@@ -1,0 +1,65 @@
+<?php
+namespace App\Http\Controllers;
+
+use App\Models\VoucherPayment;
+use App\Models\Voucher;
+use Illuminate\Http\Request;
+
+class VoucherPaymentController extends Controller
+{
+    public function index(Request $request)
+    {
+        $query = VoucherPayment::with('voucher');
+        if ($request->filled('payment_status')) {
+            $query->where('payment_status', $request->payment_status);
+        }
+        $payments = $query->orderByDesc('id')->paginate(20);
+        return view('voucher_payments.index', compact('payments'));
+    }
+
+    public function create()
+    {
+        $vouchers = Voucher::all();
+        return view('voucher_payments.create', compact('vouchers'));
+    }
+
+    public function store(Request $request)
+    {
+        $data = $request->validate([
+            'voucher_id' => 'required|exists:vouchers,id',
+            'payment_type' => 'required|string',
+            'payment_mode' => 'required|string',
+            'transaction_id' => 'required|string',
+            'remark' => 'nullable|string',
+            'payment_status' => 'required|in:pending,in-progress,paid',
+        ]);
+        VoucherPayment::create($data);
+        return redirect()->route('voucher_payments.index')->with('success', 'Voucher Payment created successfully.');
+    }
+
+    public function edit(VoucherPayment $voucher_payment)
+    {
+        $vouchers = Voucher::all();
+        return view('voucher_payments.edit', compact('voucher_payment', 'vouchers'));
+    }
+
+    public function update(Request $request, VoucherPayment $voucher_payment)
+    {
+        $data = $request->validate([
+            'voucher_id' => 'required|exists:vouchers,id',
+            'payment_type' => 'required|string',
+            'payment_mode' => 'required|string',
+            'transaction_id' => 'required|string',
+            'remark' => 'nullable|string',
+            'payment_status' => 'required|in:pending,in-progress,paid',
+        ]);
+        $voucher_payment->update($data);
+        return redirect()->route('voucher_payments.index')->with('success', 'Voucher Payment updated successfully.');
+    }
+
+    public function destroy(VoucherPayment $voucher_payment)
+    {
+        $voucher_payment->delete();
+        return redirect()->route('voucher_payments.index')->with('success', 'Voucher Payment deleted.');
+    }
+}
