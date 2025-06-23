@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\Truck;
 use App\Models\Transporter;
+use App\Models\Customer;
+use App\Models\Consignee;
 
 class LorryReceipt extends Model
 {
@@ -13,7 +15,8 @@ class LorryReceipt extends Model
         'transporter_id',
         'eway_bill_number',
         'delivery_status',
-        'consignor_id',
+        'customer_id',
+        'customer_contact_number',
         'consignee_id',
         'consignee_contact_number',
         'source_city',
@@ -33,5 +36,6 @@ class LorryReceipt extends Model
 
     public function truck() { return $this->belongsTo(Truck::class); }
     public function transporter() { return $this->belongsTo(Transporter::class); }
-    // Add consignor/consignee relations if needed later
+    public function customer() { return $this->belongsTo(Customer::class); }
+    public function consignee() { return $this->belongsTo(Consignee::class); }
 }

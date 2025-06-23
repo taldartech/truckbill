@@ -19,6 +19,15 @@ Route::get('/company/{id}/edit', [CompanyController::class, 'edit'])->name('comp
 Route::put('/company/{id}', [CompanyController::class, 'update'])->name('company.update');
 Route::delete('/company/{id}', [CompanyController::class, 'destroy'])->name('company.destroy');
 
+
+// Consignee Management
+use App\Http\Controllers\ConsigneeController;
+Route::get('/consignees', [ConsigneeController::class, 'index'])->name('consignees.index');
+Route::get('/consignees/create', [ConsigneeController::class, 'create'])->name('consignees.create');
+Route::post('/consignees', [ConsigneeController::class, 'store'])->name('consignees.store');
+Route::get('/consignees/{consignee}/edit', [ConsigneeController::class, 'edit'])->name('consignees.edit');
+Route::put('/consignees/{consignee}', [ConsigneeController::class, 'update'])->name('consignees.update');
+Route::delete('/consignees/{consignee}', [ConsigneeController::class, 'destroy'])->name('consignees.destroy');
 // User Management
 use App\Http\Controllers\UserController;
 // Transporter Management

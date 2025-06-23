@@ -39,7 +39,9 @@ class LorryReceiptController extends Controller
         $trucks = \App\Models\Truck::all();
         $transporters = \App\Models\Transporter::all();
         $statuses = ['Pending', 'Delivered', 'Cancelled'];
-        return view('lorry_receipts.create', compact('trucks', 'transporters', 'statuses'));
+        $customers = \App\Models\Customer::all();
+        $consignees = \App\Models\Consignee::all();
+        return view('lorry_receipts.create', compact('trucks', 'transporters', 'statuses', 'customers', 'consignees'));
     }
 
     public function store(Request $request)
@@ -49,9 +51,8 @@ class LorryReceiptController extends Controller
             'transporter_id' => 'required|exists:transporters,id',
             'eway_bill_number' => 'nullable|string|max:100',
             'delivery_status' => 'required|in:Pending,Delivered,Cancelled',
-            'consignor_id' => 'required|integer',
-            'consignee_id' => 'required|integer',
-            'consignee_contact_number' => 'nullable|string|max:20',
+            'customer_id' => 'required|integer',
+            'customer_contact_number' => 'nullable|string|max:20',
             'source_city' => 'required|string|max:100',
             'destination_city' => 'required|string|max:100',
             'source_state' => 'required|string|max:100',
@@ -90,9 +91,8 @@ class LorryReceiptController extends Controller
             'transporter_id' => 'required|exists:transporters,id',
             'eway_bill_number' => 'nullable|string|max:100',
             'delivery_status' => 'required|in:Pending,Delivered,Cancelled',
-            'consignor_id' => 'required|integer',
-            'consignee_id' => 'required|integer',
-            'consignee_contact_number' => 'nullable|string|max:20',
+            'customer_id' => 'required|integer',
+            'customer_contact_number' => 'nullable|string|max:20',
             'source_city' => 'required|string|max:100',
             'destination_city' => 'required|string|max:100',
             'source_state' => 'required|string|max:100',
