@@ -46,6 +46,13 @@ class TruckController extends Controller
             'driver_id' => 'nullable|exists:drivers,id',
             'registration_date' => 'required|date',
         ]);
+
+        // If driver_id is selected, get the driver's name
+        if ($validated['driver_id']) {
+            $driver = \App\Models\Driver::find($validated['driver_id']);
+            $validated['driver_name'] = $driver ? $driver->name : null;
+        }
+
         \App\Models\Truck::create($validated);
         return redirect()->route('trucks.index')->with('success', 'Truck created successfully!');
     }

@@ -123,9 +123,9 @@ endif;
 unset($__errorArgs, $__bag); ?>
             </div>
             <div class="col-md-4 mb-3">
-                <label for="consignee_contact_number" class="form-label">Consignee Contact Number</label>
-                <input type="text" class="form-control" id="consignee_contact_number" name="consignee_contact_number" value="<?php echo e(old('consignee_contact_number')); ?>">
-                <?php $__errorArgs = ['consignee_contact_number'];
+                <label for="source_city" class="form-label">Source City *</label>
+                <input type="text" class="form-control" id="source_city" name="source_city" required value="<?php echo e(old('source_city')); ?>">
+                <?php $__errorArgs = ['source_city'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }
@@ -134,6 +134,7 @@ if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>
             </div>
+           
             <div class="col-md-4 mb-3">
                 <label for="destination_city" class="form-label">Destination City *</label>
                 <input type="text" class="form-control" id="destination_city" name="destination_city" required value="<?php echo e(old('destination_city')); ?>">

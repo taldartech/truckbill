@@ -89,6 +89,9 @@ Route::get('vouchers/{voucher}/payments-section', [App\Http\Controllers\VoucherC
 // Voucher Payments
 use App\Http\Controllers\VoucherPaymentController;
 Route::resource('voucher_payments', VoucherPaymentController::class);
+Route::get('voucher_payments/{voucher_payment}/edit', [VoucherPaymentController::class, 'edit'])->name('voucher_payments.edit');
+Route::put('voucher_payments/{voucher_payment}', [VoucherPaymentController::class, 'update'])->name('voucher_payments.update');
+Route::delete('voucher_payments/{voucher_payment}', [VoucherPaymentController::class, 'destroy'])->name('voucher_payments.destroy');
 
 // Driver CRUD
 Route::get('/drivers', [DriverController::class, 'index'])->name('drivers.index');

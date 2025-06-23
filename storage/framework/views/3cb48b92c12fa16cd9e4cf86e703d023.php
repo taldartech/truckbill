@@ -39,7 +39,7 @@
                 <th>ID</th>
                 <th>Truck Number</th>
                 <th>Truck Type</th>
-                <th>Driver Name</th>
+               
                 <th>Registration Date</th>
                 <th>Transporter</th>
                 <th>Driver</th>
@@ -52,7 +52,7 @@
                     <td><?php echo e($truck->id); ?></td>
                     <td><?php echo e($truck->truck_number); ?></td>
                     <td><?php echo e($truck->truck_type); ?></td>
-                    <td><?php echo e($truck->driver_name); ?></td>
+                    
                     <td><?php echo e($truck->registration_date); ?></td>
                     <td><?php echo e($truck->transporter ? $truck->transporter->name : '-'); ?></td>
                     <td><?php echo e($truck->driver ? $truck->driver->name : '-'); ?></td>

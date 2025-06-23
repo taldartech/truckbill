@@ -41,7 +41,7 @@
                 <th>ID</th>
                 <th>Truck Number</th>
                 <th>Truck Type</th>
-                <th>Driver Name</th>
+               
                 <th>Registration Date</th>
                 <th>Transporter</th>
                 <th>Driver</th>
@@ -54,7 +54,7 @@
                     <td>{{ $truck->id }}</td>
                     <td>{{ $truck->truck_number }}</td>
                     <td>{{ $truck->truck_type }}</td>
-                    <td>{{ $truck->driver_name }}</td>
+                    
                     <td>{{ $truck->registration_date }}</td>
                     <td>{{ $truck->transporter ? $truck->transporter->name : '-' }}</td>
                     <td>{{ $truck->driver ? $truck->driver->name : '-' }}</td>

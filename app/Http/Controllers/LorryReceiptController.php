@@ -66,6 +66,8 @@ class LorryReceiptController extends Controller
             'gr_date' => 'required|date',
             'gr_number' => 'required|string|max:100|unique:lorry_receipts,gr_number',
             'memo_id' => 'nullable|integer',
+            'consignee_id' => 'required|integer',
+           
         ]);
         \App\Models\LorryReceipt::create($validated);
         return redirect()->route('lorry_receipts.index')->with('success', 'Lorry Receipt created successfully!');

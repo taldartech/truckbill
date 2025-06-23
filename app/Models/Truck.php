@@ -10,7 +10,8 @@ class Truck extends Model
         'transporter_id',
         'truck_number',
         'truck_type',
-        'driver_name',
+        
+        'driver_id',
         'registration_date',
     ];
 
