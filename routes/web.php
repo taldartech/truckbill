@@ -15,9 +15,9 @@ use App\Http\Controllers\CompanyController;
 Route::get('/company/create', [CompanyController::class, 'create'])->name('company.create');
 Route::post('/company', [CompanyController::class, 'store'])->name('company.store');
 Route::get('/company', [CompanyController::class, 'index'])->name('company.index');
-Route::get('/company/{id}/edit', [CompanyController::class, 'edit'])->name('company.edit');
-Route::put('/company/{id}', [CompanyController::class, 'update'])->name('company.update');
-Route::delete('/company/{id}', [CompanyController::class, 'destroy'])->name('company.destroy');
+Route::get('/company/{company}/edit', [CompanyController::class, 'edit'])->name('company.edit');
+Route::put('/company/{company}', [CompanyController::class, 'update'])->name('company.update');
+Route::delete('/company/{company}', [CompanyController::class, 'destroy'])->name('company.destroy');
 
 
 // Consignee Management
@@ -39,9 +39,9 @@ use App\Http\Controllers\DriverController;
 Route::get('/users', [UserController::class, 'index'])->name('users.index');
 Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
 Route::post('/users', [UserController::class, 'store'])->name('users.store');
-Route::get('/users/{id}/edit', [UserController::class, 'edit'])->name('users.edit');
-Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
-Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
+Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 
 // Transporter CRUD
 Route::get('/transporters', [TransporterController::class, 'index'])->name('transporters.index');
@@ -92,6 +92,22 @@ Route::resource('voucher_payments', VoucherPaymentController::class);
 Route::get('voucher_payments/{voucher_payment}/edit', [VoucherPaymentController::class, 'edit'])->name('voucher_payments.edit');
 Route::put('voucher_payments/{voucher_payment}', [VoucherPaymentController::class, 'update'])->name('voucher_payments.update');
 Route::delete('voucher_payments/{voucher_payment}', [VoucherPaymentController::class, 'destroy'])->name('voucher_payments.destroy');
+
+// Transporter Bank Accounts
+use App\Http\Controllers\TransporterBankAccountController;
+Route::resource('transporter_bank_accounts', TransporterBankAccountController::class);
+Route::get('transporter_bank_accounts/create', [TransporterBankAccountController::class, 'create'])->name('transporter_bank_accounts.create');
+Route::get('transporter_bank_accounts/{transporter_bank_account}/edit', [TransporterBankAccountController::class, 'edit'])->name('transporter_bank_accounts.edit');
+
+// Transporter Ledger
+use App\Http\Controllers\TransporterLedgerController;
+Route::get('transporter_ledger', [TransporterLedgerController::class, 'index'])->name('transporter_ledger.index');
+Route::get('transporter_ledger/create', [TransporterLedgerController::class, 'create'])->name('transporter_ledger.create');
+Route::post('transporter_ledger', [TransporterLedgerController::class, 'store'])->name('transporter_ledger.store');
+Route::get('transporter_ledger/{ledger}/edit', [TransporterLedgerController::class, 'edit'])->name('transporter_ledger.edit');
+Route::put('transporter_ledger/{ledger}', [TransporterLedgerController::class, 'update'])->name('transporter_ledger.update');
+Route::delete('transporter_ledger/{ledger}', [TransporterLedgerController::class, 'destroy'])->name('transporter_ledger.destroy');
+Route::get('transporter_ledger/balance/{transporter}', [TransporterLedgerController::class, 'transporterBalance'])->name('transporter_ledger.balance');
 
 // Driver CRUD
 Route::get('/drivers', [DriverController::class, 'index'])->name('drivers.index');
