@@ -44,6 +44,7 @@
     </table>
     <?php echo e($customers->links()); ?>
 
+    <a href="/dashboard" class="btn btn-secondary mt-2">Back to Dashboard</a>
 </div>
 <?php $__env->stopSection(); ?>
 

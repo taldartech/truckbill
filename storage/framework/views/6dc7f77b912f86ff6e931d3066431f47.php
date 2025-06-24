@@ -203,7 +203,15 @@ unset($__errorArgs, $__bag); ?>
             </div>
             <div class="col-md-4 mb-3">
                 <label for="good_type" class="form-label">Goods Type *</label>
-                <input type="text" class="form-control" id="good_type" name="good_type" required value="<?php echo e(old('good_type')); ?>">
+                <select class="form-select" id="good_type" name="good_type" required>
+                    <option value="">Select Goods Type</option>
+                    <?php $__currentLoopData = $goodsTypes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $goodsType): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <option value="<?php echo e($goodsType->name); ?>" <?php echo e(old('good_type') == $goodsType->name ? 'selected' : ''); ?>>
+                            <?php echo e($goodsType->name); ?>
+
+                        </option>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                </select>
                 <?php $__errorArgs = ['good_type'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :

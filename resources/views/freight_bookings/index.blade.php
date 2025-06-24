@@ -77,5 +77,8 @@
         </tbody>
     </table>
     {{ $bookings->links() }}
+    <div class="mt-3">
+        <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
 </div>
 @endsection

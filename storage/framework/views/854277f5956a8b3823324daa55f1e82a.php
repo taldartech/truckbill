@@ -55,6 +55,9 @@
     </table>
     <?php echo e($vouchers->links()); ?>
 
+    <div class="mt-3">
+        <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
 </div>
 <?php $__env->stopSection(); ?>
 

@@ -41,7 +41,8 @@ class LorryReceiptController extends Controller
         $statuses = ['Pending', 'Delivered', 'Cancelled'];
         $customers = \App\Models\Customer::all();
         $consignees = \App\Models\Consignee::all();
-        return view('lorry_receipts.create', compact('trucks', 'transporters', 'statuses', 'customers', 'consignees'));
+        $goodsTypes = \App\Models\GoodType::all();
+        return view('lorry_receipts.create', compact('trucks', 'transporters', 'statuses', 'customers', 'consignees', 'goodsTypes'));
     }
 
     public function store(Request $request)

@@ -52,7 +52,14 @@
             </div>
             <div class="col-md-4 mb-3">
                 <label for="good_type" class="form-label">Goods Type</label>
-                <input type="text" class="form-control" name="good_type" id="good_type" value="{{ old('good_type') }}">
+                <select class="form-select" name="good_type" id="good_type">
+                    <option value="">Select Goods Type</option>
+                    @foreach($goodsTypes as $goodsType)
+                        <option value="{{ $goodsType->name }}" {{ old('good_type') == $goodsType->name ? 'selected' : '' }}>
+                            {{ $goodsType->name }}
+                        </option>
+                    @endforeach
+                </select>
                 @error('good_type') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
             <div class="col-md-4 mb-3">

@@ -28,7 +28,8 @@ class FreightBookingController extends Controller
     {
         $lrs = LorryReceipt::all();
         $linkedBookings = FreightBooking::all();
-        return view('freight_bookings.create', compact('lrs', 'linkedBookings'));
+        $goodsTypes = \App\Models\GoodType::all();
+        return view('freight_bookings.create', compact('lrs', 'linkedBookings', 'goodsTypes'));
     }
 
     public function store(Request $request)
