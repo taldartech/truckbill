@@ -22,4 +22,18 @@ class VoucherPayment extends Model
     {
         return $this->belongsTo(Voucher::class);
     }
+
+    public function getPaymentStatusBadge()
+    {
+        switch ($this->payment_status) {
+            case 'pending':
+                return '<span class="badge bg-warning">Pending</span>';
+            case 'in-progress':
+                return '<span class="badge bg-info">In Progress</span>';
+            case 'paid':
+                return '<span class="badge bg-success">Paid</span>';
+            default:
+                return '<span class="badge bg-secondary">Unknown</span>';
+        }
+    }
 }

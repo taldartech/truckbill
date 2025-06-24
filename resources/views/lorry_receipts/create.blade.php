@@ -43,16 +43,16 @@
                 @error('delivery_status') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
             <div class="col-md-4 mb-3">
-                <label for="customer_id" class="form-label">Consignor *</label>
-                <select class="form-select" id="customer_id" name="customer_id" required>
+                <label for="consignor_id" class="form-label">Consignor *</label>
+                <select class="form-select" id="consignor_id" name="consignor_id" required>
                     <option value="">Select Consignor</option>
                     @foreach($customers as $customer)
-                        <option value="{{ $customer->id }}" {{ old('customer_id') == $customer->id ? 'selected' : '' }}>
+                        <option value="{{ $customer->id }}" {{ old('consignor_id') == $customer->id ? 'selected' : '' }}>
                             {{ $customer->name }}
                         </option>
                     @endforeach
                 </select>
-                @error('customer_id') <div class="text-danger">{{ $message }}</div> @enderror
+                @error('consignor_id') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
             <div class="col-md-4 mb-3">
                 <label for="customer_contact_number" class="form-label">Consignor Contact Number</label>

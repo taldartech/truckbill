@@ -15,8 +15,8 @@ class LorryReceipt extends Model
         'transporter_id',
         'eway_bill_number',
         'delivery_status',
-        'customer_id',
-        'customer_contact_number',
+        'consignor_id',
+        'consignor_contact_number',
         'consignee_id',
         'consignee_contact_number',
         'source_city',
@@ -36,6 +36,6 @@ class LorryReceipt extends Model
 
     public function truck() { return $this->belongsTo(Truck::class); }
     public function transporter() { return $this->belongsTo(Transporter::class); }
-    public function customer() { return $this->belongsTo(Customer::class); }
+    public function consignor() { return $this->belongsTo(Customer::class, 'consignor_id'); }
     public function consignee() { return $this->belongsTo(Consignee::class); }
 }

@@ -69,17 +69,17 @@ endif;
 unset($__errorArgs, $__bag); ?>
             </div>
             <div class="col-md-4 mb-3">
-                <label for="customer_id" class="form-label">Consignor *</label>
-                <select class="form-select" id="customer_id" name="customer_id" required>
+                <label for="consignor_id" class="form-label">Consignor *</label>
+                <select class="form-select" id="consignor_id" name="consignor_id" required>
                     <option value="">Select Consignor</option>
                     <?php $__currentLoopData = $customers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                        <option value="<?php echo e($customer->id); ?>" <?php echo e(old('customer_id') == $customer->id ? 'selected' : ''); ?>>
+                        <option value="<?php echo e($customer->id); ?>" <?php echo e(old('consignor_id') == $customer->id ? 'selected' : ''); ?>>
                             <?php echo e($customer->name); ?>
 
                         </option>
                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </select>
-                <?php $__errorArgs = ['customer_id'];
+                <?php $__errorArgs = ['consignor_id'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
 if (isset($message)) { $__messageOriginal = $message; }

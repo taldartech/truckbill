@@ -47,8 +47,17 @@ class VoucherController extends Controller
             'pan_verified' => 'boolean',
             'status' => 'required|in:pending,completed',
         ]);
-        Voucher::create($data);
-        return redirect()->route('vouchers.index')->with('success', 'Voucher created successfully.');
+
+        // Create voucher first to get the ID
+        $voucher = Voucher::create($data);
+
+        // Update voucher number using the ID
+        $voucher->update([
+            'voucher_number' => $voucher->id,
+            'formatted_voucher_number' => 'V-' . str_pad($voucher->id, 6, '0', STR_PAD_LEFT)
+        ]);
+
+        return redirect()->route('vouchers.show', $voucher)->with('success', 'Voucher created successfully.');
     }
 
     public function edit(Voucher $voucher)

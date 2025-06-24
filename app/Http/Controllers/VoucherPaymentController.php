@@ -3,6 +3,8 @@ namespace App\Http\Controllers;
 
 use App\Models\VoucherPayment;
 use App\Models\Voucher;
+use App\Models\PaymentType;
+use App\Models\PaymentMode;
 use Illuminate\Http\Request;
 
 class VoucherPaymentController extends Controller
@@ -20,7 +22,9 @@ class VoucherPaymentController extends Controller
     public function create()
     {
         $vouchers = Voucher::all();
-        return view('voucher_payments.create', compact('vouchers'));
+        $paymentTypes = PaymentType::all();
+        $paymentModes = PaymentMode::all();
+        return view('voucher_payments.create', compact('vouchers', 'paymentTypes', 'paymentModes'));
     }
 
     public function store(Request $request)

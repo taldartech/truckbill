@@ -23,7 +23,15 @@ unset($__errorArgs, $__bag); ?>
             </div>
             <div class="col-md-4 mb-3">
                 <label for="payment_type" class="form-label">Payment Type *</label>
-                <input type="text" class="form-control" name="payment_type" id="payment_type" value="<?php echo e(old('payment_type')); ?>" required>
+                <select name="payment_type" id="payment_type" class="form-select" required>
+                    <option value="">Select Payment Type</option>
+                    <?php $__currentLoopData = $paymentTypes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $paymentType): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <option value="<?php echo e($paymentType->name); ?>" <?php echo e(old('payment_type') == $paymentType->name ? 'selected' : ''); ?>>
+                            <?php echo e($paymentType->name); ?>
+
+                        </option>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                </select>
                 <?php $__errorArgs = ['payment_type'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
@@ -35,7 +43,15 @@ unset($__errorArgs, $__bag); ?>
             </div>
             <div class="col-md-4 mb-3">
                 <label for="payment_mode" class="form-label">Payment Mode *</label>
-                <input type="text" class="form-control" name="payment_mode" id="payment_mode" value="<?php echo e(old('payment_mode')); ?>" required>
+                <select name="payment_mode" id="payment_mode" class="form-select" required>
+                    <option value="">Select Payment Mode</option>
+                    <?php $__currentLoopData = $paymentModes; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $paymentMode): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <option value="<?php echo e($paymentMode->name); ?>" <?php echo e(old('payment_mode') == $paymentMode->name ? 'selected' : ''); ?>>
+                            <?php echo e($paymentMode->name); ?>
+
+                        </option>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                </select>
                 <?php $__errorArgs = ['payment_mode'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :

@@ -18,12 +18,26 @@
             </div>
             <div class="col-md-4 mb-3">
                 <label for="payment_type" class="form-label">Payment Type *</label>
-                <input type="text" class="form-control" name="payment_type" id="payment_type" value="{{ old('payment_type') }}" required>
+                <select name="payment_type" id="payment_type" class="form-select" required>
+                    <option value="">Select Payment Type</option>
+                    @foreach($paymentTypes as $paymentType)
+                        <option value="{{ $paymentType->name }}" {{ old('payment_type') == $paymentType->name ? 'selected' : '' }}>
+                            {{ $paymentType->name }}
+                        </option>
+                    @endforeach
+                </select>
                 @error('payment_type') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
             <div class="col-md-4 mb-3">
                 <label for="payment_mode" class="form-label">Payment Mode *</label>
-                <input type="text" class="form-control" name="payment_mode" id="payment_mode" value="{{ old('payment_mode') }}" required>
+                <select name="payment_mode" id="payment_mode" class="form-select" required>
+                    <option value="">Select Payment Mode</option>
+                    @foreach($paymentModes as $paymentMode)
+                        <option value="{{ $paymentMode->name }}" {{ old('payment_mode') == $paymentMode->name ? 'selected' : '' }}>
+                            {{ $paymentMode->name }}
+                        </option>
+                    @endforeach
+                </select>
                 @error('payment_mode') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
         </div>

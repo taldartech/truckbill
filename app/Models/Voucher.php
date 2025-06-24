@@ -14,6 +14,8 @@ class Voucher extends Model
         'transporter_id',
         'pan_verified',
         'status',
+        'voucher_number',
+        'formatted_voucher_number',
     ];
 
     public function freightBooking()
@@ -34,5 +36,28 @@ class Voucher extends Model
     public function payments()
     {
         return $this->hasMany(VoucherPayment::class);
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($voucher) {
+            // Get the highest existing voucher number
+            $lastVoucher = self::orderBy('voucher_number', 'desc')->first();
+            $nextNumber = $lastVoucher ? $lastVoucher->voucher_number + 1 : 1;
+            
+            // Store the raw number
+            $voucher->voucher_number = $nextNumber;
+            
+            // Format and store the formatted version
+            $voucher->formatted_voucher_number = 'V-' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
+        });
+    }
+
+    // Accessor to get formatted voucher number
+    public function getVoucherNumberAttribute($value)
+    {
+        return $this->formatted_voucher_number ?? 'V-' . str_pad($value, 6, '0', STR_PAD_LEFT);
     }
 }
