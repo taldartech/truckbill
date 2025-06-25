@@ -55,11 +55,11 @@
                     <option value="paid" {{ old('payment_status') == 'paid' ? 'selected' : '' }}>Paid</option>
                 </select>
             </div>
-            <div class="col-md-8 mb-3">
+            <div class="col-md-8 mb-3" id="memoDiv" style="display: {{ old('customer_id') ? 'block' : 'none' }};">
                 <label class="form-label">Memos</label>
                 <select name="memo_ids[]" class="form-select" multiple>
                     @foreach($memos as $memo)
-                        <option value="{{ $memo->id }}" {{ (collect(old('memo_ids'))->contains($memo->id)) ? 'selected' : '' }}>{{ $memo->memo_number }}</option>
+                        <option value="{{ $memo['id'] }}" {{ (collect(old('memo_ids'))->contains($memo['id'])) ? 'selected' : '' }}>{{ $memo['memo_number'] }}</option>
                     @endforeach
                 </select>
                 <small class="text-muted">Hold Ctrl (Cmd on Mac) to select multiple.</small>
@@ -68,5 +68,16 @@
         <button type="submit" class="btn btn-success">Save</button>
         <a href="{{ route('invoices.index') }}" class="btn btn-secondary ms-2">Back to List</a>
     </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const customerSelect = document.querySelector('select[name="customer_id"]');
+            const memoDiv = document.getElementById('memoDiv');
+
+            customerSelect.addEventListener('change', function() {
+                memoDiv.style.display = this.value ? 'block' : 'none';
+            });
+        });
+    </script>
 </div>
 @endsection

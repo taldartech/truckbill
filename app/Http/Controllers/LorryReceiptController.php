@@ -3,6 +3,11 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Truck;
+use App\Models\Transporter;
+use App\Models\Customer;
+use App\Models\Consignee;
+use App\Models\GoodType;
 
 class LorryReceiptController extends Controller
 {
@@ -36,13 +41,13 @@ class LorryReceiptController extends Controller
 
     public function create()
     {
-        $trucks = \App\Models\Truck::all();
-        $transporters = \App\Models\Transporter::all();
+        $trucks = Truck::all();
+        $transporters = Transporter::all();
+        $customers = Customer::all();
+        $consignees = Consignee::all();
+        $goodsTypes = GoodType::all();
         $statuses = ['Pending', 'Delivered', 'Cancelled'];
-        $customers = \App\Models\Customer::all();
-        $consignees = \App\Models\Consignee::all();
-        $goodsTypes = \App\Models\GoodType::all();
-        return view('lorry_receipts.create', compact('trucks', 'transporters', 'statuses', 'customers', 'consignees', 'goodsTypes'));
+        return view('lorry_receipts.create', compact('trucks', 'transporters', 'customers', 'consignees', 'goodsTypes', 'statuses'));
     }
 
     public function store(Request $request)

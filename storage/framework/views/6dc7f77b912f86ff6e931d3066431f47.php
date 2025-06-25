@@ -89,6 +89,25 @@ endif;
 unset($__errorArgs, $__bag); ?>
             </div>
             <div class="col-md-4 mb-3">
+                <label for="customer_id" class="form-label">Customer *</label>
+                <select class="form-select" id="customer_id" name="customer_id" required>
+                    <option value="">Select</option>
+                    <?php $__currentLoopData = $customers; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $customer): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <option value="<?php echo e($customer->id); ?>" <?php echo e(old('customer_id') == $customer->id ? 'selected' : ''); ?>><?php echo e($customer->name); ?></option>
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                </select>
+                <?php $__errorArgs = ['customer_id'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> <div class="text-danger"><?php echo e($message); ?></div> <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4 mb-3">
                 <label for="customer_contact_number" class="form-label">Consignor Contact Number</label>
                 <input type="text" class="form-control" id="customer_contact_number" name="customer_contact_number" value="<?php echo e(old('customer_contact_number')); ?>">
                 <?php $__errorArgs = ['customer_contact_number'];
@@ -100,8 +119,6 @@ if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>
             </div>
-        </div>
-        <div class="row">
             <div class="col-md-4 mb-3">
                 <label for="consignee_id" class="form-label">Consignee *</label>
                 <select class="form-select" id="consignee_id" name="consignee_id" required>
@@ -134,7 +151,8 @@ if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>
             </div>
-           
+        </div>
+        <div class="row">
             <div class="col-md-4 mb-3">
                 <label for="destination_city" class="form-label">Destination City *</label>
                 <input type="text" class="form-control" id="destination_city" name="destination_city" required value="<?php echo e(old('destination_city')); ?>">
@@ -147,10 +165,6 @@ if (isset($__messageOriginal)) { $message = $__messageOriginal; }
 endif;
 unset($__errorArgs, $__bag); ?>
             </div>
-           
-        </div>
-        <div class="row">
-            
             <div class="col-md-4 mb-3">
                 <label for="source_state" class="form-label">Source State *</label>
                 <input type="text" class="form-control" id="source_state" name="source_state" required value="<?php echo e(old('source_state')); ?>">

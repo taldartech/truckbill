@@ -55,12 +55,22 @@
                 @error('consignor_id') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
             <div class="col-md-4 mb-3">
+                <label for="customer_id" class="form-label">Customer *</label>
+                <select class="form-select" id="customer_id" name="customer_id" required>
+                    <option value="">Select</option>
+                    @foreach($customers as $customer)
+                        <option value="{{ $customer->id }}" {{ old('customer_id') == $customer->id ? 'selected' : '' }}>{{ $customer->name }}</option>
+                    @endforeach
+                </select>
+                @error('customer_id') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4 mb-3">
                 <label for="customer_contact_number" class="form-label">Consignor Contact Number</label>
                 <input type="text" class="form-control" id="customer_contact_number" name="customer_contact_number" value="{{ old('customer_contact_number') }}">
                 @error('customer_contact_number') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
-        </div>
-        <div class="row">
             <div class="col-md-4 mb-3">
                 <label for="consignee_id" class="form-label">Consignee *</label>
                 <select class="form-select" id="consignee_id" name="consignee_id" required>
@@ -78,16 +88,13 @@
                 <input type="text" class="form-control" id="source_city" name="source_city" required value="{{ old('source_city') }}">
                 @error('source_city') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
-           
+        </div>
+        <div class="row">
             <div class="col-md-4 mb-3">
                 <label for="destination_city" class="form-label">Destination City *</label>
                 <input type="text" class="form-control" id="destination_city" name="destination_city" required value="{{ old('destination_city') }}">
                 @error('destination_city') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
-           
-        </div>
-        <div class="row">
-            
             <div class="col-md-4 mb-3">
                 <label for="source_state" class="form-label">Source State *</label>
                 <input type="text" class="form-control" id="source_state" name="source_state" required value="{{ old('source_state') }}">

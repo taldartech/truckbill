@@ -47,14 +47,14 @@
                             <td><?php echo e($ledger->remark); ?></td>
                             <td><?php echo e($ledger->created_at->format('Y-m-d H:i')); ?></td>
                             <td>
-                                <div class="btn-group">
+                                
                                     <a href="<?php echo e(route('transporter_ledger.edit', $ledger)); ?>" class="btn btn-sm btn-warning">Edit</a>
                                     <form action="<?php echo e(route('transporter_ledger.destroy', $ledger)); ?>" method="POST" style="display:inline-block;">
                                         <?php echo csrf_field(); ?>
                                         <?php echo method_field('DELETE'); ?>
                                         <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
                                     </form>
-                                </div>
+                                
                             </td>
                         </tr>
                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>

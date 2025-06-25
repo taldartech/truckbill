@@ -48,14 +48,14 @@
                             <td>{{ $ledger->remark }}</td>
                             <td>{{ $ledger->created_at->format('Y-m-d H:i') }}</td>
                             <td>
-                                <div class="btn-group">
+                                
                                     <a href="{{ route('transporter_ledger.edit', $ledger) }}" class="btn btn-sm btn-warning">Edit</a>
                                     <form action="{{ route('transporter_ledger.destroy', $ledger) }}" method="POST" style="display:inline-block;">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
                                     </form>
-                                </div>
+                                
                             </td>
                         </tr>
                     @empty

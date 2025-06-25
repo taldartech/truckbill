@@ -53,11 +53,11 @@
                     <option value="paid" <?php echo e(old('payment_status') == 'paid' ? 'selected' : ''); ?>>Paid</option>
                 </select>
             </div>
-            <div class="col-md-8 mb-3">
+            <div class="col-md-8 mb-3" id="memoDiv" style="display: <?php echo e(old('customer_id') ? 'block' : 'none'); ?>;">
                 <label class="form-label">Memos</label>
                 <select name="memo_ids[]" class="form-select" multiple>
                     <?php $__currentLoopData = $memos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $memo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                        <option value="<?php echo e($memo->id); ?>" <?php echo e((collect(old('memo_ids'))->contains($memo->id)) ? 'selected' : ''); ?>><?php echo e($memo->memo_number); ?></option>
+                        <option value="<?php echo e($memo['id']); ?>" <?php echo e((collect(old('memo_ids'))->contains($memo['id'])) ? 'selected' : ''); ?>><?php echo e($memo['memo_number']); ?></option>
                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </select>
                 <small class="text-muted">Hold Ctrl (Cmd on Mac) to select multiple.</small>
@@ -66,6 +66,17 @@
         <button type="submit" class="btn btn-success">Save</button>
         <a href="<?php echo e(route('invoices.index')); ?>" class="btn btn-secondary ms-2">Back to List</a>
     </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const customerSelect = document.querySelector('select[name="customer_id"]');
+            const memoDiv = document.getElementById('memoDiv');
+
+            customerSelect.addEventListener('change', function() {
+                memoDiv.style.display = this.value ? 'block' : 'none';
+            });
+        });
+    </script>
 </div>
 <?php $__env->stopSection(); ?>
 

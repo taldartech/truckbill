@@ -6,7 +6,9 @@ use App\Models\Company;
 use App\Models\Customer;
 use App\Models\Memo;
 use App\Models\InvoiceMemoMap;
+use App\Models\LorryReceipt;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class InvoiceController extends Controller
 {
@@ -20,7 +22,22 @@ class InvoiceController extends Controller
     {
         $companies = Company::all();
         $customers = Customer::all();
-        $memos = Memo::all();
+        
+        // Get memo_ids directly from database
+        $memoIds = DB::table('lorry_receipts')
+            ->select('memo_id')
+            ->distinct()
+            ->pluck('memo_id')
+            ->toArray();
+        
+        // Format as array for view
+        $memos = array_map(function($id) {
+            return [
+                'id' => $id,
+                'memo_number' => 'Memo #' . $id  // You might want to adjust this based on your actual memo_number format
+            ];
+        }, $memoIds);
+        
         return view('invoices.create', compact('companies', 'customers', 'memos'));
     }
 
