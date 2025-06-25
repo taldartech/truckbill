@@ -73,8 +73,7 @@ Route::resource('freight_bookings', FreightBookingController::class);
 // Invoices
 use App\Http\Controllers\InvoiceController;
 Route::resource('invoices', InvoiceController::class);
-Route::get('invoices/filter-memos', [InvoiceController::class, 'filterMemos'])->name('invoices.filterMemos');
-Route::get('invoices/filter-memos/{customer_id}', [InvoiceController::class, 'filterMemos'])->name('invoices.filterMemos.withId');
+Route::get('/invoices/memos/{customerId}', [InvoiceController::class, 'getCustomerMemos']);
 Route::get('invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
 
 // Customers

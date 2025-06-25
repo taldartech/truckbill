@@ -58,6 +58,7 @@ class LorryReceiptController extends Controller
             'eway_bill_number' => 'nullable|string|max:100',
             'delivery_status' => 'required|in:Pending,Delivered,Cancelled',
             'consignor_id' => 'required|integer',
+            'customer_id' => 'required|integer',
             'consignor_contact_number' => 'nullable|string|max:20',
             'source_city' => 'required|string|max:100',
             'destination_city' => 'required|string|max:100',
@@ -74,6 +75,7 @@ class LorryReceiptController extends Controller
             'memo_id' => 'nullable|integer',
             'consignee_id' => 'required|integer',
         ]);
+        
         \App\Models\LorryReceipt::create($validated);
         return redirect()->route('lorry_receipts.index')->with('success', 'Lorry Receipt created successfully!');
     }

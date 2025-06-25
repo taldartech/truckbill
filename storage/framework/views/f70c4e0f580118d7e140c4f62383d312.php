@@ -53,12 +53,11 @@
                     <option value="paid" <?php echo e(old('payment_status') == 'paid' ? 'selected' : ''); ?>>Paid</option>
                 </select>
             </div>
-            <div class="col-md-8 mb-3" id="memoDiv" style="display: <?php echo e(old('customer_id') ? 'block' : 'none'); ?>;">
+            
+            <div class="col-md-8 mb-3" id="memoDiv" style="display: none;">
                 <label class="form-label">Memos</label>
-                <select name="memo_ids[]" class="form-select" multiple>
-                    <?php $__currentLoopData = $memos; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $memo): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                        <option value="<?php echo e($memo['id']); ?>" <?php echo e((collect(old('memo_ids'))->contains($memo['id'])) ? 'selected' : ''); ?>><?php echo e($memo['memo_number']); ?></option>
-                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                <select name="memo_ids[]" class="form-select" id="memoSelect" multiple>
+                    <!-- options will be loaded dynamically -->
                 </select>
                 <small class="text-muted">Hold Ctrl (Cmd on Mac) to select multiple.</small>
             </div>
@@ -67,17 +66,64 @@
         <a href="<?php echo e(route('invoices.index')); ?>" class="btn btn-secondary ms-2">Back to List</a>
     </form>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const customerSelect = document.querySelector('select[name="customer_id"]');
-            const memoDiv = document.getElementById('memoDiv');
-
-            customerSelect.addEventListener('change', function() {
-                memoDiv.style.display = this.value ? 'block' : 'none';
-            });
-        });
-    </script>
+    
+    
+    
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("🚀 Script loaded");
+        const customerSelect = document.querySelector('select[name="customer_id"]');
+        const memoDiv = document.getElementById('memoDiv');
+        const memoSelect = document.getElementById('memoSelect');
+
+        customerSelect.addEventListener('change', function () {
+            const customerId = this.value;
+            console.log("📦 Customer selected:", customerId);
+            memoDiv.style.display = customerId ? 'block' : 'none';
+            memoSelect.innerHTML = ''; // clear old options
+
+            if (customerId) {
+                fetch(`/invoices/memos/${customerId}`, {
+                    cache: 'no-store',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("✅ AJAX response:", data);
+                    memoSelect.innerHTML = ''; // Clear existing options
+                    
+                    if (Array.isArray(data) && data.length > 0) {
+                        data.forEach(memo => {
+                            const option = document.createElement('option');
+                            option.value = memo.id;
+                            option.text = memo.memo_number;
+                            option.selected = memo.selected;
+                            memoSelect.appendChild(option);
+                        });
+                    } else {
+                        const option = document.createElement('option');
+                        option.value = '';
+                        option.text = 'No memos found';
+                        option.disabled = true;
+                        memoSelect.appendChild(option);
+                    }
+                })
+                .catch(error => {
+                    console.error("❌ AJAX fetch error:", error);
+                    memoSelect.innerHTML = '<option value="">Error loading memos</option>';
+                });
+            }
+        });
+    });
+</script>
 <?php $__env->stopSection(); ?>
 
 <?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH /opt/lampp/htdocs/transport/resources/views/invoices/create.blade.php ENDPATH**/ ?>

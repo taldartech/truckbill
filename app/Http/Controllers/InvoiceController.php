@@ -9,6 +9,7 @@ use App\Models\InvoiceMemoMap;
 use App\Models\LorryReceipt;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class InvoiceController extends Controller
 {
@@ -18,28 +19,68 @@ class InvoiceController extends Controller
         return view('invoices.index', compact('invoices'));
     }
 
+    // public function create()
+    // {
+    //     $companies = Company::all();
+    //     $customers = Customer::all();
+        
+    //     // Get memo_ids directly from database
+    //     $memoIds = DB::table('lorry_receipts')
+    //         ->select('memo_id')
+    //         ->distinct()
+    //         ->pluck('memo_id')
+    //         ->toArray();
+        
+    //     // Format as array for view
+    //     $memos = array_map(function($id) {
+    //         return [
+    //             'id' => $id,
+    //             'memo_number' => 'Memo #' . $id  // You might want to adjust this based on your actual memo_number format
+    //         ];
+    //     }, $memoIds);
+        
+    //     return view('invoices.create', compact('companies', 'customers', 'memos'));
+    // }
     public function create()
-    {
-        $companies = Company::all();
-        $customers = Customer::all();
-        
-        // Get memo_ids directly from database
-        $memoIds = DB::table('lorry_receipts')
-            ->select('memo_id')
-            ->distinct()
-            ->pluck('memo_id')
-            ->toArray();
-        
-        // Format as array for view
-        $memos = array_map(function($id) {
+{
+    $companies = Company::all();
+    $customers = Customer::all();
+    return view('invoices.create', compact('companies', 'customers'));
+}
+
+
+public function getCustomerMemos($customerId)
+{
+    // Log the incoming request
+    // Log::info('Fetching memos for customer:', ['customer_id' => $customerId]);
+    
+    // // Validate the customer ID
+    // if (!is_numeric($customerId)) {
+    //     Log::warning('Invalid customer ID:', ['customer_id' => $customerId]);
+    //     return response()->json(['error' => 'Invalid customer ID'], 400);
+    // }
+
+    // Get memos from lorry_receipts
+    $memos = DB::table('lorry_receipts')
+        ->select('memo_id')
+        ->where('customer_id', $customerId)
+        ->whereNotNull('memo_id')
+        ->distinct()
+        ->get()
+        ->map(function($memo) {
             return [
-                'id' => $id,
-                'memo_number' => 'Memo #' . $id  // You might want to adjust this based on your actual memo_number format
+                'id' => $memo->memo_id,
+                'memo_number' => 'Memo #' . $memo->memo_id,
+                'selected' => request()->old('memo_ids') && in_array($memo->memo_id, request()->old('memo_ids'))
             ];
-        }, $memoIds);
-        
-        return view('invoices.create', compact('companies', 'customers', 'memos'));
-    }
+        });
+
+    Log::info('Found memos for customer:', ['count' => count($memos)]);
+    
+    return response()->json($memos);
+}
+
+
 
     public function store(Request $request)
     {
