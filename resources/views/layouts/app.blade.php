@@ -11,9 +11,28 @@
     <!-- You can add more theme CSS here if needed -->
 </head>
 <body class="sidebar-mini layout-fixed">
+    <!-- Top Navbar -->
+    <nav class="navbar navbar-expand navbar-light bg-white border-bottom fixed-top" style="z-index:1050;">
+        <div class="container-fluid">
+            <!-- Page Title as Link -->
+            <a class="navbar-brand fw-bold" href="#">@yield('title', 'Transport Management')</a>
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-user-circle fa-lg"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
+                        <a class="dropdown-item" href="#">Profile</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item text-danger" href="#">Logout</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </nav>
     <div class="d-flex" style="min-height: 100vh;">
         <!-- Fixed Simple Sidebar -->
-        <nav class="bg-dark text-white p-3" style="width:220px;position:fixed;top:0;left:0;height:100vh;z-index:1040;">
+        <nav class="bg-dark text-white p-3" style="width:220px;position:fixed;top:56px;left:0;height:calc(100vh - 56px);z-index:1040;">
             <ul class="nav nav-pills flex-column">
                 <li class="nav-item mb-2">
                     <a href="/dashboard" class="nav-link text-white">
@@ -33,7 +52,7 @@
             </ul>
         </nav>
         <!-- Main Content -->
-        <div style="margin-left:250px;flex:1;">
+        <div style="margin-left:220px;flex:1;padding-top:56px;">
             <div class="p-4">
                 @yield('content')
             </div>
