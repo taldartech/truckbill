@@ -1,48 +1,106 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body { background: #f8f9fa; }
-        .dashboard-title { margin-top: 2rem; margin-bottom: 2rem; }
-        .card { min-height: 170px; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1 class="text-center dashboard-title">Invoice & Transport Management System</h1>
-        <div class="row row-cols-1 row-cols-md-3 g-4">
-            <div class="col"><a href="/company" class="text-decoration-none"><div class="card h-100"><div class="card-body"><h5 class="card-title">Company Registration</h5><p class="card-text">Register and manage company details.</p></div></div></a></div>
-            <div class="col"><a href="/transporters" class="text-decoration-none"><div class="card h-100"><div class="card-body"><h5 class="card-title">Transport/Truck Owner Registration</h5><p class="card-text">Register agencies and truck owners.</p></div></div></a></div>
-            <div class="col"><a href="{{ route('transporter_bank_accounts.index') }}" class="text-decoration-none"><div class="card h-100"><div class="card-body"><h5 class="card-title">Transporter Bank Details</h5><p class="card-text">Manage transporter bank accounts and payment details.</p></div></div></a></div>
-            <div class="col"><a href="{{ route('transporter_ledger.index') }}" class="text-decoration-none"><div class="card h-100"><div class="card-body"><h5 class="card-title">Transporter Ledger</h5><p class="card-text">Track and manage transporter financial transactions.</p></div></div></a></div>
-            <div class="col"><a href="/trucks" class="text-decoration-none"><div class="card h-100"><div class="card-body"><h5 class="card-title">Truck Details Entry</h5><p class="card-text">Record truck and owner details.</p></div></div></a></div>
-{{-- <div class="col"><a href="/trucks/report" class="text-decoration-none"><div class="card h-100"><div class="card-body"><h5 class="card-title">Truck Report</h5><p class="card-text">View and analyze trucks by type, transporter, driver, and date.</p></div></div></a></div> --}}
-<div class="col"><a href="/customers" class="text-decoration-none"><div class="card h-100"><div class="card-body"><h5 class="card-title">Customer Management</h5><p class="card-text">Add, view, and manage customers for billing and invoicing.</p></div></div></a></div>
-<div class="col"><a href="{{ route('consignees.index') }}" class="text-decoration-none"><div class="card h-100"><div class="card-body"><h5 class="card-title">Consignee Management</h5><p class="card-text">Manage consignees for freight bookings and LR generation.</p></div></div></a></div>          
+@extends('layouts.app')
 
-<div class="col"><a href="/lorry_receipts" class="text-decoration-none"><div class="card h-100"><div class="card-body"><h5 class="card-title">LR Generation</h5><p class="card-text">Enter and manage LRs. Validation checks included.</p></div></div></a></div>
-<div class="col"><a href="/freight_bookings" class="text-decoration-none"><div class="card h-100"><div class="card-body"><h5 class="card-title">Freight Booking Entries</h5><p class="card-text">Assign bookings, manage freight rates, advances, and payments.</p></div></div></a></div>
-<div class="col"><a href="/vouchers" class="text-decoration-none"><div class="card h-100"><div class="card-body"><h5 class="card-title">Voucher Generation</h5><p class="card-text">Generate and manage payment vouchers for freight bookings.</p></div></div></a></div>
-<div class="col"><a href="{{ route('voucher_payments.index') }}" class="text-decoration-none"><div class="card h-100"><div class="card-body"><h5 class="card-title">Voucher Payment Tracking</h5><p class="card-text">Track payment status for each voucher.</p></div></div></a></div>
-<div class="col"><a href="/invoices" class="text-decoration-none"><div class="card h-100"><div class="card-body"><h5 class="card-title">Invoice Management</h5><p class="card-text">Create, view, and manage invoices and their payments.</p></div></div></a></div>
+@section('title', 'Dashboard')
 
-{{-- <div class="col"><a href="#" class="text-decoration-none"><div class="card h-100"><div class="card-body"><h5 class="card-title">Freight Booking Entries</h5><p class="card-text">Assign bookings, rates, advances, and manage payments.</p></div></div></a></div> --}}
-            {{-- <div class="col"><a href="#" class="text-decoration-none"><div class="card h-100"><div class="card-body"><h5 class="card-title">Voucher Generation</h5><p class="card-text">Generate and track advance and remaining payment vouchers.</p></div></div></a></div> --}}
-            {{-- <div class="col"><a href="#" class="text-decoration-none"><div class="card h-100"><div class="card-body"><h5 class="card-title">E-Way Bill Management</h5><p class="card-text">Monitor eWay bill expiry and alerts.</p></div></div></a></div> --}}
-            {{-- <div class="col"><a href="#" class="text-decoration-none"><div class="card h-100"><div class="card-body"><h5 class="card-title">Invoice Generation</h5><p class="card-text">Generate invoices from LRs and link to accounts.</p></div></div></a></div> --}}
-            {{-- <div class="col"><a href="#" class="text-decoration-none"><div class="card h-100"><div class="card-body"><h5 class="card-title">Invoice Payment Tracking</h5><p class="card-text">Track payment status for each invoice.</p></div></div></a></div> --}}
-            <div class="col"><a href="/users" class="text-decoration-none"><div class="card h-100"><div class="card-body"><h5 class="card-title">User Management</h5><p class="card-text">Role-based access control and user roles.</p></div></div></a></div>
-            {{-- <div class="col"><a href="#" class="text-decoration-none"><div class="card h-100"><div class="card-body"><h5 class="card-title">Reporting & Search</h5><p class="card-text">Advanced search and export features.</p></div></div></a></div> --}}
-            {{-- <div class="col"><a href="#" class="text-decoration-none"><div class="card h-100"><div class="card-body"><h5 class="card-title">Configuration & Master Setup</h5><p class="card-text">Master data setup, PAN verification, year-end closure.</p></div></div></a></div>
-        </div> --}}
-        <footer class="text-center mt-5 mb-3 text-muted">&copy; 2025 Invoice & Transport Management System</footer>
+@section('content')
+<!-- AdminLTE v4 Demo Dashboard Content -->
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0">Dashboard</h1>
+      </div>
+      <div class="col-sm-6">
+        <ol class="breadcrumb float-sm-right">
+          <li class="breadcrumb-item"><a href="#">Home</a></li>
+          <li class="breadcrumb-item active">Dashboard</li>
+        </ol>
+      </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+  </div>
+</div>
+
+<div class="content">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-info">
+          <div class="inner">
+            <h3>150</h3>
+            <p>New Orders</p>
+          </div>
+          <div class="icon">
+            <i class="fas fa-shopping-cart"></i>
+          </div>
+          <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+        </div>
+      </div>
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-success">
+          <div class="inner">
+            <h3>53<sup style="font-size: 20px">%</sup></h3>
+            <p>Bounce Rate</p>
+          </div>
+          <div class="icon">
+            <i class="fas fa-chart-line"></i>
+          </div>
+          <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+        </div>
+      </div>
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-warning">
+          <div class="inner">
+            <h3>44</h3>
+            <p>User Registrations</p>
+          </div>
+          <div class="icon">
+            <i class="fas fa-user-plus"></i>
+          </div>
+          <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+        </div>
+      </div>
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-danger">
+          <div class="inner">
+            <h3>65</h3>
+            <p>Unique Visitors</p>
+          </div>
+          <div class="icon">
+            <i class="fas fa-chart-pie"></i>
+          </div>
+          <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <section class="col-lg-7 connectedSortable">
+        <!-- Sales chart card -->
+        <div class="card">
+          <div class="card-header border-transparent">
+            <h3 class="card-title">Sales Value</h3>
+          </div>
+          <div class="card-body">
+            <div class="chart">
+              <canvas id="salesChart" height="180" style="height: 180px;"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="col-lg-5 connectedSortable">
+        <!-- Map card -->
+        <div class="card bg-gradient-primary">
+          <div class="card-header border-0">
+            <h3 class="card-title">
+              <i class="fas fa-map-marker-alt mr-1"></i>
+              Sales Value
+            </h3>
+          </div>
+          <div class="card-body">
+            <div id="world-map" style="height: 180px; width: 100%; background: #fff; border-radius: .25rem;"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+@endsection
