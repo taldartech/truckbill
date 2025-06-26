@@ -41,3 +41,6 @@ ad.js
 
 #storage folder
 /storage/
+/storage/*
+/storage/framework/views/*
+
