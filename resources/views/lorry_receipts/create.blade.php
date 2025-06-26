@@ -8,39 +8,13 @@
         <div class="row">
             <div class="col-md-4 mb-3">
                 <label for="truck_id" class="form-label">Truck *</label>
-                <select class="form-select" id="truck_id" name="truck_id" required>
+                <select class="form-select" id="truck_id" name="truck_id" disabled>
                     <option value="">Select</option>
                     @foreach($trucks as $truck)
                         <option value="{{ $truck->id }}" {{ old('truck_id') == $truck->id ? 'selected' : '' }}>{{ $truck->truck_number }}</option>
                     @endforeach
                 </select>
                 @error('truck_id') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="transporter_id" class="form-label">Transporter *</label>
-                <select class="form-select" id="transporter_id" name="transporter_id" required>
-                    <option value="">Select</option>
-                    @foreach($transporters as $transporter)
-                        <option value="{{ $transporter->id }}" {{ old('transporter_id') == $transporter->id ? 'selected' : '' }}>{{ $transporter->name }}</option>
-                    @endforeach
-                </select>
-                @error('transporter_id') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="eway_bill_number" class="form-label">Eway Bill Number</label>
-                <input type="text" class="form-control" id="eway_bill_number" name="eway_bill_number" value="{{ old('eway_bill_number') }}">
-                @error('eway_bill_number') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="delivery_status" class="form-label">Delivery Status *</label>
-                <select class="form-select" id="delivery_status" name="delivery_status" required>
-                    @foreach($statuses as $status)
-                        <option value="{{ $status }}" {{ old('delivery_status') == $status ? 'selected' : '' }}>{{ $status }}</option>
-                    @endforeach
-                </select>
-                @error('delivery_status') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
             <div class="col-md-4 mb-3">
                 <label for="consignor_id" class="form-label">Consignor *</label>
@@ -52,25 +26,14 @@
                         </option>
                     @endforeach
                 </select>
-                @error('consignor_id') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
             <div class="col-md-4 mb-3">
-                <label for="customer_id" class="form-label">Customer *</label>
-                <select class="form-select" id="customer_id" name="customer_id" required>
-                    <option value="">Select</option>
-                    @foreach($customers as $customer)
-                        <option value="{{ $customer->id }}" {{ old('customer_id') == $customer->id ? 'selected' : '' }}>{{ $customer->name }}</option>
-                    @endforeach
-                </select>
-                @error('customer_id') <div class="text-danger">{{ $message }}</div> @enderror
+                <label for="consignor_contact_number" class="form-label">Consignor Contact Number</label>
+                <input type="text" class="form-control" id="consignor_contact_number" name="consignor_contact_number" readonly>
             </div>
         </div>
+
         <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="customer_contact_number" class="form-label">Consignor Contact Number</label>
-                <input type="text" class="form-control" id="customer_contact_number" name="customer_contact_number" value="{{ old('customer_contact_number') }}">
-                @error('customer_contact_number') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
             <div class="col-md-4 mb-3">
                 <label for="consignee_id" class="form-label">Consignee *</label>
                 <select class="form-select" id="consignee_id" name="consignee_id" required>
@@ -81,7 +44,37 @@
                         </option>
                     @endforeach
                 </select>
-                @error('consignee_id') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="consignee_contact_number" class="form-label">Consignee Contact Number</label>
+                <input type="text" class="form-control" id="consignee_contact_number" name="consignee_contact_number" readonly>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="delivery_status" class="form-label">Delivery Status *</label>
+                <select class="form-select" id="delivery_status" name="delivery_status" required>
+                    @foreach($statuses as $status)
+                        <option value="{{ $status }}" {{ old('delivery_status') == $status ? 'selected' : '' }}>{{ $status }}</option>
+                    @endforeach
+                </select>
+                @error('delivery_status') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label for="customer_id" class="form-label">Customer *</label>
+                <select class="form-select" id="customer_id" name="customer_id" required>
+                    <option value="">Select</option>
+                    @foreach($customers as $customer)
+                        <option value="{{ $customer->id }}" {{ old('customer_id') == $customer->id ? 'selected' : '' }}>{{ $customer->name }}</option>
+                    @endforeach
+                </select>
+                @error('customer_id') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="gr_date" class="form-label">GR Date *</label>
+                <input type="date" class="form-control" id="gr_date" name="gr_date" required value="{{ old('gr_date') }}">
+                @error('gr_date') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
             <div class="col-md-4 mb-3">
                 <label for="source_city" class="form-label">Source City *</label>
@@ -89,6 +82,7 @@
                 @error('source_city') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
         </div>
+
         <div class="row">
             <div class="col-md-4 mb-3">
                 <label for="destination_city" class="form-label">Destination City *</label>
@@ -106,16 +100,11 @@
                 @error('destination_state') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
         </div>
+
         <div class="row">
             <div class="col-md-4 mb-3">
-                <label for="weight" class="form-label">Weight *</label>
-                <input type="number" step="0.01" class="form-control" id="weight" name="weight" required value="{{ old('weight') }}">
-                @error('weight') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="no_of_units" class="form-label">No. of Units *</label>
-                <input type="number" class="form-control" id="no_of_units" name="no_of_units" required value="{{ old('no_of_units') }}">
-                @error('no_of_units') <div class="text-danger">{{ $message }}</div> @enderror
+                <label for="lane" class="form-label">Lane *</label>
+                <input type="text" class="form-control" id="lane" name="lane" value="Road" readonly required>
             </div>
             <div class="col-md-4 mb-3">
                 <label for="good_type" class="form-label">Goods Type *</label>
@@ -129,8 +118,19 @@
                 </select>
                 @error('good_type') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
+            <div class="col-md-4 mb-3">
+                <label for="weight" class="form-label">Weight *</label>
+                <input type="number" step="0.01" class="form-control" id="weight" name="weight" required value="{{ old('weight') }}">
+                @error('weight') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
         </div>
+
         <div class="row">
+            <div class="col-md-4 mb-3">
+                <label for="no_of_units" class="form-label">No. of Units *</label>
+                <input type="number" class="form-control" id="no_of_units" name="no_of_units" required value="{{ old('no_of_units') }}">
+                @error('no_of_units') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
             <div class="col-md-4 mb-3">
                 <label for="fr_rate" class="form-label">Freight Rate *</label>
                 <input type="number" step="0.01" class="form-control" id="fr_rate" name="fr_rate" required value="{{ old('fr_rate') }}">
@@ -141,22 +141,54 @@
                 <input type="number" step="0.01" class="form-control" id="amount" name="amount" required value="{{ old('amount') }}">
                 @error('amount') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
-            <div class="col-md-4 mb-3">
-                <label for="linked_lr_id" class="form-label">Linked LR ID</label>
-                <input type="number" class="form-control" id="linked_lr_id" name="linked_lr_id" value="{{ old('linked_lr_id') }}">
-                @error('linked_lr_id') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
         </div>
+
         <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="gr_date" class="form-label">GR Date *</label>
-                <input type="date" class="form-control" id="gr_date" name="gr_date" required value="{{ old('gr_date') }}">
-                @error('gr_date') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
             <div class="col-md-4 mb-3">
                 <label for="gr_number" class="form-label">GR Number *</label>
                 <input type="text" class="form-control" id="gr_number" name="gr_number" required value="{{ old('gr_number') }}">
                 @error('gr_number') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="damage_qty" class="form-label">Damage Quantity</label>
+                <input type="number" step="0.01" class="form-control" id="damage_qty" name="damage_qty" value="{{ old('damage_qty') }}" disabled>
+                @error('damage_qty') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="damage_rate" class="form-label">Damage Rate</label>
+                <input type="number" step="0.01" class="form-control" id="damage_rate" name="damage_rate" value="{{ old('damage_rate') }}" disabled>
+                @error('damage_rate') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label for="shortage_qty" class="form-label">Shortage Quantity</label>
+                <input type="number" step="0.01" class="form-control" id="shortage_qty" name="shortage_qty" value="{{ old('shortage_qty') }}" disabled>
+                @error('shortage_qty') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="shortage_rate" class="form-label">Shortage Rate</label>
+                <input type="number" step="0.01" class="form-control" id="shortage_rate" name="shortage_rate" value="{{ old('shortage_rate') }}" disabled>
+                @error('shortage_rate') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="service_tax" class="form-label">Service Tax</label>
+                <input type="number" step="0.01" class="form-control" id="service_tax" name="service_tax" value="{{ old('service_tax') }}" disabled>
+                @error('service_tax') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label for="swachh_bharat_cess" class="form-label">Swachh Bharat Cess</label>
+                <input type="number" step="0.01" class="form-control" id="swachh_bharat_cess" name="swachh_bharat_cess" value="{{ old('swachh_bharat_cess') }}" disabled>
+                @error('swachh_bharat_cess') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="lr_number" class="form-label">LR Number *</label>
+                <input type="text" class="form-control" id="lr_number" name="lr_number" required value="{{ old('lr_number') }}">
+                @error('lr_number') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
             <div class="col-md-4 mb-3">
                 <label for="memo_id" class="form-label">Memo ID</label>
@@ -168,4 +200,109 @@
         <a href="{{ route('lorry_receipts.index') }}" class="btn btn-secondary ms-2">Back to List</a>
     </form>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const consignorSelect = document.getElementById('consignor_id');
+        const consignorContact = document.getElementById('consignor_contact_number');
+        const sourceCity = document.getElementById('source_city');
+        const sourceState = document.getElementById('source_state');
+    
+        consignorSelect.addEventListener('change', function () {
+            const consignorId = this.value;
+    
+            if (!consignorId) {
+                consignorContact.value = '';
+                sourceCity.value = '';
+                sourceState.value = '';
+                return;
+            }
+    
+            fetch(`/customers/details/${consignorId}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to fetch consignor details');
+                return response.json();
+            })
+            .then(data => {
+                consignorContact.value = data.contact_number || '';
+                sourceCity.value = data.source_city || '';
+                sourceState.value = data.source_state || '';
+            })
+            .catch(error => {
+                console.error('❌ Error:', error);
+                consignorContact.value = '';
+                sourceCity.value = '';
+                sourceState.value = '';
+            });
+        });
+    });
+    </script>
+    
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const consigneeSelect = document.getElementById('consignee_id');
+        const consigneeContact = document.getElementById('consignee_contact_number');
+        const destinationCity = document.getElementById('destination_city');
+        const destinationState = document.getElementById('destination_state');
+    
+        consigneeSelect.addEventListener('change', function () {
+            const consigneeId = this.value;
+    
+            if (!consigneeId) {
+                consigneeContact.value = '';
+                destinationCity.value = '';
+                destinationState.value = '';
+                return;
+            }
+    
+            fetch(`/consignees/details/${consigneeId}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to fetch consignee details');
+                return response.json();
+            })
+            .then(data => {
+                consigneeContact.value = data.contact_number || '';
+                destinationCity.value = data.destination_city || '';
+                destinationState.value = data.destination_state || '';
+            })
+            .catch(error => {
+                console.error('❌ Error:', error);
+                consigneeContact.value = '';
+                destinationCity.value = '';
+                destinationState.value = '';
+            });
+        });
+    });
+
+    </script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const weightInput = document.getElementById('weight');
+        const frRateInput = document.getElementById('fr_rate');
+        const amountInput = document.getElementById('amount');
+    
+        function calculateAmount() {
+            const weight = parseFloat(weightInput.value);
+            const frRate = parseFloat(frRateInput.value);
+    
+            if (!isNaN(weight) && !isNaN(frRate)) {
+                const amount = (weight * frRate).toFixed(2);
+                amountInput.value = amount;
+            } else {
+                amountInput.value = '';
+            }
+        }
+    
+        weightInput.addEventListener('input', calculateAmount);
+        frRateInput.addEventListener('input', calculateAmount);
+    });
+    </script>
 @endsection

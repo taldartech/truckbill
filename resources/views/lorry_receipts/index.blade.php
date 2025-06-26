@@ -10,22 +10,22 @@
         <div class="col-md-2">
             <input type="text" name="gr_number" class="form-control" placeholder="GR Number" value="{{ request('gr_number') }}">
         </div>
-        <div class="col-md-2">
+        <!-- <div class="col-md-2">
             <select name="truck_id" class="form-select">
                 <option value="">All Trucks</option>
-                @foreach($trucks as $truck)
-                    <option value="{{ $truck->id }}" {{ request('truck_id') == $truck->id ? 'selected' : '' }}>{{ $truck->truck_number }}</option>
-                @endforeach
+                {{-- @foreach($trucks as $truck) --}}
+                    {{-- <option value="{{ $truck->id }}" {{ request('truck_id') == $truck->id ? 'selected' : '' }}>{{ $truck->truck_number }}</option> --}}
+                {{-- @endforeach --}}
             </select>
         </div>
         <div class="col-md-2">
             <select name="transporter_id" class="form-select">
                 <option value="">All Transporters</option>
-                @foreach($transporters as $transporter)
-                    <option value="{{ $transporter->id }}" {{ request('transporter_id') == $transporter->id ? 'selected' : '' }}>{{ $transporter->name }}</option>
-                @endforeach
+                {{-- @foreach($transporters as $transporter) --}}
+                    {{-- <option value="{{ $transporter->id }}" {{ request('transporter_id') == $transporter->id ? 'selected' : '' }}>{{ $transporter->name }}</option> --}}
+                {{-- @endforeach --}}
             </select>
-        </div>
+        </div> -->
         <div class="col-md-2">
             <select name="delivery_status" class="form-select">
                 <option value="">All Statuses</option>
@@ -51,8 +51,6 @@
             <tr>
                 <th>ID</th>
                 <th>GR Number</th>
-                <th>Truck</th>
-                <th>Transporter</th>
                 <th>Consignor</th>
                 <th>Consignee</th>
                 <th>Status</th>
@@ -66,10 +64,8 @@
                 <tr>
                     <td>{{ $lr->id }}</td>
                     <td>{{ $lr->gr_number }}</td>
-                    <td>{{ $lr->truck ? $lr->truck->truck_number : '-' }}</td>
-                    <td>{{ $lr->transporter ? $lr->transporter->name : '-' }}</td>
-                    <td>{{ $lr->consignor_id }}</td>
-                    <td>{{ $lr->consignee_id }}</td>
+                    <td>{{ $lr->consignor->name }}</td>
+                    <td>{{ $lr->consignee->name }}</td>
                     <td>{{ $lr->delivery_status }}</td>
                     <td>{{ $lr->gr_date }}</td>
                     <td>{{ $lr->amount }}</td>
@@ -83,11 +79,10 @@
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="10" class="text-center">No Lorry Receipts found.</td></tr>
+                <tr><td colspan="8" class="text-center">No Lorry Receipts found.</td></tr>
             @endforelse
         </tbody>
     </table>
     <a href="/dashboard" class="btn btn-secondary mt-2">Back to Dashboard</a>
 </div>
 @endsection
-

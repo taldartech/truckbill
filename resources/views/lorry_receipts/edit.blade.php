@@ -7,31 +7,31 @@
         @csrf
         @method('PUT')
         <div class="row">
-            <div class="col-md-4 mb-3">
+            <!-- <div class="col-md-4 mb-3">
                 <label for="truck_id" class="form-label">Truck *</label>
                 <select class="form-select" id="truck_id" name="truck_id" required>
                     <option value="">Select</option>
-                    @foreach($trucks as $truck)
-                        <option value="{{ $truck->id }}" {{ old('truck_id', $lr->truck_id) == $truck->id ? 'selected' : '' }}>{{ $truck->truck_number }}</option>
-                    @endforeach
+                    {{-- @foreach($trucks as $truck) --}}
+                        {{-- <option value="{{ $truck->id }}" {{ old('truck_id', $lr->truck_id) == $truck->id ? 'selected' : '' }}>{{ $truck->truck_number }}</option> --}}
+                    {{-- @endforeach --}}
                 </select>
-                @error('truck_id') <div class="text-danger">{{ $message }}</div> @enderror
+                {{-- @error('truck_id') <div class="text-danger">{{ $message }}</div> @enderror --}}
             </div>
             <div class="col-md-4 mb-3">
                 <label for="transporter_id" class="form-label">Transporter *</label>
                 <select class="form-select" id="transporter_id" name="transporter_id" required>
                     <option value="">Select</option>
-                    @foreach($transporters as $transporter)
-                        <option value="{{ $transporter->id }}" {{ old('transporter_id', $lr->transporter_id) == $transporter->id ? 'selected' : '' }}>{{ $transporter->name }}</option>
-                    @endforeach
+                    {{-- @foreach($transporters as $transporter) --}}
+                        {{-- <option value="{{ $transporter->id }}" {{ old('transporter_id', $lr->transporter_id) == $transporter->id ? 'selected' : '' }}>{{ $transporter->name }}</option> --}}
+                    {{-- @endforeach --}}
                 </select>
-                @error('transporter_id') <div class="text-danger">{{ $message }}</div> @enderror
+                {{-- @error('transporter_id') <div class="text-danger">{{ $message }}</div> @enderror --}}
             </div>
             <div class="col-md-4 mb-3">
                 <label for="eway_bill_number" class="form-label">Eway Bill Number</label>
                 <input type="text" class="form-control" id="eway_bill_number" name="eway_bill_number" value="{{ old('eway_bill_number', $lr->eway_bill_number) }}">
-                @error('eway_bill_number') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
+                {{-- @error('eway_bill_number') <div class="text-danger">{{ $message }}</div> @enderror --}}
+            </div> -->
         </div>
         <div class="row">
             <div class="col-md-4 mb-3">

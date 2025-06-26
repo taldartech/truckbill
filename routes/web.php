@@ -22,12 +22,17 @@ Route::delete('/company/{company}', [CompanyController::class, 'destroy'])->name
 
 // Consignee Management
 use App\Http\Controllers\ConsigneeController;
+Route::get('/consignees/details/{id}', [ConsigneeController::class, 'getDetails']);
+
+
+
 Route::get('/consignees', [ConsigneeController::class, 'index'])->name('consignees.index');
 Route::get('/consignees/create', [ConsigneeController::class, 'create'])->name('consignees.create');
 Route::post('/consignees', [ConsigneeController::class, 'store'])->name('consignees.store');
 Route::get('/consignees/{consignee}/edit', [ConsigneeController::class, 'edit'])->name('consignees.edit');
 Route::put('/consignees/{consignee}', [ConsigneeController::class, 'update'])->name('consignees.update');
 Route::delete('/consignees/{consignee}', [ConsigneeController::class, 'destroy'])->name('consignees.destroy');
+
 // User Management
 use App\Http\Controllers\UserController;
 // Transporter Management
@@ -78,7 +83,11 @@ Route::get('invoices/{invoice}', [InvoiceController::class, 'show'])->name('invo
 
 // Customers
 use App\Http\Controllers\CustomerController;
+Route::get('/customers/details/{id}', [CustomerController::class, 'getDetails']);
+
 Route::resource('customers', CustomerController::class);
+// Route::get('/customers/contact-number/{id}', [CustomerController::class, 'getContactNumber']);
+
 
 // Vouchers
 use App\Http\Controllers\VoucherController;

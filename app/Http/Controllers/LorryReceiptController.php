@@ -33,29 +33,25 @@ class LorryReceiptController extends Controller
             $query->whereDate('gr_date', '<=', $request->gr_date_to);
         }
         $lrs = $query->orderByDesc('created_at')->get();
-        $trucks = \App\Models\Truck::all();
-        $transporters = \App\Models\Transporter::all();
         $statuses = ['Pending', 'Delivered', 'Cancelled'];
-        return view('lorry_receipts.index', compact('lrs', 'trucks', 'transporters', 'statuses'));
+        return view('lorry_receipts.index', compact('lrs', 'statuses'));
     }
 
     public function create()
     {
         $trucks = Truck::all();
-        $transporters = Transporter::all();
+        // $transporters = Transporter::all();
         $customers = Customer::all();
         $consignees = Consignee::all();
         $goodsTypes = GoodType::all();
         $statuses = ['Pending', 'Delivered', 'Cancelled'];
-        return view('lorry_receipts.create', compact('trucks', 'transporters', 'customers', 'consignees', 'goodsTypes', 'statuses'));
+        return view('lorry_receipts.create', compact( 'customers','trucks', 'consignees', 'goodsTypes', 'statuses'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'truck_id' => 'required|exists:trucks,id',
-            'transporter_id' => 'required|exists:transporters,id',
-            'eway_bill_number' => 'nullable|string|max:100',
+            'truck_id' => 'nullable|exists:trucks,id',
             'delivery_status' => 'required|in:Pending,Delivered,Cancelled',
             'consignor_id' => 'required|integer',
             'customer_id' => 'required|integer',
@@ -69,12 +65,23 @@ class LorryReceiptController extends Controller
             'good_type' => 'required|string|max:100',
             'fr_rate' => 'required|numeric',
             'amount' => 'required|numeric',
-            'linked_lr_id' => 'nullable|integer',
             'gr_date' => 'required|date',
             'gr_number' => 'required|string|max:100|unique:lorry_receipts,gr_number',
             'memo_id' => 'nullable|integer',
             'consignee_id' => 'required|integer',
+            'consignee_contact_number' => 'nullable|string|max:20',
+            'lane' => 'required|string',
+            'damage_qty' => 'nullable|numeric',
+            'damage_rate' => 'nullable|numeric',
+            'shortage_qty' => 'nullable|numeric',
+            'shortage_rate' => 'nullable|numeric',
+            'service_tax' => 'nullable|numeric',
+            'swachh_bharat_cess' => 'nullable|numeric',
+            'lr_number' => 'required|string|max:100',
         ]);
+
+        // Set truck_id to null if not provided
+        $validated['truck_id'] = $validated['truck_id'] ?? null;
         
         \App\Models\LorryReceipt::create($validated);
         return redirect()->route('lorry_receipts.index')->with('success', 'Lorry Receipt created successfully!');
@@ -82,13 +89,13 @@ class LorryReceiptController extends Controller
 
     public function edit(\App\Models\LorryReceipt $lorry_receipt)
     {
-        $trucks = \App\Models\Truck::all();
-        $transporters = \App\Models\Transporter::all();
+        // $trucks = \App\Models\Truck::all();
+        // $transporters = \App\Models\Transporter::all();
         $statuses = ['Pending', 'Delivered', 'Cancelled'];
         return view('lorry_receipts.edit', [
             'lr' => $lorry_receipt,
-            'trucks' => $trucks,
-            'transporters' => $transporters,
+            // 'trucks' => $trucks,
+            // 'transporters' => $transporters,
             'statuses' => $statuses,
         ]);
     }
@@ -97,8 +104,8 @@ class LorryReceiptController extends Controller
     {
         $validated = $request->validate([
             'truck_id' => 'required|exists:trucks,id',
-            'transporter_id' => 'required|exists:transporters,id',
-            'eway_bill_number' => 'nullable|string|max:100',
+            // 'transporter_id' => 'required|exists:transporters,id',
+            // 'eway_bill_number' => 'nullable|string|max:100',
             'delivery_status' => 'required|in:Pending,Delivered,Cancelled',
             'customer_id' => 'required|integer',
             'customer_contact_number' => 'nullable|string|max:20',
@@ -115,6 +122,16 @@ class LorryReceiptController extends Controller
             'gr_date' => 'required|date',
             'gr_number' => 'required|string|max:100|unique:lorry_receipts,gr_number,' . $lorry_receipt->id,
             'memo_id' => 'nullable|integer',
+            'consignee_id' => 'required|integer',
+            'consignee_contact_number' => 'nullable|string|max:20',
+            'lane' => 'required|string',
+            'damage_qty' => 'nullable|numeric',
+            'damage_rate' => 'nullable|numeric',
+            'shortage_qty' => 'nullable|numeric',
+            'shortage_rate' => 'nullable|numeric',
+            'service_tax' => 'nullable|numeric',
+            'swachh_bharat_cess' => 'nullable|numeric',
+            'lr_number' => 'required|string|max:100',
         ]);
         $lorry_receipt->update($validated);
         return redirect()->route('lorry_receipts.index')->with('success', 'Lorry Receipt updated successfully!');

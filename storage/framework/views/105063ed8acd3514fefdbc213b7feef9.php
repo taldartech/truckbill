@@ -8,22 +8,22 @@
         <div class="col-md-2">
             <input type="text" name="gr_number" class="form-control" placeholder="GR Number" value="<?php echo e(request('gr_number')); ?>">
         </div>
-        <div class="col-md-2">
+        <!-- <div class="col-md-2">
             <select name="truck_id" class="form-select">
                 <option value="">All Trucks</option>
-                <?php $__currentLoopData = $trucks; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $truck): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                    <option value="<?php echo e($truck->id); ?>" <?php echo e(request('truck_id') == $truck->id ? 'selected' : ''); ?>><?php echo e($truck->truck_number); ?></option>
-                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                
+                    
+                
             </select>
         </div>
         <div class="col-md-2">
             <select name="transporter_id" class="form-select">
                 <option value="">All Transporters</option>
-                <?php $__currentLoopData = $transporters; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $transporter): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                    <option value="<?php echo e($transporter->id); ?>" <?php echo e(request('transporter_id') == $transporter->id ? 'selected' : ''); ?>><?php echo e($transporter->name); ?></option>
-                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                
+                    
+                
             </select>
-        </div>
+        </div> -->
         <div class="col-md-2">
             <select name="delivery_status" class="form-select">
                 <option value="">All Statuses</option>
@@ -49,8 +49,6 @@
             <tr>
                 <th>ID</th>
                 <th>GR Number</th>
-                <th>Truck</th>
-                <th>Transporter</th>
                 <th>Consignor</th>
                 <th>Consignee</th>
                 <th>Status</th>
@@ -64,10 +62,8 @@
                 <tr>
                     <td><?php echo e($lr->id); ?></td>
                     <td><?php echo e($lr->gr_number); ?></td>
-                    <td><?php echo e($lr->truck ? $lr->truck->truck_number : '-'); ?></td>
-                    <td><?php echo e($lr->transporter ? $lr->transporter->name : '-'); ?></td>
-                    <td><?php echo e($lr->consignor_id); ?></td>
-                    <td><?php echo e($lr->consignee_id); ?></td>
+                    <td><?php echo e($lr->consignor->name); ?></td>
+                    <td><?php echo e($lr->consignee->name); ?></td>
                     <td><?php echo e($lr->delivery_status); ?></td>
                     <td><?php echo e($lr->gr_date); ?></td>
                     <td><?php echo e($lr->amount); ?></td>
@@ -81,13 +77,12 @@
                     </td>
                 </tr>
             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
-                <tr><td colspan="10" class="text-center">No Lorry Receipts found.</td></tr>
+                <tr><td colspan="8" class="text-center">No Lorry Receipts found.</td></tr>
             <?php endif; ?>
         </tbody>
     </table>
     <a href="/dashboard" class="btn btn-secondary mt-2">Back to Dashboard</a>
 </div>
 <?php $__env->stopSection(); ?>
-
 
 <?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH /opt/lampp/htdocs/transport/resources/views/lorry_receipts/index.blade.php ENDPATH**/ ?>

@@ -61,4 +61,19 @@ class ConsigneeController extends Controller
         return redirect()->route('consignees.index')
             ->with('success', 'Consignee deleted successfully!');
     }
+    
+    public function getDetails($id)
+{
+    $consignee = Consignee::find($id);
+
+    if ($consignee) {
+        return response()->json([
+            'contact_number'     => $consignee->contact_number,
+            'destination_city'   => $consignee->city,
+            'destination_state'  => $consignee->state
+        ]);
+    }
+
+    return response()->json(null, 404);
+}
 }

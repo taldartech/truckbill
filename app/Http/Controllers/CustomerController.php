@@ -31,6 +31,22 @@ class CustomerController extends Controller
         return redirect()->route('customers.index')->with('success', 'Customer added successfully.');
     }
 
+    public function getDetails($id)
+    {
+        $customer = Customer::find($id);
+    
+        if ($customer) {
+            return response()->json([
+                'contact_number' => $customer->contact_number,
+                'source_city'    => $customer->city,
+                'source_state'   => $customer->state
+            ]);
+        }
+    
+        return response()->json(null, 404);
+    }
+
+
     public function edit(Customer $customer)
     {
         return view('customers.edit', compact('customer'));
