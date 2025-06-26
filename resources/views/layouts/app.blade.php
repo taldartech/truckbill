@@ -32,54 +32,94 @@
     </nav>
     <div class="d-flex" style="min-height: 100vh;">
         <!-- Fixed Simple Sidebar -->
-        <nav class="bg-dark text-white p-3" style="width:220px;position:fixed;top:56px;left:0;height:calc(100vh - 56px);z-index:1040;">
-            <ul class="nav nav-pills flex-column">
-                <li class="nav-item mb-2">
-                    <a href="/dashboard" class="nav-link text-white">
-                        <i class="fas fa-tachometer-alt"></i> Dashboard
-                    </a>
-                </li>
-                <li class="nav-item mb-2">
-                    <a href="/voucher_payments" class="nav-link text-white">
-                        <i class="fas fa-money-check-alt"></i> Voucher Payments
-                    </a>
-                </li>
-                <li class="nav-item mb-2">
-                    <a href="/vouchers" class="nav-link text-white">
-                        <i class="fas fa-file-invoice"></i> Vouchers
-                    </a>
-                </li>
-                <li class="nav-item mb-2">
-                    <a href="/freight_bookings" class="nav-link text-white">
-                        <i class="fas fa-shipping-fast"></i> Freight Bookings
-                    </a>
-                </li>
-                <li class="nav-item mb-2">
-                    <a href="/trucks" class="nav-link text-white">
-                        <i class="fas fa-truck"></i> Trucks
-                    </a>
-                </li>
-                <li class="nav-item mb-2">
-                    <a href="/transporters" class="nav-link text-white">
-                        <i class="fas fa-people-carry"></i> Transporters
-                    </a>
-                </li>
-                <li class="nav-item mb-2">
-                    <a href="/users" class="nav-link text-white">
-                        <i class="fas fa-users"></i> Users
-                    </a>
-                </li>
-                <li class="nav-item mb-2">
-                    <a href="/reports" class="nav-link text-white">
-                        <i class="fas fa-chart-bar"></i> Reports
-                    </a>
-                </li>
-                <li class="nav-item mb-2">
-                    <a href="/settings" class="nav-link text-white">
-                        <i class="fas fa-cog"></i> Settings
-                    </a>
-                </li>
-            </ul>
+        <nav class="bg-dark text-white" style="width:220px;position:fixed;top:56px;left:0;z-index:1040;">
+            <div class="p-3" style="height: calc(100vh - 56px); overflow-y: auto;">
+                <ul class="nav nav-pills flex-column">
+                    <li class="nav-item mb-2">
+                        <a href="/dashboard" class="nav-link text-white">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a href="/company/create" class="nav-link text-white">
+                            <i class="fas fa-money-check-alt"></i> Company Registeration
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a href="/transporter/create" class="nav-link text-white">
+                            <i class="fas fa-money-check-alt"></i> Transporter Registeration
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a href="/transporter/bank-details" class="nav-link text-white">
+                            <i class="fas fa-money-check-alt"></i> Transporter Bank Details
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a href="/transporter/ledger" class="nav-link text-white">
+                            <i class="fas fa-money-check-alt"></i> Transporter Ledger
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a href="/trucks/create" class="nav-link text-white">
+                            <i class="fas fa-money-check-alt"></i> Truck Registeration
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a href="/customers" class="nav-link text-white">
+                            <i class="fas fa-money-check-alt"></i> Customer Management
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a href="/consignees" class="nav-link text-white">
+                            <i class="fas fa-money-check-alt"></i> Consignee Management
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a href="/lorry_receipts" class="nav-link text-white">
+                            <i class="fas fa-money-check-alt"></i> Lorry Receipts
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a href="/freight_bookings" class="nav-link text-white">
+                            <i class="fas fa-shipping-fast"></i> Freight Bookings
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a href="/vouchers" class="nav-link text-white">
+                            <i class="fas fa-file-invoice"></i> Vouchers
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a href="/voucher_payments" class="nav-link text-white">
+                            <i class="fas fa-money-check-alt"></i> Voucher Payments
+                        </a>
+                    </li>
+                   
+                    <li class="nav-item mb-2">
+                        <a href="/invoices" class="nav-link text-white">
+                            <i class="fas fa-money-check-alt"></i> Invoices
+                        </a>
+                    </li>
+                   
+                   
+                    <li class="nav-item mb-2">
+                        <a href="/users" class="nav-link text-white">
+                            <i class="fas fa-users"></i> Users
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a href="/reports" class="nav-link text-white">
+                            <i class="fas fa-chart-bar"></i> Reports
+                        </a>
+                    </li>
+                    <li class="nav-item mb-2">
+                        <a href="/settings" class="nav-link text-white">
+                            <i class="fas fa-cog"></i> Settings
+                        </a>
+                    </li>
+                </ul>
+            </div>
         </nav>
         <!-- Main Content -->
         <div style="margin-left:220px;flex:1;padding-top:56px;">
