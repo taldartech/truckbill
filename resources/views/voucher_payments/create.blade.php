@@ -1,4 +1,78 @@
 @extends('layouts.app')
+@section('content')
+<!-- Content Header (Page header) -->
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0">Add Voucher Payment</h1>
+      </div>
+      <div class="col-sm-6 text-end">
+        <a href="{{ route('voucher_payments.index') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back</a>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Main content -->
+<section class="content">
+  <div class="container-fluid">
+    <div class="card card-primary card-outline">
+      <div class="card-body">
+        @if ($errors->any())
+          <div class="alert alert-danger">
+            <ul class="mb-0">
+              @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+              @endforeach
+            </ul>
+          </div>
+        @endif
+        <form action="{{ route('voucher_payments.store') }}" method="POST">
+          @csrf
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <div class="form-group">
+                <label for="payment_type">Payment Type</label>
+                <input type="text" name="payment_type" id="payment_type" class="form-control" value="{{ old('payment_type') }}" required>
+              </div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <div class="form-group">
+                <label for="payment_mode">Payment Mode</label>
+                <input type="text" name="payment_mode" id="payment_mode" class="form-control" value="{{ old('payment_mode') }}" required>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <div class="form-group">
+                <label for="transaction_id">Transaction ID</label>
+                <input type="text" name="transaction_id" id="transaction_id" class="form-control" value="{{ old('transaction_id') }}">
+              </div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <div class="form-group">
+                <label for="amount">Amount</label>
+                <input type="number" name="amount" id="amount" class="form-control" value="{{ old('amount') }}" required step="0.01">
+              </div>
+            </div>
+          </div>
+          <div class="form-group mb-3">
+            <label for="status">Status</label>
+            <select name="status" id="status" class="form-control">
+              <option value="pending" {{ old('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+              <option value="completed" {{ old('status') == 'completed' ? 'selected' : '' }}>Completed</option>
+              <option value="failed" {{ old('status') == 'failed' ? 'selected' : '' }}>Failed</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Add Payment</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+@endsection
+
 
 @section('content')
 <div class="container mt-4">

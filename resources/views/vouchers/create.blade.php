@@ -1,4 +1,49 @@
 @extends('layouts.app')
+@section('content')
+<!-- Content Header (Page header) -->
+<div class="content-header">
+  <div class="container-fluid">
+    <div class="row mb-2">
+      <div class="col-sm-6">
+        <h1 class="m-0">Add Voucher</h1>
+      </div>
+      <div class="col-sm-6 text-end">
+        <a href="{{ route('vouchers.index') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back</a>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Main content -->
+<section class="content">
+  <div class="container-fluid">
+    <div class="card card-primary card-outline">
+      <div class="card-body">
+        @if ($errors->any())
+          <div class="alert alert-danger">
+            <ul class="mb-0">
+              @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+              @endforeach
+            </ul>
+          </div>
+        @endif
+        <form action="{{ route('vouchers.store') }}" method="POST">
+          @csrf
+          <!-- Add your voucher fields here, using AdminLTE form-group and form-control classes -->
+          <!-- Example: -->
+          <div class="form-group mb-3">
+            <label for="voucher_number">Voucher Number</label>
+            <input type="text" name="voucher_number" id="voucher_number" class="form-control" value="{{ old('voucher_number') }}" required>
+          </div>
+          <!-- Add more fields as needed -->
+          <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Add Voucher</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+@endsection
+
 
 @section('content')
 <div class="container mt-4">
