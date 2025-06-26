@@ -106,7 +106,7 @@ unset($__errorArgs, $__bag); ?>
             </div>
             <div class="col-md-4 mb-3">
                 <label for="source_city" class="form-label">Source City *</label>
-                <input type="text" class="form-control" id="source_city" name="source_city" required value="<?php echo e(old('source_city')); ?>">
+                <input type="text" class="form-control" id="source_city" name="source_city" required value="<?php echo e(old('source_city')); ?>" readonly>
                 <?php $__errorArgs = ['source_city'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
@@ -121,7 +121,7 @@ unset($__errorArgs, $__bag); ?>
         <div class="row">
             <div class="col-md-4 mb-3">
                 <label for="destination_city" class="form-label">Destination City *</label>
-                <input type="text" class="form-control" id="destination_city" name="destination_city" required value="<?php echo e(old('destination_city')); ?>">
+                <input type="text" class="form-control" id="destination_city" name="destination_city" required value="<?php echo e(old('destination_city')); ?>" readonly>
                 <?php $__errorArgs = ['destination_city'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
@@ -133,7 +133,7 @@ unset($__errorArgs, $__bag); ?>
             </div>
             <div class="col-md-4 mb-3">
                 <label for="source_state" class="form-label">Source State *</label>
-                <input type="text" class="form-control" id="source_state" name="source_state" required value="<?php echo e(old('source_state')); ?>">
+                <input type="text" class="form-control" id="source_state" name="source_state" required value="<?php echo e(old('source_state')); ?>" readonly>
                 <?php $__errorArgs = ['source_state'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
@@ -145,7 +145,7 @@ unset($__errorArgs, $__bag); ?>
             </div>
             <div class="col-md-4 mb-3">
                 <label for="destination_state" class="form-label">Destination State *</label>
-                <input type="text" class="form-control" id="destination_state" name="destination_state" required value="<?php echo e(old('destination_state')); ?>">
+                <input type="text" class="form-control" id="destination_state" name="destination_state" required value="<?php echo e(old('destination_state')); ?>" readonly>
                 <?php $__errorArgs = ['destination_state'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :
@@ -223,7 +223,7 @@ unset($__errorArgs, $__bag); ?>
             </div>
             <div class="col-md-4 mb-3">
                 <label for="amount" class="form-label">Amount *</label>
-                <input type="number" step="0.01" class="form-control" id="amount" name="amount" required value="<?php echo e(old('amount')); ?>">
+                <input type="number" step="0.01" class="form-control" id="amount" name="amount" required value="<?php echo e(old('amount')); ?>" readonly>
                 <?php $__errorArgs = ['amount'];
 $__bag = $errors->getBag($__errorArgs[1] ?? 'default');
 if ($__bag->has($__errorArgs[0])) :

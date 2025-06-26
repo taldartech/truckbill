@@ -78,7 +78,7 @@
             </div>
             <div class="col-md-4 mb-3">
                 <label for="source_city" class="form-label">Source City *</label>
-                <input type="text" class="form-control" id="source_city" name="source_city" required value="{{ old('source_city') }}">
+                <input type="text" class="form-control" id="source_city" name="source_city" required value="{{ old('source_city') }}" readonly>
                 @error('source_city') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
         </div>
@@ -86,17 +86,17 @@
         <div class="row">
             <div class="col-md-4 mb-3">
                 <label for="destination_city" class="form-label">Destination City *</label>
-                <input type="text" class="form-control" id="destination_city" name="destination_city" required value="{{ old('destination_city') }}">
+                <input type="text" class="form-control" id="destination_city" name="destination_city" required value="{{ old('destination_city') }}" readonly>
                 @error('destination_city') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
             <div class="col-md-4 mb-3">
                 <label for="source_state" class="form-label">Source State *</label>
-                <input type="text" class="form-control" id="source_state" name="source_state" required value="{{ old('source_state') }}">
+                <input type="text" class="form-control" id="source_state" name="source_state" required value="{{ old('source_state') }}" readonly>
                 @error('source_state') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
             <div class="col-md-4 mb-3">
                 <label for="destination_state" class="form-label">Destination State *</label>
-                <input type="text" class="form-control" id="destination_state" name="destination_state" required value="{{ old('destination_state') }}">
+                <input type="text" class="form-control" id="destination_state" name="destination_state" required value="{{ old('destination_state') }}" readonly>
                 @error('destination_state') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
         </div>
@@ -138,7 +138,7 @@
             </div>
             <div class="col-md-4 mb-3">
                 <label for="amount" class="form-label">Amount *</label>
-                <input type="number" step="0.01" class="form-control" id="amount" name="amount" required value="{{ old('amount') }}">
+                <input type="number" step="0.01" class="form-control" id="amount" name="amount" required value="{{ old('amount') }}" readonly>
                 @error('amount') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
         </div>
