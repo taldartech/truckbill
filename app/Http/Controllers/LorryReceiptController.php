@@ -89,14 +89,20 @@ class LorryReceiptController extends Controller
 
     public function edit(\App\Models\LorryReceipt $lorry_receipt)
     {
-        // $trucks = \App\Models\Truck::all();
+        $trucks = \App\Models\Truck::all();
+        $customers = \App\Models\Customer::all();
+        $consignees = \App\Models\Consignee::all();
+        $goodsTypes = \App\Models\GoodType::all();
         // $transporters = \App\Models\Transporter::all();
         $statuses = ['Pending', 'Delivered', 'Cancelled'];
         return view('lorry_receipts.edit', [
             'lr' => $lorry_receipt,
-            // 'trucks' => $trucks,
+            'trucks' => $trucks,
             // 'transporters' => $transporters,
             'statuses' => $statuses,
+            'customers' => $customers,
+            'consignees' => $consignees,
+            'goodsTypes' => $goodsTypes,
         ]);
     }
 

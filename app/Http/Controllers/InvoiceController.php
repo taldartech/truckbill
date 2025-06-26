@@ -111,7 +111,19 @@ public function getCustomerMemos($customerId)
     {
         $companies = Company::all();
         $customers = Customer::all();
-        $memos = Memo::all();
+        $memos = DB::table('lorry_receipts')
+        ->select('memo_id')
+        ->where('customer_id', $customerId)
+        ->whereNotNull('memo_id')
+        ->distinct()
+        ->get()
+        ->map(function($memo) {
+            return [
+                'id' => $memo->memo_id,
+                'memo_number' => 'Memo #' . $memo->memo_id,
+                'selected' => request()->old('memo_ids') && in_array($memo->memo_id, request()->old('memo_ids'))
+            ];
+        });
         $selectedMemos = $invoice->memos->pluck('id')->toArray();
         return view('invoices.edit', compact('invoice', 'companies', 'customers', 'memos', 'selectedMemos'));
     }
