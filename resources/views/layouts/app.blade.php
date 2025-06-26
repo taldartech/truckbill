@@ -25,35 +25,41 @@
         </nav>
         <!-- /.navbar -->
         <!-- Sidebar for AdminLTE v4 -->
-        <aside class="sidebar sidebar-dark-primary">
+        <aside class="main-sidebar sidebar-dark-primary elevation-4">
             <a href="/dashboard" class="brand-link">
                 <span class="brand-text font-weight-light">Transport System</span>
             </a>
-            <div class="sidebar-wrapper">
-                <nav class="mt-2">
-                    <ul class="nav nav-pills nav-sidebar flex-column" data-nav-type="treeview" role="menu">
-                        <li class="nav-item">
-                            <a href="/dashboard" class="nav-link">
-                                <i class="nav-icon fas fa-tachometer-alt"></i>
-                                <p>Dashboard</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="/voucher_payments" class="nav-link">
-                                <i class="nav-icon fas fa-money-check-alt"></i>
-                                <p>Voucher Payments</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="/vouchers" class="nav-link">
-                                <i class="nav-icon fas fa-file-invoice"></i>
-                                <p>Vouchers</p>
-                            </a>
-                        </li>
-                        <!-- Add more sidebar links as needed -->
-                    </ul>
-                </nav>
-            </div>
+            <!-- Sidebar -->
+<div class="sidebar">
+    <!-- Sidebar user panel (optional) -->
+    <!-- You can add a user panel here if desired -->
+    <!-- Sidebar Menu -->
+    <nav class="mt-2">
+        <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+            <li class="nav-item">
+                <a href="/dashboard" class="nav-link">
+                    <i class="nav-icon fas fa-tachometer-alt"></i>
+                    <p>Dashboard</p>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/voucher_payments" class="nav-link">
+                    <i class="nav-icon fas fa-money-check-alt"></i>
+                    <p>Voucher Payments</p>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/vouchers" class="nav-link">
+                    <i class="nav-icon fas fa-file-invoice"></i>
+                    <p>Vouchers</p>
+                </a>
+            </li>
+            <!-- Add more sidebar links as needed -->
+        </ul>
+    </nav>
+    <!-- /.sidebar-menu -->
+</div>
+<!-- /.sidebar -->
         </aside>
         <!-- Content Wrapper. Contains page content -->
         <div class="content-wrapper">
