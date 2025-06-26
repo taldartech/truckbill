@@ -49,6 +49,36 @@
                         <i class="fas fa-file-invoice"></i> Vouchers
                     </a>
                 </li>
+                <li class="nav-item mb-2">
+                    <a href="/freight_bookings" class="nav-link text-white">
+                        <i class="fas fa-shipping-fast"></i> Freight Bookings
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a href="/trucks" class="nav-link text-white">
+                        <i class="fas fa-truck"></i> Trucks
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a href="/transporters" class="nav-link text-white">
+                        <i class="fas fa-people-carry"></i> Transporters
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a href="/users" class="nav-link text-white">
+                        <i class="fas fa-users"></i> Users
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a href="/reports" class="nav-link text-white">
+                        <i class="fas fa-chart-bar"></i> Reports
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a href="/settings" class="nav-link text-white">
+                        <i class="fas fa-cog"></i> Settings
+                    </a>
+                </li>
             </ul>
         </nav>
         <!-- Main Content -->
