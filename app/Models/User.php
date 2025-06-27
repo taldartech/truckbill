@@ -13,13 +13,18 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role',
+        'user_role_id',
         'company_id',
     ];
 
     public function company()
     {
         return $this->belongsTo(Company::class);
+    }
+
+    public function userRole()
+    {
+        return $this->belongsTo(UserRole::class, 'user_role_id');
     }
 
     /** @use HasFactory<\Database\Factories\UserFactory> */

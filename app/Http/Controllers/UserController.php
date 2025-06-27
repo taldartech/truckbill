@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\UserRole;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
@@ -20,13 +21,15 @@ class UserController extends Controller
             $query->where('email', 'like', '%' . $request->email . '%');
         }
         if ($request->filled('role')) {
-            $query->where('role', $request->role);
-        }
+    $query->whereHas('userRole', function ($q) use ($request) {
+        $q->where('name', $request->role);
+    });
+}
         if ($request->filled('company_id')) {
             $query->where('company_id', $request->company_id);
         }
         $users = $query->orderByDesc('created_at')->get();
-        $roles = ['admin', 'operator', 'accountant'];
+        $roles = ['super_admin', 'admin', 'moderator', 'accountant'];
         $companies = \App\Models\Company::all();
         return view('users.index', compact('users', 'roles', 'companies'));
     }
@@ -37,7 +40,7 @@ class UserController extends Controller
     public function create()
     {
         $companies = \App\Models\Company::all();
-        $roles = ['admin', 'operator', 'accountant'];
+        $roles = ['super_admin', 'admin', 'moderator', 'accountant'];
         return view('users.create', compact('companies', 'roles'));
     }
 
@@ -54,6 +57,12 @@ class UserController extends Controller
             'company_id' => 'required|exists:companies,id',
         ]);
         $validated['password'] = bcrypt($validated['password']);
+        $userRole = UserRole::where('name', $validated['role'])->first();
+        if (!$userRole) {
+            return back()->withErrors(['role' => 'Invalid role selected.']);
+        }
+        $validated['user_role_id'] = $userRole->id;
+        unset($validated['role']);
         \App\Models\User::create($validated);
         return redirect()->route('users.index')->with('success', 'User created successfully!');
     }
@@ -72,7 +81,7 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $companies = \App\Models\Company::all();
-        $roles = ['admin', 'operator', 'accountant'];
+        $roles = ['super_admin', 'admin', 'moderator', 'accountant'];
         return view('users.edit', compact('user', 'companies', 'roles'));
     }
 
@@ -93,6 +102,12 @@ class UserController extends Controller
         } else {
             unset($validated['password']);
         }
+        $userRole = UserRole::where('name', $validated['role'])->first();
+        if (!$userRole) {
+            return back()->withErrors(['role' => 'Invalid role selected.']);
+        }
+        $validated['user_role_id'] = $userRole->id;
+        unset($validated['role']);
         $user->update($validated);
         return redirect()->route('users.index')->with('success', 'User updated successfully!');
     }
