@@ -150,6 +150,7 @@ class ComposerStaticInit864d1123eb75460ef0df93c040857f40
             'Doctrine\\Inflector\\' => 19,
             'Doctrine\\Common\\Lexer\\' => 22,
             'Dflydev\\DotAccessData\\' => 22,
+            'Database\\Seeders\\' => 17,
         ),
         'C' => 
         array (
@@ -455,6 +456,10 @@ class ComposerStaticInit864d1123eb75460ef0df93c040857f40
         'Dflydev\\DotAccessData\\' => 
         array (
             0 => __DIR__ . '/..' . '/dflydev/dot-access-data/src',
+        ),
+        'Database\\Seeders\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/database/seeders',
         ),
         'Cron\\' => 
         array (
