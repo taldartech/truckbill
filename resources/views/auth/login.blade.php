@@ -15,7 +15,23 @@
                         <h3 class="text-center mb-0">Login</h3>
                     </div>
                     <div class="card-body">
-                        <form method="POST" action="/login">
+                        @if ($errors->any())
+    <div class="alert alert-danger">
+        <ul class="mb-0">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
+@if (session('status'))
+    <div class="alert alert-success">
+        {{ session('status') }}
+    </div>
+@endif
+
+<form method="POST" action="/login">
                             @csrf
                             
                             <div class="mb-3">

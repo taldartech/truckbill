@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Login;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Redirect;
 
@@ -22,13 +22,9 @@ class LoginController extends Controller
             'password' => ['required'],
         ]);
 
-        $user = Login::checkCredentials($credentials['email'], $credentials['password']);
-
-        if ($user) {
-            Session::put('user_id', $user->id);
-            Session::put('user_email', $user->email);
-            
-            return Redirect::intended('/dashboard');
+        if (Auth::attempt($credentials)) {
+            $request->session()->regenerate();
+            return redirect()->intended('/dashboard');
         }
 
         return back()->withErrors([
@@ -38,8 +34,9 @@ class LoginController extends Controller
 
     public function logout(Request $request)
     {
-        Session::flush();
-        
-        return Redirect::route('login');
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return redirect()->route('login');
     }
 }

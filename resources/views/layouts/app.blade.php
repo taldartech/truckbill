@@ -18,14 +18,20 @@
             <a class="navbar-brand fw-bold" href="#">@yield('title', 'Transport Management')</a>
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        <i class="fas fa-user-circle fa-lg"></i>
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
-                        <a class="dropdown-item" href="#">Profile</a>
-                        <div class="dropdown-divider"></div>
-                        <a class="dropdown-item text-danger" href="#">Logout</a>
-                    </div>
+                    <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+    <i class="fas fa-user-circle fa-lg"></i>
+    @auth
+        <span class="ms-2">{{ Auth::user()->name ?? Auth::user()->email }}</span>
+    @endauth
+</a>
+<div class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
+    <a class="dropdown-item" href="/profile">Profile</a>
+    <div class="dropdown-divider"></div>
+    <a class="dropdown-item text-danger" href="#" id="logout-link">Logout</a>
+    <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+        @csrf
+    </form>
+</div>
                 </li>
             </ul>
         </div>
@@ -134,6 +140,17 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
     <!-- Bootstrap JS (recommended for dropdowns, tooltips, etc.) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var logoutLink = document.getElementById('logout-link');
+        if (logoutLink) {
+            logoutLink.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.getElementById('logout-form').submit();
+            });
+        }
+    });
+</script>
     <!-- AdminLTE JS -->
     <script src="/theme/dist/js/adminlte.min.js"></script>
 </body>
