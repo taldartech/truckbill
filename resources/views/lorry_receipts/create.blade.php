@@ -5,61 +5,10 @@
     <h2>Add New Lorry Receipt</h2>
     <form action="{{ route('lorry_receipts.store') }}" method="POST">
         @csrf
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="truck_id" class="form-label">Truck *</label>
-                <select class="form-select" id="truck_id" name="truck_id" disabled>
-                    <option value="">Select</option>
-                    @foreach($trucks as $truck)
-                        <option value="{{ $truck->id }}" {{ old('truck_id') == $truck->id ? 'selected' : '' }}>{{ $truck->truck_number }}</option>
-                    @endforeach
-                </select>
-                @error('truck_id') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="consignor_id" class="form-label">Consignor *</label>
-                <select class="form-select" id="consignor_id" name="consignor_id" required>
-                    <option value="">Select Consignor</option>
-                    @foreach($customers as $customer)
-                        <option value="{{ $customer->id }}" {{ old('consignor_id') == $customer->id ? 'selected' : '' }}>
-                            {{ $customer->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="consignor_contact_number" class="form-label">Consignor Contact Number</label>
-                <input type="text" class="form-control" id="consignor_contact_number" name="consignor_contact_number" readonly>
-            </div>
-        </div>
 
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="consignee_id" class="form-label">Consignee *</label>
-                <select class="form-select" id="consignee_id" name="consignee_id" required>
-                    <option value="">Select Consignee</option>
-                    @foreach($consignees as $consignee)
-                        <option value="{{ $consignee->id }}" {{ old('consignee_id') == $consignee->id ? 'selected' : '' }}>
-                            {{ $consignee->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="consignee_contact_number" class="form-label">Consignee Contact Number</label>
-                <input type="text" class="form-control" id="consignee_contact_number" name="consignee_contact_number" readonly>
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="delivery_status" class="form-label">Delivery Status *</label>
-                <select class="form-select" id="delivery_status" name="delivery_status" required>
-                    @foreach($statuses as $status)
-                        <option value="{{ $status }}" {{ old('delivery_status') == $status ? 'selected' : '' }}>{{ $status }}</option>
-                    @endforeach
-                </select>
-                @error('delivery_status') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-        </div>
-
+        <h5 class="mt-4 mb-3">Trip & Parties</h5>
+        <hr class="mb-3 mt-0">
+        
         <div class="row">
             <div class="col-md-4 mb-3">
                 <label for="customer_id" class="form-label">Customer *</label>
@@ -71,6 +20,69 @@
                 </select>
                 @error('customer_id') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
+            
+            <div class="col-md-4 mb-3">
+                <label for="lr_number" class="form-label">LR Number *</label>
+                <input type="text" class="form-control" id="lr_number" name="lr_number" required value="{{ old('lr_number') }}">
+                @error('lr_number') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="delivery_status" class="form-label">Delivery Status *</label>
+                <select class="form-select" id="delivery_status" name="delivery_status" required disabled>
+                    @foreach($statuses as $status)
+                        <option value="{{ $status }}" {{ old('delivery_status') == $status ? 'selected' : '' }}>{{ $status }}</option>
+                    @endforeach
+                </select>
+                <input type="hidden" name="delivery_status" value="{{ old('delivery_status') }}">
+                <small class="text-muted">It will beupdated from freight booking entries.</small>
+                @error('delivery_status') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="consignor_id" class="form-label">Consignor *</label>
+                <select class="form-select" id="consignor_id" name="consignor_id" required>
+                    <option value="">Select Consignor</option>
+                    @foreach($customers as $customer)
+                        <option value="{{ $customer->id }}" {{ old('consignor_id') == $customer->id ? 'selected' : '' }}>
+                            {{ $customer->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="consignor_contact_number" class="form-label">Consignor Contact Number</label>
+                <input type="text" class="form-control" id="consignor_contact_number" name="consignor_contact_number" readonly>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="consignee_id" class="form-label">Consignee *</label>
+                <select class="form-select" id="consignee_id" name="consignee_id" required>
+                    <option value="">Select Consignee</option>
+                    @foreach($consignees as $consignee)
+                        <option value="{{ $consignee->id }}" {{ old('consignee_id') == $consignee->id ? 'selected' : '' }}>
+                            {{ $consignee->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="consignee_contact_number" class="form-label">Consignee Contact Number</label>
+                <input type="text" class="form-control" id="consignee_contact_number" name="consignee_contact_number" readonly>
+            </div>
+
+                
+            </div>
+        </div>
+
+        <h5 class="mt-4 mb-3">Route & Dates</h5>
+        <hr class="mb-3 mt-0">
+
+
+        <div class="row">
             <div class="col-md-4 mb-3">
                 <label for="gr_date" class="form-label">GR Date *</label>
                 <input type="date" class="form-control" id="gr_date" name="gr_date" required value="{{ old('gr_date') }}">
@@ -100,6 +112,10 @@
                 @error('destination_state') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
         </div>
+
+        <h5 class="mt-4 mb-3">Goods & Charges</h5>
+        <hr class="mb-3 mt-0">
+
 
         <div class="row">
             <div class="col-md-4 mb-3">
@@ -204,20 +220,16 @@
     document.addEventListener('DOMContentLoaded', function () {
         const consignorSelect = document.getElementById('consignor_id');
         const consignorContact = document.getElementById('consignor_contact_number');
-        const sourceCity = document.getElementById('source_city');
-        const sourceState = document.getElementById('source_state');
-    
+
         consignorSelect.addEventListener('change', function () {
             const consignorId = this.value;
-    
+
             if (!consignorId) {
                 consignorContact.value = '';
-                sourceCity.value = '';
-                sourceState.value = '';
                 return;
             }
-    
-            fetch(`/customers/details/${consignorId}`, {
+
+            fetch(`/consignors/details/${consignorId}`, {
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
                 }
@@ -228,14 +240,10 @@
             })
             .then(data => {
                 consignorContact.value = data.contact_number || '';
-                sourceCity.value = data.source_city || '';
-                sourceState.value = data.source_state || '';
             })
             .catch(error => {
                 console.error('❌ Error:', error);
                 consignorContact.value = '';
-                sourceCity.value = '';
-                sourceState.value = '';
             });
         });
     });
@@ -243,11 +251,37 @@
     
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // First Consignee
         const consigneeSelect = document.getElementById('consignee_id');
         const consigneeContact = document.getElementById('consignee_contact_number');
         const destinationCity = document.getElementById('destination_city');
         const destinationState = document.getElementById('destination_state');
-    
+
+        // Second Consignee
+        const consigneeSelect2 = document.getElementById('consignee_id_2');
+        const consigneeContact2 = document.getElementById('consignee_contact_number_2');
+
+        if (consigneeSelect) {
+            consigneeSelect.addEventListener('change', function () {
+                const consigneeId = this.value;
+                if (!consigneeId) {
+                    consigneeContact.value = '';
+                    destinationCity.value = '';
+                    destinationState.value = '';
+                    return;
+                }
+                fetch(`/consignees/details/${consigneeId}`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('Failed to fetch consignee details');
+                    return response.json();
+                })
+                .then(data => {
+                    consigneeContact.value = data.contact_number || '';
+                    destinationCity.value = data.destination_city || '';
         consigneeSelect.addEventListener('change', function () {
             const consigneeId = this.value;
     
