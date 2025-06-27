@@ -8,7 +8,9 @@ class TruckController extends Controller
 {
     public function index(Request $request)
     {
-        $query = \App\Models\Truck::with(['transporter', 'driver']);
+        $query = \App\Models\Truck::with(['transporter', 'driver'])->whereHas('transporter', function($q) {
+            $q->where('company_id', auth()->user()->company_id);
+        });
         if ($request->filled('truck_number')) {
             $query->where('truck_number', 'like', '%' . $request->truck_number . '%');
         }

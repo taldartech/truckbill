@@ -141,20 +141,65 @@
                     
                     
                     <li class="nav-item mb-2">
-                        <a href="/consignees" class="nav-link text-white">
-                            <i class="fas fa-money-check-alt"></i> Consignee Management
-                        </a>
-                    </li>
+    <a class="nav-link text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#consigneeMenu" role="button" aria-expanded="false" aria-controls="consigneeMenu">
+        <span><i class="fas fa-people-carry"></i> Consignee</span>
+        <i class="fas fa-chevron-down small"></i>
+    </a>
+    <div class="collapse ms-3" id="consigneeMenu">
+        <ul class="nav flex-column">
+            <li class="nav-item mb-1">
+                <a href="/consignees" class="nav-link text-white">
+                    <i class="fas fa-list"></i> Listing
+                </a>
+            </li>
+            <li class="nav-item mb-1">
+                <a href="/consignees/create" class="nav-link text-white">
+                    <i class="fas fa-plus"></i> Register
+                </a>
+            </li>
+        </ul>
+    </div>
+</li>
                     <li class="nav-item mb-2">
-                        <a href="/lorry_receipts" class="nav-link text-white">
-                            <i class="fas fa-money-check-alt"></i> Lorry Receipts
-                        </a>
-                    </li>
+    <a class="nav-link text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#lorryReceiptMenu" role="button" aria-expanded="false" aria-controls="lorryReceiptMenu">
+        <span><i class="fas fa-file-alt"></i> Lorry Receipts</span>
+        <i class="fas fa-chevron-down small"></i>
+    </a>
+    <div class="collapse ms-3" id="lorryReceiptMenu">
+        <ul class="nav flex-column">
+            <li class="nav-item mb-1">
+                <a href="/lorry_receipts" class="nav-link text-white">
+                    <i class="fas fa-list"></i> Listing
+                </a>
+            </li>
+            <li class="nav-item mb-1">
+                <a href="/lorry_receipts/create" class="nav-link text-white">
+                    <i class="fas fa-plus"></i> Register
+                </a>
+            </li>
+        </ul>
+    </div>
+</li>
                     <li class="nav-item mb-2">
-                        <a href="/freight_bookings" class="nav-link text-white">
-                            <i class="fas fa-shipping-fast"></i> Freight Bookings
-                        </a>
-                    </li>
+    <a class="nav-link text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#freightBookingMenu" role="button" aria-expanded="false" aria-controls="freightBookingMenu">
+        <span><i class="fas fa-shipping-fast"></i> Freight Bookings</span>
+        <i class="fas fa-chevron-down small"></i>
+    </a>
+    <div class="collapse ms-3" id="freightBookingMenu">
+        <ul class="nav flex-column">
+            <li class="nav-item mb-1">
+                <a href="/freight_bookings" class="nav-link text-white">
+                    <i class="fas fa-list"></i> Listing
+                </a>
+            </li>
+            <li class="nav-item mb-1">
+                <a href="/freight_bookings/create" class="nav-link text-white">
+                    <i class="fas fa-plus"></i> Register
+                </a>
+            </li>
+        </ul>
+    </div>
+</li>
                     <li class="nav-item mb-2">
                         <a href="/vouchers" class="nav-link text-white">
                             <i class="fas fa-file-invoice"></i> Vouchers

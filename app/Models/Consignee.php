@@ -10,6 +10,7 @@ class Consignee extends Model
     use HasFactory;
 
     protected $fillable = [
+        'company_id',
         'name',
         'address',
         'city',
@@ -19,4 +20,9 @@ class Consignee extends Model
     ];
 
     protected $table = 'consignees';
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
 }

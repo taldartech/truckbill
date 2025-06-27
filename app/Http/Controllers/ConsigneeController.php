@@ -9,7 +9,7 @@ class ConsigneeController extends Controller
 {
     public function index()
     {
-        $consignees = Consignee::orderBy('name')->paginate(20);
+        $consignees = Consignee::where('company_id', auth()->user()->company_id)->orderBy('name')->paginate(20);
         return view('consignees.index', compact('consignees'));
     }
 
@@ -29,6 +29,7 @@ class ConsigneeController extends Controller
             'contact_number' => 'required|string|max:20',
         ]);
 
+        $validated['company_id'] = auth()->user()->company_id;
         Consignee::create($validated);
         return redirect()->route('consignees.index')
             ->with('success', 'Consignee created successfully!');

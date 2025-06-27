@@ -8,6 +8,7 @@ class Customer extends Model
 {
     use HasFactory;
     protected $fillable = [
+        'company_id',
         'name',
         'gst_number',
         'pan_number',
@@ -15,4 +16,8 @@ class Customer extends Model
         'contact_person',
         'contact_number',
     ];
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
 }

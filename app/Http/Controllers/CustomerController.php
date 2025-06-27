@@ -8,7 +8,7 @@ class CustomerController extends Controller
 {
     public function index()
     {
-        $customers = Customer::latest()->paginate(20);
+        $customers = Customer::where('company_id', auth()->user()->company_id)->latest()->paginate(20);
         return view('customers.index', compact('customers'));
     }
 
@@ -27,6 +27,7 @@ class CustomerController extends Controller
             'contact_person' => 'nullable|string|max:255',
             'contact_number' => 'nullable|string|max:255',
         ]);
+        $data['company_id'] = auth()->user()->company_id;
         Customer::create($data);
         return redirect()->route('customers.index')->with('success', 'Customer added successfully.');
     }

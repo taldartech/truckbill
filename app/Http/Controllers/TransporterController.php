@@ -8,7 +8,7 @@ class TransporterController extends Controller
 {
     public function index(Request $request)
     {
-        $query = \App\Models\Transporter::with('company');
+        $query = \App\Models\Transporter::with('company')->where('company_id', auth()->user()->company_id);
         if ($request->filled('name')) {
             $query->where('name', 'like', '%' . $request->name . '%');
         }
