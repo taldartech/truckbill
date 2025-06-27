@@ -10,6 +10,7 @@
                 <label for="transporter_id" class="form-label">Transporter *</label>
                 <select class="form-select" id="transporter_id" name="transporter_id" required>
                     <option value="">Select Transporter</option>
+                    {{-- Only show transporters for user's company unless super_admin. $transporters should be filtered in controller. --}}
                     @foreach($transporters as $transporter)
                         <option value="{{ $transporter->id }}" {{ old('transporter_id') == $transporter->id ? 'selected' : '' }}>
                             {{ $transporter->name }}

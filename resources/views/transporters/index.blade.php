@@ -30,14 +30,25 @@
                 <option value="0" {{ request('is_owner') === '0' ? 'selected' : '' }}>Agency</option>
             </select>
         </div>
-        <div class="col-md-2">
-            <select name="company_id" class="form-select">
-                <option value="">All Companies</option>
-                @foreach($companies as $company)
-                    <option value="{{ $company->id }}" {{ request('company_id') == $company->id ? 'selected' : '' }}>{{ $company->name }}</option>
-                @endforeach
-            </select>
+        @php
+    $canEditCompany = auth()->check() && auth()->user()->userRole->name === 'super_admin';
+    $userCompanyId = auth()->user()->company_id ?? null;
+@endphp
+<div class="col-md-2">
+    @if($canEditCompany)
+        <select name="company_id" class="form-select">
+            <option value="">All Companies</option>
+            @foreach($companies as $company)
+                <option value="{{ $company->id }}" {{ request('company_id', $userCompanyId) == $company->id ? 'selected' : '' }}>{{ $company->name }}</option>
+            @endforeach
+        </select>
+    @else
+        <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
+        <div class="form-control-plaintext">
+            {{ $companies->firstWhere('id', $userCompanyId)->name ?? '' }}
         </div>
+    @endif
+</div>
         <div class="col-md-12">
             <button type="submit" class="btn btn-secondary">Search</button>
             <a href="{{ route('transporters.index') }}" class="btn btn-outline-secondary ms-2">Reset</a>
