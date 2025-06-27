@@ -25,14 +25,14 @@ class TruckController extends Controller
             $query->where('driver_id', $request->driver_id);
         }
         $trucks = $query->orderByDesc('created_at')->get();
-        $transporters = \App\Models\Transporter::all();
+        $transporters = \App\Models\Transporter::where('company_id', auth()->user()->company_id)->get();
         $drivers = \App\Models\Driver::all();
         return view('trucks.index', compact('trucks', 'transporters', 'drivers'));
     }
 
     public function create()
     {
-        $transporters = \App\Models\Transporter::all();
+        $transporters = \App\Models\Transporter::where('company_id', auth()->user()->company_id)->get();
         $drivers = \App\Models\Driver::all();
         return view('trucks.create', compact('transporters', 'drivers'));
     }
@@ -59,7 +59,7 @@ class TruckController extends Controller
 
     public function edit(\App\Models\Truck $truck)
     {
-        $transporters = \App\Models\Transporter::all();
+        $transporters = \App\Models\Transporter::where('company_id', auth()->user()->company_id)->get();
         $drivers = \App\Models\Driver::all();
         return view('trucks.edit', compact('truck', 'transporters', 'drivers'));
     }
@@ -104,7 +104,7 @@ class TruckController extends Controller
         }
         $trucks = $query->orderByDesc('created_at')->get();
         $total = $trucks->count();
-        $transporters = \App\Models\Transporter::all();
+        $transporters = \App\Models\Transporter::where('company_id', auth()->user()->company_id)->get();
         $drivers = \App\Models\Driver::all();
         $truckTypes = [
             'Open', 'Closed', 'Container', 'Trailer', 'Tanker', 'Refrigerated', 'Flatbed', 'Tipper', 'Other'

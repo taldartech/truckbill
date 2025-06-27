@@ -80,6 +80,26 @@
         </ul>
     </div>
 </li>
+<li class="nav-item mb-2">
+    <a class="nav-link text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#customerMenu" role="button" aria-expanded="false" aria-controls="customerMenu">
+        <span><i class="fas fa-users"></i> Customer</span>
+        <i class="fas fa-chevron-down small"></i>
+    </a>
+    <div class="collapse ms-3" id="customerMenu">
+        <ul class="nav flex-column">
+            <li class="nav-item mb-1">
+                <a href="/customers" class="nav-link text-white">
+                    <i class="fas fa-list"></i> Listing
+                </a>
+            </li>
+            <li class="nav-item mb-1">
+                <a href="/customers/create" class="nav-link text-white">
+                    <i class="fas fa-plus"></i> Register
+                </a>
+            </li>
+        </ul>
+    </div>
+</li>
 @endauth
                     @if(auth()->check() && auth()->user()->userRole->name === 'super_admin')
 <li class="nav-item mb-2">
@@ -119,11 +139,7 @@
     </a>
 </li>
                     
-                    <li class="nav-item mb-2">
-                        <a href="/customers" class="nav-link text-white">
-                            <i class="fas fa-money-check-alt"></i> Customer Management
-                        </a>
-                    </li>
+                    
                     <li class="nav-item mb-2">
                         <a href="/consignees" class="nav-link text-white">
                             <i class="fas fa-money-check-alt"></i> Consignee Management

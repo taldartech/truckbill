@@ -52,7 +52,7 @@
                     <td>{{ $user->id }}</td>
                     <td>{{ $user->name }}</td>
                     <td>{{ $user->email }}</td>
-                    <td>{{ ucfirst($user->role) }}</td>
+                    <td>{{ $user->userRole ? ucfirst($user->userRole->name) : '-' }}</td>
                     <td>{{ $user->company ? $user->company->name : '-' }}</td>
                     <td>
                         <a href="{{ route('users.edit', $user->id) }}" class="btn btn-sm btn-warning">Edit</a>
