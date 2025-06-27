@@ -54,6 +54,33 @@
                             <i class="fas fa-tachometer-alt"></i> Dashboard
                         </a>
                     </li>
+                    @auth
+<li class="nav-item mb-2">
+    <a class="nav-link text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#truckMenu" role="button" aria-expanded="false" aria-controls="truckMenu">
+        <span><i class="fas fa-truck-moving"></i> Truck</span>
+        <i class="fas fa-chevron-down small"></i>
+    </a>
+    <div class="collapse ms-3" id="truckMenu">
+        <ul class="nav flex-column">
+            <li class="nav-item mb-1">
+                <a href="/trucks" class="nav-link text-white">
+                    <i class="fas fa-list"></i> Listing
+                </a>
+            </li>
+            <li class="nav-item mb-1">
+                <a href="/trucks/create" class="nav-link text-white">
+                    <i class="fas fa-plus"></i> Register
+                </a>
+            </li>
+            <li class="nav-item mb-1">
+                <a href="/drivers/create" class="nav-link text-white">
+                    <i class="fas fa-user-tie"></i> Add Driver
+                </a>
+            </li>
+        </ul>
+    </div>
+</li>
+@endauth
                     @if(auth()->check() && auth()->user()->userRole->name === 'super_admin')
 <li class="nav-item mb-2">
     <a href="/company/create" class="nav-link text-white">
@@ -91,11 +118,7 @@
         <i class="fas fa-money-check-alt"></i> Transporter Ledger
     </a>
 </li>
-                    <li class="nav-item mb-2">
-                        <a href="/trucks/create" class="nav-link text-white">
-                            <i class="fas fa-money-check-alt"></i> Truck Registeration
-                        </a>
-                    </li>
+                    
                     <li class="nav-item mb-2">
                         <a href="/customers" class="nav-link text-white">
                             <i class="fas fa-money-check-alt"></i> Customer Management
