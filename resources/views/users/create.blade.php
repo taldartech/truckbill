@@ -24,26 +24,39 @@
             <label for="password_confirmation" class="form-label">Confirm Password *</label>
             <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" required>
         </div>
-        <div class="mb-3">
-            <label for="role" class="form-label">Role *</label>
-            <select class="form-select" id="role" name="role" required>
-                <option value="">Select</option>
-                @foreach($roles as $role)
-                    <option value="{{ $role }}" {{ old('role') == $role ? 'selected' : '' }}>{{ ucfirst($role) }}</option>
-                @endforeach
-            </select>
-            @error('role') <div class="text-danger">{{ $message }}</div> @enderror
-        </div>
-        <div class="mb-3">
-            <label for="company_id" class="form-label">Company *</label>
-            <select class="form-select" id="company_id" name="company_id" required>
-                <option value="">Select</option>
-                @foreach($companies as $company)
-                    <option value="{{ $company->id }}" {{ old('company_id') == $company->id ? 'selected' : '' }}>{{ $company->name }}</option>
-                @endforeach
-            </select>
-            @error('company_id') <div class="text-danger">{{ $message }}</div> @enderror
-        </div>
+        @php
+    $canEdit = auth()->check() && (auth()->user()->userRole->name === 'super_admin' || auth()->user()->userRole->name === 'admin');
+@endphp
+<div class="mb-3">
+    <label for="role" class="form-label">Role *</label>
+    @if($canEdit)
+        <select class="form-select" id="role" name="role" required>
+            <option value="">Select</option>
+            @foreach($roles as $role)
+                <option value="{{ $role }}" {{ old('role') == $role ? 'selected' : '' }}>{{ ucfirst($role) }}</option>
+            @endforeach
+        </select>
+    @else
+        <input type="hidden" name="role" value="{{ auth()->user()->userRole->name ?? '' }}">
+        <div class="form-control-plaintext">{{ ucfirst(auth()->user()->userRole->name ?? '') }}</div>
+    @endif
+    @error('role') <div class="text-danger">{{ $message }}</div> @enderror
+</div>
+<div class="mb-3">
+    <label for="company_id" class="form-label">Company *</label>
+    @if($canEdit)
+        <select class="form-select" id="company_id" name="company_id" required>
+            <option value="">Select</option>
+            @foreach($companies as $company)
+                <option value="{{ $company->id }}" {{ old('company_id') == $company->id ? 'selected' : '' }}>{{ $company->name }}</option>
+            @endforeach
+        </select>
+    @else
+        <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
+        <div class="form-control-plaintext">{{ auth()->user()->company->name ?? '' }}</div>
+    @endif
+    @error('company_id') <div class="text-danger">{{ $message }}</div> @enderror
+</div>
         <button type="submit" class="btn btn-primary">Create User</button>
         <a href="{{ route('users.index') }}" class="btn btn-secondary ms-2">Back to List</a>
     </form>

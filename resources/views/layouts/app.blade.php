@@ -15,8 +15,15 @@
     <nav class="navbar navbar-expand navbar-light bg-white border-bottom fixed-top" style="z-index:1050;">
         <div class="container-fluid">
             <!-- Page Title as Link -->
-            <a class="navbar-brand fw-bold" href="#">@yield('title', 'Transport Management')</a>
-            <ul class="navbar-nav ms-auto">
+            <a class="navbar-brand fw-bold" href="#">
+    @yield('title', 'Transport Management')
+</a>
+            @auth
+    <span class="align-middle ms-3 me-2 border-start ps-3 small text-muted" style="font-size: 1em;">
+        <i class="fas fa-building me-1"></i>{{ Auth::user()->company ? Auth::user()->company->name : '' }}
+    </span>
+@endauth
+<ul class="navbar-nav ms-auto">
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     <i class="fas fa-user-circle fa-lg"></i>
@@ -39,18 +46,21 @@
     <div class="d-flex" style="min-height: 100vh;">
         <!-- Fixed Simple Sidebar -->
         <nav class="bg-dark text-white" style="width:220px;position:fixed;top:56px;left:0;z-index:1040;">
-            <div class="p-3" style="height: calc(100vh - 56px); overflow-y: auto;">
-                <ul class="nav nav-pills flex-column">
+    <div class="p-3" style="height: calc(100vh - 56px); overflow-y: auto;">
+        
+        <ul class="nav nav-pills flex-column">
                     <li class="nav-item mb-2">
                         <a href="/dashboard" class="nav-link text-white">
                             <i class="fas fa-tachometer-alt"></i> Dashboard
                         </a>
                     </li>
-                    <li class="nav-item mb-2">
-                        <a href="/company/create" class="nav-link text-white">
-                            <i class="fas fa-money-check-alt"></i> Company Registeration
-                        </a>
-                    </li>
+                    @if(auth()->check() && auth()->user()->userRole->name === 'super_admin')
+<li class="nav-item mb-2">
+    <a href="/company/create" class="nav-link text-white">
+        <i class="fas fa-money-check-alt"></i> Company Registeration
+    </a>
+</li>
+@endif
                     <li class="nav-item mb-2">
                         <a href="/transporter/create" class="nav-link text-white">
                             <i class="fas fa-money-check-alt"></i> Transporter Registeration
@@ -109,11 +119,13 @@
                     </li>
                    
                    
-                    <li class="nav-item mb-2">
-                        <a href="/users" class="nav-link text-white">
-                            <i class="fas fa-users"></i> Users
-                        </a>
-                    </li>
+                    @if(auth()->check() && auth()->user()->userRole->name === 'super_admin')
+<li class="nav-item mb-2">
+    <a href="/users" class="nav-link text-white">
+        <i class="fas fa-users"></i> Users
+    </a>
+</li>
+@endif
                     <li class="nav-item mb-2">
                         <a href="/reports" class="nav-link text-white">
                             <i class="fas fa-chart-bar"></i> Reports
