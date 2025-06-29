@@ -229,7 +229,7 @@
                 return;
             }
 
-            fetch(`/consignors/details/${consignorId}`, {
+            fetch(`/consignees/details/${consignorId}`, {
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
                 }
@@ -250,48 +250,16 @@
     </script>
     
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // First Consignee
-        const consigneeSelect = document.getElementById('consignee_id');
-        const consigneeContact = document.getElementById('consignee_contact_number');
-        const destinationCity = document.getElementById('destination_city');
-        const destinationState = document.getElementById('destination_state');
-
-        // Second Consignee
-        const consigneeSelect2 = document.getElementById('consignee_id_2');
-        const consigneeContact2 = document.getElementById('consignee_contact_number_2');
-
-        if (consigneeSelect) {
-            consigneeSelect.addEventListener('change', function () {
-                const consigneeId = this.value;
-                if (!consigneeId) {
-                    consigneeContact.value = '';
-                    destinationCity.value = '';
-                    destinationState.value = '';
-                    return;
-                }
-                fetch(`/consignees/details/${consigneeId}`, {
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(response => {
-                    if (!response.ok) throw new Error('Failed to fetch consignee details');
-                    return response.json();
-                })
-                .then(data => {
-                    consigneeContact.value = data.contact_number || '';
-                    destinationCity.value = data.destination_city || '';
+document.addEventListener('DOMContentLoaded', function () {
+    const consigneeSelect = document.getElementById('consignee_id');
+    const consigneeContact = document.getElementById('consignee_contact_number');
+    if (consigneeSelect && consigneeContact) {
         consigneeSelect.addEventListener('change', function () {
             const consigneeId = this.value;
-    
             if (!consigneeId) {
                 consigneeContact.value = '';
-                destinationCity.value = '';
-                destinationState.value = '';
                 return;
             }
-    
             fetch(`/consignees/details/${consigneeId}`, {
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
@@ -303,19 +271,15 @@
             })
             .then(data => {
                 consigneeContact.value = data.contact_number || '';
-                destinationCity.value = data.destination_city || '';
-                destinationState.value = data.destination_state || '';
             })
             .catch(error => {
                 console.error('❌ Error:', error);
                 consigneeContact.value = '';
-                destinationCity.value = '';
-                destinationState.value = '';
             });
         });
-    });
-
-    </script>
+    }
+});
+</script>
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
