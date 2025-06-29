@@ -41,8 +41,8 @@ class LorryReceiptController extends Controller
     {
         $trucks = Truck::all();
         // $transporters = Transporter::all();
-        $customers = Customer::all();
-        $consignees = Consignee::all();
+        $customers = Customer::where('company_id', auth()->user()->company_id)->orderBy('name')->get();
+        $consignees = Consignee::where('company_id', auth()->user()->company_id)->orderBy('name')->get();
         $goodsTypes = GoodType::all();
         $statuses = ['Pending', 'Delivered', 'Cancelled'];
         return view('lorry_receipts.create', compact( 'customers','trucks', 'consignees', 'goodsTypes', 'statuses'));

@@ -9,6 +9,7 @@
         <div class="card-body">
             <form action="{{ route('consignees.store') }}" method="POST">
                 @csrf
+<input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
 
                 <div class="mb-3">
                     <label for="name" class="form-label">Name *</label>

@@ -13,11 +13,11 @@
             <div class="col-md-4 mb-3">
                 <label for="customer_id" class="form-label">Customer *</label>
                 <select class="form-select" id="customer_id" name="customer_id" required>
-                    <option value="">Select</option>
-                    @foreach($customers as $customer)
-                        <option value="{{ $customer->id }}" {{ old('customer_id') == $customer->id ? 'selected' : '' }}>{{ $customer->name }}</option>
-                    @endforeach
-                </select>
+    <option value="">Select Customer</option>
+    @foreach($customers as $customer)
+        <option value="{{ $customer->id }}" {{ old('customer_id') == $customer->id ? 'selected' : '' }}>{{ $customer->name }}</option>
+    @endforeach
+</select>
                 @error('customer_id') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
             
@@ -43,13 +43,13 @@
             <div class="col-md-6 mb-3">
                 <label for="consignor_id" class="form-label">Consignor *</label>
                 <select class="form-select" id="consignor_id" name="consignor_id" required>
-                    <option value="">Select Consignor</option>
-                    @foreach($customers as $customer)
-                        <option value="{{ $customer->id }}" {{ old('consignor_id') == $customer->id ? 'selected' : '' }}>
-                            {{ $customer->name }}
-                        </option>
-                    @endforeach
-                </select>
+    <option value="">Select Consignor</option>
+    @foreach($consignees as $consignee)
+        <option value="{{ $consignee->id }}" {{ old('consignor_id') == $consignee->id ? 'selected' : '' }}>
+            {{ $consignee->name }}
+        </option>
+    @endforeach
+</select>
             </div>
             <div class="col-md-6 mb-3">
                 <label for="consignor_contact_number" class="form-label">Consignor Contact Number</label>
@@ -61,13 +61,13 @@
             <div class="col-md-6 mb-3">
                 <label for="consignee_id" class="form-label">Consignee *</label>
                 <select class="form-select" id="consignee_id" name="consignee_id" required>
-                    <option value="">Select Consignee</option>
-                    @foreach($consignees as $consignee)
-                        <option value="{{ $consignee->id }}" {{ old('consignee_id') == $consignee->id ? 'selected' : '' }}>
-                            {{ $consignee->name }}
-                        </option>
-                    @endforeach
-                </select>
+    <option value="">Select Consignee</option>
+    @foreach($consignees as $consignee)
+        <option value="{{ $consignee->id }}" {{ old('consignee_id') == $consignee->id ? 'selected' : '' }}>
+            {{ $consignee->name }}
+        </option>
+    @endforeach
+</select>
             </div>
             <div class="col-md-6 mb-3">
                 <label for="consignee_contact_number" class="form-label">Consignee Contact Number</label>
