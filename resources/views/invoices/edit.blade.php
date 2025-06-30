@@ -60,7 +60,7 @@
                 <label class="form-label">Memos</label>
                 <select name="memo_ids[]" class="form-select" multiple>
                     @foreach($memos as $memo)
-                        <option value="{{ $memo->id }}" {{ (in_array($memo->id, old('memo_ids', $selectedMemos))) ? 'selected' : '' }}>{{ $memo->memo_number }}</option>
+                        <option value="{{ $memo->memo_id }}" {{ $memo->selected ? 'selected' : '' }}>{{ $memo->memo_number }}</option>
                     @endforeach
                 </select>
                 <small class="text-muted">Hold Ctrl (Cmd on Mac) to select multiple.</small>

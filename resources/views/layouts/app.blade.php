@@ -198,20 +198,80 @@
                             </div>
                         </li>
                         <li class="nav-item mb-2">
+                            <a class="nav-link text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#voucherMenu" role="button" aria-expanded="false" aria-controls="voucherMenu">
+                                <span><i class="fas fa-file-invoice"></i> Vouchers</span>
+                                <i class="fas fa-chevron-down small"></i>
+                            </a>
+                            <div class="collapse ms-3" id="voucherMenu">
+                                <ul class="nav flex-column">
+                                    <li class="nav-item mb-1">
+                                        <a href="/vouchers" class="nav-link text-white">
+                                            <i class="fas fa-list"></i> Listing
+                                        </a>
+                                    </li>
+                                    <li class="nav-item mb-1">
+                                        <a href="/vouchers/create" class="nav-link text-white">
+                                            <i class="fas fa-plus"></i> Register
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        <li class="nav-item mb-2">
+                            <a class="nav-link text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#voucherPaymentMenu" role="button" aria-expanded="false" aria-controls="voucherPaymentMenu">
+                                <span><i class="fas fa-money-bill-wave"></i> Voucher Payments</span>
+                                <i class="fas fa-chevron-down small"></i>
+                            </a>
+                            <div class="collapse ms-3" id="voucherPaymentMenu">
+                                <ul class="nav flex-column">
+                                    <li class="nav-item mb-1">
+                                        <a href="/voucher_payments" class="nav-link text-white">
+                                            <i class="fas fa-list"></i> Listing
+                                        </a>
+                                    </li>
+                                    <li class="nav-item mb-1">
+                                        <a href="/voucher_payments/create" class="nav-link text-white">
+                                            <i class="fas fa-plus"></i> Register
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        <li class="nav-item mb-2">
+                            <a class="nav-link text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#invoiceMenu" role="button" aria-expanded="false" aria-controls="invoiceMenu">
+                                <span><i class="fas fa-file-invoice-dollar"></i> Invoices</span>
+                                <i class="fas fa-chevron-down small"></i>
+                            </a>
+                            <div class="collapse ms-3" id="invoiceMenu">
+                                <ul class="nav flex-column">
+                                    <li class="nav-item mb-1">
+                                        <a href="/invoices" class="nav-link text-white">
+                                            <i class="fas fa-list"></i> Listing
+                                        </a>
+                                    </li>
+                                    <li class="nav-item mb-1">
+                                        <a href="/invoices/create" class="nav-link text-white">
+                                            <i class="fas fa-plus"></i> Register
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        {{-- <li class="nav-item mb-2">
                             <a href="/vouchers" class="nav-link text-white">
                                 <i class="fas fa-file-invoice"></i> Vouchers
                             </a>
-                        </li>
-                        <li class="nav-item mb-2">
+                        </li> --}}
+                        {{-- <li class="nav-item mb-2">
                             <a href="/voucher_payments" class="nav-link text-white">
                                 <i class="fas fa-money-check-alt"></i> Voucher Payments
                             </a>
-                        </li>
-                        <li class="nav-item mb-2">
+                        </li> --}}
+                        {{-- <li class="nav-item mb-2">
                             <a href="/invoices" class="nav-link text-white">
                                 <i class="fas fa-money-check-alt"></i> Invoices
                             </a>
-                        </li>
+                        </li> --}}
                         <li class="nav-item mb-2">
                             <a href="/reports" class="nav-link text-white">
                                 <i class="fas fa-chart-bar"></i> Reports

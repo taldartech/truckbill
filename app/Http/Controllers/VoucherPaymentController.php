@@ -34,6 +34,7 @@ class VoucherPaymentController extends Controller
             'payment_type' => 'required|string',
             'payment_mode' => 'required|string',
             'transaction_id' => 'required|string',
+            'amount' => 'required|numeric|min:0',
             'remark' => 'nullable|string',
             'payment_status' => 'required|in:pending,in-progress,paid',
         ]);
@@ -44,7 +45,9 @@ class VoucherPaymentController extends Controller
     public function edit(VoucherPayment $voucher_payment)
     {
         $vouchers = Voucher::all();
-        return view('voucher_payments.edit', compact('voucher_payment', 'vouchers'));
+        $paymentTypes = PaymentType::all();
+        $paymentModes = PaymentMode::all();
+        return view('voucher_payments.edit', compact('voucher_payment', 'vouchers', 'paymentTypes', 'paymentModes'));
     }
 
     public function update(Request $request, VoucherPayment $voucher_payment)

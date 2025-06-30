@@ -3,10 +3,10 @@
 @section('content')
 <div class="container mt-4">
     <h2>Invoices</h2>
-<a href="{{ route('invoices.create') }}" class="btn btn-primary mb-3">Add Invoice</a>
-@if(session('success'))
-    <div class="alert alert-success">{{ session('success') }}</div>
-@endif
+    <a href="{{ route('invoices.create') }}" class="btn btn-primary mb-3">Add Invoice</a>
+    @if(session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
 
 <!-- Quick Stats -->
 @php
@@ -76,7 +76,7 @@
     </div>
 </form>
 
-    <div class="table-responsive">
+<div class="table-responsive">
     <table class="table table-bordered table-striped" id="invoicesTable">
         <thead>
             <tr>
@@ -124,6 +124,8 @@
 </div>
 </div>
 
+@endsection
+
 @section('scripts')
 <script>
     document.querySelectorAll('.toggle-col').forEach(function(checkbox) {
@@ -131,7 +133,7 @@
             var colClass = 'col-' + this.getAttribute('data-col');
             document.querySelectorAll('.' + colClass).forEach(function(cell) {
                 cell.style.display = checkbox.checked ? '' : 'none';
-            });
+            }.bind(this));
         });
     });
 </script>

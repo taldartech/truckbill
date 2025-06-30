@@ -5,20 +5,33 @@
     <h2>Add Invoice</h2>
     <form method="POST" action="{{ route('invoices.store') }}">
         @csrf
+        @php
+    $canEditCompany = auth()->check() && auth()->user()->userRole->name === 'super_admin';
+    $userCompanyId = auth()->user()->company_id ?? null;
+@endphp
         <div class="row">
+            <div class="col-md-4 mb-3">
+                <label for="company_id" class="form-label">Company *</label>
+                @if($canEditCompany)
+                    <select class="form-select" id="company_id" name="company_id" required>
+                        <option value="">Select</option>
+                        @foreach($companies as $company)
+                            <option value="{{ $company->id }}" {{ old('company_id') == $company->id ? 'selected' : '' }}>{{ $company->name }}</option>
+                        @endforeach
+                    </select>
+                @else
+                    <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
+                    <div class="form-control-plaintext">
+                        {{ $companies->firstWhere('id', $userCompanyId)->name ?? '' }}
+                    </div>
+                @endif
+                @error('company_id') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
             <div class="col-md-4 mb-3">
                 <label class="form-label">Manual Invoice #</label>
                 <input type="text" name="manual_invoice_number" class="form-control" value="{{ old('manual_invoice_number') }}">
             </div>
-            <div class="col-md-4 mb-3">
-                <label class="form-label">Company *</label>
-                <select name="company_id" class="form-select" required>
-                    <option value="">Select</option>
-                    @foreach($companies as $company)
-                        <option value="{{ $company->id }}" {{ old('company_id') == $company->id ? 'selected' : '' }}>{{ $company->name }}</option>
-                    @endforeach
-                </select>
-            </div>
+           
             <div class="col-md-4 mb-3">
                 <label class="form-label">Invoice Type *</label>
                 <select name="invoice_type" class="form-select" required>

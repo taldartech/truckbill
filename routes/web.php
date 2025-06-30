@@ -105,9 +105,6 @@ Route::middleware(['auth'])->group(function () {
 
     // Voucher Payments
     Route::resource('voucher_payments', VoucherPaymentController::class);
-    Route::get('voucher_payments/{voucher_payment}/edit', [VoucherPaymentController::class, 'edit'])->name('voucher_payments.edit');
-    Route::put('voucher_payments/{voucher_payment}', [VoucherPaymentController::class, 'update'])->name('voucher_payments.update');
-    Route::delete('voucher_payments/{voucher_payment}', [VoucherPaymentController::class, 'destroy'])->name('voucher_payments.destroy');
 
     // Transporter Bank Accounts
     Route::resource('transporter_bank_accounts', TransporterBankAccountController::class);

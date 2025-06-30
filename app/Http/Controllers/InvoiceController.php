@@ -100,11 +100,24 @@ public function getCustomerMemos($customerId)
             foreach ($data['memo_ids'] as $memoId) {
                 InvoiceMemoMap::create([
                     'invoice_id' => $invoice->id,
-                    'memo_id' => $memoId,
+                    'memo_id' => $memoId
                 ]);
             }
         }
         return redirect()->route('invoices.index')->with('success', 'Invoice created successfully.');
+    }
+
+    public function show(Invoice $invoice)
+    {
+        $invoice->load(['company', 'customer']);
+        // Get memos directly from lorry_receipts using the invoice's customer_id
+        $memos = DB::table('lorry_receipts')
+            ->select('memo_id', 'gr_number', 'source_city as from_location', 'destination_city as to_location', 'fr_rate as rate', 'amount')
+            ->where('customer_id', $invoice->customer_id)
+            ->whereNotNull('memo_id')
+            ->get();
+        
+        return view('invoices.show', compact('invoice', 'memos'));
     }
 
     public function edit(Invoice $invoice)
@@ -112,20 +125,27 @@ public function getCustomerMemos($customerId)
         $companies = Company::all();
         $customers = Customer::all();
         $memos = DB::table('lorry_receipts')
-        ->select('memo_id')
-        ->where('customer_id', $customerId)
-        ->whereNotNull('memo_id')
-        ->distinct()
-        ->get()
-        ->map(function($memo) {
-            return [
-                'id' => $memo->memo_id,
-                'memo_number' => 'Memo #' . $memo->memo_id,
-                'selected' => request()->old('memo_ids') && in_array($memo->memo_id, request()->old('memo_ids'))
-            ];
-        });
-        $selectedMemos = $invoice->memos->pluck('id')->toArray();
-        return view('invoices.edit', compact('invoice', 'companies', 'customers', 'memos', 'selectedMemos'));
+            ->select('memo_id')
+            ->where('customer_id', $invoice->customer_id)
+            ->whereNotNull('memo_id')
+            ->distinct()
+            ->get()
+            ->map(function($memo) use ($invoice) {
+                $selected = false;
+                if (request()->old('memo_ids')) {
+                    $selected = in_array($memo->memo_id, request()->old('memo_ids'));
+                } else {
+                    // Get memo_ids from the invoice's memoMaps relationship
+                    $selected = $invoice->memoMaps->pluck('memo_id')->contains($memo->memo_id);
+                }
+                return (object)[
+                    'memo_id' => $memo->memo_id,
+                    'memo_number' => 'Memo #' . $memo->memo_id,
+                    'selected' => $selected
+                ];
+            });
+
+        return view('invoices.edit', compact('invoice', 'companies', 'customers', 'memos'));
     }
 
     public function update(Request $request, Invoice $invoice)
@@ -139,19 +159,15 @@ public function getCustomerMemos($customerId)
             'total_amount' => 'required|numeric|min:0',
             'payment_status' => 'required|in:pending,partial,paid',
             'memo_ids' => 'nullable|array',
-            'memo_ids.*' => 'exists:memos,id',
+            'memo_ids.*' => 'exists:lorry_receipts,memo_id',
         ]);
+        
+        // Handle memo_ids separately since it's not a direct column
+        $memoIds = $data['memo_ids'] ?? [];
+        unset($data['memo_ids']);
+        
         $invoice->update($data);
-        // Sync memos
-        InvoiceMemoMap::where('invoice_id', $invoice->id)->delete();
-        if (!empty($data['memo_ids'])) {
-            foreach ($data['memo_ids'] as $memoId) {
-                InvoiceMemoMap::create([
-                    'invoice_id' => $invoice->id,
-                    'memo_id' => $memoId,
-                ]);
-            }
-        }
+        
         return redirect()->route('invoices.index')->with('success', 'Invoice updated successfully.');
     }
 
