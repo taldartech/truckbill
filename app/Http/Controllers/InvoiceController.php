@@ -112,7 +112,7 @@ public function getCustomerMemos($customerId)
         $invoice->load(['company', 'customer']);
         // Get memos directly from lorry_receipts using the invoice's customer_id
         $memos = DB::table('lorry_receipts')
-            ->select('memo_id', 'gr_number', 'source_city as from_location', 'destination_city as to_location', 'fr_rate as rate', 'amount')
+            ->select('memo_id', 'lr_number', 'source_city as from_location', 'destination_city as to_location', 'fr_rate as rate', 'amount')
             ->where('customer_id', $invoice->customer_id)
             ->whereNotNull('memo_id')
             ->get();

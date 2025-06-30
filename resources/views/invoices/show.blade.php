@@ -59,7 +59,7 @@
                                 @forelse($memos as $memo)
                                     <tr>
                                         <td>{{ $memo->memo_id }}</td>
-                                        <td>{{ $memo->gr_number }}</td>
+                                        <td>{{ $memo->lr_number }}</td>
                                         <td>{{ $memo->from_location }}</td>
                                         <td>{{ $memo->to_location }}</td>
                                         <td>&#8377;{{ number_format($memo->rate, 2) }}</td>
