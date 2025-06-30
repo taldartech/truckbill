@@ -27,14 +27,14 @@
                 @error('lr_number') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
             <div class="col-md-4 mb-3">
-                <label for="delivery_status" class="form-label">Delivery Status *</label>
-                <select class="form-select" id="delivery_status" name="delivery_status" required disabled>
+                <label for="delivery_status" class="form-label">Delivery Status</label>
+                <select class="form-select" id="delivery_status" name="delivery_status" disabled>
                     @foreach($statuses as $status)
                         <option value="{{ $status }}" {{ old('delivery_status') == $status ? 'selected' : '' }}>{{ $status }}</option>
                     @endforeach
                 </select>
-                <input type="hidden" name="delivery_status" value="{{ old('delivery_status') }}">
-                <small class="text-muted">It will beupdated from freight booking entries.</small>
+                <input type="hidden" name="delivery_status">
+                <small class="text-muted">It will be updated from freight booking entries.</small>
                 @error('delivery_status') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
         </div>
@@ -44,9 +44,9 @@
                 <label for="consignor_id" class="form-label">Consignor *</label>
                 <select class="form-select" id="consignor_id" name="consignor_id" required>
     <option value="">Select Consignor</option>
-    @foreach($consignees as $consignee)
-        <option value="{{ $consignee->id }}" {{ old('consignor_id') == $consignee->id ? 'selected' : '' }}>
-            {{ $consignee->name }}
+    @foreach($customers as $customer)
+        <option value="{{ $customer->id }}" {{ old('consignor_id') == $customer->id ? 'selected' : '' }}>
+            {{ $customer->name }}
         </option>
     @endforeach
 </select>
@@ -201,11 +201,7 @@
                 <input type="number" step="0.01" class="form-control" id="swachh_bharat_cess" name="swachh_bharat_cess" value="{{ old('swachh_bharat_cess') }}" disabled>
                 @error('swachh_bharat_cess') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
-            <div class="col-md-4 mb-3">
-                <label for="lr_number" class="form-label">LR Number *</label>
-                <input type="text" class="form-control" id="lr_number" name="lr_number" required value="{{ old('lr_number') }}">
-                @error('lr_number') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
+            
             <div class="col-md-4 mb-3">
                 <label for="memo_id" class="form-label">Memo ID</label>
                 <input type="number" class="form-control" id="memo_id" name="memo_id" value="{{ old('memo_id') }}">
@@ -217,90 +213,175 @@
     </form>
 </div>
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const consignorSelect = document.getElementById('consignor_id');
-        const consignorContact = document.getElementById('consignor_contact_number');
+document.addEventListener('DOMContentLoaded', function () {
+    // Handle consignor contact number and location details
+    const consignorSelect = document.getElementById('consignor_id');
+    const consignorContact = document.getElementById('consignor_contact_number');
+    const sourceCityInput = document.getElementById('source_city');
+    const sourceStateInput = document.getElementById('source_state');
 
-        consignorSelect.addEventListener('change', function () {
+    if (consignorSelect && consignorContact && sourceCityInput && sourceStateInput) {
+        consignorSelect.addEventListener('change', async function () {
             const consignorId = this.value;
-
             if (!consignorId) {
                 consignorContact.value = '';
+                sourceCityInput.value = '';
+                sourceStateInput.value = '';
                 return;
             }
 
-            fetch(`/consignees/details/${consignorId}`, {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
+            try {
+                const response = await fetch(`{{ route('customers.details', '__id__') }}`.replace('__id__', consignorId));
+                if (!response.ok) {
+                    throw new Error('Failed to fetch consignor details');
                 }
-            })
-            .then(response => {
-                if (!response.ok) throw new Error('Failed to fetch consignor details');
-                return response.json();
-            })
-            .then(data => {
+
+                const data = await response.json();
+                
+                // Update contact number and location fields
                 consignorContact.value = data.contact_number || '';
-            })
-            .catch(error => {
+                sourceCityInput.value = data.city_id ? 'Loading...' : '';
+                sourceStateInput.value = data.state_id ? 'Loading...' : '';
+
+                // Fetch city and state names using IDs
+                if (data.city_id || data.state_id) {
+                    const fetchCityState = async () => {
+                        try {
+                            // Fetch city name
+                            if (data.city_id) {
+                                const cityResponse = await fetch(`{{ route('cities.show', '__id__') }}`.replace('__id__', data.city_id));
+                                if (cityResponse.ok) {
+                                    const cityData = await cityResponse.json();
+                                    sourceCityInput.value = cityData.name || '';
+                                } else {
+                                    console.error('❌ Failed to fetch city:', await cityResponse.text());
+                                    sourceCityInput.value = '';
+                                }
+                            }
+
+                            // Fetch state name
+                            if (data.state_id) {
+                                const stateResponse = await fetch(`{{ route('states.show', '__id__') }}`.replace('__id__', data.state_id));
+                                if (stateResponse.ok) {
+                                    const stateData = await stateResponse.json();
+                                    sourceStateInput.value = stateData.name || '';
+                                } else {
+                                    console.error('❌ Failed to fetch state:', await stateResponse.text());
+                                    sourceStateInput.value = '';
+                                }
+                            }
+                        } catch (error) {
+                            console.error('❌ Error fetching city/state:', error);
+                            sourceCityInput.value = '';
+                            sourceStateInput.value = '';
+                        }
+                    };
+
+                    fetchCityState();
+                }
+            } catch (error) {
                 console.error('❌ Error:', error);
                 consignorContact.value = '';
-            });
+                sourceCityInput.value = '';
+                sourceStateInput.value = '';
+            }
         });
-    });
-    </script>
-    
-<script>
-document.addEventListener('DOMContentLoaded', function () {
+    }
+
+    // Handle consignee contact number and location details
     const consigneeSelect = document.getElementById('consignee_id');
     const consigneeContact = document.getElementById('consignee_contact_number');
-    if (consigneeSelect && consigneeContact) {
-        consigneeSelect.addEventListener('change', function () {
+    const destinationCityInput = document.getElementById('destination_city');
+    const destinationStateInput = document.getElementById('destination_state');
+
+    if (consigneeSelect && consigneeContact && destinationCityInput && destinationStateInput) {
+        consigneeSelect.addEventListener('change', async function () {
             const consigneeId = this.value;
             if (!consigneeId) {
                 consigneeContact.value = '';
+                destinationCityInput.value = '';
+                destinationStateInput.value = '';
                 return;
             }
-            fetch(`/consignees/details/${consigneeId}`, {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
+
+            try {
+                const response = await fetch(`{{ route('consignees.details', '__id__') }}`.replace('__id__', consigneeId));
+                if (!response.ok) {
+                    throw new Error('Failed to fetch consignee details');
                 }
-            })
-            .then(response => {
-                if (!response.ok) throw new Error('Failed to fetch consignee details');
-                return response.json();
-            })
-            .then(data => {
+
+                const data = await response.json();
+                
+                // Update contact number and location fields
                 consigneeContact.value = data.contact_number || '';
-            })
-            .catch(error => {
+                destinationCityInput.value = data.city_id ? 'Loading...' : '';
+                destinationStateInput.value = data.state_id ? 'Loading...' : '';
+
+                // Fetch city and state names using IDs
+                if (data.city_id || data.state_id) {
+                    const fetchCityState = async () => {
+                        try {
+                            // Fetch city name
+                            if (data.city_id) {
+                                const cityResponse = await fetch(`{{ route('cities.show', '__id__') }}`.replace('__id__', data.city_id));
+                                if (cityResponse.ok) {
+                                    const cityData = await cityResponse.json();
+                                    destinationCityInput.value = cityData.name || '';
+                                } else {
+                                    console.error('❌ Failed to fetch city:', await cityResponse.text());
+                                    destinationCityInput.value = '';
+                                }
+                            }
+
+                            // Fetch state name
+                            if (data.state_id) {
+                                const stateResponse = await fetch(`{{ route('states.show', '__id__') }}`.replace('__id__', data.state_id));
+                                if (stateResponse.ok) {
+                                    const stateData = await stateResponse.json();
+                                    destinationStateInput.value = stateData.name || '';
+                                } else {
+                                    console.error('❌ Failed to fetch state:', await stateResponse.text());
+                                    destinationStateInput.value = '';
+                                }
+                            }
+                        } catch (error) {
+                            console.error('❌ Error fetching city/state:', error);
+                            destinationCityInput.value = '';
+                            destinationStateInput.value = '';
+                        }
+                    };
+
+                    fetchCityState();
+                }
+            } catch (error) {
                 console.error('❌ Error:', error);
                 consigneeContact.value = '';
-            });
+                destinationCityInput.value = '';
+                destinationStateInput.value = '';
+            }
         });
     }
+
+    // Calculate amount
+    const weightInput = document.getElementById('weight');
+    const frRateInput = document.getElementById('fr_rate');
+    const amountInput = document.getElementById('amount');
+    
+    function calculateAmount() {
+        const weight = parseFloat(weightInput.value);
+        const frRate = parseFloat(frRateInput.value);
+    
+        if (!isNaN(weight) && !isNaN(frRate)) {
+            const amount = (weight * frRate).toFixed(2);
+            amountInput.value = amount;
+        } else {
+            amountInput.value = '';
+        }
+    }
+    
+    weightInput.addEventListener('input', calculateAmount);
+    frRateInput.addEventListener('input', calculateAmount);
 });
 </script>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const weightInput = document.getElementById('weight');
-        const frRateInput = document.getElementById('fr_rate');
-        const amountInput = document.getElementById('amount');
     
-        function calculateAmount() {
-            const weight = parseFloat(weightInput.value);
-            const frRate = parseFloat(frRateInput.value);
-    
-            if (!isNaN(weight) && !isNaN(frRate)) {
-                const amount = (weight * frRate).toFixed(2);
-                amountInput.value = amount;
-            } else {
-                amountInput.value = '';
-            }
-        }
-    
-        weightInput.addEventListener('input', calculateAmount);
-        frRateInput.addEventListener('input', calculateAmount);
-    });
-    </script>
 @endsection

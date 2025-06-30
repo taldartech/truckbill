@@ -27,6 +27,10 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // Protected Routes
 Route::middleware(['auth'])->group(function () {
+    // City and State routes
+    Route::get('/cities/{id}', [\App\Http\Controllers\CityController::class, 'show'])->name('cities.show');
+    Route::get('/states/{id}', [\App\Http\Controllers\StateController::class, 'show'])->name('states.show');
+
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
@@ -44,7 +48,7 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/company/{company}', [CompanyController::class, 'destroy'])->name('company.destroy');
 
     // Consignee Management
-    Route::get('/consignees/details/{id}', [ConsigneeController::class, 'getDetails']);
+    Route::get('/consignees/details/{id}', [ConsigneeController::class, 'getDetails'])->name('consignees.details');
     Route::get('/consignees', [ConsigneeController::class, 'index'])->name('consignees.index');
     Route::get('/consignees/create', [ConsigneeController::class, 'create'])->name('consignees.create');
     Route::post('/consignees', [ConsigneeController::class, 'store'])->name('consignees.store');
@@ -91,7 +95,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
 
     // Customers
-    Route::get('/customers/details/{id}', [CustomerController::class, 'getDetails']);
+    Route::get('/customers/details/{id}', [CustomerController::class, 'getDetails'])->name('customers.details');
     Route::resource('customers', CustomerController::class);
 
     // Vouchers

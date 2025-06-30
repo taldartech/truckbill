@@ -15,9 +15,22 @@ class Customer extends Model
         'address',
         'contact_person',
         'contact_number',
+        'country_id',
+        'state_id',
+        'city_id',
     ];
     public function company()
     {
         return $this->belongsTo(Company::class);
+    }
+
+    public function city()
+    {
+        return $this->belongsTo(City::class, 'city_id');
+    }
+
+    public function state()
+    {
+        return $this->belongsTo(State::class, 'state_id');
     }
 }

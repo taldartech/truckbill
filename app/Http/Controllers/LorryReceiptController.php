@@ -52,7 +52,7 @@ class LorryReceiptController extends Controller
     {
         $validated = $request->validate([
             'truck_id' => 'nullable|exists:trucks,id',
-            'delivery_status' => 'required|in:Pending,Delivered,Cancelled',
+            'delivery_status' => 'nullable|in:Pending,Delivered,Cancelled',
             'consignor_id' => 'required|integer',
             'customer_id' => 'required|integer',
             'consignor_contact_number' => 'nullable|string|max:20',
@@ -82,6 +82,9 @@ class LorryReceiptController extends Controller
 
         // Set truck_id to null if not provided
         $validated['truck_id'] = $validated['truck_id'] ?? null;
+        
+        // Set delivery_status to null if not provided
+        $validated['delivery_status'] = $validated['delivery_status'] ?? null;
         
         \App\Models\LorryReceipt::create($validated);
         return redirect()->route('lorry_receipts.index')->with('success', 'Lorry Receipt created successfully!');

@@ -7,9 +7,12 @@
             <h4 class="mb-0">Add Customer</h4>
         </div>
         <div class="card-body">
-            <form method="POST" action="{{ route('customers.store') }}">
+            <form method="POST" action="{{ route('customers.store') }}" id="customerForm">
                 @csrf
                 <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
+                <input type="hidden" name="country_id" id="country_id_hidden" value="{{ old('country_id') }}">
+                <input type="hidden" name="state_id" id="state_id_hidden" value="{{ old('state_id') }}">
+                <input type="hidden" name="city_id" id="city_id_hidden" value="{{ old('city_id') }}">
 
                 <div class="mb-3">
                     <label for="name" class="form-label">Name *</label>
@@ -126,6 +129,8 @@
         // Handle country change
         $('#country_id').change(function() {
             const countryId = $(this).val();
+            $('#country_id_hidden').val(countryId);
+            
             if (countryId) {
                 $.ajax({
                     url: '/api/states/' + countryId,
@@ -142,12 +147,17 @@
             } else {
                 $('#state_id').empty().append('<option value="">Select State</option>');
                 $('#city_id').empty().append('<option value="">Select City</option>');
+                $('#country_id_hidden').val('');
+                $('#state_id_hidden').val('');
+                $('#city_id_hidden').val('');
             }
         });
 
         // Handle state change
         $('#state_id').change(function() {
             const stateId = $(this).val();
+            $('#state_id_hidden').val(stateId);
+            
             if (stateId) {
                 $.ajax({
                     url: '/api/cities/' + stateId,
@@ -162,7 +172,14 @@
                 });
             } else {
                 $('#city_id').empty().append('<option value="">Select City</option>');
+                $('#city_id_hidden').val('');
             }
+        });
+
+        // Handle city change
+        $('#city_id').change(function() {
+            const cityId = $(this).val();
+            $('#city_id_hidden').val(cityId);
         });
     });
 </script>

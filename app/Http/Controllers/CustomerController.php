@@ -32,24 +32,54 @@ class CustomerController extends Controller
             'city_id' => 'required|exists:cities,id',
         ]);
         
-        $validated['company_id'] = auth()->user()->company_id;
-        Customer::create($validated);
+        // Log the validated data
+        \Log::info('Customer creation data:', $validated);
+        
+        // Create customer with explicit location IDs
+        $customer = Customer::create([
+            'name' => $validated['name'],
+            'gst_number' => $validated['gst_number'],
+            'pan_number' => $validated['pan_number'],
+            'address' => $validated['address'],
+            'contact_person' => $validated['contact_person'],
+            'contact_number' => $validated['contact_number'],
+            'country_id' => $validated['country_id'],
+            'state_id' => $validated['state_id'],
+            'city_id' => $validated['city_id'],
+            'company_id' => auth()->user()->company_id
+        ]);
+        
+        // Log the created customer
+        \Log::info('Created customer:', [
+            'id' => $customer->id,
+            'country_id' => $customer->country_id,
+            'state_id' => $customer->state_id,
+            'city_id' => $customer->city_id
+        ]);
+        
         return redirect()->route('customers.index')->with('success', 'Customer added successfully.');
     }
 
     public function getDetails($id)
     {
         $customer = Customer::find($id);
-    
-        if ($customer) {
-            return response()->json([
-                'contact_number' => $customer->contact_number,
-                'source_city'    => $customer->city,
-                'source_state'   => $customer->state
-            ]);
+        
+        if (!$customer) {
+            return response()->json(['error' => 'Customer not found'], 404);
         }
-    
-        return response()->json(null, 404);
+
+        // Log the foreign key values for debugging
+        \Log::info('Customer details:', [
+            'id' => $id,
+            'city_id' => $customer->city_id,
+            'state_id' => $customer->state_id
+        ]);
+
+        return response()->json([
+            'contact_number' => $customer->contact_number,
+            'city_id'        => $customer->city_id,
+            'state_id'       => $customer->state_id
+        ]);
     }
 
 

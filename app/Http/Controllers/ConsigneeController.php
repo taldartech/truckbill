@@ -51,6 +51,8 @@ class ConsigneeController extends Controller
             ->with('success', 'Consignee created successfully!');
     }
 
+
+
     public function edit(Consignee $consignee)
     {
         $countries = \App\Models\Country::all();
@@ -83,16 +85,16 @@ class ConsigneeController extends Controller
     }
     
     public function getDetails($id)
-{
-    $consignee = Consignee::find($id);
+    {
+        $consignee = Consignee::with(['city', 'state'])->find($id);
 
-    if ($consignee) {
-        return response()->json([
-            'contact_number'     => $consignee->contact_number,
-            'destination_city'   => $consignee->city,
-            'destination_state'  => $consignee->state
-        ]);
-    }
+        if ($consignee) {
+            return response()->json([
+                'contact_number' => $consignee->contact_number,
+                'city_id' => $consignee->city_id,
+                'state_id' => $consignee->state_id
+            ]);
+        }
 
     return response()->json(null, 404);
 }
