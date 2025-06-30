@@ -86,7 +86,9 @@ class CustomerController extends Controller
     public function edit(Customer $customer)
     {
         $countries = \App\Models\Country::all();
-        return view('customers.edit', compact('customer', 'countries'));
+        $states = $customer->country_id ? \App\Models\State::where('country_id', $customer->country_id)->get() : collect();
+        $cities = $customer->state_id ? \App\Models\City::where('state_id', $customer->state_id)->get() : collect();
+        return view('customers.edit', compact('customer', 'countries', 'states', 'cities'));
     }
 
     public function update(Request $request, Customer $customer)

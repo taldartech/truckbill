@@ -112,10 +112,8 @@ class LorryReceiptController extends Controller
     public function update(Request $request, \App\Models\LorryReceipt $lorry_receipt)
     {
         $validated = $request->validate([
-            'truck_id' => 'required|exists:trucks,id',
-            // 'transporter_id' => 'required|exists:transporters,id',
-            // 'eway_bill_number' => 'nullable|string|max:100',
-            'delivery_status' => 'required|in:Pending,Delivered,Cancelled',
+            'truck_id' => 'nullable|exists:trucks,id',
+            'delivery_status' => 'nullable|in:Pending,Delivered,Cancelled',
             'customer_id' => 'required|integer',
             'customer_contact_number' => 'nullable|string|max:20',
             'source_city' => 'required|string|max:100',

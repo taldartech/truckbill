@@ -56,8 +56,8 @@ class ConsigneeController extends Controller
     public function edit(Consignee $consignee)
     {
         $countries = \App\Models\Country::all();
-        $states = \App\Models\State::where('country_id', $consignee->country_id)->get();
-        $cities = \App\Models\City::where('state_id', $consignee->state_id)->get();
+        $states = $consignee->country_id ? \App\Models\State::where('country_id', $consignee->country_id)->get() : collect();
+        $cities = $consignee->state_id ? \App\Models\City::where('state_id', $consignee->state_id)->get() : collect();
         return view('consignees.edit', compact('consignee', 'countries', 'states', 'cities'));
     }
 
