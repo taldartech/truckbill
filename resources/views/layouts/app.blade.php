@@ -63,6 +63,31 @@
                        
                     @else
                         <li class="nav-item mb-2">
+                            <a class="nav-link text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#transporterMenu" role="button" aria-expanded="false" aria-controls="transporterMenu">
+                                <span><i class="fas fa-truck"></i> Transporter</span>
+                                <i class="fas fa-chevron-down small"></i>
+                            </a>
+                            <div class="collapse ms-3" id="transporterMenu">
+                                <ul class="nav flex-column">
+                                    <li class="nav-item mb-1">
+                                        <a href="/transporters" class="nav-link text-white">
+                                            <i class="fas fa-list"></i> Listing
+                                        </a>
+                                    </li>
+                                    <li class="nav-item mb-1">
+                                        <a href="/transporters/create" class="nav-link text-white">
+                                            <i class="fas fa-plus"></i> Register
+                                        </a>
+                                    </li>
+                                    <li class="nav-item mb-1">
+                                        <a href="/transporter_bank_accounts/create" class="nav-link text-white">
+                                            <i class="fas fa-university"></i> Add Bank Details
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        <li class="nav-item mb-2">
                             <a class="nav-link text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#truckMenu" role="button" aria-expanded="false" aria-controls="truckMenu">
                                 <span><i class="fas fa-truck-moving"></i> Truck</span>
                                 <i class="fas fa-chevron-down small"></i>
@@ -106,36 +131,6 @@
                                     </li>
                                 </ul>
                             </div>
-                        </li>
-                        <li class="nav-item mb-2">
-                            <a class="nav-link text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#transporterMenu" role="button" aria-expanded="false" aria-controls="transporterMenu">
-                                <span><i class="fas fa-truck"></i> Transporter</span>
-                                <i class="fas fa-chevron-down small"></i>
-                            </a>
-                            <div class="collapse ms-3" id="transporterMenu">
-                                <ul class="nav flex-column">
-                                    <li class="nav-item mb-1">
-                                        <a href="/transporters" class="nav-link text-white">
-                                            <i class="fas fa-list"></i> Listing
-                                        </a>
-                                    </li>
-                                    <li class="nav-item mb-1">
-                                        <a href="/transporters/create" class="nav-link text-white">
-                                            <i class="fas fa-plus"></i> Register
-                                        </a>
-                                    </li>
-                                    <li class="nav-item mb-1">
-                                        <a href="/transporter_bank_accounts/create" class="nav-link text-white">
-                                            <i class="fas fa-university"></i> Add Bank Details
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </li>
-                        <li class="nav-item mb-2">
-                            <a href="{{ route('transporter_ledger.index') }}" class="nav-link text-white">
-                                <i class="fas fa-money-check-alt"></i> Transporter Ledger
-                            </a>
                         </li>
                         <li class="nav-item mb-2">
                             <a class="nav-link text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#consigneeMenu" role="button" aria-expanded="false" aria-controls="consigneeMenu">
@@ -257,6 +252,7 @@
                                 </ul>
                             </div>
                         </li>
+                       
                         {{-- <li class="nav-item mb-2">
                             <a href="/vouchers" class="nav-link text-white">
                                 <i class="fas fa-file-invoice"></i> Vouchers
