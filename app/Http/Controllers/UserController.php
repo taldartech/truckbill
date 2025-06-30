@@ -29,7 +29,7 @@ class UserController extends Controller
             $query->where('company_id', $request->company_id);
         }
         $users = $query->orderByDesc('created_at')->get();
-        $roles = ['super_admin', 'admin', 'moderator', 'accountant'];
+        $roles = UserRole::pluck('name')->toArray();
         $companies = \App\Models\Company::all();
         return view('users.index', compact('users', 'roles', 'companies'));
     }
@@ -40,7 +40,7 @@ class UserController extends Controller
     public function create()
     {
         $companies = \App\Models\Company::all();
-        $roles = ['super_admin', 'admin', 'moderator', 'accountant'];
+        $roles = UserRole::pluck('name')->toArray();
         return view('users.create', compact('companies', 'roles'));
     }
 
