@@ -13,9 +13,12 @@ class Consignee extends Model
         'company_id',
         'name',
         'address',
-        'city',
-        'state',
-        'country',
+        'city_id',
+        'state_id',
+        'country_id',
+        'city_name',
+        'state_name',
+        'country_name',
         'contact_number',
     ];
 
@@ -24,5 +27,20 @@ class Consignee extends Model
     public function company()
     {
         return $this->belongsTo(Company::class);
+    }
+
+    public function city()
+    {
+        return $this->belongsTo(City::class);
+    }
+
+    public function state()
+    {
+        return $this->belongsTo(State::class);
+    }
+
+    public function country()
+    {
+        return $this->belongsTo(Country::class);
     }
 }

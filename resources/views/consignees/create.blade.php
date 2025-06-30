@@ -29,22 +29,53 @@
 
                 <div class="row">
                     <div class="col-md-4 mb-3">
-                        <label for="city" class="form-label">City *</label>
-                        <input type="text" class="form-control" id="city" name="city" value="{{ old('city') }}" required>
-                        @error('city')
+                        <label for="country" class="form-label">Country *</label>
+                        <select class="form-select" id="country_id" name="country_id" required>
+                            <option value="">Select Country</option>
+                            @foreach($countries as $country)
+                                <option value="{{ $country->id }}" {{ old('country_id') == $country->id ? 'selected' : '' }}>
+                                    {{ $country->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('country_id')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
                     </div>
 
                     <div class="col-md-4 mb-3">
                         <label for="state" class="form-label">State *</label>
-                        <input type="text" class="form-control" id="state" name="state" value="{{ old('state') }}" required>
-                        @error('state')
+                        <select class="form-select" id="state_id" name="state_id" required>
+                            <option value="">Select State</option>
+                            @if(old('country_id'))
+                                @foreach($states as $state)
+                                    <option value="{{ $state->id }}" {{ old('state_id') == $state->id ? 'selected' : '' }}>
+                                        {{ $state->name }}
+                                    </option>
+                                @endforeach
+                            @endif
+                        </select>
+                        @error('state_id')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
                     </div>
 
                     <div class="col-md-4 mb-3">
+                        <label for="city" class="form-label">City *</label>
+                        <select class="form-select" id="city_id" name="city_id" required>
+                            <option value="">Select City</option>
+                            @if(old('state_id'))
+                                @foreach($cities as $city)
+                                    <option value="{{ $city->id }}" {{ old('city_id') == $city->id ? 'selected' : '' }}>
+                                        {{ $city->name }}
+                                    </option>
+                                @endforeach
+                            @endif
+                        </select>
+                        @error('city_id')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
                         <label for="country" class="form-label">Country *</label>
                         <input type="text" class="form-control" id="country" name="country" value="{{ old('country') }}" required>
                         @error('country')
@@ -69,4 +100,5 @@
         </div>
     </div>
 </div>
+
 @endsection

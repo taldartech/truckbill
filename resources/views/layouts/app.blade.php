@@ -134,10 +134,16 @@
     </div>
 </li>
 <li class="nav-item mb-2">
-    <a href="/transporter/ledger" class="nav-link text-white">
+    <a href="transporter_ledger" class="nav-link text-white">
         <i class="fas fa-money-check-alt"></i> Transporter Ledger
     </a>
 </li>
+<li class="nav-item mb-2">
+    <a href="transporter_bank_accounts" class="nav-link text-white">
+        <i class="fas fa-money-check-alt"></i> Transporter Bank Details
+    </a>
+</li>
+      
                     
                     
                     <li class="nav-item mb-2">
@@ -262,6 +268,7 @@
         }
     });
 </script>
+    <script src="/js/dynamic-dropdowns.js"></script>
     <!-- AdminLTE JS -->
     <script src="/theme/dist/js/adminlte.min.js"></script>
 </body>
