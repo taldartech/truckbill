@@ -29,7 +29,7 @@ class UserController extends Controller
             $query->where('company_id', $request->company_id);
         }
         $users = $query->orderByDesc('created_at')->get();
-        $roles = UserRole::pluck('name')->toArray();
+        $roles = ['super_admin', 'admin', 'moderator', 'accountant'];
         $companies = \App\Models\Company::all();
         return view('users.index', compact('users', 'roles', 'companies'));
     }
@@ -40,7 +40,7 @@ class UserController extends Controller
     public function create()
     {
         $companies = \App\Models\Company::all();
-        $roles = UserRole::pluck('name')->toArray();
+        $roles = ['super_admin', 'admin', 'moderator', 'accountant'];
         return view('users.create', compact('companies', 'roles'));
     }
 
@@ -53,13 +53,14 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:6|confirmed',
-            'role' => 'required|in:admin,operator,accountant',
+            'role' => 'required|in:super_admin,admin,moderator,accountant',
             'company_id' => 'required|exists:companies,id',
         ]);
         $validated['password'] = bcrypt($validated['password']);
         $userRole = UserRole::where('name', $validated['role'])->first();
         if (!$userRole) {
-            return back()->withErrors(['role' => 'Invalid role selected.']);
+            // Create the role if it doesn't exist
+            $userRole = UserRole::create(['name' => $validated['role']]);
         }
         $validated['user_role_id'] = $userRole->id;
         unset($validated['role']);
@@ -94,7 +95,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:6|confirmed',
-            'role' => 'required|in:admin,operator,accountant',
+            'role' => 'required|in:super_admin,admin,moderator,accountant',
             'company_id' => 'required|exists:companies,id',
         ]);
         if ($validated['password']) {
