@@ -54,174 +54,191 @@
                             <i class="fas fa-tachometer-alt"></i> Dashboard
                         </a>
                     </li>
-                    @auth
-<li class="nav-item mb-2">
-    <a class="nav-link text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#truckMenu" role="button" aria-expanded="false" aria-controls="truckMenu">
-        <span><i class="fas fa-truck-moving"></i> Truck</span>
-        <i class="fas fa-chevron-down small"></i>
-    </a>
-    <div class="collapse ms-3" id="truckMenu">
-        <ul class="nav flex-column">
-            <li class="nav-item mb-1">
-                <a href="/trucks" class="nav-link text-white">
-                    <i class="fas fa-list"></i> Listing
-                </a>
-            </li>
-            <li class="nav-item mb-1">
-                <a href="/trucks/create" class="nav-link text-white">
-                    <i class="fas fa-plus"></i> Register
-                </a>
-            </li>
-            <li class="nav-item mb-1">
-                <a href="/drivers/create" class="nav-link text-white">
-                    <i class="fas fa-user-tie"></i> Add Driver
-                </a>
-            </li>
-        </ul>
-    </div>
-</li>
-<li class="nav-item mb-2">
-    <a class="nav-link text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#customerMenu" role="button" aria-expanded="false" aria-controls="customerMenu">
-        <span><i class="fas fa-users"></i> Customer</span>
-        <i class="fas fa-chevron-down small"></i>
-    </a>
-    <div class="collapse ms-3" id="customerMenu">
-        <ul class="nav flex-column">
-            <li class="nav-item mb-1">
-                <a href="/customers" class="nav-link text-white">
-                    <i class="fas fa-list"></i> Listing
-                </a>
-            </li>
-            <li class="nav-item mb-1">
-                <a href="/customers/create" class="nav-link text-white">
-                    <i class="fas fa-plus"></i> Register
-                </a>
-            </li>
-        </ul>
-    </div>
-</li>
-@endauth
                     @if(auth()->check() && auth()->user()->userRole->name === 'super_admin')
-<li class="nav-item mb-2">
-    <a href="/company/create" class="nav-link text-white">
-        <i class="fas fa-money-check-alt"></i> Company Registeration
-    </a>
-</li>
-@endif
-                    <li class="nav-item mb-2">
-    <a class="nav-link text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#transporterMenu" role="button" aria-expanded="false" aria-controls="transporterMenu">
-        <span><i class="fas fa-truck"></i> Transporter</span>
-        <i class="fas fa-chevron-down small"></i>
-    </a>
-    <div class="collapse ms-3" id="transporterMenu">
-        <ul class="nav flex-column">
-            <li class="nav-item mb-1">
-                <a href="/transporters" class="nav-link text-white">
-                    <i class="fas fa-list"></i> Listing
-                </a>
-            </li>
-            <li class="nav-item mb-1">
-                <a href="/transporters/create" class="nav-link text-white">
-                    <i class="fas fa-plus"></i> Register
-                </a>
-            </li>
-            <li class="nav-item mb-1">
-                <a href="/transporter_bank_accounts/create" class="nav-link text-white">
-    <i class="fas fa-university"></i> Add Bank Details
-</a>
-            </li>
-        </ul>
-    </div>
-</li>
-<li class="nav-item mb-2">
-    <a href="transporter_ledger" class="nav-link text-white">
-        <i class="fas fa-money-check-alt"></i> Transporter Ledger
-    </a>
-</li>
-<li class="nav-item mb-2">
-    <a href="transporter_bank_accounts" class="nav-link text-white">
-        <i class="fas fa-money-check-alt"></i> Transporter Bank Details
-    </a>
-</li>
-      
-                    
-                    
-                    <li class="nav-item mb-2">
-    <a class="nav-link text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#consigneeMenu" role="button" aria-expanded="false" aria-controls="consigneeMenu">
-        <span><i class="fas fa-people-carry"></i> Consignee</span>
-        <i class="fas fa-chevron-down small"></i>
-    </a>
-    <div class="collapse ms-3" id="consigneeMenu">
-        <ul class="nav flex-column">
-            <li class="nav-item mb-1">
-                <a href="/consignees" class="nav-link text-white">
-                    <i class="fas fa-list"></i> Listing
-                </a>
-            </li>
-            <li class="nav-item mb-1">
-                <a href="/consignees/create" class="nav-link text-white">
-                    <i class="fas fa-plus"></i> Register
-                </a>
-            </li>
-        </ul>
-    </div>
-</li>
-                    <li class="nav-item mb-2">
-    <a class="nav-link text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#lorryReceiptMenu" role="button" aria-expanded="false" aria-controls="lorryReceiptMenu">
-        <span><i class="fas fa-file-alt"></i> Lorry Receipts</span>
-        <i class="fas fa-chevron-down small"></i>
-    </a>
-    <div class="collapse ms-3" id="lorryReceiptMenu">
-        <ul class="nav flex-column">
-            <li class="nav-item mb-1">
-                <a href="/lorry_receipts" class="nav-link text-white">
-                    <i class="fas fa-list"></i> Listing
-                </a>
-            </li>
-            <li class="nav-item mb-1">
-                <a href="/lorry_receipts/create" class="nav-link text-white">
-                    <i class="fas fa-plus"></i> Register
-                </a>
-            </li>
-        </ul>
-    </div>
-</li>
-                    <li class="nav-item mb-2">
-    <a class="nav-link text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#freightBookingMenu" role="button" aria-expanded="false" aria-controls="freightBookingMenu">
-        <span><i class="fas fa-shipping-fast"></i> Freight Bookings</span>
-        <i class="fas fa-chevron-down small"></i>
-    </a>
-    <div class="collapse ms-3" id="freightBookingMenu">
-        <ul class="nav flex-column">
-            <li class="nav-item mb-1">
-                <a href="/freight_bookings" class="nav-link text-white">
-                    <i class="fas fa-list"></i> Listing
-                </a>
-            </li>
-            <li class="nav-item mb-1">
-                <a href="/freight_bookings/create" class="nav-link text-white">
-                    <i class="fas fa-plus"></i> Register
-                </a>
-            </li>
-        </ul>
-    </div>
-</li>
-                    <li class="nav-item mb-2">
+                        <li class="nav-item mb-2">
+                            <a href="/company/create" class="nav-link text-white">
+                                <i class="fas fa-money-check-alt"></i> Company Registeration
+                            </a>
+                        </li>
+                       
+                    @else
+                        <li class="nav-item mb-2">
+                            <a class="nav-link text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#truckMenu" role="button" aria-expanded="false" aria-controls="truckMenu">
+                                <span><i class="fas fa-truck-moving"></i> Truck</span>
+                                <i class="fas fa-chevron-down small"></i>
+                            </a>
+                            <div class="collapse ms-3" id="truckMenu">
+                                <ul class="nav flex-column">
+                                    <li class="nav-item mb-1">
+                                        <a href="/trucks" class="nav-link text-white">
+                                            <i class="fas fa-list"></i> Listing
+                                        </a>
+                                    </li>
+                                    <li class="nav-item mb-1">
+                                        <a href="/trucks/create" class="nav-link text-white">
+                                            <i class="fas fa-plus"></i> Register
+                                        </a>
+                                    </li>
+                                    <li class="nav-item mb-1">
+                                        <a href="/drivers/create" class="nav-link text-white">
+                                            <i class="fas fa-user-tie"></i> Add Driver
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        <li class="nav-item mb-2">
+                            <a class="nav-link text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#customerMenu" role="button" aria-expanded="false" aria-controls="customerMenu">
+                                <span><i class="fas fa-users"></i> Customer</span>
+                                <i class="fas fa-chevron-down small"></i>
+                            </a>
+                            <div class="collapse ms-3" id="customerMenu">
+                                <ul class="nav flex-column">
+                                    <li class="nav-item mb-1">
+                                        <a href="/customers" class="nav-link text-white">
+                                            <i class="fas fa-list"></i> Listing
+                                        </a>
+                                    </li>
+                                    <li class="nav-item mb-1">
+                                        <a href="/customers/create" class="nav-link text-white">
+                                            <i class="fas fa-plus"></i> Register
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        <li class="nav-item mb-2">
+                            <a class="nav-link text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#transporterMenu" role="button" aria-expanded="false" aria-controls="transporterMenu">
+                                <span><i class="fas fa-truck"></i> Transporter</span>
+                                <i class="fas fa-chevron-down small"></i>
+                            </a>
+                            <div class="collapse ms-3" id="transporterMenu">
+                                <ul class="nav flex-column">
+                                    <li class="nav-item mb-1">
+                                        <a href="/transporters" class="nav-link text-white">
+                                            <i class="fas fa-list"></i> Listing
+                                        </a>
+                                    </li>
+                                    <li class="nav-item mb-1">
+                                        <a href="/transporters/create" class="nav-link text-white">
+                                            <i class="fas fa-plus"></i> Register
+                                        </a>
+                                    </li>
+                                    <li class="nav-item mb-1">
+                                        <a href="/transporter_bank_accounts/create" class="nav-link text-white">
+                                            <i class="fas fa-university"></i> Add Bank Details
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        <li class="nav-item mb-2">
+                            <a href="{{ route('transporter_ledger.index') }}" class="nav-link text-white">
+                                <i class="fas fa-money-check-alt"></i> Transporter Ledger
+                            </a>
+                        </li>
+                        <li class="nav-item mb-2">
+                            <a class="nav-link text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#consigneeMenu" role="button" aria-expanded="false" aria-controls="consigneeMenu">
+                                <span><i class="fas fa-people-carry"></i> Consignee</span>
+                                <i class="fas fa-chevron-down small"></i>
+                            </a>
+                            <div class="collapse ms-3" id="consigneeMenu">
+                                <ul class="nav flex-column">
+                                    <li class="nav-item mb-1">
+                                        <a href="/consignees" class="nav-link text-white">
+                                            <i class="fas fa-list"></i> Listing
+                                        </a>
+                                    </li>
+                                    <li class="nav-item mb-1">
+                                        <a href="/consignees/create" class="nav-link text-white">
+                                            <i class="fas fa-plus"></i> Register
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        <li class="nav-item mb-2">
+                            <a class="nav-link text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#lorryReceiptMenu" role="button" aria-expanded="false" aria-controls="lorryReceiptMenu">
+                                <span><i class="fas fa-file-alt"></i> Lorry Receipts</span>
+                                <i class="fas fa-chevron-down small"></i>
+                            </a>
+                            <div class="collapse ms-3" id="lorryReceiptMenu">
+                                <ul class="nav flex-column">
+                                    <li class="nav-item mb-1">
+                                        <a href="/lorry_receipts" class="nav-link text-white">
+                                            <i class="fas fa-list"></i> Listing
+                                        </a>
+                                    </li>
+                                    <li class="nav-item mb-1">
+                                        <a href="/lorry_receipts/create" class="nav-link text-white">
+                                            <i class="fas fa-plus"></i> Register
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        <li class="nav-item mb-2">
+                            <a class="nav-link text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#freightBookingMenu" role="button" aria-expanded="false" aria-controls="freightBookingMenu">
+                                <span><i class="fas fa-shipping-fast"></i> Freight Bookings</span>
+                                <i class="fas fa-chevron-down small"></i>
+                            </a>
+                            <div class="collapse ms-3" id="freightBookingMenu">
+                                <ul class="nav flex-column">
+                                    <li class="nav-item mb-1">
+                                        <a href="/freight_bookings" class="nav-link text-white">
+                                            <i class="fas fa-list"></i> Listing
+                                        </a>
+                                    </li>
+                                    <li class="nav-item mb-1">
+                                        <a href="/freight_bookings/create" class="nav-link text-white">
+                                            <i class="fas fa-plus"></i> Register
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        <li class="nav-item mb-2">
+                            <a href="/vouchers" class="nav-link text-white">
+                                <i class="fas fa-file-invoice"></i> Vouchers
+                            </a>
+                        </li>
+                        <li class="nav-item mb-2">
+                            <a href="/voucher_payments" class="nav-link text-white">
+                                <i class="fas fa-money-check-alt"></i> Voucher Payments
+                            </a>
+                        </li>
+                        <li class="nav-item mb-2">
+                            <a href="/invoices" class="nav-link text-white">
+                                <i class="fas fa-money-check-alt"></i> Invoices
+                            </a>
+                        </li>
+                        <li class="nav-item mb-2">
+                            <a href="/reports" class="nav-link text-white">
+                                <i class="fas fa-chart-bar"></i> Reports
+                            </a>
+                        </li>
+                        <li class="nav-item mb-2">
+                            <a href="/settings" class="nav-link text-white">
+                                <i class="fas fa-cog"></i> Settings
+                            </a>
+                        </li>
+                    @endif
+                    {{-- <li class="nav-item mb-2">
                         <a href="/vouchers" class="nav-link text-white">
                             <i class="fas fa-file-invoice"></i> Vouchers
                         </a>
-                    </li>
-                    <li class="nav-item mb-2">
+                    </li> --}}
+                    {{-- <li class="nav-item mb-2">
                         <a href="/voucher_payments" class="nav-link text-white">
                             <i class="fas fa-money-check-alt"></i> Voucher Payments
                         </a>
-                    </li>
+                    </li> --}}
                    
-                    <li class="nav-item mb-2">
+                    {{-- <li class="nav-item mb-2">
                         <a href="/invoices" class="nav-link text-white">
                             <i class="fas fa-money-check-alt"></i> Invoices
                         </a>
-                    </li>
+                    </li> --}}
                    
                    
                     @if(auth()->check() && auth()->user()->userRole->name === 'super_admin')
@@ -231,7 +248,7 @@
     </a>
 </li>
 @endif
-                    <li class="nav-item mb-2">
+                    {{-- <li class="nav-item mb-2">
                         <a href="/reports" class="nav-link text-white">
                             <i class="fas fa-chart-bar"></i> Reports
                         </a>
@@ -240,7 +257,7 @@
                         <a href="/settings" class="nav-link text-white">
                             <i class="fas fa-cog"></i> Settings
                         </a>
-                    </li>
+                    </li> --}}
                 </ul>
             </div>
         </nav>

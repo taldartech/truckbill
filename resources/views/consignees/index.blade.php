@@ -24,9 +24,9 @@
             <tr>
                 <td>{{ $consignee->id }}</td>
                 <td>{{ $consignee->name }}</td>
-                <td>{{ $consignee->city }}</td>
-                <td>{{ $consignee->state }}</td>
-                <td>{{ $consignee->country }}</td>
+                <td>{{ $consignee->city?->name ?? '-' }}</td>
+                <td>{{ $consignee->state?->name ?? '-' }}</td>
+                <td>{{ $consignee->country?->name ?? '-' }}</td>
                 <td>{{ $consignee->contact_number }}</td>
                 <td>
                     

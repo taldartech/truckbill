@@ -111,6 +111,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('transporter_bank_accounts/{transporter_bank_account}/edit', [TransporterBankAccountController::class, 'edit'])->name('transporter_bank_accounts.edit');
 
     // Transporter Ledger
+    Route::get('/transporter_ledger', [TransporterLedgerController::class, 'index'])->name('transporter_ledger.index');
     Route::get('transporter_ledger', [TransporterLedgerController::class, 'index'])->name('transporter_ledger.index');
     Route::get('transporter_ledger/create', [TransporterLedgerController::class, 'create'])->name('transporter_ledger.create');
     Route::post('transporter_ledger', [TransporterLedgerController::class, 'store'])->name('transporter_ledger.store');
@@ -126,6 +127,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/drivers/{driver}/edit', [DriverController::class, 'edit'])->name('drivers.edit');
     Route::put('/drivers/{driver}', [DriverController::class, 'update'])->name('drivers.update');
     Route::delete('/drivers/{driver}', [DriverController::class, 'destroy'])->name('drivers.destroy');
+
+    // Transporters CRUD
+    Route::get('/transporters', [TransporterController::class, 'index'])->name('transporters.index');
+    Route::get('/transporters/create', [TransporterController::class, 'create'])->name('transporters.create');
+    Route::post('/transporters', [TransporterController::class, 'store'])->name('transporters.store');
+    Route::get('/transporters/{transporter}/edit', [TransporterController::class, 'edit'])->name('transporters.edit');
+    Route::put('/transporters/{transporter}', [TransporterController::class, 'update'])->name('transporters.update');
+    Route::delete('/transporters/{transporter}', [TransporterController::class, 'destroy'])->name('transporters.destroy');
 
     // API routes for dynamic dropdowns
     Route::get('/api/states/{countryId}', [\App\Http\Controllers\Api\DropdownController::class, 'states']);

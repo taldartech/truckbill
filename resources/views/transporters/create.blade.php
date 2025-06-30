@@ -3,29 +3,38 @@
 @section('content')
 <div class="container mt-4">
     <h2>Add New Transporter</h2>
-    <form action="{{ route('transporters.store') }}" method="POST">
+    <form action="{{ route('transporters.store') }}" method="POST" class="needs-validation" novalidate>
         @csrf
         @php
     $canEditCompany = auth()->check() && auth()->user()->userRole->name === 'super_admin';
     $userCompanyId = auth()->user()->company_id ?? null;
 @endphp
-<div class="mb-3">
-    <label for="company_id" class="form-label">Company *</label>
-    @if($canEditCompany)
-        <select class="form-select" id="company_id" name="company_id" required>
-            <option value="">Select</option>
-            @foreach($companies as $company)
-                <option value="{{ $company->id }}" {{ old('company_id') == $company->id ? 'selected' : '' }}>{{ $company->name }}</option>
-            @endforeach
-        </select>
-    @else
-        <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
-        <div class="form-control-plaintext">
-            {{ $companies->firstWhere('id', $userCompanyId)->name ?? '' }}
+        <div class="mb-3">
+            <label for="company_id" class="form-label">Company *</label>
+            @if($canEditCompany)
+                <select class="form-select" id="company_id" name="company_id" required>
+                    <option value="">Select</option>
+                    @foreach($companies as $company)
+                        <option value="{{ $company->id }}" {{ old('company_id') == $company->id ? 'selected' : '' }}>{{ $company->name }}</option>
+                    @endforeach
+                </select>
+            @else
+                <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
+                <div class="form-control-plaintext">
+                    {{ $companies->firstWhere('id', $userCompanyId)->name ?? '' }}
+                </div>
+            @endif
+            @error('company_id') <div class="text-danger">{{ $message }}</div> @enderror
         </div>
-    @endif
-    @error('company_id') <div class="text-danger">{{ $message }}</div> @enderror
-</div>
+
+        @php
+            $companyIdError = session('errors') ? session('errors')->first('company_id') : null;
+        @endphp
+        @if($companyIdError)
+            <div class="alert alert-danger">
+                {{ $companyIdError }}
+            </div>
+        @endif
         <div class="mb-3">
             <label for="name" class="form-label">Name *</label>
             <input type="text" class="form-control" id="name" name="name" required value="{{ old('name') }}">

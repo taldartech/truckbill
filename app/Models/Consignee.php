@@ -16,10 +16,13 @@ class Consignee extends Model
         'city_id',
         'state_id',
         'country_id',
-        'city_name',
-        'state_name',
-        'country_name',
         'contact_number',
+    ];
+
+    protected $casts = [
+        'city_name' => 'string',
+        'state_name' => 'string',
+        'country_name' => 'string',
     ];
 
     protected $table = 'consignees';

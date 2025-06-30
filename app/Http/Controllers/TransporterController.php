@@ -8,7 +8,13 @@ class TransporterController extends Controller
 {
     public function index(Request $request)
     {
-        $query = \App\Models\Transporter::with('company')->where('company_id', auth()->user()->company_id);
+        $query = \App\Models\Transporter::with('company');
+        
+        // Only apply company_id filter for non-super_admin users
+        if (auth()->user()->userRole->name !== 'super_admin') {
+            $query->where('company_id', auth()->user()->company_id);
+        }
+        
         if ($request->filled('name')) {
             $query->where('name', 'like', '%' . $request->name . '%');
         }
@@ -24,11 +30,16 @@ class TransporterController extends Controller
         if ($request->filled('is_owner')) {
             $query->where('is_owner', $request->is_owner);
         }
-        if ($request->filled('company_id')) {
+        if ($request->filled('company_id') && auth()->user()->userRole->name === 'super_admin') {
             $query->where('company_id', $request->company_id);
         }
+        
         $transporters = $query->orderByDesc('created_at')->get();
         $companies = \App\Models\Company::all();
+        
+        // Log the number of transporters found
+        \Log::info('Transporters found: ' . count($transporters));
+        
         return view('transporters.index', compact('transporters', 'companies'));
     }
 

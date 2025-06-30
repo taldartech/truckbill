@@ -76,11 +76,7 @@
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
                     </div>
-                        <label for="country" class="form-label">Country *</label>
-                        <input type="text" class="form-control" id="country" name="country" value="{{ old('country') }}" required>
-                        @error('country')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
+                      
                     </div>
                 </div>
 

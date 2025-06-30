@@ -14,21 +14,26 @@ class CustomerController extends Controller
 
     public function create()
     {
-        return view('customers.create');
+        $countries = \App\Models\Country::all();
+        return view('customers.create', compact('countries'));
     }
 
     public function store(Request $request)
     {
-        $data = $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'gst_number' => 'nullable|string|max:255',
             'pan_number' => 'nullable|string|max:255',
             'address' => 'nullable|string|max:255',
             'contact_person' => 'nullable|string|max:255',
-            'contact_number' => 'nullable|string|max:255',
+            'contact_number' => 'required|string|max:20',
+            'country_id' => 'required|exists:countries,id',
+            'state_id' => 'required|exists:states,id',
+            'city_id' => 'required|exists:cities,id',
         ]);
-        $data['company_id'] = auth()->user()->company_id;
-        Customer::create($data);
+        
+        $validated['company_id'] = auth()->user()->company_id;
+        Customer::create($validated);
         return redirect()->route('customers.index')->with('success', 'Customer added successfully.');
     }
 
@@ -50,20 +55,25 @@ class CustomerController extends Controller
 
     public function edit(Customer $customer)
     {
-        return view('customers.edit', compact('customer'));
+        $countries = \App\Models\Country::all();
+        return view('customers.edit', compact('customer', 'countries'));
     }
 
     public function update(Request $request, Customer $customer)
     {
-        $data = $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'gst_number' => 'nullable|string|max:255',
             'pan_number' => 'nullable|string|max:255',
             'address' => 'nullable|string|max:255',
             'contact_person' => 'nullable|string|max:255',
-            'contact_number' => 'nullable|string|max:255',
+            'contact_number' => 'required|string|max:20',
+            'country_id' => 'required|exists:countries,id',
+            'state_id' => 'required|exists:states,id',
+            'city_id' => 'required|exists:cities,id',
         ]);
-        $customer->update($data);
+        
+        $customer->update($validated);
         return redirect()->route('customers.index')->with('success', 'Customer updated successfully.');
     }
 

@@ -9,7 +9,10 @@ class ConsigneeController extends Controller
 {
     public function index()
     {
-        $consignees = Consignee::where('company_id', auth()->user()->company_id)->orderBy('name')->paginate(20);
+        $consignees = Consignee::where('company_id', auth()->user()->company_id)
+            ->with(['city', 'state', 'country'])
+            ->orderBy('name')
+            ->paginate(20);
         return view('consignees.index', compact('consignees'));
     }
 
@@ -35,17 +38,15 @@ class ConsigneeController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'required|string',
-            'city' => 'required|string|max:255',
-            'state' => 'required|string|max:255',
-            'country' => 'required|string|max:255',
+            'country_id' => 'required|exists:countries,id',
+            'state_id' => 'required|exists:states,id',
+            'city_id' => 'required|exists:cities,id',
             'contact_number' => 'required|string|max:20',
         ]);
 
         $validated['company_id'] = auth()->user()->company_id;
-        $validated['city_name'] = \App\Models\City::find($validated['city_id'])->name;
-        $validated['state_name'] = \App\Models\State::find($validated['state_id'])->name;
-        $validated['country_name'] = \App\Models\Country::find($validated['country_id'])->name;
-        Consignee::create($validated);
+        
+        $consignee = Consignee::create($validated);
         return redirect()->route('consignees.index')
             ->with('success', 'Consignee created successfully!');
     }
@@ -63,15 +64,12 @@ class ConsigneeController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'required|string',
-            'city' => 'required|string|max:255',
-            'state' => 'required|string|max:255',
-            'country' => 'required|string|max:255',
+            'country_id' => 'required|exists:countries,id',
+            'state_id' => 'required|exists:states,id',
+            'city_id' => 'required|exists:cities,id',
             'contact_number' => 'required|string|max:20',
         ]);
 
-        $validated['city_name'] = \App\Models\City::find($validated['city_id'])->name;
-        $validated['state_name'] = \App\Models\State::find($validated['state_id'])->name;
-        $validated['country_name'] = \App\Models\Country::find($validated['country_id'])->name;
         $consignee->update($validated);
         return redirect()->route('consignees.index')
             ->with('success', 'Consignee updated successfully!');
