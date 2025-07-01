@@ -124,24 +124,25 @@ public function getCustomerMemos($customerId)
     {
         $companies = Company::all();
         $customers = Customer::all();
+        
+        // Get all memos for this customer
         $memos = DB::table('lorry_receipts')
             ->select('memo_id')
             ->where('customer_id', $invoice->customer_id)
             ->whereNotNull('memo_id')
             ->distinct()
             ->get()
-            ->map(function($memo) use ($invoice) {
-                $selected = false;
-                if (request()->old('memo_ids')) {
-                    $selected = in_array($memo->memo_id, request()->old('memo_ids'));
-                } else {
-                    // Get memo_ids from the invoice's memoMaps relationship
-                    $selected = $invoice->memoMaps->pluck('memo_id')->contains($memo->memo_id);
-                }
+            ->map(function($memo) {
+                // Only show memos that have an invoice_id (indicating they're used)
+                $hasInvoice = DB::table('lorry_receipts')
+                    ->where('memo_id', $memo->memo_id)
+                    
+                    ->exists();
+                
                 return (object)[
                     'memo_id' => $memo->memo_id,
                     'memo_number' => 'Memo #' . $memo->memo_id,
-                    'selected' => $selected
+                    'selected' => $hasInvoice
                 ];
             });
 
