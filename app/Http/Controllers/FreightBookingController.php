@@ -53,10 +53,18 @@ class FreightBookingController extends Controller
             'linked_freight_booking_id' => 'nullable|exists:freight_bookings,id',
         ]);
 
-        $freightBooking = FreightBooking::create($data);
+        // Get the lorry receipt to get its LR number
+        $lorryReceipt = LorryReceipt::find($data['lr_id']);
+        if (!$lorryReceipt) {
+            return redirect()->back()->withErrors(['lr_id' => 'Invalid lorry receipt']);
+        }
+
+        // Create freight booking with lorry receipt's LR number
+        $freightBooking = FreightBooking::create(array_merge($data, [
+            'lr_number' => $lorryReceipt->lr_number
+        ]));
         
         // Update lorry receipt status
-        $lorryReceipt = LorryReceipt::find($data['lr_id']);
         if ($lorryReceipt) {
             $deliveryStatus = 'Pending';
             if ($data['is_cancelled'] === '1') {
@@ -99,11 +107,18 @@ class FreightBookingController extends Controller
             'linked_freight_booking_id' => 'nullable|exists:freight_bookings,id',
         ]);
 
-        // Update freight booking
-        $freight_booking->update($data);
+        // Get the lorry receipt to get its LR number
+        $lorryReceipt = LorryReceipt::find($data['lr_id']);
+        if (!$lorryReceipt) {
+            return redirect()->back()->withErrors(['lr_id' => 'Invalid lorry receipt']);
+        }
+
+        // Update freight booking with lorry receipt's LR number
+        $freight_booking->update(array_merge($data, [
+            'lr_number' => $lorryReceipt->lr_number
+        ]));
 
         // Update lorry receipt status
-        $lorryReceipt = LorryReceipt::find($data['lr_id']);
         if ($lorryReceipt) {
             $deliveryStatus = 'Pending';
             if ($data['is_cancelled'] === '1') {
