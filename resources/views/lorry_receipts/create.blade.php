@@ -44,9 +44,9 @@
                 <label for="consignor_id" class="form-label">Consignor *</label>
                 <select class="form-select" id="consignor_id" name="consignor_id" required>
     <option value="">Select Consignor</option>
-    @foreach($customers as $customer)
-        <option value="{{ $customer->id }}" {{ old('consignor_id') == $customer->id ? 'selected' : '' }}>
-            {{ $customer->name }}
+    @foreach($consignees as $consignee)
+        <option value="{{ $consignee->id }}" {{ old('consignee_id') == $consignee->id ? 'selected' : '' }}>
+            {{ $consignee->name }}
         </option>
     @endforeach
 </select>
@@ -231,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             try {
-                const response = await fetch(`{{ route('customers.details', '__id__') }}`.replace('__id__', consignorId));
+                const response = await fetch(`{{ route('consignees.details', '__id__') }}`.replace('__id__', consignorId));
                 if (!response.ok) {
                     throw new Error('Failed to fetch consignor details');
                 }
