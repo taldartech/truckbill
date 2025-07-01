@@ -117,5 +117,50 @@
         <button type="submit" class="btn btn-success">Update</button>
         <a href="{{ route('freight_bookings.index') }}" class="btn btn-secondary ms-2">Back to List</a>
     </form>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const isDeliveredSelect = document.getElementById('is_delivered');
+            const isCancelledSelect = document.getElementById('is_cancelled');
+            const lrSelect = document.getElementById('lr_id');
+
+            function updateLorryReceiptStatus() {
+                const lrId = lrSelect.value;
+                if (!lrId) return;
+
+                // Get the LR number from the selected option
+                const selectedOption = lrSelect.options[lrSelect.selectedIndex];
+                const lrNumber = selectedOption.textContent;
+
+                fetch(`/lorry_receipts/update-status`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        lr_number: lrNumber,
+                        delivered: isDeliveredSelect.value === '1' ? 'Yes' : 'No',
+                        cancelled: isCancelledSelect.value === '1' ? 'Yes' : 'No'
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('Lorry receipt status updated successfully');
+                    } else if (data.error) {
+                        console.error('Error:', data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error updating lorry receipt status:', error);
+                });
+            }
+
+            // Attach event listeners
+            isDeliveredSelect.addEventListener('change', updateLorryReceiptStatus);
+            isCancelledSelect.addEventListener('change', updateLorryReceiptStatus);
+            lrSelect.addEventListener('change', updateLorryReceiptStatus);
+        });
+    </script>
 </div>
 @endsection

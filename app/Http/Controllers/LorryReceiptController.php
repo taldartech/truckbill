@@ -8,33 +8,45 @@ use App\Models\Transporter;
 use App\Models\Customer;
 use App\Models\Consignee;
 use App\Models\GoodType;
+use App\Models\FreightBooking;
+use App\Models\LorryReceipt;
 
 class LorryReceiptController extends Controller
 {
     public function index(Request $request)
     {
+        $statuses = ['Pending', 'Delivered', 'Cancelled'];
         $query = \App\Models\LorryReceipt::with(['truck', 'transporter', 'consignor', 'consignee']);
-        if ($request->filled('gr_number')) {
+
+        if ($request->gr_number) {
             $query->where('gr_number', 'like', '%' . $request->gr_number . '%');
         }
-        if ($request->filled('truck_id')) {
+
+        if ($request->truck_id) {
             $query->where('truck_id', $request->truck_id);
         }
-        if ($request->filled('transporter_id')) {
+
+        if ($request->transporter_id) {
             $query->where('transporter_id', $request->transporter_id);
         }
-        if ($request->filled('delivery_status')) {
+
+        if ($request->delivery_status) {
             $query->where('delivery_status', $request->delivery_status);
         }
-        if ($request->filled('gr_date_from')) {
-            $query->whereDate('gr_date', '>=', $request->gr_date_from);
+
+        if ($request->gr_date_from) {
+            $query->where('gr_date', '>=', $request->gr_date_from);
         }
-        if ($request->filled('gr_date_to')) {
-            $query->whereDate('gr_date', '<=', $request->gr_date_to);
+
+        if ($request->gr_date_to) {
+            $query->where('gr_date', '<=', $request->gr_date_to);
         }
-        $lrs = $query->orderByDesc('created_at')->get();
-        $statuses = ['Pending', 'Delivered', 'Cancelled'];
-        return view('lorry_receipts.index', compact('lrs', 'statuses'));
+
+        $lrs = $query->paginate(10);
+        return view('lorry_receipts.index', [
+            'lrs' => $lrs,
+            'statuses' => $statuses
+        ]);
     }
 
     public function create()
@@ -51,26 +63,23 @@ class LorryReceiptController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'customer_id' => 'required|exists:customers,id',
+            'lr_number' => 'required|string|max:100',
             'truck_id' => 'nullable|exists:trucks,id',
-            'delivery_status' => 'nullable|in:Pending,Delivered,Cancelled',
-            'consignor_id' => 'required|integer',
-            'customer_id' => 'required|integer',
-            'consignor_contact_number' => 'nullable|string|max:20',
-            'source_city' => 'required|string|max:100',
-            'destination_city' => 'required|string|max:100',
-            'source_state' => 'required|string|max:100',
-            'destination_state' => 'required|string|max:100',
-            'weight' => 'required|numeric',
-            'no_of_units' => 'required|integer',
-            'good_type' => 'required|string|max:100',
-            'fr_rate' => 'required|numeric',
-            'amount' => 'required|numeric',
+            'transporter_id' => 'nullable|exists:transporters,id',
+            'consignor_id' => 'required|exists:consignees,id',
+            'consignee_id' => 'required|exists:consignees,id',
             'gr_date' => 'required|date',
-            'gr_number' => 'required|string|max:100|unique:lorry_receipts,gr_number',
-            'memo_id' => 'nullable|integer',
-            'consignee_id' => 'required|integer',
-            'consignee_contact_number' => 'nullable|string|max:20',
-            'lane' => 'required|string',
+            'source_city' => 'required|string|max:100',
+            'source_state' => 'required|string|max:100',
+            'destination_city' => 'required|string|max:100',
+            'destination_state' => 'required|string|max:100',
+            'lane' => 'required|string|max:100',
+            'good_type' => 'required|string|max:100',
+            'weight' => 'required|numeric|min:0',
+            'no_of_units' => 'required|numeric|min:0',
+            'fr_rate' => 'required|numeric|min:0',
+            'amount' => 'required|numeric|min:0',
             'damage_qty' => 'nullable|numeric',
             'damage_rate' => 'nullable|numeric',
             'shortage_qty' => 'nullable|numeric',
@@ -83,8 +92,8 @@ class LorryReceiptController extends Controller
         // Set truck_id to null if not provided
         $validated['truck_id'] = $validated['truck_id'] ?? null;
         
-        // Set delivery_status to null if not provided
-        $validated['delivery_status'] = $validated['delivery_status'] ?? null;
+        // Set default delivery_status
+        $validated['delivery_status'] = 'Pending';
         
         \App\Models\LorryReceipt::create($validated);
         return redirect()->route('lorry_receipts.index')->with('success', 'Lorry Receipt created successfully!');

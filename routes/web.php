@@ -85,6 +85,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Lorry Receipt CRUD
     Route::resource('lorry_receipts', LorryReceiptController::class);
+    Route::post('/lorry_receipts/update-status', [LorryReceiptController::class, 'updateDeliveryStatus'])->name('lorry_receipts.update-status');
 
     // Freight Bookings
     Route::resource('freight_bookings', FreightBookingController::class);

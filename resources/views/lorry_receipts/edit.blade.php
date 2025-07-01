@@ -34,7 +34,7 @@
                         <option value="{{ $status }}" {{ $lr->delivery_status == $status ? 'selected' : '' }}>{{ $status }}</option>
                     @endforeach
                 </select>
-                <input type="hidden" name="delivery_status">
+                <input type="hidden" name="delivery_status" value="{{ $lr->delivery_status }}">
                 <small class="text-muted">It will be updated from freight booking entries.</small>
                 @error('delivery_status') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
