@@ -52,7 +52,22 @@ class FreightBookingController extends Controller
             'is_cancelled' => 'boolean',
             'linked_freight_booking_id' => 'nullable|exists:freight_bookings,id',
         ]);
-        FreightBooking::create($data);
+
+        $freightBooking = FreightBooking::create($data);
+        
+        // Update lorry receipt status
+        $lorryReceipt = LorryReceipt::find($data['lr_id']);
+        if ($lorryReceipt) {
+            $deliveryStatus = 'Pending';
+            if ($data['is_cancelled'] === '1') {
+                $deliveryStatus = 'Cancelled';
+            } elseif ($data['is_delivered'] === '1') {
+                $deliveryStatus = 'Delivered';
+            }
+            $lorryReceipt->delivery_status = $deliveryStatus;
+            $lorryReceipt->save();
+        }
+
         return redirect()->route('freight_bookings.index')->with('success', 'Freight Booking created successfully.');
     }
 
@@ -83,7 +98,23 @@ class FreightBookingController extends Controller
             'is_cancelled' => 'boolean',
             'linked_freight_booking_id' => 'nullable|exists:freight_bookings,id',
         ]);
+
+        // Update freight booking
         $freight_booking->update($data);
+
+        // Update lorry receipt status
+        $lorryReceipt = LorryReceipt::find($data['lr_id']);
+        if ($lorryReceipt) {
+            $deliveryStatus = 'Pending';
+            if ($data['is_cancelled'] === '1') {
+                $deliveryStatus = 'Cancelled';
+            } elseif ($data['is_delivered'] === '1') {
+                $deliveryStatus = 'Delivered';
+            }
+            $lorryReceipt->delivery_status = $deliveryStatus;
+            $lorryReceipt->save();
+        }
+
         return redirect()->route('freight_bookings.index')->with('success', 'Freight Booking updated successfully.');
     }
 
