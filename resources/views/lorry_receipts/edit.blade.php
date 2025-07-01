@@ -76,6 +76,9 @@
             </div>
         </div>
 
+        <h5 class="mt-4 mb-3">Route & Dates</h5>
+        <hr class="mb-3 mt-0">
+
         <div class="row">
             <div class="col-md-4 mb-3">
                 <label for="gr_date" class="form-label">GR Date *</label>
@@ -88,28 +91,32 @@
                 @error('source_city') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
             <div class="col-md-4 mb-3">
-                <label for="destination_city" class="form-label">Destination City *</label>
-                <input type="text" class="form-control" id="destination_city" name="destination_city" required value="{{ $lr->destination_city }}" readonly>
-                @error('destination_city') <div class="text-danger">{{ $message }}</div> @enderror
+                <label for="source_state" class="form-label">Source State *</label>
+                <input type="text" class="form-control" id="source_state" name="source_state" required value="{{ $lr->source_state }}" readonly>
+                @error('source_state') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
         </div>
 
         <div class="row">
             <div class="col-md-4 mb-3">
-                <label for="source_state" class="form-label">Source State *</label>
-                <input type="text" class="form-control" id="source_state" name="source_state" required value="{{ $lr->source_state }}" readonly>
-                @error('source_state') <div class="text-danger">{{ $message }}</div> @enderror
+                <label for="destination_city" class="form-label">Destination City *</label>
+                <input type="text" class="form-control" id="destination_city" name="destination_city" required value="{{ $lr->destination_city }}" readonly>
+                @error('destination_city') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
             <div class="col-md-4 mb-3">
                 <label for="destination_state" class="form-label">Destination State *</label>
                 <input type="text" class="form-control" id="destination_state" name="destination_state" required value="{{ $lr->destination_state }}" readonly>
                 @error('destination_state') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
+        </div>
+
+        <h5 class="mt-4 mb-3">Goods & Charges</h5>
+        <hr class="mb-3 mt-0">
 
         <div class="row">
             <div class="col-md-4 mb-3">
                 <label for="lane" class="form-label">Lane *</label>
-                <input type="text" class="form-control" id="lane" name="lane" value="Road" readonly required>
+                <input type="text" class="form-control" id="lane" name="lane" value="{{ $lr->lane }}" readonly required>
             </div>
             <div class="col-md-4 mb-3">
                 <label for="good_type" class="form-label">Goods Type *</label>
