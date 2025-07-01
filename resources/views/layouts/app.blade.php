@@ -273,11 +273,7 @@
                                 <i class="fas fa-chart-bar"></i> Reports
                             </a>
                         </li>
-                        <li class="nav-item mb-2">
-                            <a href="/settings" class="nav-link text-white">
-                                <i class="fas fa-cog"></i> Settings
-                            </a>
-                        </li>
+                       
                     @endif
                     {{-- <li class="nav-item mb-2">
                         <a href="/vouchers" class="nav-link text-white">
