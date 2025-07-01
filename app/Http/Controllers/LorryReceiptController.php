@@ -13,7 +13,7 @@ class LorryReceiptController extends Controller
 {
     public function index(Request $request)
     {
-        $query = \App\Models\LorryReceipt::with(['truck', 'transporter']);
+        $query = \App\Models\LorryReceipt::with(['truck', 'transporter', 'consignor', 'consignee']);
         if ($request->filled('gr_number')) {
             $query->where('gr_number', 'like', '%' . $request->gr_number . '%');
         }

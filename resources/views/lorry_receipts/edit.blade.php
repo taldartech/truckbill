@@ -6,49 +6,26 @@
     <form action="{{ route('lorry_receipts.update', $lr->id) }}" method="POST">
         @csrf
         @method('PUT')
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="truck_id" class="form-label">Truck *</label>
-                <select class="form-select" id="truck_id" name="truck_id" disabled>
-                    <option value="">Select</option>
-                    @foreach($trucks as $truck)
-                        <option value="{{ $truck->id }}" {{ $lr->truck_id == $truck->id ? 'selected' : '' }}>{{ $truck->truck_number }}</option>
-                    @endforeach
-                </select>
-                @error('truck_id') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="consignor_id" class="form-label">Consignor *</label>
-                <select class="form-select" id="consignor_id" name="consignor_id" required>
-                    <option value="">Select Consignor</option>
-                    @foreach($customers as $customer)
-                        <option value="{{ $customer->id }}" {{ $lr->consignor_id == $customer->id ? 'selected' : '' }}>
-                            {{ $customer->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="consignor_contact_number" class="form-label">Consignor Contact Number</label>
-                <input type="text" class="form-control" id="consignor_contact_number" name="consignor_contact_number" value="{{ $lr->consignor->contact_number }}" readonly>
-            </div>
-        </div>
 
+        <h5 class="mt-4 mb-3">Trip & Parties</h5>
+        <hr class="mb-3 mt-0">
+        
         <div class="row">
             <div class="col-md-4 mb-3">
-                <label for="consignee_id" class="form-label">Consignee *</label>
-                <select class="form-select" id="consignee_id" name="consignee_id" required>
-                    <option value="">Select Consignee</option>
-                    @foreach($consignees as $consignee)
-                        <option value="{{ $consignee->id }}" {{ $lr->consignee_id == $consignee->id ? 'selected' : '' }}>
-                            {{ $consignee->name }}
-                        </option>
+                <label for="customer_id" class="form-label">Customer *</label>
+                <select class="form-select" id="customer_id" name="customer_id" required>
+                    <option value="">Select Customer</option>
+                    @foreach($customers as $customer)
+                        <option value="{{ $customer->id }}" {{ $lr->customer_id == $customer->id ? 'selected' : '' }}>{{ $customer->name }}</option>
                     @endforeach
                 </select>
+                @error('customer_id') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
+            
             <div class="col-md-4 mb-3">
-                <label for="consignee_contact_number" class="form-label">Consignee Contact Number</label>
-                <input type="text" class="form-control" id="consignee_contact_number" name="consignee_contact_number" value="{{ $lr->consignee->contact_number }}" readonly>
+                <label for="lr_number" class="form-label">LR Number *</label>
+                <input type="text" class="form-control" id="lr_number" name="lr_number" required value="{{ $lr->lr_number }}">
+                @error('lr_number') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
             <div class="col-md-4 mb-3">
                 <label for="delivery_status" class="form-label">Delivery Status</label>
@@ -64,16 +41,42 @@
         </div>
 
         <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="customer_id" class="form-label">Customer *</label>
-                <select class="form-select" id="customer_id" name="customer_id" required>
-                    <option value="">Select</option>
-                    @foreach($customers as $customer)
-                        <option value="{{ $customer->id }}" {{ $lr->customer_id == $customer->id ? 'selected' : '' }}>{{ $customer->name }}</option>
+            <div class="col-md-6 mb-3">
+                <label for="consignor_id" class="form-label">Consignor *</label>
+                <select class="form-select" id="consignor_id" name="consignor_id" required>
+                    <option value="">Select Consignor</option>
+                    @foreach($consignees as $consignee)
+                        <option value="{{ $consignee->id }}" {{ $lr->consignor_id == $consignee->id ? 'selected' : '' }}>
+                            {{ $consignee->name }}
+                        </option>
                     @endforeach
                 </select>
-                @error('customer_id') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
+            <div class="col-md-6 mb-3">
+                <label for="consignor_contact_number" class="form-label">Consignor Contact Number</label>
+                <input type="text" class="form-control" id="consignor_contact_number" name="consignor_contact_number" value="{{ $lr->consignor->contact_number ?? '' }}" readonly>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="consignee_id" class="form-label">Consignee *</label>
+                <select class="form-select" id="consignee_id" name="consignee_id" required>
+                    <option value="">Select Consignee</option>
+                    @foreach($consignees as $consignee)
+                        <option value="{{ $consignee->id }}" {{ $lr->consignee_id == $consignee->id ? 'selected' : '' }}>
+                            {{ $consignee->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="consignee_contact_number" class="form-label">Consignee Contact Number</label>
+                <input type="text" class="form-control" id="consignee_contact_number" name="consignee_contact_number" value="{{ $lr->consignee->contact_number ?? '' }}" readonly>
+            </div>
+        </div>
+
+        <div class="row">
             <div class="col-md-4 mb-3">
                 <label for="gr_date" class="form-label">GR Date *</label>
                 <input type="date" class="form-control" id="gr_date" name="gr_date" required value="{{ $lr->gr_date }}">
@@ -84,14 +87,14 @@
                 <input type="text" class="form-control" id="source_city" name="source_city" required value="{{ $lr->source_city }}" readonly>
                 @error('source_city') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
-        </div>
-
-        <div class="row">
             <div class="col-md-4 mb-3">
                 <label for="destination_city" class="form-label">Destination City *</label>
                 <input type="text" class="form-control" id="destination_city" name="destination_city" required value="{{ $lr->destination_city }}" readonly>
                 @error('destination_city') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
+        </div>
+
+        <div class="row">
             <div class="col-md-4 mb-3">
                 <label for="source_state" class="form-label">Source State *</label>
                 <input type="text" class="form-control" id="source_state" name="source_state" required value="{{ $lr->source_state }}" readonly>
@@ -102,7 +105,6 @@
                 <input type="text" class="form-control" id="destination_state" name="destination_state" required value="{{ $lr->destination_state }}" readonly>
                 @error('destination_state') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
-        </div>
 
         <div class="row">
             <div class="col-md-4 mb-3">
@@ -205,7 +207,7 @@
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // Handle consignor contact number and location details
+    // Handle consignor details
     const consignorSelect = document.getElementById('consignor_id');
     const consignorContact = document.getElementById('consignor_contact_number');
     const sourceCityInput = document.getElementById('source_city');
@@ -222,56 +224,15 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             try {
-                const response = await fetch(`{{ route('customers.details', '__id__') }}`.replace('__id__', consignorId));
-                if (!response.ok) {
-                    throw new Error('Failed to fetch consignor details');
-                }
+                const response = await fetch(`{{ route('consignees.details', '__id__') }}`);
+                if (!response.ok) throw new Error('Failed to fetch consignor details');
+                const consignor = await response.json();
 
-                const data = await response.json();
-                
-                // Update contact number and location fields
-                consignorContact.value = data.contact_number || '';
-                sourceCityInput.value = data.city_id ? 'Loading...' : '';
-                sourceStateInput.value = data.state_id ? 'Loading...' : '';
-
-                // Fetch city and state names using IDs
-                if (data.city_id || data.state_id) {
-                    const fetchCityState = async () => {
-                        try {
-                            // Fetch city name
-                            if (data.city_id) {
-                                const cityResponse = await fetch(`{{ route('cities.show', '__id__') }}`.replace('__id__', data.city_id));
-                                if (cityResponse.ok) {
-                                    const cityData = await cityResponse.json();
-                                    sourceCityInput.value = cityData.name || '';
-                                } else {
-                                    console.error('❌ Failed to fetch city:', await cityResponse.text());
-                                    sourceCityInput.value = '';
-                                }
-                            }
-
-                            // Fetch state name
-                            if (data.state_id) {
-                                const stateResponse = await fetch(`{{ route('states.show', '__id__') }}`.replace('__id__', data.state_id));
-                                if (stateResponse.ok) {
-                                    const stateData = await stateResponse.json();
-                                    sourceStateInput.value = stateData.name || '';
-                                } else {
-                                    console.error('❌ Failed to fetch state:', await stateResponse.text());
-                                    sourceStateInput.value = '';
-                                }
-                            }
-                        } catch (error) {
-                            console.error('❌ Error fetching city/state:', error);
-                            sourceCityInput.value = '';
-                            sourceStateInput.value = '';
-                        }
-                    };
-
-                    fetchCityState();
-                }
+                consignorContact.value = consignor.contact_number;
+                sourceCityInput.value = consignor.city;
+                sourceStateInput.value = consignor.state;
             } catch (error) {
-                console.error('❌ Error:', error);
+                console.error('❌ Error fetching consignor details:', error);
                 consignorContact.value = '';
                 sourceCityInput.value = '';
                 sourceStateInput.value = '';
@@ -279,7 +240,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Handle consignee contact number and location details
+    // Handle consignee details
     const consigneeSelect = document.getElementById('consignee_id');
     const consigneeContact = document.getElementById('consignee_contact_number');
     const destinationCityInput = document.getElementById('destination_city');
@@ -297,22 +258,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
             try {
                 const response = await fetch(`{{ route('consignees.details', '__id__') }}`.replace('__id__', consigneeId));
-                if (!response.ok) {
-                    throw new Error('Failed to fetch consignee details');
-                }
+                if (!response.ok) throw new Error('Failed to fetch consignee details');
+                const consignee = await response.json();
 
-                const data = await response.json();
-                
-                // Update contact number and location fields
-                consigneeContact.value = data.contact_number || '';
-                destinationCityInput.value = data.city_id ? 'Loading...' : '';
-                destinationStateInput.value = data.state_id ? 'Loading...' : '';
-
-                // Fetch city and state names using IDs
-                if (data.city_id || data.state_id) {
-                    const fetchCityState = async () => {
-                        try {
-                            // Fetch city name
+                consigneeContact.value = consignee.contact_number;
+                destinationCityInput.value = consignee.city;
+                destinationStateInput.value = consignee.state;
                             if (data.city_id) {
                                 const cityResponse = await fetch(`{{ route('cities.show', '__id__') }}`.replace('__id__', data.city_id));
                                 if (cityResponse.ok) {

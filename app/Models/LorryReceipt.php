@@ -45,7 +45,7 @@ class LorryReceipt extends Model
 
     public function truck() { return $this->belongsTo(Truck::class); }
     public function transporter() { return $this->belongsTo(Transporter::class); }
-    public function consignor() { return $this->belongsTo(Customer::class, 'consignor_id'); }
+    public function consignor() { return $this->belongsTo(Consignee::class, 'consignor_id'); }
     public function consignee() { return $this->belongsTo(Consignee::class); }
     public function customer() { return $this->belongsTo(Customer::class, 'customer_id'); }
 }

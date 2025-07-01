@@ -64,8 +64,8 @@
                 <tr>
                     <td>{{ $lr->id }}</td>
                     <td>{{ $lr->gr_number }}</td>
-                    <td>{{ $lr->consignor->name }}</td>
-                    <td>{{ $lr->consignee->name }}</td>
+                    <td>{{ $lr->consignor?->name ?? 'N/A' }}</td>
+                    <td>{{ $lr->consignee?->name ?? 'N/A' }}</td>
                     <td>{{ $lr->delivery_status }}</td>
                     <td>{{ $lr->gr_date }}</td>
                     <td>{{ $lr->amount }}</td>
