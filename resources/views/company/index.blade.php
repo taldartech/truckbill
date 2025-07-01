@@ -1,22 +1,11 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="content-header">
-    <div class="container-fluid">
-        <div class="row mb-2">
-            <div class="col-sm-6">
-                <h1 class="m-0">Registered Companies</h1>
-            </div>
-        </div>
-        @if(session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
-        @endif
-    </div>
-</div>
-<section class="content">
-    <div class="container-fluid">
-        <div class="card">
-            <div class="card-header">
+<div class="container mt-4">
+                <h2>Transporter Management</h2>
+                @if(session('success'))
+                    <div class="alert alert-success">{{ session('success') }}</div>
+                @endif
                 <form method="GET" action="{{ route('company.index') }}" class="row g-3 mb-0">
                     <div class="col-md-3">
                         <input type="text" name="name" class="form-control" placeholder="Company Name" value="{{ request('name') }}">
@@ -33,7 +22,7 @@
                         <a href="{{ route('company.create') }}" class="btn btn-primary">Add New Company</a>
                     </div>
                 </form>
-            </div>
+    </form>
     <table class="table table-bordered table-striped">
         <thead>
             <tr>
@@ -75,11 +64,10 @@
               @endforelse
             </tbody>
           </table>
-        </div>
-      </div>
-      <div class="card-footer bg-white">
-        <a href="/dashboard" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
-      </div>
     </div>
-  </div>
-</section>
+
+    <div class="mt-3">
+        <a href="/dashboard" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+    </div>
+
+@endsection
