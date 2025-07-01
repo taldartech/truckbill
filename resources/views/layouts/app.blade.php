@@ -56,11 +56,25 @@
                     </li>
                     @if(auth()->check() && auth()->user()->userRole->name === 'super_admin')
                         <li class="nav-item mb-2">
-                            <a href="/company/create" class="nav-link text-white">
-                                <i class="fas fa-money-check-alt"></i> Company Registeration
+                            <a class="nav-link text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#companyMenu" role="button" aria-expanded="false" aria-controls="companyMenu">
+                                <span><i class="fas fa-money-check-alt"></i> Company</span>
+                                <i class="fas fa-chevron-down small"></i>
                             </a>
+                            <div class="collapse ms-3" id="companyMenu">
+                                <ul class="nav flex-column">
+                                    <li class="nav-item mb-1">
+                                        <a href="/company" class="nav-link text-white">
+                                            <i class="fas fa-list"></i> Company List
+                                        </a>
+                                    </li>
+                                    <li class="nav-item mb-1">
+                                        <a href="/company/create" class="nav-link text-white">
+                                            <i class="fas fa-plus"></i> Register Company
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
                         </li>
-                       
                     @else
                         <li class="nav-item mb-2">
                             <a class="nav-link text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#transporterMenu" role="button" aria-expanded="false" aria-controls="transporterMenu">
