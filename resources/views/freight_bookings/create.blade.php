@@ -6,14 +6,21 @@
     <form method="POST" action="{{ route('freight_bookings.store') }}">
         @csrf
         <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="lr_id" class="form-label">LR *</label>
-                <select name="lr_id" id="lr_id" class="form-select" required>
-                    <option value="">Select</option>
-                    @foreach($lrs as $lr)
-                        <option value="{{ $lr->id }}" {{ old('lr_id') == $lr->id ? 'selected' : '' }}>{{ $lr->gr_number }}</option>
-                    @endforeach
-                </select>
+            <div class="col-md-4 mb-3">@php
+    $lrs = \App\Models\LorryReceipt::all();
+@endphp
+
+<div class="form-group">
+    <label for="lr_id">LR Number</label>
+    <select name="lr_id" id="lr_id" class="form-control" required>
+        <option value="">Select LR Number</option>
+        @foreach($lrs as $lr)
+            <option value="{{ $lr->id }}" {{ old('lr_id') == $lr->id ? 'selected' : '' }}>
+                {{ $lr->lr_number }} 
+            </option>
+        @endforeach
+    </select>
+</div>
                 @error('lr_id') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
             <div class="col-md-4 mb-3">

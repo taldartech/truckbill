@@ -64,12 +64,13 @@ class LorryReceiptController extends Controller
     {
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
-            'lr_number' => 'required|string|max:100',
+            'lr_number' => 'required|string|max:100|unique:lorry_receipts,lr_number',
             'truck_id' => 'nullable|exists:trucks,id',
             'transporter_id' => 'nullable|exists:transporters,id',
             'consignor_id' => 'required|exists:consignees,id',
             'consignee_id' => 'required|exists:consignees,id',
             'gr_date' => 'required|date',
+            'gr_number' => 'required|string|max:100|unique:lorry_receipts,gr_number',
             'source_city' => 'required|string|max:100',
             'source_state' => 'required|string|max:100',
             'destination_city' => 'required|string|max:100',
@@ -86,7 +87,6 @@ class LorryReceiptController extends Controller
             'shortage_rate' => 'nullable|numeric',
             'service_tax' => 'nullable|numeric',
             'swachh_bharat_cess' => 'nullable|numeric',
-            'lr_number' => 'required|string|max:100',
         ]);
 
         // Set truck_id to null if not provided
@@ -95,6 +95,11 @@ class LorryReceiptController extends Controller
         // Set default delivery_status
         $validated['delivery_status'] = 'Pending';
         
+        // Check if lr_number already exists
+        if (\App\Models\LorryReceipt::where('lr_number', $validated['lr_number'])->exists()) {
+            return redirect()->back()->withErrors(['lr_number' => 'LR Number already exists. Please use a unique LR Number.']);
+        }
+
         \App\Models\LorryReceipt::create($validated);
         return redirect()->route('lorry_receipts.index')->with('success', 'Lorry Receipt created successfully!');
     }

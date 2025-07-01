@@ -50,7 +50,7 @@
         <thead>
             <tr>
                 <th>ID</th>
-                <th>GR Number</th>
+                <th>LR Number</th>
                 <th>Consignor</th>
                 <th>Consignee</th>
                 <th>Status</th>
@@ -63,7 +63,7 @@
             @forelse($lrs as $lr)
                 <tr>
                     <td>{{ $lr->id }}</td>
-                    <td>{{ $lr->gr_number }}</td>
+                    <td>{{ $lr->lr_number }}</td>
                     <td>{{ $lr->consignor?->name ?? 'N/A' }}</td>
                     <td>{{ $lr->consignee?->name ?? 'N/A' }}</td>
                     <td>{{ $lr->delivery_status ?? 'Pending' }}</td>
