@@ -46,7 +46,9 @@ class TransporterController extends Controller
     public function create()
     {
         $companies = \App\Models\Company::all();
-        return view('transporters.create', compact('companies'));
+        // For create, we can't filter trucks as we don't have transporter_id yet
+        $trucks = \App\Models\Truck::all();
+        return view('transporters.create', compact('companies', 'trucks'));
     }
 
     public function store(Request $request)
@@ -72,7 +74,9 @@ class TransporterController extends Controller
     public function edit(\App\Models\Transporter $transporter)
     {
         $companies = \App\Models\Company::all();
-        return view('transporters.edit', compact('transporter', 'companies'));
+        // Filter trucks to show only those belonging to this transporter
+        $trucks = \App\Models\Truck::where('transporter_id', $transporter->id)->get();
+        return view('transporters.edit', compact('transporter', 'companies', 'trucks'));
     }
 
     public function update(Request $request, \App\Models\Transporter $transporter)

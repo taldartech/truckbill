@@ -9,6 +9,9 @@
     $canEditCompany = auth()->check() && auth()->user()->userRole->name === 'super_admin';
     $userCompanyId = auth()->user()->company_id ?? null;
 @endphp
+        @error('registered_truck_id')
+            <div class="text-danger">{{ $message }}</div>
+        @enderror
         <div class="mb-3">
             <label for="company_id" class="form-label">Company *</label>
             @if($canEditCompany)
@@ -87,6 +90,13 @@
             <label for="total_trucks" class="form-label">Total Trucks *</label>
             <input type="number" class="form-control" id="total_trucks" name="total_trucks" min="0" required value="{{ old('total_trucks', 0) }}">
             @error('total_trucks') <div class="text-danger">{{ $message }}</div> @enderror
+        </div>
+        <div class="mb-3">
+            <label for="registered_truck_id" class="form-label">Registered Truck</label>
+            <select class="form-select" id="registered_truck_id" name="registered_truck_id">
+                <option value="">Select</option>
+            </select>
+            @error('registered_truck_id') <div class="text-danger">{{ $message }}</div> @enderror
         </div>
         <div class="mb-3">
             <label for="advance_amount" class="form-label">Advance Amount</label>

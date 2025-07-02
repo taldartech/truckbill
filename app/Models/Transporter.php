@@ -16,6 +16,7 @@ class Transporter extends Model
         'declaration_given',
         'total_trucks',
         'advance_amount',
+        'registered_truck_id',
     ];
 
     public function company()
