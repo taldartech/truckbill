@@ -81,16 +81,34 @@
             @error('total_trucks') <div class="text-danger">{{ $message }}</div> @enderror
         </div>
         <div class="mb-3">
-            <label for="registered_truck_id" class="form-label">Registered Truck</label>
-            @php
-                $truckNumbers = \App\Models\Truck::where('transporter_id', $transporter->id)
-                    ->pluck('truck_number')
-                    ->toArray();
-                $truckNumbersString = implode(', ', $truckNumbers);
-            @endphp
-            <input type="text" class="form-control" id="registered_truck_id" name="registered_truck_id" readonly 
-                   value="{{ $truckNumbersString }}">
-            @error('registered_truck_id') <div class="text-danger">{{ $message }}</div> @enderror
+            <label class="form-label">Registered Trucks</label>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Registration Date</th>
+                            <th>Truck Number</th>
+                            <th>Driver Name</th>
+                            <th>Contact Number</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @php
+                            $trucks = \App\Models\Truck::where('transporter_id', $transporter->id)
+                                ->with('driver')
+                                ->get();
+                        @endphp
+                        @foreach($trucks as $truck)
+                            <tr>
+                                <td>{{ $truck->created_at->format('Y-m-d') }}</td>
+                                <td>{{ $truck->truck_number }}</td>
+                                <td>{{ $truck->driver->name ?? '-' }}</td>
+                                <td>{{ $truck->driver->mobile ?? '-' }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         </div>
         <div class="mb-3">
             <label for="advance_amount" class="form-label">Advance Amount</label>
