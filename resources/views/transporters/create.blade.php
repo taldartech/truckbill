@@ -93,9 +93,7 @@
         </div>
         <div class="mb-3">
             <label for="registered_truck_id" class="form-label">Registered Truck</label>
-            <select class="form-select" id="registered_truck_id" name="registered_truck_id">
-                <option value="">Select</option>
-            </select>
+            <input type="text" class="form-control" id="registered_truck_id" name="registered_truck_id" readonly value="">
             @error('registered_truck_id') <div class="text-danger">{{ $message }}</div> @enderror
         </div>
         <div class="mb-3">
