@@ -75,7 +75,8 @@
                                 </ul>
                             </div>
                         </li>
-                    @else
+                    @endif
+                    @if(auth()->check() && auth()->user()->userRole->name !== 'super_admin')
                         <li class="nav-item mb-2">
                             <a class="nav-link text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#transporterMenu" role="button" aria-expanded="false" aria-controls="transporterMenu">
                                 <span><i class="fas fa-truck"></i> Transporter</span>
@@ -308,20 +309,45 @@
                    
                    
                     @if(auth()->check() && auth()->user()->userRole->name === 'super_admin')
-<li class="nav-item mb-2">
-    <a href="/users" class="nav-link text-white">
-        <i class="fas fa-users"></i> Users
-    </a>
-</li>
-@endif
+                        <li class="nav-item mb-2">
+                            <a href="/users" class="nav-link text-white">
+                                <i class="fas fa-users"></i> Users
+                            </a>
+                        </li>
+                        <li class="nav-item mb-2">
+                            <a class="nav-link text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#masterMenu" role="button" aria-expanded="false" aria-controls="masterMenu">
+                                <span><i class="fas fa-cog"></i> Master</span>
+                                <i class="fas fa-chevron-down small"></i>
+                            </a>
+                            <div class="collapse ms-3" id="masterMenu">
+                                <ul class="nav flex-column">
+                                    <li class="nav-item mb-1">
+                                        <a href="/master/countries" class="nav-link text-white">
+                                            <i class="fas fa-globe"></i> Countries
+                                        </a>
+                                    </li>
+                                    <li class="nav-item mb-1">
+                                        <a href="/master/states" class="nav-link text-white">
+                                            <i class="fas fa-map-marker-alt"></i> States
+                                        </a>
+                                    </li>
+                                    <li class="nav-item mb-1">
+                                        <a href="/master/cities" class="nav-link text-white">
+                                            <i class="fas fa-city"></i> Cities
+                                        </a>
+                                    </li>
+                                    <li class="nav-item mb-1">
+                                        <a href="/master/goods-types" class="nav-link text-white">
+                                            <i class="fas fa-box"></i> Goods Types
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                    @endif
                     {{-- <li class="nav-item mb-2">
                         <a href="/reports" class="nav-link text-white">
                             <i class="fas fa-chart-bar"></i> Reports
-                        </a>
-                    </li>
-                    <li class="nav-item mb-2">
-                        <a href="/settings" class="nav-link text-white">
-                            <i class="fas fa-cog"></i> Settings
                         </a>
                     </li> --}}
                 </ul>
