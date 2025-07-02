@@ -40,7 +40,7 @@ class UserController extends Controller
     public function create()
     {
         $companies = \App\Models\Company::all();
-        $roles = ['super_admin', 'admin', 'moderator', 'accountant'];
+        $roles = ['admin', 'moderator', 'accountant'];
         return view('users.create', compact('companies', 'roles'));
     }
 
@@ -82,7 +82,7 @@ class UserController extends Controller
     public function edit(User $user)
     {
         $companies = \App\Models\Company::all();
-        $roles = ['super_admin', 'admin', 'moderator', 'accountant'];
+        $roles = ['admin', 'moderator', 'accountant'];
         return view('users.edit', compact('user', 'companies', 'roles'));
     }
 

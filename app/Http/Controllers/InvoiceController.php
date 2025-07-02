@@ -136,7 +136,6 @@ public function getCustomerMemos($customerId)
                 // Only show memos that have an invoice_id (indicating they're used)
                 $hasInvoice = DB::table('lorry_receipts')
                     ->where('memo_id', $memo->memo_id)
-                    
                     ->exists();
                 
                 return (object)[
