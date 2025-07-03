@@ -61,7 +61,7 @@ class LorryReceiptController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'customer_id' => 'required|exists:customers,id',
+            'customer_id' => 'required|exists:consignees,id',
             'lr_number' => 'required|string|max:100|unique:lorry_receipts,lr_number',
             'truck_id' => 'nullable|exists:trucks,id',
             'transporter_id' => 'nullable|exists:transporters,id',
@@ -70,7 +70,7 @@ class LorryReceiptController extends Controller
             'consignee_id' => 'required|exists:consignees,id',
             'consignee_contact_number' => 'nullable|string|max:20',
             'gr_date' => 'required|date',
-            
+        
             
             'source_city' => 'required|string|max:100',
             'source_state' => 'required|string|max:100',

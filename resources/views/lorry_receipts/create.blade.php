@@ -68,8 +68,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 <label for="customer_id" class="form-label">Customer *</label>
                 <select class="form-select" id="customer_id" name="customer_id" required>
     <option value="">Select Customer</option>
-    @foreach($customers as $customer)
-        <option value="{{ $customer->id }}" {{ old('customer_id') == $customer->id ? 'selected' : '' }}>{{ $customer->name }}</option>
+    @foreach($consignees as $consignee)
+        <option value="{{ $consignee->id }}" {{ old('customer_id') == $consignee->id ? 'selected' : '' }}>{{ $consignee->name }}</option>
     @endforeach
 </select>
                 @error('customer_id') <div class="text-danger">{{ $message }}</div> @enderror
@@ -137,11 +137,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
         <div class="row">
-        <div class="col-md-4 mb-3">
-                <label for="gr_number" class="form-label">GR Number *</label>
-                <input type="text" class="form-control" id="gr_number" name="gr_number" required value="{{ old('gr_number') }}">
-                @error('gr_number') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
+        
             <div class="col-md-4 mb-3">
                 <label for="gr_date" class="form-label">GR Date *</label>
                 <input type="date" class="form-control" id="gr_date" name="gr_date" required value="{{ old('gr_date') }}">
@@ -223,23 +219,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         </div>
 
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="gr_number" class="form-label">GR Number *</label>
-                <input type="text" class="form-control" id="gr_number" name="gr_number" required value="{{ old('gr_number') }}">
-                @error('gr_number') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="damage_qty" class="form-label">Damage Quantity</label>
-                <input type="number" step="0.01" class="form-control" id="damage_qty" name="damage_qty" value="{{ old('damage_qty') }}" disabled>
-                @error('damage_qty') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="damage_rate" class="form-label">Damage Rate</label>
-                <input type="number" step="0.01" class="form-control" id="damage_rate" name="damage_rate" value="{{ old('damage_rate') }}" disabled>
-                @error('damage_rate') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-        </div>
+        
 
         <div class="row">
             <div class="col-md-4 mb-3">
