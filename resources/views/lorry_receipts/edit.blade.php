@@ -1,6 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    $transporters = \App\Models\Transporter::where('company_id', auth()->user()->company_id)->get();
+@endphp
 <div class="container mt-4">
     <h2>Edit Lorry Receipt</h2>
     <form action="{{ route('lorry_receipts.update', $lr->id) }}" method="POST">

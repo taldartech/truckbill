@@ -13,22 +13,40 @@ document.addEventListener('DOMContentLoaded', function() {
     // Function to update trucks based on selected transporter
     function updateTrucks() {
         const selectedTransporter = transporterSelect.value;
+        console.log('Selected Transporter:', selectedTransporter);
+        
         if (!selectedTransporter) {
             truckSelect.innerHTML = '<option value="">Select Truck</option>';
             return;
         }
 
         // Make AJAX request to get trucks for selected transporter
-        fetch(`/api/transporters/${selectedTransporter}/trucks`)
-            .then(response => response.json())
-            .then(trucks => {
-                let options = '<option value="">Select Truck</option>';
-                trucks.forEach(truck => {
-                    options += `<option value="${truck.id}">${truck.truck_number}</option>`;
-                });
-                truckSelect.innerHTML = options;
-            })
-            .catch(error => console.error('Error:', error));
+        fetch(`/api/transporters/${selectedTransporter}/trucks`, {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(trucks => {
+            console.log('Received trucks:', trucks);
+            let options = '<option value="">Select Truck</option>';
+            trucks.forEach(truck => {
+                console.log('Adding truck:', truck);
+                options += `<option value="${truck.id}">${truck.truck_number}</option>`;
+            });
+            truckSelect.innerHTML = options;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            truckSelect.innerHTML = '<option value="">Error loading trucks</option>';
+        });
     }
 
     // Update trucks when transporter changes
