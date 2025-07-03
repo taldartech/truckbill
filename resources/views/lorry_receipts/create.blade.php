@@ -98,6 +98,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <input type="text" class="form-control" id="lr_number" name="lr_number" required value="{{ old('lr_number') }}">
                 @error('lr_number') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
+           
             <div class="col-md-4 mb-3">
                 <label for="delivery_status" class="form-label">Delivery Status</label>
                 <select class="form-select" id="delivery_status" name="delivery_status" disabled>

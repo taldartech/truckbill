@@ -63,6 +63,7 @@ class LorryReceiptController extends Controller
         $validated = $request->validate([
             'customer_id' => 'required|exists:consignees,id',
             'lr_number' => 'required|string|max:100|unique:lorry_receipts,lr_number',
+            'memo_id' => 'nullable|integer',
             'truck_id' => 'nullable|exists:trucks,id',
             'transporter_id' => 'nullable|exists:transporters,id',
             'consignor_id' => 'required|exists:consignees,id',

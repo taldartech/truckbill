@@ -153,11 +153,7 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         </div>
 
-        <div class="row">
-            <div class="col-md-12 mb-3">
-                <button type="button" class="btn btn-secondary" onclick="resetDropdowns()">Reset Dropdowns</button>
-            </div>
-        </div>
+        
 
         <h5 class="mt-4 mb-3">Route & Dates</h5>
         <hr class="mb-3 mt-0">

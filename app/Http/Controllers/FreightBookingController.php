@@ -70,7 +70,7 @@ class FreightBookingController extends Controller
             'lr_number' => $lorryReceipt->lr_number
         ]));
         
-        // Update lorry receipt status
+        // Update lorry receipt status and damage amount
         if ($lorryReceipt) {
             $deliveryStatus = 'Pending';
             if ($data['is_cancelled'] === '1') {
@@ -79,6 +79,8 @@ class FreightBookingController extends Controller
                 $deliveryStatus = 'Delivered';
             }
             $lorryReceipt->delivery_status = $deliveryStatus;
+            $lorryReceipt->damage_amount = $data['damage_amount'];
+            $lorryReceipt->shortage_amount = $data['shortage_amount'];
             $lorryReceipt->save();
         }
 
@@ -188,6 +190,8 @@ class FreightBookingController extends Controller
                 $deliveryStatus = 'Delivered';
             }
             $lorryReceipt->delivery_status = $deliveryStatus;
+            $lorryReceipt->damage_amount = $freight_booking->damage_amount;
+            $lorryReceipt->shortage_amount = $freight_booking->shortage_amount;
             $lorryReceipt->save();
         }
 
