@@ -1,6 +1,81 @@
+
+
 @extends('layouts.app')
 
 @section('content')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const lrSelect = document.getElementById('lr_id');
+        const transporterSelect = document.getElementById('transporter_id');
+        const truckSelect = document.getElementById('truck_id');
+
+        // Function to update trucks based on selected transporter
+        function updateTrucks() {
+            const selectedTransporter = transporterSelect.value;
+            if (!selectedTransporter) {
+                truckSelect.innerHTML = '<option value="">Select Truck</option>';
+                return;
+            }
+
+            // Make AJAX request to get trucks for selected transporter
+            fetch(`/api/transporters/${selectedTransporter}/trucks`)
+                .then(response => response.json())
+                .then(trucks => {
+                    let options = '<option value="">Select Truck</option>';
+                    trucks.forEach(truck => {
+                        options += `<option value="${truck.id}">${truck.truck_number}</option>`;
+                    });
+                    truckSelect.innerHTML = options;
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Function to load LR details
+        function loadLRDetails() {
+            const selectedLR = lrSelect.value;
+            if (!selectedLR) {
+                document.getElementById('transporter_id').value = '';
+                document.getElementById('truck_id').value = '';
+                return;
+            }
+
+            // Make AJAX request to get LR details
+            fetch(`/api/lorry_receipts/${selectedLR}`)
+                .then(response => response.json())
+                .then(lr => {
+                    // Set transporter
+                    const transporterSelect = document.getElementById('transporter_id');
+                    const truckSelect = document.getElementById('truck_id');
+                    
+                    // Get transporter name
+                    fetch(`/api/transporters/${lr.transporter_id}`)
+                        .then(response => response.json())
+                        .then(transporter => {
+                            transporterSelect.value = `${transporter.name}`;
+                        });
+                    
+                    // Get truck number
+                    fetch(`/api/trucks/${lr.truck_id}`)
+                        .then(response => response.json())
+                        .then(truck => {
+                            truckSelect.value = `${truck.truck_number}`;
+                        });
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Update trucks when transporter changes
+        transporterSelect.addEventListener('change', updateTrucks);
+        
+        // Load LR details when LR changes
+        lrSelect.addEventListener('change', loadLRDetails);
+    });
+</script>
+@php
+    $lrs = \App\Models\LorryReceipt::all();
+    $transporters = \App\Models\Transporter::where('company_id', auth()->user()->company_id)->get();
+@endphp
+
 <div class="container mt-4">
     <h2>Edit Freight Booking</h2>
     <form method="POST" action="{{ route('freight_bookings.update', $freight_booking->id) }}">
@@ -8,15 +83,30 @@
         @method('PUT')
         <div class="row">
             <div class="col-md-4 mb-3">
-                <label for="lr_id" class="form-label">LR *</label>
-                <select name="lr_id" id="lr_id" class="form-select" required>
-                    <option value="">Select</option>
+                <label for="lr_id" class="form-label">LR Number *</label>
+                <select name="lr_id" id="lr_id" class="form-control" required>
+                    <option value="">Select LR Number</option>
                     @foreach($lrs as $lr)
-                        <option value="{{ $lr->id }}" {{ old('lr_id', $freight_booking->lr_id) == $lr->id ? 'selected' : '' }}>{{ $lr->gr_number }}</option>
+                        <option value="{{ $lr->id }}" {{ $freight_booking->lr_id == $lr->id ? 'selected' : '' }}>
+                            {{ $lr->lr_number }} 
+                        </option>
                     @endforeach
                 </select>
                 @error('lr_id') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
+            <div class="col-md-4 mb-3">
+                <label for="transporter_id" class="form-label">Transporter *</label>
+                <input type="text" name="transporter_id" id="transporter_id" class="form-control" readonly value="{{ $transporter ? $transporter->name : '' }}">
+                @error('transporter_id') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="truck_id" class="form-label">Truck *</label>
+                <input type="text" name="truck_id" id="truck_id" class="form-control" readonly value="{{ $truck ? $truck->truck_number : '' }}">
+                @error('truck_id') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+        </div>
+
+        <div class="row">
             <div class="col-md-4 mb-3">
                 <label for="tr_fr_rate" class="form-label">TR Freight Rate *</label>
                 <input type="number" step="0.01" class="form-control" name="tr_fr_rate" id="tr_fr_rate" value="{{ old('tr_fr_rate', $freight_booking->tr_fr_rate) }}" required>
@@ -48,12 +138,19 @@
         <div class="row">
             <div class="col-md-4 mb-3">
                 <label for="shortage" class="form-label">Shortage</label>
-                <input type="number" step="0.01" class="form-control" name="shortage" id="shortage" value="{{ old('shortage', $freight_booking->shortage) }}">
+                <input type="number" step="0.01" class="form-control" name="shortage" id="shortage" value="{{ old('shortage', $freight_booking->shortage        ) }}">
                 @error('shortage') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
             <div class="col-md-4 mb-3">
                 <label for="good_type" class="form-label">Goods Type</label>
-                <input type="text" class="form-control" name="good_type" id="good_type" value="{{ old('good_type', $freight_booking->good_type) }}">
+                <select class="form-select" name="good_type" id="good_type">
+                    <option value="">Select Goods Type</option>
+                    @foreach($goodsTypes as $goodsType)
+                        <option value="{{ $goodsType->name }}" {{ old('good_type', $freight_booking->good_type) == $goodsType->name ? 'selected' : '' }}>
+                            {{ $goodsType->name }}
+                        </option>
+                    @endforeach
+                </select>
                 @error('good_type') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
             <div class="col-md-4 mb-3">
@@ -73,16 +170,43 @@
                 <input type="number" step="0.01" class="form-control" name="misc_expense" id="misc_expense" value="{{ old('misc_expense', $freight_booking->misc_expense) }}">
                 @error('misc_expense') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
+            
             <div class="col-md-4 mb-3">
-                <label for="misc_income" class="form-label">Misc. Income</label>
-                <input type="number" step="0.01" class="form-control" name="misc_income" id="misc_income" value="{{ old('misc_income', $freight_booking->misc_income) }}">
-                @error('misc_income') <div class="text-danger">{{ $message }}</div> @enderror
+                <label for="damage_qty" class="form-label">Damage Quantity</label>
+                <input type="number" step="0.01" class="form-control" name="damage_qty" id="damage_qty" value="{{ old('damage_qty', $freight_booking->damage_qty) }}">
+                @error('damage_qty') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
+            <div class="col-md-4 mb-3">
+                <label for="damage_rate" class="form-label">Damage Rate</label>
+                <input type="number" step="0.01" class="form-control" name="damage_rate" id="damage_rate" value="{{ old('damage_rate', $freight_booking->damage_rate) }}">
+                @error('damage_rate') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="damage_amount" class="form-label">Damage Amount</label>
+                <input type="number" step="0.01" class="form-control" name="damage_amount" id="damage_amount" value="{{ old('damage_amount', $freight_booking->damage_amount) }}">
+                @error('damage_amount') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="shortage_qty" class="form-label">Shortage Quantity</label>
+                <input type="number" step="0.01" class="form-control" name="shortage_qty" id="shortage_qty" value="{{ old('shortage_qty', $freight_booking->shortage_qty) }}">
+                @error('shortage_qty') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="shortage_rate" class="form-label">Shortage Rate</label>
+                <input type="number" step="0.01" class="form-control" name="shortage_rate" id="shortage_rate" value="{{ old('shortage_rate', $freight_booking->shortage_rate) }}">
+                @error('shortage_rate') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="shortage_amount" class="form-label">Shortage Amount</label>
+                <input type="number" step="0.01" class="form-control" name="shortage_amount" id="shortage_amount" value="{{ old('shortage_amount', $freight_booking->shortage_amount) }}">
+                @error('shortage_amount') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+            
         </div>
         <div class="row">
             <div class="col-md-6 mb-3">
                 <label for="remark" class="form-label">Remark</label>
-                <textarea name="remark" id="remark" class="form-control">{{ old('remark', $freight_booking->remark) }}</textarea>
+                <textarea name="remark" id="remark" class="form-control">{{ old('remark') }}</textarea>
                 @error('remark') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
             <div class="col-md-3 mb-3">
@@ -103,10 +227,10 @@
         <div class="row">
             <div class="col-md-6 mb-3">
                 <label for="linked_freight_booking_id" class="form-label">Linked Freight Booking</label>
-                <select name="linked_freight_booking_id" id="linked_freight_booking_id" class="form-select">
+                <select name="linked_freight_booking_id" id="linked_freight_booking_id" class="form-select" value="{{ old('linked_freight_booking_id', $freight_booking->linked_freight_booking_id) }}" >
                     <option value="">None</option>
                     @foreach($linkedBookings as $fb)
-                        <option value="{{ $fb->id }}" {{ old('linked_freight_booking_id', $freight_booking->linked_freight_booking_id) == $fb->id ? 'selected' : '' }}>
+                        <option value="{{ $fb->id }}" {{ old('linked_freight_booking_id') == $fb->id ? 'selected' : '' }}>
                             #{{ $fb->id }} (LR: {{ $fb->lr ? $fb->lr->gr_number : '-' }})
                         </option>
                     @endforeach
@@ -114,53 +238,8 @@
                 @error('linked_freight_booking_id') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
         </div>
-        <button type="submit" class="btn btn-success">Update</button>
+        <button type="submit" class="btn btn-success">Save</button>
         <a href="{{ route('freight_bookings.index') }}" class="btn btn-secondary ms-2">Back to List</a>
     </form>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const isDeliveredSelect = document.getElementById('is_delivered');
-            const isCancelledSelect = document.getElementById('is_cancelled');
-            const lrSelect = document.getElementById('lr_id');
-
-            function updateLorryReceiptStatus() {
-                const lrId = lrSelect.value;
-                if (!lrId) return;
-
-                // Get the LR number from the selected option
-                const selectedOption = lrSelect.options[lrSelect.selectedIndex];
-                const lrNumber = selectedOption.textContent;
-
-                fetch(`/lorry_receipts/update-status`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        lr_number: lrNumber,
-                        delivered: isDeliveredSelect.value === '1' ? 'Yes' : 'No',
-                        cancelled: isCancelledSelect.value === '1' ? 'Yes' : 'No'
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        console.log('Lorry receipt status updated successfully');
-                    } else if (data.error) {
-                        console.error('Error:', data.error);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error updating lorry receipt status:', error);
-                });
-            }
-
-            // Attach event listeners
-            isDeliveredSelect.addEventListener('change', updateLorryReceiptStatus);
-            isCancelledSelect.addEventListener('change', updateLorryReceiptStatus);
-            lrSelect.addEventListener('change', updateLorryReceiptStatus);
-        });
-    </script>
 </div>
 @endsection

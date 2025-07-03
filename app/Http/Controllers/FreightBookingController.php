@@ -87,9 +87,32 @@ class FreightBookingController extends Controller
 
     public function edit(FreightBooking $freight_booking)
     {
+        // Get the LorryReceipt details
+        $lorryReceipt = LorryReceipt::find($freight_booking->lr_id);
+        
+        // Get the transporter details
+        $transporter = \App\Models\Transporter::find($lorryReceipt->transporter_id);
+        
+        // Get the truck details
+        $truck = \App\Models\Truck::find($lorryReceipt->truck_id);
+        
+        // Get all LRs
         $lrs = LorryReceipt::all();
+        
+        // Get goods types
+        $goodsTypes = \App\Models\GoodType::all();
+        
+        // Get linked bookings
         $linkedBookings = FreightBooking::where('id', '!=', $freight_booking->id)->get();
-        return view('freight_bookings.edit', compact('freight_booking', 'lrs', 'linkedBookings'));
+        
+        return view('freight_bookings.edit', compact(
+            'freight_booking', 
+            'lrs', 
+            'linkedBookings', 
+            'goodsTypes',
+            'transporter',
+            'truck'
+        ));
     }
 
     public function getLorryReceipt($id)
@@ -133,7 +156,12 @@ class FreightBookingController extends Controller
             'detention' => 'nullable|numeric',
             'deviation' => 'nullable|numeric',
             'misc_expense' => 'nullable|numeric',
-           
+            'damage_qty' => 'nullable|numeric',
+            'damage_rate' => 'nullable|numeric',
+            'damage_amount' => 'nullable|numeric',
+            'shortage_qty' => 'nullable|numeric',
+            'shortage_rate' => 'nullable|numeric',
+            'shortage_amount' => 'nullable|numeric',
             'remark' => 'nullable|string',
             'is_delivered' => 'boolean',
             'is_cancelled' => 'boolean',
