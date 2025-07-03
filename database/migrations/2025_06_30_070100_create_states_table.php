@@ -10,9 +10,8 @@ return new class extends Migration
     {
         Schema::create('states', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('country_id')->constrained()->onDelete('cascade');
+            $table->foreignId('country_id')->constrained('countries')->onDelete('cascade');
             $table->string('name')->unique();
-            $table->string('code')->unique();
             $table->timestamps();
         });
     }
