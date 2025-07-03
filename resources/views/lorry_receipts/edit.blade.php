@@ -3,6 +3,7 @@
 @section('content')
 @php
     $transporters = \App\Models\Transporter::where('company_id', auth()->user()->company_id)->get();
+    $consignees = \App\Models\Consignee::where('company_id', auth()->user()->company_id)->get();
 @endphp
 
 <script>
@@ -91,8 +92,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 <label for="customer_id" class="form-label">Customer *</label>
                 <select class="form-select" id="customer_id" name="customer_id" required>
                     <option value="">Select Customer</option>
-                    @foreach($customers as $customer)
-                        <option value="{{ $customer->id }}" {{ $lr->customer_id == $customer->id ? 'selected' : '' }}>{{ $customer->name }}</option>
+                    @foreach($consignees as $consignee)
+                        <option value="{{ $consignee->id }}" {{ $lr->consignee_id == $consignee->id ? 'selected' : '' }}>{{ $consignee->name }}</option>
                     @endforeach
                 </select>
                 @error('customer_id') <div class="text-danger">{{ $message }}</div> @enderror
