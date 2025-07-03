@@ -1,6 +1,36 @@
 @extends('layouts.app')
 
 @section('content')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const transporterSelect = document.getElementById('transporter_id');
+        const truckSelect = document.getElementById('truck_id');
+
+        // Function to update trucks based on selected transporter
+        function updateTrucks() {
+            const selectedTransporter = transporterSelect.value;
+            if (!selectedTransporter) {
+                truckSelect.innerHTML = '<option value="">Select Truck</option>';
+                return;
+            }
+
+            // Make AJAX request to get trucks for selected transporter
+            fetch(`/api/transporters/${selectedTransporter}/trucks`)
+                .then(response => response.json())
+                .then(trucks => {
+                    let options = '<option value="">Select Truck</option>';
+                    trucks.forEach(truck => {
+                        options += `<option value="${truck.id}">${truck.truck_number}</option>`;
+                    });
+                    truckSelect.innerHTML = options;
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Update trucks when transporter changes
+        transporterSelect.addEventListener('change', updateTrucks);
+    });
+</script>
 <div class="container mt-4">
     <h2>Add Freight Booking</h2>
     <form method="POST" action="{{ route('freight_bookings.store') }}">
@@ -8,6 +38,7 @@
         <div class="row">
             <div class="col-md-4 mb-3">@php
     $lrs = \App\Models\LorryReceipt::all();
+    $transporters = \App\Models\Transporter::where('company_id', auth()->user()->company_id)->get();
 @endphp
 
 <div class="form-group">
@@ -20,6 +51,27 @@
             </option>
         @endforeach
     </select>
+</div>
+
+<div class="col-md-4 mb-3">
+    <label for="transporter_id">Transporter *</label>
+    <select name="transporter_id" id="transporter_id" class="form-control" required>
+        <option value="">Select Transporter</option>
+        @foreach($transporters as $transporter)
+            <option value="{{ $transporter->id }}" {{ old('transporter_id') == $transporter->id ? 'selected' : '' }}>
+                {{ $transporter->name }}
+            </option>
+        @endforeach
+    </select>
+    @error('transporter_id') <div class="text-danger">{{ $message }}</div> @enderror
+</div>
+
+<div class="col-md-4 mb-3">
+    <label for="truck_id">Truck *</label>
+    <select name="truck_id" id="truck_id" class="form-control" required>
+        <option value="">Select Truck</option>
+    </select>
+    @error('truck_id') <div class="text-danger">{{ $message }}</div> @enderror
 </div>
                 @error('lr_id') <div class="text-danger">{{ $message }}</div> @enderror
             </div>

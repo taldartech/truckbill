@@ -27,6 +27,9 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // Protected Routes
 Route::middleware(['auth'])->group(function () {
+    // API Routes
+    Route::get('/api/transporters/{transporter}/trucks', [TruckController::class, 'getTrucksForTransporter']);
+
     // City and State routes
     Route::get('/cities/{id}', [\App\Http\Controllers\CityController::class, 'show'])->name('cities.show');
     Route::get('/states/{id}', [\App\Http\Controllers\StateController::class, 'show'])->name('states.show');

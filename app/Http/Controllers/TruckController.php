@@ -6,6 +6,16 @@ use Illuminate\Http\Request;
 
 class TruckController extends Controller
 {
+    public function getTrucksForTransporter($transporterId)
+    {
+        $trucks = \App\Models\Truck::where('transporter_id', $transporterId)
+            ->whereHas('transporter', function($q) {
+                $q->where('company_id', auth()->user()->company_id);
+            })
+            ->get();
+
+        return response()->json($trucks);
+    }
     public function index(Request $request)
     {
         $query = \App\Models\Truck::with(['transporter', 'driver'])->whereHas('transporter', function($q) {
