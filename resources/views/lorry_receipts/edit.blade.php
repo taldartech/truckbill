@@ -4,6 +4,60 @@
 @php
     $transporters = \App\Models\Transporter::where('company_id', auth()->user()->company_id)->get();
 @endphp
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const transporterSelect = document.getElementById('transporter_id');
+    const truckSelect = document.getElementById('truck_id');
+
+    // Function to update trucks based on selected transporter
+    function updateTrucks() {
+        const selectedTransporter = transporterSelect.value;
+        console.log('Selected Transporter:', selectedTransporter);
+        
+        if (!selectedTransporter) {
+            truckSelect.innerHTML = '<option value="">Select Truck</option>';
+            return;
+        }
+
+        // Make AJAX request to get trucks for selected transporter
+        fetch(`/api/transporters/${selectedTransporter}/trucks`, {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(trucks => {
+            console.log('Received trucks:', trucks);
+            let options = '<option value="">Select Truck</option>';
+            trucks.forEach(truck => {
+                console.log('Adding truck:', truck);
+                options += `<option value="${truck.id}" ${truck.id == {{ $lr->truck_id }} ? 'selected' : ''}>${truck.truck_number}</option>`;
+            });
+            truckSelect.innerHTML = options;
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            truckSelect.innerHTML = '<option value="">Error loading trucks</option>';
+        });
+    }
+
+    // Update trucks when transporter changes
+    transporterSelect.addEventListener('change', updateTrucks);
+
+    // Initialize trucks based on current transporter
+    if (transporterSelect.value) {
+        updateTrucks();
+    }
+});
+</script>
 <div class="container mt-4">
     <h2>Edit Lorry Receipt</h2>
     <form action="{{ route('lorry_receipts.update', $lr->id) }}" method="POST">
@@ -30,11 +84,6 @@
                 <label for="truck_id" class="form-label">Truck *</label>
                 <select class="form-select" id="truck_id" name="truck_id" required>
                     <option value="">Select Truck</option>
-                    @foreach($trucks as $truck)
-                        <option value="{{ $truck->id }}" {{ $lr->truck_id == $truck->id ? 'selected' : '' }}>
-                            {{ $truck->number }}
-                        </option>
-                    @endforeach
                 </select>
                 @error('truck_id') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
