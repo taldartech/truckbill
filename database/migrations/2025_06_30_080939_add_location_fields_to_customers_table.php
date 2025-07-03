@@ -9,9 +9,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('customers', function (Blueprint $table) {
-            $table->foreignId('country_id')->nullable()->constrained('countries');
-            $table->foreignId('state_id')->nullable()->constrained('states');
-            $table->foreignId('city_id')->nullable()->constrained('cities');
+            // COUNTRY_ID
+            if (!Schema::hasColumn('customers', 'country_id')) {
+                $table->foreignId('country_id')->nullable()->constrained('countries');
+            }
+            // STATE_ID
+            if (!Schema::hasColumn('customers', 'state_id')) {
+                $table->foreignId('state_id')->nullable()->constrained('states');
+            }
+            // CITY_ID
+            if (!Schema::hasColumn('customers', 'city_id')) {
+                $table->foreignId('city_id')->nullable()->constrained('cities');
+            }
         });
     }
 
