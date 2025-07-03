@@ -46,7 +46,7 @@ class FreightBookingController extends Controller
             'detention' => 'nullable|numeric',
             'deviation' => 'nullable|numeric',
             'misc_expense' => 'nullable|numeric',
-            'misc_income' => 'nullable|numeric',
+            
             'remark' => 'nullable|string',
             'is_delivered' => 'boolean',
             'is_cancelled' => 'boolean',
@@ -127,7 +127,7 @@ class FreightBookingController extends Controller
             'detention' => 'nullable|numeric',
             'deviation' => 'nullable|numeric',
             'misc_expense' => 'nullable|numeric',
-            'misc_income' => 'nullable|numeric',
+           
             'remark' => 'nullable|string',
             'is_delivered' => 'boolean',
             'is_cancelled' => 'boolean',

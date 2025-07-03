@@ -22,7 +22,6 @@ class FreightBooking extends Model
         'detention',
         'deviation',
         'misc_expense',
-        'misc_income',
         'remark',
         'is_delivered',
         'is_cancelled',

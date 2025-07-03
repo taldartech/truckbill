@@ -37,6 +37,14 @@
                         <div class="text-danger">{{ $message }}</div>
                     @enderror
                 </div>
+                <div class="mb-3">
+                    <label for="code" class="form-label">Code *</label>
+                    <input type="text" class="form-control" id="code" name="code" 
+                           value="{{ old('code', isset($state) ? $state->code : '') }}" required>
+                    @error('code')
+                        <div class="text-danger">{{ $message }}</div>
+                    @enderror
+                </div>
                 
                 <button type="submit" class="btn btn-primary">Save</button>
                 <a href="{{ route('master.states.index') }}" class="btn btn-secondary">Cancel</a>
