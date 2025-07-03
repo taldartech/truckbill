@@ -9,6 +9,8 @@
 document.addEventListener('DOMContentLoaded', function() {
     const transporterSelect = document.getElementById('transporter_id');
     const truckSelect = document.getElementById('truck_id');
+    const consignorSelect = document.getElementById('consignor_id');
+    const consigneeSelect = document.getElementById('consignee_id');
 
     // Function to update trucks based on selected transporter
     function updateTrucks() {
@@ -33,6 +35,60 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Update trucks when transporter changes
     transporterSelect.addEventListener('change', updateTrucks);
+
+    // Function to update consignee options when consignor changes
+    function updateConsigneeOptions() {
+        const selectedConsignor = consignorSelect.value;
+        const currentConsignee = consigneeSelect.value;
+        
+        // Get all consignee options
+        const consigneeOptions = Array.from(consigneeSelect.getElementsByTagName('option'));
+        
+        // Remove all options except the default one
+        consigneeSelect.innerHTML = '<option value="">Select Consignee</option>';
+        
+        // Add back all options except the selected consignor
+        consigneeOptions.forEach(option => {
+            if (option.value && option.value !== selectedConsignor) {
+                const newOption = document.createElement('option');
+                newOption.value = option.value;
+                newOption.textContent = option.textContent;
+                newOption.selected = (option.value === currentConsignee);
+                consigneeSelect.appendChild(newOption);
+            }
+        });
+    }
+
+    // Function to update consignor options when consignee changes
+    function updateConsignorOptions() {
+        const selectedConsignee = consigneeSelect.value;
+        const currentConsignor = consignorSelect.value;
+        
+        // Get all consignor options
+        const consignorOptions = Array.from(consignorSelect.getElementsByTagName('option'));
+        
+        // Remove all options except the default one
+        consignorSelect.innerHTML = '<option value="">Select Consignor</option>';
+        
+        // Add back all options except the selected consignee
+        consignorOptions.forEach(option => {
+            if (option.value && option.value !== selectedConsignee) {
+                const newOption = document.createElement('option');
+                newOption.value = option.value;
+                newOption.textContent = option.textContent;
+                newOption.selected = (option.value === currentConsignor);
+                consignorSelect.appendChild(newOption);
+            }
+        });
+    }
+
+    // Add event listeners
+    consignorSelect.addEventListener('change', updateConsigneeOptions);
+    consigneeSelect.addEventListener('change', updateConsignorOptions);
+
+    // Initialize with current values
+    updateConsigneeOptions();
+    updateConsignorOptions();
 });
 </script>
 
@@ -208,60 +264,34 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             <div class="col-md-4 mb-3">
                 <label for="amount" class="form-label">Amount *</label>
-                <input type="number" step="0.01" class="form-control" id="amount" name="amount" required value="{{ old('amount') }}" readonly>
+                <input type="number" step="0.01" class="form-control" id="amount" name="amount" required value="{{ old('amount') }}">
                 @error('amount') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
         </div>
 
         <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="gr_number" class="form-label">GR Number *</label>
-                <input type="text" class="form-control" id="gr_number" name="gr_number" required value="{{ old('gr_number') }}">
-                @error('gr_number') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="damage_qty" class="form-label">Damage Quantity</label>
-                <input type="number" step="0.01" class="form-control" id="damage_qty" name="damage_qty" value="{{ old('damage_qty') }}" disabled>
-                @error('damage_qty') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="damage_rate" class="form-label">Damage Rate</label>
-                <input type="number" step="0.01" class="form-control" id="damage_rate" name="damage_rate" value="{{ old('damage_rate') }}" disabled>
-                @error('damage_rate') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="shortage_qty" class="form-label">Shortage Quantity</label>
-                <input type="number" step="0.01" class="form-control" id="shortage_qty" name="shortage_qty" value="{{ old('shortage_qty') }}" disabled>
-                @error('shortage_qty') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="shortage_rate" class="form-label">Shortage Rate</label>
-                <input type="number" step="0.01" class="form-control" id="shortage_rate" name="shortage_rate" value="{{ old('shortage_rate') }}" disabled>
-                @error('shortage_rate') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="service_tax" class="form-label">Service Tax</label>
-                <input type="number" step="0.01" class="form-control" id="service_tax" name="service_tax" value="{{ old('service_tax') }}" disabled>
-                @error('service_tax') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="swachh_bharat_cess" class="form-label">Swachh Bharat Cess</label>
-                <input type="number" step="0.01" class="form-control" id="swachh_bharat_cess" name="swachh_bharat_cess" value="{{ old('swachh_bharat_cess') }}" disabled>
-                @error('swachh_bharat_cess') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
             
+            <div class="col-md-4 mb-3">
+                <label for="damage_amount" class="form-label">Damage Amount</label>
+                <input type="number" step="0.01" class="form-control" id="damage_amount" name="damage_amount" value="{{ old('damage_amount') }}" disabled>
+                @error('damage_amount') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="shortage_amount" class="form-label">Shortage Amount</label>
+                <input type="number" step="0.01" class="form-control" id="shortage_amount" name="shortage_amount" value="{{ old('shortage_amount') }}" disabled>
+                @error('shortage_amount') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
             <div class="col-md-4 mb-3">
                 <label for="memo_id" class="form-label">Memo ID</label>
                 <input type="number" class="form-control" id="memo_id" name="memo_id" value="{{ old('memo_id') }}">
                 @error('memo_id') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
+            
         </div>
+
+       
+
+        
         <button type="submit" class="btn btn-primary">Create LR</button>
         <a href="{{ route('lorry_receipts.index') }}" class="btn btn-secondary ms-2">Back to List</a>
     </form>

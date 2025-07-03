@@ -156,11 +156,7 @@
         </div>
 
         <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="gr_number" class="form-label">GR Number *</label>
-                <input type="text" class="form-control" id="gr_number" name="gr_number" required value="{{ $lr->gr_number }}">
-                @error('gr_number') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
+            
             <div class="col-md-4 mb-3">
                 <label for="damage_qty" class="form-label">Damage Quantity</label>
                 <input type="number" step="0.01" class="form-control" id="damage_qty" name="damage_qty" value="{{ $lr->damage_qty }}" disabled>

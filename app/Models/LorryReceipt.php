@@ -28,15 +28,11 @@ class LorryReceipt extends Model
         'fr_rate',
         'amount',
         'gr_date',
-        'gr_number',
         'memo_id',
         'lane',
-        'damage_qty',
-        'damage_rate',
-        'shortage_qty',
-        'shortage_rate',
-        'service_tax',
-        'swachh_bharat_cess',
+        'damage_amount',
+        'shortage_amount',
+        
         'lr_number',
     ];
 
