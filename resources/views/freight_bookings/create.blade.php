@@ -167,11 +167,38 @@
                 <input type="number" step="0.01" class="form-control" name="misc_expense" id="misc_expense" value="{{ old('misc_expense') }}">
                 @error('misc_expense') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
+            
             <div class="col-md-4 mb-3">
-                <label for="misc_income" class="form-label">Misc. Income</label>
-                <input type="number" step="0.01" class="form-control" name="misc_income" id="misc_income" value="{{ old('misc_income') }}">
-                @error('misc_income') <div class="text-danger">{{ $message }}</div> @enderror
+                <label for="damage_qty" class="form-label">Damage Quantity</label>
+                <input type="number" step="0.01" class="form-control" name="damage_qty" id="damage_qty" value="{{ old('damage_qty') }}">
+                @error('damage_qty') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
+            <div class="col-md-4 mb-3">
+                <label for="damage_rate" class="form-label">Damage Rate</label>
+                <input type="number" step="0.01" class="form-control" name="damage_rate" id="damage_rate" value="{{ old('damage_rate') }}">
+                @error('damage_rate') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="damage_amount" class="form-label">Damage Amount</label>
+                <input type="number" step="0.01" class="form-control" name="damage_amount" id="damage_amount" value="{{ old('damage_amount') }}">
+                @error('damage_amount') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="shortage_qty" class="form-label">Shortage Quantity</label>
+                <input type="number" step="0.01" class="form-control" name="shortage_qty" id="shortage_qty" value="{{ old('shortage_qty') }}">
+                @error('shortage_qty') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="shortage_rate" class="form-label">Shortage Rate</label>
+                <input type="number" step="0.01" class="form-control" name="shortage_rate" id="shortage_rate" value="{{ old('shortage_rate') }}">
+                @error('shortage_rate') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="shortage_amount" class="form-label">Shortage Amount</label>
+                <input type="number" step="0.01" class="form-control" name="shortage_amount" id="shortage_amount" value="{{ old('shortage_amount') }}">
+                @error('shortage_amount') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+            
         </div>
         <div class="row">
             <div class="col-md-6 mb-3">

@@ -13,7 +13,7 @@
             <select name="lr_id" id="lr_id" class="form-select">
                 <option value="">All</option>
                 @foreach($lrs as $lr)
-                    <option value="{{ $lr->id }}" {{ request('lr_id') == $lr->id ? 'selected' : '' }}>{{ $lr->gr_number }}</option>
+                    <option value="{{ $lr->id }}" {{ request('lr_id') == $lr->id ? 'selected' : '' }}>{{ $lr->lr_number }}</option>
                 @endforeach
             </select>
         </div>
@@ -46,6 +46,7 @@
                 <th>TR Amount</th>
                 <th>Advance</th>
                 <th>Balance</th>
+                <th>GR Date</th>
                 <th>Delivered?</th>
                 <th>Cancelled?</th>
                 <th>Actions</th>
@@ -55,11 +56,12 @@
         @forelse($bookings as $booking)
             <tr>
                 <td>{{ $booking->id }}</td>
-                <td>{{ $booking->lr ? $booking->lr->gr_number : '-' }}</td>
+                <td>{{ $booking->lr ? $booking->lr->lr_number : '-' }}</td>
                 <td>{{ $booking->tr_fr_rate }}</td>
                 <td>{{ $booking->tr_amount }}</td>
                 <td>{{ $booking->advance_amount }}</td>
                 <td>{{ $booking->balance_amount }}</td>
+                <td>{{ $booking->lr ? $booking->lr->gr_date : '-' }}</td>
                 <td>{{ $booking->is_delivered ? 'Yes' : 'No' }}</td>
                 <td>{{ $booking->is_cancelled ? 'Yes' : 'No' }}</td>
                 <td>

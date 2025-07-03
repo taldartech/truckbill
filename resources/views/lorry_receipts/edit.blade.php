@@ -11,6 +11,25 @@
         <hr class="mb-3 mt-0">
         
         <div class="row">
+                        <div class="col-md-4 mb-3">
+                <label for="transporter_id" class="form-label">Transporter *</label>
+                <select class="form-select" id="transporter_id" name="transporter_id" required>
+                    <option value="">Select Transporter</option>
+                    @foreach($transporters as $transporter)
+                        <option value="{{ $transporter->id }}" {{ old('transporter_id') == $transporter->id ? 'selected' : '' }}>
+                            {{ $transporter->name }}
+                        </option>
+                    @endforeach
+                </select>
+                @error('transporter_id') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="truck_id" class="form-label">Truck *</label>
+                <select class="form-select" id="truck_id" name="truck_id" required>
+                    <option value="">Select Truck</option>
+                </select>
+                @error('truck_id') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
             <div class="col-md-4 mb-3">
                 <label for="customer_id" class="form-label">Customer *</label>
                 <select class="form-select" id="customer_id" name="customer_id" required>
@@ -73,6 +92,12 @@
             <div class="col-md-6 mb-3">
                 <label for="consignee_contact_number" class="form-label">Consignee Contact Number</label>
                 <input type="text" class="form-control" id="consignee_contact_number" name="consignee_contact_number" value="{{ $lr->consignee->contact_number ?? '' }}" readonly>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12 mb-3">
+                <button type="button" class="btn btn-secondary" onclick="resetDropdowns()">Reset Dropdowns</button>
             </div>
         </div>
 
@@ -150,54 +175,32 @@
             </div>
             <div class="col-md-4 mb-3">
                 <label for="amount" class="form-label">Amount *</label>
-                <input type="number" step="0.01" class="form-control" id="amount" name="amount" required value="{{ $lr->amount }}" readonly>
+                <input type="number" step="0.01" class="form-control" id="amount" name="amount" required value="{{ $lr->amount }}">
                 @error('amount') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
         </div>
 
         <div class="row">
+           
             
             <div class="col-md-4 mb-3">
-                <label for="damage_qty" class="form-label">Damage Quantity</label>
-                <input type="number" step="0.01" class="form-control" id="damage_qty" name="damage_qty" value="{{ $lr->damage_qty }}" disabled>
-                @error('damage_qty') <div class="text-danger">{{ $message }}</div> @enderror
+                <label for="damage_amount" class="form-label">Damage Amount</label>
+                <input type="number" step="0.01" class="form-control" id="damage_amount" name="damage_amount" value="{{ $lr->damage_amount }}" disabled>
+                @error('damage_amount') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
             <div class="col-md-4 mb-3">
-                <label for="damage_rate" class="form-label">Damage Rate</label>
-                <input type="number" step="0.01" class="form-control" id="damage_rate" name="damage_rate" value="{{ $lr->damage_rate }}" disabled>
-                @error('damage_rate') <div class="text-danger">{{ $message }}</div> @enderror
+                <label for="shortage_amount" class="form-label">Shortage Amount</label>
+                <input type="number" step="0.01" class="form-control" id="shortage_amount" name="shortage_amount" value="{{ $lr->shortage_amount }}" disabled>
+                @error('shortage_amount') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
         </div>
 
         <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="shortage_qty" class="form-label">Shortage Quantity</label>
-                <input type="number" step="0.01" class="form-control" id="shortage_qty" name="shortage_qty" value="{{   $lr->shortage_qty }}" disabled>
-                @error('shortage_qty') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="shortage_rate" class="form-label">Shortage Rate</label>
-                <input type="number" step="0.01" class="form-control" id="shortage_rate" name="shortage_rate" value="{{ $lr->shortage_rate }}" disabled>
-                @error('shortage_rate') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="service_tax" class="form-label">Service Tax</label>
-                <input type="number" step="0.01" class="form-control" id="service_tax" name="service_tax" value="{{ $lr->service_tax }}" disabled>
-                @error('service_tax') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
+            
+           
+            
         </div>
-
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="swachh_bharat_cess" class="form-label">Swachh Bharat Cess</label>
-                <input type="number" step="0.01" class="form-control" id="swachh_bharat_cess" name="swachh_bharat_cess" value="{{ $lr->swachh_bharat_cess }}" disabled>
-                @error('swachh_bharat_cess') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="lr_number" class="form-label">LR Number *</label>
-                <input type="text" class="form-control" id="lr_number" name="lr_number" required value="{{ $lr->lr_number }}">
-                @error('lr_number') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
+           
             <div class="col-md-4 mb-3">
                 <label for="memo_id" class="form-label">Memo ID</label>
                 <input type="number" class="form-control" id="memo_id" name="memo_id" value="{{ $lr->memo_id }}">
@@ -328,4 +331,94 @@ document.addEventListener('DOMContentLoaded', function () {
     noOfUnitsInput.addEventListener('input', calculateAmount);
 });
 </script>
+@endsection
+
+@section('scripts')
+<script>
+    // Initialize dropdowns
+    const transporterSelect = document.getElementById('transporter_id');
+    const truckSelect = document.getElementById('truck_id');
+    const consignorSelect = document.getElementById('consignor_id');
+    const consigneeSelect = document.getElementById('consignee_id');
+
+    // Function to update options
+    function updateOptions() {
+        const selectedConsignor = consignorSelect.value;
+        const selectedConsignee = consigneeSelect.value;
+
+        // Get all options
+        const consignorOptions = Array.from(consignorSelect.options);
+        const consigneeOptions = Array.from(consigneeSelect.options);
+
+        // Remove the selected option from the other dropdown
+        consignorOptions.forEach(option => {
+            if (option.value === selectedConsignee) {
+                option.style.display = 'none';
+            } else {
+                option.style.display = '';
+            }
+        });
+
+        consigneeOptions.forEach(option => {
+            if (option.value === selectedConsignor) {
+                option.style.display = 'none';
+            } else {
+                option.style.display = '';
+            }
+        });
+    }
+
+    
+
+  
+
+
+    
+    consignorSelect.addEventListener('change', () => {
+        updateOptions();
+        // Update contact number
+        const selectedOption = consignorSelect.options[consignorSelect.selectedIndex];
+        document.getElementById('consignor_contact_number').value = selectedOption.getAttribute('data-contact');
+    });
+
+    consigneeSelect.addEventListener('change', () => {
+        updateOptions();
+        // Update contact number
+        const selectedOption = consigneeSelect.options[consigneeSelect.selectedIndex];
+        document.getElementById('consignee_contact_number').value = selectedOption.getAttribute('data-contact');
+    });
+
+    
+    updateOptions();
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const transporterSelect = document.getElementById('transporter_id');
+        const truckSelect = document.getElementById('truck_id');
+    
+        // Function to update trucks based on selected transporter
+        function updateTrucks() {
+            const selectedTransporter = transporterSelect.value;
+            if (!selectedTransporter) {
+                truckSelect.innerHTML = '<option value="">Select Truck</option>';
+                return;
+            }
+    
+            // Make AJAX request to get trucks for selected transporter
+            fetch(`/api/transporters/${selectedTransporter}/trucks`)
+                .then(response => response.json())
+                .then(trucks => {
+                    let options = '<option value="">Select Truck</option>';
+                    trucks.forEach(truck => {
+                        options += `<option value="${truck.id}">${truck.truck_number}</option>`;
+                    });
+                    truckSelect.innerHTML = options;
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    
+        // Update trucks when transporter changes
+        transporterSelect.addEventListener('change', updateTrucks);
+    });
+    </script>
 @endsection

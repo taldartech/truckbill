@@ -46,6 +46,12 @@ class FreightBookingController extends Controller
             'detention' => 'nullable|numeric',
             'deviation' => 'nullable|numeric',
             'misc_expense' => 'nullable|numeric',
+            'damage_qty' => 'nullable|numeric',
+            'damage_rate' => 'nullable|numeric',
+            'damage_amount' => 'nullable|numeric',
+            'shortage_qty' => 'nullable|numeric',
+            'shortage_rate' => 'nullable|numeric',
+            'shortage_amount' => 'nullable|numeric',
             
             'remark' => 'nullable|string',
             'is_delivered' => 'boolean',
