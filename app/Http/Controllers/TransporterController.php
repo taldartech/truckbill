@@ -56,9 +56,19 @@ class TransporterController extends Controller
         $validated = $request->validate([
             'company_id' => 'required|exists:companies,id',
             'name' => 'required|string|max:255',
-            'gst_number' => 'nullable|string|max:50',
+           'gst_number' => [
+                'nullable',
+                'string',
+                'max:15',
+                'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/'
+            ],
+            'pan_number' => [
+                'nullable',
+                'string',
+                'size:10',
+                'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/'
+            ],
             'gst_type' => 'required|in:composition,regular',
-            'pan_number' => 'nullable|string|max:20',
             'is_owner' => 'required|boolean',
             'declaration_given' => 'required|boolean',
             'total_trucks' => 'required|integer|min:0',
@@ -84,9 +94,19 @@ class TransporterController extends Controller
         $validated = $request->validate([
             'company_id' => 'required|exists:companies,id',
             'name' => 'required|string|max:255',
-            'gst_number' => 'nullable|string|max:50',
+           'gst_number' => [
+                'nullable',
+                'string',
+                'max:15',
+                'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/'
+            ],
+            'pan_number' => [
+                'nullable',
+                'string',
+                'size:10',
+                'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/'
+            ],
             'gst_type' => 'required|in:composition,regular',
-            'pan_number' => 'nullable|string|max:20',
             'is_owner' => 'required|boolean',
             'declaration_given' => 'required|boolean',
             'total_trucks' => 'required|integer|min:0',

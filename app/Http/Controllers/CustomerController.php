@@ -22,8 +22,18 @@ class CustomerController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'gst_number' => 'nullable|string|max:255',
-            'pan_number' => 'nullable|string|max:255',
+            'gst_number' => [
+                'nullable',
+                'string',
+                'max:15',
+                'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/'
+            ],
+            'pan_number' => [
+                'nullable',
+                'string',
+                'size:10',
+                'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/'
+            ],
             'address' => 'nullable|string|max:255',
             'contact_person' => 'nullable|string|max:255',
             'contact_number' => 'required|string|max:20',
@@ -95,8 +105,18 @@ class CustomerController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'gst_number' => 'nullable|string|max:255',
-            'pan_number' => 'nullable|string|max:255',
+           'gst_number' => [
+                'nullable',
+                'string',
+                'max:15',
+                'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/'
+            ],
+            'pan_number' => [
+                'nullable',
+                'string',
+                'size:10',
+                'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/'
+            ],
             'address' => 'nullable|string|max:255',
             'contact_person' => 'nullable|string|max:255',
             'contact_number' => 'required|string|max:20',

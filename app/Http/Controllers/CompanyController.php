@@ -33,13 +33,25 @@ class CompanyController extends Controller
         $company = \App\Models\Company::findOrFail($id);
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'gst_number' => 'nullable|string|max:32',
-            'pan_number' => 'nullable|string|max:32',
+            'gst_number' => [
+    'nullable',
+    'string',
+    'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
+],
+            'pan_number' => [
+                'nullable',
+                'string',
+                'size:10',
+                'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/'
+            ],
             'gst_scheme' => 'nullable|in:reverse charge,forward charge',
             'gst_type' => 'nullable|in:composition,regular',
             'address' => 'nullable|string',
             'contact_person' => 'nullable|string|max:255',
-            'contact_number' => 'nullable|string|max:32',
+            'contact_number' => [
+    'nullable',
+    'digits:10',
+],
         ]);
         $company->update($validated);
         return redirect()->route('company.index')->with('success', 'Company updated successfully!');
@@ -60,13 +72,25 @@ class CompanyController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'gst_number' => 'nullable|string|max:32',
-            'pan_number' => 'nullable|string|max:32',
+            'gst_number' => [
+                'nullable',
+                'string',
+                'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
+            ],
+            'pan_number' => [
+                'nullable',
+                'string',
+                'size:10',
+                'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/'
+            ],
             'gst_scheme' => 'nullable|in:reverse charge,forward charge',
             'gst_type' => 'nullable|in:composition,regular',
             'address' => 'nullable|string',
             'contact_person' => 'nullable|string|max:255',
-            'contact_number' => 'nullable|string|max:32',
+            'contact_number' => [
+    'nullable',
+    'digits:10',
+],
         ]);
         
         \App\Models\Company::create($validated);

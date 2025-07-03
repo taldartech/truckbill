@@ -31,7 +31,10 @@ class DriverController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:100',
-            'mobile' => 'nullable|string|max:20',
+            'mobile' => [
+                'nullable',
+                'digits:10',
+            ],
             'license_number' => 'nullable|string|max:50',
             'address' => 'nullable|string|max:255',
         ]);
@@ -48,7 +51,10 @@ class DriverController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:100',
-            'mobile' => 'nullable|string|max:20',
+            'mobile' => [
+                'nullable',
+                'digits:10',
+            ],
             'license_number' => 'nullable|string|max:50',
             'address' => 'nullable|string|max:255',
         ]);
