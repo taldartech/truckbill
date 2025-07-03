@@ -3,6 +3,7 @@
 @section('content')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        const lrSelect = document.getElementById('lr_id');
         const transporterSelect = document.getElementById('transporter_id');
         const truckSelect = document.getElementById('truck_id');
 
@@ -27,54 +28,82 @@
                 .catch(error => console.error('Error:', error));
         }
 
+        // Function to load LR details
+        function loadLRDetails() {
+            const selectedLR = lrSelect.value;
+            if (!selectedLR) {
+                document.getElementById('transporter_id').value = '';
+                document.getElementById('truck_id').value = '';
+                return;
+            }
+
+            // Make AJAX request to get LR details
+            fetch(`/api/lorry_receipts/${selectedLR}`)
+                .then(response => response.json())
+                .then(lr => {
+                    // Set transporter
+                    const transporterSelect = document.getElementById('transporter_id');
+                    const truckSelect = document.getElementById('truck_id');
+                    
+                    // Get transporter name
+                    fetch(`/api/transporters/${lr.transporter_id}`)
+                        .then(response => response.json())
+                        .then(transporter => {
+                            transporterSelect.value = `${transporter.name}`;
+                        });
+                    
+                    // Get truck number
+                    fetch(`/api/trucks/${lr.truck_id}`)
+                        .then(response => response.json())
+                        .then(truck => {
+                            truckSelect.value = `${truck.truck_number}`;
+                        });
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
         // Update trucks when transporter changes
         transporterSelect.addEventListener('change', updateTrucks);
+        
+        // Load LR details when LR changes
+        lrSelect.addEventListener('change', loadLRDetails);
     });
 </script>
+@php
+    $lrs = \App\Models\LorryReceipt::all();
+    $transporters = \App\Models\Transporter::where('company_id', auth()->user()->company_id)->get();
+@endphp
+
 <div class="container mt-4">
     <h2>Add Freight Booking</h2>
     <form method="POST" action="{{ route('freight_bookings.store') }}">
         @csrf
         <div class="row">
-            <div class="col-md-4 mb-3">@php
-    $lrs = \App\Models\LorryReceipt::all();
-    $transporters = \App\Models\Transporter::where('company_id', auth()->user()->company_id)->get();
-@endphp
-
-<div class="form-group">
-    <label for="lr_id">LR Number</label>
-    <select name="lr_id" id="lr_id" class="form-control" required>
-        <option value="">Select LR Number</option>
-        @foreach($lrs as $lr)
-            <option value="{{ $lr->id }}" {{ old('lr_id') == $lr->id ? 'selected' : '' }}>
-                {{ $lr->lr_number }} 
-            </option>
-        @endforeach
-    </select>
-</div>
-
-<div class="col-md-4 mb-3">
-    <label for="transporter_id">Transporter *</label>
-    <select name="transporter_id" id="transporter_id" class="form-control" required>
-        <option value="">Select Transporter</option>
-        @foreach($transporters as $transporter)
-            <option value="{{ $transporter->id }}" {{ old('transporter_id') == $transporter->id ? 'selected' : '' }}>
-                {{ $transporter->name }}
-            </option>
-        @endforeach
-    </select>
-    @error('transporter_id') <div class="text-danger">{{ $message }}</div> @enderror
-</div>
-
-<div class="col-md-4 mb-3">
-    <label for="truck_id">Truck *</label>
-    <select name="truck_id" id="truck_id" class="form-control" required>
-        <option value="">Select Truck</option>
-    </select>
-    @error('truck_id') <div class="text-danger">{{ $message }}</div> @enderror
-</div>
+            <div class="col-md-4 mb-3">
+                <label for="lr_id" class="form-label">LR Number *</label>
+                <select name="lr_id" id="lr_id" class="form-control" required>
+                    <option value="">Select LR Number</option>
+                    @foreach($lrs as $lr)
+                        <option value="{{ $lr->id }}" {{ old('lr_id') == $lr->id ? 'selected' : '' }}>
+                            {{ $lr->lr_number }} 
+                        </option>
+                    @endforeach
+                </select>
                 @error('lr_id') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
+            <div class="col-md-4 mb-3">
+                <label for="transporter_id" class="form-label">Transporter *</label>
+                <input type="text" name="transporter_id" id="transporter_id" class="form-control" readonly>
+                @error('transporter_id') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="truck_id" class="form-label">Truck *</label>
+                <input type="text" name="truck_id" id="truck_id" class="form-control" readonly>
+                @error('truck_id') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+        </div>
+
+        <div class="row">
             <div class="col-md-4 mb-3">
                 <label for="tr_fr_rate" class="form-label">TR Freight Rate *</label>
                 <input type="number" step="0.01" class="form-control" name="tr_fr_rate" id="tr_fr_rate" value="{{ old('tr_fr_rate') }}" required>

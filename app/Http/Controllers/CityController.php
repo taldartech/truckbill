@@ -47,6 +47,11 @@ class CityController extends Controller
         return redirect()->route('master.cities.index')->with('success', 'City updated successfully');
     }
 
+    public function show(City $city)
+    {
+        return response()->json($city);
+    }
+
     public function destroy(City $city)
     {
         $city->delete();

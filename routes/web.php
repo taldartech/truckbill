@@ -29,6 +29,9 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 Route::middleware(['auth'])->group(function () {
     // API Routes
     Route::get('/api/transporters/{transporter}/trucks', [TruckController::class, 'getTrucksForTransporter']);
+    Route::get('/api/lorry_receipts/{id}', [FreightBookingController::class, 'getLorryReceipt']);
+    Route::get('/api/transporters/{id}', [FreightBookingController::class, 'getTransporter']);
+    Route::get('/api/trucks/{id}', [FreightBookingController::class, 'getTruck']);
 
     // City and State routes
     Route::get('/cities/{id}', [\App\Http\Controllers\CityController::class, 'show'])->name('cities.show');

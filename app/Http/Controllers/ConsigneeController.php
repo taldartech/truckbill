@@ -92,10 +92,12 @@ class ConsigneeController extends Controller
             return response()->json([
                 'contact_number' => $consignee->contact_number,
                 'city_id' => $consignee->city_id,
-                'state_id' => $consignee->state_id
+                'state_id' => $consignee->state_id,
+                'city_name' => $consignee->city ? $consignee->city->name : '',
+                'state_name' => $consignee->state ? $consignee->state->name : ''
             ]);
         }
 
-    return response()->json(null, 404);
-}
+        return response()->json(['error' => 'Consignee not found'], 404);
+    }
 }

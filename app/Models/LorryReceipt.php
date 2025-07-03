@@ -12,14 +12,12 @@ class LorryReceipt extends Model
 {
     protected $fillable = [
         'truck_id',
-        // 'transporter_id',
-        // 'eway_bill_number',
+        'transporter_id',
         'delivery_status',
         'consignor_id',
         'customer_id',
         'consignor_contact_number',
         'consignee_id',
-        // 'consignee_contact_number',
         'source_city',
         'destination_city',
         'source_state',
@@ -29,7 +27,6 @@ class LorryReceipt extends Model
         'good_type',
         'fr_rate',
         'amount',
-        // 'linked_lr_id',
         'gr_date',
         'gr_number',
         'memo_id',

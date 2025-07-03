@@ -86,6 +86,33 @@ class FreightBookingController extends Controller
         return view('freight_bookings.edit', compact('freight_booking', 'lrs', 'linkedBookings'));
     }
 
+    public function getLorryReceipt($id)
+    {
+        $lr = LorryReceipt::find($id);
+        if (!$lr) {
+            return response()->json(['error' => 'LR not found'], 404);
+        }
+        return response()->json($lr);
+    }
+
+    public function getTransporter($id)
+    {
+        $transporter = \App\Models\Transporter::find($id);
+        if (!$transporter) {
+            return response()->json(['error' => 'Transporter not found'], 404);
+        }
+        return response()->json($transporter);
+    }
+
+    public function getTruck($id)
+    {
+        $truck = \App\Models\Truck::find($id);
+        if (!$truck) {
+            return response()->json(['error' => 'Truck not found'], 404);
+        }
+        return response()->json($truck);
+    }
+
     public function update(Request $request, FreightBooking $freight_booking)
     {
         $data = $request->validate([

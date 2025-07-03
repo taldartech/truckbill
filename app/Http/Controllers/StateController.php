@@ -47,6 +47,11 @@ class StateController extends Controller
         return redirect()->route('master.states.index')->with('success', 'State updated successfully');
     }
 
+    public function show(State $state)
+    {
+        return response()->json($state);
+    }
+
     public function destroy(State $state)
     {
         $state->delete();

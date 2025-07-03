@@ -1,6 +1,41 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    $transporters = \App\Models\Transporter::where('company_id', auth()->user()->company_id)->get();
+@endphp
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const transporterSelect = document.getElementById('transporter_id');
+    const truckSelect = document.getElementById('truck_id');
+
+    // Function to update trucks based on selected transporter
+    function updateTrucks() {
+        const selectedTransporter = transporterSelect.value;
+        if (!selectedTransporter) {
+            truckSelect.innerHTML = '<option value="">Select Truck</option>';
+            return;
+        }
+
+        // Make AJAX request to get trucks for selected transporter
+        fetch(`/api/transporters/${selectedTransporter}/trucks`)
+            .then(response => response.json())
+            .then(trucks => {
+                let options = '<option value="">Select Truck</option>';
+                trucks.forEach(truck => {
+                    options += `<option value="${truck.id}">${truck.truck_number}</option>`;
+                });
+                truckSelect.innerHTML = options;
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    // Update trucks when transporter changes
+    transporterSelect.addEventListener('change', updateTrucks);
+});
+</script>
+
 <div class="container mt-4">
     <h2>Add New Lorry Receipt</h2>
     <form action="{{ route('lorry_receipts.store') }}" method="POST">
@@ -10,6 +45,25 @@
         <hr class="mb-3 mt-0">
         
         <div class="row">
+            <div class="col-md-4 mb-3">
+                <label for="transporter_id" class="form-label">Transporter *</label>
+                <select class="form-select" id="transporter_id" name="transporter_id" required>
+                    <option value="">Select Transporter</option>
+                    @foreach($transporters as $transporter)
+                        <option value="{{ $transporter->id }}" {{ old('transporter_id') == $transporter->id ? 'selected' : '' }}>
+                            {{ $transporter->name }}
+                        </option>
+                    @endforeach
+                </select>
+                @error('transporter_id') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+            <div class="col-md-4 mb-3">
+                <label for="truck_id" class="form-label">Truck *</label>
+                <select class="form-select" id="truck_id" name="truck_id" required>
+                    <option value="">Select Truck</option>
+                </select>
+                @error('truck_id') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
             <div class="col-md-4 mb-3">
                 <label for="customer_id" class="form-label">Customer *</label>
                 <select class="form-select" id="customer_id" name="customer_id" required>
@@ -240,45 +294,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 
                 // Update contact number and location fields
                 consignorContact.value = data.contact_number || '';
-                sourceCityInput.value = data.city_id ? 'Loading...' : '';
-                sourceStateInput.value = data.state_id ? 'Loading...' : '';
-
-                // Fetch city and state names using IDs
-                if (data.city_id || data.state_id) {
-                    const fetchCityState = async () => {
-                        try {
-                            // Fetch city name
-                            if (data.city_id) {
-                                const cityResponse = await fetch(`{{ route('cities.show', '__id__') }}`.replace('__id__', data.city_id));
-                                if (cityResponse.ok) {
-                                    const cityData = await cityResponse.json();
-                                    sourceCityInput.value = cityData.name || '';
-                                } else {
-                                    console.error('❌ Failed to fetch city:', await cityResponse.text());
-                                    sourceCityInput.value = '';
-                                }
-                            }
-
-                            // Fetch state name
-                            if (data.state_id) {
-                                const stateResponse = await fetch(`{{ route('states.show', '__id__') }}`.replace('__id__', data.state_id));
-                                if (stateResponse.ok) {
-                                    const stateData = await stateResponse.json();
-                                    sourceStateInput.value = stateData.name || '';
-                                } else {
-                                    console.error('❌ Failed to fetch state:', await stateResponse.text());
-                                    sourceStateInput.value = '';
-                                }
-                            }
-                        } catch (error) {
-                            console.error('❌ Error fetching city/state:', error);
-                            sourceCityInput.value = '';
-                            sourceStateInput.value = '';
-                        }
-                    };
-
-                    fetchCityState();
-                }
+                sourceCityInput.value = data.city_name || '';
+                sourceStateInput.value = data.state_name || '';
             } catch (error) {
                 console.error('❌ Error:', error);
                 consignorContact.value = '';
@@ -314,45 +331,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 
                 // Update contact number and location fields
                 consigneeContact.value = data.contact_number || '';
-                destinationCityInput.value = data.city_id ? 'Loading...' : '';
-                destinationStateInput.value = data.state_id ? 'Loading...' : '';
-
-                // Fetch city and state names using IDs
-                if (data.city_id || data.state_id) {
-                    const fetchCityState = async () => {
-                        try {
-                            // Fetch city name
-                            if (data.city_id) {
-                                const cityResponse = await fetch(`{{ route('cities.show', '__id__') }}`.replace('__id__', data.city_id));
-                                if (cityResponse.ok) {
-                                    const cityData = await cityResponse.json();
-                                    destinationCityInput.value = cityData.name || '';
-                                } else {
-                                    console.error('❌ Failed to fetch city:', await cityResponse.text());
-                                    destinationCityInput.value = '';
-                                }
-                            }
-
-                            // Fetch state name
-                            if (data.state_id) {
-                                const stateResponse = await fetch(`{{ route('states.show', '__id__') }}`.replace('__id__', data.state_id));
-                                if (stateResponse.ok) {
-                                    const stateData = await stateResponse.json();
-                                    destinationStateInput.value = stateData.name || '';
-                                } else {
-                                    console.error('❌ Failed to fetch state:', await stateResponse.text());
-                                    destinationStateInput.value = '';
-                                }
-                            }
-                        } catch (error) {
-                            console.error('❌ Error fetching city/state:', error);
-                            destinationCityInput.value = '';
-                            destinationStateInput.value = '';
-                        }
-                    };
-
-                    fetchCityState();
-                }
+                destinationCityInput.value = data.city_name || '';
+                destinationStateInput.value = data.state_name || '';
             } catch (error) {
                 console.error('❌ Error:', error);
                 consigneeContact.value = '';
