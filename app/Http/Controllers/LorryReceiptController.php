@@ -103,18 +103,20 @@ class LorryReceiptController extends Controller
 
     public function edit(\App\Models\LorryReceipt $lorry_receipt)
     {
+        // Eager load the truck relationship
+        $lorry_receipt = $lorry_receipt->load('truck');
+        
         $customers = \App\Models\Customer::all();
         $consignees = \App\Models\Consignee::all();
         $goodsTypes = \App\Models\GoodType::all();
-        $trucks = \App\Models\Truck::all();
+        
+        // Get trucks filtered by the current transporter's company
+        $trucks = \App\Models\Truck::when($lorry_receipt->transporter_id, function ($query) use ($lorry_receipt) {
+            return $query->where('transporter_id', $lorry_receipt->transporter_id);
+        })->get();
 
         $transporters = \App\Models\Transporter::all();
         $statuses = ['Pending', 'Delivered', 'Cancelled'];
-        
-        // // Filter trucks by the current transporter
-        // $trucks = $lorry_receipt->transporter_id 
-        //     ? \App\Models\Truck::where('transporter_id', $lorry_receipt->transporter_id)->get()
-        //     : \App\Models\Truck::all();
         
         return view('lorry_receipts.edit', [
             'lr' => $lorry_receipt,

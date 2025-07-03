@@ -16,7 +16,7 @@
                 <select class="form-select" id="transporter_id" name="transporter_id" required>
                     <option value="">Select Transporter</option>
                     @foreach($transporters as $transporter)
-                        <option value="{{ $transporter->id }}" {{ old('transporter_id') == $transporter->id ? 'selected' : '' }}>
+                        <option value="{{ $transporter->id }}" {{ $lr->transporter_id == $transporter->id ? 'selected' : '' }}>
                             {{ $transporter->name }}
                         </option>
                     @endforeach
@@ -27,6 +27,11 @@
                 <label for="truck_id" class="form-label">Truck *</label>
                 <select class="form-select" id="truck_id" name="truck_id" required>
                     <option value="">Select Truck</option>
+                    @foreach($trucks as $truck)
+                        <option value="{{ $truck->id }}" {{ $lr->truck_id == $truck->id ? 'selected' : '' }}>
+                            {{ $truck->number }}
+                        </option>
+                    @endforeach
                 </select>
                 @error('truck_id') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
