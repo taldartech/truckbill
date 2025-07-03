@@ -9,8 +9,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     const transporterSelect = document.getElementById('transporter_id');
     const truckSelect = document.getElementById('truck_id');
-    const consignorSelect = document.getElementById('consignor_id');
-    const consigneeSelect = document.getElementById('consignee_id');
 
     // Function to update trucks based on selected transporter
     function updateTrucks() {
@@ -35,60 +33,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Update trucks when transporter changes
     transporterSelect.addEventListener('change', updateTrucks);
-
-    // Function to update consignee options when consignor changes
-    function updateConsigneeOptions() {
-        const selectedConsignor = consignorSelect.value;
-        const currentConsignee = consigneeSelect.value;
-        
-        // Get all consignee options
-        const consigneeOptions = Array.from(consigneeSelect.getElementsByTagName('option'));
-        
-        // Remove all options except the default one
-        consigneeSelect.innerHTML = '<option value="">Select Consignee</option>';
-        
-        // Add back all options except the selected consignor
-        consigneeOptions.forEach(option => {
-            if (option.value && option.value !== selectedConsignor) {
-                const newOption = document.createElement('option');
-                newOption.value = option.value;
-                newOption.textContent = option.textContent;
-                newOption.selected = (option.value === currentConsignee);
-                consigneeSelect.appendChild(newOption);
-            }
-        });
-    }
-
-    // Function to update consignor options when consignee changes
-    function updateConsignorOptions() {
-        const selectedConsignee = consigneeSelect.value;
-        const currentConsignor = consignorSelect.value;
-        
-        // Get all consignor options
-        const consignorOptions = Array.from(consignorSelect.getElementsByTagName('option'));
-        
-        // Remove all options except the default one
-        consignorSelect.innerHTML = '<option value="">Select Consignor</option>';
-        
-        // Add back all options except the selected consignee
-        consignorOptions.forEach(option => {
-            if (option.value && option.value !== selectedConsignee) {
-                const newOption = document.createElement('option');
-                newOption.value = option.value;
-                newOption.textContent = option.textContent;
-                newOption.selected = (option.value === currentConsignor);
-                consignorSelect.appendChild(newOption);
-            }
-        });
-    }
-
-    // Add event listeners
-    consignorSelect.addEventListener('change', updateConsigneeOptions);
-    consigneeSelect.addEventListener('change', updateConsignorOptions);
-
-    // Initialize with current values
-    updateConsigneeOptions();
-    updateConsignorOptions();
 });
 </script>
 
