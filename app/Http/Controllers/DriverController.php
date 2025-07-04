@@ -35,7 +35,12 @@ class DriverController extends Controller
                 'nullable',
                 'digits:10',
             ],
-            'license_number' => 'nullable|string|max:50',
+           'license_number' => [
+                            'nullable',
+                            'string',
+                            'size:17',
+                            'regex:/^[A-Z]{2}\d{2}\s\d{11}$/',
+                        ],
             'address' => 'nullable|string|max:255',
         ]);
         \App\Models\Driver::create($validated);
@@ -55,7 +60,12 @@ class DriverController extends Controller
                 'nullable',
                 'digits:10',
             ],
-            'license_number' => 'nullable|string|max:50',
+             'license_number' => [
+                            'nullable',
+                            'string',
+                            'size:17',
+                            'regex:/^[A-Z]{2}\d{2}\s\d{11}$/',
+                        ],
             'address' => 'nullable|string|max:255',
         ]);
         $driver->update($validated);

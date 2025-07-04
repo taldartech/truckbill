@@ -53,7 +53,12 @@ class TruckController extends Controller
     {
         $validated = $request->validate([
             'transporter_id' => 'required|exists:transporters,id',
-            'truck_number' => 'required|string|max:50',
+           'truck_number' => [
+    'required',
+    'string',
+    'size:10',
+    'regex:/^[A-Z]{2}\d{2}[A-Z]{2}\d{4}$/',
+],
             'truck_type' => 'required|string|max:50',
             'driver_id' => 'nullable|exists:drivers,id',
             'registration_date' => 'required|date',
@@ -80,7 +85,12 @@ class TruckController extends Controller
     {
         $validated = $request->validate([
             'transporter_id' => 'required|exists:transporters,id',
-            'truck_number' => 'required|string|max:50',
+           'truck_number' => [
+    'required',
+    'string',
+    'size:10',
+    'regex:/^[A-Z]{2}\d{2}[A-Z]{2}\d{4}$/',
+],
             'truck_type' => 'required|string|max:50',
             'driver_id' => 'nullable|exists:drivers,id',
             'registration_date' => 'required|date',

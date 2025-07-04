@@ -268,6 +268,36 @@
                                 </ul>
                             </div>
                         </li>
+                        <li class="nav-item mb-2">
+                            <a class="nav-link text-white d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#masterMenu" role="button" aria-expanded="false" aria-controls="masterMenu">
+                                <span><i class="fas fa-cog"></i> Master</span>
+                                <i class="fas fa-chevron-down small"></i>
+                            </a>
+                            <div class="collapse ms-3" id="masterMenu">
+                                <ul class="nav flex-column">
+                                    <li class="nav-item mb-1">
+                                        <a href="/master/countries" class="nav-link text-white">
+                                            <i class="fas fa-globe"></i> Countries
+                                        </a>
+                                    </li>
+                                    <li class="nav-item mb-1">
+                                        <a href="/master/states" class="nav-link text-white">
+                                            <i class="fas fa-map-marker-alt"></i> States
+                                        </a>
+                                    </li>
+                                    <li class="nav-item mb-1">
+                                        <a href="/master/cities" class="nav-link text-white">
+                                            <i class="fas fa-city"></i> Cities
+                                        </a>
+                                    </li>
+                                    <li class="nav-item mb-1">
+                                        <a href="/master/goods-types" class="nav-link text-white">
+                                            <i class="fas fa-box"></i> Goods Types
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
                        
                         {{-- <li class="nav-item mb-2">
                             <a href="/vouchers" class="nav-link text-white">
