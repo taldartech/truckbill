@@ -78,6 +78,9 @@ class FreightBookingController extends Controller
             } elseif ($data['is_delivered'] === '1') {
                 $deliveryStatus = 'Delivered';
             }
+            else{
+                $deliveryStatus = 'In-Progress';
+            }
             $lorryReceipt->delivery_status = $deliveryStatus;
             $lorryReceipt->damage_amount = $data['damage_amount'];
             $lorryReceipt->shortage_amount = $data['shortage_amount'];

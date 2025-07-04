@@ -15,7 +15,9 @@ class CustomerController extends Controller
     public function create()
     {
         $countries = \App\Models\Country::all();
-        return view('customers.create', compact('countries'));
+        $states = \App\Models\State::all();
+            $cities = \App\Models\City::all();
+        return view('customers.create', compact('countries', 'states', 'cities'));
     }
 
     public function store(Request $request)
@@ -25,7 +27,6 @@ class CustomerController extends Controller
             'gst_number' => [
                 'nullable',
                 'string',
-                'max:15',
                 'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/'
             ],
             'pan_number' => [
@@ -36,7 +37,10 @@ class CustomerController extends Controller
             ],
             'address' => 'nullable|string|max:255',
             'contact_person' => 'nullable|string|max:255',
-            'contact_number' => 'required|string|max:20',
+            'contact_number' => [
+                'nullable',
+                'digits:10',
+            ],
             'country_id' => 'required|exists:countries,id',
             'state_id' => 'required|exists:states,id',
             'city_id' => 'required|exists:cities,id',
@@ -108,7 +112,6 @@ class CustomerController extends Controller
            'gst_number' => [
                 'nullable',
                 'string',
-                'max:15',
                 'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/'
             ],
             'pan_number' => [
@@ -119,7 +122,10 @@ class CustomerController extends Controller
             ],
             'address' => 'nullable|string|max:255',
             'contact_person' => 'nullable|string|max:255',
-            'contact_number' => 'required|string|max:20',
+            'contact_number' => [
+                'nullable',
+                'digits:10',
+            ],
             'country_id' => 'required|exists:countries,id',
             'state_id' => 'required|exists:states,id',
             'city_id' => 'required|exists:cities,id',

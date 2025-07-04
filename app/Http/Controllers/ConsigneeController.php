@@ -41,7 +41,10 @@ class ConsigneeController extends Controller
             'country_id' => 'required|exists:countries,id',
             'state_id' => 'required|exists:states,id',
             'city_id' => 'required|exists:cities,id',
-            'contact_number' => 'required|string|max:20',
+            'contact_number' => [
+                'nullable',
+                'digits:10',
+            ],
         ]);
 
         $validated['company_id'] = auth()->user()->company_id;
@@ -69,7 +72,10 @@ class ConsigneeController extends Controller
             'country_id' => 'required|exists:countries,id',
             'state_id' => 'required|exists:states,id',
             'city_id' => 'required|exists:cities,id',
-            'contact_number' => 'required|string|max:20',
+            'contact_number' => [
+                'nullable',
+                'digits:10',
+            ],
         ]);
 
         $consignee->update($validated);

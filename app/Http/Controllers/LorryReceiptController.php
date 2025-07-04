@@ -15,7 +15,7 @@ class LorryReceiptController extends Controller
 {
     public function index(Request $request)
     {
-        $statuses = ['Pending', 'Delivered', 'Cancelled'];
+        $statuses = ['Pending', 'Delivered', 'Cancelled','In-Progress'];
         $query = \App\Models\LorryReceipt::with(['truck', 'transporter', 'consignor', 'consignee']);
 
         
@@ -54,7 +54,7 @@ class LorryReceiptController extends Controller
         $customers = Customer::where('company_id', auth()->user()->company_id)->orderBy('name')->get();
         $consignees = Consignee::where('company_id', auth()->user()->company_id)->orderBy('name')->get();
         $goodsTypes = GoodType::all();
-        $statuses = ['Pending', 'Delivered', 'Cancelled'];
+        $statuses = ['Pending', 'Delivered', 'Cancelled','In-Progress'];
         return view('lorry_receipts.create', compact( 'customers','trucks', 'transporters', 'consignees', 'goodsTypes', 'statuses'));
     }
 
@@ -72,7 +72,7 @@ class LorryReceiptController extends Controller
             'consignee_contact_number' => 'nullable|string|max:20',
             'gr_date' => 'required|date',
         
-            
+            'delivery_status' => 'nullable|in:Pending,Delivered,Cancelled,In-Progress',
             'source_city' => 'required|string|max:100',
             'source_state' => 'required|string|max:100',
             'destination_city' => 'required|string|max:100',
@@ -117,7 +117,7 @@ class LorryReceiptController extends Controller
         })->get();
 
         $transporters = \App\Models\Transporter::all();
-        $statuses = ['Pending', 'Delivered', 'Cancelled'];
+        $statuses = ['Pending', 'Delivered', 'Cancelled','In-Progress'];
         
         return view('lorry_receipts.edit', [
             'lr' => $lorry_receipt,
@@ -135,10 +135,16 @@ class LorryReceiptController extends Controller
         $validated = $request->validate([
             'truck_id' => 'nullable|exists:trucks,id',
             'transporter_id' => 'nullable|exists:transporters,id',
-            'delivery_status' => 'nullable|in:Pending,Delivered,Cancelled',
+            'delivery_status' => 'nullable|in:Pending,Delivered,Cancelled,In-Progress',
             'customer_id' => 'required|integer',
-            'consignor_contact_number' => 'nullable|string|max:20',
-            'consignee_contact_number' => 'nullable|string|max:20',
+            'consignor_contact_number' => [
+                'nullable',
+                'digits:10',
+            ],
+            'consignee_contact_number' => [
+                'nullable',
+                'digits:10',
+            ],
             'source_city' => 'required|string|max:100',
             'destination_city' => 'required|string|max:100',
             'source_state' => 'required|string|max:100',
@@ -151,8 +157,8 @@ class LorryReceiptController extends Controller
             'linked_lr_id' => 'nullable|integer',
             'gr_date' => 'required|date',
             'memo_id' => 'nullable|integer',
+            'consignor_id' => 'required|integer',
             'consignee_id' => 'required|integer',
-            'consignee_contact_number' => 'nullable|string|max:20',
             'lane' => 'required|string',
             'damage_amount' => 'nullable|numeric',
             'shortage_amount' => 'nullable|numeric',
