@@ -22,12 +22,15 @@ class VoucherController extends Controller
     }
     public function index(Request $request)
     {
+        $freightBookings = FreightBooking::all();
+        $trucks = Truck::all();
+        $transporters = Transporter::all();
         $query = Voucher::with(['freightBooking', 'truck', 'transporter']);
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
         $vouchers = $query->orderByDesc('id')->paginate(20);
-        return view('vouchers.index', compact('vouchers'));
+        return view('vouchers.index', compact('vouchers', 'freightBookings', 'trucks', 'transporters'));
     }
 
     public function create()
