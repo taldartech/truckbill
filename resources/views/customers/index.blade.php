@@ -106,14 +106,14 @@
                         <td>{{ $customer->contact_person }}</td>
                         <td>{{ $customer->contact_number }}</td>
                         <td>
-                            <div class="d-inline-flex gap-1">
-                                <a href="{{ route('customers.edit', $customer->id) }}" class="btn btn-sm btn-warning">
+                            <div class="d-flex gap-1">
+                                <a href="{{ route('customers.edit', $customer->id) }}" class="btn btn-sm btn-info">
                                     <i class="bi bi-pencil"></i>
                                 </a>
                                 <form action="{{ route('customers.destroy', $customer->id) }}" method="POST" style="display:inline-block;">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">
+                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this customer?')">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>

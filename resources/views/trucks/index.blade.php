@@ -119,16 +119,18 @@
                             <td>{{ $truck->transporter ? $truck->transporter->name : '-' }}</td>
                             <td>{{ $truck->driver ? $truck->driver->name : '-' }}</td>
                             <td>
-                                <a href="{{ route('trucks.edit', $truck->id) }}" class="btn btn-sm btn-warning">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                                <form action="{{ route('trucks.destroy', $truck->id) }}" method="POST" style="display:inline-block;">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </form>
+                                <div class="d-flex gap-1">
+                                    <a href="{{ route('trucks.edit', $truck->id) }}" class="btn btn-sm btn-info">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form action="{{ route('trucks.destroy', $truck->id) }}" method="POST" style="display:inline-block;">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this truck?')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     @empty

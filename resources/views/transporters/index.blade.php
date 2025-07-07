@@ -207,13 +207,17 @@
                 <td>{{ number_format($transporter->advance_amount, 2) }}</td>
                 <td>{{ $transporter->company ? $transporter->company->name : '-' }}</td>
                 <td>
-                    <div class="d-inline-flex gap-1">
-                    <a href="{{ route('transporters.edit', $transporter->id) }}" class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i></a>
-                    <form action="{{ route('transporters.destroy', $transporter->id) }}" method="POST" style="display:inline-block;">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')"> <i class="bi bi-trash"></i></button>
-                    </form>
+                    <div class="d-flex gap-1">
+                        <a href="{{ route('transporters.edit', $transporter->id) }}" class="btn btn-sm btn-info">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <form action="{{ route('transporters.destroy', $transporter->id) }}" method="POST" style="display:inline-block;">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this transporter?')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
                     </div>
                 </td>
                 {{-- <td>1.</td>

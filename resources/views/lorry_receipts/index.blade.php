@@ -106,14 +106,14 @@
                         <td>{{ $lr->gr_date }}</td>
                         <td>{{ $lr->amount }}</td>
                         <td>
-                            <div class="d-inline-flex gap-1">
-                                <a href="{{ route('lorry_receipts.edit', $lr->id) }}" class="btn btn-sm btn-warning">
+                            <div class="d-flex gap-1">
+                                <a href="{{ route('lorry_receipts.edit', $lr->id) }}" class="btn btn-sm btn-info">
                                     <i class="bi bi-pencil"></i>
                                 </a>
                                 <form action="{{ route('lorry_receipts.destroy', $lr->id) }}" method="POST" style="display:inline-block;">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">
+                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this lorry receipt?')">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>
