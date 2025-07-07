@@ -96,8 +96,8 @@
                   role="menu"
                   data-accordion="false"
                 >
-                  <li class="nav-item menu-open">
-                    <a href="/dashboard" class="nav-link text-white">
+                  <li class="nav-item ">
+                    <a href="/dashboard" class="nav-link">
                       <i class="nav-icon bi bi-speedometer"></i>
                       <p>
                         Dashboard
