@@ -10,11 +10,11 @@
     {{-- Always visible container --}}
 {{-- <div class="card card-body shadow-sm mb-4"> --}}
     <div class="d-flex justify-content-end gap-2 mb-3">
-        <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('advanced-search-box').classList.toggle('d-none')">
-            <i class="bi bi-funnel"></i> Search Filters
+        <button type="button" class="btn btn-info" onclick="document.getElementById('advanced-search-box').classList.toggle('d-none')">
+            <i class="bi bi-funnel"></i> Search filter
         </button>
-        <a href="{{ route('transporters.create') }}" class="btn btn-primary">
-            <i class="bi bi-plus"></i> Create
+        <a href="{{ route('transporters.create') }}" class="btn btn-info">
+            <i class="bi bi-plus"></i> create
         </a>
     </div>
 {{-- </div> --}}
@@ -115,74 +115,9 @@
     </div>
 </form>
 
+
    
     
-    {{-- <form method="GET" action="{{ route('transporters.index') }}" class="card card-body mb-4 shadow-sm">
-        <div class="row g-3 align-items-end">
-            <div class="col-md-2">
-                <label class="form-label">Name</label>
-                <input type="text" name="name" class="form-control" placeholder="Name" value="{{ request('name') }}">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">GST Number</label>
-                <input type="text" name="gst_number" class="form-control" placeholder="GST Number" value="{{ request('gst_number') }}">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">GST Type</label>
-                <select name="gst_type" class="form-select">
-                    <option value="">All Types</option>
-                    <option value="composition" {{ request('gst_type') == 'composition' ? 'selected' : '' }}>Composition</option>
-                    <option value="regular" {{ request('gst_type') == 'regular' ? 'selected' : '' }}>Regular</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">PAN Number</label>
-                <input type="text" name="pan_number" class="form-control" placeholder="PAN Number" value="{{ request('pan_number') }}">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label">Type</label>
-                <select name="is_owner" class="form-select">
-                    <option value="">All Types</option>
-                    <option value="1" {{ request('is_owner') === '1' ? 'selected' : '' }}>Owner</option>
-                    <option value="0" {{ request('is_owner') === '0' ? 'selected' : '' }}>Agency</option>
-                </select>
-            </div>
-    
-            <div class="col-md-2">
-                <label class="form-label">Company</label>
-                @php
-                    $canEditCompany = auth()->check() && auth()->user()->userRole->name === 'super_admin';
-                    $userCompanyId = auth()->user()->company_id ?? null;
-                @endphp
-    
-                @if($canEditCompany)
-                    <select name="company_id" class="form-select">
-                        <option value="">All Companies</option>
-                        @foreach($companies as $company)
-                            <option value="{{ $company->id }}" {{ request('company_id', $userCompanyId) == $company->id ? 'selected' : '' }}>{{ $company->name }}</option>
-                        @endforeach
-                    </select>
-                @else
-                    <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
-                    <div class="form-control-plaintext">
-                        {{ $companies->firstWhere('id', $userCompanyId)->name ?? '' }}
-                    </div>
-                @endif
-            </div>
-    
-            <div class="col-md-12 text-end mt-2">
-                <button type="submit" class="btn btn-secondary">
-                    <i class="bi bi-search"></i> Search
-                </button>
-                <a href="{{ route('transporters.index') }}" class="btn btn-outline-secondary ms-2">
-                    <i class="bi bi-arrow-clockwise"></i> Reset
-                </a>
-                <a href="{{ route('transporters.create') }}" class="btn btn-primary ms-2">
-                    <i class="bi bi-plus"></i> Create
-                </a>
-            </div>
-        </div>
-    </form> --}}
     
     {{-- <form method="GET" action="{{ route('transporters.index') }}" class="row g-3 mb-3">
         <div class="col-md-2">
@@ -273,7 +208,7 @@
                 <td>{{ $transporter->company ? $transporter->company->name : '-' }}</td>
                 <td>
                     <div class="d-inline-flex gap-1">
-                    <a href="{{ route('transporters.edit', $transporter->id) }}" class="btn btn-sm btn-warning"> <i class="bi bi-pencil-square"></i></a>
+                    <a href="{{ route('transporters.edit', $transporter->id) }}" class="btn btn-sm btn-warning"><i class="bi bi-pencil"></i></a>
                     <form action="{{ route('transporters.destroy', $transporter->id) }}" method="POST" style="display:inline-block;">
                         @csrf
                         @method('DELETE')
@@ -383,23 +318,10 @@
             @endforelse
         </tbody>
     </table> --}}
-    <a href="/dashboard" class="btn btn-secondary mt-2">Back to Dashboard</a>
+    {{-- <a href="/dashboard" class="btn btn-secondary mt-2">Back to Dashboard</a> --}}
 </div>
 
-{{-- <script>
-    function toggleField(checkbox) {
-        const fieldId = 'field_' + checkbox.value;
-        const fieldDiv = document.getElementById(fieldId);
-        if (checkbox.checked) {
-            fieldDiv.classList.remove('d-none');
-        } else {
-            fieldDiv.classList.add('d-none');
-            // Optionally clear the field value
-            const input = fieldDiv.querySelector('input, select');
-            if (input) input.value = '';
-        }
-    }
-</script> --}}
+
 
 <script>
     function toggleField(checkbox) {
