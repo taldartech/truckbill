@@ -22,6 +22,10 @@
             <div class="col-md-12">
                 <label class="form-label fw-bold">Choose Filter Fields:</label>
                 <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" value="name" id="filter_name" onchange="toggleField(this)">
+                    <label class="form-check-label" for="filter_name">Name</label>
+                </div>
+                <div class="form-check form-check-inline">
                     <input class="form-check-input" type="checkbox" value="gst_number" id="filter_gst" onchange="toggleField(this)">
                     <label class="form-check-label" for="filter_gst">GST Number</label>
                 </div>
@@ -42,6 +46,10 @@
 
         {{-- Conditionally visible filter fields --}}
         <div class="row g-3 mt-2" id="filter-fields">
+            <div class="col-md-3 d-none" id="field_name">
+                <label class="form-label">Name</label>
+                <input type="text" name="name" class="form-control" value="{{ request('name') }}">
+            </div>
             <div class="col-md-3 d-none" id="field_gst_number">
                 <label class="form-label">GST Number</label>
                 <input type="text" name="gst_number" class="form-control" value="{{ request('gst_number') }}">
@@ -74,31 +82,30 @@
     <div class="card mb-4">
         <div class="card-header"><h3 class="card-title">Customers List</h3></div>
         <div class="card-body" style="overflow-x: auto;">
-            <div class="table-responsive">
-                <table class="table table-bordered table-striped">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>GST</th>
-                            <th>PAN</th>
-                            <th>Address</th>
-                            <th>Contact Person</th>
-                            <th>Contact Number</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($customers as $customer)
-                        <tr>
-                            <td>{{ $customer->id }}</td>
-                            <td>{{ $customer->name }}</td>
-                            <td>{{ $customer->gst_number }}</td>
-                            <td>{{ $customer->pan_number }}</td>
-                            <td>{{ $customer->address }}</td>
-                            <td>{{ $customer->contact_person }}</td>
-                            <td>{{ $customer->contact_number }}</td>
-                            <td>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th style="width: 10px">ID</th>
+                        <th>Name</th>
+                        <th>GST Number</th>
+                        <th>PAN Number</th>
+                        <th>Address</th>
+                        <th>Contact Person</th>
+                        <th>Contact Number</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($customers as $customer)
+                    <tr class="align-middle">
+                        <td>{{ $customer->id }}</td>
+                        <td>{{ $customer->name }}</td>
+                        <td>{{ $customer->gst_number }}</td>
+                        <td>{{ $customer->pan_number }}</td>
+                        <td>{{ $customer->address }}</td>
+                        <td>{{ $customer->contact_person }}</td>
+                        <td>{{ $customer->contact_number }}</td>
+                        <td>
                             <div class="d-inline-flex gap-1">
                                 <a href="{{ route('customers.edit', $customer->id) }}" class="btn btn-sm btn-warning">
                                     <i class="bi bi-pencil"></i>
@@ -112,24 +119,22 @@
                                 </form>
                             </div>
                         </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="8" class="text-center">
-                                <div class="empty-state">
-                                    <i class="bi bi-box"></i>
-                                    <p class="mt-2">No customers found.</p>
-                                </div>
-                            </td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="8" class="text-center">
+                            <div class="empty-state">
+                                <i class="bi bi-box"></i>
+                                <p class="mt-2">No customers found.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
             {{ $customers->links() }}
         </div>
     </div>
-    {{-- <a href="/dashboard" class="btn btn-secondary mt-2">Back to Dashboard</a> --}}
 </div>
 
 <script>
@@ -150,20 +155,19 @@
         // Get all filter checkboxes
         const checkboxes = document.querySelectorAll('.form-check-input');
         
-        // Check if each field has a value in the URL
+        // Check each checkbox based on URL parameters
         checkboxes.forEach(checkbox => {
-            const fieldId = 'field_' + checkbox.value;
+            const value = checkbox.value;
+            const fieldId = 'field_' + value;
             const field = document.getElementById(fieldId);
-            const input = field.querySelector('input, select');
+            const urlValue = new URLSearchParams(window.location.search).get(value);
             
-            if (input && input.value) {
+            if (urlValue) {
                 checkbox.checked = true;
                 field.classList.remove('d-none');
-            } else {
-                checkbox.checked = false;
-                field.classList.add('d-none');
             }
         });
     });
 </script>
+
 @endsection

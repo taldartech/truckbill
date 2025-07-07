@@ -58,56 +58,54 @@
     <div class="card mb-4">
         <div class="card-header"><h3 class="card-title">Consignees List</h3></div>
         <div class="card-body" style="overflow-x: auto;">
-            <div class="table-responsive">
-                <table class="table table-bordered table-striped">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>City</th>
-                            <th>State</th>
-                            <th>Country</th>
-                            <th>Contact Number</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($consignees as $consignee)
-                        <tr>
-                            <td>{{ $consignee->id }}</td>
-                            <td>{{ $consignee->name }}</td>
-                            <td>{{ $consignee->city?->name ?? '-' }}</td>
-                            <td>{{ $consignee->state?->name ?? '-' }}</td>
-                            <td>{{ $consignee->country?->name ?? '-' }}</td>
-                            <td>{{ $consignee->contact_number }}</td>
-                            <td>
-                                <div class="d-inline-flex gap-1">
-                                    <a href="{{ route('consignees.edit', $consignee->id) }}" class="btn btn-sm btn-warning">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                    <form action="{{ route('consignees.destroy', $consignee->id) }}" method="POST" style="display:inline-block;">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="7" class="text-center">
-                                <div class="empty-state">
-                                    <i class="bi bi-box"></i>
-                                    <p class="mt-2">No consignees found.</p>
-                                </div>
-                            </td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th style="width: 10px">ID</th>
+                        <th>Name</th>
+                        <th>City</th>
+                        <th>State</th>
+                        <th>Country</th>
+                        <th>Contact Number</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($consignees as $consignee)
+                    <tr class="align-middle">
+                        <td>{{ $consignee->id }}</td>
+                        <td>{{ $consignee->name }}</td>
+                        <td>{{ $consignee->city?->name ?? '-' }}</td>
+                        <td>{{ $consignee->state?->name ?? '-' }}</td>
+                        <td>{{ $consignee->country?->name ?? '-' }}</td>
+                        <td>{{ $consignee->contact_number }}</td>
+                        <td>
+                            <div class="d-inline-flex gap-1">
+                                <a href="{{ route('consignees.edit', $consignee->id) }}" class="btn btn-sm btn-warning">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form action="{{ route('consignees.destroy', $consignee->id) }}" method="POST" style="display:inline-block;">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="7" class="text-center">
+                            <div class="empty-state">
+                                <i class="bi bi-box"></i>
+                                <p class="mt-2">No consignees found.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
             {{ $consignees->links() }}
         </div>
     </div>

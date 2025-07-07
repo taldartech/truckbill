@@ -97,7 +97,7 @@
     <div class="card mb-4">
         <div class="card-header"><h3 class="card-title">Trucks List</h3></div>
         <div class="card-body" style="overflow-x: auto;">
-            <table class="table table-bordered table-striped">
+            <table class="table table-bordered">
                 <thead>
                     <tr>
                         <th>ID</th>
