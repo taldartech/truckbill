@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container mt-4">
-    <h2>Transporter Management</h2>
+    <div class="col-sm-6"><h3 class="mb-0">Transporter Management</h3></div>
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
@@ -50,12 +50,119 @@
     @endif
 </div>
         <div class="col-md-12">
-            <button type="submit" class="btn btn-secondary">Search</button>
-            <a href="{{ route('transporters.index') }}" class="btn btn-outline-secondary ms-2">Reset</a>
-            <a href="{{ route('transporters.create') }}" class="btn btn-primary ms-2">Add New Transporter</a>
+            <button type="submit" class="btn btn-secondary"><i class="bi bi-search"></i></button>
+            <a href="{{ route('transporters.index') }}" class="btn btn-outline-secondary ms-2"><i class="bi bi-arrow-clockwise"></i></a>
+            <a href="{{ route('transporters.create') }}" class="btn btn-primary ms-2"><i class="bi bi-plus"></i>Create</a>
         </div>
     </form>
-    <table class="table table-bordered table-striped mt-3">
+    <div class="card mb-4">
+        <div class="card-header"><h3 class="card-title">Transporters List</h3></div>
+        <!-- /.card-header -->
+        <div class="card-body" style="overflow-x: auto;">
+            {{-- <div class="table-responsive"> --}}
+          <table class="table table-bordered">
+            <thead>
+              <tr>
+                {{-- <th style="width: 10px">#</th> --}}
+                {{-- <th>Task</th>
+                <th>Progress</th>
+                <th style="width: 40px">Label</th> --}}
+                <th style="width: 10px">ID</th>
+                <th>Name</th>
+                <th>GST Number</th>
+                <th>GST Type</th>
+                <th>PAN Number</th>
+                <th>Type</th>
+                <th>Declaration Given</th>
+                <th>Total Trucks</th>
+                <th>Advance Amount</th>
+                <th>Company</th>
+                <th >Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+                @forelse($transporters as $transporter)
+              <tr class="align-middle">
+                <td>{{ $transporter->id }}</td>
+                <td>{{ $transporter->name }}</td>
+                <td>{{ $transporter->gst_number }}</td>
+                <td>{{ ucfirst($transporter->gst_type) }}</td>
+                <td>{{ $transporter->pan_number }}</td>
+                <td>{{ $transporter->is_owner ? 'Owner' : 'Agency' }}</td>
+                <td>{{ $transporter->declaration_given ? 'Yes' : 'No' }}</td>
+                <td>{{ $transporter->total_trucks }}</td>
+                <td>{{ number_format($transporter->advance_amount, 2) }}</td>
+                <td>{{ $transporter->company ? $transporter->company->name : '-' }}</td>
+                <td>
+                    <div class="d-inline-flex gap-1">
+                    <a href="{{ route('transporters.edit', $transporter->id) }}" class="btn btn-sm btn-warning"> <i class="bi bi-pencil-square"></i></a>
+                    <form action="{{ route('transporters.destroy', $transporter->id) }}" method="POST" style="display:inline-block;">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')"> <i class="bi bi-trash"></i></button>
+                    </form>
+                    </div>
+                </td>
+                {{-- <td>1.</td>
+                <td>Update software</td>
+                <td>
+                  <div class="progress progress-xs">
+                    <div class="progress-bar progress-bar-danger" style="width: 55%"></div>
+                  </div>
+                </td>
+                <td><span class="badge text-bg-danger">55%</span></td>
+              </tr>
+              <tr class="align-middle">
+                <td>2.</td>
+                <td>Clean database</td>
+                <td>
+                  <div class="progress progress-xs">
+                    <div class="progress-bar text-bg-warning" style="width: 70%"></div>
+                  </div>
+                </td>
+                <td><span class="badge text-bg-warning">70%</span></td>
+              </tr>
+              <tr class="align-middle">
+                <td>3.</td>
+                <td>Cron job running</td>
+                <td>
+                  <div class="progress progress-xs progress-striped active">
+                    <div class="progress-bar text-bg-primary" style="width: 30%"></div>
+                  </div>
+                </td>
+                <td><span class="badge text-bg-primary">30%</span></td>
+              </tr>
+              <tr class="align-middle">
+                <td>4.</td>
+                <td>Fix and squish bugs</td>
+                <td>
+                  <div class="progress progress-xs progress-striped active">
+                    <div class="progress-bar text-bg-success" style="width: 90%"></div>
+                  </div>
+                </td>
+                <td><span class="badge text-bg-success">90%</span></td> --}}
+              </tr>
+              @empty
+              <tr><td colspan="11" class="text-center">No transporters found.</td></tr>
+          @endforelse
+            </tbody>
+          </table>
+            {{-- </div> --}}
+        </div>
+        <!-- /.card-body -->
+        <div class="card-footer clearfix">
+          <ul class="pagination pagination-sm m-0 float-end">
+            <li class="page-item"><a class="page-link" href="#">«</a></li>
+            <li class="page-item"><a class="page-link" href="#">1</a></li>
+            <li class="page-item"><a class="page-link" href="#">2</a></li>
+            <li class="page-item"><a class="page-link" href="#">3</a></li>
+            <li class="page-item"><a class="page-link" href="#">»</a></li>
+          </ul>
+        </div>
+
+    </div>
+     
+    {{-- <table class="table table-bordered table-striped mt-3">
         <thead>
             <tr>
                 <th>ID</th>
@@ -97,7 +204,7 @@
                 <tr><td colspan="11" class="text-center">No transporters found.</td></tr>
             @endforelse
         </tbody>
-    </table>
+    </table> --}}
     <a href="/dashboard" class="btn btn-secondary mt-2">Back to Dashboard</a>
 </div>
 @endsection

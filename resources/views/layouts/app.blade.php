@@ -193,7 +193,7 @@
                           <li class="nav-item">
                             <a href="/transporters/create" class="nav-link">
                               <i class="fas fa-plus"></i> 
-                            <p>Register Transporter</p>
+                            <p>Register</p>
                             </a>
                           </li>
                           <li class="nav-item">
@@ -461,6 +461,21 @@
             </div>
             <!--end::App Content-->
           </main>
+
+           <!--begin::Footer-->
+      <footer class="app-footer">
+        <!--begin::To the end-->
+        <div class="float-end d-none d-sm-inline"> Taldar Tech Consultancy </div>
+        <!--end::To the end-->
+        <!--begin::Copyright-->
+        <strong>
+          Copyright &copy; 2025&nbsp;
+         
+        </strong>
+  
+        <!--end::Copyright-->
+      </footer>
+      <!--end::Footer-->
 
         </div>
           
