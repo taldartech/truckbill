@@ -9,8 +9,9 @@ class StateController extends Controller
 {
     public function index()
     {
+        $countries = Country::all();
         $states = State::with('country')->get();
-        return view('master.states', compact('states'));
+        return view('master.states', compact('states', 'countries'));
     }
 
     public function create()

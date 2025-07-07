@@ -3,14 +3,17 @@ namespace App\Http\Controllers;
 
 use App\Models\City;
 use App\Models\State;
+use App\Models\Country;
 use Illuminate\Http\Request;
 
 class CityController extends Controller
 {
     public function index()
     {
+        $countries = Country::all();
+        $states = State::with('country')->get();
         $cities = City::with('state', 'state.country')->get();
-        return view('master.cities', compact('cities'));
+        return view('master.cities', compact('cities', 'states', 'countries'));
     }
 
     public function create()
