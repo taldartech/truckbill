@@ -1,103 +1,66 @@
 @extends('layouts.app')
 
 @section('content')
-@php
-    $transporters = \App\Models\Transporter::where('company_id', auth()->user()->company_id)->get();
-@endphp
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const transporterSelect = document.getElementById('transporter_id');
-    const truckSelect = document.getElementById('truck_id');
-
-    // Function to update trucks based on selected transporter
-    function updateTrucks() {
-        const selectedTransporter = transporterSelect.value;
-        console.log('Selected Transporter:', selectedTransporter);
-        
-        if (!selectedTransporter) {
-            truckSelect.innerHTML = '<option value="">Select Truck</option>';
-            return;
-        }
-
-        // Make AJAX request to get trucks for selected transporter
-        fetch(`/api/transporters/${selectedTransporter}/trucks`, {
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => {
-            console.log('Response status:', response.status);
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(trucks => {
-            console.log('Received trucks:', trucks);
-            let options = '<option value="">Select Truck</option>';
-            trucks.forEach(truck => {
-                console.log('Adding truck:', truck);
-                options += `<option value="${truck.id}">${truck.truck_number}</option>`;
-            });
-            truckSelect.innerHTML = options;
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            truckSelect.innerHTML = '<option value="">Error loading trucks</option>';
-        });
-    }
-
-    // Update trucks when transporter changes
-    transporterSelect.addEventListener('change', updateTrucks);
-});
-</script>
-
-<div class="container mt-4">
-    <h2>Add New Lorry Receipt</h2>
-    <form action="{{ route('lorry_receipts.store') }}" method="POST">
+<div class="card card-info card-outline mb-4">
+    <!--begin::Header-->
+    <div class="card-header"><div class="card-title">Add New Lorry Receipt</div></div>
+    <!--end::Header-->
+    <!--begin::Form-->
+    <form method="POST" action="{{ route('lorry_receipts.store') }}" id="lorryReceiptForm" class="needs-validation" novalidate="">
         @csrf
+        <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
 
-        <h5 class="mt-4 mb-3">Trip & Parties</h5>
-        <hr class="mb-3 mt-0">
-        
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="transporter_id" class="form-label">Transporter *</label>
-                <select class="form-select" id="transporter_id" name="transporter_id" required>
-                    <option value="">Select Transporter</option>
-                    @foreach($transporters as $transporter)
-                        <option value="{{ $transporter->id }}" {{ old('transporter_id') == $transporter->id ? 'selected' : '' }}>
-                            {{ $transporter->name }}
-                        </option>
-                    @endforeach
-                </select>
-                @error('transporter_id') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="truck_id" class="form-label">Truck *</label>
-                <select class="form-select" id="truck_id" name="truck_id" required>
-                    <option value="">Select Truck</option>
-                </select>
-                @error('truck_id') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="customer_id" class="form-label">Customer *</label>
-                <select class="form-select" id="customer_id" name="customer_id" required>
-    <option value="">Select Customer</option>
-    @foreach($consignees as $consignee)
-        <option value="{{ $consignee->id }}" {{ old('customer_id') == $consignee->id ? 'selected' : '' }}>{{ $consignee->name }}</option>
-    @endforeach
-</select>
-                @error('customer_id') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            
-            <div class="col-md-4 mb-3">
-                <label for="lr_number" class="form-label">LR Number *</label>
-                <input type="text" class="form-control" id="lr_number" name="lr_number" required value="{{ old('lr_number') }}">
-                @error('lr_number') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
+        <!--begin::Body-->
+        <div class="card-body">
+            <!--begin::Row-->
+            <div class="row g-3">
+                <!--begin::Col-->
+                <div class="col-md-4">
+                    <label for="transporter_id" class="form-label">Transporter *</label>
+                    <select class="form-select" id="transporter_id" name="transporter_id" required>
+                        <option value="">Select Transporter</option>
+                        @foreach($transporters as $transporter)
+                            <option value="{{ $transporter->id }}" {{ old('transporter_id') == $transporter->id ? 'selected' : '' }}>
+                                {{ $transporter->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('transporter_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please select a transporter.</div>
+                </div>
+                <!--end::Col-->
+                <!--begin::Col-->
+                <div class="col-md-4">
+                    <label for="truck_id" class="form-label">Truck *</label>
+                    <select class="form-select" id="truck_id" name="truck_id" required>
+                        <option value="">Select Truck</option>
+                    </select>
+                    @error('truck_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please select a truck.</div>
+                </div>
+                <!--end::Col-->
+                <!--begin::Col-->
+                <div class="col-md-4">
+                    <label for="customer_id" class="form-label">Customer *</label>
+                    <select class="form-select" id="customer_id" name="customer_id" required>
+                        <option value="">Select Customer</option>
+                        @foreach($consignees as $consignee)
+                            <option value="{{ $consignee->id }}" {{ old('customer_id') == $consignee->id ? 'selected' : '' }}>
+                                {{ $consignee->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('customer_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please select a customer.</div>
+                </div>
+                <!--end::Col-->
+                <!--begin::Col-->
+                <div class="col-md-4">
+                    <label for="lr_number" class="form-label">LR Number *</label>
+                    <input type="text" class="form-control" id="lr_number" name="lr_number" value="{{ old('lr_number') }}" required>
+                    @error('lr_number') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please enter an LR number.</div>
+                </div>
            
             <div class="col-md-4 mb-3">
                 <label for="delivery_status" class="form-label">Delivery Status</label>
@@ -262,9 +225,148 @@ document.addEventListener('DOMContentLoaded', function() {
        
 
         
-        <button type="submit" class="btn btn-primary">Create LR</button>
-        <a href="{{ route('lorry_receipts.index') }}" class="btn btn-secondary ms-2">Back to List</a>
+       
+            <!--end::Row-->
+        </div>
+        <!--end::Body-->
+        <!--begin::Footer-->
+        <div class="card-footer">
+            <button class="btn btn-info" type="submit">Submit form</button>
+            <a href="{{ route('lorry_receipts.index') }}" class="btn btn-info">Back to List</a>
+        </div>
+        <!--end::Footer-->
     </form>
+    <!--end::Form-->
+    <!--begin::JavaScript-->
+    <script>
+        // Example starter JavaScript for disabling form submissions if there are invalid fields
+        (() => {
+            'use strict';
+
+            // Fetch all the forms we want to apply custom Bootstrap validation styles to
+            const forms = document.querySelectorAll('.needs-validation');
+
+            // Loop over them and prevent submission
+            Array.from(forms).forEach((form) => {
+                form.addEventListener(
+                    'submit',
+                    (event) => {
+                        if (!form.checkValidity()) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+
+                        form.classList.add('was-validated');
+                    },
+                    false,
+                );
+            });
+        })();
+
+        // Handle truck selection based on transporter
+        document.addEventListener('DOMContentLoaded', function() {
+            const transporterSelect = document.getElementById('transporter_id');
+            const truckSelect = document.getElementById('truck_id');
+
+            // Function to update trucks based on selected transporter
+            function updateTrucks() {
+                const selectedTransporter = transporterSelect.value;
+                console.log('Selected Transporter:', selectedTransporter);
+                
+                if (!selectedTransporter) {
+                    truckSelect.innerHTML = '<option value="">Select Truck</option>';
+                    return;
+                }
+
+                // Make AJAX request to get trucks for selected transporter
+                fetch(`/api/transporters/${selectedTransporter}/trucks`, {
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(trucks => {
+                    console.log('Received trucks:', trucks);
+                    let options = '<option value="">Select Truck</option>';
+                    trucks.forEach(truck => {
+                        console.log('Adding truck:', truck);
+                        options += `<option value="${truck.id}">${truck.truck_number}</option>`;
+                    });
+                    truckSelect.innerHTML = options;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    truckSelect.innerHTML = '<option value="">Error loading trucks</option>';
+                });
+            }
+
+            // Update trucks when transporter changes
+            transporterSelect.addEventListener('change', updateTrucks);
+
+            // Handle consignor and consignee contact number and location details
+            const consignorSelect = document.getElementById('consignor_id');
+            const consignorContact = document.getElementById('consignor_contact_number');
+            const consignorLocation = document.getElementById('consignor_location');
+            const consigneeSelect = document.getElementById('consignee_id');
+            const consigneeContact = document.getElementById('consignee_contact_number');
+            const consigneeLocation = document.getElementById('consignee_location');
+
+            function updateConsignorDetails() {
+                const selectedConsignor = consignorSelect.value;
+                if (!selectedConsignor) {
+                    consignorContact.value = '';
+                    consignorLocation.value = '';
+                    return;
+                }
+
+                fetch(`/api/consignors/${selectedConsignor}`, {
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(consignor => {
+                    consignorContact.value = consignor.contact_number;
+                    consignorLocation.value = `${consignor.city}, ${consignor.state}`;
+                })
+                .catch(error => console.error('Error:', error));
+            }
+
+            function updateConsigneeDetails() {
+                const selectedConsignee = consigneeSelect.value;
+                if (!selectedConsignee) {
+                    consigneeContact.value = '';
+                    consigneeLocation.value = '';
+                    return;
+                }
+
+                fetch(`/api/consignees/${selectedConsignee}`, {
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(consignee => {
+                    consigneeContact.value = consignee.contact_number;
+                    consigneeLocation.value = `${consignee.city}, ${consignee.state}`;
+                })
+                .catch(error => console.error('Error:', error));
+            }
+
+            consignorSelect.addEventListener('change', updateConsignorDetails);
+            consigneeSelect.addEventListener('change', updateConsigneeDetails);
+        });
+    </script>
+    <!--end::JavaScript-->
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
