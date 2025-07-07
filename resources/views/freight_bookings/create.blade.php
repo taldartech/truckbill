@@ -1,103 +1,49 @@
 @extends('layouts.app')
 
 @section('content')
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const lrSelect = document.getElementById('lr_id');
-        const transporterSelect = document.getElementById('transporter_id');
-        const truckSelect = document.getElementById('truck_id');
-
-        // Function to update trucks based on selected transporter
-        function updateTrucks() {
-            const selectedTransporter = transporterSelect.value;
-            if (!selectedTransporter) {
-                truckSelect.innerHTML = '<option value="">Select Truck</option>';
-                return;
-            }
-
-            // Make AJAX request to get trucks for selected transporter
-            fetch(`/api/transporters/${selectedTransporter}/trucks`)
-                .then(response => response.json())
-                .then(trucks => {
-                    let options = '<option value="">Select Truck</option>';
-                    trucks.forEach(truck => {
-                        options += `<option value="${truck.id}">${truck.truck_number}</option>`;
-                    });
-                    truckSelect.innerHTML = options;
-                })
-                .catch(error => console.error('Error:', error));
-        }
-
-        // Function to load LR details
-        function loadLRDetails() {
-            const selectedLR = lrSelect.value;
-            if (!selectedLR) {
-                document.getElementById('transporter_id').value = '';
-                document.getElementById('truck_id').value = '';
-                return;
-            }
-
-            // Make AJAX request to get LR details
-            fetch(`/api/lorry_receipts/${selectedLR}`)
-                .then(response => response.json())
-                .then(lr => {
-                    // Set transporter
-                    const transporterSelect = document.getElementById('transporter_id');
-                    const truckSelect = document.getElementById('truck_id');
-                    
-                    // Get transporter name
-                    fetch(`/api/transporters/${lr.transporter_id}`)
-                        .then(response => response.json())
-                        .then(transporter => {
-                            transporterSelect.value = `${transporter.name}`;
-                        });
-                    
-                    // Get truck number
-                    fetch(`/api/trucks/${lr.truck_id}`)
-                        .then(response => response.json())
-                        .then(truck => {
-                            truckSelect.value = `${truck.truck_number}`;
-                        });
-                })
-                .catch(error => console.error('Error:', error));
-        }
-
-        // Update trucks when transporter changes
-        transporterSelect.addEventListener('change', updateTrucks);
-        
-        // Load LR details when LR changes
-        lrSelect.addEventListener('change', loadLRDetails);
-    });
-</script>
 @php
     $lrs = \App\Models\LorryReceipt::all();
     $transporters = \App\Models\Transporter::where('company_id', auth()->user()->company_id)->get();
 @endphp
 
-<div class="container mt-4">
-    <h2>Add Freight Booking</h2>
-    <form method="POST" action="{{ route('freight_bookings.store') }}">
+<div class="card card-info card-outline mb-4">
+    <!--begin::Header-->
+    <div class="card-header"><div class="card-title">Add New Freight Booking</div></div>
+    <!--end::Header-->
+    <!--begin::Form-->
+    <form method="POST" action="{{ route('freight_bookings.store') }}" class="needs-validation" novalidate="">
         @csrf
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="lr_id" class="form-label">LR Number *</label>
-                <select name="lr_id" id="lr_id" class="form-control" required>
-                    <option value="">Select LR Number</option>
-                    @foreach($lrs as $lr)
-                        <option value="{{ $lr->id }}" {{ old('lr_id') == $lr->id ? 'selected' : '' }}>
-                            {{ $lr->lr_number }} 
-                        </option>
-                    @endforeach
-                </select>
-                @error('lr_id') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="transporter_id" class="form-label">Transporter *</label>
-                <input type="text" name="transporter_id" id="transporter_id" class="form-control" readonly>
-                @error('transporter_id') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="truck_id" class="form-label">Truck *</label>
+        <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
+        <!--begin::Body-->
+        <div class="card-body">
+            <!--begin::Row-->
+            <div class="row g-3">
+                <!--begin::Col-->
+                <div class="col-md-4">
+                    <label for="lr_id" class="form-label">LR Number *</label>
+                    <select name="lr_id" id="lr_id" class="form-select" required>
+                        <option value="">Select LR Number</option>
+                        @foreach($lrs as $lr)
+                            <option value="{{ $lr->id }}" {{ old('lr_id') == $lr->id ? 'selected' : '' }}>
+                                {{ $lr->lr_number }} 
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('lr_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please select an LR Number.</div>
+                </div>
+                <!--end::Col-->
+                <!--begin::Col-->
+                <div class="col-md-4">
+                    <label for="transporter_id" class="form-label">Transporter *</label>
+                    <input type="text" name="transporter_id" id="transporter_id" class="form-control" readonly>
+                    @error('transporter_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please select a transporter.</div>
+                </div>
+                <!--end::Col-->
+                <!--begin::Col-->
+                <div class="col-md-4">
+                    <label for="truck_id" class="form-label">Truck *</label>
                 <input type="text" name="truck_id" id="truck_id" class="form-control" readonly>
                 @error('truck_id') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
@@ -235,8 +181,86 @@
                 @error('linked_freight_booking_id') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
         </div>
-        <button type="submit" class="btn btn-success">Save</button>
-        <a href="{{ route('freight_bookings.index') }}" class="btn btn-secondary ms-2">Back to List</a>
+        <!--end::Row-->
+      </div>
+      <!--end::Body-->
+      <!--begin::Footer-->
+      <div class="card-footer">
+        <div class="d-flex justify-content-end gap-2">
+            <button class="btn btn-info" type="submit">Submit form</button>
+            <a href="{{ route('freight_bookings.index') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+      </div>
+      <!--end::Footer-->
     </form>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const lrSelect = document.getElementById('lr_id');
+        const transporterSelect = document.getElementById('transporter_id');
+        const truckSelect = document.getElementById('truck_id');
+
+        // Function to update trucks based on selected transporter
+        function updateTrucks() {
+            const selectedTransporter = transporterSelect.value;
+            if (!selectedTransporter) {
+                truckSelect.innerHTML = '<option value="">Select Truck</option>';
+                return;
+            }
+
+            // Make AJAX request to get trucks for selected transporter
+            fetch(`/api/transporters/${selectedTransporter}/trucks`)
+                .then(response => response.json())
+                .then(trucks => {
+                    let options = '<option value="">Select Truck</option>';
+                    trucks.forEach(truck => {
+                        options += `<option value="${truck.id}">${truck.truck_number}</option>`;
+                    });
+                    truckSelect.innerHTML = options;
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Function to load LR details
+        function loadLRDetails() {
+            const selectedLR = lrSelect.value;
+            if (!selectedLR) {
+                document.getElementById('transporter_id').value = '';
+                document.getElementById('truck_id').value = '';
+                return;
+            }
+
+            // Make AJAX request to get LR details
+            fetch(`/api/lorry_receipts/${selectedLR}`)
+                .then(response => response.json())
+                .then(lr => {
+                    // Set transporter
+                    const transporterSelect = document.getElementById('transporter_id');
+                    const truckSelect = document.getElementById('truck_id');
+                    
+                    // Get transporter name
+                    fetch(`/api/transporters/${lr.transporter_id}`)
+                        .then(response => response.json())
+                        .then(transporter => {
+                            transporterSelect.value = `${transporter.name}`;
+                        });
+                    
+                    // Get truck number
+                    fetch(`/api/trucks/${lr.truck_id}`)
+                        .then(response => response.json())
+                        .then(truck => {
+                            truckSelect.value = `${truck.truck_number}`;
+                        });
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Update trucks when transporter changes
+        transporterSelect.addEventListener('change', updateTrucks);
+        
+        // Load LR details when LR changes
+        lrSelect.addEventListener('change', loadLRDetails);
+    });
+</script>
 @endsection
