@@ -9,6 +9,8 @@
 
     <!-- FontAwesome for AdminLTE Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <!-- OverlayScrollbars CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.10.1/styles/overlayscrollbars.min.css">
     <!-- AdminLTE Theme CSS -->
     <link href="/theme/dist/css/adminlte.min.css" rel="stylesheet">
     <!-- You can add more theme CSS here if needed -->
@@ -606,6 +608,7 @@ const sales_chart = new ApexCharts(
 );
 sales_chart.render();
 </script>
+
 <!-- jsvectormap -->
 <script
 src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/js/jsvectormap.min.js"
@@ -728,5 +731,25 @@ sparkline3.render();
     <script src="/js/dynamic-dropdowns.js"></script>
     <!-- AdminLTE JS -->
     <script src="/theme/dist/js/adminlte.min.js"></script>
+    <script>
+      const SELECTOR_SIDEBAR_WRAPPER = '.sidebar-wrapper';
+      const Default = {
+        scrollbarTheme: 'os-theme-light',
+        scrollbarAutoHide: 'leave',
+        scrollbarClickScroll: true,
+      };
+      document.addEventListener('DOMContentLoaded', function () {
+        const sidebarWrapper = document.querySelector(SELECTOR_SIDEBAR_WRAPPER);
+        if (sidebarWrapper && typeof OverlayScrollbarsGlobal?.OverlayScrollbars !== 'undefined') {
+          OverlayScrollbarsGlobal.OverlayScrollbars(sidebarWrapper, {
+            scrollbars: {
+              theme: Default.scrollbarTheme,
+              autoHide: Default.scrollbarAutoHide,
+              clickScroll: Default.scrollbarClickScroll,
+            },
+          });
+        }
+      });
+    </script>
 </body>
 </html>
