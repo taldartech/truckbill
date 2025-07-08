@@ -120,8 +120,35 @@
                             <span class="{{ $badgeClass }}">{{ ucfirst($rawStatus) }}</span>
                         </td>
                         <td>
-                            <a href="{{ route('freight_bookings.index', ['lorry_receipt_id' => $lr->id]) }}" class="btn btn-sm btn-success">
-                                <i class="bi bi-plus"></i> Create Freight Booking
+                            @php
+                                $actionText = match(strtolower(trim($lr->delivery_status ?? 'pending'))) {
+                                    'cancelled' => 'Create new Freight Booking',
+                                    'pending' => 'Create Freight Booking',
+                                    'delivered' => 'Show Freight Booking',
+                                    'in-progress' => 'Show Freight Booking',
+                                    default => 'Create Freight Booking'
+                                };
+                                $actionRoute = in_array(strtolower(trim($lr->delivery_status ?? 'pending')), ['delivered', 'in-progress']) ? 
+                                    route('freight_bookings.index', ['lorry_receipt_id' => $lr->id]) : 
+                                    route('freight_bookings.create', ['lorry_receipt_id' => $lr->id]);
+                            @endphp
+                            <div class="d-flex gap-1">
+                                <a href="{{ $actionRoute }}" class="btn btn-sm @php
+                                    $status = strtolower(trim($lr->delivery_status ?? 'pending'));
+                                    echo match($status) {
+                                        'delivered' => 'btn-info',
+                                        'in-progress' => 'btn-warning',
+                                        default => 'btn-success'
+                                    };
+                                @endphp">
+                                    <i class="bi bi-plus"></i> {{ $actionText }}
+                                </a>
+                                @if(strtolower(trim($lr->delivery_status ?? 'pending')) === 'delivered')
+                                    <a href="{{ route('vouchers.index', ['lorry_receipt_id' => $lr->id]) }}" class="btn btn-sm btn-danger">
+                                        <i class="bi bi-plus"></i> Voucher
+                                    </a>
+                                @endif
+                            </div>
                             </a>
                         </td>
                         
