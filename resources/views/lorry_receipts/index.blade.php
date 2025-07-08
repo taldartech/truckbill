@@ -155,7 +155,7 @@
        data-bs-placement="top">
         <i class="bi bi-truck"></i> 
     </a>
-                                @if(strtolower(trim($lr->delivery_status ?? 'pending')) === 'delivered')
+                                @if(in_array(strtolower(trim($lr->delivery_status ?? 'pending')), ['delivered', 'in-progress']))
                                 <a href="{{ route('vouchers.index', ['lorry_receipt_id' => $lr->id]) }}" 
                                     class="btn btn-sm btn-success" 
                                     title="create Vouchers" 
@@ -170,7 +170,6 @@
                                     data-bs-placement="top">
                                     <i class="bi bi-file-earmark-text"></i> 
                                  </a>
-                                 
                                 @endif
                             </div>
                             </a>
