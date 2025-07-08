@@ -139,7 +139,7 @@
               <a href="#" class="brand-link">
                
                 <!--begin::Brand Text-->
-                <span class="brand-text fw-light" style="font-size: 1.2em;"> Transport Management</span>
+                <span class="brand-text fw-light" style="font-size: 1.2em;"> Transport Management </br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;System</span>
                 <!--end::Brand Text-->
               </a>
               <!--end::Brand Link-->

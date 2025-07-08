@@ -90,6 +90,8 @@
                         <th>Consignor</th>
                         <th>Consignee</th>
                         <th>Status</th>
+                        <th>Action</th>
+
                         <th>GR Date</th>
                         <th>Amount</th>
                         <th>Actions</th>
@@ -117,10 +119,15 @@
                             @endphp
                             <span class="{{ $badgeClass }}">{{ ucfirst($rawStatus) }}</span>
                         </td>
-                        
+                        <td>
+                            <a href="{{ route('freight_bookings.index', ['lorry_receipt_id' => $lr->id]) }}" class="btn btn-sm btn-success">
+                                <i class="bi bi-plus"></i> Create Freight Booking
+                            </a>
+                        </td>
                         
                         <td>{{ $lr->gr_date }}</td>
                         <td>{{ $lr->amount }}</td>
+                        
                         <td>
                             <div class="d-flex gap-1">
                                 <a href="{{ route('lorry_receipts.edit', $lr->id) }}" class="btn btn-sm btn-info">
