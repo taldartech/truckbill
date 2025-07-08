@@ -8,7 +8,7 @@
 </head>
 <body>
   
-    <script>window.location.href = '/adminlte/dist/pages/index.html'</script>
+    <script>window.location.href = '/theme/dist/pages/index.html'</script>
     {{-- <script>window.location.href = './dist/pages/index.html'</script> --}}
 </body>
 </html>

@@ -14,6 +14,46 @@
     <!-- AdminLTE Theme CSS -->
     <link href="/theme/dist/css/adminlte.min.css" rel="stylesheet">
     <!-- You can add more theme CSS here if needed -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css"
+      integrity="sha256-tXJfXfp6Ewt1ilPzLDtQnJV4hclT9XuaZUKyUvmyr+Q="
+      crossorigin="anonymous"
+    />
+    <!--end::Fonts-->
+    <!--begin::Third Party Plugin(OverlayScrollbars)-->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.10.1/styles/overlayscrollbars.min.css"
+      integrity="sha256-tZHrRjVqNSRyWg2wbppGnT833E/Ys0DHWGwT04GiqQg="
+      crossorigin="anonymous"
+    />
+    <!--end::Third Party Plugin(OverlayScrollbars)-->
+    <!--begin::Third Party Plugin(Bootstrap Icons)-->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+      integrity="sha256-9kPW/n5nn53j4WMRYAxe9c1rCY96Oogo/MKSVdKzPmI="
+      crossorigin="anonymous"
+    />
+    <!--end::Third Party Plugin(Bootstrap Icons)-->
+    <!--begin::Required Plugin(AdminLTE)-->
+    <link rel="stylesheet" href="../../dist/css/adminlte.css" />
+    <!--end::Required Plugin(AdminLTE)-->
+    <!-- apexcharts -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/apexcharts@3.37.1/dist/apexcharts.css"
+      integrity="sha256-4MX+61mt9NVvvuPjUWdUdyfZfxSB1/Rf9WtqRHgG5S0="
+      crossorigin="anonymous"
+    />
+    <!-- jsvectormap -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/css/jsvectormap.min.css"
+      integrity="sha256-+uGLJmmTKOqBr+2E6KDYs/NRsHxSkONXFHUL0fy2O/4="
+      crossorigin="anonymous"
+    />
 </head>
 
     <body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
@@ -48,6 +88,7 @@
               
                
                 <!--begin::User Menu Dropdown-->
+                <!--begin::User Menu Dropdown-->
                 <li class="nav-item dropdown user-menu">
                   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
                     <i class="fas fa-user-circle fa-lg"></i>
@@ -55,19 +96,35 @@
                         <span class="d-none d-md-inline">{{ Auth::user()->name ?? Auth::user()->email }}</span>
                     @endauth
                   </a>
-                  <ul class="dropdown-menu dropdown-menu-lg dropdown-menu-end">
-                  
-                   
+                  <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end">
+                    <!--begin::User Image-->
+                    <div class="user-header bg-primary">
+                      <i class="fas fa-user-circle fa-3x"></i>
+                      <p>
+                        @auth
+                          {{ Auth::user()->name ?? Auth::user()->email }}
+                          <small>Member since {{ Auth::user()->created_at->format('M. Y') }}</small>
+                        @endauth
+                      </p>
+                    </div>
+                    <!--end::User Image-->
+                    <!--begin::Menu Body-->
+                    <div class="user-body">
+                      <!--begin::Row-->
+                     
+                      <!--end::Row-->
+                    </div>
+                    <!--end::Menu Body-->
                     <!--begin::Menu Footer-->
-                    <li class="user-footer">
+                    <div class="user-footer">
                       <a href="/profile" class="btn btn-default btn-flat">Profile</a>
                       <a href="#" class="btn btn-default btn-flat float-end" id="logout-link">Sign out</a>
                       <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
                         @csrf
-                    </form>
-                    </li>
+                      </form>
+                    </div>
                     <!--end::Menu Footer-->
-                  </ul>
+                  </div>
                 </li>
                 <!--end::User Menu Dropdown-->
               </ul>
@@ -524,8 +581,45 @@
         }
       });
     </script>
-    <!--end::Required Plugin(Bootstrap 5)--><!--begin::Required Plugin(AdminLTE)-->
+    <!-- jQuery (required for AdminLTE) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Popper.js (required for AdminLTE v4 sidebar) -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+    <!-- Bootstrap JS (recommended for dropdowns, tooltips, etc.) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!--end::Required Plugin(Bootstrap 5)--><!--begin::Required Plugin(AdminLTE)-->    
     <script src="../../dist/js/adminlte.js"></script>
+    <script>
+        // Initialize AdminLTE
+        $(document).ready(function () {
+            // Initialize layout fix
+            $.AdminLTE.layout.fix();
+            $.AdminLTE.layout.fixSidebar();
+            
+            // Initialize dropdowns
+            $.AdminLTE.dropdown.init();
+            
+            // Initialize all dropdowns
+            $('.dropdown-toggle').dropdown();
+            
+            // Add click handler for dropdowns
+            $('.dropdown-toggle').on('click', function(e) {
+                e.preventDefault();
+                $(this).dropdown('toggle');
+            });
+            
+            // Initialize tooltips and popovers
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+            
+            var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+            var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+                return new bootstrap.Popover(popoverTriggerEl);
+            });
+        });
+    </script>
     <!-- jQuery (required for AdminLTE) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- Popper.js (required for AdminLTE v4 sidebar) -->
