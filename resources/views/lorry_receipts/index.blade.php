@@ -102,7 +102,23 @@
                         <td>{{ $lr->lr_number }}</td>
                         <td>{{ $lr->consignor?->name ?? 'N/A' }}</td>
                         <td>{{ $lr->consignee?->name ?? 'N/A' }}</td>
-                        <td>{{ $lr->delivery_status ?? 'Pending' }}</td>
+                        {{-- <td>{{ $lr->delivery_status ?? 'Pending' }}</td> --}}
+                        <td>
+                            @php
+                                $rawStatus = $lr->delivery_status ?? 'Pending';
+                                $status = strtolower(trim($rawStatus)); // Normalize status: trim spaces + lowercase
+                                $badgeClass = match($status) {
+                                    'cancelled'    => 'badge text-bg-danger',
+                                    'pending'      => 'badge text-bg-primary',
+                                    'delivered'    => 'badge text-bg-success',
+                                    'in-progress'  => 'badge text-bg-warning',
+                                    default        => 'badge text-bg-secondary',
+                                };
+                            @endphp
+                            <span class="{{ $badgeClass }}">{{ ucfirst($rawStatus) }}</span>
+                        </td>
+                        
+                        
                         <td>{{ $lr->gr_date }}</td>
                         <td>{{ $lr->amount }}</td>
                         <td>

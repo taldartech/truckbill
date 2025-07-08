@@ -1,64 +1,125 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container mt-4">
-    <h2>Add New User</h2>
-    <form action="{{ route('users.store') }}" method="POST">
+<div class="card card-info card-outline mb-4">
+    <!--begin::Header-->
+    <div class="card-header"><div class="card-title">Add New User</div></div>
+    <!--end::Header-->
+    <!--begin::Form-->
+    <form action="{{ route('users.store') }}" method="POST" class="needs-validation" novalidate="">
         @csrf
-        <div class="mb-3">
-            <label for="name" class="form-label">Name *</label>
-            <input type="text" class="form-control" id="name" name="name" required value="{{ old('name') }}">
-            @error('name') <div class="text-danger">{{ $message }}</div> @enderror
+        <!--begin::Body-->
+        <div class="card-body">
+            <!--begin::Row-->
+            <div class="row g-3">
+                <!--begin::Col-->
+                <div class="col-md-6">
+                    <label for="name" class="form-label">Name *</label>
+                    <input type="text" class="form-control" id="name" name="name" required value="{{ old('name') }}">
+                    @error('name') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="valid-feedback">Looks good!</div>
+                </div>
+                <!--end::Col-->
+                <!--begin::Col-->
+                <div class="col-md-6">
+                    <label for="email" class="form-label">Email *</label>
+                    <input type="email" class="form-control" id="email" name="email" required value="{{ old('email') }}">
+                    @error('email') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="valid-feedback">Looks good!</div>
+                </div>
+                <!--end::Col-->
+                <!--begin::Col-->
+                <div class="col-md-6">
+                    <label for="password" class="form-label">Password *</label>
+                    <input type="password" class="form-control" id="password" name="password" required>
+                    @error('password') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="valid-feedback">Looks good!</div>
+                </div>
+                <!--end::Col-->
+                <!--begin::Col-->
+                <div class="col-md-6">
+                    <label for="password_confirmation" class="form-label">Confirm Password *</label>
+                    <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" required>
+                    <div class="valid-feedback">Looks good!</div>
+                </div>
+                <!--end::Col-->
+                @php
+                    $canEdit = auth()->check() && (auth()->user()->userRole->name === 'super_admin' || auth()->user()->userRole->name === 'admin');
+                @endphp
+                <!--begin::Col-->
+                <div class="col-md-6">
+                    <label for="role" class="form-label">Role *</label>
+                    @if($canEdit)
+                        <select class="form-select" id="role" name="role" required>
+                            <option value="">Select</option>
+                            @foreach($roles as $role)
+                                <option value="{{ $role }}" {{ old('role') == $role ? 'selected' : '' }}>{{ ucfirst($role) }}</option>
+                            @endforeach
+                        </select>
+                    @else
+                        <input type="hidden" name="role" value="{{ auth()->user()->userRole->name ?? '' }}">
+                        <div class="form-control-plaintext">{{ ucfirst(auth()->user()->userRole->name ?? '') }}</div>
+                    @endif
+                    @error('role') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="valid-feedback">Looks good!</div>
+                </div>
+                <!--end::Col-->
+                <!--begin::Col-->
+                <div class="col-md-6">
+                    <label for="company_id" class="form-label">Company *</label>
+                    @if($canEdit)
+                        <select class="form-select" id="company_id" name="company_id" required>
+                            <option value="">Select</option>
+                            @foreach($companies as $company)
+                                <option value="{{ $company->id }}" {{ old('company_id') == $company->id ? 'selected' : '' }}>{{ $company->name }}</option>
+                            @endforeach
+                        </select>
+                    @else
+                        <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
+                        <div class="form-control-plaintext">{{ auth()->user()->company->name ?? '' }}</div>
+                    @endif
+                    @error('company_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="valid-feedback">Looks good!</div>
+                </div>
+                <!--end::Col-->
+            </div>
+            <!--end::Row-->
         </div>
-        <div class="mb-3">
-            <label for="email" class="form-label">Email *</label>
-            <input type="email" class="form-control" id="email" name="email" required value="{{ old('email') }}">
-            @error('email') <div class="text-danger">{{ $message }}</div> @enderror
+        <!--end::Body-->
+        <!--begin::Footer-->
+        <div class="card-footer">
+            <button class="btn btn-info" type="submit">Submit form</button>
+            <a href="{{ route('users.index') }}" class="btn btn-info">Back to List</a>
         </div>
-        <div class="mb-3">
-            <label for="password" class="form-label">Password *</label>
-            <input type="password" class="form-control" id="password" name="password" required>
-            @error('password') <div class="text-danger">{{ $message }}</div> @enderror
-        </div>
-        <div class="mb-3">
-            <label for="password_confirmation" class="form-label">Confirm Password *</label>
-            <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" required>
-        </div>
-        @php
-    $canEdit = auth()->check() && (auth()->user()->userRole->name === 'super_admin' || auth()->user()->userRole->name === 'admin');
-@endphp
-<div class="mb-3">
-    <label for="role" class="form-label">Role *</label>
-    @if($canEdit)
-        <select class="form-select" id="role" name="role" required>
-            <option value="">Select</option>
-            @foreach($roles as $role)
-                <option value="{{ $role }}" {{ old('role') == $role ? 'selected' : '' }}>{{ ucfirst($role) }}</option>
-            @endforeach
-        </select>
-    @else
-        <input type="hidden" name="role" value="{{ auth()->user()->userRole->name ?? '' }}">
-        <div class="form-control-plaintext">{{ ucfirst(auth()->user()->userRole->name ?? '') }}</div>
-    @endif
-    @error('role') <div class="text-danger">{{ $message }}</div> @enderror
-</div>
-<div class="mb-3">
-    <label for="company_id" class="form-label">Company *</label>
-    @if($canEdit)
-        <select class="form-select" id="company_id" name="company_id" required>
-            <option value="">Select</option>
-            @foreach($companies as $company)
-                <option value="{{ $company->id }}" {{ old('company_id') == $company->id ? 'selected' : '' }}>{{ $company->name }}</option>
-            @endforeach
-        </select>
-    @else
-        <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
-        <div class="form-control-plaintext">{{ auth()->user()->company->name ?? '' }}</div>
-    @endif
-    @error('company_id') <div class="text-danger">{{ $message }}</div> @enderror
-</div>
-        <button type="submit" class="btn btn-primary">Create User</button>
-        <a href="{{ route('users.index') }}" class="btn btn-secondary ms-2">Back to List</a>
+        <!--end::Footer-->
     </form>
+    <!--end::Form-->
+    <!--begin::JavaScript-->
+    <script>
+        // Example starter JavaScript for disabling form submissions if there are invalid fields
+        (() => {
+            'use strict';
+
+            // Fetch all the forms we want to apply custom Bootstrap validation styles to
+            const forms = document.querySelectorAll('.needs-validation');
+
+            // Loop over them and prevent submission
+            Array.from(forms).forEach((form) => {
+                form.addEventListener(
+                    'submit',
+                    (event) => {
+                        if (!form.checkValidity()) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+
+                        form.classList.add('was-validated');
+                    },
+                    false,
+                );
+            });
+        })();
+    </script>
+    <!--end::JavaScript-->
 </div>
 @endsection
