@@ -122,7 +122,7 @@
                         <td>
                             @php
                                 $actionText = match(strtolower(trim($lr->delivery_status ?? 'pending'))) {
-                                    'cancelled' => 'Create new Freight Booking',
+                                    'cancelled' => 'Create new Freight Booking ',
                                     'pending' => 'Create Freight Booking',
                                     'delivered' => 'Show Freight Booking',
                                     'in-progress' => 'Show Freight Booking',
@@ -157,14 +157,14 @@
     </a>
                                 @if(in_array(strtolower(trim($lr->delivery_status ?? 'pending')), ['delivered', 'in-progress']))
                                 <a href="{{ route('vouchers.index', ['lorry_receipt_id' => $lr->id]) }}" 
-                                    class="btn btn-sm btn-success" 
+                                    class="btn btn-sm btn-success wavy-animation" 
                                     title="create Vouchers" 
                                     data-bs-toggle="tooltip" 
                                     data-bs-placement="top">
                                      <i class="bi bi-receipt"></i> 
                                  </a>
                                  <a href="{{ route('invoices.index', ['lorry_receipt_id' => $lr->id]) }}" 
-                                    class="btn btn-sm btn-secondary" 
+                                    class="btn btn-sm btn-secondary wavy-animation" 
                                     title="create Invoices" 
                                     data-bs-toggle="tooltip" 
                                     data-bs-placement="top">
@@ -249,4 +249,25 @@
         });
     });
 </script>
+<style>
+    .wavy-animation {
+        animation: waveMove 2s ease-in-out infinite;
+        display: inline-block;
+    }
+
+    .wavy-animation:nth-child(1) {
+        animation-delay: 0s;
+    }
+
+    .wavy-animation:nth-child(2) {
+        animation-delay: 0.3s;
+    }
+
+    @keyframes waveMove {
+        0%   { transform: translateY(0); }
+        50%  { transform: translateY(-5px); }
+        100% { transform: translateY(0); }
+    }
+</style>
+
 @endsection
