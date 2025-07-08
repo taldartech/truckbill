@@ -101,7 +101,11 @@
                     @forelse($lrs as $lr)
                     <tr class="align-middle">
                         <td>{{ $lr->id }}</td>
-                        <td>{{ $lr->lr_number }}</td>
+                        <td>
+                            <a href="#" class="table-link" onclick="showLRDetails({{ $lr->id }})">
+                                {{ $lr->lr_number }}
+                            </a>
+                        </td>
                         <td>{{ $lr->consignor?->name ?? 'N/A' }}</td>
                         <td>{{ $lr->consignee?->name ?? 'N/A' }}</td>
                         {{-- <td>{{ $lr->delivery_status ?? 'Pending' }}</td> --}}
@@ -268,6 +272,150 @@
         50%  { transform: translateY(-5px); }
         100% { transform: translateY(0); }
     }
+
+    .lr-details-container {
+        padding: 20px;
+    }
+
+    .lr-details-section {
+        margin-bottom: 20px;
+        padding: 15px;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+    }
+
+    .lr-details-section h5 {
+        margin-top: 0;
+        margin-bottom: 10px;
+        color: #495057;
+    }
+
+    .lr-details-row {
+        display: flex;
+        margin-bottom: 10px;
+    }
+
+    .lr-details-label {
+        width: 150px;
+        font-weight: 600;
+        color: #6c757d;
+    }
+
+    .lr-details-value {
+        flex: 1;
+        color: #495057;
+    }
+
+    .table-link {
+        color: inherit !important;
+        text-decoration: none !important;
+        cursor: pointer;
+    }
+
+    .table-link:hover {
+        text-decoration: underline !important;
+    }
 </style>
+
+<div class="modal fade" id="lrDetailsModal" tabindex="-1" aria-labelledby="lrDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="lrDetailsModalLabel">LR Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="lrDetailsContent"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showLRDetails(lrId) {
+        const modal = new bootstrap.Modal(document.getElementById('lrDetailsModal'));
+        const contentDiv = document.getElementById('lrDetailsContent');
+
+        // Fetch LR details from API
+        fetch(`/api/lorry-receipts/${lrId}/details`)
+            .then(response => response.json())
+            .then(lr => {
+                // Format the details content
+                const html = `
+                    <div class="lr-details-container">
+                        <div class="lr-details-section">
+                            <h5>Trip & Parties</h5>
+                            <div class="lr-details-row">
+                                <div class="lr-details-label">Transporter</div>
+                                <div class="lr-details-value">${lr.transporter?.name || 'N/A'}</div>
+                            </div>
+                            <div class="lr-details-row">
+                                <div class="lr-details-label">Truck</div>
+                                <div class="lr-details-value">${lr.truck?.truck_number || 'N/A'}</div>
+                            </div>
+                            <div class="lr-details-row">
+                                <div class="lr-details-label">Customer</div>
+                                <div class="lr-details-value">${lr.consignee?.name || 'N/A'}</div>
+                            </div>
+                            <div class="lr-details-row">
+                                <div class="lr-details-label">LR Number</div>
+                                <div class="lr-details-value">${lr.lr_number}</div>
+                            </div>
+                            <div class="lr-details-row">
+                                <div class="lr-details-label">Delivery Status</div>
+                                <div class="lr-details-value">${lr.delivery_status}</div>
+                            </div>
+                        </div>
+
+                        <div class="lr-details-section">
+                            <h5>Route & Dates</h5>
+                            <div class="lr-details-row">
+                                <div class="lr-details-label">GR Date</div>
+                                <div class="lr-details-value">${lr.gr_date}</div>
+                            </div>
+                            <div class="lr-details-row">
+                                <div class="lr-details-label">Source City</div>
+                                <div class="lr-details-value">${lr.source_city}</div>
+                            </div>
+                            <div class="lr-details-row">
+                                <div class="lr-details-label">Source State</div>
+                                <div class="lr-details-value">${lr.source_state}</div>
+                            </div>
+                            <div class="lr-details-row">
+                                <div class="lr-details-label">Destination City</div>
+                                <div class="lr-details-value">${lr.destination_city}</div>
+                            </div>
+                            <div class="lr-details-row">
+                                <div class="lr-details-label">Destination State</div>
+                                <div class="lr-details-value">${lr.destination_state}</div>
+                            </div>
+                        </div>
+
+                        <div class="lr-details-section">
+                            <h5>Goods & Charges</h5>
+                            <div class="lr-details-row">
+                                <div class="lr-details-label">Lane</div>
+                                <div class="lr-details-value">${lr.lane}</div>
+                            </div>
+                            <div class="lr-details-row">
+                                <div class="lr-details-label">No. of Units</div>
+                                <div class="lr-details-value">${lr.no_of_units}</div>
+                            </div>
+                            <div class="lr-details-row">
+                                <div class="lr-details-label">Amount</div>
+                                <div class="lr-details-value">${lr.amount}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                contentDiv.innerHTML = html;
+                modal.show();
+            })
+            .catch(error => {
+                console.error('Error fetching LR details:', error);
+                contentDiv.innerHTML = '<div class="alert alert-danger">Error loading details. Please try again.</div>';
+                modal.show();
+            });
+    }
+</script>
 
 @endsection
