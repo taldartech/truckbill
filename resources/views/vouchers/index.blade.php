@@ -1,6 +1,6 @@
 @extends('layouts.app')
 @section('content')
-<div class="container mt-4">
+    <div class="container mt-4">
     <div class="col-sm-6"><h3 class="mb-0">Voucher Management</h3></div>
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
@@ -91,15 +91,57 @@
             <div class="col-md-3 d-none" id="field_status">
                 <label class="form-label">Status</label>
                 <select name="status" class="form-select">
-                <option value="">All</option>
-                <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
-            </select>
+                    <option value="">All</option>
+                    <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                    <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
+                </select>
+            </div>
         </div>
-        <div class="col-md-2 align-self-end">
-            <button type="submit" class="btn btn-secondary">Filter</button>
+
+        {{-- Form action buttons --}}
+        <div class="text-end mt-3">
+            <button type="submit" class="btn btn-secondary">
+                <i class="bi bi-search"></i> Search
+            </button>
+            <a href="{{ route('vouchers.index') }}" class="btn btn-outline-secondary ms-2">
+                <i class="bi bi-arrow-clockwise"></i> Reset
+            </a>
         </div>
     </form>
+
+    <script>
+        function toggleField(checkbox) {
+            const fieldId = 'field_' + checkbox.value;
+            const field = document.getElementById(fieldId);
+            if (checkbox.checked) {
+                field.classList.remove('d-none');
+            } else {
+                field.classList.add('d-none');
+                const input = field.querySelector('input, select');
+                if (input) input.value = '';
+            }
+        }
+
+        // Initialize filter fields based on URL parameters
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get all filter checkboxes
+            const checkboxes = document.querySelectorAll('.form-check-input');
+            
+            // Check each checkbox based on URL parameters
+            checkboxes.forEach(checkbox => {
+                const value = checkbox.value;
+                const fieldId = 'field_' + value;
+                const field = document.getElementById(fieldId);
+                const urlValue = new URLSearchParams(window.location.search).get(value);
+                
+                if (urlValue) {
+                    checkbox.checked = true;
+                    field.classList.remove('d-none');
+                }
+            });
+        });
+    </script>
+
     <table class="table table-bordered table-striped">
         <thead>
             <tr>

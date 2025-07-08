@@ -157,9 +157,16 @@
                         
                         <td>
                             <div class="d-flex gap-1">
-                                <a href="{{ route('lorry_receipts.edit', $lr->id) }}" class="btn btn-sm btn-info">
+                                {{-- <a href="{{ route('lorry_receipts.edit', $lr->id) }}" class="btn btn-sm btn-info">
                                     <i class="bi bi-pencil"></i>
-                                </a>
+                                </a> --}}
+                                <a href="{{ route('lorry_receipts.edit', $lr->id) }}" 
+                                    class="btn btn-sm btn-info" 
+                                    title="Edit Lorry Receipt" 
+                                    data-bs-toggle="tooltip" 
+                                    data-bs-placement="top">
+                                    <i class="bi bi-pencil"></i>
+                                 </a>
                                 <form action="{{ route('lorry_receipts.destroy', $lr->id) }}" method="POST" style="display:inline-block;">
                                     @csrf
                                     @method('DELETE')
