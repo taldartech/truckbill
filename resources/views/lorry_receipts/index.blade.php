@@ -131,9 +131,14 @@
                                 $actionRoute = in_array(strtolower(trim($lr->delivery_status ?? 'pending')), ['delivered', 'in-progress']) ? 
                                     route('freight_bookings.index', ['lorry_receipt_id' => $lr->id]) : 
                                     route('freight_bookings.create', ['lorry_receipt_id' => $lr->id]);
+                                    $buttonClass = match($status) {
+                                        'delivered'   => 'btn-info',
+                                        'in-progress' => 'btn-warning',
+                                        default       => 'btn-success'
+                                    };
                             @endphp
                             <div class="d-flex gap-1">
-                                <a href="{{ $actionRoute }}" class="btn btn-sm @php
+                                {{-- <a href="{{ $actionRoute }}" class="btn btn-sm @php
                                     $status = strtolower(trim($lr->delivery_status ?? 'pending'));
                                     echo match($status) {
                                         'delivered' => 'btn-info',
@@ -142,11 +147,30 @@
                                     };
                                 @endphp">
                                     <i class="bi bi-plus"></i> {{ $actionText }}
-                                </a>
+                                </a> --}}
+                                <a href="{{ $actionRoute }}" 
+       class="btn btn-sm {{ $buttonClass }}"
+       title="{{ $actionText }}"
+       data-bs-toggle="tooltip" 
+       data-bs-placement="top">
+        <i class="bi bi-truck"></i> 
+    </a>
                                 @if(strtolower(trim($lr->delivery_status ?? 'pending')) === 'delivered')
-                                    <a href="{{ route('vouchers.index', ['lorry_receipt_id' => $lr->id]) }}" class="btn btn-sm btn-danger">
-                                        <i class="bi bi-plus"></i> Voucher
-                                    </a>
+                                <a href="{{ route('vouchers.index', ['lorry_receipt_id' => $lr->id]) }}" 
+                                    class="btn btn-sm btn-success" 
+                                    title="create Vouchers" 
+                                    data-bs-toggle="tooltip" 
+                                    data-bs-placement="top">
+                                     <i class="bi bi-receipt"></i> 
+                                 </a>
+                                 <a href="{{ route('invoices.index', ['lorry_receipt_id' => $lr->id]) }}" 
+                                    class="btn btn-sm btn-secondary" 
+                                    title="create Invoices" 
+                                    data-bs-toggle="tooltip" 
+                                    data-bs-placement="top">
+                                    <i class="bi bi-file-earmark-text"></i> 
+                                 </a>
+                                 
                                 @endif
                             </div>
                             </a>
