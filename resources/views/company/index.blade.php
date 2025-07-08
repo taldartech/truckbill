@@ -114,9 +114,9 @@
                             <td>{{ $company->address }}</td>
                             <td>{{ $company->contact_person }}</td>
                             <td>{{ $company->contact_number }}</td>
-                            <td>
-                                <a href="{{ route('company.edit', $company->id) }}" class="btn btn-sm btn-warning me-1">
-                                    <i class="bi bi-pencil-square"></i>
+                            <td class="d-flex align-items-center">
+                                <a href="{{ route('company.edit', $company->id) }}" class="btn btn-sm btn-info me-2" title="Edit">
+                                    <i class="bi bi-pencil"></i>
                                 </a>
                                 <form action="{{ route('company.destroy', $company->id) }}" method="POST" style="display:inline-block;">
                                     @csrf
