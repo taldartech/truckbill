@@ -160,9 +160,9 @@
         <i class="bi bi-truck"></i> 
     </a>
                                 @if(in_array(strtolower(trim($lr->delivery_status ?? 'pending')), ['delivered', 'in-progress']))
-                                <a href="{{ route('vouchers.index', ['lorry_receipt_id' => $lr->id]) }}" 
+                                <a href="{{ route('voucher_payments.create', ['lorry_receipt_id' => $lr->id]) }}" 
                                     class="btn btn-sm btn-success wavy-animation" 
-                                    title="create Vouchers" 
+                                    title="create Voucher Payments" 
                                     data-bs-toggle="tooltip" 
                                     data-bs-placement="top">
                                      <i class="bi bi-receipt"></i> 

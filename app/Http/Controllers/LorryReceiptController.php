@@ -40,7 +40,7 @@ class LorryReceiptController extends Controller
             $query->where('gr_date', '<=', $request->gr_date_to);
         }
 
-        $lrs = $query->paginate(10);
+        $lrs = $query->orderBy('id', 'desc')->paginate(10);
         return view('lorry_receipts.index', [
             'lrs' => $lrs,
             'statuses' => $statuses
