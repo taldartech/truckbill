@@ -142,44 +142,63 @@
         });
     </script>
 
-    <table class="table table-bordered table-striped">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Freight Booking</th>
-                <th>Truck</th>
-                <th>Transporter</th>
-                <th>PAN Verified</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-        @forelse($vouchers as $voucher)
-            <tr>
-                <td>{{ $voucher->id }}</td>
-                <td>{{ $voucher->freightBooking ? $voucher->freightBooking->id : '-' }}</td>
-                <td>{{ $voucher->truck ? $voucher->truck->truck_number : '-' }}</td>
-                <td>{{ $voucher->transporter ? $voucher->transporter->name : '-' }}</td>
-                <td>{{ $voucher->pan_verified ? 'Yes' : 'No' }}</td>
-                <td>{{ ucfirst($voucher->status) }}</td>
-                <td>
-                    <a href="{{ route('vouchers.edit', $voucher->id) }}" class="btn btn-sm btn-warning">Edit</a>
-                    <form action="{{ route('vouchers.destroy', $voucher->id) }}" method="POST" style="display:inline-block;">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this voucher?')">Delete</button>
-                    </form>
-                </td>
-            </tr>
-        @empty
-            <tr><td colspan="7">No vouchers found.</td></tr>
-        @endforelse
-        </tbody>
-    </table>
-    {{ $vouchers->links() }}
-    <div class="mt-3">
-        <a href="/dashboard" class="btn btn-secondary">Back to Dashboard</a>
+    <div class="card mb-4">
+        <div class="card-header"><h3 class="card-title">Vouchers List</h3></div>
+        <div class="card-body" style="overflow-x: auto;">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th style="width: 10px">ID</th>
+                        <th>Freight Booking</th>
+                        <th>Truck</th>
+                        <th>Transporter</th>
+                        <th>PAN Verified</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($vouchers as $voucher)
+                        <tr class="align-middle">
+                            <td>{{ $voucher->id }}</td>
+                            <td>
+                                <div>
+                                    <strong>LR #{{ $voucher->freightBooking ? $voucher->freightBooking->lr_id : '-' }}</strong><br>
+                                    Rate: {{ number_format($voucher->freightBooking ? $voucher->freightBooking->tr_fr_rate : 0, 2) }}
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <strong>{{ $voucher->truck ? $voucher->truck->registration_number : '-' }}</strong><br>
+                                    {{ $voucher->truck ? $voucher->truck->truck_type : '-' }}
+                                </div>
+                            </td>
+                            <td>{{ $voucher->transporter ? $voucher->transporter->name : '-' }}</td>
+                            <td>{{ $voucher->pan_verified ? 'Yes' : 'No' }}</td>
+                            <td>{{ ucfirst($voucher->status) }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{{ route('vouchers.edit', $voucher->id) }}" class="btn btn-sm btn-warning">
+                                        <i class="bi bi-pencil"></i> Edit
+                                    </a>
+                                    <form action="{{ route('vouchers.destroy', $voucher->id) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this voucher?')">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="7" class="text-center">No vouchers found.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
+    {{ $vouchers->links() }}
+    
 </div>
 @endsection
