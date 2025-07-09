@@ -17,6 +17,11 @@ class Transporter extends Model
         'total_trucks',
         'advance_amount',
         'registered_truck_id',
+        'pan_active',
+    ];
+
+    protected $casts = [
+        'pan_active' => 'boolean',
     ];
 
     public function company()

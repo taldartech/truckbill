@@ -15,14 +15,12 @@ class StatesSeeder extends Seeder
             [
                 'country_id' => $india->id,
                 'name' => 'Rajasthan',
-                'code' => 'RJ',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
             [
                 'country_id' => $india->id,
                 'name' => 'Gujarat',
-                'code' => 'GJ',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],

@@ -73,10 +73,13 @@ class TransporterController extends Controller
             'declaration_given' => 'required|boolean',
             'total_trucks' => 'required|integer|min:0',
             'advance_amount' => 'nullable|numeric',
+            'pan_active' => 'required|boolean',
         ]);
         if (!isset($validated['advance_amount'])) {
             $validated['advance_amount'] = 0;
         }
+        // Convert pan_active to boolean
+        $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
         \App\Models\Transporter::create($validated);
         return redirect()->route('transporters.index')->with('success', 'Transporter created successfully!');
     }
@@ -111,10 +114,13 @@ class TransporterController extends Controller
             'declaration_given' => 'required|boolean',
             'total_trucks' => 'required|integer|min:0',
             'advance_amount' => 'nullable|numeric',
-        ]);
+            'pan_active' => 'required|boolean',
+        ]); 
         if (!isset($validated['advance_amount'])) {
             $validated['advance_amount'] = 0;
         }
+        // Convert pan_active to boolean
+        $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
         $transporter->update($validated);
         return redirect()->route('transporters.index')->with('success', 'Transporter updated successfully!');
     }

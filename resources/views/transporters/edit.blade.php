@@ -52,6 +52,18 @@
             @error('pan_number') <div class="text-danger">{{ $message }}</div> @enderror
         </div>
         <div class="mb-3">
+            <label class="form-label">PAN is Active *</label><br>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="pan_active" id="pan_active_yes" value="1" {{ old('pan_active', $transporter->pan_active) == '1' ? 'checked' : '' }} required>
+                <label class="form-check-label" for="pan_active_yes">Yes</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="pan_active" id="pan_active_no" value="0" {{ old('pan_active', $transporter->pan_active) == '0' ? 'checked' : '' }} required>
+                <label class="form-check-label" for="pan_active_no">No</label>
+            </div>
+            @error('pan_active') <div class="text-danger">{{ $message }}</div> @enderror
+        </div>
+        <div class="mb-3">
             <label class="form-label">Type *</label><br>
             <div class="form-check form-check-inline">
                 <input class="form-check-input" type="radio" name="is_owner" id="owner" value="1" {{ old('is_owner', $transporter->is_owner) == '1' ? 'checked' : '' }} required>

@@ -73,6 +73,21 @@
             <div class="valid-feedback">Looks good!</div>
           </div>
           <!--end::Col-->
+          <!--begin::Col-->
+          <div class="col-md-6">
+            <label for="type" class="form-label">PAN is Active *</label><br>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="pan_active" id="pan_active_yes" value="1" {{ old('pan_active') === '1' ? 'checked' : '' }} required>
+                <label class="form-check-label" for="pan_active_yes">Yes</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="pan_active" id="pan_active_no" value="0" {{ old('pan_active') === '0' ? 'checked' : '' }} required>
+                <label class="form-check-label" for="pan_active_no">No</label>
+            </div>
+            @error('pan_active') <div class="text-danger">{{ $message }}</div> @enderror
+            <div class="invalid-feedback">Please choose a type.</div>
+        </div>
+        <!--end::Col-->
             <!--begin::Col-->
             <div class="col-md-6">
                 <div class="row">
