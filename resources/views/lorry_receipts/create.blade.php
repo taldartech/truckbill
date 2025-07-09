@@ -248,10 +248,8 @@
         <!--end::Body-->
         <!--begin::Footer-->
         <div class="card-footer">
-            <div class="d-flex justify-content-end gap-2">
-                <button class="btn btn-info" type="submit">Submit form</button>
-                <a href="{{ route('lorry_receipts.index') }}" class="btn btn-secondary">Cancel</a>
-            </div>
+            <button class="btn btn-info" type="submit">Submit form</button>
+            <a href="{{ route('lorry_receipts.index') }}" class="btn btn-info">Back to List</a>
         </div>
         <!--end::Footer-->
     </form>
