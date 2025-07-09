@@ -22,19 +22,17 @@
                 <div class="col-md-4">
                     <label for="lr_id" class="form-label">LR Number *</label>
                     <div class="input-group">
-                        <input type="hidden" name="lr_id" value="{{ isset($selectedLR) ? $selectedLR->id : '' }}">
-                        <span class="input-group-text">{{ isset($selectedLR) ? $selectedLR->lr_number : '' }}</span>
+                        <span class="input-group-text">{{ isset($preFilled) ? $preFilled['lr_number'] : '' }}</span>
                     </div>
                     @error('lr_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please select an LR Number.</div>
                 </div>
                 <!--end::Col-->
                 <!--begin::Col-->
                 <div class="col-md-4">
                     <label for="transporter_id" class="form-label">Transporter *</label>
                     <div class="input-group">
-                        <input type="hidden" name="transporter_id" value="{{ isset($selectedLR) ? $selectedLR->transporter_id : '' }}">
-                        <input type="text" class="form-control" readonly value="{{ isset($selectedLR) && $selectedLR->transporter ? $selectedLR->transporter->name : '' }}">
+                        <input type="hidden" name="transporter_id" value="{{ isset($preFilled) ? $preFilled['transporter_id'] : '' }}">
+                        <input type="text" class="form-control" readonly value="{{ isset($preFilled) ? $preFilled['transporter_name'] : '' }}">
                     </div>
                     @error('transporter_id') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
@@ -43,24 +41,15 @@
                 <div class="col-md-4">
                     <label for="truck_id" class="form-label">Truck *</label>
                     <div class="input-group">
-                        <input type="hidden" name="truck_id" value="{{ isset($selectedLR) ? $selectedLR->truck_id : '' }}">
-                        <input type="text" class="form-control" readonly value="{{ isset($selectedLR) && $selectedLR->truck ? $selectedLR->truck->registration_number : '' }}">
+                        <input type="hidden" name="truck_id" value="{{ isset($preFilled) ? $preFilled['truck_id'] : '' }}">
+                        <input type="text" class="form-control" readonly value="{{ isset($preFilled) ? $preFilled['truck_number'] : '' }}">
                     </div>
                     @error('truck_id') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
-            </div>
+        </div>
 
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <label for="tr_fr_rate" class="form-label">TR Freight Rate *</label>
-                    <input type="number" step="0.01" class="form-control" name="tr_fr_rate" id="tr_fr_rate" value="{{ old('tr_fr_rate') }}" required>
-                    @error('tr_fr_rate') <div class="text-danger">{{ $message }}</div> @enderror
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label for="tr_amount" class="form-label">TR Amount *</label>
-                    <input type="number" step="0.01" class="form-control" name="tr_amount" id="tr_amount" value="{{ old('tr_amount') }}" required>
-                    @error('tr_amount') <div class="text-danger">{{ $message }}</div> @enderror
-                </div>
+        <div class="row">
+            <div class="col-md-4 mb-3">
                 <label for="tr_fr_rate" class="form-label">TR Freight Rate *</label>
                 <input type="number" step="0.01" class="form-control" name="tr_fr_rate" id="tr_fr_rate" value="{{ old('tr_fr_rate') }}" required>
                 @error('tr_fr_rate') <div class="text-danger">{{ $message }}</div> @enderror

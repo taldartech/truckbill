@@ -30,15 +30,25 @@ class FreightBookingController extends Controller
         $linkedBookings = FreightBooking::all();
         $goodsTypes = \App\Models\GoodType::all();
 
-        // If lr_id is provided through URL
-        if ($request->has('lr_id')) {
-            $lr = \App\Models\LorryReceipt::with(['truck', 'transporter'])->find($request->lr_id);
+        // If lorry_receipt_id is provided, fetch LR number and related data
+        if ($request->has('lorry_receipt_id')) {
+            $lr = \App\Models\LorryReceipt::find($request->lorry_receipt_id);
             if ($lr) {
+                // Fetch transporter and truck details directly from their models
+                $transporter = \App\Models\Transporter::find($lr->transporter_id);
+                $truck = \App\Models\Truck::find($lr->truck_id);
+                
                 return view('freight_bookings.create', [
                     'lrs' => $lrs,
                     'linkedBookings' => $linkedBookings,
                     'goodsTypes' => $goodsTypes,
-                    'selectedLR' => $lr
+                    'preFilled' => [
+                        'lr_number' => $lr->lr_number,
+                        'transporter_id' => $lr->transporter_id,
+                        'transporter_name' => $transporter ? $transporter->name : '',
+                        'truck_id' => $lr->truck_id,
+                        'truck_number' => $truck ? $truck->truck_number : '',
+                    ]
                 ]);
             }
         }
