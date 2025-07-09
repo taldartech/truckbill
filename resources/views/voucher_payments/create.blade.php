@@ -6,6 +6,12 @@
     <!--end::Header-->
     <!--begin::Form-->
     <form method="POST" action="{{ route('voucher_payments.store') }}" class="needs-validation" novalidate>
+        @if(isset($lorry_receipt_id))
+            <input type="hidden" name="lorry_receipt_id" value="{{ $lorry_receipt_id }}">
+        @endif
+        @if(isset($freight_booking_id))
+            <input type="hidden" name="freight_booking_id" value="{{ $freight_booking_id }}">
+        @endif
         @csrf
         <!--begin::Body-->
         <div class="card-body">
@@ -14,12 +20,13 @@
                 <!--begin::Col-->
                 <div class="col-md-4">
                     <label for="voucher_id" class="form-label">Voucher *</label>
-                    <select name="voucher_id" id="voucher_id" class="form-select" required>
-                        <option value="">Select</option>
-                        @foreach($vouchers as $voucher)
-                            <option value="{{ $voucher->id }}" {{ old('voucher_id') == $voucher->id ? 'selected' : '' }}>{{ $voucher->id }}</option>
-                        @endforeach
-                    </select>
+                    <input type="text" 
+                           name="freight_booking_id" 
+                           id="freight_booking_id" 
+                           class="form-control" 
+                           value="{{ $vouchers->first()->voucher_number ?? '' }}"
+                           readonly 
+                           required>
                     @error('voucher_id') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please select a voucher.</div>
                 </div>

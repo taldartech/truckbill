@@ -154,6 +154,14 @@
                 @error('good_type') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
             <div class="col-md-4 mb-3">
+                <label for="pan_verified" class="form-label">PAN Verified *</label>
+                <input type="hidden" name="pan_verified" id="pan_verified" value="{{ old('pan_verified', $freight_booking->pan_verified) }}" required>
+                <div class="form-control">
+                    {{ old('pan_verified', $freight_booking->pan_verified) ? 'Yes' : 'No' }}
+                </div>
+                @error('pan_verified') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+            <div class="col-md-4 mb-3">
                 <label for="detention" class="form-label">Detention</label>
                 <input type="number" step="0.01" class="form-control" name="detention" id="detention" value="{{ old('detention', $freight_booking->detention) }}">
                 @error('detention') <div class="text-danger">{{ $message }}</div> @enderror

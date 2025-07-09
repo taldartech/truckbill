@@ -91,7 +91,7 @@
                         <th>Consignee</th>
                         <th>Status</th>
                         <th>Action</th>
-
+                        <th style="display: none">Freight Booking ID</th>
                         <th>GR Date</th>
                         <th>Amount</th>
                         <th>Actions</th>
@@ -126,14 +126,14 @@
                         <td>
                             @php
                                 $actionText = match(strtolower(trim($lr->delivery_status ?? 'pending'))) {
-                                    'cancelled' => 'Create new Freight Booking ',
+                                    'cancelled' => 'Create new Freight Booking',
                                     'pending' => 'Create Freight Booking',
-                                    'delivered' => 'Show Freight Booking',
-                                    'in-progress' => 'Show Freight Booking',
+                                    'delivered' => 'View Freight Booking',
+                                    'in-progress' => 'View Freight Booking',
                                     default => 'Create Freight Booking'
                                 };
-                                $actionRoute = in_array(strtolower(trim($lr->delivery_status ?? 'pending')), ['delivered', 'in-progress']) ? 
-                                    route('freight_bookings.index', ['lorry_receipt_id' => $lr->id]) : 
+                                $actionRoute = in_array(strtolower(trim($lr->delivery_status ?? 'pending')), ['delivered', 'in-progress']) && $lr->freight_booking_id ? 
+                                    route('freight_bookings.index', $lr->freight_booking_id) : 
                                     route('freight_bookings.create', ['lorry_receipt_id' => $lr->id]);
                                     $buttonClass = match($status) {
                                         'delivered'   => 'btn-info',
@@ -160,7 +160,7 @@
         <i class="bi bi-truck"></i> 
     </a>
                                 @if(in_array(strtolower(trim($lr->delivery_status ?? 'pending')), ['delivered', 'in-progress']))
-                                <a href="{{ route('voucher_payments.create', ['lorry_receipt_id' => $lr->id]) }}" 
+                                <a href="{{ route('voucher_payments.create', ['lorry_receipt_id' => $lr->id, 'freight_booking_id' => $lr->freight_booking_id]) }}" 
                                     class="btn btn-sm btn-success wavy-animation" 
                                     title="create Voucher Payments" 
                                     data-bs-toggle="tooltip" 

@@ -19,11 +19,19 @@ class VoucherPaymentController extends Controller
         return view('voucher_payments.index', compact('payments'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
-        $vouchers = \App\Models\FreightBooking::select('id', 'voucher_number')->get();
+        $freight_booking_id = $request->freight_booking_id;
+        
+        $vouchers = \App\Models\FreightBooking::select('id', 'voucher_number')
+            ->when($freight_booking_id, function ($query) use ($freight_booking_id) {
+                $query->where('id', $freight_booking_id);
+            })
+            ->get();
+            
         $paymentTypes = PaymentType::all();
         $paymentModes = PaymentMode::all();
+        
         return view('voucher_payments.create', compact('vouchers', 'paymentTypes', 'paymentModes'));
     }
 
