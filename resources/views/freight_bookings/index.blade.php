@@ -112,6 +112,7 @@
                     <tr>
                         <th style="width: 10px">ID</th>
                         <th>LR No</th>
+                        <th>Voucher No</th>
                         <th>TR Rate</th>
                         <th>TR Amount</th>
                         <th>Advance</th>
@@ -135,6 +136,7 @@
                                     -
                                 @endif
                             </td>
+                            <td>{{ $booking->voucher_number }}</td>
                             <td>{{ $booking->tr_fr_rate }}</td>
                             <td>{{ $booking->tr_amount }}</td>
                             <td>{{ $booking->advance_amount }}</td>

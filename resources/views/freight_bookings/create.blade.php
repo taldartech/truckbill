@@ -22,6 +22,7 @@
                 <div class="col-md-4">
                     <label for="lr_id" class="form-label">LR Number *</label>
                     <div class="input-group">
+                        <input type="hidden" name="lr_id" id="lr_id" value="{{ isset($preFilled) ? $preFilled['lr_id'] : old('lr_id') }}" required>
                         <span class="input-group-text">{{ isset($preFilled) ? $preFilled['lr_number'] : '' }}</span>
                     </div>
                     @error('lr_id') <div class="text-danger">{{ $message }}</div> @enderror
@@ -97,6 +98,7 @@
             </div>
             <div class="col-md-4 mb-3">
                 <label for="pan_verified" class="form-label">PAN Verified *</label>
+                <input type="hidden" name="pan_verified" id="pan_verified" value="{{ isset($preFilled['pan_verified']) ? (int)$preFilled['pan_verified'] : (old('pan_verified') ? 1 : 0) }}" required>
                 <div class="form-control">
                     {{ isset($preFilled['pan_verified']) && $preFilled['pan_verified'] ? 'Yes' : 'No' }}
                 </div>

@@ -44,6 +44,7 @@ class FreightBookingController extends Controller
                     'goodsTypes' => $goodsTypes,
                     'preFilled' => [
                         'lr_number' => $lr->lr_number,
+                        'lr_id' => $lr->id,
                         'transporter_id' => $lr->transporter_id,
                         'transporter_name' => $transporter ? $transporter->name : '',
                         'truck_id' => $lr->truck_id,
@@ -91,8 +92,13 @@ class FreightBookingController extends Controller
         }
 
         // Create freight booking with lorry receipt's LR number
+        // Get the next voucher number
+        $nextVoucherNumber = FreightBooking::max('voucher_number') + 1;
+        
         $freightBooking = FreightBooking::create(array_merge($data, [
-            'lr_number' => $lorryReceipt->lr_number
+            'lr_number' => $lorryReceipt->lr_number,
+            'voucher_number' => $nextVoucherNumber,
+            'pan_verified' => (bool)$data['pan_verified']
         ]));
         
         // Update lorry receipt status and damage amount
