@@ -24,11 +24,25 @@ class FreightBookingController extends Controller
         return view('freight_bookings.index', compact('bookings', 'lrs'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $lrs = LorryReceipt::all();
         $linkedBookings = FreightBooking::all();
         $goodsTypes = \App\Models\GoodType::all();
+
+        // If lr_id is provided through URL
+        if ($request->has('lr_id')) {
+            $lr = \App\Models\LorryReceipt::with(['truck', 'transporter'])->find($request->lr_id);
+            if ($lr) {
+                return view('freight_bookings.create', [
+                    'lrs' => $lrs,
+                    'linkedBookings' => $linkedBookings,
+                    'goodsTypes' => $goodsTypes,
+                    'selectedLR' => $lr
+                ]);
+            }
+        }
+
         return view('freight_bookings.create', compact('lrs', 'linkedBookings', 'goodsTypes'));
     }
 
