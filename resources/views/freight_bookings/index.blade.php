@@ -78,6 +78,32 @@
         </div>
     </form>
 
+    <!-- LR Details Modal -->
+    <div class="modal fade" id="lrDetailsModal" tabindex="-1" aria-labelledby="lrDetailsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="lrDetailsModalLabel">LR Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="lrDetailsContent">
+                    <!-- LR details will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .table-link {
+            color: #000 !important;
+            text-decoration: none !important;
+            cursor: pointer;
+        }
+        .table-link:hover {
+            color: #000 !important;
+            text-decoration: none !important;
+        }
+    </style>
     <div class="card mb-4">
         <div class="card-header"><h3 class="card-title">Freight Bookings List</h3></div>
         <div class="card-body" style="overflow-x: auto;">
@@ -100,7 +126,15 @@
                     @forelse($bookings as $booking)
                         <tr class="align-middle">
                             <td>{{ $booking->id }}</td>
-                            <td>{{ $booking->lr ? $booking->lr->lr_number : '-' }}</td>
+                            <td>
+                                @if($booking->lr)
+                                    <a href="#" class="table-link" onclick="showLRDetails({{ $booking->lr->id }})">
+                                        {{ $booking->lr->lr_number }}
+                                    </a>
+                                @else
+                                    -
+                                @endif
+                            </td>
                             <td>{{ $booking->tr_fr_rate }}</td>
                             <td>{{ $booking->tr_amount }}</td>
                             <td>{{ $booking->advance_amount }}</td>
@@ -185,5 +219,54 @@
             }
         });
     });
+    function showLRDetails(lrId) {
+        const modal = new bootstrap.Modal(document.getElementById('lrDetailsModal'));
+        const contentDiv = document.getElementById('lrDetailsContent');
+        
+        // Show loading state
+        contentDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+        
+        // Fetch LR details
+        fetch(`/api/lorry-receipts/${lrId}/details`)
+            .then(response => response.json())
+            .then(data => {
+                // Format and display the details
+                contentDiv.innerHTML = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>LR Information</h5>
+                            <p><strong>LR Number:</strong> ${data.lr_number}</p>
+                            <p><strong>GR Date:</strong> ${data.gr_date}</p>
+                            <p><strong>Amount:</strong> ${data.amount}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Transport Details</h5>
+                            <p><strong>Transporter:</strong> ${data.transporter ? data.transporter.name : 'N/A'}</p>
+                            <p><strong>Truck:</strong> ${data.truck ? data.truck.registration_number : 'N/A'}</p>
+                            <p><strong>Status:</strong> ${data.delivery_status}</p>
+                        </div>
+                    </div>
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <h5>Consignor Information</h5>
+                            <p><strong>Name:</strong> ${data.consignor ? data.consignor.name : 'N/A'}</p>
+                            <p><strong>Contact:</strong> ${data.consignor ? data.consignor.contact_number : 'N/A'}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Consignee Information</h5>
+                            <p><strong>Name:</strong> ${data.consignee ? data.consignee.name : 'N/A'}</p>
+                            <p><strong>Contact:</strong> ${data.consignee ? data.consignee.contact_number : 'N/A'}</p>
+                        </div>
+                    </div>
+                `;
+                
+                // Show the modal
+                modal.show();
+            })
+            .catch(error => {
+                contentDiv.innerHTML = `<div class="alert alert-danger">Error loading LR details: ${error.message}</div>`;
+            });
+    }
+
 </script>
 @endsection

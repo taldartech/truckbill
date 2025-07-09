@@ -199,6 +199,5 @@
         </div>
     </div>
     {{ $vouchers->links() }}
-    
 </div>
 @endsection
