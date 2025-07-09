@@ -32,6 +32,7 @@ class FreightBooking extends Model
         'is_delivered',
         'is_cancelled',
         'linked_freight_booking_id',
+        'pan_verified',
     ];
 
     public function lr()

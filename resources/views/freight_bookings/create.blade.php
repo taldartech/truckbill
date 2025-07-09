@@ -96,6 +96,13 @@
                 @error('good_type') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
             <div class="col-md-4 mb-3">
+                <label for="pan_verified" class="form-label">PAN Verified *</label>
+                <div class="form-control">
+                    {{ isset($preFilled['pan_verified']) && $preFilled['pan_verified'] ? 'Yes' : 'No' }}
+                </div>
+                @error('pan_verified') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+            <div class="col-md-4 mb-3">
                 <label for="detention" class="form-label">Detention</label>
                 <input type="number" step="0.01" class="form-control" name="detention" id="detention" value="{{ old('detention') }}">
                 @error('detention') <div class="text-danger">{{ $message }}</div> @enderror

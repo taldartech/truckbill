@@ -48,6 +48,7 @@ class FreightBookingController extends Controller
                         'transporter_name' => $transporter ? $transporter->name : '',
                         'truck_id' => $lr->truck_id,
                         'truck_number' => $truck ? $truck->truck_number : '',
+                        'pan_verified' => $transporter ? $transporter->pan_active : 0,
                     ]
                 ]);
             }
@@ -76,7 +77,7 @@ class FreightBookingController extends Controller
             'shortage_qty' => 'nullable|numeric',
             'shortage_rate' => 'nullable|numeric',
             'shortage_amount' => 'nullable|numeric',
-            
+            'pan_verified' => 'required|boolean',
             'remark' => 'nullable|string',
             'is_delivered' => 'boolean',
             'is_cancelled' => 'boolean',
@@ -191,6 +192,7 @@ class FreightBookingController extends Controller
             'shortage_qty' => 'nullable|numeric',
             'shortage_rate' => 'nullable|numeric',
             'shortage_amount' => 'nullable|numeric',
+            'pan_verified' => 'required|boolean',
             'remark' => 'nullable|string',
             'is_delivered' => 'boolean',
             'is_cancelled' => 'boolean',
