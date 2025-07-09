@@ -21,7 +21,7 @@ class VoucherPaymentController extends Controller
 
     public function create()
     {
-        $vouchers = Voucher::all();
+        $vouchers = \App\Models\FreightBooking::select('id', 'voucher_number')->get();
         $paymentTypes = PaymentType::all();
         $paymentModes = PaymentMode::all();
         return view('voucher_payments.create', compact('vouchers', 'paymentTypes', 'paymentModes'));
@@ -30,7 +30,7 @@ class VoucherPaymentController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'voucher_id' => 'required|exists:vouchers,id',
+            'freight_booking_id' => 'required|exists:freight_bookings,id',
             'payment_type' => 'required|string',
             'payment_mode' => 'required|string',
             'transaction_id' => 'required|string',
@@ -44,7 +44,7 @@ class VoucherPaymentController extends Controller
 
     public function edit(VoucherPayment $voucher_payment)
     {
-        $vouchers = Voucher::all();
+        $vouchers = \App\Models\FreightBooking::select('id', 'voucher_number')->get();
         $paymentTypes = PaymentType::all();
         $paymentModes = PaymentMode::all();
         return view('voucher_payments.edit', compact('voucher_payment', 'vouchers', 'paymentTypes', 'paymentModes'));
