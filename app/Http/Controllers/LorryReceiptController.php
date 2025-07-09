@@ -173,4 +173,16 @@ class LorryReceiptController extends Controller
         $lorry_receipt->delete();
         return redirect()->route('lorry_receipts.index')->with('success', 'Lorry Receipt deleted successfully!');
     }
+
+    public function details($id)
+    {
+        $lorry_receipt = \App\Models\LorryReceipt::with([
+            'truck',
+            'transporter',
+            'consignor',
+            'consignee'
+        ])->findOrFail($id);
+
+        return response()->json($lorry_receipt);
+    }
 }

@@ -32,7 +32,6 @@ class LorryReceipt extends Model
         'lane',
         'damage_amount',
         'shortage_amount',
-        
         'lr_number',
     ];
 
