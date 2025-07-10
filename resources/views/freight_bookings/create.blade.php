@@ -95,12 +95,12 @@
             </div>
             <div class="col-md-4 mb-3">
                 <label for="balance_amount" class="form-label">Balance Amount *</label>
-                <input type="number" step="0.01" class="form-control" name="balance_amount" id="balance_amount" value="{{ old('balance_amount') }}" required>
+                <input type="number" step="0.01" class="form-control" name="balance_amount" id="balance_amount" value="{{ old('balance_amount') }}" required readonly>
                 @error('balance_amount') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
             <div class="col-md-4 mb-3">
-                <label for="tds_amount" class="form-label">TDS Amount</label>
-                <input type="number" step="0.01" class="form-control" name="tds_amount" id="tds_amount" value="{{ old('tds_amount') }}">
+                <label for="tds_amount" class="form-label">TDS Amount *</label>
+                <input type="number" step="0.01" class="form-control" name="tds_amount" id="tds_amount" value="{{ old('tds_amount') }}" readonly>
                 @error('tds_amount') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
         </div>
@@ -229,6 +229,33 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Calculate balance amount when TR Amount or Advance Amount changes
+        const trAmountInput = document.getElementById('tr_amount');
+        const advanceAmountInput = document.getElementById('advance_amount');
+        const balanceAmountInput = document.getElementById('balance_amount');
+
+        function calculateBalance() {
+            const trAmount = parseFloat(trAmountInput.value) || 0;
+            const advanceAmount = parseFloat(advanceAmountInput.value) || 0;
+            const balance = trAmount - advanceAmount;
+            balanceAmountInput.value = balance.toFixed(2);
+
+            // Calculate TDS Amount (1% of TR Amount)
+            const tdsAmountInput = document.getElementById('tds_amount');
+            const tdsAmount = (trAmount * 0.01).toFixed(2);
+            tdsAmountInput.value = tdsAmount;
+        }
+
+        // Update balance when TR Amount changes
+        trAmountInput.addEventListener('input', calculateBalance);
+        
+        // Update balance when Advance Amount changes
+        advanceAmountInput.addEventListener('input', calculateBalance);
+
+        // Calculate initial balance if values exist
+        calculateBalance();
+
+        // Existing code for LR selection
         const lrSelect = document.getElementById('lr_id');
         const transporterSelect = document.getElementById('transporter_id');
         const truckSelect = document.getElementById('truck_id');
