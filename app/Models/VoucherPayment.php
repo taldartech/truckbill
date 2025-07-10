@@ -9,7 +9,8 @@ class VoucherPayment extends Model
     use HasFactory;
 
     protected $fillable = [
-        'voucher_id',
+        'freight_booking_id',
+        'voucher_number',
         'payment_type',
         'payment_mode',
         'amount',
@@ -18,10 +19,10 @@ class VoucherPayment extends Model
         'payment_status',
     ];
 
-    public function voucher()
-    {
-        return $this->belongsTo(Voucher::class);
-    }
+    // public function voucher_number()
+    // {
+    //     return $this->belongsTo(Voucher::class);
+    // }
 
     public function getPaymentStatusBadge()
     {

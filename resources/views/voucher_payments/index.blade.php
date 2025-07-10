@@ -115,7 +115,7 @@
                     @forelse($payments as $payment)
                         <tr class="align-middle">
                             <td>{{ $payment->id }}</td>
-                            <td><strong>{{ $payment->voucher->voucher_number }}</strong></td>
+                            <td><strong>{{ $payment->voucher_number }}</strong></td>
                             <td>{{ ucfirst($payment->payment_type) }}</td>
                             <td>{{ ucfirst(str_replace('_', ' ', $payment->payment_mode)) }}</td>
                             <td>{{ $payment->transaction_id }}</td>

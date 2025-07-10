@@ -2,7 +2,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\VoucherPayment;
-use App\Models\Voucher;
+// use App\Models\Voucher;
 use App\Models\PaymentType;
 use App\Models\PaymentMode;
 use Illuminate\Http\Request;
@@ -11,7 +11,7 @@ class VoucherPaymentController extends Controller
 {
     public function index(Request $request)
     {
-        $query = VoucherPayment::with('voucher');
+        $query = VoucherPayment::query();
         if ($request->filled('payment_status')) {
             $query->where('payment_status', $request->payment_status);
         }
@@ -23,22 +23,25 @@ class VoucherPaymentController extends Controller
     {
         $freight_booking_id = $request->freight_booking_id;
         
-        $vouchers = \App\Models\FreightBooking::select('id', 'voucher_number')
+        $vouchers = \App\Models\FreightBooking::select('voucher_number')
             ->when($freight_booking_id, function ($query) use ($freight_booking_id) {
                 $query->where('id', $freight_booking_id);
             })
             ->get();
+            $voucher_number = $vouchers->first()->voucher_number;
             
         $paymentTypes = PaymentType::all();
         $paymentModes = PaymentMode::all();
         
-        return view('voucher_payments.create', compact('vouchers', 'paymentTypes', 'paymentModes'));
+        return view('voucher_payments.create', compact('voucher_number', 'paymentTypes', 'paymentModes', 'freight_booking_id'));
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
             'freight_booking_id' => 'required|exists:freight_bookings,id',
+            'voucher_number' => 'required|string',
+           
             'payment_type' => 'required|string',
             'payment_mode' => 'required|string',
             'transaction_id' => 'required|string',
@@ -61,7 +64,9 @@ class VoucherPaymentController extends Controller
     public function update(Request $request, VoucherPayment $voucher_payment)
     {
         $data = $request->validate([
-            'voucher_id' => 'required|exists:vouchers,id',
+            'freight_booking_id' => 'required|exists:freight_bookings,id',
+            'voucher_number' => 'required|string',
+          
             'payment_type' => 'required|string',
             'payment_mode' => 'required|string',
             'transaction_id' => 'required|string',

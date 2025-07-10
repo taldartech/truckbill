@@ -24,9 +24,7 @@ return new class extends Migration {
         Schema::table('voucher_payments', function (Blueprint $table) {
             // Remove voucher_number column
             $table->dropColumn('voucher_number');
-            
-            // Re-add voucher_id as foreign key
-            $table->foreignId('voucher_id')->constrained('vouchers')->onDelete('cascade');
+          
         });
     }
 };

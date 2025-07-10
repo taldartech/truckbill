@@ -6,9 +6,7 @@
     <!--end::Header-->
     <!--begin::Form-->
     <form method="POST" action="{{ route('voucher_payments.store') }}" class="needs-validation" novalidate>
-        @if(isset($lorry_receipt_id))
-            <input type="hidden" name="lorry_receipt_id" value="{{ $lorry_receipt_id }}">
-        @endif
+       
         @if(isset($freight_booking_id))
             <input type="hidden" name="freight_booking_id" value="{{ $freight_booking_id }}">
         @endif
@@ -19,16 +17,16 @@
             <div class="row g-3">
                 <!--begin::Col-->
                 <div class="col-md-4">
-                    <label for="voucher_id" class="form-label">Voucher *</label>
+                    <label for="voucher_number" class="form-label">Voucher *</label>
                     <input type="text" 
-                           name="freight_booking_id" 
-                           id="freight_booking_id" 
+                           name="voucher_number" 
+                           id="voucher_number" 
                            class="form-control" 
-                           value="{{ $vouchers->first()->voucher_number ?? '' }}"
+                           value="{{ $voucher_number }}"
                            readonly 
                            required>
-                    @error('voucher_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please select a voucher.</div>
+                    @error('voucher_number') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please enter a voucher number.</div>
                 </div>
                 <!--end::Col-->
                 <!--begin::Col-->
