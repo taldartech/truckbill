@@ -115,6 +115,7 @@ class FreightBookingController extends Controller
             $lorryReceipt->delivery_status = $deliveryStatus;
             $lorryReceipt->damage_amount = $data['damage_amount'];
             $lorryReceipt->shortage_amount = $data['shortage_amount'];
+            $lorryReceipt->freight_booking_id = $freightBooking->id;
             $lorryReceipt->save();
         }
 
