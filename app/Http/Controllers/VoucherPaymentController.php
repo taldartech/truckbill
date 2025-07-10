@@ -22,6 +22,19 @@ class VoucherPaymentController extends Controller
     public function create(Request $request)
     {
         $freight_booking_id = $request->freight_booking_id;
+        $lorry_receipt_id = $request->lorry_receipt_id;
+        // $lorry_receipt = \App\Models\LorryReceipt::select('id', 'lr_number','transporter_id','truck_id')
+        //     ->when($lorry_receipt_id, function ($query) use ($lorry_receipt_id) {
+        //         $query->where('id', $lorry_receipt_id);
+        //     })
+        //     ->get();
+
+        $lorry_receipt = \App\Models\LorryReceipt::with(['transporter:id,name', 'truck:id,truck_number'])
+    ->select('id', 'lr_number', 'transporter_id', 'truck_id','customer_id','consignor_id','consignee_id')
+    ->when($lorry_receipt_id, function ($query) use ($lorry_receipt_id) {
+        $query->where('id', $lorry_receipt_id);
+    })
+    ->get();
         
         $vouchers = \App\Models\FreightBooking::select('voucher_number')
             ->when($freight_booking_id, function ($query) use ($freight_booking_id) {
@@ -33,7 +46,7 @@ class VoucherPaymentController extends Controller
         $paymentTypes = PaymentType::all();
         $paymentModes = PaymentMode::all();
         
-        return view('voucher_payments.create', compact('voucher_number', 'paymentTypes', 'paymentModes', 'freight_booking_id'));
+        return view('voucher_payments.create', compact('voucher_number', 'paymentTypes', 'paymentModes', 'freight_booking_id','lorry_receipt'));
     }
 
     public function store(Request $request)

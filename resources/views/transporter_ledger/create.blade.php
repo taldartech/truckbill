@@ -1,9 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container mt-4">
-    <h2>Add Ledger Entry</h2>
-    <form action="{{ route('transporter_ledger.store') }}" method="POST">
+<div class="card card-info card-outline mb-4" style="width: 70%;align-items: center;margin: auto;">
+    <div class="card-header"><div class="card-title">Add New Transporter Ledger</div></div>
+    <form action="{{ route('transporter_ledger.store') }}" method="POST" class="needs-validation" novalidate>
         @csrf
         <div class="row">
             <div class="col-md-6 mb-3">

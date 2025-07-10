@@ -1,9 +1,10 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="card card-info card-outline mb-4">
+<div class="card card-info card-outline mb-4" style="width: 70%;align-items: center;margin: auto;">
     <!--begin::Header-->
     <div class="card-header"><div class="card-title">Add New Lorry Receipt</div></div>
+    <hr class="mb-3 mt-0">
     <!--end::Header-->
     <!--begin::Form-->
     <form method="POST" action="{{ route('lorry_receipts.store') }}" id="lorryReceiptForm" class="needs-validation" novalidate="">
@@ -14,6 +15,31 @@
         <div class="card-body">
             <!--begin::Row-->
             <div class="row g-3">
+                 <!--begin::Col-->
+                 <div class="col-md-4">
+                    <label for="lr_number" class="form-label">LR Number *</label>
+                    <input type="text" class="form-control" id="lr_number" name="lr_number" value="{{ old('lr_number') }}" required>
+                    @error('lr_number') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please enter an LR number.</div>
+                </div>
+                <!--end::Col-->
+                 <!--begin::Col-->
+                 <div class="col-md-4">
+                    <label for="customer_id" class="form-label">Customer *</label>
+                    <select class="form-select" id="customer_id" name="customer_id" required>
+                        <option value="">Select Customer</option>
+                        @foreach($consignees as $consignee)
+                            <option value="{{ $consignee->id }}" {{ old('customer_id') == $consignee->id ? 'selected' : '' }}>
+                                {{ $consignee->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('customer_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please select a customer.</div>
+                </div>
+            </div>
+                <!--end::Col-->
+                <div class="row g-3">
                 <!--begin::Col-->
                 <div class="col-md-4">
                     <label for="transporter_id" class="form-label">Transporter *</label>
@@ -39,31 +65,10 @@
                     <div class="invalid-feedback">Please select a truck.</div>
                 </div>
                 <!--end::Col-->
+               
+               
                 <!--begin::Col-->
-                <div class="col-md-4">
-                    <label for="customer_id" class="form-label">Customer *</label>
-                    <select class="form-select" id="customer_id" name="customer_id" required>
-                        <option value="">Select Customer</option>
-                        @foreach($consignees as $consignee)
-                            <option value="{{ $consignee->id }}" {{ old('customer_id') == $consignee->id ? 'selected' : '' }}>
-                                {{ $consignee->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('customer_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please select a customer.</div>
-                </div>
-                <!--end::Col-->
-                <!--begin::Col-->
-                <div class="col-md-4">
-                    <label for="lr_number" class="form-label">LR Number *</label>
-                    <input type="text" class="form-control" id="lr_number" name="lr_number" value="{{ old('lr_number') }}" required>
-                    @error('lr_number') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please enter an LR number.</div>
-                </div>
-                <!--end::Col-->
-                <!--begin::Col-->
-                <div class="col-md-4">
+                {{-- <div class="col-md-4">
                     <label for="delivery_status" class="form-label">Delivery Status</label>
                     <select class="form-select" id="delivery_status" name="delivery_status" disabled>
                         @foreach($statuses as $status)
@@ -74,7 +79,7 @@
                     <small class="text-muted">It will be updated from freight booking entries.</small>
                     @error('delivery_status') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please select a delivery status.</div>
-                </div>
+                </div> --}}
                 <!--end::Col-->
             </div>
             <!--end::Row-->
@@ -214,7 +219,7 @@
             </div>
 
             <div class="row">
-                <div class="col-md-4 mb-3">
+                {{-- <div class="col-md-4 mb-3">
                     <label for="damage_amount" class="form-label">Damage Amount</label>
                     <input type="number" step="0.01" class="form-control" id="damage_amount" name="damage_amount" value="{{ old('damage_amount') }}" disabled>
                     @error('damage_amount') <div class="text-danger">{{ $message }}</div> @enderror
@@ -225,7 +230,7 @@
                     <input type="number" step="0.01" class="form-control" id="shortage_amount" name="shortage_amount" value="{{ old('shortage_amount') }}" disabled>
                     @error('shortage_amount') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please enter a shortage amount.</div>
-                </div>
+                </div> --}}
                 <div class="col-md-4 mb-3">
                     <label for="memo_id" class="form-label">Memo ID</label>
                     <input type="number" class="form-control" id="memo_id" name="memo_id" value="{{ old('memo_id') }}">
@@ -234,15 +239,7 @@
                 </div>
             </div>
 
-            <div class="col-12">
-                <div class="form-check">
-                  <input class="form-check-input" type="checkbox" value="" id="invalidCheck" required="">
-                  <label class="form-check-label" for="invalidCheck">
-                    Agree to terms and conditions
-                  </label>
-                  <div class="invalid-feedback">You must agree before submitting.</div>
-                </div>
-            </div>
+            
 
         </div>
         <!--end::Body-->

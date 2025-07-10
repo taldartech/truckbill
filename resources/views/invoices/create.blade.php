@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="container mt-4">
-    <div class="card card-info card-outline">
+    <div class="card card-info card-outline" style="width: 70%;align-items: center;margin: auto;">
         <div class="card-header">
             <h3 class="card-title">Add New Invoice</h3>
         </div>

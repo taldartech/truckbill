@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="card card-info card-outline mb-4">
+<div class="card card-info card-outline mb-4" style="width: 70%;align-items: center;margin: auto;">
     <!--begin::Header-->
     <div class="card-header"><div class="card-title">Add New Driver</div></div>
     <!--end::Header-->

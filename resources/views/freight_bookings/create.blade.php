@@ -1,12 +1,38 @@
 @extends('layouts.app')
 
 @section('content')
+
+<div class="card card-info card-outline mb-4" style="width: 70%;align-items: center;margin: auto;">
+    <div class="row g-3">
+         <div class="col-md-3 ps-4">
+            <p><strong>LR Number:</strong> {{ $lorry_receipt->first()->lr_number }}</p>
+        </div>
+        <div class="col-md-3">
+            <p><strong>Transporter:</strong> {{ $lorry_receipt->first()->transporter->name }}</p>
+        </div>
+        <div class="col-md-3">
+            <p><strong>Truck:</strong> {{ $lorry_receipt->first()->truck->truck_number }}</p>
+        </div>
+        <div class="col-md-3">
+            <p><strong>Customer:</strong> {{ $lorry_receipt->first()->customer->name }}</p>
+        </div>
+        <div class="col-md-3 ps-4">
+            <p><strong>Consignor:</strong> {{ $lorry_receipt->first()->consignor->name }}</p>
+        </div>
+        <div class="col-md-3">
+            <p><strong>Consignee:</strong> {{ $lorry_receipt->first()->consignee->name }}</p>
+        </div>
+       
+    </div>
+</div>
+
 @php
     $lrs = \App\Models\LorryReceipt::all();
     $transporters = \App\Models\Transporter::where('company_id', auth()->user()->company_id)->get();
 @endphp
 
-<div class="card card-info card-outline mb-4">
+
+<div class="card card-info card-outline mb-4" style="width: 70%;align-items: center;margin: auto;">
     <!--begin::Header-->
     <div class="card-header"><div class="card-title">Add New Freight Booking</div></div>
     <!--end::Header-->
@@ -79,11 +105,11 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-md-4 mb-3">
+            {{-- <div class="col-md-4 mb-3">
                 <label for="shortage" class="form-label">Shortage</label>
                 <input type="number" step="0.01" class="form-control" name="shortage" id="shortage" value="{{ old('shortage') }}">
                 @error('shortage') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
+            </div> --}}
             <div class="col-md-4 mb-3">
                 <label for="good_type" class="form-label">Goods Type</label>
                 <select class="form-select" name="good_type" id="good_type">
@@ -104,14 +130,14 @@
                 </div>
                 @error('pan_verified') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
-            <div class="col-md-4 mb-3">
+            {{-- <div class="col-md-4 mb-3">
                 <label for="detention" class="form-label">Detention</label>
                 <input type="number" step="0.01" class="form-control" name="detention" id="detention" value="{{ old('detention') }}">
                 @error('detention') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
+            </div> --}}
         </div>
         <div class="row">
-            <div class="col-md-4 mb-3">
+            {{-- <div class="col-md-4 mb-3">
                 <label for="deviation" class="form-label">Deviation</label>
                 <input type="number" step="0.01" class="form-control" name="deviation" id="deviation" value="{{ old('deviation') }}">
                 @error('deviation') <div class="text-danger">{{ $message }}</div> @enderror
@@ -151,7 +177,7 @@
                 <label for="shortage_amount" class="form-label">Shortage Amount</label>
                 <input type="number" step="0.01" class="form-control" name="shortage_amount" id="shortage_amount" value="{{ old('shortage_amount') }}">
                 @error('shortage_amount') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
+            </div> --}}
             
         </div>
         <div class="row">
@@ -176,7 +202,7 @@
             </div>
         </div>
         <div class="row">
-            <div class="col-md-6 mb-3">
+            {{-- <div class="col-md-6 mb-3">
                 <label for="linked_freight_booking_id" class="form-label">Linked Freight Booking</label>
                 <select name="linked_freight_booking_id" id="linked_freight_booking_id" class="form-select">
                     <option value="">None</option>
@@ -187,7 +213,7 @@
                     @endforeach
                 </select>
                 @error('linked_freight_booking_id') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
+            </div> --}}
         </div>
         <!--end::Row-->
       </div>

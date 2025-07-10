@@ -161,14 +161,14 @@
     </a>
                                 @if(in_array(strtolower(trim($lr->delivery_status ?? 'pending')), ['delivered', 'in-progress']))
                                 <a href="{{ route('voucher_payments.create', ['lorry_receipt_id' => $lr->id, 'freight_booking_id' => $lr->freight_booking_id]) }}" 
-                                    class="btn btn-sm btn-success wavy-animation" 
+                                    class="btn btn-sm btn-success " 
                                     title="create Voucher Payments" 
                                     data-bs-toggle="tooltip" 
                                     data-bs-placement="top">
                                      <i class="bi bi-receipt"></i> 
                                  </a>
                                  <a href="{{ route('invoices.index', ['lorry_receipt_id' => $lr->id]) }}" 
-                                    class="btn btn-sm btn-secondary wavy-animation" 
+                                    class="btn btn-sm btn-secondary" 
                                     title="create Invoices" 
                                     data-bs-toggle="tooltip" 
                                     data-bs-placement="top">

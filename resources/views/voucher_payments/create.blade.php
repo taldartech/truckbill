@@ -1,6 +1,30 @@
 @extends('layouts.app')
 @section('content')
-<div class="card card-info card-outline mb-4">
+
+<div class="card card-info card-outline mb-4" style="width: 70%;align-items: center;margin: auto;">
+    <div class="row g-3">
+         <div class="col-md-3 ps-4">
+            <p><strong>LR Number:</strong> {{ $lorry_receipt->first()->lr_number }}</p>
+        </div>
+        <div class="col-md-3">
+            <p><strong>Transporter:</strong> {{ $lorry_receipt->first()->transporter->name }}</p>
+        </div>
+        <div class="col-md-3">
+            <p><strong>Truck:</strong> {{ $lorry_receipt->first()->truck->truck_number }}</p>
+        </div>
+        <div class="col-md-3">
+            <p><strong>Customer:</strong> {{ $lorry_receipt->first()->customer->name }}</p>
+        </div>
+        <div class="col-md-3 ps-4">
+            <p><strong>Consignor:</strong> {{ $lorry_receipt->first()->consignor->name }}</p>
+        </div>
+        <div class="col-md-3">
+            <p><strong>Consignee:</strong> {{ $lorry_receipt->first()->consignee->name }}</p>
+        </div>
+       
+    </div>
+</div>
+<div class="card card-info card-outline mb-4" style="width: 70%;align-items: center;margin: auto;">
     <!--begin::Header-->
     <div class="card-header"><div class="card-title">Add Voucher Payment</div></div>
     <!--end::Header-->

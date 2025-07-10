@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="card card-info card-outline mb-4">
+<div class="card card-info card-outline mb-4" style="width: 70%;align-items: center;margin: auto;">
     <div class="card-header">
         <h3 class="card-title">{{ isset($country) ? 'Edit Country' : 'Add New Country' }}</h3>
     </div>

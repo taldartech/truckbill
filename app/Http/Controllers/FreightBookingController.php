@@ -29,6 +29,15 @@ class FreightBookingController extends Controller
         $lrs = LorryReceipt::all();
         $linkedBookings = FreightBooking::all();
         $goodsTypes = \App\Models\GoodType::all();
+        $lorry_receipt_id = $request->lorry_receipt_id;
+
+
+        $lorry_receipt = \App\Models\LorryReceipt::with(['transporter:id,name', 'truck:id,truck_number'])
+        ->select('id', 'lr_number', 'transporter_id', 'truck_id','customer_id','consignor_id','consignee_id')
+        ->when($lorry_receipt_id, function ($query) use ($lorry_receipt_id) {
+            $query->where('id', $lorry_receipt_id);
+        })
+        ->get();
 
         // If lorry_receipt_id is provided, fetch LR number and related data
         if ($request->has('lorry_receipt_id')) {
@@ -39,6 +48,7 @@ class FreightBookingController extends Controller
                 $truck = \App\Models\Truck::find($lr->truck_id);
                 
                 return view('freight_bookings.create', [
+                    'lorry_receipt' => $lorry_receipt,
                     'lrs' => $lrs,
                     'linkedBookings' => $linkedBookings,
                     'goodsTypes' => $goodsTypes,
@@ -55,7 +65,7 @@ class FreightBookingController extends Controller
             }
         }
 
-        return view('freight_bookings.create', compact('lrs', 'linkedBookings', 'goodsTypes'));
+        return view('freight_bookings.create', compact('lrs', 'linkedBookings', 'goodsTypes', 'lorry_receipt'));
     }
 
     public function store(Request $request)
@@ -67,22 +77,14 @@ class FreightBookingController extends Controller
             'advance_amount' => 'required|numeric',
             'balance_amount' => 'required|numeric',
             'tds_amount' => 'nullable|numeric',
-            'shortage' => 'nullable|numeric',
+            
             'good_type' => 'nullable|string',
-            'detention' => 'nullable|numeric',
-            'deviation' => 'nullable|numeric',
-            'misc_expense' => 'nullable|numeric',
-            'damage_qty' => 'nullable|numeric',
-            'damage_rate' => 'nullable|numeric',
-            'damage_amount' => 'nullable|numeric',
-            'shortage_qty' => 'nullable|numeric',
-            'shortage_rate' => 'nullable|numeric',
-            'shortage_amount' => 'nullable|numeric',
+            
             'pan_verified' => 'required|boolean',
             'remark' => 'nullable|string',
             'is_delivered' => 'boolean',
             'is_cancelled' => 'boolean',
-            'linked_freight_booking_id' => 'nullable|exists:freight_bookings,id',
+            
         ]);
 
         // Get the lorry receipt to get its LR number
@@ -113,13 +115,13 @@ class FreightBookingController extends Controller
                 $deliveryStatus = 'In-Progress';
             }
             $lorryReceipt->delivery_status = $deliveryStatus;
-            $lorryReceipt->damage_amount = $data['damage_amount'];
-            $lorryReceipt->shortage_amount = $data['shortage_amount'];
+            // $lorryReceipt->damage_amount = $data['damage_amount'];
+            // $lorryReceipt->shortage_amount = $data['shortage_amount'];
             $lorryReceipt->freight_booking_id = $freightBooking->id;
             $lorryReceipt->save();
         }
 
-        return redirect()->route('freight_bookings.index')->with('success', 'Freight Booking created successfully.');
+        return redirect()->route('lorry_receipts.index')->with('success', 'Freight Booking created successfully.');
     }
 
     public function edit(FreightBooking $freight_booking)
