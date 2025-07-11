@@ -72,7 +72,7 @@
                 <!--end::Col-->
 
                 <!--begin::Col-->
-                <div class="col-md-4" id="ownerAgencySection">
+                <div class="col-md-4" id="ownerAgencySection" style="display: none;">
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="checkbox" name="owner_agency[]" id="truck_owner" value="owner">
                         <label class="form-check-label" for="truck_owner">Truck Owner</label>
@@ -415,8 +415,20 @@ agencyCheckbox.addEventListener('change', () => {
 
         // Event listeners
         truckSelect.addEventListener('change', () => {
-            updateOwnerTransporters();
-            updateAgencyTransporters();
+            const ownerAgencySection = document.getElementById('ownerAgencySection');
+            if (truckSelect.value) {
+                ownerAgencySection.style.display = 'block';
+                updateOwnerTransporters();
+                updateAgencyTransporters();
+            } else {
+                ownerAgencySection.style.display = 'none';
+                // Reset checkboxes
+                truckOwnerCheckbox.checked = false;
+                agencyCheckbox.checked = false;
+                // Hide transporter select boxes
+                document.getElementById('agencyTransporterMain').style.display = 'none';
+                document.getElementById('ownerTransporterSelect').style.display = 'none';
+            }
         });
         truckOwnerCheckbox.addEventListener('change', () => {
             const ownerTransporterDiv = document.getElementById('ownerTransporterSelect');
