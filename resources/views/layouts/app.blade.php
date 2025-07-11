@@ -55,6 +55,26 @@
       crossorigin="anonymous"
     />
     <style>
+      html, body {
+        font-size: 15px !important;
+      }
+      h1 { font-size: 1.8rem !important; }
+      h2 { font-size: 1.5rem !important; }
+      h3 { font-size: 1.2rem !important; }
+      h4, h5, h6 { font-size: 1rem !important; }
+      table, th, td {
+        font-size: 1em !important;
+      }
+      .app-sidebar, .main-sidebar {
+        width: 220px !important;
+        min-width: 220px !important;
+        max-width:  220px !important;
+      }
+      .sidebar-wrapper {
+        width: 220px !important;
+        min-width: 220px !important;
+        max-width: 220px !important;
+      }
       .app-sidebar {
           background-color: #003366 !important;
           --lte-sidebar-hover-bg: rgba(255, 255, 255, 0.1);
@@ -581,11 +601,15 @@
            <!--begin::Footer-->
       <footer class="app-footer">
         <!--begin::To the end-->
-        <div class="float-end d-none d-sm-inline"> Taldar Tech Consultancy </div>
+        <div class="float-end d-none d-sm-inline">
+  <a href="https://www.taldartechconsultancy.com/" target="_blank" rel="noopener">
+    Developed &amp; Consulted by Taldar Tech Consultancy.
+  </a>
+</div>
         <!--end::To the end-->
         <!--begin::Copyright-->
         <strong>
-          Copyright &copy; 2025&nbsp;
+        Copyright All Rights Reserved © 2025
          
         </strong>
   
