@@ -54,6 +54,39 @@
       integrity="sha256-+uGLJmmTKOqBr+2E6KDYs/NRsHxSkONXFHUL0fy2O/4="
       crossorigin="anonymous"
     />
+    <style>
+      .app-sidebar {
+          background-color: #003366 !important;
+          --lte-sidebar-hover-bg: rgba(255, 255, 255, 0.1);
+    --lte-sidebar-color: #e6eaf1;
+    --lte-sidebar-hover-color: #fff;
+    --lte-sidebar-active-color: #fff;
+    --lte-sidebar-menu-active-bg: rgba(255, 255, 255, 0.1);
+    --lte-sidebar-menu-active-color: #fff;
+    --lte-sidebar-submenu-bg: transparent;
+    --lte-sidebar-submenu-color: #c2c7d0;
+    --lte-sidebar-submenu-hover-color: #fff;
+    --lte-sidebar-submenu-hover-bg: rgba(255, 255, 255, 0.1);
+    --lte-sidebar-submenu-active-color: #fff;
+    --lte-sidebar-submenu-active-bg: rgba(255, 255, 255, 0.1);
+    --lte-sidebar-header-color: #c5cad2;
+      
+      }
+      .sidebar-brand .brand-text  {
+        color: #fff;
+      font-weight: 700;
+      }
+      .sidebar-brand .brand-text:hover {
+        color: #fff;
+      font-weight: 700;
+      }
+      
+
+      /* .nav-link {
+        color: #003366 !important;
+      } */
+      
+  </style>
 </head>
 
     <body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
@@ -66,14 +99,14 @@
               <!--begin::Start Navbar Links-->
               <ul class="navbar-nav">
                 <li class="nav-item">
-                  <a class="nav-link" data-lte-toggle="sidebar" href="#" role="button">
+                  <a class="nav-link" style="color: #003366 !important;" data-lte-toggle="sidebar" href="#" role="button">
                     <i class="fa-solid fa-bars"></i>
                   </a>
                 </li>
-                <li class="nav-item d-none d-md-block"><a href="#" class="nav-link">  
+                <li class="nav-item d-none d-md-block"  ><a href="#" class="nav-link" style="color: #003366 !important;" >  
                      @auth
-                    <span class="align-middle ms-3 me-2 border-start ps-3 small text-muted" style="font-size: 1em;">
-                        <i class="fas fa-building me-1"></i>{{ Auth::user()->company ? Auth::user()->company->name : '' }}
+                    <span class="align-middle ms-3 me-2 border-start ps-3 small text-muted"  style="font-size: 1em; color: #003366 !important;">
+                        <i class="fas fa-building me-1" style="color: #003366 !important;"></i>{{ Auth::user()->company ? Auth::user()->company->name : '' }}
                     </span>
                 @endauth</a>
             </li>
@@ -90,7 +123,7 @@
                 <!--begin::User Menu Dropdown-->
                 <!--begin::User Menu Dropdown-->
                 <li class="nav-item dropdown user-menu">
-                  <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
+                  <a href="#" class="nav-link dropdown-toggle" style="color: #003366 !important;" data-bs-toggle="dropdown">
                     <i class="fas fa-user-circle fa-lg"></i>
                     @auth
                         <span class="d-none d-md-inline">{{ Auth::user()->name ?? Auth::user()->email }}</span>
@@ -132,14 +165,14 @@
             </div>
             <!--end::Container-->
           </nav>
-          <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
+          <aside class="app-sidebar  shadow" >
             <!--begin::Sidebar Brand-->
             <div class="sidebar-brand">
               <!--begin::Brand Link-->
               <a href="#" class="brand-link">
                
                 <!--begin::Brand Text-->
-                <span class="brand-text fw-light" style="font-size: 1.2em;"> TruckMate-TMS</span>
+                <span class="brand-text " style="font-size: 1.2em;"> <strong>TruckMate-TMS</strong></span>
                 <!--end::Brand Text-->
               </a>
               <!--end::Brand Link-->
