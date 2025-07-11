@@ -200,4 +200,14 @@ Route::middleware(['auth'])->group(function () {
     // API routes for dynamic dropdowns
     Route::get('/api/states/{countryId}', [\App\Http\Controllers\Api\DropdownController::class, 'states']);
     Route::get('/api/cities/{stateId}', [\App\Http\Controllers\Api\DropdownController::class, 'cities']);
+    Route::get('/get-transporter-name/{truck}', function ($truckId) {
+        $truck = \App\Models\Truck::with('transporter')->find($truckId);
+    
+        if ($truck && $truck->transporter) {
+            return response()->json(['transporter_name' => $truck->transporter->name]);
+        }
+    
+        return response()->json(['transporter_name' => null]);
+    });
+    
 });

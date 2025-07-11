@@ -74,7 +74,7 @@
                 <!--begin::Col-->
                 <div class="col-md-4" id="ownerAgencySection" style="display: none;">
                     <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="checkbox" name="owner_agency[]" id="truck_owner" value="owner">
+                        <input class="form-check-input " checked type="checkbox" name="owner_agency[]" id="truck_owner" value="owner">
                         <label class="form-check-label" for="truck_owner">Truck Owner</label>
                     </div>
                     <div class="form-check form-check-inline">
@@ -82,12 +82,17 @@
                         <label class="form-check-label" for="agency">Agency</label>
                     </div>
 
-                    <div id="ownerTransporterSelect" class="mt-3" style="display: none;">
+                    {{-- <div id="ownerTransporterSelect" class="mt-3" style="display: none;">
                         <label for="owner_transporter_id" class="form-label">Select Truck Owner</label>
                         <select class="form-select" id="owner_transporter_id" name="owner_transporter_id">
                             <option value="">Select Transporter</option>
                         </select>
                         <div class="invalid-feedback">Please select an owner transporter.</div>
+                    </div> --}}
+
+                    <div id="ownerTransporterSelect" class="col-md-4 mt-3" style="display: none;">
+                        <label class="form-label">Truck Owner</label>
+                        <input type="text" id="transporter_name" class="form-control" readonly>
                     </div>
 
 
@@ -554,5 +559,28 @@ document.addEventListener('DOMContentLoaded', function () {
     frRateInput.addEventListener('input', calculateAmount);
 });
 </script>
+<script>
+    document.getElementById('truck_id').addEventListener('change', function () {
+        let truckId = this.value;
     
+        if (truckId) {
+            fetch(`/get-transporter-name/${truckId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.transporter_name) {
+                        document.getElementById('transporter_name').value = data.transporter_name;
+                        document.getElementById('ownerTransporterSelect').style.display = 'block';
+                    } else {
+                        document.getElementById('ownerTransporterSelect').style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('ownerTransporterSelect').style.display = 'none';
+                });
+        } else {
+            document.getElementById('ownerTransporterSelect').style.display = 'none';
+        }
+    });
+    </script>
 @endsection
