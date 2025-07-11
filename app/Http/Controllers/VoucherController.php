@@ -25,7 +25,10 @@ class VoucherController extends Controller
         $freightBookings = FreightBooking::all();
         $trucks = Truck::all();
         $transporters = Transporter::all();
-        $query = Voucher::with(['freightBooking', 'truck', 'transporter']);
+        $query = Voucher::with(['freightBooking', 'truck', 'transporter', 'company']);
+        if (auth()->user()->userRole->name !== 'super_admin') {
+            $query->where('company_id', auth()->user()->company_id);
+        }
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }

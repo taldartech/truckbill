@@ -41,6 +41,16 @@ class FreightBooking extends Model
         return $this->belongsTo(LorryReceipt::class, 'lr_id');
     }
 
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
+
+    public function consignee()
+    {
+        return $this->belongsTo(Consignee::class);
+    }
+
     public function linkedFreightBooking()
     {
         return $this->belongsTo(FreightBooking::class, 'linked_freight_booking_id');

@@ -11,7 +11,12 @@ class VoucherPaymentController extends Controller
 {
     public function index(Request $request)
     {
-        $query = VoucherPayment::query();
+        $query = \App\Models\VoucherPayment::with(['voucher', 'company']);
+
+        // Only apply company_id filter for non-super_admin users
+        if (auth()->user()->userRole->name !== 'super_admin') {
+            $query->where('company_id', auth()->user()->company_id);
+        }
         if ($request->filled('payment_status')) {
             $query->where('payment_status', $request->payment_status);
         }

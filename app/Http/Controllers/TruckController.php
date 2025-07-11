@@ -42,11 +42,15 @@ class TruckController extends Controller
         return view('trucks.index', compact('trucks', 'transporters', 'drivers'));
     }
 
-    public function create()
+    public function create($transporter_id)
     {
-        $transporters = \App\Models\Transporter::where('company_id', auth()->user()->company_id)->get();
+        // Fetch only the specific transporter
+        $transporter = \App\Models\Transporter::where('company_id', auth()->user()->company_id)
+            ->where('id', $transporter_id)
+            ->firstOrFail();
+            
         $drivers = \App\Models\Driver::all();
-        return view('trucks.create', compact('transporters', 'drivers'));
+        return view('trucks.create', compact('transporter', 'drivers'));
     }
 
     public function store(Request $request)

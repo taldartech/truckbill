@@ -28,6 +28,16 @@ class Voucher extends Model
         return $this->belongsTo(Truck::class);
     }
 
+    public function consignee()
+    {
+        return $this->belongsTo(Consignee::class);
+    }
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
+
     public function transporter()
     {
         return $this->belongsTo(Transporter::class);

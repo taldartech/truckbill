@@ -7,6 +7,7 @@ use App\Models\Truck;
 use App\Models\Transporter;
 use App\Models\Customer;
 use App\Models\Consignee;
+use App\Models\Company;
 
 class LorryReceipt extends Model
 {
@@ -38,6 +39,11 @@ class LorryReceipt extends Model
     protected $attributes = [
         'delivery_status' => 'Pending',
     ];
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
 
     public function truck()
     {

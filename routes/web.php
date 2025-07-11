@@ -90,7 +90,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Truck Management
     Route::get('/trucks', [TruckController::class, 'index'])->name('trucks.index');
-    Route::get('/trucks/create', [TruckController::class, 'create'])->name('trucks.create');
+    Route::get('/trucks/create/{transporter_id}', [TruckController::class, 'create'])->name('trucks.create');
     Route::post('/trucks', [TruckController::class, 'store'])->name('trucks.store');
     Route::get('/trucks/{truck}/edit', [TruckController::class, 'edit'])->name('trucks.edit');
     Route::put('/trucks/{truck}', [TruckController::class, 'update'])->name('trucks.update');

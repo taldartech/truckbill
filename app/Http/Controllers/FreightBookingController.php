@@ -9,7 +9,12 @@ class FreightBookingController extends Controller
 {
     public function index(Request $request)
     {
-        $query = FreightBooking::with(['lr', 'linkedFreightBooking']);
+        $query = FreightBooking::with(['lr', 'linkedFreightBooking', 'company']);
+
+        // Only apply company_id filter for non-super_admin users
+        if (auth()->user()->userRole->name !== 'super_admin') {
+            $query->where('company_id', auth()->user()->company_id);
+        }
         if ($request->filled('lr_id')) {
             $query->where('lr_id', $request->lr_id);
         }

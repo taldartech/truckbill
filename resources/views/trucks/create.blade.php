@@ -14,13 +14,9 @@
             <div class="row g-3">
                 <!--begin::Col-->
                 <div class="col-md-6">
-                    <label for="transporter_id" class="form-label">Transporter *</label>
-                    <select class="form-select" id="transporter_id" name="transporter_id" required>
-                        <option value="">Select</option>
-                        @foreach($transporters as $transporter)
-                            <option value="{{ $transporter->id }}" {{ old('transporter_id') == $transporter->id ? 'selected' : '' }}>{{ $transporter->name }}</option>
-                        @endforeach
-                    </select>
+                    <label for="transporter_id" class="form-label">Truck Owner *</label>
+                    <input type="text" class="form-control" value="{{ $transporter->name }}" disabled>
+                    <input type="hidden" id="transporter_id" name="transporter_id" value="{{ $transporter->id }}">
                     @error('transporter_id') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please select a transporter.</div>
                 </div>

@@ -10,7 +10,8 @@ class TruckOwnerController extends Controller
 {
     public function index(Request $request)
     {
-        $query = \App\Models\Transporter::with('company');
+        $query = \App\Models\Transporter::with('company')
+        ->where('is_owner', 1);
         
         // Only apply company_id filter for non-super_admin users
         if (auth()->user()->userRole->name !== 'super_admin') {
@@ -83,7 +84,7 @@ class TruckOwnerController extends Controller
         // Convert pan_active to boolean
         $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
         \App\Models\Transporter::create($validated);
-        return redirect()->route('truck_owner.index')->with('success', 'TruckOwner created successfully!');
+        return redirect()->route('truck_owners.index')->with('success', 'TruckOwner created successfully!');
     }
 
     public function edit(\App\Models\Transporter $transporter)

@@ -74,14 +74,14 @@
             <label class="form-label">PAN Number</label>
             <input type="text" name="pan_number" class="form-control" value="{{ request('pan_number') }}">
         </div>
-        <div class="col-md-2 d-none" id="field_is_owner">
+        {{-- <div class="col-md-2 d-none" id="field_is_owner">
             <label class="form-label">Type</label>
             <select name="is_owner" class="form-select">
                 <option value="">All</option>
                 <option value="1" {{ request('is_owner') === '1' ? 'selected' : '' }}>Owner</option>
                 <option value="0" {{ request('is_owner') === '0' ? 'selected' : '' }}>Agency</option>
             </select>
-        </div>
+        </div> --}}
         <div class="col-md-2 d-none" id="field_company_id">
             <label class="form-label">Company</label>
             @php
@@ -180,12 +180,12 @@
                 {{-- <th>Task</th>
                 <th>Progress</th>
                 <th style="width: 40px">Label</th> --}}
-                <th style="width: 10px">ID</th>
+                <th style="width: 10px">Sr. No</th>
                 <th>Name</th>
                 <th>GST Number</th>
                 <th>GST Type</th>
                 <th>PAN Number</th>
-                <th>Type</th>
+                {{-- <th>Type</th> --}}
                 <th>Declaration Given</th>
                 <th>Total Trucks</th>
                 <th>Advance Amount</th>
@@ -196,12 +196,12 @@
             <tbody>
                 @forelse($transporters as $transporter)
               <tr class="align-middle">
-                <td>{{ $transporter->id }}</td>
+                <td>{{ $loop->iteration }}</td>
                 <td>{{ $transporter->name }}</td>
                 <td>{{ $transporter->gst_number }}</td>
                 <td>{{ ucfirst($transporter->gst_type) }}</td>
                 <td>{{ $transporter->pan_number }}</td>
-                <td>{{ $transporter->is_owner ? 'Owner' : 'Agency' }}</td>
+                {{-- <td>{{ $transporter->is_owner ? 'Owner' : 'Agency' }}</td> --}}
                 <td>{{ $transporter->declaration_given ? 'Yes' : 'No' }}</td>
                 <td>{{ $transporter->total_trucks }}</td>
                 <td>{{ number_format($transporter->advance_amount, 2) }}</td>

@@ -3,10 +3,10 @@
 @section('content')
 <div class="card card-info card-outline mb-4" style="width: 70%;align-items: center;margin: auto;">
     <!--begin::Header-->
-    <div class="card-header"><div class="card-title">Add New Transporter</div></div>
+    <div class="card-header"><div class="card-title">Add New Truck Owner</div></div>
     <!--end::Header-->
     <!--begin::Form-->
-    <form  action="{{ route('transporters.store') }}" method="POST" class="needs-validation" novalidate="">
+    <form  action="{{ route('truck_owners.store') }}" method="POST" class="needs-validation" novalidate="">
         @csrf
         @php
     $canEditCompany = auth()->check() && auth()->user()->userRole->name === 'super_admin';
@@ -132,7 +132,7 @@
       <!--begin::Footer-->
       <div class="card-footer">
         <button class="btn btn-info" type="submit">Submit form</button>
-        <a href="{{ route('transporters.index') }}" class="btn btn-info">Back to List</a>
+        <a href="{{ route('truck_owners.index') }}" class="btn btn-info">Back to List</a>
       </div>
       <!--end::Footer-->
     </form>

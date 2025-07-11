@@ -19,10 +19,15 @@ class VoucherPayment extends Model
         'payment_status',
     ];
 
-    // public function voucher_number()
-    // {
-    //     return $this->belongsTo(Voucher::class);
-    // }
+    public function voucher()
+    {
+        return $this->belongsTo(Voucher::class);
+    }
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
 
     public function getPaymentStatusBadge()
     {

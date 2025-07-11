@@ -15,7 +15,12 @@ class InvoiceController extends Controller
 {
     public function index()
     {
-        $invoices = Invoice::with(['company', 'customer'])->orderByDesc('id')->paginate(20);
+        $invoices = Invoice::with(['company', 'customer'])->orderByDesc('id');
+
+        if (auth()->user()->userRole->name !== 'super_admin') {
+            $invoices = $invoices->where('company_id', auth()->user()->company_id);
+        }
+        $invoices = $invoices->paginate(20);
         return view('invoices.index', compact('invoices'));
     }
 
