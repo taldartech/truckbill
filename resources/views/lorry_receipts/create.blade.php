@@ -59,7 +59,12 @@
                 <div class="col-md-4">
                     <label for="truck_id" class="form-label">Truck *</label>
                     <select class="form-select" id="truck_id" name="truck_id" required>
-                        <option value="">Select Truck</option>
+                        <option value="">Select Trucks</option>
+                        @foreach($trucks as $truck)
+                            <option value="{{ $truck->id }}" {{ old('truck_id') == $truck->id ? 'selected' : '' }}>
+                                {{ $truck->truck_number }} ({{ $truck->transporter->name }})
+                            </option>
+                        @endforeach
                     </select>
                     @error('truck_id') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please select a truck.</div>
@@ -281,50 +286,50 @@
 
         // Handle truck selection based on transporter
         document.addEventListener('DOMContentLoaded', function() {
-            const transporterSelect = document.getElementById('transporter_id');
-            const truckSelect = document.getElementById('truck_id');
+            // const transporterSelect = document.getElementById('transporter_id');
+            // const truckSelect = document.getElementById('truck_id');
 
-            // Function to update trucks based on selected transporter
-            function updateTrucks() {
-                const selectedTransporter = transporterSelect.value;
-                console.log('Selected Transporter:', selectedTransporter);
+            // // Function to update trucks based on selected transporter
+            // function updateTrucks() {
+            //     const selectedTransporter = transporterSelect.value;
+            //     console.log('Selected Transporter:', selectedTransporter);
                 
-                if (!selectedTransporter) {
-                    truckSelect.innerHTML = '<option value="">Select Truck</option>';
-                    return;
-                }
+            //     if (!selectedTransporter) {
+            //         truckSelect.innerHTML = '<option value="">Select Truck</option>';
+            //         return;
+            //     }
 
-                // Make AJAX request to get trucks for selected transporter
-                fetch(`/api/transporters/${selectedTransporter}/trucks`, {
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Content-Type': 'application/json'
-                    }
-                })
-                .then(response => {
-                    console.log('Response status:', response.status);
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(trucks => {
-                    console.log('Received trucks:', trucks);
-                    let options = '<option value="">Select Truck</option>';
-                    trucks.forEach(truck => {
-                        console.log('Adding truck:', truck);
-                        options += `<option value="${truck.id}">${truck.truck_number}</option>`;
-                    });
-                    truckSelect.innerHTML = options;
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    truckSelect.innerHTML = '<option value="">Error loading trucks</option>';
-                });
-            }
+            //     // Make AJAX request to get trucks for selected transporter
+            //     fetch(`/api/transporters/${selectedTransporter}/trucks`, {
+            //         headers: {
+            //             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            //             'Content-Type': 'application/json'
+            //         }
+            //     })
+            //     .then(response => {
+            //         console.log('Response status:', response.status);
+            //         if (!response.ok) {
+            //             throw new Error('Network response was not ok');
+            //         }
+            //         return response.json();
+            //     })
+            //     .then(trucks => {
+            //         console.log('Received trucks:', trucks);
+            //         let options = '<option value="">Select Truck</option>';
+            //         trucks.forEach(truck => {
+            //             console.log('Adding truck:', truck);
+            //             options += `<option value="${truck.id}">${truck.truck_number}</option>`;
+            //         });
+            //         truckSelect.innerHTML = options;
+            //     })
+            //     .catch(error => {
+            //         console.error('Error:', error);
+            //         truckSelect.innerHTML = '<option value="">Error loading trucks</option>';
+            //     });
+            // }
 
-            // Update trucks when transporter changes
-            transporterSelect.addEventListener('change', updateTrucks);
+            // // Update trucks when transporter changes
+            // transporterSelect.addEventListener('change', updateTrucks);
 
             // Handle consignor and consignee contact number and location details
             const consignorSelect = document.getElementById('consignor_id');
