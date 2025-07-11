@@ -41,8 +41,8 @@
                 <!--end::Col-->
                 <div class="row g-3">
                 <!--begin::Col-->
-                <div class="col-md-4">
-                    <label for="transporter_id" class="form-label">Transporter *</label>
+                <div class="col-md-4" id="agencyTransporterMain" style="display: none">
+                    <label for="transporter_id" class="form-label" >Transporter *</label>
                     <select class="form-select" id="transporter_id" name="transporter_id" required>
                         <option value="">Select Transporter</option>
                         @foreach($transporters as $transporter)
@@ -68,6 +68,30 @@
                     </select>
                     @error('truck_id') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please select a truck.</div>
+                </div>
+                <!--end::Col-->
+
+                <!--begin::Col-->
+                <div class="col-md-4" id="ownerAgencySection">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" name="owner_agency[]" id="truck_owner" value="owner">
+                        <label class="form-check-label" for="truck_owner">Truck Owner</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" name="owner_agency[]" id="agency" value="agency">
+                        <label class="form-check-label" for="agency">Agency</label>
+                    </div>
+
+                    <div id="ownerTransporterSelect" class="mt-3" style="display: none;">
+                        <label for="owner_transporter_id" class="form-label">Select Truck Owner</label>
+                        <select class="form-select" id="owner_transporter_id" name="owner_transporter_id">
+                            <option value="">Select Transporter</option>
+                        </select>
+                        <div class="invalid-feedback">Please select an owner transporter.</div>
+                    </div>
+
+
+                   
                 </div>
                 <!--end::Col-->
                
@@ -286,50 +310,7 @@
 
         // Handle truck selection based on transporter
         document.addEventListener('DOMContentLoaded', function() {
-            // const transporterSelect = document.getElementById('transporter_id');
-            // const truckSelect = document.getElementById('truck_id');
-
-            // // Function to update trucks based on selected transporter
-            // function updateTrucks() {
-            //     const selectedTransporter = transporterSelect.value;
-            //     console.log('Selected Transporter:', selectedTransporter);
-                
-            //     if (!selectedTransporter) {
-            //         truckSelect.innerHTML = '<option value="">Select Truck</option>';
-            //         return;
-            //     }
-
-            //     // Make AJAX request to get trucks for selected transporter
-            //     fetch(`/api/transporters/${selectedTransporter}/trucks`, {
-            //         headers: {
-            //             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            //             'Content-Type': 'application/json'
-            //         }
-            //     })
-            //     .then(response => {
-            //         console.log('Response status:', response.status);
-            //         if (!response.ok) {
-            //             throw new Error('Network response was not ok');
-            //         }
-            //         return response.json();
-            //     })
-            //     .then(trucks => {
-            //         console.log('Received trucks:', trucks);
-            //         let options = '<option value="">Select Truck</option>';
-            //         trucks.forEach(truck => {
-            //             console.log('Adding truck:', truck);
-            //             options += `<option value="${truck.id}">${truck.truck_number}</option>`;
-            //         });
-            //         truckSelect.innerHTML = options;
-            //     })
-            //     .catch(error => {
-            //         console.error('Error:', error);
-            //         truckSelect.innerHTML = '<option value="">Error loading trucks</option>';
-            //     });
-            // }
-
-            // // Update trucks when transporter changes
-            // transporterSelect.addEventListener('change', updateTrucks);
+           
 
             // Handle consignor and consignee contact number and location details
             const consignorSelect = document.getElementById('consignor_id');
@@ -386,6 +367,81 @@
             consignorSelect.addEventListener('change', updateConsignorDetails);
             consigneeSelect.addEventListener('change', updateConsigneeDetails);
         });
+        // Handle truck owner/agency selection
+        const truckSelect = document.getElementById('truck_id');
+        const truckOwnerCheckbox = document.getElementById('truck_owner');
+        const agencyCheckbox = document.getElementById('agency');
+        const ownerTransporterSelect = document.getElementById('owner_transporter_id');
+        const ownerAgencySection = document.getElementById('ownerAgencySection');
+
+        // Function to update owner transporters based on selected truck
+        async function updateOwnerTransporters() {
+            const truckId = truckSelect.value;
+            if (!truckId) {
+                ownerTransporterSelect.innerHTML = '<option value="">Select Transporter</option>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/trucks/${truckId}/owner-transporters`);
+                const data = await response.json();
+                
+                // Clear existing options
+                ownerTransporterSelect.innerHTML = '<option value="">Select Transporter</option>';
+                
+                // Add owner transporters
+                data.forEach(transporter => {
+                    const option = document.createElement('option');
+                    option.value = transporter.id;
+                    option.textContent = transporter.name;
+                    ownerTransporterSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Error fetching owner transporters:', error);
+            }
+        }
+ // Function to update owner transporters based on selected truck
+// Update the agency checkbox event listener
+agencyCheckbox.addEventListener('change', () => {
+    const mainTransporterDiv = document.getElementById('agencyTransporterMain');
+    if (agencyCheckbox.checked) {
+        mainTransporterDiv.style.display = 'block';
+    } else {
+        mainTransporterDiv.style.display = 'none';
+        mainTransporterDiv.querySelector('select').value = ''; // Clear the selected value
+    }
+});
+       
+
+        // Event listeners
+        truckSelect.addEventListener('change', () => {
+            updateOwnerTransporters();
+            updateAgencyTransporters();
+        });
+        truckOwnerCheckbox.addEventListener('change', () => {
+            const ownerTransporterDiv = document.getElementById('ownerTransporterSelect');
+            if (truckOwnerCheckbox.checked) {
+                ownerTransporterDiv.style.display = 'block';
+                updateOwnerTransporters(); // Fetch and populate the options
+            } else {
+                ownerTransporterDiv.style.display = 'none';
+                ownerTransporterSelect.value = '';
+            }
+        });
+
+        agencyCheckbox.addEventListener('change', () => {
+            const agencyTransporterDiv = document.getElementById('agencyTransporterSelect');
+            if (agencyCheckbox.checked) {
+                agencyTransporterDiv.style.display = 'block';
+                // updateAgencyTransporters(); // Fetch and populate the options
+            } else {
+                agencyTransporterDiv.style.display = 'none';
+                agencyTransporterSelect.value = '';
+            }
+        });
+
+        // Initial update
+        updateOwnerTransporters();
     </script>
     <!--end::JavaScript-->
 </div>

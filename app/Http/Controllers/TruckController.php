@@ -42,6 +42,69 @@ class TruckController extends Controller
         return view('trucks.index', compact('trucks', 'transporters', 'drivers'));
     }
 
+    public function getOwnerTransporters($truckId)
+    {
+        $truck = \App\Models\Truck::with('transporter')
+            ->where('id', $truckId)
+            ->whereHas('transporter', function($q) {
+                $q->where('company_id', auth()->user()->company_id);
+            })
+            ->first();
+
+        if (!$truck) {
+            return response()->json([], 404);
+        }
+
+        // Get all transporters that are owners
+        $ownerTransporters = \App\Models\Transporter::where('company_id', auth()->user()->company_id)
+            ->where('is_owner', 1)
+            ->get();
+
+        return response()->json($ownerTransporters);
+    }
+
+    public function getAgencyTransporters($truckId)
+    {
+        $truck = \App\Models\Truck::with('transporter')
+            ->where('id', $truckId)
+            ->whereHas('transporter', function($q) {
+                $q->where('company_id', auth()->user()->company_id);
+            })
+            ->first();
+
+        if (!$truck) {
+            return response()->json([], 404);
+        }
+
+        // Get all transporters that are agencies
+        $agencyTransporters = \App\Models\Transporter::where('company_id', auth()->user()->company_id)
+            ->where('is_owner', 0)
+            ->get();
+
+        return response()->json($agencyTransporters);
+    }
+
+    public function getOwnerTransporters($truckId)
+    {
+        $truck = \App\Models\Truck::with('transporter')
+            ->where('id', $truckId)
+            ->whereHas('transporter', function($q) {
+                $q->where('company_id', auth()->user()->company_id);
+            })
+            ->first();
+
+        if (!$truck) {
+            return response()->json([], 404);
+        }
+
+        // Get all transporters that are owners
+        $ownerTransporters = \App\Models\Transporter::where('company_id', auth()->user()->company_id)
+            ->where('is_owner', 1)
+            ->get();
+
+        return response()->json($ownerTransporters);
+    }
+
     public function create($transporter_id)
     {
         // Fetch only the specific transporter
