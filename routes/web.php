@@ -19,6 +19,8 @@ use App\Http\Controllers\VoucherPaymentController;
 use App\Http\Controllers\TransporterBankAccountController;
 use App\Http\Controllers\TransporterLedgerController;
 use App\Http\Controllers\DriverController;
+use App\Http\Controllers\TruckOwnerController;
+use App\Http\Controllers\TruckOwnerBankAccountController;
 
 // Authentication Routes
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -78,6 +80,14 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/transporters/{transporter}', [TransporterController::class, 'update'])->name('transporters.update');
     Route::delete('/transporters/{transporter}', [TransporterController::class, 'destroy'])->name('transporters.destroy');
 
+    //Truck Owner Management
+    Route::get('/truck_owners', [TruckOwnerController::class, 'index'])->name('truck_owners.index');
+    Route::get('/truck_owners/create', [TruckOwnerController::class, 'create'])->name('truck_owners.create');
+    Route::post('/truck_owners', [TruckOwnerController::class, 'store'])->name('truck_owners.store');
+    Route::get('/truck_owners/{truck_owner}/edit', [TruckOwnerController::class, 'edit'])->name('truck_owners.edit');
+    Route::put('/truck_owners/{truck_owner}', [TruckOwnerController::class, 'update'])->name('truck_owners.update');
+    Route::delete('/truck_owners/{truck_owner}', [TruckOwnerController::class, 'destroy'])->name('truck_owners.destroy');
+
     // Truck Management
     Route::get('/trucks', [TruckController::class, 'index'])->name('trucks.index');
     Route::get('/trucks/create', [TruckController::class, 'create'])->name('trucks.create');
@@ -118,6 +128,11 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('transporter_bank_accounts', TransporterBankAccountController::class);
     Route::get('transporter_bank_accounts/create', [TransporterBankAccountController::class, 'create'])->name('transporter_bank_accounts.create');
     Route::get('transporter_bank_accounts/{transporter_bank_account}/edit', [TransporterBankAccountController::class, 'edit'])->name('transporter_bank_accounts.edit');
+
+       // Truck_Owner Bank Accounts
+       Route::resource('truck_owner_bank_accounts', TruckOwnerBankAccountController::class);
+       Route::get('truck_owner_bank_accounts/create', [TruckOwnerBankAccountController::class, 'create'])->name('truck_owner_bank_accounts.create');
+       Route::get('truck_owner_bank_accounts/{truck_owner_bank_account}/edit', [TruckOwnerBankAccountController::class, 'edit'])->name('truck_owner_bank_accounts.edit');
 
     // Transporter Ledger
     Route::get('/transporter_ledger', [TransporterLedgerController::class, 'index'])->name('transporter_ledger.index');

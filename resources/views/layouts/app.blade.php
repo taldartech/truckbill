@@ -296,6 +296,34 @@
                           </li>
                     </ul>
                   </li>
+
+                  <li class="nav-item">
+                    <a class="nav-link" href="#truckOwnerMenu">
+                        <i class="fas fa-truck"></i> 
+                        <p> Truck Owner </p>
+                        <i class="nav-arrow bi bi-chevron-right"></i>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="/truck_owners" class="nav-link">
+                                <i class="fas fa-list"></i> 
+                              <p>Truck Owner List</p>
+                            </a>
+                          </li>
+                          <li class="nav-item">
+                            <a href="/truck_owners/create" class="nav-link">
+                              <i class="fas fa-plus"></i> 
+                            <p>Register</p>
+                            </a>
+                          </li>
+                          <li class="nav-item">
+                            <a href="/truck_owner_bank_accounts/create" class="nav-link">
+                              <i class="fas fa-university"></i> 
+                            <p>Add Bank Details</p>
+                            </a>
+                          </li>
+                    </ul>
+                  </li>
                   <li class="nav-item">
                     <a class="nav-link "  href="#truckMenu"  >
                         <i class="fas fa-truck-moving"></i> <p>
