@@ -99,14 +99,14 @@
               <!--begin::Start Navbar Links-->
               <ul class="navbar-nav">
                 <li class="nav-item">
-                  <a class="nav-link" style="color: #003366 !important;" data-lte-toggle="sidebar" href="#" role="button">
+                  <a class="nav-link"  data-lte-toggle="sidebar" href="#" role="button">
                     <i class="fa-solid fa-bars"></i>
                   </a>
                 </li>
-                <li class="nav-item d-none d-md-block"  ><a href="#" class="nav-link" style="color: #003366 !important;" >  
+                <li class="nav-item d-none d-md-block"  ><a href="#" class="nav-link" >  
                      @auth
-                    <span class="align-middle ms-3 me-2 border-start ps-3 small text-muted"  style="font-size: 1em; color: #003366 !important;">
-                        <i class="fas fa-building me-1" style="color: #003366 !important;"></i>{{ Auth::user()->company ? Auth::user()->company->name : '' }}
+                    <span class="align-middle ms-3 me-2 border-start ps-3 small text-muted"  style="font-size: 1em;">
+                        <i class="fas fa-building me-1"></i>{{ Auth::user()->company ? Auth::user()->company->name : '' }}
                     </span>
                 @endauth</a>
             </li>
@@ -123,7 +123,7 @@
                 <!--begin::User Menu Dropdown-->
                 <!--begin::User Menu Dropdown-->
                 <li class="nav-item dropdown user-menu">
-                  <a href="#" class="nav-link dropdown-toggle" style="color: #003366 !important;" data-bs-toggle="dropdown">
+                  <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
                     <i class="fas fa-user-circle fa-lg"></i>
                     @auth
                         <span class="d-none d-md-inline">{{ Auth::user()->name ?? Auth::user()->email }}</span>
