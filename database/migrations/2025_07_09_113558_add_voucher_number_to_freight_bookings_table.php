@@ -11,15 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('freight_bookings', function (Blueprint $table) {
-            $table->integer('voucher_number')->unique()->after('id');
-        });
+        if (!Schema::hasColumn('freight_bookings', 'voucher_number')) {
+            Schema::table('freight_bookings', function (Blueprint $table) {
+                $table->integer('voucher_number')->unique()->after('id');
+            });
 
-        // Initialize the first voucher number
-        $firstBooking = \App\Models\FreightBooking::first();
-        if ($firstBooking) {
-            $firstBooking->voucher_number = 1;
-            $firstBooking->save();
+            // Initialize the first voucher number
+            $firstBooking = \App\Models\FreightBooking::first();
+            if ($firstBooking) {
+                $firstBooking->voucher_number = 1;
+                $firstBooking->save();
+            }
         }
     }
 

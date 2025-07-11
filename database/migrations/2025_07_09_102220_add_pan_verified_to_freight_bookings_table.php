@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('freight_bookings', function (Blueprint $table) {
-            $table->boolean('pan_verified')->default(false);
-        });
+        if (!Schema::hasColumn('freight_bookings', 'pan_verified')) {
+            Schema::table('freight_bookings', function (Blueprint $table) {
+                $table->boolean('pan_verified')->default(false);
+            });
+        }
     }
 
     /**
