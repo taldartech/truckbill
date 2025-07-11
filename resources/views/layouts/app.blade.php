@@ -266,9 +266,9 @@
                     
                  
                   @endif
-                  @if(auth()->check() && auth()->user()->userRole->name !== 'super_admin')
                   
-                 
+                  {{-- Master data menus hidden from moderator/accountant/operator users --}}
+                  @if(auth()->check() && !in_array(auth()->user()->userRole->name, ['operator', 'accountant', 'moderator']))
                   <li class="nav-item">
                     <a class="nav-link" href="#transporterMenu">
                         <i class="fas fa-truck"></i> 
@@ -281,19 +281,19 @@
                                 <i class="fas fa-list"></i> 
                               <p>Transporter List</p>
                             </a>
-                          </li>
-                          <li class="nav-item">
+                        </li>
+                        <li class="nav-item">
                             <a href="/transporters/create" class="nav-link">
                               <i class="fas fa-plus"></i> 
                             <p>Register</p>
                             </a>
-                          </li>
-                          <li class="nav-item">
+                        </li>
+                        <li class="nav-item">
                             <a href="/transporter_bank_accounts/create" class="nav-link">
                               <i class="fas fa-university"></i> 
                             <p>Add Bank Details</p>
                             </a>
-                          </li>
+                        </li>
                     </ul>
                   </li>
 
@@ -396,6 +396,10 @@
                           </li>
                     </ul>
                   </li>
+                  @endif
+                  
+                  {{-- Operational menus visible to all authenticated users including moderators --}}
+                  @if(auth()->check())
                   <li class="nav-item">
                     <a class="nav-link "  href="#lorryReceiptMenu"  >
                         <i class="fas fa-file-alt"></i><p>
@@ -541,24 +545,16 @@
                           </li>
                     </ul>
                   </li>
+                  @endif
                   
+                  {{-- Operational menus visible to all authenticated users including moderators --}}
+                  @if(auth()->check())
                   <li class="nav-item">
                     <a href="/reports" class="nav-link">
                         <i class="fas fa-chart-bar"></i> 
                       <p>Reports</p>
                     </a>
-                  </li> 
-                 
-               
-                
-               
-               
-                  
-                 
-                   
-                
-                
-    
+                  </li>
                   @endif
                 </ul>
                 <!--end::Sidebar Menu-->
