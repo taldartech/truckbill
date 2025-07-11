@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.10.1/styles/overlayscrollbars.min.css">
     <!-- AdminLTE Theme CSS -->
     <link href="/theme/dist/css/adminlte.min.css" rel="stylesheet">
+<link rel="stylesheet" href="/css/buttons.css">
     <!-- You can add more theme CSS here if needed -->
     <link
       rel="stylesheet"
