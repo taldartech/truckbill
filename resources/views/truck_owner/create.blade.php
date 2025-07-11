@@ -91,19 +91,7 @@
             <!--begin::Col-->
             <div class="col-md-6">
                 <div class="row">
-                    <div class="col-md-6">
-                        <label for="type" class="form-label">Type *</label><br>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="is_owner" id="owner" value="1" {{ old('is_owner') === '1' ? 'checked' : '' }} required>
-                            <label class="form-check-label" for="owner">Owner</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="is_owner" id="agency" value="0" {{ old('is_owner') === '0' ? 'checked' : '' }} required>
-                            <label class="form-check-label" for="agency">Agency</label>
-                        </div>
-                        @error('is_owner') <div class="text-danger">{{ $message }}</div> @enderror
-                        <div class="invalid-feedback">Please choose a type.</div>
-                    </div>
+                    <input type="hidden" name="is_owner" value="1">
                     <div class="col-md-6">
                         <label class="form-label">Declaration Given? *</label><br>
                         <div class="form-check form-check-inline">
