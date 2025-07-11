@@ -23,8 +23,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('lorry_receipts', function (Blueprint $table) {
-            $table->decimal('service_tax', 10, 2)->nullable()->after('shortage_rate');
-            $table->decimal('swachh_bharat_cess', 10, 2)->nullable()->after('service_tax');
+            $table->decimal('service_tax', 10, 2)->nullable();
+            $table->decimal('swachh_bharat_cess', 10, 2)->nullable();
         });
     }
 };

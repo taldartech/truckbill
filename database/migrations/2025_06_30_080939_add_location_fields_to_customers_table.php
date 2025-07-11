@@ -26,11 +26,23 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('customers', function (Blueprint $table) {
-            $table->dropForeign(['country_id']);
-            $table->dropForeign(['state_id']);
-            $table->dropForeign(['city_id']);
-            $table->dropColumn(['country_id', 'state_id', 'city_id']);
+        $sm = Schema::getConnection()->getDoctrineSchemaManager();
+        $foreignKeys = $sm->listTableForeignKeys('customers');
+
+        Schema::table('customers', function (Blueprint $table) use ($foreignKeys) {
+            foreach ([['country_id'], ['state_id'], ['city_id']] as $col) {
+                foreach ($foreignKeys as $fk) {
+                    if ($fk->getLocalColumns() === $col) {
+                        $table->dropForeign($col);
+                    }
+                }
+            }
+            // Drop columns if they exist
+            foreach (['country_id', 'state_id', 'city_id'] as $column) {
+                if (Schema::hasColumn('customers', $column)) {
+                    $table->dropColumn($column);
+                }
+            }
         });
     }
 };
