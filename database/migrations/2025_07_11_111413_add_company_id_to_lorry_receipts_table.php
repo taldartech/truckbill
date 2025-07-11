@@ -11,14 +11,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Get the default company ID (assuming there's at least one company in the system)
+        // 1. Add the company_id column first if it doesn't exist
+        if (!Schema::hasColumn('lorry_receipts', 'company_id')) {
+            Schema::table('lorry_receipts', function (Blueprint $table) {
+                $table->unsignedBigInteger('company_id')->nullable()->after('id');
+            });
+        }
+
+        // 2. Set the default company_id for existing records
         $defaultCompanyId = \App\Models\Company::first()?->id;
-        
         if ($defaultCompanyId) {
-            // Update existing records with the default company ID
             \DB::table('lorry_receipts')->update(['company_id' => $defaultCompanyId]);
         }
 
+        // 3. Add the foreign key constraint
         Schema::table('lorry_receipts', function (Blueprint $table) {
             $table->foreign('company_id', 'lorry_receipts_company_id_foreign')
                 ->references('id')
