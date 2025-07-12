@@ -123,6 +123,11 @@
                 @error('good_type') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
             <div class="col-md-4 mb-3">
+                <label for="eway_bill_number" class="form-label">E-Way Bill Number</label>
+                <input type="text" class="form-control" name="eway_bill_number" id="eway_bill_number" value="{{ old('eway_bill_number') }}">
+                @error('eway_bill_number') <div class="text-danger">{{ $message }}</div> @enderror
+            </div>
+            <div class="col-md-4 mb-3">
                 <label for="pan_verified" class="form-label">PAN Verified *</label>
                 <input type="hidden" name="pan_verified" id="pan_verified" value="{{ isset($preFilled['pan_verified']) ? (int)$preFilled['pan_verified'] : (old('pan_verified') ? 1 : 0) }}" required>
                 

@@ -31,6 +31,7 @@ class FreightBookingController extends Controller
 
     public function create(Request $request)
     {
+        $companies = \App\Models\Company::all();
         $lrs = LorryReceipt::all();
         $linkedBookings = FreightBooking::all();
         $goodsTypes = \App\Models\GoodType::all();
@@ -56,8 +57,9 @@ class FreightBookingController extends Controller
                     'lorry_receipt' => $lorry_receipt,
                     'lrs' => $lrs,
                     'linkedBookings' => $linkedBookings,
+                    'companies' => $companies,
                     'goodsTypes' => $goodsTypes,
-                    'preFilled' => [
+                                    'preFilled' => [
                         'lr_number' => $lr->lr_number,
                         'lr_id' => $lr->id,
                         'transporter_id' => $lr->transporter_id,
@@ -71,7 +73,7 @@ class FreightBookingController extends Controller
             }
         }
 
-        return view('freight_bookings.create', compact('lrs', 'linkedBookings', 'goodsTypes', 'lorry_receipt'));
+        return view('freight_bookings.create', compact('lrs', 'linkedBookings', 'goodsTypes', 'lorry_receipt','companies'));
     }
 
     public function store(Request $request)
@@ -83,13 +85,14 @@ class FreightBookingController extends Controller
             'advance_amount' => 'required|numeric',
             'balance_amount' => 'required|numeric',
             'tds_amount' => 'nullable|numeric',
-            
+            'eway_bill_number' => 'nullable|string',
             'good_type' => 'nullable|string',
             
             'pan_verified' => 'required|boolean',
             'remark' => 'nullable|string',
             'is_delivered' => 'boolean',
             'is_cancelled' => 'boolean',
+            'company_id' => 'required|exists:companies,id',
            
             
         ]);
@@ -107,7 +110,8 @@ class FreightBookingController extends Controller
         $freightBooking = FreightBooking::create(array_merge($data, [
             'lr_number' => $lorryReceipt->lr_number,
             'voucher_number' => $nextVoucherNumber,
-            'pan_verified' => (bool)$data['pan_verified']
+            'pan_verified' => (bool)$data['pan_verified'],
+            'company_id' => $data['company_id']
         ]));
         
         // Update lorry receipt status and damage amount
@@ -217,6 +221,7 @@ class FreightBookingController extends Controller
             'is_delivered' => 'boolean',
             'is_cancelled' => 'boolean',
             'linked_freight_booking_id' => 'nullable|exists:freight_bookings,id',
+            'eway_bill_number' => 'nullable|string',
         ]);
 
         // Get the lorry receipt to get its LR number

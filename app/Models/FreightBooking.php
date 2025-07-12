@@ -34,6 +34,8 @@ class FreightBooking extends Model
         'linked_freight_booking_id',
         'pan_verified',
         'voucher_number',
+        'company_id',
+        'eway_bill_number',
     ];
 
     public function lr()
