@@ -74,7 +74,7 @@
                 <!--begin::Col-->
                 <div class="col-md-4" id="ownerAgencySection" style="display: none;">
                     <div class="form-check form-check-inline">
-                        <input class="form-check-input " checked type="checkbox" name="owner_agency[]" id="truck_owner" value="owner">
+                        <input class="form-check-input" type="checkbox" name="owner_agency[]" id="truck_owner" value="owner" {{ isset($transporter) && $transporter->is_owner == 0 ? 'disabled' : '' }}>
                         <label class="form-check-label" for="truck_owner">Truck Owner</label>
                     </div>
                     <div class="form-check form-check-inline">
@@ -90,10 +90,12 @@
                         <div class="invalid-feedback">Please select an owner transporter.</div>
                     </div> --}}
 
+                    @if(isset($transporter) && $transporter->is_owner == 1)
                     <div id="ownerTransporterSelect" class="col-md-4 mt-3" style="display: none;">
                         <label class="form-label">Truck Owner</label>
                         <input type="text" id="transporter_name" class="form-control" readonly>
                     </div>
+                    @endif
 
 
                    
@@ -438,6 +440,7 @@ agencyCheckbox.addEventListener('change', () => {
         truckOwnerCheckbox.addEventListener('change', () => {
             const ownerTransporterDiv = document.getElementById('ownerTransporterSelect');
             if (truckOwnerCheckbox.checked) {
+                
                 ownerTransporterDiv.style.display = 'block';
                 updateOwnerTransporters(); // Fetch and populate the options
             } else {
@@ -569,7 +572,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 .then(data => {
                     if (data.transporter_name) {
                         document.getElementById('transporter_name').value = data.transporter_name;
-                        document.getElementById('ownerTransporterSelect').style.display = 'block';
+                        if(data.transporter.is_owner == 1){
+                            document.getElementById('ownerTransporterSelect').style.display = 'block';
+                        }
                     } else {
                         document.getElementById('ownerTransporterSelect').style.display = 'none';
                     }
