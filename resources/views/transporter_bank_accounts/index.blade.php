@@ -11,9 +11,9 @@
         <button type="button" class="btn btn-info" onclick="document.getElementById('advanced-search-box').classList.toggle('d-none')">
             <i class="bi bi-funnel"></i> Search filter
         </button>
-        <a href="{{ route('transporter_bank_accounts.create') }}" class="btn btn-info">
+        {{-- <a href="{{ route('transporter_bank_accounts.create') }}" class="btn btn-info">
             <i class="bi bi-plus"></i> create
-        </a>
+        </a> --}}
     </div>
 
     <form method="GET" action="{{ route('transporter_bank_accounts.index') }}" id="advanced-search-box" class="card card-body shadow-sm mb-4 d-none">
@@ -29,10 +29,10 @@
                     <input class="form-check-input" type="checkbox" value="bank_name" id="filter_bank_name" onchange="toggleField(this)">
                     <label class="form-check-label" for="filter_bank_name">Bank Name</label>
                 </div>
-                <div class="form-check form-check-inline">
+                {{-- <div class="form-check form-check-inline">
                     <input class="form-check-input" type="checkbox" value="account_number" id="filter_account_number" onchange="toggleField(this)">
                     <label class="form-check-label" for="filter_account_number">Account Number</label>
-                </div>
+                </div> --}}
             </div>
         </div>
 
@@ -53,10 +53,10 @@
                 <label class="form-label">Bank Name</label>
                 <input type="text" name="bank_name" class="form-control" value="{{ request('bank_name') }}">
             </div>
-            <div class="col-md-3 d-none" id="field_account_number">
+            {{-- <div class="col-md-3 d-none" id="field_account_number">
                 <label class="form-label">Account Number</label>
                 <input type="text" name="account_number" class="form-control" value="{{ request('account_number') }}">
-            </div>
+            </div> --}}
         </div>
 
         {{-- Form action buttons --}}
@@ -79,8 +79,8 @@
                         <th style="width: 10px">ID</th>
                         <th>Transporter</th>
                         <th>Bank Name</th>
-                        <th>Account Number</th>
-                        <th>IFSC Code</th>
+                        {{-- <th>Account Number</th>
+                        <th>IFSC Code</th> --}}
                         <th>Beneficiary Name</th>
                         <th>Bulk Payment ID</th>
                         <th>Actions</th>
@@ -92,8 +92,8 @@
                         <td>{{ $account->id }}</td>
                         <td>{{ $account->transporter->name }}</td>
                         <td>{{ $account->bank_name }}</td>
-                        <td>{{ $account->account_number }}</td>
-                        <td>{{ $account->ifsc_code }}</td>
+                        {{-- <td>{{ $account->account_number }}</td>
+                        <td>{{ $account->ifsc_code }}</td> --}}
                         <td>{{ $account->beneficiary_name }}</td>
                         <td>{{ $account->bulk_payment_id }}</td>
                         <td>

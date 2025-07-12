@@ -329,7 +329,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="/transporter_bank_accounts/create" class="nav-link{{ Request::is('transporter_bank_accounts/create') ? ' active' : '' }}">
+                            <a href="/transporter_bank_accounts/index" class="nav-link{{ Request::is('transporter_bank_accounts/index') ? ' active' : '' }}">
                               <i class="fas fa-university"></i> 
                             <p>Add Bank Details</p>
                             </a>
@@ -357,7 +357,7 @@
                             </a>
                           </li>
                           <li class="nav-item">
-                            <a href="/truck_owner_bank_accounts/create" class="nav-link{{ Request::is('truck_owner_bank_accounts/create') ? ' active' : '' }}">
+                            <a href="/truck_owner_bank_accounts/index" class="nav-link{{ Request::is('truck_owner_bank_accounts/index') ? ' active' : '' }}">
                               <i class="fas fa-university"></i> 
                             <p>Add Bank Details</p>
                             </a>

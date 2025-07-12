@@ -122,10 +122,14 @@ class FreightBookingController extends Controller
                 $deliveryStatus = 'In-Progress';
             }
             $lorryReceipt->delivery_status = $deliveryStatus;
-            // $lorryReceipt->damage_amount = $data['damage_amount'];
-            // $lorryReceipt->shortage_amount = $data['shortage_amount'];
             $lorryReceipt->freight_booking_id = $freightBooking->id;
             $lorryReceipt->save();
+        }
+
+        if ($request->has('action') && $request->action === 'save_and_pay') {
+            // Redirect to voucher payment creation page with freight booking ID
+            return redirect()->route('voucher_payments.create', ['freight_booking_id' => $freightBooking->id])
+                ->with('success', 'Freight Booking created successfully. Ready to make payment.');
         }
 
         return redirect()->route('lorry_receipts.index')->with('success', 'Freight Booking created successfully.');

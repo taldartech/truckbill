@@ -16,27 +16,20 @@
             <div class="row g-3">
                 <!--begin::Col-->
                 <div class="col-md-6">
-                    <label for="transporter_id" class="form-label">Transporter *</label>
-                    <select class="form-select" id="transporter_id" name="transporter_id" required>
-                        <option value="">Select Transporter</option>
-                        @foreach($transporters as $transporter)
-                            <option value="{{ $transporter->id }}" {{ old('transporter_id') == $transporter->id ? 'selected' : '' }}>
-                                {{ $transporter->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('transporter_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please select a transporter.</div>
+                    <label for="transporter_name" class="form-label">Transporter *</label>
+                    <input type="text" class="form-control" id="transporter_name" name="transporter_name" 
+                           value="{{ $transporter->name }}" disabled>
+                    <input type="hidden" name="transporter_id" value="{{ $transporter_id }}">
                 </div>
                 <!--end::Col-->
                 <!--begin::Col-->
-                <div class="col-md-6">
+                 <div class="col-md-6">
                     <label for="bank_name" class="form-label">Bank Name *</label>
                     <input type="text" class="form-control" id="bank_name" name="bank_name" value="{{ old('bank_name') }}" required>
                     @error('bank_name') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please enter a bank name.</div>
                 </div>
-                <!--end::Col-->
+                {{-- <!--end::Col-->
                 <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="account_number" class="form-label">Account Number *</label>
@@ -52,7 +45,7 @@
                     @error('ifsc_code') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please enter an IFSC code.</div>
                 </div>
-                <!--end::Col-->
+                <!--end::Col--> --}}
                 <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="beneficiary_name" class="form-label">Beneficiary Name *</label>

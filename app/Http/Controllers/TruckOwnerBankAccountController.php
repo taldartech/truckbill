@@ -14,13 +14,13 @@ class TruckOwnerBankAccountController extends Controller
     {
         $transporters = Transporter::all();
         $accounts = TransporterBankAccount::with('transporter')->paginate(10);
-        return view('transporter_bank_accounts.index', compact('accounts', 'transporters'));
+        return view('truck_owner_bank_accounts.index', compact('accounts', 'transporters'));
     }
 
-    public function create()
+    public function create($transporter_id)
     {
-        $transporters = Transporter::all();
-        return view('transporter_bank_accounts.create', compact('transporters'));
+        $transporter = Transporter::findOrFail($transporter_id);
+        return view('truck_owner_bank_accounts.create', compact('transporter', 'transporter_id'));
     }
 
     public function store(Request $request)
@@ -28,20 +28,20 @@ class TruckOwnerBankAccountController extends Controller
         $validated = $request->validate([
             'transporter_id' => 'required|exists:transporters,id',
             'bank_name' => 'required|string|max:255',
-            'account_number' => 'required|string|max:255',
-            'ifsc_code' => 'required|string|max:11',
+            'account_number' => 'nullable|string|max:255',
+            'ifsc_code' => 'nullable|string|max:11',
             'beneficiary_name' => 'required|string|max:255',
             'bulk_payment_id' => 'nullable|string|max:255',
         ]);
 
         TransporterBankAccount::create($validated);
-        return redirect()->route('transporter_bank_accounts.index')->with('success', 'Bank account added successfully!');
+        return redirect()->route('truck_owner_bank_accounts.index')->with('success', 'Bank account added successfully!');
     }
 
     public function edit(TransporterBankAccount $account)
     {
         $transporters = Transporter::all();
-        return view('transporter_bank_accounts.edit', compact('account', 'transporters'));
+        return view('truck_owner_bank_accounts.edit', compact('account', 'transporters'));
     }
 
     public function update(Request $request, TransporterBankAccount $account)
@@ -49,19 +49,19 @@ class TruckOwnerBankAccountController extends Controller
         $validated = $request->validate([
             'transporter_id' => 'required|exists:transporters,id',
             'bank_name' => 'required|string|max:255',
-            'account_number' => 'required|string|max:255',
-            'ifsc_code' => 'required|string|max:11',
+            'account_number' => 'nullable|string|max:255',
+            'ifsc_code' => 'nullable|string|max:11',
             'beneficiary_name' => 'required|string|max:255',
             'bulk_payment_id' => 'nullable|string|max:255',
         ]);
 
         $account->update($validated);
-        return redirect()->route('transporter_bank_accounts.index')->with('success', 'Bank account updated successfully!');
+        return redirect()->route('truck_owner_bank_accounts.index')->with('success', 'Bank account updated successfully!');
     }
 
     public function destroy(TransporterBankAccount $account)
     {
         $account->delete();
-        return redirect()->route('transporter_bank_accounts.index')->with('success', 'Bank account deleted successfully!');
+        return redirect()->route('truck_owner_bank_accounts.index')->with('success', 'Bank account deleted successfully!');
     }
 }

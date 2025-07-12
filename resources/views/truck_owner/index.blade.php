@@ -208,6 +208,9 @@
                 <td>{{ $transporter->company ? $transporter->company->name : '-' }}</td>
                 <td>
                     <div class="d-flex gap-1">
+                        <a href="{{ route('truck_owner_bank_accounts.create', $transporter->id) }}" class="btn btn-sm btn-info">
+                            <i class="bi bi-pencil"></i>
+                        </a>
                         <a href="{{ route('trucks.create', ['transporter_id' => $transporter->id]) }}" class="btn btn-sm btn-warning">
                             <i class="bi bi-truck"></i>
                         </a>

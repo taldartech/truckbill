@@ -221,9 +221,11 @@
       <!--end::Body-->
       <!--begin::Footer-->
       <div class="card-footer">
-            <button class="btn btn-info" type="submit">Submit form</button>
+            <button class="btn btn-info" type="submit" name="action" value="save">Submit form</button>
+            <button class="btn btn-primary" type="submit" name="action" value="save_and_pay">Save & Make Payment</button>
             <a href="{{ route('freight_bookings.index') }}" class="btn btn-info">Back to List</a>
       </div>
+      <input type="hidden" name="redirect_to_payment" value="0">
       <!--end::Footer-->
     </form>
 </div>

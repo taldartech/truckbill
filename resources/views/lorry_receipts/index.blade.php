@@ -85,7 +85,7 @@
             <table class="table table-bordered">
                 <thead>
                     <tr>
-                        <th style="width: 10px">ID</th>
+                        <th style="width: 10px">Sr. No</th>
                         <th>LR Number</th>
                         <th>Consignor</th>
                         <th>Consignee</th>
@@ -93,6 +93,8 @@
                         <th>Action</th>
                         <th style="display: none">Freight Booking ID</th>
                         <th>GR Date</th>
+                        <th>Truck Number</th>
+                        <th>Quantity</th>
                         <th>Amount</th>
                         <th>Actions</th>
                     </tr>
@@ -100,7 +102,7 @@
                 <tbody>
                     @forelse($lrs as $lr)
                     <tr class="align-middle">
-                        <td>{{ $lr->id }}</td>
+                        <td>{{ $loop->iteration }}</td>
                         <td>
                             <a href="#" class="table-link" onclick="showLRDetails({{ $lr->id }})">
                                 {{ $lr->lr_number }}
@@ -180,6 +182,8 @@
                         </td>
                         
                         <td>{{ $lr->gr_date }}</td>
+                        <td>{{ $lr->truck->truck_number }}</td>
+                        <td>{{ $lr->weight }}</td>
                         <td>{{ $lr->amount }}</td>
                         
                         <td>

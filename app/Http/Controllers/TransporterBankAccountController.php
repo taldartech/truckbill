@@ -15,10 +15,10 @@ class TransporterBankAccountController extends Controller
         return view('transporter_bank_accounts.index', compact('accounts', 'transporters'));
     }
 
-    public function create()
+    public function create($transporter_id)
     {
-        $transporters = Transporter::all();
-        return view('transporter_bank_accounts.create', compact('transporters'));
+        $transporter = Transporter::findOrFail($transporter_id);
+        return view('transporter_bank_accounts.create', compact('transporter', 'transporter_id'));
     }
 
     public function store(Request $request)
@@ -26,8 +26,8 @@ class TransporterBankAccountController extends Controller
         $validated = $request->validate([
             'transporter_id' => 'required|exists:transporters,id',
             'bank_name' => 'required|string|max:255',
-            'account_number' => 'required|string|max:255',
-            'ifsc_code' => 'required|string|max:11',
+            'account_number' => 'nullable|string|max:255',
+            'ifsc_code' => 'nullable|string|max:11',
             'beneficiary_name' => 'required|string|max:255',
             'bulk_payment_id' => 'nullable|string|max:255',
         ]);
@@ -47,8 +47,8 @@ class TransporterBankAccountController extends Controller
         $validated = $request->validate([
             'transporter_id' => 'required|exists:transporters,id',
             'bank_name' => 'required|string|max:255',
-            'account_number' => 'required|string|max:255',
-            'ifsc_code' => 'required|string|max:11',
+            'account_number' => 'nullable|string|max:255',
+            'ifsc_code' => 'nullable|string|max:11',
             'beneficiary_name' => 'required|string|max:255',
             'bulk_payment_id' => 'nullable|string|max:255',
         ]);
