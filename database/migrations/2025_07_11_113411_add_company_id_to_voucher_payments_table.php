@@ -16,7 +16,7 @@ return new class extends Migration
         });
 
         // Get the default company ID (assuming there's at least one company in the system)
-        $defaultCompanyId = \App\Models\Company::first()?->id;
+        $defaultCompanyId = \App\Models\Company::first()->id;
         
         if ($defaultCompanyId) {
             // Update existing records with the default company ID

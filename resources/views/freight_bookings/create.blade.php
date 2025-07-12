@@ -125,6 +125,7 @@
             <div class="col-md-4 mb-3">
                 <label for="pan_verified" class="form-label">PAN Verified *</label>
                 <input type="hidden" name="pan_verified" id="pan_verified" value="{{ isset($preFilled['pan_verified']) ? (int)$preFilled['pan_verified'] : (old('pan_verified') ? 1 : 0) }}" required>
+                
                 <div class="form-control">
                     {{ isset($preFilled['pan_verified']) && $preFilled['pan_verified'] ? 'Yes' : 'No' }}
                 </div>
@@ -226,6 +227,9 @@
       <!--end::Footer-->
     </form>
 </div>
+<script>
+    const IS_OWNER = {{ $preFilled['is_owner'] ?? 0 }};
+</script>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -233,16 +237,22 @@
         const trAmountInput = document.getElementById('tr_amount');
         const advanceAmountInput = document.getElementById('advance_amount');
         const balanceAmountInput = document.getElementById('balance_amount');
+        const panVerified = parseInt(document.getElementById('pan_verified').value) || 0;
 
         function calculateBalance() {
             const trAmount = parseFloat(trAmountInput.value) || 0;
             const advanceAmount = parseFloat(advanceAmountInput.value) || 0;
             const balance = trAmount - advanceAmount;
             balanceAmountInput.value = balance.toFixed(2);
+             // Calculate TDS %
+    let tdsPercentage = 0.2; // default 20%
+    if (panVerified === 1) {
+        tdsPercentage = IS_OWNER === 0 ? 0.02 : 0.01;
+    }
 
             // Calculate TDS Amount (1% of TR Amount)
             const tdsAmountInput = document.getElementById('tds_amount');
-            const tdsAmount = (trAmount * 0.01).toFixed(2);
+            const tdsAmount = (trAmount * tdsPercentage).toFixed(2);
             tdsAmountInput.value = tdsAmount;
         }
 

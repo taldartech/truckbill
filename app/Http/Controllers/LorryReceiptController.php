@@ -52,13 +52,14 @@ class LorryReceiptController extends Controller
 
     public function create()
     {
+        $companies = \App\Models\Company::all();
         $trucks = Truck::all();
         $transporters = Transporter::all();
         $customers = Customer::where('company_id', auth()->user()->company_id)->orderBy('name')->get();
         $consignees = Consignee::where('company_id', auth()->user()->company_id)->orderBy('name')->get();
         $goodsTypes = GoodType::all();
         $statuses = ['Pending', 'Delivered', 'Cancelled','In-Progress'];
-        return view('lorry_receipts.create', compact( 'customers','trucks', 'transporters', 'consignees', 'goodsTypes', 'statuses'));
+        return view('lorry_receipts.create', compact('companies', 'customers','trucks', 'transporters', 'consignees', 'goodsTypes', 'statuses'));
     }
 
     public function store(Request $request)
@@ -74,6 +75,7 @@ class LorryReceiptController extends Controller
             'consignee_id' => 'required|exists:consignees,id',
             'consignee_contact_number' => 'nullable|string|max:20',
             'gr_date' => 'required|date',
+            'company_id' => 'required|exists:companies,id',
         
             'delivery_status' => 'nullable|in:Pending,Delivered,Cancelled,In-Progress',
             'source_city' => 'required|string|max:100',
@@ -101,6 +103,9 @@ class LorryReceiptController extends Controller
             return redirect()->back()->withErrors(['lr_number' => 'LR Number already exists. Please use a unique LR Number.']);
         }
 
+        // Add company_id to validated data
+        $validated['company_id'] = auth()->user()->company_id;
+        
         \App\Models\LorryReceipt::create($validated);
         return redirect()->route('lorry_receipts.index')->with('success', 'Lorry Receipt created successfully!');
     }

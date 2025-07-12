@@ -16,15 +16,15 @@ return new class extends Migration
         });
 
         // Get the default company ID (assuming there's at least one company in the system)
-        $defaultCompanyId = \App\Models\Company::first()?->id;
-        
-        if ($defaultCompanyId) {
+        $company = \App\Models\Company::first();
+        if ($company) {
+            $defaultCompanyId = $company->id;
             // Update existing records with the default company ID
             \DB::table('vouchers')->update(['company_id' => $defaultCompanyId]);
         }
 
         Schema::table('vouchers', function (Blueprint $table) {
-            $table->foreign('company_id', 'vouchers_company_id_foreign')
+            $table->foreign('company_id')
                 ->references('id')
                 ->on('companies')
                 ->onDelete('cascade');

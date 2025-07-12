@@ -34,6 +34,7 @@ class LorryReceipt extends Model
         'damage_amount',
         'shortage_amount',
         'lr_number',
+        'company_id',
     ];
 
     protected $attributes = [
