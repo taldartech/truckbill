@@ -10,8 +10,10 @@ class TruckOwnerController extends Controller
 {
     public function index(Request $request)
     {
-        $query = \App\Models\Transporter::with('company')
-        ->where('is_owner', 1);
+        $query = \App\Models\Transporter::with(['company', 'bankAccounts' => function($q) {
+            $q->select('transporter_id', 'bulk_payment_id');
+        }])
+            ->where('is_owner', 1); // Default to show only Agencies
         
         // Only apply company_id filter for non-super_admin users
         if (auth()->user()->userRole->name !== 'super_admin') {

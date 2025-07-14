@@ -8,9 +8,11 @@ class TransporterController extends Controller
 {
     public function index(Request $request)
     {
-        $query = \App\Models\Transporter::with('company')
+        $query = \App\Models\Transporter::with(['company', 'bankAccounts' => function($q) {
+            $q->select('transporter_id', 'bulk_payment_id');
+        }])
             ->where('is_owner', 0); // Default to show only Agencies
-        
+
         // Only apply company_id filter for non-super_admin users
         if (auth()->user()->userRole->name !== 'super_admin') {
             $query->where('company_id', auth()->user()->company_id);

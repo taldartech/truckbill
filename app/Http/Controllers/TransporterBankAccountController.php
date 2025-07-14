@@ -10,8 +10,12 @@ class TransporterBankAccountController extends Controller
 {
     public function index()
     {
-        $transporters = Transporter::all();
-        $accounts = TransporterBankAccount::with('transporter')->paginate(10);
+        $transporters = Transporter::where('is_owner', 0)->get();
+        $accounts = TransporterBankAccount::with('transporter')
+            ->whereHas('transporter', function($query) {
+                $query->where('is_owner', 0);
+            })
+            ->paginate(10);
         return view('transporter_bank_accounts.index', compact('accounts', 'transporters'));
     }
 

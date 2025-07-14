@@ -29,5 +29,10 @@ class Transporter extends Model
         return $this->belongsTo(Company::class);
     }
 
+    public function bankAccounts()
+    {
+        return $this->hasMany(TransporterBankAccount::class);
+    }
+
     //
 }

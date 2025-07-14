@@ -12,8 +12,12 @@ class TruckOwnerBankAccountController extends Controller
 {
     public function index()
     {
-        $transporters = Transporter::all();
-        $accounts = TransporterBankAccount::with('transporter')->paginate(10);
+        $transporters = Transporter::where('is_owner', 1)->get();
+        $accounts = TransporterBankAccount::with('transporter')
+            ->whereHas('transporter', function($query) {
+                $query->where('is_owner', 1);
+            })
+            ->paginate(10);
         return view('truck_owner_bank_accounts.index', compact('accounts', 'transporters'));
     }
 
@@ -40,7 +44,7 @@ class TruckOwnerBankAccountController extends Controller
 
     public function edit(TransporterBankAccount $account)
     {
-        $transporters = Transporter::all();
+        $transporters = Transporter::where('is_owner', 1)->get();
         return view('truck_owner_bank_accounts.edit', compact('account', 'transporters'));
     }
 

@@ -208,9 +208,15 @@
                 <td>{{ $transporter->company ? $transporter->company->name : '-' }}</td>
                 <td>
                     <div class="d-flex gap-1">
+                        @if($transporter->bankAccounts->isEmpty() || $transporter->bankAccounts->first()->bulk_payment_id === null)
                         <a href="{{ route('transporter_bank_accounts.create', ['transporter_id' => $transporter->id]) }}" class="btn btn-sm btn-info">
                             <i class="bi bi-bank"></i>
                         </a>
+                    @else
+                        <a href="{{ route('transporter_bank_accounts.index', ['transporter_id' => $transporter->id]) }}" class="btn btn-sm btn-warning">
+                            <i class="bi bi-bank"></i>
+                        </a>
+                    @endif
                         <a href="{{ route('transporters.edit', $transporter->id) }}" class="btn btn-sm btn-info">
                             <i class="bi bi-pencil"></i>
                         </a>
