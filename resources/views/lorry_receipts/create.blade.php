@@ -267,12 +267,12 @@
                     @error('shortage_amount') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please enter a shortage amount.</div>
                 </div> --}}
-                <div class="col-md-4 mb-3">
+                {{-- <div class="col-md-4 mb-3">
                     <label for="memo_id" class="form-label">Memo ID</label>
                     <input type="number" class="form-control" id="memo_id" name="memo_id" value="{{ old('memo_id') }}">
                     @error('memo_id') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please enter a memo ID.</div>
-                </div>
+                </div> --}}
             </div>
 
             
@@ -440,7 +440,6 @@ agencyCheckbox.addEventListener('change', () => {
         truckOwnerCheckbox.addEventListener('change', () => {
             const ownerTransporterDiv = document.getElementById('ownerTransporterSelect');
             if (truckOwnerCheckbox.checked) {
-                
                 ownerTransporterDiv.style.display = 'block';
                 updateOwnerTransporters(); // Fetch and populate the options
             } else {
