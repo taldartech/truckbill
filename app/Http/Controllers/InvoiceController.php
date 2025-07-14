@@ -3,7 +3,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Invoice;
 use App\Models\Company;
-use App\Models\Customer;
+use App\Models\Consignee;
 use App\Models\Memo;
 use App\Models\InvoiceMemoMap;
 use App\Models\LorryReceipt;
@@ -15,7 +15,7 @@ class InvoiceController extends Controller
 {
     public function index()
     {
-        $invoices = Invoice::with(['company', 'customer'])->orderByDesc('id');
+        $invoices = Invoice::with(['company', 'consignee'])->orderByDesc('id');
 
         if (auth()->user()->userRole->name !== 'super_admin') {
             $invoices = $invoices->where('company_id', auth()->user()->company_id);
@@ -49,8 +49,8 @@ class InvoiceController extends Controller
     public function create()
 {
     $companies = Company::all();
-    $customers = Customer::all();
-    return view('invoices.create', compact('companies', 'customers'));
+    $consignees = Consignee::all();
+    return view('invoices.create', compact('companies', 'consignees'));
 }
 
 

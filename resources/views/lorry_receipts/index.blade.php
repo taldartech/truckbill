@@ -113,8 +113,9 @@
                         {{-- <td>{{ $lr->delivery_status ?? 'Pending' }}</td> --}}
                         <td>
                             @php
-                                $rawStatus = $lr->delivery_status ?? 'Pending';
-                                $status = strtolower(trim($rawStatus)); // Normalize status: trim spaces + lowercase
+                                $hasFreightBooking = !empty($lr->freight_booking_id);
+                                $rawStatus = $hasFreightBooking ? ($lr->delivery_status ?? 'Pending') : 'Pending';
+                                $status = strtolower(trim($rawStatus));
                                 $badgeClass = match($status) {
                                     'cancelled'    => 'badge text-bg-danger',
                                     'pending'      => 'badge text-bg-primary',
@@ -127,21 +128,24 @@
                         </td>
                         <td>
                             @php
-                                $actionText = match(strtolower(trim($lr->delivery_status ?? 'pending'))) {
-                                    'cancelled' => 'Create new Freight Booking',
-                                    'pending' => 'Create Freight Booking',
+                                $deliveryStatus = strtolower(trim($lr->delivery_status ?? 'pending'));
+                                $hasFreightBooking = !empty($lr->freight_booking_id);
+                                
+                                $actionText = !$hasFreightBooking ? 'Create Freight Booking' : match($deliveryStatus) {
                                     'delivered' => 'View Freight Booking',
                                     'in-progress' => 'View Freight Booking',
                                     default => 'Create Freight Booking'
                                 };
-                                $actionRoute = in_array(strtolower(trim($lr->delivery_status ?? 'pending')), ['delivered', 'in-progress']) && $lr->freight_booking_id ? 
+                                
+                                $actionRoute = $hasFreightBooking && in_array($deliveryStatus, ['delivered', 'in-progress']) ? 
                                     route('freight_bookings.index', $lr->freight_booking_id) : 
                                     route('freight_bookings.create', ['lorry_receipt_id' => $lr->id]);
-                                    $buttonClass = match($status) {
-                                        'delivered'   => 'btn-info',
-                                        'in-progress' => 'btn-warning',
-                                        default       => 'btn-success'
-                                    };
+                                
+                                $buttonClass = $hasFreightBooking ? match($deliveryStatus) {
+                                    'delivered' => 'btn-info',
+                                    'in-progress' => 'btn-warning',
+                                    default => 'btn-success'
+                                } : 'btn-success';
                             @endphp
                             <div class="d-flex gap-1">
                                 {{-- <a href="{{ $actionRoute }}" class="btn btn-sm @php
@@ -161,24 +165,23 @@
        data-bs-placement="top">
         <i class="bi bi-truck"></i> 
     </a>
-                                @if(in_array(strtolower(trim($lr->delivery_status ?? 'pending')), ['delivered', 'in-progress']))
+                                @if($hasFreightBooking && in_array(strtolower(trim($lr->delivery_status ?? 'pending')), ['delivered', 'in-progress']))
                                 <a href="{{ route('voucher_payments.create', ['lorry_receipt_id' => $lr->id, 'freight_booking_id' => $lr->freight_booking_id]) }}" 
                                     class="btn btn-sm btn-success " 
                                     title="create Voucher Payments" 
                                     data-bs-toggle="tooltip" 
                                     data-bs-placement="top">
-                                     <i class="bi bi-receipt"></i> 
-                                 </a>
-                                 <a href="{{ route('invoices.index', ['lorry_receipt_id' => $lr->id]) }}" 
+                                    <i class="bi bi-receipt"></i> 
+                                </a>
+                                <a href="{{ route('invoices.index', ['lorry_receipt_id' => $lr->id]) }}" 
                                     class="btn btn-sm btn-secondary" 
                                     title="create Invoices" 
                                     data-bs-toggle="tooltip" 
                                     data-bs-placement="top">
                                     <i class="bi bi-file-earmark-text"></i> 
-                                 </a>
+                                </a>
                                 @endif
                             </div>
-                            </a>
                         </td>
                         
                         <td>{{ $lr->gr_date }}</td>

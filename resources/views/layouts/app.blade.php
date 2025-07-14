@@ -392,7 +392,7 @@
                           </li>
                     </ul>
                   </li>
-                  <li class="nav-item">
+                  {{-- <li class="nav-item">
                     <a class="nav-link{{ (Request::is('customers*') || Request::is('customers/create')) ? ' active' : '' }}"  href="#customerMenu"  >
                         <i class="fas fa-users"></i><p>
                             Customer
@@ -413,11 +413,11 @@
                             </a>
                           </li>
                     </ul>
-                  </li>
+                  </li> --}}
                   <li class="nav-item">
                     <a class="nav-link{{ (Request::is('consignees*') || Request::is('consignees/create')) ? ' active' : '' }}"  href="#consigneeMenu"  >
                         <i class="fas fa-people-carry"></i><p>
-                            Consignee
+                            Consignee/Customer
                             <i class="nav-arrow bi bi-chevron-right"></i>
                           </p>
                     </a>
@@ -425,7 +425,7 @@
                         <li class="nav-item">
                             <a href="/consignees" class="nav-link{{ Request::is('consignees*') ? ' active' : '' }}">
                                 <i class="fas fa-list"></i> 
-                              <p>Consignee List</p>
+                              <p>Consignee/Customer List</p>
                             </a>
                           </li>
                           <li class="nav-item">
