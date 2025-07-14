@@ -251,13 +251,19 @@
             const advanceAmount = parseFloat(advanceAmountInput.value) || 0;
             const balance = trAmount - advanceAmount;
             balanceAmountInput.value = balance.toFixed(2);
-             // Calculate TDS %
-    let tdsPercentage = 0.2; // default 20%
-    if (panVerified === 1) {
-        tdsPercentage = IS_OWNER === 0 ? 0.02 : 0.01;
-    }
+            
+            // Get TDS percentages from PHP variables
+            const defaultPercentage = {{ $tdsPercentages['default'] / 100 }};
+            const agencyPercentage = {{ $tdsPercentages['agency'] / 100 }};
+            const ownerPercentage = {{ $tdsPercentages['owner'] / 100 }};
+            
+            // Calculate TDS %
+            let tdsPercentage = defaultPercentage;
+            if (panVerified === 1) {
+                tdsPercentage = IS_OWNER === 0 ? agencyPercentage : ownerPercentage;
+            }
 
-            // Calculate TDS Amount (1% of TR Amount)
+            // Calculate TDS Amount
             const tdsAmountInput = document.getElementById('tds_amount');
             const tdsAmount = (trAmount * tdsPercentage).toFixed(2);
             tdsAmountInput.value = tdsAmount;

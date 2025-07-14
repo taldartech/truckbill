@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Models\FreightBooking;
 use App\Models\LorryReceipt;
 use Illuminate\Http\Request;
+use App\Helpers\TdsHelper;
 
 class FreightBookingController extends Controller
 {
@@ -37,7 +38,13 @@ class FreightBookingController extends Controller
         $goodsTypes = \App\Models\GoodType::all();
         $lorry_receipt_id = $request->lorry_receipt_id;
 
- 
+        // Get TDS percentages from config
+        $tdsPercentages = [
+            'default' => env('TDS_PERCENTAGE_DEFAULT', 20),
+            'agency' => env('TDS_PERCENTAGE_AGENCY', 2),
+            'owner' => env('TDS_PERCENTAGE_OWNER', 1)
+        ];
+
         $lorry_receipt = \App\Models\LorryReceipt::with(['transporter:id,name', 'truck:id,truck_number'])
         ->select('id', 'lr_number', 'transporter_id', 'truck_id','customer_id','consignor_id','consignee_id')
         ->when($lorry_receipt_id, function ($query) use ($lorry_receipt_id) {
@@ -54,12 +61,14 @@ class FreightBookingController extends Controller
                 $truck = \App\Models\Truck::find($lr->truck_id);
                 
                 return view('freight_bookings.create', [
-                    'lorry_receipt' => $lorry_receipt,
+                    'companies' => $companies,
                     'lrs' => $lrs,
                     'linkedBookings' => $linkedBookings,
-                    'companies' => $companies,
                     'goodsTypes' => $goodsTypes,
-                                    'preFilled' => [
+                    'lorry_receipt' => $lorry_receipt,
+                    'transporter' => $transporter ?? null,
+                    'tdsPercentages' => $tdsPercentages,
+                    'preFilled' => [
                         'lr_number' => $lr->lr_number,
                         'lr_id' => $lr->id,
                         'transporter_id' => $lr->transporter_id,
@@ -73,7 +82,16 @@ class FreightBookingController extends Controller
             }
         }
 
-        return view('freight_bookings.create', compact('lrs', 'linkedBookings', 'goodsTypes', 'lorry_receipt','companies'));
+        return view('freight_bookings.create', [
+            'companies' => $companies,
+            'lrs' => $lrs,
+            'linkedBookings' => $linkedBookings,
+            'goodsTypes' => $goodsTypes,
+            'lorry_receipt' => $lorry_receipt,
+            'transporter' => null,
+            'tdsPercentages' => $tdsPercentages,
+            'preFilled' => []
+        ]);
     }
 
     public function store(Request $request)
