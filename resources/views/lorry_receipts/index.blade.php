@@ -85,6 +85,7 @@
             <table class="table table-bordered">
                 <thead>
                     <tr>
+                        <th><input type="checkbox" id="selectAllCheckbox"></th>
                         <th style="width: 10px">Sr. No</th>
                         <th>LR Number</th>
                         <th>Consignor</th>
@@ -102,6 +103,7 @@
                 <tbody>
                     @forelse($lrs as $lr)
                     <tr class="align-middle">
+                        <td><input type="checkbox" class="rowCheckbox" value="{{ $lr->id }}"></td>
                         <td>{{ $loop->iteration }}</td>
                         <td>
                             <a href="#" class="table-link" onclick="showLRDetails({{ $lr->id }})">
@@ -335,6 +337,43 @@
         </div>
     </div>
 </div>
+
+<script>
+// Select all checkbox functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    const rowCheckboxes = document.querySelectorAll('.rowCheckbox');
+
+    // Handle select all checkbox
+    selectAllCheckbox.addEventListener('change', function() {
+        rowCheckboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+    });
+
+    // Handle individual row checkboxes
+    rowCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            // If any checkbox is unchecked, uncheck the select all checkbox
+            if (!this.checked) {
+                selectAllCheckbox.checked = false;
+            } else {
+                // If all checkboxes are checked, check the select all checkbox
+                const allChecked = Array.from(rowCheckboxes).every(cb => cb.checked);
+                selectAllCheckbox.checked = allChecked;
+            }
+        });
+    });
+
+    // Function to get selected row IDs
+    window.getSelectedLorryReceipts = function() {
+        return Array.from(rowCheckboxes)
+            .filter(checkbox => checkbox.checked)
+            .map(checkbox => checkbox.value);
+    };
+});
+
+</script>
 
 <script>
     function showLRDetails(lrId) {
