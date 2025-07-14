@@ -86,10 +86,37 @@ class LorryReceiptController extends Controller
                 ], 422);
             }
 
+            // Check freight_booking_id for selected lorry receipts
+            $lorryReceipts = LorryReceipt::whereIn('id', $validated['lr_ids'])
+                ->get();
+
+            $noFreightBooking = $lorryReceipts->filter(function($lr) {
+                return !$lr->freight_booking_id;
+            })->pluck('lr_number')->toArray();
+
+            if (!empty($noFreightBooking)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The following LR numbers do not have a freight booking: ' . implode(', ', $noFreightBooking)
+                ], 422);
+            }
+
+            // Get freight booking IDs
+            $freightBookingIds = $lorryReceipts->pluck('freight_booking_id')->toArray();
+
+            // Update is_delivered for freight bookings
+            \App\Models\FreightBooking::whereIn('id', $freightBookingIds)
+                ->update(['is_delivered' => 1]);
+
+            // Update delivery status for lorry receipts
+            LorryReceipt::whereIn('id', $validated['lr_ids'])
+                ->update(['delivery_status' => 'Delivered']);
+
             // Log the request data for debugging
             \Log::info('Bulk Payment Request:', [
                 'memo_id' => $validated['memo_id'],
-                'lr_ids' => $validated['lr_ids']
+                'lr_ids' => $validated['lr_ids'],
+                'freight_booking_ids' => $freightBookingIds
             ]);
 
             // Update memo_id for selected lorry receipts
