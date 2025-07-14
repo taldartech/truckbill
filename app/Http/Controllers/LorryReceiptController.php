@@ -63,6 +63,66 @@ class LorryReceiptController extends Controller
         return view('lorry_receipts.create', compact('companies', 'customers','trucks', 'transporters', 'consignees', 'goodsTypes', 'statuses'));
     }
 
+    public function bulkPayment(Request $request)
+    {
+        try {
+            // Validate input
+            $validated = $request->validate([
+                'memo_id' => 'required|integer',
+                'lr_ids' => 'required|array',
+                'lr_ids.*' => 'integer|exists:lorry_receipts,id'
+            ]);
+
+            // Get the lorry receipts that already have memo_id
+            $existingMemoIds = LorryReceipt::whereIn('id', $validated['lr_ids'])
+                ->whereNotNull('memo_id')
+                ->pluck('lr_number')
+                ->toArray();
+
+            if (!empty($existingMemoIds)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'The following LR numbers already have memo_id: ' . implode(', ', $existingMemoIds)
+                ], 422);
+            }
+
+            // Log the request data for debugging
+            \Log::info('Bulk Payment Request:', [
+                'memo_id' => $validated['memo_id'],
+                'lr_ids' => $validated['lr_ids']
+            ]);
+
+            // Update memo_id for selected lorry receipts
+            $updatedCount = LorryReceipt::whereIn('id', $validated['lr_ids'])
+                ->update(['memo_id' => $validated['memo_id']]);
+
+            \Log::info('Bulk Payment Update Result:', [
+                'updated_count' => $updatedCount,
+                'ids' => $validated['lr_ids']
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Memo ID updated successfully for selected lorry receipts'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error: ' . json_encode($e->errors())
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Bulk Payment Error:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update Memo ID: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([

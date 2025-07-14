@@ -2,12 +2,18 @@
 
 @section('content')
 <div class="container mt-4">
-    <div class="col-sm-6"><h3 class="mb-0">Lorry Receipts</h3></div>
+    <div class="col-sm-6">
+        <h3 class="mb-0">Lorry Receipts</h3>
+        
+    </div>
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
     <div class="d-flex justify-content-end gap-2 mb-3">
+        <button type="button" id="bulkPaymentBtn" class="btn btn-lg btn-primary d-none" onclick="handleBulkPayment()">
+            <i class="bi bi-cash-coin"></i> Bulk Payment
+        </button>
         <button type="button" class="btn btn-info" onclick="document.getElementById('advanced-search-box').classList.toggle('d-none')">
             <i class="bi bi-funnel"></i> Search filter
         </button>
@@ -233,7 +239,7 @@
 <script>
     function toggleField(checkbox) {
         const fieldId = 'field_' + checkbox.value;
-        const field = document.getElementById(fieldId);
+        p     const field = document.getElementById(fieldId);
         if (checkbox.checked) {
             field.classList.remove('d-none');
         } else {
@@ -326,17 +332,73 @@
     }
 </style>
 
+<!-- Modal for showing LR details -->
 <div class="modal fade" id="lrDetailsModal" tabindex="-1" aria-labelledby="lrDetailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="lrDetailsModalLabel">LR Details</h5>
+                <h5 class="modal-title" id="lrDetailsModalLabel">Lorry Receipt Details</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="lrDetailsContent"></div>
         </div>
     </div>
 </div>
+
+<!-- Modal for Bulk Payment -->
+<div class="modal fade" id="bulkPaymentModal" tabindex="-1" aria-labelledby="bulkPaymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bulkPaymentModalLabel">Bulk Payment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="memoId" class="form-label">Memo ID</label>
+                    <input type="text" class="form-control" id="memoId" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Selected Lorry Receipts:</label>
+                    <ul class="selected-lr-list" id="selectedLrList"></ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="processBulkPayment()">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    /* Bulk Payment Button styles */
+    #bulkPaymentBtn {
+        padding: 12px 24px;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    #bulkPaymentBtn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    }
+
+    /* Bulk Payment Modal Styles */
+    .selected-lr-list {
+        max-height: 300px;
+        overflow-y: auto;
+        margin-bottom: 1rem;
+    }
+    .selected-lr-list li {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #eee;
+    }
+    .selected-lr-list li:last-child {
+        border-bottom: none;
+    }
+</style>
+</style>
 
 <script>
 // Select all checkbox functionality
@@ -349,6 +411,7 @@ document.addEventListener('DOMContentLoaded', function() {
         rowCheckboxes.forEach(checkbox => {
             checkbox.checked = this.checked;
         });
+        updateBulkPaymentBtn(); // Update bulk payment button visibility
     });
 
     // Handle individual row checkboxes
@@ -371,6 +434,95 @@ document.addEventListener('DOMContentLoaded', function() {
             .filter(checkbox => checkbox.checked)
             .map(checkbox => checkbox.value);
     };
+
+    // Function to handle bulk payment
+    window.handleBulkPayment = function() {
+        const selectedIds = getSelectedLorryReceipts();
+        if (selectedIds.length > 0) {
+            // Show the bulk payment modal
+            const modal = new bootstrap.Modal(document.getElementById('bulkPaymentModal'));
+            const lrList = document.getElementById('selectedLrList');
+            
+            // Clear existing list
+            lrList.innerHTML = '';
+            
+            // Create a map of LR IDs to their numbers
+            const lrNumbers = new Map();
+            @foreach($lrs as $lr)
+                lrNumbers.set({{ $lr->id }}, '{{ $lr->lr_number }}');
+            @endforeach
+
+            // Add selected LR numbers to the list
+            selectedIds.forEach(id => {
+                const li = document.createElement('li');
+                const lrNumber = lrNumbers.get(Number(id)) || 'Unknown LR';
+                li.textContent = 'LR Number: ' + lrNumber;
+                lrList.appendChild(li);
+            });
+            
+            modal.show();
+        }
+    };
+
+    // Function to process bulk payment
+    window.processBulkPayment = function() {
+        const selectedIds = getSelectedLorryReceipts();
+        const memoId = document.getElementById('memoId').value;
+        
+        if (!memoId) {
+            alert('Please enter a Memo ID');
+            return;
+        }
+
+        // Create form data
+        const formData = new FormData();
+        formData.append('memo_id', memoId);
+        
+        // Add each selected ID as a separate array element
+        selectedIds.forEach(id => {
+            formData.append('lr_ids[]', id);
+        });
+
+        // Send AJAX request
+        fetch('/lorry_receipts/bulk-payment', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Memo ID updated successfully for selected lorry receipts');
+                // Refresh the page to show updated LR numbers
+                location.reload();
+            } else {
+                alert(data.message || 'Failed to update LR numbers');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while updating LR numbers');
+        });
+    };
+
+    // Update bulk payment button visibility
+    const updateBulkPaymentBtn = function() {
+        const selectedIds = getSelectedLorryReceipts();
+        const bulkPaymentBtn = document.getElementById('bulkPaymentBtn');
+        bulkPaymentBtn.classList.toggle('d-none', selectedIds.length === 0);
+    };
+
+    // Call updateBulkPaymentBtn when any checkbox changes
+    rowCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateBulkPaymentBtn();
+        });
+    });
+
+    // Initial visibility check
+    updateBulkPaymentBtn();
 });
 
 </script>
