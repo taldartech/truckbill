@@ -11,9 +11,15 @@
     @endif
 
     <div class="d-flex justify-content-end gap-2 mb-3">
-        <button type="button" id="bulkPaymentBtn" class="btn btn-lg btn-primary d-none" onclick="handleBulkPayment()">
+        {{-- <button type="button" id="bulkPaymentBtn" class="btn btn-lg btn-primary d-none" onclick="handleBulkPayment()">
             <i class="bi bi-cash-coin"></i> Bulk Payment
-        </button>
+        </button> --}}
+        <button type="button" id="bulkPaymentBtn" 
+        class="btn btn-lg btn-primary d-none"
+        onclick="handleBulkPayment()"
+        style="position: fixed; bottom: 20px; right: 20px; z-index: 1050;">
+    <i class="bi bi-cash-coin"></i> Bulk Payment
+</button>
         <button type="button" class="btn btn-info" onclick="document.getElementById('advanced-search-box').classList.toggle('d-none')">
             <i class="bi bi-funnel"></i> Search filter
         </button>
