@@ -219,14 +219,14 @@
             </div>
             <div class="col-md-3 mb-3">
                 <label for="is_delivered" class="form-label">Delivered?</label>
-                <select name="is_delivered" id="is_delivered" class="form-select">
+                <select name="is_delivered" id="is_delivered" class="form-select" {{ Auth::user()->role !== 'super_admin' && old('is_delivered', $freight_booking->is_delivered) == '1' ? 'disabled' : '' }}>
                     <option value="0" {{ old('is_delivered', $freight_booking->is_delivered) == '0' ? 'selected' : '' }}>No</option>
                     <option value="1" {{ old('is_delivered', $freight_booking->is_delivered) == '1' ? 'selected' : '' }}>Yes</option>
                 </select>
             </div>
             <div class="col-md-3 mb-3">
                 <label for="is_cancelled" class="form-label">Cancelled?</label>
-                <select name="is_cancelled" id="is_cancelled" class="form-select">
+                <select name="is_cancelled" id="is_cancelled" class="form-select" {{ Auth::user()->role !== 'super_admin' && old('is_delivered', $freight_booking->is_delivered) == '1' ? 'disabled' : '' }}>
                     <option value="0" {{ old('is_cancelled', $freight_booking->is_cancelled) == '0' ? 'selected' : '' }}>No</option>
                     <option value="1" {{ old('is_cancelled', $freight_booking->is_cancelled) == '1' ? 'selected' : '' }}>Yes</option>
                 </select>

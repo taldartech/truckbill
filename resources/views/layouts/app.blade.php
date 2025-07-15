@@ -476,12 +476,12 @@
                               <p> Listing</p>
                             </a>
                           </li>
-                          <li class="nav-item">
+                          {{-- <li class="nav-item">
                             <a href="/freight_bookings/create" class="nav-link{{ Request::is('freight_bookings/create') ? ' active' : '' }}">
                               <i class="fas fa-plus"></i> 
                             <p>Register</p>
                             </a>
-                          </li>
+                          </li> --}}
                     </ul>
                   </li>
                   <li class="nav-item">

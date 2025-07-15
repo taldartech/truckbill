@@ -18,7 +18,7 @@
         class="btn btn-lg btn-primary d-none"
         onclick="handleBulkPayment()"
         style="position: fixed; bottom: 20px; right: 20px; z-index: 1050;">
-    <i class="bi bi-cash-coin"></i> Bulk Payment
+    <i class="bi bi-cash-coin"></i> Memo Update
 </button>
         <button type="button" class="btn btn-info" onclick="document.getElementById('advanced-search-box').classList.toggle('d-none')">
             <i class="bi bi-funnel"></i> Search filter
@@ -356,7 +356,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="bulkPaymentModalLabel">Bulk Payment</h5>
+                <h5 class="modal-title" id="bulkPaymentModalLabel">Memo Update </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
