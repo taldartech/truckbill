@@ -219,17 +219,31 @@
             </div>
             <div class="col-md-3 mb-3">
                 <label for="is_delivered" class="form-label">Delivered?</label>
-                <select name="is_delivered" id="is_delivered" class="form-select" {{ Auth::user()->role !== 'super_admin' && old('is_delivered', $freight_booking->is_delivered) == '1' ? 'disabled' : '' }}>
-                    <option value="0" {{ old('is_delivered', $freight_booking->is_delivered) == '0' ? 'selected' : '' }}>No</option>
-                    <option value="1" {{ old('is_delivered', $freight_booking->is_delivered) == '1' ? 'selected' : '' }}>Yes</option>
-                </select>
+                @if(Auth::user()->role !== 'super_admin' && old('is_delivered', $freight_booking->is_delivered) == '1')
+                    <div class="input-group">
+                        <input type="text" class="form-control" value="Yes" readonly>
+                        <input type="hidden" name="is_delivered" value="1">
+                    </div>
+                @else
+                    <select name="is_delivered" id="is_delivered" class="form-select">
+                        <option value="0" {{ old('is_delivered', $freight_booking->is_delivered) == '0' ? 'selected' : '' }}>No</option>
+                        <option value="1" {{ old('is_delivered', $freight_booking->is_delivered) == '1' ? 'selected' : '' }}>Yes</option>
+                    </select>
+                @endif
             </div>
             <div class="col-md-3 mb-3">
                 <label for="is_cancelled" class="form-label">Cancelled?</label>
-                <select name="is_cancelled" id="is_cancelled" class="form-select" {{ Auth::user()->role !== 'super_admin' && old('is_delivered', $freight_booking->is_delivered) == '1' ? 'disabled' : '' }}>
-                    <option value="0" {{ old('is_cancelled', $freight_booking->is_cancelled) == '0' ? 'selected' : '' }}>No</option>
-                    <option value="1" {{ old('is_cancelled', $freight_booking->is_cancelled) == '1' ? 'selected' : '' }}>Yes</option>
-                </select>
+                @if(Auth::user()->role !== 'super_admin' && old('is_delivered', $freight_booking->is_delivered) == '1')
+                    <div class="input-group">
+                        <input type="text" class="form-control" value="No" readonly>
+                        <input type="hidden" name="is_cancelled" value="0">
+                    </div>
+                @else
+                    <select name="is_cancelled" id="is_cancelled" class="form-select">
+                        <option value="0" {{ old('is_cancelled', $freight_booking->is_cancelled) == '0' ? 'selected' : '' }}>No</option>
+                        <option value="1" {{ old('is_cancelled', $freight_booking->is_cancelled) == '1' ? 'selected' : '' }}>Yes</option>
+                    </select>
+                @endif
             </div>
         </div>
         <div class="row">
@@ -250,4 +264,99 @@
         <a href="{{ route('freight_bookings.index') }}" class="btn btn-secondary ms-2">Back to List</a>
     </form>
 </div>
+
+<!-- Modal for Memo Update -->
+<div class="modal fade" id="memoUpdateModal" tabindex="-1" aria-labelledby="memoUpdateModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="memoUpdateModalLabel">Memo Update</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="memoUpdateForm">
+                    <div class="mb-3">
+                        <label for="memoId" class="form-label">Memo ID *</label>
+                        <input type="text" class="form-control" id="memoId" name="memo_id" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="lr_id" class="form-label">LR Number *</label>
+                        <select name="lr_id" id="lr_id" class="form-select" required>
+                            <option value="">Select LR Number</option>
+                            @foreach($lrs as $lr)
+                                <option value="{{ $lr->id }}" {{ $freight_booking->lr_id == $lr->id ? 'selected' : '' }}>
+                                    {{ $lr->lr_number }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="processMemoUpdate()">Update</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Function to handle memo update
+    window.handleMemoUpdate = function() {
+        const modal = new bootstrap.Modal(document.getElementById('memoUpdateModal'));
+        // Set the selected LR
+        document.getElementById('lr_id').value = {{ $freight_booking->lr_id }};
+        modal.show();
+    };
+
+    // Function to process memo update
+    window.processMemoUpdate = function() {
+        const memoId = document.getElementById('memoId').value;
+        const lrId = document.getElementById('lr_id').value;
+        
+        if (!memoId) {
+            alert('Please enter a Memo ID');
+            return;
+        }
+
+        if (!lrId) {
+            alert('Please select an LR Number');
+            return;
+        }
+
+        // Create form data
+        const formData = new FormData();
+        formData.append('memo_id', memoId);
+        formData.append('lr_ids[]', lrId);
+
+        // Send AJAX request
+        fetch('/lorry_receipts/bulk-payment', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Memo ID updated successfully');
+                location.reload();
+            } else {
+                alert(data.message || 'Failed to update memo');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while updating memo');
+        });
+    };
+
+    // Add event listener to is_delivered select
+    document.getElementById('is_delivered').addEventListener('change', function() {
+        if (this.value === '1') {
+            handleMemoUpdate();
+        }
+    });
+</script>
 @endsection

@@ -177,14 +177,24 @@ class FreightBookingController extends Controller
         // Get linked bookings
         $linkedBookings = FreightBooking::where('id', '!=', $freight_booking->id)->get();
         
-        return view('freight_bookings.edit', compact(
-            'freight_booking', 
-            'lrs', 
-            'linkedBookings', 
-            'goodsTypes',
-            'transporter',
-            'truck'
-        ));
+        return view('freight_bookings.edit', [
+            'freight_booking' => $freight_booking,
+            'lrs' => $lrs,
+            'linkedBookings' => $linkedBookings,
+            'goodsTypes' => $goodsTypes,
+            'transporter' => $transporter,
+            'truck' => $truck,
+            'preFilled' => [
+                'lr_number' => $freight_booking->lr ? $freight_booking->lr->lr_number : '',
+                'lr_id' => $freight_booking->lr_id,
+                'transporter_id' => $freight_booking->lr ? $freight_booking->lr->transporter_id : '',
+                'transporter_name' => $transporter ? $transporter->name : '',
+                'truck_id' => $freight_booking->lr ? $freight_booking->lr->truck_id : '',
+                'truck_number' => $truck ? $truck->truck_number : '',
+                'pan_verified' => $transporter ? $transporter->pan_active : 0,
+                'is_owner' => $transporter ? $transporter->is_owner : 0,
+            ]
+        ]);
     }
 
     public function getLorryReceipt($id)
