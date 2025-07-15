@@ -146,9 +146,11 @@
                             <td>{{ $booking->is_cancelled ? 'Yes' : 'No' }}</td>
                             <td>
                                 <div class="d-flex gap-1">
-                                    <a href="{{ route('freight_bookings.edit', $booking->id) }}" class="btn btn-sm btn-info">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
+                                    @if(!$booking->is_cancelled)
+                                        <a href="{{ route('freight_bookings.edit', $booking->id) }}" class="btn btn-sm btn-info">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    @endif
                                     <form action="{{ route('freight_bookings.destroy', $booking->id) }}" method="POST" style="display:inline-block;">
                                         @csrf
                                         @method('DELETE')
