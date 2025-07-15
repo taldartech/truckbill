@@ -46,7 +46,7 @@ class FreightBookingController extends Controller
         ];
 
         $lorry_receipt = \App\Models\LorryReceipt::with(['transporter:id,name', 'truck:id,truck_number'])
-        ->select('id', 'lr_number', 'transporter_id', 'truck_id','customer_id','consignor_id','consignee_id')
+        ->select('id', 'lr_number', 'transporter_id', 'truck_id','customer_id','consignor_id','consignee_id','freight_booking_id')
         ->when($lorry_receipt_id, function ($query) use ($lorry_receipt_id) {
             $query->where('id', $lorry_receipt_id);
         })
@@ -66,6 +66,7 @@ class FreightBookingController extends Controller
                     'linkedBookings' => $linkedBookings,
                     'goodsTypes' => $goodsTypes,
                     'lorry_receipt' => $lorry_receipt,
+                    
                     'transporter' => $transporter ?? null,
                     'tdsPercentages' => $tdsPercentages,
                     'preFilled' => [
@@ -77,6 +78,7 @@ class FreightBookingController extends Controller
                         'truck_number' => $truck ? $truck->truck_number : '',
                         'pan_verified' => $transporter ? $transporter->pan_active : 0,
                         'is_owner' => $transporter ? $transporter->is_owner : 0,
+                        
                     ]
                 ]);
             }

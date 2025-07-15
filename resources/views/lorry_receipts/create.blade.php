@@ -425,6 +425,7 @@ agencyCheckbox.addEventListener('change', () => {
             const ownerAgencySection = document.getElementById('ownerAgencySection');
             if (truckSelect.value) {
                 ownerAgencySection.style.display = 'block';
+            
                 updateOwnerTransporters();
                 updateAgencyTransporters();
             } else {

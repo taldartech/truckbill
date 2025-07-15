@@ -22,6 +22,13 @@
         <div class="col-md-3">
             <p><strong>Consignee:</strong> {{ $lorry_receipt->first()->consignee->name }}</p>
         </div>
+        @if($lorry_receipt->first()->freight_booking_id)
+        <div class="col-md-3">
+            <div class="bg-danger text-white p-2 rounded">
+                <p class="mb-0"><strong>Old Freight Number:</strong> {{ $lorry_receipt->first()->freight_booking_id }}</p>
+            </div>
+        </div>
+        @endif
        
     </div>
 </div>
