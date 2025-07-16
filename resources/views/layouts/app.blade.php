@@ -946,5 +946,6 @@ sparkline3.render();
         }
       });
     </script>
+    @yield('scripts')
 </body>
 </html>

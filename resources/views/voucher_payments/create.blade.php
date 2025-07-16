@@ -30,11 +30,12 @@
     <!--end::Header-->
     <!--begin::Form-->
     <form method="POST" action="{{ route('voucher_payments.store') }}" class="needs-validation" novalidate>
-       
+        @csrf
+        <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
+
         @if(isset($freight_booking_id))
             <input type="hidden" name="freight_booking_id" value="{{ $freight_booking_id }}">
         @endif
-        @csrf
         <!--begin::Body-->
         <div class="card-body">
             <!--begin::Row-->
@@ -84,12 +85,12 @@
                 </div>
                 <!--end::Col-->
                 <!--begin::Col-->
-                <div class="col-md-6">
+                {{-- <div class="col-md-6">
                     <label for="transaction_id" class="form-label">Transaction ID *</label>
                     <input type="text" name="transaction_id" id="transaction_id" class="form-control" value="{{ old('transaction_id') }}" required>
                     @error('transaction_id') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please enter a transaction ID.</div>
-                </div>
+                </div> --}}
                 <!--end::Col-->
                 <!--begin::Col-->
                 <div class="col-md-6">
@@ -100,7 +101,12 @@
                 </div>
                 <!--end::Col-->
                 <!--begin::Col-->
-                <div class="col-md-6">
+                <!-- Hidden payment_status for operators -->
+                @php
+                $isAdmin = auth()->user()->userRole && auth()->user()->userRole->name === 'admin';
+            @endphp
+               
+                <div class="col-md-6"  @if(!$isAdmin) style="display: none;" @endif>
                     <label for="payment_status" class="form-label">Payment Status *</label>
                     <select name="payment_status" id="payment_status" class="form-select" required>
                         <option value="pending" {{ old('payment_status') == 'pending' ? 'selected' : '' }}>Pending</option>
@@ -114,7 +120,79 @@
             </div>
             <!--end::Row-->
         </div>
-        <!--end::Body-->
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const paymentModeSelect = document.getElementById('payment_mode');
+                const paymentStatusSelect = document.getElementById('payment_status');
+                const isAdmin = @json(auth()->user()->userRole->name === 'admin');
+            
+                paymentModeSelect.addEventListener('change', function() {
+                    const selectedValue = this.value.toLowerCase();
+            
+                    if (isAdmin) {
+                        if (selectedValue === 'cash' || selectedValue === 'adjust in advance') {
+                            paymentStatusSelect.value = 'in-progress';
+                        } else if (['bank', 'online', 'fuel'].includes(selectedValue)) {
+                            paymentStatusSelect.value = 'pending';
+                            paymentStatusSelect.disabled = false;
+                        } else {
+                            paymentStatusSelect.disabled = false;
+                        }
+                    } else {
+                        // Operator (non-admin)
+                        if (selectedValue === 'cash' || selectedValue === 'adjust in advance') {
+                            paymentStatusSelect.value = 'in-progress';
+                        } else if (['bank', 'online', 'fuel'].includes(selectedValue)) {
+                            paymentStatusSelect.value = 'pending';
+                        }
+                    }
+                });
+            
+                // Trigger change once at start (in case of edit or default selection)
+                paymentModeSelect.dispatchEvent(new Event('change'));
+            });
+            </script>
+{{-- 
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const paymentModeSelect = document.getElementById('payment_mode');
+                const paymentStatusSelect = document.getElementById('payment_status');
+                const isAdmin = auth()->user()->role === 'admin';
+
+                paymentModeSelect.addEventListener('change', function() {
+                    // Get the selected option value (which is the payment mode name)
+                    const selectedValue = this.value;
+                    console.log('Selected payment mode:', selectedValue);
+                    
+                    if (isAdmin) {
+                        if (selectedValue.toLowerCase() === 'cash' || selectedValue.toLowerCase() === 'adjust in advance') {
+                            console.log('Cash selected, setting status to in-progress');
+                            paymentStatusSelect.value = 'in-progress';
+                            // paymentStatusSelect.disabled = true;
+                        } else if (selectedValue.toLowerCase() === 'bank' || 
+                                   selectedValue.toLowerCase() === 'online' || 
+                                   selectedValue.toLowerCase() === 'fuel') {
+                            console.log('Bank/Online/Fuel selected, setting status to pending');
+                            paymentStatusSelect.value = 'pending';
+                            paymentStatusSelect.disabled = false;
+                        } else {
+                            console.log('Other payment mode selected, enabling status');
+                            paymentStatusSelect.disabled = false;
+                        }
+                    } else {
+                        // For operators, set payment status based on payment mode
+                        if (selectedValue.toLowerCase() === 'cash' || selectedValue.toLowerCase() === 'adjust in advance') {
+                            paymentStatusSelect.value = 'in-progress';
+                        } else if (selectedValue.toLowerCase() === 'bank' || 
+                                   selectedValue.toLowerCase() === 'online' || 
+                                   selectedValue.toLowerCase() === 'fuel') {
+                            paymentStatusSelect.value = 'pending';
+                        }
+                    }
+                });
+            });
+        </script>
+        <!--end::Body--> --}}
         <!--begin::Footer-->
         <div class="card-footer">
             <button class="btn btn-info" type="submit">Submit form</button>

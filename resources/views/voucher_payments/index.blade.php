@@ -105,7 +105,7 @@
                         <th>Voucher #</th>
                         <th>Payment Type</th>
                         <th>Payment Mode</th>
-                        <th>Transaction ID</th>
+                     
                         <th>Amount</th>
                         <th>Status</th>
                         <th>Actions</th>
@@ -118,12 +118,11 @@
                             <td><strong>{{ $payment->voucher_number }}</strong></td>
                             <td>{{ ucfirst($payment->payment_type) }}</td>
                             <td>{{ ucfirst(str_replace('_', ' ', $payment->payment_mode)) }}</td>
-                            <td>{{ $payment->transaction_id }}</td>
                             <td class="text-success fw-bold">₹{{ number_format($payment->amount, 2) }}</td>
                             <td>{!! $payment->getPaymentStatusBadge() !!}</td>
                             <td>
                                 <div class="d-flex gap-1">
-                                    <a href="{{ route('voucher_payments.edit', $payment) }}" class="btn btn-sm btn-info">
+                                    <a href="{{ route('voucher_payments.edit', $payment) }}?lorry_receipt_id={{ $payment->freight_booking ? $payment->freight_booking->lr_id : '' }}&freight_booking_id={{ $payment->freight_booking_id }}" class="btn btn-sm btn-info">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                     <form action="{{ route('voucher_payments.destroy', $payment) }}" method="POST" style="display:inline-block;">

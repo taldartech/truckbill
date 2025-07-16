@@ -14,9 +14,11 @@ class VoucherPayment extends Model
         'payment_type',
         'payment_mode',
         'amount',
-        'transaction_id',
+        'transaction_id' => 'nullable',
+        'reference_transaction_id',
         'remark',
         'payment_status',
+        'company_id'
     ];
 
     public function voucher()
@@ -27,6 +29,11 @@ class VoucherPayment extends Model
     public function company()
     {
         return $this->belongsTo(Company::class);
+    }
+
+    public function freight_booking()
+    {
+        return $this->belongsTo(FreightBooking::class);
     }
 
     public function getPaymentStatusBadge()

@@ -21,11 +21,13 @@ class VoucherPaymentController extends Controller
             $query->where('payment_status', $request->payment_status);
         }
         $payments = $query->orderByDesc('id')->paginate(20);
-        return view('voucher_payments.index', compact('payments'));
+        $companies = \App\Models\Company::all();
+        return view('voucher_payments.index', compact('payments','companies'));
     }
 
     public function create(Request $request)
     {
+        $companies = \App\Models\Company::all();
         $freight_booking_id = $request->freight_booking_id;
         $lorry_receipt_id = $request->lorry_receipt_id;
         // $lorry_receipt = \App\Models\LorryReceipt::select('id', 'lr_number','transporter_id','truck_id')
@@ -51,7 +53,7 @@ class VoucherPaymentController extends Controller
         $paymentTypes = PaymentType::all();
         $paymentModes = PaymentMode::all();
         
-        return view('voucher_payments.create', compact('voucher_number', 'paymentTypes', 'paymentModes', 'freight_booking_id','lorry_receipt'));
+        return view('voucher_payments.create', compact('voucher_number', 'paymentTypes', 'paymentModes', 'freight_booking_id','lorry_receipt','companies'));
     }
 
     public function store(Request $request)
@@ -62,21 +64,34 @@ class VoucherPaymentController extends Controller
            
             'payment_type' => 'required|string',
             'payment_mode' => 'required|string',
-            'transaction_id' => 'required|string',
+           
             'amount' => 'required|numeric|min:0',
             'remark' => 'nullable|string',
             'payment_status' => 'required|in:pending,in-progress,paid',
+            'company_id' => 'required|exists:companies,id',
         ]);
         VoucherPayment::create($data);
         return redirect()->route('voucher_payments.index')->with('success', 'Voucher Payment created successfully.');
     }
 
-    public function edit(VoucherPayment $voucher_payment)
+    public function edit(Request $request, VoucherPayment $voucher_payment)
     {
         $vouchers = \App\Models\FreightBooking::select('id', 'voucher_number')->get();
         $paymentTypes = PaymentType::all();
         $paymentModes = PaymentMode::all();
-        return view('voucher_payments.edit', compact('voucher_payment', 'vouchers', 'paymentTypes', 'paymentModes'));
+        $companies = \App\Models\Company::all();
+        
+        // Get lorry receipt and freight booking from request parameters
+        $lorry_receipt_id = $request->query('lorry_receipt_id', $voucher_payment->lorry_receipt_id);
+        $freight_booking_id = $request->query('freight_booking_id', $voucher_payment->freight_booking_id);
+        
+        // Get the lorry receipt
+        $lorry_receipt = \App\Models\LorryReceipt::with(['transporter:id,name', 'truck:id,truck_number', 'customer:id,name', 'consignor:id,name', 'consignee:id,name'])
+            ->select('id', 'lr_number', 'transporter_id', 'truck_id', 'customer_id', 'consignor_id', 'consignee_id')
+            ->where('id', $lorry_receipt_id)
+            ->get();
+
+        return view('voucher_payments.edit', compact('voucher_payment', 'vouchers', 'paymentTypes', 'paymentModes', 'lorry_receipt', 'freight_booking_id', 'companies'));
     }
 
     public function update(Request $request, VoucherPayment $voucher_payment)
@@ -87,10 +102,24 @@ class VoucherPaymentController extends Controller
           
             'payment_type' => 'required|string',
             'payment_mode' => 'required|string',
-            'transaction_id' => 'required|string',
+            
+            'reference_transaction_id' => 'nullable|string',
             'remark' => 'nullable|string',
             'payment_status' => 'required|in:pending,in-progress,paid',
+            'company_id' => 'required|exists:companies,id',
         ]);
+        
+        // Update payment status if conditions are met
+        if (
+            auth()->user()->userRole &&
+            auth()->user()->userRole->name === 'admin' &&
+            in_array($request->payment_mode, ['bank', 'online', 'fuel']) &&
+            $request->payment_status === 'in-progress' &&
+            $request->filled('reference_transaction_id')
+        ) {
+            $data['payment_status'] = 'paid';
+        }
+        
         $voucher_payment->update($data);
         return redirect()->route('voucher_payments.index')->with('success', 'Voucher Payment updated successfully.');
     }
