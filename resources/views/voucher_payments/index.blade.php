@@ -95,17 +95,65 @@
     </form>
 
     {{-- Main content card --}}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        
+        @if(auth()->user()->userRole->name === 'admin')
+        <div>
+            <button type="button" id="bulkUpdateBtn" 
+                    class="btn btn-lg btn-primary d-none"
+                    onclick="showBulkUpdateModal()"
+                    style="position: fixed; bottom: 20px; right: 20px; z-index: 1050;">
+                <i class="bi bi-cash-coin"></i> Bulk Update
+            </button>
+        </div>
+        @endif
+    </div>
+
+    <!-- Bulk Update Modal -->
+    <div class="modal fade" id="bulkUpdateModal" tabindex="-1" aria-labelledby="bulkUpdateModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="bulkUpdateModalLabel">Bulk Update Payment Status</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="bulkUpdateForm">
+                        <div class="mb-3">
+                            <label for="bulkPaymentStatus" class="form-label">Select New Payment Status *</label>
+                            <select name="payment_status" id="bulkPaymentStatus" class="form-select" required>
+                                <option value="pending">Pending</option>
+                                <option value="in-progress">In-Progress</option>
+                                <option value="paid">Paid</option>
+                            </select>
+                            <div class="invalid-feedback">Please select a payment status.</div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="submitBulkUpdate()">Update Status</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="card mb-4">
         <div class="card-header"><h3 class="card-title">Voucher Payments List</h3></div>
         <div class="card-body" style="overflow-x: auto;">
             <table class="table table-bordered">
                 <thead>
                     <tr>
+                        @if(auth()->user()->userRole->name === 'admin')
+                        <th style="width: 30px">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="select-all" onchange="toggleAllChecks(this.checked)">
+                            </div>
+                        </th>
+                        @endif
                         <th style="width: 10px">ID</th>
                         <th>Voucher #</th>
                         <th>Payment Type</th>
                         <th>Payment Mode</th>
-                     
                         <th>Amount</th>
                         <th>Status</th>
                         <th>Actions</th>
@@ -114,6 +162,13 @@
                 <tbody>
                     @forelse($payments as $payment)
                         <tr class="align-middle">
+                            @if(auth()->user()->userRole->name === 'admin')
+                            <td>
+                                <div class="form-check">
+                                    <input class="form-check-input row-check" type="checkbox" value="{{ $payment->id }}" data-payment-id="{{ $payment->id }}">
+                                </div>
+                            </td>
+                            @endif
                             <td>{{ $payment->id }}</td>
                             <td><strong>{{ $payment->voucher_number }}</strong></td>
                             <td>{{ ucfirst($payment->payment_type) }}</td>
@@ -137,7 +192,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="text-center">
+                            <td colspan="9" class="text-center">
                                 <div class="empty-state">
                                     <i class="bi bi-box"></i>
                                     <p class="mt-2">No payments found.</p>
@@ -156,13 +211,28 @@
     function toggleField(checkbox) {
         const fieldId = 'field_' + checkbox.value;
         const field = document.getElementById(fieldId);
+        const input = field.querySelector('input, select');
+
         if (checkbox.checked) {
             field.classList.remove('d-none');
         } else {
             field.classList.add('d-none');
-            const input = field.querySelector('input, select');
             if (input) input.value = '';
         }
+    }
+
+    // Handle select all/deselect all
+    function toggleAllChecks(checked) {
+        const checkboxes = document.querySelectorAll('.row-check');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = checked;
+        });
+    }
+
+    // Get selected payment IDs
+    function getSelectedPayments() {
+        const checkboxes = document.querySelectorAll('.row-check:checked');
+        return Array.from(checkboxes).map(checkbox => checkbox.value);
     }
 
     // Initialize filter fields based on URL parameters
@@ -183,5 +253,66 @@
             }
         });
     });
+
+    // Update bulk update button visibility
+    function updateBulkButtonVisibility() {
+        const bulkUpdateBtn = document.getElementById('bulkUpdateBtn');
+        const selectedCount = document.querySelectorAll('.row-check:checked').length;
+        bulkUpdateBtn.classList.toggle('d-none', selectedCount === 0);
+    }
+
+    // Show bulk update modal
+    function showBulkUpdateModal() {
+        const selectedPayments = getSelectedPayments();
+        if (selectedPayments.length === 0) {
+            alert('Please select at least one payment to update');
+            return;
+        }
+
+        const modal = new bootstrap.Modal(document.getElementById('bulkUpdateModal'));
+        modal.show();
+    }
+
+    // Submit bulk update
+    async function submitBulkUpdate() {
+        const selectedPayments = getSelectedPayments();
+        const newStatus = document.getElementById('bulkPaymentStatus').value;
+
+        if (!newStatus) {
+            alert('Please select a payment status');
+            return;
+        }
+
+        if (!confirm(`Are you sure you want to update ${selectedPayments.length} payment(s) to status: ${newStatus}?`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch('{{ route('voucher_payments.bulkUpdateStatus') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    _token: '{{ csrf_token() }}',
+                    payment_ids: selectedPayments,
+                    new_status: newStatus
+                })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert('Payment status updated successfully');
+                window.location.reload();
+            } else {
+                alert(result.message || 'Failed to update payment status');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while updating payment status');
+        }
+    }
 </script>
 @endsection

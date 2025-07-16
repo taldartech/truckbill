@@ -129,4 +129,31 @@ class VoucherPaymentController extends Controller
         $voucher_payment->delete();
         return redirect()->route('voucher_payments.index')->with('success', 'Voucher Payment deleted.');
     }
+
+    /**
+     * Update payment status for multiple payments
+     */
+    public function bulkUpdateStatus(Request $request)
+    {
+        $validated = $request->validate([
+            'payment_ids' => 'required|array|min:1',
+            'payment_ids.*' => 'required|integer|exists:voucher_payments,id',
+            'new_status' => 'required|in:pending,in-progress,paid'
+        ]);
+
+        try {
+            VoucherPayment::whereIn('id', $validated['payment_ids'])
+                ->update(['payment_status' => $validated['new_status']]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment status updated successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating payment status: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

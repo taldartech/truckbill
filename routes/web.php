@@ -127,6 +127,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Voucher Payments
     Route::resource('voucher_payments', VoucherPaymentController::class);
+    Route::post('voucher_payments/bulk-update', [VoucherPaymentController::class, 'bulkUpdateStatus'])->name('voucher_payments.bulkUpdateStatus');
 
     // Transporter Bank Accounts
     // Transporter Bank Accounts

@@ -97,7 +97,7 @@
             <table class="table table-bordered">
                 <thead>
                     <tr>
-                        <th><input type="checkbox" id="selectAllCheckbox"></th>
+                       <th><input type="checkbox" id="selectAllCheckbox"></th>
                         <th style="width: 10px">Sr. No</th>
                         <th>LR Number</th>
                         <th>Consignor</th>
