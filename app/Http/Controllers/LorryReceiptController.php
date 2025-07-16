@@ -16,7 +16,7 @@ class LorryReceiptController extends Controller
     public function index(Request $request)
     {
         $statuses = ['Pending', 'Delivered', 'Cancelled','In-Progress'];
-        $query = \App\Models\LorryReceipt::with(['truck', 'transporter', 'consignor', 'consignee', 'company','customer']);
+        $query = \App\Models\LorryReceipt::with(['truck', 'transporter', 'consignor', 'consignee', 'company','customer','freightBooking']);
 
         // Only apply company_id filter for non-super_admin users
         if (auth()->user()->userRole->name !== 'super_admin') {

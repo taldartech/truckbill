@@ -77,7 +77,7 @@ class LorryReceipt extends Model
 
     public function freightBooking()
     {
-        return $this->hasOne(FreightBooking::class);
+        return $this->belongsTo(FreightBooking::class, 'freight_booking_id');
     }
     public function customer() { return $this->belongsTo(Consignee::class, 'customer_id'); }
 }
