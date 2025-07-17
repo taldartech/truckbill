@@ -67,22 +67,23 @@ class VoucherPaymentController extends Controller
 
     public function store(Request $request)
     {
+        // Validate basic fields
         $data = $request->validate([
             'freight_booking_id' => 'required|exists:freight_bookings,id',
             'voucher_number' => 'required|string',
-           
             'payment_type' => 'required|string',
             'payment_mode' => 'required|string',
-           
             'amount' => 'required|numeric|min:0',
             'remark' => 'nullable|string',
             'payment_status' => 'required|in:pending,in-progress,paid',
             'company_id' => 'required|exists:companies,id',
+        
+           
         ]);
 
         // Create voucher payment
         $voucherPayment = VoucherPayment::create($data);
-
+        
         // Get the freight booking and update advance_amount
         $freightBooking = \App\Models\FreightBooking::findOrFail($data['freight_booking_id']);
         
@@ -102,7 +103,9 @@ class VoucherPaymentController extends Controller
         // Save the freight booking
         $freightBooking->save();
 
-        return redirect()->route('voucher_payments.index')->with('success', 'Voucher Payment created successfully.');
+        // Redirect back to lorry receipts page with success message
+        return redirect()->route('lorry_receipts.index')
+            ->with('success', 'Payment allocated successfully.');
     }
 
     public function edit(Request $request, VoucherPayment $voucher_payment)

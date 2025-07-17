@@ -119,7 +119,7 @@
                     @forelse($lrs as $lr)
                     <tr class="align-middle">
                         <td><input type="checkbox" class="rowCheckbox" value="{{ $lr->id }}" data-lr="{{ $lr->lr_number }}"
-                            data-truck="{{ $lr->truck->truck_number }}"  data-balance="{{ $lr->freightBooking?->balance_amount ?? 0 }}" data-payment-status="{{ strtolower($lr->delivery_status )}}"></td>
+                            data-truck="{{ $lr->truck->truck_number }}" data-freight_booking_id="{{ $lr->freight_booking_id }}" data-balance="{{ $lr->freightBooking?->balance_amount ?? 0 }}" data-voucher_number="{{ $lr->freightBooking?->voucher_number ?? 0 }}" data-payment-status="{{ strtolower($lr->delivery_status )}}"></td>
                         <td>{{ $loop->iteration }}</td>
                         <td>
                             <a href="#" class="table-link" onclick="showLRDetails({{ $lr->id }})">
@@ -433,6 +433,7 @@
 }
 </style>
 
+
 <script>
 // Select all checkbox functionality
 document.addEventListener('DOMContentLoaded', function() {
@@ -500,6 +501,137 @@ document.addEventListener('DOMContentLoaded', function() {
             modal.show();
         }
     };
+    //voucher bulk payment
+    window.submitVoucherPayment = function() {
+        // Store logs in localStorage
+        const debugLogs = localStorage.getItem('debugLogs') || '[]';
+        const logs = JSON.parse(debugLogs);
+        
+        console.log("submitVoucherPayment function called");
+        logs.push({ timestamp: new Date().toISOString(), message: "submitVoucherPayment function called" });
+        
+        try {
+            const paymentType = document.getElementById('payment_type');
+            const paymentMode = document.getElementById('payment_mode');
+            const totalAllocated = document.getElementById('totalAllocatedAmount');
+            const checkboxes = document.querySelectorAll('.rowCheckbox:checked');
+            const submitButton = document.querySelector('.btn-success[onclick="submitVoucherPayment()"]');
+
+            // Store form values in localStorage
+            const formValues = {
+                paymentType: paymentType ? paymentType.value : 'null',
+                paymentMode: paymentMode ? paymentMode.value : 'null',
+                totalAllocated: totalAllocated ? totalAllocated.value : 'null',
+                selectedCheckboxes: checkboxes.length
+            };
+            
+            logs.push({ 
+                timestamp: new Date().toISOString(), 
+                message: "Form values:",
+                data: formValues
+            });
+            
+            // Update localStorage with logs
+            localStorage.setItem('debugLogs', JSON.stringify(logs));
+            
+            // Add temporary alert to pause execution
+            alert('Debug logs have been saved. Check console and localStorage for details.');
+            
+            console.log("Form values:", formValues);
+            console.log("DOM Elements:", {
+                paymentType: paymentType,
+                paymentMode: paymentMode,
+                totalAllocated: totalAllocated,
+                checkboxes: checkboxes.length
+            });
+
+            if (!paymentType || !paymentType.value) {
+                console.error('Payment type validation failed');
+                alert('Please select payment type');
+                return;
+            }
+            if (!paymentMode || !paymentMode.value) {
+                console.error('Payment mode validation failed');
+                alert('Please select payment mode');
+                return;
+            }
+            if (!totalAllocated || !totalAllocated.value) {
+                alert('Please enter payment amount');
+                return;
+            }
+            if (checkboxes.length === 0) {
+                alert('Please select at least one Lorry Receipt');
+                return;
+            }
+
+            // Disable submit button and show loading state
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Processing...';
+
+            // Submit the form directly
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ route("voucher_payments.store") }}';
+            form.className = 'd-none'; // Hide the form
+
+            // Add CSRF token
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_token';
+            csrfInput.value = csrfToken;
+            form.appendChild(csrfInput);
+
+            // Add form inputs
+            const inputs = [
+                { name: 'voucher_number', value: checkboxes[0].getAttribute('data-voucher_number') },
+                { name: 'payment_type', value: paymentType.value },
+                { name: 'payment_mode', value: paymentMode.value },
+                { name: 'amount', value: totalAllocated.value },
+                { name: 'reference_transaction_id', value: document.getElementById('reference_transaction_id')?.value || '' },
+                { name: 'remark', value: document.getElementById('remark')?.value || '' },
+                { name: 'payment_status', value: paymentMode.value.toLowerCase() === 'cash' || paymentMode.value.toLowerCase() === 'adjust in advance' ? 'in-progress' : 'pending' }
+            ];
+
+            inputs.forEach(input => {
+                const inputElement = document.createElement('input');
+                inputElement.type = 'hidden';
+                inputElement.name = input.name;
+                inputElement.value = input.value;
+                form.appendChild(inputElement);
+                // ✅ Add freight_booking_id and company_id
+const freightBookingIdInput = document.createElement('input');
+freightBookingIdInput.type = 'hidden';
+freightBookingIdInput.name = 'freight_booking_id';
+freightBookingIdInput.value = checkboxes[0].getAttribute('data-freight_booking_id');
+form.appendChild(freightBookingIdInput);
+
+const companyIdInput = document.createElement('input');
+companyIdInput.type = 'hidden';
+companyIdInput.name = 'company_id';
+companyIdInput.value = '{{ auth()->user()->company_id }}';
+form.appendChild(companyIdInput);
+
+            });
+
+            // Add selected LRs
+            checkboxes.forEach(cb => {
+                const lrInput = document.createElement('input');
+                lrInput.type = 'hidden';
+                lrInput.name = 'lr_numbers[]';
+                lrInput.value = cb.getAttribute('data-lr');
+                form.appendChild(lrInput);
+            });
+
+            // Append form to body and submit
+            document.body.appendChild(form);
+            form.submit();
+
+        } catch (error) {
+            console.error('Exception:', error);
+            alert('Unexpected error occurred.');
+        }
+    }
 
     // Function to process bulk payment
     window.processBulkPayment = function() {
@@ -617,138 +749,24 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <script>
-//     function handleVoucherPayment() {
-//     const checkboxes = document.querySelectorAll('.rowCheckbox:checked');
-//     const modalBody = document.getElementById('voucherPaymentBody');
-//     modalBody.innerHTML = '';
 
-//     if (checkboxes.length === 0) {
-//         alert("Please select at least one Lorry Receipt.");
-//         return;
-//     }
-
-//     checkboxes.forEach((checkbox, index) => {
-//         const lrNumber = checkbox.getAttribute('data-lr');
-//         const truckNumber = checkbox.getAttribute('data-truck');
-
-//         modalBody.innerHTML += `
-//             <div class="mb-3 border-bottom pb-2">
-//                 <strong>${index + 1}. LR Number:</strong> ${lrNumber}<br>
-//                 <strong>Truck Number:</strong> ${truckNumber}
-//                 <input type="number" class="form-control mt-2" name="amounts[]" placeholder="Enter Amount" required>
-//                 <input type="hidden" name="lr_numbers[]" value="${lrNumber}">
-//             </div>
-//         `;
-//     });
-
-//     const modal = new bootstrap.Modal(document.getElementById('voucherPaymentModal'));
-//     modal.show();
-// }
-// function handleVoucherPayment() {
-//     const checkboxes = document.querySelectorAll('.rowCheckbox:checked');
-//     const modalBody = document.getElementById('voucherPaymentBody');
-//     modalBody.innerHTML = '';
-
-//     if (checkboxes.length === 0) {
-//         alert("Please select at least one Lorry Receipt.");
-//         return;
-//     }
-
-//     // Collect all truck numbers
-//     const truckNumbers = Array.from(checkboxes).map(cb => cb.getAttribute('data-truck'));
-
-//     // Check if all truck numbers are the same
-//     const firstTruck = truckNumbers[0];
-//     const allSameTruck = truckNumbers.every(truck => truck === firstTruck);
-
-//     if (!allSameTruck) {
-//         alert("Selected Lorry Receipts belong to different Truck Numbers. Please select LRs with the same truck.");
-//         return;
-//     }
-
-//     // Build modal content
-//     checkboxes.forEach((checkbox, index) => {
-//         const lrNumber = checkbox.getAttribute('data-lr');
-//         const truckNumber = checkbox.getAttribute('data-truck');
-
-//         modalBody.innerHTML += `
-//             <div class="mb-3 border-bottom pb-2">
-//                 <strong>${index + 1}. LR Number:</strong> ${lrNumber}<br>
-//                 <strong>Truck Number:</strong> ${truckNumber}
-//                 <input type="number" class="form-control mt-2" name="amounts[]" placeholder="Enter Amount" required>
-//                 <input type="hidden" name="lr_numbers[]" value="${lrNumber}">
-//             </div>
-//         `;
-//     });
-
-//     // Show modal if validation passed
-//     const modal = new bootstrap.Modal(document.getElementById('voucherPaymentModal'));
-//     modal.show();
-// }
-// function handleVoucherPayment() {
-//     const checkboxes = document.querySelectorAll('.rowCheckbox:checked');
-//     const modalBody = document.getElementById('voucherPaymentBody');
-//     modalBody.innerHTML = '';
-
-//     if (checkboxes.length === 0) {
-//         alert("Please select at least one Lorry Receipt.");
-//         return;
-//     }
-
-//     // Collect truck numbers
-//     const truckNumbers = Array.from(checkboxes).map(cb => cb.getAttribute('data-truck'));
-//     const firstTruck = truckNumbers[0];
-//     const allSameTruck = truckNumbers.every(truck => truck === firstTruck);
-
-//     if (!allSameTruck) {
-//         alert("Selected Lorry Receipts belong to different Truck Numbers. Please select LRs with the same truck.");
-//         return;
-//     }
-
-//     // Header: show truck number once at top-right
-//     modalBody.innerHTML += `
-//         <div class="d-flex justify-content-between align-items-center mb-3">
-//             <h5>Selected Lorry Receipts</h5>
-//             <div><strong>Truck Number:</strong> ${firstTruck}</div>
-//         </div>
-//     `;
-
-//     // Build LR list with amount input
-//     checkboxes.forEach((checkbox, index) => {
-//         const lrNumber = checkbox.getAttribute('data-lr');
-
-//         modalBody.innerHTML += `
-//             <div class="mb-3 border-bottom pb-2">
-//                 <strong>${index + 1}. LR Number:</strong> ${lrNumber}
-//                 <input type="number" class="form-control mt-2" name="amounts[]" placeholder="Enter Amount" required>
-//                 <input type="hidden" name="lr_numbers[]" value="${lrNumber}">
-//             </div>
-//         `;
-//     });
-
-//     const modal = new bootstrap.Modal(document.getElementById('voucherPaymentModal'));
-//     modal.show();
-// }
 function handleVoucherPayment() {
     const checkboxes = document.querySelectorAll('.rowCheckbox:checked');
     const modalBody = document.getElementById('voucherPaymentBody');
     
-
     modalBody.innerHTML = '';
-
-   
-
 
     if (checkboxes.length === 0) {
         alert("Please select at least one Lorry Receipt.");
         return;
     }
 
-//     const paymentStatus = checkboxes.getAttribute('data-payment-status') || 'pending';
-// if (paymentStatus.toLowerCase() === 'pending') {
-//     alert("Please create Freight Booking first.");
-//     return;
-// }
+    // Check if any LR has no voucher number
+    const hasNoVoucher = Array.from(checkboxes).some(cb => cb.getAttribute('data-voucher_number') === '0');
+    if (hasNoVoucher) {
+        alert("Please create Freight Booking first for selected Lorry Receipts.");
+        return;
+    }
 
     // Collect truck numbers
     const truckNumbers = Array.from(checkboxes).map(cb => cb.getAttribute('data-truck'));
@@ -768,32 +786,112 @@ function handleVoucherPayment() {
         </div>
     `;
 
-    // Show LR Number + balance amount (no input here)
-    checkboxes.forEach((checkbox, index) => {
-        const lrNumber = checkbox.getAttribute('data-lr');
-        const balance = checkbox.getAttribute('data-balance') || 0;
+    // Collect LR data for allocation
+    const lrData = Array.from(checkboxes).map(checkbox => ({
+        lrNumber: checkbox.getAttribute('data-lr'),
+        balance: parseFloat(checkbox.getAttribute('data-balance') || 0)
+    }));
 
+    // Show LR Number + balance amount and voucher number
+    lrData.forEach((item, index) => {
+        const voucherNumber = checkboxes[index].getAttribute('data-voucher_number');
         modalBody.innerHTML += `
             <div class="mb-3 border-bottom pb-2">
-                <strong>${index + 1}. LR Number:</strong> ${lrNumber}<br>
-                <strong>Balance Amount:</strong> ₹${parseFloat(balance).toFixed(2)}
-                <input type="hidden" name="lr_numbers[]" value="${lrNumber}">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div><strong>${index + 1}. LR Number:</strong> ${item.lrNumber}</div>
+                    <div><strong>Voucher Number:</strong> ${voucherNumber}</div>
+                </div>
+                <div class="mb-2">
+                    <strong>Balance Amount:</strong> ₹${item.balance.toFixed(2)}
+                </div>
+                <div>
+                    <strong>Allocated Amount:</strong> ₹<span class="allocated-amount" data-lr="${item.lrNumber}">0.00</span>
+                </div>
+                <input type="hidden" class="allocated-input" data-lr="${item.lrNumber}" name="allocated_amounts[${index}]" value="0">
             </div>
         `;
     });
 
-    // Add one final input for "Enter Amount"
+    // Add payment type, payment mode, and optional fields
     modalBody.innerHTML += `
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <label for="payment_type" class="form-label">Payment Type *</label>
+                <select name="payment_type" id="payment_type" class="form-select" required>
+                    <option value="">Select Payment Type</option>
+                    @foreach($paymentTypes as $paymentType)
+                        <option value="{{ $paymentType->name }}">
+                            {{ $paymentType->name }}
+                        </option>
+                    @endforeach
+                </select>
+                <div class="invalid-feedback">Please select a payment type.</div>
+            </div>
+            <div class="col-md-6">
+                <label for="payment_mode" class="form-label">Payment Mode *</label>
+                <select name="payment_mode" id="payment_mode" class="form-select" required>
+                    <option value="">Select Payment Mode</option>
+                    @foreach($paymentModes as $paymentMode)
+                        <option value="{{ $paymentMode->name }}">
+                            {{ $paymentMode->name }}
+                        </option>
+                    @endforeach
+                </select>
+                <div class="invalid-feedback">Please select a payment mode.</div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <label for="reference_transaction_id" class="form-label">Reference Transaction ID</label>
+                <input type="text" class="form-control" name="reference_transaction_id" id="reference_transaction_id">
+            </div>
+            <div class="col-md-6">
+                <label for="remark" class="form-label">Remark</label>
+                <input type="text" class="form-control" name="remark" id="remark">
+            </div>
+        </div>
+
         <div class="mt-4">
             <label><strong>Enter Payment Amount:</strong></label>
-            <input type="number" class="form-control" name="total_amount" placeholder="Enter Total Amount" required>
+            <input type="number" class="form-control" id="totalAmountInput" name="total_amount" placeholder="Enter Total Amount" required>
+            <input type="hidden" id="totalAllocatedAmount" name="amount_given" value="0">
         </div>
     `;
+
+    // Add allocation logic
+    const totalAmountInput = document.getElementById('totalAmountInput');
+    totalAmountInput.addEventListener('input', () => {
+        let remaining = parseFloat(totalAmountInput.value || 0);
+        let totalAllocated = 0;
+
+        lrData.forEach((item) => {
+            let allocate = 0;
+            if (remaining > 0) {
+                if (remaining >= item.balance) {
+                    allocate = item.balance;
+                    remaining -= item.balance;
+                } else {
+                    allocate = remaining;
+                    remaining = 0;
+                }
+            }
+
+            totalAllocated += allocate;
+
+            const span = document.querySelector(`.allocated-amount[data-lr="${item.lrNumber}"]`);
+            const hiddenInput = document.querySelector(`.allocated-input[data-lr="${item.lrNumber}"]`);
+            span.textContent = allocate.toFixed(2);
+            hiddenInput.value = allocate.toFixed(2);
+        });
+
+        // Update hidden total allocated input
+        document.getElementById('totalAllocatedAmount').value = totalAllocated.toFixed(2);
+    });
 
     const modal = new bootstrap.Modal(document.getElementById('voucherPaymentModal'));
     modal.show();
 }
-
 
 
     function showLRDetails(lrId) {

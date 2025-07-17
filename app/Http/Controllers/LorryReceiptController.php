@@ -48,9 +48,96 @@ class LorryReceiptController extends Controller
         }
 
         $lrs = $query->orderBy('id', 'desc')->paginate(10);
+
+        // Get payment types and payment modes
+        $paymentTypes = \App\Models\PaymentType::all();
+        $paymentModes = \App\Models\PaymentMode::all();
+
+        // Handle voucher payment submission
+        if ($request->isMethod('post')) {
+    //   dd("heelo");
+           
+            try {
+                // Get all required inputs
+                $voucherNumber = $request->input('voucher_number');
+                $paymentType = $request->input('payment_type');
+                $paymentMode = $request->input('payment_mode');
+                $amount = $request->input('amount', 0);
+                $paymentStatus = $request->input('payment_status');
+                $selectedLRs = $request->input('lr_numbers', []);
+
+                // Validate inputs
+                if (empty($selectedLRs)) {
+                    return redirect()->back()->with('error', 'Please select at least one Lorry Receipt');
+                }
+
+                if (!$voucherNumber) {
+                    return redirect()->back()->with('error', 'Please enter voucher number');
+                }
+
+                if (!$paymentType) {
+                    return redirect()->back()->with('error', 'Please select payment type');
+                }
+
+                if (!$paymentMode) {
+                    return redirect()->back()->with('error', 'Please select payment mode');
+                }
+
+                if ($amount <= 0) {
+                    return redirect()->back()->with('error', 'Please enter valid payment amount');
+                }
+
+                // Get the freight booking ID from the first selected LR
+                $firstLR = \App\Models\LorryReceipt::where('lr_number', $selectedLRs[0])->first();
+                if (!$firstLR || !$firstLR->freight_booking_id) {
+                    return redirect()->back()->with('error', 'Please create Freight Booking first');
+                }
+
+                $freightBooking = \App\Models\FreightBooking::findOrFail($firstLR->freight_booking_id);
+
+                // Validate payment amount
+                if ($freightBooking->advance_amount + $amount > $freightBooking->tr_amount) {
+                    $remaining = $freightBooking->tr_amount - $freightBooking->advance_amount;
+                    return redirect()->back()->with('error', 'Payment amount exceeds remaining balance. Remaining amount: ' . number_format($remaining, 2));
+                }
+
+                // Create voucher payment with all required fields
+                $voucherPayment = \App\Models\VoucherPayment::create([
+                    'freight_booking_id' => $freightBooking->id,
+                    'voucher_number' => $voucherNumber,
+                    'payment_type' => $paymentType,
+                    'payment_mode' => $paymentMode,
+                    'amount' => $amount,
+                    'reference_transaction_id' => $request->input('reference_transaction_id', null),
+                    'remark' => $request->input('remark', null),
+                    'payment_status' => $paymentStatus,
+                    'company_id' => auth()->user()->company_id,
+                ]);
+
+                if (!$voucherPayment) {
+                    throw new \Exception('Failed to create voucher payment');
+                }
+
+                // Update freight booking
+                $freightBooking->advance_amount += $amount;
+                $freightBooking->balance_amount = $freightBooking->tr_amount - $freightBooking->advance_amount;
+                
+                if (!$freightBooking->save()) {
+                    throw new \Exception('Failed to update freight booking');
+                }
+
+                return redirect()->back()->with('success', 'Payment allocated successfully');
+
+            } catch (\Exception $e) {
+                \Log::error('Voucher Payment Error: ' . $e->getMessage());
+                return redirect()->back()->with('error', 'An error occurred while processing payment: ' . $e->getMessage());
+            }
+        }
         return view('lorry_receipts.index', [
             'lrs' => $lrs,
-            'statuses' => $statuses
+            'statuses' => $statuses,
+            'paymentTypes' => $paymentTypes,
+            'paymentModes' => $paymentModes
         ]);
     }
 
