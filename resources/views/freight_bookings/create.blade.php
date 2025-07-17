@@ -2,6 +2,13 @@
 
 @section('content')
 
+@if (session('error'))
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
+
 <div class="card card-info card-outline mb-4" style="width: 70%;align-items: center;margin: auto;">
     <div class="row g-3">
          <div class="col-md-3 ps-4">
@@ -256,6 +263,14 @@
         function calculateBalance() {
             const trAmount = parseFloat(trAmountInput.value) || 0;
             const advanceAmount = parseFloat(advanceAmountInput.value) || 0;
+             // Prevent advance > TR
+        if (advanceAmount > trAmount) {
+            alert("Advance amount cannot be greater than TR amount.");
+            advanceAmountInput.value = '';
+            balanceAmountInput.value = trAmount.toFixed(2);
+          
+            return;
+        }
             const balance = trAmount - advanceAmount;
             balanceAmountInput.value = balance.toFixed(2);
             

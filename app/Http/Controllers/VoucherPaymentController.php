@@ -50,10 +50,19 @@ class VoucherPaymentController extends Controller
             ->get();
             $voucher_number = $vouchers->first()->voucher_number;
             
+        // Get balance amount from freight booking
+        $balanceAmount = null;
+        if ($freight_booking_id) {
+            $freightBooking = \App\Models\FreightBooking::find($freight_booking_id);
+            if ($freightBooking) {
+                $balanceAmount = $freightBooking->balance_amount;
+            }
+        }
+            
         $paymentTypes = PaymentType::all();
         $paymentModes = PaymentMode::all();
         
-        return view('voucher_payments.create', compact('voucher_number', 'paymentTypes', 'paymentModes', 'freight_booking_id','lorry_receipt','companies'));
+        return view('voucher_payments.create', compact('voucher_number', 'paymentTypes', 'paymentModes', 'freight_booking_id','lorry_receipt','companies', 'balanceAmount'));
     }
 
     public function store(Request $request)
@@ -70,7 +79,29 @@ class VoucherPaymentController extends Controller
             'payment_status' => 'required|in:pending,in-progress,paid',
             'company_id' => 'required|exists:companies,id',
         ]);
-        VoucherPayment::create($data);
+
+        // Create voucher payment
+        $voucherPayment = VoucherPayment::create($data);
+
+        // Get the freight booking and update advance_amount
+        $freightBooking = \App\Models\FreightBooking::findOrFail($data['freight_booking_id']);
+        
+        // Validate that advance amount won't exceed TR amount
+        if (($freightBooking->advance_amount + $data['amount']) > $freightBooking->tr_amount) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Advance amount cannot exceed TR amount.');
+        }
+
+        // Update advance_amount
+        $freightBooking->advance_amount += $data['amount'];
+        
+        // Recalculate balance_amount
+        $freightBooking->balance_amount = $freightBooking->tr_amount - $freightBooking->advance_amount;
+        
+        // Save the freight booking
+        $freightBooking->save();
+
         return redirect()->route('voucher_payments.index')->with('success', 'Voucher Payment created successfully.');
     }
 
@@ -90,8 +121,16 @@ class VoucherPaymentController extends Controller
             ->select('id', 'lr_number', 'transporter_id', 'truck_id', 'customer_id', 'consignor_id', 'consignee_id')
             ->where('id', $lorry_receipt_id)
             ->get();
+             // Get balance amount from freight booking
+        $balanceAmount = null;
+        if ($freight_booking_id) {
+            $freightBooking = \App\Models\FreightBooking::find($freight_booking_id);
+            if ($freightBooking) {
+                $balanceAmount = $freightBooking->balance_amount;
+            }
+        }
 
-        return view('voucher_payments.edit', compact('voucher_payment', 'vouchers', 'paymentTypes', 'paymentModes', 'lorry_receipt', 'freight_booking_id', 'companies'));
+        return view('voucher_payments.edit', compact('voucher_payment', 'vouchers', 'paymentTypes', 'paymentModes', 'lorry_receipt', 'freight_booking_id', 'companies','balanceAmount'));
     }
 
     public function update(Request $request, VoucherPayment $voucher_payment)
@@ -121,6 +160,7 @@ class VoucherPaymentController extends Controller
         }
         
         $voucher_payment->update($data);
+        
         return redirect()->route('voucher_payments.index')->with('success', 'Voucher Payment updated successfully.');
     }
 
