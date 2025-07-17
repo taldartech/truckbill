@@ -315,4 +315,83 @@
         }
     }
 </script>
+    <script>
+        // Toggle all checkboxes
+        function toggleAllChecks(checked) {
+            document.querySelectorAll('.row-check').forEach(checkbox => {
+                checkbox.checked = checked;
+            });
+            updateBulkUpdateButton();
+        }
+
+        // Update bulk update button visibility based on selected rows
+        function updateBulkUpdateButton() {
+            const selectedChecks = document.querySelectorAll('.row-check:checked');
+            const bulkUpdateBtn = document.getElementById('bulkUpdateBtn');
+            
+            if (selectedChecks.length > 0) {
+                bulkUpdateBtn.classList.remove('d-none');
+            } else {
+                bulkUpdateBtn.classList.add('d-none');
+            }
+        }
+
+        // Show bulk update modal
+        function showBulkUpdateModal() {
+            const selectedChecks = document.querySelectorAll('.row-check:checked');
+            if (selectedChecks.length === 0) {
+                alert('Please select at least one payment to update');
+                return;
+            }
+            
+            const modal = new bootstrap.Modal(document.getElementById('bulkUpdateModal'));
+            modal.show();
+        }
+
+        // Submit bulk update
+        async function submitBulkUpdate() {
+            const form = document.getElementById('bulkUpdateForm');
+            if (!form.checkValidity()) {
+                form.classList.add('was-validated');
+                return;
+            }
+
+            const selectedChecks = document.querySelectorAll('.row-check:checked');
+            const paymentIds = Array.from(selectedChecks).map(checkbox => checkbox.value);
+            const newStatus = document.getElementById('bulkPaymentStatus').value;
+
+            try {
+                const response = await fetch('{{ route('voucher_payments.bulkUpdateStatus') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        payment_ids: paymentIds,
+                        new_status: newStatus
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert('Payment statuses updated successfully');
+                    window.location.reload();
+                } else {
+                    alert(result.message || 'Failed to update payment statuses');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while updating payment statuses');
+            }
+        }
+
+        // Add event listeners to individual checkboxes
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.row-check').forEach(checkbox => {
+                checkbox.addEventListener('change', updateBulkUpdateButton);
+            });
+        });
+    </script>
 @endsection
