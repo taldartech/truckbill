@@ -501,138 +501,9 @@ document.addEventListener('DOMContentLoaded', function() {
             modal.show();
         }
     };
-    //voucher bulk payment
-    window.submitVoucherPayment = function() {
-        // Store logs in localStorage
-        const debugLogs = localStorage.getItem('debugLogs') || '[]';
-        const logs = JSON.parse(debugLogs);
-        
-        console.log("submitVoucherPayment function called");
-        logs.push({ timestamp: new Date().toISOString(), message: "submitVoucherPayment function called" });
-        
-        try {
-            const paymentType = document.getElementById('payment_type');
-            const paymentMode = document.getElementById('payment_mode');
-            const totalAllocated = document.getElementById('totalAllocatedAmount');
-            const checkboxes = document.querySelectorAll('.rowCheckbox:checked');
-            const submitButton = document.querySelector('.btn-success[onclick="submitVoucherPayment()"]');
-
-            // Store form values in localStorage
-            const formValues = {
-                paymentType: paymentType ? paymentType.value : 'null',
-                paymentMode: paymentMode ? paymentMode.value : 'null',
-                totalAllocated: totalAllocated ? totalAllocated.value : 'null',
-                selectedCheckboxes: checkboxes.length
-            };
-            
-            logs.push({ 
-                timestamp: new Date().toISOString(), 
-                message: "Form values:",
-                data: formValues
-            });
-            
-            // Update localStorage with logs
-            localStorage.setItem('debugLogs', JSON.stringify(logs));
-            
-            // Add temporary alert to pause execution
-            alert('Debug logs have been saved. Check console and localStorage for details.');
-            
-            console.log("Form values:", formValues);
-            console.log("DOM Elements:", {
-                paymentType: paymentType,
-                paymentMode: paymentMode,
-                totalAllocated: totalAllocated,
-                checkboxes: checkboxes.length
-            });
-
-            if (!paymentType || !paymentType.value) {
-                console.error('Payment type validation failed');
-                alert('Please select payment type');
-                return;
-            }
-            if (!paymentMode || !paymentMode.value) {
-                console.error('Payment mode validation failed');
-                alert('Please select payment mode');
-                return;
-            }
-            if (!totalAllocated || !totalAllocated.value) {
-                alert('Please enter payment amount');
-                return;
-            }
-            if (checkboxes.length === 0) {
-                alert('Please select at least one Lorry Receipt');
-                return;
-            }
-
-            // Disable submit button and show loading state
-            submitButton.disabled = true;
-            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Processing...';
-
-            // Submit the form directly
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '{{ route("voucher_payments.store") }}';
-            form.className = 'd-none'; // Hide the form
-
-            // Add CSRF token
-            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            const csrfInput = document.createElement('input');
-            csrfInput.type = 'hidden';
-            csrfInput.name = '_token';
-            csrfInput.value = csrfToken;
-            form.appendChild(csrfInput);
-
-            // Add form inputs
-            const inputs = [
-                { name: 'voucher_number', value: checkboxes[0].getAttribute('data-voucher_number') },
-                { name: 'payment_type', value: paymentType.value },
-                { name: 'payment_mode', value: paymentMode.value },
-                { name: 'amount', value: totalAllocated.value },
-                { name: 'reference_transaction_id', value: document.getElementById('reference_transaction_id')?.value || '' },
-                { name: 'remark', value: document.getElementById('remark')?.value || '' },
-                { name: 'payment_status', value: paymentMode.value.toLowerCase() === 'cash' || paymentMode.value.toLowerCase() === 'adjust in advance' ? 'in-progress' : 'pending' }
-            ];
-
-            inputs.forEach(input => {
-                const inputElement = document.createElement('input');
-                inputElement.type = 'hidden';
-                inputElement.name = input.name;
-                inputElement.value = input.value;
-                form.appendChild(inputElement);
-                // ✅ Add freight_booking_id and company_id
-const freightBookingIdInput = document.createElement('input');
-freightBookingIdInput.type = 'hidden';
-freightBookingIdInput.name = 'freight_booking_id';
-freightBookingIdInput.value = checkboxes[0].getAttribute('data-freight_booking_id');
-form.appendChild(freightBookingIdInput);
-
-const companyIdInput = document.createElement('input');
-companyIdInput.type = 'hidden';
-companyIdInput.name = 'company_id';
-companyIdInput.value = '{{ auth()->user()->company_id }}';
-form.appendChild(companyIdInput);
-
-            });
-
-            // Add selected LRs
-            checkboxes.forEach(cb => {
-                const lrInput = document.createElement('input');
-                lrInput.type = 'hidden';
-                lrInput.name = 'lr_numbers[]';
-                lrInput.value = cb.getAttribute('data-lr');
-                form.appendChild(lrInput);
-            });
-
-            // Append form to body and submit
-            document.body.appendChild(form);
-            form.submit();
-
-        } catch (error) {
-            console.error('Exception:', error);
-            alert('Unexpected error occurred.');
-        }
-    }
-
+  
+  
+          
     // Function to process bulk payment
     window.processBulkPayment = function() {
         const selectedIds = getSelectedLorryReceipts();
@@ -677,46 +548,146 @@ form.appendChild(companyIdInput);
     };
 
     // Function to process voucher payment
-    window.processVoucherPayment = function() {
-        const selectedIds = getSelectedLorryReceipts();
-        const voucherId = document.getElementById('voucherId').value;
-        
-        if (!voucherId) {
-            alert('Please enter a Voucher ID');
-            return;
-        }
+    window.submitVoucherPayment = function() {
+        try {
+            const paymentType = document.getElementById('payment_type');
+            const paymentMode = document.getElementById('payment_mode');
+            const totalAmountInput = document.getElementById('totalAmountInput');
+            const checkboxes = document.querySelectorAll('.rowCheckbox:checked');
+            const submitButton = document.querySelector('.btn-success[onclick="submitVoucherPayment()"]');
 
-        // Create form data
-        const formData = new FormData();
-        formData.append('voucher_id', voucherId);
-        
-        // Add each selected ID as a separate array element
-        selectedIds.forEach(id => {
-            formData.append('lr_ids[]', id);
-        });
-
-        // Send AJAX request
-        fetch('/lorry_receipts/voucher-payment', {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Voucher ID updated successfully for selected lorry receipts');
-                // Refresh the page to show updated LR numbers
-                location.reload();
-            } else {
-                alert(data.message || 'Failed to update LR numbers');
+            if (!paymentType || !paymentType.value) {
+                alert('Please select payment type');
+                return;
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while updating LR numbers');
-        });
+            if (!paymentMode || !paymentMode.value) {
+                alert('Please select payment mode');
+                return;
+            }
+            if (!totalAmountInput || !totalAmountInput.value) {
+                alert('Please enter payment amount');
+                return;
+            }
+            if (checkboxes.length === 0) {
+                alert('Please select at least one Lorry Receipt');
+                return;
+            }
+
+            // Get allocated amounts from the modal
+            const allocatedInputs = document.querySelectorAll('.allocated-input');
+            const allocatedAmounts = Array.from(allocatedInputs).map(input => input.value);
+
+            // Disable submit button and show loading state
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Processing...';
+
+            // Create form
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ route("voucher_payments.bulkPayment") }}';
+            form.className = 'd-none';
+
+            // Add CSRF token
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_token';
+            csrfInput.value = csrfToken;
+            form.appendChild(csrfInput);
+
+            // Add payment details
+            const inputs = [
+                { name: 'payment_type', value: paymentType.value },
+                { name: 'payment_mode', value: paymentMode.value },
+                { name: 'reference_transaction_id', value: document.getElementById('reference_transaction_id')?.value || '' },
+                { name: 'remark', value: document.getElementById('remark')?.value || '' }
+            ];
+
+            // Add all form inputs
+            inputs.forEach(input => {
+                const inputElement = document.createElement('input');
+                inputElement.type = 'hidden';
+                inputElement.name = input.name;
+                inputElement.value = input.value;
+                form.appendChild(inputElement);
+            });
+
+            // Add company ID
+            const companyIdInput = document.createElement('input');
+            companyIdInput.type = 'hidden';
+            companyIdInput.name = 'company_id';
+            companyIdInput.value = '{{ auth()->user()->company_id }}';
+            form.appendChild(companyIdInput);
+
+            // Add each selected Lorry Receipt and its Freight Booking with amount
+            checkboxes.forEach((checkbox, index) => {
+                const lorryReceiptId = checkbox.value;
+                const freightBookingId = checkbox.getAttribute('data-freight_booking_id');
+                const allocatedAmount = allocatedAmounts[index] ?? 0;
+
+                if (!freightBookingId || allocatedAmount <= 0) {
+                    return;
+                }
+
+                // Add Lorry Receipt ID
+                const lrInput = document.createElement('input');
+                lrInput.type = 'hidden';
+                lrInput.name = 'lorry_receipts[]';
+                lrInput.value = lorryReceiptId;
+                form.appendChild(lrInput);
+
+                // Add Freight Booking ID
+                const freightInput = document.createElement('input');
+                freightInput.type = 'hidden';
+                freightInput.name = 'freight_bookings[' + lorryReceiptId + ']';
+                freightInput.value = freightBookingId;
+                form.appendChild(freightInput);
+
+                // Add amount for this LR
+                const amountInput = document.createElement('input');
+                amountInput.type = 'hidden';
+                amountInput.name = 'amounts[' + lorryReceiptId + ']';
+                amountInput.value = allocatedAmount;
+                form.appendChild(amountInput);
+            });
+
+            // Add each selected Lorry Receipt and its Freight Booking
+            checkboxes.forEach((checkbox, index) => {
+                const lorryReceiptId = checkbox.value;
+                const freightBookingId = checkbox.getAttribute('data-freight_booking_id');
+
+                // Skip if no freight booking ID
+                if (!freightBookingId) {
+                    return;
+                }
+
+                // Add Lorry Receipt ID
+                const lrInput = document.createElement('input');
+                lrInput.type = 'hidden';
+                lrInput.name = 'lorry_receipts[]';
+                lrInput.value = lorryReceiptId;
+                form.appendChild(lrInput);
+
+                // Add Freight Booking ID
+                const freightInput = document.createElement('input');
+                freightInput.type = 'hidden';
+                freightInput.name = 'freight_bookings[' + lorryReceiptId + ']';
+                freightInput.value = freightBookingId;
+                form.appendChild(freightInput);
+            });
+
+            // Append form and submit
+            document.body.appendChild(form);
+            form.submit();
+
+        } catch (error) {
+            console.error('Error in submitVoucherPayment:', error);
+            alert('An error occurred while processing the payment. Please try again.');
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.innerHTML = 'Submit Payment';
+            }
+        }
     };
 
     // Function to update bulk payment button visibility

@@ -167,10 +167,154 @@ class VoucherPaymentController extends Controller
         return redirect()->route('voucher_payments.index')->with('success', 'Voucher Payment updated successfully.');
     }
 
-    public function destroy(VoucherPayment $voucher_payment)
+    public function bulkPayment(Request $request)
     {
-        $voucher_payment->delete();
-        return redirect()->route('voucher_payments.index')->with('success', 'Voucher Payment deleted.');
+        try {
+            // Log the incoming request for debugging
+            \Log::info('Bulk payment request received:', [
+                'all_data' => $request->all(),
+                'payment_type' => $request->payment_type,
+                'payment_mode' => $request->payment_mode,
+                'lorry_receipts' => $request->lorry_receipts,
+                'freight_bookings' => $request->freight_bookings,
+                'amounts' => $request->amounts
+            ]);
+
+            // Validate the request
+            $validated = $request->validate([
+                'payment_type' => 'required|string',
+                'payment_mode' => 'required|string',
+                'reference_transaction_id' => 'nullable|string',
+                'remark' => 'nullable|string',
+                'lorry_receipts' => 'required|array',
+                'freight_bookings' => 'required|array',
+                'amounts' => 'required|array',
+                'company_id' => 'required|exists:companies,id'
+            ]);
+
+            // Get payment type and mode
+            $paymentType = PaymentType::where('name', $validated['payment_type'])->first();
+            $paymentMode = PaymentMode::where('name', $validated['payment_mode'])->first();
+
+            if (!$paymentType || !$paymentMode) {
+                return redirect()->back()->with('error', 'Invalid payment type or mode');
+            }
+
+            $reference_transaction_id = $validated['reference_transaction_id'] ?? null;
+            $remark = $validated['remark'] ?? null;
+            $payment_status = $paymentMode->name === 'cash' || $paymentMode->name === 'adjust in advance' ? 'in-progress' : 'pending';
+            $company_id = $validated['company_id'];
+
+            // Process each voucher payment
+            $lorryReceipts = $validated['lorry_receipts'];
+            $freightBookings = $validated['freight_bookings'];
+            $amounts = $validated['amounts'];
+
+            \Log::info('Starting to process voucher payments:', [
+                'lorry_receipts' => $lorryReceipts,
+                'freight_bookings' => $freightBookings,
+                'amounts' => $amounts
+            ]);
+
+            foreach ($lorryReceipts as $index => $lorryReceiptId) {
+                \Log::info('Processing voucher payment for LR:', [
+                    'lorry_receipt_id' => $lorryReceiptId,
+                    'freight_booking_id' => $freightBookings[$lorryReceiptId] ?? null,
+                    'amount' => $amounts[$lorryReceiptId] ?? null
+                ]);
+
+                $freightBookingId = $freightBookings[$lorryReceiptId] ?? null;
+                $amount = $amounts[$lorryReceiptId] ?? 0;
+
+                if (!$freightBookingId || $amount <= 0) {
+                    \Log::warning('Skipping voucher payment due to invalid data:', [
+                        'lorry_receipt_id' => $lorryReceiptId,
+                        'freight_booking_id' => $freightBookingId,
+                        'amount' => $amount
+                    ]);
+                    continue;
+                }
+
+                // Get the freight booking
+                $freightBooking = \App\Models\FreightBooking::find($freightBookingId);
+                if (!$freightBooking) {
+                    \Log::error('Freight booking not found:', [
+                        'freight_booking_id' => $freightBookingId
+                    ]);
+                    continue;
+                }
+
+                // Create voucher payment
+                $paymentData = [
+                    'voucher_number' => $freightBooking->voucher_number,
+                    'freight_booking_id' => $freightBooking->id,
+                    'payment_type' => $validated['payment_type'],
+                    'payment_mode' => $validated['payment_mode'],
+                    'amount' => $amount,
+                    'remark' => $remark,
+                    'payment_status' => $payment_status
+                ];
+
+                \Log::info('Creating voucher payment with data:', $paymentData);
+
+                // Explicitly specify the fields to create
+                $voucherPayment = VoucherPayment::create([
+                    'freight_booking_id' => $freightBooking->id,
+                    'voucher_number' => $freightBooking->voucher_number,
+                    'payment_type' => $validated['payment_type'],
+                    'payment_mode' => $validated['payment_mode'],
+                    'amount' => $amount,
+                    'remark' => $remark,
+                    'payment_status' => $payment_status
+                ]);
+
+                if ($voucherPayment) {
+                    \Log::info('Successfully created voucher payment:', [
+                        'id' => $voucherPayment->id,
+                        'voucher_id' => $voucherPayment->voucher_id,
+                        'amount' => $voucherPayment->amount
+                    ]);
+                } else {
+                    \Log::error('Failed to create voucher payment:', $paymentData);
+                }
+
+                $freightBooking = \App\Models\FreightBooking::find($freightBookingId);
+                if (!$freightBooking) {
+                    continue;
+                }
+
+                // Create voucher payment
+                VoucherPayment::create([
+                    'voucher_id' => $freightBooking->voucher_id, // Use voucher_id from freight booking
+                    'payment_type' => $validated['payment_type'],
+                    'payment_mode' => $validated['payment_mode'],
+                    'amount' => $amount,
+                    'transaction_id' => $reference_transaction_id,
+                    'remark' => $remark,
+                    'payment_status' => $payment_status,
+                    'company_id' => $company_id
+                ]);
+
+                // Log the creation
+                \Log::info('Created voucher payment:', [
+                    'voucher_id' => $freightBooking->voucher_id,
+                    'amount' => $amount,
+                    'freight_booking_id' => $freightBooking->id,
+                    'lorry_receipt_id' => $lorryReceiptId,
+                    'company_id' => $company_id
+                ]);
+            }
+
+            return redirect()->route('voucher_payments.index')
+                ->with('success', 'Bulk voucher payments created successfully.');
+
+        } catch (\Exception $e) {
+            \Log::error('Bulk voucher payment error: ' . $e->getMessage(), [
+                'request' => $request->all()
+            ]);
+            return redirect()->back()
+                ->with('error', 'An error occurred while processing bulk payments. Please try again.');
+        }
     }
 
     /**
