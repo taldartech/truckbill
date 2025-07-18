@@ -600,7 +600,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 { name: 'payment_type', value: paymentType.value },
                 { name: 'payment_mode', value: paymentMode.value },
                 { name: 'reference_transaction_id', value: document.getElementById('reference_transaction_id')?.value || '' },
-                { name: 'remark', value: document.getElementById('remark')?.value || '' }
+                { name: 'remark', value: document.getElementById('remark')?.value || '' },
+                { name: 'company_id', value: '{{ auth()->user()->company_id }}' }
             ];
 
             // Add all form inputs
@@ -827,6 +828,7 @@ function handleVoucherPayment() {
             <label><strong>Enter Payment Amount:</strong></label>
             <input type="number" class="form-control" id="totalAmountInput" name="total_amount" placeholder="Enter Total Amount" required>
             <input type="hidden" id="totalAllocatedAmount" name="amount_given" value="0">
+            <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
         </div>
     `;
 

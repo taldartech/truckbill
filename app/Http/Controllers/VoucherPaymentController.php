@@ -75,11 +75,11 @@ class VoucherPaymentController extends Controller
             'payment_mode' => 'required|string',
             'amount' => 'required|numeric|min:0',
             'remark' => 'nullable|string',
-            'payment_status' => 'required|in:pending,in-progress,paid',
-            'company_id' => 'required|exists:companies,id',
-        
-           
+            'payment_status' => 'required|in:pending,in-progress,paid'
         ]);
+
+        // Add company_id to data
+        $data['company_id'] = auth()->user()->company_id;
 
         // Create voucher payment
         $voucherPayment = VoucherPayment::create($data);
@@ -191,7 +191,8 @@ class VoucherPaymentController extends Controller
                 'amounts' => 'required|array',
                 'company_id' => 'required|exists:companies,id'
             ]);
-
+           
+    
             // Get payment type and mode
             $paymentType = PaymentType::where('name', $validated['payment_type'])->first();
             $paymentMode = PaymentMode::where('name', $validated['payment_mode'])->first();
@@ -252,7 +253,8 @@ class VoucherPaymentController extends Controller
                     'payment_mode' => $validated['payment_mode'],
                     'amount' => $amount,
                     'remark' => $remark,
-                    'payment_status' => $payment_status
+                    'payment_status' => $payment_status,
+                    'company_id' => $company_id
                 ];
 
                 \Log::info('Creating voucher payment with data:', $paymentData);
@@ -265,7 +267,8 @@ class VoucherPaymentController extends Controller
                     'payment_mode' => $validated['payment_mode'],
                     'amount' => $amount,
                     'remark' => $remark,
-                    'payment_status' => $payment_status
+                    'payment_status' => $payment_status,
+                    'company_id' => $company_id
                 ]);
 
                 if ($voucherPayment) {
@@ -273,6 +276,32 @@ class VoucherPaymentController extends Controller
                         'id' => $voucherPayment->id,
                         'voucher_id' => $voucherPayment->voucher_id,
                         'amount' => $voucherPayment->amount
+                    ]);
+
+                    // Update freight booking advance amount
+                    if (($freightBooking->advance_amount + $amount) > $freightBooking->tr_amount) {
+                        \Log::error('Advance amount exceeds TR amount:', [
+                            'freight_booking_id' => $freightBooking->id,
+                            'advance_amount' => $freightBooking->advance_amount,
+                            'tr_amount' => $freightBooking->tr_amount,
+                            'new_amount' => $amount
+                        ]);
+                        continue;
+                    }
+
+                    // Update advance amount
+                    $freightBooking->advance_amount += $amount;
+                    
+                    // Recalculate balance amount
+                    $freightBooking->balance_amount = $freightBooking->tr_amount - $freightBooking->advance_amount;
+                    
+                    // Save the freight booking
+                    $freightBooking->save();
+                    
+                    \Log::info('Successfully updated freight booking:', [
+                        'freight_booking_id' => $freightBooking->id,
+                        'new_advance_amount' => $freightBooking->advance_amount,
+                        'new_balance_amount' => $freightBooking->balance_amount
                     ]);
                 } else {
                     \Log::error('Failed to create voucher payment:', $paymentData);
