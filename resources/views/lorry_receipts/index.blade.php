@@ -574,8 +574,21 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Get allocated amounts from the modal
-            const allocatedInputs = document.querySelectorAll('.allocated-input');
-            const allocatedAmounts = Array.from(allocatedInputs).map(input => input.value);
+            const allocatedInputs = document.querySelectorAll('[name^="allocated_amounts["]');
+            const allocatedAmounts = Array.from(allocatedInputs).map(input => parseFloat(input.value) || 0);
+
+            // Validate that we have the same number of allocated amounts as selected LRs
+            if (allocatedAmounts.length !== checkboxes.length) {
+                alert('Allocated amounts do not match selected Lorry Receipts');
+                return;
+            }
+
+            // Validate total amount
+            const totalAmount = allocatedAmounts.reduce((sum, amount) => sum + amount, 0);
+            if (totalAmount <= 0) {
+                alert('Please enter valid amounts for all selected Lorry Receipts');
+                return;
+            }
 
             // Disable submit button and show loading state
             submitButton.disabled = true;
@@ -613,18 +626,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 form.appendChild(inputElement);
             });
 
-            // Add company ID
-            const companyIdInput = document.createElement('input');
-            companyIdInput.type = 'hidden';
-            companyIdInput.name = 'company_id';
-            companyIdInput.value = '{{ auth()->user()->company_id }}';
-            form.appendChild(companyIdInput);
-
-            // Add each selected Lorry Receipt and its Freight Booking with amount
-            checkboxes.forEach((checkbox, index) => {
+            // Process each selected Lorry Receipt with its Freight Booking and amount
+            Array.from(checkboxes).forEach((checkbox, index) => {
                 const lorryReceiptId = checkbox.value;
                 const freightBookingId = checkbox.getAttribute('data-freight_booking_id');
-                const allocatedAmount = allocatedAmounts[index] ?? 0;
+                const allocatedAmount = allocatedAmounts[index];
 
                 if (!freightBookingId || allocatedAmount <= 0) {
                     return;
@@ -650,31 +656,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 amountInput.name = 'amounts[' + lorryReceiptId + ']';
                 amountInput.value = allocatedAmount;
                 form.appendChild(amountInput);
-            });
-
-            // Add each selected Lorry Receipt and its Freight Booking
-            checkboxes.forEach((checkbox, index) => {
-                const lorryReceiptId = checkbox.value;
-                const freightBookingId = checkbox.getAttribute('data-freight_booking_id');
-
-                // Skip if no freight booking ID
-                if (!freightBookingId) {
-                    return;
-                }
-
-                // Add Lorry Receipt ID
-                const lrInput = document.createElement('input');
-                lrInput.type = 'hidden';
-                lrInput.name = 'lorry_receipts[]';
-                lrInput.value = lorryReceiptId;
-                form.appendChild(lrInput);
-
-                // Add Freight Booking ID
-                const freightInput = document.createElement('input');
-                freightInput.type = 'hidden';
-                freightInput.name = 'freight_bookings[' + lorryReceiptId + ']';
-                freightInput.value = freightBookingId;
-                form.appendChild(freightInput);
             });
 
             // Append form and submit

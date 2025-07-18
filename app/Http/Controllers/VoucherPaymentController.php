@@ -217,104 +217,152 @@ class VoucherPaymentController extends Controller
                 'amounts' => $amounts
             ]);
 
-            foreach ($lorryReceipts as $index => $lorryReceiptId) {
-                \Log::info('Processing voucher payment for LR:', [
-                    'lorry_receipt_id' => $lorryReceiptId,
-                    'freight_booking_id' => $freightBookings[$lorryReceiptId] ?? null,
-                    'amount' => $amounts[$lorryReceiptId] ?? null
-                ]);
+            // foreach ($lorryReceipts as $index => $lorryReceiptId) {
+            //     \Log::info('Processing voucher payment for LR:', [
+            //         'lorry_receipt_id' => $lorryReceiptId,
+            //         'freight_booking_id' => $freightBookings[$lorryReceiptId] ?? null,
+            //         'amount' => $amounts[$lorryReceiptId] ?? null
+            //     ]);
 
+            //     $freightBookingId = $freightBookings[$lorryReceiptId] ?? null;
+            //     $amount = $amounts[$lorryReceiptId] ?? 0;
+
+            //     if (!$freightBookingId || $amount <= 0) {
+            //         \Log::warning('Skipping voucher payment due to invalid data:', [
+            //             'lorry_receipt_id' => $lorryReceiptId,
+            //             'freight_booking_id' => $freightBookingId,
+            //             'amount' => $amount
+            //         ]);
+            //         continue;
+            //     }
+
+            //     // Get the freight booking
+            //     $freightBooking = \App\Models\FreightBooking::find($freightBookingId);
+            //     if (!$freightBooking) {
+            //         \Log::error('Freight booking not found:', [
+            //             'freight_booking_id' => $freightBookingId
+            //         ]);
+            //         continue;
+            //     }
+
+            //     // Create voucher payment
+            //     $paymentData = [
+            //         'voucher_number' => $freightBooking->voucher_number,
+            //         'freight_booking_id' => $freightBooking->id,
+            //         'payment_type' => $validated['payment_type'],
+            //         'payment_mode' => $validated['payment_mode'],
+            //         'amount' => $amount,
+            //         'remark' => $remark,
+            //         'payment_status' => $payment_status,
+            //         'company_id' => $company_id
+            //     ];
+
+            //     \Log::info('Creating voucher payment with data:', $paymentData);
+
+            //     // Explicitly specify the fields to create
+            //     $voucherPayment = VoucherPayment::create([
+            //         'freight_booking_id' => $freightBooking->id,
+            //         'voucher_number' => $freightBooking->voucher_number,
+            //         'payment_type' => $validated['payment_type'],
+            //         'payment_mode' => $validated['payment_mode'],
+            //         'amount' => $amount,
+            //         'remark' => $remark,
+            //         'payment_status' => $payment_status,
+            //         'company_id' => $company_id
+            //     ]);
+
+            //     if ($voucherPayment) {
+            //         \Log::info('Successfully created voucher payment:', [
+            //             'id' => $voucherPayment->id,
+            //             'voucher_id' => $voucherPayment->voucher_id,
+            //             'amount' => $voucherPayment->amount
+            //         ]);
+
+            //         // Update freight booking advance amount
+            //         if (($freightBooking->advance_amount + $amount) > $freightBooking->tr_amount) {
+            //             \Log::error('Advance amount exceeds TR amount:', [
+            //                 'freight_booking_id' => $freightBooking->id,
+            //                 'advance_amount' => $freightBooking->advance_amount,
+            //                 'tr_amount' => $freightBooking->tr_amount,
+            //                 'new_amount' => $amount
+            //             ]);
+            //             continue;
+            //         }
+
+            //         // Update advance amount
+            //         $freightBooking->advance_amount += $amount;
+                    
+            //         // Recalculate balance amount
+            //         $freightBooking->balance_amount = $freightBooking->tr_amount - $freightBooking->advance_amount;
+                    
+            //         // Save the freight booking
+            //         $freightBooking->save();
+                    
+            //         \Log::info('Successfully updated freight booking:', [
+            //             'freight_booking_id' => $freightBooking->id,
+            //             'new_advance_amount' => $freightBooking->advance_amount,
+            //             'new_balance_amount' => $freightBooking->balance_amount
+            //         ]);
+            //     } else {
+            //         \Log::error('Failed to create voucher payment:', $paymentData);
+            //     }
+
+            //     $freightBooking = \App\Models\FreightBooking::find($freightBookingId);
+            //     if (!$freightBooking) {
+            //         continue;
+            //     }
+
+            //     // Create voucher payment
+            //     VoucherPayment::create([
+            //         'voucher_id' => $freightBooking->voucher_id, // Use voucher_id from freight booking
+            //         'payment_type' => $validated['payment_type'],
+            //         'payment_mode' => $validated['payment_mode'],
+            //         'amount' => $amount,
+            //         'transaction_id' => $reference_transaction_id,
+            //         'remark' => $remark,
+            //         'payment_status' => $payment_status,
+            //         'company_id' => $company_id
+            //     ]);
+
+            //     // Log the creation
+            //     \Log::info('Created voucher payment:', [
+            //         'voucher_id' => $freightBooking->voucher_id,
+            //         'amount' => $amount,
+            //         'freight_booking_id' => $freightBooking->id,
+            //         'lorry_receipt_id' => $lorryReceiptId,
+            //         'company_id' => $company_id
+            //     ]);
+            // }
+            foreach ($lorryReceipts as $index => $lorryReceiptId) {
                 $freightBookingId = $freightBookings[$lorryReceiptId] ?? null;
                 $amount = $amounts[$lorryReceiptId] ?? 0;
-
+            
                 if (!$freightBookingId || $amount <= 0) {
-                    \Log::warning('Skipping voucher payment due to invalid data:', [
-                        'lorry_receipt_id' => $lorryReceiptId,
-                        'freight_booking_id' => $freightBookingId,
-                        'amount' => $amount
-                    ]);
+                    \Log::warning('Skipping due to invalid data', compact('lorryReceiptId', 'freightBookingId', 'amount'));
                     continue;
                 }
-
-                // Get the freight booking
+            
                 $freightBooking = \App\Models\FreightBooking::find($freightBookingId);
                 if (!$freightBooking) {
-                    \Log::error('Freight booking not found:', [
-                        'freight_booking_id' => $freightBookingId
-                    ]);
+                    \Log::error('Freight booking not found', ['freight_booking_id' => $freightBookingId]);
                     continue;
                 }
-
-                // Create voucher payment
-                $paymentData = [
-                    'voucher_number' => $freightBooking->voucher_number,
-                    'freight_booking_id' => $freightBooking->id,
-                    'payment_type' => $validated['payment_type'],
-                    'payment_mode' => $validated['payment_mode'],
-                    'amount' => $amount,
-                    'remark' => $remark,
-                    'payment_status' => $payment_status,
-                    'company_id' => $company_id
-                ];
-
-                \Log::info('Creating voucher payment with data:', $paymentData);
-
-                // Explicitly specify the fields to create
-                $voucherPayment = VoucherPayment::create([
-                    'freight_booking_id' => $freightBooking->id,
-                    'voucher_number' => $freightBooking->voucher_number,
-                    'payment_type' => $validated['payment_type'],
-                    'payment_mode' => $validated['payment_mode'],
-                    'amount' => $amount,
-                    'remark' => $remark,
-                    'payment_status' => $payment_status,
-                    'company_id' => $company_id
-                ]);
-
-                if ($voucherPayment) {
-                    \Log::info('Successfully created voucher payment:', [
-                        'id' => $voucherPayment->id,
-                        'voucher_id' => $voucherPayment->voucher_id,
-                        'amount' => $voucherPayment->amount
-                    ]);
-
-                    // Update freight booking advance amount
-                    if (($freightBooking->advance_amount + $amount) > $freightBooking->tr_amount) {
-                        \Log::error('Advance amount exceeds TR amount:', [
-                            'freight_booking_id' => $freightBooking->id,
-                            'advance_amount' => $freightBooking->advance_amount,
-                            'tr_amount' => $freightBooking->tr_amount,
-                            'new_amount' => $amount
-                        ]);
-                        continue;
-                    }
-
-                    // Update advance amount
-                    $freightBooking->advance_amount += $amount;
-                    
-                    // Recalculate balance amount
-                    $freightBooking->balance_amount = $freightBooking->tr_amount - $freightBooking->advance_amount;
-                    
-                    // Save the freight booking
-                    $freightBooking->save();
-                    
-                    \Log::info('Successfully updated freight booking:', [
+            
+                if (($freightBooking->advance_amount + $amount) > $freightBooking->tr_amount) {
+                    \Log::error('Advance amount exceeds TR amount', [
                         'freight_booking_id' => $freightBooking->id,
-                        'new_advance_amount' => $freightBooking->advance_amount,
-                        'new_balance_amount' => $freightBooking->balance_amount
+                        'advance_amount' => $freightBooking->advance_amount,
+                        'tr_amount' => $freightBooking->tr_amount,
+                        'new_amount' => $amount
                     ]);
-                } else {
-                    \Log::error('Failed to create voucher payment:', $paymentData);
-                }
-
-                $freightBooking = \App\Models\FreightBooking::find($freightBookingId);
-                if (!$freightBooking) {
                     continue;
                 }
-
+            
                 // Create voucher payment
-                VoucherPayment::create([
-                    'voucher_id' => $freightBooking->voucher_id, // Use voucher_id from freight booking
+                $voucherPayment = VoucherPayment::create([
+                    'voucher_id' => $freightBooking->voucher_id,
+                    'freight_booking_id' => $freightBooking->id,
+                    'voucher_number' => $freightBooking->voucher_number,
                     'payment_type' => $validated['payment_type'],
                     'payment_mode' => $validated['payment_mode'],
                     'amount' => $amount,
@@ -323,16 +371,19 @@ class VoucherPaymentController extends Controller
                     'payment_status' => $payment_status,
                     'company_id' => $company_id
                 ]);
-
-                // Log the creation
-                \Log::info('Created voucher payment:', [
-                    'voucher_id' => $freightBooking->voucher_id,
-                    'amount' => $amount,
-                    'freight_booking_id' => $freightBooking->id,
+            
+                // Update advance and balance
+                $freightBooking->advance_amount += $amount;
+                $freightBooking->balance_amount = $freightBooking->tr_amount - $freightBooking->advance_amount;
+                $freightBooking->save();
+            
+                \Log::info('Voucher payment processed', [
                     'lorry_receipt_id' => $lorryReceiptId,
-                    'company_id' => $company_id
+                    'amount' => $amount,
+                    'voucher_payment_id' => $voucherPayment->id
                 ]);
             }
+            
 
             return redirect()->route('voucher_payments.index')
                 ->with('success', 'Bulk voucher payments created successfully.');
