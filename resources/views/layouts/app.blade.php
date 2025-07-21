@@ -310,7 +310,7 @@
                             </a>
                           </li>
                     </ul>
-                  </li>
+                </li>
     
                   {{-- end master --}}
                     
@@ -318,7 +318,7 @@
                   @endif
                   
                   {{-- Master data menus hidden from moderator/accountant/operator users --}}
-                  @if(auth()->check() && !in_array(auth()->user()->userRole->name, ['operator', 'accountant', 'moderator']))
+                  @if(auth()->check() && !in_array(auth()->user()->userRole->name, ['operator', 'accountant', 'moderator', 'super_admin']))
                   <li class="nav-item">
                     <a class="nav-link{{ (Request::is('transporters*') || Request::is('transporters/create') || Request::is('transporter_bank_accounts/create')) ? ' active' : '' }}" href="#transporterMenu">
                         <i class="fas fa-truck"></i> 
@@ -449,7 +449,7 @@
                   @endif
                   
                   {{-- Operational menus visible to all authenticated users including moderators --}}
-                  @if(auth()->check())
+                  @if(auth()->check() && !in_array(auth()->user()->userRole->name, [ 'super_admin']))
                   <li class="nav-item">
                     <a class="nav-link{{ (Request::is('lorry_receipts*') || Request::is('lorry_receipts/create')) ? ' active' : '' }}"  href="#lorryReceiptMenu"  >
                         <i class="fas fa-file-alt"></i><p>
