@@ -182,7 +182,7 @@
             </div>
 
             <div class="row">
-                <div class="col-md-4 mb-3">
+                <div class="col-md-4 mb-3 ms-3">
                     <label for="source_city" class="form-label">Source City *</label>
                     <input type="text" class="form-control" id="source_city" name="source_city" required value="{{ old('source_city') }}" readonly>
                     @error('source_city') <div class="text-danger">{{ $message }}</div> @enderror
@@ -197,7 +197,7 @@
             </div>
 
             <div class="row">
-                <div class="col-md-4 mb-3">
+                <div class="col-md-4 mb-3 ms-3">
                     <label for="destination_city" class="form-label">Destination City *</label>
                     <input type="text" class="form-control" id="destination_city" name="destination_city" required value="{{ old('destination_city') }}" readonly>
                     @error('destination_city') <div class="text-danger">{{ $message }}</div> @enderror
@@ -217,8 +217,8 @@
             <div class="row">
                 <input type="hidden" id="lane" name="lane" value="Road">
                 <div class="col-md-4 mb-3">
-                    <label for="good_type" class="form-label">Goods Type *</label>
-                    <select class="form-select" id="good_type" name="good_type" required>
+                    <label for="good_type" class="form-label ms-3">Goods Type *</label>
+                    <select class="form-select ms-3" id="good_type" name="good_type" required>
                         <option value="">Select Goods Type</option>
                         @foreach($goodsTypes as $goodsType)
                             <option value="{{ $goodsType->name }}" {{ old('good_type') == $goodsType->name ? 'selected' : '' }}>
@@ -230,8 +230,8 @@
                     <div class="invalid-feedback">Please select a goods type.</div>
                 </div>
                 <div class="col-md-4 mb-3">
-                    <label for="weight" class="form-label">Weight *</label>
-                    <input type="number" step="0.01" class="form-control" id="weight" name="weight" required value="{{ old('weight') }}">
+                    <label for="weight" class="form-label ms-3">Weight *</label>
+                    <input type="number" step="0.01" class="form-control ms-3" id="weight" name="weight" required value="{{ old('weight') }}">
                     @error('weight') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please enter a weight.</div>
                 </div>
@@ -245,7 +245,7 @@
 
             <div class="row">
                
-                <div class="col-md-4 mb-3">
+                <div class="col-md-4 mb-3 ms-3">
                     <label for="fr_rate" class="form-label">Freight Rate *</label>
                     <input type="number" step="0.01" class="form-control" id="fr_rate" name="fr_rate" required value="{{ old('fr_rate') }}">
                     @error('fr_rate') <div class="text-danger">{{ $message }}</div> @enderror
