@@ -14,7 +14,8 @@
         <!--begin::Body-->
         <div class="card-body">
             <!--begin::Row-->
-            <div class="row g-3">
+            <div class="row">
+               
                  <!--begin::Col-->
                  <div class="col-md-4">
                     <label for="lr_number" class="form-label">LR Number *</label>
@@ -22,7 +23,14 @@
                     @error('lr_number') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please enter an LR number.</div>
                 </div>
+
                 <!--end::Col-->
+                <div class="col-md-4 mb-3">
+                    <label for="gr_date" class="form-label">GR Date *</label>
+                    <input type="date" class="form-control" id="gr_date" name="gr_date" required value="{{ old('gr_date') }}">
+                    @error('gr_date') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please select a GR date.</div>
+                </div>
                  <!--begin::Col-->
                  <div class="col-md-4">
                     <label for="customer_id" class="form-label">Customer *</label>
@@ -39,9 +47,9 @@
                 </div>
             </div>
                 <!--end::Col-->
-                <div class="row g-3">
-                <!--begin::Col-->
-                <div class="col-md-4" id="agencyTransporterMain" style="display: none">
+                <div class="row">
+                {{-- <!--begin::Col-->
+                <div class="col-md-4">
                     <label for="transporter_id" class="form-label" >Transporter *</label>
                     <select class="form-select" id="transporter_id" name="transporter_id" required>
                         <option value="">Select Transporter</option>
@@ -54,7 +62,8 @@
                     @error('transporter_id') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please select a transporter.</div>
                 </div>
-                <!--end::Col-->
+                <!--end::Col--> --}}
+               
                 <!--begin::Col-->
                 <div class="col-md-4">
                     <label for="truck_id" class="form-label">Truck *</label>
@@ -69,18 +78,28 @@
                     @error('truck_id') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please select a truck.</div>
                 </div>
+                <div class="col-md-4">
+                    <label for="transporter_type" class="form-label">Select Type *</label>
+                    <select class="form-select" id="transporter_type" required>
+                        <option value="">Select Type</option>
+                        <option value="owner">Truck Owner</option>
+                        <option value="agency">Agency</option>
+                    </select>
+                    <div class="invalid-feedback">Please select transporter type.</div>
+                </div>
                 <!--end::Col-->
+                <div class="col-md-4">
+                    <label for="transporter_id" id="transporterLabel" class="form-label">Transporter *</label>
+                    <select class="form-select" id="transporter_id" name="transporter_id" required>
+                        <option value="">Select Transporter</option>
+                        {{-- This will be filled via JavaScript --}}
+                    </select>
+                    @error('transporter_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please select a transporter.</div>
+                </div>
 
                 <!--begin::Col-->
-                <div class="col-md-4" id="ownerAgencySection" style="display: none;">
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="checkbox" name="owner_agency[]" id="truck_owner" value="owner" {{ isset($transporter) && $transporter->is_owner == 0 ? 'disabled' : '' }}>
-                        <label class="form-check-label" for="truck_owner">Truck Owner</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="checkbox" name="owner_agency[]" id="agency" value="agency">
-                        <label class="form-check-label" for="agency">Agency</label>
-                    </div>
+               
 
                     {{-- <div id="ownerTransporterSelect" class="mt-3" style="display: none;">
                         <label for="owner_transporter_id" class="form-label">Select Truck Owner</label>
@@ -90,12 +109,7 @@
                         <div class="invalid-feedback">Please select an owner transporter.</div>
                     </div> --}}
 
-                    @if(isset($transporter) && $transporter->is_owner == 1)
-                    <div id="ownerTransporterSelect" class="col-md-4 mt-3" style="display: none;">
-                        <label class="form-label">Truck Owner</label>
-                        <input type="text" id="transporter_name" class="form-control" readonly>
-                    </div>
-                    @endif
+                   
 
 
                    
@@ -121,7 +135,7 @@
             <!--end::Row-->
 
             <div class="row">
-                <div class="col-md-6 mb-3">
+                <div class="col-md-4 mb-3 ms-3">
                     <label for="consignor_id" class="form-label">Consignor *</label>
                     <select class="form-select" id="consignor_id" name="consignor_id" required>
                         <option value="">Select Consignor</option>
@@ -134,14 +148,14 @@
                     @error('consignor_id') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please select a consignor.</div>
                 </div>
-                <div class="col-md-6 mb-3">
+                <div class="col-md-4 mb-3">
                     <label for="consignor_contact_number" class="form-label">Consignor Contact Number</label>
                     <input type="text" class="form-control" id="consignor_contact_number" name="consignor_contact_number" readonly>
                 </div>
             </div>
 
             <div class="row">
-                <div class="col-md-6 mb-3">
+                <div class="col-md-4 mb-3 ms-3">
                     <label for="consignee_id" class="form-label">Consignee *</label>
                     <select class="form-select" id="consignee_id" name="consignee_id" required>
                         <option value="">Select Consignee</option>
@@ -154,22 +168,17 @@
                     @error('consignee_id') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please select a consignee.</div>
                 </div>
-                <div class="col-md-6 mb-3">
+                <div class="col-md-4 mb-3 ">
                     <label for="consignee_contact_number" class="form-label">Consignee Contact Number</label>
                     <input type="text" class="form-control" id="consignee_contact_number" name="consignee_contact_number" readonly>
                 </div>
             </div>
 
-            <h5 class="mt-4 mb-3">Route & Dates</h5>
+            <h5 class="mt-4 mb-3">Route</h5>
             <hr class="mb-3 mt-0">
 
             <div class="row">
-                <div class="col-md-4 mb-3">
-                    <label for="gr_date" class="form-label">GR Date *</label>
-                    <input type="date" class="form-control" id="gr_date" name="gr_date" required value="{{ old('gr_date') }}">
-                    @error('gr_date') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please select a GR date.</div>
-                </div>
+               
             </div>
 
             <div class="row">
@@ -206,12 +215,7 @@
             <hr class="mb-3 mt-0">
 
             <div class="row">
-                <div class="col-md-4 mb-3">
-                    <label for="lane" class="form-label">Lane *</label>
-                    <input type="text" class="form-control" id="lane" name="lane" value="Road" readonly required>
-                    @error('lane') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please enter a lane.</div>
-                </div>
+                <input type="hidden" id="lane" name="lane" value="Road">
                 <div class="col-md-4 mb-3">
                     <label for="good_type" class="form-label">Goods Type *</label>
                     <select class="form-select" id="good_type" name="good_type" required>
@@ -231,15 +235,16 @@
                     @error('weight') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please enter a weight.</div>
                 </div>
-            </div>
-
-            <div class="row">
                 <div class="col-md-4 mb-3">
                     <label for="no_of_units" class="form-label">No. of Units *</label>
                     <input type="number" class="form-control" id="no_of_units" name="no_of_units" required value="{{ old('no_of_units') }}">
                     @error('no_of_units') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please enter number of units.</div>
                 </div>
+            </div>
+
+            <div class="row">
+               
                 <div class="col-md-4 mb-3">
                     <label for="fr_rate" class="form-label">Freight Rate *</label>
                     <input type="number" step="0.01" class="form-control" id="fr_rate" name="fr_rate" required value="{{ old('fr_rate') }}">
@@ -288,6 +293,87 @@
     </form>
     <!--end::Form-->
     <!--begin::JavaScript-->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const transporterTypeSelect = document.getElementById('transporter_type');
+            const truckSelect = document.getElementById('truck_id');
+            const transporterSelect = document.getElementById('transporter_id');
+            const transporterLabel = document.getElementById('transporterLabel');
+        
+            const agencies = @json($agencies);
+            const truckOwners = @json($truckOwners);
+            const trucks = @json($trucks);
+        
+            function updateTransporterDropdown() {
+                const selectedType = transporterTypeSelect.value;
+                const selectedTruckId = truckSelect.value;
+                let optionsHtml = `<option value="">Select Transporter</option>`;
+        
+                if (selectedType === 'owner') {
+                    transporterLabel.textContent = 'Truck Owner *';
+                    // Get selected truck
+                    const selectedTruck = trucks.find(truck => truck.id == selectedTruckId);
+                    if (selectedTruck && selectedTruck.transporter) {
+                        const transporter = selectedTruck.transporter;
+                        if (transporter.is_owner == 1) {
+                            optionsHtml += `<option value="${transporter.id}" selected>${transporter.name}</option>`;
+                        } else {
+                            optionsHtml += `<option disabled>No owner assigned to this truck</option>`;
+                        }
+                    }
+                } else if (selectedType === 'agency') {
+                    transporterLabel.textContent = 'Agency *';
+                    agencies.forEach(agency => {
+                        optionsHtml += `<option value="${agency.id}">${agency.name}</option>`;
+                    });
+                } else {
+                    transporterLabel.textContent = 'Transporter *';
+                }
+        
+                transporterSelect.innerHTML = optionsHtml;
+            }
+        
+            transporterTypeSelect.addEventListener('change', updateTransporterDropdown);
+            truckSelect.addEventListener('change', () => {
+                if (transporterTypeSelect.value === 'owner') {
+                    updateTransporterDropdown();
+                }
+            });
+        });
+        </script>
+        
+    {{-- <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const transporterTypeSelect = document.getElementById('transporter_type');
+            const transporterSelect = document.getElementById('transporter_id');
+            const transporterLabel = document.getElementById('transporterLabel');
+    
+            const truckOwners = @json($truckOwners);
+            const agencies = @json($agencies);
+    
+            transporterTypeSelect.addEventListener('change', function () {
+                const selectedType = this.value;
+                let optionsHtml = `<option value="">Select Transporter</option>`;
+    
+                if (selectedType === 'owner') {
+                    transporterLabel.textContent = 'Truck Owner *';
+                    truckOwners.forEach(function (owner) {
+                        optionsHtml += `<option value="${owner.id}">${owner.name}</option>`;
+                    });
+                } else if (selectedType === 'agency') {
+                    transporterLabel.textContent = 'Agency *';
+                    agencies.forEach(function (agency) {
+                        optionsHtml += `<option value="${agency.id}">${agency.name}</option>`;
+                    });
+                } else {
+                    transporterLabel.textContent = 'Transporter *';
+                }
+    
+                transporterSelect.innerHTML = optionsHtml;
+            });
+        });
+    </script> --}}
+    
     <script>
       // Example starter JavaScript for disabling form submissions if there are invalid fields
     //   (() => {
@@ -374,94 +460,12 @@
             consignorSelect.addEventListener('change', updateConsignorDetails);
             consigneeSelect.addEventListener('change', updateConsigneeDetails);
         });
-        // Handle truck owner/agency selection
-        const truckSelect = document.getElementById('truck_id');
-        const truckOwnerCheckbox = document.getElementById('truck_owner');
-        const agencyCheckbox = document.getElementById('agency');
-        const ownerTransporterSelect = document.getElementById('owner_transporter_id');
-        const ownerAgencySection = document.getElementById('ownerAgencySection');
-
-        // Function to update owner transporters based on selected truck
-        async function updateOwnerTransporters() {
-            const truckId = truckSelect.value;
-            if (!truckId) {
-                ownerTransporterSelect.innerHTML = '<option value="">Select Transporter</option>';
-                return;
-            }
-
-            try {
-                const response = await fetch(`/api/trucks/${truckId}/owner-transporters`);
-                const data = await response.json();
-                
-                // Clear existing options
-                ownerTransporterSelect.innerHTML = '<option value="">Select Transporter</option>';
-                
-                // Add owner transporters
-                data.forEach(transporter => {
-                    const option = document.createElement('option');
-                    option.value = transporter.id;
-                    option.textContent = transporter.name;
-                    ownerTransporterSelect.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Error fetching owner transporters:', error);
-            }
-        }
- // Function to update owner transporters based on selected truck
-// Update the agency checkbox event listener
-agencyCheckbox.addEventListener('change', () => {
-    const mainTransporterDiv = document.getElementById('agencyTransporterMain');
-    if (agencyCheckbox.checked) {
-        mainTransporterDiv.style.display = 'block';
-    } else {
-        mainTransporterDiv.style.display = 'none';
-        mainTransporterDiv.querySelector('select').value = ''; // Clear the selected value
-    }
-});
        
+       
+     
+    
 
-        // Event listeners
-        truckSelect.addEventListener('change', () => {
-            const ownerAgencySection = document.getElementById('ownerAgencySection');
-            if (truckSelect.value) {
-                ownerAgencySection.style.display = 'block';
-            
-                updateOwnerTransporters();
-                updateAgencyTransporters();
-            } else {
-                ownerAgencySection.style.display = 'none';
-                // Reset checkboxes
-                truckOwnerCheckbox.checked = false;
-                agencyCheckbox.checked = false;
-                // Hide transporter select boxes
-                document.getElementById('agencyTransporterMain').style.display = 'none';
-                document.getElementById('ownerTransporterSelect').style.display = 'none';
-            }
-        });
-        truckOwnerCheckbox.addEventListener('change', () => {
-            const ownerTransporterDiv = document.getElementById('ownerTransporterSelect');
-            if (truckOwnerCheckbox.checked) {
-                ownerTransporterDiv.style.display = 'block';
-                updateOwnerTransporters(); // Fetch and populate the options
-            } else {
-                ownerTransporterDiv.style.display = 'none';
-                ownerTransporterSelect.value = '';
-            }
-        });
-
-        agencyCheckbox.addEventListener('change', () => {
-            const agencyTransporterDiv = document.getElementById('agencyTransporterSelect');
-            if (agencyCheckbox.checked) {
-                agencyTransporterDiv.style.display = 'block';
-                // updateAgencyTransporters(); // Fetch and populate the options
-            } else {
-                agencyTransporterDiv.style.display = 'none';
-                agencyTransporterSelect.value = '';
-            }
-        });
-
-        // Initial update
-        updateOwnerTransporters();
+      
     </script>
     <!--end::JavaScript-->
 </div>

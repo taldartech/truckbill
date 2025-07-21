@@ -2,15 +2,19 @@
 
 @section('content')
 <div class="container mt-4">
-    <div class="col-sm-6">
-        <h3 class="mb-0">Lorry Receipts</h3>
-        
-    </div>
+    {{-- <div class="row">
+        <div class="col-12 text-center">
+            <h3 class="mb-4">Lorry Receipts</h3>
+        </div>
+    </div> --}}
+    
+  
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
-
-    <div class="d-flex justify-content-end gap-2 mb-3">
+    <div class="card mb-4">
+   
+    <div class="d-flex justify-content-end gap-2 mb-4 mt-1">
         <button type="button" id="VocherPaymentBtn" 
             class="btn btn-lg btn-primary d-none"
             onclick="handleVoucherPayment()"
@@ -23,19 +27,19 @@
             style="position: fixed; bottom: 20px; right: 20px; z-index: 1050;">
             <i class="bi bi-cash-coin"></i> Memo Update
         </button>
-        <button type="button" class="btn btn-info" onclick="document.getElementById('advanced-search-box').classList.toggle('d-none')">
-            <i class="bi bi-funnel"></i> Search filter
+        <button type="button" class="btn btn-info mt-1" onclick="document.getElementById('advanced-search-box').classList.toggle('d-none')">
+            <i class="bi bi-funnel"></i>  Filter
         </button>
-        <a href="{{ route('lorry_receipts.create') }}" class="btn btn-info">
-            <i class="bi bi-plus"></i> Add New LR
+        <a href="{{ route('lorry_receipts.create') }}" class="btn btn-info mt-1 me-2">
+            <i class="bi bi-plus"></i> Create
         </a>
     </div>
 
-    <form method="GET" action="{{ route('lorry_receipts.index') }}" id="advanced-search-box" class="card card-body shadow-sm mb-4 d-none">
+    <form method="GET" action="{{ route('lorry_receipts.index') }}" id="advanced-search-box"  class=" d-none">
         {{-- Filter checkboxes --}}
         <div class="row g-2">
             <div class="col-md-12">
-                <label class="form-label fw-bold">Choose Filter Fields:</label>
+                <label class="form-label fw-bold ms-2">Choose Filter Fields:</label>
                 <div class="form-check form-check-inline">
                     <input class="form-check-input" type="checkbox" value="lr_number" id="filter_lr_number" onchange="toggleField(this)" >
                     <label class="form-check-label" for="filter_lr_number">LR Number</label>
@@ -49,17 +53,25 @@
                     <input class="form-check-input" type="checkbox" value="gr_date" id="filter_date" onchange="toggleField(this)" >
                     <label class="form-check-label" for="filter_date">GR Date</label>
                 </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" value="customer_id" id="filter_customer" onchange="toggleField(this)" >
+                    <label class="form-check-label" for="filter_customer">Customer</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" value="truck_number" id="filter_truck_number" onchange="toggleField(this)" >
+                    <label class="form-check-label" for="filter_truck_number">Truck Number</label>
+                </div>
             </div>
         </div>
 
         {{-- Conditionally visible filter fields --}}
-        <div class="row g-3 mt-2" id="filter-fields">
-            <div class="col-md-3 d-none" id="field_lr_number">
+        <div class="row g-3 mt-2 ms-2" id="filter-fields">
+            <div class="col-md-2 d-none" id="field_lr_number">
                 <label class="form-label">LR Number</label>
                 <input type="text" name="lr_number" class="form-control" value="{{ request('lr_number') }}">
             </div>
            
-            <div class="col-md-3 d-none" id="field_delivery_status">
+            <div class="col-md-2 d-none" id="field_delivery_status">
                 <label class="form-label">Status</label>
                 <select name="delivery_status" class="form-select">
                     <option value="">All Statuses</option>
@@ -72,30 +84,65 @@
             </div>
             <div class="col-md-3 d-none" id="field_gr_date">
                 <label class="form-label">GR Date Range</label>
-                <div class="row g-2">
-                    <div class="col">
-                        <input type="date" name="gr_date_from" class="form-control" value="{{ request('gr_date_from') }}">
-                    </div>
-                    <div class="col">
-                        <input type="date" name="gr_date_to" class="form-control" value="{{ request('gr_date_to') }}">
-                    </div>
+                <div class="d-flex gap-2">
+                    <input type="date" name="gr_date_from" class="form-control flex-grow-1" value="{{ request('gr_date_from') }}">
+                    <input type="date" name="gr_date_to" class="form-control flex-grow-1" value="{{ request('gr_date_to') }}">
                 </div>
             </div>
         </div>
-
+        <div class="row g-3 mt-2 ms-2" id="filter-fields">
+        <div class="col-md-2 d-none" id="field_customer_id">
+                <label class="form-label">Customer</label>
+                <select name="customer_id" class="form-select">
+                    <option value="">All Customers</option>
+                    @foreach($customers as $customer)
+                        <option value="{{ $customer->id }}" {{ request('customer_id') == $customer->id ? 'selected' : '' }}>
+                            {{ $customer->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-2 d-none" id="field_truck_number">
+                <label class="form-label">Truck Number</label>
+                <input type="text" name="truck_number" class="form-control" value="{{ request('truck_number') }}">
+            </div>
+        </div>  
         {{-- Form action buttons --}}
         <div class="text-end mt-3">
-            <button type="submit" class="btn btn-secondary">
-                <i class="bi bi-search"></i> Search
-            </button>
-            <a href="{{ route('lorry_receipts.index') }}" class="btn btn-outline-secondary ms-2">
-                <i class="bi bi-arrow-clockwise"></i> Reset
-            </a>
+            <button type="submit" class="btn btn-primary "> Search <i class="bi bi-search"></i></button>
+            <button type="button" class="btn btn-secondary me-2" onclick="resetFilters()"> Reset <i class="bi bi-arrow-clockwise"></i></button>
         </div>
     </form>
+    {{-- <div class="mb-3 d-flex justify-content-start gap-2">
+        <a href="{{ route('lorry_receipts.index') }}" 
+           class="btn btn-outline-primary {{ request('delivery_status') == null ? 'active' : '' }}">
+            <i class="bi bi-list"></i> All
+        </a>
+    
+        <a href="{{ route('lorry_receipts.index', ['delivery_status' => 'pending']) }}" 
+           class="btn btn-outline-warning {{ request('delivery_status') == 'pending' ? 'active' : '' }}">
+            <i class="bi bi-hourglass-split"></i> Pending
+        </a>
+    </div> --}}
+    
+  
+        {{-- <div class="card-header"><h3 class="card-title">Lorry Receipts List</h3></div>  --}}
+        
+      
+        <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-start">
+         
+            <div class="d-flex gap-2">
+                <a href="{{ route('lorry_receipts.index') }}" 
+                   class="btn btn-outline-primary {{ request('delivery_status') == null ? 'active' : '' }}">
+                    <i class="bi bi-list"></i> All
+                </a>
+                <a href="{{ route('lorry_receipts.index', ['delivery_status' => 'pending']) }}" 
+                   class="btn btn-outline-warning {{ request('delivery_status') == 'pending' ? 'active' : '' }}">
+                    <i class="bi bi-hourglass-split"></i> Pending
+                </a>
+            </div>
+        </div>
 
-    <div class="card mb-4">
-        <div class="card-header"><h3 class="card-title">Lorry Receipts List</h3></div>
         <div class="card-body" style="overflow-x: auto;">
             <table class="table table-bordered">
                 <thead>
@@ -103,6 +150,7 @@
                        <th><input type="checkbox" id="selectAllCheckbox"></th>
                         <th style="width: 10px">Sr. No</th>
                         <th>LR Number</th>
+                        <th>Customer</th>
                         <th>Consignor</th>
                         <th>Consignee</th>
                         <th>Status</th>
@@ -126,19 +174,27 @@
                                 {{ $lr->lr_number }}
                             </a>
                         </td>
+                        <td>{{ $lr->customer?->name ?? 'N/A' }}</td>
                         <td>{{ $lr->consignor?->name ?? 'N/A' }}</td>
                         <td>{{ $lr->consignee?->name ?? 'N/A' }}</td>
                         {{-- <td>{{ $lr->delivery_status ?? 'Pending' }}</td> --}}
                         <td>
                             @php
                                 $hasFreightBooking = !empty($lr->freight_booking_id);
-                                $rawStatus = $hasFreightBooking ? ($lr->delivery_status ?? 'Pending') : 'Pending';
+                                if ($hasFreightBooking && $lr->freightBooking && $lr->freightBooking->balance_amount == 0) {
+                                    $rawStatus = 'Completed';
+                                } else {
+                                    $rawStatus = $hasFreightBooking ? ($lr->delivery_status ?? 'Pending') : 'Pending';
+                                }
                                 $status = strtolower(trim($rawStatus));
                                 $badgeClass = match($status) {
                                     'cancelled'    => 'badge text-bg-danger',
                                     'pending'      => 'badge text-bg-primary',
                                     'delivered'    => 'badge text-bg-success',
                                     'in-progress'  => 'badge text-bg-warning',
+                                    'completed'    => 'badge text-bg-info',
+                                    'invoice-raised' => 'badge text-bg-secondary',
+                                    'finally-paid' => 'badge text-bg-success',
                                     default        => 'badge text-bg-secondary',
                                 };
                             @endphp
@@ -244,7 +300,48 @@
             {{ $lrs->links() }}
         </div>
     </div>
+   
+
 </div>
+
+<style>
+    .btn.active {
+        background-color: #0d6efd;
+        color: white;
+        border-color: #0d6efd;
+    }
+</style>
+
+<script>
+    function toggleField(checkbox) {
+        const fieldId = 'field_' + checkbox.value;
+        const fieldElement = document.getElementById(fieldId);
+        if (fieldElement) {
+            fieldElement.classList.toggle('d-none', !checkbox.checked);
+        }
+    }
+
+    // To re-show filters on page reload with old values
+    window.addEventListener('DOMContentLoaded', () => {
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                toggleField(checkbox);
+            }
+        });
+    });
+</script>
+
+
+<script>
+    $(document).ready(function() {
+        $('#customerSelect').select2({
+            placeholder: "-- Select Customer --",
+            allowClear: true
+        });
+    });
+</script>
+
 
 <script>
     function toggleField(checkbox) {
@@ -718,6 +815,19 @@ function handleVoucherPayment() {
     const hasNoVoucher = Array.from(checkboxes).some(cb => cb.getAttribute('data-voucher_number') === '0');
     if (hasNoVoucher) {
         alert("Please create Freight Booking first for selected Lorry Receipts.");
+        return;
+    }
+
+    // Check for LRs with zero balance and collect their numbers
+    const zeroBalanceLRs = Array.from(checkboxes).filter(cb => {
+        const balance = parseFloat(cb.getAttribute('data-balance') || 0);
+        return balance <= 0;
+    }).map(cb => cb.getAttribute('data-lr'));
+
+    if (zeroBalanceLRs.length > 0) {
+        const message = `The following Lorry Receipts have zero balance. No payment is required:
+        ${zeroBalanceLRs.join(', ')}`;
+        alert(message);
         return;
     }
 

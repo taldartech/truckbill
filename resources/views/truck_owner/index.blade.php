@@ -217,7 +217,7 @@
                             <i class="bi bi-bank"></i>
                         </a>
                     @endif
-                        <a href="{{ route('truck_owners.create', ['truck_owner_id' => $transporter->id]) }}" class="btn btn-sm btn-warning">
+                        <a href="{{ route('trucks.create', ['transporter_id' => $transporter->id]) }}" class="btn btn-sm btn-warning">
                             <i class="bi bi-truck"></i>
                         </a>
                         <a href="{{ route('truck_owners.edit', $transporter->id) }}" class="btn btn-sm btn-info">

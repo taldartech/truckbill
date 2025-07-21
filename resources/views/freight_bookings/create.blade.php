@@ -2,12 +2,7 @@
 
 @section('content')
 
-@if (session('error'))
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        {{ session('error') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-@endif
+
 
 <div class="card card-info card-outline mb-4" style="width: 70%;align-items: center;margin: auto;">
     <div class="row g-3">
@@ -126,14 +121,10 @@
             </div> --}}
             <div class="col-md-4 mb-3">
                 <label for="good_type" class="form-label">Goods Type</label>
-                <select class="form-select" name="good_type" id="good_type">
-                    <option value="">Select Goods Type</option>
-                    @foreach($goodsTypes as $goodsType)
-                        <option value="{{ $goodsType->name }}" {{ old('good_type') == $goodsType->name ? 'selected' : '' }}>
-                            {{ $goodsType->name }}
-                        </option>
-                    @endforeach
-                </select>
+                <div class="input-group">
+                    <input type="hidden" name="good_type" value="{{ isset($preFilled) ? $preFilled['goods_type'] : '' }}">
+                    <input type="text" class="form-control" readonly value="{{ isset($preFilled) ? $preFilled['goods_type'] : '' }}">
+                </div>
                 @error('good_type') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
             <div class="col-md-4 mb-3">
