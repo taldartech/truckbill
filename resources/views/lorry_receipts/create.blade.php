@@ -1,7 +1,182 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="card card-info card-outline mb-4" style="width: 70%;align-items: center;margin: auto;">
+<div class="card card-info card-outline mb-4" style="max-width: 950px;align-items: center;margin: auto;">
+    <!--begin::Header-->
+    <div class="card-header">
+        <div class="card-title h4">Add New Lorry Receipt</div>
+    </div>
+    <hr class="mb-3 mt-0">
+    <!--end::Header-->
+    <form method="POST" action="{{ route('lorry_receipts.store') }}" id="lorryReceiptForm" class="needs-validation" novalidate="">
+        @csrf
+        <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
+        <div class="card-body">
+            <!-- General Details -->
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label for="lr_number" class="form-label">LR Number *</label>
+                    <input type="text" class="form-control" id="lr_number" name="lr_number" value="{{ old('lr_number') }}" required placeholder="Enter LR Number">
+                    @error('lr_number') <div class="text-danger">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-4">
+                    <label for="gr_date" class="form-label">GR Date *</label>
+                    <input type="date" class="form-control" id="gr_date" name="gr_date" required value="{{ old('gr_date') }}">
+                    @error('gr_date') <div class="text-danger">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-4">
+                    <label for="customer_id" class="form-label">Customer *</label>
+                    <select class="form-select" id="customer_id" name="customer_id" required>
+                        <option value="">Select Customer</option>
+                        @foreach($consignees as $consignee)
+                            <option value="{{ $consignee->id }}" {{ old('customer_id') == $consignee->id ? 'selected' : '' }}>{{ $consignee->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('customer_id') <div class="text-danger">{{ $message }}</div> @enderror
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label for="truck_id" class="form-label">Truck *</label>
+                    <select class="form-select" id="truck_id" name="truck_id" required>
+                        <option value="">Select Trucks</option>
+                        @foreach($trucks as $truck)
+                            <option value="{{ $truck->id }}" {{ old('truck_id') == $truck->id ? 'selected' : '' }}>{{ $truck->truck_number }} ({{ $truck->transporter->name }})</option>
+                        @endforeach
+                    </select>
+                    @error('truck_id') <div class="text-danger">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-4">
+                    <label for="transporter_type" class="form-label">Select Type *</label>
+                    <select class="form-select" id="transporter_type" required>
+                        <option value="">Select Type</option>
+                        <option value="owner">Truck Owner</option>
+                        <option value="agency">Agency</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="transporter_id" id="transporterLabel" class="form-label">Transporter *</label>
+                    <select class="form-select" id="transporter_id" name="transporter_id" required>
+                        <option value="">Select Transporter</option>
+                    </select>
+                    @error('transporter_id') <div class="text-danger">{{ $message }}</div> @enderror
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label for="consignor_id" class="form-label">Consignor *</label>
+                    <select class="form-select" id="consignor_id" name="consignor_id" required>
+                        <option value="">Select Consignor</option>
+                        @foreach($consignees as $consignee)
+                            <option value="{{ $consignee->id }}" {{ old('consignee_id') == $consignee->id ? 'selected' : '' }}>{{ $consignee->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('consignor_id') <div class="text-danger">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-4">
+                    <label for="consignor_contact_number" class="form-label">Consignor Contact Number</label>
+                    <input type="text" class="form-control" id="consignor_contact_number" name="consignor_contact_number" readonly>
+                </div>
+                <div class="col-md-4">
+                    <label for="consignee_id" class="form-label">Consignee *</label>
+                    <select class="form-select" id="consignee_id" name="consignee_id" required>
+                        <option value="">Select Consignee</option>
+                        @foreach($consignees as $consignee)
+                            <option value="{{ $consignee->id }}" {{ old('consignee_id') == $consignee->id ? 'selected' : '' }}>{{ $consignee->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('consignee_id') <div class="text-danger">{{ $message }}</div> @enderror
+                </div>
+            </div>
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <label for="consignee_contact_number" class="form-label">Consignee Contact Number</label>
+                    <input type="text" class="form-control" id="consignee_contact_number" name="consignee_contact_number" readonly>
+                </div>
+            </div>
+            <!-- Route Section -->
+            <div class="card mb-4 p-3 bg-light">
+                <div class="row"><div class="col"><h5 class="mb-3">Route</h5></div></div>
+                <div class="row mb-2">
+                    <div class="col-md-6">
+                        <label for="source_city" class="form-label">Source City *</label>
+                        <input type="text" class="form-control" id="source_city" name="source_city" required value="{{ old('source_city') }}" readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="source_state" class="form-label">Source State *</label>
+                        <input type="text" class="form-control" id="source_state" name="source_state" required value="{{ old('source_state') }}" readonly>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="destination_city" class="form-label">Destination City *</label>
+                        <input type="text" class="form-control" id="destination_city" name="destination_city" required value="{{ old('destination_city') }}" readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="destination_state" class="form-label">Destination State *</label>
+                        <input type="text" class="form-control" id="destination_state" name="destination_state" required value="{{ old('destination_state') }}" readonly>
+                    </div>
+                </div>
+            </div>
+            <!-- Goods & Charges Section -->
+            <div class="card mb-4 p-3 bg-light">
+                <div class="row"><div class="col"><h5 class="mb-3">Goods & Charges</h5></div></div>
+                <div class="row mb-2">
+                    <div class="col-md-4">
+                        <label for="good_type" class="form-label">Goods Type *</label>
+                        <select class="form-select" id="good_type" name="good_type" required>
+                            <option value="">Select Goods Type</option>
+                            @foreach($goodsTypes as $goodsType)
+                                <option value="{{ $goodsType->name }}" {{ old('good_type') == $goodsType->name ? 'selected' : '' }}>{{ $goodsType->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('good_type') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label for="weight" class="form-label">Weight *</label>
+                        <input type="number" step="0.01" class="form-control" id="weight" name="weight" required value="{{ old('weight') }}">
+                        @error('weight') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label for="no_of_units" class="form-label">No. of Units *</label>
+                        <input type="number" class="form-control" id="no_of_units" name="no_of_units" required value="{{ old('no_of_units') }}">
+                        @error('no_of_units') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-4">
+                        <label for="fr_rate" class="form-label">Freight Rate *</label>
+                        <input type="number" step="0.01" class="form-control" id="fr_rate" name="fr_rate" required value="{{ old('fr_rate') }}">
+                        @error('fr_rate') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label for="amount" class="form-label">Amount *</label>
+                        <input type="number" step="0.01" class="form-control" id="amount" name="amount" required value="{{ old('amount') }}">
+                        @error('amount') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+            </div>
+            <!-- Quick Actions Section -->
+            <div class="card p-3 bg-light">
+                <div class="row"><div class="col"><h5 class="mb-3">Quick Actions</h5></div></div>
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <button class="btn btn-success w-100 mb-2" type="submit">💾 Submit Form</button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-secondary w-100 mb-2" type="button" title="Copies most data, clears variable fields">🔄 Save & Create Similar <span class="ms-1" data-bs-toggle="tooltip" title="Copies most data, clears variable fields">ℹ️</span></button>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-warning w-100 mb-2" type="button" title="Save this combination for future use">📋 Save as Template <span class="ms-1" data-bs-toggle="tooltip" title="Save this combination for future use">ℹ️</span></button>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{{ route('lorry_receipts.index') }}" class="btn btn-outline-dark w-100 mb-2">📄 Back to List</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
     <!--begin::Header-->
     <div class="card-header"><div class="card-title">Add New Lorry Receipt</div></div>
     <hr class="mb-3 mt-0">
