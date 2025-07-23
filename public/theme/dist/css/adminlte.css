@@ -3117,6 +3117,7 @@ textarea.form-control-lg {
 
 .btn-info {
 .btn-info {
+  color: #fff;
   --bs-btn-color: #ffffff;
   --bs-btn-bg: #003366;
   --bs-btn-border-color: #003366;

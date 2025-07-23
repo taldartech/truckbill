@@ -157,6 +157,12 @@ a.btn-success:hover {
 }
 
 .btn-lg {
+
+/* Force .btn-info text to white, override all */
+.btn-info, .btn-info * {
+  color: #fff !important;
+}
+
     font-size: 1.2rem;
     padding: 1em 2.5em;
     border-radius: 14px;
