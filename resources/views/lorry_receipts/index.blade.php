@@ -247,7 +247,7 @@
                                     data-bs-placement="top">
                                     <i class="bi bi-receipt"></i> 
                                 </a>
-                                <a href="{{ route('invoices.index', ['lorry_receipt_id' => $lr->id]) }}" 
+                                <a href="{{ route('invoices.create', ['lorry_receipt_id' => $lr->id]) }}" 
                                     class="btn btn-sm btn-secondary" 
                                     title="create Invoices" 
                                     data-bs-toggle="tooltip" 
@@ -278,7 +278,9 @@
                                 <form action="{{ route('lorry_receipts.destroy', $lr->id) }}" method="POST" style="display:inline-block;">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this lorry receipt?')">
+                                    <button type="submit" class="btn btn-sm btn-danger" data-bs-toggle="tooltip" 
+                            data-bs-placement="top" 
+                            title="Delete Lorry Receipt" onclick="return confirm('Delete this lorry receipt?')">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>

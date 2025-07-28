@@ -209,24 +209,35 @@
                 <td>
                     <div class="d-flex gap-1">
                         @if($transporter->bankAccounts->isEmpty() || $transporter->bankAccounts->first()->bulk_payment_id === null)
-                        <a href="{{ route('truck_owner_bank_accounts.create', ['truck_owner_id' => $transporter->id]) }}" class="btn btn-sm btn-info">
+                        <a href="{{ route('truck_owner_bank_accounts.create', ['truck_owner_id' => $transporter->id]) }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" 
+                            data-bs-placement="top" 
+                            title="Add Bank Account">
                             <i class="bi bi-bank"></i>
                         </a>
                     @else
-                        <a href="{{ route('truck_owner_bank_accounts.index', ['truck_owner_id' => $transporter->id]) }}" class="btn btn-sm btn-warning">
+                        <a href="{{ route('truck_owner_bank_accounts.index', ['truck_owner_id' => $transporter->id]) }}" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" 
+                            data-bs-placement="top" 
+                            title="View Bank Accounts">
                             <i class="bi bi-bank"></i>
                         </a>
                     @endif
-                        <a href="{{ route('trucks.create', ['transporter_id' => $transporter->id]) }}" class="btn btn-sm btn-warning">
+                        <a href="{{ route('trucks.create', ['transporter_id' => $transporter->id]) }}" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" 
+                            data-bs-placement="top" 
+                            title="Add Truck">
                             <i class="bi bi-truck"></i>
                         </a>
-                        <a href="{{ route('truck_owners.edit', $transporter->id) }}" class="btn btn-sm btn-info">
+                        <a href="{{ route('truck_owners.edit', $transporter->id) }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" 
+                            data-bs-placement="top" 
+                            title="Edit Truck Owner">
                             <i class="bi bi-pencil"></i>
                         </a>
                         <form action="{{ route('transporters.destroy', $transporter->id) }}" method="POST" style="display:inline-block;">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this transporter?')">
+                            <button type="submit" class="btn btn-sm btn-danger" data-bs-toggle="tooltip" 
+                            data-bs-placement="top" 
+                            title="Delete Truck Owner"
+                             onclick="return confirm('Delete this transporter?')">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </form>

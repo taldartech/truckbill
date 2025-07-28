@@ -12,9 +12,9 @@
         <button type="button" class="btn btn-info" onclick="document.getElementById('advanced-search-box').classList.toggle('d-none')">
             <i class="bi bi-funnel"></i> Search filter
         </button>
-        <a href="{{ route('transporters.create') }}" class="btn btn-info">
+        {{-- <a href="{{ route('transporters.create') }}" class="btn btn-info">
             <i class="bi bi-plus"></i> create
-        </a>
+        </a> --}}
     </div>
 
     {{-- Hidden filter form --}}
@@ -120,13 +120,17 @@
                             <td>{{ $truck->driver ? $truck->driver->name : '-' }}</td>
                             <td>
                                 <div class="d-flex gap-1">
-                                    <a href="{{ route('trucks.edit', $truck->id) }}" class="btn btn-sm btn-info">
+                                    <a href="{{ route('trucks.edit', $truck->id) }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" 
+                            data-bs-placement="top" 
+                            title="Edit Truck">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                     <form action="{{ route('trucks.destroy', $truck->id) }}" method="POST" style="display:inline-block;">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this truck?')">
+                                        <button type="submit" class="btn btn-sm btn-danger" data-bs-toggle="tooltip" 
+                            data-bs-placement="top" 
+                            title="Delete Truck" onclick="return confirm('Delete this truck?')">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </form>

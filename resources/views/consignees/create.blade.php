@@ -16,7 +16,7 @@
         <!--begin::Body-->
         <div class="card-body">
             <!--begin::Row-->
-            <div class="row g-3">
+            <div class="row mb-3">
                 <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="name" class="form-label">Name *</label>
@@ -26,16 +26,18 @@
                 </div>
                 <!--end::Col-->
                
-               
-                <!--begin::Col-->
                 <div class="col-md-6">
-                    <label for="address" class="form-label">Address *</label>
-                    <textarea class="form-control" id="address" name="address" rows="3">{{ old('address') }}</textarea>
-                    @error('address') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please enter an address.</div>
+                    <label for="contact_number" class="form-label">Contact Number *</label>
+                    <input type="text" class="form-control" id="contact_number" name="contact_number" value="{{ old('contact_number') }}" required>
+                    @error('contact_number') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please enter a contact number.</div>
                 </div>
+                <!--begin::Col-->
+                
                 <!--end::Col-->
                 <!--begin::Col-->
+            </div>
+            <div class="row mb-3">
                 <div class="col-md-4">
                     <label for="country_id" class="form-label">Country *</label>
                     <select class="form-select" id="country_id" name="country_id" required>
@@ -84,13 +86,14 @@
                     <div class="invalid-feedback">Please select a city.</div>
                 </div>
                 <!--end::Col-->
-             
+            </div>             
+            <div class="row mb-3">          
                 <!--begin::Col-->
                 <div class="col-md-6">
-                    <label for="contact_number" class="form-label">Contact Number *</label>
-                    <input type="text" class="form-control" id="contact_number" name="contact_number" value="{{ old('contact_number') }}" required>
-                    @error('contact_number') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please enter a contact number.</div>
+                    <label for="address" class="form-label">Address *</label>
+                    <textarea class="form-control" id="address" name="address" rows="3">{{ old('address') }}</textarea>
+                    @error('address') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please enter an address.</div>
                 </div>
                 <!--end::Col-->
              
@@ -98,14 +101,25 @@
              
             </div>
             <!--end::Row-->
+            <div class="card p-3 bg-light">
+                <div class="row"><div class="col"><h5 class="mb-3">Quick Actions</h5></div></div>
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <button class="btn btn-success w-100 mb-2" type="submit">💾 Submit Form</button>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{{ route('transporters.index') }}" class="btn btn-outline-dark w-100 mb-2">📄 Back to List</a>
+                    </div>
+                </div>
+            </div>
         </div>
         <!--end::Body-->
-        <!--begin::Footer-->
+        {{-- <!--begin::Footer-->
         <div class="card-footer">
             <button class="btn btn-info" type="submit">Submit form</button>
             <a href="{{ route('consignees.index') }}" class="btn btn-info">Back to List</a>
         </div>
-        <!--end::Footer-->
+        <!--end::Footer--> --}}
     </form>
     <!--end::Form-->
 </div>

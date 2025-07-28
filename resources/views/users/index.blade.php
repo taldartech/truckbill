@@ -101,13 +101,17 @@
                             <td>{{ $user->userRole ? ucfirst($user->userRole->name) : '-' }}</td>
                             <td>{{ $user->company ? $user->company->name : '-' }}</td>
                             <td class="d-flex align-items-center">
-                                <a href="{{ route('users.edit', $user->id) }}" class="btn btn-sm btn-info me-2" title="Edit">
+                                <a href="{{ route('users.edit', $user->id) }}" class="btn btn-sm btn-info me-2" title="Edit" data-bs-toggle="tooltip" 
+                            data-bs-placement="top" 
+                            title="Edit User">
                                     <i class="bi bi-pencil"></i>
                                 </a>
                                 <form action="{{ route('users.destroy', $user->id) }}" method="POST" style="display:inline-block;">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">
+                                    <button type="submit" class="btn btn-sm btn-danger" data-bs-toggle="tooltip" 
+                            data-bs-placement="top" 
+                            title="Delete User" onclick="return confirm('Are you sure?')">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>

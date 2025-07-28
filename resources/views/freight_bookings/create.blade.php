@@ -52,7 +52,7 @@
         <!--begin::Body-->
         <div class="card-body">
             <!--begin::Row-->
-            <div class="row g-3">
+            <div class="row mb-3">
                 <!--begin::Col-->
                 <div class="col-md-4">
                     <label for="lr_id" class="form-label">LR Number *</label>
@@ -83,9 +83,9 @@
                     @error('truck_id') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
         </div>
-
-        <div class="row">
-            <div class="col-md-4 mb-3">
+        <div class="card mb-4 p-3 bg-light">
+        <div class="row mb-3">
+            <div class="col-md-4">
                 <label for="tr_fr_rate" class="form-label">TR Freight Rate *</label>
                 <input type="number" step="0.01" class="form-control" name="tr_fr_rate" id="tr_fr_rate" value="{{ old('tr_fr_rate') }}" required>
                 @error('tr_fr_rate') <div class="text-danger">{{ $message }}</div> @enderror
@@ -113,6 +113,8 @@
                 @error('tds_amount') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
         </div>
+    </div>
+    <div class="card mb-4 p-3 bg-light">
         <div class="row">
             {{-- <div class="col-md-4 mb-3">
                 <label for="shortage" class="form-label">Shortage</label>
@@ -147,6 +149,8 @@
                 @error('detention') <div class="text-danger">{{ $message }}</div> @enderror
             </div> --}}
         </div>
+    
+    
         <div class="row">
             {{-- <div class="col-md-4 mb-3">
                 <label for="deviation" class="form-label">Deviation</label>
@@ -212,7 +216,8 @@
                 </select>
             </div>
         </div>
-        <div class="row">
+    </div>
+        {{-- <div class="row"> --}}
             {{-- <div class="col-md-6 mb-3">
                 <label for="linked_freight_booking_id" class="form-label">Linked Freight Booking</label>
                 <select name="linked_freight_booking_id" id="linked_freight_booking_id" class="form-select">
@@ -225,16 +230,31 @@
                 </select>
                 @error('linked_freight_booking_id') <div class="text-danger">{{ $message }}</div> @enderror
             </div> --}}
-        </div>
+        {{-- </div> --}}
         <!--end::Row-->
+        <div class="card p-3 bg-light">
+            <div class="row"><div class="col"><h5 class="mb-3">Quick Actions</h5></div></div>
+            <div class="row g-2">
+                <div class="col-md-4">
+                    <button class="btn btn-success w-100 mb-2" type="submit" name="action" value="save">💾 Submit Form</button>
+                </div>
+                <div class="col-md-4">
+                    <button class="btn btn-secondary w-100 mb-2" type="submit" name="action" value="save_and_pay" title="save the form and make voucher payment"> Save & Make Payment <span class="ms-1" data-bs-toggle="tooltip" title="save the form and make voucher payment">ℹ️</span></button>
+                </div>
+                
+                <div class="col-md-4">
+                    <a href="{{ route('freight_bookings.index') }}" class="btn btn-outline-dark w-100 mb-2">📄 Back to List</a>
+                </div>
+            </div>
+        </div>
       </div>
       <!--end::Body-->
       <!--begin::Footer-->
-      <div class="card-footer">
+      {{-- <div class="card-footer">
             <button class="btn btn-info" type="submit" name="action" value="save">Submit form</button>
             <button class="btn btn-primary" type="submit" name="action" value="save_and_pay">Save & Make Payment</button>
             <a href="{{ route('freight_bookings.index') }}" class="btn btn-info">Back to List</a>
-      </div>
+      </div> --}}
       <input type="hidden" name="redirect_to_payment" value="0">
       <!--end::Footer-->
     </form>

@@ -12,9 +12,9 @@
         <button type="button" class="btn btn-info" onclick="document.getElementById('advanced-search-box').classList.toggle('d-none')">
             <i class="bi bi-funnel"></i> Search filter
         </button>
-        <a href="{{ route('voucher_payments.create') }}" class="btn btn-info">
+        {{-- <a href="{{ route('voucher_payments.create') }}" class="btn btn-info">
             <i class="bi bi-plus"></i> Create
-        </a>
+        </a> --}}
     </div>
 
     {{-- Hidden filter form --}}
@@ -177,13 +177,17 @@
                             <td>{!! $payment->getPaymentStatusBadge() !!}</td>
                             <td>
                                 <div class="d-flex gap-1">
-                                    <a href="{{ route('voucher_payments.edit', $payment) }}?lorry_receipt_id={{ $payment->freight_booking ? $payment->freight_booking->lr_id : '' }}&freight_booking_id={{ $payment->freight_booking_id }}" class="btn btn-sm btn-info">
+                                    <a href="{{ route('voucher_payments.edit', $payment) }}?lorry_receipt_id={{ $payment->freight_booking ? $payment->freight_booking->lr_id : '' }}&freight_booking_id={{ $payment->freight_booking_id }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" 
+                            data-bs-placement="top" 
+                            title="Edit Payment">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                     <form action="{{ route('voucher_payments.destroy', $payment) }}" method="POST" style="display:inline-block;">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this payment?')">
+                                        <button type="submit" class="btn btn-sm btn-danger" data-bs-toggle="tooltip" 
+                            data-bs-placement="top" 
+                            title="Delete Payment" onclick="return confirm('Delete this payment?')">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </form>

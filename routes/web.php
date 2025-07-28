@@ -114,6 +114,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Invoices
     Route::resource('invoices', InvoiceController::class);
+Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->name('invoices.lrs');
     Route::get('/invoices/memos/{customerId}', [InvoiceController::class, 'getCustomerMemos']);
     Route::get('invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
 

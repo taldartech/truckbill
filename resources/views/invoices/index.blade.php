@@ -131,16 +131,22 @@
                             <td>{{ ucfirst($invoice->payment_status) }}</td>
                             <td>
                                 <div class="d-flex gap-1">
-                                    <a href="{{ route('invoices.show', $invoice->id) }}" class="btn btn-sm btn-info">
+                                    <a href="{{ route('invoices.show', $invoice->id) }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" 
+                            data-bs-placement="top" 
+                            title="View Invoice">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    <a href="{{ route('invoices.edit', $invoice->id) }}" class="btn btn-sm btn-info">
+                                    <a href="{{ route('invoices.edit', $invoice->id) }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" 
+                            data-bs-placement="top" 
+                            title="Edit Invoice">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                     <form action="{{ route('invoices.destroy', $invoice->id) }}" method="POST" style="display:inline-block;">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this invoice?')">
+                                        <button type="submit" class="btn btn-sm btn-danger" data-bs-toggle="tooltip" 
+                            data-bs-placement="top" 
+                            title="Delete Invoice" onclick="return confirm('Delete this invoice?')">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </form>

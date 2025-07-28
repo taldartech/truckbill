@@ -98,13 +98,17 @@
                         <td>{{ $account->bulk_payment_id }}</td>
                         <td>
                             <div class="d-inline-flex gap-1">
-                                <a href="{{ route('transporter_bank_accounts.edit', $account) }}" class="btn btn-sm btn-warning">
+                                <a href="{{ route('transporter_bank_accounts.edit', $account) }}" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" 
+                            data-bs-placement="top" 
+                            title="Edit Bank Account">
                                     <i class="bi bi-pencil"></i>
                                 </a>
                                 <form action="{{ route('transporter_bank_accounts.destroy', $account) }}" method="POST" style="display:inline-block;">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">
+                                    <button type="submit" class="btn btn-sm btn-danger" data-bs-toggle="tooltip" 
+                            data-bs-placement="top" 
+                            title="Delete Bank Account" onclick="return confirm('Are you sure?')">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>

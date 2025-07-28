@@ -11,7 +11,7 @@
         <!--begin::Body-->
         <div class="card-body">
             <!--begin::Row-->
-            <div class="row g-3">
+            <div class="row mb-3">
                 <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="transporter_id" class="form-label">Truck Owner *</label>
@@ -29,6 +29,8 @@
                     <div class="invalid-feedback">Please enter a truck number.</div>
                 </div>
                 <!--end::Col-->
+            </div>
+            <div class="row mb-3">
                 <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="truck_type" class="form-label">Truck Type *</label>
@@ -63,6 +65,8 @@
                     @error('driver_id') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
                 <!--end::Col-->
+            </div>
+            <div class="row mb-3">
                 <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="registration_date" class="form-label">Registration Date *</label>
@@ -73,14 +77,27 @@
                 <!--end::Col-->
             </div>
             <!--end::Row-->
+            <div class="card p-3 bg-light">
+                <div class="row"><div class="col"><h5 class="mb-3">Quick Actions</h5></div></div>
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <button class="btn btn-success w-100 mb-2" type="submit">💾 Submit Form</button>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{{ route('transporters.index') }}" class="btn btn-outline-dark w-100 mb-2">📄 Back to List</a>
+                    </div>
+                </div>
+            </div>
         </div>
         <!--end::Body-->
-        <!--begin::Footer-->
+        {{-- <!--begin::Footer-->
         <div class="card-footer">
             <button class="btn btn-info" type="submit">Submit form</button>
             <a href="{{ route('trucks.index') }}" class="btn btn-info">Back to List</a>
         </div>
-        <!--end::Footer-->
+        <!--end::Footer--> --}}
+        <!-- Quick Actions Section -->
+       
     </form>
     <!--end::Form-->
     <!--begin::JavaScript-->

@@ -181,4 +181,36 @@ public function getCustomerMemos($customerId)
         $invoice->delete();
         return redirect()->route('invoices.index')->with('success', 'Invoice deleted.');
     }
+
+    public function getLrs($memoIds)
+    {
+        $memoIds = explode(',', $memoIds);
+        Log::info('Fetching LR numbers for memos:', ['memo_ids' => $memoIds]);
+
+        $lrs = LorryReceipt::whereIn('memo_id', $memoIds)
+            ->with(['transporter', 'consignor', 'consignee','truck'])
+            ->select('lr_number', 'memo_id', 'source_city', 'destination_city', 'transporter_id', 'consignor_id', 'consignee_id', 'gr_date', 'amount', 'truck_id', 'weight')
+            ->get()
+            ->groupBy('memo_id');
+
+        $result = [];
+        foreach ($memoIds as $memoId) {
+            $result[$memoId] = $lrs->get($memoId)?->map(function($lr) {
+                return [
+                    'lr_number' => $lr->lr_number,
+                    'source_city' => $lr->source_city,
+                    'destination_city' => $lr->destination_city,
+                    'transporter' => $lr->transporter?->name ?? '',
+                    'consignor' => $lr->consignor?->name ?? '',
+                    'consignee' => $lr->consignee?->name ?? '',
+                    'gr_date' => $lr->gr_date,
+                    'amount' => $lr->amount,
+                    'truck_number' => $lr->truck?->truck_number ?? '',
+                    'weight' => $lr->weight
+                ];
+            })->toArray() ?? [];
+        }
+
+        return response()->json($result);
+    }
 }

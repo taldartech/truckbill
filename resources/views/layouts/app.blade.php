@@ -388,12 +388,12 @@
                               <p>Truck List</p>
                             </a>
                           </li>
-                          <li class="nav-item">
+                          {{-- <li class="nav-item">
                             <a href="/trucks/create" class="nav-link{{ Request::is('trucks/create') ? ' active' : '' }}">
                               <i class="fas fa-plus"></i> 
                             <p>Register Truck</p>
                             </a>
-                          </li>
+                          </li> --}}
                           <li class="nav-item">
                             <a href="/drivers/create" class="nav-link{{ Request::is('drivers/create') ? ' active' : '' }}">
                                 <i class="fas fa-user-tie"></i>
@@ -494,7 +494,7 @@
                           </li> --}}
                     </ul>
                   </li>
-                  <li class="nav-item">
+                  {{-- <li class="nav-item">
                     <a class="nav-link{{ (Request::is('vouchers*') || Request::is('vouchers/create')) ? ' active' : '' }}"  href="#voucherMenu"  >
                         <i class="fas fa-file-invoice"></i><p>
                             Vouchers
@@ -515,7 +515,7 @@
                             </a>
                           </li>
                     </ul>
-                  </li>
+                  </li> --}}
     
                   <li class="nav-item">
                     <a class="nav-link{{ (Request::is('voucher_payments*') || Request::is('voucher_payments/create')) ? ' active' : '' }}"  href="#voucherPaymentMenu"  >
@@ -531,12 +531,12 @@
                               <p> Listing</p>
                             </a>
                           </li>
-                          <li class="nav-item">
+                          {{-- <li class="nav-item">
                             <a href="/voucher_payments/create" class="nav-link{{ Request::is('voucher_payments/create') ? ' active' : '' }}">
                               <i class="fas fa-plus"></i> 
                             <p>Register</p>
                             </a>
-                          </li>
+                          </li> --}}
                     </ul>
                   </li>
                   <li class="nav-item">

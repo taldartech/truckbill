@@ -147,14 +147,18 @@
                             <td>
                                 <div class="d-flex gap-1">
                                     @if(!$booking->is_cancelled)
-                                        <a href="{{ route('freight_bookings.edit', $booking->id) }}" class="btn btn-sm btn-info">
+                                        <a href="{{ route('freight_bookings.edit', $booking->id) }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" 
+                            data-bs-placement="top" 
+                            title="Edit Booking">
                                             <i class="bi bi-pencil"></i>
                                         </a>
                                     @endif
                                     <form action="{{ route('freight_bookings.destroy', $booking->id) }}" method="POST" style="display:inline-block;">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this booking?')">
+                                        <button type="submit" class="btn btn-sm btn-danger" data-bs-toggle="tooltip" 
+                            data-bs-placement="top" 
+                            title="Delete Booking" onclick="return confirm('Delete this booking?')">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </form>

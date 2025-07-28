@@ -14,52 +14,66 @@
         <div class="card-body">
             <!-- General Details -->
             <div class="row mb-3">
-                <div class="col-md-4">
+              
+                 <div class="col-md-4">
                     <label for="lr_number" class="form-label">LR Number *</label>
                     <input type="text" class="form-control" id="lr_number" name="lr_number" value="{{ old('lr_number') }}" required placeholder="Enter LR Number">
                     @error('lr_number') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please enter an LR number.</div>
                 </div>
-                <div class="col-md-4">
+               
+                  <div class="col-md-4">
                     <label for="gr_date" class="form-label">GR Date *</label>
                     <input type="date" class="form-control" id="gr_date" name="gr_date" required value="{{ old('gr_date') }}">
                     @error('gr_date') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please select a GR date.</div>
                 </div>
-                <div class="col-md-4">
+              
+                  <div class="col-md-4">
                     <label for="customer_id" class="form-label">Customer *</label>
                     <select class="form-select" id="customer_id" name="customer_id" required>
                         <option value="">Select Customer</option>
                         @foreach($consignees as $consignee)
-                            <option value="{{ $consignee->id }}" {{ old('customer_id') == $consignee->id ? 'selected' : '' }}>{{ $consignee->name }}</option>
+                            <option value="{{ $consignee->id }}" {{ old('customer_id') == $consignee->id ? 'selected' : '' }}>
+                                {{ $consignee->name }}
+                            </option>
                         @endforeach
                     </select>
                     @error('customer_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please select a customer.</div>
                 </div>
             </div>
             <div class="row mb-3">
-                <div class="col-md-4">
+               <div class="col-md-4">
                     <label for="truck_id" class="form-label">Truck *</label>
                     <select class="form-select" id="truck_id" name="truck_id" required>
                         <option value="">Select Trucks</option>
                         @foreach($trucks as $truck)
-                            <option value="{{ $truck->id }}" {{ old('truck_id') == $truck->id ? 'selected' : '' }}>{{ $truck->truck_number }} ({{ $truck->transporter->name }})</option>
+                            <option value="{{ $truck->id }}" {{ old('truck_id') == $truck->id ? 'selected' : '' }}>
+                                {{ $truck->truck_number }} ({{ $truck->transporter->name }})
+                            </option>
                         @endforeach
                     </select>
                     @error('truck_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please select a truck.</div>
                 </div>
-                <div class="col-md-4">
+               <div class="col-md-4">
                     <label for="transporter_type" class="form-label">Select Type *</label>
                     <select class="form-select" id="transporter_type" required>
                         <option value="">Select Type</option>
                         <option value="owner">Truck Owner</option>
                         <option value="agency">Agency</option>
                     </select>
+                    <div class="invalid-feedback">Please select transporter type.</div>
                 </div>
                 <div class="col-md-4">
                     <label for="transporter_id" id="transporterLabel" class="form-label">Transporter *</label>
                     <select class="form-select" id="transporter_id" name="transporter_id" required>
                         <option value="">Select Transporter</option>
-                    </select>
+                        {{-- This will be filled via JavaScript --}} 
+                     </select>
                     @error('transporter_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please select a transporter.</div>
                 </div>
             </div>
             <div class="row mb-3">
@@ -67,11 +81,14 @@
                     <label for="consignor_id" class="form-label">Consignor *</label>
                     <select class="form-select" id="consignor_id" name="consignor_id" required>
                         <option value="">Select Consignor</option>
-                        @foreach($consignees as $consignee)
-                            <option value="{{ $consignee->id }}" {{ old('consignee_id') == $consignee->id ? 'selected' : '' }}>{{ $consignee->name }}</option>
+                        @foreach($consignees as $consignee) 
+                            <option value="{{ $consignee->id }}" {{ old('consignee_id') == $consignee->id ? 'selected' : '' }}>
+                                {{ $consignee->name }}
+                            </option>
                         @endforeach
                     </select>
                     @error('consignor_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please select a consignor.</div>
                 </div>
                 <div class="col-md-4">
                     <label for="consignor_contact_number" class="form-label">Consignor Contact Number</label>
@@ -82,10 +99,13 @@
                     <select class="form-select" id="consignee_id" name="consignee_id" required>
                         <option value="">Select Consignee</option>
                         @foreach($consignees as $consignee)
-                            <option value="{{ $consignee->id }}" {{ old('consignee_id') == $consignee->id ? 'selected' : '' }}>{{ $consignee->name }}</option>
+                            <option value="{{ $consignee->id }}" {{ old('consignee_id') == $consignee->id ? 'selected' : '' }}>
+                                {{ $consignee->name }}
+                            </option>
                         @endforeach
                     </select>
                     @error('consignee_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please select a consignee.</div>
                 </div>
             </div>
             <div class="row mb-4">
@@ -121,8 +141,13 @@
             <!-- Goods & Charges Section -->
             <div class="card mb-4 p-3 bg-light">
                 <div class="row"><div class="col"><h5 class="mb-3">Goods & Charges</h5></div></div>
-                <div class="row mb-2">
-                    <div class="col-md-4">
+                 <div class="row mb-2">
+                  {{-- error('good_type') <div class="text-danger">{{ $message }}</div> @enderror --}}
+                  {{--  <div class="col-md-4">
+                        <label for="weight" class="form-label">Weight *</label>
+                        <input type="number" step="0.01" class="form-control" id="weight" name="weight" required value="{{ old('weight') }}">
+                        @error('weight') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>  <div class="col-md-4">
                         <label for="good_type" class="form-label">Goods Type *</label>
                         <select class="form-select" id="good_type" name="good_type" required>
                             <option value="">Select Goods Type</option>
@@ -130,29 +155,63 @@
                                 <option value="{{ $goodsType->name }}" {{ old('good_type') == $goodsType->name ? 'selected' : '' }}>{{ $goodsType->name }}</option>
                             @endforeach
                         </select>
+                        @
+                    <div class="col-md-4">
+                        <label for="no_of_units" class="form-label">No. of Units *</label>
+                        <input type="number" class="form-control" id="no_of_units" name="no_of_units" required value="{{ old('no_of_units') }}">
+                        @error('no_of_units') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div> --}}
+                    <input type="hidden" id="lane" name="lane" value="Road">
+                    <div class="col-md-4">
+                        <label for="good_type" class="form-label ms-3">Goods Type *</label>
+                        <select class="form-select " id="good_type" name="good_type" required>
+                            <option value="">Select Goods Type</option>
+                            @foreach($goodsTypes as $goodsType)
+                                <option value="{{ $goodsType->name }}" {{ old('good_type') == $goodsType->name ? 'selected' : '' }}>
+                                    {{ $goodsType->name }}
+                                </option>
+                            @endforeach
+                        </select>
                         @error('good_type') <div class="text-danger">{{ $message }}</div> @enderror
+                        <div class="invalid-feedback">Please select a goods type.</div>
                     </div>
                     <div class="col-md-4">
-                        <label for="weight" class="form-label">Weight *</label>
+                        <label for="weight" class="form-label ">Weight *</label>
                         <input type="number" step="0.01" class="form-control" id="weight" name="weight" required value="{{ old('weight') }}">
                         @error('weight') <div class="text-danger">{{ $message }}</div> @enderror
+                        <div class="invalid-feedback">Please enter a weight.</div>
                     </div>
                     <div class="col-md-4">
                         <label for="no_of_units" class="form-label">No. of Units *</label>
                         <input type="number" class="form-control" id="no_of_units" name="no_of_units" required value="{{ old('no_of_units') }}">
                         @error('no_of_units') <div class="text-danger">{{ $message }}</div> @enderror
+                        <div class="invalid-feedback">Please enter number of units.</div>
                     </div>
                 </div>
+            
+
                 <div class="row mb-2">
                     <div class="col-md-4">
                         <label for="fr_rate" class="form-label">Freight Rate *</label>
                         <input type="number" step="0.01" class="form-control" id="fr_rate" name="fr_rate" required value="{{ old('fr_rate') }}">
                         @error('fr_rate') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
+                    {{-- <div class="col-md-4">
+                        <label for="fr_rate" class="form-label">Freight Rate *</label>
+                        <input type="number" step="0.01" class="form-control" id="fr_rate" name="fr_rate" required value="{{ old('fr_rate') }}">
+                        @error('fr_rate') <div class="text-danger">{{ $message }}</div> @enderror
+                        <div class="invalid-feedback">Please enter a freight rate.</div>
+                    </div> --}}
+                    {{-- <div class="col-md-4">
+                        <label for="amount" class="form-label">Amount *</label>
+                        <input type="number" step="0.01" class="form-control" id="amount" name="amount" required value="{{ old('amount') }}">
+                        @error('amount') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div> --}}
                     <div class="col-md-4">
                         <label for="amount" class="form-label">Amount *</label>
                         <input type="number" step="0.01" class="form-control" id="amount" name="amount" required value="{{ old('amount') }}">
                         @error('amount') <div class="text-danger">{{ $message }}</div> @enderror
+                        <div class="invalid-feedback">Please enter an amount.</div>
                     </div>
                 </div>
             </div>
@@ -161,6 +220,7 @@
                 <div class="row"><div class="col"><h5 class="mb-3">Quick Actions</h5></div></div>
                 <div class="row g-2">
                     <div class="col-md-3">
+                        {{-- <button class="btn btn-info" type="submit">Submit form</button> --}}
                         <button class="btn btn-success w-100 mb-2" type="submit">💾 Submit Form</button>
                     </div>
                     <div class="col-md-3">
@@ -178,7 +238,7 @@
     </form>
 </div>
     <!--begin::Header-->
-    <div class="card-header"><div class="card-title">Add New Lorry Receipt</div></div>
+    {{-- <div class="card-header"><div class="card-title">Add New Lorry Receipt</div></div>
     <hr class="mb-3 mt-0">
     <!--end::Header-->
     <!--begin::Form-->
@@ -189,7 +249,7 @@
         <!--begin::Body-->
         <div class="card-body">
             <!--begin::Row-->
-            <div class="row">
+            <div class="row mb-3">
                
                  <!--begin::Col-->
                  <div class="col-md-4">
@@ -221,8 +281,9 @@
                     <div class="invalid-feedback">Please select a customer.</div>
                 </div>
             </div>
+
                 <!--end::Col-->
-                <div class="row">
+                <div class="row mb-3"> --}}
                 {{-- <!--begin::Col-->
                 <div class="col-md-4">
                     <label for="transporter_id" class="form-label" >Transporter *</label>
@@ -240,7 +301,7 @@
                 <!--end::Col--> --}}
                
                 <!--begin::Col-->
-                <div class="col-md-4">
+                {{-- <div class="col-md-4">
                     <label for="truck_id" class="form-label">Truck *</label>
                     <select class="form-select" id="truck_id" name="truck_id" required>
                         <option value="">Select Trucks</option>
@@ -268,28 +329,14 @@
                     <select class="form-select" id="transporter_id" name="transporter_id" required>
                         <option value="">Select Transporter</option>
                         {{-- This will be filled via JavaScript --}}
-                    </select>
+                    {{-- </select>
                     @error('transporter_id') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please select a transporter.</div>
                 </div>
 
-                <!--begin::Col-->
-               
+            </div> --}} 
 
-                    {{-- <div id="ownerTransporterSelect" class="mt-3" style="display: none;">
-                        <label for="owner_transporter_id" class="form-label">Select Truck Owner</label>
-                        <select class="form-select" id="owner_transporter_id" name="owner_transporter_id">
-                            <option value="">Select Transporter</option>
-                        </select>
-                        <div class="invalid-feedback">Please select an owner transporter.</div>
-                    </div> --}}
-
-                   
-
-
-                   
-                </div>
-                <!--end::Col-->
+              
                
                
                 <!--begin::Col-->
@@ -306,9 +353,9 @@
                     <div class="invalid-feedback">Please select a delivery status.</div>
                 </div> --}}
                 <!--end::Col-->
-            </div>
+            {{-- </div> --}}
             <!--end::Row-->
-
+{{-- 
             <div class="row">
                 <div class="col-md-4 mb-3 ms-3">
                     <label for="consignor_id" class="form-label">Consignor *</label>
@@ -434,7 +481,7 @@
                 </div>
             </div>
 
-            <div class="row">
+            <div class="row"> --}}
                 {{-- <div class="col-md-4 mb-3">
                     <label for="damage_amount" class="form-label">Damage Amount</label>
                     <input type="number" step="0.01" class="form-control" id="damage_amount" name="damage_amount" value="{{ old('damage_amount') }}" disabled>
@@ -453,11 +500,11 @@
                     @error('memo_id') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please enter a memo ID.</div>
                 </div> --}}
-            </div>
+            {{-- </div> --}}
 
             
 
-        </div>
+        {{-- </div>
         <!--end::Body-->
         <!--begin::Footer-->
         <div class="card-footer">
@@ -465,7 +512,7 @@
             <a href="{{ route('lorry_receipts.index') }}" class="btn btn-info">Back to List</a>
         </div>
         <!--end::Footer-->
-    </form>
+    </form> --}}
     <!--end::Form-->
     <!--begin::JavaScript-->
     <script>
