@@ -21,6 +21,21 @@
             <!-- General Details -->
             <div class="row mb-3">
                 <div class="col-md-6">
+                    {{-- <label for="company_id" class="form-label">Company *</label>
+                    @if($canEditCompany)
+                        <select class="form-select" id="company_id" name="company_id" required>
+                            <option value="">Select</option>
+                            @foreach($companies as $company)
+                                <option value="{{ $company->id }}" {{ old('company_id') == $company->id ? 'selected' : '' }}>{{ $company->name }}</option>
+                            @endforeach
+                        </select>
+                    @else
+                        <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
+                        <div class="form-control-plaintext">
+                            {{ $companies->firstWhere('id', $userCompanyId)->name ?? '' }}
+                        </div>
+                    @endif
+                    @error('company_id') <div class="text-danger">{{ $message }}</div> @enderror --}}
                     <label for="company_id" class="form-label">Company *</label>
                     @if($canEditCompany)
                         <select class="form-select" id="company_id" name="company_id" required>
@@ -38,31 +53,27 @@
                     @error('company_id') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-6">
-                    <label for="name" class="form-label">Transporter Name *</label>
-                    <input type="text" class="form-control" id="name" name="name" required value="{{ old('name') }}" placeholder="Enter Transporter Name">
+                    <label for="name" class="form-label">Transport Name *</label>
+                    <input placeholder="Enter Transport Name" type="text" class="form-control" id="name" name="name" required value="{{ old('name') }}">
                     @error('name') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
             </div>
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label for="gst_number" class="form-label">GST Number</label>
-                    <input type="text" class="form-control" id="gst_number" name="gst_number" value="{{ old('gst_number') }}" placeholder="Enter GST Number">
-                    @error('gst_number') <div class="text-danger">{{ $message }}</div> @enderror
+            <input placeholder="Enter GST Number" type="text" class="form-control" id="gst_number" name="gst_number" value="{{ old('gst_number') }}">
+            @error('gst_number') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-6">
                     <label for="gst_type" class="form-label">GST Type *</label>
-                    <select class="form-select" id="gst_type" name="gst_type" required>
-                        <option value="">Select</option>
-                        <option value="composition" {{ old('gst_type') == 'composition' ? 'selected' : '' }}>Composition</option>
-                        <option value="regular" {{ old('gst_type') == 'regular' ? 'selected' : '' }}>Regular</option>
-                    </select>
+                    <input type="text" class="form-control" id="gst_type" name="gst_type" value="Regular" disabled>
                     @error('gst_type') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
             </div>
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label for="pan_number" class="form-label">PAN Number</label>
-                    <input type="text" class="form-control" id="pan_number" name="pan_number" value="{{ old('pan_number') }}" placeholder="Enter PAN Number">
+                    <input placeholder="Enter PAN Number" type="text" class="form-control" id="pan_number" name="pan_number" value="{{ old('pan_number') }}">
                     @error('pan_number') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-6">
@@ -194,7 +205,7 @@
             @error('name') <div class="text-danger">{{ $message }}</div> @enderror
         </div>
         <div class="mb-3">
-            <label for="gst_number" class="form-label">GST Number</label>
+        <label for="gst_number" class="form-label">GST Number</label>
             <input type="text" class="form-control" id="gst_number" name="gst_number" value="{{ old('gst_number') }}">
             @error('gst_number') <div class="text-danger">{{ $message }}</div> @enderror
         </div>

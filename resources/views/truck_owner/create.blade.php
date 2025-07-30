@@ -157,7 +157,7 @@
             </div>
             <div class="col-md-6">
                 <label for="name" class="form-label">Truck Owner Name *</label>
-                <input type="text" class="form-control" id="name" name="name" required value="{{ old('name') }}" placeholder="Enter Transporter Name">
+                <input type="text" class="form-control" id="name" name="name" required value="{{ old('name') }}" placeholder="Enter Truck Owner Name">
                 @error('name') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
         </div>
@@ -169,11 +169,7 @@
             </div>
             <div class="col-md-6">
                 <label for="gst_type" class="form-label">GST Type *</label>
-                <select class="form-select" id="gst_type" name="gst_type" required>
-                    <option value="">Select</option>
-                    <option value="composition" {{ old('gst_type') == 'composition' ? 'selected' : '' }}>Composition</option>
-                    <option value="regular" {{ old('gst_type') == 'regular' ? 'selected' : '' }}>Regular</option>
-                </select>
+                <input type="text" class="form-control" id="gst_type" name="gst_type" value="Regular" disabled>
                 @error('gst_type') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
         </div>

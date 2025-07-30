@@ -46,7 +46,7 @@ class FreightBookingController extends Controller
         ];
 
         $lorry_receipt = \App\Models\LorryReceipt::with(['transporter:id,name', 'truck:id,truck_number'])
-        ->select('id', 'lr_number', 'transporter_id', 'truck_id','customer_id','consignor_id','consignee_id','freight_booking_id','good_type')
+        ->select('id', 'lr_number', 'transporter_id', 'truck_id','customer_id','consignor_id','consignee_id','good_type')
         ->when($lorry_receipt_id, function ($query) use ($lorry_receipt_id) {
             $query->where('id', $lorry_receipt_id);
         })
@@ -103,7 +103,7 @@ class FreightBookingController extends Controller
             'lr_id' => 'required|exists:lorry_receipts,id',
             'tr_fr_rate' => 'required|numeric',
             'tr_amount' => 'required|numeric',
-            'advance_amount' => 'required|numeric',
+            'advance_amount' => 'nullable|numeric',
             'balance_amount' => 'required|numeric',
             'tds_amount' => 'nullable|numeric',
             'eway_bill_number' => 'nullable|string',

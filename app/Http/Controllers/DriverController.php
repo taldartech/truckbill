@@ -38,8 +38,8 @@ class DriverController extends Controller
            'license_number' => [
                             'nullable',
                             'string',
-                            'size:17',
-                            'regex:/^[A-Z]{2}\d{2}\s\d{11}$/',
+                            
+                            
                         ],
             'address' => 'nullable|string|max:255',
         ]);
@@ -63,8 +63,8 @@ class DriverController extends Controller
              'license_number' => [
                             'nullable',
                             'string',
-                            'size:17',
-                            'regex:/^[A-Z]{2}\d{2}\s\d{11}$/',
+                            
+                          
                         ],
             'address' => 'nullable|string|max:255',
         ]);

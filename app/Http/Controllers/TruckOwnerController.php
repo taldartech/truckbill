@@ -73,8 +73,8 @@ class TruckOwnerController extends Controller
                 'size:10',
                 'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/'
             ],
-            'gst_type' => 'required|in:composition,regular',
-            'is_owner' => 'required|boolean',
+            'gst_type' => 'nullable|in:composition,regular',
+            'is_owner' => 'nullable|boolean',
             'declaration_given' => 'required|boolean',
             'total_trucks' => 'required|integer|min:0',
             'advance_amount' => 'nullable|numeric',
@@ -82,6 +82,9 @@ class TruckOwnerController extends Controller
         ]);
         if (!isset($validated['advance_amount'])) {
             $validated['advance_amount'] = 0;
+        }
+        if (!isset($validated['is_owner'])) {
+            $validated['is_owner'] = 1;
         }
         // Convert pan_active to boolean
         $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
@@ -114,8 +117,8 @@ class TruckOwnerController extends Controller
                 'size:10',
                 'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/'
             ],
-            'gst_type' => 'required|in:composition,regular',
-            'is_owner' => 'required|boolean',
+            'gst_type' => 'nullable|in:composition,regular',
+            'is_owner' => 'nullable|boolean',
             'declaration_given' => 'required|boolean',
             'total_trucks' => 'required|integer|min:0',
             'advance_amount' => 'nullable|numeric',
@@ -123,6 +126,9 @@ class TruckOwnerController extends Controller
         ]); 
         if (!isset($validated['advance_amount'])) {
             $validated['advance_amount'] = 0;
+        }
+        if (!isset($validated['is_owner'])) {
+            $validated['is_owner'] = 1;
         }
         // Convert pan_active to boolean
         $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);

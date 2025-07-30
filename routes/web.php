@@ -21,6 +21,9 @@ use App\Http\Controllers\TransporterLedgerController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\TruckOwnerController;
 use App\Http\Controllers\TruckOwnerBankAccountController;
+use App\Http\Controllers\CityController;
+use App\Http\Controllers\StateController;
+use App\Http\Controllers\CountryController;
 
 // Authentication Routes
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
