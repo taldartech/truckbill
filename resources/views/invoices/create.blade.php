@@ -124,7 +124,7 @@
                         @enderror
                         <div class="invalid-feedback">Please select a date.</div>
                     </div>
-                    {{-- <div class="col-md-4">
+                    <div class="col-md-4">
                         <label class="form-label">Customer *</label>
                         <select name="customer_id" class="form-select" required>
                             <option value="">Select</option>
@@ -136,7 +136,7 @@
                             <div class="text-danger">{{ $message }}</div> 
                         @enderror
                         <div class="invalid-feedback">Please select a customer.</div>
-                    </div> --}}
+                    </div>
                     <div class="col-md-4">
                         <label class="form-label">Total Amount *</label>
                         <input type="number" name="total_amount" class="form-control" step="0.01" min="0" required value="{{ old('total_amount') }}">
@@ -286,6 +286,22 @@
                 .then(data => {
     // Create a table for LR details
     let tableHtml = '';
+    // Prefill customer select field when form is shown
+    showInvoiceFormBtn.addEventListener('click', function() {
+        const selectedCustomerName = document.getElementById('selectedCustomerName').textContent;
+        const customerSelect = document.querySelector('select[name="customer_id"]');
+        
+        // Find the option that matches the selected customer name
+        const selectedOption = Array.from(customerSelect.options).find(option => 
+            option.text === selectedCustomerName
+        );
+        
+        if (selectedOption) {
+            customerSelect.value = selectedOption.value;
+            customerSelect.dispatchEvent(new Event('change'));
+        }
+    });
+
     for (const memoId in data) {
         if (data[memoId].length > 0) {
             tableHtml += `
