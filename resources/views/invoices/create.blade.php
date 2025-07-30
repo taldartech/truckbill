@@ -126,12 +126,18 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Customer *</label>
-                        <select name="customer_id" class="form-select" required>
+                        {{-- <select name="customer_id" class="form-select" required>
                             <option value="">Select</option>
                             @foreach($consignees as $consignee)
                                 <option value="{{ $consignee->id }}" {{ old('customer_id') == $consignee->id ? 'selected' : '' }}>{{ $consignee->name }}</option>
                             @endforeach
-                        </select>
+                        </select> --}}
+                        {{-- Hidden input to store selected customer_id --}}
+<input type="hidden" name="customer_id" id="prefilledCustomerId" value="{{ old('customer_id') }}">
+
+
+<input type="text" id="prefilledCustomerName" class="form-control" readonly required value="{{ old('customer_name') }}">
+
                         @error('customer_id') 
                             <div class="text-danger">{{ $message }}</div> 
                         @enderror
@@ -371,12 +377,16 @@
                 });
             }
 
-            // Set value in the main invoice form's customer select
-            const customerSelect = document.querySelector('select[name="customer_id"]');
-            if (customerSelect) {
-                customerSelect.value = selectedCustomerId;
-                customerSelect.dispatchEvent(new Event('change')); // trigger memo load
-            }
+            // Prefill hidden and readonly customer fields
+         document.getElementById('prefilledCustomerId').value = selectedCustomerId;
+        document.getElementById('prefilledCustomerName').value = customerName;
+
+            // // Set value in the main invoice form's customer select
+            // const customerSelect = document.querySelector('select[name="customer_id"]');
+            // if (customerSelect) {
+            //     customerSelect.value = selectedCustomerId;
+            //     customerSelect.dispatchEvent(new Event('change')); // trigger memo load
+            // }
 
             // Get selected memos and set them in the main form
             if (selectedMemos.length > 0) {

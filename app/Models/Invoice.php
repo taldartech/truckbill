@@ -18,6 +18,11 @@ class Invoice extends Model
         'payment_status',
     ];
 
+    public function consignee()
+{
+    return $this->belongsTo(Consignee::class, 'customer_id');
+}
+
     public function company()
     {
         return $this->belongsTo(Company::class);

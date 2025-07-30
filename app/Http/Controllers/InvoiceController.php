@@ -89,26 +89,42 @@ public function getCustomerMemos($customerId)
 
     public function store(Request $request)
     {
+    //   dd($request->all());
         $data = $request->validate([
             'manual_invoice_number' => 'nullable|string',
             'company_id' => 'required|exists:companies,id',
             'invoice_type' => 'required|in:Reverse,Forward',
             'generated_date' => 'required|date',
-            'customer_id' => 'required|exists:customers,id',
+           'customer_id' => 'required|exists:consignees,id',
             'total_amount' => 'required|numeric|min:0',
             'payment_status' => 'required|in:pending,partial,paid',
-            'memo_ids' => 'nullable|array',
-            'memo_ids.*' => 'exists:memos,id',
+            
+            'memo_ids.*' => 'exists:lorry_receipts,memo_id',
         ]);
+
+          // Separate memo_ids from the rest of invoice data
+    $memoIds = $request->input('memo_ids', []);
+    unset($data['memo_ids']);
+    
         $invoice = Invoice::create($data);
-        if (!empty($data['memo_ids'])) {
-            foreach ($data['memo_ids'] as $memoId) {
-                InvoiceMemoMap::create([
-                    'invoice_id' => $invoice->id,
-                    'memo_id' => $memoId
-                ]);
-            }
-        }
+        // if (!empty($data['memo_ids'])) {
+        //     foreach ($data['memo_ids'] as $memoId) {
+        //         InvoiceMemoMap::create([
+        //             'invoice_id' => $invoice->id,
+        //             'memo_id' => $memoId
+        //         ]);
+        //     }
+        // }
+
+    // if (!empty($memoIds)) {
+    //     foreach ($memoIds as $memoId) {
+    //         InvoiceMemoMap::create([
+    //             'invoice_id' => $invoice->id,
+    //             'memo_id' => $memoId
+    //         ]);
+    //     }
+    // }
+  
         return redirect()->route('invoices.index')->with('success', 'Invoice created successfully.');
     }
 
