@@ -93,6 +93,11 @@ class CompanyController extends Controller
 ],
         ]);
         
+        // Set default GST type to regular if not provided
+        if (!$request->filled('gst_type')) {
+            $validated['gst_type'] = 'regular';
+        }
+        
         \App\Models\Company::create($validated);
         return redirect()->route('company.create')->with('success', 'Company registered successfully!');
     }

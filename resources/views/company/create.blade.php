@@ -52,7 +52,7 @@
                 </div>
                 <!--end::Col-->
                 <!--begin::Col-->
-                <div class="col-md-6">
+                {{-- <div class="col-md-6">
                     <label for="gst_type" class="form-label">GST Type *</label>
                     <select class="form-select" id="gst_type" name="gst_type" required>
                         <option value="">Select</option>
@@ -61,7 +61,7 @@
                     </select>
                     @error('gst_type') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please choose a GST Type.</div>
-                </div>
+                </div> --}}
                 <!--end::Col-->
                 <!--begin::Col-->
                 <div class="col-md-6">
