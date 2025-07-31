@@ -137,6 +137,7 @@
       } */
       
   </style>
+  @stack('styles')
 </head>
 
     <body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
@@ -957,5 +958,6 @@ sparkline3.render();
       });
     </script>
     @yield('scripts')
+    @stack('scripts')
 </body>
 </html>
