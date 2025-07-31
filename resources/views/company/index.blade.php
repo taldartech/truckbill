@@ -1,5 +1,13 @@
 @extends('layouts.app')
 
+@push('styles')
+<!-- DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/searchpanes/2.2.0/css/searchPanes.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css">
+@endpush
+
 @section('content')
 <div class="container mt-4">
     <div class="col-sm-6"><h3 class="mb-0">Company Management</h3></div>
@@ -8,89 +16,20 @@
     @endif
 
     <div class="d-flex justify-content-end gap-2 mb-3">
-        <button type="button" class="btn btn-info" onclick="document.getElementById('advanced-search-box').classList.toggle('d-none')">
-            <i class="bi bi-funnel"></i> Search filter
-        </button>
         <a href="{{ route('company.create') }}" class="btn btn-info">
             <i class="bi bi-plus"></i> Create
         </a>
     </div>
 
-    <form method="GET" action="{{ route('company.index') }}" id="advanced-search-box" class="card card-body shadow-sm mb-4 d-none">
-        <div class="row g-2">
-            <div class="col-md-12">
-                <label class="form-label fw-bold">Choose Filter Fields:</label>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" value="name" id="filter_name" onchange="toggleField(this)">
-                    <label class="form-check-label" for="filter_name">Name</label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" value="gst_number" id="filter_gst" onchange="toggleField(this)">
-                    <label class="form-check-label" for="filter_gst">GST Number</label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" value="pan_number" id="filter_pan" onchange="toggleField(this)">
-                    <label class="form-check-label" for="filter_pan">PAN Number</label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" value="gst_scheme" id="filter_scheme" onchange="toggleField(this)">
-                    <label class="form-check-label" for="filter_scheme">GST Scheme</label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" value="gst_type" id="filter_type" onchange="toggleField(this)">
-                    <label class="form-check-label" for="filter_type">GST Type</label>
-                </div>
-            </div>
-        </div>
-
-        <div class="row g-3 mt-2" id="filter-fields">
-            <div class="col-md-2 d-none" id="field_name">
-                <label class="form-label">Name</label>
-                <input type="text" name="name" class="form-control" value="{{ request('name') }}">
-            </div>
-            <div class="col-md-2 d-none" id="field_gst_number">
-                <label class="form-label">GST Number</label>
-                <input type="text" name="gst_number" class="form-control" value="{{ request('gst_number') }}">
-            </div>
-            <div class="col-md-2 d-none" id="field_pan_number">
-                <label class="form-label">PAN Number</label>
-                <input type="text" name="pan_number" class="form-control" value="{{ request('pan_number') }}">
-            </div>
-            <div class="col-md-2 d-none" id="field_gst_scheme">
-                <label class="form-label">GST Scheme</label>
-                <select name="gst_scheme" class="form-select">
-                    <option value="">All</option>
-                    <option value="reverse charge" {{ request('gst_scheme') == 'reverse charge' ? 'selected' : '' }}>Reverse Charge</option>
-                    <option value="forward charge" {{ request('gst_scheme') == 'forward charge' ? 'selected' : '' }}>Forward Charge</option>
-                </select>
-            </div>
-            <div class="col-md-2 d-none" id="field_gst_type">
-                <label class="form-label">GST Type</label>
-                <select name="gst_type" class="form-select">
-                    <option value="">All</option>
-                    <option value="composition" {{ request('gst_type') == 'composition' ? 'selected' : '' }}>Composition</option>
-                    <option value="regular" {{ request('gst_type') == 'regular' ? 'selected' : '' }}>Regular</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="text-end mt-3">
-            <button type="submit" class="btn btn-secondary">
-                <i class="bi bi-search"></i> Search
-            </button>
-            <a href="{{ route('company.index') }}" class="btn btn-outline-secondary ms-2">
-                <i class="bi bi-arrow-clockwise"></i> Reset
-            </a>
-        </div>
-    </form>
-
     <div class="card mb-4">
-        <div class="card-header"><h3 class="card-title">Companies List</h3></div>
-        <div class="card-body" style="overflow-x: auto;">
-            <table class="table table-bordered">
+        <div class="card-header">
+            <h3 class="card-title">Companies List</h3>
+        </div>
+        <div class="card-body">
+            <table id="companiesTable" class="table table-bordered table-striped">
                 <thead>
                     <tr>
-                        <th style="width: 10px">ID</th>
+                        <th style="width: 80px;">ID</th>
                         <th>Name</th>
                         <th>GST Number</th>
                         <th>PAN Number</th>
@@ -99,50 +38,149 @@
                         <th>Address</th>
                         <th>Contact Person</th>
                         <th>Contact Number</th>
-                        <th>Actions</th>
+                        <th style="width: 120px;">Actions</th>
                     </tr>
                 </thead>
-                <tbody>
-                    @forelse($companies as $company)
-                        <tr class="align-middle">
-                            <td>{{ $company->id }}</td>
-                            <td>{{ $company->name }}</td>
-                            <td>{{ $company->gst_number }}</td>
-                            <td>{{ $company->pan_number }}</td>
-                            <td>{{ $company->gst_scheme }}</td>
-                            <td>{{ $company->gst_type }}</td>
-                            <td>{{ $company->address }}</td>
-                            <td>{{ $company->contact_person }}</td>
-                            <td>{{ $company->contact_number }}</td>
-                            <td class="d-flex align-items-center">
-                                <a href="{{ route('company.edit', $company->id) }}" class="btn btn-sm btn-info me-2" title="Edit">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                                <form action="{{ route('company.destroy', $company->id) }}" method="POST" style="display:inline-block;">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr><td colspan="10" class="text-center">No companies found.</td></tr>
-                    @endforelse
-                </tbody>
             </table>
         </div>
     </div>
 </div>
+@endsection
+
+@push('scripts')
+<!-- DataTables JS -->
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+<script src="https://cdn.datatables.net/searchpanes/2.2.0/js/dataTables.searchPanes.min.js"></script>
+<script src="https://cdn.datatables.net/searchpanes/2.2.0/js/searchPanes.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/select/1.7.0/js/dataTables.select.min.js"></script>
 
 <script>
-    function toggleField(checkbox) {
-        const fieldId = 'field_' + checkbox.value;
-        const field = document.getElementById(fieldId);
-        if (field) {
-            field.classList.toggle('d-none');
+$(document).ready(function() {
+    $('#companiesTable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: '{{ route("company.index") }}',
+            type: 'GET'
+        },
+        columns: [
+            {
+                data: 'id',
+                name: 'id',
+                width: '80px',
+                className: 'text-center'
+            },
+            {
+                data: 'name',
+                name: 'name'
+            },
+            {
+                data: 'gst_number',
+                name: 'gst_number',
+                width: '150px'
+            },
+            {
+                data: 'pan_number',
+                name: 'pan_number',
+                width: '120px'
+            },
+            {
+                data: 'gst_scheme',
+                name: 'gst_scheme',
+                width: '120px'
+            },
+            {
+                data: 'gst_type',
+                name: 'gst_type',
+                width: '100px'
+            },
+            {
+                data: 'address',
+                name: 'address'
+            },
+            {
+                data: 'contact_person',
+                name: 'contact_person',
+                width: '150px'
+            },
+            {
+                data: 'contact_number',
+                name: 'contact_number',
+                width: '130px'
+            },
+            {
+                data: 'actions',
+                name: 'actions',
+                orderable: false,
+                searchable: false,
+                width: '120px',
+                className: 'text-center'
+            }
+        ],
+        order: [[0, 'desc']],
+        pageLength: 10,
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+        dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+             '<"row"<"col-sm-12 col-md-2"B><"col-sm-12 col-md-10"p>>' +
+             '<"row"<"col-sm-12"tr>>' +
+             '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+        buttons: [
+            {
+                extend: 'excel',
+                className: 'btn btn-secondary btn-sm',
+                text: '<i class="bi bi-file-earmark-excel"></i> Excel'
+            }
+        ],
+        language: {
+            search: "Search:",
+            lengthMenu: "Show _MENU_ entries",
+            info: "Showing _START_ to _END_ of _TOTAL_ entries",
+            infoEmpty: "Showing 0 to 0 of 0 entries",
+            infoFiltered: "(filtered from _MAX_ total entries)",
+            zeroRecords: "No matching records found",
+            emptyTable: "No data available in table",
+            paginate: {
+                first: "First",
+                last: "Last",
+                next: "Next",
+                previous: "Previous"
+            }
+        },
+        responsive: true,
+        autoWidth: false,
+        stateSave: true,
+        searchDelay: 500,
+        scrollX: true,
+        initComplete: function() {
+            // Add individual column search
+            this.api().columns([1, 2, 3, 4, 5, 6, 7, 8]).every(function() {
+                var column = this;
+                var title = column.header().textContent;
+                
+                // Create input element
+                var input = $('<input type="text" class="form-control form-control-sm" placeholder="Search ' + title + '" />')
+                    .appendTo($(column.header()))
+                    .on('keyup change clear', function() {
+                        if (column.search() !== this.value) {
+                            column.search(this.value).draw();
+                        }
+                    });
+            });
         }
-    }
+    });
+    
+    // Handle delete confirmation
+    $(document).on('submit', 'form[action*="destroy"]', function(e) {
+        if (!confirm('Are you sure you want to delete this company?')) {
+            e.preventDefault();
+            return false;
+        }
+    });
+});
 </script>
-@endsection
+@endpush
