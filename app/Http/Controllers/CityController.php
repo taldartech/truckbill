@@ -144,8 +144,8 @@ class CityController extends Controller
 
     public function create()
     {
-        $states = State::with('country')->get();
-        return view('master.cities-form', compact('states'));
+        $countries = Country::all();
+        return view('master.cities-form', compact('countries'));
     }
 
     public function store(Request $request)
@@ -156,6 +156,11 @@ class CityController extends Controller
         ]);
 
         City::create($validated);
+
+        if ($request->has('from_modal')) {
+            return redirect()->back()->with('success', 'City created successfully from modal.');
+        }
+    
         return redirect()->route('master.cities.index')->with('success', 'City created successfully');
     }
 

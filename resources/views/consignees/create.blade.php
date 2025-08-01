@@ -1,6 +1,11 @@
 @extends('layouts.app')
 
 @section('content')
+@if(session('success'))
+    <div class="alert alert-success mt-2">
+        {{ session('success') }}
+    </div>
+@endif
 <div class="card card-info card-outline mb-4" style="width: 70%;align-items: center;margin: auto;">
     <!--begin::Header-->
     <div class="card-header"><div class="card-title">Add New Consignee</div></div>
@@ -54,7 +59,7 @@
                 <!--end::Col-->
                 <!--begin::Col-->
                 <div class="col-md-4">
-                    <label for="state_id" class="form-label">State *</label>
+                    <label for="state_id" class="form-label">State *  <i class="bi bi-plus-circle btn btn-sm text-primary" data-bs-toggle="modal" data-bs-target="#addStateModal" style="cursor: pointer;"></i></label>
                     <select class="form-select" id="state_id" name="state_id" required>
                         <option value="">Select State</option>
                         @if(old('country_id'))
@@ -71,7 +76,7 @@
                 <!--end::Col-->
                 <!--begin::Col-->
                 <div class="col-md-4">
-                    <label for="city_id" class="form-label">City *</label>
+                    <label for="city_id" class="form-label">City * <i class="bi bi-plus-circle btn btn-sm text-primary" data-bs-toggle="modal" data-bs-target="#addCityModal" style="cursor: pointer;"></i></label>
                     <select class="form-select" id="city_id" name="city_id" required>
                         <option value="">Select City</option>
                         @if(old('state_id'))
@@ -163,6 +168,170 @@
       </div>
     </div>
   </div>
+  <!-- Add State Modal -->
+<div class="modal fade" id="addStateModal" tabindex="-1" aria-labelledby="addStateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form action="{{ route('master.states.store') }}" method="POST">
+          @csrf
+          <input type="hidden" name="from_modal" value="1">
+          <div class="modal-header">
+            <h5 class="modal-title" id="addStateModalLabel">Add State</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+  
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="name" class="form-label">State Name *</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+                @error('name')
+                  <div class="text-danger">{{ $message }}</div>
+                @enderror
+              </div>
+  
+              <div class="col-md-6">
+                <label for="country_id" class="form-label">Country *</label>
+                <select class="form-select" id="country_id" name="country_id" required>
+                  <option value="">Select Country</option>
+                  @foreach($countries as $country)
+                    <option value="{{ $country->id }}">{{ $country->name }}</option>
+                  @endforeach
+                </select>
+                @error('country_id')
+                  <div class="text-danger">{{ $message }}</div>
+                @enderror
+                <div class="invalid-feedback">Please select a country.</div>
+              </div>
+  
+              <div class="col-md-6">
+                <label for="code" class="form-label">Code *</label>
+                <input type="text" class="form-control" id="code" name="code" required>
+                @error('code')
+                  <div class="text-danger">{{ $message }}</div>
+                @enderror
+              </div>
+            </div>
+          </div>
+  
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-info">Submit form</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <!-- Add City Modal -->
+{{-- <div class="modal fade" id="addCityModal" tabindex="-1" aria-labelledby="addCityModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form action="{{ route('master.cities.store') }}" method="POST">
+          @csrf
+          <input type="hidden" name="from_modal" value="1">
+          <div class="modal-header">
+            <h5 class="modal-title" id="addCityModalLabel">Add City</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+  
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="name" class="form-label">City Name *</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+                @error('name')
+                  <div class="text-danger">{{ $message }}</div>
+                @enderror
+              </div>
+  
+              <div class="col-md-6">
+                <label for="state_id" class="form-label">State *</label>
+                <select class="form-select" id="state_id" name="state_id" required>
+                  <option value="">Select State</option>
+                  @foreach($states as $state)
+                    <option value="{{ $state->id }}">
+                      {{ $state->name }} ({{ $state->country->name }})
+                    </option>
+                  @endforeach
+                </select>
+                @error('state_id')
+                  <div class="text-danger">{{ $message }}</div>
+                @enderror
+                <div class="invalid-feedback">Please select a state.</div>
+              </div>
+            </div>
+          </div>
+  
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-info">Submit form</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div> --}}
+  <div class="modal fade" id="addCityModal" tabindex="-1" aria-labelledby="addCityModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form action="{{ route('master.cities.store') }}" method="POST">
+          @csrf
+          <input type="hidden" name="from_modal" value="1">
+  
+          <div class="modal-header">
+            <h5 class="modal-title" id="addCityModalLabel">Add City</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+  
+          <div class="modal-body">
+            <div class="row g-3">
+  
+              <div class="col-md-6">
+                <label for="country_id" class="form-label">Country *</label>
+                <select class="form-select" id="country_id" name="country_id" required>
+                  <option value="">Select Country</option>
+                  @foreach($countries as $country)
+                    <option value="{{ $country->id }}">{{ $country->name }}</option>
+                  @endforeach
+                </select>
+                @error('country_id')
+                  <div class="text-danger">{{ $message }}</div>
+                @enderror
+                <div class="invalid-feedback">Please select a country.</div>
+              </div>
+  
+              <div class="col-md-6">
+                <label for="state_id" class="form-label">State *</label>
+                <select class="form-select" id="state_id" name="state_id" required>
+                  <option value="">Select State</option>
+                  {{-- Dynamically populated via JS --}}
+                </select>
+                @error('state_id')
+                  <div class="text-danger">{{ $message }}</div>
+                @enderror
+                <div class="invalid-feedback">Please select a state.</div>
+              </div>
+  
+              <div class="col-md-6">
+                <label for="name" class="form-label">City Name *</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+                @error('name')
+                  <div class="text-danger">{{ $message }}</div>
+                @enderror
+                <div class="valid-feedback">Looks good!</div>
+              </div>
+  
+            </div>
+          </div>
+  
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-info">Submit form</button>
+          </div>
+  
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  
+  
   
 
 @endsection

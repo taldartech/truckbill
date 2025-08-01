@@ -39,6 +39,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/api/lorry_receipts/{id}', [FreightBookingController::class, 'getLorryReceipt']);
     Route::get('/api/transporters/{id}', [FreightBookingController::class, 'getTransporter']);
     Route::get('/api/trucks/{id}', [FreightBookingController::class, 'getTruck']);
+    Route::get('/api/dropdown/states/{countryId}', [\App\Http\Controllers\Api\DropdownController::class, 'states']);
+    Route::get('/api/dropdown/cities/{stateId}', [\App\Http\Controllers\Api\DropdownController::class, 'cities']);
 
     // City and State routes
     Route::get('/cities/{id}', [\App\Http\Controllers\CityController::class, 'show'])->name('cities.show');
