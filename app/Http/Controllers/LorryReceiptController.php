@@ -172,22 +172,23 @@ class LorryReceiptController extends Controller
             \Log::info('Query built successfully');
 
             return DataTables::of($query)
-                ->addColumn('checkbox', function ($row) {
-                    return '<input type="checkbox" class="rowCheckbox" value="' . $row->id . '" ' .
-                        'data-lr="' . $row->lr_number . '" ' .
-                        'data-truck="' . ($row->truck ? $row->truck->truck_number : '') . '" ' .
-                        'data-freight_booking_id="' . $row->freight_booking_id . '" ' .
-                        'data-balance="' . ($row->freightBooking ? $row->freightBooking->balance_amount : 0) . '" ' .
-                        'data-voucher_number="' . ($row->freightBooking ? $row->freightBooking->voucher_number : 0) . '" ' .
-                        'data-payment-status="' . strtolower($row->delivery_status) . '">';
-                })
-                ->addColumn('sr_no', function ($row) {
-                    static $counter = 0;
-                    return ++$counter;
-                })
-                ->addColumn('customer_name', function ($row) {
-                    return $row->customer ? $row->customer->name : '-';
-                })
+            ->addColumn('checkbox', function ($row) {
+                return '<input type="checkbox" class="rowCheckbox" value="' . $row->id . '" ' .
+                    'data-lr="' . $row->lr_number . '" ' .
+                    'data-truck="' . ($row->truck ? $row->truck->truck_number : '') . '" ' .
+                    'data-freight_booking_id="' . $row->freight_booking_id . '" ' .
+                    'data-balance="' . ($row->freightBooking ? $row->freightBooking->balance_amount : 0) . '" ' .
+                    'data-voucher_number="' . ($row->freightBooking ? $row->freightBooking->voucher_number : 0) . '" ' .
+                    'data-payment-status="' . strtolower($row->delivery_status) . '">';
+            })
+           
+            ->addColumn('sr_no', function ($row) {
+                static $counter = 0;
+                return ++$counter;
+            })
+            ->addColumn('customer_name', function ($row) {
+                return $row->customer ? $row->customer->name : '-';
+            })
                 ->addColumn('consignor_name', function ($row) {
                     return $row->consignor ? $row->consignor->name : '-';
                 })
@@ -216,7 +217,7 @@ class LorryReceiptController extends Controller
                 ->addColumn('actions', function ($row) {
                     return $this->getActionButtons($row);
                 })
-                ->rawColumns(['status_badge', 'actions'])
+                ->rawColumns(['checkbox', 'sr_no', 'lr_number', 'customer_name', 'consignor_name', 'consignee_name', 'truck_number', 'gr_date_formatted', 'amount_formatted', 'status_badge', 'actions'])
                 ->make(true);
         } catch (\Exception $e) {
             \Log::error('DataTables error: ' . $e->getMessage());
