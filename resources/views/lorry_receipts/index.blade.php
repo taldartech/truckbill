@@ -364,16 +364,18 @@ $(document).ready(function() {
         var selectedLrList = $('#selectedLrList');
         selectedLrList.empty();
         
-        selectedRows.each(function() {
-            var lrNumber = this.lr_number;
-            var truckNumber = this.truck_number;
-            var customer = this.customer_name;
+        selectedRows.each(function(index, row) {
+            // Get the row data using the row object
+            var rowNode = table.row(row).node();
+            var lrNumber = $(rowNode).find('td:eq(2)').text(); // LR Number is in 3rd column
+            var truckNumber = $(rowNode).find('td:eq(9)').text(); // Truck Number is in 10th column
+            var customer = $(rowNode).find('td:eq(3)').text(); // Customer is in 4th column
             
             var li = $('<li class="list-group-item">'
                 + '<div class="d-flex justify-content-between align-items-center">'
                 + '<div>'
                 + '<strong>LR: </strong>' + lrNumber + '<br>'
-                + '<small><strong>Truck: </strong>' + truckNumber + '</small>'
+                + '<small><strong>Truck: </strong>' + $(rowNode).find('td:eq(8)').text() + '</small>'
                 + '</div>'
                 + '<small><strong>Customer: </strong>' + customer + '</small>'
                 + '</div>'
