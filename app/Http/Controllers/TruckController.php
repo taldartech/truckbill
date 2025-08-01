@@ -18,28 +18,154 @@ class TruckController extends Controller
     }
     public function index(Request $request)
     {
+        // Handle DataTables AJAX request
+        if ($request->ajax()) {
+            return $this->getTrucksData($request);
+        }
+        
+        $transporters = \App\Models\Transporter::where('company_id', auth()->user()->company_id)->get();
+        $drivers = \App\Models\Driver::all();
+        return view('trucks.index', compact('transporters', 'drivers'));
+    }
+    
+    private function getTrucksData(Request $request)
+    {
         $query = \App\Models\Truck::with(['transporter', 'driver'])->whereHas('transporter', function($q) {
             $q->where('company_id', auth()->user()->company_id);
         });
-        if ($request->filled('truck_number')) {
-            $query->where('truck_number', 'like', '%' . $request->truck_number . '%');
+        
+        // Handle search
+        if ($request->has('search') && $request->search['value']) {
+            $searchValue = $request->search['value'];
+            $query->where(function($q) use ($searchValue) {
+                $q->where('truck_number', 'like', "%{$searchValue}%")
+                  ->orWhere('truck_type', 'like', "%{$searchValue}%")
+                  ->orWhere('registration_date', 'like', "%{$searchValue}%")
+                  ->orWhereHas('transporter', function($transporterQuery) use ($searchValue) {
+                      $transporterQuery->where('name', 'like', "%{$searchValue}%");
+                  })
+                  ->orWhereHas('driver', function($driverQuery) use ($searchValue) {
+                      $driverQuery->where('name', 'like', "%{$searchValue}%");
+                  });
+            });
         }
-        if ($request->filled('truck_type')) {
-            $query->where('truck_type', 'like', '%' . $request->truck_type . '%');
+        
+        // Handle column-specific search
+        if ($request->has('columns')) {
+            foreach ($request->columns as $index => $column) {
+                if (!empty($column['search']['value'])) {
+                    $searchValue = $column['search']['value'];
+                    switch ($index) {
+                        case 1: // Truck Number
+                            $query->where('truck_number', 'like', "%{$searchValue}%");
+                            break;
+                        case 2: // Truck Type
+                            $query->where('truck_type', 'like', "%{$searchValue}%");
+                            break;
+                        case 3: // Registration Date
+                            $query->where('registration_date', 'like', "%{$searchValue}%");
+                            break;
+                        case 4: // Transporter
+                            $query->whereHas('transporter', function($transporterQuery) use ($searchValue) {
+                                $transporterQuery->where('name', 'like', "%{$searchValue}%");
+                            });
+                            break;
+                        case 5: // Driver
+                            $query->whereHas('driver', function($driverQuery) use ($searchValue) {
+                                $driverQuery->where('name', 'like', "%{$searchValue}%");
+                            });
+                            break;
+                    }
+                }
+            }
         }
-        if ($request->filled('driver_name')) {
-            $query->where('driver_name', 'like', '%' . $request->driver_name . '%');
+        
+        // Handle sorting
+        if ($request->has('order')) {
+            $orderColumn = $request->order[0]['column'];
+            $orderDirection = $request->order[0]['dir'];
+            
+            switch ($orderColumn) {
+                case 0: // ID
+                    $query->orderBy('id', $orderDirection);
+                    break;
+                case 1: // Truck Number
+                    $query->orderBy('truck_number', $orderDirection);
+                    break;
+                case 2: // Truck Type
+                    $query->orderBy('truck_type', $orderDirection);
+                    break;
+                case 3: // Registration Date
+                    $query->orderBy('registration_date', $orderDirection);
+                    break;
+                case 4: // Transporter
+                    $query->join('transporters', 'trucks.transporter_id', '=', 'transporters.id')
+                          ->orderBy('transporters.name', $orderDirection)
+                          ->select('trucks.*');
+                    break;
+                case 5: // Driver
+                    $query->leftJoin('drivers', 'trucks.driver_id', '=', 'drivers.id')
+                          ->orderBy('drivers.name', $orderDirection)
+                          ->select('trucks.*');
+                    break;
+                default:
+                    $query->orderBy('created_at', 'desc');
+            }
+        } else {
+            $query->orderBy('created_at', 'desc');
         }
-        if ($request->filled('transporter_id')) {
-            $query->where('transporter_id', $request->transporter_id);
-        }
-        if ($request->filled('driver_id')) {
-            $query->where('driver_id', $request->driver_id);
-        }
-        $trucks = $query->orderByDesc('created_at')->get();
-        $transporters = \App\Models\Transporter::where('company_id', auth()->user()->company_id)->get();
-        $drivers = \App\Models\Driver::all();
-        return view('trucks.index', compact('trucks', 'transporters', 'drivers'));
+        
+        // Get total count before pagination
+        $totalQuery = \App\Models\Truck::whereHas('transporter', function($q) {
+            $q->where('company_id', auth()->user()->company_id);
+        });
+        $totalRecords = $totalQuery->count();
+        $filteredRecords = $query->count();
+        
+        // Handle pagination
+        $start = $request->start ?? 0;
+        $length = $request->length ?? 10;
+        $trucks = $query->skip($start)->take($length)->get();
+        
+        // Format data for DataTables
+        $data = $trucks->map(function($truck, $index) use ($start) {
+            return [
+                'id' => $truck->id,
+                'truck_number' => $truck->truck_number,
+                'truck_type' => $truck->truck_type ?: '-',
+                'registration_date' => $truck->registration_date ? date('Y-m-d', strtotime($truck->registration_date)) : '-',
+                'transporter' => $truck->transporter ? $truck->transporter->name : '-',
+                'driver' => $truck->driver ? $truck->driver->name : '-',
+                'actions' => $this->getActionButtons($truck)
+            ];
+        });
+        
+        return response()->json([
+            'draw' => intval($request->draw),
+            'recordsTotal' => $totalRecords,
+            'recordsFiltered' => $filteredRecords,
+            'data' => $data
+        ]);
+    }
+    
+    private function getActionButtons($truck)
+    {
+        $buttons = '<div class="d-flex gap-1">';
+        
+        // Edit button
+        $editUrl = route('trucks.edit', $truck->id);
+        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit Truck">';
+        $buttons .= '<i class="bi bi-pencil"></i></a>';
+        
+        // Delete button
+        $deleteUrl = route('trucks.destroy', $truck->id);
+        $buttons .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this truck?\')">';
+        $buttons .= csrf_field() . method_field('DELETE');
+        $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete Truck">';
+        $buttons .= '<i class="bi bi-trash"></i></button></form>';
+        
+        $buttons .= '</div>';
+        return $buttons;
     }
 
     public function getOwnerTransporters($truckId)

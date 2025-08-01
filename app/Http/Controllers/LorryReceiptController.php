@@ -10,11 +10,17 @@ use App\Models\Consignee;
 use App\Models\GoodType;
 use App\Models\FreightBooking;
 use App\Models\LorryReceipt;
+use Yajra\DataTables\Facades\DataTables;
 
 class LorryReceiptController extends Controller
 {
     public function index(Request $request)
     {
+        // Handle DataTables AJAX request
+        if ($request->ajax()) {
+            return $this->getLorryReceiptsData($request);
+        }
+
         $statuses = ['Pending', 'Delivered', 'Cancelled','In-Progress'];
         $customers = \App\Models\Consignee::all();
         $query = \App\Models\LorryReceipt::with(['truck', 'transporter', 'consignor', 'consignee', 'company','customer','freightBooking']);
@@ -148,6 +154,93 @@ class LorryReceiptController extends Controller
             'paymentModes' => $paymentModes,
             'customers' => $customers,
         ]);
+    }
+
+    public function getLorryReceiptsData(Request $request)
+    {
+        try {
+            \Log::info('DataTables request started');
+            
+            $query = LorryReceipt::with(['truck', 'transporter', 'consignor', 'consignee', 'company', 'customer']);
+
+            // Only apply company_id filter for non-super_admin users
+            if (auth()->user()->userRole->name !== 'super_admin') {
+                $query->where('company_id', auth()->user()->company_id);
+            }
+
+            \Log::info('Query built successfully');
+
+            return DataTables::of($query)
+                ->addColumn('sr_no', function ($row) {
+                    static $counter = 0;
+                    return ++$counter;
+                })
+                ->addColumn('customer_name', function ($row) {
+                    return $row->customer ? $row->customer->name : '-';
+                })
+                ->addColumn('consignor_name', function ($row) {
+                    return $row->consignor ? $row->consignor->name : '-';
+                })
+                ->addColumn('consignee_name', function ($row) {
+                    return $row->consignee ? $row->consignee->name : '-';
+                })
+                ->addColumn('truck_number', function ($row) {
+                    return $row->truck ? $row->truck->truck_number : '-';
+                })
+                ->addColumn('gr_date_formatted', function ($row) {
+                    return $row->gr_date ? date('d-m-Y', strtotime($row->gr_date)) : '-';
+                })
+                ->addColumn('amount_formatted', function ($row) {
+                    return $row->amount ? '₹' . number_format($row->amount, 2) : '₹0.00';
+                })
+                ->addColumn('status_badge', function ($row) {
+                    $statusClass = match($row->delivery_status) {
+                        'Pending' => 'warning',
+                        'Delivered' => 'success',
+                        'Cancelled' => 'danger',
+                        'In-Progress' => 'info',
+                        default => 'secondary'
+                    };
+                    return '<span class="badge bg-' . $statusClass . '">' . ($row->delivery_status ?? 'Unknown') . '</span>';
+                })
+                ->addColumn('actions', function ($row) {
+                    return $this->getActionButtons($row);
+                })
+                ->rawColumns(['status_badge', 'actions'])
+                ->make(true);
+        } catch (\Exception $e) {
+            \Log::error('DataTables error: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    private function getActionButtons($lorryReceipt)
+    {
+        $actions = '<div class="btn-group" role="group">';
+        
+        // View button
+        $actions .= '<a href="' . route('lorry_receipts.show', $lorryReceipt->id) . '" class="btn btn-sm btn-outline-info" title="View">';
+        $actions .= '<i class="bi bi-eye"></i>';
+        $actions .= '</a>';
+        
+        // Edit button
+        $actions .= '<a href="' . route('lorry_receipts.edit', $lorryReceipt->id) . '" class="btn btn-sm btn-outline-primary" title="Edit">';
+        $actions .= '<i class="bi bi-pencil"></i>';
+        $actions .= '</a>';
+        
+        // Delete button
+        $actions .= '<form method="POST" action="' . route('lorry_receipts.destroy', $lorryReceipt->id) . '" style="display: inline;">';
+        $actions .= csrf_field();
+        $actions .= method_field('DELETE');
+        $actions .= '<button type="submit" class="btn btn-sm btn-outline-danger" title="Delete" onclick="return confirm(\'Are you sure you want to delete this lorry receipt?\')">';
+        $actions .= '<i class="bi bi-trash"></i>';
+        $actions .= '</button>';
+        $actions .= '</form>';
+        
+        $actions .= '</div>';
+        
+        return $actions;
     }
 
     public function create()

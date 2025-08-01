@@ -5,11 +5,17 @@ use App\Models\FreightBooking;
 use App\Models\LorryReceipt;
 use Illuminate\Http\Request;
 use App\Helpers\TdsHelper;
+use Yajra\DataTables\Facades\DataTables;
 
 class FreightBookingController extends Controller
 {
     public function index(Request $request)
     {
+        // Handle DataTables AJAX request
+        if ($request->ajax()) {
+            return $this->getFreightBookingsData($request);
+        }
+
         $query = FreightBooking::with(['lr', 'linkedFreightBooking', 'company']);
 
         // Only apply company_id filter for non-super_admin users
@@ -28,6 +34,100 @@ class FreightBookingController extends Controller
         $bookings = $query->orderByDesc('id')->paginate(20);
         $lrs = LorryReceipt::all();
         return view('freight_bookings.index', compact('bookings', 'lrs'));
+    }
+
+    public function getFreightBookingsData(Request $request)
+    {
+        try {
+            $query = FreightBooking::with(['lr', 'linkedFreightBooking', 'company'])
+                ->leftJoin('lorry_receipts', 'freight_bookings.lr_id', '=', 'lorry_receipts.id')
+                ->select('freight_bookings.*');
+
+            // Only apply company_id filter for non-super_admin users
+            if (auth()->user()->userRole->name !== 'super_admin') {
+                $query->where('freight_bookings.company_id', auth()->user()->company_id);
+            }
+
+            return DataTables::of($query)
+                ->addColumn('lr_number', function ($row) {
+                    return $row->lr ? $row->lr->lr_number : '-';
+                })
+                ->addColumn('voucher_number', function ($row) {
+                    return $row->voucher_number ?? '-';
+                })
+                ->addColumn('tr_rate_formatted', function ($row) {
+                    return $row->tr_rate ? '₹' . number_format($row->tr_rate, 2) : '₹0.00';
+                })
+                ->addColumn('tr_amount_formatted', function ($row) {
+                    return $row->tr_amount ? '₹' . number_format($row->tr_amount, 2) : '₹0.00';
+                })
+                ->addColumn('advance_formatted', function ($row) {
+                    return $row->advance ? '₹' . number_format($row->advance, 2) : '₹0.00';
+                })
+                ->addColumn('balance_formatted', function ($row) {
+                    $balance = ($row->tr_amount ?? 0) - ($row->advance ?? 0);
+                    return '₹' . number_format($balance, 2);
+                })
+                ->addColumn('gr_date_formatted', function ($row) {
+                    return $row->lr && $row->lr->gr_date ? date('d-m-Y', strtotime($row->lr->gr_date)) : '-';
+                })
+                ->addColumn('is_delivered_badge', function ($row) {
+                    if ($row->is_delivered == '1') {
+                        return '<span class="badge bg-success">Yes</span>';
+                    } else {
+                        return '<span class="badge bg-warning">No</span>';
+                    }
+                })
+                ->addColumn('is_cancelled_badge', function ($row) {
+                    if ($row->is_cancelled == '1') {
+                        return '<span class="badge bg-danger">Yes</span>';
+                    } else {
+                        return '<span class="badge bg-secondary">No</span>';
+                    }
+                })
+                ->addColumn('actions', function ($row) {
+                    return $this->getActionButtons($row);
+                })
+                ->filterColumn('lr_number', function ($query, $keyword) {
+                    $query->whereHas('lr', function ($q) use ($keyword) {
+                        $q->where('lr_number', 'like', "%{$keyword}%");
+                    });
+                })
+                ->orderColumn('lr_number', 'lorry_receipts.lr_number $1')
+                ->rawColumns(['is_delivered_badge', 'is_cancelled_badge', 'actions'])
+                ->make(true);
+        } catch (\Exception $e) {
+            \Log::error('DataTables error: ' . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    private function getActionButtons($freightBooking)
+    {
+        $actions = '<div class="btn-group" role="group">';
+        
+        // View button
+        $actions .= '<a href="' . route('freight_bookings.show', $freightBooking->id) . '" class="btn btn-sm btn-outline-info" title="View">';
+        $actions .= '<i class="bi bi-eye"></i>';
+        $actions .= '</a>';
+        
+        // Edit button
+        $actions .= '<a href="' . route('freight_bookings.edit', $freightBooking->id) . '" class="btn btn-sm btn-outline-primary" title="Edit">';
+        $actions .= '<i class="bi bi-pencil"></i>';
+        $actions .= '</a>';
+        
+        // Delete button
+        $actions .= '<form method="POST" action="' . route('freight_bookings.destroy', $freightBooking->id) . '" style="display: inline;">';
+        $actions .= csrf_field();
+        $actions .= method_field('DELETE');
+        $actions .= '<button type="submit" class="btn btn-sm btn-outline-danger" title="Delete" onclick="return confirm(\'Are you sure you want to delete this freight booking?\')">';
+        $actions .= '<i class="bi bi-trash"></i>';
+        $actions .= '</button>';
+        $actions .= '</form>';
+        
+        $actions .= '</div>';
+        
+        return $actions;
     }
 
     public function create(Request $request)

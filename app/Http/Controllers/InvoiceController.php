@@ -10,11 +10,17 @@ use App\Models\LorryReceipt;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Yajra\DataTables\Facades\DataTables;
 
 class InvoiceController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        // Handle DataTables AJAX request
+        if ($request->ajax()) {
+            return $this->getInvoicesData($request);
+        }
+
         $invoices = Invoice::with(['company', 'consignee'])->orderByDesc('id');
 
         if (auth()->user()->userRole->name !== 'super_admin') {
@@ -22,6 +28,107 @@ class InvoiceController extends Controller
         }
         $invoices = $invoices->paginate(20);
         return view('invoices.index', compact('invoices'));
+    }
+
+    public function getInvoicesData(Request $request)
+    {
+        try {
+            $query = Invoice::with(['company', 'consignee'])
+                ->leftJoin('companies', 'invoices.company_id', '=', 'companies.id')
+                ->leftJoin('consignees', 'invoices.consignee_id', '=', 'consignees.id')
+                ->select('invoices.*');
+
+            // Only apply company_id filter for non-super_admin users
+            if (auth()->user()->userRole->name !== 'super_admin') {
+                $query->where('invoices.company_id', auth()->user()->company_id);
+            }
+
+            return DataTables::of($query)
+                ->addColumn('company_name', function ($row) {
+                    return $row->company ? $row->company->name : '-';
+                })
+                ->addColumn('consignee_name', function ($row) {
+                    return $row->consignee ? $row->consignee->name : '-';
+                })
+                ->addColumn('generated_date_formatted', function ($row) {
+                    return $row->generated_date ? date('d-m-Y', strtotime($row->generated_date)) : '-';
+                })
+                ->addColumn('total_amount_formatted', function ($row) {
+                    return $row->total_amount ? '₹' . number_format($row->total_amount, 2) : '₹0.00';
+                })
+                ->addColumn('payment_status_badge', function ($row) {
+                    $statusClass = match($row->payment_status) {
+                        'paid' => 'success',
+                        'pending' => 'warning',
+                        'overdue' => 'danger',
+                        default => 'secondary'
+                    };
+                    $statusText = ucfirst($row->payment_status ?? 'Unknown');
+                    return '<span class="badge bg-' . $statusClass . '">' . $statusText . '</span>';
+                })
+                ->addColumn('invoice_type_badge', function ($row) {
+                    $typeClass = match($row->invoice_type) {
+                        'manual' => 'primary',
+                        'auto' => 'info',
+                        default => 'secondary'
+                    };
+                    $typeText = ucfirst($row->invoice_type ?? 'Unknown');
+                    return '<span class="badge bg-' . $typeClass . '">' . $typeText . '</span>';
+                })
+                ->addColumn('actions', function ($row) {
+                    return $this->getActionButtons($row);
+                })
+                ->filterColumn('company_name', function ($query, $keyword) {
+                    $query->whereHas('company', function ($q) use ($keyword) {
+                        $q->where('name', 'like', "%{$keyword}%");
+                    });
+                })
+                ->filterColumn('consignee_name', function ($query, $keyword) {
+                    $query->whereHas('consignee', function ($q) use ($keyword) {
+                        $q->where('name', 'like', "%{$keyword}%");
+                    });
+                })
+                ->orderColumn('company_name', 'companies.name $1')
+                ->orderColumn('consignee_name', 'consignees.name $1')
+                ->rawColumns(['payment_status_badge', 'invoice_type_badge', 'actions'])
+                ->make(true);
+        } catch (\Exception $e) {
+            \Log::error('DataTables error: ' . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    private function getActionButtons($invoice)
+    {
+        $actions = '<div class="btn-group" role="group">';
+        
+        // View button
+        $actions .= '<a href="' . route('invoices.show', $invoice->id) . '" class="btn btn-sm btn-outline-info" title="View">';
+        $actions .= '<i class="bi bi-eye"></i>';
+        $actions .= '</a>';
+        
+        // Edit button
+        $actions .= '<a href="' . route('invoices.edit', $invoice->id) . '" class="btn btn-sm btn-outline-primary" title="Edit">';
+        $actions .= '<i class="bi bi-pencil"></i>';
+        $actions .= '</a>';
+        
+        // Print button
+        $actions .= '<a href="' . route('invoices.print', $invoice->id) . '" class="btn btn-sm btn-outline-secondary" title="Print" target="_blank">';
+        $actions .= '<i class="bi bi-printer"></i>';
+        $actions .= '</a>';
+        
+        // Delete button
+        $actions .= '<form method="POST" action="' . route('invoices.destroy', $invoice->id) . '" style="display: inline;">';
+        $actions .= csrf_field();
+        $actions .= method_field('DELETE');
+        $actions .= '<button type="submit" class="btn btn-sm btn-outline-danger" title="Delete" onclick="return confirm(\'Are you sure you want to delete this invoice?\')">';
+        $actions .= '<i class="bi bi-trash"></i>';
+        $actions .= '</button>';
+        $actions .= '</form>';
+        
+        $actions .= '</div>';
+        
+        return $actions;
     }
 
     // public function create()
