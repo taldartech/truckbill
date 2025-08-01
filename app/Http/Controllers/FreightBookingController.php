@@ -115,7 +115,13 @@ class FreightBookingController extends Controller
         $actions .= '<a href="' . route('freight_bookings.edit', $freightBooking->id) . '" class="btn btn-sm btn-outline-primary" title="Edit">';
         $actions .= '<i class="bi bi-pencil"></i>';
         $actions .= '</a>';
-        
+
+        // voucher button 
+       // Voucher Payments button
+$actions .= '<a href="' . route('voucher_payments.create', ['freight_booking_id' => $freightBooking->id , 'lorry_receipt_id'=>$freightBooking->lr_id]) . '" class="btn btn-sm btn-outline-success" title="Create Voucher Payment">';
+$actions .= '<i class="bi bi-receipt"></i>';
+$actions .= '</a>';
+
         // Delete button
         $actions .= '<form method="POST" action="' . route('freight_bookings.destroy', $freightBooking->id) . '" style="display: inline;">';
         $actions .= csrf_field();

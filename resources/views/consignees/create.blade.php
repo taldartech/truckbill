@@ -39,7 +39,7 @@
             </div>
             <div class="row mb-3">
                 <div class="col-md-4">
-                    <label for="country_id" class="form-label">Country *</label>
+                    <label for="country_id" class="form-label">Country *  <i class="bi bi-plus-circle btn btn-sm text-primary" data-bs-toggle="modal" data-bs-target="#addCountryModal" style="cursor: pointer;"></i></label>
                     <select class="form-select" id="country_id" name="country_id" required>
                         <option value="">Select Country</option>
                         @foreach($countries as $country)
@@ -90,7 +90,7 @@
             <div class="row mb-3">          
                 <!--begin::Col-->
                 <div class="col-md-6">
-                    <label for="address" class="form-label">Address *</label>
+                    <label for="address" class="form-label">Address</label>
                     <textarea class="form-control" id="address" name="address" rows="3">{{ old('address') }}</textarea>
                     @error('address') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please enter an address.</div>
@@ -123,6 +123,47 @@
     </form>
     <!--end::Form-->
 </div>
+
+<!-- Add Country Modal -->
+<div class="modal fade" id="addCountryModal" tabindex="-1" aria-labelledby="addCountryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form action="{{ route('master.countries.store') }}" method="POST">
+          @csrf
+          <input type="hidden" name="from_modal" value="1">
+          <div class="modal-header">
+            <h5 class="modal-title" id="addCountryModalLabel">Add Country</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+  
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="name" class="form-label">Country Name *</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+                @error('name')
+                    <div class="text-danger">{{ $message }}</div>
+                @enderror
+              </div>
+  
+              <div class="col-md-6">
+                <label for="code" class="form-label">Country Code *</label>
+                <input type="text" class="form-control" id="code" name="code" required>
+                @error('code')
+                    <div class="text-danger">{{ $message }}</div>
+                @enderror
+              </div>
+            </div>
+          </div>
+  
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-info">Submit form</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
 
 @endsection
 

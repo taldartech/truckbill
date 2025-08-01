@@ -130,6 +130,12 @@ class CountryController extends Controller
         ]);
 
         Country::create($validated);
+
+
+    // Check if it's an AJAX or modal form submission
+    if ($request->has('from_modal')) {
+        return redirect()->back()->with('success', 'Country created successfully from modal.');
+    }
         return redirect()->route('master.countries.index')->with('success', 'Country created successfully');
     }
 

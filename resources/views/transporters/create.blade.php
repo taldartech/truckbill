@@ -64,11 +64,11 @@
             <input placeholder="Enter GST Number" type="text" class="form-control" id="gst_number" name="gst_number" value="{{ old('gst_number') }}">
             @error('gst_number') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
-                <div class="col-md-6">
+                {{-- <div class="col-md-6">
                     <label for="gst_type" class="form-label">GST Type *</label>
                     <input type="text" class="form-control" id="gst_type" name="gst_type" value="Regular" disabled>
                     @error('gst_type') <div class="text-danger">{{ $message }}</div> @enderror
-                </div>
+                </div> --}}
             </div>
             <div class="row mb-3">
                 <div class="col-md-6">

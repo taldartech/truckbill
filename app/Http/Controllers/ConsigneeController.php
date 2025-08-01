@@ -181,7 +181,7 @@ class ConsigneeController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'address' => 'required|string',
+            'address' => 'nullable|string',
             'country_id' => 'required|exists:countries,id',
             'state_id' => 'required|exists:states,id',
             'city_id' => 'required|exists:cities,id',
