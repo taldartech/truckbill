@@ -170,6 +170,11 @@ class TruckOwnerController extends Controller
         $editUrl = route('truck_owners.edit', $truckOwner->id);
         $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info">';
         $buttons .= '<i class="bi bi-pencil"></i></a>';
+
+        // // Truck creation button
+        $truckUrl = route('trucks.create', ['transporter_id' => $truckOwner->id]);
+        $buttons .= '<a href="' . $truckUrl . '" class="btn btn-sm btn-info" title="Add Truck">';
+        $buttons .= '<i class="bi bi-truck"></i></a>';
         
         // Delete button
         $deleteUrl = route('truck_owners.destroy', $truckOwner->id);

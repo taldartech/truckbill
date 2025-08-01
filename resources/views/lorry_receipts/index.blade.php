@@ -41,6 +41,7 @@
             <table id="lorryReceiptsTable" class="table table-bordered table-striped">
                 <thead>
                     <tr>
+                        
                         <th style="width: 60px;">Sr. No</th>
                         <th>LR Number</th>
                         <th>Customer</th>

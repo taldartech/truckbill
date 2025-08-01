@@ -17,6 +17,7 @@ class LorryReceiptController extends Controller
     public function index(Request $request)
     {
         // Handle DataTables AJAX request
+        // dd($request->all());
         if ($request->ajax()) {
             return $this->getLorryReceiptsData($request);
         }
@@ -220,9 +221,9 @@ class LorryReceiptController extends Controller
         $actions = '<div class="btn-group" role="group">';
         
         // View button
-        $actions .= '<a href="' . route('lorry_receipts.show', $lorryReceipt->id) . '" class="btn btn-sm btn-outline-info" title="View">';
-        $actions .= '<i class="bi bi-eye"></i>';
-        $actions .= '</a>';
+        // $actions .= '<a href="' . route('lorry_receipts.show', $lorryReceipt->id) . '" class="btn btn-sm btn-outline-info" title="View">';
+        // $actions .= '<i class="bi bi-eye"></i>';
+        // $actions .= '</a>';
         
         // Edit button
         $actions .= '<a href="' . route('lorry_receipts.edit', $lorryReceipt->id) . '" class="btn btn-sm btn-outline-primary" title="Edit">';
