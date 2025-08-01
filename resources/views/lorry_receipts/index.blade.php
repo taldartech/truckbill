@@ -41,7 +41,9 @@
             <table id="lorryReceiptsTable" class="table table-bordered table-striped">
                 <thead>
                     <tr>
-                        
+                        <th style="width: 30px;" class="text-center">
+                            <input type="checkbox" id="selectAllCheckbox">
+                        </th>
                         <th style="width: 60px;">Sr. No</th>
                         <th>LR Number</th>
                         <th>Customer</th>
@@ -56,6 +58,31 @@
                     </tr>
                 </thead>
             </table>
+        </div>
+    </div>
+</div>
+<!-- Modal for Bulk Payment -->
+<div class="modal fade" id="bulkPaymentModal" tabindex="-1" aria-labelledby="bulkPaymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bulkPaymentModalLabel">Memo Update </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="memoId" class="form-label">Memo ID</label>
+                    <input type="text" class="form-control" id="memoId" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Selected Lorry Receipts:</label>
+                    <ul class="selected-lr-list" id="selectedLrList"></ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="processBulkPayment()">OK</button>
+            </div>
         </div>
     </div>
 </div>
@@ -151,6 +178,14 @@ $(document).ready(function() {
             type: 'GET'
         },
         columns: [
+            {
+                data: 'checkbox',
+                name: 'checkbox',
+                width: '30px',
+                className: 'text-center',
+                orderable: false,
+                searchable: false
+            },
             {
                 data: 'sr_no',
                 name: 'sr_no',
@@ -287,6 +322,36 @@ $(document).ready(function() {
     }
 
     // Bulk payment functionality (placeholder)
+    // Handle select all checkbox
+    $('#selectAllCheckbox').on('change', function() {
+        var isChecked = this.checked;
+        table.$('input[type="checkbox"]').prop('checked', isChecked);
+        table.$('tr').toggleClass('selected', isChecked);
+        
+        // Show/hide bulk payment buttons based on selection
+        updateBulkPaymentButtons();
+    });
+
+    // Handle individual checkbox changes
+    table.on('change', 'input[type="checkbox"]', function() {
+        var $row = $(this).closest('tr');
+        $row.toggleClass('selected', this.checked);
+        
+        // Update select all checkbox if all rows are selected
+        var allSelected = table.$('input[type="checkbox"]').not(this).length === 
+            table.$('input[type="checkbox"]:checked').not(this).length;
+        $('#selectAllCheckbox').prop('checked', allSelected);
+        
+        // Show/hide bulk payment buttons based on selection
+        updateBulkPaymentButtons();
+    });
+
+    function updateBulkPaymentButtons() {
+        var selectedRows = table.rows('.selected').data();
+        $('#bulkPaymentBtn').toggleClass('d-none', selectedRows.length === 0);
+        $('#VocherPaymentBtn').toggleClass('d-none', selectedRows.length === 0);
+    }
+
     function handleBulkPayment() {
         // Get selected rows
         var selectedRows = table.rows('.selected').data();
@@ -294,14 +359,84 @@ $(document).ready(function() {
             alert('Please select at least one lorry receipt for memo update.');
             return;
         }
+
+        // Populate the selected lorry receipts list in the modal
+        var selectedLrList = $('#selectedLrList');
+        selectedLrList.empty();
         
-        // Handle bulk payment logic here
-        console.log('Bulk payment for', selectedRows.length, 'items');
+        selectedRows.each(function() {
+            var lrNumber = this.lr_number;
+            var truckNumber = this.truck_number;
+            var customer = this.customer_name;
+            
+            var li = $('<li class="list-group-item">'
+                + '<div class="d-flex justify-content-between align-items-center">'
+                + '<div>'
+                + '<strong>LR: </strong>' + lrNumber + '<br>'
+                + '<small><strong>Truck: </strong>' + truckNumber + '</small>'
+                + '</div>'
+                + '<small><strong>Customer: </strong>' + customer + '</small>'
+                + '</div>'
+                + '</li>');
+            selectedLrList.append(li);
+        });
+
+        // Show the bulk payment modal
+        $('#bulkPaymentModal').modal('show');
     }
 
     // Make functions global
     window.handleVoucherPayment = handleVoucherPayment;
     window.handleBulkPayment = handleBulkPayment;
 });
+    // Function to process bulk payment
+    window.processBulkPayment = function() {
+        // Get selected rows
+        var selectedRows = table.rows('.selected').data();
+        if (selectedRows.length === 0) {
+            alert('Please select at least one lorry receipt for memo update.');
+            return;
+        }
+
+        const memoId = document.getElementById('memoId').value;
+        
+        if (!memoId) {
+            alert('Please enter a Memo ID');
+            return;
+        }
+
+        // Create form data
+        const formData = new FormData();
+        formData.append('memo_id', memoId);
+        
+        // Add each selected ID as a separate array element
+        selectedRows.each(function() {
+            formData.append('lr_ids[]', this.id);
+        });
+
+        // Send AJAX request
+        fetch('/lorry_receipts/bulk-payment', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Memo ID updated successfully for selected lorry receipts');
+                // Refresh the page to show updated LR numbers
+                location.reload();
+            } else {
+                alert(data.message || 'Failed to update LR numbers');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while updating LR numbers');
+        });
+    };
+
 </script>
 @endpush
