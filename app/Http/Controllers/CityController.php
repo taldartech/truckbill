@@ -158,7 +158,7 @@ class CityController extends Controller
         City::create($validated);
 
         if ($request->has('from_modal')) {
-            return redirect()->back()->with('success', 'City created successfully from modal.');
+            return redirect()->back()->with('success', 'City created successfully.');
         }
     
         return redirect()->route('master.cities.index')->with('success', 'City created successfully');

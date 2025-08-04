@@ -222,7 +222,7 @@
     </div>
   </div>
   <!-- Add City Modal -->
-{{-- <div class="modal fade" id="addCityModal" tabindex="-1" aria-labelledby="addCityModalLabel" aria-hidden="true">
+<div class="modal fade" id="addCityModal" tabindex="-1" aria-labelledby="addCityModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <form action="{{ route('master.cities.store') }}" method="POST">
@@ -235,14 +235,23 @@
   
           <div class="modal-body">
             <div class="row g-3">
+             
+  
+             
+
               <div class="col-md-6">
-                <label for="name" class="form-label">City Name *</label>
-                <input type="text" class="form-control" id="name" name="name" required>
-                @error('name')
+                <label for="country_id" class="form-label">Country *</label>
+                <select class="form-select" id="country_id" name="country_id" required>
+                  <option value="">Select Country</option>
+                  @foreach($countries as $country)
+                    <option value="{{ $country->id }}">{{ $country->name }}</option>
+                  @endforeach
+                </select>
+                @error('country_id')
                   <div class="text-danger">{{ $message }}</div>
                 @enderror
+                <div class="invalid-feedback">Please select a country.</div>
               </div>
-  
               <div class="col-md-6">
                 <label for="state_id" class="form-label">State *</label>
                 <select class="form-select" id="state_id" name="state_id" required>
@@ -258,78 +267,25 @@
                 @enderror
                 <div class="invalid-feedback">Please select a state.</div>
               </div>
-            </div>
-          </div>
-  
-          <div class="modal-footer">
-            <button type="submit" class="btn btn-info">Submit form</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div> --}}
-  <div class="modal fade" id="addCityModal" tabindex="-1" aria-labelledby="addCityModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <form action="{{ route('master.cities.store') }}" method="POST">
-          @csrf
-          <input type="hidden" name="from_modal" value="1">
-  
-          <div class="modal-header">
-            <h5 class="modal-title" id="addCityModalLabel">Add City</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-  
-          <div class="modal-body">
-            <div class="row g-3">
-  
-              <div class="col-md-6">
-                <label for="country_id" class="form-label">Country *</label>
-                <select class="form-select" id="country_id" name="country_id" required>
-                  <option value="">Select Country</option>
-                  @foreach($countries as $country)
-                    <option value="{{ $country->id }}">{{ $country->name }}</option>
-                  @endforeach
-                </select>
-                @error('country_id')
-                  <div class="text-danger">{{ $message }}</div>
-                @enderror
-                <div class="invalid-feedback">Please select a country.</div>
-              </div>
-  
-              <div class="col-md-6">
-                <label for="state_id" class="form-label">State *</label>
-                <select class="form-select" id="state_id" name="state_id" required>
-                  <option value="">Select State</option>
-                  {{-- Dynamically populated via JS --}}
-                </select>
-                @error('state_id')
-                  <div class="text-danger">{{ $message }}</div>
-                @enderror
-                <div class="invalid-feedback">Please select a state.</div>
-              </div>
-  
+
               <div class="col-md-6">
                 <label for="name" class="form-label">City Name *</label>
                 <input type="text" class="form-control" id="name" name="name" required>
                 @error('name')
                   <div class="text-danger">{{ $message }}</div>
                 @enderror
-                <div class="valid-feedback">Looks good!</div>
               </div>
-  
             </div>
           </div>
   
           <div class="modal-footer">
             <button type="submit" class="btn btn-info">Submit form</button>
           </div>
-  
         </form>
       </div>
     </div>
   </div>
-  
+ 
   
   
   
@@ -337,6 +293,36 @@
 @endsection
 
 @section('scripts')
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+      const modalCountry = document.querySelector('#addCityModal #country_id');
+      const modalState = document.querySelector('#addCityModal #state_id');
+  
+      if (modalCountry && modalState) {
+          modalCountry.addEventListener('change', function () {
+              const countryId = this.value;
+  
+              // Clear current state options
+              modalState.innerHTML = '<option value="">Select State</option>';
+  
+              if (countryId) {
+                  fetch(`/api/states/${countryId}`)
+                      .then(response => response.json())
+                      .then(states => {
+                          states.forEach(state => {
+                              const option = document.createElement('option');
+                              option.value = state.id;
+                              option.textContent = state.name;
+                              modalState.appendChild(option);
+                          });
+                      })
+                      .catch(error => console.error('Error fetching states for modal:', error));
+              }
+          });
+      }
+  });
+  </script>
+  
 <script>
     // Example starter JavaScript for disabling form submissions if there are invalid fields
     (() => {

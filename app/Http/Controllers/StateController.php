@@ -142,7 +142,7 @@ class StateController extends Controller
         State::create($validated);
 
         if ($request->has('from_modal')) {
-            return redirect()->back()->with('success', 'State created successfully from modal.');
+            return redirect()->back()->with('success', 'State created successfully');
         }
         return redirect()->route('master.states.index')->with('success', 'State created successfully');
     }

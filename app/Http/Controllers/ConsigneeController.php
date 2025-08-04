@@ -164,7 +164,7 @@ class ConsigneeController extends Controller
     {
         $countries = \App\Models\Country::all();
         $states = [];
-    $cities = [];
+        $cities = [];
     
     if (old('country_id')) {
         $states = \App\Models\State::where('country_id', old('country_id'))->get();
