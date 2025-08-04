@@ -319,7 +319,7 @@
                   @endif
                   
                   {{-- Master data menus hidden from moderator/accountant/operator users --}}
-                  @if(auth()->check() && !in_array(auth()->user()->userRole->name, ['operator', 'accountant', 'moderator', 'super_admin']))
+                  @if(auth()->check() && !in_array(auth()->user()->userRole->name, [ 'accountant','super_admin']))
                   <li class="nav-item">
                     <a class="nav-link{{ (Request::is('transporters*') || Request::is('transporters/create') || Request::is('transporter_bank_accounts/create')) ? ' active' : '' }}" href="#transporterMenu">
                         <i class="fas fa-truck"></i> 
@@ -425,6 +425,8 @@
                           </li>
                     </ul>
                   </li> --}}
+                  @endif
+                  @if(auth()->check() && !in_array(auth()->user()->userRole->name, ['operator', 'accountant', 'moderator', 'super_admin']))
                   <li class="nav-item">
                     <a class="nav-link{{ (Request::is('consignees*') || Request::is('consignees/create')) ? ' active' : '' }}"  href="#consigneeMenu"  >
                         <i class="fas fa-people-carry"></i><p>

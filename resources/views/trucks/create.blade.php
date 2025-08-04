@@ -70,7 +70,7 @@
                 <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="registration_date" class="form-label">Registration Date *</label>
-                    <input type="date" class="form-control" id="registration_date" name="registration_date" required value="{{ old('registration_date') }}">
+                    <input type="date" class="form-control" id="registration_date" name="registration_date"  value="{{ old('registration_date') }}">
                     @error('registration_date') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please select a registration date.</div>
                 </div>

@@ -82,7 +82,9 @@
                 <th>Mobile</th>
                 <th>License Number</th>
                 <th>Address</th>
+                @if(auth()->check() && auth()->user()->userRole->name === 'admin')
                 <th>Actions</th>
+                @endif
             </tr>
         </thead>
         <tbody>
@@ -93,6 +95,7 @@
                     <td>{{ $driver->mobile }}</td>
                     <td>{{ $driver->license_number }}</td>
                     <td>{{ $driver->address }}</td>
+                    @if(auth()->check() && auth()->user()->userRole->name === 'admin')
                     <td>
                         <a href="{{ route('drivers.edit', $driver->id) }}" class="btn btn-sm btn-warning">Edit</a>
                         <form action="{{ route('drivers.destroy', $driver->id) }}" method="POST" style="display:inline-block;">
@@ -101,6 +104,7 @@
                             <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
                         </form>
                     </td>
+                    @endif
                 </tr>
             @empty
                 <tr><td colspan="6" class="text-center">No drivers found.</td></tr>

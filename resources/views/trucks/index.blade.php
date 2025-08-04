@@ -29,7 +29,9 @@
                         <th>Registration Date</th>
                         <th>Transporter</th>
                         <th>Driver</th>
+                        @if(auth()->check() && auth()->user()->userRole->name === 'admin')
                         <th style="width: 120px;">Actions</th>
+                        @endif
                     </tr>
                 </thead>
             </table>
@@ -88,6 +90,7 @@ $(document).ready(function() {
                 data: 'driver',
                 name: 'driver'
             },
+            @if(auth()->check() && auth()->user()->userRole->name === 'admin')
             {
                 data: 'actions',
                 name: 'actions',
@@ -96,6 +99,7 @@ $(document).ready(function() {
                 width: '120px',
                 className: 'text-center'
             }
+            @endif
         ],
         order: [[0, 'desc']],
         pageLength: 10,

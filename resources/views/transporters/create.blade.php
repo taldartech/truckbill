@@ -119,6 +119,74 @@
                     </div>
                 </div>
             </div>
+            <div class="card mb-4 p-3 bg-light">
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label for="country_id" class="form-label">Country * </label>
+                    <select class="form-select" id="country_id" name="country_id" required>
+                        <option value="">Select Country</option>
+                        @foreach($countries as $country)
+                            <option value="{{ $country->id }}" {{ old('country_id') == $country->id ? 'selected' : '' }}>
+                                {{ $country->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('country_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please select a country.</div>
+                </div>
+                <!--end::Col-->
+                <!--begin::Col-->
+                <div class="col-md-4">
+                    <label for="state_id" class="form-label">State *</label>
+                    <select class="form-select" id="state_id" name="state_id" required>
+                        <option value="">Select State</option>
+                        @if(old('country_id'))
+                            @foreach($states as $state)
+                                <option value="{{ $state->id }}" {{ old('state_id') == $state->id ? 'selected' : '' }}>
+                                    {{ $state->name }}
+                                </option>
+                            @endforeach
+                        @endif
+                    </select>
+                    @error('state_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please select a state.</div>
+                </div>
+                <!--end::Col-->
+                <!--begin::Col-->
+                <div class="col-md-4">
+                    <label for="city_id" class="form-label">City *</label>
+                    <select class="form-select" id="city_id" name="city_id" required>
+                        <option value="">Select City</option>
+                        @if(old('state_id'))
+                            @foreach($cities as $city)
+                                <option value="{{ $city->id }}" {{ old('city_id') == $city->id ? 'selected' : '' }}>
+                                    {{ $city->name }}
+                                </option>
+                            @endforeach
+                        @endif
+                    </select>
+                    @error('city_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please select a city.</div>
+                </div>
+                <!--end::Col-->
+            </div>  
+            <div class="row mb-3">          
+                <!--begin::Col-->
+                <div class="col-md-6">
+                    <label for="mobile" class="form-label">Mobile</label>
+                    <input type="text" class="form-control" id="mobile" name="mobile_number" required value="{{ old('mobile_number') }}">
+                    @error('mobile_number') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please enter a valid mobile number.</div>
+                </div>
+                <div class="col-md-6">
+                    <label for="address" class="form-label">Address</label>
+                    <textarea class="form-control" id="address" name="address" rows="3">{{ old('address') }}</textarea>
+                    @error('address') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please enter an address.</div>
+                </div>
+                <!--end::Col-->
+            </div>
+            </div>
             <!-- Quick Actions Section -->
             <div class="card p-3 bg-light">
                 <div class="row"><div class="col"><h5 class="mb-3">Quick Actions</h5></div></div>
@@ -266,4 +334,87 @@
         <a href="{{ route('transporters.index') }}" class="btn btn-secondary ms-2">Back to List</a>
     </form> --}}
 {{-- </div> --}}
+
+<script>
+    // Example starter JavaScript for disabling form submissions if there are invalid fields
+    (() => {
+        'use strict';
+
+        // Fetch all the forms we want to apply custom Bootstrap validation styles to
+        const forms = document.querySelectorAll('.needs-validation');
+
+        // Loop over them and prevent submission
+        Array.from(forms).forEach((form) => {
+            form.addEventListener(
+                'submit',
+                (event) => {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+
+                    form.classList.add('was-validated');
+                },
+                false,
+            );
+        });
+    })();
+
+    // Country, State, City cascading selects
+    const countrySelect = document.getElementById('country_id');
+    const stateSelect = document.getElementById('state_id');
+    const citySelect = document.getElementById('city_id');
+
+    const oldCountry = "{{ old('country_id') }}";
+    const oldState = "{{ old('state_id') }}";
+    const oldCity = "{{ old('city_id') }}";
+
+    countrySelect.addEventListener('change', function() {
+    const countryId = this.value;
+    stateSelect.length = 0;
+    stateSelect.innerHTML = '<option value="">Select State</option>';
+    citySelect.length = 0;
+    citySelect.innerHTML = '<option value="">Select City</option>';
+    if (!oldCountry && !oldState){
+    if (countryId) {
+        fetch(`/api/states/${countryId}`)
+            .then(response => response.json())
+            .then(states => {
+                states.forEach(state => {
+                    const option = document.createElement('option');
+                    option.value = state.id;
+                    option.textContent = state.name;
+                    stateSelect.appendChild(option);
+                });
+                stateSelect.required = true;
+            });
+    }
+    stateSelect.addEventListener('change', function() {
+    const stateId = this.value;
+    citySelect.length = 0;
+    citySelect.innerHTML = '<option value="">Select City</option>';
+    if (!oldState && !oldCity){
+    if (stateId) {
+        fetch(`/api/cities/${stateId}`)
+            .then(response => response.json())
+            .then(cities => {
+                cities.forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city.id;
+                    option.textContent = city.name;
+                    citySelect.appendChild(option);
+                });
+                citySelect.required = true;
+            });
+    }
+});
+}
+
+
+
+});
+
+
+
+</script>
 @endsection

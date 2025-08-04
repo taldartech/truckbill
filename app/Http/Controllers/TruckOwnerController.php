@@ -139,7 +139,10 @@ class TruckOwnerController extends Controller
                 'total_trucks' => $truckOwner->total_trucks ?: 0,
                 'advance_amount' => number_format($truckOwner->advance_amount ?: 0, 2),
                 'company' => $truckOwner->company ? $truckOwner->company->name : '-',
-                'actions' => $this->getActionButtons($truckOwner)
+                // 'actions' => $this->getActionButtons($truckOwner)
+                'actions' => auth()->user()->userRole->name === 'admin'
+                        ? $this->getActionButtons($truckOwner)
+                        : ''  // empty string for non-admins
             ];
         });
         

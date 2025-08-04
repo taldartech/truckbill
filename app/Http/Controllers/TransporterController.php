@@ -9,6 +9,7 @@ class TransporterController extends Controller
     public function index(Request $request)
     {
         // Handle DataTables AJAX request
+        
         if ($request->ajax()) {
             return $this->getTransportersData($request);
         }
@@ -137,8 +138,14 @@ class TransporterController extends Controller
                 'total_trucks' => $transporter->total_trucks ?: 0,
                 'advance_amount' => number_format($transporter->advance_amount ?: 0, 2),
                 'company' => $transporter->company ? $transporter->company->name : '-',
-                'actions' => $this->getActionButtons($transporter)
+
+                // 'actions' => $this->getActionButtons($transporter)
+                'actions' => auth()->user()->userRole->name === 'admin'
+                        ? $this->getActionButtons($transporter)
+                        : ''  // empty string for non-admins
             ];
+     
+      return $row;
         });
         
         return response()->json([
@@ -183,13 +190,27 @@ class TransporterController extends Controller
     public function create()
     {
         $companies = \App\Models\Company::all();
+        
         // For create, we can't filter trucks as we don't have transporter_id yet
         $trucks = \App\Models\Truck::all();
-        return view('transporters.create', compact('companies', 'trucks'));
+        $countries = \App\Models\Country::all();
+        $states = [];
+        $cities = [];
+    
+    if (old('country_id')) {
+        $states = \App\Models\State::where('country_id', old('country_id'))->get();
+    }
+    
+    if (old('state_id')) {
+        $cities = \App\Models\City::where('state_id', old('state_id'))->get();
+    }
+        return view('transporters.create', compact('companies', 'trucks', 'countries', 'states', 'cities'));
     }
 
     public function store(Request $request)
     {
+
+        // dd($request->all());
         $validated = $request->validate([
             'company_id' => 'required|exists:companies,id',
             'name' => 'required|string|max:255',
@@ -211,7 +232,16 @@ class TransporterController extends Controller
             'total_trucks' => 'required|integer|min:0',
             'advance_amount' => 'nullable|numeric',
             'pan_active' => 'required|boolean',
+            'address' => 'nullable|string|max:255',
+            'city_id' => 'nullable|exists:cities,id',
+            'state_id' => 'nullable|exists:states,id',
+            'country_id' => 'nullable|exists:countries,id',
+            'mobile_number' => [
+                'required',
+                'digits:10',
+            ],
         ]);
+       
         if (!isset($validated['advance_amount'])) {
             $validated['advance_amount'] = 0;
         }
@@ -220,6 +250,7 @@ class TransporterController extends Controller
         }
         // Convert pan_active to boolean
         $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
+       
         \App\Models\Transporter::create($validated);
         return redirect()->route('transporters.index')->with('success', 'Transporter created successfully!');
     }
@@ -229,7 +260,10 @@ class TransporterController extends Controller
         $companies = \App\Models\Company::all();
         // Filter trucks to show only those belonging to this transporter
         $trucks = \App\Models\Truck::where('transporter_id', $transporter->id)->get();
-        return view('transporters.edit', compact('transporter', 'companies', 'trucks'));
+        $countries = \App\Models\Country::all();
+        $states = $transporter->country_id ? \App\Models\State::where('country_id', $transporter->country_id)->get() : collect();
+        $cities = $transporter->state_id ? \App\Models\City::where('state_id', $transporter->state_id)->get() : collect();
+        return view('transporters.edit', compact('transporter', 'companies', 'trucks', 'countries', 'states', 'cities'));
     }
 
     public function update(Request $request, \App\Models\Transporter $transporter)
@@ -255,6 +289,14 @@ class TransporterController extends Controller
             'total_trucks' => 'required|integer|min:0',
             'advance_amount' => 'nullable|numeric',
             'pan_active' => 'required|boolean',
+            'address' => 'nullable|string|max:255',
+            'city_id' => 'nullable|exists:cities,id',
+            'state_id' => 'nullable|exists:states,id',
+            'country_id' => 'nullable|exists:countries,id',
+            'mobile_number' => [
+                'required',
+                'digits:10',
+            ],
         ]); 
         if (!isset($validated['advance_amount'])) {
             $validated['advance_amount'] = 0;

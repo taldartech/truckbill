@@ -136,7 +136,10 @@ class TruckController extends Controller
                 'registration_date' => $truck->registration_date ? date('Y-m-d', strtotime($truck->registration_date)) : '-',
                 'transporter' => $truck->transporter ? $truck->transporter->name : '-',
                 'driver' => $truck->driver ? $truck->driver->name : '-',
-                'actions' => $this->getActionButtons($truck)
+                // 'actions' => $this->getActionButtons($truck)
+                'actions' => auth()->user()->userRole->name === 'admin'
+                        ? $this->getActionButtons($truck)
+                        : ''  // empty string for non-admins
             ];
         });
         
@@ -235,7 +238,7 @@ class TruckController extends Controller
 ],
             'truck_type' => 'required|string|max:50',
             'driver_id' => 'nullable|exists:drivers,id',
-            'registration_date' => 'required|date',
+            'registration_date' => 'nullable|date',
         ]);
 
         // If driver_id is selected, get the driver's name
@@ -267,7 +270,7 @@ class TruckController extends Controller
 ],
             'truck_type' => 'required|string|max:50',
             'driver_id' => 'nullable|exists:drivers,id',
-            'registration_date' => 'required|date',
+            'registration_date' => 'nullable|date',
         ]);
         $truck->update($validated);
         return redirect()->route('trucks.index')->with('success', 'Truck updated successfully!');
