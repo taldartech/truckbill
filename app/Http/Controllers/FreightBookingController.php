@@ -173,6 +173,7 @@ $actions .= '</a>';
                     'linkedBookings' => $linkedBookings,
                     'goodsTypes' => $goodsTypes,
                     'lorry_receipt' => $lorry_receipt,
+                    'weight' => $lr->weight,
                     
                     'transporter' => $transporter ?? null,
                     'tdsPercentages' => $tdsPercentages,
@@ -186,6 +187,7 @@ $actions .= '</a>';
                         'pan_verified' => $transporter ? $transporter->pan_active : 0,
                         'is_owner' => $transporter ? $transporter->is_owner : 0,
                         'goods_type' => $lr->good_type,
+                        
                         
                     ]
                 ]);

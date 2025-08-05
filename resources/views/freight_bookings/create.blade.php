@@ -46,6 +46,9 @@
     <div class="card-header"><div class="card-title">Add New Freight Booking</div></div>
     <!--end::Header-->
     <!--begin::Form-->
+    @php
+    $weight = $weight ?? 0; // default fallback
+@endphp
     <form method="POST" action="{{ route('freight_bookings.store') }}" class="needs-validation" novalidate="">
         @csrf
         <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
@@ -102,6 +105,9 @@
                 <input type="number" step="0.01" class="form-control" name="advance_amount" id="advance_amount" value="{{ old('advance_amount') }}" required>
                 @error('advance_amount') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
+
+<!-- Hidden weight input (if needed for JS) -->
+<input type="hidden" id="weight" value="{{ $weight }}">
             <div class="col-md-4 mb-3">
                 <label for="balance_amount" class="form-label">Balance Amount *</label>
                 <input type="number" step="0.01" class="form-control" name="balance_amount" id="balance_amount" value="{{ old('balance_amount') }}" required readonly>
@@ -259,6 +265,124 @@
       <!--end::Footer-->
     </form>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const weight = parseFloat(document.getElementById('weight').value || 0);
+        const rateInput = document.getElementById('tr_fr_rate');
+        const amountInput = document.getElementById('tr_amount');
+        const trAmountInput = document.getElementById('tr_amount');
+        const advanceAmountInput = document.getElementById('advance_amount');
+        const balanceAmountInput = document.getElementById('balance_amount');
+        const panVerified = parseInt(document.getElementById('pan_verified').value) || 0;
+
+        rateInput.addEventListener('input', function () {
+            const rate = parseFloat(rateInput.value || 0);
+            const amount = (weight * rate).toFixed(2);
+            amountInput.value = amount;
+
+            function calculateBalance() {
+            const trAmount = parseFloat(trAmountInput.value) || 0;
+            const advanceAmount = parseFloat(advanceAmountInput.value) || 0;
+             // Prevent advance > TR
+        if (advanceAmount > trAmount) {
+            alert("Advance amount cannot be greater than TR amount.");
+            advanceAmountInput.value = '';
+            balanceAmountInput.value = trAmount.toFixed(2);
+          
+            return;
+        }
+            const balance = trAmount - advanceAmount;
+            balanceAmountInput.value = balance.toFixed(2);
+            
+            // Get TDS percentages from PHP variables
+            const defaultPercentage = {{ $tdsPercentages['default'] / 100 }};
+            const agencyPercentage = {{ $tdsPercentages['agency'] / 100 }};
+            const ownerPercentage = {{ $tdsPercentages['owner'] / 100 }};
+            
+            // Calculate TDS %
+            let tdsPercentage = defaultPercentage;
+            if (panVerified === 1) {
+                tdsPercentage = IS_OWNER === 0 ? agencyPercentage : ownerPercentage;
+            }
+
+            // Calculate TDS Amount
+            const tdsAmountInput = document.getElementById('tds_amount');
+            const tdsAmount = (trAmount * tdsPercentage).toFixed(2);
+            tdsAmountInput.value = tdsAmount;
+        }
+
+        // Update balance when TR Amount changes
+        trAmountInput.addEventListener('input', calculateBalance);
+        
+        // Update balance when Advance Amount changes
+        advanceAmountInput.addEventListener('input', calculateBalance);
+
+        // Calculate initial balance if values exist
+        calculateBalance();
+
+        // Existing code for LR selection
+        const lrSelect = document.getElementById('lr_id');
+        const transporterSelect = document.getElementById('transporter_id');
+        const truckSelect = document.getElementById('truck_id');
+
+        // Function to update trucks based on selected transporter
+        function updateTrucks() {
+            const selectedTransporter = transporterSelect.value;
+            if (!selectedTransporter) {
+                truckSelect.innerHTML = '<option value="">Select Truck</option>';
+                return;
+            }
+
+            // Make AJAX request to get trucks for selected transporter
+            fetch(`/api/transporters/${selectedTransporter}/trucks`)
+                .then(response => response.json())
+                .then(trucks => {
+                    let options = '<option value="">Select Truck</option>';
+                    trucks.forEach(truck => {
+                        options += `<option value="${truck.id}">${truck.truck_number}</option>`;
+                    });
+                    truckSelect.innerHTML = options;
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Function to load LR details
+        function loadLRDetails() {
+            const selectedLR = lrSelect.value;
+            if (!selectedLR) {
+                document.getElementById('transporter_id').value = '';
+                document.getElementById('truck_id').value = '';
+                return;
+            }
+
+            // Make AJAX request to get LR details
+            fetch(`/api/lorry_receipts/${selectedLR}`)
+                .then(response => response.json())
+                .then(lr => {
+                    // Set transporter
+                    const transporterSelect = document.getElementById('transporter_id');
+                    const truckSelect = document.getElementById('truck_id');
+                    
+                    // Get transporter name
+                    fetch(`/api/transporters/${lr.transporter_id}`)
+                        .then(response => response.json())
+                        .then(transporter => {
+                            transporterSelect.value = `${transporter.name}`;
+                        });
+                    
+                    // Get truck number
+                    fetch(`/api/trucks/${lr.truck_id}`)
+                        .then(response => response.json())
+                        .then(truck => {
+                            truckSelect.value = `${truck.truck_number}`;
+                        });
+                })
+                .catch(error => console.error('Error:', error));
+        }
+        });
+    });
+</script>
+
 <script>
     const IS_OWNER = {{ $preFilled['is_owner'] ?? 0 }};
 </script>

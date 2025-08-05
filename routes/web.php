@@ -24,6 +24,7 @@ use App\Http\Controllers\TruckOwnerBankAccountController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\StateController;
 use App\Http\Controllers\CountryController;
+use App\Http\Controllers\PumpController;
 
 // Authentication Routes
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -212,7 +213,19 @@ Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->nam
         Route::get('/goods-types/{goodsType}/edit', [\App\Http\Controllers\GoodsTypeController::class, 'edit'])->name('master.goods-types.edit');
         Route::put('/goods-types/{goodsType}', [\App\Http\Controllers\GoodsTypeController::class, 'update'])->name('master.goods-types.update');
         Route::delete('/goods-types/{goodsType}', [\App\Http\Controllers\GoodsTypeController::class, 'destroy'])->name('master.goods-types.destroy');
+
+         //Pumps
+    Route::resource('pumps', PumpController::class);
+    Route::get('/pumps', [PumpController::class, 'index'])->name('master.pump.index');
+    Route::get('/pumps/create', [PumpController::class, 'create'])->name('master.pump.create');
+    Route::post('/pumps', [PumpController::class, 'store'])->name('master.pump.store');
+    Route::get('/pumps/{pump}/edit', [PumpController::class, 'edit'])->name('master.pump.edit');
+    Route::put('/pumps/{pump}', [PumpController::class, 'update'])->name('master.pump.update');
+    Route::delete('/pumps/{pump}', [PumpController::class, 'destroy'])->name('master.pump.destroy');
     });
+
+   
+
 
     // Transporters CRUD
     Route::get('/transporters', [TransporterController::class, 'index'])->name('transporters.index');

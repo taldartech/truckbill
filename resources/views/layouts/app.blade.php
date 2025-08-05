@@ -310,6 +310,12 @@
                             <p>Goods Types</p>
                             </a>
                           </li>
+                          <li class="nav-item">
+                            <a href="/master/pumps" class="nav-link">
+                              <i class="fas fa-plus"></i> 
+                            <p>Pumps</p>
+                            </a>
+                          </li>
                     </ul>
                 </li>
     
@@ -430,7 +436,7 @@
                     </ul>
                   </li> --}}
                   @endif
-                  @if(auth()->check() && !in_array(auth()->user()->userRole->name, [ 'accountant',  'super_admin']))
+                  @if(auth()->check() && !in_array(auth()->user()->userRole->name, [ 'accountant', 'super_admin']))
                   <li class="nav-item">
                     <a class="nav-link{{ (Request::is('consignees*') || Request::is('consignees/create')) ? ' active' : '' }}"  href="#consigneeMenu"  >
                         <i class="fas fa-people-carry"></i><p>
@@ -598,6 +604,12 @@
                             <a href="/master/goods-types" class="nav-link">
                               <i class="fas fa-plus"></i> 
                             <p>Goods Types</p>
+                            </a>
+                          </li>
+                          <li class="nav-item">
+                            <a href="/master/pumps" class="nav-link">
+                              <i class="fas fa-plus"></i> 
+                            <p>Pumps</p>
                             </a>
                           </li>
                     </ul>
