@@ -73,7 +73,7 @@
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label for="pan_number" class="form-label">PAN Number</label>
-                    <input placeholder="Enter PAN Number" type="text" class="form-control" id="pan_number" name="pan_number" value="{{ old('pan_number') }}">
+                    <input placeholder="Enter PAN Number" type="text" class="form-control" id="pan_number" name="pan_number" required value="{{ old('pan_number') }}">
                     @error('pan_number') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-6">

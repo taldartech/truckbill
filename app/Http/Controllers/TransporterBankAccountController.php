@@ -40,13 +40,16 @@ class TransporterBankAccountController extends Controller
         return redirect()->route('transporter_bank_accounts.index')->with('success', 'Bank account added successfully!');
     }
 
-    public function edit(TransporterBankAccount $account)
+    public function edit(TransporterBankAccount $transporter_bank_account)
     {
-        $transporters = Transporter::all();
-        return view('transporter_bank_accounts.edit', compact('account', 'transporters'));
+        $transporters = Transporter::where('is_owner', 0)->get();
+        return view('transporter_bank_accounts.edit', [
+            'account' => $transporter_bank_account,
+            'transporters' => $transporters
+        ]);
     }
 
-    public function update(Request $request, TransporterBankAccount $account)
+    public function update(Request $request, TransporterBankAccount $transporter_bank_account)
     {
         $validated = $request->validate([
             'transporter_id' => 'required|exists:transporters,id',
@@ -57,7 +60,7 @@ class TransporterBankAccountController extends Controller
             'bulk_payment_id' => 'nullable|string|max:255',
         ]);
 
-        $account->update($validated);
+        $transporter_bank_account->update($validated);
         return redirect()->route('transporter_bank_accounts.index')->with('success', 'Bank account updated successfully!');
     }
 

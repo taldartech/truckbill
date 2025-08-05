@@ -18,11 +18,16 @@ class Transporter extends Model
         'advance_amount',
         'registered_truck_id',
         'pan_active',
+        'address',
+        'city_id',
+        'state_id',
+        'country_id',
+        'mobile_number',
     ];
 
     protected $casts = [
         'pan_active' => 'boolean',
-    ];
+        ];
 
     public function company()
     {
@@ -34,5 +39,19 @@ class Transporter extends Model
         return $this->hasMany(TransporterBankAccount::class);
     }
 
+    public function city()
+    {
+        return $this->belongsTo(City::class);
+    }
+
+    public function state()
+    {
+        return $this->belongsTo(State::class);
+    }
+
+    public function country()
+    {
+        return $this->belongsTo(Country::class);
+    }
     //
 }

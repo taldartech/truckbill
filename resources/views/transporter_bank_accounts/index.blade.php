@@ -98,7 +98,7 @@
                         <td>{{ $account->bulk_payment_id }}</td>
                         <td>
                             <div class="d-inline-flex gap-1">
-                                <a href="{{ route('transporter_bank_accounts.edit', $account) }}" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" 
+                                <a href="{{ route('transporter_bank_accounts.edit', $account->id) }}" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" 
                             data-bs-placement="top" 
                             title="Edit Bank Account">
                                     <i class="bi bi-pencil"></i>

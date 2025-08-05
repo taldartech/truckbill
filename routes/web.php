@@ -140,7 +140,7 @@ Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->nam
     Route::post('voucher_payments/bulk-payment', [VoucherPaymentController::class, 'bulkPayment'])->name('voucher_payments.bulkPayment');
 
     // Transporter Bank Accounts
-    // Transporter Bank Accounts
+    
     Route::get('transporter_bank_accounts/index', [TransporterBankAccountController::class, 'index'])->name('transporter_bank_accounts.index');
     Route::get('transporter_bank_accounts/create/{transporter_id}', [TransporterBankAccountController::class, 'create'])->name('transporter_bank_accounts.create');
     Route::get('transporter_bank_accounts/{transporter_bank_account}/edit', [TransporterBankAccountController::class, 'edit'])->name('transporter_bank_accounts.edit');
