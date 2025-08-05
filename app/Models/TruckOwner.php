@@ -21,6 +21,7 @@ class TruckOwner extends Model
         'total_trucks',
         'advance_amount',
         'pan_active',
+        'short_name',
     ];
 
     protected $casts = [

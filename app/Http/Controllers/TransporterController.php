@@ -240,6 +240,7 @@ class TransporterController extends Controller
                 'required',
                 'digits:10',
             ],
+            'short_name' => 'nullable|string|max:255',
         ]);
     //    dd($validated);
         if (!isset($validated['advance_amount'])) {
@@ -250,6 +251,7 @@ class TransporterController extends Controller
         }
         // Convert pan_active to boolean
         $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
+        // dd($validated);
        
         \App\Models\Transporter::create($validated);
        

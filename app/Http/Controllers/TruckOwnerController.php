@@ -223,6 +223,7 @@ class TruckOwnerController extends Controller
             'total_trucks' => 'required|integer|min:0',
             'advance_amount' => 'nullable|numeric',
             'pan_active' => 'required|boolean',
+            'short_name' => 'nullable|string|max:255',
         ]);
         if (!isset($validated['advance_amount'])) {
             $validated['advance_amount'] = 0;

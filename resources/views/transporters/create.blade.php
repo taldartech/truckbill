@@ -57,8 +57,14 @@
                     <input placeholder="Enter Transport Name" type="text" class="form-control" id="name" name="name" required value="{{ old('name') }}">
                     @error('name') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
+               
             </div>
             <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="short_name" class="form-label">Short Name *</label>
+                    <input placeholder="Enter Short Name" type="text" class="form-control" id="short_name" name="short_name" value="{{ old('short_name') }}">
+                    @error('short_name') <div class="text-danger">{{ $message }}</div> @enderror
+                </div>
                 <div class="col-md-6">
                     <label for="gst_number" class="form-label">GST Number</label>
             <input placeholder="Enter GST Number" type="text" class="form-control" id="gst_number" name="gst_number" value="{{ old('gst_number') }}">
