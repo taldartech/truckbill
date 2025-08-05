@@ -339,12 +339,14 @@
                             <p>Register</p>
                             </a>
                         </li>
+                        @if(auth()->check() && auth()->user()->userRole->name === 'super_admin')
                         <li class="nav-item">
                             <a href="/transporter_bank_accounts/index" class="nav-link{{ Request::is('transporter_bank_accounts/index') ? ' active' : '' }}">
                               <i class="fas fa-university"></i> 
                             <p>Add Bank Details</p>
                             </a>
                         </li>
+                        @endif
                     </ul>
                   </li>
 
@@ -367,12 +369,14 @@
                             <p>Register</p>
                             </a>
                           </li>
+                          @if(auth()->check() && auth()->user()->userRole->name === 'super_admin')
                           <li class="nav-item">
                             <a href="/truck_owner_bank_accounts/index" class="nav-link{{ Request::is('truck_owner_bank_accounts/index') ? ' active' : '' }}">
                               <i class="fas fa-university"></i> 
                             <p>Add Bank Details</p>
                             </a>
                           </li>
+                          @endif
                     </ul>
                   </li>
                   <li class="nav-item">
@@ -426,7 +430,7 @@
                     </ul>
                   </li> --}}
                   @endif
-                  @if(auth()->check() && !in_array(auth()->user()->userRole->name, ['operator', 'accountant', 'moderator', 'super_admin']))
+                  @if(auth()->check() && !in_array(auth()->user()->userRole->name, [ 'accountant',  'super_admin']))
                   <li class="nav-item">
                     <a class="nav-link{{ (Request::is('consignees*') || Request::is('consignees/create')) ? ' active' : '' }}"  href="#consigneeMenu"  >
                         <i class="fas fa-people-carry"></i><p>

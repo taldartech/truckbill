@@ -35,7 +35,9 @@
                         <th>State</th>
                         <th>Country</th>
                         <th>Contact Number</th>
+                        @if(auth()->check() && auth()->user()->userRole->name === 'admin')
                         <th style="width: 120px;">Actions</th>
+                        @endif
                     </tr>
                 </thead>
             </table>
@@ -96,6 +98,7 @@ $(document).ready(function() {
                 name: 'contact_number',
                 width: '130px'
             },
+            @if(auth()->check() && auth()->user()->userRole->name === 'admin')
             {
                 data: 'actions',
                 name: 'actions',
@@ -104,6 +107,7 @@ $(document).ready(function() {
                 width: '120px',
                 className: 'text-center'
             }
+            @endif
         ],
         order: [[0, 'desc']],
         pageLength: 10,

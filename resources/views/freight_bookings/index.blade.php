@@ -31,7 +31,8 @@
                     <tr>
                         <th style="width: 80px;">ID</th>
                         <th>LR No</th>
-                        <th>Voucher No</th>
+                        {{-- <th>Voucher No</th> --}}
+                        <th>Unloading Point</th>
                         <th>TR Rate</th>
                         <th>TR Amount</th>
                         <th>Advance</th>
@@ -81,9 +82,10 @@ $(document).ready(function() {
                 name: 'lr_number'
             },
             {
-                data: 'voucher_number',
-                name: 'voucher_number'
-            },
+    data: 'destination_city',
+    name: 'destination_city'
+},
+           
             {
                 data: 'tr_rate_formatted',
                 name: 'tr_rate',
@@ -175,7 +177,7 @@ $(document).ready(function() {
         scrollX: true,
         initComplete: function() {
             // Add individual column search
-            this.api().columns([1, 2]).every(function() {
+            this.api().columns([1]).every(function() {
                 var column = this;
                 var title = column.header().textContent;
                 

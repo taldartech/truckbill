@@ -159,6 +159,7 @@ class TruckOwnerController extends Controller
         $buttons = '<div class="d-flex gap-1">';
         
         // Bank account button
+        if(auth()->check() && auth()->user()->userRole->name === 'super_admin') {
         if($truckOwner->bankAccounts->isEmpty() || $truckOwner->bankAccounts->first()->bulk_payment_id === null) {
             $bankUrl = route('truck_owner_bank_accounts.create', ['truck_owner_id' => $truckOwner->id]);
             $buttons .= '<a href="' . $bankUrl . '" class="btn btn-sm btn-info" title="Add Bank Account">';
@@ -167,6 +168,7 @@ class TruckOwnerController extends Controller
             $bankUrl = route('truck_owner_bank_accounts.index', ['truck_owner_id' => $truckOwner->id]);
             $buttons .= '<a href="' . $bankUrl . '" class="btn btn-sm btn-warning" title="View Bank Accounts">';
             $buttons .= '<i class="bi bi-bank"></i></a>';
+        }
         }
         
         // Edit button

@@ -52,9 +52,10 @@ class FreightBookingController extends Controller
                 ->addColumn('lr_number', function ($row) {
                     return $row->lr ? $row->lr->lr_number : '-';
                 })
-                ->addColumn('voucher_number', function ($row) {
-                    return $row->voucher_number ?? '-';
+                ->addColumn('destination_city', function ($row) {
+                    return $row->lr && $row->lr->destination_city ? $row->lr->destination_city : '-';
                 })
+               
                 ->addColumn('tr_rate_formatted', function ($row) {
                     return $row->tr_rate ? '₹' . number_format($row->tr_rate, 2) : '₹0.00';
                 })
