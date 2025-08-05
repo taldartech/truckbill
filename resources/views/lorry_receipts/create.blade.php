@@ -4,8 +4,18 @@
 <div class="card card-info card-outline mb-4" style="max-width: 950px;align-items: center;margin: auto;">
     <!--begin::Header-->
     <div class="card-header">
-        <div class="card-title h4">Add New Lorry Receipt</div>
+        <div class="d-flex w-100">
+            <div class="d-flex align-items-center">
+                <h4 class="mb-0 me-3">Add New Lorry Receipt</h4>
+            </div>
+            <div class="ms-auto">
+                <a href="{{ route('consignees.create') }}" class="btn btn-info">
+                    <i class="bi bi-plus"></i> Create Consignee
+                </a>
+            </div>
+        </div>
     </div>
+   
     <hr class="mb-3 mt-0">
     <!--end::Header-->
     <form method="POST" action="{{ route('lorry_receipts.store') }}" id="lorryReceiptForm" class="needs-validation" novalidate="">
