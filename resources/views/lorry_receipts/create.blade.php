@@ -84,7 +84,10 @@
                      </select>
                     @error('transporter_id') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please select a transporter.</div>
+                    <p id="tdsRateDisplay" class="form-control-plaintext text-primary fw-bold">--</p>
                 </div>
+             
+   
             </div>
             <div class="row mb-3">
                 <div class="col-md-4">
@@ -525,7 +528,8 @@
     </form> --}}
     <!--end::Form-->
     <!--begin::JavaScript-->
-    <script>
+    
+    {{-- <script>
         document.addEventListener('DOMContentLoaded', function () {
             const transporterTypeSelect = document.getElementById('transporter_type');
             const truckSelect = document.getElementById('truck_id');
@@ -572,6 +576,96 @@
                 }
             });
         });
+        </script>
+         --}}
+         <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const transporterTypeSelect = document.getElementById('transporter_type');
+                const truckSelect = document.getElementById('truck_id');
+                const transporterSelect = document.getElementById('transporter_id');
+                const transporterLabel = document.getElementById('transporterLabel');
+                const tdsRateDisplay = document.getElementById('tdsRateDisplay');
+        
+                const agencies = @json($agencies);
+                const truckOwners = @json($truckOwners);
+                const trucks = @json($trucks);
+                const tdsPercentages = @json($tdsPercentages);
+        
+                function updateTransporterDropdown() {
+                    const selectedType = transporterTypeSelect.value;
+                    const selectedTruckId = truckSelect.value;
+                    let optionsHtml = `<option value="">Select Transporter</option>`;
+        
+                    if (selectedType === 'owner') {
+                        transporterLabel.textContent = 'Truck Owner *';
+                        const selectedTruck = trucks.find(truck => truck.id == selectedTruckId);
+                        if (selectedTruck && selectedTruck.transporter) {
+                            const transporter = selectedTruck.transporter;
+                            if (transporter.is_owner == 1) {
+                                optionsHtml += `<option value="${transporter.id}" selected>${transporter.name}</option>`;
+                                fetchTdsInfo(transporter.id); // Fetch TDS immediately
+                            } else {
+                                optionsHtml += `<option disabled>No owner assigned to this truck</option>`;
+                                tdsRateDisplay.textContent = '--';
+                            }
+                        } else {
+                            tdsRateDisplay.textContent = '--';
+                        }
+                    } else if (selectedType === 'agency') {
+                        transporterLabel.textContent = 'Agency *';
+                        agencies.forEach(agency => {
+                            optionsHtml += `<option value="${agency.id}">${agency.name}</option>`;
+                        });
+                        tdsRateDisplay.textContent = '--';
+                    } else {
+                        transporterLabel.textContent = 'Transporter *';
+                        tdsRateDisplay.textContent = '--';
+                    }
+        
+                    transporterSelect.innerHTML = optionsHtml;
+                }
+        
+                // ✅ Fetch TDS from server
+                function fetchTdsInfo(transporterId) {
+                    if (!transporterId) {
+                        tdsRateDisplay.textContent = '--';
+                        return;
+                    }
+        
+                    fetch(`/transporter/${transporterId}/tds-info`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const { pan_active, is_owner } = data;
+        
+                            if (pan_active == 0 || pan_active === false) {
+                                tdsRateDisplay.textContent = `TDS RATE= ${tdsPercentages.default}% (Default - PAN not active)`;
+                            } else {
+                                if (is_owner == 1) {
+                                    tdsRateDisplay.textContent = `TDS RATE= ${tdsPercentages.owner}%`;
+                                } else {
+                                    tdsRateDisplay.textContent = `TDS RATE= ${tdsPercentages.agency}%`;
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching transporter TDS info:', error);
+                            tdsRateDisplay.textContent = 'Error';
+                        });
+                }
+        
+                transporterTypeSelect.addEventListener('change', updateTransporterDropdown);
+        
+                truckSelect.addEventListener('change', () => {
+                    if (transporterTypeSelect.value === 'owner') {
+                        updateTransporterDropdown();
+                    }
+                });
+        
+                transporterSelect.addEventListener('change', function () {
+                    const transporterId = this.value;
+                    fetchTdsInfo(transporterId);
+                });
+            });
         </script>
         
     {{-- <script>

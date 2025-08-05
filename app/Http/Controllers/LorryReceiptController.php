@@ -267,9 +267,25 @@ class LorryReceiptController extends Controller
         $consignees = Consignee::where('company_id', auth()->user()->company_id)->orderBy('name')->get();
         $goodsTypes = GoodType::all();
         $statuses = ['Pending', 'Delivered', 'Cancelled','In-Progress'];
+        $tdsPercentages = [
+            'default' => env('TDS_PERCENTAGE_DEFAULT', 20),
+            'agency' => env('TDS_PERCENTAGE_AGENCY', 2),
+            'owner' => env('TDS_PERCENTAGE_OWNER', 1)
+        ];
+
         
-        return view('lorry_receipts.create', compact('companies', 'customers','trucks', 'transporters', 'consignees', 'goodsTypes', 'statuses','truckOwners','agencies'));
+        return view('lorry_receipts.create', compact('companies', 'customers','trucks', 'transporters', 'consignees', 'goodsTypes', 'statuses','truckOwners','agencies','tdsPercentages'));
     }
+    public function getTdsInfo($id)
+{
+    $transporter = Transporter::findOrFail($id);
+
+    return response()->json([
+        'pan_active' => $transporter->pan_active,
+        'is_owner' => $transporter->is_owner,
+    ]);
+}
+
 
     public function bulkPayment(Request $request)
     {

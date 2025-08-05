@@ -86,6 +86,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/transporters/{transporter}/edit', [TransporterController::class, 'edit'])->name('transporters.edit');
     Route::put('/transporters/{transporter}', [TransporterController::class, 'update'])->name('transporters.update');
     Route::delete('/transporters/{transporter}', [TransporterController::class, 'destroy'])->name('transporters.destroy');
+    Route::get('/transporter/{id}/tds-info', [LorryReceiptController::class, 'getTdsInfo']);
+
 
     //Truck Owner Management
     Route::get('/truck_owners', [TruckOwnerController::class, 'index'])->name('truck_owners.index');
