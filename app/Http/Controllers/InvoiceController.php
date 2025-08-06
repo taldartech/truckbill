@@ -204,10 +204,12 @@ public function getCustomerMemos($customerId)
             'generated_date' => 'required|date',
            'customer_id' => 'required|exists:consignees,id',
             'total_amount' => 'required|numeric|min:0',
-            'payment_status' => 'required|in:pending,partial,paid',
+            // 'payment_status' => 'required|in:pending,partial,paid',
             
             'memo_ids.*' => 'exists:lorry_receipts,memo_id',
         ]);
+        $data['payment_status'] = 'pending';
+
 
           // Separate memo_ids from the rest of invoice data
     $memoIds = $request->input('memo_ids', []);

@@ -151,7 +151,9 @@
                         @enderror
                         <div class="invalid-feedback">Please enter a valid amount.</div>
                     </div>
-                    <div class="col-md-4">
+                    <input type="hidden" name="payment_status" value="pending">
+
+                    {{-- <div class="col-md-4">
                         <label class="form-label">Payment Status *</label>
                         <select name="payment_status" class="form-select" required>
                             <option value="">Select</option>
@@ -163,7 +165,7 @@
                             <div class="text-danger">{{ $message }}</div> 
                         @enderror
                         <div class="invalid-feedback">Please select a payment status.</div>
-                    </div>
+                    </div> --}}
                     <div class="col-md-8" id="memoDiv" style="display: none;">
                         <label class="form-label">Memos</label>
                         <select name="memo_ids[]" class="form-select" id="memoSelect" multiple>
@@ -296,6 +298,9 @@
     showInvoiceFormBtn.addEventListener('click', function() {
         const selectedCustomerName = document.getElementById('selectedCustomerName').textContent;
         const customerSelect = document.querySelector('select[name="customer_id"]');
+        let tableHtml = '';
+let grandTotalAmount = 0;
+
         
         // Find the option that matches the selected customer name
         const selectedOption = Array.from(customerSelect.options).find(option => 
@@ -310,6 +315,8 @@
 
     for (const memoId in data) {
         if (data[memoId].length > 0) {
+            const totalAmount = data[memoId].reduce((sum, lr) => sum + parseFloat(lr.amount || 0), 0);
+           
             tableHtml += `
                 <div class="card mb-3">
                     <div class="card-header">
@@ -346,7 +353,13 @@
                                         <td>${lr.weight}</td>
                                     </tr>
                                 `).join('')}
+                                 <tr>
+                                <td colspan="7" class="text-end fw-bold">Total Amount:</td>
+                                <td class="fw-bold">${totalAmount.toFixed(2)}</td>
+                                <td colspan="2"></td>
+                            </tr>
                             </tbody>
+                            
                         </table>
                     </div>
                 </div>

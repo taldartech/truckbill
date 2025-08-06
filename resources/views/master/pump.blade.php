@@ -36,7 +36,9 @@
                         <th>Pump Name</th>
                         <th>Contact Name</th>
                         <th>Contact Number</th>
+                        @if(auth()->user()->userRole->name === 'admin')
                         <th>Actions</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
@@ -74,6 +76,7 @@ $(document).ready(function() {
             { data: 'pump_name', name: 'pump_name' },
             { data: 'contact_name', name: 'contact_name' },
             { data: 'contact_number', name: 'contact_number' },
+            @if(auth()->user()->userRole->name === 'admin')
             {
                 data: 'actions',
                 name: 'actions',
@@ -82,6 +85,7 @@ $(document).ready(function() {
                 width: '120px',
                 className: 'text-center'
             }
+            @endif
         ],
         order: [[0, 'asc']],
         pageLength: 10,

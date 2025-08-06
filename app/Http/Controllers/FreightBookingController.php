@@ -113,9 +113,11 @@ class FreightBookingController extends Controller
         // $actions .= '</a>';
         
         // Edit button
+        if(auth()->check() && auth()->user()->userRole->name === 'super_admin') {
         $actions .= '<a href="' . route('freight_bookings.edit', $freightBooking->id) . '" class="btn btn-sm btn-outline-primary" title="Edit">';
         $actions .= '<i class="bi bi-pencil"></i>';
         $actions .= '</a>';
+        }
 
         // voucher button 
        // Voucher Payments button
@@ -124,6 +126,7 @@ $actions .= '<i class="bi bi-receipt"></i>';
 $actions .= '</a>';
 
         // Delete button
+        if(auth()->check() && auth()->user()->userRole->name === 'super_admin') {
         $actions .= '<form method="POST" action="' . route('freight_bookings.destroy', $freightBooking->id) . '" style="display: inline;">';
         $actions .= csrf_field();
         $actions .= method_field('DELETE');
@@ -131,7 +134,7 @@ $actions .= '</a>';
         $actions .= '<i class="bi bi-trash"></i>';
         $actions .= '</button>';
         $actions .= '</form>';
-        
+        }
         $actions .= '</div>';
         
         return $actions;

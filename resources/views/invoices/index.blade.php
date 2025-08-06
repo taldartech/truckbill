@@ -115,7 +115,9 @@
                         <th>Customer</th>
                         <th>Total Amount</th>
                         <th>Status</th>
+                        @if(auth()->user()->userRole->name === 'admin')
                         <th>Actions</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
@@ -129,6 +131,7 @@
                             <td>{{ $invoice->consignee ? $invoice->consignee->name : '-' }}</td>
                             <td class="text-success fw-bold">&#8377;{{ number_format($invoice->total_amount, 2) }}</td>
                             <td>{{ ucfirst($invoice->payment_status) }}</td>
+                            @if(auth()->user()->userRole->name === 'admin')
                             <td>
                                 <div class="d-flex gap-1">
                                     <a href="{{ route('invoices.show', $invoice->id) }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" 
@@ -152,7 +155,8 @@
                                     </form>
                                 </div>
                             </td>
-                        </tr>
+                            @endif
+                            </tr>
                     @empty
                         <tr>
                             <td colspan="9" class="text-center">

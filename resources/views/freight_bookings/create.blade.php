@@ -102,7 +102,7 @@
         <div class="row">
             <div class="col-md-4 mb-3">
                 <label for="advance_amount" class="form-label">Advance Amount *</label>
-                <input type="number" step="0.01" class="form-control" name="advance_amount" id="advance_amount" value="{{ old('advance_amount') }}" required>
+                <input type="number" step="0.01" class="form-control" name="advance_amount" id="advance_amount" value="{{ old('advance_amount') }}">
                 @error('advance_amount') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
 

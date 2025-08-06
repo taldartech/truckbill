@@ -35,7 +35,9 @@
                         <th>Name</th>
                         <th>State</th>
                         <th>Country</th>
+                        @if(auth()->user()->userRole->name === 'admin')
                         <th>Actions</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
@@ -87,6 +89,7 @@ $(document).ready(function() {
                 data: 'country',
                 name: 'country'
             },
+            @if(auth()->user()->userRole->name === 'admin')
             {
                 data: 'actions',
                 name: 'actions',
@@ -95,6 +98,7 @@ $(document).ready(function() {
                 width: '120px',
                 className: 'text-center'
             }
+            @endif
         ],
         order: [[0, 'asc']],
         pageLength: 10,
