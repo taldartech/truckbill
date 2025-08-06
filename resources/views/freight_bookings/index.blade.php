@@ -47,6 +47,21 @@
         </div>
     </div>
 </div>
+<!-- Freight Booking Details Modal -->
+<div class="modal fade" id="freightBookingDetailsModal" tabindex="-1" aria-labelledby="freightBookingDetailsLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Freight Booking Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="freightBookingDetailsContent">
+                <!-- Details will be loaded here dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
@@ -75,7 +90,10 @@ $(document).ready(function() {
                 data: 'id',
                 name: 'id',
                 width: '80px',
-                className: 'text-center'
+                className: 'text-center',
+                render: function(data, type, row) {
+                    return `<a href="#" onclick="showFreightBookingDetails(${data})">${data}</a>`;
+                }
             },
             {
                 data: 'lr_number',
@@ -215,4 +233,41 @@ $(document).ready(function() {
     });
 });
 </script>
+<script>
+    function showFreightBookingDetails(id) {
+        const modal = new bootstrap.Modal(document.getElementById('freightBookingDetailsModal'));
+        const contentDiv = document.getElementById('freightBookingDetailsContent');
+
+        fetch(`/api/freight-bookings/${id}/details`)
+            .then(response => response.json())
+            .then(data => {
+                const fb = data.freight_booking;
+                const lr = data.lr;
+
+                const html = `
+                    <div class="lr-details-container">
+                        <h5>Freight Booking Info</h5>
+                        <div class="lr-details-row"><strong>LR Number:</strong> ${lr?.lr_number || '-'}</div>
+                        <div class="lr-details-row"><strong>TR Freight Rate:</strong> ₹${fb.tr_fr_rate ? Number(fb.tr_fr_rate).toFixed(2) : '0.00'}</div>
+                        <div class="lr-details-row"><strong>TR Amount:</strong> ₹${fb.tr_amount ? Number(fb.tr_amount).toFixed(2) : '0.00'}</div>
+                        <div class="lr-details-row"><strong>Advance:</strong> ₹${fb.advance_amount ? Number(fb.advance_amount).toFixed(2) : '0.00'}</div>
+                        <div class="lr-details-row"><strong>Balance:</strong> ₹${fb.balance_amount ? Number(fb.balance_amount).toFixed(2) : '0.00'}</div>
+                        <div class="lr-details-row"><strong>TDS Amount:</strong> ₹${fb.tds_amount ? Number(fb.tds_amount).toFixed(2) : '0.00'}</div>
+                        <div class="lr-details-row"><strong>Good Type:</strong> ${fb.good_type || '-'}</div>
+                        <div class="lr-details-row"><strong>Delivered?</strong>   ${String(fb.is_delivered) === '1' ? 'Yes' : 'No'}</div>
+                        <div class="lr-details-row"><strong>Cancelled?</strong> ${String(fb.is_cancelled) === '1' ? 'Yes' : 'No'}</div>
+                    </div>
+                `;
+
+                contentDiv.innerHTML = html;
+                modal.show();
+            })
+            .catch(error => {
+                console.error('Error fetching Freight Booking details:', error);
+                contentDiv.innerHTML = '<div class="alert alert-danger">Error loading details. Please try again.</div>';
+                modal.show();
+            });
+    }
+</script>
+
 @endpush

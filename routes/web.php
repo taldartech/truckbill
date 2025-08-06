@@ -121,6 +121,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Freight Bookings
     Route::resource('freight_bookings', FreightBookingController::class);
+    Route::get('/api/freight-bookings/{id}/details', [FreightBookingController::class, 'getFreightBookingDetails']);
 
     // Invoices
     Route::resource('invoices', InvoiceController::class);

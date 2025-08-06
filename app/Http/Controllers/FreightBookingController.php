@@ -137,6 +137,20 @@ $actions .= '</a>';
         return $actions;
     }
 
+    public function getFreightBookingDetails($id)
+{
+    $freightBooking = FreightBooking::with('lr')->find($id);
+
+    if (!$freightBooking) {
+        return response()->json(['error' => 'Freight Booking not found'], 404);
+    }
+
+    return response()->json([
+        'freight_booking' => $freightBooking,
+        'lr' => $freightBooking->lr
+    ]);
+}
+
     public function create(Request $request)
     {
         $companies = \App\Models\Company::all();
