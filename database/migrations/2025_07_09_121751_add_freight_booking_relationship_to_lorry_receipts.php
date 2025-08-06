@@ -18,8 +18,20 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::table('lorry_receipts', function (Blueprint $table) {
-            // Remove the foreign key constraint
-            $table->dropForeign(['freight_booking_id']);
+            // Check if foreign key exists before dropping
+            $foreignKeys = Schema::getConnection()->getDoctrineSchemaManager()->listTableForeignKeys('lorry_receipts');
+            $foreignKeyExists = false;
+            
+            foreach ($foreignKeys as $foreignKey) {
+                if (in_array('freight_booking_id', $foreignKey->getLocalColumns())) {
+                    $foreignKeyExists = true;
+                    break;
+                }
+            }
+            
+            if ($foreignKeyExists) {
+                $table->dropForeign(['freight_booking_id']);
+            }
         });
     }
 };
