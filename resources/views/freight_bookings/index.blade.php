@@ -63,6 +63,69 @@
 </div>
 
 @endsection
+<style>
+    .wavy-animation {
+        animation: waveMove 2s ease-in-out infinite;
+        display: inline-block;
+    }
+
+    .wavy-animation:nth-child(1) {
+        animation-delay: 0s;
+    }
+
+    .wavy-animation:nth-child(2) {
+        animation-delay: 0.3s;
+    }
+
+    @keyframes waveMove {
+        0%   { transform: translateY(0); }
+        50%  { transform: translateY(-5px); }
+        100% { transform: translateY(0); }
+    }
+
+    .lr-details-container {
+        padding: 20px;
+    }
+
+    .lr-details-section {
+        margin-bottom: 20px;
+        padding: 15px;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+    }
+
+    .lr-details-section h5 {
+        margin-top: 0;
+        margin-bottom: 10px;
+        color: #495057;
+    }
+
+    .lr-details-row {
+        display: flex;
+        margin-bottom: 10px;
+    }
+
+    .lr-details-label {
+        width: 150px;
+        font-weight: 600;
+        color: #6c757d;
+    }
+
+    .lr-details-value {
+        flex: 1;
+        color: #495057;
+    }
+
+    .table-link {
+        color: inherit !important;
+        text-decoration: none !important;
+        cursor: pointer;
+    }
+
+    .table-link:hover {
+        text-decoration: underline !important;
+    }
+</style>
 
 @push('scripts')
 <!-- DataTables JS -->
@@ -234,40 +297,175 @@ $(document).ready(function() {
 });
 </script>
 <script>
+    // function showFreightBookingDetails(id) {
+    //     const modal = new bootstrap.Modal(document.getElementById('freightBookingDetailsModal'));
+    //     const contentDiv = document.getElementById('freightBookingDetailsContent');
+
+    //     fetch(`/api/freight-bookings/${id}/details`)
+    //         .then(response => response.json())
+    //         .then(data => {
+    //             const fb = data.freight_booking;
+    //             const lr = data.lr;
+
+    //             const html = `
+    //                 <div class="lr-details-container">
+    //                     <h5>Freight Booking Info</h5>
+    //                     <div class="lr-details-row"><strong>LR Number:</strong> ${lr?.lr_number || '-'}</div>
+    //                     <div class="lr-details-row"><strong>TR Freight Rate:</strong> ₹${fb.tr_fr_rate ? Number(fb.tr_fr_rate).toFixed(2) : '0.00'}</div>
+    //                     <div class="lr-details-row"><strong>TR Amount:</strong> ₹${fb.tr_amount ? Number(fb.tr_amount).toFixed(2) : '0.00'}</div>
+    //                     <div class="lr-details-row"><strong>Advance:</strong> ₹${fb.advance_amount ? Number(fb.advance_amount).toFixed(2) : '0.00'}</div>
+    //                     <div class="lr-details-row"><strong>Balance:</strong> ₹${fb.balance_amount ? Number(fb.balance_amount).toFixed(2) : '0.00'}</div>
+    //                     <div class="lr-details-row"><strong>TDS Amount:</strong> ₹${fb.tds_amount ? Number(fb.tds_amount).toFixed(2) : '0.00'}</div>
+    //                     <div class="lr-details-row"><strong>Good Type:</strong> ${fb.good_type || '-'}</div>
+    //                     <div class="lr-details-row"><strong>Delivered?</strong>   ${String(fb.is_delivered) === '1' ? 'Yes' : 'No'}</div>
+    //                     <div class="lr-details-row"><strong>Cancelled?</strong> ${String(fb.is_cancelled) === '1' ? 'Yes' : 'No'}</div>
+    //                 </div>
+    //             `;
+
+    //             contentDiv.innerHTML = html;
+    //             modal.show();
+    //         })
+    //         .catch(error => {
+    //             console.error('Error fetching Freight Booking details:', error);
+    //             contentDiv.innerHTML = '<div class="alert alert-danger">Error loading details. Please try again.</div>';
+    //             modal.show();
+    //         });
+    // }
     function showFreightBookingDetails(id) {
-        const modal = new bootstrap.Modal(document.getElementById('freightBookingDetailsModal'));
-        const contentDiv = document.getElementById('freightBookingDetailsContent');
+    const modal = new bootstrap.Modal(document.getElementById('freightBookingDetailsModal'));
+    const contentDiv = document.getElementById('freightBookingDetailsContent');
 
-        fetch(`/api/freight-bookings/${id}/details`)
-            .then(response => response.json())
-            .then(data => {
-                const fb = data.freight_booking;
-                const lr = data.lr;
+    fetch(`/api/freight-bookings/${id}/details`)
+        .then(response => response.json())
+        .then(data => {
+            const fb = data.freight_booking;
+            const lr = data.lr;
 
-                const html = `
-                    <div class="lr-details-container">
-                        <h5>Freight Booking Info</h5>
-                        <div class="lr-details-row"><strong>LR Number:</strong> ${lr?.lr_number || '-'}</div>
-                        <div class="lr-details-row"><strong>TR Freight Rate:</strong> ₹${fb.tr_fr_rate ? Number(fb.tr_fr_rate).toFixed(2) : '0.00'}</div>
-                        <div class="lr-details-row"><strong>TR Amount:</strong> ₹${fb.tr_amount ? Number(fb.tr_amount).toFixed(2) : '0.00'}</div>
-                        <div class="lr-details-row"><strong>Advance:</strong> ₹${fb.advance_amount ? Number(fb.advance_amount).toFixed(2) : '0.00'}</div>
-                        <div class="lr-details-row"><strong>Balance:</strong> ₹${fb.balance_amount ? Number(fb.balance_amount).toFixed(2) : '0.00'}</div>
-                        <div class="lr-details-row"><strong>TDS Amount:</strong> ₹${fb.tds_amount ? Number(fb.tds_amount).toFixed(2) : '0.00'}</div>
-                        <div class="lr-details-row"><strong>Good Type:</strong> ${fb.good_type || '-'}</div>
-                        <div class="lr-details-row"><strong>Delivered?</strong>   ${String(fb.is_delivered) === '1' ? 'Yes' : 'No'}</div>
-                        <div class="lr-details-row"><strong>Cancelled?</strong> ${String(fb.is_cancelled) === '1' ? 'Yes' : 'No'}</div>
+            const html = `
+                <div class="lr-details-container">
+
+                    <!-- Trip & Parties -->
+                    <div class="lr-details-section">
+                        <h5>Trip & Parties</h5>
+                        <div class="lr-details-row">
+                            <div class="lr-details-label">Transporter</div>
+                            <div class="lr-details-value">${lr?.transporter?.name || 'N/A'}</div>
+                        </div>
+                        <div class="lr-details-row">
+                            <div class="lr-details-label">Truck</div>
+                            <div class="lr-details-value">${lr?.truck?.truck_number || 'N/A'}</div>
+                        </div>
+                        <div class="lr-details-row">
+                            <div class="lr-details-label">Customer</div>
+                            <div class="lr-details-value">${lr?.consignee?.name || 'N/A'}</div>
+                        </div>
+                        <div class="lr-details-row">
+                            <div class="lr-details-label">LR Number</div>
+                            <div class="lr-details-value">${lr?.lr_number || '-'}</div>
+                        </div>
+                        <div class="lr-details-row">
+                            <div class="lr-details-label">Delivery Status</div>
+                            <div class="lr-details-value">${lr?.delivery_status || '-'}</div>
+                        </div>
                     </div>
-                `;
 
-                contentDiv.innerHTML = html;
-                modal.show();
-            })
-            .catch(error => {
-                console.error('Error fetching Freight Booking details:', error);
-                contentDiv.innerHTML = '<div class="alert alert-danger">Error loading details. Please try again.</div>';
-                modal.show();
-            });
-    }
+                    <!-- Route & Dates -->
+                    <div class="lr-details-section">
+                        <h5>Route & Dates</h5>
+                        <div class="lr-details-row">
+                            <div class="lr-details-label">GR Date</div>
+                            <div class="lr-details-value">${lr?.gr_date || '-'}</div>
+                        </div>
+                        <div class="lr-details-row">
+                            <div class="lr-details-label">Source City</div>
+                            <div class="lr-details-value">${lr?.source_city || '-'}</div>
+                        </div>
+                        <div class="lr-details-row">
+                            <div class="lr-details-label">Source State</div>
+                            <div class="lr-details-value">${lr?.source_state || '-'}</div>
+                        </div>
+                        <div class="lr-details-row">
+                            <div class="lr-details-label">Destination City</div>
+                            <div class="lr-details-value">${lr?.destination_city || '-'}</div>
+                        </div>
+                        <div class="lr-details-row">
+                            <div class="lr-details-label">Destination State</div>
+                            <div class="lr-details-value">${lr?.destination_state || '-'}</div>
+                        </div>
+                    </div>
+
+                    <!-- Goods & Charges -->
+                    <div class="lr-details-section">
+                        <h5>Goods & Charges</h5>
+                        <div class="lr-details-row">
+                            <div class="lr-details-label">Lane</div>
+                            <div class="lr-details-value">${lr?.lane || '-'}</div>
+                        </div>
+                        <div class="lr-details-row">
+                            <div class="lr-details-label">No. of Units</div>
+                            <div class="lr-details-value">${lr?.no_of_units || '0'}</div>
+                        </div>
+                        <div class="lr-details-row">
+                            <div class="lr-details-label">Amount</div>
+                            <div class="lr-details-value">₹${lr?.amount ? Number(lr.amount).toFixed(2) : '0.00'}</div>
+                        </div>
+                        <div class="lr-details-row">
+                            <div class="lr-details-label">Good Type</div>
+                            <div class="lr-details-value">${fb?.good_type || '-'}</div>
+                        </div>
+                    </div>
+
+                    <!-- Freight Booking Financials -->
+                    <div class="lr-details-section">
+                        <h5>Freight Booking Financials</h5>
+                        <div class="lr-details-row">
+                            <div class="lr-details-label">TR Freight Rate</div>
+                            <div class="lr-details-value">₹${fb?.tr_fr_rate ? Number(fb.tr_fr_rate).toFixed(2) : '0.00'}</div>
+                        </div>
+                        <div class="lr-details-row">
+                            <div class="lr-details-label">TR Amount</div>
+                            <div class="lr-details-value">₹${fb?.tr_amount ? Number(fb.tr_amount).toFixed(2) : '0.00'}</div>
+                        </div>
+                        <div class="lr-details-row">
+                            <div class="lr-details-label">Advance</div>
+                            <div class="lr-details-value">₹${fb?.advance_amount ? Number(fb.advance_amount).toFixed(2) : '0.00'}</div>
+                        </div>
+                        <div class="lr-details-row">
+                            <div class="lr-details-label">Balance</div>
+                            <div class="lr-details-value">₹${fb?.balance_amount ? Number(fb.balance_amount).toFixed(2) : '0.00'}</div>
+                        </div>
+                        <div class="lr-details-row">
+                            <div class="lr-details-label">TDS Amount</div>
+                            <div class="lr-details-value">₹${fb?.tds_amount ? Number(fb.tds_amount).toFixed(2) : '0.00'}</div>
+                        </div>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="lr-details-section">
+                        <h5>Status</h5>
+                        <div class="lr-details-row">
+                            <div class="lr-details-label">Delivered?</div>
+                            <div class="lr-details-value">${String(fb?.is_delivered) === '1' ? 'Yes' : 'No'}</div>
+                        </div>
+                        <div class="lr-details-row">
+                            <div class="lr-details-label">Cancelled?</div>
+                            <div class="lr-details-value">${String(fb?.is_cancelled) === '1' ? 'Yes' : 'No'}</div>
+                        </div>
+                    </div>
+
+                </div>
+            `;
+
+            contentDiv.innerHTML = html;
+            modal.show();
+        })
+        .catch(error => {
+            console.error('Error fetching Freight Booking details:', error);
+            contentDiv.innerHTML = '<div class="alert alert-danger">Error loading details. Please try again.</div>';
+            modal.show();
+        });
+}
+
 </script>
 
 @endpush
