@@ -127,7 +127,7 @@
                 @php
     $isAdmin = auth()->user()->userRole && auth()->user()->userRole->name === 'admin';
 @endphp
-                <div class="col-md-6" @if(!$isAdmin) style="display: none;" @endif>
+                <div class="col-md-4" @if(!$isAdmin) style="display: none;" @endif>
                     <label for="payment_status" class="form-label">Payment Status *</label>
                     <select name="payment_status" id="payment_status" class="form-select" required>
                         <option value="pending" {{ old('payment_status', $voucher_payment->payment_status) == 'pending' ? 'selected' : '' }}>Pending</option>
@@ -147,14 +147,14 @@
                 </div> --}}
                 <!--end::Col-->
                 <!--begin::Col-->
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label for="amount" class="form-label">Amount *</label>
                     <input type="number" step="0.01" name="amount" id="amount" class="form-control" value="{{ old('amount', $voucher_payment->amount) }}" required>
                     @error('amount') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please enter an amount.</div>
                 </div>
                 <!--end::Col-->
-                <div class="col-md-6 mt-3" id="reference_transaction_box" style="display: none;">
+                <div class="col-md-4" id="reference_transaction_box" style="display: none;">
                     <label for="reference_transaction_id" class="form-label">Reference Transaction ID *</label>
                     <input type="text" class="form-control"
                            id="reference_transaction_id"

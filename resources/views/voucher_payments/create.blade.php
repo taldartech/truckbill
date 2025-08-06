@@ -96,18 +96,7 @@
                 </div>
                 <!--end::Col-->
 
-                <div class="col-md-4 mt-3" id="pumpDropdownContainer" style="display: none;">
-                    <label for="pump_id" class="form-label">Select Pump</label>
-                    <select name="pump_id" id="pump_id" class="form-select">
-                        <option value="">Select Pump</option>
-                        @foreach($pumps as $pump)
-                            <option value="{{ $pump->id }}" {{ old('pump_id') == $pump->id ? 'selected' : '' }}>
-                                {{ $pump->pump_name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('pump_id') <div class="text-danger">{{ $message }}</div> @enderror
-                </div>
+              
                 
                 <!--begin::Col-->
                 {{-- <div class="col-md-6">
@@ -118,7 +107,7 @@
                 </div> --}}
                 <!--end::Col-->
                 <!--begin::Col-->
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label for="amount" class="form-label">Amount *</label>
                     <input type="number" name="amount" id="amount" class="form-control" value="{{ old('amount') }}" required step="0.01">
                     @error('amount') <div class="text-danger">{{ $message }}</div> @enderror
@@ -131,7 +120,7 @@
                 $isAdmin = auth()->user()->userRole && auth()->user()->userRole->name === 'admin';
             @endphp
                
-                <div class="col-md-6"  @if(!$isAdmin) style="display: none;" @endif>
+                <div class="col-md-4"  @if(!$isAdmin) style="display: none;" @endif>
                     <label for="payment_status" class="form-label">Payment Status *</label>
                     <select name="payment_status" id="payment_status" class="form-select" required>
                         <option value="pending" {{ old('payment_status') == 'pending' ? 'selected' : '' }}>Pending</option>
@@ -142,6 +131,18 @@
                     <div class="invalid-feedback">Please select a payment status.</div>
                 </div>
                 <!--end::Col-->
+                <div class="col-md-4" id="pumpDropdownContainer" style="display: none;">
+                    <label for="pump_id" class="form-label">Select Pump</label>
+                    <select name="pump_id" id="pump_id" class="form-select">
+                        <option value="">Select Pump</option>
+                        @foreach($pumps as $pump)
+                            <option value="{{ $pump->id }}" {{ old('pump_id') == $pump->id ? 'selected' : '' }}>
+                                {{ $pump->pump_name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('pump_id') <div class="text-danger">{{ $message }}</div> @enderror
+                </div>
             </div>
             <!--end::Row-->
         </div>
