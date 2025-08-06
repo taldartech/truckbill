@@ -160,7 +160,9 @@
                         <th>Truck Number</th>
                         <th>Quantity</th>
                         <th>Amount</th>
+                        @if(auth()->check() && auth()->user()->userRole->name === 'admin')
                         <th>Actions</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
@@ -262,7 +264,7 @@
                         <td>{{ $lr->truck->truck_number }}</td>
                         <td>{{ $lr->weight }}</td>
                         <td>{{ $lr->amount }}</td>
-                        
+                        @if(auth()->check() && auth()->user()->userRole->name === 'admin')
                         <td>
                             <div class="d-flex gap-1">
                                 {{-- <a href="{{ route('lorry_receipts.edit', $lr->id) }}" class="btn btn-sm btn-info">
@@ -286,6 +288,7 @@
                                 </form>
                             </div>
                         </td>
+                        @endif
                     </tr>
                     @empty
                     <tr>

@@ -156,7 +156,9 @@
                         <th>Payment Mode</th>
                         <th>Amount</th>
                         <th>Status</th>
+                        @if(auth()->check() && auth()->user()->userRole->name === 'admin')
                         <th>Actions</th>
+                        @endif
                     </tr>
                 </thead>
                 <tbody>
@@ -175,6 +177,7 @@
                             <td>{{ ucfirst(str_replace('_', ' ', $payment->payment_mode)) }}</td>
                             <td class="text-success fw-bold">₹{{ number_format($payment->amount, 2) }}</td>
                             <td>{!! $payment->getPaymentStatusBadge() !!}</td>
+                            @if(auth()->check() && auth()->user()->userRole->name === 'admin')
                             <td>
                                 <div class="d-flex gap-1">
                                     <a href="{{ route('voucher_payments.edit', $payment) }}?lorry_receipt_id={{ $payment->freight_booking ? $payment->freight_booking->lr_id : '' }}&freight_booking_id={{ $payment->freight_booking_id }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" 
@@ -193,6 +196,7 @@
                                     </form>
                                 </div>
                             </td>
+                            @endif
                         </tr>
                     @empty
                         <tr>

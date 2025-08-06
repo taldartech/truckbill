@@ -107,10 +107,10 @@ class FreightBookingController extends Controller
     {
         $actions = '<div class="btn-group" role="group">';
         
-        // View button
-        $actions .= '<a href="' . route('freight_bookings.show', $freightBooking->id) . '" class="btn btn-sm btn-outline-info" title="View">';
-        $actions .= '<i class="bi bi-eye"></i>';
-        $actions .= '</a>';
+        // // View button
+        // $actions .= '<a href="' . route('freight_bookings.show', $freightBooking->id) . '" class="btn btn-sm btn-outline-info" title="View">';
+        // $actions .= '<i class="bi bi-eye"></i>';
+        // $actions .= '</a>';
         
         // Edit button
         $actions .= '<a href="' . route('freight_bookings.edit', $freightBooking->id) . '" class="btn btn-sm btn-outline-primary" title="Edit">';
