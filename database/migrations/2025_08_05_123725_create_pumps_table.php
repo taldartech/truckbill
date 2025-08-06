@@ -15,8 +15,6 @@ class CreatePumpsTable extends Migration
             $table->string('pump_name');
             $table->string('contact_name');
             $table->string('contact_number')->unique();
-            $table->string('contact_name');
-            $table->string('contact_number')->unique();
             $table->timestamps();
         });
     }
