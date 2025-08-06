@@ -16,7 +16,8 @@ class VoucherPayment extends Model
         'amount',
         'remark',
         'payment_status',
-        'company_id'
+        'company_id',
+        'pump_id'
     ];
 
     public function voucher()
@@ -32,6 +33,11 @@ class VoucherPayment extends Model
     public function freight_booking()
     {
         return $this->belongsTo(FreightBooking::class);
+    }
+
+    public function pump()
+    {
+        return $this->belongsTo(Pump::class);
     }
 
     public function getPaymentStatusBadge()

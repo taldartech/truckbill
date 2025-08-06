@@ -215,7 +215,7 @@ Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->nam
         Route::delete('/goods-types/{goodsType}', [\App\Http\Controllers\GoodsTypeController::class, 'destroy'])->name('master.goods-types.destroy');
 
          //Pumps
-    Route::resource('pumps', PumpController::class);
+    // Route::resource('pumps', PumpController::class);
     Route::get('/pumps', [PumpController::class, 'index'])->name('master.pump.index');
     Route::get('/pumps/create', [PumpController::class, 'create'])->name('master.pump.create');
     Route::post('/pumps', [PumpController::class, 'store'])->name('master.pump.store');

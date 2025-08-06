@@ -94,6 +94,18 @@
                     <div class="invalid-feedback">Please select a payment mode.</div>
                 </div>
                 <!--end::Col-->
+                <div class="col-md-4 mt-3" id="pumpDropdownContainer" style="display: none;">
+                    <label for="pump_id" class="form-label">Select Pump</label>
+                    <select name="pump_id" id="pump_id" class="form-select">
+                        <option value="">Select Pump</option>
+                        @foreach($pumps as $pump)
+                            <option value="{{ $pump->id }}" {{ old('pump_id', $voucher_payment->pump_id) == $pump->id ? 'selected' : '' }}>
+                                {{ $pump->pump_name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('pump_id') <div class="text-danger">{{ $message }}</div> @enderror
+                </div>
                 <!--begin::Col-->
                 {{-- <div class="col-md-6">
                     <label for="transaction_id" class="form-label">Transaction ID *</label>
@@ -170,6 +182,30 @@
 @php
     $currentStatus = $voucher_payment->payment_status ?? '';
 @endphp
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const paymentModeSelect = document.getElementById('payment_mode');
+        const pumpDropdownContainer = document.getElementById('pumpDropdownContainer');
+        const pumpSelect = document.getElementById('pump_id');
+    
+        function togglePumpDropdown() {
+            const selectedValue = paymentModeSelect.value.toLowerCase();
+            if (selectedValue === 'fuel') {
+                pumpDropdownContainer.style.display = 'block';
+            } else {
+                pumpDropdownContainer.style.display = 'none';
+                pumpSelect.value = ''; // Reset pump selection
+            }
+        }
+    
+        paymentModeSelect.addEventListener('change', togglePumpDropdown);
+    
+        // Run on page load (for edit forms or validation errors)
+        togglePumpDropdown();
+    });
+    </script>
+    
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {

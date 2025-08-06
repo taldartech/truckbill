@@ -5,6 +5,7 @@ use App\Models\VoucherPayment;
 // use App\Models\Voucher;
 use App\Models\PaymentType;
 use App\Models\PaymentMode;
+use App\Models\Pump;
 use Illuminate\Http\Request;
 
 class VoucherPaymentController extends Controller
@@ -61,8 +62,9 @@ class VoucherPaymentController extends Controller
             
         $paymentTypes = PaymentType::all();
         $paymentModes = PaymentMode::all();
+        $pumps = Pump::all();
         
-        return view('voucher_payments.create', compact('voucher_number', 'paymentTypes', 'paymentModes', 'freight_booking_id','lorry_receipt','companies', 'balanceAmount'));
+        return view('voucher_payments.create', compact('voucher_number', 'paymentTypes', 'paymentModes', 'freight_booking_id','lorry_receipt','companies', 'balanceAmount','pumps'));
     }
 
     public function store(Request $request)
@@ -75,7 +77,8 @@ class VoucherPaymentController extends Controller
             'payment_mode' => 'required|string',
             'amount' => 'required|numeric|min:0',
             'remark' => 'nullable|string',
-            'payment_status' => 'required|in:pending,in-progress,paid'
+            'payment_status' => 'required|in:pending,in-progress,paid',
+            'pump_id' => 'nullable|exists:pumps,id',
         ]);
 
         // Add company_id to data
@@ -114,6 +117,7 @@ class VoucherPaymentController extends Controller
         $paymentTypes = PaymentType::all();
         $paymentModes = PaymentMode::all();
         $companies = \App\Models\Company::all();
+        $pumps = Pump::all();
         
         // Get lorry receipt and freight booking from request parameters
         $lorry_receipt_id = $request->query('lorry_receipt_id', $voucher_payment->lorry_receipt_id);
@@ -133,7 +137,7 @@ class VoucherPaymentController extends Controller
             }
         }
 
-        return view('voucher_payments.edit', compact('voucher_payment', 'vouchers', 'paymentTypes', 'paymentModes', 'lorry_receipt', 'freight_booking_id', 'companies','balanceAmount'));
+        return view('voucher_payments.edit', compact('voucher_payment', 'vouchers', 'paymentTypes', 'paymentModes', 'lorry_receipt', 'freight_booking_id', 'companies','balanceAmount','pumps'));
     }
 
     public function update(Request $request, VoucherPayment $voucher_payment)
@@ -149,6 +153,7 @@ class VoucherPaymentController extends Controller
             'remark' => 'nullable|string',
             'payment_status' => 'required|in:pending,in-progress,paid',
             'company_id' => 'required|exists:companies,id',
+            'pump_id' => 'nullable|exists:pumps,id',
         ]);
         
         // Update payment status if conditions are met
@@ -189,7 +194,8 @@ class VoucherPaymentController extends Controller
                 'lorry_receipts' => 'required|array',
                 'freight_bookings' => 'required|array',
                 'amounts' => 'required|array',
-                'company_id' => 'required|exists:companies,id'
+                'company_id' => 'required|exists:companies,id',
+                'pump_id' => 'nullable|exists:pumps,id',
             ]);
            
     

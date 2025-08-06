@@ -99,8 +99,8 @@ class PumpController extends Controller
 
     private function getActionButtons($pump)
     {
-        $editUrl = route('pumps.edit', $pump->id);
-        $deleteUrl = route('pumps.destroy', $pump->id);
+        $editUrl = route('master.pump.edit', $pump->id);
+        $deleteUrl = route('master.pump.destroy', $pump->id);
 
         return '
             <div class="d-flex gap-1">
