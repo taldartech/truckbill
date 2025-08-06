@@ -294,12 +294,11 @@
                 .then(data => {
     // Create a table for LR details
     let tableHtml = '';
+    let grandTotalAmount = 0;
     // Prefill customer select field when form is shown
     showInvoiceFormBtn.addEventListener('click', function() {
         const selectedCustomerName = document.getElementById('selectedCustomerName').textContent;
         const customerSelect = document.querySelector('select[name="customer_id"]');
-        let tableHtml = '';
-let grandTotalAmount = 0;
 
         
         // Find the option that matches the selected customer name
@@ -316,7 +315,7 @@ let grandTotalAmount = 0;
     for (const memoId in data) {
         if (data[memoId].length > 0) {
             const totalAmount = data[memoId].reduce((sum, lr) => sum + parseFloat(lr.amount || 0), 0);
-           
+           grandTotalAmount += totalAmount;
             tableHtml += `
                 <div class="card mb-3">
                     <div class="card-header">
@@ -365,6 +364,23 @@ let grandTotalAmount = 0;
                 </div>
             `;
         }
+    }
+
+      // ✅ Only add Grand Total if there's data
+      if (tableHtml !== '') {
+        tableHtml += `
+            <div class="card border-dark">
+                <div class="card-body text-end">
+                    <h5 class="mb-0 fw-bold">Grand Total Amount: ₹${grandTotalAmount.toFixed(2)}</h5>
+                </div>
+            </div>
+        `;
+    }
+
+     // ✅ Fill the total_amount input field
+     const totalAmountInput = document.querySelector('input[name="total_amount"]');
+    if (totalAmountInput) {
+        totalAmountInput.value = grandTotalAmount.toFixed(2);
     }
 
     // Show the LR details container
