@@ -113,7 +113,7 @@ class FreightBookingController extends Controller
         // $actions .= '</a>';
         
         // Edit button
-        if(auth()->check() && auth()->user()->userRole->name === 'super_admin') {
+        if(auth()->check() && auth()->user()->userRole->name === 'admin') {
         $actions .= '<a href="' . route('freight_bookings.edit', $freightBooking->id) . '" class="btn btn-sm btn-outline-primary" title="Edit">';
         $actions .= '<i class="bi bi-pencil"></i>';
         $actions .= '</a>';
@@ -126,7 +126,7 @@ $actions .= '<i class="bi bi-receipt"></i>';
 $actions .= '</a>';
 
         // Delete button
-        if(auth()->check() && auth()->user()->userRole->name === 'super_admin') {
+        if(auth()->check() && auth()->user()->userRole->name === 'admin') {
         $actions .= '<form method="POST" action="' . route('freight_bookings.destroy', $freightBooking->id) . '" style="display: inline;">';
         $actions .= csrf_field();
         $actions .= method_field('DELETE');
@@ -224,8 +224,8 @@ $actions .= '</a>';
     }
 
     public function store(Request $request)
-    {
-        $data = $request->validate([
+ {
+         $data = $request->validate([
             'lr_id' => 'required|exists:lorry_receipts,id',
             'tr_fr_rate' => 'required|numeric',
             'tr_amount' => 'required|numeric',

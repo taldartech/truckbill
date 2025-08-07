@@ -11,6 +11,7 @@ use App\Models\GoodType;
 use App\Models\FreightBooking;
 use App\Models\LorryReceipt;
 use Yajra\DataTables\Facades\DataTables;
+use App\Http\Controllers\AdvancePaymentController;
 
 class LorryReceiptController extends Controller
 {
@@ -234,6 +235,14 @@ class LorryReceiptController extends Controller
         // $actions .= '<a href="' . route('lorry_receipts.show', $lorryReceipt->id) . '" class="btn btn-sm btn-outline-info" title="View">';
         // $actions .= '<i class="bi bi-eye"></i>';
         // $actions .= '</a>';
+
+        // Advance Payment button
+        if ($lorryReceipt->transporter_id) {
+            $advanceUrl = route('advance-payments.create', ['transporter_id' => $lorryReceipt->transporter_id]);
+            $actions .= '<a href="' . $advanceUrl . '" class="btn btn-sm btn-outline-success" title="Advance Payment">';
+            $actions .= '<i class="bi bi-currency-rupee"></i>';
+            $actions .= '</a>';
+        }
         
         // Edit button
         $actions .= '<a href="' . route('lorry_receipts.edit', $lorryReceipt->id) . '" class="btn btn-sm btn-outline-primary" title="Edit">';
@@ -324,6 +333,30 @@ class LorryReceiptController extends Controller
                     'message' => 'The following LR numbers do not have a freight booking: ' . implode(', ', $noFreightBooking)
                 ], 422);
             }
+
+              // ✅ Step: Ensure all selected LRs belong to same customer
+        $customerIds = $lorryReceipts->pluck('customer_id')->unique();
+
+        if ($customerIds->count() > 1) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Selected LRs belong to different customers. Please select LRs from the same customer only.'
+            ], 422);
+        }
+
+        $customerId = $customerIds->first();
+
+         // ✅ Step: Ensure memo_id is not used by another customer
+         $memoUsedByOtherCustomer = LorryReceipt::where('memo_id', $validated['memo_id'])
+         ->where('customer_id', '!=', $customerId)
+         ->exists();
+
+     if ($memoUsedByOtherCustomer) {
+         return response()->json([
+             'success' => false,
+             'message' => 'This memo ID is already used by another customer. Please choose a unique one.'
+         ], 422);
+     }
 
             // Get freight booking IDs
             $freightBookingIds = $lorryReceipts->pluck('freight_booking_id')->toArray();

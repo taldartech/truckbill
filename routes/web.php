@@ -21,6 +21,7 @@ use App\Http\Controllers\TransporterLedgerController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\TruckOwnerController;
 use App\Http\Controllers\TruckOwnerBankAccountController;
+use App\Http\Controllers\AdvancePaymentController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\StateController;
 use App\Http\Controllers\CountryController;
@@ -97,6 +98,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/truck_owners/{truck_owner}/edit', [TruckOwnerController::class, 'edit'])->name('truck_owners.edit');
     Route::put('/truck_owners/{truck_owner}', [TruckOwnerController::class, 'update'])->name('truck_owners.update');
     Route::delete('/truck_owners/{truck_owner}', [TruckOwnerController::class, 'destroy'])->name('truck_owners.destroy');
+
+    // Advance Payment Management
+    Route::get('/advance-payments', [AdvancePaymentController::class, 'index'])->name('advance-payments.index');
+    Route::get('/advance-payments/create', [AdvancePaymentController::class, 'create'])->name('advance-payments.create');
+    Route::post('/advance-payments', [AdvancePaymentController::class, 'store'])->name('advance-payments.store');
+    Route::get('/advance-payments/{advancePayment}/edit', [AdvancePaymentController::class, 'edit'])->name('advance-payments.edit');
+    Route::put('/advance-payments/{advancePayment}', [AdvancePaymentController::class, 'update'])->name('advance-payments.update');
+    Route::delete('/advance-payments/{advancePayment}', [AdvancePaymentController::class, 'destroy'])->name('advance-payments.destroy');
 
     // Truck Management
     Route::get('/trucks', [TruckController::class, 'index'])->name('trucks.index');
@@ -236,6 +245,25 @@ Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->nam
     Route::put('/transporters/{transporter}', [TransporterController::class, 'update'])->name('transporters.update');
     Route::delete('/transporters/{transporter}', [TransporterController::class, 'destroy'])->name('transporters.destroy');
 
+    //Advance_payments
+    // // Route::resource('advance-payments', \App\Http\Controllers\AdvancePaymentController::class);
+    // Route::resource('advance-payments', \App\Http\Controllers\AdvancePaymentController::class)->names([
+    //     'index' => 'advance-payments.index',
+    //     'create' => 'advance-payments.create',
+    //     'store' => 'advance-payments.store',
+    //     'edit' => 'advance-payments.edit',
+    //     'update' => 'advance-payments.update',
+    //     'destroy' => 'advance-payments.destroy',
+    // ]);
+    Route::get('advance-payments/create/{transporter_id}', [AdvancePaymentController::class, 'create'])
+    ->name('advance-payments.create');
+    Route::resource('advance-payments', AdvancePaymentController::class)->except(['create']);
+
+  
+  
+  
+  
+  
     // API routes for dynamic dropdowns
     Route::get('/api/states/{countryId}', [\App\Http\Controllers\Api\DropdownController::class, 'states']);
     Route::get('/api/cities/{stateId}', [\App\Http\Controllers\Api\DropdownController::class, 'cities']);

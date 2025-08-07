@@ -270,6 +270,13 @@
                                 {{-- <a href="{{ route('lorry_receipts.edit', $lr->id) }}" class="btn btn-sm btn-info">
                                     <i class="bi bi-pencil"></i>
                                 </a> --}}
+                                <a href="{{ route('advance-payments.create', ['transporter_id' => $lr->transporter_id]) }}" 
+                                    class="btn btn-sm btn-success" 
+                                    title="Advance Payment" 
+                                    data-bs-toggle="tooltip" 
+                                    data-bs-placement="top">
+                                    <i class="bi bi-currency-rupee"></i>
+                                </a>
                                 <a href="{{ route('lorry_receipts.edit', $lr->id) }}" 
                                     class="btn btn-sm btn-info" 
                                     title="Edit Lorry Receipt" 
