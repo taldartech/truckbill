@@ -237,7 +237,7 @@
                         `;
                         memoCheckboxes.appendChild(checkbox);
                     });
-                    memoOptionsContainer.style.display = 'block';
+                    // memoOptionsContainer.style.display = 'block';
                 } else {
                     memoOptionsContainer.style.display = 'none';
                 }
