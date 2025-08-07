@@ -31,13 +31,15 @@
                     <tr>
                         <th style="width: 80px;">Sr. No</th>
                         <th>Name</th>
-                        <th>GST Number</th>
-                        <th>GST Type</th>
+                        {{-- <th>GST Number</th> --}}
+                        {{-- <th>GST Type</th> --}}
                         <th>PAN Number</th>
+                        <th>Location</th>
+                        <th>Contact Number</th>
                         <th>Declaration Given</th>
-                        <th>Total Trucks</th>
+                        {{-- <th>Total Trucks</th> --}}
                         <th>Advance Amount</th>
-                        <th>Company</th>
+                        {{-- <th>Company</th> --}}
                         @if(auth()->check() && auth()->user()->userRole->name === 'admin')
                         <th style="width: 120px;">Actions</th>
                         @endif
@@ -83,43 +85,37 @@ $(document).ready(function() {
                 data: 'name',
                 name: 'name'
             },
-            {
-                data: 'gst_number',
-                name: 'gst_number',
-                width: '120px'
-            },
-            {
-                data: 'gst_type',
-                name: 'gst_type',
-                width: '100px'
-            },
+           
             {
                 data: 'pan_number',
                 name: 'pan_number',
                 width: '120px'
             },
+
+            {
+    data: 'location',
+    name: 'location',
+    width: '150px'
+},
+{
+    data: 'contact_number',
+    name: 'contact_number',
+    width: '140px'
+},
             {
                 data: 'declaration_given',
                 name: 'declaration_given',
                 width: '120px',
                 className: 'text-center'
             },
-            {
-                data: 'total_trucks',
-                name: 'total_trucks',
-                width: '100px',
-                className: 'text-center'
-            },
+            
             {
                 data: 'advance_amount',
                 name: 'advance_amount',
                 width: '120px',
                 className: 'text-end'
             },
-            {
-                data: 'company',
-                name: 'company'
-            },
+           
             @if(auth()->check() && auth()->user()->userRole->name === 'admin')
             {
                 data: 'actions',
@@ -166,7 +162,7 @@ $(document).ready(function() {
         searchDelay: 500,
         initComplete: function() {
             // Add individual column search
-            this.api().columns([1, 2, 3, 4, 8]).every(function() {
+            this.api().columns([1, 2, 3, 4]).every(function() {
                 var column = this;
                 var title = column.header().textContent;
                 

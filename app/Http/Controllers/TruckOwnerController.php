@@ -35,12 +35,7 @@ class TruckOwnerController extends Controller
             $searchValue = $request->search['value'];
             $query->where(function($q) use ($searchValue) {
                 $q->where('name', 'like', "%{$searchValue}%")
-                  ->orWhere('gst_number', 'like', "%{$searchValue}%")
-                  ->orWhere('pan_number', 'like', "%{$searchValue}%")
-                  ->orWhere('gst_type', 'like', "%{$searchValue}%")
-                  ->orWhereHas('company', function($companyQuery) use ($searchValue) {
-                      $companyQuery->where('name', 'like', "%{$searchValue}%");
-                  });
+                  ->orWhere('pan_number', 'like', "%{$searchValue}%");
             });
         }
         
@@ -53,20 +48,20 @@ class TruckOwnerController extends Controller
                         case 1: // Name
                             $query->where('name', 'like', "%{$searchValue}%");
                             break;
-                        case 2: // GST Number
-                            $query->where('gst_number', 'like', "%{$searchValue}%");
-                            break;
-                        case 3: // GST Type
-                            $query->where('gst_type', 'like', "%{$searchValue}%");
-                            break;
-                        case 4: // PAN Number
+                       
+                        case 2: // PAN Number
                             $query->where('pan_number', 'like', "%{$searchValue}%");
                             break;
-                        case 8: // Company
-                            $query->whereHas('company', function($companyQuery) use ($searchValue) {
-                                $companyQuery->where('name', 'like', "%{$searchValue}%");
-                            });
-                            break;
+
+                            case 3: // Location
+                                $query->whereHas('city', function($q) use ($searchValue) {
+                                    $q->where('name', 'like', "%{$searchValue}%");
+                                });
+                                break;
+                            case 4: // Contact Number
+                                $query->where('mobile_number', 'like', "%{$searchValue}%");
+                                break;
+                        
                     }
                 }
             }
@@ -84,29 +79,26 @@ class TruckOwnerController extends Controller
                 case 1: // Name
                     $query->orderBy('name', $orderDirection);
                     break;
-                case 2: // GST Number
-                    $query->orderBy('gst_number', $orderDirection);
-                    break;
-                case 3: // GST Type
-                    $query->orderBy('gst_type', $orderDirection);
-                    break;
-                case 4: // PAN Number
+               
+                case 2: // PAN Number
                     $query->orderBy('pan_number', $orderDirection);
                     break;
+               case 3: // Location
+                        $query->orderByHas('city', function($q) use ($orderDirection) {
+                            $q->orderBy('name', $orderDirection);
+                        });
+                        break;
+                case 4: // Contact Number
+                        $query->orderBy('mobile_number', $orderDirection);
+                        break;
+    
                 case 5: // Declaration Given
                     $query->orderBy('declaration_given', $orderDirection);
                     break;
-                case 6: // Total Trucks
-                    $query->orderBy('total_trucks', $orderDirection);
-                    break;
-                case 7: // Advance Amount
+                case 6: // Advance Amount
                     $query->orderBy('advance_amount', $orderDirection);
                     break;
-                case 8: // Company
-                    $query->join('companies', 'transporters.company_id', '=', 'companies.id')
-                          ->orderBy('companies.name', $orderDirection)
-                          ->select('transporters.*');
-                    break;
+               
                 default:
                     $query->orderBy('created_at', 'desc');
             }
@@ -132,13 +124,12 @@ class TruckOwnerController extends Controller
             return [
                 'sr_no' => $start + $index + 1,
                 'name' => $truckOwner->name,
-                'gst_number' => $truckOwner->gst_number ?: '-',
-                'gst_type' => ucfirst($truckOwner->gst_type ?: '-'),
+               
                 'pan_number' => $truckOwner->pan_number ?: '-',
+                'location' => optional($truckOwner->city)->name ?: '-',
+                'contact_number' => $truckOwner->mobile_number ?: '-',
                 'declaration_given' => $truckOwner->declaration_given ? 'Yes' : 'No',
-                'total_trucks' => $truckOwner->total_trucks ?: 0,
                 'advance_amount' => number_format($truckOwner->advance_amount ?: 0, 2),
-                'company' => $truckOwner->company ? $truckOwner->company->name : '-',
                 // 'actions' => $this->getActionButtons($truckOwner)
                 'actions' => auth()->user()->userRole->name === 'admin'
                         ? $this->getActionButtons($truckOwner)
@@ -197,7 +188,10 @@ class TruckOwnerController extends Controller
         $companies = \App\Models\Company::all();
         // For create, we can't filter trucks as we don't have transporter_id yet
         $trucks = \App\Models\Truck::all();
-        return view('truck_owner.create', compact('companies', 'trucks'));
+        $countries = \App\Models\Country::all();
+        $states = \App\Models\State::all();
+        $cities = \App\Models\City::all();
+        return view('truck_owner.create', compact('companies', 'trucks', 'countries', 'states', 'cities'));
     }
 
     public function store(Request $request)
@@ -224,6 +218,10 @@ class TruckOwnerController extends Controller
             'advance_amount' => 'nullable|numeric',
             'pan_active' => 'required|boolean',
             'short_name' => 'nullable|string|max:255',
+            'country_id' => 'required|exists:countries,id',
+            'state_id' => 'required|exists:states,id',
+            'city_id' => 'required|exists:cities,id',
+            'mobile_number' => 'required|string|max:15',
         ]);
         if (!isset($validated['advance_amount'])) {
             $validated['advance_amount'] = 0;
@@ -268,6 +266,11 @@ class TruckOwnerController extends Controller
             'total_trucks' => 'required|integer|min:0',
             'advance_amount' => 'nullable|numeric',
             'pan_active' => 'required|boolean',
+            'mobile_number' => 'required|string|max:15',
+            'short_name' => 'nullable|string|max:255',
+            'country_id' => 'required|exists:countries,id',
+            'state_id' => 'required|exists:states,id',
+            'city_id' => 'required|exists:cities,id',
         ]); 
         if (!isset($validated['advance_amount'])) {
             $validated['advance_amount'] = 0;
