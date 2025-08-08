@@ -24,6 +24,7 @@ class Transporter extends Model
         'country_id',
         'mobile_number',
         'short_name',
+        'beneficiary_id',
     ];
 
     protected $casts = [

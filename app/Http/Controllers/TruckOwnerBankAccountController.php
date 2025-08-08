@@ -10,15 +10,25 @@ use App\Models\TransporterBankAccount;
 
 class TruckOwnerBankAccountController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $transporters = Transporter::where('is_owner', 1)->get();
-        $accounts = TransporterBankAccount::with('transporter')
-            ->whereHas('transporter', function($query) {
-                $query->where('is_owner', 1);
-            })
-            ->paginate(10);
-        return view('truck_owner_bank_accounts.index', compact('accounts', 'transporters'));
+        // Get all companies for super admin
+        $companies = \App\Models\Company::all();
+        
+        // Get selected company ID
+        $selectedCompanyId = $request->get('company_id');
+        
+        // Initialize empty collections
+        $truckOwners = collect();
+        
+        // If company is selected, get truck owners for that company
+        if ($selectedCompanyId) {
+            $truckOwners = Transporter::where('is_owner', 1)
+                ->where('company_id', $selectedCompanyId)
+                ->get();
+        }
+        
+        return view('truck_owner_bank_accounts.index', compact('companies', 'truckOwners', 'selectedCompanyId'));
     }
 
     public function create($transporter_id)
@@ -67,5 +77,26 @@ class TruckOwnerBankAccountController extends Controller
     {
         $account->delete();
         return redirect()->route('truck_owner_bank_accounts.index')->with('success', 'Bank account deleted successfully!');
+    }
+
+    public function updateBeneficiaryId(Request $request, $transporterId)
+    {
+        $transporter = Transporter::findOrFail($transporterId);
+        
+        $validated = $request->validate([
+            'beneficiary_id' => [
+                'required',
+                'string',
+                'max:255',
+                // Check uniqueness but exclude current transporter
+                \Illuminate\Validation\Rule::unique('transporters', 'beneficiary_id')->ignore($transporter->id)
+            ],
+        ], [
+            'beneficiary_id.unique' => 'This Beneficiary ID is already in use by another transporter/truck owner.',
+        ]);
+
+        $transporter->update(['beneficiary_id' => $validated['beneficiary_id']]);
+
+        return redirect()->back()->with('success', 'Beneficiary ID updated successfully!');
     }
 }

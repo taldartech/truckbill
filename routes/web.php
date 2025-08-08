@@ -16,7 +16,7 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\VoucherPaymentController;
-
+use App\Http\Controllers\TransporterBankAccountController;
 use App\Http\Controllers\TransporterLedgerController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\TruckOwnerController;
@@ -161,11 +161,11 @@ Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->nam
     Route::get('truck_owner_bank_accounts/{truck_owner_bank_account}/edit', [TruckOwnerBankAccountController::class, 'edit'])->name('truck_owner_bank_accounts.edit');
     Route::put('truck_owner_bank_accounts/{truck_owner_bank_account}', [TruckOwnerBankAccountController::class, 'update'])->name('truck_owner_bank_accounts.update');
     Route::delete('truck_owner_bank_accounts/{truck_owner_bank_account}', [TruckOwnerBankAccountController::class, 'destroy'])->name('truck_owner_bank_accounts.destroy');
+    Route::put('truck_owner_bank_accounts/{transporter_id}/beneficiary-id', [TruckOwnerBankAccountController::class, 'updateBeneficiaryId'])->name('truck_owner_bank_accounts.updateBeneficiaryId');
 
-    // Transporter Bank Accounts (Placeholder)
-    Route::get('transporter_bank_accounts/index', function() {
-        return view('coming_soon', ['title' => 'Transporter Bank Accounts', 'message' => 'Transporter Bank Account management is coming soon!']);
-    })->name('transporter_bank_accounts.index');
+    // Transporter Bank Accounts
+    Route::get('transporter_bank_accounts/index', [TransporterBankAccountController::class, 'index'])->name('transporter_bank_accounts.index');
+    Route::put('transporter_bank_accounts/{transporter_id}/beneficiary-id', [TransporterBankAccountController::class, 'updateBeneficiaryId'])->name('transporter_bank_accounts.updateBeneficiaryId');
 
     // Transporter Ledger
     Route::get('/transporter_ledger', [TransporterLedgerController::class, 'index'])->name('transporter_ledger.index');
