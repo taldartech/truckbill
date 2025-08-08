@@ -1,23 +1,35 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid">
-    <div class="d-flex justify-content-between mb-3">
-        <h4>Advance Payments</h4>
-        <a href="{{ route('advance-payments.create') }}" class="btn btn-primary">Add New</a>
+@if(session('success'))
+    <div class="alert alert-success mt-2">
+        {{ session('success') }}
     </div>
-
-    <table class="table table-bordered" id="advance-payments-table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Transporter</th>
-                <th>Advance Amount</th>
-                <th>Payment Date</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-    </table>
+@endif
+<div class="card card-info card-outline mb-4" style="width: 70%;align-items: center;margin: auto;">
+    <!--begin::Header-->
+    <div class="card-header">
+        <div class="d-flex justify-content-between w-100">
+            <div class="card-title">Advance Payments</div>
+            <a href="{{ route('advance-payments.create') }}" class="btn btn-primary">Add New</a>
+        </div>
+    </div>
+    <!--end::Header-->
+    <!--begin::Body-->
+    <div class="card-body">
+        <table class="table table-bordered" id="advance-payments-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Transporter</th>
+                    <th>Advance Amount</th>
+                    <th>Payment Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+    <!--end::Body-->
 </div>
 @endsection
 

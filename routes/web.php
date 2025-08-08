@@ -255,9 +255,20 @@ Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->nam
     //     'update' => 'advance-payments.update',
     //     'destroy' => 'advance-payments.destroy',
     // ]);
+    Route::get('advance-payments', [AdvancePaymentController::class, 'index'])
+    ->name('advance-payments.index');
     Route::get('advance-payments/create/{transporter_id}', [AdvancePaymentController::class, 'create'])
     ->name('advance-payments.create');
-    Route::resource('advance-payments', AdvancePaymentController::class)->except(['create']);
+    Route::post('advance-payments', [AdvancePaymentController::class, 'store'])
+    ->name('advance-payments.store');
+    Route::get('advance-payments/{advancePayment}/edit', [AdvancePaymentController::class, 'edit'])
+    ->name('advance-payments.edit');
+    Route::put('advance-payments/{advancePayment}', [AdvancePaymentController::class, 'update'])
+    ->name('advance-payments.update');
+    Route::delete('advance-payments/{advancePayment}', [AdvancePaymentController::class, 'destroy'])
+    ->name('advance-payments.destroy');
+
+    // Route::resource('advance-payments', AdvancePaymentController::class)->except(['create']);
 
   
   

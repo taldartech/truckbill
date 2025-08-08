@@ -22,6 +22,12 @@ class AdvancePaymentController extends Controller
         $query = AdvancePayment::with('transporter')
             ->where('company_id', auth()->user()->company_id);
 
+
+        // Only apply company_id filter for non-super_admin users
+        if (auth()->user()->userRole->name !== 'super_admin') {
+            $query->where('company_id', auth()->user()->company_id);
+        }
+
         // Apply search filters
         if ($request->has('columns')) {
             foreach ($request->columns as $index => $column) {
@@ -91,8 +97,12 @@ class AdvancePaymentController extends Controller
 
     public function create($transporter_id)
     {
-        $transporters = Transporter::where('id', $transporter_id)->get();
-        return view('advance-payments.create', compact('transporters'));
+        $transporter = Transporter::findOrFail($transporter_id);
+        $preFilled = [
+            'transporter_id' => $transporter->id,
+            'transporter_name' => $transporter->name
+        ];
+        return view('advance_payments.create', compact('preFilled'));
     }
 
     public function store(Request $request)

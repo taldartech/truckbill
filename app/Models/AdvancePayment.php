@@ -13,10 +13,16 @@ class AdvancePayment extends Model
         'transporter_id',
         'advance_amount',
         'payment_date',
+        'company_id',
     ];
 
     public function transporter()
     {
         return $this->belongsTo(Transporter::class);
+    }
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
     }
 }
