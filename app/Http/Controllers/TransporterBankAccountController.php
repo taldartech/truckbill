@@ -12,20 +12,32 @@ class TransporterBankAccountController extends Controller
         // Get all companies for super admin
         $companies = \App\Models\Company::all();
         
-        // Get selected company ID
+        // Get selected company ID and search term
         $selectedCompanyId = $request->get('company_id');
+        $search = $request->get('search');
         
         // Initialize empty collections
         $transporters = collect();
         
         // If company is selected, get transporters for that company (excluding truck owners)
         if ($selectedCompanyId) {
-            $transporters = Transporter::where('is_owner', 0)
-                ->where('company_id', $selectedCompanyId)
-                ->get();
+            $query = Transporter::where('is_owner', 0)
+                ->where('company_id', $selectedCompanyId);
+            
+            // Add search functionality
+            if ($search) {
+                $query->where(function($q) use ($search) {
+                    $q->where('name', 'LIKE', '%' . $search . '%')
+                      ->orWhere('gst_number', 'LIKE', '%' . $search . '%')
+                      ->orWhere('pan_number', 'LIKE', '%' . $search . '%')
+                      ->orWhere('beneficiary_id', 'LIKE', '%' . $search . '%');
+                });
+            }
+            
+            $transporters = $query->paginate(10)->appends($request->query());
         }
         
-        return view('transporter_bank_accounts.index', compact('companies', 'transporters', 'selectedCompanyId'));
+        return view('transporter_bank_accounts.index', compact('companies', 'transporters', 'selectedCompanyId', 'search'));
     }
 
     public function updateBeneficiaryId(Request $request, $transporterId)

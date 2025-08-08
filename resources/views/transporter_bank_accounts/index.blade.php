@@ -32,9 +32,43 @@
     </div>
 
     @if($selectedCompanyId)
+    
+    <!-- Search Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Search Transporters</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{{ route('transporter_bank_accounts.index') }}">
+                <input type="hidden" name="company_id" value="{{ $selectedCompanyId }}">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="input-group">
+                            <input type="text" name="search" class="form-control" placeholder="Search by name, GST number, PAN number, or beneficiary ID..." value="{{ $search }}">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="bi bi-search"></i> Search
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        @if($search)
+                            <a href="{{ route('transporter_bank_accounts.index', ['company_id' => $selectedCompanyId]) }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Clear Search
+                            </a>
+                        @endif
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <div class="card mb-4">
-        <div class="card-header"><h3 class="card-title">Transporters List</h3></div>
+        <div class="card-header">
+            <h3 class="card-title">Transporters List</h3>
+            @if($search)
+                <small class="text-muted">Search results for: "{{ $search }}"</small>
+            @endif
+        </div>
         <div class="card-body" style="overflow-x: auto;">
             <table class="table table-bordered">
                 <thead>
@@ -43,7 +77,7 @@
                         <th>Name</th>
                         <th>GST Number</th>
                         <th>PAN Number</th>
-                        <th>Current Beneficiary ID</th>
+                        <th>Bank Beneficiary ID</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -112,6 +146,13 @@
                     @endforelse
                 </tbody>
             </table>
+            
+            <!-- Pagination -->
+            @if($transporters instanceof \Illuminate\Pagination\LengthAwarePaginator && $transporters->hasPages())
+                <div class="d-flex justify-content-center mt-3">
+                    {{ $transporters->links() }}
+                </div>
+            @endif
         </div>
     </div>
     @else

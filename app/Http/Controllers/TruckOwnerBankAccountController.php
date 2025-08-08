@@ -15,20 +15,32 @@ class TruckOwnerBankAccountController extends Controller
         // Get all companies for super admin
         $companies = \App\Models\Company::all();
         
-        // Get selected company ID
+        // Get selected company ID and search term
         $selectedCompanyId = $request->get('company_id');
+        $search = $request->get('search');
         
         // Initialize empty collections
         $truckOwners = collect();
         
         // If company is selected, get truck owners for that company
         if ($selectedCompanyId) {
-            $truckOwners = Transporter::where('is_owner', 1)
-                ->where('company_id', $selectedCompanyId)
-                ->get();
+            $query = Transporter::where('is_owner', 1)
+                ->where('company_id', $selectedCompanyId);
+            
+            // Add search functionality
+            if ($search) {
+                $query->where(function($q) use ($search) {
+                    $q->where('name', 'LIKE', '%' . $search . '%')
+                      ->orWhere('gst_number', 'LIKE', '%' . $search . '%')
+                      ->orWhere('pan_number', 'LIKE', '%' . $search . '%')
+                      ->orWhere('beneficiary_id', 'LIKE', '%' . $search . '%');
+                });
+            }
+            
+            $truckOwners = $query->paginate(10)->appends($request->query());
         }
         
-        return view('truck_owner_bank_accounts.index', compact('companies', 'truckOwners', 'selectedCompanyId'));
+        return view('truck_owner_bank_accounts.index', compact('companies', 'truckOwners', 'selectedCompanyId', 'search'));
     }
 
     public function create($transporter_id)
