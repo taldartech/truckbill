@@ -3,7 +3,7 @@
 @section('content')
 <div class="container mt-4">
     <h2>Edit Bank Account</h2>
-    <form action="{{ route('transporter_bank_accounts.update', $account) }}" method="POST">
+    <form action="{{ route('truck_owner_bank_accounts.update', $account) }}" method="POST">
         @csrf
         @method('PUT')
         <div class="row">
@@ -54,7 +54,7 @@
         <div class="row">
             <div class="col-12">
                 <button type="submit" class="btn btn-primary">Update</button>
-                <a href="{{ route('transporter_bank_accounts.index') }}" class="btn btn-secondary">Cancel</a>
+                <a href="{{ route('truck_owner_bank_accounts.index') }}" class="btn btn-secondary">Cancel</a>
             </div>
         </div>
     </form>

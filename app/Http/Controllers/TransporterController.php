@@ -158,18 +158,7 @@ class TransporterController extends Controller
     {
         $buttons = '<div class="d-flex gap-1">';
         
-        // Bank account button
-        if(auth()->check() && auth()->user()->userRole->name === 'super_admin') {
-            if($transporter->bankAccounts->isEmpty() || $transporter->bankAccounts->first()->bulk_payment_id === null) {
-                $bankUrl = route('transporter_bank_accounts.create', ['transporter_id' => $transporter->id]);
-                $buttons .= '<a href="' . $bankUrl . '" class="btn btn-sm btn-info" title="Add Bank Account">';
-                $buttons .= '<i class="bi bi-bank"></i></a>';
-            } else {
-                $bankUrl = route('transporter_bank_accounts.index', ['transporter_id' => $transporter->id]);
-                $buttons .= '<a href="' . $bankUrl . '" class="btn btn-sm btn-success" title="View Bank Accounts">';
-                $buttons .= '<i class="bi bi-bank"></i></a>';
-            }
-        }
+
 
     // Edit button
         $editUrl = route('transporters.edit', $transporter->id);
