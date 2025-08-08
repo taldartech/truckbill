@@ -250,6 +250,11 @@ class TruckController extends Controller
         \App\Models\Truck::create($validated);
         return redirect()->route('trucks.index')->with('success', 'Truck created successfully!');
     }
+    public function checkTruckNumber(Request $request)
+{
+    $exists = \App\Models\Truck::where('truck_number', $request->truck_number)->exists();
+    return response()->json(['exists' => $exists]);
+}
 
     public function edit(\App\Models\Truck $truck)
     {

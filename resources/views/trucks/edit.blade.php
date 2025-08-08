@@ -7,7 +7,7 @@
         @csrf
         @method('PUT')
         <div class="mb-3">
-            <label for="transporter_id" class="form-label">Transporter *</label>
+            <label for="transporter_id" class="form-label">Truck Owner *</label>
             <select class="form-select" id="transporter_id" name="transporter_id" required>
                 <option value="">Select</option>
                 @foreach($transporters as $transporter)
@@ -18,7 +18,7 @@
         </div>
         <div class="mb-3">
             <label for="truck_number" class="form-label">Truck Number *</label>
-            <input type="text" class="form-control" id="truck_number" name="truck_number" required value="{{ old('truck_number', $truck->truck_number) }}">
+            <input type="text" class="form-control" placeholder="Enter Truck Number" id="truck_number" name="truck_number" required value="{{ old('truck_number', $truck->truck_number) }}">
             @error('truck_number') <div class="text-danger">{{ $message }}</div> @enderror
         </div>
         <div class="mb-3">
@@ -52,7 +52,7 @@
 </div>
         <div class="mb-3">
             <label for="registration_date" class="form-label">Registration Date *</label>
-            <input type="date" class="form-control" id="registration_date" name="registration_date" required value="{{ old('registration_date', $truck->registration_date) }}">
+            <input type="date" class="form-control" placeholder="Enter Registration Date" id="registration_date" name="registration_date" required value="{{ old('registration_date', $truck->registration_date) }}">
             @error('registration_date') <div class="text-danger">{{ $message }}</div> @enderror
         </div>
         <button type="submit" class="btn btn-success">Update Truck</button>

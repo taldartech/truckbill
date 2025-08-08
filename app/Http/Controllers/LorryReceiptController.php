@@ -456,6 +456,18 @@ class LorryReceiptController extends Controller
             return redirect()->back()->withErrors(['lr_number' => 'LR Number already exists. Please use a unique LR Number.']);
         }
 
+        // Calculate expected amount from weight and freight rate
+        $expectedAmount = ($validated['weight'] * $validated['fr_rate'])->round(2);
+        
+        // Check if entered amount matches calculated amount
+        if ($validated['amount'] != $expectedAmount) {
+            return redirect()->back()->withErrors([
+                'amount' => 'The entered amount does not match the calculated amount. ' . 
+                           'Expected amount is: ' . $expectedAmount . 
+                           ' (Weight: ' . $validated['weight'] . ' × FR Rate: ' . $validated['fr_rate'] . ')'
+            ])->withInput();
+        }
+
         // Add company_id to validated data
         $validated['company_id'] = auth()->user()->company_id;
         
@@ -466,65 +478,148 @@ class LorryReceiptController extends Controller
     public function edit(\App\Models\LorryReceipt $lorry_receipt)
     {
         // Eager load the truck relationship
-        $lorry_receipt = $lorry_receipt->load('truck');
+        // $lorry_receipt = $lorry_receipt->load('truck');
         
-        $customers = \App\Models\Customer::all();
-        $consignees = \App\Models\Consignee::all();
-        $goodsTypes = \App\Models\GoodType::all();
+        // $customers = \App\Models\Customer::all();
+        // $consignees = \App\Models\Consignee::all();
+        // $goodsTypes = \App\Models\GoodType::all();
         
-        // Get trucks filtered by the current transporter's company
-        $trucks = \App\Models\Truck::when($lorry_receipt->transporter_id, function ($query) use ($lorry_receipt) {
-            return $query->where('transporter_id', $lorry_receipt->transporter_id);
-        })->get();
+        // // Get trucks filtered by the current transporter's company
+        // $trucks = \App\Models\Truck::when($lorry_receipt->transporter_id, function ($query) use ($lorry_receipt) {
+        //     return $query->where('transporter_id', $lorry_receipt->transporter_id);
+        // })->get();
 
-        $transporters = \App\Models\Transporter::all();
+        // $transporters = \App\Models\Transporter::all();
+        $companies = \App\Models\Company::all();
+        // $trucks = Truck::all();
+        $trucks = Truck::with('transporter')->get(); // assumes `transporter()` relationship is defined
+
+        $transporters = Transporter::all();
+        $truckOwners = Transporter::where('is_owner', 1)->get();
+        $agencies = Transporter::where('is_owner', 0)->get();
+        $customers = Customer::where('company_id', auth()->user()->company_id)->orderBy('name')->get();
+        $consignees = Consignee::where('company_id', auth()->user()->company_id)->orderBy('name')->get();
+        $goodsTypes = GoodType::all();
+        $statuses = ['Pending', 'Delivered', 'Cancelled','In-Progress'];
+        $tdsPercentages = [
+            'default' => env('TDS_PERCENTAGE_DEFAULT', 20),
+            'agency' => env('TDS_PERCENTAGE_AGENCY', 2),
+            'owner' => env('TDS_PERCENTAGE_OWNER', 1)
+        ];
         $statuses = ['Pending', 'Delivered', 'Cancelled','In-Progress'];
         
         return view('lorry_receipts.edit', [
-            'lr' => $lorry_receipt,
+            'lorry_receipt' => $lorry_receipt,
             'trucks' => $trucks,
-            'transporters' => $transporters,
+            'transporter' => $transporters,
             'statuses' => $statuses,
             'customers' => $customers,
             'consignees' => $consignees,
             'goodsTypes' => $goodsTypes,
+            'truckOwners' => $truckOwners,
+            'agencies' => $agencies,
+            'tdsPercentages' => $tdsPercentages,
         ]);
     }
 
     public function update(Request $request, \App\Models\LorryReceipt $lorry_receipt)
     {
+        // $validated = $request->validate([
+        //     'truck_id' => 'nullable|exists:trucks,id',
+        //     'transporter_id' => 'nullable|exists:transporters,id',
+        //     'delivery_status' => 'nullable|in:Pending,Delivered,Cancelled,In-Progress',
+        //     'customer_id' => 'required|integer',
+        //     'consignor_contact_number' => [
+        //         'nullable',
+        //         'digits:10',
+        //     ],
+        //     'consignee_contact_number' => [
+        //         'nullable',
+        //         'digits:10',
+        //     ],
+        //     'source_city' => 'required|string|max:100',
+        //     'destination_city' => 'required|string|max:100',
+        //     'source_state' => 'required|string|max:100',
+        //     'destination_state' => 'required|string|max:100',
+        //     'weight' => 'required|numeric',
+        //     'no_of_units' => 'required|integer',
+        //     'good_type' => 'required|string|max:100',
+        //     'fr_rate' => 'required|numeric',
+        //     'amount' => 'required|numeric',
+        //     'linked_lr_id' => 'nullable|integer',
+        //     'gr_date' => 'required|date',
+        //     'memo_id' => 'nullable|integer',
+        //     'consignor_id' => 'required|integer',
+        //     'consignee_id' => 'required|integer',
+        //     'lane' => 'required|string',
+        //     'damage_amount' => 'nullable|numeric',
+        //     'shortage_amount' => 'nullable|numeric',
+        //     'lr_number' => 'required|string|max:100',
+        // ]);
+        // $lorry_receipt->update($validated);
         $validated = $request->validate([
+            'customer_id' => 'required|exists:consignees,id',
+           'lr_number' => 'required|string|max:100|unique:lorry_receipts,lr_number,' . $lorry_receipt->id . ',id',
+            'memo_id' => 'nullable|integer',
             'truck_id' => 'nullable|exists:trucks,id',
             'transporter_id' => 'nullable|exists:transporters,id',
-            'delivery_status' => 'nullable|in:Pending,Delivered,Cancelled,In-Progress',
-            'customer_id' => 'required|integer',
-            'consignor_contact_number' => [
-                'nullable',
-                'digits:10',
-            ],
-            'consignee_contact_number' => [
-                'nullable',
-                'digits:10',
-            ],
-            'source_city' => 'required|string|max:100',
-            'destination_city' => 'required|string|max:100',
-            'source_state' => 'required|string|max:100',
-            'destination_state' => 'required|string|max:100',
-            'weight' => 'required|numeric',
-            'no_of_units' => 'required|integer',
-            'good_type' => 'required|string|max:100',
-            'fr_rate' => 'required|numeric',
-            'amount' => 'required|numeric',
-            'linked_lr_id' => 'nullable|integer',
+            'consignor_id' => 'required|exists:consignees,id',
+            'consignor_contact_number' => 'nullable|string|max:20',
+            'consignee_id' => 'required|exists:consignees,id',
+            'consignee_contact_number' => 'nullable|string|max:20',
             'gr_date' => 'required|date',
-            'memo_id' => 'nullable|integer',
-            'consignor_id' => 'required|integer',
-            'consignee_id' => 'required|integer',
-            'lane' => 'required|string',
+            'company_id' => 'required|exists:companies,id',
+        
+            'delivery_status' => 'nullable|in:Pending,Delivered,Cancelled,In-Progress',
+            'source_city' => 'required|string|max:100',
+            'source_state' => 'required|string|max:100',
+            'destination_city' => 'required|string|max:100',
+            'destination_state' => 'required|string|max:100',
+            'lane' => 'required|string|max:100',
+            'good_type' => 'required|string|max:100',
+            'weight' => 'required|numeric|min:0',
+            'no_of_units' => 'required|numeric|min:0',
+            'fr_rate' => 'required|numeric|min:0',
+            'amount' => 'required|numeric|min:0',
             'damage_amount' => 'nullable|numeric',
             'shortage_amount' => 'nullable|numeric',
-            'lr_number' => 'required|string|max:100',
         ]);
+
+        // Check if consignor and consignee are the same
+        if ($validated['consignor_id'] === $validated['consignee_id']) {
+            return redirect()->back()->withErrors([
+                'consignor_id' => 'Consignor and Consignee cannot be the same.',
+                'consignee_id' => 'Consignor and Consignee cannot be the same.'
+            ])->withInput();
+        }
+
+        // Set truck_id to null if not provided
+        $validated['truck_id'] = $validated['truck_id'] ?? null;
+        
+        // Set default delivery_status
+        $validated['delivery_status'] = 'Pending';
+        
+        // Check if lr_number already exists
+        // if (\App\Models\LorryReceipt::where('lr_number', $validated['lr_number'])->exists()) {
+        //     return redirect()->back()->withErrors(['lr_number' => 'LR Number already exists. Please use a unique LR Number.']);
+        // }
+         // Calculate expected amount from weight and freight rate
+        //  $expectedAmount = ($validated['weight'] * $validated['fr_rate'])->round(2);
+        $expectedAmount = round($validated['weight'] * $validated['fr_rate'], 2);
+        
+         // Check if entered amount matches calculated amount
+         if ($validated['amount'] != $expectedAmount) {
+             return redirect()->back()->withErrors([
+                 'amount' => 'The entered amount does not match the calculated amount. ' . 
+                            'Expected amount is: ' . $expectedAmount . 
+                            ' (Weight: ' . $validated['weight'] . ' × FR Rate: ' . $validated['fr_rate'] . ')'
+             ])->withInput();
+         }
+ 
+
+        // Add company_id to validated data
+        $validated['company_id'] = auth()->user()->company_id;
+        
         $lorry_receipt->update($validated);
         return redirect()->route('lorry_receipts.index')->with('success', 'Lorry Receipt updated successfully!');
     }

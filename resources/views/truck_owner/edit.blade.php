@@ -1,284 +1,294 @@
+
+
 @extends('layouts.app')
 
 @section('content')
-<div class="card card-info card-outline mb-4" style="width: 70%;align-items: center;margin: auto;">
-    <!--begin::Header-->
-    <div class="card-header"><div class="card-title">Add New Transporter</div></div>
-    <!--end::Header-->
-    <!--begin::Form-->
-    <form  action="{{ route('transporters.store') }}" method="POST" class="needs-validation" novalidate="">
+<div class="card card-info card-outline mb-4" style="max-width: 950px;align-items: center;margin: auto;">
+    <div class="card-header">
+        <h3 class="card-title">Edit Truck Owner</h3>
+    </div>
+
+   
+
+    <form action="{{ route('truck_owners.update', $transporter->id) }}" method="POST" class="needs-validation" novalidate="">
         @csrf
+        @method('PUT')
         @php
-    $canEditCompany = auth()->check() && auth()->user()->userRole->name === 'super_admin';
-    $userCompanyId = auth()->user()->company_id ?? null;
-@endphp
+            $canEditCompany = auth()->check() && auth()->user()->userRole->name === 'super_admin';
+            $userCompanyId = auth()->user()->company_id ?? null;
+        @endphp
         @error('registered_truck_id')
             <div class="text-danger">{{ $message }}</div>
         @enderror
-      <!--begin::Body-->
-      <div class="card-body">
-        <!--begin::Row-->
-        <div class="row g-3">
-          <!--begin::Col-->
-          <div class="col-md-6">
-            <label for="validationCustom01" class="form-label">Company *</label>
-            @if($canEditCompany)
-                <select class="form-select" id="company_id" name="company_id" required>
-                    <option value="">Select</option>
-                    @foreach($companies as $company)
-                        <option value="{{ $company->id }}" {{ old('company_id') == $company->id ? 'selected' : '' }}>{{ $company->name }}</option>
-                    @endforeach
-                </select>
-            @else
-                <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
-                <div class="form-control-plaintext">
-                    {{ $companies->firstWhere('id', $userCompanyId)->name ?? '' }}
+        <div class="card-body">
+            <!-- General Details -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                  
+                    <label for="company_id" class="form-label">Company *</label>
+                    @if($canEditCompany)
+                        <select class="form-select" id="company_id" name="company_id" required>
+                            <option value="">Select</option>
+                            @foreach($companies as $company)
+                                <option value="{{ $company->id }}" {{ old('company_id', $transporter->company_id) == $company->id ? 'selected' : '' }}>{{ $company->name }}</option>
+                            @endforeach
+                        </select>
+                    @else
+                        <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
+                        <div class="form-control-plaintext">
+                            {{ $companies->firstWhere('id', $userCompanyId)->name ?? '' }}
+                        </div>
+                    @endif
+                    @error('company_id') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
-                <div class="valid-feedback">Looks good!</div>
-            @endif
-            @error('company_id') <div class="text-danger">{{ $message }}</div> @enderror
-          </div>
-          <div class="col-md-6">
-            <label for="name" class="form-label">Name *</label>
-            <input type="text" class="form-control" id="name" name="name" required value="{{ old('name') }}">
-            @error('name') <div class="text-danger">{{ $message }}</div> @enderror
-            <div class="valid-feedback">Looks good!</div>
-          </div>
-          <!--end::Col-->
-          <!--begin::Col-->
-          <div class="col-md-6">
-            <label for="gst_number" class="form-label">GST Number</label>
-            <input type="text" class="form-control" id="gst_number" name="gst_number" value="{{ old('gst_number') }}">
+                <div class="col-md-6">
+                    <label for="name" class="form-label">Truck Owner Name *</label>
+                    <input placeholder="Enter Truck Owner Name" type="text" class="form-control" id="name" name="name" required value="{{ old('name', $transporter->name) }}">
+                    @error('name') <div class="text-danger">{{ $message }}</div> @enderror
+                </div>
+               
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="short_name" class="form-label">Short Name *</label>
+                    <input placeholder="Enter Short Name" type="text" class="form-control" id="short_name" name="short_name" value="{{ old('short_name', $transporter->short_name) }}">
+                    @error('short_name') <div class="text-danger">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-6">
+                    <label for="gst_number" class="form-label">GST Number</label>
+            <input placeholder="Enter GST Number" type="text" class="form-control" id="gst_number" name="gst_number" value="{{ old('gst_number', $transporter->gst_number) }}">
             @error('gst_number') <div class="text-danger">{{ $message }}</div> @enderror
-            <div class="valid-feedback">Looks good!</div>
-          </div>
-          <!--end::Col-->
-          <!--begin::Col-->
-          <div class="col-md-6">
-            <label for="gst_type" class="form-label">GST Type *</label>
-            <select class="form-select" id="gst_type" name="gst_type" required>
-                <option value="">Select</option>
-                <option value="composition" {{ old('gst_type') == 'composition' ? 'selected' : '' }}>Composition</option>
-                <option value="regular" {{ old('gst_type') == 'regular' ? 'selected' : '' }}>Regular</option>
-            </select>
-            @error('gst_type') <div class="text-danger">{{ $message }}</div> @enderror
-            <div class="invalid-feedback">Please choose a GST Type.</div>
-          </div>
-          <!--end::Col-->
-           <!--begin::Col-->
-           <div class="col-md-6">
-            <label for="pan_number" class="form-label">PAN Number</label>
-            <input type="text" class="form-control" id="pan_number" name="pan_number" value="{{ old('pan_number') }}">
-            @error('pan_number') <div class="text-danger">{{ $message }}</div> @enderror
-            <div class="valid-feedback">Looks good!</div>
-          </div>
-          <!--end::Col-->
-          <!--begin::Col-->
-          <div class="col-md-6">
-            <label for="type" class="form-label">PAN is Active *</label><br>
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="pan_active" id="pan_active_yes" value="1" {{ old('pan_active') === '1' ? 'checked' : '' }} required>
-                <label class="form-check-label" for="pan_active_yes">Yes</label>
+                </div>
+               
             </div>
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="pan_active" id="pan_active_no" value="0" {{ old('pan_active') === '0' ? 'checked' : '' }} required>
-                <label class="form-check-label" for="pan_active_no">No</label>
-            </div>
-            @error('pan_active') <div class="text-danger">{{ $message }}</div> @enderror
-            <div class="invalid-feedback">Please choose a type.</div>
-        </div>
-        <!--end::Col-->
-            <!--begin::Col-->
-            <div class="col-md-6">
-                <div class="row">
-                    <div class="col-md-6">
-                        <label for="type" class="form-label">Type *</label><br>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="is_owner" id="owner" value="1" {{ old('is_owner') === '1' ? 'checked' : '' }} required>
-                            <label class="form-check-label" for="owner">Owner</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="is_owner" id="agency" value="0" {{ old('is_owner') === '0' ? 'checked' : '' }} required>
-                            <label class="form-check-label" for="agency">Agency</label>
-                        </div>
-                        @error('is_owner') <div class="text-danger">{{ $message }}</div> @enderror
-                        <div class="invalid-feedback">Please choose a type.</div>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="pan_number" class="form-label">PAN Number</label>
+                    <input placeholder="Enter PAN Number" type="text" class="form-control" id="pan_number" name="pan_number" required value="{{ old('pan_number', $transporter->pan_number) }}">
+                    @error('pan_number') <div class="text-danger">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">PAN is Active *</label><br>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="pan_active" id="pan_active_yes" value="1" {{ old('pan_active', $transporter->pan_active) == 1 ? 'checked' : '' }} required>
+                        <label class="form-check-label" for="pan_active_yes">Yes</label>
                     </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="pan_active" id="pan_active_no" value="0" {{ old('pan_active', $transporter->pan_active) == 0 ? 'checked' : '' }} required>
+                        <label class="form-check-label" for="pan_active_no">No</label>
+                    </div>
+                    @error('pan_active') <div class="text-danger">{{ $message }}</div> @enderror
+                </div>
+            </div>
+            <!-- Additional Details Section -->
+            <div class="card mb-4 p-3 bg-light">
+                <div class="row"><div class="col"><h5 class="mb-3">Additional Details</h5></div></div>
+                <div class="row mb-2">
                     <div class="col-md-6">
                         <label class="form-label">Declaration Given? *</label><br>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="declaration_given" id="decl_yes" value="1" {{ old('declaration_given') === '1' ? 'checked' : '' }} required>
+                            <input class="form-check-input" type="radio" name="declaration_given" id="decl_yes" value="1" {{ old('declaration_given', $transporter->declaration_given) == 1 ? 'checked' : '' }} required>
                             <label class="form-check-label" for="decl_yes">Yes</label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="declaration_given" id="decl_no" value="0" {{ old('declaration_given') === '0' ? 'checked' : '' }} required>
+                            <input class="form-check-input" type="radio" name="declaration_given" id="decl_no" value="0" {{ old('declaration_given', $transporter->declaration_given) == 0 ? 'checked' : '' }} required>
                             <label class="form-check-label" for="decl_no">No</label>
                         </div>
                         @error('declaration_given') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
+                    <div class="col-md-6">
+                        <label for="total_trucks" class="form-label">Total Trucks *</label>
+                        <input type="number" class="form-control" id="total_trucks" name="total_trucks" min="0" required value="{{ old('total_trucks', $transporter->total_trucks) }}" placeholder="Enter total trucks">
+                        @error('total_trucks') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-6">
+                        <label for="advance_amount" class="form-label">Advance Amount</label>
+                        <input type="number" step="0.01" class="form-control" id="advance_amount" name="advance_amount" value="{{ old('advance_amount', $transporter->advance_amount) }}" placeholder="Enter advance amount">
+                        @error('advance_amount') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
                 </div>
             </div>
-              <!--end::Col-->
-          <!--begin::Col-->
-          <div class="col-md-6">
-            <label for="total_trucks" class="form-label">Total Trucks *</label>
-            <input type="number" class="form-control" id="total_trucks" name="total_trucks" min="0" required value="{{ old('total_trucks', 0) }}">
-            @error('total_trucks') <div class="text-danger">{{ $message }}</div> @enderror
-            <div class="invalid-feedback">Please enter  total trucks.</div>
-          </div>
-          <!--end::Col-->
-          <!--begin::Col-->
-          <div class="col-md-6">
-            <label for="advance_amount" class="form-label">Advance Amount</label>
-            <input type="number" step="0.01" class="form-control" id="advance_amount" name="advance_amount" value="{{ old('advance_amount', 0) }}">
-            @error('advance_amount') <div class="text-danger">{{ $message }}</div> @enderror
-            <div class="invalid-feedback">Please enter advance amount.</div>
-          </div>
-          <!--end::Col-->
-          
-         
+            <div class="card mb-4 p-3 bg-light">
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label for="country_id" class="form-label">Country * </label>
+                    <select class="form-select" id="country_id" name="country_id" required>
+                        <option value="">Select Country</option>
+                        @foreach($countries as $country)
+                            <option value="{{ $country->id }}" {{ old('country_id', $transporter->country_id) == $country->id ? 'selected' : '' }}>
+                                {{ $country->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('country_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please select a country.</div>
+                </div>
+                <!--end::Col-->
+                
+                <div class="col-md-4">
+                    <label for="state_id" class="form-label">State *</label>
+                    <select class="form-select" id="state_id" name="state_id" required>
+                        <option value="">Select State</option>
+                        @foreach($states as $state)
+                            <option value="{{ $state->id }}"
+                                {{ (old('state_id', $transporter->state_id) == $state->id) ? 'selected' : '' }}>
+                                {{ $state->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('state_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please select a state.</div>
+                </div>
+                
+                <div class="col-md-4">
+                    <label for="city_id" class="form-label">City *</label>
+                    <select class="form-select" id="city_id" name="city_id" required>
+                        <option value="">Select City</option>
+                        @foreach($cities as $city)
+                            <option value="{{ $city->id }}"
+                                {{ (old('city_id', $transporter->city_id) == $city->id) ? 'selected' : '' }}>
+                                {{ $city->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('city_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please select a city.</div>
+                </div>
+                
+                <!--end::Col-->
+            </div>  
+            <div class="row mb-3">          
+                <!--begin::Col-->
+                <div class="col-md-6">
+                    <label for="mobile" class="form-label">Mobile</label>
+                    <input type="text" class="form-control" id="mobile" name="mobile_number" required value="{{ old('mobile_number', $transporter->mobile_number) }}">
+                    @error('mobile_number') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please enter a valid mobile number.</div>
+                </div>
+                <div class="col-md-6">
+                    <label for="address" class="form-label">Address</label>
+                    <textarea class="form-control" id="address" name="address" rows="3">{{ old('address', $transporter->address) }}</textarea>
+                    @error('address') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please enter an address.</div>
+                </div>
+                <!--end::Col-->
+            </div>
+            </div>
+            <!-- Registered Trucks Section -->
+<div class="card mb-4 p-3 bg-light">
+    <div class="row">
+        <div class="col">
+            <h5 class="mb-3">Registered Trucks</h5>
         </div>
-        <!--end::Row-->
-      </div>
-      <!--end::Body-->
-      <!--begin::Footer-->
-      <div class="card-footer">
-        <button class="btn btn-info" type="submit">Submit form</button>
-        <a href="{{ route('transporters.index') }}" class="btn btn-info">Back to List</a>
-      </div>
-      <!--end::Footer-->
+    </div>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead class="table-light">
+                <tr>
+                    <th>S.No</th>
+                    <th>Truck Number</th>
+                    <th>Truck Type</th>
+                    <th>Driver Name</th>
+                    <th>Driver Mobile Number</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($trucks as $index => $truck)
+                    <tr>
+                        <td>{{ $index + 1 }}</td>
+                        <td>{{ $truck->truck_number }}</td>
+                        <td>{{ $truck->truck_type }}</td>
+                        <td>{{ $truck->driver->name ?? 'N/A' }}</td>
+                        <td>{{ $truck->driver->mobile ?? 'N/A' }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">No trucks registered for this transporter.</td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
+
+            <!-- Quick Actions Section -->
+            <div class="card p-3 bg-light">
+                <div class="row"><div class="col"><h5 class="mb-3">Quick Actions</h5></div></div>
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <button class="btn btn-success w-100 mb-2" type="submit">💾Update Form</button>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="{{ route('transporters.index') }}" class="btn btn-outline-dark w-100 mb-2">📄 Back to List</a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </form>
-    <!--end::Form-->
-    <!--begin::JavaScript-->
-    <script>
-      // Example starter JavaScript for disabling form submissions if there are invalid fields
-      (() => {
-        'use strict';
+</div>
 
-        // Fetch all the forms we want to apply custom Bootstrap validation styles to
-        const forms = document.querySelectorAll('.needs-validation');
-
-        // Loop over them and prevent submission
-        Array.from(forms).forEach((form) => {
-          form.addEventListener(
-            'submit',
-            (event) => {
-              if (!form.checkValidity()) {
-                event.preventDefault();
-                event.stopPropagation();
-              }
-
-              form.classList.add('was-validated');
-            },
-            false,
-          );
+{{-- JS for cascading dropdowns --}}
+<script>
+    $(document).ready(function () {
+        let countryId = "{{ old('country_id', $transporter->country_id) }}";
+        let stateId = "{{ old('state_id', $transporter->state_id) }}";
+        let cityId = "{{ old('city_id', $transporter->city_id) }}";
+    
+        // Pre-fill states if editing
+        if (countryId) {
+            loadStates(countryId, stateId, function () {
+                // Load cities after states are loaded
+                if (stateId) {
+                    loadCities(stateId, cityId);
+                }
+            });
+        }
+    
+        // Country change
+        $('#country_id').on('change', function () {
+            let cid = $(this).val();
+            $('#state_id').html('<option value="">Select State</option>');
+            $('#city_id').html('<option value="">Select City</option>');
+            if (cid) {
+                loadStates(cid);
+            }
         });
-      })();
+    
+        // State change
+        $('#state_id').on('change', function () {
+            let sid = $(this).val();
+            $('#city_id').html('<option value="">Select City</option>');
+            if (sid) {
+                loadCities(sid);
+            }
+        });
+    
+        function loadStates(countryId, selectedStateId = null, callback = null) {
+            $.get('/api/dropdown/states/' + countryId, function (data) {
+                $('#state_id').empty().append('<option value="">Select State</option>');
+                $.each(data, function (key, state) {
+                    $('#state_id').append('<option value="' + state.id + '" ' +
+                        (state.id == selectedStateId ? 'selected' : '') + '>' + state.name + '</option>');
+                });
+                if (callback) callback();
+            });
+        }
+    
+        function loadCities(stateId, selectedCityId = null) {
+            $.get('/api/dropdown/cities/' + stateId, function (data) {
+                $('#city_id').empty().append('<option value="">Select City</option>');
+                $.each(data, function (key, city) {
+                    $('#city_id').append('<option value="' + city.id + '" ' +
+                        (city.id == selectedCityId ? 'selected' : '') + '>' + city.name + '</option>');
+                });
+            });
+        }
+    });
     </script>
-    <!--end::JavaScript-->
-  </div>
-{{-- <div class="container mt-4">
-    <h2>Add New Transporter</h2>
-    <form action="{{ route('transporters.store') }}" method="POST" class="needs-validation" novalidate>
-        @csrf
-        @php
-    $canEditCompany = auth()->check() && auth()->user()->userRole->name === 'super_admin';
-    $userCompanyId = auth()->user()->company_id ?? null;
-@endphp
-        @error('registered_truck_id')
-            <div class="text-danger">{{ $message }}</div>
-        @enderror
-        <div class="mb-3">
-            <label for="company_id" class="form-label">Company *</label>
-            @if($canEditCompany)
-                <select class="form-select" id="company_id" name="company_id" required>
-                    <option value="">Select</option>
-                    @foreach($companies as $company)
-                        <option value="{{ $company->id }}" {{ old('company_id') == $company->id ? 'selected' : '' }}>{{ $company->name }}</option>
-                    @endforeach
-                </select>
-            @else
-                <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
-                <div class="form-control-plaintext">
-                    {{ $companies->firstWhere('id', $userCompanyId)->name ?? '' }}
-                </div>
-            @endif
-            @error('company_id') <div class="text-danger">{{ $message }}</div> @enderror
-        </div>
+    
 
-        @php
-            $companyIdError = session('errors') ? session('errors')->first('company_id') : null;
-        @endphp
-        @if($companyIdError)
-            <div class="alert alert-danger">
-                {{ $companyIdError }}
-            </div>
-        @endif
-        <div class="mb-3">
-            <label for="name" class="form-label">Name *</label>
-            <input type="text" class="form-control" id="name" name="name" required value="{{ old('name') }}">
-            @error('name') <div class="text-danger">{{ $message }}</div> @enderror
-        </div>
-        <div class="mb-3">
-            <label for="gst_number" class="form-label">GST Number</label>
-            <input type="text" class="form-control" id="gst_number" name="gst_number" value="{{ old('gst_number') }}">
-            @error('gst_number') <div class="text-danger">{{ $message }}</div> @enderror
-        </div>
-        <div class="mb-3">
-            <label for="gst_type" class="form-label">GST Type *</label>
-            <select class="form-select" id="gst_type" name="gst_type" required>
-                <option value="">Select</option>
-                <option value="composition" {{ old('gst_type') == 'composition' ? 'selected' : '' }}>Composition</option>
-                <option value="regular" {{ old('gst_type') == 'regular' ? 'selected' : '' }}>Regular</option>
-            </select>
-            @error('gst_type') <div class="text-danger">{{ $message }}</div> @enderror
-        </div>
-        <div class="mb-3">
-            <label for="pan_number" class="form-label">PAN Number</label>
-            <input type="text" class="form-control" id="pan_number" name="pan_number" value="{{ old('pan_number') }}">
-            @error('pan_number') <div class="text-danger">{{ $message }}</div> @enderror
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Type *</label><br>
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="is_owner" id="owner" value="1" {{ old('is_owner') === '1' ? 'checked' : '' }} required>
-                <label class="form-check-label" for="owner">Owner</label>
-            </div>
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="is_owner" id="agency" value="0" {{ old('is_owner') === '0' ? 'checked' : '' }} required>
-                <label class="form-check-label" for="agency">Agency</label>
-            </div>
-            @error('is_owner') <div class="text-danger">{{ $message }}</div> @enderror
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Declaration Given? *</label><br>
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="declaration_given" id="decl_yes" value="1" {{ old('declaration_given') === '1' ? 'checked' : '' }} required>
-                <label class="form-check-label" for="decl_yes">Yes</label>
-            </div>
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="declaration_given" id="decl_no" value="0" {{ old('declaration_given') === '0' ? 'checked' : '' }} required>
-                <label class="form-check-label" for="decl_no">No</label>
-            </div>
-            @error('declaration_given') <div class="text-danger">{{ $message }}</div> @enderror
-        </div>
-        <div class="mb-3">
-            <label for="total_trucks" class="form-label">Total Trucks *</label>
-            <input type="number" class="form-control" id="total_trucks" name="total_trucks" min="0" required value="{{ old('total_trucks', 0) }}">
-            @error('total_trucks') <div class="text-danger">{{ $message }}</div> @enderror
-        </div>
-        {{-- <div class="mb-3">
-            <label for="registered_truck_id" class="form-label">Registered Truck</label>
-            <input type="text" class="form-control" id="registered_truck_id" name="registered_truck_id" readonly value="">
-            @error('registered_truck_id') <div class="text-danger">{{ $message }}</div> @enderror
-        </div> --}}
-        {{-- <div class="mb-3">
-            <label for="advance_amount" class="form-label">Advance Amount</label>
-            <input type="number" step="0.01" class="form-control" id="advance_amount" name="advance_amount" value="{{ old('advance_amount', 0) }}">
-            @error('advance_amount') <div class="text-danger">{{ $message }}</div> @enderror
-        </div>
-        <button type="submit" class="btn btn-primary">Create Transporter</button>
-        <a href="{{ route('transporters.index') }}" class="btn btn-secondary ms-2">Back to List</a>
-    </form> --}}
-{{-- </div> --}}
+    
 @endsection
+

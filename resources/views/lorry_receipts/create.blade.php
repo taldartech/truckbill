@@ -239,9 +239,9 @@
                     <div class="col-md-3">
                         <button class="btn btn-secondary w-100 mb-2" type="button" title="Copies most data, clears variable fields">🔄 Save & Create Similar <span class="ms-1" data-bs-toggle="tooltip" title="Copies most data, clears variable fields">ℹ️</span></button>
                     </div>
-                    <div class="col-md-3">
-                        <button class="btn btn-warning w-100 mb-2" type="button" title="Save this combination for future use">📋 Save as Template <span class="ms-1" data-bs-toggle="tooltip" title="Save this combination for future use">ℹ️</span></button>
-                    </div>
+                    {{-- <div class="col-md-3"> --}}
+                        {{-- <button class="btn btn-warning w-100 mb-2" type="button" title="Save this combination for future use">📋 Save as Template <span class="ms-1" data-bs-toggle="tooltip" title="Save this combination for future use">ℹ️</span></button> --}}
+                    {{-- </div> --}}
                     <div class="col-md-3">
                         <a href="{{ route('lorry_receipts.index') }}" class="btn btn-outline-dark w-100 mb-2">📄 Back to List</a>
                     </div>

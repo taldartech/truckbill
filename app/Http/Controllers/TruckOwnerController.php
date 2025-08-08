@@ -3,6 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\TruckOwner;
+use App\Models\Transporter;
+use App\Models\Company;
+use App\Models\Country;
+use App\Models\State;
+use App\Models\City;
+use App\Models\Truck;
+use App\Models\Driver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -189,8 +196,16 @@ class TruckOwnerController extends Controller
         // For create, we can't filter trucks as we don't have transporter_id yet
         $trucks = \App\Models\Truck::all();
         $countries = \App\Models\Country::all();
-        $states = \App\Models\State::all();
-        $cities = \App\Models\City::all();
+        $states = [];
+        $cities = [];
+    
+    if (old('country_id')) {
+        $states = \App\Models\State::where('country_id', old('country_id'))->get();
+    }
+    
+    if (old('state_id')) {
+        $cities = \App\Models\City::where('state_id', old('state_id'))->get();
+    }
         return view('truck_owner.create', compact('companies', 'trucks', 'countries', 'states', 'cities'));
     }
 
@@ -217,11 +232,15 @@ class TruckOwnerController extends Controller
             'total_trucks' => 'required|integer|min:0',
             'advance_amount' => 'nullable|numeric',
             'pan_active' => 'required|boolean',
+            'address' => 'nullable|string|max:255',
+            'city_id' => 'nullable|exists:cities,id',
+            'state_id' => 'nullable|exists:states,id',
+            'country_id' => 'nullable|exists:countries,id',
+            'mobile_number' => [
+                'required',
+                'digits:10',
+            ],
             'short_name' => 'nullable|string|max:255',
-            'country_id' => 'required|exists:countries,id',
-            'state_id' => 'required|exists:states,id',
-            'city_id' => 'required|exists:cities,id',
-            'mobile_number' => 'required|string|max:15',
         ]);
         if (!isset($validated['advance_amount'])) {
             $validated['advance_amount'] = 0;
@@ -234,13 +253,35 @@ class TruckOwnerController extends Controller
         \App\Models\Transporter::create($validated);
         return redirect()->route('truck_owners.index')->with('success', 'TruckOwner created successfully!');
     }
+    public function checkTruckNumber(Request $request)
+{
+    $exists = \App\Models\Truck::where('truck_number', $request->truck_number)->exists();
+    return response()->json(['exists' => $exists]);
+}
 
     public function edit(\App\Models\Transporter $transporter)
     {
         $companies = \App\Models\Company::all();
         // Filter trucks to show only those belonging to this transporter
         $trucks = \App\Models\Truck::where('transporter_id', $transporter->id)->get();
-        return view('truck_owner.edit', compact('transporter', 'companies', 'trucks'));
+        $countries = \App\Models\Country::all();
+        $states = [];
+        $cities = [];
+    
+    if (old('country_id')) {
+        $states = \App\Models\State::where('country_id', old('country_id'))->get();
+    }
+    
+    if (old('state_id')) {
+        $cities = \App\Models\City::where('state_id', old('state_id'))->get();
+    }
+
+    // Fetch trucks with driver details
+    $trucks = \App\Models\Truck::with('driver') // assuming relationship exists
+        ->where('transporter_id', $transporter->id)
+        ->get();
+        
+        return view('truck_owner.edit', compact('transporter', 'companies', 'trucks', 'countries', 'states', 'cities'));
     }
 
     public function update(Request $request, \App\Models\Transporter $transporter)
@@ -266,11 +307,15 @@ class TruckOwnerController extends Controller
             'total_trucks' => 'required|integer|min:0',
             'advance_amount' => 'nullable|numeric',
             'pan_active' => 'required|boolean',
-            'mobile_number' => 'required|string|max:15',
+            'address' => 'nullable|string|max:255',
+            'city_id' => 'nullable|exists:cities,id',
+            'state_id' => 'nullable|exists:states,id',
+            'country_id' => 'nullable|exists:countries,id',
+            'mobile_number' => [
+                'required',
+                'digits:10',
+            ],
             'short_name' => 'nullable|string|max:255',
-            'country_id' => 'required|exists:countries,id',
-            'state_id' => 'required|exists:states,id',
-            'city_id' => 'required|exists:cities,id',
         ]); 
         if (!isset($validated['advance_amount'])) {
             $validated['advance_amount'] = 0;

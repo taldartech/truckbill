@@ -57,17 +57,17 @@ class FreightBookingController extends Controller
                 })
                
                 ->addColumn('tr_rate_formatted', function ($row) {
-                    return $row->tr_rate ? '₹' . number_format($row->tr_rate, 2) : '₹0.00';
+                    return $row->tr_fr_rate ? '₹' . number_format($row->tr_fr_rate, 2) : '₹0.00';
                 })
                 ->addColumn('tr_amount_formatted', function ($row) {
                     return $row->tr_amount ? '₹' . number_format($row->tr_amount, 2) : '₹0.00';
                 })
                 ->addColumn('advance_formatted', function ($row) {
-                    return $row->advance ? '₹' . number_format($row->advance, 2) : '₹0.00';
+                    return $row->advance_amount ? '₹' . number_format($row->advance_amount, 2) : '₹0.00';
                 })
                 ->addColumn('balance_formatted', function ($row) {
-                    $balance = ($row->tr_amount ?? 0) - ($row->advance ?? 0);
-                    return '₹' . number_format($balance, 2);
+                   
+                    return '₹' . number_format($row->balance_amount, 2);
                 })
                 ->addColumn('gr_date_formatted', function ($row) {
                     return $row->lr && $row->lr->gr_date ? date('d-m-Y', strtotime($row->lr->gr_date)) : '-';
@@ -142,7 +142,11 @@ $actions .= '</a>';
 
     public function getFreightBookingDetails($id)
 {
-    $freightBooking = FreightBooking::with('lr')->find($id);
+    $freightBooking = FreightBooking::with([
+        'lr' => function ($query) {
+            $query->with(['transporter', 'truck', 'consignor', 'consignee']);
+        }
+    ])->find($id);
 
     if (!$freightBooking) {
         return response()->json(['error' => 'Freight Booking not found'], 404);
@@ -288,8 +292,16 @@ $actions .= '</a>';
 
     public function edit(FreightBooking $freight_booking)
     {
+
+        $companies = \App\Models\Company::all();
         // Get the LorryReceipt details
         $lorryReceipt = LorryReceipt::find($freight_booking->lr_id);
+         // Get TDS percentages from config
+         $tdsPercentages = [
+            'default' => env('TDS_PERCENTAGE_DEFAULT', 20),
+            'agency' => env('TDS_PERCENTAGE_AGENCY', 2),
+            'owner' => env('TDS_PERCENTAGE_OWNER', 1)
+        ];
         
         // Get the transporter details
         $transporter = \App\Models\Transporter::find($lorryReceipt->transporter_id);
@@ -302,15 +314,58 @@ $actions .= '</a>';
         
         // Get goods types
         $goodsTypes = \App\Models\GoodType::all();
+        $lorry_receipt = \App\Models\LorryReceipt::with(['transporter:id,name', 'truck:id,truck_number'])
+        ->select('id', 'lr_number', 'transporter_id', 'truck_id','customer_id','consignor_id','consignee_id','good_type')
+        ->when($lorryReceipt, function ($query) use ($lorryReceipt) {
+            $query->where('id', $lorryReceipt->id);
+        })
+        ->get();
+
         
         // Get linked bookings
         $linkedBookings = FreightBooking::where('id', '!=', $freight_booking->id)->get();
+         // If lorry_receipt_id is provided, fetch LR number and related data
+         if ($lorryReceipt) {
+            $lr = \App\Models\LorryReceipt::find($lorryReceipt->id);
+            if ($lr) {
+                // Fetch transporter and truck details directly from their models
+                $transporter = \App\Models\Transporter::find($lr->transporter_id);
+                $truck = \App\Models\Truck::find($lr->truck_id);
+                
+                return view('freight_bookings.edit', [
+                    'freight_booking' => $freight_booking,
+                    'companies' => $companies,
+                    'lrs' => $lrs,
+                    'linkedBookings' => $linkedBookings,
+                    'goodsTypes' => $goodsTypes,
+                    'lorry_receipt' => $lorry_receipt,
+                    'weight' => $lr->weight,
+                    
+                    'transporter' => $transporter ?? null,
+                    'tdsPercentages' => $tdsPercentages,
+                    'preFilled' => [
+                        'lr_number' => $lr->lr_number,
+                        'lr_id' => $lr->id,
+                        'transporter_id' => $lr->transporter_id,
+                        'transporter_name' => $transporter ? $transporter->name : '',
+                        'truck_id' => $lr->truck_id,
+                        'truck_number' => $truck ? $truck->truck_number : '',
+                        'pan_verified' => $transporter ? $transporter->pan_active : 0,
+                        'is_owner' => $transporter ? $transporter->is_owner : 0,
+                        'goods_type' => $lr->good_type,
+                        'memo_id' => $lr->memo_id
+                        
+                        
+                    ]
+                ]);
+            }
+        }
         
         return view('freight_bookings.edit', [
             'freight_booking' => $freight_booking,
-            'lrs' => $lrs,
+            'lorry_receipt' => $lrs,
             'linkedBookings' => $linkedBookings,
-            'goodsTypes' => $goodsTypes,
+            'goods_type' => $goodsTypes,
             'transporter' => $transporter,
             'truck' => $truck,
             'preFilled' => [
@@ -403,6 +458,7 @@ $actions .= '</a>';
             $lorryReceipt->delivery_status = $deliveryStatus;
             $lorryReceipt->damage_amount = $freight_booking->damage_amount;
             $lorryReceipt->shortage_amount = $freight_booking->shortage_amount;
+            $lorryReceipt->amount = $lorryReceipt->amount-($freight_booking->damage_amount + $freight_booking->shortage_amount);
             $lorryReceipt->save();
         }
 

@@ -264,8 +264,19 @@ class TransporterController extends Controller
         // Filter trucks to show only those belonging to this transporter
         $trucks = \App\Models\Truck::where('transporter_id', $transporter->id)->get();
         $countries = \App\Models\Country::all();
-        $states = $transporter->country_id ? \App\Models\State::where('country_id', $transporter->country_id)->get() : collect();
-        $cities = $transporter->state_id ? \App\Models\City::where('state_id', $transporter->state_id)->get() : collect();
+        $states = [];
+        $cities = [];
+    
+    if (old('country_id')) {
+        $states = \App\Models\State::where('country_id', old('country_id'))->get();
+    }
+    
+    if (old('state_id')) {
+        $cities = \App\Models\City::where('state_id', old('state_id'))->get();
+    }
+        // $countries = \App\Models\Country::all();
+        // $states = $transporter->country_id ? \App\Models\State::where('country_id', $transporter->country_id)->get() : collect();
+        // $cities = $transporter->state_id ? \App\Models\City::where('state_id', $transporter->state_id)->get() : collect();
         return view('transporters.edit', compact('transporter', 'companies', 'trucks', 'countries', 'states', 'cities'));
     }
 
@@ -300,6 +311,8 @@ class TransporterController extends Controller
                 'required',
                 'digits:10',
             ],
+            'short_name' => 'nullable|string|max:255',
+
         ]); 
         if (!isset($validated['advance_amount'])) {
             $validated['advance_amount'] = 0;

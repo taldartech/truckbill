@@ -95,9 +95,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/truck_owners', [TruckOwnerController::class, 'index'])->name('truck_owners.index');
     Route::get('/truck_owners/create', [TruckOwnerController::class, 'create'])->name('truck_owners.create');
     Route::post('/truck_owners', [TruckOwnerController::class, 'store'])->name('truck_owners.store');
-    Route::get('/truck_owners/{truck_owner}/edit', [TruckOwnerController::class, 'edit'])->name('truck_owners.edit');
-    Route::put('/truck_owners/{truck_owner}', [TruckOwnerController::class, 'update'])->name('truck_owners.update');
-    Route::delete('/truck_owners/{truck_owner}', [TruckOwnerController::class, 'destroy'])->name('truck_owners.destroy');
+    Route::get('/truck_owners/{transporter}/edit', [TruckOwnerController::class, 'edit'])->name('truck_owners.edit');
+    Route::put('/truck_owners/{transporter}', [TruckOwnerController::class, 'update'])->name('truck_owners.update');
+    Route::delete('/truck_owners/{transporter}', [TruckOwnerController::class, 'destroy'])->name('truck_owners.destroy');
 
     // Advance Payment Management
     Route::get('/advance-payments', [AdvancePaymentController::class, 'index'])->name('advance-payments.index');
@@ -114,6 +114,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/trucks/{truck}/edit', [TruckController::class, 'edit'])->name('trucks.edit');
     Route::put('/trucks/{truck}', [TruckController::class, 'update'])->name('trucks.update');
     Route::delete('/trucks/{truck}', [TruckController::class, 'destroy'])->name('trucks.destroy');
+    // Route::get('/check-truck-number', [TruckController::class, 'checkTruckNumber'])->name('check.truck.number');
+    Route::get('/check-truck-number', function (Illuminate\Http\Request $request) {
+        $exists = \App\Models\Truck::where('truck_number', $request->truck_number)->exists();
+        return response()->json(['exists' => $exists]);
+    });
 
     // Truck Reporting
     Route::get('/trucks/report', [TruckController::class, 'report'])->name('trucks.report');

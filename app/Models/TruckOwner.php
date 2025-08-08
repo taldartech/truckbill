@@ -21,6 +21,11 @@ class TruckOwner extends Model
         'total_trucks',
         'advance_amount',
         'pan_active',
+        'address',
+        'city_id',
+        'state_id',
+        'country_id',
+        'mobile_number',
         'short_name',
     ];
 
@@ -61,4 +66,21 @@ class TruckOwner extends Model
             ->when($filters['company_id'] ?? false, fn($query, $company_id) => 
                 $query->where('company_id', $company_id));
     }
+    public function city()
+    {
+        return $this->belongsTo(City::class);
+    }   
+    public function state()
+    {
+        return $this->belongsTo(State::class);
+    }   
+    public function country()
+    {
+        return $this->belongsTo(Country::class);
+    }  
+   // In Truck.php
+public function driver()
+{
+    return $this->belongsTo(\App\Models\Driver::class);
+}
 }

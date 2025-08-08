@@ -19,6 +19,7 @@ class LorryReceipt extends Model
         'customer_id',
         'consignor_contact_number',
         'consignee_id',
+        'consignee_contact_number',
         'source_city',
         'destination_city',
         'source_state',

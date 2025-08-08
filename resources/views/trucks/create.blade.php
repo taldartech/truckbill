@@ -6,7 +6,7 @@
     <div class="card-header"><div class="card-title">Add New Truck</div></div>
     <!--end::Header-->
     <!--begin::Form-->
-    <form action="{{ route('trucks.store') }}" method="POST" class="needs-validation" novalidate="">
+    <form id="truckForm" action="{{ route('trucks.store') }}" method="POST" class="needs-validation" novalidate="">
         @csrf
         <!--begin::Body-->
         <div class="card-body">
@@ -24,7 +24,7 @@
                 <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="truck_number" class="form-label">Truck Number *</label>
-                    <input type="text" class="form-control" id="truck_number" name="truck_number" required value="{{ old('truck_number') }}">
+                    <input type="text" class="form-control" placeholder="Enter Truck Number" id="truck_number" name="truck_number" required value="{{ old('truck_number') }}">
                     @error('truck_number') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please enter a truck number.</div>
                 </div>
@@ -70,7 +70,7 @@
                 <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="registration_date" class="form-label">Registration Date *</label>
-                    <input type="date" class="form-control" id="registration_date" name="registration_date"  value="{{ old('registration_date') }}">
+                    <input type="date" class="form-control" placeholder="Enter Registration Date" id="registration_date" name="registration_date"  value="{{ old('registration_date') }}">
                     @error('registration_date') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please select a registration date.</div>
                 </div>
@@ -127,5 +127,36 @@
         })();
     </script>
     <!--end::JavaScript-->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('truckForm').addEventListener('submit', function(e) {
+                e.preventDefault(); // Stop Laravel submit
+        
+                let truckNumber = document.getElementById('truck_number').value.trim();
+                if (truckNumber === '') {
+                    alert('Please enter a Truck Number');
+                    return;
+                }
+        
+                fetch(`/check-truck-number?truck_number=${encodeURIComponent(truckNumber)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.exists) {
+                            alert('🚫 This Truck Number already exists.');
+                            document.getElementById('truck_number').focus();
+                        } else {
+                            e.target.submit(); // No duplicate → Submit form
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        e.target.submit(); // fallback submit
+                    });
+            });
+        });
+        </script>
+        
+        
+    
 </div>
 @endsection

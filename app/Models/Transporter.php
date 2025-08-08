@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Transporter extends Model
 {
@@ -55,4 +56,9 @@ class Transporter extends Model
         return $this->belongsTo(Country::class);
     }
     //
+   // In Truck.php
+public function driver()
+{
+    return $this->belongsTo(\App\Models\Driver::class);
+}
 }
