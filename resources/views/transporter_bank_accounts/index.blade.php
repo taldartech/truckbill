@@ -2,166 +2,179 @@
 
 @section('content')
 <div class="container mt-4">
-    <div class="col-sm-6"><h3 class="mb-0">Transporter Bank Accounts</h3></div>
+    <div class="col-sm-6"><h3 class="mb-0">Transporter Bank Account Setup</h3></div>
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
-    <div class="d-flex justify-content-end gap-2 mb-3">
-        <button type="button" class="btn btn-info" onclick="document.getElementById('advanced-search-box').classList.toggle('d-none')">
-            <i class="bi bi-funnel"></i> Search filter
-        </button>
-        {{-- <a href="{{ route('transporter_bank_accounts.create') }}" class="btn btn-info">
-            <i class="bi bi-plus"></i> create
-        </a> --}}
+    <!-- Company Selection -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Select Company</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{{ route('transporter_bank_accounts.index') }}">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label">Company <span class="text-danger">*</span></label>
+                        <select name="company_id" class="form-select" onchange="this.form.submit()">
+                            <option value="">-- Select Company --</option>
+                            @foreach($companies as $company)
+                                <option value="{{ $company->id }}" {{ $selectedCompanyId == $company->id ? 'selected' : '' }}>
+                                    {{ $company->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
 
-    <form method="GET" action="{{ route('transporter_bank_accounts.index') }}" id="advanced-search-box" class="card card-body shadow-sm mb-4 d-none">
-        {{-- Filter checkboxes --}}
-        <div class="row g-2">
-            <div class="col-md-12">
-                <label class="form-label fw-bold">Choose Filter Fields:</label>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" value="transporter_id" id="filter_transporter" onchange="toggleField(this)">
-                    <label class="form-check-label" for="filter_transporter">Transporter</label>
+    @if($selectedCompanyId)
+    
+    <!-- Search Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Search Transporters</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{{ route('transporter_bank_accounts.index') }}">
+                <input type="hidden" name="company_id" value="{{ $selectedCompanyId }}">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="input-group">
+                            <input type="text" name="search" class="form-control" placeholder="Search by name, GST number, PAN number, or beneficiary ID..." value="{{ $search }}">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="bi bi-search"></i> Search
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        @if($search)
+                            <a href="{{ route('transporter_bank_accounts.index', ['company_id' => $selectedCompanyId]) }}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Clear Search
+                            </a>
+                        @endif
+                    </div>
                 </div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" value="bank_name" id="filter_bank_name" onchange="toggleField(this)">
-                    <label class="form-check-label" for="filter_bank_name">Bank Name</label>
-                </div>
-                {{-- <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" value="account_number" id="filter_account_number" onchange="toggleField(this)">
-                    <label class="form-check-label" for="filter_account_number">Account Number</label>
-                </div> --}}
-            </div>
+            </form>
         </div>
-
-        {{-- Conditionally visible filter fields --}}
-        <div class="row g-3 mt-2" id="filter-fields">
-            <div class="col-md-3 d-none" id="field_transporter_id">
-                <label class="form-label">Transporter</label>
-                <select name="transporter_id" class="form-select">
-                    <option value="">All Transporters</option>
-                    @foreach($transporters as $transporter)
-                        <option value="{{ $transporter->id }}" {{ request('transporter_id') == $transporter->id ? 'selected' : '' }}>
-                            {{ $transporter->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-3 d-none" id="field_bank_name">
-                <label class="form-label">Bank Name</label>
-                <input type="text" name="bank_name" class="form-control" value="{{ request('bank_name') }}">
-            </div>
-            {{-- <div class="col-md-3 d-none" id="field_account_number">
-                <label class="form-label">Account Number</label>
-                <input type="text" name="account_number" class="form-control" value="{{ request('account_number') }}">
-            </div> --}}
-        </div>
-
-        {{-- Form action buttons --}}
-        <div class="text-end mt-3">
-            <button type="submit" class="btn btn-secondary">
-                <i class="bi bi-search"></i> Search
-            </button>
-            <a href="{{ route('transporter_bank_accounts.index') }}" class="btn btn-outline-secondary ms-2">
-                <i class="bi bi-arrow-clockwise"></i> Reset
-            </a>
-        </div>
-    </form>
+    </div>
 
     <div class="card mb-4">
-        <div class="card-header"><h3 class="card-title">Bank Accounts List</h3></div>
+        <div class="card-header">
+            <h3 class="card-title">Transporters List</h3>
+            @if($search)
+                <small class="text-muted">Search results for: "{{ $search }}"</small>
+            @endif
+        </div>
         <div class="card-body" style="overflow-x: auto;">
             <table class="table table-bordered">
                 <thead>
                     <tr>
                         <th style="width: 10px">ID</th>
-                        <th>Transporter</th>
-                        <th>Bank Name</th>
-                        {{-- <th>Account Number</th>
-                        <th>IFSC Code</th> --}}
-                        <th>Beneficiary Name</th>
-                        <th>Bulk Payment ID</th>
+                        <th>Name</th>
+                        <th>GST Number</th>
+                        <th>PAN Number</th>
+                        <th>Bank Beneficiary ID</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($accounts as $account)
+                    @forelse($transporters as $transporter)
                     <tr class="align-middle">
-                        <td>{{ $account->id }}</td>
-                        <td>{{ $account->transporter->name }}</td>
-                        <td>{{ $account->bank_name }}</td>
-                        {{-- <td>{{ $account->account_number }}</td>
-                        <td>{{ $account->ifsc_code }}</td> --}}
-                        <td>{{ $account->beneficiary_name }}</td>
-                        <td>{{ $account->bulk_payment_id }}</td>
+                        <td>{{ $transporter->id }}</td>
+                        <td>{{ $transporter->name }}</td>
+                        <td>{{ $transporter->gst_number ?? '-' }}</td>
+                        <td>{{ $transporter->pan_number ?? '-' }}</td>
                         <td>
-                            <div class="d-inline-flex gap-1">
-                                <a href="{{ route('transporter_bank_accounts.edit', $account->id) }}" class="btn btn-sm btn-warning" data-bs-toggle="tooltip" 
-                            data-bs-placement="top" 
-                            title="Edit Bank Account">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                                <form action="{{ route('transporter_bank_accounts.destroy', $account) }}" method="POST" style="display:inline-block;">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-danger" data-bs-toggle="tooltip" 
-                            data-bs-placement="top" 
-                            title="Delete Bank Account" onclick="return confirm('Are you sure?')">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
-                                </form>
-                            </div>
+                            @if($transporter->beneficiary_id)
+                                <span class="badge bg-success">{{ $transporter->beneficiary_id }}</span>
+                            @else
+                                <span class="badge bg-warning">Not Set</span>
+                            @endif
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#beneficiaryModal{{ $transporter->id }}">
+                                <i class="bi bi-bank"></i> {{ $transporter->beneficiary_id ? 'Update' : 'Add' }} Beneficiary ID
+                            </button>
                         </td>
                     </tr>
+
+                    <!-- Beneficiary ID Modal -->
+                    <div class="modal fade" id="beneficiaryModal{{ $transporter->id }}" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">{{ $transporter->beneficiary_id ? 'Update' : 'Add' }} Beneficiary ID</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <form action="{{ route('transporter_bank_accounts.updateBeneficiaryId', $transporter->id) }}" method="POST">
+                                    @csrf
+                                    @method('PUT')
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">Transporter</label>
+                                            <input type="text" class="form-control" value="{{ $transporter->name }}" readonly>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Beneficiary ID <span class="text-danger">*</span></label>
+                                            <input type="text" name="beneficiary_id" class="form-control {{ $errors->has('beneficiary_id') ? 'is-invalid' : '' }}" value="{{ old('beneficiary_id', $transporter->beneficiary_id) }}" required>
+                                            @error('beneficiary_id')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-primary">{{ $transporter->beneficiary_id ? 'Update' : 'Save' }}</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
                     @empty
                     <tr>
-                        <td colspan="8" class="text-center">
+                        <td colspan="6" class="text-center">
                             <div class="empty-state">
-                                <i class="bi bi-box"></i>
-                                <p class="mt-2">No bank accounts found.</p>
+                                <i class="bi bi-truck"></i>
+                                <p class="mt-2">No transporters found for this company.</p>
                             </div>
                         </td>
                     </tr>
                     @endforelse
                 </tbody>
             </table>
-            {{ $accounts->links() }}
+            
+            <!-- Pagination -->
+            @if($transporters instanceof \Illuminate\Pagination\LengthAwarePaginator && $transporters->hasPages())
+                <div class="d-flex justify-content-center mt-3">
+                    {{ $transporters->links() }}
+                </div>
+            @endif
         </div>
     </div>
+    @else
+    <div class="card mb-4">
+        <div class="card-body text-center">
+            <div class="empty-state">
+                <i class="bi bi-building fa-3x text-muted mb-3"></i>
+                <h5>Select a Company</h5>
+                <p class="text-muted">Please select a company from the dropdown above to view transporters and manage their beneficiary IDs.</p>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>
 
+@if($errors->has('beneficiary_id'))
 <script>
-    function toggleField(checkbox) {
-        const fieldId = 'field_' + checkbox.value;
-        const field = document.getElementById(fieldId);
-        if (checkbox.checked) {
-            field.classList.remove('d-none');
-        } else {
-            field.classList.add('d-none');
-            const input = field.querySelector('input, select');
-            if (input) input.value = '';
-        }
-    }
-
-    // Initialize filter fields based on URL parameters
     document.addEventListener('DOMContentLoaded', function() {
-        // Get all filter checkboxes
-        const checkboxes = document.querySelectorAll('.form-check-input');
-        
-        // Check each checkbox based on URL parameters
-        checkboxes.forEach(checkbox => {
-            const value = checkbox.value;
-            const fieldId = 'field_' + value;
-            const field = document.getElementById(fieldId);
-            const urlValue = new URLSearchParams(window.location.search).get(value);
-            
-            if (urlValue) {
-                checkbox.checked = true;
-                field.classList.remove('d-none');
-            }
-        });
+        // Show alert with the validation error message
+        alert('{{ $errors->first('beneficiary_id') }}');
     });
 </script>
+@endif
+
 @endsection

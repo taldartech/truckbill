@@ -25,6 +25,7 @@ class Transporter extends Model
         'country_id',
         'mobile_number',
         'short_name',
+        'beneficiary_id',
     ];
 
     protected $casts = [
@@ -36,10 +37,7 @@ class Transporter extends Model
         return $this->belongsTo(Company::class);
     }
 
-    public function bankAccounts()
-    {
-        return $this->hasMany(TransporterBankAccount::class);
-    }
+
 
     public function city()
     {

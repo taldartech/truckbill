@@ -278,6 +278,29 @@
                         <p>Users</p>
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link{{ (Request::is('truck_owner_bank_accounts*') || Request::is('transporter_bank_accounts*')) ? ' active' : '' }}" href="#bankAccountMenu">
+                        <i class="fas fa-university"></i> 
+                        <p>
+                            Bank Account Setup
+                            <i class="nav-arrow bi bi-chevron-right"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="/truck_owner_bank_accounts/index" class="nav-link{{ Request::is('truck_owner_bank_accounts/index') ? ' active' : '' }}">
+                                <i class="fas fa-truck"></i> 
+                                <p>Truck Owners</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/transporter_bank_accounts/index" class="nav-link{{ Request::is('transporter_bank_accounts/index') ? ' active' : '' }}">
+                                <i class="fas fa-shipping-fast"></i> 
+                                <p>Transporters</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
                 <li class="nav-item" >
                     <a class="nav-link "  href="#masterMenu" >
                         <i class="fas fa-money-check-alt"></i>  <p>
@@ -327,7 +350,7 @@
                   {{-- Master data menus hidden from moderator/accountant/operator users --}}
                   @if(auth()->check() && !in_array(auth()->user()->userRole->name, [ 'accountant','super_admin']))
                   <li class="nav-item">
-                    <a class="nav-link{{ (Request::is('transporters*') || Request::is('transporters/create') || Request::is('transporter_bank_accounts/create')) ? ' active' : '' }}" href="#transporterMenu">
+                    <a class="nav-link{{ (Request::is('transporters*') || Request::is('transporters/create')) ? ' active' : '' }}" href="#transporterMenu">
                         <i class="fas fa-truck"></i> 
                         <p> Transporter </p>
                         <i class="nav-arrow bi bi-chevron-right"></i>
@@ -345,14 +368,7 @@
                             <p>Register</p>
                             </a>
                         </li>
-                        @if(auth()->check() && auth()->user()->userRole->name === 'super_admin')
-                        <li class="nav-item">
-                            <a href="/transporter_bank_accounts/index" class="nav-link{{ Request::is('transporter_bank_accounts/index') ? ' active' : '' }}">
-                              <i class="fas fa-university"></i> 
-                            <p>Add Bank Details</p>
-                            </a>
-                        </li>
-                        @endif
+
                     </ul>
                   </li>
 
@@ -375,14 +391,7 @@
                             <p>Register</p>
                             </a>
                           </li>
-                          @if(auth()->check() && auth()->user()->userRole->name === 'super_admin')
-                          <li class="nav-item">
-                            <a href="/truck_owner_bank_accounts/index" class="nav-link{{ Request::is('truck_owner_bank_accounts/index') ? ' active' : '' }}">
-                              <i class="fas fa-university"></i> 
-                            <p>Add Bank Details</p>
-                            </a>
-                          </li>
-                          @endif
+
                     </ul>
                   </li>
                   <li class="nav-item">

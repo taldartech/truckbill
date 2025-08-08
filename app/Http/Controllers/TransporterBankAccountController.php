@@ -2,71 +2,62 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\TransporterBankAccount;
 use App\Models\Transporter;
 use Illuminate\Http\Request;
 
 class TransporterBankAccountController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $transporters = Transporter::where('is_owner', 0)->get();
-        $accounts = TransporterBankAccount::with('transporter')
-            ->whereHas('transporter', function($query) {
-                $query->where('is_owner', 0);
-            })
-            ->paginate(10);
-        return view('transporter_bank_accounts.index', compact('accounts', 'transporters'));
+        // Get all companies for super admin
+        $companies = \App\Models\Company::all();
+        
+        // Get selected company ID and search term
+        $selectedCompanyId = $request->get('company_id');
+        $search = $request->get('search');
+        
+        // Initialize empty collections
+        $transporters = collect();
+        
+        // If company is selected, get transporters for that company (excluding truck owners)
+        if ($selectedCompanyId) {
+            $query = Transporter::where('is_owner', 0)
+                ->where('company_id', $selectedCompanyId);
+            
+            // Add search functionality
+            if ($search) {
+                $query->where(function($q) use ($search) {
+                    $q->where('name', 'LIKE', '%' . $search . '%')
+                      ->orWhere('gst_number', 'LIKE', '%' . $search . '%')
+                      ->orWhere('pan_number', 'LIKE', '%' . $search . '%')
+                      ->orWhere('beneficiary_id', 'LIKE', '%' . $search . '%');
+                });
+            }
+            
+            $transporters = $query->paginate(10)->appends($request->query());
+        }
+        
+        return view('transporter_bank_accounts.index', compact('companies', 'transporters', 'selectedCompanyId', 'search'));
     }
 
-    public function create($transporter_id)
+    public function updateBeneficiaryId(Request $request, $transporterId)
     {
-        $transporter = Transporter::findOrFail($transporter_id);
-        return view('transporter_bank_accounts.create', compact('transporter', 'transporter_id'));
-    }
-
-    public function store(Request $request)
-    {
+        $transporter = Transporter::findOrFail($transporterId);
+        
         $validated = $request->validate([
-            'transporter_id' => 'required|exists:transporters,id',
-            'bank_name' => 'required|string|max:255',
-            'account_number' => 'nullable|string|max:255',
-            'ifsc_code' => 'nullable|string|max:11',
-            'beneficiary_name' => 'required|string|max:255',
-            'bulk_payment_id' => 'nullable|string|max:255',
+            'beneficiary_id' => [
+                'required',
+                'string',
+                'max:255',
+                // Check uniqueness but exclude current transporter
+                \Illuminate\Validation\Rule::unique('transporters', 'beneficiary_id')->ignore($transporter->id)
+            ],
+        ], [
+            'beneficiary_id.unique' => 'This Beneficiary ID is already in use by another transporter/truck owner.',
         ]);
 
-        TransporterBankAccount::create($validated);
-        return redirect()->route('transporter_bank_accounts.index')->with('success', 'Bank account added successfully!');
-    }
+        $transporter->update(['beneficiary_id' => $validated['beneficiary_id']]);
 
-    public function edit(TransporterBankAccount $transporter_bank_account)
-    {
-        $transporters = Transporter::where('is_owner', 0)->get();
-        return view('transporter_bank_accounts.edit', [
-            'account' => $transporter_bank_account,
-            'transporters' => $transporters
-        ]);
-    }
-
-    public function update(Request $request, TransporterBankAccount $transporter_bank_account)
-    {
-        $validated = $request->validate([
-            'transporter_id' => 'required|exists:transporters,id',
-            'bank_name' => 'required|string|max:255',
-            'account_number' => 'nullable|string|max:255',
-            'ifsc_code' => 'nullable|string|max:11',
-            'beneficiary_name' => 'required|string|max:255',
-            'bulk_payment_id' => 'nullable|string|max:255',
-        ]);
-
-        $transporter_bank_account->update($validated);
-        return redirect()->route('transporter_bank_accounts.index')->with('success', 'Bank account updated successfully!');
-    }
-
-    public function destroy(TransporterBankAccount $account)
-    {
-        $account->delete();
-        return redirect()->route('transporter_bank_accounts.index')->with('success', 'Bank account deleted successfully!');
+        return redirect()->back()->with('success', 'Beneficiary ID updated successfully!');
     }
 }
