@@ -37,8 +37,8 @@
                 <label class="form-label">Customer *</label>
                 <select name="customer_id" class="form-select" required>
                     <option value="">Select</option>
-                    @foreach($customers as $customer)
-                        <option value="{{ $customer->id }}" {{ old('customer_id', $invoice->customer_id) == $customer->id ? 'selected' : '' }}>{{ $customer->name }}</option>
+                    @foreach($consignees as $consignee)
+                        <option value="{{ $consignee->id }}" {{ old('customer_id', $invoice->customer_id) == $consignee->id ? 'selected' : '' }}>{{ $consignee->name }}</option>
                     @endforeach
                 </select>
             </div>

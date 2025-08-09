@@ -292,6 +292,7 @@ class LorryReceiptController extends Controller
     return response()->json([
         'pan_active' => $transporter->pan_active,
         'is_owner' => $transporter->is_owner,
+        'declaration_given' => $transporter->declaration_given,
     ]);
 }
 

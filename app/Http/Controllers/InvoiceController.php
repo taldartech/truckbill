@@ -176,6 +176,7 @@ public function getCustomerMemos($customerId)
     $memos = DB::table('lorry_receipts')
         ->select('memo_id')
         ->where('customer_id', $customerId)
+        ->where('invoice_generated', 0) // ✅ Only those not yet invoiced
         ->whereNotNull('memo_id')
         ->distinct()
         ->get()
@@ -214,6 +215,13 @@ public function getCustomerMemos($customerId)
           // Separate memo_ids from the rest of invoice data
     $memoIds = $request->input('memo_ids', []);
     unset($data['memo_ids']);
+
+    // ✅ Update lorry_receipts before invoice creation
+    if (!empty($memoIds)) {
+        \App\Models\LorryReceipt::whereIn('memo_id', $memoIds)
+            ->update(['invoice_generated' => 1]);
+    }
+
     
         $invoice = Invoice::create($data);
         // if (!empty($data['memo_ids'])) {
@@ -253,7 +261,8 @@ public function getCustomerMemos($customerId)
     public function edit(Invoice $invoice)
     {
         $companies = Company::all();
-        $customers = Customer::all();
+    $consignees = Consignee::all();
+        
         
         // Get all memos for this customer
         $memos = DB::table('lorry_receipts')
@@ -275,7 +284,7 @@ public function getCustomerMemos($customerId)
                 ];
             });
 
-        return view('invoices.edit', compact('invoice', 'companies', 'customers', 'memos'));
+        return view('invoices.edit', compact('invoice', 'companies', 'consignees', 'memos'));
     }
 
     public function update(Request $request, Invoice $invoice)

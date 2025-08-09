@@ -635,13 +635,19 @@
                     fetch(`/transporter/${transporterId}/tds-info`)
                         .then(response => response.json())
                         .then(data => {
-                            const { pan_active, is_owner } = data;
+                            const { pan_active, is_owner, declaration_given } = data;
+
+           
         
                             if (pan_active == 0 || pan_active === false) {
                                 tdsRateDisplay.textContent = `TDS RATE= ${tdsPercentages.default}% (Default - PAN not active)`;
                             } else {
                                 if (is_owner == 1) {
-                                    tdsRateDisplay.textContent = `TDS RATE= ${tdsPercentages.owner}%`;
+                                    if (declaration_given == 1) {
+                                        tdsRateDisplay.textContent = `TDS RATE= 0% (Declaration Given)`;
+                                    } else {
+                                        tdsRateDisplay.textContent = `TDS RATE= ${tdsPercentages.owner}%`;
+                                    }
                                 } else {
                                     tdsRateDisplay.textContent = `TDS RATE= ${tdsPercentages.agency}%`;
                                 }

@@ -207,6 +207,7 @@ $actions .= '</a>';
                         'truck_number' => $truck ? $truck->truck_number : '',
                         'pan_verified' => $transporter ? $transporter->pan_active : 0,
                         'is_owner' => $transporter ? $transporter->is_owner : 0,
+                        'declaration_given' => $transporter ? $transporter->declaration_given : 0,
                         'goods_type' => $lr->good_type,
                         
                         

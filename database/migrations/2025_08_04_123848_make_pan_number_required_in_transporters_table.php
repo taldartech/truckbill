@@ -6,23 +6,18 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::table('transporters', function (Blueprint $table) {
-            //
+            $table->string('pan_number')->nullable(false)->change();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('transporters', function (Blueprint $table) {
-            //
+            $table->string('pan_number')->nullable()->change();
         });
     }
 };
+

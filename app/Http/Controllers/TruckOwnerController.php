@@ -253,11 +253,6 @@ class TruckOwnerController extends Controller
         \App\Models\Transporter::create($validated);
         return redirect()->route('truck_owners.index')->with('success', 'TruckOwner created successfully!');
     }
-    public function checkTruckNumber(Request $request)
-{
-    $exists = \App\Models\Truck::where('truck_number', $request->truck_number)->exists();
-    return response()->json(['exists' => $exists]);
-}
 
     public function edit(\App\Models\Transporter $transporter)
     {

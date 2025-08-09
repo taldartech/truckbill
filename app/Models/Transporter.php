@@ -59,4 +59,8 @@ public function driver()
 {
     return $this->belongsTo(\App\Models\Driver::class);
 }
+public function bankAccounts()
+{
+    return $this->hasMany(TransporterBankAccount::class, 'transporter_id');
+}
 }
