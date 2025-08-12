@@ -935,9 +935,22 @@ function handleVoucherPayment() {
         </div>
     `;
 
+    // Calculate the max total balance amount
+const maxTotalBalance = lrData.reduce((sum, item) => sum + item.balance, 0);
+
     // Add allocation logic
     const totalAmountInput = document.getElementById('totalAmountInput');
     totalAmountInput.addEventListener('input', () => {
+
+        let enteredAmount = parseFloat(totalAmountInput.value || 0);
+
+// Validation: prevent amount greater than total balance
+if (enteredAmount > maxTotalBalance) {
+    alert(`Payment amount cannot be greater than total balance ₹${maxTotalBalance.toFixed(2)}`);
+    enteredAmount = maxTotalBalance;
+    totalAmountInput.value = enteredAmount.toFixed(2);
+}
+
         let remaining = parseFloat(totalAmountInput.value || 0);
         let totalAllocated = 0;
 
