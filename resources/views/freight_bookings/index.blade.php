@@ -72,6 +72,23 @@
         </div>
     </div>
 </div>
+<div class="modal fade" id="voucherPaymentModal" tabindex="-1" aria-labelledby="voucherPaymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Voucher Payment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="voucherPaymentBody">
+                <!-- Dynamic content will be inserted here -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-success" onclick="submitVoucherPayment()">Submit Payment</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 @endsection
 <style>
@@ -354,6 +371,177 @@ $(document).ready(function() {
 });
 </script>
 <script>
+
+function handleVoucherPayment() {
+    const checkboxes = document.querySelectorAll('.rowCheckbox:checked');
+    const modalBody = document.getElementById('voucherPaymentBody');
+    
+    modalBody.innerHTML = '';
+
+    if (checkboxes.length === 0) {
+        alert("Please select at least one Lorry Receipt.");
+        return;
+    }
+
+    // Check if any LR has no voucher number
+    const hasNoVoucher = Array.from(checkboxes).some(cb => cb.getAttribute('data-voucher_number') === '0');
+    if (hasNoVoucher) {
+        alert("Please create Freight Booking first for selected Lorry Receipts.");
+        return;
+    }
+
+    // Check for LRs with zero balance and collect their numbers
+    const zeroBalanceLRs = Array.from(checkboxes).filter(cb => {
+        const balance = parseFloat(cb.getAttribute('data-balance') || 0);
+        return balance <= 0;
+    }).map(cb => cb.getAttribute('data-lr'));
+
+    if (zeroBalanceLRs.length > 0) {
+        const message = `The following Lorry Receipts have zero balance. No payment is required:
+        ${zeroBalanceLRs.join(', ')}`;
+        alert(message);
+        return;
+    }
+
+    // Collect truck numbers
+    const truckNumbers = Array.from(checkboxes).map(cb => cb.getAttribute('data-truck'));
+    const firstTruck = truckNumbers[0];
+    const allSameTruck = truckNumbers.every(truck => truck === firstTruck);
+
+    if (!allSameTruck) {
+        alert("Selected Lorry Receipts belong to different Truck Numbers. Please select LRs with the same truck.");
+        return;
+    }
+
+    // Header: show truck number once at top-right
+    modalBody.innerHTML += `
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5>Selected Lorry Receipts</h5>
+            <div><strong>Truck Number:</strong> ${firstTruck}</div>
+        </div>
+    `;
+
+    // Collect LR data for allocation
+    const lrData = Array.from(checkboxes).map(checkbox => ({
+        lrNumber: checkbox.getAttribute('data-lr'),
+        balance: parseFloat(checkbox.getAttribute('data-balance') || 0)
+    }));
+
+    // Show LR Number + balance amount and voucher number
+    lrData.forEach((item, index) => {
+        const voucherNumber = checkboxes[index].getAttribute('data-voucher_number');
+        modalBody.innerHTML += `
+            <div class="mb-3 border-bottom pb-2">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div><strong>${index + 1}. LR Number:</strong> ${item.lrNumber}</div>
+                    <div><strong>Voucher Number:</strong> ${voucherNumber}</div>
+                </div>
+                <div class="mb-2">
+                    <strong>Balance Amount:</strong> ₹${item.balance.toFixed(2)}
+                </div>
+                <div>
+                    <strong>Allocated Amount:</strong> ₹<span class="allocated-amount" data-lr="${item.lrNumber}">0.00</span>
+                </div>
+                <input type="hidden" class="allocated-input" data-lr="${item.lrNumber}" name="allocated_amounts[${index}]" value="0">
+            </div>
+        `;
+    });
+
+    // Add payment type, payment mode, and optional fields
+    modalBody.innerHTML += `
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <label for="payment_type" class="form-label">Payment Type *</label>
+                <select name="payment_type" id="payment_type" class="form-select" required>
+                    <option value="">Select Payment Type</option>
+                    @foreach($paymentTypes as $paymentType)
+                        <option value="{{ $paymentType->name }}">
+                            {{ $paymentType->name }}
+                        </option>
+                    @endforeach
+                </select>
+                <div class="invalid-feedback">Please select a payment type.</div>
+            </div>
+            <div class="col-md-6">
+                <label for="payment_mode" class="form-label">Payment Mode *</label>
+                <select name="payment_mode" id="payment_mode" class="form-select" required>
+                    <option value="">Select Payment Mode</option>
+                    @foreach($paymentModes as $paymentMode)
+                        <option value="{{ $paymentMode->name }}">
+                            {{ $paymentMode->name }}
+                        </option>
+                    @endforeach
+                </select>
+                <div class="invalid-feedback">Please select a payment mode.</div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <label for="reference_transaction_id" class="form-label">Reference Transaction ID</label>
+                <input type="text" class="form-control" name="reference_transaction_id" id="reference_transaction_id">
+            </div>
+            <div class="col-md-6">
+                <label for="remark" class="form-label">Remark</label>
+                <input type="text" class="form-control" name="remark" id="remark">
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <label><strong>Enter Payment Amount:</strong></label>
+            <input type="number" class="form-control" id="totalAmountInput" name="total_amount" placeholder="Enter Total Amount" required>
+            <input type="hidden" id="totalAllocatedAmount" name="amount_given" value="0">
+            <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
+        </div>
+    `;
+
+    // Calculate the max total balance amount
+const maxTotalBalance = lrData.reduce((sum, item) => sum + item.balance, 0);
+
+    // Add allocation logic
+    const totalAmountInput = document.getElementById('totalAmountInput');
+    totalAmountInput.addEventListener('input', () => {
+
+        let enteredAmount = parseFloat(totalAmountInput.value || 0);
+
+// Validation: prevent amount greater than total balance
+if (enteredAmount > maxTotalBalance) {
+    alert(`Payment amount cannot be greater than total balance ₹${maxTotalBalance.toFixed(2)}`);
+    enteredAmount = maxTotalBalance;
+    totalAmountInput.value = enteredAmount.toFixed(2);
+}
+
+        let remaining = parseFloat(totalAmountInput.value || 0);
+        let totalAllocated = 0;
+
+        lrData.forEach((item) => {
+            let allocate = 0;
+            if (remaining > 0) {
+                if (remaining >= item.balance) {
+                    allocate = item.balance;
+                    remaining -= item.balance;
+                } else {
+                    allocate = remaining;
+                    remaining = 0;
+                }
+            }
+
+            totalAllocated += allocate;
+
+            const span = document.querySelector(`.allocated-amount[data-lr="${item.lrNumber}"]`);
+            const hiddenInput = document.querySelector(`.allocated-input[data-lr="${item.lrNumber}"]`);
+            span.textContent = allocate.toFixed(2);
+            hiddenInput.value = allocate.toFixed(2);
+        });
+
+        // Update hidden total allocated input
+        document.getElementById('totalAllocatedAmount').value = totalAllocated.toFixed(2);
+    });
+
+    const modal = new bootstrap.Modal(document.getElementById('voucherPaymentModal'));
+    modal.show();
+}
+
     // function showFreightBookingDetails(id) {
     //     const modal = new bootstrap.Modal(document.getElementById('freightBookingDetailsModal'));
     //     const contentDiv = document.getElementById('freightBookingDetailsContent');

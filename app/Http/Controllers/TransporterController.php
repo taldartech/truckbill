@@ -245,11 +245,11 @@ class TransporterController extends Controller
                 'unique:transporters,mobile_number'
             ],
             'short_name' => 'nullable|string|max:255',
-            'contact_person_name' => 'required|string|max:255',
+            'contact_person_name' => 'nullable|string|max:255',
         ], [
             'pan_number.unique' => 'This PAN number is already associated with another transporter and cannot be used.',
             'mobile_number.unique' => 'This mobile number is already associated with another transporter.',
-            'contact_person_name.required' => 'Contact person name is required.',
+            
         ]);
     //    dd($validated);
         if (!isset($validated['advance_amount'])) {
@@ -326,12 +326,11 @@ class TransporterController extends Controller
                 \Illuminate\Validation\Rule::unique('transporters', 'mobile_number')->ignore($transporter->id)
             ],
             'short_name' => 'nullable|string|max:255',
-            'contact_person_name' => 'required|string|max:255',
+            'contact_person_name' => 'nullable|string|max:255',
 
         ], [
             'pan_number.unique' => 'This PAN number is already associated with another transporter and cannot be used.',
             'mobile_number.unique' => 'This mobile number is already associated with another transporter.',
-            'contact_person_name.required' => 'Contact person name is required.'
         ]); 
         if (!isset($validated['advance_amount'])) {
             $validated['advance_amount'] = 0;

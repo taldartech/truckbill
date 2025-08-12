@@ -36,8 +36,6 @@
                         <th>PAN Number</th>
                         <th>Location</th>
                         <th>Contact Number</th>
-                        <th>Declaration Given</th>
-                        {{-- <th>Total Trucks</th> --}}
                         <th>Advance Amount</th>
                         {{-- <th>Company</th> --}}
                         @if(auth()->check() && auth()->user()->userRole->name === 'admin')
@@ -101,12 +99,7 @@ $(document).ready(function() {
     name: 'contact_number',
     width: '140px'
 },
-            {
-                data: 'declaration_given',
-                name: 'declaration_given',
-                width: '120px',
-                className: 'text-center'
-            },
+            
             
             {
                 data: 'advance_amount',

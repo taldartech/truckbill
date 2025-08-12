@@ -33,7 +33,9 @@ class FreightBookingController extends Controller
         }
         $bookings = $query->orderByDesc('id')->paginate(20);
         $lrs = LorryReceipt::all();
-        return view('freight_bookings.index', compact('bookings', 'lrs'));
+        $paymentTypes = \App\Models\PaymentType::all();
+        $paymentModes = \App\Models\PaymentMode::all();
+        return view('freight_bookings.index', compact('bookings', 'lrs', 'paymentTypes', 'paymentModes'));
     }
 
     public function getFreightBookingsData(Request $request)

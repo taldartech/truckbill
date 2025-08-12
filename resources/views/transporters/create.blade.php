@@ -64,7 +64,7 @@
                 </div>
                 <div class="col-md-4">
                     <label for="contact_person_name" class="form-label">Contact Person Name *</label>
-                    <input type="text" class="form-control" id="contact_person_name" name="contact_person_name" required value="{{ old('contact_person_name') }}" placeholder="Enter Contact Person Name">
+                    <input type="text" class="form-control" id="contact_person_name" name="contact_person_name" value="{{ old('contact_person_name') }}" placeholder="Enter Contact Person Name">
                     @error('contact_person_name') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
                 
