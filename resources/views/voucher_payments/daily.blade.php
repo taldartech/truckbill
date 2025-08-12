@@ -125,7 +125,7 @@
                             @endif
                         </td>
                         <td>
-                            <small>{{ $payment->created_at->format('h:i A') }}</small>
+                            <small>{{ $payment->created_at->setTimezone('Asia/Kolkata')->format('h:i A') }}</small>
                         </td>
                         <td>
                             @if($payment->remark)
