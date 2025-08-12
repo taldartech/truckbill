@@ -47,6 +47,35 @@
         </div>
     </div>
 </div>
+
+<!-- Transporter Details Modal -->
+<div class="modal fade" id="transporterDetailsModal" tabindex="-1" aria-labelledby="transporterDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="transporterDetailsModalLabel">
+                    <i class="bi bi-truck"></i> Transporter Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="transporterDetailsContent">
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading transporter details...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="editTransporterBtn" style="display: none;">
+                    <i class="bi bi-pencil"></i> Edit Transporter
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
@@ -175,6 +204,164 @@ $(document).ready(function() {
             e.preventDefault();
             return false;
         }
+    });
+
+    // Handle transporter name click to show details
+    $(document).on('click', '.transporter-name-link', function(e) {
+        e.preventDefault();
+        var transporterId = $(this).data('id');
+        
+        // Show modal with loading state
+        $('#transporterDetailsModal').modal('show');
+        $('#transporterDetailsContent').html(`
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Loading transporter details...</p>
+            </div>
+        `);
+        $('#editTransporterBtn').hide();
+        
+        // Fetch transporter details
+        $.ajax({
+            url: '/transporters/' + transporterId,
+            type: 'GET',
+            success: function(data) {
+                var detailsHtml = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="bi bi-person-circle"></i> Basic Information</h6>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-borderless table-sm">
+                                        <tr>
+                                            <td class="fw-bold">Name:</td>
+                                            <td>${data.name}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">Short Name:</td>
+                                            <td>${data.short_name || 'Not provided'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">Contact Person:</td>
+                                            <td>${data.contact_person_name}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">Mobile Number:</td>
+                                            <td>${data.mobile_number}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">Type:</td>
+                                            <td><span class="badge ${data.is_owner === 'Truck Owner' ? 'bg-success' : 'bg-info'}">${data.is_owner}</span></td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="bi bi-file-text"></i> Business Information</h6>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-borderless table-sm">
+                                        <tr>
+                                            <td class="fw-bold">GST Number:</td>
+                                            <td>${data.gst_number}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">PAN Number:</td>
+                                            <td>${data.pan_number}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">PAN Active:</td>
+                                            <td><span class="badge ${data.pan_active === 'Yes' ? 'bg-success' : 'bg-warning'}">${data.pan_active}</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">Declaration Given:</td>
+                                            <td><span class="badge ${data.declaration_given === 'Yes' ? 'bg-success' : 'bg-warning'}">${data.declaration_given}</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">Advance Amount:</td>
+                                            <td class="fw-bold text-success">${data.advance_amount}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="bi bi-geo-alt"></i> Location Details</h6>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-borderless table-sm">
+                                        <tr>
+                                            <td class="fw-bold">Country:</td>
+                                            <td>${data.country}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">State:</td>
+                                            <td>${data.state}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">City:</td>
+                                            <td>${data.city}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">Address:</td>
+                                            <td>${data.address}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="bi bi-info-circle"></i> Additional Information</h6>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-borderless table-sm">
+                                        <tr>
+                                            <td class="fw-bold">Company:</td>
+                                            <td>${data.company}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">Created:</td>
+                                            <td>${data.created_at}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">Last Updated:</td>
+                                            <td>${data.updated_at}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                $('#transporterDetailsContent').html(detailsHtml);
+                $('#editTransporterBtn').show().off('click').on('click', function() {
+                    window.location.href = '/transporters/' + data.id + '/edit';
+                });
+            },
+            error: function(xhr, status, error) {
+                $('#transporterDetailsContent').html(`
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Error:</strong> Unable to load transporter details. Please try again.
+                    </div>
+                `);
+                $('#editTransporterBtn').hide();
+            }
+        });
     });
 });
 </script>

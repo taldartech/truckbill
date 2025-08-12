@@ -145,7 +145,7 @@ class TransporterController extends Controller
         $data = $transporters->map(function($transporter, $index) use ($start) {
             return [
                 'sr_no' => $start + $index + 1,
-                'name' => $transporter->name ?: '-',
+                'name' => '<a href="javascript:void(0)" class="text-primary fw-bold transporter-name-link" data-id="' . $transporter->id . '" style="cursor: pointer; text-decoration: none;">' . ($transporter->name ?: '-') . '</a>',
                 'pan_number' => $transporter->pan_number ?: '-',
                 'location' => optional($transporter->city)->name ?: '-',
                 'contact_number' => $transporter->mobile_number ?: '-',
@@ -189,6 +189,37 @@ class TransporterController extends Controller
         
         $buttons .= '</div>';
         return $buttons;
+    }
+
+    public function show($id)
+    {
+        $transporter = \App\Models\Transporter::with(['company', 'city.state.country'])->findOrFail($id);
+        
+        // Check if user has permission to view this transporter
+        if (auth()->user()->userRole->name !== 'super_admin' && $transporter->company_id !== auth()->user()->company_id) {
+            abort(403, 'Unauthorized access to this transporter.');
+        }
+        
+        return response()->json([
+            'id' => $transporter->id,
+            'name' => $transporter->name,
+            'short_name' => $transporter->short_name,
+            'contact_person_name' => $transporter->contact_person_name,
+            'gst_number' => $transporter->gst_number ?: 'Not provided',
+            'pan_number' => $transporter->pan_number,
+            'pan_active' => $transporter->pan_active ? 'Yes' : 'No',
+            'mobile_number' => $transporter->mobile_number,
+            'address' => $transporter->address ?: 'Not provided',
+            'country' => optional($transporter->city->state->country)->name ?: 'Not specified',
+            'state' => optional($transporter->city->state)->name ?: 'Not specified',
+            'city' => optional($transporter->city)->name ?: 'Not specified',
+            'company' => optional($transporter->company)->name ?: 'Not specified',
+            'is_owner' => $transporter->is_owner ? 'Truck Owner' : 'Agency',
+            'declaration_given' => $transporter->declaration_given ? 'Yes' : 'No',
+            'advance_amount' => '₹' . number_format($transporter->advance_amount, 2),
+            'created_at' => $transporter->created_at->format('d-m-Y H:i'),
+            'updated_at' => $transporter->updated_at->format('d-m-Y H:i')
+        ]);
     }
 
     public function create()

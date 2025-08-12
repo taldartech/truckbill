@@ -243,6 +243,7 @@ Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->nam
     Route::get('/transporters', [TransporterController::class, 'index'])->name('transporters.index');
     Route::get('/transporters/create', [TransporterController::class, 'create'])->name('transporters.create');
     Route::post('/transporters', [TransporterController::class, 'store'])->name('transporters.store');
+    Route::get('/transporters/{transporter}', [TransporterController::class, 'show'])->name('transporters.show');
     Route::get('/transporters/{transporter}/edit', [TransporterController::class, 'edit'])->name('transporters.edit');
     Route::put('/transporters/{transporter}', [TransporterController::class, 'update'])->name('transporters.update');
     Route::delete('/transporters/{transporter}', [TransporterController::class, 'destroy'])->name('transporters.destroy');
