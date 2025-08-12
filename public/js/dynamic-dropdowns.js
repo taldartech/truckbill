@@ -4,7 +4,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const stateSelect = document.getElementById('state_id');
     const citySelect = document.getElementById('city_id');
 
-    countrySelect.addEventListener('change', function() {
+    // Only add event listeners if elements exist
+    if (countrySelect && stateSelect && citySelect) {
+        countrySelect.addEventListener('change', function() {
         const countryId = this.value;
         console.log('Country changed:', countryId);
         
@@ -64,4 +66,5 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
         }
     });
+    }
 });

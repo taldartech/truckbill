@@ -86,7 +86,7 @@ class TransporterController extends Controller
                 case 2: // PAN Number
                     $query->orderBy('pan_number', $orderDirection);
                     break;
-                    case 3: // Location
+                case 3: // Location
                         $query->leftJoin('cities', 'cities.id', '=', 'transporters.city_id')
                               ->orderBy('cities.name', $orderDirection)
                               ->select('transporters.*');

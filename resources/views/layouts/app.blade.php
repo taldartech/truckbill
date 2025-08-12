@@ -49,7 +49,7 @@
     />
     <!--end::Third Party Plugin(Bootstrap Icons)-->
     <!--begin::Required Plugin(AdminLTE)-->
-    <link rel="stylesheet" href="../../dist/css/adminlte.css" />
+    <link rel="stylesheet" href="/theme/dist/css/adminlte.min.css" />
     <!--end::Required Plugin(AdminLTE)-->
     <!-- apexcharts -->
     <link
@@ -548,11 +548,19 @@
                     </a>
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
-                            <a href="/voucher_payments" class="nav-link{{ Request::is('voucher_payments*') ? ' active' : '' }}">
+                            <a href="/voucher_payments" class="nav-link{{ Request::is('voucher_payments*') && !Request::is('daily-payments') ? ' active' : '' }}">
                                 <i class="fas fa-list"></i> 
                               <p> Listing</p>
                             </a>
                           </li>
+                          @if(in_array(auth()->user()->userRole->name, ['admin', 'moderator']))
+                          <li class="nav-item">
+                            <a href="{{ route('voucher_payments.daily') }}" class="nav-link{{ Request::is('daily-payments') ? ' active' : '' }}">
+                              <i class="fas fa-calendar-day"></i> 
+                            <p>Daily Payments</p>
+                            </a>
+                          </li>
+                          @endif
                           {{-- <li class="nav-item">
                             <a href="/voucher_payments/create" class="nav-link{{ Request::is('voucher_payments/create') ? ' active' : '' }}">
                               <i class="fas fa-plus"></i> 
@@ -583,6 +591,7 @@
                           </li>
                     </ul>
                   </li>
+                  @if(auth()->check() && in_array(auth()->user()->userRole->name, ['super_admin', 'moderator']))
                   <li class="nav-item" >
                     <a class="nav-link "  href="#masterMenu" >
                         <i class="fas fa-money-check-alt"></i>  <p>
@@ -633,6 +642,7 @@
                       <p>Reports</p>
                     </a>
                   </li>
+                  @endif
                   @endif
                 </ul>
                 <!--end::Sidebar Menu-->
@@ -722,21 +732,24 @@
     </script>
     <!-- jQuery (required for AdminLTE) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Popper.js (required for AdminLTE v4 sidebar) -->
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
-    <!-- Bootstrap JS (recommended for dropdowns, tooltips, etc.) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!--end::Required Plugin(Bootstrap 5)--><!--begin::Required Plugin(AdminLTE)-->    
-    <script src="../../dist/js/adminlte.js"></script>
+    <!-- AdminLTE JS -->
+    <script src="/theme/dist/js/adminlte.min.js"></script>
     <script>
         // Initialize AdminLTE
         $(document).ready(function () {
-            // Initialize layout fix
-            $.AdminLTE.layout.fix();
-            $.AdminLTE.layout.fixSidebar();
-            
-            // Initialize dropdowns
-            $.AdminLTE.dropdown.init();
+            // Check if AdminLTE is loaded
+            if (typeof $.AdminLTE !== 'undefined') {
+                // Initialize layout fix
+                if ($.AdminLTE.layout) {
+                    $.AdminLTE.layout.fix();
+                    $.AdminLTE.layout.fixSidebar();
+                }
+                
+                // Initialize dropdowns
+                if ($.AdminLTE.dropdown) {
+                    $.AdminLTE.dropdown.init();
+                }
+            }
             
             // Initialize all dropdowns
             $('.dropdown-toggle').dropdown();
@@ -759,12 +772,6 @@
             });
         });
     </script>
-    <!-- jQuery (required for AdminLTE) -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Popper.js (required for AdminLTE v4 sidebar) -->
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
-    <!-- Bootstrap JS (recommended for dropdowns, tooltips, etc.) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         var logoutLink = document.getElementById('logout-link');
@@ -835,11 +842,12 @@ const sales_chart_options = {
   },
 };
 
-const sales_chart = new ApexCharts(
-  document.querySelector('#revenue-chart'),
-  sales_chart_options,
-);
-sales_chart.render();
+// Only render chart if element exists
+const revenueChartElement = document.querySelector('#revenue-chart');
+if (revenueChartElement) {
+  const sales_chart = new ApexCharts(revenueChartElement, sales_chart_options);
+  sales_chart.render();
+}
 </script>
 
 <!-- jsvectormap -->
@@ -869,11 +877,14 @@ const visitorsData = {
   RU: 3000, // Russia
 };
 
-// World map by jsVectorMap
-const map = new jsVectorMap({
-  selector: '#world-map',
-  map: 'world',
-});
+// World map by jsVectorMap - only render if element exists
+const worldMapElement = document.querySelector('#world-map');
+if (worldMapElement) {
+  const map = new jsVectorMap({
+    selector: '#world-map',
+    map: 'world',
+  });
+}
 
 // Sparkline charts
 const option_sparkline1 = {
@@ -901,8 +912,12 @@ const option_sparkline1 = {
   colors: ['#DCE6EC'],
 };
 
-const sparkline1 = new ApexCharts(document.querySelector('#sparkline-1'), option_sparkline1);
-sparkline1.render();
+// Sparkline 1 - only render if element exists
+const sparkline1Element = document.querySelector('#sparkline-1');
+if (sparkline1Element) {
+  const sparkline1 = new ApexCharts(sparkline1Element, option_sparkline1);
+  sparkline1.render();
+}
 
 const option_sparkline2 = {
   series: [
@@ -929,8 +944,12 @@ const option_sparkline2 = {
   colors: ['#DCE6EC'],
 };
 
-const sparkline2 = new ApexCharts(document.querySelector('#sparkline-2'), option_sparkline2);
-sparkline2.render();
+// Sparkline 2 - only render if element exists
+const sparkline2Element = document.querySelector('#sparkline-2');
+if (sparkline2Element) {
+  const sparkline2 = new ApexCharts(sparkline2Element, option_sparkline2);
+  sparkline2.render();
+}
 
 const option_sparkline3 = {
   series: [
@@ -957,33 +976,15 @@ const option_sparkline3 = {
   colors: ['#DCE6EC'],
 };
 
-const sparkline3 = new ApexCharts(document.querySelector('#sparkline-3'), option_sparkline3);
-sparkline3.render();
+// Sparkline 3 - only render if element exists
+const sparkline3Element = document.querySelector('#sparkline-3');
+if (sparkline3Element) {
+  const sparkline3 = new ApexCharts(sparkline3Element, option_sparkline3);
+  sparkline3.render();
+}
 </script>
 <!--end::Script-->
     <script src="/js/dynamic-dropdowns.js"></script>
-    <!-- AdminLTE JS -->
-    <script src="/theme/dist/js/adminlte.min.js"></script>
-    <script>
-      const SELECTOR_SIDEBAR_WRAPPER = '.sidebar-wrapper';
-      const Default = {
-        scrollbarTheme: 'os-theme-light',
-        scrollbarAutoHide: 'leave',
-        scrollbarClickScroll: true,
-      };
-      document.addEventListener('DOMContentLoaded', function () {
-        const sidebarWrapper = document.querySelector(SELECTOR_SIDEBAR_WRAPPER);
-        if (sidebarWrapper && typeof OverlayScrollbarsGlobal?.OverlayScrollbars !== 'undefined') {
-          OverlayScrollbarsGlobal.OverlayScrollbars(sidebarWrapper, {
-            scrollbars: {
-              theme: Default.scrollbarTheme,
-              autoHide: Default.scrollbarAutoHide,
-              clickScroll: Default.scrollbarClickScroll,
-            },
-          });
-        }
-      });
-    </script>
     @yield('scripts')
     @stack('scripts')
 </body>

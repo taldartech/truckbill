@@ -429,4 +429,24 @@ class VoucherPaymentController extends Controller
             ], 500);
         }
     }
+
+    public function dailyPayments(Request $request)
+    {
+        // Get selected date (default to today)
+        $selectedDate = $request->get('date', date('Y-m-d'));
+        
+        // Build query for voucher payments
+        $query = VoucherPayment::with(['freight_booking.lr', 'company', 'pump'])
+            ->whereDate('created_at', $selectedDate);
+        
+        // Filter by company for operators
+        if (auth()->user()->userRole->name === 'operator') {
+            $query->where('company_id', auth()->user()->company_id);
+        }
+        
+        // Get payments with pagination
+        $payments = $query->orderByDesc('created_at')->paginate(15)->appends($request->query());
+        
+        return view('voucher_payments.daily', compact('payments', 'selectedDate'));
+    }
 }

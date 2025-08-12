@@ -157,6 +157,7 @@ Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->nam
     Route::resource('voucher_payments', VoucherPaymentController::class);
     Route::post('voucher_payments/bulk-update', [VoucherPaymentController::class, 'bulkUpdateStatus'])->name('voucher_payments.bulkUpdateStatus');
     Route::post('voucher_payments/bulk-payment', [VoucherPaymentController::class, 'bulkPayment'])->name('voucher_payments.bulkPayment');
+    Route::get('daily-payments', [VoucherPaymentController::class, 'dailyPayments'])->name('voucher_payments.daily');
 
 
 

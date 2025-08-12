@@ -28,7 +28,7 @@ class TruckOwnerController extends Controller
     
     private function getTruckOwnersData(Request $request)
     {
-        $query = \App\Models\Transporter::with(['company', 'bankAccounts' => function($q) {
+        $query = \App\Models\Transporter::with(['company', 'city', 'bankAccounts' => function($q) {
             $q->select('transporter_id', 'bulk_payment_id');
         }])->where('is_owner', 1); // Show only truck owners
 
@@ -41,8 +41,12 @@ class TruckOwnerController extends Controller
         if ($request->has('search') && $request->search['value']) {
             $searchValue = $request->search['value'];
             $query->where(function($q) use ($searchValue) {
-                $q->where('name', 'like', "%{$searchValue}%")
-                  ->orWhere('pan_number', 'like', "%{$searchValue}%");
+                $q->where('transporters.name', 'like', "%{$searchValue}%")
+                  ->orWhere('transporters.pan_number', 'like', "%{$searchValue}%")
+                  ->orWhere('transporters.mobile_number', 'like', "%{$searchValue}%")
+                  ->orWhereHas('city', function($cityQuery) use ($searchValue) {
+                      $cityQuery->where('name', 'like', "%{$searchValue}%");
+                  });
             });
         }
         
@@ -53,22 +57,21 @@ class TruckOwnerController extends Controller
                     $searchValue = $column['search']['value'];
                     switch ($index) {
                         case 1: // Name
-                            $query->where('name', 'like', "%{$searchValue}%");
+                            $query->where('transporters.name', 'like', "%{$searchValue}%");
                             break;
                        
                         case 2: // PAN Number
-                            $query->where('pan_number', 'like', "%{$searchValue}%");
+                            $query->where('transporters.pan_number', 'like', "%{$searchValue}%");
                             break;
 
-                            case 3: // Location
-                                $query->whereHas('city', function($q) use ($searchValue) {
-                                    $q->where('name', 'like', "%{$searchValue}%");
-                                });
-                                break;
-                            case 4: // Contact Number
-                                $query->where('mobile_number', 'like', "%{$searchValue}%");
-                                break;
-                        
+                        case 3: // Location
+                            $query->whereHas('city', function($cityQuery) use ($searchValue) {
+                                $cityQuery->where('name', 'like', "%{$searchValue}%");
+                            });
+                            break;
+                        case 4: // Contact Number
+                            $query->where('transporters.mobile_number', 'like', "%{$searchValue}%");
+                            break;
                     }
                 }
             }
@@ -81,36 +84,36 @@ class TruckOwnerController extends Controller
             
             switch ($orderColumn) {
                 case 0: // Sr. No (ID)
-                    $query->orderBy('id', $orderDirection);
+                    $query->orderBy('transporters.id', $orderDirection);
                     break;
                 case 1: // Name
-                    $query->orderBy('name', $orderDirection);
+                    $query->orderBy('transporters.name', $orderDirection);
                     break;
                
                 case 2: // PAN Number
-                    $query->orderBy('pan_number', $orderDirection);
+                    $query->orderBy('transporters.pan_number', $orderDirection);
                     break;
                case 3: // Location
-                        $query->orderByHas('city', function($q) use ($orderDirection) {
-                            $q->orderBy('name', $orderDirection);
-                        });
-                        break;
+                    $query->leftJoin('cities', 'transporters.city_id', '=', 'cities.id')
+                          ->orderBy('cities.name', $orderDirection)
+                          ->select('transporters.*');
+                    break;
                 case 4: // Contact Number
-                        $query->orderBy('mobile_number', $orderDirection);
-                        break;
+                    $query->orderBy('transporters.mobile_number', $orderDirection);
+                    break;
     
                 case 5: // Declaration Given
-                    $query->orderBy('declaration_given', $orderDirection);
+                    $query->orderBy('transporters.declaration_given', $orderDirection);
                     break;
                 case 6: // Advance Amount
-                    $query->orderBy('advance_amount', $orderDirection);
+                    $query->orderBy('transporters.advance_amount', $orderDirection);
                     break;
                
                 default:
-                    $query->orderBy('created_at', 'desc');
+                    $query->orderBy('transporters.created_at', 'desc');
             }
         } else {
-            $query->orderBy('created_at', 'desc');
+            $query->orderBy('transporters.created_at', 'desc');
         }
         
         // Get total count before pagination
@@ -119,7 +122,10 @@ class TruckOwnerController extends Controller
             $totalQuery->where('company_id', auth()->user()->company_id);
         }
         $totalRecords = $totalQuery->count();
-        $filteredRecords = $query->count();
+        
+        // Clone query for filtered count to avoid issues with joins
+        $filteredQuery = clone $query;
+        $filteredRecords = $filteredQuery->count();
         
         // Handle pagination
         $start = $request->start ?? 0;
@@ -131,7 +137,6 @@ class TruckOwnerController extends Controller
             return [
                 'sr_no' => $start + $index + 1,
                 'name' => $truckOwner->name,
-               
                 'pan_number' => $truckOwner->pan_number ?: '-',
                 'location' => optional($truckOwner->city)->name ?: '-',
                 'contact_number' => $truckOwner->mobile_number ?: '-',

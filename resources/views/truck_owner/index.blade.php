@@ -85,7 +85,6 @@ $(document).ready(function() {
                 data: 'name',
                 name: 'name'
             },
-           
             {
                 data: 'pan_number',
                 name: 'pan_number',
@@ -114,9 +113,7 @@ $(document).ready(function() {
                 name: 'advance_amount',
                 width: '120px',
                 className: 'text-end'
-            },
-           
-            @if(auth()->check() && auth()->user()->userRole->name === 'admin')
+            }@if(auth()->check() && auth()->user()->userRole->name === 'admin'),
             {
                 data: 'actions',
                 name: 'actions',
