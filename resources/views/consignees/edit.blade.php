@@ -205,6 +205,13 @@
                     @error('contact_number') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please enter a contact number.</div>
                 </div>
+                <div class="col-md-6">
+                    <label for="gst_number" class="form-label">GST Number</label>
+                    <input type="text" class="form-control" id="gst_number" name="gst_number"
+                        value="{{ old('gst_number', $consignee->gst_number) }}">
+                    @error('gst_number') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please enter a GST number.</div>
+                </div>
             </div>
 
             <div class="row mb-3">

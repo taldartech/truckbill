@@ -67,7 +67,7 @@ class FreightBookingController extends Controller
                 })
                 ->addColumn('balance_formatted', function ($row) {
                    
-                    return '₹' . number_format($row->balance_amount, 2);
+                    return $row->balance_amount ? '₹' . number_format($row->balance_amount, 2) : '₹0.00';
                 })
                 ->addColumn('gr_date_formatted', function ($row) {
                     return $row->lr && $row->lr->gr_date ? date('d-m-Y', strtotime($row->lr->gr_date)) : '-';
@@ -187,6 +187,54 @@ $actions .= '</a>';
                 // Fetch transporter and truck details directly from their models
                 $transporter = \App\Models\Transporter::find($lr->transporter_id);
                 $truck = \App\Models\Truck::find($lr->truck_id);
+                     // Prepare values for TDS calculation
+            $isOwner          = $transporter ? $transporter->is_owner : 0;
+            $declarationGiven = $transporter ? $transporter->declaration_given : 0;
+            $panActive        = $transporter ? $transporter->pan_active : 0;
+            $panNumber        = $transporter ? $transporter->pan_number : '';
+            $trAmount         = $lr->freight_amount ?? 0; // adjust this field if amount is stored differently
+
+            // =============================
+            // TDS CALCULATION LOGIC
+            // =============================
+            $tdsPercentage = 0;
+
+            // CASE 1: is_owner = 0, declaration_given = 1 → 0% TDS
+            if (($isOwner == 1 && $declarationGiven == 1 )&& ($panActive == 1 || $panActive == 0)) {
+                $tdsPercentage = 0;
+            }
+            // // CASE 2: is_owner = 0, declaration_given = 0, pan_active = 0 → 20% TDS
+            elseif ($isOwner == 1 && $declarationGiven == 0 && $panActive == 0) {
+                $tdsPercentage = 20;
+            }
+            // CASE 3: is_owner = 0, declaration_given = 0, pan_active = 1 → check PAN letter
+            elseif ($isOwner == 1 && $declarationGiven == 0 && $panActive == 1) {
+                if (strlen($panNumber) >= 4) {
+                    $fourthChar = strtoupper($panNumber[3]);
+                    if ($fourthChar == 'P' || $fourthChar == 'H') {
+                        $tdsPercentage = 1;
+                    } else {
+                        $tdsPercentage = 2;
+                    }
+                } else {
+                    $tdsPercentage = 2; // fallback if PAN invalid
+                }
+            }
+            // // CASE 4: is_owner = 1, pan_active = 0 → 20% TDS
+            elseif ($isOwner == 0 && $panActive == 0) {
+                $tdsPercentage = 20;
+            }
+            // CASE 5: is_owner = 1, pan_active = 1 → 2% TDS
+            elseif ($isOwner == 0 && $panActive == 1) {
+                $fourthChar = strtoupper($panNumber[3]);
+                if ($fourthChar === 'C' || $fourthChar === 'F' || $fourthChar === 'A' || $fourthChar === 'B' || $fourthChar === 'J' || $fourthChar === 'L' || $fourthChar === 'T') {
+                    $tdsPercentage = 2;
+                } else {
+                    $tdsPercentage = 1;
+                }
+            }
+
+            // $tdsAmount = $trAmount * ($tdsPercentage / 100);
                 
                 return view('freight_bookings.create', [
                     'companies' => $companies,
@@ -198,6 +246,8 @@ $actions .= '</a>';
                     
                     'transporter' => $transporter ?? null,
                     'tdsPercentages' => $tdsPercentages,
+                    'tdsPercentage'   => $tdsPercentage, // send to view
+                    // 'tdsAmount'       => $tdsAmount,     // send to view
                     'preFilled' => [
                         'lr_number' => $lr->lr_number,
                         'lr_id' => $lr->id,
@@ -206,6 +256,7 @@ $actions .= '</a>';
                         'truck_id' => $lr->truck_id,
                         'truck_number' => $truck ? $truck->truck_number : '',
                         'pan_verified' => $transporter ? $transporter->pan_active : 0,
+                        'pan_number' => $transporter ? $transporter->pan_number : '',
                         'is_owner' => $transporter ? $transporter->is_owner : 0,
                         'declaration_given' => $transporter ? $transporter->declaration_given : 0,
                         'goods_type' => $lr->good_type,
@@ -332,6 +383,53 @@ $actions .= '</a>';
                 // Fetch transporter and truck details directly from their models
                 $transporter = \App\Models\Transporter::find($lr->transporter_id);
                 $truck = \App\Models\Truck::find($lr->truck_id);
+
+                $isOwner          = $transporter ? $transporter->is_owner : 0;
+                $declarationGiven = $transporter ? $transporter->declaration_given : 0;
+                $panActive        = $transporter ? $transporter->pan_active : 0;
+                $panNumber        = $transporter ? $transporter->pan_number : '';
+                $trAmount         = $lr->freight_amount ?? 0; // adjust this field if amount is stored differently
+    
+                // =============================
+                // TDS CALCULATION LOGIC
+                // =============================
+                $tdsPercentage = 0;
+    
+                // CASE 1: is_owner = 0, declaration_given = 1 → 0% TDS
+                if (($isOwner == 1 && $declarationGiven == 1 )&& ($panActive == 1 || $panActive == 0)) {
+                    $tdsPercentage = 0;
+                }
+                // // CASE 2: is_owner = 0, declaration_given = 0, pan_active = 0 → 20% TDS
+                elseif ($isOwner == 1 && $declarationGiven == 0 && $panActive == 0) {
+                    $tdsPercentage = 20;
+                }
+                // CASE 3: is_owner = 0, declaration_given = 0, pan_active = 1 → check PAN letter
+                elseif ($isOwner == 1 && $declarationGiven == 0 && $panActive == 1) {
+                    if (strlen($panNumber) >= 4) {
+                        $fourthChar = strtoupper($panNumber[3]);
+                        if ($fourthChar == 'P' || $fourthChar == 'H') {
+                            $tdsPercentage = 1;
+                        } else {
+                            $tdsPercentage = 2;
+                        }
+                    } else {
+                        $tdsPercentage = 2; // fallback if PAN invalid
+                    }
+                }
+                // // CASE 4: is_owner = 1, pan_active = 0 → 20% TDS
+                elseif ($isOwner == 0 && $panActive == 0) {
+                    $tdsPercentage = 20;
+                }
+                // CASE 5: is_owner = 1, pan_active = 1 → 2% TDS
+                elseif ($isOwner == 0 && $panActive == 1) {
+                    $fourthChar = strtoupper($panNumber[3]);
+                    if ($fourthChar === 'C' || $fourthChar === 'F' || $fourthChar === 'A' || $fourthChar === 'B' || $fourthChar === 'J' || $fourthChar === 'L' || $fourthChar === 'T') {
+                        $tdsPercentage = 2;
+                    } else {
+                        $tdsPercentage = 1;
+                    }
+                }
+    
                 
                 return view('freight_bookings.edit', [
                     'freight_booking' => $freight_booking,
@@ -344,6 +442,7 @@ $actions .= '</a>';
                     
                     'transporter' => $transporter ?? null,
                     'tdsPercentages' => $tdsPercentages,
+                    'tdsPercentage'   => $tdsPercentage, // send to view
                     'preFilled' => [
                         'lr_number' => $lr->lr_number,
                         'lr_id' => $lr->id,
@@ -442,11 +541,33 @@ $actions .= '</a>';
         if (!$lorryReceipt) {
             return redirect()->back()->withErrors(['lr_id' => 'Invalid lorry receipt']);
         }
+        $existingTrAmount = $freight_booking->tr_amount;
+
+        // Calculate balance on the server side
+        $calculatedBalance = $existingTrAmount
+            - $data['advance_amount']
+            - ($data['tds_amount'] ?? 0)
+            + ($data['detention'] ?? 0)
+            + ($data['deviation'] ?? 0)
+            - ($data['misc_expense'] ?? 0)
+            - ($data['damage_amount'] ?? 0)
+            - ($data['shortage_amount'] ?? 0);
+    
+        // Compare with submitted balance_amount
+        if (round($data['balance_amount'], 2) !== round($calculatedBalance, 2)) {
+            return redirect()->back()->withErrors([
+                'balance_amount' => 'Balance amount mismatch. Expected: ' . number_format($calculatedBalance, 2)
+            ]);
+        }
+
+       
 
         // Update freight booking with lorry receipt's LR number
         $freight_booking->update(array_merge($data, [
             'lr_number' => $lorryReceipt->lr_number
         ]));
+
+
 
         // Update lorry receipt status
         if ($lorryReceipt) {

@@ -189,6 +189,7 @@ class ConsigneeController extends Controller
                 'nullable',
                 'digits:10',
             ],
+            'gst_number' => 'nullable|string|max:255',
         ]);
 
         $validated['company_id'] = auth()->user()->company_id;
@@ -220,6 +221,7 @@ class ConsigneeController extends Controller
                 'nullable',
                 'digits:10',
             ],
+            'gst_number' => 'nullable|string|max:255',
         ]);
 
         $consignee->update($validated);

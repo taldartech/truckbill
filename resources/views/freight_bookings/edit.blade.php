@@ -727,6 +727,8 @@
         const trAmountInput = document.getElementById('tr_amount');
         const advanceAmountInput = document.getElementById('advance_amount');
         const balanceAmountInput = document.getElementById('balance_amount');
+        const tdsAmountInput = document.getElementById('tds_amount');
+        const tdsPercentage = parseFloat("{{ $tdsPercentage ?? 0 }}"); // already in %
         
 
         const panVerified = parseInt(document.getElementById('pan_verified').value) || 0;
@@ -744,27 +746,34 @@
             alert("Advance amount cannot be greater than TR amount.");
             advanceAmountInput.value = '';
             balanceAmountInput.value = trAmount.toFixed(2);
+            tdsAmountInput.value = (trAmount * (tdsPercentage / 100)).toFixed(2);
           
             return;
         }
-            const balance = trAmount - advanceAmount;
+
+            // TDS
+            const tdsAmount = (trAmount * (tdsPercentage / 100)).toFixed(2);
+        tdsAmountInput.value = tdsAmount;
+
+
+            const balance = trAmount - advanceAmount - tdsAmount;
             balanceAmountInput.value = balance.toFixed(2);
             
             // Get TDS percentages from PHP variables
-            const defaultPercentage = {{ $tdsPercentages['default'] / 100 }};
-            const agencyPercentage = {{ $tdsPercentages['agency'] / 100 }};
-            const ownerPercentage = {{ $tdsPercentages['owner'] / 100 }};
+            // const defaultPercentage = {{ $tdsPercentages['default'] / 100 }};
+            // const agencyPercentage = {{ $tdsPercentages['agency'] / 100 }};
+            // const ownerPercentage = {{ $tdsPercentages['owner'] / 100 }};
             
-            // Calculate TDS %
-            let tdsPercentage = defaultPercentage;
-            if (panVerified === 1) {
-                tdsPercentage = IS_OWNER === 0 ? agencyPercentage : ownerPercentage;
-            }
+            // // Calculate TDS %
+            // let tdsPercentage = defaultPercentage;
+            // if (panVerified === 1) {
+            //     tdsPercentage = IS_OWNER === 0 ? agencyPercentage : ownerPercentage;
+            // }
 
-            // Calculate TDS Amount
-            const tdsAmountInput = document.getElementById('tds_amount');
-            const tdsAmount = (trAmount * tdsPercentage).toFixed(2);
-            tdsAmountInput.value = tdsAmount;
+            // // Calculate TDS Amount
+            // const tdsAmountInput = document.getElementById('tds_amount');
+            // const tdsAmount = (trAmount * tdsPercentage).toFixed(2);
+            // tdsAmountInput.value = tdsAmount;
         }
 
         // Update balance when TR Amount changes
@@ -855,6 +864,9 @@
         const miscExpenseInput = document.getElementById('misc_expense');
         const damageAmountInput = document.getElementById('damage_amount');
         const shortageAmountInput = document.getElementById('shortage_amount');
+        const tdsAmountInput = document.getElementById('tds_amount');
+
+        const tdsPercentage = parseFloat("{{ $tdsPercentage ?? 0 }}"); // already in %
 
         function calculateBalance() {
             const trAmount = parseFloat(trAmountInput.value) || 0;
@@ -864,12 +876,19 @@
             alert("Advance amount cannot be greater than TR amount.");
             advanceAmountInput.value = '';
             balanceAmountInput.value = trAmount.toFixed(2);
+            tdsAmountInput.value = (trAmount * (tdsPercentage / 100)).toFixed(2);
           
             return;
         }
+
+         // Calculate TDS Amount
+            // TDS
+            const tdsAmount = (trAmount * (tdsPercentage / 100)).toFixed(2);
+        tdsAmountInput.value = tdsAmount;
+          
           const detention = parseFloat(detentionInput.value) || 0;
           const deviation = parseFloat(deviationInput.value) || 0;
-            const balance = trAmount  - advanceAmount + detention + deviation;
+            const balance = trAmount  - advanceAmount + detention + deviation - parseFloat(tdsAmount);
             const miscExpense = parseFloat(miscExpenseInput.value) || 0;
             const damageAmount = parseFloat(damageAmountInput.value) || 0;
             const shortageAmount = parseFloat(shortageAmountInput.value) || 0;
@@ -877,21 +896,21 @@
         
             balanceAmountInput.value = (balance.toFixed(2) - miscExpense - damageAmount - shortageAmount).toFixed(2);
             
-            // Get TDS percentages from PHP variables
-            const defaultPercentage = {{ $tdsPercentages['default'] / 100 }};
-            const agencyPercentage = {{ $tdsPercentages['agency'] / 100 }};
-            const ownerPercentage = {{ $tdsPercentages['owner'] / 100 }};
+            // // Get TDS percentages from PHP variables
+            // const defaultPercentage = {{ $tdsPercentages['default'] / 100 }};
+            // const agencyPercentage = {{ $tdsPercentages['agency'] / 100 }};
+            // const ownerPercentage = {{ $tdsPercentages['owner'] / 100 }};
             
-            // Calculate TDS %
-            let tdsPercentage = defaultPercentage;
-            if (panVerified === 1) {
-                tdsPercentage = IS_OWNER === 0 ? agencyPercentage : ownerPercentage;
-            }
+            // // Calculate TDS %
+            // let tdsPercentage = defaultPercentage;
+            // if (panVerified === 1) {
+            //     tdsPercentage = IS_OWNER === 0 ? agencyPercentage : ownerPercentage;
+            // }
 
             // Calculate TDS Amount
-            const tdsAmountInput = document.getElementById('tds_amount');
-            const tdsAmount = (trAmount * tdsPercentage).toFixed(2);
-            tdsAmountInput.value = tdsAmount;
+            // const tdsAmountInput = document.getElementById('tds_amount');
+            // const tdsAmount = (trAmount * tdsPercentage).toFixed(2);
+            // tdsAmountInput.value = tdsAmount;
         }
 
         // Update balance when TR Amount changes

@@ -458,7 +458,7 @@ class LorryReceiptController extends Controller
         }
 
         // Calculate expected amount from weight and freight rate
-        $expectedAmount = ($validated['weight'] * $validated['fr_rate'])->round(2);
+        $expectedAmount = round($validated['weight'] * $validated['fr_rate'], 2);
         
         // Check if entered amount matches calculated amount
         if ($validated['amount'] != $expectedAmount) {

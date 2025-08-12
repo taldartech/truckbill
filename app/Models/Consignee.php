@@ -17,6 +17,7 @@ class Consignee extends Model
         'state_id',
         'country_id',
         'contact_number',
+        'gst_number',
     ];
 
     protected $casts = [
