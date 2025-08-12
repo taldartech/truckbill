@@ -12,7 +12,14 @@ class VoucherPaymentController extends Controller
 {
     public function index(Request $request)
     {
-        $query = \App\Models\VoucherPayment::with(['voucher', 'company']);
+        $query = \App\Models\VoucherPayment::with([
+            'voucher', 
+            'company',
+            'freight_booking.lr.customer',
+            'freight_booking.lr.truck',
+            'freight_booking.lr.consignor.city',
+            'freight_booking.lr.consignee.city'
+        ]);
 
         // Only apply company_id filter for non-super_admin users
         if (auth()->user()->userRole->name !== 'super_admin') {
