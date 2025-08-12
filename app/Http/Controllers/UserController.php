@@ -134,17 +134,29 @@ class UserController extends Controller
     {
         $buttons = '<div class="d-flex gap-1">';
         
-        // Edit button
-        $editUrl = route('users.edit', $user->id);
-        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit User">';
-        $buttons .= '<i class="bi bi-pencil"></i></a>';
+        // Check if user is super_admin - if so, disable edit and delete actions
+        $isSuperAdmin = $user->userRole && $user->userRole->name === 'super_admin';
         
-        // Delete button
-        $deleteUrl = route('users.destroy', $user->id);
-        $buttons .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this user?\')">';
-        $buttons .= csrf_field() . method_field('DELETE');
-        $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete User">';
-        $buttons .= '<i class="bi bi-trash"></i></button></form>';
+        if ($isSuperAdmin) {
+            // Disabled buttons for super_admin users
+            $buttons .= '<span class="btn btn-sm btn-secondary disabled" title="Super Admin cannot be edited">';
+            $buttons .= '<i class="bi bi-pencil"></i></span>';
+            
+            $buttons .= '<span class="btn btn-sm btn-secondary disabled" title="Super Admin cannot be deleted">';
+            $buttons .= '<i class="bi bi-trash"></i></span>';
+        } else {
+            // Edit button
+            $editUrl = route('users.edit', $user->id);
+            $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit User">';
+            $buttons .= '<i class="bi bi-pencil"></i></a>';
+            
+            // Delete button
+            $deleteUrl = route('users.destroy', $user->id);
+            $buttons .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this user?\')">';
+            $buttons .= csrf_field() . method_field('DELETE');
+            $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete User">';
+            $buttons .= '<i class="bi bi-trash"></i></button></form>';
+        }
         
         $buttons .= '</div>';
         return $buttons;
