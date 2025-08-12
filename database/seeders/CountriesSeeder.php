@@ -9,13 +9,18 @@ class CountriesSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::table('countries')->insert([
-            [
-                'name' => 'India',
-                'code' => 'IN',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        ]);
+        // Check if India already exists before inserting
+        $existingCountry = DB::table('countries')->where('name', 'India')->first();
+        
+        if (!$existingCountry) {
+            DB::table('countries')->insert([
+                [
+                    'name' => 'India',
+                    'code' => 'IN',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+            ]);
+        }
     }
 }

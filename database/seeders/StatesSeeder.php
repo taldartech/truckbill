@@ -11,19 +11,20 @@ class StatesSeeder extends Seeder
     {
         $india = DB::table('countries')->where('name', 'India')->first();
         
-        DB::table('states')->insert([
-            [
-                'country_id' => $india->id,
-                'name' => 'Rajasthan',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'country_id' => $india->id,
-                'name' => 'Gujarat',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        ]);
+        // Check if states already exist before inserting
+        $states = ['Rajasthan', 'Gujarat'];
+        
+        foreach ($states as $stateName) {
+            $existingState = DB::table('states')->where('name', $stateName)->first();
+            
+            if (!$existingState) {
+                DB::table('states')->insert([
+                    'country_id' => $india->id,
+                    'name' => $stateName,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
     }
 }

@@ -247,9 +247,9 @@ class TransporterController extends Controller
             $validated['is_owner'] = 0;
         }
         
-        // Set declaration_given and total_trucks as NULL for transporters
-        $validated['declaration_given'] = null;
-        $validated['total_trucks'] = null;
+        // Set declaration_given and total_trucks with default values for transporters
+        $validated['declaration_given'] = false;
+        $validated['total_trucks'] = 0;
         
         // Convert pan_active to boolean
         $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
@@ -327,9 +327,9 @@ class TransporterController extends Controller
             $validated['is_owner'] = 0;
         }
         
-        // Set declaration_given and total_trucks as NULL for transporters
-        $validated['declaration_given'] = null;
-        $validated['total_trucks'] = null;
+        // Set declaration_given and total_trucks with default values for transporters
+        $validated['declaration_given'] = false;
+        $validated['total_trucks'] = 0;
         
         // Convert pan_active to boolean
         $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
