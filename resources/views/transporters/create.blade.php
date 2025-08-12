@@ -257,15 +257,7 @@
             <input type="text" class="form-control" id="gst_number" name="gst_number" value="{{ old('gst_number') }}">
             @error('gst_number') <div class="text-danger">{{ $message }}</div> @enderror
         </div>
-        <div class="mb-3">
-            <label for="gst_type" class="form-label">GST Type *</label>
-            <select class="form-select" id="gst_type" name="gst_type" required>
-                <option value="">Select</option>
-                <option value="composition" {{ old('gst_type') == 'composition' ? 'selected' : '' }}>Composition</option>
-                <option value="regular" {{ old('gst_type') == 'regular' ? 'selected' : '' }}>Regular</option>
-            </select>
-            @error('gst_type') <div class="text-danger">{{ $message }}</div> @enderror
-        </div>
+
         <div class="mb-3">
             <label for="pan_number" class="form-label">PAN Number</label>
             <input type="text" class="form-control" id="pan_number" name="pan_number" value="{{ old('pan_number') }}">
