@@ -398,6 +398,67 @@ $(document).ready(function() {
                         </div>
                     </div>
                 `;
+
+                // Add advance payments section if there are any payments
+                if (data.advance_payments && data.advance_payments.length > 0) {
+                    detailsHtml += `
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0"><i class="bi bi-currency-rupee"></i> Recent Advance Payments (Last 10)</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-hover">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th style="width: 15%;">Amount</th>
+                                                        <th style="width: 20%;">Payment Date</th>
+                                                        <th style="width: 35%;">Remark</th>
+                                                        <th style="width: 30%;">Added On</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                    `;
+                    
+                    data.advance_payments.forEach(function(payment) {
+                        detailsHtml += `
+                            <tr>
+                                <td class="fw-bold text-success">${payment.amount}</td>
+                                <td>${payment.payment_date}</td>
+                                <td class="text-muted">${payment.remark}</td>
+                                <td class="text-muted small">${payment.created_at}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    detailsHtml += `
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    detailsHtml += `
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0"><i class="bi bi-currency-rupee"></i> Recent Advance Payments</h6>
+                                    </div>
+                                    <div class="card-body text-center text-muted">
+                                        <i class="bi bi-inbox display-6"></i>
+                                        <p class="mt-2 mb-0">No advance payments found for this transporter.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
                 
                 $('#transporterDetailsContent').html(detailsHtml);
                 $('#editTransporterBtn').show().off('click').on('click', function() {

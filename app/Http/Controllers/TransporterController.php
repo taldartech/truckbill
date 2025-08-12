@@ -199,6 +199,21 @@ class TransporterController extends Controller
             abort(403, 'Unauthorized access to this transporter.');
         }
         
+        // Get last 10 advance payments for this transporter
+        $advancePayments = \App\Models\AdvancePayment::where('transporter_id', $id)
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get()
+            ->map(function($payment) {
+                return [
+                    'id' => $payment->id,
+                    'amount' => '₹' . number_format($payment->advance_amount, 2),
+                    'payment_date' => $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('d-m-Y') : 'Not specified',
+                    'remark' => $payment->remark ?: 'No remarks',
+                    'created_at' => $payment->created_at->format('d-m-Y H:i')
+                ];
+            });
+        
         return response()->json([
             'id' => $transporter->id,
             'name' => $transporter->name,
@@ -217,7 +232,8 @@ class TransporterController extends Controller
             'declaration_given' => $transporter->declaration_given ? 'Yes' : 'No',
             'advance_amount' => '₹' . number_format($transporter->advance_amount, 2),
             'created_at' => $transporter->created_at->format('d-m-Y H:i'),
-            'updated_at' => $transporter->updated_at->format('d-m-Y H:i')
+            'updated_at' => $transporter->updated_at->format('d-m-Y H:i'),
+            'advance_payments' => $advancePayments
         ]);
     }
 

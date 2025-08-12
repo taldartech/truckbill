@@ -109,13 +109,28 @@ class AdvancePaymentController extends Controller
     {
         $validated = $request->validate([
             'transporter_id' => 'required|exists:transporters,id',
-            'advance_amount' => 'required|numeric|min:0',
+            'advance_amount' => 'required|numeric|min:0.01',
             'payment_date' => 'required|date',
+            'remark' => 'nullable|string|max:1000',
         ]);
 
         $validated['company_id'] = auth()->user()->company_id;
 
-        AdvancePayment::create($validated);
+        $advancePayment = AdvancePayment::create($validated);
+
+        // Update transporter's advance amount
+        $transporter = Transporter::find($validated['transporter_id']);
+        $transporter->advance_amount += $validated['advance_amount'];
+        $transporter->save();
+
+        // Handle AJAX request
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Advance Payment created successfully.',
+                'data' => $advancePayment
+            ]);
+        }
 
         return redirect()->route('advance-payments.index')
             ->with('success', 'Advance Payment created successfully.');

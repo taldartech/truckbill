@@ -14,6 +14,7 @@ class AdvancePayment extends Model
         'advance_amount',
         'payment_date',
         'company_id',
+        'remark',
     ];
 
     public function transporter()
