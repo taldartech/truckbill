@@ -40,10 +40,11 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('transporters', function (Blueprint $table) {
-            // Check if unique constraint exists before dropping
-            $indexes = Schema::getConnection()->getDoctrineSchemaManager()->listTableIndexes('transporters');
-            if (isset($indexes['transporters_pan_number_unique'])) {
+            // Try to drop the unique constraint if it exists
+            try {
                 $table->dropUnique(['pan_number']);
+            } catch (\Exception $e) {
+                // Ignore if constraint doesn't exist
             }
         });
     }

@@ -9,14 +9,18 @@ class AddAddressToTransportersTable extends Migration
     public function up()
     {
         Schema::table('transporters', function (Blueprint $table) {
-            $table->text('address')->nullable()->after('city_id'); 
+            if (!Schema::hasColumn('transporters', 'address')) {
+                $table->text('address')->nullable()->after('city_id'); 
+            }
         });
     }
 
     public function down()
     {
         Schema::table('transporters', function (Blueprint $table) {
-            $table->dropColumn('address');
+            if (Schema::hasColumn('transporters', 'address')) {
+                $table->dropColumn('address');
+            }
         });
     }
 }

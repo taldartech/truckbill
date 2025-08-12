@@ -218,12 +218,11 @@ class TransporterController extends Controller
                 'required',
                 'string',
                 'size:10',
-                'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/'
+                'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
+                'unique:transporters,pan_number'
             ],
             'gst_type' => 'nullable|in:composition,regular',
             'is_owner' => 'nullable|boolean',
-            'declaration_given' => 'required|boolean',
-            'total_trucks' => 'required|integer|min:0',
             'advance_amount' => 'nullable|numeric',
             'pan_active' => 'required|boolean',
             'address' => 'nullable|string|max:255',
@@ -235,6 +234,10 @@ class TransporterController extends Controller
                 'digits:10',
             ],
             'short_name' => 'nullable|string|max:255',
+            'contact_person_name' => 'required|string|max:255',
+        ], [
+            'pan_number.unique' => 'This PAN number is already associated with another transporter and cannot be used.',
+            'contact_person_name.required' => 'Contact person name is required.',
         ]);
     //    dd($validated);
         if (!isset($validated['advance_amount'])) {
@@ -243,6 +246,11 @@ class TransporterController extends Controller
         if (!isset($validated['is_owner'])) {
             $validated['is_owner'] = 0;
         }
+        
+        // Set declaration_given and total_trucks as NULL for transporters
+        $validated['declaration_given'] = null;
+        $validated['total_trucks'] = null;
+        
         // Convert pan_active to boolean
         $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
         // dd($validated);
@@ -289,12 +297,11 @@ class TransporterController extends Controller
                 'required',
                 'string',
                 'size:10',
-                'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/'
+                'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
+                'unique:transporters,pan_number,' . $transporter->id
             ],
             'gst_type' => 'nullable|in:composition,regular',
             'is_owner' => 'nullable|boolean',
-            'declaration_given' => 'required|boolean',
-            'total_trucks' => 'required|integer|min:0',
             'advance_amount' => 'nullable|numeric',
             'pan_active' => 'required|boolean',
             'address' => 'nullable|string|max:255',
@@ -306,7 +313,11 @@ class TransporterController extends Controller
                 'digits:10',
             ],
             'short_name' => 'nullable|string|max:255',
+            'contact_person_name' => 'required|string|max:255',
 
+        ], [
+            'pan_number.unique' => 'This PAN number is already associated with another transporter and cannot be used.',
+            'contact_person_name.required' => 'Contact person name is required.',
         ]); 
         if (!isset($validated['advance_amount'])) {
             $validated['advance_amount'] = 0;
@@ -315,6 +326,11 @@ class TransporterController extends Controller
         if (!isset($validated['is_owner'])) {
             $validated['is_owner'] = 0;
         }
+        
+        // Set declaration_given and total_trucks as NULL for transporters
+        $validated['declaration_given'] = null;
+        $validated['total_trucks'] = null;
+        
         // Convert pan_active to boolean
         $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
         $transporter->update($validated);
