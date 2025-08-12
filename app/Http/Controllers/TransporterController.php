@@ -26,22 +26,27 @@ class TransporterController extends Controller
     
     private function getTransportersData(Request $request)
     {
-        $query = \App\Models\Transporter::with(['company','city', 'bankAccounts' => function($q) {
-            $q->select('transporter_id', 'bulk_payment_id');
-        }])->where('is_owner', 0); // Default to show only Agencies
+        $query = \App\Models\Transporter::with(['company', 'city'])
+            ->where('is_owner', 0); // Default to show only Agencies
 
         // Only apply company_id filter for non-super_admin users
         if (auth()->user()->userRole->name !== 'super_admin') {
             $query->where('company_id', auth()->user()->company_id);
         }
         
-        // Handle search
+        // Handle global search
         if ($request->has('search') && $request->search['value']) {
             $searchValue = $request->search['value'];
             $query->where(function($q) use ($searchValue) {
-                $q->where('name', 'like', "%{$searchValue}%")
-                  ->orWhere('pan_number', 'like', "%{$searchValue}%");
-                 
+                $q->where('transporters.name', 'like', "%{$searchValue}%")
+                  ->orWhere('transporters.pan_number', 'like', "%{$searchValue}%")
+                  ->orWhere('transporters.mobile_number', 'like', "%{$searchValue}%")
+                  ->orWhereHas('company', function($companyQuery) use ($searchValue) {
+                      $companyQuery->where('name', 'like', "%{$searchValue}%");
+                  })
+                  ->orWhereHas('city', function($cityQuery) use ($searchValue) {
+                      $cityQuery->where('name', 'like', "%{$searchValue}%");
+                  });
             });
         }
         
@@ -52,10 +57,10 @@ class TransporterController extends Controller
                     $searchValue = $column['search']['value'];
                     switch ($index) {
                         case 1: // Name
-                            $query->where('name', 'like', "%{$searchValue}%");
+                            $query->where('transporters.name', 'like', "%{$searchValue}%");
                             break;
                         case 2: // PAN Number
-                            $query->where('pan_number', 'like', "%{$searchValue}%");
+                            $query->where('transporters.pan_number', 'like', "%{$searchValue}%");
                             break;
                         case 3: // Location
                             $query->whereHas('city', function($q) use ($searchValue) {
@@ -63,9 +68,20 @@ class TransporterController extends Controller
                             });
                             break;
                         case 4: // Contact Number
-                            $query->where('mobile_number', 'like', "%{$searchValue}%");
+                            $query->where('transporters.mobile_number', 'like', "%{$searchValue}%");
                             break;
-                        
+                        case 5: // Declaration Given
+                            if (strtolower($searchValue) === 'yes') {
+                                $query->where('transporters.declaration_given', 1);
+                            } elseif (strtolower($searchValue) === 'no') {
+                                $query->where('transporters.declaration_given', 0);
+                            }
+                            break;
+                        case 7: // Company
+                            $query->whereHas('company', function($q) use ($searchValue) {
+                                $q->where('name', 'like', "%{$searchValue}%");
+                            });
+                            break;
                     }
                 }
             }
@@ -78,38 +94,38 @@ class TransporterController extends Controller
             
             switch ($orderColumn) {
                 case 0: // Sr. No (ID)
-                    $query->orderBy('id', $orderDirection);
+                    $query->orderBy('transporters.id', $orderDirection);
                     break;
                 case 1: // Name
-                    $query->orderBy('name', $orderDirection);
+                    $query->orderBy('transporters.name', $orderDirection);
                     break;
                 case 2: // PAN Number
-                    $query->orderBy('pan_number', $orderDirection);
+                    $query->orderBy('transporters.pan_number', $orderDirection);
                     break;
                 case 3: // Location
-                        $query->leftJoin('cities', 'cities.id', '=', 'transporters.city_id')
-                              ->orderBy('cities.name', $orderDirection)
-                              ->select('transporters.*');
-                        break;
+                    $query->leftJoin('cities', 'cities.id', '=', 'transporters.city_id')
+                          ->orderBy('cities.name', $orderDirection)
+                          ->select('transporters.*');
+                    break;
                 case 4: // Contact Number
-                    $query->orderBy('mobile_number', $orderDirection);
+                    $query->orderBy('transporters.mobile_number', $orderDirection);
                     break;
-
                 case 5: // Declaration Given
-                    $query->orderBy('declaration_given', $orderDirection);
+                    $query->orderBy('transporters.declaration_given', $orderDirection);
                     break;
-                
-                   
                 case 6: // Advance Amount
-                    $query->orderBy('advance_amount', $orderDirection);
+                    $query->orderBy('transporters.advance_amount', $orderDirection);
                     break;
-               
-                    
+                case 7: // Company
+                    $query->leftJoin('companies', 'companies.id', '=', 'transporters.company_id')
+                          ->orderBy('companies.name', $orderDirection)
+                          ->select('transporters.*');
+                    break;
                 default:
-                    $query->orderBy('created_at', 'desc');
+                    $query->orderBy('transporters.created_at', 'desc');
             }
         } else {
-            $query->orderBy('created_at', 'desc');
+            $query->orderBy('transporters.created_at', 'desc');
         }
         
         // Get total count before pagination
@@ -129,21 +145,15 @@ class TransporterController extends Controller
         $data = $transporters->map(function($transporter, $index) use ($start) {
             return [
                 'sr_no' => $start + $index + 1,
-                'name' => $transporter->name,
+                'name' => $transporter->name ?: '-',
                 'pan_number' => $transporter->pan_number ?: '-',
                 'location' => optional($transporter->city)->name ?: '-',
                 'contact_number' => $transporter->mobile_number ?: '-',
                 'declaration_given' => $transporter->declaration_given ? 'Yes' : 'No',
-                
-                'advance_amount' => number_format($transporter->advance_amount ?: 0, 2),
-
-                // 'actions' => $this->getActionButtons($transporter)
-                'actions' => auth()->user()->userRole->name === 'admin'
-                        ? $this->getActionButtons($transporter)
-                        : ''  // empty string for non-admins
+                'advance_amount' => '₹' . number_format($transporter->advance_amount ?: 0, 2),
+                'company' => optional($transporter->company)->name ?: '-',
+                'actions' => $this->getActionButtons($transporter)
             ];
-     
-     
         });
         
         return response()->json([
@@ -232,11 +242,13 @@ class TransporterController extends Controller
             'mobile_number' => [
                 'required',
                 'digits:10',
+                'unique:transporters,mobile_number'
             ],
             'short_name' => 'nullable|string|max:255',
             'contact_person_name' => 'required|string|max:255',
         ], [
             'pan_number.unique' => 'This PAN number is already associated with another transporter and cannot be used.',
+            'mobile_number.unique' => 'This mobile number is already associated with another transporter.',
             'contact_person_name.required' => 'Contact person name is required.',
         ]);
     //    dd($validated);
@@ -311,13 +323,15 @@ class TransporterController extends Controller
             'mobile_number' => [
                 'required',
                 'digits:10',
+                \Illuminate\Validation\Rule::unique('transporters', 'mobile_number')->ignore($transporter->id)
             ],
             'short_name' => 'nullable|string|max:255',
             'contact_person_name' => 'required|string|max:255',
 
         ], [
             'pan_number.unique' => 'This PAN number is already associated with another transporter and cannot be used.',
-            'contact_person_name.required' => 'Contact person name is required.',
+            'mobile_number.unique' => 'This mobile number is already associated with another transporter.',
+            'contact_person_name.required' => 'Contact person name is required.'
         ]); 
         if (!isset($validated['advance_amount'])) {
             $validated['advance_amount'] = 0;
