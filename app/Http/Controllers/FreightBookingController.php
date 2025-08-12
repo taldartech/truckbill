@@ -49,6 +49,24 @@ class FreightBookingController extends Controller
             }
 
             return DataTables::of($query)
+                ->addColumn('checkbox', function ($row) {
+                    return sprintf(
+                        '<input type="checkbox" class="rowCheckbox" value="%s" \
+                        data-lr="%s" \
+                        data-truck="%s" \
+                        data-freight_booking_id="%s" \
+                        data-balance="%s" \
+                        data-voucher_number="%s" \
+                        data-payment-status="%s">',
+                        $row->id,
+                        $row->lr ? $row->lr->lr_number : '',
+                        $row->lr && $row->lr->truck ? $row->lr->truck->truck_number : '',
+                        $row->id,
+                        $row->balance_amount ?? 0,
+                        $row->voucher_number ?? '',
+                        strtolower($row->lr ? $row->lr->delivery_status : '')
+                    );
+                })
                 ->addColumn('lr_number', function ($row) {
                     return $row->lr ? $row->lr->lr_number : '-';
                 })
@@ -278,6 +296,24 @@ $actions .= '</a>';
             'preFilled' => []
         ]);
     }
+
+
+    public function bulkAction(Request $request)
+{
+    $selectedIds = $request->input('selected_ids');
+
+    if (empty($selectedIds) || !is_array($selectedIds)) {
+        return redirect()->back()->with('error', 'Please select at least one freight booking.');
+    }
+
+    // Now $selectedIds contains all selected row IDs
+    FreightBooking::whereIn('id', $selectedIds)->update([
+        // your update logic
+    ]);
+
+    return redirect()->back()->with('success', 'Selected freight bookings updated successfully.');
+}
+
 
     public function store(Request $request)
  {

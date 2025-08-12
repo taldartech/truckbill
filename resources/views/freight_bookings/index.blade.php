@@ -16,7 +16,16 @@
     @endif
 
     <div class="d-flex justify-content-end gap-2 mb-3">
-        <a href="{{ route('freight_bookings.create') }}" class="btn btn-info">
+        <button type="button" id="VocherPaymentBtn" 
+            class="btn btn-lg btn-primary d-none"
+            onclick="handleVoucherPayment()"
+            style="position: fixed; bottom: 50px; right: 20px; z-index: 1050;">
+            <i class="bi bi-cash-coin"></i> Payment
+        </button>
+        <button type="button" class="btn btn-info mt-1" onclick="document.getElementById('advanced-search-box').classList.toggle('d-none')">
+            <i class="bi bi-funnel"></i> Filter
+        </button>
+        <a href="{{ route('freight_bookings.create') }}" class="btn btn-info mt-1 me-2">
             <i class="bi bi-plus"></i> Add New
         </a>
     </div>
@@ -29,6 +38,7 @@
             <table id="freightBookingsTable" class="table table-bordered table-striped">
                 <thead>
                     <tr>
+                        <th><input type="checkbox" id="selectAllCheckbox"></th>
                         <th style="width: 80px;">ID</th>
                         <th>LR No</th>
                         {{-- <th>Voucher No</th> --}}
@@ -149,6 +159,15 @@ $(document).ready(function() {
             type: 'GET'
         },
         columns: [
+            {
+                data: 'checkbox',
+                name: 'checkbox',
+                width: '20px',
+                className: 'text-center',
+                render: function(data, type, row) {
+                    return `<input type="checkbox" class="rowCheckbox" value="${row.id}">`;
+                }
+            },
             {
                 data: 'id',
                 name: 'id',
@@ -293,6 +312,39 @@ $(document).ready(function() {
             e.preventDefault();
             return false;
         }
+    });
+    
+    // Add select all functionality
+    $(document).ready(function() {
+        // Select all checkboxes
+        $('#selectAllCheckbox').on('click', function() {
+            $('.rowCheckbox').prop('checked', this.checked);
+            updatePaymentButtonVisibility();
+        });
+
+        // Update select all checkbox based on individual checkboxes
+        $('.rowCheckbox').on('click', function() {
+            const allChecked = $('.rowCheckbox:checked').length === $('.rowCheckbox').length;
+            $('#selectAllCheckbox').prop('checked', allChecked);
+            updatePaymentButtonVisibility();
+        });
+
+        // Update payment button visibility
+        function updatePaymentButtonVisibility() {
+            const hasChecked = $('.rowCheckbox:checked').length > 0;
+            $('#VocherPaymentBtn').removeClass('d-none');
+            if (!hasChecked) {
+                $('#VocherPaymentBtn').addClass('d-none');
+            }
+        }
+
+        // Initialize payment button visibility
+        updatePaymentButtonVisibility();
+
+        // Also listen for changes on the DataTable's checkboxes
+        $(document).on('click', '.rowCheckbox', function() {
+            updatePaymentButtonVisibility();
+        });
     });
 });
 </script>
@@ -467,5 +519,6 @@ $(document).ready(function() {
 }
 
 </script>
+
 
 @endpush
