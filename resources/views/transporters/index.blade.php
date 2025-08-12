@@ -76,6 +76,58 @@
     </div>
 </div>
 
+<!-- Advance Payment Modal -->
+<div class="modal fade" id="advancePaymentModal" tabindex="-1" aria-labelledby="advancePaymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="advancePaymentModalLabel">
+                    <i class="bi bi-currency-rupee"></i> Add Advance Payment
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="advancePaymentForm" method="POST" action="{{ route('advance-payments.store') }}">
+                @csrf
+                <div class="modal-body">
+                    <input type="hidden" id="transporter_id" name="transporter_id">
+                    
+                    <div class="mb-3">
+                        <label for="transporter_name_display" class="form-label">Transporter Name</label>
+                        <input type="text" class="form-control" id="transporter_name_display" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="advance_amount" class="form-label">Advance Amount *</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="number" step="0.01" class="form-control" id="advance_amount" name="advance_amount" required min="0.01" placeholder="Enter amount">
+                        </div>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="payment_date" class="form-label">Payment Date *</label>
+                        <input type="date" class="form-control" id="payment_date" name="payment_date" required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="remark" class="form-label">Remark</label>
+                        <textarea class="form-control" id="remark" name="remark" rows="3" placeholder="Enter any remarks or notes (optional)"></textarea>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-lg"></i> Add Payment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
@@ -362,6 +414,107 @@ $(document).ready(function() {
                 $('#editTransporterBtn').hide();
             }
         });
+    });
+
+    // Handle advance payment button click
+    $(document).on('click', '.advance-payment-btn', function(e) {
+        e.preventDefault();
+        var transporterId = $(this).data('transporter-id');
+        var transporterName = $(this).data('transporter-name');
+        
+        // Reset form and populate data
+        $('#advancePaymentForm')[0].reset();
+        $('#transporter_id').val(transporterId);
+        $('#transporter_name_display').val(transporterName);
+        
+        // Set today's date as default
+        var today = new Date().toISOString().split('T')[0];
+        $('#payment_date').val(today);
+        
+        // Clear any previous validation states
+        $('#advancePaymentForm .form-control').removeClass('is-invalid is-valid');
+        $('#advancePaymentForm .invalid-feedback').text('');
+        
+        // Show modal
+        $('#advancePaymentModal').modal('show');
+    });
+
+    // Handle advance payment form submission
+    $('#advancePaymentForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        var form = $(this);
+        var submitBtn = form.find('button[type="submit"]');
+        var originalBtnText = submitBtn.html();
+        
+        // Show loading state
+        submitBtn.prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> Processing...');
+        
+        // Clear previous validation states
+        form.find('.form-control').removeClass('is-invalid is-valid');
+        form.find('.invalid-feedback').text('');
+        
+        $.ajax({
+            url: form.attr('action'),
+            type: 'POST',
+            data: form.serialize(),
+            success: function(response) {
+                // Show success message
+                $('#advancePaymentModal').modal('hide');
+                
+                // Show success alert
+                $('body').prepend(`
+                    <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                        <i class="bi bi-check-circle"></i>
+                        <strong>Success!</strong> Advance payment of ₹${$('#advance_amount').val()} has been added successfully.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `);
+                
+                // Auto-hide alert after 5 seconds
+                setTimeout(function() {
+                    $('.alert-success').fadeOut();
+                }, 5000);
+                
+                // Reload DataTable to show updated data
+                $('#transportersTable').DataTable().ajax.reload(null, false);
+            },
+            error: function(xhr) {
+                if (xhr.status === 422) {
+                    // Validation errors
+                    var errors = xhr.responseJSON.errors;
+                    $.each(errors, function(field, messages) {
+                        var input = $('#' + field);
+                        input.addClass('is-invalid');
+                        input.siblings('.invalid-feedback').text(messages[0]);
+                    });
+                } else {
+                    // General error
+                    $('body').prepend(`
+                        <div class="alert alert-danger alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>Error!</strong> Unable to process advance payment. Please try again.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    `);
+                    
+                    setTimeout(function() {
+                        $('.alert-danger').fadeOut();
+                    }, 5000);
+                }
+            },
+            complete: function() {
+                // Reset button state
+                submitBtn.prop('disabled', false).html(originalBtnText);
+            }
+        });
+    });
+
+    // Reset form when modal is hidden
+    $('#advancePaymentModal').on('hidden.bs.modal', function() {
+        $('#advancePaymentForm')[0].reset();
+        $('#advancePaymentForm .form-control').removeClass('is-invalid is-valid');
+        $('#advancePaymentForm .invalid-feedback').text('');
     });
 });
 </script>

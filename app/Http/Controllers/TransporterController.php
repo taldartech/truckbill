@@ -169,10 +169,9 @@ class TransporterController extends Controller
         $buttons = '<div class="d-flex gap-1">';
         
        
-            $advanceUrl = route('advance-payments.create', ['transporter_id' => $transporter->id]);
-            $buttons .= '<a href="' . $advanceUrl . '" class="btn btn-sm btn-outline-success" title="Advance Payment">';
+            $buttons .= '<button type="button" class="btn btn-sm btn-outline-success advance-payment-btn" title="Advance Payment" data-transporter-id="' . $transporter->id . '" data-transporter-name="' . htmlspecialchars($transporter->name) . '">';
             $buttons .= '<i class="bi bi-currency-rupee"></i>';
-            $buttons .= '</a>';
+            $buttons .= '</button>';
         
 
     // Edit button
