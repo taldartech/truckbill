@@ -183,9 +183,13 @@ $(document).ready(function() {
                 name: 'lr_number'
             },
             {
-    data: 'destination_city',
-    name: 'destination_city'
-},
+                data: 'source_city',
+                name: 'source_city'
+            },
+            {
+                data: 'destination_city',
+                name: 'destination_city'
+            },
            
             {
                 data: 'tr_rate_formatted',

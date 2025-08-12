@@ -70,6 +70,9 @@ class FreightBookingController extends Controller
                 ->addColumn('lr_number', function ($row) {
                     return $row->lr ? $row->lr->lr_number : '-';
                 })
+                ->addColumn('source_city', function ($row) {
+                    return $row->lr && $row->lr->source_city ? $row->lr->source_city : '-';
+                })
                 ->addColumn('destination_city', function ($row) {
                     return $row->lr && $row->lr->destination_city ? $row->lr->destination_city : '-';
                 })
