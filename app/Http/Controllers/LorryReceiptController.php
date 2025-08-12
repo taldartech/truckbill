@@ -237,12 +237,7 @@ class LorryReceiptController extends Controller
         // $actions .= '</a>';
 
         // Advance Payment button
-        // if ($lorryReceipt->transporter_id) {
-        //     $advanceUrl = route('advance-payments.create', ['transporter_id' => $lorryReceipt->transporter_id]);
-        //     $actions .= '<a href="' . $advanceUrl . '" class="btn btn-sm btn-outline-success" title="Advance Payment">';
-        //     $actions .= '<i class="bi bi-currency-rupee"></i>';
-        //     $actions .= '</a>';
-        // }
+     
         
         // Edit button
         $actions .= '<a href="' . route('lorry_receipts.edit', $lorryReceipt->id) . '" class="btn btn-sm btn-outline-primary" title="Edit">';

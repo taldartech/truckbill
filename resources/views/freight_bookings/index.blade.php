@@ -42,7 +42,8 @@
                         <th style="width: 80px;">ID</th>
                         <th>LR No</th>
                         {{-- <th>Voucher No</th> --}}
-                        <th>Unloading Point</th>
+                        <th>Source</th>
+                        <th>Destination</th>
                         <th>TR Rate</th>
                         <th>TR Amount</th>
                         <th>Advance</th>
