@@ -47,6 +47,10 @@
                         <th style="width: 10px">ID</th>
                         <th>Voucher Number</th>
                         <th>LR Number</th>
+                        <th>Customer</th>
+                        <th>Truck No</th>
+                        <th>Source</th>
+                        <th>Destination</th>
                         <th>Payment Type</th>
                         <th>Payment Mode</th>
                         <th>Amount</th>
@@ -70,6 +74,34 @@
                         <td>
                             @if($payment->freight_booking && $payment->freight_booking->lr)
                                 <span class="badge bg-info">{{ $payment->freight_booking->lr->lr_number }}</span>
+                            @else
+                                <span class="text-muted">-</span>
+                            @endif
+                        </td>
+                        <td>
+                            @if($payment->freight_booking && $payment->freight_booking->lr && $payment->freight_booking->lr->customer)
+                                <span class="badge bg-info">{{ $payment->freight_booking->lr->customer->name }}</span>
+                            @else
+                                <span class="text-muted">-</span>
+                            @endif
+                        </td>
+                        <td>
+                            @if($payment->freight_booking && $payment->freight_booking->lr && $payment->freight_booking->lr->truck)
+                                <span class="badge bg-primary">{{ $payment->freight_booking->lr->truck->truck_number }}</span>
+                            @else
+                                <span class="text-muted">-</span>
+                            @endif
+                        </td>
+                        <td>
+                            @if($payment->freight_booking && $payment->freight_booking->lr && $payment->freight_booking->lr->consignor && $payment->freight_booking->lr->consignor->city)
+                                <span class="badge bg-success">{{ $payment->freight_booking->lr->consignor->city->name }}</span>
+                            @else
+                                <span class="text-muted">-</span>
+                            @endif
+                        </td>
+                        <td>
+                            @if($payment->freight_booking && $payment->freight_booking->lr && $payment->freight_booking->lr->consignee && $payment->freight_booking->lr->consignee->city)
+                                <span class="badge bg-warning">{{ $payment->freight_booking->lr->consignee->city->name }}</span>
                             @else
                                 <span class="text-muted">-</span>
                             @endif

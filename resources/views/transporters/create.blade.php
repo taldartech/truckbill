@@ -1,7 +1,36 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="card card-info card-outline mb-4" style="max-width: 950px;align-items: center;margin: auto;">
+<style>
+/* Prevent form expansion on validation errors */
+.form-control, .form-select {
+    min-height: 38px;
+    box-sizing: border-box;
+}
+
+.text-danger {
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    word-wrap: break-word;
+}
+
+/* Ensure consistent column widths */
+.row .col-md-4 {
+    flex: 0 0 33.333333%;
+    max-width: 33.333333%;
+}
+
+/* Prevent card from expanding */
+.card {
+    overflow: hidden;
+}
+
+/* Consistent spacing for form groups */
+.mb-3 {
+    margin-bottom: 1rem !important;
+}
+</style>
+<div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
     <!--begin::Header-->
     <div class="card-header">
         <div class="card-title h4">Add New Transporter</div>
@@ -18,71 +47,40 @@
             <div class="text-danger">{{ $message }}</div>
         @enderror
         <div class="card-body">
+            {{-- Company field hidden as requested --}}
+            <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
+            
             <!-- General Details -->
             <div class="row mb-3">
-                <div class="col-md-6">
-                    {{-- <label for="company_id" class="form-label">Company *</label>
-                    @if($canEditCompany)
-                        <select class="form-select" id="company_id" name="company_id" required>
-                            <option value="">Select</option>
-                            @foreach($companies as $company)
-                                <option value="{{ $company->id }}" {{ old('company_id') == $company->id ? 'selected' : '' }}>{{ $company->name }}</option>
-                            @endforeach
-                        </select>
-                    @else
-                        <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
-                        <div class="form-control-plaintext">
-                            {{ $companies->firstWhere('id', $userCompanyId)->name ?? '' }}
-                        </div>
-                    @endif
-                    @error('company_id') <div class="text-danger">{{ $message }}</div> @enderror --}}
-                    <label for="company_id" class="form-label">Company *</label>
-                    @if($canEditCompany)
-                        <select class="form-select" id="company_id" name="company_id" required>
-                            <option value="">Select</option>
-                            @foreach($companies as $company)
-                                <option value="{{ $company->id }}" {{ old('company_id') == $company->id ? 'selected' : '' }}>{{ $company->name }}</option>
-                            @endforeach
-                        </select>
-                    @else
-                        <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
-                        <div class="form-control-plaintext">
-                            {{ $companies->firstWhere('id', $userCompanyId)->name ?? '' }}
-                        </div>
-                    @endif
-                    @error('company_id') <div class="text-danger">{{ $message }}</div> @enderror
-                </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label for="name" class="form-label">Transport Name *</label>
                     <input placeholder="Enter Transport Name" type="text" class="form-control" id="name" name="name" required value="{{ old('name') }}">
                     @error('name') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
-               
-            </div>
-            <div class="row mb-3">
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label for="short_name" class="form-label">Short Name *</label>
                     <input placeholder="Enter Short Name" type="text" class="form-control" id="short_name" name="short_name" value="{{ old('short_name') }}">
                     @error('short_name') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
-                <div class="col-md-6">
-                    <label for="gst_number" class="form-label">GST Number</label>
-            <input placeholder="Enter GST Number" type="text" class="form-control" id="gst_number" name="gst_number" value="{{ old('gst_number') }}">
-            @error('gst_number') <div class="text-danger">{{ $message }}</div> @enderror
+                <div class="col-md-4">
+                    <label for="contact_person_name" class="form-label">Contact Person Name *</label>
+                    <input type="text" class="form-control" id="contact_person_name" name="contact_person_name" required value="{{ old('contact_person_name') }}" placeholder="Enter Contact Person Name">
+                    @error('contact_person_name') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
-                {{-- <div class="col-md-6">
-                    <label for="gst_type" class="form-label">GST Type *</label>
-                    <input type="text" class="form-control" id="gst_type" name="gst_type" value="Regular" disabled>
-                    @error('gst_type') <div class="text-danger">{{ $message }}</div> @enderror
-                </div> --}}
+                
             </div>
             <div class="row mb-3">
-                <div class="col-md-6">
-                    <label for="pan_number" class="form-label">PAN Number</label>
+                <div class="col-md-4">
+                    <label for="gst_number" class="form-label">GST Number</label>
+                    <input placeholder="Enter GST Number" type="text" class="form-control" id="gst_number" name="gst_number" value="{{ old('gst_number') }}">
+                    @error('gst_number') <div class="text-danger">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-4">
+                    <label for="pan_number" class="form-label">PAN Number *</label>
                     <input placeholder="Enter PAN Number" type="text" class="form-control" id="pan_number" name="pan_number" required value="{{ old('pan_number') }}">
                     @error('pan_number') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label class="form-label">PAN is Active *</label><br>
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="radio" name="pan_active" id="pan_active_yes" value="1" {{ old('pan_active') === '1' ? 'checked' : '' }} required>
@@ -94,104 +92,80 @@
                     </div>
                     @error('pan_active') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
+                
             </div>
-            <!-- Additional Details Section -->
-            <div class="card mb-4 p-3 bg-light">
-                <div class="row"><div class="col"><h5 class="mb-3">Additional Details</h5></div></div>
-                <div class="row mb-2">
-                    <div class="col-md-6">
-                        <label class="form-label">Declaration Given? *</label><br>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="declaration_given" id="decl_yes" value="1" {{ old('declaration_given') === '1' ? 'checked' : '' }} required>
-                            <label class="form-check-label" for="decl_yes">Yes</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="declaration_given" id="decl_no" value="0" {{ old('declaration_given') === '0' ? 'checked' : '' }} required>
-                            <label class="form-check-label" for="decl_no">No</label>
-                        </div>
-                        @error('declaration_given') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-6">
-                        <label for="total_trucks" class="form-label">Total Trucks *</label>
-                        <input type="number" class="form-control" id="total_trucks" name="total_trucks" min="0" required value="{{ old('total_trucks', 0) }}" placeholder="Enter total trucks">
-                        @error('total_trucks') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                </div>
-                <div class="row mb-2">
-                    <div class="col-md-6">
-                        <label for="advance_amount" class="form-label">Advance Amount</label>
-                        <input type="number" step="0.01" class="form-control" id="advance_amount" name="advance_amount" value="{{ old('advance_amount', 0) }}" placeholder="Enter advance amount">
-                        @error('advance_amount') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                </div>
-            </div>
-            <div class="card mb-4 p-3 bg-light">
             <div class="row mb-3">
                 <div class="col-md-4">
-                    <label for="country_id" class="form-label">Country * </label>
-                    <select class="form-select" id="country_id" name="country_id" required>
-                        <option value="">Select Country</option>
-                        @foreach($countries as $country)
-                            <option value="{{ $country->id }}" {{ old('country_id') == $country->id ? 'selected' : '' }}>
-                                {{ $country->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('country_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please select a country.</div>
-                </div>
-                <!--end::Col-->
-                <!--begin::Col-->
-                <div class="col-md-4">
-                    <label for="state_id" class="form-label">State *</label>
-                    <select class="form-select" id="state_id" name="state_id" required>
-                        <option value="">Select State</option>
-                        @if(old('country_id'))
-                            @foreach($states as $state)
-                                <option value="{{ $state->id }}" {{ old('state_id') == $state->id ? 'selected' : '' }}>
-                                    {{ $state->name }}
-                                </option>
-                            @endforeach
-                        @endif
-                    </select>
-                    @error('state_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please select a state.</div>
-                </div>
-                <!--end::Col-->
-                <!--begin::Col-->
-                <div class="col-md-4">
-                    <label for="city_id" class="form-label">City *</label>
-                    <select class="form-select" id="city_id" name="city_id" required>
-                        <option value="">Select City</option>
-                        @if(old('state_id'))
-                            @foreach($cities as $city)
-                                <option value="{{ $city->id }}" {{ old('city_id') == $city->id ? 'selected' : '' }}>
-                                    {{ $city->name }}
-                                </option>
-                            @endforeach
-                        @endif
-                    </select>
-                    @error('city_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please select a city.</div>
-                </div>
-                <!--end::Col-->
-            </div>  
-            <div class="row mb-3">          
-                <!--begin::Col-->
-                <div class="col-md-6">
-                    <label for="mobile" class="form-label">Mobile</label>
-                    <input type="text" class="form-control" id="mobile" name="mobile_number" required value="{{ old('mobile_number') }}">
+                    <label for="mobile_number" class="form-label">Mobile Number *</label>
+                    <input type="text" class="form-control" id="mobile_number" name="mobile_number" required value="{{ old('mobile_number') }}" placeholder="Enter Mobile Number">
                     @error('mobile_number') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please enter a valid mobile number.</div>
                 </div>
-                <div class="col-md-6">
-                    <label for="address" class="form-label">Address</label>
-                    <textarea class="form-control" id="address" name="address" rows="3">{{ old('address') }}</textarea>
-                    @error('address') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please enter an address.</div>
+                <div class="col-md-4">
+                    <!-- Empty column for consistent 3-column layout -->
                 </div>
-                <!--end::Col-->
+                <div class="col-md-4">
+                    <label class="form-label">Advance Amount</label>
+                    <div class="form-control-plaintext bg-light border rounded px-3 py-2">
+                        <strong>₹ 0.00</strong>
+                        <small class="text-muted d-block">Read-only field</small>
+                    </div>
+                    <input type="hidden" name="advance_amount" value="0">
+                </div>
             </div>
+            
+
+            <!-- Location Details Section -->
+            <div class="card mb-4 p-3 bg-light">
+                <div class="row"><div class="col"><h5 class="mb-3">Location Details</h5></div></div>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="country_id" class="form-label">Country *</label>
+                        <select class="form-select" id="country_id" name="country_id" required>
+                            <option value="">Select Country</option>
+                            @foreach($countries as $country)
+                                <option value="{{ $country->id }}" {{ old('country_id') == $country->id ? 'selected' : '' }}>
+                                    {{ $country->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('country_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label for="state_id" class="form-label">State *</label>
+                        <select class="form-select" id="state_id" name="state_id" required>
+                            <option value="">Select State</option>
+                            @if(old('country_id'))
+                                @foreach($states as $state)
+                                    <option value="{{ $state->id }}" {{ old('state_id') == $state->id ? 'selected' : '' }}>
+                                        {{ $state->name }}
+                                    </option>
+                                @endforeach
+                            @endif
+                        </select>
+                        @error('state_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label for="city_id" class="form-label">City *</label>
+                        <select class="form-select" id="city_id" name="city_id" required>
+                            <option value="">Select City</option>
+                            @if(old('state_id'))
+                                @foreach($cities as $city)
+                                    <option value="{{ $city->id }}" {{ old('city_id') == $city->id ? 'selected' : '' }}>
+                                        {{ $city->name }}
+                                    </option>
+                                @endforeach
+                            @endif
+                        </select>
+                        @error('city_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="address" class="form-label">Address</label>
+                        <textarea class="form-control" id="address" name="address" rows="3" placeholder="Enter complete address">{{ old('address') }}</textarea>
+                        @error('address') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                </div>
             </div>
             <!-- Quick Actions Section -->
             <div class="card p-3 bg-light">

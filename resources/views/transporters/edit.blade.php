@@ -83,25 +83,7 @@
             <!-- Additional Details Section -->
             <div class="card mb-4 p-3 bg-light">
                 <div class="row"><div class="col"><h5 class="mb-3">Additional Details</h5></div></div>
-                <div class="row mb-2">
-                    <div class="col-md-6">
-                        <label class="form-label">Declaration Given? *</label><br>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="declaration_given" id="decl_yes" value="1" {{ old('declaration_given', $transporter->declaration_given) == 1 ? 'checked' : '' }} required>
-                            <label class="form-check-label" for="decl_yes">Yes</label>
-                        </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="declaration_given" id="decl_no" value="0" {{ old('declaration_given', $transporter->declaration_given) == 0 ? 'checked' : '' }} required>
-                            <label class="form-check-label" for="decl_no">No</label>
-                        </div>
-                        @error('declaration_given') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-6">
-                        <label for="total_trucks" class="form-label">Total Trucks *</label>
-                        <input type="number" class="form-control" id="total_trucks" name="total_trucks" min="0" required value="{{ old('total_trucks', $transporter->total_trucks) }}" placeholder="Enter total trucks">
-                        @error('total_trucks') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                </div>
+
                 <div class="row mb-2">
                     <div class="col-md-6">
                         <label for="advance_amount" class="form-label">Advance Amount</label>

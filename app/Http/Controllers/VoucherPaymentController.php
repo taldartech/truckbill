@@ -443,8 +443,14 @@ class VoucherPaymentController extends Controller
         $selectedDate = $request->get('date', date('Y-m-d'));
         
         // Build query for voucher payments
-        $query = VoucherPayment::with(['freight_booking.lr', 'company', 'pump'])
-            ->whereDate('created_at', $selectedDate);
+        $query = VoucherPayment::with([
+            'freight_booking.lr.customer',
+            'freight_booking.lr.truck', 
+            'freight_booking.lr.consignor.city',
+            'freight_booking.lr.consignee.city',
+            'company', 
+            'pump'
+        ])->whereDate('created_at', $selectedDate);
         
         // Filter by company for operators
         if (auth()->user()->userRole->name === 'operator') {

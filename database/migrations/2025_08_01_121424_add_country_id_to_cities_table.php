@@ -45,19 +45,11 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::table('cities', function (Blueprint $table) {
-            // Check if foreign key exists before dropping
-            $foreignKeys = Schema::getConnection()->getDoctrineSchemaManager()->listTableForeignKeys('cities');
-            $foreignKeyExists = false;
-            
-            foreach ($foreignKeys as $foreignKey) {
-                if (in_array('country_id', $foreignKey->getLocalColumns())) {
-                    $foreignKeyExists = true;
-                    break;
-                }
-            }
-            
-            if ($foreignKeyExists) {
+            // Try to drop foreign key if it exists
+            try {
                 $table->dropForeign(['country_id']);
+            } catch (\Exception $e) {
+                // Ignore if foreign key doesn't exist
             }
             
             // Check if column exists before dropping
