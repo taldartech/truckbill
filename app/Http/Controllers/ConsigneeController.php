@@ -125,7 +125,7 @@ class ConsigneeController extends Controller
         $data = $consignees->map(function($consignee, $index) use ($start) {
             return [
                 'id' => $consignee->id,
-                'name' => $consignee->name,
+                'name' => '<a href="javascript:void(0)" class="text-primary fw-bold consignee-name-link" data-id="' . $consignee->id . '" style="cursor: pointer; text-decoration: none;">' . ($consignee->name ?: '-') . '</a>',
                 'city' => $consignee->city?->name ?? '-',
                 'state' => $consignee->state?->name ?? '-',
                 'country' => $consignee->country?->name ?? '-',
@@ -242,18 +242,28 @@ class ConsigneeController extends Controller
     
     public function getDetails($id)
     {
-        $consignee = Consignee::with(['city', 'state'])->find($id);
+        $consignee = Consignee::with(['city', 'state', 'country', 'company'])->find($id);
 
-        if ($consignee) {
-            return response()->json([
-                'contact_number' => $consignee->contact_number,
-                'city_id' => $consignee->city_id,
-                'state_id' => $consignee->state_id,
-                'city_name' => $consignee->city ? $consignee->city->name : '',
-                'state_name' => $consignee->state ? $consignee->state->name : ''
-            ]);
+        if (!$consignee) {
+            return response()->json(['error' => 'Consignee not found'], 404);
         }
 
-        return response()->json(['error' => 'Consignee not found'], 404);
+        return response()->json([
+            'id' => $consignee->id,
+            'name' => $consignee->name ?: 'Not provided',
+            'short_name' => $consignee->short_name ?: 'Not provided',
+            'contact_person_name' => $consignee->contact_person_name ?: 'Not provided',
+            'contact_number' => $consignee->contact_number ?: 'Not provided',
+            'email' => $consignee->email ?: 'Not provided',
+            'gst_number' => $consignee->gst_number ?: 'Not provided',
+            'pan_number' => $consignee->pan_number ?: 'Not provided',
+            'address' => $consignee->address ?: 'Not provided',
+            'city' => $consignee->city?->name ?: 'Not provided',
+            'state' => $consignee->state?->name ?: 'Not provided',
+            'country' => $consignee->country?->name ?: 'Not provided',
+            'company' => $consignee->company?->name ?: 'Not provided',
+            'created_at' => $consignee->created_at?->format('d M Y, h:i A') ?: 'Not available',
+            'updated_at' => $consignee->updated_at?->format('d M Y, h:i A') ?: 'Not available'
+        ]);
     }
 }

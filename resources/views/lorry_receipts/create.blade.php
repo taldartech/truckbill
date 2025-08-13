@@ -60,7 +60,7 @@
                         <option value="">Select Trucks</option>
                         @foreach($trucks as $truck)
                             <option value="{{ $truck->id }}" {{ old('truck_id') == $truck->id ? 'selected' : '' }}>
-                                {{ $truck->truck_number }} ({{ $truck->transporter->name }})
+                                {{ $truck->truck_number }} ({{ $truck->transporter ? $truck->transporter->name : 'No Transporter' }})
                             </option>
                         @endforeach
                     </select>
@@ -320,7 +320,7 @@
                         <option value="">Select Trucks</option>
                         @foreach($trucks as $truck)
                             <option value="{{ $truck->id }}" {{ old('truck_id') == $truck->id ? 'selected' : '' }}>
-                                {{ $truck->truck_number }} ({{ $truck->transporter->name }})
+                                {{ $truck->truck_number }} ({{ $truck->transporter ? $truck->transporter->name : 'No Transporter' }})
                             </option>
                         @endforeach
                     </select>
