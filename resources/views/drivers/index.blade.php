@@ -38,16 +38,6 @@
                         <th style="width: 120px;">Actions</th>
                         @endif
                     </tr>
-                    <tr>
-                        <th></th>
-                        <th><input type="text" class="form-control form-control-sm" placeholder="Search Name"></th>
-                        <th><input type="text" class="form-control form-control-sm" placeholder="Search Mobile"></th>
-                        <th><input type="text" class="form-control form-control-sm" placeholder="Search License"></th>
-                        <th><input type="text" class="form-control form-control-sm" placeholder="Search Address"></th>
-                        @if(auth()->check() && auth()->user()->userRole->name === 'admin')
-                        <th></th>
-                        @endif
-                    </tr>
                 </thead>
             </table>
         </div>
@@ -188,32 +178,69 @@ $(document).ready(function() {
             { data: 'actions', name: 'actions', orderable: false, searchable: false }
             @endif
         ],
-        order: [[0, 'desc']],
-        pageLength: 25,
+        order: [[1, 'asc']],
+        pageLength: 10,
         lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-        dom: '<"row"<"col-md-6"l><"col-md-6"f>>rt<"row"<"col-md-6"i><"col-md-6"p>><"row"<"col-md-12"B>>',
+        dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+             '<"row"<"col-sm-12 col-md-2"B><"col-sm-12 col-md-10"p>>' +
+             '<"row"<"col-sm-12"tr>>' +
+             '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
         buttons: [
             {
                 extend: 'excel',
-                text: '<i class="bi bi-file-earmark-excel"></i> Excel',
-                className: 'btn btn-success btn-sm',
-                exportOptions: {
-                    columns: [0, 1, 2, 3, 4]
-                }
+                className: 'btn btn-secondary btn-sm',
+                text: '<i class="bi bi-file-earmark-excel"></i> Excel'
             }
         ],
-        responsive: true,
-        stateSave: true,
+        // responsive: true,
+        // stateSave: true,
+        // language: {
+        //     processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>',
+        //     emptyTable: "No drivers found",
+        //     zeroRecords: "No matching drivers found"
+        // },
+        // drawCallback: function(settings) {
+        //     // Initialize tooltips
+        //     $('[data-bs-toggle="tooltip"]').tooltip();
+        // }
         language: {
-            processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>',
-            emptyTable: "No drivers found",
-            zeroRecords: "No matching drivers found"
+            search: "Search:",
+            lengthMenu: "Show _MENU_ entries",
+            info: "Showing _START_ to _END_ of _TOTAL_ entries",
+            infoEmpty: "Showing 0 to 0 of 0 entries",
+            infoFiltered: "(filtered from _MAX_ total entries)",
+            zeroRecords: "No matching records found",
+            emptyTable: "No data available in table",
+            paginate: {
+                first: "First",
+                last: "Last",
+                next: "Next",
+                previous: "Previous"
+            }
         },
-        drawCallback: function(settings) {
-            // Initialize tooltips
-            $('[data-bs-toggle="tooltip"]').tooltip();
+        responsive: true,
+        autoWidth: false,
+        stateSave: true,
+        searchDelay: 500,
+        initComplete: function() {
+            // Add individual column search
+            this.api().columns([1, 2,3,4]).every(function() {
+                var column = this;
+                var title = column.header().textContent;
+                
+                // Create input element
+                var input = $('<input type="text" class="form-control form-control-sm" placeholder="Search ' + title + '" />')
+                    .appendTo($(column.header()))
+                    .on('keyup change clear', function() {
+                        if (column.search() !== this.value) {
+                            column.search(this.value).draw();
+                        }
+                    });
+            });
         }
     });
+    
+    
 
     // Individual column searching
     $('#driversTable thead tr:eq(1) th').each(function(i) {
