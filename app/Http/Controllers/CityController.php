@@ -155,10 +155,15 @@ class CityController extends Controller
             'state_id' => 'required|exists:states,id',
         ]);
 
-        City::create($validated);
+        $city = City::create($validated);
 
-        if ($request->has('from_modal')) {
-            return redirect()->back()->with('success', 'City created successfully.');
+        // Check if it's an AJAX request
+        if ($request->ajax() || $request->has('from_modal')) {
+            return response()->json([
+                'success' => true,
+                'message' => 'City created successfully',
+                'city' => $city
+            ]);
         }
     
         return redirect()->route('master.cities.index')->with('success', 'City created successfully');

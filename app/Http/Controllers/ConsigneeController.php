@@ -29,6 +29,8 @@ class ConsigneeController extends Controller
                 $q->where('name', 'like', "%{$searchValue}%")
                   ->orWhere('address', 'like', "%{$searchValue}%")
                   ->orWhere('contact_number', 'like', "%{$searchValue}%")
+                  ->orWhere('gst_number', 'like', "%{$searchValue}%")
+                  ->orWhere('pan_number', 'like', "%{$searchValue}%")
                   ->orWhereHas('city', function($cityQuery) use ($searchValue) {
                       $cityQuery->where('name', 'like', "%{$searchValue}%");
                   })
@@ -190,6 +192,7 @@ class ConsigneeController extends Controller
                 'digits:10',
             ],
             'gst_number' => 'nullable|string|max:255',
+            'pan_number' => 'nullable|string|size:10|regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
         ]);
 
         $validated['company_id'] = auth()->user()->company_id;
@@ -222,6 +225,7 @@ class ConsigneeController extends Controller
                 'digits:10',
             ],
             'gst_number' => 'nullable|string|max:255',
+            'pan_number' => 'nullable|string|size:10|regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
         ]);
 
         $consignee->update($validated);

@@ -139,11 +139,17 @@ class StateController extends Controller
             'country_id' => 'required|exists:countries,id',
         ]);
 
-        State::create($validated);
+        $state = State::create($validated);
 
-        if ($request->has('from_modal')) {
-            return redirect()->back()->with('success', 'State created successfully');
+        // Check if it's an AJAX request
+        if ($request->ajax() || $request->has('from_modal')) {
+            return response()->json([
+                'success' => true,
+                'message' => 'State created successfully',
+                'state' => $state
+            ]);
         }
+
         return redirect()->route('master.states.index')->with('success', 'State created successfully');
     }
 

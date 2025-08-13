@@ -10,7 +10,7 @@
 
 @section('content')
 <div class="container mt-4">
-    <div class="col-sm-6"><h3 class="mb-0">Consignees</h3></div>
+    <div class="col-sm-6"><h3 class="mb-0">Consignees/Consignors/Customer</h3></div>
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
@@ -23,7 +23,7 @@
 
     <div class="card mb-4">
         <div class="card-header">
-            <h3 class="card-title">Consignees List</h3>
+            <h3 class="card-title">Consignees/Consignors/Customer List</h3>
         </div>
         <div class="card-body">
             <table id="consigneesTable" class="table table-bordered table-striped">
