@@ -44,6 +44,33 @@
         </div>
     </div>
 </div>
+
+<!-- Consignee Details Modal -->
+<div class="modal fade" id="consigneeDetailsModal" tabindex="-1" aria-labelledby="consigneeDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="consigneeDetailsModalLabel">
+                    <i class="bi bi-person-lines-fill"></i> Consignee Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="consigneeDetailsContent">
+                    <!-- Content will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Close
+                </button>
+                <a href="#" id="editConsigneeBtn" class="btn btn-primary" style="display: none;">
+                    <i class="bi bi-pencil-square"></i> Edit Consignee
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -158,6 +185,150 @@ $(document).ready(function() {
                     });
             });
         }
+    });
+    
+    // Handle consignee name click to show details
+    $(document).on('click', '.consignee-name-link', function(e) {
+        e.preventDefault();
+        var consigneeId = $(this).data('id');
+        
+        // Show modal with loading state
+        $('#consigneeDetailsModal').modal('show');
+        $('#consigneeDetailsContent').html(`
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Loading consignee details...</p>
+            </div>
+        `);
+        $('#editConsigneeBtn').hide();
+        
+        // Fetch consignee details
+        $.ajax({
+            url: '/consignees/details/' + consigneeId,
+            type: 'GET',
+            success: function(data) {
+                var detailsHtml = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="bi bi-person-circle"></i> Basic Information</h6>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-borderless table-sm">
+                                        <tr>
+                                            <td class="fw-bold">Name:</td>
+                                            <td>${data.name}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">Short Name:</td>
+                                            <td>${data.short_name}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">Contact Person:</td>
+                                            <td>${data.contact_person_name}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">Contact Number:</td>
+                                            <td>${data.contact_number}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">Email:</td>
+                                            <td>${data.email}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="bi bi-file-text"></i> Business Information</h6>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-borderless table-sm">
+                                        <tr>
+                                            <td class="fw-bold">GST Number:</td>
+                                            <td>${data.gst_number}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">PAN Number:</td>
+                                            <td>${data.pan_number}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">Company:</td>
+                                            <td>${data.company}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="bi bi-geo-alt"></i> Location Details</h6>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-borderless table-sm">
+                                        <tr>
+                                            <td class="fw-bold">Country:</td>
+                                            <td>${data.country}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">State:</td>
+                                            <td>${data.state}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">City:</td>
+                                            <td>${data.city}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">Address:</td>
+                                            <td>${data.address}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="bi bi-info-circle"></i> Additional Information</h6>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-borderless table-sm">
+                                        <tr>
+                                            <td class="fw-bold">Created:</td>
+                                            <td>${data.created_at}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-bold">Last Updated:</td>
+                                            <td>${data.updated_at}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                $('#consigneeDetailsContent').html(detailsHtml);
+                $('#editConsigneeBtn').show().attr('href', '/consignees/' + consigneeId + '/edit');
+            },
+            error: function(xhr, status, error) {
+                $('#consigneeDetailsContent').html(`
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Error!</strong> Failed to load consignee details. Please try again.
+                    </div>
+                `);
+                $('#editConsigneeBtn').hide();
+            }
+        });
     });
     
     // Handle delete confirmation
