@@ -380,10 +380,7 @@ $(document).ready(function() {
                                 </div>
                                 <div class="card-body">
                                     <table class="table table-borderless table-sm">
-                                        <tr>
-                                            <td class="fw-bold">Company:</td>
-                                            <td>${data.company}</td>
-                                        </tr>
+                                        
                                         <tr>
                                             <td class="fw-bold">Created:</td>
                                             <td>${data.created_at}</td>
