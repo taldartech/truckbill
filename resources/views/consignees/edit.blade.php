@@ -240,17 +240,17 @@
                         $('#country_id').val(response.country.id);
                         $('#addCountryModal').modal('hide');
                         $('#addCountryModal form')[0].reset();
-                        toastr.success('Country added successfully!');
+                        showSuccessMessage('Country added successfully!');
                     }
                 },
                 error: function(xhr) {
                     if (xhr.status === 422) {
                         let errors = xhr.responseJSON.errors;
                         for (let field in errors) {
-                            toastr.error(errors[field][0]);
+                            showErrorMessage(errors[field][0]);
                         }
                     } else {
-                        toastr.error('An error occurred while adding the country.');
+                        showErrorMessage('An error occurred while adding the country.');
                     }
                 }
             });
@@ -270,17 +270,17 @@
                         $('#state_id').val(response.state.id);
                         $('#addStateModal').modal('hide');
                         $('#addStateModal form')[0].reset();
-                        toastr.success('State added successfully!');
+                        showSuccessMessage('State added successfully!');
                     }
                 },
                 error: function(xhr) {
                     if (xhr.status === 422) {
                         let errors = xhr.responseJSON.errors;
                         for (let field in errors) {
-                            toastr.error(errors[field][0]);
+                            showErrorMessage(errors[field][0]);
                         }
                     } else {
-                        toastr.error('An error occurred while adding the state.');
+                        showErrorMessage('An error occurred while adding the state.');
                     }
                 }
             });
@@ -300,17 +300,17 @@
                         $('#city_id').val(response.city.id);
                         $('#addCityModal').modal('hide');
                         $('#addCityModal form')[0].reset();
-                        toastr.success('City added successfully!');
+                        showSuccessMessage('City added successfully!');
                     }
                 },
                 error: function(xhr) {
                     if (xhr.status === 422) {
                         let errors = xhr.responseJSON.errors;
                         for (let field in errors) {
-                            toastr.error(errors[field][0]);
+                            showErrorMessage(errors[field][0]);
                         }
                     } else {
-                        toastr.error('An error occurred while adding the city.');
+                        showErrorMessage('An error occurred while adding the city.');
                     }
                 }
             });
@@ -331,7 +331,7 @@
                         });
                     })
                     .fail(function() {
-                        toastr.error('Error loading states');
+                        showErrorMessage('Error loading states');
                     });
             }
         });
@@ -517,17 +517,17 @@
                         $('#country_id').val(response.country.id);
                         $('#addCountryModal').modal('hide');
                         $('#addCountryModal form')[0].reset();
-                        toastr.success('Country added successfully!');
+                        showSuccessMessage('Country added successfully!');
                     }
                 },
                 error: function(xhr) {
                     if (xhr.status === 422) {
                         let errors = xhr.responseJSON.errors;
                         for (let field in errors) {
-                            toastr.error(errors[field][0]);
+                            showErrorMessage(errors[field][0]);
                         }
                     } else {
-                        toastr.error('An error occurred while adding the country.');
+                        showErrorMessage('An error occurred while adding the country.');
                     }
                 }
             });
@@ -547,17 +547,17 @@
                         $('#state_id').val(response.state.id);
                         $('#addStateModal').modal('hide');
                         $('#addStateModal form')[0].reset();
-                        toastr.success('State added successfully!');
+                        showSuccessMessage('State added successfully!');
                     }
                 },
                 error: function(xhr) {
                     if (xhr.status === 422) {
                         let errors = xhr.responseJSON.errors;
                         for (let field in errors) {
-                            toastr.error(errors[field][0]);
+                            showErrorMessage(errors[field][0]);
                         }
                     } else {
-                        toastr.error('An error occurred while adding the state.');
+                        showErrorMessage('An error occurred while adding the state.');
                     }
                 }
             });
@@ -577,17 +577,17 @@
                         $('#city_id').val(response.city.id);
                         $('#addCityModal').modal('hide');
                         $('#addCityModal form')[0].reset();
-                        toastr.success('City added successfully!');
+                        showSuccessMessage('City added successfully!');
                     }
                 },
                 error: function(xhr) {
                     if (xhr.status === 422) {
                         let errors = xhr.responseJSON.errors;
                         for (let field in errors) {
-                            toastr.error(errors[field][0]);
+                            showErrorMessage(errors[field][0]);
                         }
                     } else {
-                        toastr.error('An error occurred while adding the city.');
+                        showErrorMessage('An error occurred while adding the city.');
                     }
                 }
             });
@@ -608,10 +608,57 @@
                         });
                     })
                     .fail(function() {
-                        toastr.error('Error loading states');
+                        showErrorMessage('Error loading states');
                     });
             }
         });
+
+        // Function to show success message
+        function showSuccessMessage(message) {
+            // Remove any existing alerts
+            $('.alert-success').remove();
+            
+            // Create and show success alert
+            const alertHtml = `
+                <div class="alert alert-success alert-dismissible fade show mt-2" role="alert">
+                    <i class="bi bi-check-circle-fill"></i> ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+            
+            // Insert after the page title or at the top of the form
+            if ($('.card-header').length) {
+                $('.card-header').after(alertHtml);
+            } else {
+                $('form').before(alertHtml);
+            }
+            
+            // Auto-hide after 5 seconds
+            setTimeout(function() {
+                $('.alert-success').fadeOut();
+            }, 5000);
+        }
+
+        // Function to show error message
+        function showErrorMessage(message) {
+            // Remove any existing alerts
+            $('.alert-danger').remove();
+            
+            // Create and show error alert
+            const alertHtml = `
+                <div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill"></i> ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+            
+            // Insert after the page title or at the top of the form
+            if ($('.card-header').length) {
+                $('.card-header').after(alertHtml);
+            } else {
+                $('form').before(alertHtml);
+            }
+        }
     });
 </script>
 @endsection
