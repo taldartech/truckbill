@@ -38,6 +38,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/api/transporters/{transporter}/trucks', [TruckController::class, 'getTrucksForTransporter']);
     Route::get('/api/trucks/{truck}/owner-transporters', [TruckController::class, 'getOwnerTransporters']);
     Route::get('/api/trucks/{truck}/agency-transporters', [TruckController::class, 'getAgencyTransporters']);
+    Route::get('/api/drivers', [DriverController::class, 'getDriversApi']);
     Route::get('/api/lorry_receipts/{id}', [FreightBookingController::class, 'getLorryReceipt']);
     Route::get('/api/transporters/{id}', [FreightBookingController::class, 'getTransporter']);
     Route::get('/api/trucks/{id}', [FreightBookingController::class, 'getTruck']);

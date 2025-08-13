@@ -159,6 +159,10 @@ class TruckOwnerController extends Controller
     {
         $buttons = '<div class="d-flex gap-1">';
         
+        // Add Truck Button (modal trigger for truck owners)
+        $buttons .= '<button type="button" class="btn btn-sm btn-outline-primary add-truck-btn" title="Add Truck" data-transporter-id="' . $truckOwner->id . '" data-transporter-name="' . htmlspecialchars($truckOwner->name) . '">';
+        $buttons .= '<i class="bi bi-truck"></i></button>';
+        
         // Advance Payment Button (same as transporters)
         $buttons .= '<button type="button" class="btn btn-sm btn-outline-success advance-payment-btn" title="Advance Payment" data-transporter-id="' . $truckOwner->id . '" data-transporter-name="' . htmlspecialchars($truckOwner->name) . '">';
         $buttons .= '<i class="bi bi-currency-rupee"></i>';

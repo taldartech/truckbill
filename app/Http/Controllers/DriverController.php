@@ -22,6 +22,15 @@ class DriverController extends Controller
         return view('drivers.index', compact('drivers'));
     }
 
+    public function getDriversApi()
+    {
+        $drivers = \App\Models\Driver::select('id', 'name', 'mobile')
+            ->orderBy('name')
+            ->get();
+        
+        return response()->json($drivers);
+    }
+
     public function create()
     {
         return view('drivers.create');
