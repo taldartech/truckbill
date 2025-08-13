@@ -169,21 +169,21 @@ class TransporterController extends Controller
         $buttons = '<div class="d-flex gap-1">';
         
        
-            $buttons .= '<button type="button" class="btn btn-sm btn-outline-success advance-payment-btn" title="Advance Payment" data-transporter-id="' . $transporter->id . '" data-transporter-name="' . htmlspecialchars($transporter->name) . '">';
-            $buttons .= '<i class="bi bi-currency-rupee"></i>';
+            $buttons .= '<button type="button" class="btn btn-sm btn-outline-success advance-payment-btn " title="Advance Payment" data-bs-toggle="tooltip" data-transporter-id="' . $transporter->id . '" data-transporter-name="' . htmlspecialchars($transporter->name) . '">';
+            $buttons .= '<i class="bi bi-currency-rupee "></i>';
             $buttons .= '</button>';
         
 
     // Edit button
         $editUrl = route('transporters.edit', $transporter->id);
-        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info">';
-        $buttons .= '<i class="bi bi-pencil"></i></a>';
+        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info " title="Edit Transporter" data-bs-toggle="tooltip">';
+        $buttons .= '<i class="bi bi-pencil "></i></a>';
         
         // Delete button
         $deleteUrl = route('transporters.destroy', $transporter->id);
         $buttons .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Delete this transporter?\')">';
         $buttons .= csrf_field() . method_field('DELETE');
-        $buttons .= '<button type="submit" class="btn btn-sm btn-danger">';
+        $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete Transporter" data-bs-toggle="tooltip">';
         $buttons .= '<i class="bi bi-trash"></i></button></form>';
         
         $buttons .= '</div>';

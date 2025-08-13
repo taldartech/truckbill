@@ -156,7 +156,7 @@ class TruckController extends Controller
         $buttons = '<div class="d-flex gap-1">';
         
         // Assign Driver button
-        $buttons .= '<button type="button" class="btn btn-sm btn-outline-success assign-driver-btn" title="Assign Driver" ';
+        $buttons .= '<button type="button" class="btn btn-sm btn-outline-success assign-driver-btn" title="Assign Driver" data-bs-toggle="tooltip" ';
         $buttons .= 'data-truck-id="' . $truck->id . '" ';
         $buttons .= 'data-truck-number="' . htmlspecialchars($truck->truck_number) . '" ';
         $buttons .= 'data-truck-type="' . htmlspecialchars($truck->truck_type) . '" ';
@@ -169,7 +169,7 @@ class TruckController extends Controller
         $deleteUrl = route('trucks.destroy', $truck->id);
         $buttons .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this truck?\')">';
         $buttons .= csrf_field() . method_field('DELETE');
-        $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete Truck">';
+        $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete Truck" data-bs-toggle="tooltip">';
         $buttons .= '<i class="bi bi-trash"></i></button></form>';
         
         $buttons .= '</div>';
