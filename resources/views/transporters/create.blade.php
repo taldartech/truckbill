@@ -213,7 +213,7 @@
                         <h6 class="text-primary mb-3"><i class="fas fa-file-alt me-2"></i>Tax Information</h6>
                         <table class="table table-sm table-borderless">
                             <tr><td class="fw-bold">GST Number:</td><td id="confirm-gst-number">-</td></tr>
-                            <tr><td class="fw-bold">GST Type:</td><td id="confirm-gst-type">-</td></tr>
+
                             <tr><td class="fw-bold">PAN Number:</td><td id="confirm-pan-number">-</td></tr>
                             <tr><td class="fw-bold">PAN Active:</td><td id="confirm-pan-active">-</td></tr>
                         </table>
@@ -269,7 +269,7 @@
           const mobile = document.getElementById('mobile_number')?.value || '-';
           
           const gstNumber = document.getElementById('gst_number')?.value || '-';
-          const gstType = document.getElementById('gst_type')?.value || '-';
+
           const panNumber = document.getElementById('pan_number')?.value || '-';
           const panActive = document.querySelector('input[name="pan_active"]:checked')?.value === '1' ? 'Yes' : 'No';
           
@@ -292,7 +292,7 @@
           document.getElementById('confirm-mobile').textContent = mobile;
           
           document.getElementById('confirm-gst-number').textContent = gstNumber;
-          document.getElementById('confirm-gst-type').textContent = gstType.charAt(0).toUpperCase() + gstType.slice(1);
+
           document.getElementById('confirm-pan-number').textContent = panNumber;
           document.getElementById('confirm-pan-active').textContent = panActive;
           
