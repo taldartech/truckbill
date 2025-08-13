@@ -12,6 +12,7 @@ use App\Models\Truck;
 use App\Models\Driver;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class TruckOwnerController extends Controller
 {
@@ -49,8 +50,8 @@ class TruckOwnerController extends Controller
                   });
             });
         }
-        
-        // Handle column-specific search
+
+        // Handle individual column searches
         if ($request->has('columns')) {
             foreach ($request->columns as $index => $column) {
                 if (!empty($column['search']['value'])) {
@@ -59,96 +60,80 @@ class TruckOwnerController extends Controller
                         case 1: // Name
                             $query->where('transporters.name', 'like', "%{$searchValue}%");
                             break;
-                       
                         case 2: // PAN Number
                             $query->where('transporters.pan_number', 'like', "%{$searchValue}%");
                             break;
-
-                        case 3: // Location
+                        case 3: // Mobile Number
+                            $query->where('transporters.mobile_number', 'like', "%{$searchValue}%");
+                            break;
+                        case 4: // City
                             $query->whereHas('city', function($cityQuery) use ($searchValue) {
                                 $cityQuery->where('name', 'like', "%{$searchValue}%");
                             });
                             break;
-                        case 4: // Contact Number
-                            $query->where('transporters.mobile_number', 'like', "%{$searchValue}%");
+                        case 5: // Company
+                            $query->whereHas('company', function($companyQuery) use ($searchValue) {
+                                $companyQuery->where('name', 'like', "%{$searchValue}%");
+                            });
                             break;
                     }
                 }
             }
         }
-        
-        // Handle sorting
+
+        // Handle ordering
         if ($request->has('order')) {
             $orderColumn = $request->order[0]['column'];
-            $orderDirection = $request->order[0]['dir'];
+            $orderDir = $request->order[0]['dir'];
             
             switch ($orderColumn) {
-                case 0: // Sr. No (ID)
-                    $query->orderBy('transporters.id', $orderDirection);
-                    break;
                 case 1: // Name
-                    $query->orderBy('transporters.name', $orderDirection);
+                    $query->orderBy('transporters.name', $orderDir);
                     break;
-               
                 case 2: // PAN Number
-                    $query->orderBy('transporters.pan_number', $orderDirection);
+                    $query->orderBy('transporters.pan_number', $orderDir);
                     break;
-               case 3: // Location
-                    $query->leftJoin('cities', 'transporters.city_id', '=', 'cities.id')
-                          ->orderBy('cities.name', $orderDirection)
+                case 3: // Mobile Number
+                    $query->orderBy('transporters.mobile_number', $orderDir);
+                    break;
+                case 4: // City
+                    $query->join('cities', 'transporters.city_id', '=', 'cities.id')
+                          ->orderBy('cities.name', $orderDir)
                           ->select('transporters.*');
                     break;
-                case 4: // Contact Number
-                    $query->orderBy('transporters.mobile_number', $orderDirection);
+                case 5: // Company
+                    $query->join('companies', 'transporters.company_id', '=', 'companies.id')
+                          ->orderBy('companies.name', $orderDir)
+                          ->select('transporters.*');
                     break;
-    
-                case 5: // Declaration Given
-                    $query->orderBy('transporters.declaration_given', $orderDirection);
-                    break;
-                case 6: // Advance Amount
-                    $query->orderBy('transporters.advance_amount', $orderDirection);
-                    break;
-               
                 default:
-                    $query->orderBy('transporters.created_at', 'desc');
+                    $query->orderBy('transporters.id', 'desc');
             }
         } else {
-            $query->orderBy('transporters.created_at', 'desc');
+            $query->orderBy('transporters.id', 'desc');
         }
+
+        $totalRecords = \App\Models\Transporter::where('is_owner', 1)->count();
+        $filteredRecords = $query->count();
         
-        // Get total count before pagination
-        $totalQuery = \App\Models\Transporter::where('is_owner', 1);
-        if (auth()->user()->userRole->name !== 'super_admin') {
-            $totalQuery->where('company_id', auth()->user()->company_id);
-        }
-        $totalRecords = $totalQuery->count();
-        
-        // Clone query for filtered count to avoid issues with joins
-        $filteredQuery = clone $query;
-        $filteredRecords = $filteredQuery->count();
-        
-        // Handle pagination
         $start = $request->start ?? 0;
         $length = $request->length ?? 10;
+        
         $truckOwners = $query->skip($start)->take($length)->get();
-        
-        // Format data for DataTables
-        $data = $truckOwners->map(function($truckOwner, $index) use ($start) {
-            return [
+
+        $data = [];
+        foreach ($truckOwners as $index => $truckOwner) {
+            $data[] = [
                 'sr_no' => $start + $index + 1,
-                'name' => $truckOwner->name,
-                'pan_number' => $truckOwner->pan_number ?: '-',
-                'location' => optional($truckOwner->city)->name ?: '-',
-                'contact_number' => $truckOwner->mobile_number ?: '-',
-                'declaration_given' => $truckOwner->declaration_given ? 'Yes' : 'No',
-                'advance_amount' => number_format($truckOwner->advance_amount ?: 0, 2),
-                // 'actions' => $this->getActionButtons($truckOwner)
-                'actions' => auth()->user()->userRole->name === 'admin'
-                        ? $this->getActionButtons($truckOwner)
-                        : ''  // empty string for non-admins
+                'name' => $truckOwner->name ?? 'N/A',
+                'pan_number' => $truckOwner->pan_number ?? 'N/A',
+                'mobile_number' => $truckOwner->mobile_number ?? 'N/A',
+                'city' => $truckOwner->city->name ?? 'N/A',
+                'company' => $truckOwner->company->name ?? 'N/A',
+                'actions' => $this->getActionButtons($truckOwner)
             ];
-        });
-        
+        }
+
         return response()->json([
             'draw' => intval($request->draw),
             'recordsTotal' => $totalRecords,
@@ -156,69 +141,44 @@ class TruckOwnerController extends Controller
             'data' => $data
         ]);
     }
-    
+
     private function getActionButtons($truckOwner)
     {
-        $buttons = '<div class="d-flex gap-1">';
+        $buttons = '';
         
-        // Bank account button
-        if(auth()->check() && auth()->user()->userRole->name === 'super_admin') {
-        if($truckOwner->bankAccounts->isEmpty() || $truckOwner->bankAccounts->first()->bulk_payment_id === null) {
-            $bankUrl = route('truck_owner_bank_accounts.create', ['truck_owner_id' => $truckOwner->id]);
-            $buttons .= '<a href="' . $bankUrl . '" class="btn btn-sm btn-info" title="Add Bank Account">';
-            $buttons .= '<i class="bi bi-bank"></i></a>';
+        // Bank Account Management Button
+        $hasBankAccount = $truckOwner->bankAccounts && $truckOwner->bankAccounts->count() > 0;
+        if ($hasBankAccount) {
+            $buttons .= '<a href="' . route('truck_owner_bank_accounts.index') . '?company_id=' . $truckOwner->company_id . '" class="btn btn-success btn-sm me-1" title="Edit Bank Account">
+                <i class="fas fa-university"></i>
+            </a>';
         } else {
-            $bankUrl = route('truck_owner_bank_accounts.index', ['truck_owner_id' => $truckOwner->id]);
-            $buttons .= '<a href="' . $bankUrl . '" class="btn btn-sm btn-warning" title="View Bank Accounts">';
-            $buttons .= '<i class="bi bi-bank"></i></a>';
+            $buttons .= '<a href="' . route('truck_owner_bank_accounts.index') . '?company_id=' . $truckOwner->company_id . '" class="btn btn-warning btn-sm me-1" title="Add Bank Account">
+                <i class="fas fa-plus"></i>
+            </a>';
         }
-        }
-
-     
-            $advanceUrl = route('advance-payments.create', ['transporter_id' => $truckOwner->transporter_id]);
-            $buttons .= '<a href="' . $advanceUrl . '" class="btn btn-sm btn-outline-success" title="Advance Payment">';
-            $buttons .= '<i class="bi bi-currency-rupee"></i>';
-            $buttons .= '</a>';
         
+        // Edit Button
+        $buttons .= '<a href="' . route('truck_owners.edit', $truckOwner->id) . '" class="btn btn-primary btn-sm me-1" title="Edit">
+            <i class="fas fa-edit"></i>
+        </a>';
         
-        // Edit button
-        $editUrl = route('truck_owners.edit', $truckOwner->id);
-        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info">';
-        $buttons .= '<i class="bi bi-pencil"></i></a>';
-
-        // // Truck creation button
-        $truckUrl = route('trucks.create', ['transporter_id' => $truckOwner->id]);
-        $buttons .= '<a href="' . $truckUrl . '" class="btn btn-sm btn-info" title="Add Truck">';
-        $buttons .= '<i class="bi bi-truck"></i></a>';
+        // Delete Button
+        $buttons .= '<button type="button" class="btn btn-danger btn-sm" onclick="confirmDelete(' . $truckOwner->id . ')" title="Delete">
+            <i class="fas fa-trash"></i>
+        </button>';
         
-        // Delete button
-        $deleteUrl = route('truck_owners.destroy', $truckOwner->id);
-        $buttons .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Delete this truck owner?\')">';
-        $buttons .= csrf_field() . method_field('DELETE');
-        $buttons .= '<button type="submit" class="btn btn-sm btn-danger">';
-        $buttons .= '<i class="bi bi-trash"></i></button></form>';
-        
-        $buttons .= '</div>';
         return $buttons;
     }
 
     public function create()
     {
-        $companies = \App\Models\Company::all();
-        // For create, we can't filter trucks as we don't have transporter_id yet
-        $trucks = \App\Models\Truck::all();
-        $countries = \App\Models\Country::all();
-        $states = [];
-        $cities = [];
-    
-    if (old('country_id')) {
-        $states = \App\Models\State::where('country_id', old('country_id'))->get();
-    }
-    
-    if (old('state_id')) {
-        $cities = \App\Models\City::where('state_id', old('state_id'))->get();
-    }
-        return view('truck_owner.create', compact('companies', 'trucks', 'countries', 'states', 'cities'));
+        $companies = Company::all();
+        $countries = Country::all();
+        $states = State::all();
+        $cities = City::all();
+        
+        return view('truck_owner.create', compact('companies', 'countries', 'states', 'cities'));
     }
 
     public function store(Request $request)
@@ -226,19 +186,20 @@ class TruckOwnerController extends Controller
         $validated = $request->validate([
             'company_id' => 'required|exists:companies,id',
             'name' => 'required|string|max:255',
-           'gst_number' => [
+            'gst_number' => [
                 'nullable',
                 'string',
                 'max:15',
-                'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/'
+                'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
+                'unique:transporters,gst_number'
             ],
             'pan_number' => [
                 'nullable',
                 'string',
                 'size:10',
-                'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/'
+                'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
+                'unique:transporters,pan_number'
             ],
-            'gst_type' => 'nullable|in:composition,regular',
             'is_owner' => 'nullable|boolean',
             'declaration_given' => 'required|boolean',
             'total_trucks' => 'required|integer|min:0',
@@ -251,9 +212,15 @@ class TruckOwnerController extends Controller
             'mobile_number' => [
                 'required',
                 'digits:10',
+                'unique:transporters,mobile_number'
             ],
             'short_name' => 'nullable|string|max:255',
+        ], [
+            'pan_number.unique' => 'This PAN number is already registered with another truck owner or transporter.',
+            'gst_number.unique' => 'This GST number is already registered with another truck owner or transporter.',
+            'mobile_number.unique' => 'This mobile number is already registered with another truck owner or transporter.',
         ]);
+        
         if (!isset($validated['advance_amount'])) {
             $validated['advance_amount'] = 0;
         }
@@ -263,30 +230,21 @@ class TruckOwnerController extends Controller
         // Convert pan_active to boolean
         $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
         \App\Models\Transporter::create($validated);
-        return redirect()->route('truck_owners.index')->with('success', 'TruckOwner created successfully!');
+        return redirect()->route('truck_owners.index')->with('success', 'Truck Owner created successfully!');
+    }
+
+    public function show(\App\Models\Transporter $transporter)
+    {
+        return view('truck_owner.show', compact('transporter'));
     }
 
     public function edit(\App\Models\Transporter $transporter)
     {
-        $companies = \App\Models\Company::all();
-        // Filter trucks to show only those belonging to this transporter
-        $trucks = \App\Models\Truck::where('transporter_id', $transporter->id)->get();
-        $countries = \App\Models\Country::all();
-        $states = [];
-        $cities = [];
-    
-    if (old('country_id')) {
-        $states = \App\Models\State::where('country_id', old('country_id'))->get();
-    }
-    
-    if (old('state_id')) {
-        $cities = \App\Models\City::where('state_id', old('state_id'))->get();
-    }
-
-    // Fetch trucks with driver details
-    $trucks = \App\Models\Truck::with('driver') // assuming relationship exists
-        ->where('transporter_id', $transporter->id)
-        ->get();
+        $companies = Company::all();
+        $trucks = Truck::where('transporter_id', $transporter->id)->get();
+        $countries = Country::all();
+        $states = State::all();
+        $cities = City::all();
         
         return view('truck_owner.edit', compact('transporter', 'companies', 'trucks', 'countries', 'states', 'cities'));
     }
@@ -296,19 +254,20 @@ class TruckOwnerController extends Controller
         $validated = $request->validate([
             'company_id' => 'required|exists:companies,id',
             'name' => 'required|string|max:255',
-           'gst_number' => [
+            'gst_number' => [
                 'nullable',
                 'string',
                 'max:15',
-                'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/'
+                'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
+                Rule::unique('transporters', 'gst_number')->ignore($transporter->id)
             ],
             'pan_number' => [
                 'nullable',
                 'string',
                 'size:10',
-                'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/'
+                'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
+                Rule::unique('transporters', 'pan_number')->ignore($transporter->id)
             ],
-            'gst_type' => 'nullable|in:composition,regular',
             'is_owner' => 'nullable|boolean',
             'declaration_given' => 'required|boolean',
             'total_trucks' => 'required|integer|min:0',
@@ -321,9 +280,15 @@ class TruckOwnerController extends Controller
             'mobile_number' => [
                 'required',
                 'digits:10',
+                Rule::unique('transporters', 'mobile_number')->ignore($transporter->id)
             ],
             'short_name' => 'nullable|string|max:255',
-        ]); 
+        ], [
+            'pan_number.unique' => 'This PAN number is already registered with another truck owner or transporter.',
+            'gst_number.unique' => 'This GST number is already registered with another truck owner or transporter.',
+            'mobile_number.unique' => 'This mobile number is already registered with another truck owner or transporter.',
+        ]);
+        
         if (!isset($validated['advance_amount'])) {
             $validated['advance_amount'] = 0;
         }
@@ -333,14 +298,12 @@ class TruckOwnerController extends Controller
         // Convert pan_active to boolean
         $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
         $transporter->update($validated);
-        return redirect()->route('truck_owner.index')->with('success', 'TruckOwner updated successfully!');
+        return redirect()->route('truck_owners.index')->with('success', 'Truck Owner updated successfully!');
     }
 
     public function destroy(\App\Models\Transporter $transporter)
     {
         $transporter->delete();
-        return redirect()->route('truck_owner.index')->with('success', 'TruckOwner deleted successfully!');
+        return redirect()->route('truck_owners.index')->with('success', 'Truck Owner deleted successfully!');
     }
-
-    //
 }
