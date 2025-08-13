@@ -29,7 +29,7 @@
             <table id="consigneesTable" class="table table-bordered table-striped">
                 <thead>
                     <tr>
-                        <th style="width: 80px;">ID</th>
+                        <th style="width: 80px;">Sr. No</th>
                         <th>Name</th>
                         <th>City</th>
                         <th>State</th>
@@ -96,10 +96,12 @@ $(document).ready(function() {
         },
         columns: [
             {
-                data: 'id',
-                name: 'id',
+                data: 'DT_RowIndex',
+                name: 'DT_RowIndex',
                 width: '80px',
-                className: 'text-center'
+                className: 'text-center',
+                orderable: false,
+                searchable: false
             },
             {
                 data: 'name',

@@ -81,9 +81,9 @@ class ConsigneeController extends Controller
             $orderDirection = $request->order[0]['dir'];
             
             switch ($orderColumn) {
-                case 0: // ID
-                    $query->orderBy('id', $orderDirection);
-                    break;
+                case 0: // Sr. No
+                // No sorting on Sr. No column
+                break;
                 case 1: // Name
                     $query->orderBy('name', $orderDirection);
                     break;
@@ -119,11 +119,12 @@ class ConsigneeController extends Controller
         // Handle pagination
         $start = $request->start ?? 0;
         $length = $request->length ?? 10;
-        $consignees = $query->skip($start)->take($length)->get();
+        $consignees = $query->orderBy('name', 'asc')->skip($start)->take($length)->get();
         
         // Format data for DataTables
         $data = $consignees->map(function($consignee, $index) use ($start) {
             return [
+                'DT_RowIndex' => $start + $index + 1,
                 'id' => $consignee->id,
                 'name' => '<a href="javascript:void(0)" class="text-primary fw-bold consignee-name-link" data-id="' . $consignee->id . '" style="cursor: pointer; text-decoration: none;">' . ($consignee->name ?: '-') . '</a>',
                 'city' => $consignee->city?->name ?? '-',
