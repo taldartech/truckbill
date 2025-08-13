@@ -200,7 +200,6 @@ class TruckOwnerController extends Controller
                 'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
                 'unique:transporters,pan_number'
             ],
-            'is_owner' => 'nullable|boolean',
             'declaration_given' => 'required|boolean',
             'total_trucks' => 'required|integer|min:0',
             'advance_amount' => 'nullable|numeric',
@@ -214,21 +213,21 @@ class TruckOwnerController extends Controller
                 'digits:10',
                 'unique:transporters,mobile_number'
             ],
-            'short_name' => 'nullable|string|max:255',
+            'short_name' => ['nullable', 'string', 'max:255', 'unique:transporters,short_name'],
+            'contact_person_name' => 'nullable|string|max:255',
         ], [
             'pan_number.unique' => 'This PAN number is already registered with another truck owner or transporter.',
             'gst_number.unique' => 'This GST number is already registered with another truck owner or transporter.',
             'mobile_number.unique' => 'This mobile number is already registered with another truck owner or transporter.',
         ]);
         
-        if (!isset($validated['advance_amount'])) {
-            $validated['advance_amount'] = 0;
-        }
-        if (!isset($validated['is_owner'])) {
-            $validated['is_owner'] = 1;
-        }
+        // Always set truck owner specific fields (system controlled, not user input)
+        $validated['advance_amount'] = 0; // Truck owners always have 0 advance amount
+        $validated['is_owner'] = 1; // Always true for truck owners (this differentiates from transporters)
+        
         // Convert pan_active to boolean
         $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
+        
         \App\Models\Transporter::create($validated);
         return redirect()->route('truck_owners.index')->with('success', 'Truck Owner created successfully!');
     }
@@ -268,7 +267,6 @@ class TruckOwnerController extends Controller
                 'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
                 Rule::unique('transporters', 'pan_number')->ignore($transporter->id)
             ],
-            'is_owner' => 'nullable|boolean',
             'declaration_given' => 'required|boolean',
             'total_trucks' => 'required|integer|min:0',
             'advance_amount' => 'nullable|numeric',
@@ -282,21 +280,21 @@ class TruckOwnerController extends Controller
                 'digits:10',
                 Rule::unique('transporters', 'mobile_number')->ignore($transporter->id)
             ],
-            'short_name' => 'nullable|string|max:255',
+            'short_name' => ['nullable', 'string', 'max:255', 'unique:transporters,short_name'],
+            'contact_person_name' => 'nullable|string|max:255',
         ], [
             'pan_number.unique' => 'This PAN number is already registered with another truck owner or transporter.',
             'gst_number.unique' => 'This GST number is already registered with another truck owner or transporter.',
             'mobile_number.unique' => 'This mobile number is already registered with another truck owner or transporter.',
         ]);
         
-        if (!isset($validated['advance_amount'])) {
-            $validated['advance_amount'] = 0;
-        }
-        if (!isset($validated['is_owner'])) {
-            $validated['is_owner'] = 1;
-        }
+        // Always set truck owner specific fields (system controlled, not user input)
+        $validated['advance_amount'] = 0; // Truck owners always have 0 advance amount
+        $validated['is_owner'] = 1; // Always true for truck owners (this differentiates from transporters)
+        
         // Convert pan_active to boolean
         $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
+        
         $transporter->update($validated);
         return redirect()->route('truck_owners.index')->with('success', 'Truck Owner updated successfully!');
     }
