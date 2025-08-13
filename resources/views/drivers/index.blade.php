@@ -29,7 +29,7 @@
             <table id="driversTable" class="table table-bordered table-striped">
                 <thead>
                     <tr>
-                        <th style="width: 80px;">ID</th>
+                        <th style="width: 80px;">Sr. No</th>
                         <th>Name</th>
                         <th>Mobile</th>
                         <th>License Number</th>
@@ -179,7 +179,7 @@ $(document).ready(function() {
             type: 'GET'
         },
         columns: [
-            { data: 'id', name: 'id', orderable: true, searchable: false },
+            { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
             { data: 'name', name: 'name', orderable: true, searchable: true },
             { data: 'mobile', name: 'mobile', orderable: true, searchable: true },
             { data: 'license_number', name: 'license_number', orderable: true, searchable: true },

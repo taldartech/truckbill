@@ -55,8 +55,8 @@ class DriverController extends Controller
             $orderDirection = $request->order[0]['dir'];
             
             switch ($orderColumn) {
-                case 0: // ID
-                    $query->orderBy('id', $orderDirection);
+                case 0: // Sr. No
+                    // No sorting for serial number column
                     break;
                 case 1: // Name
                     $query->orderBy('name', $orderDirection);
@@ -87,6 +87,7 @@ class DriverController extends Controller
         $data = [];
         foreach ($drivers as $index => $driver) {
             $data[] = [
+                'DT_RowIndex' => $request->start + $index + 1,
                 'id' => $driver->id,
                 'name' => $driver->name ?? '-',
                 'mobile' => $driver->mobile ?? '-',
@@ -119,7 +120,7 @@ class DriverController extends Controller
             
             $buttons .= '<form action="' . route('drivers.destroy', $driver->id) . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this driver?\')">';
             $buttons .= csrf_field() . method_field('DELETE');
-            $buttons .= '<button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Driver">';
+            $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete Driver">';
             $buttons .= '<i class="bi bi-trash"></i></button></form>';
         }
         
