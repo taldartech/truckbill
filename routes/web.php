@@ -116,6 +116,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/trucks/{truck}', [TruckController::class, 'show'])->name('trucks.show');
     Route::get('/trucks/{truck}/edit', [TruckController::class, 'edit'])->name('trucks.edit');
     Route::put('/trucks/{truck}', [TruckController::class, 'update'])->name('trucks.update');
+    Route::put('/trucks/{truck}/assign-driver', [TruckController::class, 'assignDriver'])->name('trucks.assign-driver');
     Route::delete('/trucks/{truck}', [TruckController::class, 'destroy'])->name('trucks.destroy');
     // Route::get('/check-truck-number', [TruckController::class, 'checkTruckNumber'])->name('check.truck.number');
     Route::get('/check-truck-number', function (Illuminate\Http\Request $request) {

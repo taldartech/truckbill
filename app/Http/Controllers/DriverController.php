@@ -44,15 +44,24 @@ class DriverController extends Controller
                 'nullable',
                 'digits:10',
             ],
-           'license_number' => [
-                            'nullable',
-                            'string',
-                            
-                            
-                        ],
+            'license_number' => [
+                'nullable',
+                'string',
+            ],
             'address' => 'nullable|string|max:255',
         ]);
-        \App\Models\Driver::create($validated);
+        
+        $driver = \App\Models\Driver::create($validated);
+        
+        // Return JSON response for AJAX requests
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Driver created successfully!',
+                'driver' => $driver
+            ]);
+        }
+        
         return redirect()->route('drivers.index')->with('success', 'Driver created successfully!');
     }
 

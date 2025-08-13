@@ -64,6 +64,120 @@
         </div>
     </div>
 </div>
+
+<!-- Assign Driver Modal -->
+<div class="modal fade" id="assignDriverModal" tabindex="-1" aria-labelledby="assignDriverModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="assignDriverModalLabel">
+                    <i class="bi bi-person-plus"></i> Assign Driver to Truck
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="assign_truck_id" name="truck_id">
+                
+                <!-- Truck Information Display -->
+                <div class="card mb-3">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="bi bi-truck"></i> Truck Information</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-2"><strong>Truck Number:</strong> <span id="display_truck_number" class="badge bg-primary"></span></p>
+                                <p class="mb-2"><strong>Truck Type:</strong> <span id="display_truck_type"></span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-2"><strong>Truck Owner:</strong> <span id="display_transporter_name"></span></p>
+                                <p class="mb-2"><strong>Current Driver:</strong> <span id="display_current_driver" class="text-muted">Not assigned</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Driver Selection Form -->
+                <form id="assignDriverForm">
+                    @csrf
+                    @method('PUT')
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <label for="assign_driver_id" class="form-label">Select Driver</label>
+                            <select class="form-select" id="assign_driver_id" name="driver_id">
+                                <option value="">No Driver (Remove current assignment)</option>
+                            </select>
+                            <div class="invalid-feedback">Please select a driver.</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">&nbsp;</label>
+                            <div>
+                                <button type="button" class="btn btn-outline-primary" id="showAddDriverForm">
+                                    <i class="bi bi-plus-circle"></i> Add New Driver
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                
+                <!-- Add New Driver Form (Initially Hidden) -->
+                <div id="addDriverForm" style="display: none;">
+                    <div class="card border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h6 class="mb-0"><i class="bi bi-person-plus"></i> Add New Driver</h6>
+                        </div>
+                        <div class="card-body">
+                            <form id="newDriverForm">
+                                @csrf
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="new_driver_name" class="form-label">Name *</label>
+                                        <input type="text" class="form-control" id="new_driver_name" name="name" required>
+                                        <div class="invalid-feedback">Please enter a name.</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="new_driver_mobile" class="form-label">Mobile *</label>
+                                        <input type="text" class="form-control" id="new_driver_mobile" name="mobile" required pattern="[0-9]{10}" maxlength="10">
+                                        <div class="invalid-feedback">Please enter a valid 10-digit mobile number.</div>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="new_driver_license" class="form-label">License Number</label>
+                                        <input type="text" class="form-control" id="new_driver_license" name="license_number">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="new_driver_address" class="form-label">Address</label>
+                                        <input type="text" class="form-control" id="new_driver_address" name="address">
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-check-circle"></i> Add Driver
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" id="cancelAddDriver">
+                                        <i class="bi bi-x-circle"></i> Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Note:</strong> You can add a new driver using the form above. The new driver will be automatically selected after creation.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="assignDriverBtn">
+                    <i class="bi bi-check-circle"></i> Assign Driver
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -301,6 +415,209 @@ $(document).ready(function() {
                         <strong>Error!</strong> Unable to load truck details. Please try again.
                     </div>
                 `);
+            }
+        });
+    });
+    
+    // Handle assign driver button click
+    $(document).on('click', '.assign-driver-btn', function(e) {
+        e.preventDefault();
+        
+        var truckId = $(this).data('truck-id');
+        var truckNumber = $(this).data('truck-number');
+        var truckType = $(this).data('truck-type');
+        var transporterName = $(this).data('transporter-name');
+        var currentDriverId = $(this).data('current-driver-id');
+        var currentDriverName = $(this).data('current-driver-name');
+        
+        // Populate truck information
+        $('#assign_truck_id').val(truckId);
+        $('#display_truck_number').text(truckNumber);
+        $('#display_truck_type').text(truckType);
+        $('#display_transporter_name').text(transporterName);
+        $('#display_current_driver').text(currentDriverName || 'Not assigned');
+        
+        // Load drivers and set current selection
+        loadDriversForAssignment(currentDriverId);
+        
+        // Show modal
+        $('#assignDriverModal').modal('show');
+    });
+    
+    // Function to load drivers for assignment
+    function loadDriversForAssignment(currentDriverId) {
+        $.ajax({
+            url: '/api/drivers',
+            type: 'GET',
+            success: function(drivers) {
+                var driverSelect = $('#assign_driver_id');
+                driverSelect.empty();
+                driverSelect.append('<option value="">No Driver (Remove current assignment)</option>');
+                
+                drivers.forEach(function(driver) {
+                    var selected = (driver.id == currentDriverId) ? 'selected' : '';
+                    driverSelect.append('<option value="' + driver.id + '" ' + selected + '>' + driver.name + ' - ' + driver.mobile + '</option>');
+                });
+            },
+            error: function() {
+                console.error('Failed to load drivers');
+            }
+        });
+    }
+    
+    // Show/Hide Add Driver Form
+    $('#showAddDriverForm').on('click', function() {
+        $('#addDriverForm').slideDown();
+        $(this).hide();
+    });
+    
+    $('#cancelAddDriver').on('click', function() {
+        $('#addDriverForm').slideUp();
+        $('#showAddDriverForm').show();
+        $('#newDriverForm')[0].reset();
+        $('#newDriverForm').removeClass('was-validated');
+    });
+    
+    // Handle new driver form submission
+    $('#newDriverForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Validate form
+        if (!this.checkValidity()) {
+            e.stopPropagation();
+            $(this).addClass('was-validated');
+            return;
+        }
+        
+        var formData = {
+            _token: $('meta[name="csrf-token"]').attr('content'),
+            name: $('#new_driver_name').val(),
+            mobile: $('#new_driver_mobile').val(),
+            license_number: $('#new_driver_license').val(),
+            address: $('#new_driver_address').val()
+        };
+        
+        $.ajax({
+            url: '{{ route("drivers.store") }}',
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                if (response.success) {
+                    // Show success message
+                    $('body').prepend(`
+                        <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                            <i class="bi bi-check-circle"></i>
+                            <strong>Success!</strong> Driver added successfully!
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    `);
+                    
+                    // Reset form and hide it
+                    $('#newDriverForm')[0].reset();
+                    $('#newDriverForm').removeClass('was-validated');
+                    $('#addDriverForm').slideUp();
+                    $('#showAddDriverForm').show();
+                    
+                    // Reload drivers and auto-select the new one
+                    loadDriversForAssignment(response.driver.id);
+                    
+                    // Auto-hide success message
+                    setTimeout(function() {
+                        $('.alert-success').fadeOut();
+                    }, 5000);
+                }
+            },
+            error: function(xhr) {
+                var errors = xhr.responseJSON?.errors || {};
+                var errorMessage = 'Unable to add driver. Please check the form and try again.';
+                
+                // Clear previous error states
+                $('.is-invalid').removeClass('is-invalid');
+                
+                // Show field-specific errors
+                Object.keys(errors).forEach(function(field) {
+                    var input = $('#new_driver_' + field);
+                    if (input.length) {
+                        input.addClass('is-invalid');
+                        input.siblings('.invalid-feedback').text(errors[field][0]);
+                    }
+                });
+                
+                // Show general error message
+                if (xhr.responseJSON?.message) {
+                    errorMessage = xhr.responseJSON.message;
+                }
+                
+                $('body').prepend(`
+                    <div class="alert alert-danger alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Error!</strong> ${errorMessage}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `);
+                
+                setTimeout(function() {
+                    $('.alert-danger').fadeOut();
+                }, 5000);
+            }
+        });
+    });
+    
+    // Handle assign driver button click
+    $('#assignDriverBtn').on('click', function(e) {
+        e.preventDefault();
+        
+        var truckId = $('#assign_truck_id').val();
+        var driverId = $('#assign_driver_id').val();
+        
+        $.ajax({
+            url: '/trucks/' + truckId + '/assign-driver',
+            type: 'PUT',
+            data: {
+                _token: $('meta[name="csrf-token"]').attr('content'),
+                driver_id: driverId
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Show success message
+                    $('body').prepend(`
+                        <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                            <i class="bi bi-check-circle"></i>
+                            <strong>Success!</strong> ${response.message}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    `);
+                    
+                    // Hide modal
+                    $('#assignDriverModal').modal('hide');
+                    
+                    // Refresh DataTable
+                    $('#trucksTable').DataTable().ajax.reload();
+                    
+                    // Auto-hide success message
+                    setTimeout(function() {
+                        $('.alert-success').fadeOut();
+                    }, 5000);
+                }
+            },
+            error: function(xhr) {
+                var errorMessage = 'Unable to assign driver. Please try again.';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                }
+                
+                // Show error message
+                $('body').prepend(`
+                    <div class="alert alert-danger alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Error!</strong> ${errorMessage}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `);
+                
+                setTimeout(function() {
+                    $('.alert-danger').fadeOut();
+                }, 5000);
             }
         });
     });

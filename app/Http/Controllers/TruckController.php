@@ -155,7 +155,16 @@ class TruckController extends Controller
     {
         $buttons = '<div class="d-flex gap-1">';
         
-       
+        // Assign Driver button
+        $buttons .= '<button type="button" class="btn btn-sm btn-outline-success assign-driver-btn" title="Assign Driver" ';
+        $buttons .= 'data-truck-id="' . $truck->id . '" ';
+        $buttons .= 'data-truck-number="' . htmlspecialchars($truck->truck_number) . '" ';
+        $buttons .= 'data-truck-type="' . htmlspecialchars($truck->truck_type) . '" ';
+        $buttons .= 'data-transporter-name="' . htmlspecialchars($truck->transporter->name) . '" ';
+        $buttons .= 'data-current-driver-id="' . ($truck->driver_id ?: '') . '" ';
+        $buttons .= 'data-current-driver-name="' . htmlspecialchars($truck->driver->name ?? '') . '">';
+        $buttons .= '<i class="bi bi-person-plus"></i></button>';
+        
         // Delete button
         $deleteUrl = route('trucks.destroy', $truck->id);
         $buttons .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this truck?\')">';
@@ -237,11 +246,7 @@ class TruckController extends Controller
             'registration_date' => 'nullable|date',
         ]);
 
-        // If driver_id is selected, get the driver's name
-        if ($validated['driver_id']) {
-            $driver = \App\Models\Driver::find($validated['driver_id']);
-            $validated['driver_name'] = $driver ? $driver->name : null;
-        }
+        // Driver relationship will be handled automatically via driver_id
 
         try {
             $truck = \App\Models\Truck::create($validated);
@@ -315,13 +320,7 @@ class TruckController extends Controller
             'registration_date' => 'nullable|date',
         ]);
 
-        // If driver_id is selected, get the driver's name
-        if ($validated['driver_id']) {
-            $driver = \App\Models\Driver::find($validated['driver_id']);
-            $validated['driver_name'] = $driver ? $driver->name : null;
-        } else {
-            $validated['driver_name'] = null;
-        }
+        // Driver relationship will be handled automatically via driver_id
 
         try {
             $truck->update($validated);
@@ -434,6 +433,42 @@ class TruckController extends Controller
         ];
         
         return response()->json($truckData);
+    }
+
+    public function assignDriver(Request $request, \App\Models\Truck $truck)
+    {
+        $validated = $request->validate([
+            'driver_id' => 'nullable|exists:drivers,id',
+        ]);
+
+        // Check if user has access to this truck (same company)
+        if ($truck->transporter->company_id !== auth()->user()->company_id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        // Update truck with driver assignment
+        if ($validated['driver_id']) {
+            $truck->update([
+                'driver_id' => $validated['driver_id']
+            ]);
+            $message = 'Driver assigned successfully!';
+        } else {
+            $truck->update([
+                'driver_id' => null
+            ]);
+            $message = 'Driver removed successfully!';
+        }
+
+        // Return JSON response for AJAX requests
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'truck' => $truck->fresh()->load('driver')
+            ]);
+        }
+
+        return redirect()->back()->with('success', $message);
     }
 
     public function report(Request $request)
