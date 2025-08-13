@@ -377,6 +377,37 @@ document.addEventListener('DOMContentLoaded', function () {
     // Store truck data for easy access
     let trucksData = {};
 
+    // Validation helper functions
+    function showValidationError(element, message) {
+        // Remove existing error message
+        clearValidationError(element);
+        
+        // Add error styling
+        element.classList.add('is-invalid');
+        
+        // Create and add error message
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'invalid-feedback d-block';
+        errorDiv.textContent = message;
+        errorDiv.id = element.id + '_validation_error';
+        
+        // Insert after the element
+        element.parentNode.insertBefore(errorDiv, element.nextSibling);
+        
+        console.log('🚨 Validation error shown:', message);
+    }
+
+    function clearValidationError(element) {
+        // Remove error styling
+        element.classList.remove('is-invalid');
+        
+        // Remove error message
+        const existingError = document.getElementById(element.id + '_validation_error');
+        if (existingError) {
+            existingError.remove();
+        }
+    }
+
     // Handle truck selection change
     $('#truck_id').on('select2:select', function (e) {
         const selectedTruckId = e.params.data.id;
@@ -557,6 +588,22 @@ document.addEventListener('DOMContentLoaded', function () {
     function handleConsignorSelection(consignorId) {
         console.log('👤 Consignor selected:', consignorId);
         
+        // Check if consignor and consignee are the same
+        const consigneeId = consigneeSelect.value;
+        if (consignorId && consigneeId && consignorId === consigneeId) {
+            console.warn('⚠️ Consignor and Consignee cannot be the same!');
+            showValidationError(consignorSelect, 'Consignor and Consignee cannot be the same');
+            
+            // Clear the consignor selection
+            $('#consignor_id').val(null).trigger('change');
+            consignorContactInput.value = '';
+            sourceCityInput.value = '';
+            sourceStateInput.value = '';
+            return;
+        } else {
+            clearValidationError(consignorSelect);
+        }
+        
         if (consignorId) {
             console.log('🔄 Fetching consignor data from API...');
             fetch(`/api/consignees/${consignorId}`)
@@ -612,6 +659,22 @@ document.addEventListener('DOMContentLoaded', function () {
     // Handle consignee selection with Select2 support
     function handleConsigneeSelection(consigneeId) {
         console.log('🏢 Consignee selected:', consigneeId);
+        
+        // Check if consignor and consignee are the same
+        const consignorId = consignorSelect.value;
+        if (consigneeId && consignorId && consigneeId === consignorId) {
+            console.warn('⚠️ Consignee and Consignor cannot be the same!');
+            showValidationError(consigneeSelect, 'Consignee and Consignor cannot be the same');
+            
+            // Clear the consignee selection
+            $('#consignee_id').val(null).trigger('change');
+            consigneeContactInput.value = '';
+            destinationCityInput.value = '';
+            destinationStateInput.value = '';
+            return;
+        } else {
+            clearValidationError(consigneeSelect);
+        }
         
         if (consigneeId) {
             console.log('🔄 Fetching consignee data from API...');
@@ -675,15 +738,38 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Bootstrap form validation
+    // Custom form validation function
+    function validateConsignorConsignee() {
+        const consignorId = consignorSelect.value;
+        const consigneeId = consigneeSelect.value;
+        
+        if (consignorId && consigneeId && consignorId === consigneeId) {
+            showValidationError(consignorSelect, 'Consignor and Consignee cannot be the same');
+            showValidationError(consigneeSelect, 'Consignor and Consignee cannot be the same');
+            return false;
+        }
+        
+        clearValidationError(consignorSelect);
+        clearValidationError(consigneeSelect);
+        return true;
+    }
+
+    // Bootstrap form validation with custom validation
     (() => {
         'use strict';
         const forms = document.querySelectorAll('.needs-validation');
         Array.from(forms).forEach(form => {
             form.addEventListener('submit', event => {
-                if (!form.checkValidity()) {
+                // Run custom validation first
+                const customValidationPassed = validateConsignorConsignee();
+                
+                if (!form.checkValidity() || !customValidationPassed) {
                     event.preventDefault();
                     event.stopPropagation();
+                    
+                    if (!customValidationPassed) {
+                        console.error('🚨 Form submission blocked: Consignor and Consignee cannot be the same');
+                    }
                 }
                 form.classList.add('was-validated');
             }, false);
