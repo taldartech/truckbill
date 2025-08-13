@@ -134,11 +134,11 @@
 <div class="modal fade" id="addTruckModal" tabindex="-1" aria-labelledby="addTruckModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header bg-success text-white">
                 <h5 class="modal-title" id="addTruckModalLabel">
                     <i class="bi bi-truck"></i> Add New Truck
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="addTruckForm" method="POST" action="{{ route('trucks.store') }}">
                 @csrf
@@ -152,8 +152,9 @@
                         </div>
                         <div class="col-md-6">
                             <label for="modal_truck_number" class="form-label">Truck Number *</label>
-                            <input type="text" class="form-control" placeholder="Enter Truck Number" id="modal_truck_number" name="truck_number" required>
-                            <div class="invalid-feedback">Please enter a truck number.</div>
+                            <input type="text" class="form-control" placeholder="e.g., MH12AB1234 or GJ01CD5678" id="modal_truck_number" name="truck_number" required>
+                            <div class="invalid-feedback">Please enter a valid truck number (6-15 characters).</div>
+                            <small class="form-text text-muted">Format: State code + digits + letters + digits (e.g., MH12AB1234)</small>
                         </div>
                     </div>
                     
@@ -176,20 +177,69 @@
                         </div>
                         <div class="col-md-6">
                             <label for="modal_driver_id" class="form-label">Driver</label>
-                            <div class="input-group">
+                            <div class="d-flex gap-2">
                                 <select class="form-select" id="modal_driver_id" name="driver_id">
-                                    <option value="">Select</option>
+                                    <option value="">Select Driver</option>
                                 </select>
-                                <a href="{{ route('drivers.create') }}" class="btn btn-outline-secondary" target="_blank">Add New</a>
+                                <button type="button" class="btn btn-outline-primary" id="showAddDriverFormModal">
+                                    <i class="bi bi-plus-circle"></i> Add New
+                                </button>
                             </div>
                         </div>
                     </div>
                     
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="modal_registration_date" class="form-label">Registration Date *</label>
-                            <input type="date" class="form-control" id="modal_registration_date" name="registration_date" required>
-                            <div class="invalid-feedback">Please select a registration date.</div>
+                            <label for="modal_registration_date" class="form-label">Registration Date</label>
+                            <input type="date" class="form-control" id="modal_registration_date" name="registration_date">
+                            <small class="form-text text-muted">Optional field</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Add New Driver Form (Initially Hidden) -->
+                    <div id="addDriverFormModal" style="display: none;">
+                        <hr class="my-4">
+                        <div class="card border-primary">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="mb-0"><i class="bi bi-person-plus"></i> Add New Driver</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="new_driver_name_modal" class="form-label">Name *</label>
+                                        <input type="text" class="form-control" id="new_driver_name_modal" name="new_driver_name">
+                                        <div class="invalid-feedback">Please enter a name.</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="new_driver_mobile_modal" class="form-label">Mobile *</label>
+                                        <input type="text" class="form-control" id="new_driver_mobile_modal" name="new_driver_mobile" pattern="[0-9]{10}" maxlength="10">
+                                        <div class="invalid-feedback">Please enter a valid 10-digit mobile number.</div>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="new_driver_license_modal" class="form-label">License Number</label>
+                                        <input type="text" class="form-control" id="new_driver_license_modal" name="new_driver_license">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="new_driver_address_modal" class="form-label">Address</label>
+                                        <input type="text" class="form-control" id="new_driver_address_modal" name="new_driver_address">
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-primary" id="addDriverBtnModal">
+                                        <i class="bi bi-check-circle"></i> Add Driver
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" id="cancelAddDriverModal">
+                                        <i class="bi bi-x-circle"></i> Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info mt-3">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Note:</strong> The new driver will be automatically selected after creation.
                         </div>
                     </div>
                 </div>
@@ -810,6 +860,122 @@ $(document).ready(function() {
         $('#addTruckForm')[0].reset();
         $('#addTruckForm .form-control, #addTruckForm .form-select').removeClass('is-invalid is-valid');
         $('#addTruckForm .invalid-feedback').hide();
+        $('#addDriverFormModal').hide();
+        $('#showAddDriverFormModal').show();
+    });
+
+    // Show/Hide Add Driver Form in Add Truck Modal
+    $('#showAddDriverFormModal').on('click', function() {
+        $('#addDriverFormModal').slideDown();
+        $(this).hide();
+    });
+    
+    $('#cancelAddDriverModal').on('click', function() {
+        $('#addDriverFormModal').slideUp();
+        $('#showAddDriverFormModal').show();
+        // Reset driver form fields
+        $('#new_driver_name_modal, #new_driver_mobile_modal, #new_driver_license_modal, #new_driver_address_modal').val('');
+        $('#addDriverFormModal .form-control').removeClass('is-invalid is-valid');
+    });
+    
+    // Handle new driver addition in add truck modal
+    $('#addDriverBtnModal').on('click', function(e) {
+        e.preventDefault();
+        
+        // Get form data
+        const driverData = {
+            name: $('#new_driver_name_modal').val().trim(),
+            mobile: $('#new_driver_mobile_modal').val().trim(),
+            license_number: $('#new_driver_license_modal').val().trim(),
+            address: $('#new_driver_address_modal').val().trim(),
+            _token: $('meta[name="csrf-token"]').attr('content')
+        };
+        
+        // Basic validation
+        let isValid = true;
+        if (!driverData.name) {
+            $('#new_driver_name_modal').addClass('is-invalid');
+            isValid = false;
+        } else {
+            $('#new_driver_name_modal').removeClass('is-invalid').addClass('is-valid');
+        }
+        
+        if (!driverData.mobile || !/^[0-9]{10}$/.test(driverData.mobile)) {
+            $('#new_driver_mobile_modal').addClass('is-invalid');
+            isValid = false;
+        } else {
+            $('#new_driver_mobile_modal').removeClass('is-invalid').addClass('is-valid');
+        }
+        
+        if (!isValid) {
+            return;
+        }
+        
+        // Show loading state
+        const originalText = $(this).html();
+        $(this).html('<i class="bi bi-hourglass-split"></i> Adding...').prop('disabled', true);
+        
+        $.ajax({
+            url: '{{ route("drivers.store") }}',
+            type: 'POST',
+            data: driverData,
+            success: function(response) {
+                if (response.success) {
+                    // Show success message
+                    $('body').prepend(`
+                        <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                            <i class="bi bi-check-circle"></i>
+                            <strong>Success!</strong> Driver added successfully!
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    `);
+                    
+                    // Reset and hide form
+                    $('#new_driver_name_modal, #new_driver_mobile_modal, #new_driver_license_modal, #new_driver_address_modal').val('');
+                    $('#addDriverFormModal .form-control').removeClass('is-invalid is-valid');
+                    $('#addDriverFormModal').slideUp();
+                    $('#showAddDriverFormModal').show();
+                    
+                    // Reload drivers and auto-select the new one
+                    loadDriversForModal();
+                    setTimeout(() => {
+                        $('#modal_driver_id').val(response.driver.id);
+                    }, 500);
+                    
+                    // Auto-hide success message
+                    setTimeout(function() {
+                        $('.alert-success').fadeOut();
+                    }, 5000);
+                }
+            },
+            error: function(xhr) {
+                let errorMessage = 'Unable to add driver. ';
+                if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    const errors = xhr.responseJSON.errors;
+                    errorMessage += Object.values(errors).flat().join(' ');
+                } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage += xhr.responseJSON.message;
+                } else {
+                    errorMessage += 'Please try again.';
+                }
+                
+                $('body').prepend(`
+                    <div class="alert alert-danger alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Error!</strong> ${errorMessage}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `);
+                
+                setTimeout(function() {
+                    $('.alert-danger').fadeOut();
+                }, 5000);
+            },
+            complete: function() {
+                // Restore button state
+                $('#addDriverBtnModal').html(originalText).prop('disabled', false);
+            }
+        });
     });
 
     // Handle Delete Truck Owner button click
@@ -870,7 +1036,7 @@ function loadDrivers() {
         success: function(drivers) {
             const driverSelect = $('#modal_driver_id');
             driverSelect.empty();
-            driverSelect.append('<option value="">Select</option>');
+            driverSelect.append('<option value="">Select Driver</option>');
             
             drivers.forEach(function(driver) {
                 driverSelect.append(`<option value="${driver.id}">${driver.name} (${driver.mobile})</option>`);
@@ -880,6 +1046,11 @@ function loadDrivers() {
             console.log('Failed to load drivers');
         }
     });
+}
+
+// Function to load drivers for modal (alias for consistency)
+function loadDriversForModal() {
+    loadDrivers();
 }
 
 // Function to view truck details

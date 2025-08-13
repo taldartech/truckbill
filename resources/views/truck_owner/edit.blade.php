@@ -320,11 +320,11 @@
 <div class="modal fade" id="truckModal" tabindex="-1" aria-labelledby="truckModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header bg-success text-white">
                 <h5 class="modal-title" id="truckModalLabel">
                     <i class="bi bi-truck"></i> <span id="truckModalTitle">Add New Truck</span>
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="truckForm" method="POST">
                 @csrf
@@ -363,11 +363,13 @@
                         </div>
                         <div class="col-md-6">
                             <label for="driver_id" class="form-label">Driver</label>
-                            <div class="input-group">
+                            <div class="d-flex gap-2">
                                 <select class="form-select" id="driver_id" name="driver_id">
-                                    <option value="">Select</option>
+                                    <option value="">Select Driver</option>
                                 </select>
-                                <a href="{{ route('drivers.create') }}" class="btn btn-outline-secondary" target="_blank">Add New</a>
+                                <button type="button" class="btn btn-outline-primary" id="showAddDriverFormTruck">
+                                    <i class="bi bi-plus-circle"></i> Add New
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -377,6 +379,53 @@
                             <label for="registration_date" class="form-label">Registration Date</label>
                             <input type="date" class="form-control" id="registration_date" name="registration_date">
                             <small class="form-text text-muted">Optional field</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Add New Driver Form (Initially Hidden) -->
+                    <div id="addDriverFormTruck" style="display: none;">
+                        <hr class="my-4">
+                        <div class="card border-primary">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="mb-0"><i class="bi bi-person-plus"></i> Add New Driver</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="new_driver_name_truck" class="form-label">Name *</label>
+                                        <input type="text" class="form-control" id="new_driver_name_truck" name="new_driver_name">
+                                        <div class="invalid-feedback">Please enter a name.</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="new_driver_mobile_truck" class="form-label">Mobile *</label>
+                                        <input type="text" class="form-control" id="new_driver_mobile_truck" name="new_driver_mobile" pattern="[0-9]{10}" maxlength="10">
+                                        <div class="invalid-feedback">Please enter a valid 10-digit mobile number.</div>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="new_driver_license_truck" class="form-label">License Number</label>
+                                        <input type="text" class="form-control" id="new_driver_license_truck" name="new_driver_license">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="new_driver_address_truck" class="form-label">Address</label>
+                                        <input type="text" class="form-control" id="new_driver_address_truck" name="new_driver_address">
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-primary" id="addDriverBtnTruck">
+                                        <i class="bi bi-check-circle"></i> Add Driver
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" id="cancelAddDriverTruck">
+                                        <i class="bi bi-x-circle"></i> Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info mt-3">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Note:</strong> The new driver will be automatically selected after creation.
                         </div>
                     </div>
                 </div>
@@ -790,8 +839,124 @@
         $('#truckForm')[0].reset();
         $('#truckForm .form-control, #truckForm .form-select').removeClass('is-invalid is-valid');
         $('#truckForm .invalid-feedback').hide();
+        $('#addDriverFormTruck').hide();
+        $('#showAddDriverFormTruck').show();
         isEditMode = false;
         currentTruckId = null;
+    });
+
+    // Show/Hide Add Driver Form in Truck Modal
+    $('#showAddDriverFormTruck').on('click', function() {
+        $('#addDriverFormTruck').slideDown();
+        $(this).hide();
+    });
+    
+    $('#cancelAddDriverTruck').on('click', function() {
+        $('#addDriverFormTruck').slideUp();
+        $('#showAddDriverFormTruck').show();
+        // Reset driver form fields
+        $('#new_driver_name_truck, #new_driver_mobile_truck, #new_driver_license_truck, #new_driver_address_truck').val('');
+        $('#addDriverFormTruck .form-control').removeClass('is-invalid is-valid');
+    });
+    
+    // Handle new driver addition in truck modal
+    $('#addDriverBtnTruck').on('click', function(e) {
+        e.preventDefault();
+        
+        // Get form data
+        const driverData = {
+            name: $('#new_driver_name_truck').val().trim(),
+            mobile: $('#new_driver_mobile_truck').val().trim(),
+            license_number: $('#new_driver_license_truck').val().trim(),
+            address: $('#new_driver_address_truck').val().trim(),
+            _token: $('meta[name="csrf-token"]').attr('content')
+        };
+        
+        // Basic validation
+        let isValid = true;
+        if (!driverData.name) {
+            $('#new_driver_name_truck').addClass('is-invalid');
+            isValid = false;
+        } else {
+            $('#new_driver_name_truck').removeClass('is-invalid').addClass('is-valid');
+        }
+        
+        if (!driverData.mobile || !/^[0-9]{10}$/.test(driverData.mobile)) {
+            $('#new_driver_mobile_truck').addClass('is-invalid');
+            isValid = false;
+        } else {
+            $('#new_driver_mobile_truck').removeClass('is-invalid').addClass('is-valid');
+        }
+        
+        if (!isValid) {
+            return;
+        }
+        
+        // Show loading state
+        const originalText = $(this).html();
+        $(this).html('<i class="bi bi-hourglass-split"></i> Adding...').prop('disabled', true);
+        
+        $.ajax({
+            url: '{{ route("drivers.store") }}',
+            type: 'POST',
+            data: driverData,
+            success: function(response) {
+                if (response.success) {
+                    // Show success message
+                    $('body').prepend(`
+                        <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                            <i class="bi bi-check-circle"></i>
+                            <strong>Success!</strong> Driver added successfully!
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    `);
+                    
+                    // Reset and hide form
+                    $('#new_driver_name_truck, #new_driver_mobile_truck, #new_driver_license_truck, #new_driver_address_truck').val('');
+                    $('#addDriverFormTruck .form-control').removeClass('is-invalid is-valid');
+                    $('#addDriverFormTruck').slideUp();
+                    $('#showAddDriverFormTruck').show();
+                    
+                    // Reload drivers and auto-select the new one
+                    loadDriversForTruck();
+                    setTimeout(() => {
+                        $('#driver_id').val(response.driver.id);
+                    }, 500);
+                    
+                    // Auto-hide success message
+                    setTimeout(function() {
+                        $('.alert-success').fadeOut();
+                    }, 5000);
+                }
+            },
+            error: function(xhr) {
+                let errorMessage = 'Unable to add driver. ';
+                if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    const errors = xhr.responseJSON.errors;
+                    errorMessage += Object.values(errors).flat().join(' ');
+                } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage += xhr.responseJSON.message;
+                } else {
+                    errorMessage += 'Please try again.';
+                }
+                
+                $('body').prepend(`
+                    <div class="alert alert-danger alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Error!</strong> ${errorMessage}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `);
+                
+                setTimeout(function() {
+                    $('.alert-danger').fadeOut();
+                }, 5000);
+            },
+            complete: function() {
+                // Restore button state
+                $('#addDriverBtnTruck').html(originalText).prop('disabled', false);
+            }
+        });
     });
     </script>
 @endsection
