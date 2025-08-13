@@ -155,11 +155,7 @@ class TruckController extends Controller
     {
         $buttons = '<div class="d-flex gap-1">';
         
-        // Edit button
-        $editUrl = route('trucks.edit', $truck->id);
-        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit Truck">';
-        $buttons .= '<i class="bi bi-pencil"></i></a>';
-        
+       
         // Delete button
         $deleteUrl = route('trucks.destroy', $truck->id);
         $buttons .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this truck?\')">';
@@ -400,6 +396,44 @@ class TruckController extends Controller
             
             return redirect()->back()->withErrors(['general' => $errorMessage]);
         }
+    }
+
+    public function show(\App\Models\Truck $truck)
+    {
+        // Load relationships
+        $truck->load(['transporter', 'driver']);
+        
+        // Check if user has access to this truck (same company)
+        if ($truck->transporter->company_id !== auth()->user()->company_id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+        
+        // Format the data for display
+        $truckData = [
+            'id' => $truck->id,
+            'truck_number' => $truck->truck_number,
+            'truck_type' => $truck->truck_type,
+            'registration_date' => $truck->registration_date ? \Carbon\Carbon::parse($truck->registration_date)->format('d-m-Y') : null,
+            'transporter' => [
+                'id' => $truck->transporter->id,
+                'name' => $truck->transporter->name,
+                'short_name' => $truck->transporter->short_name,
+                'mobile_number' => $truck->transporter->mobile_number,
+                'gst_number' => $truck->transporter->gst_number,
+                'pan_number' => $truck->transporter->pan_number,
+                'address' => $truck->transporter->address,
+            ],
+            'driver' => $truck->driver ? [
+                'id' => $truck->driver->id,
+                'name' => $truck->driver->name,
+                'mobile' => $truck->driver->mobile,
+                'license_number' => $truck->driver->license_number,
+            ] : null,
+            'created_at' => $truck->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y h:i A'),
+            'updated_at' => $truck->updated_at->setTimezone('Asia/Kolkata')->format('d-m-Y h:i A'),
+        ];
+        
+        return response()->json($truckData);
     }
 
     public function report(Request $request)
