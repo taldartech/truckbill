@@ -99,7 +99,7 @@
                     </div>
                     <div class="col-md-4">
                         <label for="customer_id" class="form-label">Customer *</label>
-                        <select class="form-select" id="customer_id" name="customer_id" required>
+                        <select class="form-select" id="customer_id" name="customer_id" required data-placeholder="Search and select customer...">
                             <option value="">Select Customer</option>
                             @foreach($consignees as $consignee)
                                 <option value="{{ $consignee->id }}" {{ old('customer_id') == $consignee->id ? 'selected' : '' }}>
@@ -157,7 +157,7 @@
                 <div class="row mb-3">
                     <div class="col-md-4">
                         <label for="consignor_id" class="form-label">Consignor *</label>
-                        <select class="form-select" id="consignor_id" name="consignor_id" required>
+                        <select class="form-select" id="consignor_id" name="consignor_id" required data-placeholder="Search and select consignor...">
                             <option value="">Select Consignor</option>
                             @foreach($consignees as $consignee) 
                                 <option value="{{ $consignee->id }}" {{ old('consignee_id') == $consignee->id ? 'selected' : '' }}>
@@ -172,9 +172,12 @@
                         <label for="consignor_contact_number" class="form-label">Consignor Contact Number</label>
                         <input type="text" class="form-control" id="consignor_contact_number" name="consignor_contact_number" readonly>
                     </div>
-                    <div class="col-md-4">
+                  
+                </div>
+                <div class="row mb-3">
+                <div class="col-md-4">
                         <label for="consignee_id" class="form-label">Consignee *</label>
-                        <select class="form-select" id="consignee_id" name="consignee_id" required>
+                        <select class="form-select" id="consignee_id" name="consignee_id" required data-placeholder="Search and select consignee...">
                             <option value="">Select Consignee</option>
                             @foreach($consignees as $consignee)
                                 <option value="{{ $consignee->id }}" {{ old('consignee_id') == $consignee->id ? 'selected' : '' }}>
@@ -185,8 +188,6 @@
                         @error('consignee_id') <div class="text-danger">{{ $message }}</div> @enderror
                         <div class="invalid-feedback">Please select a consignee.</div>
                     </div>
-                </div>
-                <div class="row mb-3">
                     <div class="col-md-4">
                         <label for="consignee_contact_number" class="form-label">Consignee Contact Number</label>
                         <input type="text" class="form-control" id="consignee_contact_number" name="consignee_contact_number" readonly>
@@ -311,6 +312,7 @@ $(document).ready(function() {
     loadSelect2().then(() => {
         // Wait a bit more to ensure Select2 is fully initialized
         setTimeout(() => {
+            // Initialize truck dropdown
             if ($('#truck_id').length > 0) {
                 $('#truck_id').select2({
                     placeholder: 'Search and select truck...',
@@ -320,6 +322,42 @@ $(document).ready(function() {
                 console.log('✅ Select2 initialized successfully for truck dropdown');
             } else {
                 console.error('❌ Truck element not found');
+            }
+            
+            // Initialize customer dropdown
+            if ($('#customer_id').length > 0) {
+                $('#customer_id').select2({
+                    placeholder: 'Search and select customer...',
+                    allowClear: true,
+                    width: '100%'
+                });
+                console.log('✅ Select2 initialized successfully for customer dropdown');
+            } else {
+                console.error('❌ Customer element not found');
+            }
+            
+            // Initialize consignor dropdown
+            if ($('#consignor_id').length > 0) {
+                $('#consignor_id').select2({
+                    placeholder: 'Search and select consignor...',
+                    allowClear: true,
+                    width: '100%'
+                });
+                console.log('✅ Select2 initialized successfully for consignor dropdown');
+            } else {
+                console.error('❌ Consignor element not found');
+            }
+            
+            // Initialize consignee dropdown
+            if ($('#consignee_id').length > 0) {
+                $('#consignee_id').select2({
+                    placeholder: 'Search and select consignee...',
+                    allowClear: true,
+                    width: '100%'
+                });
+                console.log('✅ Select2 initialized successfully for consignee dropdown');
+            } else {
+                console.error('❌ Consignee element not found');
             }
         }, 100);
     }).catch(() => {
