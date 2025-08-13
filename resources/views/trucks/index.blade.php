@@ -43,7 +43,7 @@
 <div class="modal fade" id="truckDetailsModal" tabindex="-1" aria-labelledby="truckDetailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header bg-info text-white">
+            <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="truckDetailsModalLabel">
                     <i class="bi bi-truck"></i> Truck Details
                 </h5>

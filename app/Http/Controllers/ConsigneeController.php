@@ -191,14 +191,8 @@ class ConsigneeController extends Controller
             'contact_number' => [
                 'nullable',
                 'digits:10',
-                \Illuminate\Validation\Rule::unique('consignees', 'contact_number')
             ],
-            'gst_number' => [
-                'nullable',
-                'string',
-                'max:255',
-                \Illuminate\Validation\Rule::unique('consignees', 'gst_number')
-            ],
+            'gst_number' => 'nullable|string|max:255',
             'pan_number' => 'nullable|string|size:10|regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
         ]);
 
@@ -230,14 +224,8 @@ class ConsigneeController extends Controller
             'contact_number' => [
                 'nullable',
                 'digits:10',
-                \Illuminate\Validation\Rule::unique('consignees', 'contact_number')->ignore($consignee->id)
             ],
-            'gst_number' => [
-                'nullable',
-                'string',
-                'max:255',
-                \Illuminate\Validation\Rule::unique('consignees', 'gst_number')->ignore($consignee->id)
-            ],
+            'gst_number' => 'nullable|string|max:255',
             'pan_number' => 'nullable|string|size:10|regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
         ]);
 
@@ -275,8 +263,8 @@ class ConsigneeController extends Controller
             'state' => $consignee->state?->name ?: 'Not provided',
             'country' => $consignee->country?->name ?: 'Not provided',
             'company' => $consignee->company?->name ?: 'Not provided',
-            'created_at' => $consignee->created_at?->format('d M Y, h:i A') ?: 'Not available',
-            'updated_at' => $consignee->updated_at?->format('d M Y, h:i A') ?: 'Not available'
+            'created_at' => \Carbon\Carbon::parse($consignee->created_at)->setTimezone('Asia/Kolkata')->format('d M Y, h:i A') ?: 'Not available',
+            'updated_at' => \Carbon\Carbon::parse($consignee->updated_at)->setTimezone('Asia/Kolkata')->format('d M Y, h:i A') ?: 'Not available'
         ]);
     }
 }
