@@ -38,6 +38,34 @@
         </div>
     </div>
 </div>
+
+<!-- Truck Details Modal -->
+<div class="modal fade" id="truckDetailsModal" tabindex="-1" aria-labelledby="truckDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="truckDetailsModalLabel">
+                    <i class="bi bi-truck"></i> Truck Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="truckDetailsContent">
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading truck details...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-info" id="editTruckBtn" style="display: none;">
+                    <i class="bi bi-pencil"></i> Edit Truck
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -70,7 +98,10 @@ $(document).ready(function() {
             },
             {
                 data: 'truck_number',
-                name: 'truck_number'
+                name: 'truck_number',
+                render: function(data, type, row) {
+                    return '<a href="#" class="truck-number-link text-primary fw-bold" data-id="' + row.id + '">' + data + '</a>';
+                }
             },
             {
                 data: 'truck_type',
@@ -158,6 +189,122 @@ $(document).ready(function() {
             e.preventDefault();
             return false;
         }
+    });
+    
+    // Handle truck number click to show details
+    $(document).on('click', '.truck-number-link', function(e) {
+        e.preventDefault();
+        var truckId = $(this).data('id');
+        
+        // Show modal with loading state
+        $('#truckDetailsModal').modal('show');
+        $('#truckDetailsContent').html(`
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Loading truck details...</p>
+            </div>
+        `);
+        $('#editTruckBtn').hide();
+        
+        // Fetch truck details
+        $.ajax({
+            url: '/trucks/' + truckId,
+            type: 'GET',
+            success: function(data) {
+                var detailsHtml = `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="bi bi-truck"></i> Truck Information</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-2"><strong>Truck Number:</strong> <span class="badge bg-primary">${data.truck_number}</span></p>
+                                    <p class="mb-2"><strong>Truck Type:</strong> ${data.truck_type}</p>
+                                    <p class="mb-2"><strong>Registration Date:</strong> ${data.registration_date || 'Not specified'}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="bi bi-person-badge"></i> Truck Owner Information</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-2"><strong>Name:</strong> ${data.transporter.name}</p>
+                                    <p class="mb-2"><strong>Short Name:</strong> ${data.transporter.short_name || 'N/A'}</p>
+                                    <p class="mb-2"><strong>Mobile:</strong> ${data.transporter.mobile_number}</p>
+                                    <p class="mb-2"><strong>GST Number:</strong> ${data.transporter.gst_number || 'N/A'}</p>
+                                    <p class="mb-2"><strong>PAN Number:</strong> ${data.transporter.pan_number || 'N/A'}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="bi bi-person-circle"></i> Driver Information</h6>
+                                </div>
+                                <div class="card-body">
+                                    ${data.driver ? `
+                                        <p class="mb-2"><strong>Name:</strong> ${data.driver.name}</p>
+                                        <p class="mb-2"><strong>Mobile:</strong> ${data.driver.mobile}</p>
+                                        <p class="mb-2"><strong>License Number:</strong> ${data.driver.license_number || 'N/A'}</p>
+                                    ` : '<p class="text-muted">No driver assigned</p>'}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="bi bi-geo-alt"></i> Address Information</h6>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-2"><strong>Address:</strong> ${data.transporter.address || 'Not specified'}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="bi bi-clock-history"></i> Record Information</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p class="mb-1"><strong>Created:</strong> ${data.created_at}</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p class="mb-1"><strong>Last Updated:</strong> ${data.updated_at}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                $('#truckDetailsContent').html(detailsHtml);
+                
+                // Show edit button and set up click handler
+                $('#editTruckBtn').show().off('click').on('click', function() {
+                    window.location.href = '/trucks/' + data.id + '/edit';
+                });
+            },
+            error: function(xhr) {
+                $('#truckDetailsContent').html(`
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Error!</strong> Unable to load truck details. Please try again.
+                    </div>
+                `);
+            }
+        });
     });
 });
 </script>

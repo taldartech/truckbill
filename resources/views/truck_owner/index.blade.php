@@ -187,9 +187,9 @@
                     
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="modal_registration_date" class="form-label">Registration Date *</label>
-                            <input type="date" class="form-control" id="modal_registration_date" name="registration_date" required>
-                            <div class="invalid-feedback">Please select a registration date.</div>
+                            <label for="modal_registration_date" class="form-label">Registration Date</label>
+                            <input type="date" class="form-control" id="modal_registration_date" name="registration_date">
+                            <small class="form-text text-muted">Optional field</small>
                         </div>
                     </div>
                 </div>
