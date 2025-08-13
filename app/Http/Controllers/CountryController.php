@@ -129,13 +129,17 @@ class CountryController extends Controller
             'code' => 'required|string|max:10',
         ]);
 
-        Country::create($validated);
+        $country = Country::create($validated);
 
+        // Check if it's an AJAX request
+        if ($request->ajax() || $request->has('from_modal')) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Country created successfully',
+                'country' => $country
+            ]);
+        }
 
-    // Check if it's an AJAX or modal form submission
-    if ($request->has('from_modal')) {
-        return redirect()->back()->with('success', 'Country created successfully');
-    }
         return redirect()->route('master.countries.index')->with('success', 'Country created successfully');
     }
 

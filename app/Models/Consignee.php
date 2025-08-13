@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Consignee extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'company_id',
@@ -18,6 +19,7 @@ class Consignee extends Model
         'country_id',
         'contact_number',
         'gst_number',
+        'pan_number',
     ];
 
     protected $casts = [
@@ -25,6 +27,8 @@ class Consignee extends Model
         'state_name' => 'string',
         'country_name' => 'string',
     ];
+
+    protected $dates = ['deleted_at'];
 
     protected $table = 'consignees';
 
