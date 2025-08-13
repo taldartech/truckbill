@@ -531,7 +531,7 @@ $(document).ready(function() {
                                                         <th>Type</th>
                                                         <th>Driver</th>
                                                         <th>Mobile</th>
-                                                        <th width="120px">Actions</th>
+                                                        
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -541,19 +541,7 @@ $(document).ready(function() {
                                                             <td>${truck.truck_type}</td>
                                                             <td>${truck.driver_name}</td>
                                                             <td>${truck.driver_mobile}</td>
-                                                            <td>
-                                                                <div class="btn-group" role="group">
-                                                                    <button type="button" class="btn btn-sm btn-outline-info" title="View Truck Details" onclick="viewTruckDetails(${truck.id})">
-                                                                        <i class="bi bi-eye"></i>
-                                                                    </button>
-                                                                    <a href="/trucks/${truck.id}/edit" class="btn btn-sm btn-outline-primary" title="Edit Truck">
-                                                                        <i class="bi bi-pencil"></i>
-                                                                    </a>
-                                                                    <button type="button" class="btn btn-sm btn-outline-danger" title="Delete Truck" onclick="deleteTruck(${truck.id}, '${truck.truck_number}')">
-                                                                        <i class="bi bi-trash"></i>
-                                                                    </button>
-                                                                </div>
-                                                            </td>
+                                                           
                                                         </tr>
                                                     `).join('')}
                                                 </tbody>
