@@ -27,7 +27,7 @@
                         <th>Truck Number</th>
                         <th>Truck Type</th>
                         <th>Registration Date</th>
-                        <th>Transporter</th>
+                        <th>Truck Owner</th>
                         <th>Driver</th>
                         @if(auth()->check() && auth()->user()->userRole->name === 'admin')
                         <th style="width: 120px;">Actions</th>

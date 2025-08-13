@@ -373,8 +373,33 @@ class TruckController extends Controller
 
     public function destroy(\App\Models\Truck $truck)
     {
-        $truck->delete();
-        return redirect()->route('trucks.index')->with('success', 'Truck deleted successfully!');
+        try {
+            // Soft delete the truck
+            $truck->delete();
+            
+            // Return JSON response for AJAX requests
+            if (request()->expectsJson() || request()->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Truck deleted successfully!'
+                ]);
+            }
+            
+            return redirect()->route('trucks.index')->with('success', 'Truck deleted successfully!');
+            
+        } catch (\Exception $e) {
+            // Handle any errors during deletion
+            $errorMessage = 'Unable to delete truck. Please try again.';
+            
+            if (request()->expectsJson() || request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMessage
+                ], 500);
+            }
+            
+            return redirect()->back()->withErrors(['general' => $errorMessage]);
+        }
     }
 
     public function report(Request $request)
