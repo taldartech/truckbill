@@ -232,7 +232,10 @@ class TruckOwnerController extends Controller
         ]);
         
         // Always set truck owner specific fields (system controlled, not user input)
-        $validated['advance_amount'] = 0; // Truck owners always have 0 advance amount
+        // Handle advance_amount - use provided value or default to 0
+        if (!isset($validated['advance_amount'])) {
+            $validated['advance_amount'] = 0;
+        }
         $validated['is_owner'] = 1; // Always true for truck owners (this differentiates from transporters)
         
         // Convert pan_active to boolean
@@ -370,7 +373,10 @@ class TruckOwnerController extends Controller
         ]);
         
         // Always set truck owner specific fields (system controlled, not user input)
-        $validated['advance_amount'] = 0; // Truck owners always have 0 advance amount
+        // Handle advance_amount - use provided value or default to 0
+        if (!isset($validated['advance_amount'])) {
+            $validated['advance_amount'] = 0;
+        }
         $validated['is_owner'] = 1; // Always true for truck owners (this differentiates from transporters)
         
         // Convert pan_active to boolean

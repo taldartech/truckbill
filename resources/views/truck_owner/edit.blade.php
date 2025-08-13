@@ -55,33 +55,23 @@
         <div class="card-body">
             {{-- Hidden fields for truck owner identification --}}
             <input type="hidden" name="is_owner" value="1">
-            <input type="hidden" name="advance_amount" value="{{ old('advance_amount', $transporter->advance_amount) }}">
-            <!-- General Details -->
+            <!-- Hidden company field - automatically set based on user's company -->
+            <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
+            
             <div class="row mb-3">
-                <div class="col-md-6">
-                  
-                    <label for="company_id" class="form-label">Company *</label>
-                    @if($canEditCompany)
-                        <select class="form-select" id="company_id" name="company_id" required>
-                            <option value="">Select</option>
-                            @foreach($companies as $company)
-                                <option value="{{ $company->id }}" {{ old('company_id', $transporter->company_id) == $company->id ? 'selected' : '' }}>{{ $company->name }}</option>
-                            @endforeach
-                        </select>
-                    @else
-                        <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
-                        <div class="form-control-plaintext">
-                            {{ $companies->firstWhere('id', $userCompanyId)->name ?? '' }}
-                        </div>
-                    @endif
-                    @error('company_id') <div class="text-danger">{{ $message }}</div> @enderror
-                </div>
                 <div class="col-md-6">
                     <label for="name" class="form-label">Truck Owner Name *</label>
                     <input placeholder="Enter Truck Owner Name" type="text" class="form-control" id="name" name="name" required value="{{ old('name', $transporter->name) }}">
                     @error('name') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
-               
+                <div class="col-md-6">
+                    <label class="form-label">Advance Amount</label>
+                    <div class="form-control-plaintext bg-light border rounded px-3 py-2">
+                        <strong>₹ {{ number_format($transporter->advance_amount, 2) }}</strong>
+                        <small class="text-muted d-block">Read-only field</small>
+                    </div>
+                    <input type="hidden" name="advance_amount" value="{{ $transporter->advance_amount }}">
+                </div>
             </div>
             <div class="row mb-3">
                 <div class="col-md-6">
