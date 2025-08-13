@@ -34,9 +34,9 @@
                         <th>Mobile</th>
                         <th>License Number</th>
                         <th>Address</th>
-                        @if(auth()->check() && auth()->user()->userRole->name === 'admin')
+                       
                         <th style="width: 120px;">Actions</th>
-                        @endif
+                       
                     </tr>
                 </thead>
             </table>
@@ -174,9 +174,9 @@ $(document).ready(function() {
             { data: 'mobile', name: 'mobile', orderable: true, searchable: true },
             { data: 'license_number', name: 'license_number', orderable: true, searchable: true },
             { data: 'address', name: 'address', orderable: true, searchable: true },
-            @if(auth()->check() && auth()->user()->userRole->name === 'admin')
+        
             { data: 'actions', name: 'actions', orderable: false, searchable: false }
-            @endif
+         
         ],
         order: [[1, 'asc']],
         pageLength: 10,

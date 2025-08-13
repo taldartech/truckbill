@@ -109,7 +109,7 @@ class DriverController extends Controller
     {
         $buttons = '<div class="d-flex gap-1">';
         
-        if (auth()->check() && auth()->user()->userRole->name === 'admin') {
+       
             $buttons .= '<button type="button" class="btn btn-sm btn-outline-primary edit-driver-btn" title="Edit Driver" ';
             $buttons .= 'data-driver-id="' . $driver->id . '" ';
             $buttons .= 'data-driver-name="' . htmlspecialchars($driver->name) . '" ';
@@ -122,7 +122,7 @@ class DriverController extends Controller
             $buttons .= csrf_field() . method_field('DELETE');
             $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete Driver">';
             $buttons .= '<i class="bi bi-trash"></i></button></form>';
-        }
+        
         
         $buttons .= '</div>';
         return $buttons;
