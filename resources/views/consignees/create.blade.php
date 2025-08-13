@@ -319,8 +319,8 @@
 @section('scripts')
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-      const modalCountry = document.querySelector('#addCityModal #country_id');
-      const modalState = document.querySelector('#addCityModal #state_id');
+      const modalCountry = document.querySelector('#addCityModal #city_country_id');
+      const modalState = document.querySelector('#addCityModal #city_state_id');
   
       if (modalCountry && modalState) {
           modalCountry.addEventListener('change', function () {
@@ -339,8 +339,11 @@
                               option.textContent = state.name;
                               modalState.appendChild(option);
                           });
+                          modalState.required = true;
                       })
                       .catch(error => console.error('Error fetching states for modal:', error));
+              } else {
+                  modalState.required = false;
               }
           });
       }
