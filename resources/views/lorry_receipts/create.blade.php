@@ -553,21 +553,54 @@ document.addEventListener('DOMContentLoaded', function () {
     const sourceCityInput = document.getElementById('source_city');
     const sourceStateInput = document.getElementById('source_state');
 
-    consignorSelect.addEventListener('change', function () {
-        const consignorId = this.value;
+    // Handle consignor selection with Select2 support
+    function handleConsignorSelection(consignorId) {
+        console.log('👤 Consignor selected:', consignorId);
+        
         if (consignorId) {
+            console.log('🔄 Fetching consignor data from API...');
             fetch(`/api/consignees/${consignorId}`)
-                .then(response => response.json())
+                .then(response => {
+                    console.log('📡 Consignor API response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('📊 Consignor data received:', data);
+                    
+                    // Auto-populate consignor fields
                     consignorContactInput.value = data.contact_number || '';
-                    sourceCityInput.value = data.city?.name || '';
-                    sourceStateInput.value = data.state?.name || '';
+                    sourceCityInput.value = data.city || '';
+                    sourceStateInput.value = data.state || '';
+                    
+                    console.log('✅ Auto-populated consignor fields:');
+                    console.log('  📞 Contact:', data.contact_number || 'N/A');
+                    console.log('  🏙️ City:', data.city || 'N/A');
+                    console.log('  🗺️ State:', data.state || 'N/A');
+                })
+                .catch(error => {
+                    console.error('❌ Error fetching consignor data:', error);
                 });
         } else {
+            console.log('🧹 Clearing consignor fields...');
             consignorContactInput.value = '';
             sourceCityInput.value = '';
             sourceStateInput.value = '';
         }
+    }
+
+    // Handle Select2 consignor selection
+    $('#consignor_id').on('select2:select', function (e) {
+        const consignorId = e.params.data.id;
+        handleConsignorSelection(consignorId);
+    });
+
+    // Handle regular consignor selection (fallback)
+    consignorSelect.addEventListener('change', function () {
+        const consignorId = this.value;
+        handleConsignorSelection(consignorId);
     });
 
     // Handle consignee contact number and location details
@@ -576,21 +609,54 @@ document.addEventListener('DOMContentLoaded', function () {
     const destinationCityInput = document.getElementById('destination_city');
     const destinationStateInput = document.getElementById('destination_state');
 
-    consigneeSelect.addEventListener('change', function () {
-        const consigneeId = this.value;
+    // Handle consignee selection with Select2 support
+    function handleConsigneeSelection(consigneeId) {
+        console.log('🏢 Consignee selected:', consigneeId);
+        
         if (consigneeId) {
+            console.log('🔄 Fetching consignee data from API...');
             fetch(`/api/consignees/${consigneeId}`)
-                .then(response => response.json())
+                .then(response => {
+                    console.log('📡 Consignee API response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('📊 Consignee data received:', data);
+                    
+                    // Auto-populate consignee fields
                     consigneeContactInput.value = data.contact_number || '';
-                    destinationCityInput.value = data.city?.name || '';
-                    destinationStateInput.value = data.state?.name || '';
+                    destinationCityInput.value = data.city || '';
+                    destinationStateInput.value = data.state || '';
+                    
+                    console.log('✅ Auto-populated consignee fields:');
+                    console.log('  📞 Contact:', data.contact_number || 'N/A');
+                    console.log('  🏙️ Destination City:', data.city || 'N/A');
+                    console.log('  🗺️ Destination State:', data.state || 'N/A');
+                })
+                .catch(error => {
+                    console.error('❌ Error fetching consignee data:', error);
                 });
         } else {
+            console.log('🧹 Clearing consignee fields...');
             consigneeContactInput.value = '';
             destinationCityInput.value = '';
             destinationStateInput.value = '';
         }
+    }
+
+    // Handle Select2 consignee selection
+    $('#consignee_id').on('select2:select', function (e) {
+        const consigneeId = e.params.data.id;
+        handleConsigneeSelection(consigneeId);
+    });
+
+    // Handle regular consignee selection (fallback)
+    consigneeSelect.addEventListener('change', function () {
+        const consigneeId = this.value;
+        handleConsigneeSelection(consigneeId);
     });
 
     // Handle truck selection for transporter info
