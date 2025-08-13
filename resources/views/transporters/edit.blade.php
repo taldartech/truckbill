@@ -82,8 +82,8 @@
                         @error('short_name') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4">
-                        <label for="contact_person_name" class="form-label">Contact Person Name *</label>
-                        <input type="text" class="form-control @error('contact_person_name') is-invalid @enderror" id="contact_person_name" name="contact_person_name" value="{{ old('contact_person_name', $transporter->contact_person_name) }}" required>
+                        <label for="contact_person_name" class="form-label">Contact Person Name</label>
+                        <input type="text" class="form-control @error('contact_person_name') is-invalid @enderror" id="contact_person_name" name="contact_person_name" value="{{ old('contact_person_name', $transporter->contact_person_name) }}">
                         @error('contact_person_name') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
                 </div>
