@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
+
 <div class="container mt-4">
     <div class="col-sm-6"><h3 class="mb-0">Drivers</h3></div>
     @if(session('success'))
@@ -96,12 +97,12 @@
                     <td>{{ $driver->license_number }}</td>
                     <td>{{ $driver->address }}</td>
                     @if(auth()->check() && auth()->user()->userRole->name === 'admin')
-                    <td>
-                        <a href="{{ route('drivers.edit', $driver->id) }}" class="btn btn-sm btn-primary"><i class="bi bi-pencil"></i></a>
+                     <td>
+                        <a href="{{ route('drivers.edit', $driver->id) }}" class="btn btn-sm btn-info" title="Edit Driver"><i class="bi bi-pencil"></i></a>
                         <form action="{{ route('drivers.destroy', $driver->id) }}" method="POST" style="display:inline-block;">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')"><i class="bi bi-trash"></i></button>
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this driver?')" title="Delete Driver"><i class="bi bi-trash"></i></button>
                         </form>
                     </td>
                     @endif
@@ -114,6 +115,8 @@
     {{-- <a href="/dashboard" class="btn btn-secondary mt-2">Back to Dashboard</a> --}}
 </div>
 @endsection
+
+
 
 <script>
     function toggleField(checkbox) {
