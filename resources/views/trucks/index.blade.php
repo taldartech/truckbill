@@ -23,7 +23,7 @@
             <table id="trucksTable" class="table table-bordered table-striped">
                 <thead>
                     <tr>
-                        <th style="width: 80px;">ID</th>
+                        <th style="width: 80px;">Sr. No</th>
                         <th>Truck Number</th>
                         <th>Truck Type</th>
                         <th>Registration Date</th>
@@ -203,10 +203,14 @@ $(document).ready(function() {
         },
         columns: [
             {
-                data: 'id',
-                name: 'id',
+                data: 'DT_RowIndex',
+                name: 'DT_RowIndex',
                 width: '80px',
-                className: 'text-center'
+                className: 'text-center',
+                orderable: false,
+                render: function(data, type, row, meta) {
+                    return meta.row + 1;
+                }
             },
             {
                 data: 'truck_number',
@@ -244,7 +248,7 @@ $(document).ready(function() {
             }
             @endif
         ],
-        order: [[0, 'desc']],
+        order: [[1, 'asc']],
         pageLength: 10,
         lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
         dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
