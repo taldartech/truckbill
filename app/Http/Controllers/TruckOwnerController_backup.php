@@ -175,7 +175,7 @@ class TruckOwnerController extends Controller
         }
 
      
-            $advanceUrl = route('advance-payments.create', ['transporter_id' => $truckOwner->transporter_id]);
+            $advanceUrl = route('advance-payments.create', ['transporter_id' => $truckOwner->id]);
             $buttons .= '<a href="' . $advanceUrl . '" class="btn btn-sm btn-outline-success" title="Advance Payment">';
             $buttons .= '<i class="bi bi-currency-rupee"></i>';
             $buttons .= '</a>';
