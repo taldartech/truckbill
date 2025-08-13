@@ -192,7 +192,12 @@ class ConsigneeController extends Controller
                 'nullable',
                 'digits:10',
             ],
-            'gst_number' => 'nullable|string|max:255',
+            'gst_number' => [
+                'nullable',
+                'string',
+                'max:255',
+                \Illuminate\Validation\Rule::unique('consignees', 'gst_number')
+            ],
             'pan_number' => 'nullable|string|size:10|regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
         ]);
 
@@ -225,7 +230,12 @@ class ConsigneeController extends Controller
                 'nullable',
                 'digits:10',
             ],
-            'gst_number' => 'nullable|string|max:255',
+            'gst_number' => [
+                'nullable',
+                'string',
+                'max:255',
+                \Illuminate\Validation\Rule::unique('consignees', 'gst_number')->ignore($consignee->id)
+            ],
             'pan_number' => 'nullable|string|size:10|regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
         ]);
 

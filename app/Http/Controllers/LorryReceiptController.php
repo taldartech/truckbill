@@ -262,7 +262,7 @@ class LorryReceiptController extends Controller
     {
         $companies = \App\Models\Company::all();
         // $trucks = Truck::all();
-        $trucks = Truck::with('transporter')->get(); // assumes `transporter()` relationship is defined
+        $trucks = Truck::with(['transporter', 'driver'])->get(); // Load both transporter and driver relationships
 
         $transporters = Transporter::all();
         $truckOwners = Transporter::where('is_owner', 1)->get();
@@ -488,7 +488,7 @@ class LorryReceiptController extends Controller
         // $transporters = \App\Models\Transporter::all();
         $companies = \App\Models\Company::all();
         // $trucks = Truck::all();
-        $trucks = Truck::with('transporter')->get(); // assumes `transporter()` relationship is defined
+        $trucks = Truck::with(['transporter', 'driver'])->get(); // Load both transporter and driver relationships
 
         $transporters = Transporter::all();
         $truckOwners = Transporter::where('is_owner', 1)->get();
