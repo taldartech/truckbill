@@ -373,25 +373,98 @@ document.addEventListener('DOMContentLoaded', function () {
     const truckSelect = document.getElementById('truck_id');
     const transporterSelect = document.getElementById('transporter_id');
     const transporterLabel = document.getElementById('transporterLabel');
+    
+    // Store truck data for easy access
+    let trucksData = {};
+
+    // Handle truck selection change
+    $('#truck_id').on('select2:select', function (e) {
+        const selectedTruckId = e.params.data.id;
+        
+        console.log('🚛 Truck selected:', selectedTruckId);
+        
+        // Get truck data from the selected option
+        const selectedOption = $(this).find('option:selected');
+        const truckText = selectedOption.text().trim();
+        
+        console.log('📝 Truck text:', truckText);
+        
+        // Extract transporter info from truck text (format: "TruckNumber - Driver: DriverName (TransporterName)")
+        const transporterMatch = truckText.match(/\(([^)]+)\)$/);
+        if (transporterMatch) {
+            const transporterName = transporterMatch[1].trim();
+            
+            console.log('🏢 Extracted transporter name:', transporterName);
+            
+            // Store truck-transporter relationship
+            trucksData[selectedTruckId] = {
+                transporterName: transporterName,
+                truckText: truckText
+            };
+            
+            // If "Truck Owner" is selected, auto-select the truck owner
+            if (transporterTypeSelect.value === 'owner') {
+                console.log('🎯 Auto-selecting truck owner for:', transporterName);
+                autoSelectTruckOwner(selectedTruckId, transporterName);
+            } else {
+                console.log('ℹ️ Transporter type is not "owner", current value:', transporterTypeSelect.value);
+            }
+        } else {
+            console.warn('⚠️ Could not extract transporter name from truck text:', truckText);
+        }
+    });
+
+    // Also handle regular change event as fallback
+    $('#truck_id').on('change', function () {
+        const selectedTruckId = $(this).val();
+        if (selectedTruckId && !trucksData[selectedTruckId]) {
+            // Trigger the same logic as select2:select
+            const selectedOption = $(this).find('option:selected');
+            const truckText = selectedOption.text().trim();
+            
+            const transporterMatch = truckText.match(/\(([^)]+)\)$/);
+            if (transporterMatch) {
+                const transporterName = transporterMatch[1].trim();
+                
+                trucksData[selectedTruckId] = {
+                    transporterName: transporterName,
+                    truckText: truckText
+                };
+                
+                if (transporterTypeSelect.value === 'owner') {
+                    autoSelectTruckOwner(selectedTruckId, transporterName);
+                }
+            }
+        }
+    });
 
     // Handle transporter type change
     transporterTypeSelect.addEventListener('change', function () {
         const selectedType = this.value;
+        const selectedTruckId = truckSelect.value;
+        
         transporterSelect.innerHTML = '<option value="">Select Transporter</option>';
+        transporterSelect.disabled = false; // Reset disabled state
         
         if (selectedType === 'owner') {
             transporterLabel.textContent = 'Truck Owner *';
-            // Fetch truck owners
-            fetch('/api/truck-owners')
-                .then(response => response.json())
-                .then(data => {
-                    data.forEach(owner => {
-                        const option = document.createElement('option');
-                        option.value = owner.id;
-                        option.textContent = owner.name;
-                        transporterSelect.appendChild(option);
+            
+            // If a truck is already selected, auto-select its owner
+            if (selectedTruckId && trucksData[selectedTruckId]) {
+                autoSelectTruckOwner(selectedTruckId, trucksData[selectedTruckId].transporterName);
+            } else {
+                // Fetch all truck owners
+                fetch('/api/truck-owners')
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(owner => {
+                            const option = document.createElement('option');
+                            option.value = owner.id;
+                            option.textContent = owner.name;
+                            transporterSelect.appendChild(option);
+                        });
                     });
-                });
+            }
         } else if (selectedType === 'agency') {
             transporterLabel.textContent = 'Agency *';
             // Fetch agencies
@@ -407,6 +480,72 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
         }
     });
+    
+    // Function to auto-select truck owner
+    function autoSelectTruckOwner(truckId, transporterName) {
+        console.log('🔄 Fetching truck owners from API...');
+        
+        // Fetch truck owners and find the matching one
+        fetch('/api/truck-owners')
+            .then(response => {
+                console.log('📡 API response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('📊 Truck owners data received:', data);
+                
+                transporterSelect.innerHTML = '<option value="">Select Transporter</option>';
+                
+                let ownerFound = false;
+                let matchedOwner = null;
+                
+                data.forEach(owner => {
+                    const option = document.createElement('option');
+                    option.value = owner.id;
+                    option.textContent = owner.name;
+                    
+                    console.log('🔍 Comparing:', owner.name, 'with', transporterName);
+                    
+                    // Auto-select if this is the truck's owner (case-insensitive comparison)
+                    if (owner.name.toLowerCase().trim() === transporterName.toLowerCase().trim()) {
+                        option.selected = true;
+                        ownerFound = true;
+                        matchedOwner = owner;
+                        console.log('✅ Found matching owner:', owner.name);
+                    }
+                    
+                    transporterSelect.appendChild(option);
+                });
+                
+                if (ownerFound) {
+                    // Disable the dropdown since it's auto-selected
+                    transporterSelect.disabled = true;
+                    transporterSelect.style.backgroundColor = '#e9ecef';
+                    transporterSelect.title = 'Automatically selected based on truck owner';
+                    
+                    console.log(`✅ Auto-selected truck owner: ${matchedOwner.name} (ID: ${matchedOwner.id})`);
+                } else {
+                    console.warn(`⚠️ No matching truck owner found for: "${transporterName}"`);
+                    console.log('Available owners:', data.map(o => o.name));
+                    
+                    // Re-enable the dropdown if no match found
+                    transporterSelect.disabled = false;
+                    transporterSelect.style.backgroundColor = '';
+                    transporterSelect.title = '';
+                }
+            })
+            .catch(error => {
+                console.error('❌ Error fetching truck owners:', error);
+                
+                // Re-enable the dropdown on error
+                transporterSelect.disabled = false;
+                transporterSelect.style.backgroundColor = '';
+                transporterSelect.title = '';
+            });
+    }
 
     // Handle consignor contact number and location details
     const consignorSelect = document.getElementById('consignor_id');

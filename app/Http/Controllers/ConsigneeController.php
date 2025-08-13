@@ -264,13 +264,11 @@ class ConsigneeController extends Controller
         return response()->json([
             'id' => $consignee->id,
             'name' => $consignee->name ?: 'Not provided',
-            'short_name' => $consignee->short_name ?: 'Not provided',
-            'contact_person_name' => $consignee->contact_person_name ?: 'Not provided',
+            'address' => $consignee->address ?: 'Not provided',
             'contact_number' => $consignee->contact_number ?: 'Not provided',
             'email' => $consignee->email ?: 'Not provided',
             'gst_number' => $consignee->gst_number ?: 'Not provided',
             'pan_number' => $consignee->pan_number ?: 'Not provided',
-            'address' => $consignee->address ?: 'Not provided',
             'city' => $consignee->city?->name ?: 'Not provided',
             'state' => $consignee->state?->name ?: 'Not provided',
             'country' => $consignee->country?->name ?: 'Not provided',
@@ -278,5 +276,38 @@ class ConsigneeController extends Controller
             'created_at' => $consignee->created_at?->format('d M Y, h:i A') ?: 'Not available',
             'updated_at' => $consignee->updated_at?->format('d M Y, h:i A') ?: 'Not available'
         ]);
+    }
+
+    /**
+     * Get consignee data for API
+     */
+    public function getConsigneeApi($id)
+    {
+        try {
+            $query = Consignee::with(['city', 'state', 'country']);
+            
+            // Apply company filter for non-super admin users
+            if (auth()->user()->userRole->name !== 'super_admin') {
+                $query->where('company_id', auth()->user()->company_id);
+            }
+            
+            $consignee = $query->findOrFail($id);
+            
+            return response()->json([
+                'id' => $consignee->id,
+                'name' => $consignee->name,
+                'contact_number' => $consignee->contact_number,
+                'address' => $consignee->address,
+                'city' => $consignee->city?->name,
+                'state' => $consignee->state?->name,
+                'country' => $consignee->country?->name,
+                'gst_number' => $consignee->gst_number,
+                'pan_number' => $consignee->pan_number,
+                'email' => $consignee->email
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching consignee: ' . $e->getMessage());
+            return response()->json(['error' => 'Consignee not found'], 404);
+        }
     }
 }

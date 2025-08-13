@@ -420,5 +420,53 @@ class TransporterController extends Controller
         return redirect()->route('transporters.index')->with('success', 'Transporter deleted successfully!');
     }
 
+    /**
+     * Get truck owners for API
+     */
+    public function getTruckOwnersApi()
+    {
+        try {
+            $query = \App\Models\Transporter::where('is_owner', 1);
+            
+            // Apply company filter for non-super admin users
+            if (auth()->user()->userRole->name !== 'super_admin') {
+                $query->where('company_id', auth()->user()->company_id);
+            }
+            
+            $truckOwners = $query->select('id', 'name')
+                                ->orderBy('name')
+                                ->get();
+            
+            return response()->json($truckOwners);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching truck owners: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to fetch truck owners'], 500);
+        }
+    }
+
+    /**
+     * Get agencies for API
+     */
+    public function getAgenciesApi()
+    {
+        try {
+            $query = \App\Models\Transporter::where('is_owner', 0);
+            
+            // Apply company filter for non-super admin users
+            if (auth()->user()->userRole->name !== 'super_admin') {
+                $query->where('company_id', auth()->user()->company_id);
+            }
+            
+            $agencies = $query->select('id', 'name')
+                             ->orderBy('name')
+                             ->get();
+            
+            return response()->json($agencies);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching agencies: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to fetch agencies'], 500);
+        }
+    }
+
     //
 }
