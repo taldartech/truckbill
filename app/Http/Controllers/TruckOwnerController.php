@@ -127,7 +127,7 @@ class TruckOwnerController extends Controller
         foreach ($truckOwners as $index => $truckOwner) {
             $data[] = [
                 'sr_no' => $start + $index + 1,
-                'name' => '<a href="#" class="truck-owner-name-link text-primary fw-bold" data-id="' . $truckOwner->id . '">' . ($truckOwner->name ?? 'N/A') . '</a>',
+                'name' => '<a href="#" class="truck-owner-name-link text-primary fw-bold" data-id="' . $truckOwner->id . '" style="text-decoration: none;">' . ($truckOwner->name ?? 'N/A') . '</a>',
                 'pan_number' => $truckOwner->pan_number ?? 'N/A',
                 'location' => $truckOwner->city->name ?? 'N/A',
                 'contact_number' => $truckOwner->mobile_number ?? 'N/A',

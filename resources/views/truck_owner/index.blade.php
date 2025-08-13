@@ -293,9 +293,9 @@ $(document).ready(function() {
             {
                 data: 'name',
                 name: 'name',
-                render: function(data, type, row) {
-                    return data; // Allow HTML rendering for clickable links
-                }
+                // render: function(data, type, row) {
+                //     return data; // Allow HTML rendering for clickable links
+                // }
             },
             {
                 data: 'pan_number',
