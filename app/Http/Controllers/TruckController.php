@@ -247,8 +247,48 @@ class TruckController extends Controller
             $validated['driver_name'] = $driver ? $driver->name : null;
         }
 
-        \App\Models\Truck::create($validated);
-        return redirect()->route('trucks.index')->with('success', 'Truck created successfully!');
+        try {
+            $truck = \App\Models\Truck::create($validated);
+            
+            // Return JSON response for AJAX requests
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Truck created successfully!',
+                    'truck' => $truck
+                ]);
+            }
+            
+            return redirect()->route('trucks.index')->with('success', 'Truck created successfully!');
+            
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Handle database constraint violations
+            if ($e->errorInfo[1] == 1062) { // Duplicate entry error
+                $errorMessage = 'This truck number is already registered in the system. Please use a different truck number.';
+                
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $errorMessage,
+                        'errors' => ['truck_number' => [$errorMessage]]
+                    ], 422);
+                }
+                
+                return redirect()->back()->withErrors(['truck_number' => $errorMessage])->withInput();
+            }
+            
+            // Handle other database errors
+            $genericError = 'Unable to create truck due to a database error. Please try again.';
+            
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $genericError
+                ], 500);
+            }
+            
+            return redirect()->back()->withErrors(['general' => $genericError])->withInput();
+        }
     }
     public function checkTruckNumber(Request $request)
 {
@@ -267,18 +307,68 @@ class TruckController extends Controller
     {
         $validated = $request->validate([
             'transporter_id' => 'required|exists:transporters,id',
-           'truck_number' => [
-    'required',
-    'string',
-    'size:10',
-    'regex:/^[A-Z]{2}\d{2}[A-Z]{2}\d{4}$/',
-],
+            'truck_number' => [
+                'required',
+                'string',
+                'min:6',
+                'max:15',
+                'unique:trucks,truck_number,' . $truck->id,
+            ],
             'truck_type' => 'required|string|max:50',
             'driver_id' => 'nullable|exists:drivers,id',
             'registration_date' => 'nullable|date',
         ]);
-        $truck->update($validated);
-        return redirect()->route('trucks.index')->with('success', 'Truck updated successfully!');
+
+        // If driver_id is selected, get the driver's name
+        if ($validated['driver_id']) {
+            $driver = \App\Models\Driver::find($validated['driver_id']);
+            $validated['driver_name'] = $driver ? $driver->name : null;
+        } else {
+            $validated['driver_name'] = null;
+        }
+
+        try {
+            $truck->update($validated);
+            
+            // Return JSON response for AJAX requests
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Truck updated successfully!',
+                    'truck' => $truck->fresh()
+                ]);
+            }
+            
+            return redirect()->route('trucks.index')->with('success', 'Truck updated successfully!');
+            
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Handle database constraint violations
+            if ($e->errorInfo[1] == 1062) { // Duplicate entry error
+                $errorMessage = 'This truck number is already registered in the system. Please use a different truck number.';
+                
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $errorMessage,
+                        'errors' => ['truck_number' => [$errorMessage]]
+                    ], 422);
+                }
+                
+                return redirect()->back()->withErrors(['truck_number' => $errorMessage])->withInput();
+            }
+            
+            // Handle other database errors
+            $genericError = 'Unable to update truck due to a database error. Please try again.';
+            
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $genericError
+                ], 500);
+            }
+            
+            return redirect()->back()->withErrors(['general' => $genericError])->withInput();
+        }
     }
 
     public function destroy(\App\Models\Truck $truck)

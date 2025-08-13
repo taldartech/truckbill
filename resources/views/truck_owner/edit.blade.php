@@ -255,6 +255,152 @@
     </form>
 </div>
 
+<!-- Registered Trucks Section -->
+<div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
+    <div class="card-header">
+        <div class="card-title h5">
+            <i class="bi bi-truck"></i> Registered Trucks
+        </div>
+        <div class="card-tools">
+            <button type="button" class="btn btn-success btn-sm" id="addNewTruckBtn">
+                <i class="bi bi-plus-circle"></i> Add New Truck
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div id="trucksContainer">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover" id="trucksTable">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Truck Number</th>
+                            <th>Truck Type</th>
+                            <th>Driver</th>
+                            <th>Driver Mobile</th>
+                            <th>Registration Date</th>
+                            <th width="120px">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($transporter->trucks as $truck)
+                        <tr id="truck-row-{{ $truck->id }}">
+                            <td class="fw-bold">{{ $truck->truck_number }}</td>
+                            <td>{{ $truck->truck_type }}</td>
+                            <td>{{ $truck->driver->name ?? 'Not Assigned' }}</td>
+                            <td>{{ $truck->driver->mobile ?? '-' }}</td>
+                            <td>{{ $truck->registration_date ? \Carbon\Carbon::parse($truck->registration_date)->format('d-m-Y') : '-' }}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-sm btn-outline-primary edit-truck-btn" 
+                                            title="Edit Truck" 
+                                            data-truck-id="{{ $truck->id }}"
+                                            data-truck-number="{{ $truck->truck_number }}"
+                                            data-truck-type="{{ $truck->truck_type }}"
+                                            data-driver-id="{{ $truck->driver_id }}"
+                                            data-registration-date="{{ $truck->registration_date }}">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger delete-truck-btn" 
+                                            title="Delete Truck" 
+                                            data-truck-id="{{ $truck->id }}"
+                                            data-truck-number="{{ $truck->truck_number }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+                @if($transporter->trucks->isEmpty())
+                <div class="text-center py-4">
+                    <i class="bi bi-truck text-muted" style="font-size: 3rem;"></i>
+                    <p class="text-muted mt-2">No trucks registered yet.</p>
+                    <button type="button" class="btn btn-primary" id="addFirstTruckBtn">
+                        <i class="bi bi-plus-circle"></i> Add First Truck
+                    </button>
+                </div>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Truck Modal -->
+<div class="modal fade" id="truckModal" tabindex="-1" aria-labelledby="truckModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="truckModalLabel">
+                    <i class="bi bi-truck"></i> <span id="truckModalTitle">Add New Truck</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="truckForm" method="POST">
+                @csrf
+                <input type="hidden" id="truck_id" name="truck_id">
+                <input type="hidden" name="transporter_id" value="{{ $transporter->id }}">
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="truck_owner_display" class="form-label">Truck Owner *</label>
+                            <input type="text" class="form-control" id="truck_owner_display" value="{{ $transporter->name }}" disabled>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="truck_number" class="form-label">Truck Number *</label>
+                            <input type="text" class="form-control" placeholder="e.g., MH12AB1234 or GJ01CD5678" id="truck_number" name="truck_number" required>
+                            <div class="invalid-feedback">Please enter a valid truck number (6-15 characters).</div>
+                            <small class="form-text text-muted">Format: State code + digits + letters + digits (e.g., MH12AB1234)</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="truck_type" class="form-label">Truck Type *</label>
+                            <select class="form-select" id="truck_type" name="truck_type" required>
+                                <option value="">Select</option>
+                                <option value="Open">Open</option>
+                                <option value="Closed">Closed</option>
+                                <option value="Container">Container</option>
+                                <option value="Trailer">Trailer</option>
+                                <option value="Tanker">Tanker</option>
+                                <option value="Refrigerated">Refrigerated</option>
+                                <option value="Flatbed">Flatbed</option>
+                                <option value="Tipper">Tipper</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <div class="invalid-feedback">Please select a truck type.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="driver_id" class="form-label">Driver</label>
+                            <div class="input-group">
+                                <select class="form-select" id="driver_id" name="driver_id">
+                                    <option value="">Select</option>
+                                </select>
+                                <a href="{{ route('drivers.create') }}" class="btn btn-outline-secondary" target="_blank">Add New</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="registration_date" class="form-label">Registration Date *</label>
+                            <input type="date" class="form-control" id="registration_date" name="registration_date" required>
+                            <div class="invalid-feedback">Please select a registration date.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success" id="saveTruckBtn">
+                        <i class="bi bi-save"></i> <span id="saveTruckText">Add Truck</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- Confirmation Modal -->
 <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -446,9 +592,216 @@
             });
         }
     });
+
+    // Truck Management JavaScript
+    let isEditMode = false;
+    let currentTruckId = null;
+
+    // Load drivers for truck modal
+    function loadDriversForTruck() {
+        $.ajax({
+            url: '/api/drivers',
+            type: 'GET',
+            success: function(drivers) {
+                const driverSelect = $('#driver_id');
+                driverSelect.empty();
+                driverSelect.append('<option value="">Select</option>');
+                
+                drivers.forEach(function(driver) {
+                    driverSelect.append(`<option value="${driver.id}">${driver.name} (${driver.mobile})</option>`);
+                });
+            },
+            error: function() {
+                console.log('Failed to load drivers');
+            }
+        });
+    }
+
+    // Show truck modal for adding new truck
+    $('#addNewTruckBtn, #addFirstTruckBtn').on('click', function() {
+        isEditMode = false;
+        currentTruckId = null;
+        $('#truckModalTitle').text('Add New Truck');
+        $('#saveTruckText').text('Add Truck');
+        $('#truckForm')[0].reset();
+        $('#truck_id').val('');
+        loadDriversForTruck();
+        $('#truckModal').modal('show');
+    });
+
+    // Show truck modal for editing existing truck
+    $(document).on('click', '.edit-truck-btn', function() {
+        isEditMode = true;
+        currentTruckId = $(this).data('truck-id');
+        
+        $('#truckModalTitle').text('Edit Truck');
+        $('#saveTruckText').text('Update Truck');
+        
+        // Populate form with truck data
+        $('#truck_id').val(currentTruckId);
+        $('#truck_number').val($(this).data('truck-number'));
+        $('#truck_type').val($(this).data('truck-type'));
+        $('#registration_date').val($(this).data('registration-date'));
+        
+        // Load drivers and select current driver
+        loadDriversForTruck();
+        setTimeout(() => {
+            $('#driver_id').val($(this).data('driver-id'));
+        }, 500);
+        
+        $('#truckModal').modal('show');
+    });
+
+    // Handle truck form submission
+    $('#truckForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = $(this).serialize();
+        const url = isEditMode ? `/trucks/${currentTruckId}` : '{{ route("trucks.store") }}';
+        const method = isEditMode ? 'PUT' : 'POST';
+        
+        // Add method field for PUT requests
+        let data = formData;
+        if (isEditMode) {
+            data += '&_method=PUT';
+        }
+        
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: data,
+            success: function(response) {
+                // Show success message
+                $('body').prepend(`
+                    <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                        <i class="bi bi-check-circle"></i>
+                        <strong>Success!</strong> Truck has been ${isEditMode ? 'updated' : 'added'} successfully.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `);
+                
+                setTimeout(function() {
+                    $('.alert-success').fadeOut();
+                }, 5000);
+                
+                $('#truckModal').modal('hide');
+                location.reload(); // Reload page to show updated trucks
+            },
+            error: function(xhr) {
+                console.log('AJAX Error:', xhr.status, xhr.responseText);
+                
+                if (xhr.status === 422) {
+                    // Handle validation errors
+                    const errors = xhr.responseJSON.errors;
+                    console.log('Validation errors:', errors);
+                    
+                    // Clear previous validation states
+                    $('#truckForm .form-control, #truckForm .form-select').removeClass('is-invalid');
+                    $('#truckForm .invalid-feedback').hide();
+                    
+                    Object.keys(errors).forEach(function(field) {
+                        const input = $(`#${field}`);
+                        input.addClass('is-invalid');
+                        input.siblings('.invalid-feedback').text(errors[field][0]).show();
+                    });
+                    
+                    // Show general validation error message
+                    $('body').prepend(`
+                        <div class="alert alert-warning alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>Validation Error!</strong> Please check the form fields and try again.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    `);
+                    
+                    setTimeout(function() {
+                        $('.alert-warning').fadeOut();
+                    }, 5000);
+                } else {
+                    // Show detailed error information
+                    let errorMessage = 'Unable to ' + (isEditMode ? 'update' : 'add') + ' truck. ';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage += xhr.responseJSON.message;
+                    } else {
+                        errorMessage += `Server returned ${xhr.status} error.`;
+                    }
+                    
+                    $('body').prepend(`
+                        <div class="alert alert-danger alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>Error!</strong> ${errorMessage}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    `);
+                    
+                    setTimeout(function() {
+                        $('.alert-danger').fadeOut();
+                    }, 5000);
+                }
+            }
+        });
+    });
+
+    // Handle truck deletion
+    $(document).on('click', '.delete-truck-btn', function() {
+        const truckId = $(this).data('truck-id');
+        const truckNumber = $(this).data('truck-number');
+        
+        if (confirm(`Are you sure you want to delete truck "${truckNumber}"? This action cannot be undone.`)) {
+            $.ajax({
+                url: `/trucks/${truckId}`,
+                type: 'POST',
+                data: {
+                    '_token': $('meta[name="csrf-token"]').attr('content'),
+                    '_method': 'DELETE'
+                },
+                success: function(response) {
+                    $('body').prepend(`
+                        <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                            <i class="bi bi-check-circle"></i>
+                            <strong>Success!</strong> Truck "${truckNumber}" has been deleted successfully.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    `);
+                    
+                    setTimeout(function() {
+                        $('.alert-success').fadeOut();
+                    }, 5000);
+                    
+                    // Remove truck row from table
+                    $(`#truck-row-${truckId}`).fadeOut(500, function() {
+                        $(this).remove();
+                        
+                        // Show empty state if no trucks left
+                        if ($('#trucksTable tbody tr').length === 0) {
+                            location.reload();
+                        }
+                    });
+                },
+                error: function(xhr) {
+                    $('body').prepend(`
+                        <div class="alert alert-danger alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>Error!</strong> Unable to delete truck "${truckNumber}". Please try again.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    `);
+                    
+                    setTimeout(function() {
+                        $('.alert-danger').fadeOut();
+                    }, 5000);
+                }
+            });
+        }
+    });
+
+    // Reset truck modal when hidden
+    $('#truckModal').on('hidden.bs.modal', function() {
+        $('#truckForm')[0].reset();
+        $('#truckForm .form-control, #truckForm .form-select').removeClass('is-invalid is-valid');
+        $('#truckForm .invalid-feedback').hide();
+        isEditMode = false;
+        currentTruckId = null;
+    });
     </script>
-    
-
-    
 @endsection
-

@@ -57,14 +57,14 @@ class Transporter extends Model
     {
         return $this->belongsTo(Country::class);
     }
-    //
-   // In Truck.php
-public function driver()
-{
-    return $this->belongsTo(\App\Models\Driver::class);
-}
-public function bankAccounts()
-{
-    return $this->hasMany(TransporterBankAccount::class, 'transporter_id');
-}
+
+    public function trucks()
+    {
+        return $this->hasMany(Truck::class, 'transporter_id');
+    }
+
+    public function bankAccounts()
+    {
+        return $this->hasMany(TransporterBankAccount::class, 'transporter_id');
+    }
 }

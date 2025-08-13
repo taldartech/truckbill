@@ -312,6 +312,9 @@ class TruckOwnerController extends Controller
 
     public function edit(\App\Models\Transporter $transporter)
     {
+        // Load the trucks relationship with driver information
+        $transporter->load(['trucks.driver']);
+        
         $companies = Company::all();
         $trucks = Truck::where('transporter_id', $transporter->id)->get();
         $countries = Country::all();
