@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-<!-- Select2 CSS - Using different CDN -->
-<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
 /* Prevent form expansion on validation errors */
 .form-control, .form-select {
@@ -282,58 +282,49 @@
     </form>
 </div>
 
-<!-- Select2 JS - Using different CDN -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
-
+<!-- Load Select2 dynamically to ensure it loads properly -->
 <script>
-// Multiple initialization attempts with different timing
-function initializeSelect2() {
-    console.log('Attempting Select2 initialization...');
-    console.log('jQuery available:', typeof $ !== 'undefined');
-    console.log('Select2 available:', typeof $.fn.select2 !== 'undefined');
-    console.log('Truck element exists:', $('#truck_id').length > 0);
-    
-    if (typeof $ !== 'undefined' && typeof $.fn.select2 !== 'undefined' && $('#truck_id').length > 0) {
-        try {
-            $('#truck_id').select2({
-                placeholder: 'Search and select truck...',
-                allowClear: true,
-                width: '100%'
-            });
-            console.log('✅ Select2 initialized successfully for truck dropdown');
-            return true;
-        } catch (error) {
-            console.error('❌ Select2 initialization error:', error);
-            return false;
+// Function to load Select2 dynamically
+function loadSelect2() {
+    return new Promise((resolve, reject) => {
+        if (typeof $.fn.select2 !== 'undefined') {
+            resolve();
+            return;
         }
-    } else {
-        console.error('❌ Select2 initialization failed - missing dependencies or element');
-        return false;
-    }
+        
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js';
+        script.onload = () => {
+            console.log('✅ Select2 loaded successfully');
+            resolve();
+        };
+        script.onerror = () => {
+            console.error('❌ Failed to load Select2');
+            reject();
+        };
+        document.head.appendChild(script);
+    });
 }
 
-// Try multiple initialization approaches
+// Initialize Select2 after ensuring it's loaded
 $(document).ready(function() {
-    // Immediate attempt
-    if (!initializeSelect2()) {
-        // Try after 500ms
-        setTimeout(function() {
-            if (!initializeSelect2()) {
-                // Try after 1 second
-                setTimeout(function() {
-                    initializeSelect2();
-                }, 1000);
+    loadSelect2().then(() => {
+        // Wait a bit more to ensure Select2 is fully initialized
+        setTimeout(() => {
+            if ($('#truck_id').length > 0) {
+                $('#truck_id').select2({
+                    placeholder: 'Search and select truck...',
+                    allowClear: true,
+                    width: '100%'
+                });
+                console.log('✅ Select2 initialized successfully for truck dropdown');
+            } else {
+                console.error('❌ Truck element not found');
             }
-        }, 500);
-    }
-});
-
-// Also try on window load as fallback
-$(window).on('load', function() {
-    if (!$('#truck_id').hasClass('select2-hidden-accessible')) {
-        console.log('Window load fallback - trying Select2 initialization...');
-        initializeSelect2();
-    }
+        }, 100);
+    }).catch(() => {
+        console.error('❌ Failed to initialize Select2 - library could not be loaded');
+    });
 });
 </script>
 

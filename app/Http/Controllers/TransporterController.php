@@ -26,13 +26,18 @@ class TransporterController extends Controller
     
     private function getTransportersData(Request $request)
     {
-        $query = \App\Models\Transporter::with(['company', 'city'])
-            ->where('is_owner', 0); // Default to show only Agencies
+        try {
+            \Log::info('DataTables request started for transporters');
+            
+            $query = \App\Models\Transporter::with(['company', 'city'])
+                ->where('is_owner', 0); // Default to show only Agencies
 
-        // Only apply company_id filter for non-super_admin users
-        if (auth()->user()->userRole->name !== 'super_admin') {
-            $query->where('company_id', auth()->user()->company_id);
-        }
+            // Only apply company_id filter for non-super_admin users
+            if (auth()->user()->userRole->name !== 'super_admin') {
+                $query->where('company_id', auth()->user()->company_id);
+            }
+            
+            \Log::info('Query built successfully');
         
         // Handle global search
         if ($request->has('search') && $request->search['value']) {
@@ -139,7 +144,7 @@ class TransporterController extends Controller
         // Handle pagination
         $start = $request->start ?? 0;
         $length = $request->length ?? 10;
-        $transporters = $query->skip($start)->take($length)->get();
+        $transporters = $query->offset($start)->limit($length)->get();
         
         // Format data for DataTables
         $data = $transporters->map(function($transporter, $index) use ($start) {
@@ -156,12 +161,25 @@ class TransporterController extends Controller
             ];
         });
         
-        return response()->json([
-            'draw' => intval($request->draw),
-            'recordsTotal' => $totalRecords,
-            'recordsFiltered' => $filteredRecords,
-            'data' => $data
-        ]);
+            return response()->json([
+                'draw' => intval($request->draw),
+                'recordsTotal' => $totalRecords,
+                'recordsFiltered' => $filteredRecords,
+                'data' => $data
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('DataTables error in transporters: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            
+            return response()->json([
+                'draw' => intval($request->draw ?? 0),
+                'recordsTotal' => 0,
+                'recordsFiltered' => 0,
+                'data' => [],
+                'error' => 'An error occurred while loading data: ' . $e->getMessage()
+            ], 500);
+        }
     }
     
     private function getActionButtons($transporter)
