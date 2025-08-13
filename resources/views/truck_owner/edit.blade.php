@@ -3,13 +3,45 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="card card-info card-outline mb-4" style="max-width: 950px;align-items: center;margin: auto;">
+<style>
+/* Prevent form expansion on validation errors */
+.form-control, .form-select {
+    min-height: 38px;
+    box-sizing: border-box;
+}
+
+.text-danger {
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    word-wrap: break-word;
+}
+
+/* Ensure consistent column widths */
+.row .col-md-4 {
+    flex: 0 0 33.333333%;
+    max-width: 33.333333%;
+}
+
+/* Prevent card from expanding */
+.card {
+    overflow: hidden;
+}
+
+/* Consistent spacing for form groups */
+.mb-3 {
+    margin-bottom: 1rem !important;
+}
+</style>
+<div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
+    <!--begin::Header-->
     <div class="card-header">
-        <h3 class="card-title">Edit Truck Owner</h3>
+        <div class="card-title h4">Edit Truck Owner</div>
     </div>
+    <!--end::Header-->
 
    
 
+    <!--begin::Form-->
     <form action="{{ route('truck_owners.update', $transporter->id) }}" method="POST" class="needs-validation" novalidate="">
         @csrf
         @method('PUT')
@@ -21,6 +53,9 @@
             <div class="text-danger">{{ $message }}</div>
         @enderror
         <div class="card-body">
+            {{-- Hidden fields for truck owner identification --}}
+            <input type="hidden" name="is_owner" value="1">
+            <input type="hidden" name="advance_amount" value="{{ old('advance_amount', $transporter->advance_amount) }}">
             <!-- General Details -->
             <div class="row mb-3">
                 <div class="col-md-6">
@@ -102,13 +137,7 @@
                         @error('total_trucks') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
                 </div>
-                <div class="row mb-2">
-                    <div class="col-md-6">
-                        <label for="advance_amount" class="form-label">Advance Amount</label>
-                        <input type="number" step="0.01" class="form-control" id="advance_amount" name="advance_amount" value="{{ old('advance_amount', $transporter->advance_amount) }}" placeholder="Enter advance amount">
-                        @error('advance_amount') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                </div>
+                {{-- Advance amount is now hidden as per truck owner requirements --}}
             </div>
             <div class="card mb-4 p-3 bg-light">
             <div class="row mb-3">
@@ -213,21 +242,152 @@
     </div>
 </div>
 
-            <!-- Quick Actions Section -->
-            <div class="card p-3 bg-light">
-                <div class="row"><div class="col"><h5 class="mb-3">Quick Actions</h5></div></div>
-                <div class="row g-2">
-                    <div class="col-md-4">
-                        <button class="btn btn-success w-100 mb-2" type="submit">💾Update Form</button>
-                    </div>
-                    <div class="col-md-4">
-                        <a href="{{ route('transporters.index') }}" class="btn btn-outline-dark w-100 mb-2">📄 Back to List</a>
-                    </div>
-                </div>
+            <!-- Form Actions -->
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <a href="{{ route('truck_owners.index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to List
+                </a>
+                <button type="button" class="btn btn-primary" id="submitFormBtn">
+                    <i class="fas fa-save me-2"></i>Update Truck Owner
+                </button>
             </div>
         </div>
     </form>
 </div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="confirmationModalLabel">
+                    <i class="fas fa-check-circle me-2"></i>Confirm Truck Owner Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Please review the details below before updating the truck owner.
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3"><i class="fas fa-user me-2"></i>Basic Information</h6>
+                        <table class="table table-sm table-borderless">
+                            <tr><td class="fw-bold">Name:</td><td id="confirm-name">-</td></tr>
+                            <tr><td class="fw-bold">Short Name:</td><td id="confirm-short-name">-</td></tr>
+                            <tr><td class="fw-bold">Contact Person:</td><td id="confirm-contact-person">-</td></tr>
+                            <tr><td class="fw-bold">Mobile Number:</td><td id="confirm-mobile">-</td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3"><i class="fas fa-file-alt me-2"></i>Tax Information</h6>
+                        <table class="table table-sm table-borderless">
+                            <tr><td class="fw-bold">GST Number:</td><td id="confirm-gst-number">-</td></tr>
+                            <tr><td class="fw-bold">PAN Number:</td><td id="confirm-pan-number">-</td></tr>
+                            <tr><td class="fw-bold">PAN Active:</td><td id="confirm-pan-active">-</td></tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3"><i class="fas fa-map-marker-alt me-2"></i>Location Details</h6>
+                        <table class="table table-sm table-borderless">
+                            <tr><td class="fw-bold">Address:</td><td id="confirm-address">-</td></tr>
+                            <tr><td class="fw-bold">Country:</td><td id="confirm-country">-</td></tr>
+                            <tr><td class="fw-bold">State:</td><td id="confirm-state">-</td></tr>
+                            <tr><td class="fw-bold">City:</td><td id="confirm-city">-</td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3"><i class="fas fa-truck me-2"></i>Business Details</h6>
+                        <table class="table table-sm table-borderless">
+                            <tr><td class="fw-bold">Declaration Given:</td><td id="confirm-declaration">-</td></tr>
+                            <tr><td class="fw-bold">Total Trucks:</td><td id="confirm-total-trucks">-</td></tr>
+                            <tr><td class="fw-bold">Advance Amount:</td><td id="confirm-advance">-</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-success" onclick="submitForm()">
+                    <i class="fas fa-check me-2"></i>Confirm & Update
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- JS for confirmation modal --}}
+<script>
+    // Function to show confirmation modal with form data
+    function showConfirmationModal() {
+        // First validate the form
+        const form = document.querySelector('.needs-validation');
+        if (!form.checkValidity()) {
+            form.classList.add('was-validated');
+            return;
+        }
+
+        // Get form values with safe access
+        const name = document.getElementById('name')?.value || '-';
+        const shortName = document.getElementById('short_name')?.value || '-';
+        const contactPerson = document.getElementById('contact_person_name')?.value || '-';
+        const mobile = document.getElementById('mobile_number')?.value || '-';
+        
+        const gstNumber = document.getElementById('gst_number')?.value || '-';
+        const panNumber = document.getElementById('pan_number')?.value || '-';
+        const panActive = document.querySelector('input[name="pan_active"]:checked')?.value === '1' ? 'Yes' : 'No';
+        
+        const address = document.getElementById('address')?.value || '-';
+        const countrySelect = document.getElementById('country_id');
+        const country = countrySelect?.options[countrySelect.selectedIndex]?.text || '-';
+        const stateSelect = document.getElementById('state_id');
+        const state = stateSelect?.options[stateSelect.selectedIndex]?.text || '-';
+        const citySelect = document.getElementById('city_id');
+        const city = citySelect?.options[citySelect.selectedIndex]?.text || '-';
+        
+        const declaration = document.querySelector('input[name="declaration_given"]:checked')?.value === '1' ? 'Yes' : 'No';
+        const totalTrucks = document.getElementById('total_trucks')?.value || '0';
+        const advance = '{{ old("advance_amount", $transporter->advance_amount) }}'; // Current advance amount
+
+        // Populate modal with form data
+        document.getElementById('confirm-name').textContent = name;
+        document.getElementById('confirm-short-name').textContent = shortName;
+        document.getElementById('confirm-contact-person').textContent = contactPerson;
+        document.getElementById('confirm-mobile').textContent = mobile;
+        
+        document.getElementById('confirm-gst-number').textContent = gstNumber;
+        document.getElementById('confirm-pan-number').textContent = panNumber;
+        document.getElementById('confirm-pan-active').textContent = panActive;
+        
+        document.getElementById('confirm-address').textContent = address;
+        document.getElementById('confirm-country').textContent = country;
+        document.getElementById('confirm-state').textContent = state;
+        document.getElementById('confirm-city').textContent = city;
+        
+        document.getElementById('confirm-declaration').textContent = declaration;
+        document.getElementById('confirm-total-trucks').textContent = totalTrucks;
+        document.getElementById('confirm-advance').textContent = '₹' + parseFloat(advance || 0).toFixed(2);
+
+        // Show the modal
+        const modal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+        modal.show();
+    }
+
+    // Function to submit the form
+    function submitForm() {
+        document.querySelector('.needs-validation').submit();
+    }
+
+    // Attach event listener to submit button
+    document.getElementById('submitFormBtn').addEventListener('click', showConfirmationModal);
+</script>
 
 {{-- JS for cascading dropdowns --}}
 <script>

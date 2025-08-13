@@ -95,6 +95,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/truck_owners', [TruckOwnerController::class, 'index'])->name('truck_owners.index');
     Route::get('/truck_owners/create', [TruckOwnerController::class, 'create'])->name('truck_owners.create');
     Route::post('/truck_owners', [TruckOwnerController::class, 'store'])->name('truck_owners.store');
+    Route::get('/truck_owners/{id}', [TruckOwnerController::class, 'show'])->name('truck_owners.show');
     Route::get('/truck_owners/{transporter}/edit', [TruckOwnerController::class, 'edit'])->name('truck_owners.edit');
     Route::put('/truck_owners/{transporter}', [TruckOwnerController::class, 'update'])->name('truck_owners.update');
     Route::delete('/truck_owners/{transporter}', [TruckOwnerController::class, 'destroy'])->name('truck_owners.destroy');

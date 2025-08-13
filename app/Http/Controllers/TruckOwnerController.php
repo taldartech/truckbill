@@ -29,14 +29,13 @@ class TruckOwnerController extends Controller
     
     private function getTruckOwnersData(Request $request)
     {
-        $query = \App\Models\Transporter::with(['company', 'city', 'bankAccounts' => function($q) {
-            $q->select('transporter_id', 'bulk_payment_id');
-        }])->where('is_owner', 1); // Show only truck owners
+        try {
+            $query = \App\Models\Transporter::with(['company', 'city'])->where('is_owner', 1); // Show only truck owners
 
-        // Only apply company_id filter for non-super_admin users
-        if (auth()->user()->userRole->name !== 'super_admin') {
-            $query->where('company_id', auth()->user()->company_id);
-        }
+            // Only apply company_id filter for non-super_admin users
+            if (auth()->user()->userRole->name !== 'super_admin') {
+                $query->where('company_id', auth()->user()->company_id);
+            }
         
         // Handle search
         if ($request->has('search') && $request->search['value']) {
@@ -63,18 +62,20 @@ class TruckOwnerController extends Controller
                         case 2: // PAN Number
                             $query->where('transporters.pan_number', 'like', "%{$searchValue}%");
                             break;
-                        case 3: // Mobile Number
-                            $query->where('transporters.mobile_number', 'like', "%{$searchValue}%");
-                            break;
-                        case 4: // City
+                        case 3: // Location (City)
                             $query->whereHas('city', function($cityQuery) use ($searchValue) {
                                 $cityQuery->where('name', 'like', "%{$searchValue}%");
                             });
                             break;
-                        case 5: // Company
-                            $query->whereHas('company', function($companyQuery) use ($searchValue) {
-                                $companyQuery->where('name', 'like', "%{$searchValue}%");
-                            });
+                        case 4: // Contact Number (Mobile)
+                            $query->where('transporters.mobile_number', 'like', "%{$searchValue}%");
+                            break;
+                        case 5: // Declaration Given
+                            if (strtolower($searchValue) === 'yes') {
+                                $query->where('transporters.declaration_given', 1);
+                            } elseif (strtolower($searchValue) === 'no') {
+                                $query->where('transporters.declaration_given', 0);
+                            }
                             break;
                     }
                 }
@@ -93,18 +94,19 @@ class TruckOwnerController extends Controller
                 case 2: // PAN Number
                     $query->orderBy('transporters.pan_number', $orderDir);
                     break;
-                case 3: // Mobile Number
-                    $query->orderBy('transporters.mobile_number', $orderDir);
-                    break;
-                case 4: // City
+                case 3: // Location (City)
                     $query->join('cities', 'transporters.city_id', '=', 'cities.id')
                           ->orderBy('cities.name', $orderDir)
                           ->select('transporters.*');
                     break;
-                case 5: // Company
-                    $query->join('companies', 'transporters.company_id', '=', 'companies.id')
-                          ->orderBy('companies.name', $orderDir)
-                          ->select('transporters.*');
+                case 4: // Contact Number (Mobile)
+                    $query->orderBy('transporters.mobile_number', $orderDir);
+                    break;
+                case 5: // Declaration Given
+                    $query->orderBy('transporters.declaration_given', $orderDir);
+                    break;
+                case 6: // Advance Amount
+                    $query->orderBy('transporters.advance_amount', $orderDir);
                     break;
                 default:
                     $query->orderBy('transporters.id', 'desc');
@@ -125,49 +127,56 @@ class TruckOwnerController extends Controller
         foreach ($truckOwners as $index => $truckOwner) {
             $data[] = [
                 'sr_no' => $start + $index + 1,
-                'name' => $truckOwner->name ?? 'N/A',
+                'name' => '<a href="#" class="truck-owner-name-link text-primary fw-bold" data-id="' . $truckOwner->id . '">' . ($truckOwner->name ?? 'N/A') . '</a>',
                 'pan_number' => $truckOwner->pan_number ?? 'N/A',
-                'mobile_number' => $truckOwner->mobile_number ?? 'N/A',
-                'city' => $truckOwner->city->name ?? 'N/A',
-                'company' => $truckOwner->company->name ?? 'N/A',
+                'location' => $truckOwner->city->name ?? 'N/A',
+                'contact_number' => $truckOwner->mobile_number ?? 'N/A',
+                'declaration_given' => $truckOwner->declaration_given ? 'Yes' : 'No',
+                'advance_amount' => '₹' . number_format($truckOwner->advance_amount, 2),
                 'actions' => $this->getActionButtons($truckOwner)
             ];
         }
 
-        return response()->json([
-            'draw' => intval($request->draw),
-            'recordsTotal' => $totalRecords,
-            'recordsFiltered' => $filteredRecords,
-            'data' => $data
-        ]);
+            return response()->json([
+                'draw' => intval($request->draw),
+                'recordsTotal' => $totalRecords,
+                'recordsFiltered' => $filteredRecords,
+                'data' => $data
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('TruckOwner DataTables Error: ' . $e->getMessage());
+            return response()->json([
+                'draw' => intval($request->draw ?? 0),
+                'recordsTotal' => 0,
+                'recordsFiltered' => 0,
+                'data' => [],
+                'error' => 'An error occurred while loading data.'
+            ]);
+        }
     }
 
     private function getActionButtons($truckOwner)
     {
-        $buttons = '';
+        $buttons = '<div class="d-flex gap-1">';
         
-        // Bank Account Management Button
-        $hasBankAccount = $truckOwner->bankAccounts && $truckOwner->bankAccounts->count() > 0;
-        if ($hasBankAccount) {
-            $buttons .= '<a href="' . route('truck_owner_bank_accounts.index') . '?company_id=' . $truckOwner->company_id . '" class="btn btn-success btn-sm me-1" title="Edit Bank Account">
-                <i class="fas fa-university"></i>
-            </a>';
-        } else {
-            $buttons .= '<a href="' . route('truck_owner_bank_accounts.index') . '?company_id=' . $truckOwner->company_id . '" class="btn btn-warning btn-sm me-1" title="Add Bank Account">
-                <i class="fas fa-plus"></i>
-            </a>';
-        }
+        // Advance Payment Button (same as transporters)
+        $buttons .= '<button type="button" class="btn btn-sm btn-outline-success advance-payment-btn" title="Advance Payment" data-transporter-id="' . $truckOwner->id . '" data-transporter-name="' . htmlspecialchars($truckOwner->name) . '">';
+        $buttons .= '<i class="bi bi-currency-rupee"></i>';
+        $buttons .= '</button>';
+
+        // Edit Button (same as transporters)
+        $editUrl = route('truck_owners.edit', $truckOwner->id);
+        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info">';
+        $buttons .= '<i class="bi bi-pencil"></i></a>';
         
-        // Edit Button
-        $buttons .= '<a href="' . route('truck_owners.edit', $truckOwner->id) . '" class="btn btn-primary btn-sm me-1" title="Edit">
-            <i class="fas fa-edit"></i>
-        </a>';
+        // Delete Button (same as transporters)
+        $deleteUrl = route('truck_owners.destroy', $truckOwner->id);
+        $buttons .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Delete this truck owner?\')">';
+        $buttons .= csrf_field() . method_field('DELETE');
+        $buttons .= '<button type="submit" class="btn btn-sm btn-danger">';
+        $buttons .= '<i class="bi bi-trash"></i></button></form>';
         
-        // Delete Button
-        $buttons .= '<button type="button" class="btn btn-danger btn-sm" onclick="confirmDelete(' . $truckOwner->id . ')" title="Delete">
-            <i class="fas fa-trash"></i>
-        </button>';
-        
+        $buttons .= '</div>';
         return $buttons;
     }
 
@@ -232,9 +241,72 @@ class TruckOwnerController extends Controller
         return redirect()->route('truck_owners.index')->with('success', 'Truck Owner created successfully!');
     }
 
-    public function show(\App\Models\Transporter $transporter)
+    public function show($id)
     {
-        return view('truck_owner.show', compact('transporter'));
+        $transporter = \App\Models\Transporter::with(['company', 'city.state.country'])->findOrFail($id);
+        
+        // Check if user has permission to view this truck owner
+        if (auth()->user()->userRole->name !== 'super_admin' && $transporter->company_id !== auth()->user()->company_id) {
+            abort(403, 'Unauthorized access to this truck owner.');
+        }
+        
+        // Ensure this is actually a truck owner (is_owner = 1)
+        if (!$transporter->is_owner) {
+            abort(404, 'Truck owner not found.');
+        }
+        
+        // Get last 10 advance payments for this truck owner
+        $advancePayments = \App\Models\AdvancePayment::where('transporter_id', $id)
+            ->orderBy('created_at', 'desc')
+            ->limit(10)
+            ->get()
+            ->map(function($payment) {
+                return [
+                    'id' => $payment->id,
+                    'amount' => '₹' . number_format($payment->advance_amount, 2),
+                    'payment_date' => $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('d-m-Y') : 'Not specified',
+                    'remark' => $payment->remark ?: 'No remarks',
+                    'created_at' => $payment->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i')
+                ];
+            });
+        
+        // Get registered trucks for this truck owner
+        $trucks = \App\Models\Truck::where('transporter_id', $id)
+            ->with('driver')
+            ->get()
+            ->map(function($truck) {
+                return [
+                    'id' => $truck->id,
+                    'truck_number' => $truck->truck_number,
+                    'truck_type' => $truck->truck_type,
+                    'driver_name' => optional($truck->driver)->name ?: 'Not assigned',
+                    'driver_mobile' => optional($truck->driver)->mobile ?: 'Not provided'
+                ];
+            });
+        
+        return response()->json([
+            'id' => $transporter->id,
+            'name' => $transporter->name,
+            'short_name' => $transporter->short_name,
+            'contact_person_name' => $transporter->contact_person_name,
+            'gst_number' => $transporter->gst_number ?: 'Not provided',
+            'pan_number' => $transporter->pan_number,
+            'pan_active' => $transporter->pan_active ? 'Yes' : 'No',
+            'mobile_number' => $transporter->mobile_number,
+            'address' => $transporter->address ?: 'Not provided',
+            'country' => optional($transporter->city->state->country)->name ?: 'Not specified',
+            'state' => optional($transporter->city->state)->name ?: 'Not specified',
+            'city' => optional($transporter->city)->name ?: 'Not specified',
+            'company' => optional($transporter->company)->name ?: 'Not specified',
+            'is_owner' => 'Truck Owner',
+            'declaration_given' => $transporter->declaration_given ? 'Yes' : 'No',
+            'total_trucks' => $transporter->total_trucks,
+            'advance_amount' => '₹' . number_format($transporter->advance_amount, 2),
+            'created_at' => $transporter->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
+            'updated_at' => $transporter->updated_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
+            'advance_payments' => $advancePayments,
+            'trucks' => $trucks
+        ]);
     }
 
     public function edit(\App\Models\Transporter $transporter)
@@ -280,7 +352,12 @@ class TruckOwnerController extends Controller
                 'digits:10',
                 Rule::unique('transporters', 'mobile_number')->ignore($transporter->id)
             ],
-            'short_name' => ['nullable', 'string', 'max:255', 'unique:transporters,short_name'],
+            'short_name' => [
+                'nullable', 
+                'string', 
+                'max:255', 
+                Rule::unique('transporters', 'short_name')->ignore($transporter->id)
+            ],
             'contact_person_name' => 'nullable|string|max:255',
         ], [
             'pan_number.unique' => 'This PAN number is already registered with another truck owner or transporter.',
@@ -301,7 +378,12 @@ class TruckOwnerController extends Controller
 
     public function destroy(\App\Models\Transporter $transporter)
     {
+        // Soft delete the truck owner
         $transporter->delete();
-        return redirect()->route('truck_owners.index')->with('success', 'Truck Owner deleted successfully!');
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Truck Owner deleted successfully!'
+        ]);
     }
 }
