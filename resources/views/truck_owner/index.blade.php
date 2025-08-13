@@ -823,6 +823,55 @@ $(document).ready(function() {
         $('#addTruckForm .form-control, #addTruckForm .form-select').removeClass('is-invalid is-valid');
         $('#addTruckForm .invalid-feedback').hide();
     });
+
+    // Handle Delete Truck Owner button click
+    $(document).on('click', '.delete-truck-owner-btn', function() {
+        const truckOwnerId = $(this).data('truck-owner-id');
+        const truckOwnerName = $(this).data('truck-owner-name');
+        
+        if (confirm(`Are you sure you want to delete truck owner "${truckOwnerName}"? This action cannot be undone.`)) {
+            $.ajax({
+                url: '/truck_owners/' + truckOwnerId,
+                type: 'POST',
+                data: {
+                    '_token': $('meta[name="csrf-token"]').attr('content'),
+                    '_method': 'DELETE'
+                },
+                success: function(response) {
+                    // Show success message
+                    $('body').prepend(`
+                        <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                            <i class="bi bi-check-circle"></i>
+                            <strong>Success!</strong> Truck owner "${truckOwnerName}" has been deleted successfully.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    `);
+                    
+                    // Auto-hide alert after 5 seconds
+                    setTimeout(function() {
+                        $('.alert-success').fadeOut();
+                    }, 5000);
+                    
+                    // Reload DataTable
+                    $('#truckOwnersTable').DataTable().ajax.reload(null, false);
+                },
+                error: function(xhr) {
+                    // Show error message
+                    $('body').prepend(`
+                        <div class="alert alert-danger alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>Error!</strong> Unable to delete truck owner "${truckOwnerName}". Please try again.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    `);
+                    
+                    setTimeout(function() {
+                        $('.alert-danger').fadeOut();
+                    }, 5000);
+                }
+            });
+        }
+    });
 });
 
 // Function to load drivers for the Add Truck modal

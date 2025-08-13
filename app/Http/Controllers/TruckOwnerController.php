@@ -173,12 +173,9 @@ class TruckOwnerController extends Controller
         $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info">';
         $buttons .= '<i class="bi bi-pencil"></i></a>';
         
-        // Delete Button (same as transporters)
-        $deleteUrl = route('truck_owners.destroy', $truckOwner->id);
-        $buttons .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Delete this truck owner?\')">';
-        $buttons .= csrf_field() . method_field('DELETE');
-        $buttons .= '<button type="submit" class="btn btn-sm btn-danger">';
-        $buttons .= '<i class="bi bi-trash"></i></button></form>';
+        // Delete Button (AJAX-based)
+        $buttons .= '<button type="button" class="btn btn-sm btn-danger delete-truck-owner-btn" title="Delete Truck Owner" data-truck-owner-id="' . $truckOwner->id . '" data-truck-owner-name="' . htmlspecialchars($truckOwner->name) . '">';
+        $buttons .= '<i class="bi bi-trash"></i></button>';
         
         $buttons .= '</div>';
         return $buttons;
