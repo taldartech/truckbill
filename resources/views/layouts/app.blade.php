@@ -414,12 +414,12 @@
                             <p>Register Truck</p>
                             </a>
                           </li> --}}
-                          {{-- <li class="nav-item">
-                            <a href="/drivers/create" class="nav-link{{ Request::is('drivers/create') ? ' active' : '' }}">
+                          <li class="nav-item">
+                            <a href="/drivers" class="nav-link{{ Request::is('drivers*') ? ' active' : '' }}">
                                 <i class="fas fa-user-tie"></i>
-                            <p>Add Driver</p>
+                            <p>Driver List</p>
                             </a>
-                          </li> --}}
+                          </li>
                     </ul>
                   </li>
                   {{-- <li class="nav-item">

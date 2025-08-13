@@ -97,11 +97,11 @@
                     <td>{{ $driver->address }}</td>
                     @if(auth()->check() && auth()->user()->userRole->name === 'admin')
                     <td>
-                        <a href="{{ route('drivers.edit', $driver->id) }}" class="btn btn-sm btn-warning">Edit</a>
+                        <a href="{{ route('drivers.edit', $driver->id) }}" class="btn btn-sm btn-primary"><i class="bi bi-pencil"></i></a>
                         <form action="{{ route('drivers.destroy', $driver->id) }}" method="POST" style="display:inline-block;">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')"><i class="bi bi-trash"></i></button>
                         </form>
                     </td>
                     @endif
