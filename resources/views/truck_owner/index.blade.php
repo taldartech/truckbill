@@ -188,7 +188,7 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="modal_registration_date" class="form-label">Registration Date *</label>
-                            <input type="date" class="form-control" id="modal_registration_date" name="registration_date" required>
+                            <input type="date" class="form-control" id="modal_registration_date" name="registration_date">
                             <div class="invalid-feedback">Please select a registration date.</div>
                         </div>
                     </div>
@@ -541,7 +541,19 @@ $(document).ready(function() {
                                                             <td>${truck.truck_type}</td>
                                                             <td>${truck.driver_name}</td>
                                                             <td>${truck.driver_mobile}</td>
-                                                           
+                                                            <td>
+                                                                <div class="btn-group" role="group">
+                                                                    <button type="button" class="btn btn-sm btn-outline-info" title="View Truck Details" onclick="viewTruckDetails(${truck.id})">
+                                                                        <i class="bi bi-eye"></i>
+                                                                    </button>
+                                                                    <a href="/trucks/${truck.id}/edit" class="btn btn-sm btn-outline-primary" title="Edit Truck">
+                                                                        <i class="bi bi-pencil"></i>
+                                                                    </a>
+                                                                    <button type="button" class="btn btn-sm btn-outline-danger" title="Delete Truck" onclick="deleteTruck(${truck.id}, '${truck.truck_number}')">
+                                                                        <i class="bi bi-trash"></i>
+                                                                    </button>
+                                                                </div>
+                                                            </td>
                                                         </tr>
                                                     `).join('')}
                                                 </tbody>
