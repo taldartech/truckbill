@@ -191,6 +191,7 @@ class ConsigneeController extends Controller
             'contact_number' => [
                 'nullable',
                 'digits:10',
+                \Illuminate\Validation\Rule::unique('consignees', 'contact_number')
             ],
             'gst_number' => [
                 'nullable',
@@ -229,6 +230,7 @@ class ConsigneeController extends Controller
             'contact_number' => [
                 'nullable',
                 'digits:10',
+                \Illuminate\Validation\Rule::unique('consignees', 'contact_number')->ignore($consignee->id)
             ],
             'gst_number' => [
                 'nullable',
