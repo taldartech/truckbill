@@ -466,6 +466,33 @@ class TransporterController extends Controller
         return redirect()->route('transporters.index')->with('success', 'Transporter updated successfully!');
     }
 
+    public function calculateTdsPercentage(Request $request)
+    {
+        $panNumber = $request->input('pan_number');
+        $panActive = $request->input('pan_active');
+        
+        $tdsPercentage = 0.00;
+        
+        if ($panActive == '0') {
+            // PAN not active
+            $tdsPercentage = 20.00;
+        } elseif ($panNumber && strlen($panNumber) >= 4) {
+            // PAN is active, check 4th character
+            $fourthChar = strtoupper(substr($panNumber, 3, 1));
+            $validChars = ['C', 'F', 'A', 'B', 'J', 'L', 'T'];
+            
+            if (in_array($fourthChar, $validChars)) {
+                $tdsPercentage = 2.00;
+            } else {
+                $tdsPercentage = 20.00;
+            }
+        }
+        
+        return response()->json([
+            'tds_percentage' => number_format($tdsPercentage, 2)
+        ]);
+    }
+
     public function destroy(\App\Models\Transporter $transporter)
     {
         $transporter->delete();

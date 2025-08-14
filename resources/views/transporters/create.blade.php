@@ -297,20 +297,8 @@
           document.getElementById('confirm-pan-number').textContent = panNumber;
           document.getElementById('confirm-pan-active').textContent = panActive;
           
-          // Calculate TDS percentage based on PAN status and 4th character
-          let tdsPercentage = '-';
-          if (panActive === 'No') {
-              tdsPercentage = '20.00%';
-          } else if (panNumber && panNumber.length >= 4) {
-              const fourthChar = panNumber.charAt(3).toUpperCase();
-              const validChars = ['C', 'F', 'A', 'B', 'J', 'L', 'T'];
-              if (validChars.includes(fourthChar)) {
-                  tdsPercentage = '2.00%';
-              } else {
-                  tdsPercentage = '20.00%';
-              }
-          }
-          document.getElementById('confirm-tds-percentage').textContent = tdsPercentage;
+          // Calculate TDS percentage using API
+          calculateTdsPercentageFromApi(panNumber, panActive);
           
           document.getElementById('confirm-address').textContent = address;
           document.getElementById('confirm-country').textContent = country;
@@ -324,6 +312,31 @@
           // Show modal
           const modal = new bootstrap.Modal(document.getElementById('confirmationModal'));
           modal.show();
+      }
+
+      // Function to calculate TDS percentage from API
+      function calculateTdsPercentageFromApi(panNumber, panActive) {
+          const panActiveValue = panActive === 'Yes' ? '1' : '0';
+          
+          fetch('/api/calculate-tds-percentage', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+              },
+              body: JSON.stringify({
+                  pan_number: panNumber,
+                  pan_active: panActiveValue
+              })
+          })
+          .then(response => response.json())
+          .then(data => {
+              document.getElementById('confirm-tds-percentage').textContent = data.tds_percentage + '%';
+          })
+          .catch(error => {
+              console.error('Error calculating TDS percentage:', error);
+              document.getElementById('confirm-tds-percentage').textContent = '-';
+          });
       }
 
       // Function to submit the form after confirmation

@@ -552,19 +552,8 @@
         document.getElementById('confirm-pan-number').textContent = panNumber;
         document.getElementById('confirm-pan-active').textContent = panActive;
         
-        // Calculate TDS percentage based on PAN status and 4th character
-        let tdsPercentage = '-';
-        if (panActive === 'No') {
-            tdsPercentage = '20.00%';
-        } else if (panNumber && panNumber.length >= 4) {
-            const fourthChar = panNumber.charAt(3).toUpperCase();
-            const validChars = ['C', 'F', 'A', 'B', 'J', 'L', 'T'];
-            if (validChars.includes(fourthChar)) {
-                tdsPercentage = '2.00%';
-            } else {
-                tdsPercentage = '20.00%';
-            }
-        }
+        // Use TDS percentage from database
+        const tdsPercentage = '{{ number_format($transporter->tds_percentage ?? 0, 2) }}%';
         document.getElementById('confirm-tds-percentage').textContent = tdsPercentage;
         
         document.getElementById('confirm-address').textContent = address;
