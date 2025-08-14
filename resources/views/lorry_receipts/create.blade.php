@@ -146,7 +146,11 @@
                         </select>
                         @error('transporter_id') <div class="text-danger">{{ $message }}</div> @enderror
                         <div class="invalid-feedback">Please select a transporter.</div>
-                        <p id="tdsRateDisplay" class="form-control-plaintext text-primary fw-bold">--</p>
+                        <div id="tdsRateDisplay" class="mt-2" style="display: none;">
+                            <span class="badge bg-warning text-dark fs-6">
+                                🎯 TDS Rate: <span id="tdsPercentageValue">--</span>
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -558,6 +562,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     transporterSelect.title = 'Automatically selected based on truck owner';
                     
                     console.log(`✅ Auto-selected truck owner: ${matchedOwner.name} (ID: ${matchedOwner.id})`);
+                    
+                    // Show TDS percentage for auto-selected truck owner
+                    showTdsPercentage(matchedOwner.id);
                 } else {
                     console.warn(`⚠️ No matching truck owner found for: "${transporterName}"`);
                     console.log('Available owners:', data.map(o => o.name));
@@ -577,6 +584,42 @@ document.addEventListener('DOMContentLoaded', function () {
                 transporterSelect.title = '';
             });
     }
+
+    // Function to show TDS percentage for a transporter
+    function showTdsPercentage(transporterId) {
+        const tdsDisplay = document.getElementById('tdsRateDisplay');
+        const tdsValue = document.getElementById('tdsPercentageValue');
+        
+        if (transporterId) {
+            // Show loading state
+            tdsDisplay.style.display = 'block';
+            tdsValue.textContent = 'Loading...';
+            
+            // Fetch transporter details to get TDS percentage
+            fetch(`/api/transporters/${transporterId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.tds_percentage !== null && data.tds_percentage !== undefined) {
+                        tdsValue.textContent = `${parseFloat(data.tds_percentage).toFixed(2)}%`;
+                    } else {
+                        tdsValue.textContent = 'Not Set';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching transporter TDS percentage:', error);
+                    tdsValue.textContent = 'Error';
+                });
+        } else {
+            // Hide TDS display when no transporter selected
+            tdsDisplay.style.display = 'none';
+        }
+    }
+
+    // Handle transporter selection to show TDS percentage
+    transporterSelect.addEventListener('change', function() {
+        const transporterId = this.value;
+        showTdsPercentage(transporterId);
+    });
 
     // Handle consignor contact number and location details
     const consignorSelect = document.getElementById('consignor_id');
