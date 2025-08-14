@@ -3,6 +3,8 @@
 @section('content')
 <!-- Select2 CSS -->
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<!-- SweetAlert2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet" />
 <style>
 /* Prevent form expansion on validation errors */
 .form-control, .form-select {
@@ -86,10 +88,11 @@
                 <div class="row"><div class="col"><h5 class="mb-3">General Details</h5></div></div>
                 <div class="row mb-3">
                     <div class="col-md-4">
-                        <label for="lr_number" class="form-label">LR Number *</label>
-                        <input type="text" class="form-control" id="lr_number" name="lr_number" value="{{ old('lr_number') }}" required placeholder="Enter LR Number">
+                        <label for="lr_number" class="form-label">LR Number * <small class="text-muted">(Must be unique)</small></label>
+                        <input type="text" class="form-control" id="lr_number" name="lr_number" value="{{ old('lr_number') }}" required placeholder="Enter unique LR Number">
                         @error('lr_number') <div class="text-danger">{{ $message }}</div> @enderror
-                        <div class="invalid-feedback">Please enter an LR number.</div>
+                        <div class="invalid-feedback">Please enter a unique LR number.</div>
+                        <div id="lr-number-feedback" class="mt-1"></div>
                     </div>
                     <div class="col-md-4">
                         <label for="gr_date" class="form-label">GR Date *</label>
@@ -241,25 +244,29 @@
                         <div class="invalid-feedback">Please select a goods type.</div>
                     </div>
                     
+                    <div class="col-md-4">
+                        <label for="no_of_units" class="form-label">No. of Units <small class="text-muted">(Optional)</small></label>
+                        <input type="number" class="form-control" id="no_of_units" name="no_of_units" value="{{ old('no_of_units') }}" min="1" max="100000" title="Maximum 100,000 units allowed">
+                        @error('no_of_units') <div class="text-danger">{{ $message }}</div> @enderror
+                        <div class="invalid-feedback">Please enter a valid number of units (max 100,000).</div>
+                        <small class="text-muted">📦 Max: 100,000 units</small>
+                    </div>
+                    
                 </div>
                 <div class="row mb-3">
-                <div class="col-md-4">
-                        <label for="weight" class="form-label">Weight *</label>
-                        <input type="number" step="0.01" class="form-control" id="weight" name="weight" required value="{{ old('weight') }}">
+                    <div class="col-md-4">
+                        <label for="weight" class="form-label">Weight * <small class="text-muted">(in Tons)</small></label>
+                        <input type="number" step="0.01" class="form-control" id="weight" name="weight" required value="{{ old('weight') }}" min="0.1" max="100" title="Weight must be between 0.1 and 100 tons">
                         @error('weight') <div class="text-danger">{{ $message }}</div> @enderror
-                        <div class="invalid-feedback">Please enter a weight.</div>
+                        <div class="invalid-feedback">Please enter a weight between 0.1 and 100 tons.</div>
+                        <small class="text-muted">📏 Range: 0.1 - 100 tons</small>
                     </div>
                     <div class="col-md-4">
-                        <label for="no_of_units" class="form-label">No. of Units *</label>
-                        <input type="number" class="form-control" id="no_of_units" name="no_of_units" required value="{{ old('no_of_units') }}">
-                        @error('no_of_units') <div class="text-danger">{{ $message }}</div> @enderror
-                        <div class="invalid-feedback">Please enter number of units.</div>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="fr_rate" class="form-label">Freight Rate *</label>
-                        <input type="number" step="0.01" class="form-control" id="fr_rate" name="fr_rate" required value="{{ old('fr_rate') }}">
+                        <label for="fr_rate" class="form-label">Freight Rate * <small class="text-muted">(₹ per ton)</small></label>
+                        <input type="number" step="0.01" class="form-control" id="fr_rate" name="fr_rate" required value="{{ old('fr_rate') }}" min="1" max="20000" title="Freight rate must be between ₹1 and ₹20,000 per ton">
                         @error('fr_rate') <div class="text-danger">{{ $message }}</div> @enderror
-                        <div class="invalid-feedback">Please enter a freight rate.</div>
+                        <div class="invalid-feedback">Please enter a freight rate between ₹1 and ₹20,000.</div>
+                        <small class="text-muted">💰 Range: ₹1 - ₹20,000 per ton</small>
                     </div>
                     <div class="col-md-4">
                         <label for="amount" class="form-label">Amount * <small class="text-muted">(Auto-calculated)</small></label>
@@ -289,33 +296,34 @@
     </form>
 </div>
 
-<!-- Load Select2 dynamically to ensure it loads properly -->
+<!-- Load Select2 from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<!-- Load SweetAlert2 from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
-// Function to load Select2 dynamically
-function loadSelect2() {
-    return new Promise((resolve, reject) => {
+// Function to check if Select2 is loaded
+function waitForSelect2() {
+    return new Promise((resolve) => {
         if (typeof $.fn.select2 !== 'undefined') {
             resolve();
             return;
         }
         
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js';
-        script.onload = () => {
-            console.log('✅ Select2 loaded successfully');
-            resolve();
-        };
-        script.onerror = () => {
-            console.error('❌ Failed to load Select2');
-            reject();
-        };
-        document.head.appendChild(script);
+        // Wait for Select2 to load
+        const checkSelect2 = setInterval(() => {
+            if (typeof $.fn.select2 !== 'undefined') {
+                clearInterval(checkSelect2);
+                console.log('✅ Select2 loaded successfully');
+                resolve();
+            }
+        }, 100);
     });
 }
 
 // Initialize Select2 after ensuring it's loaded
 $(document).ready(function() {
-    loadSelect2().then(() => {
+    waitForSelect2().then(() => {
         // Wait a bit more to ensure Select2 is fully initialized
         setTimeout(() => {
             // Initialize truck dropdown
@@ -799,23 +807,29 @@ document.addEventListener('DOMContentLoaded', function () {
         return true;
     }
 
-    // Bootstrap form validation with custom validation
+    // Bootstrap form validation with custom validation and confirmation dialog
     (() => {
         'use strict';
         const forms = document.querySelectorAll('.needs-validation');
         Array.from(forms).forEach(form => {
             form.addEventListener('submit', event => {
+                // Always prevent default submission first
+                event.preventDefault();
+                event.stopPropagation();
+                
                 // Run custom validation first
                 const customValidationPassed = validateConsignorConsignee();
                 
                 if (!form.checkValidity() || !customValidationPassed) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    
                     if (!customValidationPassed) {
                         console.error('🚨 Form submission blocked: Consignor and Consignee cannot be the same');
                     }
+                    form.classList.add('was-validated');
+                    return;
                 }
+                
+                // If validation passes, show confirmation dialog
+                showConfirmationDialog(form);
                 form.classList.add('was-validated');
             }, false);
         });
@@ -843,8 +857,37 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     
     // Add event listeners for weight and freight rate changes
-    weightInput.addEventListener('input', calculateAmount);
+    weightInput.addEventListener('input', function() {
+        validateWeight();
+        calculateAmount();
+    });
     frRateInput.addEventListener('input', calculateAmount);
+    
+    // Weight validation function
+    function validateWeight() {
+        const weight = parseFloat(weightInput.value);
+        
+        if (isNaN(weight)) {
+            return; // Let HTML5 validation handle empty/invalid input
+        }
+        
+        if (weight < 0.1) {
+            weightInput.setCustomValidity('Weight must be at least 0.1 tons');
+            weightInput.classList.add('is-invalid');
+            console.warn('⚠️ Weight too low:', weight);
+        } else if (weight > 100) {
+            weightInput.setCustomValidity('Weight cannot exceed 100 tons');
+            weightInput.classList.add('is-invalid');
+            console.warn('⚠️ Weight too high:', weight);
+        } else {
+            weightInput.setCustomValidity('');
+            weightInput.classList.remove('is-invalid');
+            console.log('✅ Valid weight:', weight, 'tons');
+        }
+    }
+    
+    // Add blur validation for weight
+    weightInput.addEventListener('blur', validateWeight);
     
     // Allow user to manually edit amount (remove auto-calculated styling when manually edited)
     amountInput.addEventListener('input', function() {
@@ -857,6 +900,228 @@ document.addEventListener('DOMContentLoaded', function () {
     // Calculate amount on page load if values exist
     if (weightInput.value && frRateInput.value) {
         calculateAmount();
+    }
+
+
+
+    // LR Number uniqueness validation
+    const lrNumberInput = document.getElementById('lr_number');
+    const lrNumberFeedback = document.getElementById('lr-number-feedback');
+    let lrNumberTimeout;
+    
+    function checkLrNumberUniqueness(lrNumber) {
+        if (!lrNumber || lrNumber.length < 2) {
+            lrNumberFeedback.innerHTML = '';
+            lrNumberInput.classList.remove('is-valid', 'is-invalid');
+            return;
+        }
+        
+        // Show loading state
+        lrNumberFeedback.innerHTML = '<small class="text-info">🔍 Checking availability...</small>';
+        lrNumberInput.classList.remove('is-valid', 'is-invalid');
+        
+        fetch('/api/check-lr-number-uniqueness', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+                lr_number: lrNumber
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.valid) {
+                lrNumberFeedback.innerHTML = '<small class="text-success">✅ ' + data.message + '</small>';
+                lrNumberInput.classList.remove('is-invalid');
+                lrNumberInput.classList.add('is-valid');
+                lrNumberInput.setCustomValidity('');
+            } else {
+                lrNumberFeedback.innerHTML = '<small class="text-danger">❌ ' + data.message + '</small>';
+                lrNumberInput.classList.remove('is-valid');
+                lrNumberInput.classList.add('is-invalid');
+                lrNumberInput.setCustomValidity(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error checking LR Number uniqueness:', error);
+            lrNumberFeedback.innerHTML = '<small class="text-warning">⚠️ Unable to check availability</small>';
+            lrNumberInput.classList.remove('is-valid', 'is-invalid');
+        });
+    }
+    
+    // Add debounced input listener for LR Number
+    lrNumberInput.addEventListener('input', function() {
+        const lrNumber = this.value.trim();
+        
+        // Clear previous timeout
+        clearTimeout(lrNumberTimeout);
+        
+        // Set new timeout for debounced checking
+        lrNumberTimeout = setTimeout(() => {
+            checkLrNumberUniqueness(lrNumber);
+        }, 500); // 500ms delay
+    });
+    
+    // Check on blur as well
+    lrNumberInput.addEventListener('blur', function() {
+        const lrNumber = this.value.trim();
+        if (lrNumber) {
+            clearTimeout(lrNumberTimeout);
+            checkLrNumberUniqueness(lrNumber);
+        }
+    });
+
+    // No. of Units validation
+    const noOfUnitsInput = document.getElementById('no_of_units');
+    
+    function validateNoOfUnits() {
+        const value = parseFloat(noOfUnitsInput.value);
+        
+        if (noOfUnitsInput.value && (isNaN(value) || value < 1 || value > 100000)) {
+            noOfUnitsInput.setCustomValidity('Please enter a valid number of units between 1 and 100,000.');
+            noOfUnitsInput.classList.add('is-invalid');
+            noOfUnitsInput.classList.remove('is-valid');
+        } else {
+            noOfUnitsInput.setCustomValidity('');
+            noOfUnitsInput.classList.remove('is-invalid');
+            if (noOfUnitsInput.value) {
+                noOfUnitsInput.classList.add('is-valid');
+            } else {
+                noOfUnitsInput.classList.remove('is-valid');
+            }
+        }
+    }
+    
+    // Add event listeners for No. of Units validation
+    noOfUnitsInput.addEventListener('input', validateNoOfUnits);
+    noOfUnitsInput.addEventListener('blur', validateNoOfUnits);
+
+    // Freight Rate validation (using existing frRateInput variable)
+    function validateFreightRate() {
+        const value = parseFloat(frRateInput.value);
+        
+        if (frRateInput.value && (isNaN(value) || value < 1 || value > 20000)) {
+            frRateInput.setCustomValidity('Please enter a valid freight rate between ₹1 and ₹20,000.');
+            frRateInput.classList.add('is-invalid');
+            frRateInput.classList.remove('is-valid');
+        } else if (frRateInput.value) {
+            frRateInput.setCustomValidity('');
+            frRateInput.classList.remove('is-invalid');
+            frRateInput.classList.add('is-valid');
+        } else {
+            frRateInput.setCustomValidity('');
+            frRateInput.classList.remove('is-invalid', 'is-valid');
+        }
+    }
+    
+    // Add event listeners for Freight Rate validation
+    frRateInput.addEventListener('input', validateFreightRate);
+    frRateInput.addEventListener('blur', validateFreightRate);
+
+    // Function to show confirmation dialog with form details
+    function showConfirmationDialog(form) {
+        const formData = new FormData(form);
+        
+        // Get display values for dropdowns
+        const customerName = document.querySelector('#customer_id option:checked')?.textContent || 'Not selected';
+        const consignorName = document.querySelector('#consignor_id option:checked')?.textContent || 'Not selected';
+        const consigneeName = document.querySelector('#consignee_id option:checked')?.textContent || 'Not selected';
+        const truckNumber = document.querySelector('#truck_id option:checked')?.textContent || 'Not selected';
+        const transporterName = document.querySelector('#transporter_id option:checked')?.textContent || 'Not selected';
+        
+        // Build confirmation message
+        const confirmationHTML = `
+            <div class="confirmation-details">
+                <h5 class="text-primary mb-3">📋 Please verify the following details:</h5>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header bg-light"><strong>📄 Basic Information</strong></div>
+                            <div class="card-body">
+                                <p><strong>LR Number:</strong> ${formData.get('lr_number') || 'Not entered'}</p>
+                                <p><strong>GR Date:</strong> ${formData.get('gr_date') || 'Not selected'}</p>
+                                <p><strong>Customer:</strong> ${customerName}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="card mb-3">
+                            <div class="card-header bg-light"><strong>🚛 Transport Details</strong></div>
+                            <div class="card-body">
+                                <p><strong>Truck:</strong> ${truckNumber}</p>
+                                <p><strong>Transporter:</strong> ${transporterName}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header bg-light"><strong>👥 Consignor & Consignee</strong></div>
+                            <div class="card-body">
+                                <p><strong>Consignor:</strong> ${consignorName}</p>
+                                <p><strong>Consignee:</strong> ${consigneeName}</p>
+                                <p><strong>Source:</strong> ${formData.get('source_city') || 'Not entered'}, ${formData.get('source_state') || 'Not entered'}</p>
+                                <p><strong>Destination:</strong> ${formData.get('destination_city') || 'Not entered'}, ${formData.get('destination_state') || 'Not entered'}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="card mb-3">
+                            <div class="card-header bg-light"><strong>📦 Goods & Charges</strong></div>
+                            <div class="card-body">
+                                <p><strong>Goods Type:</strong> ${formData.get('good_type') || 'Not selected'}</p>
+                                <p><strong>Weight:</strong> ${formData.get('weight') || 'Not entered'} tons</p>
+                                <p><strong>No. of Units:</strong> ${formData.get('no_of_units') || 'Not entered'}</p>
+                                <p><strong>Freight Rate:</strong> ₹${formData.get('fr_rate') || 'Not entered'}</p>
+                                <p><strong>Amount:</strong> ₹${formData.get('amount') || 'Not entered'}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle"></i> Please review all details carefully before confirming submission.
+                </div>
+            </div>
+        `;
+        
+        // Show confirmation dialog using SweetAlert2 or Bootstrap modal
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: '📋 Confirm Lorry Receipt Details',
+                html: confirmationHTML,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '✅ Yes, Submit',
+                cancelButtonText: '❌ Cancel',
+                width: '90%',
+                customClass: {
+                    popup: 'swal-wide'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Actually submit the form
+                    form.submit();
+                }
+            });
+        } else {
+            // Fallback to native confirm dialog
+            const confirmText = `Please confirm the following details:\n\n` +
+                `LR Number: ${formData.get('lr_number')}\n` +
+                `Customer: ${customerName}\n` +
+                `Consignor: ${consignorName}\n` +
+                `Consignee: ${consigneeName}\n` +
+                `Weight: ${formData.get('weight')} tons\n` +
+                `Amount: ₹${formData.get('amount')}\n\n` +
+                `Do you want to submit this lorry receipt?`;
+                
+            if (confirm(confirmText)) {
+                form.submit();
+            }
+        }
     }
 });
 </script>

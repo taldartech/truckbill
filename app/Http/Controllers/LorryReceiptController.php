@@ -426,8 +426,8 @@ class LorryReceiptController extends Controller
             'lane' => 'required|string|max:100',
             'good_type' => 'required|string|max:100',
             'weight' => 'required|numeric|min:0',
-            'no_of_units' => 'required|numeric|min:0',
-            'fr_rate' => 'required|numeric|min:0',
+            'no_of_units' => 'nullable|numeric|min:1|max:100000',
+            'fr_rate' => 'required|numeric|min:1|max:20000',
             'amount' => 'required|numeric|min:0',
             'damage_amount' => 'nullable|numeric',
             'shortage_amount' => 'nullable|numeric',
@@ -452,23 +452,37 @@ class LorryReceiptController extends Controller
             return redirect()->back()->withErrors(['lr_number' => 'LR Number already exists. Please use a unique LR Number.']);
         }
 
-        // Calculate expected amount from weight and freight rate
-        $expectedAmount = round($validated['weight'] * $validated['fr_rate'], 2);
-        
-        // Check if entered amount matches calculated amount
-        if ($validated['amount'] != $expectedAmount) {
-            return redirect()->back()->withErrors([
-                'amount' => 'The entered amount does not match the calculated amount. ' . 
-                           'Expected amount is: ' . $expectedAmount . 
-                           ' (Weight: ' . $validated['weight'] . ' × FR Rate: ' . $validated['fr_rate'] . ')'
-            ])->withInput();
-        }
+        // Note: Amount field is auto-calculated but user can override the value
+        // No validation check needed - store whatever amount the user enters
 
         // Add company_id to validated data
         $validated['company_id'] = auth()->user()->company_id;
         
         \App\Models\LorryReceipt::create($validated);
         return redirect()->route('lorry_receipts.index')->with('success', 'Lorry Receipt created successfully!');
+    }
+
+    public function checkLrNumberUniqueness(Request $request)
+    {
+        $lrNumber = $request->input('lr_number');
+        
+        if (!$lrNumber) {
+            return response()->json(['valid' => false, 'message' => 'LR Number is required']);
+        }
+        
+        $exists = \App\Models\LorryReceipt::where('lr_number', $lrNumber)->exists();
+        
+        if ($exists) {
+            return response()->json([
+                'valid' => false, 
+                'message' => 'LR Number already exists. Please use a unique LR Number.'
+            ]);
+        }
+        
+        return response()->json([
+            'valid' => true, 
+            'message' => 'LR Number is available'
+        ]);
     }
 
     public function edit(\App\Models\LorryReceipt $lorry_receipt)
@@ -574,8 +588,8 @@ class LorryReceiptController extends Controller
             'lane' => 'required|string|max:100',
             'good_type' => 'required|string|max:100',
             'weight' => 'required|numeric|min:0',
-            'no_of_units' => 'required|numeric|min:0',
-            'fr_rate' => 'required|numeric|min:0',
+            'no_of_units' => 'nullable|numeric|min:1|max:100000',
+            'fr_rate' => 'required|numeric|min:1|max:20000',
             'amount' => 'required|numeric|min:0',
             'damage_amount' => 'nullable|numeric',
             'shortage_amount' => 'nullable|numeric',
