@@ -26,13 +26,18 @@ class TransporterController extends Controller
     
     private function getTransportersData(Request $request)
     {
-        $query = \App\Models\Transporter::with(['company', 'city'])
-            ->where('is_owner', 0); // Default to show only Agencies
+        try {
+            \Log::info('DataTables request started for transporters');
+            
+            $query = \App\Models\Transporter::with(['company', 'city'])
+                ->where('is_owner', 0); // Default to show only Agencies
 
-        // Only apply company_id filter for non-super_admin users
-        if (auth()->user()->userRole->name !== 'super_admin') {
-            $query->where('company_id', auth()->user()->company_id);
-        }
+            // Only apply company_id filter for non-super_admin users
+            if (auth()->user()->userRole->name !== 'super_admin') {
+                $query->where('company_id', auth()->user()->company_id);
+            }
+            
+            \Log::info('Query built successfully');
         
         // Handle global search
         if ($request->has('search') && $request->search['value']) {
@@ -139,7 +144,7 @@ class TransporterController extends Controller
         // Handle pagination
         $start = $request->start ?? 0;
         $length = $request->length ?? 10;
-        $transporters = $query->skip($start)->take($length)->get();
+        $transporters = $query->offset($start)->limit($length)->get();
         
         // Format data for DataTables
         $data = $transporters->map(function($transporter, $index) use ($start) {
@@ -156,12 +161,25 @@ class TransporterController extends Controller
             ];
         });
         
-        return response()->json([
-            'draw' => intval($request->draw),
-            'recordsTotal' => $totalRecords,
-            'recordsFiltered' => $filteredRecords,
-            'data' => $data
-        ]);
+            return response()->json([
+                'draw' => intval($request->draw),
+                'recordsTotal' => $totalRecords,
+                'recordsFiltered' => $filteredRecords,
+                'data' => $data
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('DataTables error in transporters: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            
+            return response()->json([
+                'draw' => intval($request->draw ?? 0),
+                'recordsTotal' => 0,
+                'recordsFiltered' => 0,
+                'data' => [],
+                'error' => 'An error occurred while loading data: ' . $e->getMessage()
+            ], 500);
+        }
     }
     
     private function getActionButtons($transporter)
@@ -297,6 +315,14 @@ class TransporterController extends Controller
             'mobile_number.unique' => 'This mobile number is already associated with another transporter.',
             
         ]);
+
+        // Ensure uppercase PAN and GST numbers
+    if (!empty($validated['pan_number'])) {
+        $validated['pan_number'] = strtoupper($validated['pan_number']);
+    }
+    if (!empty($validated['gst_number'])) {
+        $validated['gst_number'] = strtoupper($validated['gst_number']);
+    }
     //    dd($validated);
         if (!isset($validated['advance_amount'])) {
             $validated['advance_amount'] = 0;
@@ -312,6 +338,22 @@ class TransporterController extends Controller
         // Convert pan_active to boolean
         $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
         // dd($validated);
+         // Determine TDS Percentage
+    if ($validated['pan_active'] == false) {
+        // PAN not active → 20%
+        $validated['tds_percentage'] = 20.00;
+    } else {
+        // PAN active → check 4th character
+        $fourthChar = strtoupper(substr($validated['pan_number'], 3, 1));
+        $validChars = ['C', 'F', 'A', 'B', 'J', 'L', 'T'];
+
+        if (in_array($fourthChar, $validChars)) {
+            $validated['tds_percentage'] = 2.00;
+        } else {
+            // Default if PAN active but not in the given list
+            $validated['tds_percentage'] = null;
+        }
+    }
        
         \App\Models\Transporter::create($validated);
        
@@ -373,11 +415,20 @@ class TransporterController extends Controller
             ],
             'short_name' => 'nullable|string|max:255',
             'contact_person_name' => 'nullable|string|max:255',
+            
 
         ], [
             'pan_number.unique' => 'This PAN number is already associated with another transporter and cannot be used.',
             'mobile_number.unique' => 'This mobile number is already associated with another transporter.',
         ]); 
+            // Ensure uppercase PAN and GST numbers
+    if (!empty($validated['pan_number'])) {
+        $validated['pan_number'] = strtoupper($validated['pan_number']);
+    }
+    if (!empty($validated['gst_number'])) {
+        $validated['gst_number'] = strtoupper($validated['gst_number']);
+    }
+
         if (!isset($validated['advance_amount'])) {
             $validated['advance_amount'] = 0;
         }
@@ -392,6 +443,25 @@ class TransporterController extends Controller
         
         // Convert pan_active to boolean
         $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
+              // Determine TDS Percentage
+          
+    if ($validated['pan_active'] == false) {
+        
+        // PAN not active → 20%
+        $validated['tds_percentage'] = 20.00;
+    } else {
+       
+        // PAN active → check 4th character
+        $fourthChar = strtoupper(substr($validated['pan_number'], 3, 1));
+        $validChars = ['C', 'F', 'A', 'B', 'J', 'L', 'T'];
+
+        if (in_array($fourthChar, $validChars)) {
+            $validated['tds_percentage'] = 2.00;
+        } else {
+            // Default if PAN active but not in the given list
+            $validated['tds_percentage'] = 20.00;
+        }
+    }
         $transporter->update($validated);
         return redirect()->route('transporters.index')->with('success', 'Transporter updated successfully!');
     }

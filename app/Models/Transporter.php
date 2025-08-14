@@ -30,6 +30,7 @@ class Transporter extends Model
         'short_name',
         'beneficiary_id',
         'contact_person_name',
+        'tds_percentage',
     ];
 
     protected $casts = [

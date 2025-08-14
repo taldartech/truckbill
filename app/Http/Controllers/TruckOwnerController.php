@@ -230,6 +230,14 @@ class TruckOwnerController extends Controller
             'gst_number.unique' => 'This GST number is already registered with another truck owner or transporter.',
             'mobile_number.unique' => 'This mobile number is already registered with another truck owner or transporter.',
         ]);
+
+                 // Ensure uppercase PAN and GST numbers
+    if (!empty($validated['pan_number'])) {
+        $validated['pan_number'] = strtoupper($validated['pan_number']);
+    }
+    if (!empty($validated['gst_number'])) {
+        $validated['gst_number'] = strtoupper($validated['gst_number']);
+    }
         
         // Always set truck owner specific fields (system controlled, not user input)
         // Handle advance_amount - use provided value or default to 0
@@ -240,6 +248,25 @@ class TruckOwnerController extends Controller
         
         // Convert pan_active to boolean
         $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
+
+        if ($validated['declaration_given']) {
+            // Rule 1: Declaration given → TDS = 0%
+            $validated['tds_percentage'] = 0.00;
+        } else {
+            // Rule 2: Declaration not given
+            if ($validated['pan_active'] == false) {
+                // PAN not active → 20%
+                $validated['tds_percentage'] = 20.00;
+            } else {
+                // PAN active → check 4th character
+                $fourthChar = strtoupper(substr($validated['pan_number'], 3, 1));
+                if (in_array($fourthChar, ['P', 'H'])) {
+                    $validated['tds_percentage'] = 1.00;
+                } else {
+                    $validated['tds_percentage'] = null;
+                }
+            }
+        }
         
         \App\Models\Transporter::create($validated);
         return redirect()->route('truck_owners.index')->with('success', 'Truck Owner created successfully!');
@@ -371,6 +398,14 @@ class TruckOwnerController extends Controller
             'gst_number.unique' => 'This GST number is already registered with another truck owner or transporter.',
             'mobile_number.unique' => 'This mobile number is already registered with another truck owner or transporter.',
         ]);
+
+                 // Ensure uppercase PAN and GST numbers
+    if (!empty($validated['pan_number'])) {
+        $validated['pan_number'] = strtoupper($validated['pan_number']);
+    }
+    if (!empty($validated['gst_number'])) {
+        $validated['gst_number'] = strtoupper($validated['gst_number']);
+    }
         
         // Always set truck owner specific fields (system controlled, not user input)
         // Handle advance_amount - use provided value or default to 0
@@ -381,6 +416,25 @@ class TruckOwnerController extends Controller
         
         // Convert pan_active to boolean
         $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
+
+        if ($validated['declaration_given']) {
+            // Rule 1: Declaration given → TDS = 0%
+            $validated['tds_percentage'] = 0.00;
+        } else {
+            // Rule 2: Declaration not given
+            if ($validated['pan_active'] == false) {
+                // PAN not active → 20%
+                $validated['tds_percentage'] = 20.00;
+            } else {
+                // PAN active → check 4th character
+                $fourthChar = strtoupper(substr($validated['pan_number'], 3, 1));
+                if (in_array($fourthChar, ['P', 'H'])) {
+                    $validated['tds_percentage'] = 1.00;
+                } else {
+                    $validated['tds_percentage'] = 20.00;
+                }
+            }
+        }
         
         $transporter->update($validated);
         return redirect()->route('truck_owners.index')->with('success', 'Truck Owner updated successfully!');
