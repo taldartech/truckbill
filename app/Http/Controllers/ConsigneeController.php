@@ -196,6 +196,13 @@ class ConsigneeController extends Controller
             'pan_number' => 'nullable|string|size:10|regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
         ]);
 
+        if (!empty($validated['pan_number'])) {
+            $validated['pan_number'] = strtoupper($validated['pan_number']);
+        }
+        if (!empty($validated['gst_number'])) {
+            $validated['gst_number'] = strtoupper($validated['gst_number']);
+        }
+
         $validated['company_id'] = auth()->user()->company_id;
         
         $consignee = Consignee::create($validated);
@@ -228,6 +235,13 @@ class ConsigneeController extends Controller
             'gst_number' => 'nullable|string|max:255',
             'pan_number' => 'nullable|string|size:10|regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
         ]);
+
+        if (!empty($validated['pan_number'])) {
+            $validated['pan_number'] = strtoupper($validated['pan_number']);
+        }
+        if (!empty($validated['gst_number'])) {
+            $validated['gst_number'] = strtoupper($validated['gst_number']);
+        }
 
         $consignee->update($validated);
         return redirect()->route('consignees.index')
