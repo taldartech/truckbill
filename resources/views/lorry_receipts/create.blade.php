@@ -373,25 +373,129 @@ document.addEventListener('DOMContentLoaded', function () {
     const truckSelect = document.getElementById('truck_id');
     const transporterSelect = document.getElementById('transporter_id');
     const transporterLabel = document.getElementById('transporterLabel');
+    
+    // Store truck data for easy access
+    let trucksData = {};
+
+    // Validation helper functions
+    function showValidationError(element, message) {
+        // Remove existing error message
+        clearValidationError(element);
+        
+        // Add error styling
+        element.classList.add('is-invalid');
+        
+        // Create and add error message
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'invalid-feedback d-block';
+        errorDiv.textContent = message;
+        errorDiv.id = element.id + '_validation_error';
+        
+        // Insert after the element
+        element.parentNode.insertBefore(errorDiv, element.nextSibling);
+        
+        console.log('🚨 Validation error shown:', message);
+    }
+
+    function clearValidationError(element) {
+        // Remove error styling
+        element.classList.remove('is-invalid');
+        
+        // Remove error message
+        const existingError = document.getElementById(element.id + '_validation_error');
+        if (existingError) {
+            existingError.remove();
+        }
+    }
+
+    // Handle truck selection change
+    $('#truck_id').on('select2:select', function (e) {
+        const selectedTruckId = e.params.data.id;
+        
+        console.log('🚛 Truck selected:', selectedTruckId);
+        
+        // Get truck data from the selected option
+        const selectedOption = $(this).find('option:selected');
+        const truckText = selectedOption.text().trim();
+        
+        console.log('📝 Truck text:', truckText);
+        
+        // Extract transporter info from truck text (format: "TruckNumber - Driver: DriverName (TransporterName)")
+        const transporterMatch = truckText.match(/\(([^)]+)\)$/);
+        if (transporterMatch) {
+            const transporterName = transporterMatch[1].trim();
+            
+            console.log('🏢 Extracted transporter name:', transporterName);
+            
+            // Store truck-transporter relationship
+            trucksData[selectedTruckId] = {
+                transporterName: transporterName,
+                truckText: truckText
+            };
+            
+            // If "Truck Owner" is selected, auto-select the truck owner
+            if (transporterTypeSelect.value === 'owner') {
+                console.log('🎯 Auto-selecting truck owner for:', transporterName);
+                autoSelectTruckOwner(selectedTruckId, transporterName);
+            } else {
+                console.log('ℹ️ Transporter type is not "owner", current value:', transporterTypeSelect.value);
+            }
+        } else {
+            console.warn('⚠️ Could not extract transporter name from truck text:', truckText);
+        }
+    });
+
+    // Also handle regular change event as fallback
+    $('#truck_id').on('change', function () {
+        const selectedTruckId = $(this).val();
+        if (selectedTruckId && !trucksData[selectedTruckId]) {
+            // Trigger the same logic as select2:select
+            const selectedOption = $(this).find('option:selected');
+            const truckText = selectedOption.text().trim();
+            
+            const transporterMatch = truckText.match(/\(([^)]+)\)$/);
+            if (transporterMatch) {
+                const transporterName = transporterMatch[1].trim();
+                
+                trucksData[selectedTruckId] = {
+                    transporterName: transporterName,
+                    truckText: truckText
+                };
+                
+                if (transporterTypeSelect.value === 'owner') {
+                    autoSelectTruckOwner(selectedTruckId, transporterName);
+                }
+            }
+        }
+    });
 
     // Handle transporter type change
     transporterTypeSelect.addEventListener('change', function () {
         const selectedType = this.value;
+        const selectedTruckId = truckSelect.value;
+        
         transporterSelect.innerHTML = '<option value="">Select Transporter</option>';
+        transporterSelect.disabled = false; // Reset disabled state
         
         if (selectedType === 'owner') {
             transporterLabel.textContent = 'Truck Owner *';
-            // Fetch truck owners
-            fetch('/api/truck-owners')
-                .then(response => response.json())
-                .then(data => {
-                    data.forEach(owner => {
-                        const option = document.createElement('option');
-                        option.value = owner.id;
-                        option.textContent = owner.name;
-                        transporterSelect.appendChild(option);
+            
+            // If a truck is already selected, auto-select its owner
+            if (selectedTruckId && trucksData[selectedTruckId]) {
+                autoSelectTruckOwner(selectedTruckId, trucksData[selectedTruckId].transporterName);
+            } else {
+                // Fetch all truck owners
+                fetch('/api/truck-owners')
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(owner => {
+                            const option = document.createElement('option');
+                            option.value = owner.id;
+                            option.textContent = owner.name;
+                            transporterSelect.appendChild(option);
+                        });
                     });
-                });
+            }
         } else if (selectedType === 'agency') {
             transporterLabel.textContent = 'Agency *';
             // Fetch agencies
@@ -407,6 +511,72 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
         }
     });
+    
+    // Function to auto-select truck owner
+    function autoSelectTruckOwner(truckId, transporterName) {
+        console.log('🔄 Fetching truck owners from API...');
+        
+        // Fetch truck owners and find the matching one
+        fetch('/api/truck-owners')
+            .then(response => {
+                console.log('📡 API response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('📊 Truck owners data received:', data);
+                
+                transporterSelect.innerHTML = '<option value="">Select Transporter</option>';
+                
+                let ownerFound = false;
+                let matchedOwner = null;
+                
+                data.forEach(owner => {
+                    const option = document.createElement('option');
+                    option.value = owner.id;
+                    option.textContent = owner.name;
+                    
+                    console.log('🔍 Comparing:', owner.name, 'with', transporterName);
+                    
+                    // Auto-select if this is the truck's owner (case-insensitive comparison)
+                    if (owner.name.toLowerCase().trim() === transporterName.toLowerCase().trim()) {
+                        option.selected = true;
+                        ownerFound = true;
+                        matchedOwner = owner;
+                        console.log('✅ Found matching owner:', owner.name);
+                    }
+                    
+                    transporterSelect.appendChild(option);
+                });
+                
+                if (ownerFound) {
+                    // Disable the dropdown since it's auto-selected
+                    transporterSelect.disabled = true;
+                    transporterSelect.style.backgroundColor = '#e9ecef';
+                    transporterSelect.title = 'Automatically selected based on truck owner';
+                    
+                    console.log(`✅ Auto-selected truck owner: ${matchedOwner.name} (ID: ${matchedOwner.id})`);
+                } else {
+                    console.warn(`⚠️ No matching truck owner found for: "${transporterName}"`);
+                    console.log('Available owners:', data.map(o => o.name));
+                    
+                    // Re-enable the dropdown if no match found
+                    transporterSelect.disabled = false;
+                    transporterSelect.style.backgroundColor = '';
+                    transporterSelect.title = '';
+                }
+            })
+            .catch(error => {
+                console.error('❌ Error fetching truck owners:', error);
+                
+                // Re-enable the dropdown on error
+                transporterSelect.disabled = false;
+                transporterSelect.style.backgroundColor = '';
+                transporterSelect.title = '';
+            });
+    }
 
     // Handle consignor contact number and location details
     const consignorSelect = document.getElementById('consignor_id');
@@ -414,21 +584,70 @@ document.addEventListener('DOMContentLoaded', function () {
     const sourceCityInput = document.getElementById('source_city');
     const sourceStateInput = document.getElementById('source_state');
 
-    consignorSelect.addEventListener('change', function () {
-        const consignorId = this.value;
+    // Handle consignor selection with Select2 support
+    function handleConsignorSelection(consignorId) {
+        console.log('👤 Consignor selected:', consignorId);
+        
+        // Check if consignor and consignee are the same
+        const consigneeId = consigneeSelect.value;
+        if (consignorId && consigneeId && consignorId === consigneeId) {
+            console.warn('⚠️ Consignor and Consignee cannot be the same!');
+            showValidationError(consignorSelect, 'Consignor and Consignee cannot be the same');
+            
+            // Clear the consignor selection
+            $('#consignor_id').val(null).trigger('change');
+            consignorContactInput.value = '';
+            sourceCityInput.value = '';
+            sourceStateInput.value = '';
+            return;
+        } else {
+            clearValidationError(consignorSelect);
+        }
+        
         if (consignorId) {
+            console.log('🔄 Fetching consignor data from API...');
             fetch(`/api/consignees/${consignorId}`)
-                .then(response => response.json())
+                .then(response => {
+                    console.log('📡 Consignor API response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('📊 Consignor data received:', data);
+                    
+                    // Auto-populate consignor fields
                     consignorContactInput.value = data.contact_number || '';
-                    sourceCityInput.value = data.city?.name || '';
-                    sourceStateInput.value = data.state?.name || '';
+                    sourceCityInput.value = data.city || '';
+                    sourceStateInput.value = data.state || '';
+                    
+                    console.log('✅ Auto-populated consignor fields:');
+                    console.log('  📞 Contact:', data.contact_number || 'N/A');
+                    console.log('  🏙️ City:', data.city || 'N/A');
+                    console.log('  🗺️ State:', data.state || 'N/A');
+                })
+                .catch(error => {
+                    console.error('❌ Error fetching consignor data:', error);
                 });
         } else {
+            console.log('🧹 Clearing consignor fields...');
             consignorContactInput.value = '';
             sourceCityInput.value = '';
             sourceStateInput.value = '';
         }
+    }
+
+    // Handle Select2 consignor selection
+    $('#consignor_id').on('select2:select', function (e) {
+        const consignorId = e.params.data.id;
+        handleConsignorSelection(consignorId);
+    });
+
+    // Handle regular consignor selection (fallback)
+    consignorSelect.addEventListener('change', function () {
+        const consignorId = this.value;
+        handleConsignorSelection(consignorId);
     });
 
     // Handle consignee contact number and location details
@@ -437,21 +656,70 @@ document.addEventListener('DOMContentLoaded', function () {
     const destinationCityInput = document.getElementById('destination_city');
     const destinationStateInput = document.getElementById('destination_state');
 
-    consigneeSelect.addEventListener('change', function () {
-        const consigneeId = this.value;
+    // Handle consignee selection with Select2 support
+    function handleConsigneeSelection(consigneeId) {
+        console.log('🏢 Consignee selected:', consigneeId);
+        
+        // Check if consignor and consignee are the same
+        const consignorId = consignorSelect.value;
+        if (consigneeId && consignorId && consigneeId === consignorId) {
+            console.warn('⚠️ Consignee and Consignor cannot be the same!');
+            showValidationError(consigneeSelect, 'Consignee and Consignor cannot be the same');
+            
+            // Clear the consignee selection
+            $('#consignee_id').val(null).trigger('change');
+            consigneeContactInput.value = '';
+            destinationCityInput.value = '';
+            destinationStateInput.value = '';
+            return;
+        } else {
+            clearValidationError(consigneeSelect);
+        }
+        
         if (consigneeId) {
+            console.log('🔄 Fetching consignee data from API...');
             fetch(`/api/consignees/${consigneeId}`)
-                .then(response => response.json())
+                .then(response => {
+                    console.log('📡 Consignee API response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
                 .then(data => {
+                    console.log('📊 Consignee data received:', data);
+                    
+                    // Auto-populate consignee fields
                     consigneeContactInput.value = data.contact_number || '';
-                    destinationCityInput.value = data.city?.name || '';
-                    destinationStateInput.value = data.state?.name || '';
+                    destinationCityInput.value = data.city || '';
+                    destinationStateInput.value = data.state || '';
+                    
+                    console.log('✅ Auto-populated consignee fields:');
+                    console.log('  📞 Contact:', data.contact_number || 'N/A');
+                    console.log('  🏙️ Destination City:', data.city || 'N/A');
+                    console.log('  🗺️ Destination State:', data.state || 'N/A');
+                })
+                .catch(error => {
+                    console.error('❌ Error fetching consignee data:', error);
                 });
         } else {
+            console.log('🧹 Clearing consignee fields...');
             consigneeContactInput.value = '';
             destinationCityInput.value = '';
             destinationStateInput.value = '';
         }
+    }
+
+    // Handle Select2 consignee selection
+    $('#consignee_id').on('select2:select', function (e) {
+        const consigneeId = e.params.data.id;
+        handleConsigneeSelection(consigneeId);
+    });
+
+    // Handle regular consignee selection (fallback)
+    consigneeSelect.addEventListener('change', function () {
+        const consigneeId = this.value;
+        handleConsigneeSelection(consigneeId);
     });
 
     // Handle truck selection for transporter info
@@ -470,15 +738,38 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // Bootstrap form validation
+    // Custom form validation function
+    function validateConsignorConsignee() {
+        const consignorId = consignorSelect.value;
+        const consigneeId = consigneeSelect.value;
+        
+        if (consignorId && consigneeId && consignorId === consigneeId) {
+            showValidationError(consignorSelect, 'Consignor and Consignee cannot be the same');
+            showValidationError(consigneeSelect, 'Consignor and Consignee cannot be the same');
+            return false;
+        }
+        
+        clearValidationError(consignorSelect);
+        clearValidationError(consigneeSelect);
+        return true;
+    }
+
+    // Bootstrap form validation with custom validation
     (() => {
         'use strict';
         const forms = document.querySelectorAll('.needs-validation');
         Array.from(forms).forEach(form => {
             form.addEventListener('submit', event => {
-                if (!form.checkValidity()) {
+                // Run custom validation first
+                const customValidationPassed = validateConsignorConsignee();
+                
+                if (!form.checkValidity() || !customValidationPassed) {
                     event.preventDefault();
                     event.stopPropagation();
+                    
+                    if (!customValidationPassed) {
+                        console.error('🚨 Form submission blocked: Consignor and Consignee cannot be the same');
+                    }
                 }
                 form.classList.add('was-validated');
             }, false);
