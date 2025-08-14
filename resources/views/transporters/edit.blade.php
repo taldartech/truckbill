@@ -184,14 +184,173 @@
             </div>
         </div>
         
-        <div class="card-footer">
-            <button type="submit" class="btn btn-primary">Update Transporter</button>
-            <a href="{{ route('transporters.index') }}" class="btn btn-secondary">Cancel</a>
+        <!-- Quick Actions Section -->
+        <div class="card p-3 bg-light">
+            <div class="row"><div class="col"><h5 class="mb-3">Quick Actions</h5></div></div>
+            <div class="row g-2">
+                <div class="col-md-4">
+                    <button class="btn btn-success w-100 mb-2" type="button" onclick="showConfirmationModal()">💾 Update Transporter</button>
+                </div>
+                <div class="col-md-4">
+                    <a href="{{ route('transporters.index') }}" class="btn btn-outline-dark w-100 mb-2">📄 Back to List</a>
+                </div>
+            </div>
         </div>
     </form>
 </div>
 
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="confirmationModalLabel">
+                    <i class="fas fa-check-circle me-2"></i>Confirm Transporter Update
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Please review the updated details below before submitting the form.
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3"><i class="fas fa-user me-2"></i>Basic Information</h6>
+                        <table class="table table-sm table-borderless">
+                            <tr><td class="fw-bold">Name:</td><td id="confirm-name">-</td></tr>
+                            <tr><td class="fw-bold">Short Name:</td><td id="confirm-short-name">-</td></tr>
+                            <tr><td class="fw-bold">Contact Person:</td><td id="confirm-contact-person">-</td></tr>
+                            <tr><td class="fw-bold">Mobile Number:</td><td id="confirm-mobile">-</td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3"><i class="fas fa-file-alt me-2"></i>Tax Information</h6>
+                        <table class="table table-sm table-borderless">
+                            <tr><td class="fw-bold">GST Number:</td><td id="confirm-gst-number">-</td></tr>
+                            <tr><td class="fw-bold">PAN Number:</td><td id="confirm-pan-number">-</td></tr>
+                            <tr><td class="fw-bold">PAN Active:</td><td id="confirm-pan-active">-</td></tr>
+                            <tr class="table-warning"><td class="fw-bold">🎯 TDS Percentage:</td><td id="confirm-tds-percentage" class="fw-bold text-danger fs-5">-</td></tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3"><i class="fas fa-map-marker-alt me-2"></i>Location Details</h6>
+                        <table class="table table-sm table-borderless">
+                            <tr><td class="fw-bold">Address:</td><td id="confirm-address">-</td></tr>
+                            <tr><td class="fw-bold">Country:</td><td id="confirm-country">-</td></tr>
+                            <tr><td class="fw-bold">State:</td><td id="confirm-state">-</td></tr>
+                            <tr><td class="fw-bold">City:</td><td id="confirm-city">-</td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3"><i class="fas fa-cog me-2"></i>Other Details</h6>
+                        <table class="table table-sm table-borderless">
+                            <tr><td class="fw-bold">Is Owner:</td><td id="confirm-is-owner">-</td></tr>
+                            <tr><td class="fw-bold">Declaration Given:</td><td id="confirm-declaration">-</td></tr>
+                            <tr><td class="fw-bold">Advance Amount:</td><td id="confirm-advance">-</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-success" onclick="submitForm()">
+                    <i class="fas fa-check me-2"></i>Confirm & Update
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+// Function to show confirmation modal with form data
+function showConfirmationModal() {
+    // First validate the form
+    const form = document.querySelector('.needs-validation');
+    if (!form.checkValidity()) {
+        form.classList.add('was-validated');
+        return;
+    }
+
+    // Get form values with safe access
+    const name = document.getElementById('name')?.value || '-';
+    const shortName = document.getElementById('short_name')?.value || '-';
+    const contactPerson = document.getElementById('contact_person_name')?.value || '-';
+    const mobile = document.getElementById('mobile_number')?.value || '-';
+    
+    const gstNumber = document.getElementById('gst_number')?.value || '-';
+    const panNumber = document.getElementById('pan_number')?.value || '-';
+    const panActive = document.querySelector('input[name="pan_active"]:checked')?.value === '1' ? 'Yes' : 'No';
+    
+    const address = document.getElementById('address')?.value || '-';
+    const countrySelect = document.getElementById('country_id');
+    const country = countrySelect?.options[countrySelect.selectedIndex]?.text || '-';
+    const stateSelect = document.getElementById('state_id');
+    const state = stateSelect?.options[stateSelect.selectedIndex]?.text || '-';
+    const citySelect = document.getElementById('city_id');
+    const city = citySelect?.options[citySelect.selectedIndex]?.text || '-';
+    
+    const isOwner = document.querySelector('input[name="is_owner"]:checked')?.value === '1' ? 'Yes' : 'No';
+    const declaration = document.querySelector('input[name="declaration_given"]:checked')?.value === '1' ? 'Yes' : 'No';
+    const advance = document.querySelector('input[name="advance_amount"]')?.value || '0';
+
+    // Calculate TDS percentage based on PAN status and 4th character
+    let tdsPercentage = '-';
+    if (panActive === 'No') {
+        tdsPercentage = '20.00%';
+    } else if (panNumber && panNumber.length >= 4) {
+        const fourthChar = panNumber.charAt(3).toUpperCase();
+        const validChars = ['C', 'F', 'A', 'B', 'J', 'L', 'T'];
+        if (validChars.includes(fourthChar)) {
+            tdsPercentage = '2.00%';
+        } else {
+            tdsPercentage = '20.00%';
+        }
+    }
+
+    // Populate modal with values
+    document.getElementById('confirm-name').textContent = name;
+    document.getElementById('confirm-short-name').textContent = shortName;
+    document.getElementById('confirm-contact-person').textContent = contactPerson;
+    document.getElementById('confirm-mobile').textContent = mobile;
+    
+    document.getElementById('confirm-gst-number').textContent = gstNumber;
+    document.getElementById('confirm-pan-number').textContent = panNumber;
+    document.getElementById('confirm-pan-active').textContent = panActive;
+    document.getElementById('confirm-tds-percentage').textContent = tdsPercentage;
+    
+    document.getElementById('confirm-address').textContent = address;
+    document.getElementById('confirm-country').textContent = country;
+    document.getElementById('confirm-state').textContent = state;
+    document.getElementById('confirm-city').textContent = city;
+    
+    document.getElementById('confirm-is-owner').textContent = isOwner;
+    document.getElementById('confirm-declaration').textContent = declaration;
+    document.getElementById('confirm-advance').textContent = '₹' + parseFloat(advance).toFixed(2);
+
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+    modal.show();
+}
+
+// Function to submit the form after confirmation
+function submitForm() {
+    const form = document.querySelector('.needs-validation');
+    
+    // Hide modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('confirmationModal'));
+    modal.hide();
+    
+    // Submit form
+    form.submit();
+}
+
 // Example starter JavaScript for disabling form submissions if there are invalid fields
 (() => {
     'use strict';

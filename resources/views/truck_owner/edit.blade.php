@@ -472,6 +472,7 @@
                             <tr><td class="fw-bold">GST Number:</td><td id="confirm-gst-number">-</td></tr>
                             <tr><td class="fw-bold">PAN Number:</td><td id="confirm-pan-number">-</td></tr>
                             <tr><td class="fw-bold">PAN Active:</td><td id="confirm-pan-active">-</td></tr>
+                            <tr class="table-warning"><td class="fw-bold">🎯 TDS Percentage:</td><td id="confirm-tds-percentage" class="fw-bold text-danger fs-5">-</td></tr>
                         </table>
                     </div>
                 </div>
@@ -550,6 +551,21 @@
         document.getElementById('confirm-gst-number').textContent = gstNumber;
         document.getElementById('confirm-pan-number').textContent = panNumber;
         document.getElementById('confirm-pan-active').textContent = panActive;
+        
+        // Calculate TDS percentage based on PAN status and 4th character
+        let tdsPercentage = '-';
+        if (panActive === 'No') {
+            tdsPercentage = '20.00%';
+        } else if (panNumber && panNumber.length >= 4) {
+            const fourthChar = panNumber.charAt(3).toUpperCase();
+            const validChars = ['C', 'F', 'A', 'B', 'J', 'L', 'T'];
+            if (validChars.includes(fourthChar)) {
+                tdsPercentage = '2.00%';
+            } else {
+                tdsPercentage = '20.00%';
+            }
+        }
+        document.getElementById('confirm-tds-percentage').textContent = tdsPercentage;
         
         document.getElementById('confirm-address').textContent = address;
         document.getElementById('confirm-country').textContent = country;
