@@ -240,7 +240,10 @@
                         @error('good_type') <div class="text-danger">{{ $message }}</div> @enderror
                         <div class="invalid-feedback">Please select a goods type.</div>
                     </div>
-                    <div class="col-md-4">
+                    
+                </div>
+                <div class="row mb-3">
+                <div class="col-md-4">
                         <label for="weight" class="form-label">Weight *</label>
                         <input type="number" step="0.01" class="form-control" id="weight" name="weight" required value="{{ old('weight') }}">
                         @error('weight') <div class="text-danger">{{ $message }}</div> @enderror
@@ -252,8 +255,6 @@
                         @error('no_of_units') <div class="text-danger">{{ $message }}</div> @enderror
                         <div class="invalid-feedback">Please enter number of units.</div>
                     </div>
-                </div>
-                <div class="row mb-3">
                     <div class="col-md-4">
                         <label for="fr_rate" class="form-label">Freight Rate *</label>
                         <input type="number" step="0.01" class="form-control" id="fr_rate" name="fr_rate" required value="{{ old('fr_rate') }}">
@@ -261,10 +262,11 @@
                         <div class="invalid-feedback">Please enter a freight rate.</div>
                     </div>
                     <div class="col-md-4">
-                        <label for="amount" class="form-label">Amount *</label>
-                        <input type="number" step="0.01" class="form-control" id="amount" name="amount" required value="{{ old('amount') }}">
+                        <label for="amount" class="form-label">Amount * <small class="text-muted">(Auto-calculated)</small></label>
+                        <input type="number" step="0.01" class="form-control" id="amount" name="amount" required value="{{ old('amount') }}" title="Auto-calculated: Weight × Freight Rate (editable)">
                         @error('amount') <div class="text-danger">{{ $message }}</div> @enderror
                         <div class="invalid-feedback">Please enter an amount.</div>
+                        <small class="text-muted">💡 Calculated as: Weight × Freight Rate</small>
                     </div>
                 </div>
             </div>
@@ -818,6 +820,44 @@ document.addEventListener('DOMContentLoaded', function () {
             }, false);
         });
     })();
+
+    // Auto-calculate amount based on weight × freight rate
+    const weightInput = document.getElementById('weight');
+    const frRateInput = document.getElementById('fr_rate');
+    const amountInput = document.getElementById('amount');
+    
+    function calculateAmount() {
+        const weight = parseFloat(weightInput.value) || 0;
+        const frRate = parseFloat(frRateInput.value) || 0;
+        
+        if (weight > 0 && frRate > 0) {
+            const calculatedAmount = weight * frRate;
+            amountInput.value = calculatedAmount.toFixed(2);
+            
+            // Add visual feedback to show it's auto-calculated
+            amountInput.style.backgroundColor = '#e8f5e8';
+            amountInput.title = `Auto-calculated: ${weight} × ${frRate} = ${calculatedAmount.toFixed(2)}`;
+            
+            console.log(`💰 Amount auto-calculated: ${weight} × ${frRate} = ${calculatedAmount.toFixed(2)}`);
+        }
+    }
+    
+    // Add event listeners for weight and freight rate changes
+    weightInput.addEventListener('input', calculateAmount);
+    frRateInput.addEventListener('input', calculateAmount);
+    
+    // Allow user to manually edit amount (remove auto-calculated styling when manually edited)
+    amountInput.addEventListener('input', function() {
+        // Remove auto-calculated styling when user manually edits
+        this.style.backgroundColor = '';
+        this.title = 'Manually edited amount';
+        console.log('✏️ Amount manually edited by user');
+    });
+    
+    // Calculate amount on page load if values exist
+    if (weightInput.value && frRateInput.value) {
+        calculateAmount();
+    }
 });
 </script>
 
