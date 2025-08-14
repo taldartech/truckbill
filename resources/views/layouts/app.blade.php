@@ -591,7 +591,7 @@
                           </li>
                     </ul>
                   </li>
-                  @if(auth()->check() && in_array(auth()->user()->userRole->name, ['super_admin', 'moderator']))
+                  @if(auth()->check() && in_array(auth()->user()->userRole->name, ['super_admin', 'moderator','admin']))
                   <li class="nav-item" >
                     <a class="nav-link "  href="#masterMenu" >
                         <i class="fas fa-money-check-alt"></i>  <p>

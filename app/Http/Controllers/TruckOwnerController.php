@@ -160,21 +160,21 @@ class TruckOwnerController extends Controller
         $buttons = '<div class="d-flex gap-1">';
         
         // Add Truck Button (modal trigger for truck owners)
-        $buttons .= '<button type="button" class="btn btn-sm btn-outline-primary add-truck-btn" title="Add Truck" data-transporter-id="' . $truckOwner->id . '" data-transporter-name="' . htmlspecialchars($truckOwner->name) . '">';
+        $buttons .= '<button type="button" class="btn btn-sm btn-outline-primary add-truck-btn" aria-label="Add Truck" title="Add Truck" data-bs-placement="top" data-bs-toggle="tooltip" data-transporter-id="' . $truckOwner->id . '" data-transporter-name="' . htmlspecialchars($truckOwner->name) . '">';
         $buttons .= '<i class="bi bi-truck"></i></button>';
         
         // Advance Payment Button (same as transporters)
-        $buttons .= '<button type="button" class="btn btn-sm btn-outline-success advance-payment-btn" title="Advance Payment" data-transporter-id="' . $truckOwner->id . '" data-transporter-name="' . htmlspecialchars($truckOwner->name) . '">';
+        $buttons .= '<button type="button" class="btn btn-sm btn-outline-success advance-payment-btn" aria-label="Advance Payment" title="Advance Payment" data-bs-placement="top" data-bs-toggle="tooltip" data-transporter-id="' . $truckOwner->id . '" data-transporter-name="' . htmlspecialchars($truckOwner->name) . '">';
         $buttons .= '<i class="bi bi-currency-rupee"></i>';
         $buttons .= '</button>';
 
         // Edit Button (same as transporters)
         $editUrl = route('truck_owners.edit', $truckOwner->id);
-        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info">';
+        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit Truck Owner" aria-label="Edit Truck Owner" data-bs-placement="top" data-bs-toggle="tooltip">';
         $buttons .= '<i class="bi bi-pencil"></i></a>';
         
         // Delete Button (AJAX-based)
-        $buttons .= '<button type="button" class="btn btn-sm btn-danger delete-truck-owner-btn" title="Delete Truck Owner" data-truck-owner-id="' . $truckOwner->id . '" data-truck-owner-name="' . htmlspecialchars($truckOwner->name) . '">';
+        $buttons .= '<button type="button" class="btn btn-sm btn-danger delete-truck-owner-btn" aria-label="Delete Truck Owner" title="Delete Truck Owner" data-bs-placement="top" data-bs-toggle="tooltip" data-truck-owner-id="' . $truckOwner->id . '" data-truck-owner-name="' . htmlspecialchars($truckOwner->name) . '">';
         $buttons .= '<i class="bi bi-trash"></i></button>';
         
         $buttons .= '</div>';
