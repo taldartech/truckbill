@@ -95,6 +95,32 @@
       .nav-link.active i, .nav-link.router-link-exact-active i {
         color: #1a73e8 !important;
       }
+      /* User dropdown styling */
+      .user-menu .dropdown-menu {
+        border: none;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .user-header {
+        background: #003366 !important;
+        position: relative;
+      }
+      .user-header i {
+        margin-bottom: 10px;
+      }
+      .user-footer {
+        background: #f8f9fa;
+        border-top: 1px solid rgba(0,0,0,0.05);
+      }
+      .user-footer .btn {
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        border: none;
+      }
+      .user-footer .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      }
 
         width: 220px !important;
         min-width: 220px !important;
@@ -180,29 +206,21 @@
                         <span class="d-none d-md-inline">{{ Auth::user()->name ?? Auth::user()->email }}</span>
                     @endauth
                   </a>
-                  <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end">
+                  <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end shadow">
                     <!--begin::User Image-->
-                    <div class="user-header bg-primary">
-                      <i class="fas fa-user-circle fa-3x"></i>
-                      <p>
+                    <div class="user-header bg-primary text-center py-4">
+                      <i class="fas fa-user-circle fa-3x text-white mb-2"></i>
+                      <p class="text-white mb-0">
                         @auth
                           {{ Auth::user()->name ?? Auth::user()->email }}
-                          <small>Member since {{ Auth::user()->created_at->format('M. Y') }}</small>
+                          <small class="d-block mt-1">Member since {{ Auth::user()->created_at->format('M. Y') }}</small>
                         @endauth
                       </p>
                     </div>
                     <!--end::User Image-->
-                    <!--begin::Menu Body-->
-                    <div class="user-body">
-                      <!--begin::Row-->
-                     
-                      <!--end::Row-->
-                    </div>
-                    <!--end::Menu Body-->
                     <!--begin::Menu Footer-->
-                    <div class="user-footer">
-                      <a href="/profile" class="btn btn-default btn-flat">Profile</a>
-                      <a href="#" class="btn btn-default btn-flat float-end" id="logout-link">Sign out</a>
+                    <div class="user-footer d-flex justify-content-center p-3">
+                      <a href="#" class="btn btn-danger text-white px-5 py-2 rounded-3" id="logout-link">Sign out</a>
                       <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
                         @csrf
                       </form>
