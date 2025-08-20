@@ -172,7 +172,11 @@ class LorryReceiptController extends Controller
                     'data-freight_booking_id="' . $row->freight_booking_id . '" ' .
                     'data-balance="' . ($row->freightBooking ? $row->freightBooking->balance_amount : 0) . '" ' .
                     'data-voucher_number="' . ($row->freightBooking ? $row->freightBooking->voucher_number : 0) . '" ' .
+                    'data-memo-id="' . ($row->memo_id ? $row->memo_id : '') . '" ' .
                     'data-payment-status="' . strtolower($row->delivery_status) . '">';
+            })
+            ->addColumn('row_class', function ($row) {
+                return $row->memo_id ? 'memo-assigned' : '';
             })
            
             ->addColumn('sr_no', function ($row) {
@@ -210,7 +214,7 @@ class LorryReceiptController extends Controller
                 ->addColumn('actions', function ($row) {
                     return $this->getActionButtons($row);
                 })
-                ->rawColumns(['checkbox', 'sr_no', 'lr_number', 'customer_name', 'consignor_name', 'consignee_name', 'truck_number', 'gr_date_formatted', 'amount_formatted', 'status_badge', 'actions'])
+                ->rawColumns(['checkbox', 'sr_no', 'lr_number', 'customer_name', 'consignor_name', 'consignee_name', 'truck_number', 'gr_date_formatted', 'amount_formatted', 'status_badge', 'actions', 'row_class'])
                 ->make(true);
         } catch (\Exception $e) {
             \Log::error('DataTables error: ' . $e->getMessage());

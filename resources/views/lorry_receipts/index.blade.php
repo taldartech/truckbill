@@ -144,6 +144,7 @@
         background-color: #f8f9fa;
         border: 1px solid #e9ecef;
         overflow: hidden;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
     .lr-details-section h5 {
         background-color: #f1f8ff;
@@ -249,6 +250,96 @@
     .table-link:hover {
         text-decoration: underline !important;
     }
+    
+    /* Highlight rows with memo_id */
+    tr.memo-assigned {
+        background-color: #e6f7ff !important;
+        position: relative;
+    }
+    
+    tr.memo-assigned:hover {
+        background-color: #cceeff !important;
+    }
+    
+    tr.memo-assigned td:first-child::before {
+        content: "📝";
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 14px;
+        margin-left: 3px;
+    }
+    
+    /* Improved card styling */
+    .card {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+        box-shadow: 0 5px 25px rgba(0,0,0,0.1);
+    }
+    
+    .card-header {
+        background: linear-gradient(to right, #f8f9fa, #e9ecef);
+        border-bottom: 1px solid #e9ecef;
+        padding: 15px 20px;
+        border-radius: 10px 10px 0 0 !important;
+    }
+    
+    .card-body {
+        padding: 20px;
+    }
+    
+    /* Button styling */
+    .btn-info, .btn-success {
+        transition: all 0.2s ease;
+    }
+    
+    .btn-info:hover, .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    /* Table improvements */
+    .table {
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    .table th {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Tooltip enhancement */
+    [data-bs-toggle="tooltip"] {
+        position: relative;
+    }
+    
+    /* Memo badge */
+    .memo-badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background-color: #0dcaf0;
+        color: white;
+        border-radius: 50%;
+        width: 18px;
+        height: 18px;
+        font-size: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
 </style>
 
 @push('scripts')
@@ -276,6 +367,19 @@ $(document).ready(function() {
             lrNumberCell.on('click', function() {
                 showLRDetails(data.id);
             });
+            
+            // Apply memo-assigned class to rows with memo_id
+            if (data.row_class && data.row_class.includes('memo-assigned')) {
+                $(row).addClass('memo-assigned');
+                
+                // Add tooltip to show memo ID
+                var memoId = $(row).find('input.rowCheckbox').data('memo-id');
+                if (memoId) {
+                    $(row).attr('title', 'Memo ID: ' + memoId);
+                    $(row).attr('data-bs-toggle', 'tooltip');
+                    $(row).attr('data-bs-placement', 'top');
+                }
+            }
         },
         ajax: {
             url: '{{ route("lorry_receipts.index") }}',
@@ -302,7 +406,14 @@ $(document).ready(function() {
                 data: 'lr_number',
                 name: 'lr_number',
                 render: function(data, type, row) {
-                    return '<a href="#" class="lr-number-link" data-id="' + row.id + '">' + data + '</a>';
+                    var memoBadge = '';
+                    
+                    // Check if row has memo-assigned class
+                    if (row.row_class && row.row_class.includes('memo-assigned')) {
+                        memoBadge = ' <span class="badge bg-info ms-1" title="Memo Attached">Memo</span>';
+                    }
+                    
+                    return '<a href="#" class="lr-number-link" data-id="' + row.id + '">' + data + '</a>' + memoBadge;
                 }
             },
             {
