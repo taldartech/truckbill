@@ -2,6 +2,8 @@
 
 @section('content')
 
+@dd($lorry_receipt->first());
+
 
 
 <div class="card card-info card-outline mb-4" style="width: 70%;align-items: center;margin: auto;">
