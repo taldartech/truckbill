@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Truck;
 use App\Models\Transporter;
 use App\Models\Customer;
@@ -11,6 +12,7 @@ use App\Models\Company;
 
 class LorryReceipt extends Model
 {
+    use SoftDeletes;
     protected $fillable = [
         'truck_id',
         'transporter_id',
