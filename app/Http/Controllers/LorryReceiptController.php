@@ -224,7 +224,7 @@ class LorryReceiptController extends Controller
         $buttons = '<div class="d-flex gap-1">';
         
         // Freight booking button
-        $buttons .= '<a href="' . route('freight_bookings.create', $lorryReceipt->id) . '" class="btn btn-sm btn-success" title="Freight Booking" data-bs-toggle="tooltip">';
+        $buttons .= '<a href="' . route('freight_bookings.create') . '?lorry_receipt_id=' . $lorryReceipt->id . '" class="btn btn-sm btn-success" title="Freight Booking" data-bs-toggle="tooltip">';
         $buttons .= '<i class="bi bi-truck"></i>';
         $buttons .= '</a>';
         
