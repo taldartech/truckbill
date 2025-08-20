@@ -132,8 +132,8 @@
                         <div class="invalid-feedback">Please select a truck.</div>
                     </div>
                     <div class="col-md-4">
-                        <label for="transporter_type" class="form-label">Select Type *</label>
-                        <select class="form-select" id="transporter_type" required>
+                        <label for="transporter_type" class="form-label" id="transporterTypeLabel">Select Type *</label>
+                        <select class="form-select" id="transporter_type" name="transporter_type" required>
                             <option value="">Select Type</option>
                             <option value="owner">Truck Owner</option>
                             <option value="agency">Agency</option>
@@ -564,11 +564,24 @@ document.addEventListener('DOMContentLoaded', function () {
                 
                 if (ownerFound) {
                     // Disable the dropdown since it's auto-selected
-                    transporterSelect.disabled = true;
-                    transporterSelect.style.backgroundColor = '#e9ecef';
-                    transporterSelect.title = 'Automatically selected based on truck owner';
+                    // transporterSelect.disabled = true;
+                    // transporterSelect.style.backgroundColor = '#e9ecef';
+                    // transporterSelect.title = 'Automatically selected based on truck owner';
                     
-                    console.log(`✅ Auto-selected truck owner: ${matchedOwner.name} (ID: ${matchedOwner.id})`);
+                    // console.log(`✅ Auto-selected truck owner: ${matchedOwner.name} (ID: ${matchedOwner.id})`);
+                    transporterSelect.value = matchedOwner.id;
+    transporterSelect.disabled = true;
+    transporterSelect.style.backgroundColor = '#e9ecef';
+    transporterSelect.title = 'Automatically selected based on truck owner';
+
+    // Hidden input to ensure value is submitted
+    let hiddenInput = document.createElement("input");
+    hiddenInput.type = "hidden";
+    hiddenInput.name = "transporter_id";
+    hiddenInput.value = matchedOwner.id;
+    transporterSelect.form.appendChild(hiddenInput);
+
+    console.log(`✅ Auto-selected truck owner: ${matchedOwner.name} (ID: ${matchedOwner.id})`);
                     
                     // Show TDS percentage for auto-selected truck owner
                     showTdsPercentage(matchedOwner.id);

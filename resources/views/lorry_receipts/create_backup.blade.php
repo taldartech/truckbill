@@ -261,7 +261,7 @@
                     @error('transporter_id') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please select a transporter.</div>
                 </div>
-                <!--end::Col--> --}}
+                <!--end::Col--> 
                
                 <!--begin::Col-->
                 {{-- <div class="col-md-4">

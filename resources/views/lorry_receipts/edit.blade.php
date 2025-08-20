@@ -144,8 +144,8 @@
                         <label for="transporter_type" class="form-label">Select Type *</label>
                         <select class="form-select" id="transporter_type" required>
                             <option value="">Select Type</option>
-                            <option value="owner" {{ old('transporter_type', $lorry_receipt->truck->transporter_type ?? '') == 'owner' ? 'selected' : '' }}>Truck Owner</option>
-                            <option value="agency" {{ old('transporter_type', $lorry_receipt->truck->transporter_type ?? '') == 'agency' ? 'selected' : '' }}>Agency</option>
+                            <option value="owner" {{ $lorry_receipt->transporter_type == 'owner' ? 'selected' : '' }}>Truck Owner</option>
+                            <option value="agency" {{ $lorry_receipt->transporter_type == 'agency' ? 'selected' : '' }}>Agency</option>
                         </select>
                         <div class="invalid-feedback">Please select transporter type.</div>
                     </div>
@@ -154,7 +154,7 @@
                         <select class="form-select" id="transporter_id" name="transporter_id" required>
                             <option value="">Select Transporter</option>
                             @foreach($transporters as $transporter)
-                                <option value="{{ $transporter->id }}" {{ $transporter->id == $lorry_receipt->transporter_id ? 'selected' : '' }}>
+                                <option value="{{  $transporter->id }}" {{ $transporter->id == $lorry_receipt->transporter_id ? 'selected' : '' }}>
                                     {{ $transporter->name }}
                                 </option>
                             @endforeach

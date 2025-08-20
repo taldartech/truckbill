@@ -294,7 +294,7 @@ public function getCustomerMemos($customerId)
             'company_id' => 'required|exists:companies,id',
             'invoice_type' => 'required|in:Reverse,Forward',
             'generated_date' => 'required|date',
-            'customer_id' => 'required|exists:customers,id',
+            'customer_id' => 'required|exists:consignees,id',
             'total_amount' => 'required|numeric|min:0',
             'payment_status' => 'required|in:pending,partial,paid',
             'memo_ids' => 'nullable|array',

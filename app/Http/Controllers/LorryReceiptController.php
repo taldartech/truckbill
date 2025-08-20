@@ -397,6 +397,7 @@ class LorryReceiptController extends Controller
 
     public function store(Request $request)
     {
+        // dd($request->all());
         $validated = $request->validate([
             'customer_id' => 'required|exists:consignees,id',
             'lr_number' => 'required|string|max:100|unique:lorry_receipts,lr_number',
@@ -423,7 +424,9 @@ class LorryReceiptController extends Controller
             'amount' => 'required|numeric|min:0',
             'damage_amount' => 'nullable|numeric',
             'shortage_amount' => 'nullable|numeric',
+            'transporter_type' => 'nullable|in:owner,agency',
         ]);
+        // dd($validated);
 
         // Check if consignor and consignee are the same
         if ($validated['consignor_id'] === $validated['consignee_id']) {
@@ -435,9 +438,12 @@ class LorryReceiptController extends Controller
 
         // Set truck_id to null if not provided
         $validated['truck_id'] = $validated['truck_id'] ?? null;
+        // dd($validated);
         
         // Set default delivery_status
         $validated['delivery_status'] = 'Pending';
+        // dd($validated);
+
         
         // Check if lr_number already exists
         if (\App\Models\LorryReceipt::where('lr_number', $validated['lr_number'])->exists()) {
@@ -449,8 +455,11 @@ class LorryReceiptController extends Controller
 
         // Add company_id to validated data
         $validated['company_id'] = auth()->user()->company_id;
+        // dd($validated);
+
         
         \App\Models\LorryReceipt::create($validated);
+        // dd($validated);
         return redirect()->route('lorry_receipts.index')->with('success', 'Lorry Receipt created successfully!');
     }
 
@@ -575,6 +584,7 @@ class LorryReceiptController extends Controller
             'amount' => 'required|numeric|min:0',
             'damage_amount' => 'nullable|numeric',
             'shortage_amount' => 'nullable|numeric',
+            'transporter_type' => 'nullable|in:owner,agency',
         ]);
 
         // Check if consignor and consignee are the same
