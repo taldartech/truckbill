@@ -427,7 +427,7 @@ $(document).ready(function() {
         ],
         order: [[1, 'desc']],
         pageLength: 25,
-        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+        lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100, "All"]],
         dom: 'Bfrtip',
         buttons: [
             'excel'
@@ -1275,3 +1275,5 @@ function submitVoucherPayment() {
 </script>
 
 @endpush
+
+
