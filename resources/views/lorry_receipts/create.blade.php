@@ -115,6 +115,16 @@
                 </div>
                 <div class="row mb-3">
                     <div class="col-md-4">
+                        <label for="memo_id" class="form-label">Memo ID <small class="text-muted">(Read-only)</small></label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="memo_id" name="memo_id" value="{{ old('memo_id') }}" readonly>
+                            <span class="input-group-text bg-secondary text-white"><i class="bi bi-dash-circle"></i></span>
+                        </div>
+                        <small class="text-muted">Memo ID will be assigned later if applicable</small>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4">
                         <label for="truck_id" class="form-label">Truck *</label>
                         <select class="form-select" id="truck_id" name="truck_id" required data-placeholder="Search and select truck...">
                             <option value="">Select Trucks</option>
