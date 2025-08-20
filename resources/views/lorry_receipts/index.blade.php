@@ -29,7 +29,7 @@
             <table id="lorryReceiptsTable" class="table table-bordered table-striped">
                 <thead>
                     <tr>
-                        <th style="width: 50px;"><input type="checkbox" id="selectAllCheckbox"></th>
+     
                         <th style="width: 80px;">Sr. No</th>
                         <th>LR Number</th>
                         <th>Customer</th>
@@ -48,60 +48,8 @@
     </div>
 </div>
 
-<!-- Floating Action Buttons for Bulk Operations -->
-<div class="floating-buttons" style="position: fixed; bottom: 30px; right: 30px; z-index: 1000;">
-    <button id="bulkPaymentBtn" class="btn btn-warning mb-2" style="display: none;" onclick="showBulkPaymentModal()">
-        <i class="bi bi-file-earmark-text"></i> Memo Update
-    </button>
-    <button id="voucherPaymentBtn" class="btn btn-success" style="display: none;" onclick="showVoucherPaymentModal()">
-        <i class="bi bi-receipt"></i> Voucher Payment
-    </button>
-</div>
 
-<!-- Modal for Bulk Payment -->
-<div class="modal fade" id="bulkPaymentModal" tabindex="-1" aria-labelledby="bulkPaymentModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="bulkPaymentModalLabel">Memo Update</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label for="memoId" class="form-label">Memo ID</label>
-                    <input type="text" class="form-control" id="memoId" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Selected Lorry Receipts:</label>
-                    <ul class="selected-lr-list" id="selectedLrList"></ul>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="processBulkPayment()">OK</button>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Modal for Voucher Payment -->
-<div class="modal fade" id="voucherPaymentModal" tabindex="-1" aria-labelledby="voucherPaymentModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Voucher Payment</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="voucherPaymentBody">
-                <!-- Dynamic content will be inserted here -->
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button class="btn btn-success" onclick="submitVoucherPayment()">Submit Payment</button>
-            </div>
-        </div>
-    </div>
-</div>
 
 <!-- Lorry Receipt Details Modal -->
 <div class="modal fade" id="lrDetailsModal" tabindex="-1" aria-labelledby="lrDetailsModalLabel" aria-hidden="true">
@@ -386,14 +334,7 @@ $(document).ready(function() {
             type: 'GET'
         },
         columns: [
-            {
-                data: 'checkbox',
-                name: 'checkbox',
-                orderable: false,
-                searchable: false,
-                width: '50px',
-                className: 'text-center'
-            },
+            
             {
                 data: 'sr_no',
                 name: 'sr_no',
@@ -406,14 +347,8 @@ $(document).ready(function() {
                 data: 'lr_number',
                 name: 'lr_number',
                 render: function(data, type, row) {
-                    var memoBadge = '';
                     
-                    // Check if row has memo-assigned class
-                    if (row.row_class && row.row_class.includes('memo-assigned')) {
-                        memoBadge = ' <span class="badge bg-info ms-1" title="Memo Attached">Memo</span>';
-                    }
-                    
-                    return '<a href="#" class="lr-number-link" data-id="' + row.id + '">' + data + '</a>' + memoBadge;
+                    return '<a href="#" class="lr-number-link" data-id="' + row.id + '">' + data + '</a>';
                 }
             },
             {
@@ -480,340 +415,22 @@ $(document).ready(function() {
             // Reinitialize tooltips after each draw
             $('[data-bs-toggle="tooltip"]').tooltip();
             
-            // Update bulk operation buttons
-            updateBulkOperationButtons();
+         
         }
     });
 
-    // Select all checkbox functionality
-    $('#selectAllCheckbox').on('change', function() {
-        $('.rowCheckbox').prop('checked', this.checked);
-        updateBulkOperationButtons();
-    });
+   
 
-    // Individual checkbox functionality
-    $(document).on('change', '.rowCheckbox', function() {
-        var totalCheckboxes = $('.rowCheckbox').length;
-        var checkedCheckboxes = $('.rowCheckbox:checked').length;
-        
-        $('#selectAllCheckbox').prop('indeterminate', checkedCheckboxes > 0 && checkedCheckboxes < totalCheckboxes);
-        $('#selectAllCheckbox').prop('checked', checkedCheckboxes === totalCheckboxes);
-        
-        updateBulkOperationButtons();
-    });
+    
 
-    function updateBulkOperationButtons() {
-        var checkedBoxes = $('.rowCheckbox:checked');
-        var bulkPaymentBtn = $('#bulkPaymentBtn');
-        var voucherPaymentBtn = $('#voucherPaymentBtn');
-        
-        if (checkedBoxes.length > 0) {
-            bulkPaymentBtn.show();
-            voucherPaymentBtn.show();
-        } else {
-            bulkPaymentBtn.hide();
-            voucherPaymentBtn.hide();
-        }
-    }
+   
 });
 
-// Bulk Payment Modal functionality
-function showBulkPaymentModal() {
-    const checkedBoxes = document.querySelectorAll('.rowCheckbox:checked');
-    const selectedLrList = document.getElementById('selectedLrList');
-    
-    if (checkedBoxes.length === 0) {
-        alert('Please select at least one lorry receipt');
-        return;
-    }
-    
-    // Clear previous list
-    selectedLrList.innerHTML = '';
-    
-    // Add selected LRs to the list
-    checkedBoxes.forEach(checkbox => {
-        const lrNumber = checkbox.getAttribute('data-lr');
-        const truckNumber = checkbox.getAttribute('data-truck');
-        
-        const listItem = document.createElement('li');
-        listItem.innerHTML = `<strong>LR:</strong> ${lrNumber} | <strong>Truck:</strong> ${truckNumber}`;
-        selectedLrList.appendChild(listItem);
-    });
-    
-    // Show the modal
-    const modal = new bootstrap.Modal(document.getElementById('bulkPaymentModal'));
-    modal.show();
-}
 
-// Process bulk payment
-function processBulkPayment() {
-    const memoId = document.getElementById('memoId').value.trim();
-    
-    if (!memoId) {
-        alert('Please enter a Memo ID');
-        return;
-    }
-    
-    const checkedBoxes = document.querySelectorAll('.rowCheckbox:checked');
-    const selectedIds = Array.from(checkedBoxes).map(cb => cb.value);
-    
-    if (selectedIds.length === 0) {
-        alert('No lorry receipts selected');
-        return;
-    }
-    
-    // Show loading state
-    const submitBtn = document.querySelector('#bulkPaymentModal .btn-primary');
-    const originalText = submitBtn.textContent;
-    submitBtn.textContent = 'Processing...';
-    submitBtn.disabled = true;
-    
-    // Make AJAX request
-    fetch('{{ route("lorry_receipts.bulkPayment") }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify({
-            memo_id: memoId,
-            lorry_receipt_ids: selectedIds
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Bulk payment processed successfully!');
-            location.reload();
-        } else {
-            alert('Error: ' + (data.message || 'Unknown error occurred'));
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred while processing the bulk payment');
-    })
-    .finally(() => {
-        submitBtn.textContent = originalText;
-        submitBtn.disabled = false;
-        bootstrap.Modal.getInstance(document.getElementById('bulkPaymentModal')).hide();
-    });
-}
 
-// Voucher Payment Modal functionality
-function showVoucherPaymentModal() {
-    const checkedBoxes = document.querySelectorAll('.rowCheckbox:checked');
-    const voucherPaymentBody = document.getElementById('voucherPaymentBody');
-    
-    if (checkedBoxes.length === 0) {
-        alert('Please select at least one lorry receipt');
-        return;
-    }
-    
-    // Clear previous content
-    voucherPaymentBody.innerHTML = '';
-    
-    // Create form for each selected LR
-    checkedBoxes.forEach((checkbox, index) => {
-        const lrNumber = checkbox.getAttribute('data-lr');
-        const truckNumber = checkbox.getAttribute('data-truck');
-        const freightBookingId = checkbox.getAttribute('data-freight_booking_id');
-        const balance = parseFloat(checkbox.getAttribute('data-balance')) || 0;
-        const voucherNumber = checkbox.getAttribute('data-voucher_number') || '';
-        const paymentStatus = checkbox.getAttribute('data-payment-status') || 'pending';
-        
-        const formSection = document.createElement('div');
-        formSection.className = 'mb-3';
-        formSection.innerHTML = `
-            <h6>LR: ${lrNumber} | Truck: ${truckNumber}</h6>
-            <div class="row">
-                <div class="col-md-6">
-                    <label class="form-label">Balance Amount</label>
-                    <input type="number" class="form-control" value="${balance}" readonly>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Payment Amount</label>
-                    <input type="number" class="form-control payment-amount" data-lr-id="${checkbox.value}" 
-                           data-freight-booking-id="${freightBookingId}" max="${balance}" step="0.01" required>
-                </div>
-            </div>
-            <div class="row mt-2">
-                <div class="col-md-6">
-                    <label class="form-label">Voucher Number</label>
-                    <input type="text" class="form-control voucher-number" value="${voucherNumber}">
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Payment Status</label>
-                    <span class="badge bg-${paymentStatus === 'delivered' ? 'success' : 'warning'}">${paymentStatus}</span>
-                </div>
-            </div>
-        `;
-        voucherPaymentBody.appendChild(formSection);
-    });
-    
-    // Show the modal
-    const modal = new bootstrap.Modal(document.getElementById('voucherPaymentModal'));
-    modal.show();
-}
 
-// Submit voucher payment
-function submitVoucherPayment() {
-    const paymentInputs = document.querySelectorAll('.payment-amount');
-    const voucherInputs = document.querySelectorAll('.voucher-number');
-    const payments = [];
-    
-    let isValid = true;
-    
-    paymentInputs.forEach((input, index) => {
-        const amount = parseFloat(input.value);
-        const lrId = input.getAttribute('data-lr-id');
-        const freightBookingId = input.getAttribute('data-freight-booking-id');
-        const voucherNumber = voucherInputs[index].value.trim();
-        
-        if (!amount || amount <= 0) {
-            isValid = false;
-            input.classList.add('is-invalid');
-        } else {
-            input.classList.remove('is-invalid');
-            payments.push({
-                lorry_receipt_id: lrId,
-                freight_booking_id: freightBookingId,
-                amount: amount,
-                voucher_number: voucherNumber
-            });
-        }
-    });
-    
-    if (!isValid) {
-        alert('Please enter valid payment amounts for all selected lorry receipts');
-        return;
-    }
-    
-    // Show loading state
-    const submitBtn = document.querySelector('#voucherPaymentModal .btn-success');
-    const originalText = submitBtn.textContent;
-    submitBtn.textContent = 'Processing...';
-    submitBtn.disabled = true;
-    
-    // Make AJAX request
-    fetch('{{ route("lorry_receipts.bulkVoucherPayment") }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify({
-            payments: payments
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Voucher payments processed successfully!');
-            location.reload();
-        } else {
-            alert('Error: ' + (data.message || 'Unknown error occurred'));
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred while processing the voucher payments');
-    })
-    .finally(() => {
-        submitBtn.textContent = originalText;
-        submitBtn.disabled = false;
-        bootstrap.Modal.getInstance(document.getElementById('voucherPaymentModal')).hide();
-    });
-}
 
-// // Show LR Details function
-// function showLRDetails(id) {
-//     const modal = new bootstrap.Modal(document.getElementById('lrDetailsModal'));
-//     const contentDiv = document.getElementById('lrDetailsContent');
-    
-//     // Show loading state
-//     contentDiv.innerHTML = `
-//         <div class="text-center">
-//             <div class="spinner-border" role="status">
-//                 <span class="visually-hidden">Loading...</span>
-//             </div>
-//             <p class="mt-2">Loading details...</p>
-//         </div>
-//     `;
-    
-//     // Fetch LR details
-//     fetch(`/api/lorry-receipts/${id}/details`)
-//         .then(response => response.json())
-//         .then(lr => {
-//             const html = `
-//                 <div class="lr-details-container">
-//                     <div class="lr-details-section">
-//                         <h5>Basic Information</h5>
-//                         <div class="lr-details-row">
-//                             <div class="lr-details-label">LR Number</div>
-//                             <div class="lr-details-value">${lr.lr_number}</div>
-//                         </div>
-//                         <div class="lr-details-row">
-//                             <div class="lr-details-label">GR Date</div>
-//                             <div class="lr-details-value">${lr.gr_date}</div>
-//                         </div>
-//                         <div class="lr-details-row">
-//                             <div class="lr-details-label">Status</div>
-//                             <div class="lr-details-value">${lr.delivery_status}</div>
-//                         </div>
-//                     </div>
-                    
-//                     <div class="lr-details-section">
-//                         <h5>Parties</h5>
-//                         <div class="lr-details-row">
-//                             <div class="lr-details-label">Customer</div>
-//                             <div class="lr-details-value">${lr.customer ? lr.customer.name : 'N/A'}</div>
-//                         </div>
-//                         <div class="lr-details-row">
-//                             <div class="lr-details-label">Consignor</div>
-//                             <div class="lr-details-value">${lr.consignor ? lr.consignor.name : 'N/A'}</div>
-//                         </div>
-//                         <div class="lr-details-row">
-//                             <div class="lr-details-label">Consignee</div>
-//                             <div class="lr-details-value">${lr.consignee ? lr.consignee.name : 'N/A'}</div>
-//                         </div>
-//                         <div class="lr-details-row">
-//                             <div class="lr-details-label">Transporter</div>
-//                             <div class="lr-details-value">${lr.transporter ? lr.transporter.name : 'N/A'}</div>
-//                         </div>
-//                     </div>
-                    
-//                     <div class="lr-details-section">
-//                         <h5>Transport Details</h5>
-//                         <div class="lr-details-row">
-//                             <div class="lr-details-label">Truck Number</div>
-//                             <div class="lr-details-value">${lr.truck ? lr.truck.truck_number : 'N/A'}</div>
-//                         </div>
-//                         <div class="lr-details-row">
-//                             <div class="lr-details-label">Goods</div>
-//                             <div class="lr-details-value">${lr.goods}</div>
-//                         </div>
-//                         <div class="lr-details-row">
-//                             <div class="lr-details-label">Weight</div>
-//                             <div class="lr-details-value">${lr.weight}</div>
-//                         </div>
-//                         <div class="lr-details-row">
-//                             <div class="lr-details-label">Amount</div>
-//                             <div class="lr-details-value">${lr.amount}</div>
-//                         </div>
-//                     </div>
-//                 </div>
-//             `;
 
-//             contentDiv.innerHTML = html;
-//             modal.show();
-//         })
-//         .catch(error => {
-//             console.error('Error fetching LR details:', error);
-//             contentDiv.innerHTML = '<div class="alert alert-danger">Error loading details. Please try again.</div>';
-//             modal.show();
-//         });
-// }
 // Show LR Details function
 function showLRDetails(id) {
     const modal = new bootstrap.Modal(document.getElementById('lrDetailsModal'));

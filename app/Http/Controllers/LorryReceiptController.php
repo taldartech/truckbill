@@ -165,19 +165,10 @@ class LorryReceiptController extends Controller
             \Log::info('Query built successfully');
 
             return DataTables::of($query)
-            ->addColumn('checkbox', function ($row) {
-                return '<input type="checkbox" class="rowCheckbox" value="' . $row->id . '" ' .
-                    'data-lr="' . $row->lr_number . '" ' .
-                    'data-truck="' . ($row->truck ? $row->truck->truck_number : '') . '" ' .
-                    'data-freight_booking_id="' . $row->freight_booking_id . '" ' .
-                    'data-balance="' . ($row->freightBooking ? $row->freightBooking->balance_amount : 0) . '" ' .
-                    'data-voucher_number="' . ($row->freightBooking ? $row->freightBooking->voucher_number : 0) . '" ' .
-                    'data-memo-id="' . ($row->memo_id ? $row->memo_id : '') . '" ' .
-                    'data-payment-status="' . strtolower($row->delivery_status) . '">';
-            })
-            ->addColumn('row_class', function ($row) {
-                return $row->memo_id ? 'memo-assigned' : '';
-            })
+           
+            // ->addColumn('row_class', function ($row) {
+            //     return $row->memo_id ? 'memo-assigned' : '';
+            // })
            
             ->addColumn('sr_no', function ($row) {
                 static $counter = 0;
@@ -214,7 +205,7 @@ class LorryReceiptController extends Controller
                 ->addColumn('actions', function ($row) {
                     return $this->getActionButtons($row);
                 })
-                ->rawColumns(['checkbox', 'sr_no', 'lr_number', 'customer_name', 'consignor_name', 'consignee_name', 'truck_number', 'gr_date_formatted', 'amount_formatted', 'status_badge', 'actions', 'row_class'])
+                ->rawColumns(['sr_no', 'lr_number', 'customer_name', 'consignor_name', 'consignee_name', 'truck_number', 'gr_date_formatted', 'amount_formatted', 'status_badge', 'actions', 'row_class'])
                 ->make(true);
         } catch (\Exception $e) {
             \Log::error('DataTables error: ' . $e->getMessage());
