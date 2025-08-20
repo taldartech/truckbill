@@ -211,9 +211,9 @@
             </div>
             <div class="col-md-3 mb-3">
                 <label for="is_delivered" class="form-label">Delivered?</label>
-                <select name="is_delivered" id="is_delivered" class="form-select">
+                <select name="is_delivered" id="is_delivered" class="form-select" readonly>
                     <option value="0" {{ old('is_delivered') == '0' ? 'selected' : '' }}>No</option>
-                    <option value="1" {{ old('is_delivered') == '1' ? 'selected' : '' }}>Yes</option>
+                    <option value="1" {{ old('is_delivered') == '1' ? 'selected' : 'disabled' }}>Yes</option>
                 </select>
             </div>
             <div class="col-md-3 mb-3">
