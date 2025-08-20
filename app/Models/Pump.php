@@ -13,6 +13,7 @@ class Pump extends Model
         'pump_name',
         'contact_name',
         'contact_number',
+        'remark',
     ];
 }
 

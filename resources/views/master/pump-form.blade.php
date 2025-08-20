@@ -42,6 +42,14 @@
                     @enderror
                     <div class="valid-feedback">Looks good!</div>
                 </div>
+
+                <div class="col-md-6">
+                    <label for="remark" class="form-label">Remark</label>
+                    <textarea class="form-control" id="remark" name="remark">{{ old('remark', isset($pump) ? $pump->remark : '') }}</textarea>
+                    @error('remark')
+                        <div class="text-danger">{{ $message }}</div>
+                    @enderror
+                </div>
             </div>
         </div>
 

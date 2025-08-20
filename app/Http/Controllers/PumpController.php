@@ -129,6 +129,7 @@ class PumpController extends Controller
             'pump_name' => 'required|string|max:255',
             'contact_name' => 'required|string|max:255',
             'contact_number' => 'required|string|max:20|unique:pumps',
+            'remark' => 'nullable|string',
         ]);
 
         Pump::create($validated);
@@ -147,6 +148,7 @@ class PumpController extends Controller
             'pump_name' => 'required|string|max:255',
             'contact_name' => 'required|string|max:255',
             'contact_number' => 'required|string|max:20|unique:pumps,contact_number,' . $pump->id,
+            'remark' => 'nullable|string',
         ]);
 
         $pump->update($validated);
