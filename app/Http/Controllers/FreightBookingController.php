@@ -16,21 +16,24 @@ class FreightBookingController extends Controller
             return $this->getFreightBookingsData($request);
         }
 
-        $query = FreightBooking::with(['lr', 'linkedFreightBooking', 'company']);
+        $query = FreightBooking::with(['lr.truck', 'linkedFreightBooking', 'company']);
 
         // Only apply company_id filter for non-super_admin users
         if (auth()->user()->userRole->name !== 'super_admin') {
             $query->where('company_id', auth()->user()->company_id);
         }
-        if ($request->filled('lr_id')) {
-            $query->where('lr_id', $request->lr_id);
+
+        // Search functionality
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('voucher_number', 'LIKE', "%{$search}%")
+                  ->orWhereHas('lr', function($lrQuery) use ($search) {
+                      $lrQuery->where('lr_number', 'LIKE', "%{$search}%");
+                  });
+            });
         }
-        if ($request->filled('is_delivered')) {
-            $query->where('is_delivered', $request->is_delivered);
-        }
-        if ($request->filled('is_cancelled')) {
-            $query->where('is_cancelled', $request->is_cancelled);
-        }
+
         $bookings = $query->orderByDesc('id')->paginate(20);
         $lrs = LorryReceipt::all();
         $paymentTypes = \App\Models\PaymentType::all();

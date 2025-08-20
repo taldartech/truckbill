@@ -1,52 +1,145 @@
 @extends('layouts.app')
 
-@push('styles')
-<!-- DataTables CSS -->
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/searchpanes/2.2.0/css/searchPanes.bootstrap5.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css">
-@endpush
-
 @section('content')
 <div class="container mt-4">
     <div class="col-sm-6"><h3 class="mb-0">Freight Bookings Management</h3></div>
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
-
-    {{-- <div class="d-flex justify-content-end gap-2 mb-3">
-        <a href="{{ route('freight_bookings.create') }}" class="btn btn-info">
-            <i class="bi bi-plus"></i> Create
-        </a>
-    </div> --}}
+    @if(session('error'))
+        <div class="alert alert-danger">{{ session('error') }}</div>
+    @endif
 
     <div class="card mb-4">
-        <div class="card-header">
-            <h3 class="card-title">Freight Bookings List</h3>
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="card-title mb-0">Freight Bookings List</h3>
+            <div class="d-flex gap-2">
+                <button id="bulk-payment-btn" class="btn btn-success" style="display: none;" data-bs-toggle="modal" data-bs-target="#bulkPaymentModal">
+                    <i class="bi bi-cash-stack"></i> Bulk Payment
+                </button>
+                <button id="voucher-payment-btn" class="btn btn-info" style="display: none;" data-bs-toggle="modal" data-bs-target="#voucherPaymentModal">
+                    <i class="bi bi-receipt"></i> Voucher Payment
+                </button>
+            </div>
         </div>
         <div class="card-body">
-            <table id="freightBookingsTable" class="table table-bordered table-striped">
-                <thead>
-                    <tr>
-                        <th style="width: 40px;"><input type="checkbox" id="select-all"></th>
-                        <th style="width: 80px;">Sr. No</th>
-                        <th>LR Number</th>
-                        <th>Voucher No</th>
-                        <th>TR Rate</th>
-                        <th>TR Amount</th>
-                        <th>Advance</th>
-                        <th>Balance</th>
-                        <th>GR Date</th>
-                        <th>Delivered</th>
-                        <th>Cancelled</th>
-                        <th style="width: 120px;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Data will be loaded by DataTables -->
-                </tbody>
-            </table>
+            <!-- Search and Filter Section -->
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <form method="GET" action="{{ route('freight_bookings.index') }}">
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="search" value="{{ request('search') }}" placeholder="Search LR Number, Voucher Number...">
+                            <button class="btn btn-outline-secondary" type="submit">
+                                <i class="bi bi-search"></i>
+                            </button>
+                            @if(request('search'))
+                                <a href="{{ route('freight_bookings.index') }}" class="btn btn-outline-danger">
+                                    <i class="bi bi-x"></i>
+                                </a>
+                            @endif
+                        </div>
+                    </form>
+                </div>
+                <div class="col-md-8 text-end">
+                    <small class="text-muted">
+                        Showing {{ $bookings->firstItem() ?? 0 }} to {{ $bookings->lastItem() ?? 0 }} of {{ $bookings->total() }} results
+                    </small>
+                </div>
+            </div>
+
+            @if(request('search'))
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> Search results for: <strong>"{{ request('search') }}"</strong>
+                    <a href="{{ route('freight_bookings.index') }}" class="btn btn-sm btn-outline-primary ms-2">Clear Search</a>
+                </div>
+            @endif
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th style="width: 40px;"><input type="checkbox" id="select-all"></th>
+                            <th style="width: 80px;">Sr. No</th>
+                            <th>LR Number</th>
+                            <th>Voucher No</th>
+                            <th class="text-end">TR Rate</th>
+                            <th class="text-end">TR Amount</th>
+                            <th class="text-end">Advance</th>
+                            <th class="text-end">Balance</th>
+                            <th class="text-center">GR Date</th>
+                            <th class="text-center">Delivered</th>
+                            <th class="text-center">Cancelled</th>
+                            <th class="text-center" style="width: 120px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($bookings as $index => $booking)
+                            <tr>
+                                <td class="text-center">
+                                    <input type="checkbox" class="row-checkbox" value="{{ $booking->id }}" 
+                                           data-lr="{{ $booking->lr ? $booking->lr->lr_number : '' }}" 
+                                           data-truck="{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->truck_number : '' }}" 
+                                           data-balance="{{ $booking->balance_amount ?? 0 }}" 
+                                           data-voucher_number="{{ $booking->voucher_number ?? '' }}">
+                                </td>
+                                <td class="text-center">{{ $bookings->firstItem() + $index }}</td>
+                                <td>{{ $booking->lr ? $booking->lr->lr_number : '-' }}</td>
+                                <td>{{ $booking->voucher_number ?? '-' }}</td>
+                                <td class="text-end">₹{{ number_format($booking->tr_fr_rate ?? 0, 2) }}</td>
+                                <td class="text-end">₹{{ number_format($booking->tr_amount ?? 0, 2) }}</td>
+                                <td class="text-end">₹{{ number_format($booking->advance_amount ?? 0, 2) }}</td>
+                                <td class="text-end">₹{{ number_format($booking->balance_amount ?? 0, 2) }}</td>
+                                <td class="text-center">
+                                    {{ $booking->lr && $booking->lr->gr_date ? date('d-m-Y', strtotime($booking->lr->gr_date)) : '-' }}
+                                </td>
+                                <td class="text-center">
+                                    @if($booking->is_delivered == '1')
+                                        <span class="badge bg-success">Yes</span>
+                                    @else
+                                        <span class="badge bg-warning">No</span>
+                                    @endif
+                                </td>
+                                <td class="text-center">
+                                    @if($booking->is_cancelled == '1')
+                                        <span class="badge bg-danger">Yes</span>
+                                    @else
+                                        <span class="badge bg-secondary">No</span>
+                                    @endif
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ route('freight_bookings.show', $booking->id) }}" class="btn btn-sm btn-outline-info" title="View">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        <a href="{{ route('freight_bookings.edit', $booking->id) }}" class="btn btn-sm btn-outline-primary" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="12" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="bi bi-inbox display-4"></i>
+                                        <p class="mt-2">No freight bookings found</p>
+                                        @if(request('search'))
+                                            <p>Try adjusting your search criteria</p>
+                                        @endif
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            @if($bookings->hasPages())
+                <div class="d-flex justify-content-center mt-4">
+                    {{ $bookings->appends(request()->query())->links() }}
+                </div>
+            @endif
         </div>
     </div>
 </div>
@@ -69,24 +162,10 @@
             </div>
         </div>
         
-        <!-- Floating action buttons column -->
-        <div class="col-md-2">
-            <div class="floating-buttons sticky-top pt-4">
-                <div class="mb-3">
-                    <button id="bulk-payment-btn" class="btn btn-success mb-2" style="display: none;" data-bs-toggle="modal" data-bs-target="#bulkPaymentModal">
-                        <i class="fas fa-money-bill-wave me-1"></i> Bulk Payment
-                    </button>
-                </div>
-                <div class="mb-3">
-                    <button id="voucher-payment-btn" class="btn btn-info mb-2" style="display: none;" data-bs-toggle="modal" data-bs-target="#voucherPaymentModal">
-                        <i class="fas fa-receipt me-1"></i> Voucher Payment
-                    </button>
-                </div>
-            </div>
-        </div>
     </div>
 </div>
 
+<!-- Voucher Payment Modal -->
 <div class="modal fade" id="voucherPaymentModal" tabindex="-1" aria-labelledby="voucherPaymentModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -99,7 +178,7 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button class="btn btn-success" onclick="submitVoucherPayment()">Submit Payment</button>
+                <button type="submit" form="voucherPaymentForm" class="btn btn-primary">Process Payment</button>
             </div>
         </div>
     </div>
@@ -117,14 +196,249 @@
                 <!-- Dynamic content will be inserted here -->
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" onclick="submitBulkPayment()">Submit Payment</button>
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="bulkPaymentForm" class="btn btn-success">Process Bulk Payment</button>
             </div>
         </div>
     </div>
 </div>
 
 @endsection
+
+@push('scripts')
+<script>
+$(document).ready(function() {
+    // Select all checkbox functionality
+    $('#select-all').on('change', function() {
+        const isChecked = $(this).is(':checked');
+        $('.row-checkbox').prop('checked', isChecked);
+        updatePaymentButtonsVisibility();
+    });
+
+    // Individual checkbox change
+    $(document).on('change', '.row-checkbox', function() {
+        updatePaymentButtonsVisibility();
+        
+        // Update select-all checkbox state
+        const totalCheckboxes = $('.row-checkbox').length;
+        const checkedCheckboxes = $('.row-checkbox:checked').length;
+        
+        if (checkedCheckboxes === 0) {
+            $('#select-all').prop('indeterminate', false).prop('checked', false);
+        } else if (checkedCheckboxes === totalCheckboxes) {
+            $('#select-all').prop('indeterminate', false).prop('checked', true);
+        } else {
+            $('#select-all').prop('indeterminate', true);
+        }
+    });
+
+    function updatePaymentButtonsVisibility() {
+        const checkedBoxes = $('.row-checkbox:checked');
+        
+        if (checkedBoxes.length > 0) {
+            $('#bulk-payment-btn, #voucher-payment-btn').show();
+        } else {
+            $('#bulk-payment-btn, #voucher-payment-btn').hide();
+        }
+    }
+
+    // Voucher Payment Modal
+    $('#voucher-payment-btn').on('click', function() {
+        const checkedBoxes = $('.row-checkbox:checked');
+        
+        if (checkedBoxes.length === 0) {
+            alert('Please select at least one freight booking.');
+            return;
+        }
+
+        let tableBody = '';
+        let totalAmount = 0;
+
+        checkedBoxes.each(function() {
+            const checkbox = $(this);
+            const lrNumber = checkbox.data('lr');
+            const truckNumber = checkbox.data('truck');
+            const balance = parseFloat(checkbox.data('balance')) || 0;
+            const voucherNumber = checkbox.data('voucher_number');
+
+            totalAmount += balance;
+
+            tableBody += `
+                <tr>
+                    <td>${lrNumber}</td>
+                    <td>${truckNumber}</td>
+                    <td>${voucherNumber}</td>
+                    <td class="text-end">₹${balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                    <td>
+                        <input type="number" class="form-control payment-amount" 
+                               data-id="${checkbox.val()}" 
+                               value="${balance}" 
+                               min="0" 
+                               max="${balance}" 
+                               step="0.01">
+                    </td>
+                </tr>
+            `;
+        });
+
+        const modalContent = `
+            <form id="voucherPaymentForm" method="POST" action="{{ route('freight_bookings.voucher_payment') }}">
+                @csrf
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Payment Type</label>
+                        <select name="payment_type_id" class="form-select" required>
+                            <option value="">Select Payment Type</option>
+                            @foreach($paymentTypes as $type)
+                                <option value="{{ $type->id }}">{{ $type->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Payment Mode</label>
+                        <select name="payment_mode_id" class="form-select" required>
+                            <option value="">Select Payment Mode</option>
+                            @foreach($paymentModes as $mode)
+                                <option value="{{ $mode->id }}">{{ $mode->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>LR Number</th>
+                                <th>Truck Number</th>
+                                <th>Voucher Number</th>
+                                <th class="text-end">Balance Amount</th>
+                                <th class="text-end">Payment Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableBody}
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-info">
+                                <th colspan="4" class="text-end">Total Payment:</th>
+                                <th class="text-end" id="totalPaymentAmount">₹${totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Remarks</label>
+                    <textarea name="remarks" class="form-control" rows="3"></textarea>
+                </div>
+            </form>
+        `;
+
+        $('#voucherPaymentBody').html(modalContent);
+    });
+
+    // Bulk Payment Modal
+    $('#bulk-payment-btn').on('click', function() {
+        const checkedBoxes = $('.row-checkbox:checked');
+        
+        if (checkedBoxes.length === 0) {
+            alert('Please select at least one freight booking.');
+            return;
+        }
+
+        let tableBody = '';
+        let totalAmount = 0;
+
+        checkedBoxes.each(function() {
+            const checkbox = $(this);
+            const lrNumber = checkbox.data('lr');
+            const truckNumber = checkbox.data('truck');
+            const balance = parseFloat(checkbox.data('balance')) || 0;
+            const voucherNumber = checkbox.data('voucher_number');
+
+            totalAmount += balance;
+
+            tableBody += `
+                <tr>
+                    <td>${lrNumber}</td>
+                    <td>${truckNumber}</td>
+                    <td>${voucherNumber}</td>
+                    <td class="text-end">₹${balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                    <input type="hidden" name="freight_booking_ids[]" value="${checkbox.val()}">
+                    <input type="hidden" name="amounts[]" value="${balance}">
+                </tr>
+            `;
+        });
+
+        const modalContent = `
+            <form id="bulkPaymentForm" method="POST" action="{{ route('freight_bookings.bulk_payment') }}">
+                @csrf
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Payment Type</label>
+                        <select name="payment_type_id" class="form-select" required>
+                            <option value="">Select Payment Type</option>
+                            @foreach($paymentTypes as $type)
+                                <option value="{{ $type->id }}">{{ $type->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Payment Mode</label>
+                        <select name="payment_mode_id" class="form-select" required>
+                            <option value="">Select Payment Mode</option>
+                            @foreach($paymentModes as $mode)
+                                <option value="{{ $mode->id }}">{{ $mode->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>LR Number</th>
+                                <th>Truck Number</th>
+                                <th>Voucher Number</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${tableBody}
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-info">
+                                <th colspan="3" class="text-end">Total Amount:</th>
+                                <th class="text-end">₹${totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Remarks</label>
+                    <textarea name="remarks" class="form-control" rows="3"></textarea>
+                </div>
+            </form>
+        `;
+
+        $('#bulkPaymentBody').html(modalContent);
+    });
+
+    // Payment amount change handler
+    $(document).on('input', '.payment-amount', function() {
+        let total = 0;
+        $('.payment-amount').each(function() {
+            total += parseFloat($(this).val()) || 0;
+        });
+        $('#totalPaymentAmount').text('₹' + total.toLocaleString('en-IN', {minimumFractionDigits: 2}));
+    });
+});
+</script>
+@endpush
+
 <style>
     /* Modal styles */
     .lr-details-container {
