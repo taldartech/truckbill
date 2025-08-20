@@ -9,24 +9,24 @@
 <div class="card card-info card-outline mb-4" style="width: 70%;align-items: center;margin: auto;">
     <div class="row g-3">
          <div class="col-md-3 ps-4">
-            <p><strong>LR Number:</strong> {{ $lorry_receipt->first()->lr_number }}</p>
+            <p><strong>LR Number:</strong> {{ $lorry_receipt->first() ? $lorry_receipt->first()->lr_number : 'N/A' }}</p>
         </div>
         <div class="col-md-3">
-            <p><strong>Transporter:</strong> {{ $lorry_receipt->first()->transporter->name }}</p>
+            <p><strong>Transporter:</strong> {{ $lorry_receipt->first() && $lorry_receipt->first()->transporter ? $lorry_receipt->first()->transporter->name : 'N/A' }}</p>
         </div>
         <div class="col-md-3">
-            <p><strong>Truck:</strong> {{ $lorry_receipt->first()->truck->truck_number }}</p>
+            <p><strong>Truck:</strong> {{ $lorry_receipt->first() && $lorry_receipt->first()->truck ? $lorry_receipt->first()->truck->truck_number : 'N/A' }}</p>
         </div>
         <div class="col-md-3">
-            <p><strong>Customer:</strong> {{ $lorry_receipt->first()->customer->name }}</p>
+            <p><strong>Customer:</strong> {{ $lorry_receipt->first() && $lorry_receipt->first()->customer ? $lorry_receipt->first()->customer->name : 'N/A' }}</p>
         </div>
         <div class="col-md-3 ps-4">
-            <p><strong>Consignor:</strong> {{ $lorry_receipt->first()->consignor->name }}</p>
+            <p><strong>Consignor:</strong> {{ $lorry_receipt->first() && $lorry_receipt->first()->consignor ? $lorry_receipt->first()->consignor->name : 'N/A' }}</p>
         </div>
         <div class="col-md-3">
-            <p><strong>Consignee:</strong> {{ $lorry_receipt->first()->consignee->name }}</p>
+            <p><strong>Consignee:</strong> {{ $lorry_receipt->first() && $lorry_receipt->first()->consignee ? $lorry_receipt->first()->consignee->name : 'N/A' }}</p>
         </div>
-        @if($lorry_receipt->first()->freight_booking_id)
+        @if($lorry_receipt->first() && $lorry_receipt->first()->freight_booking_id)
         <div class="col-md-3">
             <div class="bg-danger text-white p-2 rounded">
                 <p class="mb-0"><strong>Old Freight Number:</strong> {{ $lorry_receipt->first()->freight_booking_id }}</p>
@@ -62,8 +62,8 @@
                 <div class="col-md-4">
                     <label for="lr_id" class="form-label">LR Number *</label>
                     <div class="input-group">
-                        <input type="hidden" name="lr_id" id="lr_id" value="{{ isset($preFilled) ? $preFilled['lr_id'] : old('lr_id') }}" required>
-                        <span class="input-group-text">{{ isset($preFilled) ? $preFilled['lr_number'] : '' }}</span>
+                        <input type="hidden" name="lr_id" id="lr_id" value="{{ isset($preFilled) && isset($preFilled['lr_id']) ? $preFilled['lr_id'] : old('lr_id') }}" required>
+                        <span class="input-group-text">{{ isset($preFilled) && isset($preFilled['lr_number']) ? $preFilled['lr_number'] : '' }}</span>
                     </div>
                     @error('lr_id') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
@@ -72,8 +72,8 @@
                 <div class="col-md-4">
                     <label for="transporter_id" class="form-label">Transporter *</label>
                     <div class="input-group">
-                        <input type="hidden" name="transporter_id" value="{{ isset($preFilled) ? $preFilled['transporter_id'] : '' }}">
-                        <input type="text" class="form-control" readonly value="{{ isset($preFilled) ? $preFilled['transporter_name'] : '' }}">
+                        <input type="hidden" name="transporter_id" value="{{ isset($preFilled) && isset($preFilled['transporter_id']) ? $preFilled['transporter_id'] : '' }}">
+                        <input type="text" class="form-control" readonly value="{{ isset($preFilled) && isset($preFilled['transporter_name']) ? $preFilled['transporter_name'] : '' }}">
                     </div>
                     @error('transporter_id') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
@@ -82,8 +82,8 @@
                 <div class="col-md-4">
                     <label for="truck_id" class="form-label">Truck *</label>
                     <div class="input-group">
-                        <input type="hidden" name="truck_id" value="{{ isset($preFilled) ? $preFilled['truck_id'] : '' }}">
-                        <input type="text" class="form-control" readonly value="{{ isset($preFilled) ? $preFilled['truck_number'] : '' }}">
+                        <input type="hidden" name="truck_id" value="{{ isset($preFilled) && isset($preFilled['truck_id']) ? $preFilled['truck_id'] : '' }}">
+                        <input type="text" class="form-control" readonly value="{{ isset($preFilled) && isset($preFilled['truck_number']) ? $preFilled['truck_number'] : '' }}">
                     </div>
                     @error('truck_id') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
@@ -132,8 +132,8 @@
             <div class="col-md-4 mb-3">
                 <label for="good_type" class="form-label">Goods Type</label>
                 <div class="input-group">
-                    <input type="hidden" name="good_type" value="{{ isset($preFilled) ? $preFilled['goods_type'] : '' }}">
-                    <input type="text" class="form-control" readonly value="{{ isset($preFilled) ? $preFilled['goods_type'] : '' }}">
+                    <input type="hidden" name="good_type" value="{{ isset($preFilled) && isset($preFilled['goods_type']) ? $preFilled['goods_type'] : '' }}">
+                    <input type="text" class="form-control" readonly value="{{ isset($preFilled) && isset($preFilled['goods_type']) ? $preFilled['goods_type'] : '' }}">
                 </div>
                 @error('good_type') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
