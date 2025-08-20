@@ -633,4 +633,168 @@ $actions .= '</a>';
         $freight_booking->delete();
         return redirect()->route('freight_bookings.index')->with('success', 'Freight Booking deleted.');
     }
+
+    /**
+     * Process voucher payment for selected freight bookings
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function voucherPayment(Request $request)
+    {
+        try {
+            // Validate the request
+            $validated = $request->validate([
+                'payment_type' => 'required|string',
+                'payment_mode' => 'required|string',
+                'payment_date' => 'required|date',
+                'reference_number' => 'nullable|string',
+                'notes' => 'nullable|string',
+                'booking_ids' => 'required|array',
+                'booking_ids.*' => 'required|integer|exists:freight_bookings,id',
+                'payment_amounts' => 'required|array',
+                'payment_amounts.*' => 'required|numeric|min:0',
+                'total_amount' => 'required|numeric|min:0'
+            ]);
+
+            // Begin transaction
+            \DB::beginTransaction();
+            
+            // Create payment record
+            $payment = \App\Models\Payment::create([
+                'payment_type' => $validated['payment_type'],
+                'payment_mode' => $validated['payment_mode'],
+                'payment_date' => $validated['payment_date'],
+                'reference_number' => $validated['reference_number'] ?? null,
+                'notes' => $validated['notes'] ?? null,
+                'total_amount' => $validated['total_amount'],
+                'company_id' => auth()->user()->company_id,
+                'created_by' => auth()->id()
+            ]);
+            
+            // Process each booking payment
+            foreach ($validated['booking_ids'] as $index => $bookingId) {
+                $amount = $validated['payment_amounts'][$index] ?? 0;
+                
+                if ($amount > 0) {
+                    $freightBooking = FreightBooking::findOrFail($bookingId);
+                    
+                    // Create payment detail
+                    \App\Models\PaymentDetail::create([
+                        'payment_id' => $payment->id,
+                        'freight_booking_id' => $bookingId,
+                        'amount' => $amount,
+                        'created_by' => auth()->id()
+                    ]);
+                    
+                    // Update freight booking balance
+                    $newBalance = max(0, $freightBooking->balance_amount - $amount);
+                    $freightBooking->update([
+                        'balance_amount' => $newBalance,
+                        'is_paid' => ($newBalance == 0) ? 1 : 0
+                    ]);
+                }
+            }
+            
+            \DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Voucher payment processed successfully',
+                'payment_id' => $payment->id
+            ]);
+            
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            \Log::error('Voucher payment error: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error processing payment: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Process bulk payment for selected freight bookings
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function bulkPayment(Request $request)
+    {
+        try {
+            // Validate the request
+            $validated = $request->validate([
+                'payment_type' => 'required|string',
+                'payment_mode' => 'required|string',
+                'payment_date' => 'required|date',
+                'reference_number' => 'nullable|string',
+                'notes' => 'nullable|string',
+                'booking_ids' => 'required|array',
+                'booking_ids.*' => 'required|integer|exists:freight_bookings,id',
+                'payment_amounts' => 'required|array',
+                'payment_amounts.*' => 'required|numeric|min:0'
+            ]);
+
+            // Begin transaction
+            \DB::beginTransaction();
+            
+            // Calculate total amount
+            $totalAmount = array_sum($validated['payment_amounts']);
+            
+            // Create payment record
+            $payment = \App\Models\Payment::create([
+                'payment_type' => $validated['payment_type'],
+                'payment_mode' => $validated['payment_mode'],
+                'payment_date' => $validated['payment_date'],
+                'reference_number' => $validated['reference_number'] ?? null,
+                'notes' => $validated['notes'] ?? null,
+                'total_amount' => $totalAmount,
+                'company_id' => auth()->user()->company_id,
+                'created_by' => auth()->id()
+            ]);
+            
+            // Process each booking payment
+            foreach ($validated['booking_ids'] as $index => $bookingId) {
+                $amount = $validated['payment_amounts'][$index] ?? 0;
+                
+                if ($amount > 0) {
+                    $freightBooking = FreightBooking::findOrFail($bookingId);
+                    
+                    // Create payment detail
+                    \App\Models\PaymentDetail::create([
+                        'payment_id' => $payment->id,
+                        'freight_booking_id' => $bookingId,
+                        'amount' => $amount,
+                        'created_by' => auth()->id()
+                    ]);
+                    
+                    // Update freight booking balance
+                    $newBalance = max(0, $freightBooking->balance_amount - $amount);
+                    $freightBooking->update([
+                        'balance_amount' => $newBalance,
+                        'is_paid' => ($newBalance == 0) ? 1 : 0
+                    ]);
+                }
+            }
+            
+            \DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Bulk payment processed successfully',
+                'payment_id' => $payment->id
+            ]);
+            
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            \Log::error('Bulk payment error: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error processing payment: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
