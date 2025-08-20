@@ -2,7 +2,7 @@
 
 @section('content')
 
-@dd($lorry_receipt->first());
+{{-- @dd($lorry_receipt); --}}
 
 
 
