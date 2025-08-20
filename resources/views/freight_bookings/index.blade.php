@@ -29,6 +29,7 @@
             <table id="freightBookingsTable" class="table table-bordered table-striped">
                 <thead>
                     <tr>
+                        <th style="width: 40px;"><input type="checkbox" id="select-all"></th>
                         <th style="width: 80px;">Sr. No</th>
                         <th>LR Number</th>
                         <th>Voucher No</th>
@@ -38,6 +39,7 @@
                         <th>Balance</th>
                         <th>GR Date</th>
                         <th>Delivered</th>
+                        <th>Cancelled</th>
                         <th style="width: 120px;">Actions</th>
                     </tr>
                 </thead>
@@ -115,10 +117,8 @@
                 <!-- Dynamic content will be inserted here -->
             </div>
             <div class="modal-footer">
-                <a href="#" id="editFreightBookingBtn" class="btn btn-primary">
-                    <i class="bi bi-pencil"></i> Edit
-                </a>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="submitBulkPayment()">Submit Payment</button>
             </div>
         </div>
     </div>
@@ -328,12 +328,24 @@ $(document).ready(function() {
     $('[data-bs-toggle="tooltip"]').tooltip();
     
     // DataTable initialization
-    var table = $('#freight-bookings-table').DataTable({
+    var table = $('#freightBookingsTable').DataTable({
         processing: true,
         serverSide: true,
         ajax: {
-            url: '{{ route("freight_bookings.index") }}',
-            type: 'GET'
+            url: '{{ route("freight_bookings.datatable") }}',
+            type: 'GET',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            error: function(xhr, error, thrown) {
+                console.error('DataTables error:', error);
+                console.error('Status:', xhr.status);
+                console.error('Response:', xhr.responseText);
+                alert('DataTables error: ' + error + '. Check console for details.');
+            },
+            success: function(data) {
+                console.log('DataTables success:', data);
+            }
         },
         columns: [
             {
@@ -342,132 +354,67 @@ $(document).ready(function() {
                 orderable: false,
                 searchable: false,
                 width: '5%',
-                className: 'text-center',
-                render: function(data, type, row) {
-                    return `<input type="checkbox" class="row-checkbox" value="${row.id}" 
-                        data-lr="${row.lr_number || ''}" 
-                        data-truck="${row.truck_number || ''}" 
-                        data-balance="${row.balance || 0}">`;
-                }
+                className: 'text-center'
             },
             {
-                data: 'id',
-                name: 'id',
+                data: 'DT_RowIndex',
+                name: 'DT_RowIndex',
+                orderable: false,
+                searchable: false,
                 width: '50px',
-                className: 'text-center align-middle',
-                render: function(data, type, row) {
-                    return `<span class="table-link" onclick="showFreightBookingDetails(${data})">${data}</span>`;
-                }
+                className: 'text-center align-middle'
             },
             {
                 data: 'lr_number',
                 name: 'lr_number',
-                className: 'align-middle',
-                render: function(data, type, row) {
-                    if (type === 'display' && data) {
-                        return `<span class="table-link" onclick="showFreightBookingDetails(${row.id})">${data}</span>`;
-                    }
-                    return data || '-';
-                }
+                className: 'align-middle'
             },
             {
                 data: 'voucher_number',
                 name: 'voucher_number',
-                className: 'align-middle',
-                render: function(data, type, row) {
-                    return data || '-';
-                }
+                className: 'align-middle'
             },
             {
-                data: 'tr_rate',
-                name: 'tr_rate',
+                data: 'tr_rate_formatted',
+                name: 'tr_rate_formatted',
                 className: 'text-end align-middle',
-                render: function(data, type, row) {
-                    if (type === 'display' && data) {
-                        return '₹' + parseFloat(data).toFixed(2);
-                    }
-                    return data || 0;
-                }
+                orderable: false
             },
             {
-                data: 'tr_amount',
-                name: 'tr_amount',
+                data: 'tr_amount_formatted',
+                name: 'tr_amount_formatted',
                 className: 'text-end align-middle',
-                render: function(data, type, row) {
-                    if (type === 'display' && data) {
-                        return '₹' + parseFloat(data).toFixed(2);
-                    }
-                    return data || 0;
-                }
+                orderable: false
             },
             {
-                data: 'advance',
-                name: 'advance',
+                data: 'advance_formatted',
+                name: 'advance_formatted',
                 className: 'text-end align-middle',
-                render: function(data, type, row) {
-                    if (type === 'display' && data) {
-                        return '₹' + parseFloat(data).toFixed(2);
-                    }
-                    return data || 0;
-                }
+                orderable: false
             },
             {
-                data: 'balance',
-                name: 'balance',
+                data: 'balance_formatted',
+                name: 'balance_formatted',
                 className: 'text-end align-middle',
-                render: function(data, type, row) {
-                    if (type === 'display') {
-                        const balance = parseFloat(row.tr_amount || 0) - parseFloat(row.advance || 0);
-                        return '₹' + balance.toFixed(2);
-                    }
-                    return data || 0;
-                }
+                orderable: false
             },
             {
-                data: 'gr_date',
-                name: 'gr_date',
+                data: 'gr_date_formatted',
+                name: 'gr_date_formatted',
                 className: 'text-center align-middle',
-                render: function(data, type, row) {
-                    if (type === 'display' && data) {
-                        // Format date as dd-mm-yyyy
-                        const date = new Date(data);
-                        const day = date.getDate().toString().padStart(2, '0');
-                        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                        const year = date.getFullYear();
-                        return `${day}-${month}-${year}`;
-                    }
-                    return data || '-';
-                }
+                orderable: false
             },
             {
-                data: 'is_delivered',
-                name: 'is_delivered',
+                data: 'is_delivered_badge',
+                name: 'is_delivered_badge',
                 className: 'text-center align-middle',
-                render: function(data, type, row) {
-                    if (type === 'display') {
-                        if (data == 1) {
-                            return '<span class="badge bg-success">Yes</span>';
-                        } else {
-                            return '<span class="badge bg-warning">No</span>';
-                        }
-                    }
-                    return data;
-                }
+                orderable: false
             },
             {
-                data: 'is_cancelled',
-                name: 'is_cancelled',
+                data: 'is_cancelled_badge',
+                name: 'is_cancelled_badge',
                 className: 'text-center align-middle',
-                render: function(data, type, row) {
-                    if (type === 'display') {
-                        if (data == 1) {
-                            return '<span class="badge bg-danger">Yes</span>';
-                        } else {
-                            return '<span class="badge bg-secondary">No</span>';
-                        }
-                    }
-                    return data;
-                }
+                orderable: false
             },
             {
                 data: 'actions',
@@ -481,45 +428,12 @@ $(document).ready(function() {
         order: [[1, 'desc']],
         pageLength: 25,
         lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-        dom: '<"row mb-3"<"col-md-6"B><"col-md-6"f>>' +
-             '<"row"<"col-sm-12"tr>>' +
-             '<"row mt-3"<"col-md-5"i><"col-md-7"p>>',
+        dom: 'Bfrtip',
         buttons: [
-            {
-                extend: 'excel',
-                className: 'btn btn-sm btn-outline-secondary',
-                text: '<i class="fas fa-file-excel me-1"></i> Export Excel',
-                exportOptions: {
-                    columns: ':visible:not(:first-child):not(:last-child)'
-                },
-                title: 'Freight Bookings - ' + new Date().toLocaleDateString()
-            }
+            'excel'
         ],
-        language: {
-            search: "<i class='fas fa-search'></i> _INPUT_",
-            searchPlaceholder: "Search records...",
-            lengthMenu: "Show _MENU_ entries",
-            info: "Showing _START_ to _END_ of _TOTAL_ entries",
-            infoEmpty: "Showing 0 to 0 of 0 entries",
-            infoFiltered: "(filtered from _MAX_ total entries)",
-            zeroRecords: "No matching records found",
-            emptyTable: "No data available",
-            paginate: {
-                first: "<i class='fas fa-angle-double-left'></i>",
-                last: "<i class='fas fa-angle-double-right'></i>",
-                next: "<i class='fas fa-angle-right'></i>",
-                previous: "<i class='fas fa-angle-left'></i>"
-            }
-        },
         responsive: true,
-        autoWidth: false,
-        stateSave: true,
-        stateDuration: 60 * 60 * 24 * 7, // 1 week
-        searchDelay: 350,
-        scrollX: true,
         drawCallback: function() {
-            // Initialize tooltips after each draw
-            $('[data-bs-toggle="tooltip"]').tooltip();
             updatePaymentButtonsVisibility();
         }
     });
@@ -530,7 +444,16 @@ $(document).ready(function() {
         table.column(index).search(this.value).draw();
     });
     
-    // Apply select filters
+    // Select all checkbox handler
+    $('#select-all').on('change', function() {
+        const checked = this.checked;
+        $('.row-checkbox').prop('checked', checked);
+        updatePaymentButtonsVisibility();
+    });
+    
+    // Individual checkbox handler
+    $(document).on('change', '.row-checkbox', function() {
+        const allChecked = $('.row-checkbox:checked').length === $('.row-checkbox').length;
         $('#select-all').prop('checked', allChecked && $('.row-checkbox').length > 0);
         updatePaymentButtonsVisibility();
     });
@@ -648,16 +571,19 @@ function handleVoucherPayment() {
 
     lrData.forEach((item, index) => {
         const voucherNumber = checkboxes[index].getAttribute('data-voucher_number');
-        modalBody.querySelector('tbody').innerHTML += `
-            <tr>
-                <td>${index + 1}</td>
-                <td>${item.lrNumber || 'N/A'}</td>
-                <td>${voucherNumber || 'N/A'}</td>
-                <td class="text-end">₹${item.balance.toFixed(2)}</td>
-                <td class="text-end">₹<span class="allocated-amount" data-lr="${item.lrNumber}">0.00</span></td>
-            </tr>
-            <input type="hidden" class="allocated-input" data-lr="${item.lrNumber}" name="allocated_amounts[${index}]" value="0">
-        `;
+        const tbody = modalBody.querySelector('tbody');
+        if (tbody) {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${item.lrNumber || 'N/A'}</td>
+                    <td>${voucherNumber || 'N/A'}</td>
+                    <td class="text-end">₹${item.balance.toFixed(2)}</td>
+                    <td class="text-end">₹<span class="allocated-amount" data-lr="${item.lrNumber}">0.00</span></td>
+                </tr>
+                <input type="hidden" class="allocated-input" data-lr="${item.lrNumber}" name="allocated_amounts[${index}]" value="0">
+            `;
+        }
     });
 
     modalBody.innerHTML += `
@@ -782,111 +708,10 @@ function handleVoucherPayment() {
     modal.show();
 }
 
-function updateBulkPaymentTotal() {
-    const selectedCheckboxes = document.querySelectorAll('.bulk-payment-checkbox:checked');
-    let total = 0;
-    
-    selectedCheckboxes.forEach(cb => {
-        total += parseFloat(cb.getAttribute('data-balance') || 0);
-    });
-    
-    document.getElementById('bulkPaymentTotal').textContent = total.toFixed(2);
-}
+// Function moved to a more complete implementation below
 
-function submitBulkPayment() {
-    // Get form values
-    const paymentType = document.getElementById('bulkPaymentType').value;
-    const paymentMode = document.getElementById('bulkPaymentMode').value;
-    const paymentDate = document.getElementById('bulkPaymentDate').value;
-    const referenceNumber = document.getElementById('bulkPaymentReference').value;
-    const notes = document.getElementById('bulkPaymentNotes').value;
-    
-    // Validate required fields
-    if (!paymentType || !paymentMode || !paymentDate) {
-        alert('Please fill all required fields.');
-        return;
-    }
-    
-    // Get selected bookings
-    const selectedCheckboxes = document.querySelectorAll('.bulk-payment-checkbox:checked');
-    if (selectedCheckboxes.length === 0) {
-        alert('Please select at least one booking for payment.');
-        return;
-    }
-    
-    // Prepare booking IDs and amounts
-    const bookingIds = [];
-    const paymentAmounts = [];
-    
-    selectedCheckboxes.forEach(cb => {
-        bookingIds.push(cb.value);
-        paymentAmounts.push(parseFloat(cb.getAttribute('data-balance') || 0));
-    });
-    
-    // Update hidden fields
-    document.getElementById('bulkPaymentIds').value = JSON.stringify(bookingIds);
-    document.getElementById('bulkPaymentAmounts').value = JSON.stringify(paymentAmounts);
-    
-    // Show processing state
-    const submitBtn = document.getElementById('bulkPaymentSubmitBtn');
-    const originalBtnText = submitBtn.innerHTML;
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
-    
-    // Submit form via AJAX
-    $.ajax({
-        url: '{{ route("freight_bookings.bulk_payment") }}',
-        type: 'POST',
-        data: {
-            _token: '{{ csrf_token() }}',
-            payment_type: paymentType,
-            payment_mode: paymentMode,
-            payment_date: paymentDate,
-            reference_number: referenceNumber,
-            notes: notes,
-            booking_ids: bookingIds,
-            payment_amounts: paymentAmounts
-        },
-        success: function(response) {
-            // Reset button state
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalBtnText;
-            
-            // Close modal
-            bootstrap.Modal.getInstance(document.getElementById('bulkPaymentModal')).hide();
-            
-            // Show success message
-            Swal.fire({
-                icon: 'success',
-                title: 'Success!',
-                text: response.message || 'Bulk payment processed successfully.',
-                confirmButtonText: 'OK'
-            }).then(() => {
-                // Refresh the table
-                $('#freightBookingsTable').DataTable().ajax.reload();
-            });
-        },
-        error: function(xhr) {
-            // Reset button state
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalBtnText;
-            
-            // Show error message
-            const errorMessage = xhr.responseJSON?.message || 'An error occurred while processing the payment.';
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: errorMessage,
-                confirmButtonText: 'OK'
-            });
-        }
-    });
-}
-// Add event listener for the Bulk Payment button
-document.getElementById('bulkPaymentBtn').addEventListener('click', handleBulkPayment);
-
-// Add event listener for the Bulk Payment submit button
-document.getElementById('bulkPaymentSubmitBtn').addEventListener('click', submitBulkPayment);
+// Function moved to a more complete implementation below
+// Bulk payment submit is handled via onclick attribute in the HTML
 
 // Initialize tooltips
 document.addEventListener('DOMContentLoaded', function() {
@@ -897,202 +722,108 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-$(document).ready(function() {
-    // Initialize DataTable
-    console.log('Initializing DataTable...');
-    var table = $('#freightBookingsTable').DataTable({
-        processing: true,
-        serverSide: true,
-        ajax: {
-            url: '{{ route("freight_bookings.datatable") }}',
-            error: function(xhr, error, thrown) {
-                console.error('DataTables error:', error);
-                console.error('Status:', xhr.status);
-                console.error('Response:', xhr.responseText);
-                // Show error message to user
-                $('#freightBookingsTable').before(
-                    '<div class="alert alert-danger">Error loading data. Please check console for details.</div>'
-                );
-            }
-        },
-        columns: [
-            { 
-                data: 'DT_RowIndex', 
-                name: 'DT_RowIndex', 
-                orderable: false, 
-                searchable: false 
-            },
-            { 
-                data: 'lr_number', 
-                name: 'lr_number',
-                render: function(data, type, row) {
-                    return '<span class="clickable lr-number" data-id="' + row.id + '">' + data + '</span>';
-                }
-            },
-            { 
-                data: 'voucher_number', 
-                name: 'voucher_number' 
-            },
-            { 
-                data: 'tr_rate_formatted', 
-                name: 'tr_rate_formatted',
-                orderable: false
-            },
-            { 
-                data: 'tr_amount_formatted', 
-                name: 'tr_amount_formatted',
-                orderable: false
-            },
-            { 
-                data: 'advance_formatted', 
-                name: 'advance_formatted',
-                orderable: false
-            },
-            { 
-                data: 'balance_formatted', 
-                name: 'balance_formatted',
-                orderable: false
-            },
-            { 
-                data: 'gr_date_formatted', 
-                name: 'gr_date_formatted',
-                orderable: false
-            },
-            { 
-                data: 'is_delivered_badge', 
-                name: 'is_delivered_badge',
-                orderable: false
-            },
-            { 
-                data: 'actions', 
-                name: 'actions', 
-                orderable: false, 
-                searchable: false,
-                className: 'text-center'
-            },
-        ],
-        order: [[0, 'desc']],
-        dom: 'Bfrtip',
-        buttons: [
-            'copy', 'csv', 'excel', 'pdf', 'print', 'colvis'
-        ],
-        pageLength: 25,
-        responsive: true,
-        createdRow: function(row, data, dataIndex) {
-            if (data.memo_id) {
-                $(row).addClass('memo-assigned');
-            }
-        },
-        initComplete: function(settings, json) {
-            console.log('DataTables initialization complete');
-            console.log('Data received:', json);
-        }
-    });
+// Function to show freight booking details in modal
+function showFreightBookingDetails(id) {
+    const modal = new bootstrap.Modal(document.getElementById('lrDetailsModal'));
+    const contentDiv = document.getElementById('lrDetailsContent');
+    const editBtn = document.getElementById('editFreightBookingBtn');
 
-    // Handle click on LR number to show details
-    $(document).on('click', '.lr-number', function(e) {
-        e.preventDefault();
-        const id = $(this).data('id');
-        showFreightBookingDetails(id);
-    });
+    // Show loading state
+    contentDiv.innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>`;
 
-    // Function to show freight booking details in modal
-    function showFreightBookingDetails(id) {
-        const modal = new bootstrap.Modal(document.getElementById('lrDetailsModal'));
-        const contentDiv = document.getElementById('lrDetailsContent');
-        const editBtn = document.getElementById('editFreightBookingBtn');
-
-        // Show loading state
-        contentDiv.innerHTML = `
-            <div class="text-center">
-                <div class="spinner-border" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            </div>`;
-
-        // Fetch freight booking details
-        fetch(`/api/freight-bookings/${id}/details`)
-            .then(response => response.json())
-            .then(fb => {
-                let detailsHtml = `
-                    <div class="row">
-                        <!-- Basic Information -->
-                        <div class="col-md-6">
-                            <div class="card mb-3">
-                                <div class="card-header bg-light">
-                                    <h6 class="mb-0">Basic Information</h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row mb-2">
-                                        <div class="col-md-6"><strong>LR Number:</strong></div>
-                                        <div class="col-md-6">${fb.lr_no || 'N/A'}</div>
-                                    </div>
-                                    <div class="row mb-2">
-                                        <div class="col-md-6"><strong>Voucher No:</strong></div>
-                                        <div class="col-md-6">${fb.voucher_no || 'N/A'}</div>
-                                    </div>
-                                    <div class="row mb-2">
-                                        <div class="col-md-6"><strong>GR Date:</strong></div>
-                                        <div class="col-md-6">${fb.gr_date || 'N/A'}</div>
-                                    </div>
-                                    <div class="row mb-2">
-                                        <div class="col-md-6"><strong>Status:</strong></div>
-                                        <div class="col-md-6">
-                                            <span class="badge bg-${fb.is_cancelled ? 'danger' : (fb.is_delivered ? 'success' : 'secondary')}">
-                                                ${fb.is_cancelled ? 'Cancelled' : (fb.is_delivered ? 'Delivered' : 'In Transit')}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
+    // Fetch freight booking details
+    fetch(`/api/freight-bookings/${id}/details`)
+        .then(response => response.json())
+        .then(fb => {
+            let detailsHtml = `
+                <div class="row">
+                    <!-- Basic Information -->
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">Basic Information</h6>
                             </div>
-                        </div>
-                        
-                        <!-- Financial Information -->
-                        <div class="col-md-6">
-                            <div class="card mb-3">
-                                <div class="card-header bg-light">
-                                    <h6 class="mb-0">Financial Information</h6>
+                            <div class="card-body">
+                                <div class="row mb-2">
+                                    <div class="col-md-6"><strong>LR Number:</strong></div>
+                                    <div class="col-md-6">${fb.lr_no || 'N/A'}</div>
                                 </div>
-                                <div class="card-body">
-                                    <div class="row mb-2">
-                                        <div class="col-md-6"><strong>TR Rate:</strong></div>
-                                        <div class="col-md-6">${fb.tr_rate || '0.00'}</div>
-                                    </div>
-                                    <div class="row mb-2">
-                                        <div class="col-md-6"><strong>TR Amount:</strong></div>
-                                        <div class="col-md-6">${fb.tr_amount || '0.00'}</div>
-                                    </div>
-                                    <div class="row mb-2">
-                                        <div class="col-md-6"><strong>Advance:</strong></div>
-                                        <div class="col-md-6">${fb.advance || '0.00'}</div>
-                                    </div>
-                                    <div class="row mb-2">
-                                        <div class="col-md-6"><strong>Balance:</strong></div>
-                                        <div class="col-md-6">${fb.balance || '0.00'}</div>
+                                <div class="row mb-2">
+                                    <div class="col-md-6"><strong>Voucher No:</strong></div>
+                                    <div class="col-md-6">${fb.voucher_no || 'N/A'}</div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-md-6"><strong>GR Date:</strong></div>
+                                    <div class="col-md-6">${fb.gr_date || 'N/A'}</div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-md-6"><strong>Status:</strong></div>
+                                    <div class="col-md-6">
+                                        <span class="badge bg-${fb.is_cancelled ? 'danger' : (fb.is_delivered ? 'success' : 'secondary')}">
+                                            ${fb.is_cancelled ? 'Cancelled' : (fb.is_delivered ? 'Delivered' : 'In Transit')}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>`;
+                    
+                    <!-- Financial Information -->
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">Financial Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-2">
+                                    <div class="col-md-6"><strong>TR Rate:</strong></div>
+                                    <div class="col-md-6">${fb.tr_rate || '0.00'}</div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-md-6"><strong>TR Amount:</strong></div>
+                                    <div class="col-md-6">${fb.tr_amount || '0.00'}</div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-md-6"><strong>Advance:</strong></div>
+                                    <div class="col-md-6">${fb.advance || '0.00'}</div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-md-6"><strong>Balance:</strong></div>
+                                    <div class="col-md-6">${fb.balance || '0.00'}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
 
-            contentDiv.innerHTML = detailsHtml;
-            
-            // Set edit button URL
-            if (editBtn) {
-                editBtn.href = `/freight_bookings/${id}/edit`;
-            }
-            
-            modal.show();
-        })
-        .catch(error => {
-            console.error('Error fetching Freight Booking details:', error);
-            contentDiv.innerHTML = '<div class="alert alert-danger">Error loading details. Please try again.</div>';
-            modal.show();
-        });
+        contentDiv.innerHTML = detailsHtml;
+        
+        // Set edit button URL
+        if (editBtn) {
+            editBtn.href = `/freight_bookings/${id}/edit`;
+        }
+        
+        modal.show();
+    })
+    .catch(error => {
+        console.error('Error fetching Freight Booking details:', error);
+        contentDiv.innerHTML = '<div class="alert alert-danger">Error loading details. Please try again.</div>';
+        modal.show();
+    });
 }
 
-</script>
+// Handle click on LR number to show details
+$(document).on('click', '.lr-number', function(e) {
+    e.preventDefault();
+    const id = $(this).data('id');
+    showFreightBookingDetails(id);
+});</script>
 
 <script>
 function handleBulkPayment() {
@@ -1167,20 +898,23 @@ function handleBulkPayment() {
     `;
 
     lrData.forEach((item, index) => {
-        modalBody.querySelector('#bulkPaymentTableBody').innerHTML += `
-            <tr>
-                <td class="text-center">
-                    <input type="checkbox" class="bulk-row-checkbox" data-id="${item.id}" data-balance="${item.balance}" checked>
-                </td>
-                <td>${item.lrNumber || 'N/A'}</td>
-                <td class="text-end">₹${item.balance.toFixed(2)}</td>
-                <td class="text-end">
-                    <input type="number" class="form-control form-control-sm bulk-payment-amount" 
-                        data-id="${item.id}" value="${item.balance.toFixed(2)}" 
-                        min="0" max="${item.balance}" step="0.01">
-                </td>
-            </tr>
-        `;
+        const tableBody = modalBody.querySelector('#bulkPaymentTableBody');
+        if (tableBody) {
+            tableBody.innerHTML += `
+                <tr>
+                    <td class="text-center">
+                        <input type="checkbox" class="bulk-row-checkbox" data-id="${item.id}" data-balance="${item.balance}" checked>
+                    </td>
+                    <td>${item.lrNumber || 'N/A'}</td>
+                    <td class="text-end">₹${item.balance.toFixed(2)}</td>
+                    <td class="text-end">
+                        <input type="number" class="form-control form-control-sm bulk-payment-amount" 
+                            data-id="${item.id}" value="${item.balance.toFixed(2)}" 
+                            min="0" max="${item.balance}" step="0.01">
+                    </td>
+                </tr>
+            `;
+        }
     });
 
     modalBody.innerHTML += `
@@ -1410,7 +1144,7 @@ function submitBulkPayment() {
             });
             
             // Refresh the table
-            $('#freight-bookings-table').DataTable().ajax.reload();
+            $('#freightBookingsTable').DataTable().ajax.reload();
         } else {
             // Show error message
             Swal.fire({
@@ -1522,7 +1256,7 @@ function submitVoucherPayment() {
             // Show success message
             alert(data.message || 'Payment processed successfully!');
             // Refresh the table
-            $('#freight-bookings-table').DataTable().ajax.reload();
+            $('#freightBookingsTable').DataTable().ajax.reload();
         } else {
             // Show error message
             alert(data.message || 'Error processing payment. Please try again.');

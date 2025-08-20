@@ -41,32 +41,28 @@ class FreightBookingController extends Controller
     public function getFreightBookingsData(Request $request)
     {
         try {
-            $query = FreightBooking::with(['lr', 'linkedFreightBooking', 'company'])
-                ->leftJoin('lorry_receipts', 'freight_bookings.lr_id', '=', 'lorry_receipts.id')
+            \Log::info('FreightBookings DataTables request started');
+            
+            $query = FreightBooking::with(['lr.truck', 'linkedFreightBooking', 'company'])
                 ->select('freight_bookings.*');
 
             // Only apply company_id filter for non-super_admin users
             if (auth()->user()->userRole->name !== 'super_admin') {
                 $query->where('freight_bookings.company_id', auth()->user()->company_id);
             }
+            
+            \Log::info('Query built, processing DataTables');
 
-            return DataTables::of($query)
+            $dataTable = DataTables::of($query)
+                ->addIndexColumn()
                 ->addColumn('checkbox', function ($row) {
                     return sprintf(
-                        '<input type="checkbox" class="rowCheckbox" value="%s" \
-                        data-lr="%s" \
-                        data-truck="%s" \
-                        data-freight_booking_id="%s" \
-                        data-balance="%s" \
-                        data-voucher_number="%s" \
-                        data-payment-status="%s">',
+                        '<input type="checkbox" class="row-checkbox" value="%s" data-lr="%s" data-truck="%s" data-balance="%s" data-voucher_number="%s">',
                         $row->id,
                         $row->lr ? $row->lr->lr_number : '',
                         $row->lr && $row->lr->truck ? $row->lr->truck->truck_number : '',
-                        $row->id,
                         $row->balance_amount ?? 0,
-                        $row->voucher_number ?? '',
-                        strtolower($row->lr ? $row->lr->delivery_status : '')
+                        $row->voucher_number ?? ''
                     );
                 })
                 ->addColumn('lr_number', function ($row) {
@@ -117,12 +113,20 @@ class FreightBookingController extends Controller
                         $q->where('lr_number', 'like', "%{$keyword}%");
                     });
                 })
-                ->orderColumn('lr_number', 'lorry_receipts.lr_number $1')
-                ->rawColumns(['is_delivered_badge', 'is_cancelled_badge', 'actions'])
-                ->make(true);
+                ->rawColumns(['checkbox', 'is_delivered_badge', 'is_cancelled_badge', 'actions']);
+            
+            \Log::info('DataTables processing complete');
+            return $dataTable->make(true);
         } catch (\Exception $e) {
             \Log::error('DataTables error: ' . $e->getMessage());
-            return response()->json(['error' => $e->getMessage()], 500);
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return response()->json([
+                'draw' => intval($request->input('draw')),
+                'recordsTotal' => 0,
+                'recordsFiltered' => 0,
+                'data' => [],
+                'error' => $e->getMessage()
+            ], 200);
         }
     }
 
@@ -383,17 +387,46 @@ $actions .= '</a>';
         return redirect()->route('lorry_receipts.index')->with('success', 'Freight Booking created successfully.');
     }
 
-    public function edit(FreightBooking $freight_booking)
+    public function show($id)
     {
+        try {
+            $freight_booking = FreightBooking::with(['lr', 'linkedFreightBooking', 'company'])->findOrFail($id);
+            
+            // Check if user has access to this freight booking (company-based filtering)
+            if (auth()->user()->userRole->name !== 'super_admin' && 
+                $freight_booking->company_id !== auth()->user()->company_id) {
+                abort(403, 'Unauthorized access to freight booking.');
+            }
+            
+            return view('freight_bookings.show', compact('freight_booking'));
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return redirect()->route('freight_bookings.index')
+                ->with('error', 'Freight booking not found.');
+        } catch (\Exception $e) {
+            return redirect()->route('freight_bookings.index')
+                ->with('error', 'An error occurred while loading the freight booking.');
+        }
+    }
 
-        $companies = \App\Models\Company::all();
-        // Get the LorryReceipt details
-        $lorryReceipt = LorryReceipt::find($freight_booking->lr_id);
-         // Get TDS percentages from config
-         $tdsPercentages = [
-            'default' => env('TDS_PERCENTAGE_DEFAULT', 20),
-            'agency' => env('TDS_PERCENTAGE_AGENCY', 2),
-            'owner' => env('TDS_PERCENTAGE_OWNER', 1)
+    public function edit($id)
+    {
+        try {
+            $freight_booking = FreightBooking::with(['lr', 'linkedFreightBooking', 'company'])->findOrFail($id);
+            
+            // Check if user has access to this freight booking (company-based filtering)
+            if (auth()->user()->userRole->name !== 'super_admin' && 
+                $freight_booking->company_id !== auth()->user()->company_id) {
+                abort(403, 'Unauthorized access to freight booking.');
+            }
+
+            $companies = \App\Models\Company::all();
+            // Get the LorryReceipt details
+            $lorryReceipt = LorryReceipt::find($freight_booking->lr_id);
+             // Get TDS percentages from config
+             $tdsPercentages = [
+                'default' => env('TDS_PERCENTAGE_DEFAULT', 20),
+                'agency' => env('TDS_PERCENTAGE_AGENCY', 2),
+                'owner' => env('TDS_PERCENTAGE_OWNER', 1)
         ];
         
         // Get the transporter details
@@ -520,6 +553,13 @@ $actions .= '</a>';
                 'is_owner' => $transporter ? $transporter->is_owner : 0,
             ]
         ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return redirect()->route('freight_bookings.index')
+                ->with('error', 'Freight booking not found.');
+        } catch (\Exception $e) {
+            return redirect()->route('freight_bookings.index')
+                ->with('error', 'An error occurred while loading the freight booking for editing.');
+        }
     }
 
     public function getLorryReceipt($id)
