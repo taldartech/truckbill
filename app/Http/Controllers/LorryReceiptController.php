@@ -141,14 +141,6 @@ class LorryReceiptController extends Controller
     //             if (!$freightBooking->save()) {
     //                 throw new \Exception('Failed to update freight booking');
     //             }
-
-    //             return redirect()->back()->with('success', 'Payment allocated successfully');
-
-    //         } catch (\Exception $e) {
-    //             \Log::error('Voucher Payment Error: ' . $e->getMessage());
-    //             return redirect()->back()->with('error', 'An error occurred while processing payment: ' . $e->getMessage());
-    //         }
-    //     }
         return view('lorry_receipts.index', [
             'lrs' => $lrs,
             'statuses' => $statuses,
@@ -487,21 +479,10 @@ class LorryReceiptController extends Controller
 
     public function edit(\App\Models\LorryReceipt $lorry_receipt)
     {
-        // Eager load the truck relationship
-        // $lorry_receipt = $lorry_receipt->load('truck');
+        // Eager load all necessary relationships
+        $lorry_receipt = $lorry_receipt->load(['truck.transporter', 'truck.driver', 'customer', 'transporter', 'consignor', 'consignee']);
         
-        // $customers = \App\Models\Customer::all();
-        // $consignees = \App\Models\Consignee::all();
-        // $goodsTypes = \App\Models\GoodType::all();
-        
-        // // Get trucks filtered by the current transporter's company
-        // $trucks = \App\Models\Truck::when($lorry_receipt->transporter_id, function ($query) use ($lorry_receipt) {
-        //     return $query->where('transporter_id', $lorry_receipt->transporter_id);
-        // })->get();
-
-        // $transporters = \App\Models\Transporter::all();
         $companies = \App\Models\Company::all();
-        // $trucks = Truck::all();
         $trucks = Truck::with(['transporter', 'driver'])->get(); // Load both transporter and driver relationships
 
         $transporters = Transporter::all();
@@ -521,9 +502,10 @@ class LorryReceiptController extends Controller
         return view('lorry_receipts.edit', [
             'lorry_receipt' => $lorry_receipt,
             'trucks' => $trucks,
-            'transporter' => $transporters,
+            'transporters' => $transporters,
             'statuses' => $statuses,
             'customers' => $customers,
+            'consignors' => $consignees, // Using consignees data for consignors dropdown
             'consignees' => $consignees,
             'goodsTypes' => $goodsTypes,
             'truckOwners' => $truckOwners,
@@ -650,5 +632,137 @@ class LorryReceiptController extends Controller
         ])->findOrFail($id);
 
         return response()->json($lorry_receipt);
+    }
+
+    /**
+     * Process bulk voucher payments for multiple lorry receipts
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function bulkVoucherPayment(Request $request)
+    {
+        try {
+            // Log the incoming request for debugging
+            \Log::info('Bulk voucher payment request received:', [
+                'request_data' => $request->all()
+            ]);
+
+            // Validate the request structure
+            $validated = $request->validate([
+                'payments' => 'required|array',
+                'payments.*.lorry_receipt_id' => 'required|integer|exists:lorry_receipts,id',
+                'payments.*.freight_booking_id' => 'required|integer|exists:freight_bookings,id',
+                'payments.*.amount' => 'required|numeric|min:0.01',
+                'payments.*.voucher_number' => 'required|string'
+            ]);
+
+            $payments = $validated['payments'];
+            $successCount = 0;
+            $errors = [];
+
+            // Process each payment
+            foreach ($payments as $index => $payment) {
+                try {
+                    // Get the lorry receipt and check company ownership
+                    $lorryReceipt = \App\Models\LorryReceipt::findOrFail($payment['lorry_receipt_id']);
+                    
+                    // Security check: Ensure user can only process payments for their company
+                    if (auth()->user()->userRole->name !== 'super_admin' && 
+                        $lorryReceipt->company_id !== auth()->user()->company_id) {
+                        $errors[] = "Security violation: LR #{$lorryReceipt->lr_number} does not belong to your company";
+                        continue;
+                    }
+
+                    // Get the freight booking
+                    $freightBooking = \App\Models\FreightBooking::findOrFail($payment['freight_booking_id']);
+                    
+                    // Verify freight booking belongs to the lorry receipt
+                    if ($freightBooking->lorry_receipt_id != $lorryReceipt->id) {
+                        $errors[] = "Freight booking #{$payment['freight_booking_id']} does not belong to LR #{$lorryReceipt->lr_number}";
+                        continue;
+                    }
+
+                    // Validate payment amount doesn't exceed remaining balance
+                    $remainingBalance = $freightBooking->tr_amount - $freightBooking->advance_amount;
+                    if ($payment['amount'] > $remainingBalance) {
+                        $errors[] = "Payment amount ₹{$payment['amount']} exceeds remaining balance ₹{$remainingBalance} for LR #{$lorryReceipt->lr_number}";
+                        continue;
+                    }
+
+                    // Create voucher payment record
+                    $voucherPayment = \App\Models\VoucherPayment::create([
+                        'freight_booking_id' => $freightBooking->id,
+                        'voucher_number' => $payment['voucher_number'],
+                        'payment_type' => 'voucher', // Default payment type
+                        'payment_mode' => 'cash',    // Default payment mode
+                        'amount' => $payment['amount'],
+                        'payment_status' => 'delivered',
+                        'company_id' => $lorryReceipt->company_id
+                    ]);
+
+                    // Update freight booking advance and balance amounts
+                    $freightBooking->advance_amount += $payment['amount'];
+                    $freightBooking->balance_amount = $freightBooking->tr_amount - $freightBooking->advance_amount;
+                    $freightBooking->save();
+
+                    \Log::info("Voucher payment processed successfully", [
+                        'lr_id' => $lorryReceipt->id,
+                        'lr_number' => $lorryReceipt->lr_number,
+                        'freight_booking_id' => $freightBooking->id,
+                        'amount' => $payment['amount'],
+                        'new_advance_amount' => $freightBooking->advance_amount,
+                        'new_balance_amount' => $freightBooking->balance_amount
+                    ]);
+
+                    $successCount++;
+                } catch (\Exception $e) {
+                    \Log::error("Error processing payment for LR #{$payment['lorry_receipt_id']}", [
+                        'error' => $e->getMessage(),
+                        'payment' => $payment
+                    ]);
+                    $errors[] = "Error processing payment for LR #{$payment['lorry_receipt_id']}: {$e->getMessage()}";
+                }
+            }
+
+            // Return appropriate response
+            if ($successCount > 0 && empty($errors)) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Successfully processed {$successCount} voucher payments"
+                ]);
+            } elseif ($successCount > 0 && !empty($errors)) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Processed {$successCount} payments with {count($errors)} errors",
+                    'errors' => $errors
+                ], 207); // 207 Multi-Status
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to process voucher payments',
+                    'errors' => $errors
+                ], 422);
+            }
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Bulk voucher payment validation error:', [
+                'errors' => $e->errors()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Bulk voucher payment error:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while processing voucher payments: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

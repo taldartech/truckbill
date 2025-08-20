@@ -72,8 +72,7 @@
             <div class="card-title h4">Add New Lorry Receipt</div>
             <div class="ms-auto">
                 <a href="{{ route('consignees.create') }}" class="btn btn-info">
-                    <i class="bi bi-plus"></i> Create Consignee
-                </a>
+                    <i class="bi bi-plus"></i> Create Consignee/Consignor/Customer</a>
             </div>
         </div>
     </div>
@@ -281,12 +280,10 @@
             <div class="card mb-4 p-3 bg-light">
                 <div class="row"><div class="col"><h5 class="mb-3">Submit Actions</h5></div></div>
                 <div class="row g-2">
-                    <div class="col-md-4">
+                    <div class="col-md-4 offset-md-4">
                         <button class="btn btn-success w-100" type="submit">💾 Submit Form</button>
                     </div>
-                    <div class="col-md-4">
-                        <button class="btn btn-secondary w-100" type="button" title="Copies most data, clears variable fields">🔄 Save & Create Similar</button>
-                    </div>
+                    
                     <div class="col-md-4">
                         <a href="{{ route('lorry_receipts.index') }}" class="btn btn-outline-dark w-100">📄 Back to List</a>
                     </div>
@@ -669,9 +666,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 })
                 .then(data => {
                     console.log('📊 Consignor data received:', data);
+                    console.log('📊 Consignor data keys:', Object.keys(data));
                     
                     // Auto-populate consignor fields
                     consignorContactInput.value = data.contact_number || '';
+                    // Use city and state names from the API response
                     sourceCityInput.value = data.city || '';
                     sourceStateInput.value = data.state || '';
                     
@@ -741,9 +740,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 })
                 .then(data => {
                     console.log('📊 Consignee data received:', data);
+                    console.log('📊 Consignee data keys:', Object.keys(data));
                     
                     // Auto-populate consignee fields
                     consigneeContactInput.value = data.contact_number || '';
+                    // Use city and state names from the API response
                     destinationCityInput.value = data.city || '';
                     destinationStateInput.value = data.state || '';
                     

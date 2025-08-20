@@ -1,884 +1,408 @@
-{{-- @extends('layouts.app')
-
-@section('content')
-@php
-    $transporters = \App\Models\Transporter::where('company_id', auth()->user()->company_id)->get();
-    $consignees = \App\Models\Consignee::where('company_id', auth()->user()->company_id)->get();
-@endphp
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const transporterSelect = document.getElementById('transporter_id');
-    const truckSelect = document.getElementById('truck_id');
-
-    // Function to update trucks based on selected transporter
-    function updateTrucks() {
-        const selectedTransporter = transporterSelect.value;
-        console.log('Selected Transporter:', selectedTransporter);
-        
-        if (!selectedTransporter) {
-            truckSelect.innerHTML = '<option value="">Select Truck</option>';
-            return;
-        }
-
-        // Make AJAX request to get trucks for selected transporter
-        fetch(`/api/transporters/${selectedTransporter}/trucks`, {
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => {
-            console.log('Response status:', response.status);
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(trucks => {
-            console.log('Received trucks:', trucks);
-            let options = '<option value="">Select Truck</option>';
-            trucks.forEach(truck => {
-                console.log('Adding truck:', truck);
-                options += `<option value="${truck.id}" ${truck.id == {{ $lr->truck_id }} ? 'selected' : ''}>${truck.truck_number}</option>`;
-            });
-            truckSelect.innerHTML = options;
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            truckSelect.innerHTML = '<option value="">Error loading trucks</option>';
-        });
-    }
-
-    // Update trucks when transporter changes
-    transporterSelect.addEventListener('change', updateTrucks);
-
-    // Initialize trucks based on current transporter
-    if (transporterSelect.value) {
-        updateTrucks();
-    }
-});
-</script>
-<div class="container mt-4">
-    <h2>Edit Lorry Receipt</h2>
-    <form action="{{ route('lorry_receipts.update', $lr->id) }}" method="POST">
-        @csrf
-        @method('PUT')
-
-        <h5 class="mt-4 mb-3">Trip & Parties</h5>
-        <hr class="mb-3 mt-0">
-        
-        <div class="row">
-                        <div class="col-md-4 mb-3">
-                <label for="transporter_id" class="form-label">Transporter *</label>
-                <select class="form-select" id="transporter_id" name="transporter_id" required>
-                    <option value="">Select Transporter</option>
-                    @foreach($transporters as $transporter)
-                        <option value="{{ $transporter->id }}" {{ $lr->transporter_id == $transporter->id ? 'selected' : '' }}>
-                            {{ $transporter->name }}
-                        </option>
-                    @endforeach
-                </select>
-                @error('transporter_id') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="truck_id" class="form-label">Truck *</label>
-                <select class="form-select" id="truck_id" name="truck_id" required>
-                    <option value="">Select Truck</option>
-                </select>
-                @error('truck_id') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="customer_id" class="form-label">Customer *</label>
-                <select class="form-select" id="customer_id" name="customer_id" required>
-                    <option value="">Select Customer</option>
-                    @foreach($consignees as $consignee)
-                        <option value="{{ $consignee->id }}" {{ $lr->consignee_id == $consignee->id ? 'selected' : '' }}>{{ $consignee->name }}</option>
-                    @endforeach
-                </select>
-                @error('customer_id') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            
-            <div class="col-md-4 mb-3">
-                <label for="lr_number" class="form-label">LR Number *</label>
-                <input type="text" class="form-control" id="lr_number" name="lr_number" required value="{{ $lr->lr_number }}">
-                @error('lr_number') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="delivery_status" class="form-label">Delivery Status</label>
-                <select class="form-select" id="delivery_status" name="delivery_status" disabled>
-                    @foreach($statuses as $status)
-                        <option value="{{ $status }}" {{ $lr->delivery_status == $status ? 'selected' : '' }}>{{ $status }}</option>
-                    @endforeach
-                </select>
-                <input type="hidden" name="delivery_status" value="{{ $lr->delivery_status }}">
-                <small class="text-muted">It will be updated from freight booking entries.</small>
-                @error('delivery_status') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label for="consignor_id" class="form-label">Consignor *</label>
-                <select class="form-select" id="consignor_id" name="consignor_id" required>
-                    <option value="">Select Consignor</option>
-                    @foreach($consignees as $consignee)
-                        <option value="{{ $consignee->id }}" {{ $lr->consignor_id == $consignee->id ? 'selected' : '' }}>
-                            {{ $consignee->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-6 mb-3">
-                <label for="consignor_contact_number" class="form-label">Consignor Contact Number</label>
-                <input type="text" class="form-control" id="consignor_contact_number" name="consignor_contact_number" value="{{ $lr->consignor->contact_number ?? '' }}" readonly>
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label for="consignee_id" class="form-label">Consignee *</label>
-                <select class="form-select" id="consignee_id" name="consignee_id" required>
-                    <option value="">Select Consignee</option>
-                    @foreach($consignees as $consignee)
-                        <option value="{{ $consignee->id }}" {{ $lr->consignee_id == $consignee->id ? 'selected' : '' }}>
-                            {{ $consignee->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-6 mb-3">
-                <label for="consignee_contact_number" class="form-label">Consignee Contact Number</label>
-                <input type="text" class="form-control" id="consignee_contact_number" name="consignee_contact_number" value="{{ $lr->consignee->contact_number ?? '' }}" readonly>
-            </div>
-        </div>
-
-        
-
-        <h5 class="mt-4 mb-3">Route & Dates</h5>
-        <hr class="mb-3 mt-0">
-
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="gr_date" class="form-label">GR Date *</label>
-                <input type="date" class="form-control" id="gr_date" name="gr_date" required value="{{ $lr->gr_date }}">
-                @error('gr_date') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="source_city" class="form-label">Source City *</label>
-                <input type="text" class="form-control" id="source_city" name="source_city" required value="{{ $lr->source_city }}" readonly>
-                @error('source_city') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="source_state" class="form-label">Source State *</label>
-                <input type="text" class="form-control" id="source_state" name="source_state" required value="{{ $lr->source_state }}" readonly>
-                @error('source_state') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="destination_city" class="form-label">Destination City *</label>
-                <input type="text" class="form-control" id="destination_city" name="destination_city" required value="{{ $lr->destination_city }}" readonly>
-                @error('destination_city') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="destination_state" class="form-label">Destination State *</label>
-                <input type="text" class="form-control" id="destination_state" name="destination_state" required value="{{ $lr->destination_state }}" readonly>
-                @error('destination_state') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-        </div>
-
-        <h5 class="mt-4 mb-3">Goods & Charges</h5>
-        <hr class="mb-3 mt-0">
-
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="lane" class="form-label">Lane *</label>
-                <input type="text" class="form-control" id="lane" name="lane" value="{{ $lr->lane }}" readonly required>
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="good_type" class="form-label">Goods Type *</label>
-                <select class="form-select" id="good_type" name="good_type" required>
-                    <option value="">Select Goods Type</option>
-                    @foreach($goodsTypes as $goodsType)
-                        <option value="{{ $goodsType->name }}" {{ $lr->good_type == $goodsType->name ? 'selected' : '' }}>
-                            {{ $goodsType->name }}
-                        </option>
-                    @endforeach
-                </select>
-                @error('good_type') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="weight" class="form-label">Weight *</label>
-                <input type="number" step="0.01" class="form-control" id="weight" name="weight" required value="{{ $lr->weight }}">
-                @error('weight') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="no_of_units" class="form-label">No. of Units *</label>
-                <input type="number" class="form-control" id="no_of_units" name="no_of_units" required value="{{ $lr->no_of_units }}">
-                @error('no_of_units') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="fr_rate" class="form-label">Freight Rate *</label>
-                <input type="number" step="0.01" class="form-control" id="fr_rate" name="fr_rate" required value="{{ $lr->fr_rate }}">
-                @error('fr_rate') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="amount" class="form-label">Amount *</label>
-                <input type="number" step="0.01" class="form-control" id="amount" name="amount" required value="{{ $lr->amount }}">
-                @error('amount') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-        </div>
-
-        <div class="row">
-           
-            
-            <div class="col-md-4 mb-3">
-                <label for="damage_amount" class="form-label">Damage Amount</label>
-                <input type="number" step="0.01" class="form-control" id="damage_amount" name="damage_amount" value="{{ $lr->damage_amount }}" disabled>
-                @error('damage_amount') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="shortage_amount" class="form-label">Shortage Amount</label>
-                <input type="number" step="0.01" class="form-control" id="shortage_amount" name="shortage_amount" value="{{ $lr->shortage_amount }}" disabled>
-                @error('shortage_amount') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-        </div>
-
-        <div class="row">
-            
-           
-            
-        </div>
-           
-            <div class="col-md-4 mb-3">
-                <label for="memo_id" class="form-label">Memo ID</label>
-                <input type="number" class="form-control" id="memo_id" name="memo_id" value="{{ $lr->memo_id }}">
-                @error('memo_id') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-        </div>
-        <button type="submit" class="btn btn-primary">Update LR</button>
-        <a href="{{ route('lorry_receipts.index') }}" class="btn btn-secondary ms-2">Back to List</a>
-    </form>
-</div>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    // Handle consignor details
-    const consignorSelect = document.getElementById('consignor_id');
-    const consignorContact = document.getElementById('consignor_contact_number');
-    const sourceCityInput = document.getElementById('source_city');
-    const sourceStateInput = document.getElementById('source_state');
-
-    if (consignorSelect && consignorContact && sourceCityInput && sourceStateInput) {
-        consignorSelect.addEventListener('change', async function () {
-            const consignorId = this.value;
-            if (!consignorId) {
-                consignorContact.value = '';
-                sourceCityInput.value = '';
-                sourceStateInput.value = '';
-                return;
-            }
-
-            try {
-                const response = await fetch(`{{ route('consignees.details', '__id__') }}`);
-                if (!response.ok) throw new Error('Failed to fetch consignor details');
-                const consignor = await response.json();
-
-                consignorContact.value = consignor.contact_number;
-                sourceCityInput.value = consignor.city;
-                sourceStateInput.value = consignor.state;
-            } catch (error) {
-                console.error('❌ Error fetching consignor details:', error);
-                consignorContact.value = '';
-                sourceCityInput.value = '';
-                sourceStateInput.value = '';
-            }
-        });
-    }
-
-    // Handle consignee details
-    const consigneeSelect = document.getElementById('consignee_id');
-    const consigneeContact = document.getElementById('consignee_contact_number');
-    const destinationCityInput = document.getElementById('destination_city');
-    const destinationStateInput = document.getElementById('destination_state');
-
-    if (consigneeSelect && consigneeContact && destinationCityInput && destinationStateInput) {
-        consigneeSelect.addEventListener('change', async function () {
-            const consigneeId = this.value;
-            if (!consigneeId) {
-                consigneeContact.value = '';
-                destinationCityInput.value = '';
-                destinationStateInput.value = '';
-                return;
-            }
-
-            try {
-                const response = await fetch(`{{ route('consignees.details', '__id__') }}`.replace('__id__', consigneeId));
-                if (!response.ok) throw new Error('Failed to fetch consignee details');
-                const consignee = await response.json();
-
-                consigneeContact.value = consignee.contact_number;
-                destinationCityInput.value = consignee.city;
-                destinationStateInput.value = consignee.state;
-                            if (data.city_id) {
-                                const cityResponse = await fetch(`{{ route('cities.show', '__id__') }}`.replace('__id__', data.city_id));
-                                if (cityResponse.ok) {
-                                    const cityData = await cityResponse.json();
-                                    destinationCityInput.value = cityData.name || '';
-                                } else {
-                                    console.error('❌ Failed to fetch city:', await cityResponse.text());
-                                    destinationCityInput.value = '';
-                                }
-                            }
-
-                            // Fetch state name
-                            if (data.state_id) {
-                                const stateResponse = await fetch(`{{ route('states.show', '__id__') }}`.replace('__id__', data.state_id));
-                                if (stateResponse.ok) {
-                                    const stateData = await stateResponse.json();
-                                    destinationStateInput.value = stateData.name || '';
-                                } else {
-                                    console.error('❌ Failed to fetch state:', await stateResponse.text());
-                                    destinationStateInput.value = '';
-                                }
-                            }
-                        } catch (error) {
-                            console.error('❌ Error fetching city/state:', error);
-                            destinationCityInput.value = '';
-                            destinationStateInput.value = '';
-                        }
-                    };
-
-                    fetchCityState();
-                }
-            } catch (error) {
-                console.error('❌ Error:', error);
-                consigneeContact.value = '';
-                destinationCityInput.value = '';
-                destinationStateInput.value = '';
-            }
-        });
-    }
-
-    // Calculate amount
-    const frRateInput = document.getElementById('fr_rate');
-    const noOfUnitsInput = document.getElementById('no_of_units');
-    const amountInput = document.getElementById('amount');
-    
-    function calculateAmount() {
-        const frRate = parseFloat(frRateInput.value) || 0;
-        const noOfUnits = parseInt(noOfUnitsInput.value) || 0;
-        
-        if (!isNaN(frRate) && !isNaN(noOfUnits)) {
-            const amount = (frRate * noOfUnits).toFixed(2);
-            amountInput.value = amount;
-        } else {
-            amountInput.value = '';
-        }
-    }
-    
-    frRateInput.addEventListener('input', calculateAmount);
-    noOfUnitsInput.addEventListener('input', calculateAmount);
-});
-</script>
-@endsection
-
-@section('scripts')
-<script>
-    // Initialize dropdowns
-    const transporterSelect = document.getElementById('transporter_id');
-    const truckSelect = document.getElementById('truck_id');
-    const consignorSelect = document.getElementById('consignor_id');
-    const consigneeSelect = document.getElementById('consignee_id');
-
-    // Function to update options
-    function updateOptions() {
-        const selectedConsignor = consignorSelect.value;
-        const selectedConsignee = consigneeSelect.value;
-
-        // Get all options
-        const consignorOptions = Array.from(consignorSelect.options);
-        const consigneeOptions = Array.from(consigneeSelect.options);
-
-        // Remove the selected option from the other dropdown
-        consignorOptions.forEach(option => {
-            if (option.value === selectedConsignee) {
-                option.style.display = 'none';
-            } else {
-                option.style.display = '';
-            }
-        });
-
-        consigneeOptions.forEach(option => {
-            if (option.value === selectedConsignor) {
-                option.style.display = 'none';
-            } else {
-                option.style.display = '';
-            }
-        });
-    }
-
-    
-
-  
-
-
-    
-    consignorSelect.addEventListener('change', () => {
-        updateOptions();
-        // Update contact number
-        const selectedOption = consignorSelect.options[consignorSelect.selectedIndex];
-        document.getElementById('consignor_contact_number').value = selectedOption.getAttribute('data-contact');
-    });
-
-    consigneeSelect.addEventListener('change', () => {
-        updateOptions();
-        // Update contact number
-        const selectedOption = consigneeSelect.options[consigneeSelect.selectedIndex];
-        document.getElementById('consignee_contact_number').value = selectedOption.getAttribute('data-contact');
-    });
-
-    
-    updateOptions();
-</script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const transporterSelect = document.getElementById('transporter_id');
-        const truckSelect = document.getElementById('truck_id');
-    
-        // Function to update trucks based on selected transporter
-        function updateTrucks() {
-            const selectedTransporter = transporterSelect.value;
-            if (!selectedTransporter) {
-                truckSelect.innerHTML = '<option value="">Select Truck</option>';
-                return;
-            }
-    
-            // Make AJAX request to get trucks for selected transporter
-            fetch(`/api/transporters/${selectedTransporter}/trucks`)
-                .then(response => response.json())
-                .then(trucks => {
-                    let options = '<option value="">Select Truck</option>';
-                    trucks.forEach(truck => {
-                        options += `<option value="${truck.id}">${truck.truck_number}</option>`;
-                    });
-                    truckSelect.innerHTML = options;
-                })
-                .catch(error => console.error('Error:', error));
-        }
-    
-        // Update trucks when transporter changes
-        transporterSelect.addEventListener('change', updateTrucks);
-    });
-    </script>
-@endsection --}}
-
 @extends('layouts.app')
 
 @section('content')
-<div class="card card-info card-outline mb-4" style="max-width: 950px;align-items: center;margin: auto;">
+<!-- SweetAlert2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet" />
+<style>
+/* Prevent form expansion on validation errors */
+.form-control, .form-select {
+    min-height: 38px;
+    box-sizing: border-box;
+}
+
+.text-danger {
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    word-wrap: break-word;
+}
+
+/* Ensure consistent column widths */
+.row .col-md-4 {
+    flex: 0 0 33.333333%;
+    max-width: 33.333333%;
+}
+
+/* Prevent card from expanding */
+.card {
+    overflow: hidden;
+}
+
+/* Consistent spacing for form groups */
+.mb-3 {
+    margin-bottom: 1rem !important;
+}
+
+/* Select2 custom styling for truck dropdown */
+.select2-container--bootstrap-5 .select2-selection {
+    min-height: 38px;
+}
+
+.select2-result-truck {
+    padding: 4px 0;
+}
+
+.truck-info {
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+    padding-left: 12px;
+    padding-right: 20px;
+    color: #212529;
+    line-height: 36px;
+}
+
+.select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+    height: 36px;
+    right: 12px;
+}
+
+.select2-dropdown {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+}
+</style>
+<div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
     <!--begin::Header-->
     <div class="card-header">
         <div class="d-flex w-100">
-            <div class="d-flex align-items-center">
-                <h4 class="mb-0 me-3">Add New Lorry Receipt</h4>
-            </div>
+            <div class="card-title h4">📝 Edit Lorry Receipt</div>
             <div class="ms-auto">
                 <a href="{{ route('consignees.create') }}" class="btn btn-info">
-                    <i class="bi bi-plus"></i> Create Consignee
-                </a>
+                    <i class="bi bi-plus"></i> Create Consignee/Consignor/Customer</a>
             </div>
         </div>
     </div>
-   
-    <hr class="mb-3 mt-0">
     <!--end::Header-->
+    <!--begin::Form-->
     <form method="POST" action="{{ route('lorry_receipts.update', $lorry_receipt->id) }}" id="lorryReceiptForm" class="needs-validation" novalidate="">
         @csrf
         @method('PUT')
         <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
+                
         <div class="card-body">
             <!-- General Details -->
-            <div class="row mb-3">
-              
-                 <div class="col-md-4">
-                    <label for="lr_number" class="form-label">LR Number *</label>
-                    <input type="text" class="form-control" id="lr_number" name="lr_number" value="{{ old('lr_number') ?? $lorry_receipt->lr_number }}" readonly>
-                    @error('lr_number') <div class="text-danger">{{ $message }}</div> @enderror
+            <div class="card mb-4 p-3 bg-light">
+                <div class="row"><div class="col"><h5 class="mb-3">General Details</h5></div></div>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="lr_number" class="form-label">LR Number * <small class="text-muted">(Must be unique)</small></label>
+                        <input type="text" class="form-control" id="lr_number" name="lr_number" value="{{ old('lr_number', $lorry_receipt->lr_number) }}" required placeholder="Enter unique LR Number">
+                        @error('lr_number') <div class="text-danger">{{ $message }}</div> @enderror
+                        <div class="invalid-feedback">Please enter a unique LR number.</div>
+                        <div id="lr-number-feedback" class="mt-1"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="gr_date" class="form-label">GR Date *</label>
+                        <input type="date" class="form-control" id="gr_date" name="gr_date" required value="{{ old('gr_date', $lorry_receipt->gr_date) }}">
+                        @error('gr_date') <div class="text-danger">{{ $message }}</div> @enderror
+                        <div class="invalid-feedback">Please select a GR date.</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="customer_id" class="form-label">Customer *</label>
+                        <!-- Debug info -->
+                        <!-- Customer ID: {{ $lorry_receipt->customer_id }} -->
+                        <!-- Customer Name: {{ $lorry_receipt->customer ? $lorry_receipt->customer->name : 'Not found' }} -->
+                        
+                        <select class="form-select" id="customer_id" name="customer_id" required>
+                            <option value="">Select Customer</option>
+                            @foreach($customers as $customer)
+                                <option value="{{ $customer->id }}" {{ $lorry_receipt->customer_id == $customer->id ? 'selected' : '' }}>
+                                    {{ $customer->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <script>
+                            // Store the selected customer data for JavaScript access
+                            window.selectedCustomerId = {{ $lorry_receipt->customer_id ?? 'null' }};
+                            window.selectedCustomerName = "{{ $lorry_receipt->customer ? addslashes($lorry_receipt->customer->name) : '' }}";
+                        </script>
+                        @error('customer_id') <div class="text-danger">{{ $message }}</div> @enderror
+                        <div class="invalid-feedback">Please select a customer.</div>
+                    </div>
                 </div>
-               
-                  <div class="col-md-4">
-                    <label for="gr_date" class="form-label">GR Date *</label>
-                    <input type="date" class="form-control" id="gr_date" name="gr_date" required value="{{ old('gr_date') ?? $lorry_receipt->gr_date }}">
-                    @error('gr_date') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please select a GR date.</div>
-                </div>
-              
-                  <div class="col-md-4">
-                    <label for="customer_id" class="form-label">Customer *</label>
-                    <select class="form-select" id="customer_id" name="customer_id" required>
-                        <option value="">Select Customer</option>
-                        @foreach($consignees as $consignee)
-                            <option value="{{ $consignee->id }}" {{ old('customer_id') ?? $lorry_receipt->consignee_id == $consignee->id ? 'selected' : '' }}>
-                                {{ $consignee->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('customer_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please select a customer.</div>
-                </div>
-            </div>
-            <div class="row mb-3">
-               <div class="col-md-4">
-                    <label for="truck_id" class="form-label">Truck *</label>
-                    <select class="form-select" id="truck_id" name="truck_id" required>
-                        <option value="">Select Trucks</option>
-                        @foreach($trucks as $truck)
-                            <option value="{{ $truck->id }}" {{ old('truck_id') ?? $lorry_receipt->truck_id == $truck->id ? 'selected' : '' }}>
-                                {{ $truck->truck_number }} ({{ $truck->transporter->name }})
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('truck_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please select a truck.</div>
-                </div>
-               <div class="col-md-4">
-                    <label for="transporter_type" class="form-label">Select Type *</label>
-                    <select class="form-select" id="transporter_type" required>
-                        <option value="">Select Type</option>
-                        <option value="owner" {{ old('transporter_type') ?? $lorry_receipt->transporter_type == 'owner' ? 'selected' : '' }}>Truck Owner</option>
-                        <option value="agency" {{ old('transporter_type') ?? $lorry_receipt->transporter_type == 'agency' ? 'selected' : '' }}>Agency</option>
-                    </select>
-                    <div class="invalid-feedback">Please select transporter type.</div>
-                </div>
-                <div class="col-md-4">
-                    <label for="transporter_id" id="transporterLabel" class="form-label">Transporter *</label>
-                    <select class="form-select" id="transporter_id" name="transporter_id" required>
-                        <option value="">Select Transporter</option>
-                        {{-- This will be filled via JavaScript --}} 
-                     </select>
-                    @error('transporter_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please select a transporter.</div>
-                    <p id="tdsRateDisplay" class="form-control-plaintext text-primary fw-bold">--</p>
-                </div>
-             
-   
-            </div>
-            <div class="row mb-3">
-                <div class="col-md-4">
-                    <label for="consignor_id" class="form-label">Consignor *</label>
-                    <select class="form-select" id="consignor_id" name="consignor_id" required>
-                        <option value="">Select Consignor</option>
-                        @foreach($consignees as $consignee) 
-                            <option value="{{ $consignee->id }}" {{ old('consignor_id') ?? $lorry_receipt->consignor_id == $consignee->id ? 'selected' : '' }}>
-                                {{ $consignee->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('consignor_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please select a consignor.</div>
-                </div>
-                <div class="col-md-4">
-                    <label for="consignor_contact_number" class="form-label">Consignor Contact Number</label>
-                    <input type="text" class="form-control" id="consignor_contact_number" name="consignor_contact_number" readonly value="{{ old('consignor_contact_number') ?? $lorry_receipt->consignor_contact_number }}">
-                </div>
-                <div class="col-md-4">
-                    <label for="consignee_id" class="form-label">Consignee *</label>
-                    <select class="form-select" id="consignee_id" name="consignee_id" required>
-                        <option value="">Select Consignee</option>
-                        @foreach($consignees as $consignee)
-                            <option value="{{ $consignee->id }}" {{ old('consignee_id') ?? $lorry_receipt->consignee_id == $consignee->id ? 'selected' : '' }}>
-                                {{ $consignee->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('consignee_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please select a consignee.</div>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="truck_id" class="form-label">Truck *</label>
+                        <select class="form-select" id="truck_id" name="truck_id" required data-placeholder="Search and select truck...">
+                            <option value="">Select Trucks</option>
+                            @foreach($trucks as $truck)
+                                <option value="{{ $truck->id }}" {{ $truck->id == $lorry_receipt->truck_id ? 'selected' : '' }}>
+                                    {{ $truck->truck_number }} 
+                                    @if($truck->driver)
+                                        - Driver: {{ $truck->driver->name }}
+                                    @endif
+                                    ({{ $truck->transporter ? $truck->transporter->name : 'No Transporter' }})
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('truck_id') <div class="text-danger">{{ $message }}</div> @enderror
+                        <div class="invalid-feedback">Please select a truck.</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="transporter_type" class="form-label">Select Type *</label>
+                        <select class="form-select" id="transporter_type" required>
+                            <option value="">Select Type</option>
+                            <option value="owner" {{ old('transporter_type', $lorry_receipt->truck->transporter_type ?? '') == 'owner' ? 'selected' : '' }}>Truck Owner</option>
+                            <option value="agency" {{ old('transporter_type', $lorry_receipt->truck->transporter_type ?? '') == 'agency' ? 'selected' : '' }}>Agency</option>
+                        </select>
+                        <div class="invalid-feedback">Please select transporter type.</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="transporter_id" id="transporterLabel" class="form-label">Transporter *</label>
+                        <select class="form-select" id="transporter_id" name="transporter_id" required>
+                            <option value="">Select Transporter</option>
+                            @foreach($transporters as $transporter)
+                                <option value="{{ $transporter->id }}" {{ $transporter->id == $lorry_receipt->transporter_id ? 'selected' : '' }}>
+                                    {{ $transporter->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('transporter_id') <div class="text-danger">{{ $message }}</div> @enderror
+                        <div class="invalid-feedback">Please select a transporter.</div>
+                        <div id="tdsRateDisplay" class="mt-2" style="display: none;">
+                            <span class="badge bg-warning text-dark fs-6">
+                                🎯 TDS Rate: <span id="tdsPercentageValue">--</span>
+                            </span>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="row mb-4">
+
+            <!-- Consignor & Consignee Details -->
+            <div class="card mb-4 p-3 bg-light">
+                <div class="row"><div class="col"><h5 class="mb-3">Consignor & Consignee Details</h5></div></div>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="consignor_id" class="form-label">Consignor *</label>
+                        <select class="form-select" id="consignor_id" name="consignor_id" required data-placeholder="Search and select consignor...">
+                            <option value="">Select Consignor</option>
+                            @foreach($consignors as $consignor)
+                                <option value="{{ $consignor->id }}" {{ $consignor->id == $lorry_receipt->consignor_id ? 'selected' : '' }}>
+                                    {{ $consignor->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('consignor_id') <div class="text-danger">{{ $message }}</div> @enderror
+                        <div class="invalid-feedback">Please select a consignor.</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="consignor_contact_number" class="form-label">Consignor Contact Number</label>
+                        <input type="text" class="form-control" id="consignor_contact_number" name="consignor_contact_number" value="{{ $lorry_receipt->consignor->contact_number ?? '' }}" readonly>
+                    </div>
+                  
+                </div>
+                <div class="row mb-3">
                 <div class="col-md-4">
-                    <label for="consignee_contact_number" class="form-label">Consignee Contact Number</label>
-                    <input type="text" class="form-control" id="consignee_contact_number" name="consignee_contact_number" readonly value="{{ old('consignee_contact_number') ?? $lorry_receipt->consignee_contact_number }}">
+                        <label for="consignee_id" class="form-label">Consignee *</label>
+                        <select class="form-select" id="consignee_id" name="consignee_id" required data-placeholder="Search and select consignee...">
+                            <option value="">Select Consignee</option>
+                            @foreach($consignees as $consignee)
+                                <option value="{{ $consignee->id }}" {{ $consignee->id == $lorry_receipt->consignee_id ? 'selected' : '' }}>
+                                    {{ $consignee->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('consignee_id') <div class="text-danger">{{ $message }}</div> @enderror
+                        <div class="invalid-feedback">Please select a consignee.</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="consignee_contact_number" class="form-label">Consignee Contact Number</label>
+                        <input type="text" class="form-control" id="consignee_contact_number" name="consignee_contact_number" value="{{ $lorry_receipt->consignee->contact_number ?? '' }}" readonly>
+                    </div>
                 </div>
             </div>
             <!-- Route Section -->
             <div class="card mb-4 p-3 bg-light">
-                <div class="row"><div class="col"><h5 class="mb-3">Route</h5></div></div>
-                <div class="row mb-2">
+                <div class="row"><div class="col"><h5 class="mb-3">Route Details</h5></div></div>
+                <div class="row mb-3">
                     <div class="col-md-6">
                         <label for="source_city" class="form-label">Source City *</label>
-                        <input type="text" class="form-control" id="source_city" name="source_city" required value="{{ old('source_city') ?? $lorry_receipt->source_city }}" readonly>
+                        <input type="text" class="form-control" id="source_city" name="source_city" required value="{{ old('source_city', $lorry_receipt->source_city) }}" readonly>
                     </div>
                     <div class="col-md-6">
                         <label for="source_state" class="form-label">Source State *</label>
-                        <input type="text" class="form-control" id="source_state" name="source_state" required value="{{ old('source_state') ?? $lorry_receipt->source_state }}" readonly>
+                        <input type="text" class="form-control" id="source_state" name="source_state" required value="{{ old('source_state', $lorry_receipt->source_state) }}" readonly>
                     </div>
                 </div>
-                <div class="row">
+                <div class="row mb-3">
                     <div class="col-md-6">
                         <label for="destination_city" class="form-label">Destination City *</label>
-                        <input type="text" class="form-control" id="destination_city" name="destination_city" required value="{{ old('destination_city') ?? $lorry_receipt->destination_city }}" readonly>
+                        <input type="text" class="form-control" id="destination_city" name="destination_city" required value="{{ old('destination_city', $lorry_receipt->destination_city) }}" readonly>
                     </div>
                     <div class="col-md-6">
                         <label for="destination_state" class="form-label">Destination State *</label>
-                        <input type="text" class="form-control" id="destination_state" name="destination_state" required value="{{ old('destination_state') ?? $lorry_receipt->destination_state }}" readonly>
+                        <input type="text" class="form-control" id="destination_state" name="destination_state" required value="{{ old('destination_state', $lorry_receipt->destination_state) }}" readonly>
                     </div>
                 </div>
             </div>
+
             <!-- Goods & Charges Section -->
             <div class="card mb-4 p-3 bg-light">
                 <div class="row"><div class="col"><h5 class="mb-3">Goods & Charges</h5></div></div>
-                 <div class="row mb-2">
-                 
+                <div class="row mb-3">
                     <input type="hidden" id="lane" name="lane" value="Road">
                     <div class="col-md-4">
-                        <label for="good_type" class="form-label ms-3">Goods Type *</label>
-                        <select class="form-select " id="good_type" name="good_type" required>
+                        <label for="good_type" class="form-label">Goods Type *</label>
+                        <select class="form-select" id="good_type" name="good_type" required>
                             <option value="">Select Goods Type</option>
                             @foreach($goodsTypes as $goodsType)
-                            <option value="{{ $goodsType->name }}" 
-                                {{ old('good_type', $lorry_receipt->good_type) == $goodsType->name ? 'selected' : '' }}>
-                                {{ $goodsType->name }}
-                            </option>
+                                <option value="{{ $goodsType->name }}" {{ $goodsType->name == $lorry_receipt->goods ? 'selected' : '' }}>
+                                    {{ $goodsType->name }}
+                                </option>
                             @endforeach
                         </select>
                         @error('good_type') <div class="text-danger">{{ $message }}</div> @enderror
                         <div class="invalid-feedback">Please select a goods type.</div>
                     </div>
+                    
                     <div class="col-md-4">
-                        <label for="weight" class="form-label ">Weight *</label>
-                        <input type="number" step="0.01" class="form-control" id="weight" name="weight" required value="{{ old('weight' , $lorry_receipt->weight) }}">
-                        @error('weight') <div class="text-danger">{{ $message }}</div> @enderror
-                        <div class="invalid-feedback">Please enter a weight.</div>
-                    </div>
-                    <div class="col-md-4">
-                        <label for="no_of_units" class="form-label">No. of Units *</label>
-                        <input type="number" class="form-control" id="no_of_units" name="no_of_units" required value="{{ old('no_of_units' , $lorry_receipt->no_of_units) }}">
+                        <label for="no_of_units" class="form-label">No. of Units <small class="text-muted">(Optional)</small></label>
+                        <input type="number" class="form-control" id="no_of_units" name="no_of_units" value="{{ old('no_of_units', $lorry_receipt->no_of_units) }}" min="1" max="100000" title="Maximum 100,000 units allowed">
                         @error('no_of_units') <div class="text-danger">{{ $message }}</div> @enderror
-                        <div class="invalid-feedback">Please enter number of units.</div>
-                    </div>
-                </div>
-            
-
-                <div class="row mb-2">
-                    <div class="col-md-4">
-                        <label for="fr_rate" class="form-label">Freight Rate *</label>
-                        <input type="number" step="0.01" class="form-control" id="fr_rate" name="fr_rate" required value="{{ old('fr_rate' , $lorry_receipt->fr_rate) }}">
-                        @error('fr_rate') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="damage_amount" class="form-label">Damage Amount</label>
-                        <input type="number" step="0.01" class="form-control" id="damage_amount" name="damage_amount" value="{{ $lorry_receipt->damage_amount }}" disabled>
-                        @error('damage_amount') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="shortage_amount" class="form-label">Shortage Amount</label>
-                        <input type="number" step="0.01" class="form-control" id="shortage_amount" name="shortage_amount" value="{{ $lorry_receipt->shortage_amount }}" disabled>
-                        @error('shortage_amount') <div class="text-danger">{{ $message }}</div> @enderror
+                        <div class="invalid-feedback">Please enter a valid number of units (max 100,000).</div>
+                        <small class="text-muted">📦 Max: 100,000 units</small>
                     </div>
                     
-                   
                 </div>
-                
-                <div class="row mb-2">
+                <div class="row mb-3">
                     <div class="col-md-4">
-                        <label for="amount" class="form-label">Amount *</label>
-                        <input type="number" step="0.01" class="form-control" id="amount" name="amount" required value="{{ old('amount' , $lorry_receipt->amount) }}">
-                        @error('amount') <div class="text-danger">{{ $message }}</div> @enderror
-                        <div class="invalid-feedback">Please enter an amount.</div>
+                        <label for="weight" class="form-label">Weight * <small class="text-muted">(in Tons)</small></label>
+                        <input type="number" step="0.01" class="form-control" id="weight" name="weight" required value="{{ old('weight', $lorry_receipt->weight) }}" min="0.1" max="100" title="Weight must be between 0.1 and 100 tons">
+                        @error('weight') <div class="text-danger">{{ $message }}</div> @enderror
+                        <div class="invalid-feedback">Please enter a weight between 0.1 and 100 tons.</div>
+                        <small class="text-muted">📏 Range: 0.1 - 100 tons</small>
                     </div>
                     <div class="col-md-4">
-                        <label for="memo_id" class="form-label">Memo ID</label>
-                        <input type="number" class="form-control" id="memo_id" name="memo_id" value="{{ $lorry_receipt->memo_id }}">
-                        @error('memo_id') <div class="text-danger">{{ $message }}</div> @enderror
+                        <label for="fr_rate" class="form-label">Freight Rate * <small class="text-muted">(₹ per ton)</small></label>
+                        <input type="number" step="0.01" class="form-control" id="fr_rate" name="fr_rate" required value="{{ old('fr_rate', $lorry_receipt->fr_rate) }}" min="1" max="20000" title="Freight rate must be between ₹1 and ₹20,000 per ton">
+                        @error('fr_rate') <div class="text-danger">{{ $message }}</div> @enderror
+                        <div class="invalid-feedback">Please enter a freight rate between ₹1 and ₹20,000.</div>
+                        <small class="text-muted">💰 Range: ₹1 - ₹20,000 per ton</small>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="amount" class="form-label">Amount * <small class="text-muted">(Auto-calculated)</small></label>
+                        <input type="number" step="0.01" class="form-control" id="amount" name="amount" required value="{{ old('amount', $lorry_receipt->amount) }}" title="Auto-calculated: Weight × Freight Rate (editable)">
+                        @error('amount') <div class="text-danger">{{ $message }}</div> @enderror
+                        <div class="invalid-feedback">Please enter an amount.</div>
+                        <small class="text-muted">💡 Calculated as: Weight × Freight Rate</small>
                     </div>
                 </div>
             </div>
-            <!-- Quick Actions Section -->
-            <div class="card p-3 bg-light">
-                <div class="row"><div class="col"><h5 class="mb-3">Quick Actions</h5></div></div>
+
+            <!-- Submit Actions -->
+            <div class="card mb-4 p-3 bg-light">
+                <div class="row"><div class="col"><h5 class="mb-3">Submit Actions</h5></div></div>
                 <div class="row g-2">
-                    <div class="col-md-3">
-                        {{-- <button class="btn btn-info" type="submit">Submit form</button> --}}
-                        <button class="btn btn-success w-100 mb-2" type="submit">💾 Submit Form</button>
+                    <div class="col-md-4">
+                        <button class="btn btn-success w-100" type="submit">💾 Update Lorry Receipt</button>
                     </div>
-                    <div class="col-md-3">
-                        <button class="btn btn-secondary w-100 mb-2" type="button" title="Copies most data, clears variable fields">🔄 Save & Create Similar <span class="ms-1" data-bs-toggle="tooltip" title="Copies most data, clears variable fields">ℹ️</span></button>
+                    <div class="col-md-4">
+                        <a href="{{ route('lorry_receipts.show', $lorry_receipt->id) }}" class="btn btn-info w-100">👁️ View Details</a>
                     </div>
-                    {{-- <div class="col-md-3"> --}}
-                        {{-- <button class="btn btn-warning w-100 mb-2" type="button" title="Save this combination for future use">📋 Save as Template <span class="ms-1" data-bs-toggle="tooltip" title="Save this combination for future use">ℹ️</span></button> --}}
-                    {{-- </div> --}}
-                    <div class="col-md-3">
-                        <a href="{{ route('lorry_receipts.index') }}" class="btn btn-outline-dark w-100 mb-2">📄 Back to List</a>
+                    <div class="col-md-4">
+                        <a href="{{ route('lorry_receipts.index') }}" class="btn btn-outline-dark w-100">📄 Back to List</a>
                     </div>
                 </div>
             </div>
         </div>
     </form>
 </div>
-   
-         <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                const transporterTypeSelect = document.getElementById('transporter_type');
-                const truckSelect = document.getElementById('truck_id');
-                const transporterSelect = document.getElementById('transporter_id');
-                const transporterLabel = document.getElementById('transporterLabel');
-                const tdsRateDisplay = document.getElementById('tdsRateDisplay');
+
+<script>
+// Bootstrap form validation
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        // Fetch all the forms we want to apply custom Bootstrap validation styles to
+        var forms = document.getElementsByClassName('needs-validation');
         
-                const agencies = @json($agencies);
-                const truckOwners = @json($truckOwners);
-                const trucks = @json($trucks);
-                const tdsPercentages = @json($tdsPercentages);
-        
-                function updateTransporterDropdown() {
-                    const selectedType = transporterTypeSelect.value;
-                    const selectedTruckId = truckSelect.value;
-                    let optionsHtml = `<option value="">Select Transporter</option>`;
-        
-                    if (selectedType === 'owner') {
-                        transporterLabel.textContent = 'Truck Owner *';
-                        const selectedTruck = trucks.find(truck => truck.id == selectedTruckId);
-                        if (selectedTruck && selectedTruck.transporter) {
-                            const transporter = selectedTruck.transporter;
-                            if (transporter.is_owner == 1) {
-                                optionsHtml += `<option value="${transporter.id}">${transporter.name}</option>`;
-                                fetchTdsInfo(transporter.id); // Fetch TDS immediately
-                            } else {
-                                optionsHtml += `<option disabled>No owner assigned to this truck</option>`;
-                                tdsRateDisplay.textContent = '--';
-                            }
-                        } else {
-                            tdsRateDisplay.textContent = '--';
-                        }
-                    } else if (selectedType === 'agency') {
-                        transporterLabel.textContent = 'Agency *';
-                        agencies.forEach(agency => {
-                            optionsHtml += `<option value="${agency.id}">${agency.name}</option>`;
-                        });
-                        tdsRateDisplay.textContent = '--';
-                    } else {
-                        transporterLabel.textContent = 'Transporter *';
-                        tdsRateDisplay.textContent = '--';
-                    }
-        
-                    transporterSelect.innerHTML = optionsHtml;
+        // Loop over them and prevent submission
+        Array.from(forms).forEach((form) => {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
                 }
-        
-                // ✅ Fetch TDS from server
-                function fetchTdsInfo(transporterId) {
-                    if (!transporterId) {
-                        tdsRateDisplay.textContent = '--';
-                        return;
-                    }
-        
-                    fetch(`/transporter/${transporterId}/tds-info`)
-                        .then(response => response.json())
-                        .then(data => {
-                            const { pan_active, is_owner } = data;
-        
-                            if (pan_active == 0 || pan_active === false) {
-                                tdsRateDisplay.textContent = `TDS RATE= ${tdsPercentages.default}% (Default - PAN not active)`;
-                            } else {
-                                if (is_owner == 1) {
-                                    tdsRateDisplay.textContent = `TDS RATE= ${tdsPercentages.owner}%`;
-                                } else {
-                                    tdsRateDisplay.textContent = `TDS RATE= ${tdsPercentages.agency}%`;
-                                }
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error fetching transporter TDS info:', error);
-                            tdsRateDisplay.textContent = 'Error';
-                        });
-                }
-        
-                transporterTypeSelect.addEventListener('change', updateTransporterDropdown);
-        
-                truckSelect.addEventListener('change', () => {
-                    if (transporterTypeSelect.value === 'owner') {
-                        updateTransporterDropdown();
-                    }
-                });
-        
-                transporterSelect.addEventListener('change', function () {
-                    const transporterId = this.value;
-                    fetchTdsInfo(transporterId);
-                });
-            });
-        </script>
-        
-    {{-- <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const transporterTypeSelect = document.getElementById('transporter_type');
-            const transporterSelect = document.getElementById('transporter_id');
-            const transporterLabel = document.getElementById('transporterLabel');
-    
-            const truckOwners = @json($truckOwners);
-            const agencies = @json($agencies);
-    
-            transporterTypeSelect.addEventListener('change', function () {
-                const selectedType = this.value;
-                let optionsHtml = `<option value="">Select Transporter</option>`;
-    
-                if (selectedType === 'owner') {
-                    transporterLabel.textContent = 'Truck Owner *';
-                    truckOwners.forEach(function (owner) {
-                        optionsHtml += `<option value="${owner.id}">${owner.name}</option>`;
-                    });
-                } else if (selectedType === 'agency') {
-                    transporterLabel.textContent = 'Agency *';
-                    agencies.forEach(function (agency) {
-                        optionsHtml += `<option value="${agency.id}">${agency.name}</option>`;
-                    });
-                } else {
-                    transporterLabel.textContent = 'Transporter *';
-                }
-    
-                transporterSelect.innerHTML = optionsHtml;
-            });
+                form.classList.add('was-validated');
+            }, false);
         });
-    </script> --}}
+    }, false);
+})();
+</script>
+
+<!-- Load Select2 from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<!-- Load SweetAlert2 from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Lorry Receipt Edit Form initialized');
     
-    <script>
-      // Example starter JavaScript for disabling form submissions if there are invalid fields
-    //   (() => {
-        'use strict';
-        (() => {
-            'use strict';
+    // Auto-calculate amount based on weight × freight rate
+    const weightInput = document.getElementById('weight');
+    const frRateInput = document.getElementById('fr_rate');
+    const amountInput = document.getElementById('amount');
+    let isManuallyEdited = false;
+    
+    function calculateAmount() {
+        if (isManuallyEdited) return;
+        
+        const weight = parseFloat(weightInput.value) || 0;
+        const frRate = parseFloat(frRateInput.value) || 0;
+        
+        if (weight > 0 && frRate > 0) {
+            const calculatedAmount = weight * frRate;
+            amountInput.value = calculatedAmount.toFixed(2);
+            
+            // Visual feedback for auto-calculation
+            amountInput.classList.remove('amount-manually-edited');
+            amountInput.classList.add('amount-auto-calculated');
+            console.log(`💰 Auto-calculated amount: ₹${calculatedAmount.toFixed(2)} (${weight} tons × ₹${frRate}/ton)`);
+        }
+    }
+    
+    // Auto-calculate on weight or freight rate change
+    weightInput.addEventListener('input', calculateAmount);
+    frRateInput.addEventListener('input', calculateAmount);
+    
+    // Track manual edits to amount field
+    amountInput.addEventListener('input', function() {
+        isManuallyEdited = true;
+        this.classList.remove('amount-auto-calculated');
+        this.classList.add('amount-manually-edited');
+        console.log('✏️ Amount manually edited by user');
+    });
+    
+    // Initialize Select2 for better dropdowns
+    $('#customer_id, #consignor_id, #consignee_id, #transporter_id, #truck_id').select2({
+        theme: 'bootstrap-5',
+        placeholder: 'Select an option...',
+        allowClear: true
+    });
+    
+    // Bootstrap form validation
+    const forms = document.querySelectorAll('.needs-validation');
+    Array.from(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    });
+});
+</script>
 
-            // Fetch all the forms we want to apply custom Bootstrap validation styles to
-            const forms = document.querySelectorAll('.needs-validation');
-
-            // Loop over them and prevent submission
-            Array.from(forms).forEach((form) => {
-                form.addEventListener(
-                    'submit',
-                    (event) => {
-                        if (!form.checkValidity()) {
-                            event.preventDefault();
-                            event.stopPropagation();
-                        }
-
-                        form.classList.add('was-validated');
-                    },
-                    false,
-                );
-            });
-        })();
-
-        // Handle truck selection based on transporter
-        document.addEventListener('DOMContentLoaded', function() {
-           
-
-            // Handle consignor and consignee contact number and location details
-            const consignorSelect = document.getElementById('consignor_id');
-            const consignorContact = document.getElementById('consignor_contact_number');
-            const consignorLocation = document.getElementById('consignor_location');
+<script>
+// Handle consignor and consignee contact number and location details
+document.addEventListener('DOMContentLoaded', function() {
+    const consignorSelect = document.getElementById('consignor_id');
+    const consignorContact = document.getElementById('consignor_contact_number');
+    const consignorLocation = document.getElementById('consignor_location');
             const consigneeSelect = document.getElementById('consignee_id');
             const consigneeContact = document.getElementById('consignee_contact_number');
             const consigneeLocation = document.getElementById('consignee_location');
@@ -927,140 +451,326 @@ document.addEventListener('DOMContentLoaded', function () {
                 .catch(error => console.error('Error:', error));
             }
 
-            consignorSelect.addEventListener('change', updateConsignorDetails);
-            consigneeSelect.addEventListener('change', updateConsigneeDetails);
-        });
-       
-       
-     
-    
-
-      
-    </script>
-    <!--end::JavaScript-->
-</div>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    // Handle consignor contact number and location details
-    const consignorSelect = document.getElementById('consignor_id');
-    const consignorContact = document.getElementById('consignor_contact_number');
-    const sourceCityInput = document.getElementById('source_city');
-    const sourceStateInput = document.getElementById('source_state');
-
-    if (consignorSelect && consignorContact && sourceCityInput && sourceStateInput) {
-        consignorSelect.addEventListener('change', async function () {
-            const consignorId = this.value;
-            if (!consignorId) {
-                consignorContact.value = '';
-                sourceCityInput.value = '';
-                sourceStateInput.value = '';
-                return;
-            }
-
-            try {
-                const response = await fetch(`{{ route('consignees.details', '__id__') }}`.replace('__id__', consignorId));
-                if (!response.ok) {
-                    throw new Error('Failed to fetch consignor details');
-                }
-
-                const data = await response.json();
-                
-                // Update contact number and location fields
-                consignorContact.value = data.contact_number || '';
-                sourceCityInput.value = data.city_name || '';
-                sourceStateInput.value = data.state_name || '';
-            } catch (error) {
-                console.error('❌ Error:', error);
-                consignorContact.value = '';
-                sourceCityInput.value = '';
-                sourceStateInput.value = '';
-            }
-        });
-    }
-
-    // Handle consignee contact number and location details
-    const consigneeSelect = document.getElementById('consignee_id');
-    const consigneeContact = document.getElementById('consignee_contact_number');
-    const destinationCityInput = document.getElementById('destination_city');
-    const destinationStateInput = document.getElementById('destination_state');
-
-    if (consigneeSelect && consigneeContact && destinationCityInput && destinationStateInput) {
-        consigneeSelect.addEventListener('change', async function () {
-            const consigneeId = this.value;
-            if (!consigneeId) {
-                consigneeContact.value = '';
-                destinationCityInput.value = '';
-                destinationStateInput.value = '';
-                return;
-            }
-
-            try {
-                const response = await fetch(`{{ route('consignees.details', '__id__') }}`.replace('__id__', consigneeId));
-                if (!response.ok) {
-                    throw new Error('Failed to fetch consignee details');
-                }
-
-                const data = await response.json();
-                
-                // Update contact number and location fields
-                consigneeContact.value = data.contact_number || '';
-                destinationCityInput.value = data.city_name || '';
-                destinationStateInput.value = data.state_name || '';
-            } catch (error) {
-                console.error('❌ Error:', error);
-                consigneeContact.value = '';
-                destinationCityInput.value = '';
-                destinationStateInput.value = '';
-            }
-        });
-    }
-
-    // Calculate amount
-    const weightInput = document.getElementById('weight');
-    const frRateInput = document.getElementById('fr_rate');
-    const amountInput = document.getElementById('amount');
-    
-    function calculateAmount() {
-        const weight = parseFloat(weightInput.value);
-        const frRate = parseFloat(frRateInput.value);
-    
-        if (!isNaN(weight) && !isNaN(frRate)) {
-            const amount = (weight * frRate).toFixed(2);
-            amountInput.value = amount;
-        } else {
-            amountInput.value = '';
-        }
-    }
-    
-    weightInput.addEventListener('input', calculateAmount);
-    frRateInput.addEventListener('input', calculateAmount);
+    consignorSelect.addEventListener('change', updateConsignorDetails);
+    consigneeSelect.addEventListener('change', updateConsigneeDetails);
 });
 </script>
+
 <script>
-    document.getElementById('truck_id').addEventListener('change', function () {
-        let truckId = this.value;
-    
-        if (truckId) {
-            fetch(`/get-transporter-name/${truckId}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.transporter_name) {
-                        document.getElementById('transporter_name').value = data.transporter_name;
-                        if(data.transporter.is_owner == 1){
-                            document.getElementById('ownerTransporterSelect').style.display = 'block';
-                        }
-                    } else {
-                        document.getElementById('ownerTransporterSelect').style.display = 'none';
+// Handle truck selection and transporter details
+document.getElementById('truck_id').addEventListener('change', function () {
+    let truckId = this.value;
+
+    if (truckId) {
+        fetch(`/get-transporter-name/${truckId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.transporter_name) {
+                    document.getElementById('transporter_name').value = data.transporter_name;
+                    if(data.transporter.is_owner == 1){
+                        document.getElementById('ownerTransporterSelect').style.display = 'block';
                     }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
+                } else {
                     document.getElementById('ownerTransporterSelect').style.display = 'none';
-                });
-        } else {
-            document.getElementById('ownerTransporterSelect').style.display = 'none';
-        }
-    });
-    </script>
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('ownerTransporterSelect').style.display = 'none';
+            });
+    } else {
+        document.getElementById('ownerTransporterSelect').style.display = 'none';
+    }
+});
+</script>
+
 @endsection
+
+<!-- SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
+
+<!-- Ensure proper script loading -->
+<script>
+// Wait for DOM and jQuery to be ready
+document.addEventListener('DOMContentLoaded', function() {
+    // Wait for jQuery to be available
+    function waitForJQuery() {
+        if (typeof $ !== 'undefined' && typeof $.fn !== 'undefined') {
+            console.log('✅ jQuery is available');
+            checkSelect2();
+        } else {
+            console.log('⏳ Waiting for jQuery...');
+            setTimeout(waitForJQuery, 100);
+        }
+    }
+    
+    function checkSelect2() {
+        if (typeof $.fn.select2 !== 'undefined') {
+            console.log('✅ Select2 is available');
+            initializeLorryReceiptForm();
+        } else {
+            console.log('Loading Select2...');
+            var script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js';
+            script.onload = function() {
+                console.log('✅ Select2 loaded successfully');
+                initializeLorryReceiptForm();
+            };
+            document.head.appendChild(script);
+        }
+    }
+    
+    waitForJQuery();
+});
+
+function initializeLorryReceiptForm() {
+    $(document).ready(function() {
+        console.log('🚀 Lorry Receipt Edit Form initialized');
+        
+        // Initialize other dropdowns with Select2
+        $('#truck_id, #transporter_id, #consignor_id, #consignee_id, #good_type').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            allowClear: true
+        });
+        
+        // Access the customer data from the window object
+        console.log('Selected customer data:', { 
+            id: window.selectedCustomerId, 
+            name: window.selectedCustomerName 
+        });
+        
+        // Initialize customer dropdown with Select2
+        $('#customer_id').select2({
+            theme: 'bootstrap-5',
+            width: '100%'
+        }).on('select2:open', function() {
+            // Log when dropdown is opened
+            console.log('Customer dropdown opened');
+        });
+        
+        // Create a function to ensure the customer is selected
+        function ensureCustomerSelected() {
+            if (window.selectedCustomerId) {
+                // Make sure the option exists
+                const optionExists = $('#customer_id option[value="' + window.selectedCustomerId + '"]').length > 0;
+                
+                if (!optionExists) {
+                    // Create the option if it doesn't exist
+                    const newOption = new Option(window.selectedCustomerName, window.selectedCustomerId, true, true);
+                    $('#customer_id').append(newOption);
+                    console.log('Created missing option for customer:', window.selectedCustomerName);
+                }
+                
+                // Set the value and trigger change
+                $('#customer_id').val(window.selectedCustomerId).trigger('change');
+                
+                // Verify the selection
+                const currentVal = $('#customer_id').val();
+                console.log('Customer dropdown value after setting:', currentVal);
+                
+                if (currentVal == window.selectedCustomerId) {
+                    console.log('✅ Customer dropdown set successfully');
+                } else {
+                    console.log('⚠️ Failed to set customer dropdown value');
+                }
+            }
+        }
+        
+        // Call immediately
+        ensureCustomerSelected();
+        
+        // And also after a short delay to ensure Select2 is fully initialized
+        setTimeout(ensureCustomerSelected, 300);
+        
+        console.log('✅ All dropdowns initialized successfully');
+        console.log('Truck ID:', $('#truck_id').val());
+        console.log('Transporter ID:', $('#transporter_id').val());
+        console.log('Transporter Type:', $('#transporter_type').val());
+        console.log('Lorry Receipt Data:', {
+            customer_id: {{ $lorry_receipt->customer_id ?? 'null' }},
+            truck_id: {{ $lorry_receipt->truck_id ?? 'null' }},
+            transporter_id: {{ $lorry_receipt->transporter_id ?? 'null' }},
+            source: '{{ $lorry_receipt->source ?? '' }}',
+            destination: '{{ $lorry_receipt->destination ?? '' }}'
+        });
+        
+        // Ensure customer dropdown is properly initialized with the correct value
+        const customerSelect = $('#customer_id');
+        if (customerSelect.length) {
+            const customerId = {{ $lorry_receipt->customer_id ?? 'null' }};
+            if (customerId) {
+                customerSelect.val(customerId).trigger('change');
+                console.log('✅ Customer dropdown initialized with ID:', customerId);
+            }
+        }
+        console.log('Route field values:', {
+            source_city: $('#source_city').val(),
+            source_state: $('#source_state').val(),
+            destination_city: $('#destination_city').val(),
+            destination_state: $('#destination_state').val()
+        });
+
+        // Store consignor and consignee data for contact number population
+        const consignors = @json($consignors->keyBy('id'));
+        const consignees = @json($consignees->keyBy('id'));
+        const trucks = @json($trucks->keyBy('id'));
+        const transporters = @json($transporters->keyBy('id'));
+
+        // Populate contact numbers and details on page load
+        updateConsignorContact();
+        updateConsigneeContact();
+        updateTruckDetails();
+        updateTransporterDetails();
+        
+        // Set transporter type based on current truck selection
+        const currentTruckId = $('#truck_id').val();
+        if (currentTruckId && trucks[currentTruckId]) {
+            const transporterType = trucks[currentTruckId].transporter_type;
+            $('#transporter_type').val(transporterType);
+            console.log('Set transporter type to:', transporterType);
+        }
+        
+        // Trigger Select2 to refresh and show selected values
+        setTimeout(function() {
+            $('#customer_id, #truck_id, #transporter_id, #consignor_id, #consignee_id, #good_type').trigger('change.select2');
+            console.log('🔄 Select2 dropdowns refreshed');
+        }, 500);
+
+        // Handle consignor selection change
+        $('#consignor_id').on('change', function() {
+            updateConsignorContact();
+        });
+
+        // Handle consignee selection change
+        $('#consignee_id').on('change', function() {
+            updateConsigneeContact();
+        });
+
+        // Handle truck selection change
+        $('#truck_id').on('change', function() {
+            updateTruckDetails();
+            populateTransporterDropdown();
+        });
+
+        // Handle transporter selection change
+        $('#transporter_id').on('change', function() {
+            updateTransporterDetails();
+        });
+
+        function updateConsignorContact() {
+            const consignorId = $('#consignor_id').val();
+            if (consignorId && consignors[consignorId]) {
+                $('#consignor_contact_number').val(consignors[consignorId].contact_number || '');
+            } else {
+                $('#consignor_contact_number').val('');
+            }
+        }
+
+        function updateConsigneeContact() {
+            const consigneeId = $('#consignee_id').val();
+            if (consigneeId && consignees[consigneeId]) {
+                $('#consignee_contact_number').val(consignees[consigneeId].contact_number || '');
+            } else {
+                $('#consignee_contact_number').val('');
+            }
+        }
+
+        function updateTruckDetails() {
+            const truckId = $('#truck_id').val();
+            if (truckId && trucks[truckId]) {
+                const truck = trucks[truckId];
+                $('#source_city').val(truck.source_city || '');
+                $('#source_state').val(truck.source_state || '');
+                $('#destination_city').val(truck.destination_city || '');
+                $('#destination_state').val(truck.destination_state || '');
+            } else {
+                $('#source_city, #source_state, #destination_city, #destination_state').val('');
+            }
+        }
+
+        function updateTransporterDetails() {
+            const transporterId = $('#transporter_id').val();
+            if (transporterId && transporters[transporterId]) {
+                const transporter = transporters[transporterId];
+                const tdsPercentage = transporter.tds_percentage || 0;
+                
+                // Update TDS badge
+                if (tdsPercentage > 0) {
+                    $('#tds-badge').text(`TDS: ${tdsPercentage}%`).removeClass('d-none');
+                } else {
+                    $('#tds-badge').addClass('d-none');
+                }
+            } else {
+                $('#tds-badge').addClass('d-none');
+            }
+        }
+
+        function populateTransporterDropdown() {
+            const truckId = $('#truck_id').val();
+            const currentTransporterId = $('#transporter_id').val();
+            
+            if (truckId && trucks[truckId]) {
+                const truck = trucks[truckId];
+                const transporterType = truck.transporter_type;
+                
+                // Clear and repopulate transporter dropdown
+                $('#transporter_id').empty().append('<option value="">Select Transporter</option>');
+                
+                Object.values(transporters).forEach(transporter => {
+                    if (transporter.transporter_type === transporterType) {
+                        const selected = transporter.id == currentTransporterId ? 'selected' : '';
+                        $('#transporter_id').append(`<option value="${transporter.id}" ${selected}>${transporter.name}</option>`);
+                    }
+                });
+                
+                $('#transporter_id').trigger('change');
+            } else {
+                $('#transporter_id').empty().append('<option value="">Select Transporter</option>');
+            }
+        }
+
+        // Auto-calculate amount when weight or freight rate changes
+        $('#weight, #fr_rate').on('input', function() {
+            calculateAmount();
+        });
+
+        function calculateAmount() {
+            const weight = parseFloat($('#weight').val()) || 0;
+            const frRate = parseFloat($('#fr_rate').val()) || 0;
+            const amount = weight * frRate;
+            
+            if (weight > 0 && frRate > 0) {
+                $('#amount').val(amount.toFixed(2));
+            }
+        }
+
+        // Validate no_of_units field
+        $('#no_of_units').on('input blur', function() {
+            const value = parseInt($(this).val());
+            const isValid = !value || (value >= 1 && value <= 100000);
+            
+            $(this).toggleClass('is-valid', isValid && value)
+                   .toggleClass('is-invalid', !isValid && value);
+            
+            if (!isValid && value) {
+                this.setCustomValidity('Number of units must be between 1 and 100,000');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+
+        // Form validation
+        $('form').on('submit', function(e) {
+            const noOfUnits = parseInt($('#no_of_units').val());
+            if (noOfUnits && (noOfUnits < 1 || noOfUnits > 100000)) {
+                e.preventDefault();
+                $('#no_of_units').addClass('is-invalid');
+                alert('Number of units must be between 1 and 100,000');
+                return false;
+            }
+        });
+    });
+}
+</script>
 
