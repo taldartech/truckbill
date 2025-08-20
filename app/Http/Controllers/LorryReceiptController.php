@@ -221,38 +221,28 @@ class LorryReceiptController extends Controller
 
     private function getActionButtons($lorryReceipt)
     {
-        $actions = '<div class="btn-group" role="group">';
+        $buttons = '<div class="d-flex gap-1">';
         
-        // View button
-        // $actions .= '<a href="' . route('lorry_receipts.show', $lorryReceipt->id) . '" class="btn btn-sm btn-outline-info" title="View">';
-        // $actions .= '<i class="bi bi-eye"></i>';
-        // $actions .= '</a>';
-
-        // Advance Payment button
-
-        //Freight booking
-        $actions .= '<a href="' . route('freight_bookings.create', $lorryReceipt->id) . '" class="btn btn-sm btn-outline-success" title="Freight Booking" "style="display: inline;">';
-        $actions .= '<i class="bi bi-truck"></i>';
-        $actions .= '</a>';
-     
+        // Freight booking button
+        $buttons .= '<a href="' . route('freight_bookings.create', $lorryReceipt->id) . '" class="btn btn-sm btn-success" title="Freight Booking" data-bs-toggle="tooltip">';
+        $buttons .= '<i class="bi bi-truck"></i>';
+        $buttons .= '</a>';
         
         // Edit button
-        $actions .= '<a href="' . route('lorry_receipts.edit', $lorryReceipt->id) . '" class="btn btn-sm btn-outline-primary" title="Edit">';
-        $actions .= '<i class="bi bi-pencil"></i>';
-        $actions .= '</a>';
+        $editUrl = route('lorry_receipts.edit', $lorryReceipt->id);
+        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit" data-bs-toggle="tooltip">';
+        $buttons .= '<i class="bi bi-pencil"></i></a>';
         
         // Delete button
-        $actions .= '<form method="POST" action="' . route('lorry_receipts.destroy', $lorryReceipt->id) . '" style="display: inline;">';
-        $actions .= csrf_field();
-        $actions .= method_field('DELETE');
-        $actions .= '<button type="submit" class="btn btn-sm btn-outline-danger" title="Delete" onclick="return confirm(\'Are you sure you want to delete this lorry receipt?\')">';
-        $actions .= '<i class="bi bi-trash"></i>';
-        $actions .= '</button>';
-        $actions .= '</form>';
+        $deleteUrl = route('lorry_receipts.destroy', $lorryReceipt->id);
+        $buttons .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this lorry receipt?\')">';
+        $buttons .= csrf_field() . method_field('DELETE');
+        $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete" data-bs-toggle="tooltip">';
+        $buttons .= '<i class="bi bi-trash"></i></button></form>';
         
-        $actions .= '</div>';
+        $buttons .= '</div>';
         
-        return $actions;
+        return $buttons;
     }
 
     public function create()
