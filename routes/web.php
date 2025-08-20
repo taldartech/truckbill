@@ -143,6 +143,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Freight Bookings
     Route::resource('freight_bookings', FreightBookingController::class);
+    Route::get('/freight_bookings/data', [FreightBookingController::class, 'getFreightBookingsData'])->name('freight_bookings.datatable');
     Route::get('/api/freight-bookings/{id}/details', [FreightBookingController::class, 'getFreightBookingDetails'])->name('api.freight_bookings.details');
     Route::post('/freight_bookings/bulk-action', [FreightBookingController::class, 'bulkAction'])->name('freight_bookings.bulkAction');
     Route::post('/freight_bookings/voucher-payment', [FreightBookingController::class, 'voucherPayment'])->name('freight_bookings.voucher_payment');

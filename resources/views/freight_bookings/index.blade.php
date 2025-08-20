@@ -9,76 +9,59 @@
 @endpush
 
 @section('content')
-<div class="container-fluid py-4">
+<div class="container mt-4">
+    <div class="col-sm-6"><h3 class="mb-0">Freight Bookings Management</h3></div>
     @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+        <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
-    <div class="row mb-4">
-        <div class="col-md-10">
-            <div class="card">
-                <div class="card-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h3 class="card-title mb-0">Freight Bookings Management</h3>
-                        <div>
-                            <a href="{{ route('freight_bookings.create') }}" class="btn btn-primary">
-                                <i class="fas fa-plus-circle me-1"></i> Add New Freight Booking
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table id="freight-bookings-table" class="table table-bordered table-striped table-hover">
-                            <thead>
-                                <tr>
-                                    <th width="30px"><input type="checkbox" id="select-all" class="form-check-input"></th>
-                                    <th width="50px">ID</th>
-                                    <th>LR No</th>
-                                    <th>Voucher No</th>
-                                    <th>TR Rate</th>
-                                    <th>TR Amount</th>
-                                    <th>Advance</th>
-                                    <th>Balance</th>
-                                    <th>GR Date</th>
-                                    <th>Delivered?</th>
-                                    <th>Cancelled?</th>
-                                    <th width="120px">Actions</th>
-                                </tr>
-                                <tr id="filterrow">
-                                    <th></th>
-                                    <th></th>
-                                    <th><input type="text" class="form-control form-control-sm column-search" placeholder="Search LR No"></th>
-                                    <th><input type="text" class="form-control form-control-sm column-search" placeholder="Search Voucher"></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th></th>
-                                    <th>
-                                        <select class="form-select form-select-sm column-search">
-                                            <option value="">All</option>
-                                            <option value="1">Yes</option>
-                                            <option value="0">No</option>
-                                        </select>
-                                    </th>
-                                    <th>
-                                        <select class="form-select form-select-sm column-search">
-                                            <option value="">All</option>
-                                            <option value="1">Yes</option>
-                                            <option value="0">No</option>
-                                        </select>
-                                    </th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Data will be loaded via AJAX -->
-                            </tbody>
-                        </table>
+    {{-- <div class="d-flex justify-content-end gap-2 mb-3">
+        <a href="{{ route('freight_bookings.create') }}" class="btn btn-info">
+            <i class="bi bi-plus"></i> Create
+        </a>
+    </div> --}}
+
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3 class="card-title">Freight Bookings List</h3>
+        </div>
+        <div class="card-body">
+            <table id="freightBookingsTable" class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">Sr. No</th>
+                        <th>LR Number</th>
+                        <th>Voucher No</th>
+                        <th>TR Rate</th>
+                        <th>TR Amount</th>
+                        <th>Advance</th>
+                        <th>Balance</th>
+                        <th>GR Date</th>
+                        <th>Delivered</th>
+                        <th style="width: 120px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data will be loaded by DataTables -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- LR Details Modal -->
+<div class="modal fade" id="lrDetailsModal" tabindex="-1" aria-labelledby="lrDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="lrDetailsModalLabel">LR Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="lrDetailsContent">
+                <!-- Content will be loaded dynamically -->
+                <div class="text-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
                     </div>
                 </div>
             </div>
@@ -101,20 +84,7 @@
         </div>
     </div>
 </div>
-<!-- Freight Booking Details Modal -->
-<div class="modal fade" id="freightBookingDetailsModal" tabindex="-1" aria-labelledby="freightBookingDetailsLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Freight Booking Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="freightBookingDetailsContent">
-                <!-- Details will be loaded here dynamically -->
-            </div>
-        </div>
-    </div>
-</div>
+
 <div class="modal fade" id="voucherPaymentModal" tabindex="-1" aria-labelledby="voucherPaymentModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -145,8 +115,10 @@
                 <!-- Dynamic content will be inserted here -->
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button class="btn btn-success" onclick="submitBulkPayment()">Submit Payment</button>
+                <a href="#" id="editFreightBookingBtn" class="btn btn-primary">
+                    <i class="bi bi-pencil"></i> Edit
+                </a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -298,15 +270,57 @@
 
 @push('scripts')
 <!-- DataTables JS -->
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.colVis.min.js"></script>
 <script src="https://cdn.datatables.net/searchpanes/2.2.0/js/dataTables.searchPanes.min.js"></script>
 <script src="https://cdn.datatables.net/searchpanes/2.2.0/js/searchPanes.bootstrap5.min.js"></script>
 <script src="https://cdn.datatables.net/select/1.7.0/js/dataTables.select.min.js"></script>
+
+<style>
+    .clickable {
+        cursor: pointer;
+        color: #0d6efd;
+        text-decoration: underline;
+    }
+    .clickable:hover {
+        text-decoration: none;
+    }
+    .memo-assigned {
+        background-color: #fff3cd !important; /* Light yellow background for rows with memo */
+    }
+    .memo-tooltip {
+        position: relative;
+        display: inline-block;
+        margin-left: 5px;
+    }
+    .memo-tooltip .tooltip-text {
+        visibility: hidden;
+        width: 200px;
+        background-color: #555;
+        color: #fff;
+        text-align: center;
+        border-radius: 6px;
+        padding: 5px;
+        position: absolute;
+        z-index: 1;
+        bottom: 125%;
+        left: 50%;
+        margin-left: -100px;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+    .memo-tooltip:hover .tooltip-text {
+        visibility: visible;
+        opacity: 1;
+    }
+</style>
 
 <script>
 $(document).ready(function() {
@@ -768,271 +782,6 @@ function handleVoucherPayment() {
     modal.show();
 }
 
-function showFreightBookingDetails(id) {
-    const modal = new bootstrap.Modal(document.getElementById('freightBookingDetailsModal'));
-    const contentDiv = document.getElementById('freightBookingDetailsContent');
-    
-    // Show loading state
-    contentDiv.innerHTML = `
-        <div class="d-flex justify-content-center my-5">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <span class="ms-2">Loading details...</span>
-        </div>
-    `;
-    modal.show();
-    
-    fetch(`{{ url('/api/freight-bookings') }}/${id}/details`)
-        .then(response => response.json())
-        .then(data => {
-            const fb = data.freight_booking;
-            const lr = data.lr;
-            
-            contentDiv.innerHTML = `
-                <div class="lr-details-container">
-                    <!-- Freight Booking Info -->
-                    <div class="lr-details-section mb-3">
-                        <h5>Freight Booking Information</h5>
-                        <div class="lr-details-content">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="lr-details-row">
-                                        <div class="lr-details-label">Booking ID</div>
-                                        <div class="lr-details-value">${fb.id || '-'}</div>
-                                    </div>
-                                    <div class="lr-details-row">
-                                        <div class="lr-details-label">LR Number</div>
-                                        <div class="lr-details-value">${lr?.lr_number || '-'}</div>
-                                    </div>
-                                    <div class="lr-details-row">
-                                        <div class="lr-details-label">Voucher Number</div>
-                                        <div class="lr-details-value">${fb.voucher_number || '-'}</div>
-                                    </div>
-                                    <div class="lr-details-row">
-                                        <div class="lr-details-label">Truck Number</div>
-                                        <div class="lr-details-value">${fb.truck_number || '-'}</div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="lr-details-row">
-                                        <div class="lr-details-label">GR Date</div>
-                                        <div class="lr-details-value">${fb.gr_date || '-'}</div>
-                                    </div>
-                                    <div class="lr-details-row">
-                                        <div class="lr-details-label">Delivered</div>
-                                        <div class="lr-details-value">
-                                            ${String(fb.is_delivered) === '1' ? 
-                                                '<span class="badge bg-success">Yes</span>' : 
-                                                '<span class="badge bg-warning">No</span>'}
-                                        </div>
-                                    </div>
-                                    <div class="lr-details-row">
-                                        <div class="lr-details-label">Cancelled</div>
-                                        <div class="lr-details-value">
-                                            ${String(fb.is_cancelled) === '1' ? 
-                                                '<span class="badge bg-danger">Yes</span>' : 
-                                                '<span class="badge bg-secondary">No</span>'}
-                                        </div>
-                                    </div>
-                                    <div class="lr-details-row">
-                                        <div class="lr-details-label">Good Type</div>
-                                        <div class="lr-details-value">${fb.good_type || '-'}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Financial Details -->
-                    <div class="lr-details-section mb-3">
-                        <h5>Financial Information</h5>
-                        <div class="lr-details-content">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="lr-details-row">
-                                        <div class="lr-details-label">TR Freight Rate</div>
-                                        <div class="lr-details-value">₹${fb.tr_rate ? Number(fb.tr_rate).toFixed(2) : '0.00'}</div>
-                                    </div>
-                                    <div class="lr-details-row">
-                                        <div class="lr-details-label">TR Amount</div>
-                                        <div class="lr-details-value">₹${fb.tr_amount ? Number(fb.tr_amount).toFixed(2) : '0.00'}</div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="lr-details-row">
-                                        <div class="lr-details-label">Advance</div>
-                                        <div class="lr-details-value">₹${fb.advance ? Number(fb.advance).toFixed(2) : '0.00'}</div>
-                                    </div>
-                                    <div class="lr-details-row">
-                                        <div class="lr-details-label">Balance</div>
-                                        <div class="lr-details-value">₹${fb.balance ? Number(fb.balance).toFixed(2) : '0.00'}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Additional Details -->
-                    <div class="lr-details-section">
-                        <h5>Additional Information</h5>
-                        <div class="lr-details-content">
-                            <div class="lr-details-row">
-                                <div class="lr-details-label">TDS Amount</div>
-                                <div class="lr-details-value">₹${fb.tds_amount ? Number(fb.tds_amount).toFixed(2) : '0.00'}</div>
-                            </div>
-                            <div class="lr-details-row">
-                                <div class="lr-details-label">Created At</div>
-                                <div class="lr-details-value">${new Date(fb.created_at).toLocaleString()}</div>
-                            </div>
-                            <div class="lr-details-row">
-                                <div class="lr-details-label">Updated At</div>
-                                <div class="lr-details-value">${new Date(fb.updated_at).toLocaleString()}</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        })
-        .catch(error => {
-            console.error('Error fetching Freight Booking details:', error);
-            contentDiv.innerHTML = '<div class="alert alert-danger">Error loading details. Please try again.</div>';
-        });
-}
-function handleBulkPayment() {
-    const checkboxes = document.querySelectorAll('.row-checkbox:checked');
-    const modalBody = document.getElementById('bulkPaymentBody');
-    
-    modalBody.innerHTML = '';
-
-    if (checkboxes.length === 0) {
-        alert("Please select at least one Freight Booking.");
-        return;
-    }
-
-    // Check for bookings with zero balance and collect their numbers
-    const zeroBalanceBookings = Array.from(checkboxes).filter(cb => {
-        const balance = parseFloat(cb.getAttribute('data-balance') || 0);
-        return balance <= 0;
-    }).map(cb => cb.getAttribute('data-lr'));
-
-    if (zeroBalanceBookings.length > 0) {
-        const message = `The following Bookings have zero balance. No payment is required:\n${zeroBalanceBookings.join(', ')}`;
-        alert(message);
-        return;
-    }
-    
-    // Create table for selected bookings
-    let tableHtml = `
-        <div class="alert alert-info mb-3">
-            <i class="fas fa-info-circle me-2"></i>
-            Selected ${checkboxes.length} freight booking(s) for payment
-        </div>
-        <table class="table table-sm table-bordered">
-            <thead>
-                <tr>
-                    <th>Select</th>
-                    <th>Booking ID</th>
-                    <th>LR Number</th>
-                    <th>Truck Number</th>
-                    <th class="text-end">Balance (₹)</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
-
-    let totalAmount = 0;
-    
-    // Add each selected booking to the table
-    Array.from(checkboxes).forEach(checkbox => {
-        const id = checkbox.value;
-        const lr = checkbox.getAttribute('data-lr') || '-';
-        const truck = checkbox.getAttribute('data-truck') || '-';
-        const balance = parseFloat(checkbox.getAttribute('data-balance') || 0);
-        
-        totalAmount += balance;
-        
-        tableHtml += `
-            <tr>
-                <td class="text-center">
-                    <input type="checkbox" class="bulk-payment-checkbox" value="${id}" 
-                           data-balance="${balance}" checked>
-                </td>
-                <td>${id}</td>
-                <td>${lr}</td>
-                <td>${truck}</td>
-                <td class="text-end">${balance.toFixed(2)}</td>
-            </tr>
-        `;
-    });
-    
-    tableHtml += `
-            </tbody>
-            <tfoot>
-                <tr>
-                    <th colspan="4" class="text-end">Total:</th>
-                    <th class="text-end" id="bulkPaymentTotal">${totalAmount.toFixed(2)}</th>
-                </tr>
-            </tfoot>
-        </table>
-    `;
-    
-    // Add payment form fields
-    tableHtml += `
-        <div class="row mt-4">
-            <div class="col-md-6 mb-3">
-                <label for="bulkPaymentType" class="form-label">Payment Type <span class="text-danger">*</span></label>
-                <select class="form-select" id="bulkPaymentType" name="payment_type" required>
-                    <option value="">Select Payment Type</option>
-                    <option value="cash">Cash</option>
-                    <option value="bank">Bank</option>
-                    <option value="upi">UPI</option>
-                </select>
-            </div>
-            <div class="col-md-6 mb-3">
-                <label for="bulkPaymentMode" class="form-label">Payment Mode <span class="text-danger">*</span></label>
-                <select class="form-select" id="bulkPaymentMode" name="payment_mode" required>
-                    <option value="">Select Payment Mode</option>
-                    <option value="cash">Cash</option>
-                    <option value="cheque">Cheque</option>
-                    <option value="neft">NEFT</option>
-                    <option value="rtgs">RTGS</option>
-                    <option value="imps">IMPS</option>
-                    <option value="upi">UPI</option>
-                </select>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label for="bulkPaymentDate" class="form-label">Payment Date <span class="text-danger">*</span></label>
-                <input type="date" class="form-control" id="bulkPaymentDate" name="payment_date" value="{{ date('Y-m-d') }}" required>
-            </div>
-            <div class="col-md-6 mb-3">
-                <label for="bulkPaymentReference" class="form-label">Reference Number</label>
-                <input type="text" class="form-control" id="bulkPaymentReference" name="reference_number" placeholder="Cheque/Transaction number">
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-12 mb-3">
-                <label for="bulkPaymentNotes" class="form-label">Notes</label>
-                <textarea class="form-control" id="bulkPaymentNotes" name="notes" rows="2" placeholder="Optional payment notes"></textarea>
-            </div>
-        </div>
-        <input type="hidden" id="bulkPaymentIds" name="booking_ids">
-        <input type="hidden" id="bulkPaymentAmounts" name="payment_amounts">
-    `;
-    
-    modalBody.innerHTML = tableHtml;
-    
-    // Add event listeners to update total when checkboxes change
-    document.querySelectorAll('.bulk-payment-checkbox').forEach(cb => {
-        cb.addEventListener('change', updateBulkPaymentTotal);
-    });
-    
-    // Show the modal
-    const modal = new bootstrap.Modal(document.getElementById('bulkPaymentModal'));
-    modal.show();
-}
 function updateBulkPaymentTotal() {
     const selectedCheckboxes = document.querySelectorAll('.bulk-payment-checkbox:checked');
     let total = 0;
@@ -1148,15 +897,192 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+$(document).ready(function() {
+    // Initialize DataTable
+    console.log('Initializing DataTable...');
+    var table = $('#freightBookingsTable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: '{{ route("freight_bookings.datatable") }}',
+            error: function(xhr, error, thrown) {
+                console.error('DataTables error:', error);
+                console.error('Status:', xhr.status);
+                console.error('Response:', xhr.responseText);
+                // Show error message to user
+                $('#freightBookingsTable').before(
+                    '<div class="alert alert-danger">Error loading data. Please check console for details.</div>'
+                );
+            }
+        },
+        columns: [
+            { 
+                data: 'DT_RowIndex', 
+                name: 'DT_RowIndex', 
+                orderable: false, 
+                searchable: false 
+            },
+            { 
+                data: 'lr_number', 
+                name: 'lr_number',
+                render: function(data, type, row) {
+                    return '<span class="clickable lr-number" data-id="' + row.id + '">' + data + '</span>';
+                }
+            },
+            { 
+                data: 'voucher_number', 
+                name: 'voucher_number' 
+            },
+            { 
+                data: 'tr_rate_formatted', 
+                name: 'tr_rate_formatted',
+                orderable: false
+            },
+            { 
+                data: 'tr_amount_formatted', 
+                name: 'tr_amount_formatted',
+                orderable: false
+            },
+            { 
+                data: 'advance_formatted', 
+                name: 'advance_formatted',
+                orderable: false
+            },
+            { 
+                data: 'balance_formatted', 
+                name: 'balance_formatted',
+                orderable: false
+            },
+            { 
+                data: 'gr_date_formatted', 
+                name: 'gr_date_formatted',
+                orderable: false
+            },
+            { 
+                data: 'is_delivered_badge', 
+                name: 'is_delivered_badge',
+                orderable: false
+            },
+            { 
+                data: 'actions', 
+                name: 'actions', 
+                orderable: false, 
+                searchable: false,
+                className: 'text-center'
+            },
+        ],
+        order: [[0, 'desc']],
+        dom: 'Bfrtip',
+        buttons: [
+            'copy', 'csv', 'excel', 'pdf', 'print', 'colvis'
+        ],
+        pageLength: 25,
+        responsive: true,
+        createdRow: function(row, data, dataIndex) {
+            if (data.memo_id) {
+                $(row).addClass('memo-assigned');
+            }
+        },
+        initComplete: function(settings, json) {
+            console.log('DataTables initialization complete');
+            console.log('Data received:', json);
+        }
+    });
 
-                            <div class="lr-details-value">${String(fb?.is_cancelled) === '1' ? 'Yes' : 'No'}</div>
+    // Handle click on LR number to show details
+    $(document).on('click', '.lr-number', function(e) {
+        e.preventDefault();
+        const id = $(this).data('id');
+        showFreightBookingDetails(id);
+    });
+
+    // Function to show freight booking details in modal
+    function showFreightBookingDetails(id) {
+        const modal = new bootstrap.Modal(document.getElementById('lrDetailsModal'));
+        const contentDiv = document.getElementById('lrDetailsContent');
+        const editBtn = document.getElementById('editFreightBookingBtn');
+
+        // Show loading state
+        contentDiv.innerHTML = `
+            <div class="text-center">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>`;
+
+        // Fetch freight booking details
+        fetch(`/api/freight-bookings/${id}/details`)
+            .then(response => response.json())
+            .then(fb => {
+                let detailsHtml = `
+                    <div class="row">
+                        <!-- Basic Information -->
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">Basic Information</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row mb-2">
+                                        <div class="col-md-6"><strong>LR Number:</strong></div>
+                                        <div class="col-md-6">${fb.lr_no || 'N/A'}</div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-6"><strong>Voucher No:</strong></div>
+                                        <div class="col-md-6">${fb.voucher_no || 'N/A'}</div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-6"><strong>GR Date:</strong></div>
+                                        <div class="col-md-6">${fb.gr_date || 'N/A'}</div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-6"><strong>Status:</strong></div>
+                                        <div class="col-md-6">
+                                            <span class="badge bg-${fb.is_cancelled ? 'danger' : (fb.is_delivered ? 'success' : 'secondary')}">
+                                                ${fb.is_cancelled ? 'Cancelled' : (fb.is_delivered ? 'Delivered' : 'In Transit')}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Financial Information -->
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0">Financial Information</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row mb-2">
+                                        <div class="col-md-6"><strong>TR Rate:</strong></div>
+                                        <div class="col-md-6">${fb.tr_rate || '0.00'}</div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-6"><strong>TR Amount:</strong></div>
+                                        <div class="col-md-6">${fb.tr_amount || '0.00'}</div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-6"><strong>Advance:</strong></div>
+                                        <div class="col-md-6">${fb.advance || '0.00'}</div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-6"><strong>Balance:</strong></div>
+                                        <div class="col-md-6">${fb.balance || '0.00'}</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
+                </div>`;
 
-                </div>
-            `;
-
-            contentDiv.innerHTML = html;
+            contentDiv.innerHTML = detailsHtml;
+            
+            // Set edit button URL
+            if (editBtn) {
+                editBtn.href = `/freight_bookings/${id}/edit`;
+            }
+            
             modal.show();
         })
         .catch(error => {
