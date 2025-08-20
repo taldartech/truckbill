@@ -229,6 +229,11 @@ class LorryReceiptController extends Controller
         // $actions .= '</a>';
 
         // Advance Payment button
+
+        //Freight booking
+        $actions .= '<a href="' . route('freight_bookings.create', $lorryReceipt->id) . '" class="btn btn-sm btn-outline-success" title="Freight Booking" "style="display: inline;">';
+        $actions .= '<i class="bi bi-truck"></i>';
+        $actions .= '</a>';
      
         
         // Edit button
@@ -638,7 +643,8 @@ class LorryReceiptController extends Controller
             'truck',
             'transporter',
             'consignor',
-            'consignee'
+            'consignee',
+            'customer' // Add customer relationship
         ])->findOrFail($id);
 
         return response()->json($lorry_receipt);

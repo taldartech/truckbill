@@ -103,20 +103,89 @@
     </div>
 </div>
 
-<!-- Modal for showing LR details -->
+<!-- Lorry Receipt Details Modal -->
 <div class="modal fade" id="lrDetailsModal" tabindex="-1" aria-labelledby="lrDetailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="lrDetailsModalLabel">Lorry Receipt Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="lrDetailsModalLabel">
+                    <i class="bi bi-file-text me-2"></i>Lorry Receipt Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body" id="lrDetailsContent"></div>
+            <div class="modal-body p-0" id="lrDetailsContent">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading lorry receipt details...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-lg me-1"></i> Close
+                </button>
+                <a href="#" class="btn btn-primary" id="editLorryReceiptBtn">
+                    <i class="bi bi-pencil me-1"></i> Edit
+                </a>
+            </div>
         </div>
     </div>
 </div>
 
 <style>
+    /* Modal styles */
+    .lr-details-container {
+        padding: 1.5rem;
+    }
+    .lr-details-section {
+        margin-bottom: 1.5rem;
+        border-radius: 0.5rem;
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        overflow: hidden;
+    }
+    .lr-details-section h5 {
+        background-color: #f1f8ff;
+        padding: 0.75rem 1.25rem;
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #0d6efd;
+        border-bottom: 1px solid #e9ecef;
+    }
+    .lr-details-content {
+        padding: 1.25rem;
+    }
+    .lr-details-row {
+        display: flex;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px dashed #e9ecef;
+    }
+    .lr-details-row:last-child {
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: none;
+    }
+    .lr-details-label {
+        width: 200px;
+        font-weight: 500;
+        color: #6c757d;
+        flex-shrink: 0;
+    }
+    .lr-details-value {
+        flex: 1;
+        color: #212529;
+        word-break: break-word;
+    }
+    .badge {
+        font-weight: 500;
+        padding: 0.35em 0.65em;
+    }
+    .badge.bg-warning { color: #000; }
+    
+    /* Floating buttons */
     .floating-buttons button {
         display: block;
         width: 100%;
@@ -200,6 +269,14 @@ $(document).ready(function() {
     var table = $('#lorryReceiptsTable').DataTable({
         processing: true,
         serverSide: true,
+        createdRow: function(row, data, dataIndex) {
+            // Make LR number cell clickable
+            var lrNumberCell = $(row).find('td:eq(2)');
+            lrNumberCell.css('cursor', 'pointer');
+            lrNumberCell.on('click', function() {
+                showLRDetails(data.id);
+            });
+        },
         ajax: {
             url: '{{ route("lorry_receipts.index") }}',
             type: 'GET'
@@ -223,7 +300,10 @@ $(document).ready(function() {
             },
             {
                 data: 'lr_number',
-                name: 'lr_number'
+                name: 'lr_number',
+                render: function(data, type, row) {
+                    return '<a href="#" class="lr-number-link" data-id="' + row.id + '">' + data + '</a>';
+                }
             },
             {
                 data: 'customer_name',
@@ -268,23 +348,23 @@ $(document).ready(function() {
                 className: 'text-center'
             }
         ],
-        order: [[1, 'desc']],
-        pageLength: 25,
-        responsive: true,
-        scrollX: true,
-        dom: 'Bfrtip',
-        buttons: [
-            {
-                extend: 'excel',
-                text: '<i class="bi bi-file-earmark-excel"></i> Export Excel',
-                className: 'btn btn-success btn-sm'
-            }
-        ],
-        language: {
-            processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>',
-            emptyTable: "No lorry receipts found",
-            zeroRecords: "No matching lorry receipts found"
-        },
+        // order: [[1, 'desc']],
+        // pageLength: 25,
+        // responsive: true,
+        // scrollX: true,
+        // dom: 'Bfrtip',
+        // buttons: [
+        //     {
+        //         extend: 'excel',
+        //         text: '<i class="bi bi-file-earmark-excel"></i> Export Excel',
+        //         className: 'btn btn-success btn-sm'
+        //     }
+        // ],
+        // language: {
+        //     processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>',
+        //     emptyTable: "No lorry receipts found",
+        //     zeroRecords: "No matching lorry receipts found"
+        // },
         drawCallback: function(settings) {
             // Reinitialize tooltips after each draw
             $('[data-bs-toggle="tooltip"]').tooltip();
@@ -535,94 +615,224 @@ function submitVoucherPayment() {
     });
 }
 
+// // Show LR Details function
+// function showLRDetails(id) {
+//     const modal = new bootstrap.Modal(document.getElementById('lrDetailsModal'));
+//     const contentDiv = document.getElementById('lrDetailsContent');
+    
+//     // Show loading state
+//     contentDiv.innerHTML = `
+//         <div class="text-center">
+//             <div class="spinner-border" role="status">
+//                 <span class="visually-hidden">Loading...</span>
+//             </div>
+//             <p class="mt-2">Loading details...</p>
+//         </div>
+//     `;
+    
+//     // Fetch LR details
+//     fetch(`/api/lorry-receipts/${id}/details`)
+//         .then(response => response.json())
+//         .then(lr => {
+//             const html = `
+//                 <div class="lr-details-container">
+//                     <div class="lr-details-section">
+//                         <h5>Basic Information</h5>
+//                         <div class="lr-details-row">
+//                             <div class="lr-details-label">LR Number</div>
+//                             <div class="lr-details-value">${lr.lr_number}</div>
+//                         </div>
+//                         <div class="lr-details-row">
+//                             <div class="lr-details-label">GR Date</div>
+//                             <div class="lr-details-value">${lr.gr_date}</div>
+//                         </div>
+//                         <div class="lr-details-row">
+//                             <div class="lr-details-label">Status</div>
+//                             <div class="lr-details-value">${lr.delivery_status}</div>
+//                         </div>
+//                     </div>
+                    
+//                     <div class="lr-details-section">
+//                         <h5>Parties</h5>
+//                         <div class="lr-details-row">
+//                             <div class="lr-details-label">Customer</div>
+//                             <div class="lr-details-value">${lr.customer ? lr.customer.name : 'N/A'}</div>
+//                         </div>
+//                         <div class="lr-details-row">
+//                             <div class="lr-details-label">Consignor</div>
+//                             <div class="lr-details-value">${lr.consignor ? lr.consignor.name : 'N/A'}</div>
+//                         </div>
+//                         <div class="lr-details-row">
+//                             <div class="lr-details-label">Consignee</div>
+//                             <div class="lr-details-value">${lr.consignee ? lr.consignee.name : 'N/A'}</div>
+//                         </div>
+//                         <div class="lr-details-row">
+//                             <div class="lr-details-label">Transporter</div>
+//                             <div class="lr-details-value">${lr.transporter ? lr.transporter.name : 'N/A'}</div>
+//                         </div>
+//                     </div>
+                    
+//                     <div class="lr-details-section">
+//                         <h5>Transport Details</h5>
+//                         <div class="lr-details-row">
+//                             <div class="lr-details-label">Truck Number</div>
+//                             <div class="lr-details-value">${lr.truck ? lr.truck.truck_number : 'N/A'}</div>
+//                         </div>
+//                         <div class="lr-details-row">
+//                             <div class="lr-details-label">Goods</div>
+//                             <div class="lr-details-value">${lr.goods}</div>
+//                         </div>
+//                         <div class="lr-details-row">
+//                             <div class="lr-details-label">Weight</div>
+//                             <div class="lr-details-value">${lr.weight}</div>
+//                         </div>
+//                         <div class="lr-details-row">
+//                             <div class="lr-details-label">Amount</div>
+//                             <div class="lr-details-value">${lr.amount}</div>
+//                         </div>
+//                     </div>
+//                 </div>
+//             `;
+
+//             contentDiv.innerHTML = html;
+//             modal.show();
+//         })
+//         .catch(error => {
+//             console.error('Error fetching LR details:', error);
+//             contentDiv.innerHTML = '<div class="alert alert-danger">Error loading details. Please try again.</div>';
+//             modal.show();
+//         });
+// }
 // Show LR Details function
 function showLRDetails(id) {
     const modal = new bootstrap.Modal(document.getElementById('lrDetailsModal'));
     const contentDiv = document.getElementById('lrDetailsContent');
-    
+
     // Show loading state
     contentDiv.innerHTML = `
         <div class="text-center">
-            <div class="spinner-border" role="status">
+            <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
             </div>
-            <p class="mt-2">Loading details...</p>
+            <p class="mt-2">Loading LR details...</p>
         </div>
     `;
-    
+
     // Fetch LR details
     fetch(`/api/lorry-receipts/${id}/details`)
         .then(response => response.json())
         .then(lr => {
-            const html = `
-                <div class="lr-details-container">
-                    <div class="lr-details-section">
-                        <h5>Basic Information</h5>
-                        <div class="lr-details-row">
-                            <div class="lr-details-label">LR Number</div>
-                            <div class="lr-details-value">${lr.lr_number}</div>
-                        </div>
-                        <div class="lr-details-row">
-                            <div class="lr-details-label">GR Date</div>
-                            <div class="lr-details-value">${lr.gr_date}</div>
-                        </div>
-                        <div class="lr-details-row">
-                            <div class="lr-details-label">Status</div>
-                            <div class="lr-details-value">${lr.delivery_status}</div>
-                        </div>
-                    </div>
-                    
-                    <div class="lr-details-section">
-                        <h5>Parties</h5>
-                        <div class="lr-details-row">
-                            <div class="lr-details-label">Customer</div>
-                            <div class="lr-details-value">${lr.customer ? lr.customer.name : 'N/A'}</div>
-                        </div>
-                        <div class="lr-details-row">
-                            <div class="lr-details-label">Consignor</div>
-                            <div class="lr-details-value">${lr.consignor ? lr.consignor.name : 'N/A'}</div>
-                        </div>
-                        <div class="lr-details-row">
-                            <div class="lr-details-label">Consignee</div>
-                            <div class="lr-details-value">${lr.consignee ? lr.consignee.name : 'N/A'}</div>
-                        </div>
-                        <div class="lr-details-row">
-                            <div class="lr-details-label">Transporter</div>
-                            <div class="lr-details-value">${lr.transporter ? lr.transporter.name : 'N/A'}</div>
+            let detailsHtml = `
+                <div class="row">
+                    <!-- Basic Information -->
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="bi bi-info-circle"></i> Basic Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-borderless table-sm">
+                                    <tr>
+                                        <td class="fw-bold">LR Number:</td>
+                                        <td>${lr.lr_number}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">GR Date:</td>
+                                        <td>${lr.gr_date}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Status:</td>
+                                        <td><span class="badge ${lr.delivery_status === 'Delivered' ? 'bg-success' : 'bg-warning'}">${lr.delivery_status}</span></td>
+                                    </tr>
+                                </table>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="lr-details-section">
-                        <h5>Transport Details</h5>
-                        <div class="lr-details-row">
-                            <div class="lr-details-label">Truck Number</div>
-                            <div class="lr-details-value">${lr.truck ? lr.truck.truck_number : 'N/A'}</div>
+
+                    <!-- Parties -->
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="bi bi-people"></i> Parties</h6>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-borderless table-sm">
+                                    <tr>
+                                        <td class="fw-bold">Customer:</td>
+                                        <td>${lr.customer ? lr.customer.name : 'N/A'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Consignor:</td>
+                                        <td>${lr.consignor ? lr.consignor.name : 'N/A'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Consignee:</td>
+                                        <td>${lr.consignee ? lr.consignee.name : 'N/A'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Transporter:</td>
+                                        <td>${lr.transporter ? lr.transporter.name : 'N/A'}</td>
+                                    </tr>
+                                </table>
+                            </div>
                         </div>
-                        <div class="lr-details-row">
-                            <div class="lr-details-label">Goods</div>
-                            <div class="lr-details-value">${lr.goods}</div>
-                        </div>
-                        <div class="lr-details-row">
-                            <div class="lr-details-label">Weight</div>
-                            <div class="lr-details-value">${lr.weight}</div>
-                        </div>
-                        <div class="lr-details-row">
-                            <div class="lr-details-label">Amount</div>
-                            <div class="lr-details-value">${lr.amount}</div>
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <!-- Transport Details -->
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="bi bi-truck"></i> Transport Details</h6>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-borderless table-sm">
+                                    <tr>
+                                        <td class="fw-bold">Truck Number:</td>
+                                        <td>${lr.truck ? lr.truck.truck_number : 'N/A'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Goods:</td>
+                                        <td>${lr.good_type}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Weight:</td>
+                                        <td>${lr.weight}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Amount:</td>
+                                        <td class="fw-bold text-success">${lr.amount}</td>
+                                    </tr>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
             `;
 
-            contentDiv.innerHTML = html;
+            contentDiv.innerHTML = detailsHtml;
+            
+            // Update the edit button's href with the correct URL
+            const editBtn = document.getElementById('editLorryReceiptBtn');
+            if (editBtn) {
+                editBtn.href = `/lorry_receipts/${id}/edit`;
+            }
+            
             modal.show();
         })
         .catch(error => {
             console.error('Error fetching LR details:', error);
-            contentDiv.innerHTML = '<div class="alert alert-danger">Error loading details. Please try again.</div>';
+            contentDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Error:</strong> Unable to load LR details. Please try again.
+                </div>
+            `;
             modal.show();
         });
 }
+
 </script>
 @endpush
 
