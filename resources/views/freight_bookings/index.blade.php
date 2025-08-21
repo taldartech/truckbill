@@ -87,7 +87,9 @@
                                            data-voucher_number="{{ $booking->voucher_number ?? '' }}"
                                            data-freight-booking-id="{{ $booking->id }}"
                                            data-transporter="{{ $booking->transporter ? $booking->transporter->name : '' }}"
-                                           data-lr-transporter="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->name : '' }}">
+                                           data-lr-transporter="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->name : '' }}"
+                                           data-fb-transporter="{{ $booking->transporter_name ?? ($booking->transporter ? $booking->transporter->name : '') }}"
+                                           data-tds-percentage="{{ $booking->transporter_tds_percentage ?? '' }}">
                                 </td>
                                 <td class="text-center">{{ $bookings->firstItem() + $index }}</td>
                                 <td><a href="{{ route('freight_bookings.show', $booking->id) }}" class="text-primary text-decoration-underline">{{ $booking->id ? $booking->id : '-' }}</a></td>
@@ -918,15 +920,24 @@ function handleVoucherPayment() {
         // Add transporter details section
         const firstTransporter = checkboxes[0].getAttribute('data-transporter');
         const firstLrTransporter = checkboxes[0].getAttribute('data-lr-transporter');
+        // Get FB transporter and TDS info from first selected booking
+        const firstFbTransporter = checkboxes[0].getAttribute('data-fb-transporter');
+        const firstTdsPercentage = checkboxes[0].getAttribute('data-tds-percentage');
+        
         modalBody.innerHTML += `
             <div class="alert alert-primary mb-3">
                 <h6 class="mb-2"><i class="fas fa-truck"></i> Transporter Details</h6>
                 <div class="row">
-                    
-                    <div class="col-md-4">
+                    <div class="col-md-3">
+                        <strong>FB Transporter:</strong> ${firstFbTransporter || 'N/A'}
+                    </div>
+                    <div class="col-md-3">
                         <strong>LR Transporter:</strong> ${firstLrTransporter || 'N/A'}
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-3">
+                        <strong>TDS Percentage:</strong> ${firstTdsPercentage ? firstTdsPercentage + '%' : 'N/A'}
+                    </div>
+                    <div class="col-md-3">
                         <strong>Truck Number:</strong> ${firstTruck || 'N/A'}
                     </div>
                 </div>

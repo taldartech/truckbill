@@ -11,6 +11,8 @@ class FreightBooking extends Model
     protected $fillable = [
         'lr_id',
         'transporter_id',
+        'transporter_name',
+        'transporter_tds_percentage',
         'truck_id',
         'tr_fr_rate',
         'tr_amount',

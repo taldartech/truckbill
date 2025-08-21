@@ -371,12 +371,22 @@ class FreightBookingController extends Controller
         // Get the next voucher number
         $nextVoucherNumber = FreightBooking::max('voucher_number') + 1;
         
+        // Get transporter information from lorry receipt
+        $transporterInfo = [];
+        if ($lorryReceipt->transporter) {
+            $transporterInfo = [
+                'transporter_id' => $lorryReceipt->transporter_id,
+                'transporter_name' => $lorryReceipt->transporter->name,
+                'transporter_tds_percentage' => $lorryReceipt->transporter->tds_percentage
+            ];
+        }
+
         $freightBooking = FreightBooking::create(array_merge($data, [
             'lr_number' => $lorryReceipt->lr_number,
             'voucher_number' => $nextVoucherNumber,
             'pan_verified' => (bool)$data['pan_verified'],
             'company_id' => $data['company_id']
-        ]));
+        ], $transporterInfo));
         
         // Update lorry receipt status and damage amount
         if ($lorryReceipt) {

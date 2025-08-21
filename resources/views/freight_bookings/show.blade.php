@@ -297,21 +297,178 @@
                     </div>
                 </div>
 
-                <!-- Transporter Details Section -->
-                <div class="alert alert-secondary">
-                    <h6><i class="fas fa-truck"></i> Transporter Details</h6>
-                    <div class="row">
-                        
-                        <div class="col-md-4">
-                            <strong>LR Transporter:</strong><br>
-                            <span id="lrTransporter">{{ $freight_booking->lr && $freight_booking->lr->transporter ? $freight_booking->lr->transporter->name : 'N/A' }}</span>
+                        <!-- Transporter Details Section -->
+                        <div class="alert alert-secondary">
+                            <h6><i class="fas fa-truck"></i> Transporter Details</h6>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <strong>FB Transporter:</strong><br>
+                                    <span id="fbTransporter">{{ $freight_booking->transporter_name ?? ($freight_booking->transporter ? $freight_booking->transporter->name : 'N/A') }}</span>
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>LR Transporter:</strong><br>
+                                    <span id="lrTransporter">{{ $freight_booking->lr && $freight_booking->lr->transporter ? $freight_booking->lr->transporter->name : 'N/A' }}</span>
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>TDS Percentage:</strong><br>
+                                    <span id="tdsPercentage">{{ $freight_booking->transporter_tds_percentage ? $freight_booking->transporter_tds_percentage . '%' : 'N/A' }}</span>
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Truck Number:</strong><br>
+                                    <span id="truckNumber">{{ $freight_booking->lr && $freight_booking->lr->truck ? $freight_booking->lr->truck->truck_number : 'N/A' }}</span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-4">  
-                            <strong>Truck Number:</strong><br>
-                            <span id="truckNumber">{{ $freight_booking->lr && $freight_booking->lr->truck ? $freight_booking->lr->truck->truck_number : 'N/A' }}</span>
+
+                        <!-- Payment Allocation Section -->
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-money-bill-wave"></i> Payment Allocation</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>FR No.</th>
+                                            <th>LR Number</th>
+                                            <th>Balance Amount</th>
+                                            <th>Payment Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>#{{ $freight_booking->id }}</td>
+                                            <td>{{ $freight_booking->lr ? $freight_booking->lr->lr_number : 'N/A' }}</td>
+                                            <td>₹{{ number_format($freight_booking->balance_amount ?? 0, 2) }}</td>
+                                            <td>
+                                                <input type="number" class="form-control allocated-input" 
+                                                       data-fb-id="{{ $freight_booking->id }}" 
+                                                       step="0.01" min="0" 
+                                                       max="{{ $freight_booking->balance_amount ?? 0 }}"
+                                                       onchange="updateTotalPayment()">
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="text-end mt-2">
+                                <strong>Total Payment Amount: ₹<span id="totalPaymentAmount">0.00</span></strong>
+                            </div>
+                        </div>
+
+                        <!-- Payment Details Section -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="paymentType" class="form-label">Payment Type *</label>
+                                    <select class="form-select" id="paymentType" required>
+                                        <option value="">Select Payment Type</option>
+                                        <option value="advance">Advance</option>
+                                        <option value="balance">Balance</option>
+                                        <option value="full">Full Payment</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="paymentMode" class="form-label">Payment Mode *</label>
+                                    <select class="form-select" id="paymentMode" required>
+                                        <option value="">Select Payment Mode</option>
+                                        <option value="cash">Cash</option>
+                                        <option value="cheque">Cheque</option>
+                                        <option value="online">Online Transfer</option>
+                                        <option value="upi">UPI</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="referenceId" class="form-label">Reference Transaction ID</label>
+                                    <input type="text" class="form-control" id="referenceId" placeholder="Enter reference ID">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="paymentRemarks" class="form-label">Remarks</label>
+                                    <textarea class="form-control" id="paymentRemarks" rows="2" placeholder="Enter remarks"></textarea>
+                                </div>
+                            </div>
                         </div>
                     </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" onclick="submitVoucherPayment()">
+                            <i class="fas fa-save"></i> Submit Payment
+                        </button>
+                    </div>
                 </div>
+            </div>
+        </div>
+
+        <script>
+        // Function to open voucher payment modal for single freight booking
+        function openVoucherPaymentModal(freightBookingId) {
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('voucherPaymentModal'));
+            modal.show();
+            
+            // Load payment history for this specific freight booking
+            loadPaymentHistory([freightBookingId]);
+        }
+
+        // Function to load payment history
+        function loadPaymentHistory(freightBookingIds) {
+            const tableContainer = document.getElementById('previousPaymentsTable');
+            
+            // Show loading state
+            tableContainer.innerHTML = `
+                <div class="text-center">
+                    <div class="spinner-border spinner-border-sm" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    Loading payment history...
+                </div>
+            `;
+            
+            // Make AJAX request to get payment history
+            fetch('/freight_bookings/payment-history', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    freight_booking_ids: freightBookingIds
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.payments && data.payments.length > 0) {
+                    // Build table HTML
+                    let tableHtml = `
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Payment ID</th>
+                                        <th>FR No.</th>
+                                        <th>Voucher Number</th>
+                                        <th>Amount</th>
+                                        <th>Payment Type</th>
+                                        <th>Payment Mode</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    
+                    data.payments.forEach(payment => {
+                        const statusBadge = payment.payment_status === 'paid' ? 'bg-success' : 
+                                          payment.payment_status === 'pending' ? 'bg-warning' : 'bg-secondary';
+                        
+                        tableHtml += `
 
                 <!-- Payment Allocation Section -->
                 <div class="alert alert-warning">
