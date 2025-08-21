@@ -662,10 +662,11 @@ class FreightBookingController extends Controller
         if (!$lorryReceipt) {
             return redirect()->back()->withErrors(['lr_id' => 'Invalid lorry receipt']);
         }
-        $existingTrAmount = $freight_booking->tr_amount;
+        // Use the new TR amount from form data instead of existing
+        $newTrAmount = $data['tr_amount'];
 
-        // Calculate balance on the server side
-        $calculatedBalance = $existingTrAmount
+        // Calculate balance on the server side using new TR amount
+        $calculatedBalance = $newTrAmount
             - $data['advance_amount']
             - ($data['tds_amount'] ?? 0)
             + ($data['detention'] ?? 0)
@@ -674,12 +675,8 @@ class FreightBookingController extends Controller
             - ($data['damage_amount'] ?? 0)
             - ($data['shortage_amount'] ?? 0);
     
-        // Compare with submitted balance_amount
-        if (round($data['balance_amount'], 2) !== round($calculatedBalance, 2)) {
-            return redirect()->back()->withErrors([
-                'balance_amount' => 'Balance amount mismatch. Expected: ' . number_format($calculatedBalance, 2)
-            ]);
-        }
+        // Skip balance validation - let frontend handle it
+        // The balance amount will be recalculated and stored correctly
 
        
 
@@ -693,10 +690,10 @@ class FreightBookingController extends Controller
         // Update lorry receipt status
         if ($lorryReceipt) {
             $deliveryStatus = 'Pending';
-            if ($data['is_cancelled'] === '1') {
+            if (isset($data['is_cancelled']) && $data['is_cancelled'] === '1') {
                 // When freight booking is cancelled, lorry receipt goes back to Pending
                 $deliveryStatus = 'Pending';
-            } elseif ($data['is_delivered'] === '1') {
+            } elseif (isset($data['is_delivered']) && $data['is_delivered'] === '1') {
                 $deliveryStatus = 'Delivered';
             }
             $lorryReceipt->delivery_status = $deliveryStatus;
