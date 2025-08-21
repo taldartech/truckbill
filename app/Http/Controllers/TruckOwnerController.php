@@ -272,6 +272,38 @@ class TruckOwnerController extends Controller
         return redirect()->route('truck_owners.index')->with('success', 'Truck Owner created successfully!');
     }
 
+    public function calculateTruckOwnerTdsPercentage(Request $request)
+    {
+        $panNumber = $request->input('pan_number');
+        $panActive = $request->input('pan_active');
+        $declarationGiven = $request->input('declaration_given');
+        
+        $tdsPercentage = 0.00;
+        
+        if ($declarationGiven == '1') {
+            // Rule 1: Declaration given → TDS = 0%
+            $tdsPercentage = 0.00;
+        } else {
+            // Rule 2: Declaration not given
+            if ($panActive == '0') {
+                // PAN not active → 20%
+                $tdsPercentage = 20.00;
+            } elseif ($panNumber && strlen($panNumber) >= 4) {
+                // PAN active → check 4th character
+                $fourthChar = strtoupper(substr($panNumber, 3, 1));
+                if (in_array($fourthChar, ['P', 'H'])) {
+                    $tdsPercentage = 1.00;
+                } else {
+                    $tdsPercentage = 0.00; // Changed from null to 0.00 for display consistency
+                }
+            }
+        }
+        
+        return response()->json([
+            'tds_percentage' => number_format($tdsPercentage, 2)
+        ]);
+    }
+
     public function show($id)
     {
         $transporter = \App\Models\Transporter::with(['company', 'city.state.country'])->findOrFail($id);

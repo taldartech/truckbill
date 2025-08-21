@@ -356,8 +356,9 @@
     // Function to calculate TDS percentage from API
     function calculateTdsPercentageFromApi(panNumber, panActive) {
         const panActiveValue = panActive === 'Yes' ? '1' : '0';
+        const declarationGiven = document.querySelector('input[name="declaration_given"]:checked')?.value === '1';
         
-        fetch('/api/calculate-tds-percentage', {
+        fetch('/api/calculate-truck-owner-tds-percentage', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -365,7 +366,8 @@
             },
             body: JSON.stringify({
                 pan_number: panNumber,
-                pan_active: panActiveValue
+                pan_active: panActiveValue,
+                declaration_given: declarationGiven ? '1' : '0'
             })
         })
         .then(response => response.json())
