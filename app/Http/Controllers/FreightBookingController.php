@@ -216,8 +216,14 @@ class FreightBookingController extends Controller
             'owner' => env('TDS_PERCENTAGE_OWNER', 1)
         ];
 
-        $lorry_receipt = \App\Models\LorryReceipt::with(['transporter:id,name', 'truck:id,truck_number'])
-        ->select('id', 'lr_number', 'transporter_id', 'truck_id','customer_id','consignor_id','consignee_id','good_type')
+        $lorry_receipt = \App\Models\LorryReceipt::with([
+            'transporter:id,name,tds_percentage,is_owner', 
+            'truck:id,truck_number',
+            'customer:id,name',
+            'consignor:id,name', 
+            'consignee:id,name'
+        ])
+        ->select('id', 'lr_number', 'transporter_id', 'truck_id','customer_id','consignor_id','consignee_id','good_type','source_city','destination_city','source_state','destination_state','weight','no_of_units','amount')
         ->when($lorry_receipt_id, function ($query) use ($lorry_receipt_id) {
             $query->where('id', $lorry_receipt_id);
         })

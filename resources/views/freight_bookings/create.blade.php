@@ -44,10 +44,24 @@
                     <span class="text-primary">{{ $lorry_receipt->first() ? $lorry_receipt->first()->lr_number : 'N/A' }}</span>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <div class="mb-2">
                     <strong>Transporter:</strong><br>
                     <span>{{ $lorry_receipt->first() && $lorry_receipt->first()->transporter ? $lorry_receipt->first()->transporter->name : 'N/A' }}</span>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="mb-2">
+                    <strong>Transporter Type:</strong><br>
+                    @if($lorry_receipt->first() && $lorry_receipt->first()->transporter)
+                        @if($lorry_receipt->first()->transporter->is_owner)
+                            <span class="badge bg-primary text-white fs-6">Truck Owner</span>
+                        @else
+                            <span class="badge bg-info text-white fs-6">Agency</span>
+                        @endif
+                    @else
+                        <span>N/A</span>
+                    @endif
                 </div>
             </div>
             <div class="col-md-2">
@@ -62,33 +76,91 @@
                     <span>{{ $lorry_receipt->first() && $lorry_receipt->first()->truck ? $lorry_receipt->first()->truck->truck_number : 'N/A' }}</span>
                 </div>
             </div>
-            <div class="col-md-3">
+            
+        </div>
+        <div class="row">
+        <div class="col-md-4">
                 <div class="mb-2">
                     <strong>Customer:</strong><br>
                     <span>{{ $lorry_receipt->first() && $lorry_receipt->first()->customer ? $lorry_receipt->first()->customer->name : 'N/A' }}</span>
                 </div>
             </div>
-        </div>
-        <div class="row">
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <div class="mb-2">
                     <strong>Consignor:</strong><br>
                     <span>{{ $lorry_receipt->first() && $lorry_receipt->first()->consignor ? $lorry_receipt->first()->consignor->name : 'N/A' }}</span>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <div class="mb-2">
                     <strong>Consignee:</strong><br>
                     <span>{{ $lorry_receipt->first() && $lorry_receipt->first()->consignee ? $lorry_receipt->first()->consignee->name : 'N/A' }}</span>
                 </div>
             </div>
+            
+        </div>
+        
+        <!-- Goods Type Details Section -->
+        <div class="row mt-3">
+            <div class="col-md-2">
+                <div class="mb-2">
+                    <strong>Goods Type:</strong><br>
+                    <span>{{ $lorry_receipt->first() ? ($lorry_receipt->first()->good_type ?? 'N/A') : 'N/A' }}</span>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="mb-2">
+                    <strong>Weight:</strong><br>
+                    <span class="text-info fw-bold">{{ $lorry_receipt->first() ? number_format($lorry_receipt->first()->weight ?? 0, 2) : '0.00' }} kg</span>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="mb-2">
+                    <strong>No. of Units:</strong><br>
+                    <span>{{ $lorry_receipt->first() ? ($lorry_receipt->first()->no_of_units ?? 'N/A') : 'N/A' }}</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-2">
+                    <strong>Amount:</strong><br>
+                    <span class="badge bg-success text-white fs-6">₹{{ $lorry_receipt->first() ? number_format($lorry_receipt->first()->amount ?? 0, 2) : '0.00' }}</span>
+                </div>
+            </div>
             @if($lorry_receipt->first() && $lorry_receipt->first()->freight_booking_id)
-            <div class="col-md-6">
+            <div class="col-md-3">
                 <div class="alert alert-danger mb-0">
                     <strong>Old Freight Number:</strong> {{ $lorry_receipt->first()->freight_booking_id }}
                 </div>
             </div>
             @endif
+        </div>
+        
+        <!-- Route Details Section -->
+        <div class="row mt-3">
+            <div class="col-md-3">
+                <div class="mb-2">
+                    <strong>Source City:</strong><br>
+                    <span>{{ $lorry_receipt->first() ? ($lorry_receipt->first()->source_city ?? 'N/A') : 'N/A' }}</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-2">
+                    <strong>Source State:</strong><br>
+                    <span>{{ $lorry_receipt->first() ? ($lorry_receipt->first()->source_state ?? 'N/A') : 'N/A' }}</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-2">
+                    <strong>Destination City:</strong><br>
+                    <span>{{ $lorry_receipt->first() ? ($lorry_receipt->first()->destination_city ?? 'N/A') : 'N/A' }}</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-2">
+                    <strong>Destination State:</strong><br>
+                    <span>{{ $lorry_receipt->first() ? ($lorry_receipt->first()->destination_state ?? 'N/A') : 'N/A' }}</span>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -127,36 +199,41 @@
             <div class="row mb-3">
                 <div class="col-md-4">
                     <label for="tr_fr_rate" class="form-label">TR Freight Rate *</label>
-                    <input type="number" step="0.01" class="form-control" name="tr_fr_rate" id="tr_fr_rate" value="{{ old('tr_fr_rate') }}" placeholder="Enter freight rate" required>
+                    <input type="number" step="0.01" min="1" max="20000" class="form-control" name="tr_fr_rate" id="tr_fr_rate" value="{{ old('tr_fr_rate') }}" placeholder="Enter freight rate (₹1 - ₹20,000 per ton)" required>
+                    <small class="form-text text-muted">
+                        <i class="fas fa-info-circle"></i> Rate must be between ₹1 and ₹20,000 per ton
+                    </small>
                     @error('tr_fr_rate') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-4">
                     <label for="tr_amount" class="form-label">TR Amount *</label>
-                    <input type="number" step="0.01" class="form-control" name="tr_amount" id="tr_amount" value="{{ old('tr_amount') }}" placeholder="Enter TR amount" required>
+                    <input type="number" step="0.01" min="0.01" class="form-control" name="tr_amount" id="tr_amount" value="{{ old('tr_amount') }}" placeholder="Auto-calculated (editable)" required>
+                    <small class="form-text text-muted">
+                        <i class="fas fa-info-circle"></i> Auto-calculated: TR Freight Rate × Weight ({{ $lorry_receipt->first() ? number_format($lorry_receipt->first()->weight ?? 0, 2) : '0.00' }} kg). Must be greater than ₹0.
+                    </small>
                     @error('tr_amount') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-4">
-                    <label for="advance_amount" class="form-label">Advance Amount</label>
-                    <input type="number" step="0.01" class="form-control" name="advance_amount" id="advance_amount" value="{{ old('advance_amount') }}" placeholder="Enter advance amount">
-                    @error('advance_amount') <div class="text-danger">{{ $message }}</div> @enderror
+                    <label for="tds_amount" class="form-label">TDS Amount *</label>
+                    <input type="number" step="0.01" class="form-control" name="tds_amount" id="tds_amount" value="{{ old('tds_amount') }}" readonly style="background-color: #f8f9fa;">
+                    <small class="form-text text-muted">
+                        <i class="fas fa-percentage"></i> Auto-calculated based on transporter TDS percentage
+                    </small>
+                    @error('tds_amount') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
+                <!-- Hidden advance amount field with default value 0 -->
+                <input type="hidden" name="advance_amount" id="advance_amount" value="0">
             </div>
 
             <div class="row mb-3">
-                <div class="col-md-4">
-                    <label for="balance_amount" class="form-label">Balance Amount *</label>
-                    <input type="number" step="0.01" class="form-control" name="balance_amount" id="balance_amount" value="{{ old('balance_amount') }}" required readonly>
-                    @error('balance_amount') <div class="text-danger">{{ $message }}</div> @enderror
-                </div>
-                <div class="col-md-4">
-                    <label for="tds_amount" class="form-label">TDS Amount *</label>
-                    <input type="number" step="0.01" class="form-control" name="tds_amount" id="tds_amount" value="{{ old('tds_amount') }}" readonly>
-                    @error('tds_amount') <div class="text-danger">{{ $message }}</div> @enderror
-                </div>
+              
+               
             </div>
 
             <!-- Hidden weight input (if needed for JS) -->
             <input type="hidden" id="weight" value="{{ $weight }}">
+            <!-- Hidden transporter TDS percentage for JS calculations -->
+            <input type="hidden" id="transporter_tds_percentage" name="transporter_tds_percentage" value="{{ $lorry_receipt->first() && $lorry_receipt->first()->transporter ? $lorry_receipt->first()->transporter->tds_percentage : 0 }}">
             <!-- Additional Information Section -->
             <div class="row mb-3">
                 <div class="col-md-4">
@@ -172,16 +249,22 @@
                 <div class="col-md-4">
                     <label for="pan_verified" class="form-label">PAN Verified *</label>
                     <input type="hidden" name="pan_verified" id="pan_verified" value="{{ isset($preFilled['pan_verified']) ? (int)$preFilled['pan_verified'] : (old('pan_verified') ? 1 : 0) }}" required>
-                    <input type="text" class="form-control" readonly value="{{ isset($preFilled['pan_verified']) && $preFilled['pan_verified'] ? 'Yes' : 'No' }}">
+                    <input type="text" class="form-control" readonly value="{{ isset($preFilled['pan_verified']) && $preFilled['pan_verified'] ? 'Yes' : 'No' }}" style="background-color: #f8f9fa;">
+                    <small class="form-text text-muted">
+                        <i class="fas fa-lock"></i> Read-only field from transporter data
+                    </small>
                     @error('pan_verified') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-4">
-                    <label for="is_delivered" class="form-label">Delivered?</label>
-                    <select name="is_delivered" id="is_delivered" class="form-select" readonly>
-                        <option value="0" {{ old('is_delivered') == '0' ? 'selected' : '' }}>No</option>
-                        <option value="1" {{ old('is_delivered') == '1' ? 'selected' : 'disabled' }}>Yes</option>
-                    </select>
+                    <label for="balance_amount" class="form-label">Balance Amount *</label>
+                    <input type="number" step="0.01" class="form-control" name="balance_amount" id="balance_amount" value="{{ old('balance_amount') }}" required readonly style="background-color: #f8f9fa;">
+                    <small class="form-text text-muted">
+                        <i class="fas fa-calculator"></i> Auto-calculated: TR Amount - TDS Amount
+                    </small>
+                    @error('balance_amount') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
+                <!-- Hidden delivered field with default value 0 -->
+                <input type="hidden" name="is_delivered" id="is_delivered" value="0">
             </div>
     
     
@@ -230,18 +313,13 @@
             
         </div>
             <div class="row mb-3">
-                <div class="col-md-8">
+                <div class="col-md-12">
                     <label for="remark" class="form-label">Remark</label>
                     <textarea name="remark" id="remark" class="form-control" rows="3" placeholder="Enter any remarks">{{ old('remark') }}</textarea>
                     @error('remark') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
-                <div class="col-md-4">
-                    <label for="is_cancelled" class="form-label">Cancelled?</label>
-                    <select name="is_cancelled" id="is_cancelled" class="form-select">
-                        <option value="0" {{ old('is_cancelled') == '0' ? 'selected' : '' }}>No</option>
-                        <option value="1" {{ old('is_cancelled') == '1' ? 'selected' : '' }}>Yes</option>
-                    </select>
-                </div>
+                <!-- Hidden cancelled field with default value 0 -->
+                <input type="hidden" name="is_cancelled" id="is_cancelled" value="0">
             </div>
         {{-- <div class="row"> --}}
             {{-- <div class="col-md-6 mb-3">
@@ -280,73 +358,63 @@
 </div>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const weight = parseFloat(document.getElementById('weight').value || 0);
+        const weightElement = document.getElementById('weight');
+        const weight = weightElement ? parseFloat(weightElement.value || 0) : 0;
         const rateInput = document.getElementById('tr_fr_rate');
         const amountInput = document.getElementById('tr_amount');
         const trAmountInput = document.getElementById('tr_amount');
         const advanceAmountInput = document.getElementById('advance_amount');
         const balanceAmountInput = document.getElementById('balance_amount');
-        const panVerified = parseInt(document.getElementById('pan_verified').value) || 0;
+        const panVerifiedElement = document.getElementById('pan_verified');
+        const panVerified = panVerifiedElement ? parseInt(panVerifiedElement.value || 0) : 0;
         const tdsAmountInput = document.getElementById('tds_amount');
 
-          // Get TDS percentage from PHP
-    const tdsPercentage = parseFloat("{{ $tdsPercentage ?? 0 }}"); // already in %
+          // Get TDS percentage from transporter (from Lorry Receipt)
+    const tdsPercentage = parseFloat("{{ $lorry_receipt->first() && $lorry_receipt->first()->transporter ? $lorry_receipt->first()->transporter->tds_percentage : 0 }}"); // already in %
 
-        rateInput.addEventListener('input', function () {
-            const rate = parseFloat(rateInput.value || 0);
-            const amount = (weight * rate).toFixed(2);
-            amountInput.value = amount;
-
-            function calculateBalance() {
-            const trAmount = parseFloat(trAmountInput.value) || 0;
-            const advanceAmount = parseFloat(advanceAmountInput.value) || 0;
-             // Prevent advance > TR
-        if (advanceAmount > trAmount) {
-            alert("Advance amount cannot be greater than TR amount.");
-            advanceAmountInput.value = '';
-            balanceAmountInput.value = trAmount.toFixed(2);
-            tdsAmountInput.value = (trAmount * (tdsPercentage / 100)).toFixed(2);
-          
-            return;
-        }
-
-         // Calculate TDS Amount
-            // TDS
+        // Function to calculate TDS and Balance amounts
+        function calculateTdsAndBalance() {
+            const trAmount = parseFloat(trAmountInput ? trAmountInput.value : 0) || 0;
+            
+            // Calculate TDS Amount based on TR Amount
             const tdsAmount = (trAmount * (tdsPercentage / 100)).toFixed(2);
-        tdsAmountInput.value = tdsAmount;
-
-        
-            // const balance = trAmount - advanceAmount;
-            const balance = trAmount - advanceAmount  - parseFloat(tdsAmount)
-            balanceAmountInput.value = balance.toFixed(2);
+            if (tdsAmountInput) {
+                tdsAmountInput.value = tdsAmount;
+            }
             
-            // // Get TDS percentages from PHP variables
-            // const defaultPercentage = {{ $tdsPercentages['default'] / 100 }};
-            // const agencyPercentage = {{ $tdsPercentages['agency'] / 100 }};
-            // const ownerPercentage = {{ $tdsPercentages['owner'] / 100 }};
-            
-            // // Calculate TDS %
-            // let tdsPercentage = defaultPercentage;
-            // if (panVerified === 1) {
-            //     tdsPercentage = IS_OWNER === 0 ? agencyPercentage : ownerPercentage;
-            // }
-             // PHP variables passed to JS
-    
-
-           
-            // const tdsAmountInput = document.getElementById('tds_amount');
-            // const tdsAmount = (trAmount * tdsPercentage).toFixed(2);
-            // tdsAmountInput.value = tdsAmount;
+            // Calculate Balance Amount (TR Amount - TDS Amount)
+            const balance = trAmount - parseFloat(tdsAmount);
+            if (balanceAmountInput) {
+                balanceAmountInput.value = balance.toFixed(2);
+            }
         }
 
-        // Update balance when TR Amount changes
-        trAmountInput.addEventListener('input', calculateBalance);
+        // Add null checks for event listeners
+        if (rateInput) {
+            rateInput.addEventListener('input', function () {
+                const rate = parseFloat(rateInput.value || 0);
+                const amount = (weight * rate).toFixed(2);
+                if (amountInput) {
+                    amountInput.value = amount;
+                }
+                
+                // Recalculate TDS and Balance when TR Amount changes
+                calculateTdsAndBalance();
+            });
+        }
+
+        // Update TDS and balance when TR Amount changes (manual input)
+        if (trAmountInput) {
+            trAmountInput.addEventListener('input', calculateTdsAndBalance);
+        }
         
         // Update balance when Advance Amount changes
-        advanceAmountInput.addEventListener('input', calculateBalance);
+        if (advanceAmountInput) {
+            advanceAmountInput.addEventListener('input', calculateTdsAndBalance);
+        }
 
-        // Calculate initial balance if values exist
-        calculateBalance();
+        // Calculate initial TDS and balance if values exist
+        calculateTdsAndBalance();
 
         // Existing code for LR selection
         const lrSelect = document.getElementById('lr_id');
@@ -413,90 +481,67 @@
 
 <script>
     const IS_OWNER = {{ $preFilled['is_owner'] ?? 0 }};
-</script>
-
-<script>
+    
     document.addEventListener('DOMContentLoaded', function() {
-        // Calculate balance amount when TR Amount or Advance Amount changes
+        // Get all required elements with null checks
+        const weightElement = document.getElementById('weight');
+        const weight = weightElement ? parseFloat(weightElement.value || 0) : 0;
+        const rateInput = document.getElementById('tr_fr_rate');
+        const amountInput = document.getElementById('tr_amount');
         const trAmountInput = document.getElementById('tr_amount');
         const advanceAmountInput = document.getElementById('advance_amount');
         const balanceAmountInput = document.getElementById('balance_amount');
-        const panVerified = parseInt(document.getElementById('pan_verified').value) || 0;
+        const panVerifiedElement = document.getElementById('pan_verified');
+        const panVerified = panVerifiedElement ? parseInt(panVerifiedElement.value || 0) : 0;
         const tdsAmountInput = document.getElementById('tds_amount');
 
-          // Get TDS percentage from PHP
-    const tdsPercentage = parseFloat("{{ $tdsPercentage ?? 0 }}"); // already in %
+        // Get TDS percentage from freight booking's transporter_tds_percentage field
+        const tdsPercentageElement = document.getElementById('transporter_tds_percentage');
+        const tdsPercentage = tdsPercentageElement ? parseFloat(tdsPercentageElement.value || 0) : 0;
 
-        function calculateBalance() {
-    const trAmount = parseFloat(trAmountInput.value) || 0;
-    const advanceAmount = parseFloat(advanceAmountInput.value) || 0;
-
-    // Prevent advance > TR
-    if (advanceAmount > trAmount) {
-        alert("Advance amount cannot be greater than TR amount.");
-        advanceAmountInput.value = '';
-        balanceAmountInput.value = trAmount.toFixed(2);
-        tdsAmountInput.value = (trAmount * (tdsPercentage / 100)).toFixed(2);
-        return;
-    }
-
-     // Calculate TDS Amount
-      // TDS
-      const tdsAmount = (trAmount * (tdsPercentage / 100)).toFixed(2);
-        tdsAmountInput.value = tdsAmount;
-
-    const balance = trAmount - advanceAmount -parseFloat(tdsAmount);
-    balanceAmountInput.value = balance.toFixed(2);
-
-   
-   
-
-   
-    // const tdsAmountInput = document.getElementById('tds_amount');
-    // const tdsAmount = (trAmount * tdsPercentage).toFixed(2);
-    // tdsAmountInput.value = tdsAmount;
-}
-
-// old code
-        // function calculateBalance() {
-        //     const trAmount = parseFloat(trAmountInput.value) || 0;
-        //     const advanceAmount = parseFloat(advanceAmountInput.value) || 0;
-        //      // Prevent advance > TR
-        // if (advanceAmount > trAmount) {
-        //     alert("Advance amount cannot be greater than TR amount.");
-        //     advanceAmountInput.value = '';
-        //     balanceAmountInput.value = trAmount.toFixed(2);
-          
-        //     return;
-        // }
-        //     const balance = trAmount - advanceAmount;
-        //     balanceAmountInput.value = balance.toFixed(2);
+        // Function to calculate TDS and Balance amounts
+        function calculateTdsAndBalance() {
+            const trAmount = parseFloat(trAmountInput ? trAmountInput.value : 0) || 0;
             
-        //     // Get TDS percentages from PHP variables
-        //     const defaultPercentage = {{ $tdsPercentages['default'] / 100 }};
-        //     const agencyPercentage = {{ $tdsPercentages['agency'] / 100 }};
-        //     const ownerPercentage = {{ $tdsPercentages['owner'] / 100 }};
+            // Calculate TDS Amount based on TR Amount
+            const tdsAmount = (trAmount * (tdsPercentage / 100)).toFixed(2);
+            if (tdsAmountInput) {
+                tdsAmountInput.value = tdsAmount;
+            }
             
-        //     // Calculate TDS %
-        //     let tdsPercentage = defaultPercentage;
-        //     if (panVerified === 1) {
-        //         tdsPercentage = IS_OWNER === 0 ? agencyPercentage : ownerPercentage;
-        //     }
+            // Calculate Balance Amount (TR Amount - TDS Amount)
+            const balance = trAmount - parseFloat(tdsAmount);
+            if (balanceAmountInput) {
+                balanceAmountInput.value = balance.toFixed(2);
+            }
+        }
 
-        //     // Calculate TDS Amount
-        //     const tdsAmountInput = document.getElementById('tds_amount');
-        //     const tdsAmount = (trAmount * tdsPercentage).toFixed(2);
-        //     tdsAmountInput.value = tdsAmount;
-        // }
+        // Add null checks for event listeners
+        if (rateInput) {
+            rateInput.addEventListener('input', function () {
+                const rate = parseFloat(rateInput.value || 0);
+                const amount = (weight * rate).toFixed(2);
+                if (amountInput) {
+                    amountInput.value = amount;
+                }
+                
+                // Recalculate TDS and Balance when TR Amount changes
+                calculateTdsAndBalance();
+            });
+        }
 
-        // Update balance when TR Amount changes
-        trAmountInput.addEventListener('input', calculateBalance);
+        // Update TDS and balance when TR Amount changes (manual input)
+        if (trAmountInput) {
+            trAmountInput.addEventListener('input', calculateTdsAndBalance);
+        }
         
         // Update balance when Advance Amount changes
-        advanceAmountInput.addEventListener('input', calculateBalance);
+        if (advanceAmountInput) {
+            advanceAmountInput.addEventListener('input', calculateTdsAndBalance);
+        }
 
-        // Calculate initial balance if values exist
-        calculateBalance();
+        // Calculate initial TDS and balance if values exist
+        calculateTdsAndBalance();
 
         // Existing code for LR selection
         const lrSelect = document.getElementById('lr_id');
@@ -505,9 +550,11 @@
 
         // Function to update trucks based on selected transporter
         function updateTrucks() {
-            const selectedTransporter = transporterSelect.value;
-            if (!selectedTransporter) {
-                truckSelect.innerHTML = '<option value="">Select Truck</option>';
+            const selectedTransporter = transporterSelect ? transporterSelect.value : '';
+            if (!selectedTransporter || !truckSelect) {
+                if (truckSelect) {
+                    truckSelect.innerHTML = '<option value="">Select Truck</option>';
+                }
                 return;
             }
 
@@ -526,10 +573,12 @@
 
         // Function to load LR details
         function loadLRDetails() {
-            const selectedLR = lrSelect.value;
+            const selectedLR = lrSelect ? lrSelect.value : '';
             if (!selectedLR) {
-                document.getElementById('transporter_id').value = '';
-                document.getElementById('truck_id').value = '';
+                const transporterInput = document.getElementById('transporter_id');
+                const truckInput = document.getElementById('truck_id');
+                if (transporterInput) transporterInput.value = '';
+                if (truckInput) truckInput.value = '';
                 return;
             }
 
@@ -542,27 +591,41 @@
                     const truckSelect = document.getElementById('truck_id');
                     
                     // Get transporter name
-                    fetch(`/api/transporters/${lr.transporter_id}`)
-                        .then(response => response.json())
-                        .then(transporter => {
-                            transporterSelect.value = `${transporter.name}`;
-                        });
+                    if (lr.transporter_id) {
+                        fetch(`/api/transporters/${lr.transporter_id}`)
+                            .then(response => response.json())
+                            .then(transporter => {
+                                if (transporterSelect) {
+                                    transporterSelect.value = `${transporter.name}`;
+                                }
+                            })
+                            .catch(error => console.error('Error fetching transporter:', error));
+                    }
                     
                     // Get truck number
-                    fetch(`/api/trucks/${lr.truck_id}`)
-                        .then(response => response.json())
-                        .then(truck => {
-                            truckSelect.value = `${truck.truck_number}`;
-                        });
+                    if (lr.truck_id) {
+                        fetch(`/api/trucks/${lr.truck_id}`)
+                            .then(response => response.json())
+                            .then(truck => {
+                                if (truckSelect) {
+                                    truckSelect.value = `${truck.truck_number}`;
+                                }
+                            })
+                            .catch(error => console.error('Error fetching truck:', error));
+                    }
                 })
-                .catch(error => console.error('Error:', error));
+                .catch(error => console.error('Error fetching LR details:', error));
         }
 
         // Update trucks when transporter changes
-        transporterSelect.addEventListener('change', updateTrucks);
+        if (transporterSelect) {
+            transporterSelect.addEventListener('change', updateTrucks);
+        }
         
         // Load LR details when LR changes
-        lrSelect.addEventListener('change', loadLRDetails);
+        if (lrSelect) {
+            lrSelect.addEventListener('change', loadLRDetails);
+        }
     });
 </script>
 @endsection
