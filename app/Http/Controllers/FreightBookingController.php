@@ -155,11 +155,18 @@ class FreightBookingController extends Controller
         $actions .= '</a>';
         }
 
-        // voucher button 
-       // Voucher Payments button
-$actions .= '<a href="' . route('voucher_payments.create', ['freight_booking_id' => $freightBooking->id , 'lorry_receipt_id'=>$freightBooking->lr_id]) . '" class="btn btn-sm btn-outline-success" title="Create Voucher Payment">';
-$actions .= '<i class="bi bi-receipt"></i>';
-$actions .= '</a>';
+        // Individual Voucher Payment button
+        if ($freightBooking->voucher_number && $freightBooking->balance_amount > 0) {
+            $actions .= '<button type="button" class="btn btn-sm btn-outline-success individual-payment-btn" ';
+            $actions .= 'data-id="' . $freightBooking->id . '" ';
+            $actions .= 'data-lr="' . ($freightBooking->lr ? $freightBooking->lr->lr_number : 'N/A') . '" ';
+            $actions .= 'data-voucher_number="' . $freightBooking->voucher_number . '" ';
+            $actions .= 'data-balance="' . $freightBooking->balance_amount . '" ';
+            $actions .= 'data-truck="' . ($freightBooking->lr && $freightBooking->lr->truck ? $freightBooking->lr->truck->truck_number : 'N/A') . '" ';
+            $actions .= 'title="Make Voucher Payment">';
+            $actions .= '<i class="bi bi-credit-card"></i>';
+            $actions .= '</button>';
+        }
 
         // Delete button
         if(auth()->check() && auth()->user()->userRole->name === 'admin') {
@@ -687,34 +694,27 @@ $actions .= '</a>';
     public function voucherPayment(Request $request)
     {
         try {
+            \Log::info('Voucher payment request received', $request->all());
+            
             // Validate the request
             $validated = $request->validate([
                 'payment_type' => 'required|string',
                 'payment_mode' => 'required|string',
-                'payment_date' => 'required|date',
-                'reference_number' => 'nullable|string',
-                'notes' => 'nullable|string',
                 'booking_ids' => 'required|array',
                 'booking_ids.*' => 'required|integer|exists:freight_bookings,id',
                 'payment_amounts' => 'required|array',
                 'payment_amounts.*' => 'required|numeric|min:0',
-                'total_amount' => 'required|numeric|min:0'
+                'total_amount' => 'required|numeric|min:0',
+                'reference_number' => 'nullable|string',
+                'notes' => 'nullable|string'
             ]);
+
+            \Log::info('Validation passed', $validated);
 
             // Begin transaction
             \DB::beginTransaction();
             
-            // Create payment record
-            $payment = \App\Models\Payment::create([
-                'payment_type' => $validated['payment_type'],
-                'payment_mode' => $validated['payment_mode'],
-                'payment_date' => $validated['payment_date'],
-                'reference_number' => $validated['reference_number'] ?? null,
-                'notes' => $validated['notes'] ?? null,
-                'total_amount' => $validated['total_amount'],
-                'company_id' => auth()->user()->company_id,
-                'created_by' => auth()->id()
-            ]);
+            $processedPayments = [];
             
             // Process each booking payment
             foreach ($validated['booking_ids'] as $index => $bookingId) {
@@ -723,34 +723,65 @@ $actions .= '</a>';
                 if ($amount > 0) {
                     $freightBooking = FreightBooking::findOrFail($bookingId);
                     
-                    // Create payment detail
-                    \App\Models\PaymentDetail::create([
-                        'payment_id' => $payment->id,
+                    // Create voucher payment record
+                    $voucherPayment = \App\Models\VoucherPayment::create([
                         'freight_booking_id' => $bookingId,
+                        'voucher_number' => $freightBooking->voucher_number,
+                        'payment_type' => $validated['payment_type'],
+                        'payment_mode' => $validated['payment_mode'],
                         'amount' => $amount,
-                        'created_by' => auth()->id()
+                        'remark' => $validated['notes'] ?? null,
+                        'payment_status' => 'paid',
+                        'company_id' => auth()->user()->company_id
                     ]);
                     
                     // Update freight booking balance
                     $newBalance = max(0, $freightBooking->balance_amount - $amount);
                     $freightBooking->update([
-                        'balance_amount' => $newBalance,
-                        'is_paid' => ($newBalance == 0) ? 1 : 0
+                        'balance_amount' => $newBalance
+                    ]);
+                    
+                    $processedPayments[] = $voucherPayment->id;
+                    
+                    \Log::info('Processed payment for booking', [
+                        'booking_id' => $bookingId,
+                        'amount' => $amount,
+                        'new_balance' => $newBalance
                     ]);
                 }
             }
             
             \DB::commit();
             
+            \Log::info('Voucher payment completed successfully', [
+                'processed_payments' => $processedPayments
+            ]);
+            
             return response()->json([
                 'success' => true,
                 'message' => 'Voucher payment processed successfully',
-                'payment_id' => $payment->id
+                'processed_count' => count($processedPayments)
             ]);
+            
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation error in voucher payment', [
+                'errors' => $e->errors(),
+                'request_data' => $request->all()
+            ]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
             
         } catch (\Exception $e) {
             \DB::rollBack();
-            \Log::error('Voucher payment error: ' . $e->getMessage());
+            \Log::error('Voucher payment error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all()
+            ]);
             
             return response()->json([
                 'success' => false,
@@ -838,6 +869,49 @@ $actions .= '</a>';
             return response()->json([
                 'success' => false,
                 'message' => 'Error processing payment: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get payment history for selected freight bookings
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getPaymentHistory(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'freight_booking_ids' => 'required|array',
+                'freight_booking_ids.*' => 'required|integer|exists:freight_bookings,id'
+            ]);
+
+            $payments = \App\Models\VoucherPayment::with([
+                'freight_booking.lr',
+                'freight_booking.transporter'
+            ])
+            ->whereIn('freight_booking_id', $validated['freight_booking_ids'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+            \Log::info('Payment history query result:', [
+                'freight_booking_ids' => $validated['freight_booking_ids'],
+                'payments_count' => $payments->count(),
+                'payments' => $payments->toArray()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'payments' => $payments
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Payment history fetch error: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching payment history: ' . $e->getMessage()
             ], 500);
         }
     }

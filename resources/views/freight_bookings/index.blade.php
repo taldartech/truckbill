@@ -84,7 +84,10 @@
                                            data-lr="{{ $booking->lr ? $booking->lr->lr_number : '' }}" 
                                            data-truck="{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->truck_number : '' }}" 
                                            data-balance="{{ $booking->balance_amount ?? 0 }}" 
-                                           data-voucher_number="{{ $booking->voucher_number ?? '' }}">
+                                           data-voucher_number="{{ $booking->voucher_number ?? '' }}"
+                                           data-freight-booking-id="{{ $booking->id }}"
+                                           data-transporter="{{ $booking->transporter ? $booking->transporter->name : '' }}"
+                                           data-lr-transporter="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->name : '' }}">
                                 </td>
                                 <td class="text-center">{{ $bookings->firstItem() + $index }}</td>
                                 <td><a href="{{ route('freight_bookings.show', $booking->id) }}" class="text-primary text-decoration-underline">{{ $booking->id ? $booking->id : '-' }}</a></td>
@@ -176,18 +179,37 @@
 
 <!-- Voucher Payment Modal -->
 <div class="modal fade" id="voucherPaymentModal" tabindex="-1" aria-labelledby="voucherPaymentModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Voucher Payment</h5>
+                <h5 class="modal-title" id="voucherPaymentModalLabel">💳 Voucher Payment</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="voucherPaymentBody">
-                <!-- Dynamic content will be inserted here -->
+                <!-- Dynamic content will be loaded here -->
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" form="voucherPaymentForm" class="btn btn-primary">Process Payment</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="submitVoucherPayment()">💰 Process Payment</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Individual Voucher Payment Modal -->
+<div class="modal fade" id="individualPaymentModal" tabindex="-1" aria-labelledby="individualPaymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="individualPaymentModalLabel">💳 Individual Voucher Payment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="individualPaymentBody">
+                <!-- Dynamic content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="submitIndividualPayment">💰 Process Payment</button>
             </div>
         </div>
     </div>
@@ -797,7 +819,7 @@ $(document).ready(function() {
     // Individual checkbox handler
     $(document).on('change', '.row-checkbox', function() {
         const allChecked = $('.row-checkbox:checked').length === $('.row-checkbox').length;
-        $('#select-all').prop('checked', allChecked && $('.row-checkbox').length > 0);
+        $('#select-all').prop('checked', allChecked);
         updatePaymentButtonsVisibility();
     });
     
@@ -893,58 +915,274 @@ function handleVoucherPayment() {
         balance: parseFloat(checkbox.getAttribute('data-balance') || 0)
     }));
 
-    // Show LR Number + balance amount and voucher number in a table format
-    modalBody.innerHTML += `
-        <div class="lr-details-section mt-3">
-            <h5>Payment Allocation</h5>
-            <div class="lr-details-content">
-                <div class="table-responsive">
-                    <table class="table table-sm table-bordered">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>LR Number</th>
-                                <th>Voucher Number</th>
-                                <th class="text-end">Balance Amount</th>
-                                <th class="text-end">Allocated Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-    `;
+        // Add transporter details section
+        const firstTransporter = checkboxes[0].getAttribute('data-transporter');
+        const firstLrTransporter = checkboxes[0].getAttribute('data-lr-transporter');
+        modalBody.innerHTML += `
+            <div class="alert alert-primary mb-3">
+                <h6 class="mb-2"><i class="fas fa-truck"></i> Transporter Details</h6>
+                <div class="row">
+                    
+                    <div class="col-md-4">
+                        <strong>LR Transporter:</strong> ${firstLrTransporter || 'N/A'}
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Truck Number:</strong> ${firstTruck || 'N/A'}
+                    </div>
+                </div>
+            </div>
+        `;
 
-    lrData.forEach((item, index) => {
-        const voucherNumber = checkboxes[index].getAttribute('data-voucher_number');
-        const tbody = modalBody.querySelector('tbody');
-        if (tbody) {
-            tbody.innerHTML += `
-                <tr>
-                    <td>${index + 1}</td>
-                    <td>${item.lrNumber || 'N/A'}</td>
-                    <td>${voucherNumber || 'N/A'}</td>
-                    <td class="text-end">₹${item.balance.toFixed(2)}</td>
-                    <td class="text-end">₹<span class="allocated-amount" data-lr="${item.lrNumber}">0.00</span></td>
-                </tr>
-                <input type="hidden" class="allocated-input" data-lr="${item.lrNumber}" name="allocated_amounts[${index}]" value="0">
+    // Fetch and display payment history first
+    fetchPaymentHistory(Array.from(checkboxes).map(cb => cb.value)).then(paymentHistory => {
+        if (paymentHistory && paymentHistory.length > 0) {
+            let paymentRows = '';
+            paymentHistory.forEach(payment => {
+                paymentRows += `
+                    <tr>
+                        <td>${new Date(payment.created_at).toLocaleDateString()}</td>
+                        <td>${payment.freight_booking_id || 'N/A'}</td>
+                        <td>${payment.freight_booking?.lr?.lr_number || 'N/A'}</td>
+                        <td>${payment.payment_type}</td>
+                        <td>${payment.payment_mode}</td>
+                        <td class="text-end">₹${parseFloat(payment.amount).toFixed(2)}</td>
+                    </tr>
+                `;
+            });
+            
+            modalBody.innerHTML += `
+                <div class="alert alert-info mb-3">
+                    <h6 class="mb-2"><i class="fas fa-history"></i> Previous Payments</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>FR No.</th>
+                                    <th>LR Number</th>
+                                    <th>Type</th>
+                                    <th>Mode</th>
+                                    <th class="text-end">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${paymentRows}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             `;
         }
+        
+        // Continue with original layout - show payment form in original SweetAlert style
+        const lrRows = lrData.map((item, index) => {
+            const voucherNumber = checkboxes[index].getAttribute('data-voucher_number');
+            const freightBookingId = checkboxes[index].getAttribute('data-freight-booking-id');
+            return `
+                <tr>
+                    <td style="text-align: left; padding: 8px; border: 1px solid #ddd;">${freightBookingId || 'N/A'}</td>
+                    <td style="text-align: left; padding: 8px; border: 1px solid #ddd;">${item.lrNumber || 'N/A'}</td>
+                    <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${firstTruck || 'N/A'}</td>
+                    <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${voucherNumber || 'N/A'}</td>
+                    <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">₹${item.balance.toFixed(2)}</td>
+                    <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">
+                        <input type="number" step="0.01" min="0" max="${item.balance}" 
+                               style="width: 80px; text-align: right; border: 1px solid #ccc; padding: 2px;" 
+                               class="allocated-input" data-lr="${item.lrNumber}" 
+                               onchange="updateTotalPayment()" value="${item.balance.toFixed(2)}">
+                    </td>
+                </tr>
+            `;
+        }).join('');
+        
+        modalBody.innerHTML += `
+            <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+                <thead>
+                    <tr style="background-color: #f8f9fa;">
+                        <th style="text-align: left; padding: 8px; border: 1px solid #ddd;">FR NO.</th>
+                        <th style="text-align: left; padding: 8px; border: 1px solid #ddd;">LR NUMBER</th>
+                        <th style="text-align: center; padding: 8px; border: 1px solid #ddd;">TRUCK NUMBER</th>
+                        <th style="text-align: center; padding: 8px; border: 1px solid #ddd;">VOUCHER NUMBER</th>
+                        <th style="text-align: right; padding: 8px; border: 1px solid #ddd;">BALANCE AMOUNT</th>
+                        <th style="text-align: right; padding: 8px; border: 1px solid #ddd;">PAYMENT AMOUNT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${lrRows}
+                </tbody>
+            </table>
+            
+            <div style="background-color: #e3f2fd; padding: 10px; margin: 10px 0; border-radius: 4px;">
+                <strong>TOTAL PAYMENT: ₹<span id="totalPaymentAmount">${lrData.reduce((sum, item) => sum + item.balance, 0).toFixed(2)}</span></strong>
+            </div>
+            
+            <div style="margin: 15px 0;">
+                <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                    <div style="flex: 1;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Type *</label>
+                        <select id="paymentType" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
+                            <option value="">Select Payment Type</option>
+                            <option value="advance">Advance</option>
+                            <option value="balance">Balance</option>
+                            <option value="full">Full Payment</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Mode *</label>
+                        <select id="paymentMode" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
+                            <option value="">Select Payment Mode</option>
+                            <option value="cash">Cash</option>
+                            <option value="cheque">Cheque</option>
+                            <option value="upi">UPI</option>
+                            <option value="neft">NEFT</option>
+                            <option value="rtgs">RTGS</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Reference Transaction ID</label>
+                    <input type="text" id="referenceId" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Enter reference/transaction ID (optional)">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Remarks</label>
+                    <textarea id="paymentRemarks" style="width: 100%; height: 60px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Enter any remarks..."></textarea>
+                </div>
+            </div>
+        `;
+        
+        // Show the modal
+        $('#voucherPaymentModal').modal('show');
+    }).catch(error => {
+        console.error('Error fetching payment history:', error);
+        // Continue with original layout even if history fetch fails
+        const lrRows = lrData.map((item, index) => {
+            const voucherNumber = checkboxes[index].getAttribute('data-voucher_number');
+            const freightBookingId = checkboxes[index].getAttribute('data-freight-booking-id');
+            return `
+                <tr>
+                    <td style="text-align: left; padding: 8px; border: 1px solid #ddd;">${freightBookingId || 'N/A'}</td>
+                    <td style="text-align: left; padding: 8px; border: 1px solid #ddd;">${item.lrNumber || 'N/A'}</td>
+                    <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${firstTruck || 'N/A'}</td>
+                    <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${voucherNumber || 'N/A'}</td>
+                    <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">₹${item.balance.toFixed(2)}</td>
+                    <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">
+                        <input type="number" step="0.01" min="0" max="${item.balance}" 
+                               style="width: 80px; text-align: right; border: 1px solid #ccc; padding: 2px;" 
+                               class="allocated-input" data-lr="${item.lrNumber}" 
+                               onchange="updateTotalPayment()" value="${item.balance.toFixed(2)}">
+                    </td>
+                </tr>
+            `;
+        }).join('');
+        
+        modalBody.innerHTML += `
+            <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+                <thead>
+                    <tr style="background-color: #f8f9fa;">
+                        <th style="text-align: left; padding: 8px; border: 1px solid #ddd;">FR NO.</th>
+                        <th style="text-align: left; padding: 8px; border: 1px solid #ddd;">LR NUMBER</th>
+                        <th style="text-align: center; padding: 8px; border: 1px solid #ddd;">TRUCK NUMBER</th>
+                        <th style="text-align: center; padding: 8px; border: 1px solid #ddd;">VOUCHER NUMBER</th>
+                        <th style="text-align: right; padding: 8px; border: 1px solid #ddd;">BALANCE AMOUNT</th>
+                        <th style="text-align: right; padding: 8px; border: 1px solid #ddd;">PAYMENT AMOUNT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${lrRows}
+                </tbody>
+            </table>
+            
+            <div style="background-color: #e3f2fd; padding: 10px; margin: 10px 0; border-radius: 4px;">
+                <strong>TOTAL PAYMENT: ₹<span id="totalPaymentAmount">${lrData.reduce((sum, item) => sum + item.balance, 0).toFixed(2)}</span></strong>
+            </div>
+            
+            <div style="margin: 15px 0;">
+                <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                    <div style="flex: 1;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Type *</label>
+                        <select id="paymentType" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
+                            <option value="">Select Payment Type</option>
+                            <option value="advance">Advance</option>
+                            <option value="balance">Balance</option>
+                            <option value="full">Full Payment</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Mode *</label>
+                        <select id="paymentMode" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
+                            <option value="">Select Payment Mode</option>
+                            <option value="cash">Cash</option>
+                            <option value="cheque">Cheque</option>
+                            <option value="upi">UPI</option>
+                            <option value="neft">NEFT</option>
+                            <option value="rtgs">RTGS</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Reference Transaction ID</label>
+                    <input type="text" id="referenceId" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Enter reference/transaction ID (optional)">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Remarks</label>
+                    <textarea id="paymentRemarks" style="width: 100%; height: 60px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Enter any remarks..."></textarea>
+                </div>
+            </div>
+        `;
+        
+        // Show the modal
+        $('#voucherPaymentModal').modal('show');
     });
+}
 
-    modalBody.innerHTML += `
-                    </table>
+// Individual voucher payment handler
+function handleIndividualVoucherPayment(button) {
+    const freightBookingId = button.data('id');
+    const lrNumber = button.data('lr');
+    const voucherNumber = button.data('voucher_number');
+    const balance = parseFloat(button.data('balance'));
+    const truckNumber = button.data('truck');
+    
+    const modalBody = document.getElementById('individualPaymentBody');
+    modalBody.innerHTML = '';
+    
+    // Show freight booking details
+    modalBody.innerHTML = `
+        <div class="lr-details-section">
+            <h5>Freight Booking Details</h5>
+            <div class="lr-details-content">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between">
+                            <span><strong>LR Number:</strong></span>
+                            <span>${lrNumber}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span><strong>Voucher Number:</strong></span>
+                            <span>${voucherNumber}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between">
+                            <span><strong>Truck Number:</strong></span>
+                            <span>${truckNumber}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span><strong>Balance Amount:</strong></span>
+                            <span class="text-success"><strong>₹${balance.toFixed(2)}</strong></span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    `;
-
-    // Add payment type, payment mode, and optional fields
-    modalBody.innerHTML += `
+        
         <div class="lr-details-section mt-3">
             <h5>Payment Details</h5>
             <div class="lr-details-content">
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
-                        <label for="payment_type" class="form-label">Payment Type *</label>
-                        <select name="payment_type" id="payment_type" class="form-select" required>
+                        <label for="individual_payment_type" class="form-label">Payment Type *</label>
+                        <select name="payment_type" id="individual_payment_type" class="form-select" required>
                             <option value="">Select Payment Type</option>
                             @foreach($paymentTypes as $paymentType)
                                 <option value="{{ $paymentType->name }}">
@@ -955,8 +1193,8 @@ function handleVoucherPayment() {
                         <div class="invalid-feedback">Please select a payment type.</div>
                     </div>
                     <div class="col-md-6">
-                        <label for="payment_mode" class="form-label">Payment Mode *</label>
-                        <select name="payment_mode" id="payment_mode" class="form-select" required>
+                        <label for="individual_payment_mode" class="form-label">Payment Mode *</label>
+                        <select name="payment_mode" id="individual_payment_mode" class="form-select" required>
                             <option value="">Select Payment Mode</option>
                             @foreach($paymentModes as $paymentMode)
                                 <option value="{{ $paymentMode->name }}">
@@ -970,613 +1208,200 @@ function handleVoucherPayment() {
 
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
-                        <label for="reference_transaction_id" class="form-label">Reference Transaction ID</label>
-                        <input type="text" class="form-control" name="reference_transaction_id" id="reference_transaction_id">
+                        <label for="individual_reference_transaction_id" class="form-label">Reference Transaction ID</label>
+                        <input type="text" class="form-control" name="reference_transaction_id" id="individual_reference_transaction_id">
                     </div>
                     <div class="col-md-6">
-                        <label for="remark" class="form-label">Remark</label>
-                        <input type="text" class="form-control" name="remark" id="remark">
+                        <label for="individual_remark" class="form-label">Remark</label>
+                        <input type="text" class="form-control" name="remark" id="individual_remark">
                     </div>
                 </div>
 
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label for="totalAmountInput" class="form-label">Enter Payment Amount *</label>
+                        <label for="individualTotalAmountInput" class="form-label">Payment Amount *</label>
                         <div class="input-group">
                             <span class="input-group-text">₹</span>
-                            <input type="number" class="form-control" id="totalAmountInput" name="total_amount" placeholder="Enter Amount" required>
+                            <input type="number" step="0.01" class="form-control" name="total_amount" id="individualTotalAmountInput" value="${balance.toFixed(2)}" max="${balance}" required>
                         </div>
-                        <div class="form-text text-muted">Maximum: ₹<span id="maxBalanceDisplay">0.00</span></div>
-                    </div>
-                    <div class="col-md-6 d-flex align-items-end">
-                        <div>
-                            <input type="hidden" id="totalAllocatedAmount" name="amount_given" value="0">
-                            <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
-                            <div class="alert alert-info mb-0 p-2">
-                                <i class="fas fa-info-circle me-1"></i> Amount will be automatically allocated to bookings
-                            </div>
-                        </div>
+                        <div class="invalid-feedback">Please enter a valid payment amount.</div>
+                        <small class="text-muted">Maximum amount: ₹${balance.toFixed(2)}</small>
                     </div>
                 </div>
             </div>
         </div>
     `;
-
-    // Calculate the max total balance amount
-    const maxTotalBalance = lrData.reduce((sum, item) => sum + item.balance, 0);
-    document.getElementById('maxBalanceDisplay').textContent = maxTotalBalance.toFixed(2);
-
-    // Add allocation logic
-    const totalAmountInput = document.getElementById('totalAmountInput');
-    totalAmountInput.addEventListener('input', () => {
-        let enteredAmount = parseFloat(totalAmountInput.value || 0);
-
-        // Validation: prevent amount greater than total balance
-        if (enteredAmount > maxTotalBalance) {
-            alert(`Payment amount cannot be greater than total balance ₹${maxTotalBalance.toFixed(2)}`);
-            enteredAmount = maxTotalBalance;
-            totalAmountInput.value = enteredAmount.toFixed(2);
-        }
-
-        let remaining = parseFloat(totalAmountInput.value || 0);
-        let totalAllocated = 0;
-
-        lrData.forEach((item) => {
-            let allocate = 0;
-            if (remaining > 0) {
-                if (remaining >= item.balance) {
-                    allocate = item.balance;
-                    remaining -= item.balance;
-                } else {
-                    allocate = remaining;
-                    remaining = 0;
-                }
-            }
-
-            totalAllocated += allocate;
-
-            const span = document.querySelector(`.allocated-amount[data-lr="${item.lrNumber}"]`);
-            const hiddenInput = document.querySelector(`.allocated-input[data-lr="${item.lrNumber}"]`);
-            if (span && hiddenInput) {
-                span.textContent = allocate.toFixed(2);
-                hiddenInput.value = allocate.toFixed(2);
-            }
-        });
-
-        // Update hidden total allocated input
-        document.getElementById('totalAllocatedAmount').value = totalAllocated.toFixed(2);
-    });
-
-    const modal = new bootstrap.Modal(document.getElementById('voucherPaymentModal'));
-    modal.show();
+    
+    // Store freight booking ID for submission
+    $('#individualPaymentModal').data('freight-booking-id', freightBookingId);
+    
+    // Show the modal
+    $('#individualPaymentModal').modal('show');
 }
 
-// Function moved to a more complete implementation below
-
-// Function moved to a more complete implementation below
-// Bulk payment submit is handled via onclick attribute in the HTML
-
-// Initialize tooltips
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize tooltips
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
-});
-
-// Function to show freight booking details in modal
-function showFreightBookingDetails(id) {
-    const modal = new bootstrap.Modal(document.getElementById('lrDetailsModal'));
-    const contentDiv = document.getElementById('lrDetailsContent');
-    const editBtn = document.getElementById('editFreightBookingBtn');
-
-    // Show loading state
-    contentDiv.innerHTML = `
-        <div class="text-center">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-        </div>`;
-
-    // Fetch freight booking details
-    fetch(`/api/freight-bookings/${id}/details`)
-        .then(response => response.json())
-        .then(fb => {
-            let detailsHtml = `
-                <div class="row">
-                    <!-- Basic Information -->
-                    <div class="col-md-6">
-                        <div class="card mb-3">
-                            <div class="card-header bg-light">
-                                <h6 class="mb-0">Basic Information</h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="row mb-2">
-                                    <div class="col-md-6"><strong>LR Number:</strong></div>
-                                    <div class="col-md-6">${fb.lr_no || 'N/A'}</div>
-                                </div>
-                                <div class="row mb-2">
-                                    <div class="col-md-6"><strong>Voucher No:</strong></div>
-                                    <div class="col-md-6">${fb.voucher_no || 'N/A'}</div>
-                                </div>
-                                <div class="row mb-2">
-                                    <div class="col-md-6"><strong>GR Date:</strong></div>
-                                    <div class="col-md-6">${fb.gr_date || 'N/A'}</div>
-                                </div>
-                                <div class="row mb-2">
-                                    <div class="col-md-6"><strong>Status:</strong></div>
-                                    <div class="col-md-6">
-                                        <span class="badge bg-${fb.is_cancelled ? 'danger' : (fb.is_delivered ? 'success' : 'secondary')}">
-                                            ${fb.is_cancelled ? 'Cancelled' : (fb.is_delivered ? 'Delivered' : 'In Transit')}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Financial Information -->
-                    <div class="col-md-6">
-                        <div class="card mb-3">
-                            <div class="card-header bg-light">
-                                <h6 class="mb-0">Financial Information</h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="row mb-2">
-                                    <div class="col-md-6"><strong>TR Rate:</strong></div>
-                                    <div class="col-md-6">${fb.tr_rate || '0.00'}</div>
-                                </div>
-                                <div class="row mb-2">
-                                    <div class="col-md-6"><strong>TR Amount:</strong></div>
-                                    <div class="col-md-6">${fb.tr_amount || '0.00'}</div>
-                                </div>
-                                <div class="row mb-2">
-                                    <div class="col-md-6"><strong>Advance:</strong></div>
-                                    <div class="col-md-6">${fb.advance || '0.00'}</div>
-                                </div>
-                                <div class="row mb-2">
-                                    <div class="col-md-6"><strong>Balance:</strong></div>
-                                    <div class="col-md-6">${fb.balance || '0.00'}</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-
-        contentDiv.innerHTML = detailsHtml;
-        
-        // Set edit button URL
-        if (editBtn) {
-            editBtn.href = `/freight_bookings/${id}/edit`;
-        }
-        
-        modal.show();
-    })
-    .catch(error => {
-        console.error('Error fetching Freight Booking details:', error);
-        contentDiv.innerHTML = '<div class="alert alert-danger">Error loading details. Please try again.</div>';
-        modal.show();
-    });
-}
-
-// Handle click on LR number to show details
-$(document).on('click', '.lr-number', function(e) {
-    e.preventDefault();
-    const id = $(this).data('id');
-    showFreightBookingDetails(id);
-});</script>
-
-<script>
-function handleBulkPayment() {
-    const checkboxes = document.querySelectorAll('.row-checkbox:checked');
-    const modalBody = document.getElementById('bulkPaymentBody');
-    
-    modalBody.innerHTML = '';
-
-    if (checkboxes.length === 0) {
-        alert("Please select at least one Freight Booking.");
-        return;
-    }
-
-    // Check for bookings with zero balance and collect their numbers
-    const zeroBalanceBookings = Array.from(checkboxes).filter(cb => {
-        const balance = parseFloat(cb.getAttribute('data-balance') || 0);
-        return balance <= 0;
-    }).map(cb => cb.getAttribute('data-lr'));
-
-    if (zeroBalanceBookings.length > 0) {
-        const message = `The following Bookings have zero balance. No payment is required:\n${zeroBalanceBookings.join(', ')}`;
-        alert(message);
-        return;
-    }
-
-    // Collect truck numbers
-    const truckNumbers = Array.from(checkboxes).map(cb => cb.getAttribute('data-truck'));
-    const firstTruck = truckNumbers[0];
-    const allSameTruck = truckNumbers.every(truck => truck === firstTruck);
-
-    if (!allSameTruck) {
-        alert("Selected Freight Bookings belong to different Truck Numbers. Please select bookings with the same truck.");
-        return;
-    }
-
-    // Header: show truck number once at top-right
-    modalBody.innerHTML += `
-        <div class="lr-details-section">
-            <h5>Selected Freight Bookings</h5>
-            <div class="lr-details-content">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div class="badge bg-info fs-6">Truck Number: ${firstTruck || 'N/A'}</div>
-                    <div class="badge bg-secondary fs-6">${checkboxes.length} booking(s) selected</div>
-                </div>
-            </div>
-        </div>
-    `;
-
-    // Collect LR data for allocation
-    const lrData = Array.from(checkboxes).map(checkbox => ({
-        id: checkbox.value,
-        lrNumber: checkbox.getAttribute('data-lr'),
-        balance: parseFloat(checkbox.getAttribute('data-balance') || 0)
-    }));
-
-    // Show LR Number + balance amount and voucher number in a table format
-    modalBody.innerHTML += `
-        <div class="lr-details-section mt-3">
-            <h5>Payment Allocation</h5>
-            <div class="lr-details-content">
-                <div class="table-responsive">
-                    <table class="table table-sm table-bordered">
-                        <thead>
-                            <tr>
-                                <th width="40px"><input type="checkbox" id="bulk-select-all" checked></th>
-                                <th>LR Number</th>
-                                <th class="text-end">Balance Amount</th>
-                                <th class="text-end">Payment Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody id="bulkPaymentTableBody">
-    `;
-
-    lrData.forEach((item, index) => {
-        const tableBody = modalBody.querySelector('#bulkPaymentTableBody');
-        if (tableBody) {
-            tableBody.innerHTML += `
-                <tr>
-                    <td class="text-center">
-                        <input type="checkbox" class="bulk-row-checkbox" data-id="${item.id}" data-balance="${item.balance}" checked>
-                    </td>
-                    <td>${item.lrNumber || 'N/A'}</td>
-                    <td class="text-end">₹${item.balance.toFixed(2)}</td>
-                    <td class="text-end">
-                        <input type="number" class="form-control form-control-sm bulk-payment-amount" 
-                            data-id="${item.id}" value="${item.balance.toFixed(2)}" 
-                            min="0" max="${item.balance}" step="0.01">
-                    </td>
-                </tr>
-            `;
-        }
-    });
-
-    modalBody.innerHTML += `
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <th colspan="3" class="text-end">Total Payment:</th>
-                                <th class="text-end">₹<span id="bulkPaymentTotal">0.00</span></th>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            </div>
-        </div>
-    `;
-
-    // Add payment type, payment mode, and optional fields
-    modalBody.innerHTML += `
-        <div class="lr-details-section mt-3">
-            <h5>Payment Details</h5>
-            <div class="lr-details-content">
-                <div class="row g-3 mb-3">
-                    <div class="col-md-6">
-                        <label for="bulk_payment_type" class="form-label">Payment Type *</label>
-                        <select name="payment_type" id="bulk_payment_type" class="form-select" required>
-                            <option value="">Select Payment Type</option>
-                            @foreach($paymentTypes as $paymentType)
-                                <option value="{{ $paymentType->name }}">
-                                    {{ $paymentType->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <div class="invalid-feedback">Please select a payment type.</div>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="bulk_payment_mode" class="form-label">Payment Mode *</label>
-                        <select name="payment_mode" id="bulk_payment_mode" class="form-select" required>
-                            <option value="">Select Payment Mode</option>
-                            @foreach($paymentModes as $paymentMode)
-                                <option value="{{ $paymentMode->name }}">
-                                    {{ $paymentMode->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <div class="invalid-feedback">Please select a payment mode.</div>
-                    </div>
-                </div>
-
-                <div class="row g-3 mb-3">
-                    <div class="col-md-6">
-                        <label for="bulk_payment_date" class="form-label">Payment Date *</label>
-                        <input type="date" class="form-control" id="bulk_payment_date" name="payment_date" 
-                            required value="{{ date('Y-m-d') }}">
-                        <div class="invalid-feedback">Please select a payment date.</div>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="bulk_reference_number" class="form-label">Reference Number</label>
-                        <input type="text" class="form-control" id="bulk_reference_number" name="reference_number">
-                    </div>
-                </div>
-
-                <div class="row g-3">
-                    <div class="col-md-12">
-                        <label for="bulk_notes" class="form-label">Notes</label>
-                        <textarea class="form-control" id="bulk_notes" name="notes" rows="2"></textarea>
-                    </div>
-                </div>
-                
-                <input type="hidden" id="bulk_total_amount" name="total_amount" value="0">
-                <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
-            </div>
-        </div>
-    `;
-
-    // Add event listeners for checkboxes and amount inputs
-    setTimeout(() => {
-        // Select all checkbox
-        const bulkSelectAll = document.getElementById('bulk-select-all');
-        bulkSelectAll.addEventListener('change', function() {
-            const checked = this.checked;
-            document.querySelectorAll('.bulk-row-checkbox').forEach(cb => {
-                cb.checked = checked;
-            });
-            updateBulkPaymentTotal();
-        });
-
-        // Individual checkboxes
-        document.querySelectorAll('.bulk-row-checkbox').forEach(cb => {
-            cb.addEventListener('change', updateBulkPaymentTotal);
-        });
-
-        // Amount inputs
-        document.querySelectorAll('.bulk-payment-amount').forEach(input => {
-            input.addEventListener('input', function() {
-                const max = parseFloat(this.getAttribute('max'));
-                if (parseFloat(this.value) > max) {
-                    this.value = max;
-                }
-                updateBulkPaymentTotal();
-            });
-        });
-
-        // Calculate initial total
-        updateBulkPaymentTotal();
-    }, 100);
-
-    const modal = new bootstrap.Modal(document.getElementById('bulkPaymentModal'));
-    modal.show();
-}
-
-function updateBulkPaymentTotal() {
-    let total = 0;
-    document.querySelectorAll('.bulk-row-checkbox:checked').forEach(cb => {
-        const id = cb.getAttribute('data-id');
-        const amountInput = document.querySelector(`.bulk-payment-amount[data-id="${id}"]`);
-        if (amountInput) {
-            total += parseFloat(amountInput.value || 0);
-        }
-    });
-    document.getElementById('bulkPaymentTotal').textContent = total.toFixed(2);
-    document.getElementById('bulk_total_amount').value = total.toFixed(2);
-}
-
-function submitBulkPayment() {
-    // Validate required fields
-    const paymentType = document.getElementById('bulk_payment_type');
-    const paymentMode = document.getElementById('bulk_payment_mode');
-    const paymentDate = document.getElementById('bulk_payment_date');
-    
-    // Basic form validation
-    let isValid = true;
-    if (!paymentType.value) {
-        paymentType.classList.add('is-invalid');
-        isValid = false;
-    } else {
-        paymentType.classList.remove('is-invalid');
-    }
-    
-    if (!paymentMode.value) {
-        paymentMode.classList.add('is-invalid');
-        isValid = false;
-    } else {
-        paymentMode.classList.remove('is-invalid');
-    }
-    
-    if (!paymentDate.value) {
-        paymentDate.classList.add('is-invalid');
-        isValid = false;
-    } else {
-        paymentDate.classList.remove('is-invalid');
-    }
-    
-    // Check if any booking is selected
-    const selectedCheckboxes = document.querySelectorAll('.bulk-row-checkbox:checked');
-    if (selectedCheckboxes.length === 0) {
-        alert('Please select at least one booking for payment.');
-        return;
-    }
-    
-    // Check if total amount is greater than 0
-    const totalAmount = parseFloat(document.getElementById('bulk_total_amount').value || 0);
-    if (totalAmount <= 0) {
-        alert('Total payment amount must be greater than zero.');
-        return;
-    }
-    
-    if (!isValid) {
-        alert('Please fill in all required fields.');
-        return;
-    }
-    
-    // Create form data
-    const formData = new FormData();
-    formData.append('payment_type', paymentType.value);
-    formData.append('payment_mode', paymentMode.value);
-    formData.append('payment_date', paymentDate.value);
-    formData.append('reference_number', document.getElementById('bulk_reference_number').value || '');
-    formData.append('notes', document.getElementById('bulk_notes').value || '');
-    formData.append('total_amount', totalAmount);
-    
-    // Add booking IDs and payment amounts
-    const bookingIds = [];
-    const paymentAmounts = [];
-    
-    selectedCheckboxes.forEach(cb => {
-        const id = cb.getAttribute('data-id');
-        const amountInput = document.querySelector(`.bulk-payment-amount[data-id="${id}"]`);
-        if (amountInput && parseFloat(amountInput.value) > 0) {
-            bookingIds.push(id);
-            paymentAmounts.push(amountInput.value);
-        }
-    });
-    
-    // Append arrays to form data
-    bookingIds.forEach((id, index) => {
-        formData.append(`booking_ids[${index}]`, id);
-        formData.append(`payment_amounts[${index}]`, paymentAmounts[index]);
-    });
-    
-    // Show loading indicator
-    const submitBtn = document.querySelector('#bulkPaymentModal .modal-footer .btn-success');
+// Handle individual payment submission
+$('#submitIndividualPayment').on('click', function() {
+    const freightBookingId = $('#individualPaymentModal').data('freight-booking-id');
+    const submitBtn = this;
     const originalBtnText = submitBtn.innerHTML;
-    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+    
+    // Validate form
+    const paymentType = document.getElementById('individual_payment_type').value;
+    const paymentMode = document.getElementById('individual_payment_mode').value;
+    const totalAmount = document.getElementById('individualTotalAmountInput').value;
+    
+    if (!paymentType || !paymentMode || !totalAmount || parseFloat(totalAmount) <= 0) {
+        alert('Please fill in all required fields with valid values.');
+        return;
+    }
+    
+    // Show loading state
+    submitBtn.innerHTML = '<i class="spinner-border spinner-border-sm me-2"></i>Processing...';
     submitBtn.disabled = true;
     
-    // Submit the form via AJAX
-    fetch('{{ route("freight_bookings.bulk_payment") }}', {
+    // Prepare payment data
+    const paymentData = {
+        freight_booking_ids: [freightBookingId],
+        payment_type: paymentType,
+        payment_mode: paymentMode,
+        total_amount: parseFloat(totalAmount),
+        reference_transaction_id: document.getElementById('individual_reference_transaction_id').value,
+        remark: document.getElementById('individual_remark').value,
+        allocated_amounts: {
+            [freightBookingId]: parseFloat(totalAmount)
+        },
+        _token: '{{ csrf_token() }}'
+    };
+    
+    // Submit payment
+    fetch('{{ route("voucher_payments.store") }}', {
         method: 'POST',
-        body: formData,
         headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        }
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify(paymentData)
     })
     .then(response => response.json())
     .then(data => {
-        // Hide modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('bulkPaymentModal'));
-        modal.hide();
-        
         if (data.success) {
-            // Show success message using SweetAlert2
-            Swal.fire({
-                title: 'Success!',
-                text: data.message || 'Bulk payment processed successfully!',
-                icon: 'success',
-                confirmButtonText: 'OK'
-            });
-            
+            // Close modal
+            $('#individualPaymentModal').modal('hide');
+            // Show success message
+            alert(data.message || 'Payment processed successfully!');
             // Refresh the table
             $('#freightBookingsTable').DataTable().ajax.reload();
         } else {
             // Show error message
-            Swal.fire({
-                title: 'Error!',
-                text: data.message || 'Error processing payment. Please try again.',
-                icon: 'error',
-                confirmButtonText: 'OK'
-            });
+            alert(data.message || 'Error processing payment. Please try again.');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        Swal.fire({
-            title: 'Error!',
-            text: 'An error occurred while processing the payment. Please try again.',
-            icon: 'error',
-            confirmButtonText: 'OK'
-        });
+        alert('An error occurred while processing the payment. Please try again.');
     })
     .finally(() => {
         // Restore button state
         submitBtn.innerHTML = originalBtnText;
         submitBtn.disabled = false;
     });
+});
+
+// Function to fetch payment history for selected freight bookings
+function fetchPaymentHistory(freightBookingIds) {
+    return fetch('{{ route("freight_bookings.payment_history") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({
+            freight_booking_ids: freightBookingIds
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            return data.payments;
+        } else {
+            throw new Error(data.message || 'Failed to fetch payment history');
+        }
+    });
 }
 
+// Function to update total payment amount
+function updateTotalPayment() {
+    const allocatedInputs = document.querySelectorAll('.allocated-input');
+    let total = 0;
+    allocatedInputs.forEach(input => {
+        total += parseFloat(input.value) || 0;
+    });
+    const totalElement = document.getElementById('totalPaymentAmount');
+    if (totalElement) {
+        totalElement.textContent = total.toFixed(2);
+    }
+}
+
+// Function to submit voucher payment
 function submitVoucherPayment() {
+    // Get form values
+    const paymentType = document.getElementById('paymentType')?.value;
+    const paymentMode = document.getElementById('paymentMode')?.value;
+    const referenceId = document.getElementById('referenceId')?.value;
+    const remarks = document.getElementById('paymentRemarks')?.value;
+    
     // Validate required fields
-    const paymentType = document.getElementById('payment_type');
-    const paymentMode = document.getElementById('payment_mode');
-    const totalAmount = document.getElementById('totalAmountInput');
-    
-    // Basic form validation
-    let isValid = true;
-    if (!paymentType.value) {
-        paymentType.classList.add('is-invalid');
-        isValid = false;
-    } else {
-        paymentType.classList.remove('is-invalid');
-    }
-    
-    if (!paymentMode.value) {
-        paymentMode.classList.add('is-invalid');
-        isValid = false;
-    } else {
-        paymentMode.classList.remove('is-invalid');
-    }
-    
-    if (!totalAmount.value || parseFloat(totalAmount.value) <= 0) {
-        totalAmount.classList.add('is-invalid');
-        isValid = false;
-    } else {
-        totalAmount.classList.remove('is-invalid');
-    }
-    
-    if (!isValid) {
-        alert('Please fill in all required fields.');
+    if (!paymentType) {
+        alert('Please select a payment type');
         return;
     }
     
-    // Get all selected freight booking IDs
+    if (!paymentMode) {
+        alert('Please select a payment mode');
+        return;
+    }
+    
+    // Get selected freight booking IDs
     const selectedIds = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value);
+    
+    // Get allocated amounts
+    const allocatedInputs = document.querySelectorAll('.allocated-input');
+    const paymentAmounts = Array.from(allocatedInputs).map(input => parseFloat(input.value) || 0);
+    
+    // Calculate total amount
+    const totalAmount = paymentAmounts.reduce((sum, amount) => sum + amount, 0);
+    
+    if (totalAmount <= 0) {
+        alert('Please enter valid payment amounts');
+        return;
+    }
     
     // Create form data
     const formData = new FormData();
-    formData.append('payment_type', paymentType.value);
-    formData.append('payment_mode', paymentMode.value);
-    formData.append('total_amount', totalAmount.value);
-    formData.append('amount_given', document.getElementById('totalAllocatedAmount').value);
-    formData.append('company_id', document.querySelector('input[name="company_id"]').value);
+    formData.append('payment_type', paymentType);
+    formData.append('payment_mode', paymentMode);
+    formData.append('total_amount', totalAmount.toFixed(2));
+    formData.append('payment_date', new Date().toISOString().split('T')[0]);
     
-    // Add reference ID and remark if provided
-    const referenceId = document.getElementById('reference_transaction_id');
-    const remark = document.getElementById('remark');
-    if (referenceId.value) formData.append('reference_transaction_id', referenceId.value);
-    if (remark.value) formData.append('remark', remark.value);
+    if (referenceId) formData.append('reference_number', referenceId);
+    if (remarks) formData.append('notes', remarks);
     
-    // Add selected IDs
-    selectedIds.forEach(id => formData.append('freight_booking_ids[]', id));
-    
-    // Add allocated amounts
-    const allocatedInputs = document.querySelectorAll('.allocated-input');
-    allocatedInputs.forEach((input, index) => {
-        formData.append(`allocated_amounts[${index}]`, input.value);
-        formData.append(`lr_numbers[${index}]`, input.getAttribute('data-lr'));
+    // Add booking IDs and payment amounts
+    selectedIds.forEach((id, index) => {
+        formData.append('booking_ids[]', id);
+        formData.append('payment_amounts[]', paymentAmounts[index] || 0);
     });
     
-    // Show loading indicator
-    const submitBtn = document.querySelector('#voucherPaymentModal .modal-footer .btn-success');
+    // Add CSRF token
+    formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+    
+    // Show loading state
+    const submitBtn = document.querySelector('#voucherPaymentModal .btn-success');
     const originalBtnText = submitBtn.innerHTML;
     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
     submitBtn.disabled = true;
@@ -1589,24 +1414,26 @@ function submitVoucherPayment() {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
         // Hide modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('voucherPaymentModal'));
-        modal.hide();
+        $('#voucherPaymentModal').modal('hide');
         
         if (data.success) {
-            // Show success message
             alert(data.message || 'Payment processed successfully!');
-            // Refresh the table
-            $('#freightBookingsTable').DataTable().ajax.reload();
+            // Refresh the page or table
+            location.reload();
         } else {
-            // Show error message
             alert(data.message || 'Error processing payment. Please try again.');
         }
     })
     .catch(error => {
-        console.error('Error:', error);
+        console.error('Payment error:', error);
         alert('An error occurred while processing the payment. Please try again.');
     })
     .finally(() => {

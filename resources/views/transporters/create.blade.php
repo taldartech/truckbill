@@ -77,7 +77,12 @@
                 </div>
                 <div class="col-md-4">
                     <label for="pan_number" class="form-label">PAN Number *</label>
-                    <input placeholder="Enter PAN Number" type="text" class="form-control" id="pan_number" name="pan_number" required value="{{ old('pan_number') }}">
+                    <div class="input-group">
+                        <input placeholder="Enter PAN Number" type="text" class="form-control" id="pan_number" name="pan_number" required value="{{ old('pan_number') }}">
+                        <a href="https://report.insight.gov.in/reporting-webapp/portal/homePage" target="_blank" class="btn btn-outline-info" title="Check PAN Status">
+                            <i class="fas fa-external-link-alt"></i> Check PAN
+                        </a>
+                    </div>
                     @error('pan_number') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-4">

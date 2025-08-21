@@ -104,7 +104,12 @@
 
                     <div class="col-md-4">
                         <label for="pan_number" class="form-label">PAN Number *</label>
-                        <input type="text" class="form-control @error('pan_number') is-invalid @enderror" id="pan_number" name="pan_number" value="{{ old('pan_number') }}" placeholder="Enter PAN Number" required>
+                        <div class="input-group">
+                            <input type="text" class="form-control @error('pan_number') is-invalid @enderror" id="pan_number" name="pan_number" value="{{ old('pan_number') }}" placeholder="Enter PAN Number" required>
+                            <a href="https://report.insight.gov.in/reporting-webapp/portal/homePage" target="_blank" class="btn btn-outline-info" title="Check PAN Status">
+                                <i class="fas fa-external-link-alt"></i> Check PAN
+                            </a>
+                        </div>
                         @error('pan_number') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4">
