@@ -345,6 +345,10 @@
             <!-- Hidden weight input and transporter TDS percentage -->
             <input type="hidden" id="weight" value="{{ $freight_booking->lr ? $freight_booking->lr->weight : 0 }}">
             <input type="hidden" id="transporter_tds_percentage" name="transporter_tds_percentage" value="{{ old('transporter_tds_percentage', $freight_booking->transporter_tds_percentage) }}">
+            <input type="hidden" id="pan_verified" name="pan_verified" value="{{ old('pan_verified', $freight_booking->pan_verified) }}">
+            <input type="hidden" id="good_type" name="good_type" value="{{ old('good_type', $freight_booking->good_type) }}">
+            <input type="hidden" name="lr_id" value="{{ $freight_booking->lr_id }}">
+
 
          
             

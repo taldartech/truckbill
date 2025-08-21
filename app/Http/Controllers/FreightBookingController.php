@@ -633,6 +633,7 @@ class FreightBookingController extends Controller
             'freight_booking_id' => $freight_booking->id,
             'request_data' => $request->all()
         ]);
+        // dd($request->all());
 
         $data = $request->validate([
             'lr_id' => 'required|exists:lorry_receipts,id',
@@ -655,6 +656,7 @@ class FreightBookingController extends Controller
             'eway_bill_number' => 'nullable|string',
         ]);
 
+        // dd($data);
         // Get the lorry receipt to get its LR number
         $lorryReceipt = LorryReceipt::find($data['lr_id']);
         if (!$lorryReceipt) {
