@@ -164,7 +164,7 @@
     </div>
     <!--end::Header-->
     <!--begin::Form-->
-    <form action="{{ route('freight_bookings.update', $freight_booking->id) }}" method="POST" class="needs-validation" novalidate {{ $freight_booking->is_cancelled ? 'onsubmit="return false;"' : '' }}>
+    <form action="{{ route('freight_bookings.update', $freight_booking->id) }}" method="POST" {{ $freight_booking->is_cancelled ? 'onsubmit="return false;"' : '' }}>
         @csrf
         @method('PUT')
         @php

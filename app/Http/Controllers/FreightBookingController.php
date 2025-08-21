@@ -628,6 +628,12 @@ class FreightBookingController extends Controller
             return redirect()->back()->withErrors(['general' => 'Cannot update a cancelled freight booking. Please contact administrator if changes are needed.']);
         }
 
+        // Add debug logging
+        \Log::info('Freight booking update started', [
+            'freight_booking_id' => $freight_booking->id,
+            'request_data' => $request->all()
+        ]);
+
         $data = $request->validate([
             'lr_id' => 'required|exists:lorry_receipts,id',
             'tr_fr_rate' => 'required|numeric',
