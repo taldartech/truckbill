@@ -310,7 +310,7 @@ $(document).ready(function() {
         serverSide: true,
         createdRow: function(row, data, dataIndex) {
             // Make LR number cell clickable
-            var lrNumberCell = $(row).find('td:eq(2)');
+            var lrNumberCell = $(row).find('td:eq(1)'); // LR Number is in the 2nd column (index 1)
             lrNumberCell.css('cursor', 'pointer');
             lrNumberCell.on('click', function() {
                 showLRDetails(data.id);
