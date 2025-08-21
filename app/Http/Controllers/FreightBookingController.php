@@ -689,27 +689,52 @@ class FreightBookingController extends Controller
 
         // Update lorry receipt status
         if ($lorryReceipt) {
+            // Refresh the lorry receipt to get latest data (in case memo_id was updated via AJAX)
+            $lorryReceipt->refresh();
+            
+            \Log::info('FREIGHT BOOKING UPDATE: Starting LR status update', [
+                'freight_booking_id' => $freight_booking->id,
+                'lr_id' => $lorryReceipt->id,
+                'lr_number' => $lorryReceipt->lr_number,
+                'current_memo_id' => $lorryReceipt->memo_id,
+                'current_delivery_status' => $lorryReceipt->delivery_status,
+                'is_delivered_from_form' => $data['is_delivered'] ?? 'not_set',
+                'is_cancelled_from_form' => $data['is_cancelled'] ?? 'not_set'
+            ]);
+
             $deliveryStatus = 'Pending';
             if (isset($data['is_cancelled']) && $data['is_cancelled'] === '1') {
                 // When freight booking is cancelled, lorry receipt goes back to Pending
                 $deliveryStatus = 'Pending';
+                \Log::info('FREIGHT BOOKING UPDATE: Setting status to Pending (cancelled)');
             } elseif (isset($data['is_delivered']) && $data['is_delivered'] === '1') {
                 // Only set to 'Delivered' if memo_id exists on the lorry receipt
                 if (!empty($lorryReceipt->memo_id)) {
                     $deliveryStatus = 'Delivered';
+                    \Log::info('FREIGHT BOOKING UPDATE: Setting status to Delivered (memo_id exists)', ['memo_id' => $lorryReceipt->memo_id]);
                 } else {
                     // If is_delivered is true but no memo_id, keep it as In-Progress
                     $deliveryStatus = 'In-Progress';
+                    \Log::info('FREIGHT BOOKING UPDATE: Setting status to In-Progress (no memo_id)');
                 }
             } else {
                 // If not delivered and not cancelled, set to In-Progress
                 $deliveryStatus = 'In-Progress';
+                \Log::info('FREIGHT BOOKING UPDATE: Setting status to In-Progress (default)');
             }
+            
             $lorryReceipt->delivery_status = $deliveryStatus;
             $lorryReceipt->damage_amount = $freight_booking->damage_amount;
             $lorryReceipt->shortage_amount = $freight_booking->shortage_amount;
             $lorryReceipt->amount = $lorryReceipt->amount-($freight_booking->damage_amount + $freight_booking->shortage_amount);
             $lorryReceipt->save();
+            
+            \Log::info('FREIGHT BOOKING UPDATE: Final LR state after save', [
+                'lr_id' => $lorryReceipt->id,
+                'lr_number' => $lorryReceipt->lr_number,
+                'memo_id' => $lorryReceipt->memo_id,
+                'delivery_status' => $lorryReceipt->delivery_status
+            ]);
         }
 
         return redirect()->route('lorry_receipts.index')->with('success', 'Freight Booking updated successfully.');

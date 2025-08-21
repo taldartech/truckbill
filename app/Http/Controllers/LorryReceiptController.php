@@ -356,17 +356,37 @@ class LorryReceiptController extends Controller
             // Get freight booking IDs
             $freightBookingIds = $lorryReceipts->pluck('freight_booking_id')->toArray();
 
+            \Log::info('BULK PAYMENT: Starting updates', [
+                'freight_booking_ids' => $freightBookingIds,
+                'lr_ids' => $validated['lr_ids'],
+                'memo_id' => $validated['memo_id']
+            ]);
+
             // Update is_delivered for freight bookings
             \App\Models\FreightBooking::whereIn('id', $freightBookingIds)
                 ->update(['is_delivered' => 1]);
+            \Log::info('BULK PAYMENT: Updated freight bookings is_delivered = 1');
 
-            // Update memo_id first, then delivery status will be handled by freight booking update
+            // Update memo_id first
             LorryReceipt::whereIn('id', $validated['lr_ids'])
                 ->update(['memo_id' => $validated['memo_id']]);
+            \Log::info('BULK PAYMENT: Updated memo_id', ['memo_id' => $validated['memo_id']]);
 
             // Update delivery status for lorry receipts to 'Delivered' since memo_id is now set
             LorryReceipt::whereIn('id', $validated['lr_ids'])
                 ->update(['delivery_status' => 'Delivered']);
+            \Log::info('BULK PAYMENT: Updated delivery_status to Delivered');
+
+            // Verify the updates
+            $updatedLRs = LorryReceipt::whereIn('id', $validated['lr_ids'])->get();
+            foreach ($updatedLRs as $lr) {
+                \Log::info('BULK PAYMENT: Final LR state', [
+                    'lr_id' => $lr->id,
+                    'lr_number' => $lr->lr_number,
+                    'memo_id' => $lr->memo_id,
+                    'delivery_status' => $lr->delivery_status
+                ]);
+            }
 
             // Log the request data for debugging
             \Log::info('Bulk Payment Request:', [
