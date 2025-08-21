@@ -276,6 +276,10 @@
                                     <small class="text-muted ms-2">
                                         <i class="fas fa-lock"></i> Cannot cancel after delivery
                                     </small>
+                                @else
+                                    <small class="text-muted ms-2">
+                                        <i class="fas fa-exclamation-triangle"></i> Will move LR to Pending status
+                                    </small>
                                 @endif
                             </label>
                         </div>
@@ -662,6 +666,42 @@
                     
                     // Hide additional charges when not delivered
                     document.getElementById('additional-charges-section').style.display = 'none';
+                }
+            });
+        }
+
+        // Handle is_cancelled toggle with confirmation
+        const isCancelledToggle = document.getElementById('is_cancelled');
+        if (isCancelledToggle) {
+            isCancelledToggle.addEventListener('change', function() {
+                if (this.checked) {
+                    // Show confirmation dialog
+                    const confirmed = confirm(
+                        'Are you sure you want to cancel this freight booking?\n\n' +
+                        '⚠️ WARNING: This action will:\n' +
+                        '• Mark the freight booking as cancelled\n' +
+                        '• Move the related Lorry Receipt status back to "Pending"\n' +
+                        '• This change cannot be undone easily\n\n' +
+                        'Click OK to proceed or Cancel to abort.'
+                    );
+                    
+                    if (!confirmed) {
+                        // User cancelled, uncheck the toggle
+                        this.checked = false;
+                        return;
+                    }
+                } else {
+                    // Unchecking cancelled - show confirmation
+                    const confirmed = confirm(
+                        'Are you sure you want to uncancel this freight booking?\n\n' +
+                        'This will restore the freight booking to its previous state.'
+                    );
+                    
+                    if (!confirmed) {
+                        // User cancelled, keep it checked
+                        this.checked = true;
+                        return;
+                    }
                 }
             });
         }

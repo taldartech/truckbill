@@ -681,7 +681,8 @@ class FreightBookingController extends Controller
         if ($lorryReceipt) {
             $deliveryStatus = 'Pending';
             if ($data['is_cancelled'] === '1') {
-                $deliveryStatus = 'Cancelled';
+                // When freight booking is cancelled, lorry receipt goes back to Pending
+                $deliveryStatus = 'Pending';
             } elseif ($data['is_delivered'] === '1') {
                 $deliveryStatus = 'Delivered';
             }
