@@ -139,80 +139,8 @@
                 </div>
             </div>
 
-            <div class="card mb-4 p-3 bg-light">
-                <div class="row"><div class="col"><h5 class="mb-3">Deduction & Expense Information</h5></div></div>
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label for="shortage" class="form-label">Shortage</label>
-                        <input type="number" step="0.01" class="form-control @error('shortage') is-invalid @enderror" name="shortage" id="shortage" value="{{ old('shortage', $freight_booking->shortage) }}">
-                        @error('shortage') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="detention" class="form-label">Detention</label>
-                        <input type="number" step="0.01" class="form-control @error('detention') is-invalid @enderror" name="detention" id="detention" value="{{ old('detention', $freight_booking->detention) }}">
-                        @error('detention') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="deviation" class="form-label">Deviation</label>
-                        <input type="number" step="0.01" class="form-control @error('deviation') is-invalid @enderror" name="deviation" id="deviation" value="{{ old('deviation', $freight_booking->deviation) }}">
-                        @error('deviation') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                </div>
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label for="misc_expense" class="form-label">Misc. Expense</label>
-                        <input type="number" step="0.01" class="form-control @error('misc_expense') is-invalid @enderror" name="misc_expense" id="misc_expense" value="{{ old('misc_expense', $freight_booking->misc_expense) }}">
-                        @error('misc_expense') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="pan_verified" class="form-label">PAN Verified *</label>
-                        <input type="hidden" name="pan_verified" id="pan_verified" value="{{ old('pan_verified', $freight_booking->pan_verified) }}" required>
-                        <div class="form-control">
-                            {{ old('pan_verified', $freight_booking->pan_verified) ? 'Yes' : 'No' }}
-                        </div>
-                        <small class="text-muted d-block">Read-only field</small>
-                        @error('pan_verified') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                </div>
-            </div>
-
-            <div class="card mb-4 p-3 bg-light">
-                <div class="row"><div class="col"><h5 class="mb-3">Damage & Shortage Details</h5></div></div>
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label for="damage_qty" class="form-label">Damage Quantity</label>
-                        <input type="number" step="0.01" class="form-control @error('damage_qty') is-invalid @enderror" name="damage_qty" id="damage_qty" value="{{ old('damage_qty', $freight_booking->damage_qty) }}">
-                        @error('damage_qty') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="damage_rate" class="form-label">Damage Rate</label>
-                        <input type="number" step="0.01" class="form-control @error('damage_rate') is-invalid @enderror" name="damage_rate" id="damage_rate" value="{{ old('damage_rate', $freight_booking->damage_rate) }}">
-                        @error('damage_rate') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="damage_amount" class="form-label">Damage Amount</label>
-                        <input type="number" step="0.01" class="form-control @error('damage_amount') is-invalid @enderror" name="damage_amount" id="damage_amount" value="{{ old('damage_amount', $freight_booking->damage_amount) }}">
-                        @error('damage_amount') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                </div>
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label for="shortage_qty" class="form-label">Shortage Quantity</label>
-                        <input type="number" step="0.01" class="form-control @error('shortage_qty') is-invalid @enderror" name="shortage_qty" id="shortage_qty" value="{{ old('shortage_qty', $freight_booking->shortage_qty) }}">
-                        @error('shortage_qty') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="shortage_rate" class="form-label">Shortage Rate</label>
-                        <input type="number" step="0.01" class="form-control @error('shortage_rate') is-invalid @enderror" name="shortage_rate" id="shortage_rate" value="{{ old('shortage_rate', $freight_booking->shortage_rate) }}">
-                        @error('shortage_rate') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="shortage_amount" class="form-label">Shortage Amount</label>
-                        <input type="number" step="0.01" class="form-control @error('shortage_amount') is-invalid @enderror" name="shortage_amount" id="shortage_amount" value="{{ old('shortage_amount', $freight_booking->shortage_amount) }}">
-                        @error('shortage_amount') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                </div>
-            </div>
+         
+            
 
             <div class="card mb-4 p-3 bg-light">
                 <div class="row"><div class="col"><h5 class="mb-3">Status & Additional Information</h5></div></div>
@@ -266,6 +194,51 @@
                     </div>
                 </div>
             </div>
+            <div class="card mb-4 p-3 bg-light">
+                <div class="row"><div class="col"><h5 class="mb-3">Deduction & Expense Information</h5></div></div>
+                <div class="row mb-3">
+                  
+                    <div class="col-md-4">
+                        <label for="detention" class="form-label">Detention</label>
+                        <input type="number" step="0.01" class="form-control @error('detention') is-invalid @enderror" name="detention" id="detention" value="{{ old('detention', $freight_booking->detention) }}">
+                        @error('detention') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label for="deviation" class="form-label">Deviation</label>
+                        <input type="number" step="0.01" class="form-control @error('deviation') is-invalid @enderror" name="deviation" id="deviation" value="{{ old('deviation', $freight_booking->deviation) }}">
+                        @error('deviation') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label for="misc_expense" class="form-label">Misc. Expense</label>
+                        <input type="number" step="0.01" class="form-control @error('misc_expense') is-invalid @enderror" name="misc_expense" id="misc_expense" value="{{ old('misc_expense', $freight_booking->misc_expense) }}">
+                        @error('misc_expense') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+
+                </div>
+                <div class="row mb-3">
+                    
+                    <div class="col-md-4">
+                        <label for="damage_amount" class="form-label">Damage Amount</label>
+                        <input type="number" step="0.01" class="form-control @error('damage_amount') is-invalid @enderror" name="damage_amount" id="damage_amount" value="{{ old('damage_amount', $freight_booking->damage_amount) }}">
+                        @error('damage_amount') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label for="shortage_amount" class="form-label">Shortage Amount</label>
+                        <input type="number" step="0.01" class="form-control @error('shortage_amount') is-invalid @enderror" name="shortage_amount" id="shortage_amount" value="{{ old('shortage_amount', $freight_booking->shortage_amount) }}">
+                        @error('shortage_amount') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label for="pan_verified" class="form-label">PAN Verified *</label>
+                        <input type="hidden" name="pan_verified" id="pan_verified" value="{{ old('pan_verified', $freight_booking->pan_verified) }}" required>
+                        <div class="form-control">
+                            {{ old('pan_verified', $freight_booking->pan_verified) ? 'Yes' : 'No' }}
+                        </div>
+                        <small class="text-muted d-block">Read-only field</small>
+                        @error('pan_verified') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+            </div>
+
         </div>
         
         <!-- Quick Actions Section -->
