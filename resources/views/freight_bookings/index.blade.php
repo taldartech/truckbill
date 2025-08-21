@@ -60,15 +60,19 @@
                         <tr>
                             <th style="width: 40px;"><input type="checkbox" id="select-all"></th>
                             <th style="width: 80px;">Sr. No</th>
+                            <th>FR Number</th>
                             <th>LR Number</th>
                             <th>Voucher No</th>
+                            <th>Source City</th>
+                            <th>Destination City</th>
+                            <th>Truck Number</th>
                             <th class="text-end">TR Rate</th>
-                            <th class="text-end">TR Amount</th>
+                            {{-- <th class="text-end">TR Amount</th> --}}
                             <th class="text-end">Advance</th>
                             <th class="text-end">Balance</th>
                             <th class="text-center">GR Date</th>
-                            <th class="text-center">Delivered</th>
-                            <th class="text-center">Cancelled</th>
+                            {{-- <th class="text-center">Delivered</th> --}}
+                            {{-- <th class="text-center">Cancelled</th> --}}
                             <th class="text-center" style="width: 120px;">Actions</th>
                         </tr>
                     </thead>
@@ -83,16 +87,20 @@
                                            data-voucher_number="{{ $booking->voucher_number ?? '' }}">
                                 </td>
                                 <td class="text-center">{{ $bookings->firstItem() + $index }}</td>
+                                <td><a href="{{ route('freight_bookings.show', $booking->id) }}" class="text-primary text-decoration-underline">{{ $booking->id ? $booking->id : '-' }}</a></td>
                                 <td>{{ $booking->lr ? $booking->lr->lr_number : '-' }}</td>
                                 <td>{{ $booking->voucher_number ?? '-' }}</td>
+                                <td>{{ $booking->lr && $booking->lr->source_city ? $booking->lr->source_city : '-' }}</td>
+                                <td>{{ $booking->lr && $booking->lr->destination_city ? $booking->lr->destination_city : '-' }}</td>
+                                <td>{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->truck_number : '-' }}</td>
                                 <td class="text-end">₹{{ number_format($booking->tr_fr_rate ?? 0, 2) }}</td>
-                                <td class="text-end">₹{{ number_format($booking->tr_amount ?? 0, 2) }}</td>
+                                {{-- <td class="text-end">₹{{ number_format($booking->tr_amount ?? 0, 2) }}</td> --}}
                                 <td class="text-end">₹{{ number_format($booking->advance_amount ?? 0, 2) }}</td>
                                 <td class="text-end">₹{{ number_format($booking->balance_amount ?? 0, 2) }}</td>
                                 <td class="text-center">
                                     {{ $booking->lr && $booking->lr->gr_date ? date('d-m-Y', strtotime($booking->lr->gr_date)) : '-' }}
                                 </td>
-                                <td class="text-center">
+                                {{-- <td class="text-center">
                                     @if($booking->is_delivered == '1')
                                         <span class="badge bg-success">Yes</span>
                                     @else
@@ -106,6 +114,7 @@
                                         <span class="badge bg-secondary">No</span>
                                     @endif
                                 </td>
+                                {{--  --}}
                                 <td class="text-center">
                                     <div class="btn-group" role="group">
                                         <a href="{{ route('freight_bookings.show', $booking->id) }}" class="btn btn-sm btn-outline-info" title="View">
@@ -679,6 +688,11 @@ $(document).ready(function() {
                 className: 'text-center align-middle'
             },
             {
+                data: 'fr_number',
+                name: 'fr_number',
+                className: 'align-middle'
+            },
+            {
                 data: 'lr_number',
                 name: 'lr_number',
                 className: 'align-middle'
@@ -689,17 +703,32 @@ $(document).ready(function() {
                 className: 'align-middle'
             },
             {
+                data: 'source_city',
+                name: 'source_city',
+                className: 'align-middle'
+            },
+            {
+                data: 'destination_city',
+                name: 'destination_city',
+                className: 'align-middle'
+            },
+            {
+                data: 'truck_number',
+                name: 'truck_number',
+                className: 'align-middle'
+            },
+            {
                 data: 'tr_rate_formatted',
                 name: 'tr_rate_formatted',
                 className: 'text-end align-middle',
                 orderable: false
             },
-            {
-                data: 'tr_amount_formatted',
-                name: 'tr_amount_formatted',
-                className: 'text-end align-middle',
-                orderable: false
-            },
+           // {
+                // data: 'tr_amount_formatted',
+                // name: 'tr_amount_formatted',
+                // className: 'text-end align-middle',
+                // orderable: false
+           // },
             {
                 data: 'advance_formatted',
                 name: 'advance_formatted',
@@ -718,18 +747,18 @@ $(document).ready(function() {
                 className: 'text-center align-middle',
                 orderable: false
             },
-            {
-                data: 'is_delivered_badge',
-                name: 'is_delivered_badge',
-                className: 'text-center align-middle',
-                orderable: false
-            },
-            {
-                data: 'is_cancelled_badge',
-                name: 'is_cancelled_badge',
-                className: 'text-center align-middle',
-                orderable: false
-            },
+            // {
+            //     data: 'is_delivered_badge',
+            //     name: 'is_delivered_badge',
+            //     className: 'text-center align-middle',
+            //     orderable: false
+            // },
+            // {
+            //     data: 'is_cancelled_badge',
+            //     name: 'is_cancelled_badge',
+            //     className: 'text-center align-middle',
+            //     orderable: false
+            // },
             {
                 data: 'actions',
                 name: 'actions',

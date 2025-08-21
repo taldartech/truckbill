@@ -68,6 +68,9 @@ class FreightBookingController extends Controller
                         $row->voucher_number ?? ''
                     );
                 })
+                ->addColumn('fr_number', function ($row) {
+                    return $row->id ? $row->id : '-';
+                })
                 ->addColumn('lr_number', function ($row) {
                     return $row->lr ? $row->lr->lr_number : '-';
                 })
@@ -81,9 +84,9 @@ class FreightBookingController extends Controller
                 ->addColumn('tr_rate_formatted', function ($row) {
                     return $row->tr_fr_rate ? '₹' . number_format($row->tr_fr_rate, 2) : '₹0.00';
                 })
-                ->addColumn('tr_amount_formatted', function ($row) {
-                    return $row->tr_amount ? '₹' . number_format($row->tr_amount, 2) : '₹0.00';
-                })
+                // ->addColumn('tr_amount_formatted', function ($row) {
+                //     return $row->tr_amount ? '₹' . number_format($row->tr_amount, 2) : '₹0.00';
+                // })
                 ->addColumn('advance_formatted', function ($row) {
                     return $row->advance_amount ? '₹' . number_format($row->advance_amount, 2) : '₹0.00';
                 })
@@ -94,20 +97,23 @@ class FreightBookingController extends Controller
                 ->addColumn('gr_date_formatted', function ($row) {
                     return $row->lr && $row->lr->gr_date ? date('d-m-Y', strtotime($row->lr->gr_date)) : '-';
                 })
-                ->addColumn('is_delivered_badge', function ($row) {
-                    if ($row->is_delivered == '1') {
-                        return '<span class="badge bg-success">Yes</span>';
-                    } else {
-                        return '<span class="badge bg-warning">No</span>';
-                    }
+                ->addColumn('truck_number', function ($row) {
+                    return $row->lr && $row->lr->truck ? $row->lr->truck->truck_number : '-';
                 })
-                ->addColumn('is_cancelled_badge', function ($row) {
-                    if ($row->is_cancelled == '1') {
-                        return '<span class="badge bg-danger">Yes</span>';
-                    } else {
-                        return '<span class="badge bg-secondary">No</span>';
-                    }
-                })
+                // ->addColumn('is_delivered_badge', function ($row) {
+                //     if ($row->is_delivered == '1') {
+                //         return '<span class="badge bg-success">Yes</span>';
+                //     } else {
+                //         return '<span class="badge bg-warning">No</span>';
+                //     }
+                // })
+                // ->addColumn('is_cancelled_badge', function ($row) {
+                //     if ($row->is_cancelled == '1') {
+                //         return '<span class="badge bg-danger">Yes</span>';
+                //     } else {
+                //         return '<span class="badge bg-secondary">No</span>';
+                //     }
+                // })
                 ->addColumn('actions', function ($row) {
                     return $this->getActionButtons($row);
                 })
@@ -116,7 +122,7 @@ class FreightBookingController extends Controller
                         $q->where('lr_number', 'like', "%{$keyword}%");
                     });
                 })
-                ->rawColumns(['checkbox', 'is_delivered_badge', 'is_cancelled_badge', 'actions']);
+                ->rawColumns(['checkbox', 'actions']);
             
             \Log::info('DataTables processing complete');
             return $dataTable->make(true);
