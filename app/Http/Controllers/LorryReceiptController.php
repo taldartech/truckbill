@@ -218,15 +218,32 @@ class LorryReceiptController extends Controller
     {
         $buttons = '<div class="d-flex gap-1">';
         
-        // Freight booking button
-        $buttons .= '<a href="' . route('freight_bookings.create') . '?lorry_receipt_id=' . $lorryReceipt->id . '" class="btn btn-sm btn-success" title="Freight Booking" data-bs-toggle="tooltip">';
-        $buttons .= '<i class="bi bi-truck"></i>';
-        $buttons .= '</a>';
+        // Freight booking button - check if freight booking already exists
+        $freightBooking = FreightBooking::where('lr_id', $lorryReceipt->id)->first();
         
-        // Edit button
+        if ($freightBooking) {
+            // If freight booking exists, redirect to edit form
+            $buttons .= '<a href="' . route('freight_bookings.edit', $freightBooking->id) . '" class="btn btn-sm btn-warning" title="Edit Freight Booking" data-bs-toggle="tooltip">';
+            $buttons .= '<i class="bi bi-truck"></i>';
+            $buttons .= '</a>';
+        } else {
+            // If no freight booking exists, redirect to create form
+            $buttons .= '<a href="' . route('freight_bookings.create') . '?lorry_receipt_id=' . $lorryReceipt->id . '" class="btn btn-sm btn-success" title="Create Freight Booking" data-bs-toggle="tooltip">';
+            $buttons .= '<i class="bi bi-truck"></i>';
+            $buttons .= '</a>';
+        }
+        
+        // Edit button - check if freight booking exists and add confirmation
         $editUrl = route('lorry_receipts.edit', $lorryReceipt->id);
-        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit" data-bs-toggle="tooltip">';
-        $buttons .= '<i class="bi bi-pencil"></i></a>';
+        if ($freightBooking) {
+            // If freight booking exists, add confirmation dialog
+            $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit" data-bs-toggle="tooltip" onclick="return confirm(\'A freight booking already exists for this Lorry Receipt. Do you still want to continue and edit it?\')">';
+            $buttons .= '<i class="bi bi-pencil"></i></a>';
+        } else {
+            // If no freight booking exists, normal edit button
+            $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit" data-bs-toggle="tooltip">';
+            $buttons .= '<i class="bi bi-pencil"></i></a>';
+        }
         
         // Delete button
         $deleteUrl = route('lorry_receipts.destroy', $lorryReceipt->id);
@@ -588,8 +605,9 @@ class LorryReceiptController extends Controller
         // Set truck_id to null if not provided
         $validated['truck_id'] = $validated['truck_id'] ?? null;
         
-        // Set default delivery_status
-        $validated['delivery_status'] = 'Pending';
+        // Preserve existing delivery_status - don't override it
+        // Remove delivery_status from validated data to keep existing value
+        unset($validated['delivery_status']);
         
         // Check if lr_number already exists
         // if (\App\Models\LorryReceipt::where('lr_number', $validated['lr_number'])->exists()) {
