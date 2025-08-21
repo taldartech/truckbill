@@ -248,6 +248,7 @@ class TransporterController extends Controller
             'company' => optional($transporter->company)->name ?: 'Not specified',
             'is_owner' => $transporter->is_owner ? 'Truck Owner' : 'Agency',
             'declaration_given' => $transporter->declaration_given ? 'Yes' : 'No',
+            'tds_percentage' => $transporter->tds_percentage ?: '0',
             'advance_amount' => '₹' . number_format($transporter->advance_amount, 2),
             'created_at' => $transporter->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
             'updated_at' => $transporter->updated_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),

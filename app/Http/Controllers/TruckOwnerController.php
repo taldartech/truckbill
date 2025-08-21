@@ -331,6 +331,7 @@ class TruckOwnerController extends Controller
             'company' => optional($transporter->company)->name ?: 'Not specified',
             'is_owner' => 'Truck Owner',
             'declaration_given' => $transporter->declaration_given ? 'Yes' : 'No',
+            'tds_percentage' => $transporter->tds_percentage ?: '0',
             'total_trucks' => $transporter->total_trucks,
             'advance_amount' => '₹' . number_format($transporter->advance_amount, 2),
             'created_at' => $transporter->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),

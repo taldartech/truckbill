@@ -337,6 +337,10 @@ $(document).ready(function() {
                                             <td><span class="badge ${data.declaration_given === 'Yes' ? 'bg-success' : 'bg-warning'}">${data.declaration_given}</span></td>
                                         </tr>
                                         <tr>
+                                            <td class="fw-bold">TDS Percentage:</td>
+                                            <td><span class="badge bg-warning text-dark">${data.tds_percentage}%</span></td>
+                                        </tr>
+                                        <tr>
                                             <td class="fw-bold">Advance Amount:</td>
                                             <td class="fw-bold text-success">${data.advance_amount}</td>
                                         </tr>

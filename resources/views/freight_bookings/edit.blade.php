@@ -30,7 +30,113 @@
     margin-bottom: 1rem !important;
 }
 </style>
-<div class="card card-info card-outline mb-4" style="max-width: 1200px; margin: 0 auto;">
+
+<!-- LR Information Card -->
+<div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
+    <div class="card-header">
+        <div class="card-title h5">Lorry Receipt Information</div>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-2">
+                <div class="mb-2">
+                    <strong>LR Number:</strong><br>
+                    <span class="text-primary">{{ $freight_booking->lr ? $freight_booking->lr->lr_number : 'N/A' }}</span>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="mb-2">
+                    <strong>Transporter:</strong><br>
+                    <span>{{ $freight_booking->transporter_name ?? 'N/A' }}</span>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="mb-2">
+                    <strong>Transporter Type:</strong><br>
+                    @if($freight_booking->lr && $freight_booking->lr->transporter)
+                        @if($freight_booking->lr->transporter->is_owner)
+                            <span class="badge bg-primary text-white fs-6">Truck Owner</span>
+                        @else
+                            <span class="badge bg-info text-white fs-6">Agency</span>
+                        @endif
+                    @else
+                        <span>N/A</span>
+                    @endif
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="mb-2">
+                    <strong>TDS Percentage:</strong><br>
+                    <span class="badge bg-warning text-dark fs-6">{{ number_format($freight_booking->transporter_tds_percentage ?? 0, 2) }}%</span>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="mb-2">
+                    <strong>Truck:</strong><br>
+                    <span>{{ $freight_booking->lr && $freight_booking->lr->truck ? $freight_booking->lr->truck->truck_number : 'N/A' }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="mb-2">
+                    <strong>Customer:</strong><br>
+                    <span>{{ $freight_booking->lr && $freight_booking->lr->customer ? $freight_booking->lr->customer->name : 'N/A' }}</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-2">
+                    <strong>Consignor:</strong><br>
+                    <span>{{ $freight_booking->lr && $freight_booking->lr->consignor ? $freight_booking->lr->consignor->name : 'N/A' }}</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-2">
+                    <strong>Consignee:</strong><br>
+                    <span>{{ $freight_booking->lr && $freight_booking->lr->consignee ? $freight_booking->lr->consignee->name : 'N/A' }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Goods Type Details Section -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="mb-2">
+                    <strong>Goods Type:</strong><br>
+                    <span class="badge bg-secondary text-white fs-6">{{ $freight_booking->lr ? $freight_booking->lr->good_type : 'N/A' }}</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-2">
+                    <strong>Weight:</strong><br>
+                    <span class="badge bg-info text-white fs-6">{{ $freight_booking->lr ? number_format($freight_booking->lr->weight ?? 0, 2) : '0.00' }} kg</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-2">
+                    <strong>LR Amount:</strong><br>
+                    <span class="badge bg-success text-white fs-6">₹{{ $freight_booking->lr ? number_format($freight_booking->lr->amount ?? 0, 2) : '0.00' }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Route Details Section -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-2">
+                    <strong>Route:</strong><br>
+                    <span class="text-muted">
+                        {{ $freight_booking->lr ? $freight_booking->lr->source_city : 'N/A' }}, {{ $freight_booking->lr ? $freight_booking->lr->source_state : 'N/A' }}
+                        <i class="fas fa-arrow-right mx-2"></i>
+                        {{ $freight_booking->lr ? $freight_booking->lr->destination_city : 'N/A' }}, {{ $freight_booking->lr ? $freight_booking->lr->destination_state : 'N/A' }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
     <!--begin::Header-->
     <div class="card-header">
         <div class="card-title h4">Edit Freight Booking</div>
@@ -66,191 +172,109 @@
                 <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
             @endif
 
-            <div class="card mb-4 p-3 bg-light">
-                <div class="row"><div class="col"><h5 class="mb-3">LR & Transport Information</h5></div></div>
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label for="lr_id" class="form-label">LR Number *</label>
-                        <select name="lr_id" id="lr_id" class="form-select @error('lr_id') is-invalid @enderror" required>
-                            <option value="">Select LR Number</option>
-                            @foreach($lorry_receipt as $lr)
-                                <option value="{{ $lr->id }}" {{ old('lr_id', $freight_booking->lr_id) == $lr->id ? 'selected' : '' }}>
-                                    {{ $lr->lr_number }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('lr_id') <div class="text-danger">{{ $message }}</div> @enderror
+            <!-- Financial Information Section -->
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label for="tr_fr_rate" class="form-label">TR Freight Rate *</label>
+                    <input type="number" step="0.01" min="1" max="20000" class="form-control @error('tr_fr_rate') is-invalid @enderror" name="tr_fr_rate" id="tr_fr_rate" value="{{ old('tr_fr_rate', $freight_booking->tr_fr_rate) }}" placeholder="Enter freight rate (₹1 - ₹20,000 per ton)" required>
+                    <small class="form-text text-muted">
+                        <i class="fas fa-info-circle"></i> Rate must be between ₹1 and ₹20,000 per ton
+                    </small>
+                    @error('tr_fr_rate') <div class="text-danger">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-4">
+                    <label for="tr_amount" class="form-label">TR Amount *</label>
+                    <input type="number" step="0.01" min="0.01" class="form-control @error('tr_amount') is-invalid @enderror" name="tr_amount" id="tr_amount" value="{{ old('tr_amount', $freight_booking->tr_amount) }}" placeholder="Auto-calculated (editable)" required>
+                    <small class="form-text text-muted">
+                        <i class="fas fa-info-circle"></i> Auto-calculated: TR Freight Rate × Weight. Must be greater than ₹0.
+                    </small>
+                    @error('tr_amount') <div class="text-danger">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-4">
+                    <label for="tds_amount" class="form-label">TDS Amount *</label>
+                    <input type="number" step="0.01" class="form-control @error('tds_amount') is-invalid @enderror" name="tds_amount" id="tds_amount" value="{{ old('tds_amount', $freight_booking->tds_amount) }}" readonly style="background-color: #f8f9fa;">
+                    <small class="form-text text-muted">
+                        <i class="fas fa-percentage"></i> Auto-calculated based on transporter TDS percentage
+                    </small>
+                    @error('tds_amount') <div class="text-danger">{{ $message }}</div> @enderror
+                </div>
+                <!-- Hidden advance amount field with default value 0 -->
+                <input type="hidden" name="advance_amount" id="advance_amount" value="0">
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label for="good_type" class="form-label">Goods Type</label>
+                    <select class="form-select @error('good_type') is-invalid @enderror" name="good_type" id="good_type">
+                        <option value="">Select Goods Type</option>
+                        @foreach($goodsTypes as $goodsType)
+                            <option value="{{ $goodsType->name }}" {{ old('good_type', $freight_booking->good_type) == $goodsType->name ? 'selected' : '' }}>
+                                {{ $goodsType->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    @error('good_type') <div class="text-danger">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-4">
+                    <label for="eway_bill_number" class="form-label">E-Way Bill Number</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control @error('eway_bill_number') is-invalid @enderror" name="eway_bill_number" id="eway_bill_number" value="{{ old('eway_bill_number', $freight_booking->eway_bill_number) }}" placeholder="Enter E-way bill number">
+                        <a href="https://ewaybillgst.gov.in/Login.aspx" target="_blank" class="btn btn-outline-info" title="Check E-way Bill Status">
+                            <i class="fas fa-external-link-alt"></i> Check Status
+                        </a>
                     </div>
-                    <div class="col-md-4">
-                        <label for="transporter_name" class="form-label">Transporter *</label>
-                        <input type="text" name="transporter_name" id="transporter_name" class="form-control" readonly value="{{ $preFilled['transporter_name'] ?? '' }}">
-                        @error('transporter_name') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="truck_number" class="form-label">Truck Number *</label>
-                        <input type="text" name="truck_number" id="truck_number" class="form-control" readonly value="{{ $preFilled['truck_number'] ?? '' }}">
-                        @error('truck_number') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
+                    @error('eway_bill_number') <div class="text-danger">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-4">
+                    <label for="pan_verified" class="form-label">PAN Verified *</label>
+                    <input type="hidden" name="pan_verified" id="pan_verified" value="{{ old('pan_verified', $freight_booking->pan_verified) }}" required>
+                    <input type="text" class="form-control" readonly value="{{ old('pan_verified', $freight_booking->pan_verified) ? 'Yes' : 'No' }}" style="background-color: #f8f9fa;">
+                    <small class="form-text text-muted">
+                        <i class="fas fa-lock"></i> Read-only field from transporter data
+                    </small>
+                    @error('pan_verified') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
             </div>
 
-            <div class="card mb-4 p-3 bg-light">
-                <div class="row"><div class="col"><h5 class="mb-3">Freight & Financial Information</h5></div></div>
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label for="tr_fr_rate" class="form-label">TR Freight Rate *</label>
-                        <input type="number" step="0.01" class="form-control @error('tr_fr_rate') is-invalid @enderror" name="tr_fr_rate" id="tr_fr_rate" value="{{ old('tr_fr_rate', $freight_booking->tr_fr_rate) }}" required>
-                        @error('tr_fr_rate') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="tr_amount" class="form-label">TR Amount *</label>
-                        <input type="number" step="0.01" class="form-control @error('tr_amount') is-invalid @enderror" name="tr_amount" id="tr_amount" value="{{ old('tr_amount', $freight_booking->tr_amount) }}" required>
-                        @error('tr_amount') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="advance_amount" class="form-label">Advance Amount *</label>
-                        <input type="number" step="0.01" class="form-control @error('advance_amount') is-invalid @enderror" name="advance_amount" id="advance_amount" value="{{ old('advance_amount', $freight_booking->advance_amount) }}" required>
-                        @error('advance_amount') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label for="balance_amount" class="form-label">Balance Amount *</label>
+                    <input type="number" step="0.01" class="form-control @error('balance_amount') is-invalid @enderror" name="balance_amount" id="balance_amount" value="{{ old('balance_amount', $freight_booking->balance_amount) }}" required readonly style="background-color: #f8f9fa;">
+                    <small class="form-text text-muted">
+                        <i class="fas fa-calculator"></i> Auto-calculated: TR Amount - TDS Amount
+                    </small>
+                    @error('balance_amount') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label for="balance_amount" class="form-label">Balance Amount *</label>
-                        <input type="number" step="0.01" class="form-control @error('balance_amount') is-invalid @enderror" name="balance_amount" id="balance_amount" value="{{ old('balance_amount', $freight_booking->balance_amount) }}" required>
-                        @error('balance_amount') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="tds_amount" class="form-label">TDS Amount</label>
-                        <input type="number" step="0.01" class="form-control @error('tds_amount') is-invalid @enderror" name="tds_amount" id="tds_amount" value="{{ old('tds_amount', $freight_booking->tds_amount) }}">
-                        @error('tds_amount') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="good_type" class="form-label">Goods Type</label>
-                        <select class="form-select @error('good_type') is-invalid @enderror" name="good_type" id="good_type">
-                            <option value="">Select Goods Type</option>
-                            @foreach($goodsTypes as $goodsType)
-                                <option value="{{ $goodsType->name }}" {{ old('good_type', $freight_booking->good_type) == $goodsType->name ? 'selected' : '' }}>
-                                    {{ $goodsType->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('good_type') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                </div>
+                <!-- Hidden delivered field with default value 0 -->
+                <input type="hidden" name="is_delivered" id="is_delivered" value="{{ old('is_delivered', $freight_booking->is_delivered) }}">
             </div>
+
+            <!-- Hidden weight input and transporter TDS percentage -->
+            <input type="hidden" id="weight" value="{{ $freight_booking->lr ? $freight_booking->lr->weight : 0 }}">
+            <input type="hidden" id="transporter_tds_percentage" name="transporter_tds_percentage" value="{{ old('transporter_tds_percentage', $freight_booking->transporter_tds_percentage) }}">
 
          
             
 
-            <div class="card mb-4 p-3 bg-light">
-                <div class="row"><div class="col"><h5 class="mb-3">Status & Additional Information</h5></div></div>
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label for="is_delivered" class="form-label">Delivered?</label>
-                        @if(Auth::user()->role !== 'super_admin' && old('is_delivered', $freight_booking->is_delivered) == '1')
-                            <input type="text" class="form-control" value="Yes" readonly>
-                            <input type="hidden" name="is_delivered" value="1">
-                            <small class="text-muted d-block">Read-only field</small>
-                        @else
-                            <select name="is_delivered" id="is_delivered" class="form-select @error('is_delivered') is-invalid @enderror">
-                                <option value="0" {{ old('is_delivered', $freight_booking->is_delivered) == '0' ? 'selected' : '' }}>No</option>
-                                <option value="1" {{ old('is_delivered', $freight_booking->is_delivered) == '1' ? 'selected' : '' }}>Yes</option>
-                            </select>
-                        @endif
-                        @error('is_delivered') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="is_cancelled" class="form-label">Cancelled?</label>
-                        @if(Auth::user()->role !== 'super_admin' && old('is_delivered', $freight_booking->is_delivered) == '1')
-                            <input type="text" class="form-control" value="No" readonly>
-                            <input type="hidden" name="is_cancelled" value="0">
-                            <small class="text-muted d-block">Read-only field</small>
-                        @else
-                            <select name="is_cancelled" id="is_cancelled" class="form-select @error('is_cancelled') is-invalid @enderror">
-                                <option value="0" {{ old('is_cancelled', $freight_booking->is_cancelled) == '0' ? 'selected' : '' }}>No</option>
-                                <option value="1" {{ old('is_cancelled', $freight_booking->is_cancelled) == '1' ? 'selected' : '' }}>Yes</option>
-                            </select>
-                        @endif
-                        @error('is_cancelled') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="linked_freight_booking_id" class="form-label">Linked Freight Booking</label>
-                        <select name="linked_freight_booking_id" id="linked_freight_booking_id" class="form-select @error('linked_freight_booking_id') is-invalid @enderror" value="{{ old('linked_freight_booking_id', $freight_booking->linked_freight_booking_id) }}">
-                            <option value="">None</option>
-                            @foreach($linkedBookings as $fb)
-                                <option value="{{ $fb->id }}" {{ old('linked_freight_booking_id') == $fb->id ? 'selected' : '' }}>
-                                    #{{ $fb->id }} (LR: {{ $fb->lr ? $fb->lr->gr_number : '-' }})
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('linked_freight_booking_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                </div>
-                <div class="row mb-3">
-                    <div class="col-md-12">
-                        <label for="remark" class="form-label">Remark</label>
-                        <textarea name="remark" id="remark" class="form-control @error('remark') is-invalid @enderror" rows="3">{{ old('remark', $freight_booking->remark) }}</textarea>
-                        @error('remark') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                </div>
-            </div>
-            <div class="card mb-4 p-3 bg-light">
-                <div class="row"><div class="col"><h5 class="mb-3">Deduction & Expense Information</h5></div></div>
-                <div class="row mb-3">
-                  
-                    <div class="col-md-4">
-                        <label for="detention" class="form-label">Detention</label>
-                        <input type="number" step="0.01" class="form-control @error('detention') is-invalid @enderror" name="detention" id="detention" value="{{ old('detention', $freight_booking->detention) }}">
-                        @error('detention') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="deviation" class="form-label">Deviation</label>
-                        <input type="number" step="0.01" class="form-control @error('deviation') is-invalid @enderror" name="deviation" id="deviation" value="{{ old('deviation', $freight_booking->deviation) }}">
-                        @error('deviation') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="misc_expense" class="form-label">Misc. Expense</label>
-                        <input type="number" step="0.01" class="form-control @error('misc_expense') is-invalid @enderror" name="misc_expense" id="misc_expense" value="{{ old('misc_expense', $freight_booking->misc_expense) }}">
-                        @error('misc_expense') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-
-                </div>
-                <div class="row mb-3">
-                    
-                    <div class="col-md-4">
-                        <label for="damage_amount" class="form-label">Damage Amount</label>
-                        <input type="number" step="0.01" class="form-control @error('damage_amount') is-invalid @enderror" name="damage_amount" id="damage_amount" value="{{ old('damage_amount', $freight_booking->damage_amount) }}">
-                        @error('damage_amount') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="shortage_amount" class="form-label">Shortage Amount</label>
-                        <input type="number" step="0.01" class="form-control @error('shortage_amount') is-invalid @enderror" name="shortage_amount" id="shortage_amount" value="{{ old('shortage_amount', $freight_booking->shortage_amount) }}">
-                        @error('shortage_amount') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="pan_verified" class="form-label">PAN Verified *</label>
-                        <input type="hidden" name="pan_verified" id="pan_verified" value="{{ old('pan_verified', $freight_booking->pan_verified) }}" required>
-                        <div class="form-control">
-                            {{ old('pan_verified', $freight_booking->pan_verified) ? 'Yes' : 'No' }}
-                        </div>
-                        <small class="text-muted d-block">Read-only field</small>
-                        @error('pan_verified') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <label for="remark" class="form-label">Remark</label>
+                    <textarea name="remark" id="remark" class="form-control @error('remark') is-invalid @enderror" rows="3" placeholder="Enter any additional remarks or notes">{{ old('remark', $freight_booking->remark) }}</textarea>
+                    @error('remark') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
             </div>
 
         </div>
         
-        <!-- Quick Actions Section -->
-        <div class="card p-3 bg-light">
-            <div class="row"><div class="col"><h5 class="mb-3">Quick Actions</h5></div></div>
-            <div class="row g-2">
-                <div class="col-md-4">
-                    <button class="btn btn-success w-100 mb-2" type="submit">💾 Update Freight Booking</button>
-                </div>
-                <div class="col-md-4">
-                    <a href="{{ route('freight_bookings.index') }}" class="btn btn-outline-dark w-100 mb-2">📄 Back to List</a>
-                </div>
+        <!--end::Footer-->
+        <div class="card-footer">
+            <div>
+                <button class="btn btn-success me-2" type="submit">
+                    <i class="bi bi-check-circle"></i> Update Freight Booking
+                </button>
+                <a href="{{ route('freight_bookings.index') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to List
+                </a>
             </div>
         </div>
     </form>
@@ -343,11 +367,58 @@
         });
     };
 
-    // Add event listener to is_delivered select
-    document.getElementById('is_delivered').addEventListener('change', function() {
-        if (this.value === '1') {
-            handleMemoUpdate();
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get all required elements with null checks
+        const weightElement = document.getElementById('weight');
+        const weight = weightElement ? parseFloat(weightElement.value || 0) : 0;
+        const rateInput = document.getElementById('tr_fr_rate');
+        const amountInput = document.getElementById('tr_amount');
+        const trAmountInput = document.getElementById('tr_amount');
+        const balanceAmountInput = document.getElementById('balance_amount');
+        const tdsAmountInput = document.getElementById('tds_amount');
+
+        // Get TDS percentage from freight booking's transporter_tds_percentage field
+        const tdsPercentageElement = document.getElementById('transporter_tds_percentage');
+        const tdsPercentage = tdsPercentageElement ? parseFloat(tdsPercentageElement.value || 0) : 0;
+
+        // Function to calculate TDS and Balance amounts
+        function calculateTdsAndBalance() {
+            const trAmount = parseFloat(trAmountInput ? trAmountInput.value : 0) || 0;
+            
+            // Calculate TDS Amount based on TR Amount
+            const tdsAmount = (trAmount * (tdsPercentage / 100)).toFixed(2);
+            if (tdsAmountInput) {
+                tdsAmountInput.value = tdsAmount;
+            }
+            
+            // Calculate Balance Amount (TR Amount - TDS Amount)
+            const balance = trAmount - parseFloat(tdsAmount);
+            if (balanceAmountInput) {
+                balanceAmountInput.value = balance.toFixed(2);
+            }
         }
+
+        // Add null checks for event listeners
+        if (rateInput) {
+            rateInput.addEventListener('input', function () {
+                const rate = parseFloat(rateInput.value || 0);
+                const amount = (weight * rate).toFixed(2);
+                if (amountInput) {
+                    amountInput.value = amount;
+                }
+                
+                // Recalculate TDS and Balance when TR Amount changes
+                calculateTdsAndBalance();
+            });
+        }
+
+        // Update TDS and balance when TR Amount changes (manual input)
+        if (trAmountInput) {
+            trAmountInput.addEventListener('input', calculateTdsAndBalance);
+        }
+
+        // Calculate initial TDS and balance if values exist
+        calculateTdsAndBalance();
     });
 </script>
 @endsection
