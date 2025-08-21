@@ -14,8 +14,8 @@
         <div class="card-header d-flex justify-content-between align-items-center">
             <h3 class="card-title mb-0">Freight Bookings List</h3>
             <div class="d-flex gap-2">
-                <button id="bulk-payment-btn" class="btn btn-success" style="display: none;" data-bs-toggle="modal" data-bs-target="#bulkPaymentModal">
-                    <i class="bi bi-cash-stack"></i> Bulk Payment
+                <button id="bulk-memo-id-btn" class="btn btn-primary" style="display: none;" data-bs-toggle="modal" data-bs-target="#bulkMemoIdModal">
+                    <i class="bi bi-clipboard-check"></i> Bulk Memo ID
                 </button>
                 <button id="voucher-payment-btn" class="btn btn-info" style="display: none;" data-bs-toggle="modal" data-bs-target="#voucherPaymentModal">
                     <i class="bi bi-receipt"></i> Voucher Payment
@@ -23,6 +23,22 @@
             </div>
         </div>
         <div class="card-body">
+            <!-- Status Legend -->
+            <div class="status-legend">
+                <div class="legend-item">
+                    <div class="legend-color legend-delivered"></div>
+                    <span>Delivered</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color legend-cancelled"></div>
+                    <span>Cancelled</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color legend-pending"></div>
+                    <span>Pending</span>
+                </div>
+            </div>
+            
             <!-- Search and Filter Section -->
             <div class="row mb-3">
                 <div class="col-md-4">
@@ -71,17 +87,16 @@
                             <th class="text-end">Advance</th>
                             <th class="text-end">Balance</th>
                             <th class="text-center">GR Date</th>
-                            {{-- <th class="text-center">Delivered</th> --}}
-                            {{-- <th class="text-center">Cancelled</th> --}}
                             <th class="text-center" style="width: 120px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($bookings as $index => $booking)
-                            <tr>
+                            <tr class="@if($booking->is_cancelled) table-danger @elseif($booking->is_delivered) table-success @endif">
                                 <td class="text-center">
                                     <input type="checkbox" class="row-checkbox" value="{{ $booking->id }}" 
                                            data-lr="{{ $booking->lr ? $booking->lr->lr_number : '' }}" 
+                                           data-lr-id="{{ $booking->lr ? $booking->lr->id : '' }}"
                                            data-truck="{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->truck_number : '' }}" 
                                            data-balance="{{ $booking->balance_amount ?? 0 }}" 
                                            data-voucher_number="{{ $booking->voucher_number ?? '' }}"
@@ -105,21 +120,6 @@
                                 <td class="text-center">
                                     {{ $booking->lr && $booking->lr->gr_date ? date('d-m-Y', strtotime($booking->lr->gr_date)) : '-' }}
                                 </td>
-                                {{-- <td class="text-center">
-                                    @if($booking->is_delivered == '1')
-                                        <span class="badge bg-success">Yes</span>
-                                    @else
-                                        <span class="badge bg-warning">No</span>
-                                    @endif
-                                </td>
-                                <td class="text-center">
-                                    @if($booking->is_cancelled == '1')
-                                        <span class="badge bg-danger">Yes</span>
-                                    @else
-                                        <span class="badge bg-secondary">No</span>
-                                    @endif
-                                </td>
-                                {{--  --}}
                                 <td class="text-center">
                                     <div class="btn-group" role="group">
                                         <a href="{{ route('freight_bookings.show', $booking->id) }}" class="btn btn-sm btn-outline-info" title="View">
@@ -217,26 +217,75 @@
     </div>
 </div>
 
-<!-- Bulk Payment Modal -->
-<div class="modal fade" id="bulkPaymentModal" tabindex="-1" aria-labelledby="bulkPaymentModalLabel" aria-hidden="true">
+<!-- Bulk Memo ID Modal -->
+<div class="modal fade" id="bulkMemoIdModal" tabindex="-1" aria-labelledby="bulkMemoIdModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Bulk Payment</h5>
+                <h5 class="modal-title"><i class="bi bi-clipboard-check"></i> Bulk Memo ID Assignment</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body" id="bulkPaymentBody">
+            <div class="modal-body" id="bulkMemoIdBody">
                 <!-- Dynamic content will be inserted here -->
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" form="bulkPaymentForm" class="btn btn-success">Process Bulk Payment</button>
+                <button type="submit" form="bulkMemoIdForm" class="btn btn-primary">Assign Memo ID</button>
             </div>
         </div>
     </div>
 </div>
 
 @endsection
+
+@push('styles')
+<style>
+    /* Status row highlighting */
+    .table-success {
+        background-color: #d1e7dd !important;
+        border-color: #badbcc !important;
+    }
+    
+    .table-danger {
+        background-color: #f8d7da !important;
+        border-color: #f5c2c7 !important;
+    }
+    
+    /* Legend for status colors */
+    .status-legend {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        margin-bottom: 15px;
+        font-size: 0.875rem;
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+    
+    .legend-color {
+        width: 20px;
+        height: 15px;
+        border-radius: 3px;
+        border: 1px solid #dee2e6;
+    }
+    
+    .legend-delivered {
+        background-color: #d1e7dd;
+    }
+    
+    .legend-cancelled {
+        background-color: #f8d7da;
+    }
+    
+    .legend-pending {
+        background-color: #ffffff;
+    }
+</style>
+@endpush
 
 @push('scripts')
 <script>
@@ -269,9 +318,9 @@ $(document).ready(function() {
         const checkedBoxes = $('.row-checkbox:checked');
         
         if (checkedBoxes.length > 0) {
-            $('#bulk-payment-btn, #voucher-payment-btn').show();
+            $('#bulk-memo-id-btn, #voucher-payment-btn').show();
         } else {
-            $('#bulk-payment-btn, #voucher-payment-btn').hide();
+            $('#bulk-memo-id-btn, #voucher-payment-btn').hide();
         }
     }
 
@@ -371,8 +420,8 @@ $(document).ready(function() {
         $('#voucherPaymentBody').html(modalContent);
     });
 
-    // Bulk Payment Modal
-    $('#bulk-payment-btn').on('click', function() {
+    // Bulk Memo ID Modal
+    $('#bulk-memo-id-btn').on('click', function() {
         const checkedBoxes = $('.row-checkbox:checked');
         
         if (checkedBoxes.length === 0) {
@@ -381,7 +430,8 @@ $(document).ready(function() {
         }
 
         let tableBody = '';
-        let totalAmount = 0;
+        let lrIds = [];
+        let freightBookingIds = [];
 
         checkedBoxes.each(function() {
             const checkbox = $(this);
@@ -389,8 +439,15 @@ $(document).ready(function() {
             const truckNumber = checkbox.data('truck');
             const balance = parseFloat(checkbox.data('balance')) || 0;
             const voucherNumber = checkbox.data('voucher_number');
+            const freightBookingId = checkbox.data('freight-booking-id');
 
-            totalAmount += balance;
+            // Get LR ID from the freight booking (we'll need to add this data attribute)
+            const lrId = checkbox.data('lr-id'); // We'll need to add this
+            
+            if (lrId) {
+                lrIds.push(lrId);
+            }
+            freightBookingIds.push(freightBookingId);
 
             tableBody += `
                 <tr>
@@ -398,33 +455,20 @@ $(document).ready(function() {
                     <td>${truckNumber}</td>
                     <td>${voucherNumber}</td>
                     <td class="text-end">₹${balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                    <input type="hidden" name="freight_booking_ids[]" value="${checkbox.val()}">
-                    <input type="hidden" name="amounts[]" value="${balance}">
+                    <input type="hidden" name="lr_ids[]" value="${lrId}">
+                    <input type="hidden" name="freight_booking_ids[]" value="${freightBookingId}">
                 </tr>
             `;
         });
 
         const modalContent = `
-            <form id="bulkPaymentForm" method="POST" action="{{ route('freight_bookings.bulk_payment') }}">
+            <form id="bulkMemoIdForm" method="POST" action="{{ route('freight_bookings.bulk_memo_id') }}">
                 @csrf
                 <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Payment Type</label>
-                        <select name="payment_type_id" class="form-select" required>
-                            <option value="">Select Payment Type</option>
-                            @foreach($paymentTypes as $type)
-                                <option value="{{ $type->id }}">{{ $type->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Payment Mode</label>
-                        <select name="payment_mode_id" class="form-select" required>
-                            <option value="">Select Payment Mode</option>
-                            @foreach($paymentModes as $mode)
-                                <option value="{{ $mode->id }}">{{ $mode->name }}</option>
-                            @endforeach
-                        </select>
+                    <div class="col-md-12">
+                        <label class="form-label">Memo ID *</label>
+                        <input type="text" name="memo_id" class="form-control" required placeholder="Enter Memo ID">
+                        <div class="form-text">This memo ID will be assigned to all selected lorry receipts</div>
                     </div>
                 </div>
                 
@@ -435,29 +479,28 @@ $(document).ready(function() {
                                 <th>LR Number</th>
                                 <th>Truck Number</th>
                                 <th>Voucher Number</th>
-                                <th class="text-end">Amount</th>
+                                <th class="text-end">Balance Amount</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${tableBody}
                         </tbody>
-                        <tfoot>
-                            <tr class="table-info">
-                                <th colspan="3" class="text-end">Total Amount:</th>
-                                <th class="text-end">₹${totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</th>
-                            </tr>
-                        </tfoot>
                     </table>
                 </div>
                 
-                <div class="mb-3">
-                    <label class="form-label">Remarks</label>
-                    <textarea name="remarks" class="form-control" rows="3"></textarea>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Note:</strong> Assigning memo ID will:
+                    <ul class="mb-0 mt-2">
+                        <li>Set lorry receipt status to "Delivered"</li>
+                        <li>Mark associated freight bookings as delivered</li>
+                        <li>This action cannot be easily undone</li>
+                    </ul>
                 </div>
             </form>
         `;
 
-        $('#bulkPaymentBody').html(modalContent);
+        $('#bulkMemoIdBody').html(modalContent);
     });
 
     // Payment amount change handler

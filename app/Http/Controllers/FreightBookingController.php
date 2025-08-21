@@ -943,4 +943,51 @@ class FreightBookingController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Bulk assign memo ID to lorry receipts and update freight bookings
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function bulkMemoId(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'memo_id' => 'required|string|max:255',
+                'lr_ids' => 'required|array',
+                'lr_ids.*' => 'required|integer|exists:lorry_receipts,id',
+                'freight_booking_ids' => 'required|array',
+                'freight_booking_ids.*' => 'required|integer|exists:freight_bookings,id'
+            ]);
+
+            \DB::transaction(function () use ($validated) {
+                // Update memo_id and delivery_status for lorry receipts
+                \App\Models\LorryReceipt::whereIn('id', $validated['lr_ids'])
+                    ->update([
+                        'memo_id' => $validated['memo_id'],
+                        'delivery_status' => 'Delivered'
+                    ]);
+
+                // Update is_delivered for freight bookings
+                FreightBooking::whereIn('id', $validated['freight_booking_ids'])
+                    ->update(['is_delivered' => 1]);
+
+                \Log::info('Bulk memo ID assignment completed', [
+                    'memo_id' => $validated['memo_id'],
+                    'lr_ids' => $validated['lr_ids'],
+                    'freight_booking_ids' => $validated['freight_booking_ids']
+                ]);
+            });
+
+            return redirect()->route('freight_bookings.index')
+                ->with('success', 'Memo ID assigned successfully to ' . count($validated['lr_ids']) . ' lorry receipts and ' . count($validated['freight_booking_ids']) . ' freight bookings updated.');
+
+        } catch (\Exception $e) {
+            \Log::error('Bulk memo ID assignment error: ' . $e->getMessage());
+            
+            return redirect()->back()
+                ->withErrors(['general' => 'An error occurred while assigning memo ID: ' . $e->getMessage()]);
+        }
+    }
 }
