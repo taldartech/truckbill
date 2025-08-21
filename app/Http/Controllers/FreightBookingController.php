@@ -685,7 +685,7 @@ class FreightBookingController extends Controller
             'lr_number' => $lorryReceipt->lr_number
         ]));
 
-
+    
 
         // Update lorry receipt status
         if ($lorryReceipt) {
