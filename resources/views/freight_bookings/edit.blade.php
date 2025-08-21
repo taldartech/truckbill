@@ -269,9 +269,14 @@
                             </label>
                         </div>
                         <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="is_cancelled" name="is_cancelled" value="1" {{ old('is_cancelled', $freight_booking->is_cancelled) ? 'checked' : '' }}>
+                            <input class="form-check-input" type="checkbox" id="is_cancelled" name="is_cancelled" value="1" {{ old('is_cancelled', $freight_booking->is_cancelled) ? 'checked' : '' }} {{ $freight_booking->is_delivered ? 'disabled' : '' }}>
                             <label class="form-check-label" for="is_cancelled">
                                 <i class="fas fa-times-circle"></i> Cancelled
+                                @if($freight_booking->is_delivered)
+                                    <small class="text-muted ms-2">
+                                        <i class="fas fa-lock"></i> Cannot cancel after delivery
+                                    </small>
+                                @endif
                             </label>
                         </div>
                     </div>
@@ -470,6 +475,12 @@
         // Function to calculate TDS and Balance amounts
         function calculateTdsAndBalance() {
             const trAmount = parseFloat(trAmountInput ? trAmountInput.value : 0) || 0;
+            const advanceAmount = parseFloat(document.getElementById('advance_amount_main') ? document.getElementById('advance_amount_main').value : 0) || 0;
+            const detention = parseFloat(document.getElementById('detention') ? document.getElementById('detention').value : 0) || 0;
+            const deviation = parseFloat(document.getElementById('deviation') ? document.getElementById('deviation').value : 0) || 0;
+            const miscExpense = parseFloat(document.getElementById('misc_expense') ? document.getElementById('misc_expense').value : 0) || 0;
+            const damageAmount = parseFloat(document.getElementById('damage_amount') ? document.getElementById('damage_amount').value : 0) || 0;
+            const shortageAmount = parseFloat(document.getElementById('shortage_amount') ? document.getElementById('shortage_amount').value : 0) || 0;
             
             // Calculate TDS Amount based on TR Amount
             const tdsAmount = (trAmount * (tdsPercentage / 100)).toFixed(2);
@@ -477,8 +488,8 @@
                 tdsAmountInput.value = tdsAmount;
             }
             
-            // Calculate Balance Amount (TR Amount - TDS Amount)
-            const balance = trAmount - parseFloat(tdsAmount);
+            // Calculate Balance Amount: TR Amount - Advance - TDS + Detention + Deviation - Misc Expense - Damage - Shortage
+            const balance = trAmount - advanceAmount - parseFloat(tdsAmount) + detention + deviation - miscExpense - damageAmount - shortageAmount;
             if (balanceAmountInput) {
                 balanceAmountInput.value = balance.toFixed(2);
             }
@@ -529,7 +540,7 @@
                                 errorDiv.className = 'validation-error text-danger small mt-1';
                                 field.parentNode.appendChild(errorDiv);
                             }
-                            errorDiv.textContent = `Value must be ≥ 0 and < TR Amount (₹${trAmount.toFixed(2)})`;
+                            errorDiv.textContent = `Value must be >= 0 and < TR Amount (Rs.${trAmount.toFixed(2)})`;
                         } else {
                             field.classList.remove('is-invalid');
                             field.classList.add('is-valid');
@@ -555,6 +566,18 @@
             });
         }
 
+        // Add event listeners for additional charges to recalculate balance
+        const additionalChargeFields = ['detention', 'deviation', 'misc_expense', 'damage_amount', 'shortage_amount'];
+        additionalChargeFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                field.addEventListener('input', function() {
+                    calculateTdsAndBalance();
+                    validateAdditionalCharges();
+                });
+            }
+        });
+
         // Handle is_delivered toggle
         const isDeliveredToggle = document.getElementById('is_delivered');
         if (isDeliveredToggle) {
@@ -573,6 +596,8 @@
             }
             
             isDeliveredToggle.addEventListener('change', function() {
+                const isCancelledToggle = document.getElementById('is_cancelled');
+                
                 // Prevent unchecking if memo_id exists
                 if (!this.checked && currentMemoId) {
                     this.checked = true;
@@ -581,6 +606,18 @@
                 }
                 
                 if (this.checked) {
+                    // Disable cancelled toggle when delivered is checked
+                    if (isCancelledToggle) {
+                        isCancelledToggle.disabled = true;
+                        isCancelledToggle.checked = false; // Uncheck cancelled if it was checked
+                        
+                        // Update label to show it's disabled
+                        const cancelledLabel = isCancelledToggle.parentNode.querySelector('label');
+                        if (cancelledLabel && !cancelledLabel.querySelector('.text-muted')) {
+                            cancelledLabel.innerHTML += '<small class="text-muted ms-2"><i class="fas fa-lock"></i> Cannot cancel after delivery</small>';
+                        }
+                    }
+                    
                     // Show additional charges immediately when delivered is checked
                     document.getElementById('additional-charges-section').style.display = 'block';
                     
@@ -595,10 +632,34 @@
                             if (!document.getElementById('deliveryMemoId').value) {
                                 isDeliveredToggle.checked = false;
                                 document.getElementById('additional-charges-section').style.display = 'none';
+                                
+                                // Re-enable cancelled toggle
+                                if (isCancelledToggle) {
+                                    isCancelledToggle.disabled = false;
+                                    
+                                    // Remove disabled message
+                                    const cancelledLabel = isCancelledToggle.parentNode.querySelector('label');
+                                    const disabledMsg = cancelledLabel.querySelector('.text-muted');
+                                    if (disabledMsg) {
+                                        disabledMsg.remove();
+                                    }
+                                }
                             }
                         });
                     }
                 } else {
+                    // Re-enable cancelled toggle when delivered is unchecked
+                    if (isCancelledToggle) {
+                        isCancelledToggle.disabled = false;
+                        
+                        // Remove disabled message
+                        const cancelledLabel = isCancelledToggle.parentNode.querySelector('label');
+                        const disabledMsg = cancelledLabel.querySelector('.text-muted');
+                        if (disabledMsg) {
+                            disabledMsg.remove();
+                        }
+                    }
+                    
                     // Hide additional charges when not delivered
                     document.getElementById('additional-charges-section').style.display = 'none';
                 }

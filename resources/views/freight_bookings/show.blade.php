@@ -203,6 +203,53 @@
             </div>
         </div>
 
+        <!-- Additional Charges Section -->
+        @if($freight_booking->is_delivered)
+        <div class="row">
+            <div class="col-12">
+                <div class="info-card card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Additional Charges</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-2">
+                                <div class="info-row">
+                                    <span class="info-label">Detention:</span>
+                                    <span class="info-value">₹{{ number_format($freight_booking->detention ?? 0, 2) }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="info-row">
+                                    <span class="info-label">Deviation:</span>
+                                    <span class="info-value">₹{{ number_format($freight_booking->deviation ?? 0, 2) }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="info-row">
+                                    <span class="info-label">Misc. Expense:</span>
+                                    <span class="info-value">₹{{ number_format($freight_booking->misc_expense ?? 0, 2) }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="info-row">
+                                    <span class="info-label">Damage Amount:</span>
+                                    <span class="info-value">₹{{ number_format($freight_booking->damage_amount ?? 0, 2) }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="info-row">
+                                    <span class="info-label">Shortage Amount:</span>
+                                    <span class="info-value">₹{{ number_format($freight_booking->shortage_amount ?? 0, 2) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
+
         @if($freight_booking->lr)
         <div class="row">
             <div class="col-12">
@@ -229,11 +276,11 @@
                             <div class="col-md-4">
                                 <div class="info-row">
                                     <span class="info-label">Source City:</span>
-                                    <span class="info-value">{{ $freight_booking->lr->sourceCity ? $freight_booking->lr->sourceCity->name : 'N/A' }}</span>
+                                    <span class="info-value">{{ $freight_booking->lr->source_city ?? 'N/A' }}</span>
                                 </div>
                                 <div class="info-row">
                                     <span class="info-label">Destination City:</span>
-                                    <span class="info-value">{{ $freight_booking->lr->destinationCity ? $freight_booking->lr->destinationCity->name : 'N/A' }}</span>
+                                    <span class="info-value">{{ $freight_booking->lr->destination_city ?? 'N/A' }}</span>
                                 </div>
                                 <div class="info-row">
                                     <span class="info-label">Weight:</span>
