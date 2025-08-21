@@ -1,39 +1,95 @@
 @extends('layouts.app')
 
 @section('content')
+<style>
+/* Prevent form expansion on validation errors */
+.form-control, .form-select {
+    min-height: 38px;
+    box-sizing: border-box;
+}
 
-{{-- @dd($lorry_receipt); --}}
+.text-danger {
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    word-wrap: break-word;
+}
 
+/* Ensure consistent column widths */
+.row .col-md-4 {
+    flex: 0 0 33.333333%;
+    max-width: 33.333333%;
+}
 
+/* Prevent card from expanding */
+.card {
+    overflow: hidden;
+}
 
-<div class="card card-info card-outline mb-4" style="width: 70%;align-items: center;margin: auto;">
-    <div class="row g-3">
-         <div class="col-md-3 ps-4">
-            <p><strong>LR Number:</strong> {{ $lorry_receipt->first() ? $lorry_receipt->first()->lr_number : 'N/A' }}</p>
-        </div>
-        <div class="col-md-3">
-            <p><strong>Transporter:</strong> {{ $lorry_receipt->first() && $lorry_receipt->first()->transporter ? $lorry_receipt->first()->transporter->name : 'N/A' }}</p>
-        </div>
-        <div class="col-md-3">
-            <p><strong>Truck:</strong> {{ $lorry_receipt->first() && $lorry_receipt->first()->truck ? $lorry_receipt->first()->truck->truck_number : 'N/A' }}</p>
-        </div>
-        <div class="col-md-3">
-            <p><strong>Customer:</strong> {{ $lorry_receipt->first() && $lorry_receipt->first()->customer ? $lorry_receipt->first()->customer->name : 'N/A' }}</p>
-        </div>
-        <div class="col-md-3 ps-4">
-            <p><strong>Consignor:</strong> {{ $lorry_receipt->first() && $lorry_receipt->first()->consignor ? $lorry_receipt->first()->consignor->name : 'N/A' }}</p>
-        </div>
-        <div class="col-md-3">
-            <p><strong>Consignee:</strong> {{ $lorry_receipt->first() && $lorry_receipt->first()->consignee ? $lorry_receipt->first()->consignee->name : 'N/A' }}</p>
-        </div>
-        @if($lorry_receipt->first() && $lorry_receipt->first()->freight_booking_id)
-        <div class="col-md-3">
-            <div class="bg-danger text-white p-2 rounded">
-                <p class="mb-0"><strong>Old Freight Number:</strong> {{ $lorry_receipt->first()->freight_booking_id }}</p>
+/* Consistent spacing for form groups */
+.mb-3 {
+    margin-bottom: 1rem !important;
+}
+</style>
+
+<!-- LR Information Card -->
+<div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
+    <div class="card-header">
+        <div class="card-title h5">Lorry Receipt Information</div>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-2">
+                <div class="mb-2">
+                    <strong>LR Number:</strong><br>
+                    <span class="text-primary">{{ $lorry_receipt->first() ? $lorry_receipt->first()->lr_number : 'N/A' }}</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-2">
+                    <strong>Transporter:</strong><br>
+                    <span>{{ $lorry_receipt->first() && $lorry_receipt->first()->transporter ? $lorry_receipt->first()->transporter->name : 'N/A' }}</span>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="mb-2">
+                    <strong>TDS Percentage:</strong><br>
+                    <span class="badge bg-warning text-dark fs-6">{{ $lorry_receipt->first() && $lorry_receipt->first()->transporter ? number_format($lorry_receipt->first()->transporter->tds_percentage ?? 0, 2) : '0.00' }}%</span>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="mb-2">
+                    <strong>Truck:</strong><br>
+                    <span>{{ $lorry_receipt->first() && $lorry_receipt->first()->truck ? $lorry_receipt->first()->truck->truck_number : 'N/A' }}</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-2">
+                    <strong>Customer:</strong><br>
+                    <span>{{ $lorry_receipt->first() && $lorry_receipt->first()->customer ? $lorry_receipt->first()->customer->name : 'N/A' }}</span>
+                </div>
             </div>
         </div>
-        @endif
-       
+        <div class="row">
+            <div class="col-md-3">
+                <div class="mb-2">
+                    <strong>Consignor:</strong><br>
+                    <span>{{ $lorry_receipt->first() && $lorry_receipt->first()->consignor ? $lorry_receipt->first()->consignor->name : 'N/A' }}</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-2">
+                    <strong>Consignee:</strong><br>
+                    <span>{{ $lorry_receipt->first() && $lorry_receipt->first()->consignee ? $lorry_receipt->first()->consignee->name : 'N/A' }}</span>
+                </div>
+            </div>
+            @if($lorry_receipt->first() && $lorry_receipt->first()->freight_booking_id)
+            <div class="col-md-6">
+                <div class="alert alert-danger mb-0">
+                    <strong>Old Freight Number:</strong> {{ $lorry_receipt->first()->freight_booking_id }}
+                </div>
+            </div>
+            @endif
+        </div>
     </div>
 </div>
 
@@ -43,9 +99,11 @@
 @endphp
 
 
-<div class="card card-info card-outline mb-4" style="width: 70%;align-items: center;margin: auto;">
+<div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
     <!--begin::Header-->
-    <div class="card-header"><div class="card-title">Add New Freight Booking</div></div>
+    <div class="card-header">
+        <div class="card-title h4">Add New Freight Booking</div>
+    </div>
     <!--end::Header-->
     <!--begin::Form-->
     @php
@@ -56,107 +114,75 @@
         <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
         <!--begin::Body-->
         <div class="card-body">
-            <!--begin::Row-->
+            <!-- Hidden inputs for form submission -->
+            <input type="hidden" name="lr_id" id="lr_id" value="{{ isset($preFilled) && isset($preFilled['lr_id']) ? $preFilled['lr_id'] : old('lr_id') }}" required>
+            <input type="hidden" name="transporter_id" value="{{ isset($preFilled) && isset($preFilled['transporter_id']) ? $preFilled['transporter_id'] : '' }}">
+            <input type="hidden" name="truck_id" value="{{ isset($preFilled) && isset($preFilled['truck_id']) ? $preFilled['truck_id'] : '' }}">
+            <input type="hidden" name="good_type" value="{{ isset($preFilled) && isset($preFilled['goods_type']) ? $preFilled['goods_type'] : '' }}">
+            @error('lr_id') <div class="text-danger">{{ $message }}</div> @enderror
+            @error('transporter_id') <div class="text-danger">{{ $message }}</div> @enderror
+            @error('truck_id') <div class="text-danger">{{ $message }}</div> @enderror
+            @error('good_type') <div class="text-danger">{{ $message }}</div> @enderror
+            <!-- Financial Information Section -->
             <div class="row mb-3">
-                <!--begin::Col-->
                 <div class="col-md-4">
-                    <label for="lr_id" class="form-label">LR Number *</label>
-                    <div class="input-group">
-                        <input type="hidden" name="lr_id" id="lr_id" value="{{ isset($preFilled) && isset($preFilled['lr_id']) ? $preFilled['lr_id'] : old('lr_id') }}" required>
-                        <span class="input-group-text">{{ isset($preFilled) && isset($preFilled['lr_number']) ? $preFilled['lr_number'] : '' }}</span>
-                    </div>
-                    @error('lr_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    <label for="tr_fr_rate" class="form-label">TR Freight Rate *</label>
+                    <input type="number" step="0.01" class="form-control" name="tr_fr_rate" id="tr_fr_rate" value="{{ old('tr_fr_rate') }}" placeholder="Enter freight rate" required>
+                    @error('tr_fr_rate') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
-                <!--end::Col-->
-                <!--begin::Col-->
                 <div class="col-md-4">
-                    <label for="transporter_id" class="form-label">Transporter *</label>
-                    <div class="input-group">
-                        <input type="hidden" name="transporter_id" value="{{ isset($preFilled) && isset($preFilled['transporter_id']) ? $preFilled['transporter_id'] : '' }}">
-                        <input type="text" class="form-control" readonly value="{{ isset($preFilled) && isset($preFilled['transporter_name']) ? $preFilled['transporter_name'] : '' }}">
-                    </div>
-                    @error('transporter_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    <label for="tr_amount" class="form-label">TR Amount *</label>
+                    <input type="number" step="0.01" class="form-control" name="tr_amount" id="tr_amount" value="{{ old('tr_amount') }}" placeholder="Enter TR amount" required>
+                    @error('tr_amount') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
-                <!--end::Col-->
-                <!--begin::Col-->
                 <div class="col-md-4">
-                    <label for="truck_id" class="form-label">Truck *</label>
-                    <div class="input-group">
-                        <input type="hidden" name="truck_id" value="{{ isset($preFilled) && isset($preFilled['truck_id']) ? $preFilled['truck_id'] : '' }}">
-                        <input type="text" class="form-control" readonly value="{{ isset($preFilled) && isset($preFilled['truck_number']) ? $preFilled['truck_number'] : '' }}">
-                    </div>
-                    @error('truck_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    <label for="advance_amount" class="form-label">Advance Amount</label>
+                    <input type="number" step="0.01" class="form-control" name="advance_amount" id="advance_amount" value="{{ old('advance_amount') }}" placeholder="Enter advance amount">
+                    @error('advance_amount') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
-        </div>
-        <div class="card mb-4 p-3 bg-light">
-        <div class="row mb-3">
-            <div class="col-md-4">
-                <label for="tr_fr_rate" class="form-label">TR Freight Rate *</label>
-                <input type="number" step="0.01" class="form-control" name="tr_fr_rate" id="tr_fr_rate" value="{{ old('tr_fr_rate') }}" required>
-                @error('tr_fr_rate') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="tr_amount" class="form-label">TR Amount *</label>
-                <input type="number" step="0.01" class="form-control" name="tr_amount" id="tr_amount" value="{{ old('tr_amount') }}" required>
-                @error('tr_amount') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-4 mb-3">
-                <label for="advance_amount" class="form-label">Advance Amount *</label>
-                <input type="number" step="0.01" class="form-control" name="advance_amount" id="advance_amount" value="{{ old('advance_amount') }}">
-                @error('advance_amount') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
 
-<!-- Hidden weight input (if needed for JS) -->
-<input type="hidden" id="weight" value="{{ $weight }}">
-            <div class="col-md-4 mb-3">
-                <label for="balance_amount" class="form-label">Balance Amount *</label>
-                <input type="number" step="0.01" class="form-control" name="balance_amount" id="balance_amount" value="{{ old('balance_amount') }}" required readonly>
-                @error('balance_amount') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="tds_amount" class="form-label">TDS Amount *</label>
-                <input type="number" step="0.01" class="form-control" name="tds_amount" id="tds_amount" value="{{ old('tds_amount') }}" readonly>
-                @error('tds_amount') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-        </div>
-    </div>
-    <div class="card mb-4 p-3 bg-light">
-        <div class="row">
-            {{-- <div class="col-md-4 mb-3">
-                <label for="shortage" class="form-label">Shortage</label>
-                <input type="number" step="0.01" class="form-control" name="shortage" id="shortage" value="{{ old('shortage') }}">
-                @error('shortage') <div class="text-danger">{{ $message }}</div> @enderror
-            </div> --}}
-            <div class="col-md-4 mb-3">
-                <label for="good_type" class="form-label">Goods Type</label>
-                <div class="input-group">
-                    <input type="hidden" name="good_type" value="{{ isset($preFilled) && isset($preFilled['goods_type']) ? $preFilled['goods_type'] : '' }}">
-                    <input type="text" class="form-control" readonly value="{{ isset($preFilled) && isset($preFilled['goods_type']) ? $preFilled['goods_type'] : '' }}">
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label for="balance_amount" class="form-label">Balance Amount *</label>
+                    <input type="number" step="0.01" class="form-control" name="balance_amount" id="balance_amount" value="{{ old('balance_amount') }}" required readonly>
+                    @error('balance_amount') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
-                @error('good_type') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="eway_bill_number" class="form-label">E-Way Bill Number</label>
-                <input type="text" class="form-control" name="eway_bill_number" id="eway_bill_number" value="{{ old('eway_bill_number') }}">
-                @error('eway_bill_number') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="pan_verified" class="form-label">PAN Verified *</label>
-                <input type="hidden" name="pan_verified" id="pan_verified" value="{{ isset($preFilled['pan_verified']) ? (int)$preFilled['pan_verified'] : (old('pan_verified') ? 1 : 0) }}" required>
-                
-                <div class="form-control">
-                    {{ isset($preFilled['pan_verified']) && $preFilled['pan_verified'] ? 'Yes' : 'No' }}
+                <div class="col-md-4">
+                    <label for="tds_amount" class="form-label">TDS Amount *</label>
+                    <input type="number" step="0.01" class="form-control" name="tds_amount" id="tds_amount" value="{{ old('tds_amount') }}" readonly>
+                    @error('tds_amount') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
-                @error('pan_verified') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
-            {{-- <div class="col-md-4 mb-3">
-                <label for="detention" class="form-label">Detention</label>
-                <input type="number" step="0.01" class="form-control" name="detention" id="detention" value="{{ old('detention') }}">
-                @error('detention') <div class="text-danger">{{ $message }}</div> @enderror
-            </div> --}}
-        </div>
+
+            <!-- Hidden weight input (if needed for JS) -->
+            <input type="hidden" id="weight" value="{{ $weight }}">
+            <!-- Additional Information Section -->
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label for="eway_bill_number" class="form-label">E-Way Bill Number</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="eway_bill_number" id="eway_bill_number" value="{{ old('eway_bill_number') }}" placeholder="Enter E-way bill number">
+                        <a href="https://ewaybillgst.gov.in/Login.aspx" target="_blank" class="btn btn-outline-info" title="Check E-way Bill Status">
+                            <i class="fas fa-external-link-alt"></i> Check Status
+                        </a>
+                    </div>
+                    @error('eway_bill_number') <div class="text-danger">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-4">
+                    <label for="pan_verified" class="form-label">PAN Verified *</label>
+                    <input type="hidden" name="pan_verified" id="pan_verified" value="{{ isset($preFilled['pan_verified']) ? (int)$preFilled['pan_verified'] : (old('pan_verified') ? 1 : 0) }}" required>
+                    <input type="text" class="form-control" readonly value="{{ isset($preFilled['pan_verified']) && $preFilled['pan_verified'] ? 'Yes' : 'No' }}">
+                    @error('pan_verified') <div class="text-danger">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-4">
+                    <label for="is_delivered" class="form-label">Delivered?</label>
+                    <select name="is_delivered" id="is_delivered" class="form-select" readonly>
+                        <option value="0" {{ old('is_delivered') == '0' ? 'selected' : '' }}>No</option>
+                        <option value="1" {{ old('is_delivered') == '1' ? 'selected' : 'disabled' }}>Yes</option>
+                    </select>
+                </div>
+            </div>
     
     
         <div class="row">
@@ -203,28 +229,20 @@
             </div> --}}
             
         </div>
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label for="remark" class="form-label">Remark</label>
-                <textarea name="remark" id="remark" class="form-control">{{ old('remark') }}</textarea>
-                @error('remark') <div class="text-danger">{{ $message }}</div> @enderror
+            <div class="row mb-3">
+                <div class="col-md-8">
+                    <label for="remark" class="form-label">Remark</label>
+                    <textarea name="remark" id="remark" class="form-control" rows="3" placeholder="Enter any remarks">{{ old('remark') }}</textarea>
+                    @error('remark') <div class="text-danger">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-4">
+                    <label for="is_cancelled" class="form-label">Cancelled?</label>
+                    <select name="is_cancelled" id="is_cancelled" class="form-select">
+                        <option value="0" {{ old('is_cancelled') == '0' ? 'selected' : '' }}>No</option>
+                        <option value="1" {{ old('is_cancelled') == '1' ? 'selected' : '' }}>Yes</option>
+                    </select>
+                </div>
             </div>
-            <div class="col-md-3 mb-3">
-                <label for="is_delivered" class="form-label">Delivered?</label>
-                <select name="is_delivered" id="is_delivered" class="form-select" readonly>
-                    <option value="0" {{ old('is_delivered') == '0' ? 'selected' : '' }}>No</option>
-                    <option value="1" {{ old('is_delivered') == '1' ? 'selected' : 'disabled' }}>Yes</option>
-                </select>
-            </div>
-            <div class="col-md-3 mb-3">
-                <label for="is_cancelled" class="form-label">Cancelled?</label>
-                <select name="is_cancelled" id="is_cancelled" class="form-select">
-                    <option value="0" {{ old('is_cancelled') == '0' ? 'selected' : '' }}>No</option>
-                    <option value="1" {{ old('is_cancelled') == '1' ? 'selected' : '' }}>Yes</option>
-                </select>
-            </div>
-        </div>
-    </div>
         {{-- <div class="row"> --}}
             {{-- <div class="col-md-6 mb-3">
                 <label for="linked_freight_booking_id" class="form-label">Linked Freight Booking</label>
@@ -240,31 +258,24 @@
             </div> --}}
         {{-- </div> --}}
         <!--end::Row-->
-        <div class="card p-3 bg-light">
-            <div class="row"><div class="col"><h5 class="mb-3">Quick Actions</h5></div></div>
-            <div class="row g-2">
-                <div class="col-md-4">
-                    <button class="btn btn-success w-100 mb-2" type="submit" name="action" value="save">💾 Submit Form</button>
-                </div>
-                <div class="col-md-4">
-                    <button class="btn btn-secondary w-100 mb-2" type="submit" name="action" value="save_and_pay" title="save the form and make voucher payment"> Save & Make Payment <span class="ms-1" data-bs-toggle="tooltip" title="save the form and make voucher payment">ℹ️</span></button>
-                </div>
-                
-                <div class="col-md-4">
-                    <a href="{{ route('freight_bookings.index') }}" class="btn btn-outline-dark w-100 mb-2">📄 Back to List</a>
-                </div>
+        </div>
+        <!--end::Body-->
+        <!--begin::Footer-->
+        <div class="card-footer d-flex justify-content-between">
+            <a href="{{ route('freight_bookings.index') }}" class="btn btn-outline-dark">
+                <i class="bi bi-arrow-left"></i> Back to List
+            </a>
+            <div>
+                <button class="btn btn-success me-2" type="submit" name="action" value="save">
+                    <i class="bi bi-check-circle"></i> Submit Form
+                </button>
+                <button class="btn btn-primary" type="submit" name="action" value="save_and_pay" title="Save the form and make voucher payment">
+                    <i class="bi bi-credit-card"></i> Save & Make Payment
+                </button>
             </div>
         </div>
-      </div>
-      <!--end::Body-->
-      <!--begin::Footer-->
-      {{-- <div class="card-footer">
-            <button class="btn btn-info" type="submit" name="action" value="save">Submit form</button>
-            <button class="btn btn-primary" type="submit" name="action" value="save_and_pay">Save & Make Payment</button>
-            <a href="{{ route('freight_bookings.index') }}" class="btn btn-info">Back to List</a>
-      </div> --}}
-      <input type="hidden" name="redirect_to_payment" value="0">
-      <!--end::Footer-->
+        <!--end::Footer-->
+        <input type="hidden" name="redirect_to_payment" value="0">
     </form>
 </div>
 <script>
