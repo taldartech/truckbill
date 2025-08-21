@@ -57,4 +57,9 @@ class FreightBooking extends Model
     {
         return $this->belongsTo(FreightBooking::class, 'linked_freight_booking_id');
     }
+
+    public function transporter()
+    {
+        return $this->belongsTo(Transporter::class, 'transporter_id');
+    }
 }
