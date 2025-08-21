@@ -200,21 +200,11 @@
                 </div>
                 <!-- Hidden advance amount field with default value 0 -->
                 <input type="hidden" name="advance_amount" id="advance_amount" value="0">
+                <!-- Hidden memo_id field -->
+                <input type="hidden" name="memo_id" id="memo_id" value="{{ $freight_booking->lr && $freight_booking->lr->memo_id ? $freight_booking->lr->memo_id : '' }}">
             </div>
 
             <div class="row mb-3">
-                <div class="col-md-4">
-                    <label for="good_type" class="form-label">Goods Type</label>
-                    <select class="form-select @error('good_type') is-invalid @enderror" name="good_type" id="good_type">
-                        <option value="">Select Goods Type</option>
-                        @foreach($goodsTypes as $goodsType)
-                            <option value="{{ $goodsType->name }}" {{ old('good_type', $freight_booking->good_type) == $goodsType->name ? 'selected' : '' }}>
-                                {{ $goodsType->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('good_type') <div class="text-danger">{{ $message }}</div> @enderror
-                </div>
                 <div class="col-md-4">
                     <label for="eway_bill_number" class="form-label">E-Way Bill Number</label>
                     <div class="input-group">
@@ -238,6 +228,13 @@
 
             <div class="row mb-3">
                 <div class="col-md-4">
+                    <label for="advance_amount_main" class="form-label">Advance Amount</label>
+                    <input type="number" step="0.01" class="form-control" id="advance_amount_main" value="{{ old('advance_amount', $freight_booking->advance_amount) }}" readonly style="background-color: #f8f9fa;">
+                    <small class="form-text text-muted">
+                        <i class="fas fa-info-circle"></i> Read-only field
+                    </small>
+                </div>
+                <div class="col-md-4">
                     <label for="balance_amount" class="form-label">Balance Amount *</label>
                     <input type="number" step="0.01" class="form-control @error('balance_amount') is-invalid @enderror" name="balance_amount" id="balance_amount" value="{{ old('balance_amount', $freight_booking->balance_amount) }}" required readonly style="background-color: #f8f9fa;">
                     <small class="form-text text-muted">
@@ -245,8 +242,85 @@
                     </small>
                     @error('balance_amount') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
-                <!-- Hidden delivered field with default value 0 -->
-                <input type="hidden" name="is_delivered" id="is_delivered" value="{{ old('is_delivered', $freight_booking->is_delivered) }}">
+            </div>
+
+            <!-- Additional Charges & Status Section -->
+            <div class="row">
+                <div class="col-12">
+                    <h5 class="text-primary border-bottom pb-2 mb-3">
+                        <i class="fas fa-plus-circle"></i> Additional Charges & Status
+                    </h5>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Delivery Status</label>
+                    <div class="d-flex gap-4">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="is_delivered" name="is_delivered" value="1" {{ old('is_delivered', $freight_booking->is_delivered) ? 'checked' : '' }} {{ ($freight_booking->is_delivered && $freight_booking->lr && $freight_booking->lr->memo_id) ? 'disabled' : '' }}>
+                            <label class="form-check-label" for="is_delivered">
+                                <i class="fas fa-truck"></i> Delivered
+                                @if($freight_booking->is_delivered && $freight_booking->lr && $freight_booking->lr->memo_id)
+                                    <small class="text-muted ms-2">
+                                        <i class="fas fa-lock"></i> Locked (Memo ID: {{ $freight_booking->lr->memo_id }})
+                                    </small>
+                                @endif
+                            </label>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="is_cancelled" name="is_cancelled" value="1" {{ old('is_cancelled', $freight_booking->is_cancelled) ? 'checked' : '' }}>
+                            <label class="form-check-label" for="is_cancelled">
+                                <i class="fas fa-times-circle"></i> Cancelled
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="additional-charges-section" style="display: {{ $freight_booking->is_delivered ? 'block' : 'none' }};">
+                <div class="row mb-2">
+                    <div class="col-md-2">
+                        <label for="detention" class="form-label">Detention</label>
+                        <input type="number" step="0.01" min="0" class="form-control form-control-sm @error('detention') is-invalid @enderror" name="detention" id="detention" value="{{ old('detention', $freight_booking->detention) }}" placeholder="Enter detention amount">
+                        <small class="form-text text-muted">
+                            <i class="fas fa-info-circle"></i> ≥ 0 and < TR Amount
+                        </small>
+                        @error('detention') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-2">
+                        <label for="deviation" class="form-label">Deviation</label>
+                        <input type="number" step="0.01" min="0" class="form-control form-control-sm @error('deviation') is-invalid @enderror" name="deviation" id="deviation" value="{{ old('deviation', $freight_booking->deviation) }}" placeholder="Enter deviation amount">
+                        <small class="form-text text-muted">
+                            <i class="fas fa-info-circle"></i> ≥ 0 and < TR Amount
+                        </small>
+                        @error('deviation') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-2">
+                        <label for="misc_expense" class="form-label">Misc. Expense</label>
+                        <input type="number" step="0.01" min="0" class="form-control form-control-sm @error('misc_expense') is-invalid @enderror" name="misc_expense" id="misc_expense" value="{{ old('misc_expense', $freight_booking->misc_expense) }}" placeholder="Enter misc expense">
+                        <small class="form-text text-muted">
+                            <i class="fas fa-info-circle"></i> ≥ 0 and < TR Amount
+                        </small>
+                        @error('misc_expense') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-3">
+                        <label for="damage_amount" class="form-label">Damage Amount</label>
+                        <input type="number" step="0.01" min="0" class="form-control form-control-sm @error('damage_amount') is-invalid @enderror" name="damage_amount" id="damage_amount" value="{{ old('damage_amount', $freight_booking->damage_amount) }}" placeholder="Enter damage amount">
+                        <small class="form-text text-muted">
+                            <i class="fas fa-info-circle"></i> Must be ≥ 0 and < TR Amount
+                        </small>
+                        @error('damage_amount') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-3">
+                        <label for="shortage_amount" class="form-label">Shortage Amount</label>
+                        <input type="number" step="0.01" min="0" class="form-control form-control-sm @error('shortage_amount') is-invalid @enderror" name="shortage_amount" id="shortage_amount" value="{{ old('shortage_amount', $freight_booking->shortage_amount) }}" placeholder="Enter shortage amount">
+                        <small class="form-text text-muted">
+                            <i class="fas fa-info-circle"></i> Must be ≥ 0 and < TR Amount
+                        </small>
+                        @error('shortage_amount') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                </div>
             </div>
 
             <!-- Hidden weight input and transporter TDS percentage -->
@@ -280,71 +354,66 @@
     </form>
 </div>
 
-<!-- Modal for Memo Update -->
-<div class="modal fade" id="memoUpdateModal" tabindex="-1" aria-labelledby="memoUpdateModalLabel" aria-hidden="true">
+<!-- Modal for Memo ID Entry -->
+<div class="modal fade" id="memoIdModal" tabindex="-1" aria-labelledby="memoIdModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="memoUpdateModalLabel">Memo Update</h5>
+                <h5 class="modal-title" id="memoIdModalLabel">Enter Memo ID for Delivery</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="memoUpdateForm">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> A Memo ID is required to mark this freight booking as delivered.
+                </div>
+                <form id="memoIdForm">
                     <div class="mb-3">
-                        <label for="memoId" class="form-label">Memo ID *</label>
-                        <input type="text" class="form-control" id="memoId" name="memo_id" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="lr_id" class="form-label">LR Number *</label>
-                        <select name="lr_id" id="lr_id" class="form-select" required>
-                            <option value="">Select LR Number</option>
-                            @foreach($lrs as $lr)
-                                <option value="{{ $lr->id }}" {{ $freight_booking->lr_id == $lr->id ? 'selected' : '' }}>
-                                    {{ $lr->lr_number }}
-                                </option>
-                            @endforeach
-                        </select>
+                        <label for="deliveryMemoId" class="form-label">Memo ID *</label>
+                        <input type="text" class="form-control" id="deliveryMemoId" name="memo_id" required placeholder="Enter memo ID">
+                        <small class="form-text text-muted">This will be saved to the lorry receipt record.</small>
                     </div>
                 </form>
             </div>
+            <div class="modal-body" id="memoModalError" style="display: none;">
+                <div class="alert alert-danger" id="memoErrorMessage"></div>
+            </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="processMemoUpdate()">Update</button>
+                <button type="button" class="btn btn-primary" onclick="saveMemoId()" id="saveMemoBtn">
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="display: none;"></span>
+                    Save Memo ID
+                </button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    // Function to handle memo update
-    window.handleMemoUpdate = function() {
-        const modal = new bootstrap.Modal(document.getElementById('memoUpdateModal'));
-        // Set the selected LR
-        document.getElementById('lr_id').value = {{ $freight_booking->lr_id }};
-        modal.show();
-    };
-
-    // Function to process memo update
-    window.processMemoUpdate = function() {
-        const memoId = document.getElementById('memoId').value;
-        const lrId = document.getElementById('lr_id').value;
+    // Function to save memo ID for delivery
+    window.saveMemoId = function() {
+        const memoId = document.getElementById('deliveryMemoId').value.trim();
+        const saveBtn = document.getElementById('saveMemoBtn');
+        const spinner = saveBtn.querySelector('.spinner-border');
+        const errorDiv = document.getElementById('memoModalError');
+        const errorMessage = document.getElementById('memoErrorMessage');
         
         if (!memoId) {
-            alert('Please enter a Memo ID');
+            errorMessage.textContent = 'Please enter a Memo ID';
+            errorDiv.style.display = 'block';
             return;
         }
 
-        if (!lrId) {
-            alert('Please select an LR Number');
-            return;
-        }
+        // Show loading state
+        saveBtn.disabled = true;
+        spinner.style.display = 'inline-block';
+        errorDiv.style.display = 'none';
 
         // Create form data
         const formData = new FormData();
         formData.append('memo_id', memoId);
-        formData.append('lr_ids[]', lrId);
+        formData.append('lr_ids[]', {{ $freight_booking->lr_id }});
 
-        // Send AJAX request
+        // Send AJAX request to update memo ID
         fetch('/lorry_receipts/bulk-payment', {
             method: 'POST',
             headers: {
@@ -355,15 +424,32 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('Memo ID updated successfully');
+                // Close modal and enable delivered toggle
+                const modal = bootstrap.Modal.getInstance(document.getElementById('memoIdModal'));
+                modal.hide();
+                
+                // Show additional charges sections
+                document.getElementById('additional-charges-section').style.display = 'block';
+                
+                // Show success message
+                alert('Memo ID saved successfully. Freight booking marked as delivered.');
+                
+                // Optionally reload to reflect changes
                 location.reload();
             } else {
-                alert(data.message || 'Failed to update memo');
+                errorMessage.textContent = data.message || 'Failed to save memo ID';
+                errorDiv.style.display = 'block';
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('An error occurred while updating memo');
+            errorMessage.textContent = 'An error occurred while saving memo ID';
+            errorDiv.style.display = 'block';
+        })
+        .finally(() => {
+            // Reset loading state
+            saveBtn.disabled = false;
+            spinner.style.display = 'none';
         });
     };
 
@@ -419,6 +505,105 @@
 
         // Calculate initial TDS and balance if values exist
         calculateTdsAndBalance();
+
+        // Validation for additional charges fields
+        function validateAdditionalCharges() {
+            const trAmount = parseFloat(trAmountInput ? trAmountInput.value : 0) || 0;
+            const fieldsToValidate = ['detention', 'deviation', 'misc_expense', 'damage_amount', 'shortage_amount'];
+            
+            fieldsToValidate.forEach(fieldName => {
+                const field = document.getElementById(fieldName);
+                if (field) {
+                    field.addEventListener('input', function() {
+                        const value = parseFloat(field.value || 0);
+                        const isValid = value >= 0 && value < trAmount;
+                        
+                        if (!isValid && value > 0) {
+                            field.classList.add('is-invalid');
+                            field.classList.remove('is-valid');
+                            
+                            // Show custom validation message
+                            let errorDiv = field.parentNode.querySelector('.validation-error');
+                            if (!errorDiv) {
+                                errorDiv = document.createElement('div');
+                                errorDiv.className = 'validation-error text-danger small mt-1';
+                                field.parentNode.appendChild(errorDiv);
+                            }
+                            errorDiv.textContent = `Value must be ≥ 0 and < TR Amount (₹${trAmount.toFixed(2)})`;
+                        } else {
+                            field.classList.remove('is-invalid');
+                            field.classList.add('is-valid');
+                            
+                            // Remove error message
+                            const errorDiv = field.parentNode.querySelector('.validation-error');
+                            if (errorDiv) {
+                                errorDiv.remove();
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+        // Initialize validation
+        validateAdditionalCharges();
+
+        // Re-validate when TR Amount changes
+        if (trAmountInput) {
+            trAmountInput.addEventListener('input', function() {
+                validateAdditionalCharges();
+            });
+        }
+
+        // Handle is_delivered toggle
+        const isDeliveredToggle = document.getElementById('is_delivered');
+        if (isDeliveredToggle) {
+            // Check if toggle should be frozen (memo_id exists)
+            const currentMemoId = '{{ $freight_booking->lr && $freight_booking->lr->memo_id ? $freight_booking->lr->memo_id : "" }}';
+            const isCurrentlyDelivered = {{ $freight_booking->is_delivered ? 'true' : 'false' }};
+            
+            // If delivered and memo_id exists, freeze the toggle
+            if (isCurrentlyDelivered && currentMemoId) {
+                isDeliveredToggle.disabled = true;
+            }
+            
+            // Show additional charges if currently delivered
+            if (isCurrentlyDelivered) {
+                document.getElementById('additional-charges-section').style.display = 'block';
+            }
+            
+            isDeliveredToggle.addEventListener('change', function() {
+                // Prevent unchecking if memo_id exists
+                if (!this.checked && currentMemoId) {
+                    this.checked = true;
+                    alert('Cannot unmark as delivered - Memo ID has been set. Contact administrator if changes are needed.');
+                    return;
+                }
+                
+                if (this.checked) {
+                    // Show additional charges immediately when delivered is checked
+                    document.getElementById('additional-charges-section').style.display = 'block';
+                    
+                    // Check if memo_id already exists
+                    if (!currentMemoId) {
+                        // Show memo ID modal
+                        const modal = new bootstrap.Modal(document.getElementById('memoIdModal'));
+                        modal.show();
+                        
+                        // Reset toggle if user cancels
+                        document.getElementById('memoIdModal').addEventListener('hidden.bs.modal', function() {
+                            if (!document.getElementById('deliveryMemoId').value) {
+                                isDeliveredToggle.checked = false;
+                                document.getElementById('additional-charges-section').style.display = 'none';
+                            }
+                        });
+                    }
+                } else {
+                    // Hide additional charges when not delivered
+                    document.getElementById('additional-charges-section').style.display = 'none';
+                }
+            });
+        }
     });
 </script>
 @endsection
