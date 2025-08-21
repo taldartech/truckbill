@@ -560,6 +560,11 @@ $(document).ready(function() {
         $('#totalPaymentAmount').text('₹' + total.toLocaleString('en-IN', {minimumFractionDigits: 2}));
     });
 });
+
+// Function to open voucher payment modal
+function openVoucherPaymentModal() {
+    $('#voucherPaymentModal').modal('show');
+}
 </script>
 @endpush
 
@@ -707,19 +712,103 @@ $(document).ready(function() {
 </style>
 
 @push('scripts')
-<!-- DataTables JS -->
-<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
-<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.colVis.min.js"></script>
-<script src="https://cdn.datatables.net/searchpanes/2.2.0/js/dataTables.searchPanes.min.js"></script>
-<script src="https://cdn.datatables.net/searchpanes/2.2.0/js/searchPanes.bootstrap5.min.js"></script>
-<script src="https://cdn.datatables.net/select/1.7.0/js/dataTables.select.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Initialize tooltips
+    $('[data-bs-toggle="tooltip"]').tooltip();
+    
+    // Voucher Payment Modal
+    $('#voucher-payment-btn').on('click', function() {
+        const checkedBoxes = $('.row-checkbox:checked');
+        
+        if (checkedBoxes.length === 0) {
+            alert('Please select at least one freight booking.');
+            return;
+        }
+        
+        // Clear previous data
+        $('#voucherPaymentTableBody').empty();
+        
+        let totalBalance = 0;
+        checkedBoxes.each(function() {
+            const checkbox = $(this);
+            const lrNumber = checkbox.data('lr');
+            const balance = parseFloat(checkbox.data('balance')) || 0;
+            const freightBookingId = checkbox.data('freight-booking-id');
+            const voucherNumber = checkbox.data('voucher_number') || '-';
+            
+            totalBalance += balance;
+            
+            const row = `
+                <tr>
+                    <td>${lrNumber}</td>
+                    <td>${voucherNumber}</td>
+                    <td class="text-end">₹${balance.toFixed(2)}</td>
+                    <td>
+                        <input type="number" class="form-control form-control-sm payment-amount" 
+                               name="payments[${freightBookingId}]" 
+                               min="0" max="${balance}" step="0.01" 
+                               value="${balance.toFixed(2)}" 
+                               data-max="${balance}">
+                    </td>
+                </tr>
+            `;
+            $('#voucherPaymentTableBody').append(row);
+        });
+        
+        $('#totalPaymentAmount').text('₹' + totalBalance.toLocaleString('en-IN', {minimumFractionDigits: 2}));
+    });
+    
+    // Payment amount validation
+    $(document).on('input', '.payment-amount', function() {
+        const input = $(this);
+        const max = parseFloat(input.data('max'));
+        const value = parseFloat(input.val()) || 0;
+        
+        if (value > max) {
+            input.val(max.toFixed(2));
+        }
+        
+        // Update total
+        let total = 0;
+        $('.payment-amount').each(function() {
+            total += parseFloat($(this).val()) || 0;
+        });
+        $('#totalPaymentAmount').text('₹' + total.toLocaleString('en-IN', {minimumFractionDigits: 2}));
+    });
+    
+    // Handle bulk memo ID button
+    $('#bulk-memo-id-btn').on('click', function() {
+        const checkedBoxes = $('.row-checkbox:checked');
+        
+        if (checkedBoxes.length === 0) {
+            alert('Please select freight bookings first.');
+            return;
+        }
+        
+        // Clear previous data
+        $('#bulkMemoTableBody').empty();
+        
+        checkedBoxes.each(function() {
+            const checkbox = $(this);
+            const lrNumber = checkbox.data('lr');
+            const lrId = checkbox.data('lr-id');
+            const freightBookingId = checkbox.data('freight-booking-id');
+            
+            const row = `
+                <tr>
+                    <td>
+                        <input type="hidden" name="lr_ids[]" value="${lrId}">
+                        <input type="hidden" name="freight_booking_ids[]" value="${freightBookingId}">
+                        ${lrNumber}
+                    </td>
+                </tr>
+            `;
+            $('#bulkMemoTableBody').append(row);
+        });
+    });
+});
+</script>
 
 <style>
     .clickable {
@@ -731,7 +820,7 @@ $(document).ready(function() {
         text-decoration: none;
     }
     .memo-assigned {
-        background-color: #fff3cd !important; /* Light yellow background for rows with memo */
+        background-color: #fff3cd !important;
     }
     .memo-tooltip {
         position: relative;
@@ -761,6 +850,11 @@ $(document).ready(function() {
 </style>
 
 <script>
+// Function to open voucher payment modal
+function openVoucherPaymentModal() {
+    $('#voucherPaymentModal').modal('show');
+}
+
 $(document).ready(function() {
     // Initialize tooltips
     $('[data-bs-toggle="tooltip"]').tooltip();

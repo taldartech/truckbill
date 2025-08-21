@@ -483,69 +483,189 @@
             </div>
         </div>
 
-        <script>
-        // Function to open voucher payment modal for single freight booking
-        function openVoucherPaymentModal(freightBookingId) {
-            // Show the modal
-            const modal = new bootstrap.Modal(document.getElementById('voucherPaymentModal'));
-            modal.show();
-            
-            // Load payment history for this specific freight booking
-            loadPaymentHistory([freightBookingId]);
-        }
+<script>
+// Function to open voucher payment modal for single freight booking
+function openVoucherPaymentModal(freightBookingId) {
+    // Show the modal
+    const modal = new bootstrap.Modal(document.getElementById('voucherPaymentModal'));
+    modal.show();
+    
+    // Load payment history for this specific freight booking
+    loadPaymentHistory([freightBookingId]);
+}
 
-        // Function to load payment history
-        function loadPaymentHistory(freightBookingIds) {
-            const tableContainer = document.getElementById('previousPaymentsTable');
+// Function to load payment history
+function loadPaymentHistory(freightBookingIds) {
+    const tableContainer = document.getElementById('previousPaymentsTable');
+    
+    // Show loading state
+    tableContainer.innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border spinner-border-sm" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            Loading payment history...
+        </div>
+    `;
+    
+    // Make AJAX request to get payment history
+    fetch('/freight_bookings/payment-history', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({
+            freight_booking_ids: freightBookingIds
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.payments && data.payments.length > 0) {
+            // Build table HTML
+            let tableHtml = `
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Payment ID</th>
+                                <th>FR No.</th>
+                                <th>Voucher Number</th>
+                                <th>Amount</th>
+                                <th>Payment Type</th>
+                                <th>Payment Mode</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
             
-            // Show loading state
-            tableContainer.innerHTML = `
-                <div class="text-center">
-                    <div class="spinner-border spinner-border-sm" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                    Loading payment history...
+            data.payments.forEach(payment => {
+                const statusBadge = payment.payment_status === 'paid' ? 'bg-success' : 
+                                  payment.payment_status === 'pending' ? 'bg-warning' : 'bg-secondary';
+                
+                tableHtml += `
+                    <tr>
+                        <td>${payment.id}</td>
+                        <td>${payment.freight_booking_id}</td>
+                        <td>${payment.voucher_number || 'N/A'}</td>
+                        <td>₹${parseFloat(payment.amount).toFixed(2)}</td>
+                        <td>${payment.payment_type}</td>
+                        <td>${payment.payment_mode}</td>
+                        <td>${new Date(payment.created_at).toLocaleDateString()}</td>
+                        <td><span class="badge ${statusBadge}">${payment.payment_status}</span></td>
+                    </tr>
+                `;
+            });
+            
+            tableHtml += `
+                        </tbody>
+                    </table>
                 </div>
             `;
             
-            // Make AJAX request to get payment history
-            fetch('/freight_bookings/payment-history', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({
-                    freight_booking_ids: freightBookingIds
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success && data.payments && data.payments.length > 0) {
-                    // Build table HTML
-                    let tableHtml = `
-                        <div class="table-responsive">
-                            <table class="table table-sm table-bordered">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Payment ID</th>
-                                        <th>FR No.</th>
-                                        <th>Voucher Number</th>
-                                        <th>Amount</th>
-                                        <th>Payment Type</th>
-                                        <th>Payment Mode</th>
-                                        <th>Date</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                    `;
-                    
-                    data.payments.forEach(payment => {
-                        const statusBadge = payment.payment_status === 'paid' ? 'bg-success' : 
-                                          payment.payment_status === 'pending' ? 'bg-warning' : 'bg-secondary';
-                        
-                        tableHtml += `
+            tableContainer.innerHTML = tableHtml;
+        } else {
+            tableContainer.innerHTML = '<div class="text-muted text-center">No payment history found.</div>';
+        }
+    })
+    .catch(error => {
+        console.error('Error loading payment history:', error);
+        tableContainer.innerHTML = '<div class="text-danger text-center">Error loading payment history.</div>';
+    });
+}
+
+// Function to update total payment amount
+function updateTotalPayment() {
+    const allocatedInputs = document.querySelectorAll('.allocated-input');
+    let total = 0;
+    allocatedInputs.forEach(input => {
+        total += parseFloat(input.value) || 0;
+    });
+    const totalElement = document.getElementById('totalPaymentAmount');
+    if (totalElement) {
+        totalElement.textContent = total.toFixed(2);
+    }
+}
+
+// Function to submit voucher payment
+function submitVoucherPayment() {
+    const submitBtn = event.target;
+    const originalBtnText = submitBtn.innerHTML;
+    
+    // Show loading state
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    submitBtn.disabled = true;
+    
+    // Get form data
+    const allocatedInputs = document.querySelectorAll('.allocated-input');
+    const payments = {};
+    let totalAmount = 0;
+    
+    allocatedInputs.forEach(input => {
+        const fbId = input.dataset.fbId;
+        const amount = parseFloat(input.value) || 0;
+        if (amount > 0) {
+            payments[fbId] = amount;
+            totalAmount += amount;
+        }
+    });
+    
+    if (totalAmount === 0) {
+        alert('Please enter payment amounts.');
+        submitBtn.innerHTML = originalBtnText;
+        submitBtn.disabled = false;
+        return;
+    }
+    
+    const paymentType = document.getElementById('paymentType').value;
+    const paymentMode = document.getElementById('paymentMode').value;
+    const paymentDate = document.getElementById('paymentDate').value;
+    const remarks = document.getElementById('paymentRemarks').value;
+    
+    if (!paymentType || !paymentMode || !paymentDate) {
+        alert('Please fill all required fields.');
+        submitBtn.innerHTML = originalBtnText;
+        submitBtn.disabled = false;
+        return;
+    }
+    
+    // Submit payment
+    fetch('/freight_bookings/voucher-payment', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({
+            payments: payments,
+            payment_type: paymentType,
+            payment_mode: paymentMode,
+            payment_date: paymentDate,
+            remarks: remarks
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Payment submitted successfully!');
+            location.reload();
+        } else {
+            alert('Error: ' + (data.message || 'Payment submission failed'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while processing the payment. Please try again.');
+    })
+    .finally(() => {
+        // Restore button state
+        submitBtn.innerHTML = originalBtnText;
+        submitBtn.disabled = false;
+    });
+}
+</script>
 
                 <!-- Payment Allocation Section -->
                 <div class="alert alert-warning">
