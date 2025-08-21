@@ -360,7 +360,11 @@ class LorryReceiptController extends Controller
             \App\Models\FreightBooking::whereIn('id', $freightBookingIds)
                 ->update(['is_delivered' => 1]);
 
-            // Update delivery status for lorry receipts
+            // Update memo_id first, then delivery status will be handled by freight booking update
+            LorryReceipt::whereIn('id', $validated['lr_ids'])
+                ->update(['memo_id' => $validated['memo_id']]);
+
+            // Update delivery status for lorry receipts to 'Delivered' since memo_id is now set
             LorryReceipt::whereIn('id', $validated['lr_ids'])
                 ->update(['delivery_status' => 'Delivered']);
 
@@ -371,9 +375,8 @@ class LorryReceiptController extends Controller
                 'freight_booking_ids' => $freightBookingIds
             ]);
 
-            // Update memo_id for selected lorry receipts
-            $updatedCount = LorryReceipt::whereIn('id', $validated['lr_ids'])
-                ->update(['memo_id' => $validated['memo_id']]);
+            // memo_id already updated above, so just log the count
+            $updatedCount = count($validated['lr_ids']);
 
             \Log::info('Bulk Payment Update Result:', [
                 'updated_count' => $updatedCount,
