@@ -623,6 +623,11 @@ class FreightBookingController extends Controller
 
     public function update(Request $request, FreightBooking $freight_booking)
     {
+        // Prevent updates to cancelled freight bookings
+        if ($freight_booking->is_cancelled) {
+            return redirect()->back()->withErrors(['general' => 'Cannot update a cancelled freight booking. Please contact administrator if changes are needed.']);
+        }
+
         $data = $request->validate([
             'lr_id' => 'required|exists:lorry_receipts,id',
             'tr_fr_rate' => 'required|numeric',
@@ -693,7 +698,7 @@ class FreightBookingController extends Controller
             $lorryReceipt->save();
         }
 
-        return redirect()->route('freight_bookings.index')->with('success', 'Freight Booking updated successfully.');
+        return redirect()->route('lorry_receipts.index')->with('success', 'Freight Booking updated successfully.');
     }
 
     public function destroy(FreightBooking $freight_booking)

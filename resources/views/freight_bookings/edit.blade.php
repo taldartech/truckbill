@@ -136,14 +136,35 @@
     </div>
 </div>
 
-<div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
+@if($freight_booking->is_cancelled)
+<div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="max-width: 1000px; margin: 0 auto;">
+    <div class="d-flex align-items-center">
+        <i class="fas fa-times-circle fa-2x me-3"></i>
+        <div>
+            <h5 class="alert-heading mb-1">
+                <i class="fas fa-exclamation-triangle"></i> CANCELLED FREIGHT BOOKING
+            </h5>
+            <p class="mb-0">This freight booking has been cancelled and cannot be modified. All form fields are disabled.</p>
+        </div>
+    </div>
+</div>
+@endif
+
+<div class="card {{ $freight_booking->is_cancelled ? 'border-danger' : 'card-info' }} card-outline mb-4" style="max-width: 1000px; margin: 0 auto; {{ $freight_booking->is_cancelled ? 'opacity: 0.8;' : '' }}">
     <!--begin::Header-->
-    <div class="card-header">
-        <div class="card-title h4">Edit Freight Booking</div>
+    <div class="card-header {{ $freight_booking->is_cancelled ? 'bg-danger-subtle' : '' }}">
+        <div class="card-title h4">
+            Edit Freight Booking
+            @if($freight_booking->is_cancelled)
+                <span class="badge bg-danger ms-2">
+                    <i class="fas fa-times-circle"></i> CANCELLED
+                </span>
+            @endif
+        </div>
     </div>
     <!--end::Header-->
     <!--begin::Form-->
-    <form action="{{ route('freight_bookings.update', $freight_booking->id) }}" method="POST" class="needs-validation" novalidate="">
+    <form action="{{ route('freight_bookings.update', $freight_booking->id) }}" method="POST" class="needs-validation" novalidate {{ $freight_booking->is_cancelled ? 'onsubmit="return false;"' : '' }}>
         @csrf
         @method('PUT')
         @php
@@ -157,7 +178,7 @@
                 <div class="row mb-3">
                     <div class="col-md-4">
                         <label for="company_id" class="form-label">Company *</label>
-                        <select class="form-select @error('company_id') is-invalid @enderror" id="company_id" name="company_id" required>
+                        <select class="form-select @error('company_id') is-invalid @enderror" id="company_id" name="company_id" required {{ $freight_booking->is_cancelled ? 'disabled' : '' }}>
                             <option value="">Select Company</option>
                             @foreach($companies as $company)
                                 <option value="{{ $company->id }}" {{ old('company_id', $freight_booking->company_id) == $company->id ? 'selected' : '' }}>
@@ -176,7 +197,7 @@
             <div class="row mb-3">
                 <div class="col-md-4">
                     <label for="tr_fr_rate" class="form-label">TR Freight Rate *</label>
-                    <input type="number" step="0.01" min="1" max="20000" class="form-control @error('tr_fr_rate') is-invalid @enderror" name="tr_fr_rate" id="tr_fr_rate" value="{{ old('tr_fr_rate', $freight_booking->tr_fr_rate) }}" placeholder="Enter freight rate (₹1 - ₹20,000 per ton)" required>
+                    <input type="number" step="0.01" min="1" max="20000" class="form-control @error('tr_fr_rate') is-invalid @enderror" name="tr_fr_rate" id="tr_fr_rate" value="{{ old('tr_fr_rate', $freight_booking->tr_fr_rate) }}" placeholder="Enter freight rate (₹1 - ₹20,000 per ton)" required {{ $freight_booking->is_cancelled ? 'disabled' : '' }}>
                     <small class="form-text text-muted">
                         <i class="fas fa-info-circle"></i> Rate must be between ₹1 and ₹20,000 per ton
                     </small>
@@ -184,7 +205,7 @@
                 </div>
                 <div class="col-md-4">
                     <label for="tr_amount" class="form-label">TR Amount *</label>
-                    <input type="number" step="0.01" min="0.01" class="form-control @error('tr_amount') is-invalid @enderror" name="tr_amount" id="tr_amount" value="{{ old('tr_amount', $freight_booking->tr_amount) }}" placeholder="Auto-calculated (editable)" required>
+                    <input type="number" step="0.01" min="0.01" class="form-control @error('tr_amount') is-invalid @enderror" name="tr_amount" id="tr_amount" value="{{ old('tr_amount', $freight_booking->tr_amount) }}" placeholder="Auto-calculated (editable)" required {{ $freight_booking->is_cancelled ? 'disabled' : '' }}>
                     <small class="form-text text-muted">
                         <i class="fas fa-info-circle"></i> Auto-calculated: TR Freight Rate × Weight. Must be greater than ₹0.
                     </small>
@@ -192,7 +213,7 @@
                 </div>
                 <div class="col-md-4">
                     <label for="tds_amount" class="form-label">TDS Amount *</label>
-                    <input type="number" step="0.01" class="form-control @error('tds_amount') is-invalid @enderror" name="tds_amount" id="tds_amount" value="{{ old('tds_amount', $freight_booking->tds_amount) }}" readonly style="background-color: #f8f9fa;">
+                    <input type="number" step="0.01" class="form-control @error('tds_amount') is-invalid @enderror" name="tds_amount" id="tds_amount" value="{{ old('tds_amount', $freight_booking->tds_amount) }}" readonly style="background-color: #f8f9fa;" {{ $freight_booking->is_cancelled ? 'disabled' : '' }}>
                     <small class="form-text text-muted">
                         <i class="fas fa-percentage"></i> Auto-calculated based on transporter TDS percentage
                     </small>
@@ -208,22 +229,11 @@
                 <div class="col-md-4">
                     <label for="eway_bill_number" class="form-label">E-Way Bill Number</label>
                     <div class="input-group">
-                        <input type="text" class="form-control @error('eway_bill_number') is-invalid @enderror" name="eway_bill_number" id="eway_bill_number" value="{{ old('eway_bill_number', $freight_booking->eway_bill_number) }}" placeholder="Enter E-way bill number">
+                        <input type="text" class="form-control @error('eway_bill_number') is-invalid @enderror" name="eway_bill_number" id="eway_bill_number" value="{{ old('eway_bill_number', $freight_booking->eway_bill_number) }}" placeholder="Enter E-way bill number" {{ $freight_booking->is_cancelled ? 'disabled' : '' }}>
                         <a href="https://ewaybillgst.gov.in/Login.aspx" target="_blank" class="btn btn-outline-info" title="Check E-way Bill Status">
                             <i class="fas fa-external-link-alt"></i> Check Status
                         </a>
                     </div>
-                    @error('eway_bill_number') <div class="text-danger">{{ $message }}</div> @enderror
-                </div>
-                <div class="col-md-4">
-                    <label for="pan_verified" class="form-label">PAN Verified *</label>
-                    <input type="hidden" name="pan_verified" id="pan_verified" value="{{ old('pan_verified', $freight_booking->pan_verified) }}" required>
-                    <input type="text" class="form-control" readonly value="{{ old('pan_verified', $freight_booking->pan_verified) ? 'Yes' : 'No' }}" style="background-color: #f8f9fa;">
-                    <small class="form-text text-muted">
-                        <i class="fas fa-lock"></i> Read-only field from transporter data
-                    </small>
-                    @error('pan_verified') <div class="text-danger">{{ $message }}</div> @enderror
-                </div>
             </div>
 
             <div class="row mb-3">
@@ -236,7 +246,7 @@
                 </div>
                 <div class="col-md-4">
                     <label for="balance_amount" class="form-label">Balance Amount *</label>
-                    <input type="number" step="0.01" class="form-control @error('balance_amount') is-invalid @enderror" name="balance_amount" id="balance_amount" value="{{ old('balance_amount', $freight_booking->balance_amount) }}" required readonly style="background-color: #f8f9fa;">
+                    <input type="number" step="0.01" class="form-control @error('balance_amount') is-invalid @enderror" name="balance_amount" id="balance_amount" value="{{ old('balance_amount', $freight_booking->balance_amount) }}" required readonly style="background-color: #f8f9fa;" {{ $freight_booking->is_cancelled ? 'disabled' : '' }}>
                     <small class="form-text text-muted">
                         <i class="fas fa-calculator"></i> Auto-calculated: TR Amount - TDS Amount
                     </small>
@@ -258,7 +268,7 @@
                     <label class="form-label">Delivery Status</label>
                     <div class="d-flex gap-4">
                         <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="is_delivered" name="is_delivered" value="1" {{ old('is_delivered', $freight_booking->is_delivered) ? 'checked' : '' }} {{ ($freight_booking->is_delivered && $freight_booking->lr && $freight_booking->lr->memo_id) ? 'disabled' : '' }}>
+                            <input class="form-check-input" type="checkbox" id="is_delivered" name="is_delivered" value="1" {{ old('is_delivered', $freight_booking->is_delivered) ? 'checked' : '' }} {{ ($freight_booking->is_delivered && $freight_booking->lr && $freight_booking->lr->memo_id) || $freight_booking->is_cancelled ? 'disabled' : '' }}>
                             <label class="form-check-label" for="is_delivered">
                                 <i class="fas fa-truck"></i> Delivered
                                 @if($freight_booking->is_delivered && $freight_booking->lr && $freight_booking->lr->memo_id)
@@ -269,7 +279,7 @@
                             </label>
                         </div>
                         <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="is_cancelled" name="is_cancelled" value="1" {{ old('is_cancelled', $freight_booking->is_cancelled) ? 'checked' : '' }} {{ $freight_booking->is_delivered ? 'disabled' : '' }}>
+                            <input class="form-check-input" type="checkbox" id="is_cancelled" name="is_cancelled" value="1" {{ old('is_cancelled', $freight_booking->is_cancelled) ? 'checked' : '' }} {{ $freight_booking->is_delivered || $freight_booking->is_cancelled ? 'disabled' : '' }}>
                             <label class="form-check-label" for="is_cancelled">
                                 <i class="fas fa-times-circle"></i> Cancelled
                                 @if($freight_booking->is_delivered)
@@ -291,7 +301,7 @@
                 <div class="row mb-2">
                     <div class="col-md-2">
                         <label for="detention" class="form-label">Detention</label>
-                        <input type="number" step="0.01" min="0" class="form-control form-control-sm @error('detention') is-invalid @enderror" name="detention" id="detention" value="{{ old('detention', $freight_booking->detention) }}" placeholder="Enter detention amount">
+                        <input type="number" step="0.01" min="0" class="form-control form-control-sm @error('detention') is-invalid @enderror" name="detention" id="detention" value="{{ old('detention', $freight_booking->detention) }}" placeholder="Enter detention amount" {{ $freight_booking->is_cancelled ? 'disabled' : '' }}>
                         <small class="form-text text-muted">
                             <i class="fas fa-info-circle"></i> ≥ 0 and < TR Amount
                         </small>
@@ -299,7 +309,7 @@
                     </div>
                     <div class="col-md-2">
                         <label for="deviation" class="form-label">Deviation</label>
-                        <input type="number" step="0.01" min="0" class="form-control form-control-sm @error('deviation') is-invalid @enderror" name="deviation" id="deviation" value="{{ old('deviation', $freight_booking->deviation) }}" placeholder="Enter deviation amount">
+                        <input type="number" step="0.01" min="0" class="form-control form-control-sm @error('deviation') is-invalid @enderror" name="deviation" id="deviation" value="{{ old('deviation', $freight_booking->deviation) }}" placeholder="Enter deviation amount" {{ $freight_booking->is_cancelled ? 'disabled' : '' }}>
                         <small class="form-text text-muted">
                             <i class="fas fa-info-circle"></i> ≥ 0 and < TR Amount
                         </small>
@@ -307,7 +317,7 @@
                     </div>
                     <div class="col-md-2">
                         <label for="misc_expense" class="form-label">Misc. Expense</label>
-                        <input type="number" step="0.01" min="0" class="form-control form-control-sm @error('misc_expense') is-invalid @enderror" name="misc_expense" id="misc_expense" value="{{ old('misc_expense', $freight_booking->misc_expense) }}" placeholder="Enter misc expense">
+                        <input type="number" step="0.01" min="0" class="form-control form-control-sm @error('misc_expense') is-invalid @enderror" name="misc_expense" id="misc_expense" value="{{ old('misc_expense', $freight_booking->misc_expense) }}" placeholder="Enter misc expense" {{ $freight_booking->is_cancelled ? 'disabled' : '' }}>
                         <small class="form-text text-muted">
                             <i class="fas fa-info-circle"></i> ≥ 0 and < TR Amount
                         </small>
@@ -315,7 +325,7 @@
                     </div>
                     <div class="col-md-3">
                         <label for="damage_amount" class="form-label">Damage Amount</label>
-                        <input type="number" step="0.01" min="0" class="form-control form-control-sm @error('damage_amount') is-invalid @enderror" name="damage_amount" id="damage_amount" value="{{ old('damage_amount', $freight_booking->damage_amount) }}" placeholder="Enter damage amount">
+                        <input type="number" step="0.01" min="0" class="form-control form-control-sm @error('damage_amount') is-invalid @enderror" name="damage_amount" id="damage_amount" value="{{ old('damage_amount', $freight_booking->damage_amount) }}" placeholder="Enter damage amount" {{ $freight_booking->is_cancelled ? 'disabled' : '' }}>
                         <small class="form-text text-muted">
                             <i class="fas fa-info-circle"></i> Must be ≥ 0 and < TR Amount
                         </small>
@@ -323,7 +333,7 @@
                     </div>
                     <div class="col-md-3">
                         <label for="shortage_amount" class="form-label">Shortage Amount</label>
-                        <input type="number" step="0.01" min="0" class="form-control form-control-sm @error('shortage_amount') is-invalid @enderror" name="shortage_amount" id="shortage_amount" value="{{ old('shortage_amount', $freight_booking->shortage_amount) }}" placeholder="Enter shortage amount">
+                        <input type="number" step="0.01" min="0" class="form-control form-control-sm @error('shortage_amount') is-invalid @enderror" name="shortage_amount" id="shortage_amount" value="{{ old('shortage_amount', $freight_booking->shortage_amount) }}" placeholder="Enter shortage amount" {{ $freight_booking->is_cancelled ? 'disabled' : '' }}>
                         <small class="form-text text-muted">
                             <i class="fas fa-info-circle"></i> Must be ≥ 0 and < TR Amount
                         </small>
@@ -342,7 +352,7 @@
             <div class="row mb-3">
                 <div class="col-md-12">
                     <label for="remark" class="form-label">Remark</label>
-                    <textarea name="remark" id="remark" class="form-control @error('remark') is-invalid @enderror" rows="3" placeholder="Enter any additional remarks or notes">{{ old('remark', $freight_booking->remark) }}</textarea>
+                    <textarea name="remark" id="remark" class="form-control @error('remark') is-invalid @enderror" rows="3" placeholder="Enter any additional remarks or notes" {{ $freight_booking->is_cancelled ? 'disabled' : '' }}>{{ old('remark', $freight_booking->remark) }}</textarea>
                     @error('remark') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
             </div>
@@ -352,9 +362,15 @@
         <!--end::Footer-->
         <div class="card-footer">
             <div>
-                <button class="btn btn-success me-2" type="submit">
-                    <i class="bi bi-check-circle"></i> Update Freight Booking
-                </button>
+                @if($freight_booking->is_cancelled)
+                    <button class="btn btn-secondary me-2" type="button" disabled>
+                        <i class="bi bi-x-circle"></i> Cannot Update - Cancelled
+                    </button>
+                @else
+                    <button class="btn btn-success me-2" type="submit">
+                        <i class="bi bi-check-circle"></i> Update Freight Booking
+                    </button>
+                @endif
                 <a href="{{ route('freight_bookings.index') }}" class="btn btn-outline-secondary">
                     <i class="bi bi-arrow-left"></i> Back to List
                 </a>
@@ -528,10 +544,11 @@
             
             fieldsToValidate.forEach(fieldName => {
                 const field = document.getElementById(fieldName);
-                if (field) {
+                if (field && !field.hasValidationListener) {
+                    field.hasValidationListener = true;
                     field.addEventListener('input', function() {
                         const value = parseFloat(field.value || 0);
-                        const isValid = value >= 0 && value < trAmount;
+                        const isValid = value >= 0 && value <= trAmount;
                         
                         if (!isValid && value > 0) {
                             field.classList.add('is-invalid');
@@ -544,7 +561,7 @@
                                 errorDiv.className = 'validation-error text-danger small mt-1';
                                 field.parentNode.appendChild(errorDiv);
                             }
-                            errorDiv.textContent = `Value must be >= 0 and < TR Amount (Rs.${trAmount.toFixed(2)})`;
+                            errorDiv.textContent = `Value must be >= 0 and <= TR Amount (Rs.${trAmount.toFixed(2)})`;
                         } else {
                             field.classList.remove('is-invalid');
                             field.classList.add('is-valid');

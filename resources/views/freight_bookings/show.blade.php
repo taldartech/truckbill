@@ -45,17 +45,47 @@
 }
 </style>
 
-<div class="card card-info card-outline mb-4" style="max-width: 1200px; margin: 0 auto;">
+@if($freight_booking->is_cancelled)
+<div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="max-width: 1200px; margin: 0 auto;">
+    <div class="d-flex align-items-center">
+        <i class="fas fa-times-circle fa-2x me-3"></i>
+        <div>
+            <h5 class="alert-heading mb-1">
+                <i class="fas fa-exclamation-triangle"></i> CANCELLED FREIGHT BOOKING
+            </h5>
+            <p class="mb-0">This freight booking has been cancelled and cannot be modified. Contact administrator for any changes.</p>
+        </div>
+    </div>
+</div>
+@endif
+
+<div class="card {{ $freight_booking->is_cancelled ? 'border-danger' : 'card-info' }} card-outline mb-4" style="max-width: 1200px; margin: 0 auto; {{ $freight_booking->is_cancelled ? 'opacity: 0.8;' : '' }}">
     <!--begin::Header-->
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <div class="card-title h4">Freight Booking Details - #{{ $freight_booking->id }}</div>
+    <div class="card-header d-flex justify-content-between align-items-center {{ $freight_booking->is_cancelled ? 'bg-danger-subtle' : '' }}">
+        <div class="card-title h4">
+            Freight Booking Details - #{{ $freight_booking->id }}
+            @if($freight_booking->is_cancelled)
+                <span class="badge bg-danger ms-2">
+                    <i class="fas fa-times-circle"></i> CANCELLED
+                </span>
+            @endif
+        </div>
         <div class="card-toolbar">
-            <button type="button" class="btn btn-sm btn-success me-2" onclick="openVoucherPaymentModal({{ $freight_booking->id }})">
-                <i class="bi bi-credit-card"></i> Voucher Payment
-            </button>
-            <a href="{{ route('freight_bookings.edit', $freight_booking->id) }}" class="btn btn-sm btn-primary me-2">
-                <i class="bi bi-pencil"></i> Edit
-            </a>
+            @if(!$freight_booking->is_cancelled)
+                <button type="button" class="btn btn-sm btn-success me-2" onclick="openVoucherPaymentModal({{ $freight_booking->id }})">
+                    <i class="bi bi-credit-card"></i> Voucher Payment
+                </button>
+                <a href="{{ route('freight_bookings.edit', $freight_booking->id) }}" class="btn btn-sm btn-primary me-2">
+                    <i class="bi bi-pencil"></i> Edit
+                </a>
+            @else
+                <button type="button" class="btn btn-sm btn-secondary me-2" disabled title="Cannot perform actions on cancelled booking">
+                    <i class="bi bi-credit-card"></i> Voucher Payment
+                </button>
+                <button type="button" class="btn btn-sm btn-secondary me-2" disabled title="Cannot edit cancelled booking">
+                    <i class="bi bi-pencil"></i> Edit
+                </button>
+            @endif
             <a href="{{ route('freight_bookings.index') }}" class="btn btn-sm btn-outline-dark">
                 <i class="bi bi-arrow-left"></i> Back to List
             </a>
