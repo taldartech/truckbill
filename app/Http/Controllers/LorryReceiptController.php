@@ -150,6 +150,19 @@ class LorryReceiptController extends Controller
         ]);
     }
 
+    /**
+     * Display the specified resource.
+     */
+    public function show(LorryReceipt $lorryReceipt)
+    {
+        // Check if user has access to this lorry receipt's company
+        if ($lorryReceipt->company_id !== auth()->user()->company_id) {
+            abort(403, 'Unauthorized access to this lorry receipt.');
+        }
+
+        return view('lorry_receipts.show', compact('lorryReceipt'));
+    }
+
     public function getLorryReceiptsData(Request $request)
     {
         try {

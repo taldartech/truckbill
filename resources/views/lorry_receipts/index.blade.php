@@ -330,8 +330,12 @@ $(document).ready(function() {
             }
         },
         ajax: {
-            url: '{{ route("lorry_receipts.index") }}',
-            type: 'GET'
+            url: '{{ route("lorry_receipts.data") }}',
+            type: 'GET',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+                'X-Requested-With': 'XMLHttpRequest'
+            }
         },
         columns: [
             
