@@ -694,7 +694,16 @@ class FreightBookingController extends Controller
                 // When freight booking is cancelled, lorry receipt goes back to Pending
                 $deliveryStatus = 'Pending';
             } elseif (isset($data['is_delivered']) && $data['is_delivered'] === '1') {
-                $deliveryStatus = 'Delivered';
+                // Only set to 'Delivered' if memo_id exists on the lorry receipt
+                if (!empty($lorryReceipt->memo_id)) {
+                    $deliveryStatus = 'Delivered';
+                } else {
+                    // If is_delivered is true but no memo_id, keep it as In-Progress
+                    $deliveryStatus = 'In-Progress';
+                }
+            } else {
+                // If not delivered and not cancelled, set to In-Progress
+                $deliveryStatus = 'In-Progress';
             }
             $lorryReceipt->delivery_status = $deliveryStatus;
             $lorryReceipt->damage_amount = $freight_booking->damage_amount;
