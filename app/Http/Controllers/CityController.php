@@ -150,6 +150,7 @@ class CityController extends Controller
 
     public function store(Request $request)
     {
+        // dd("hello");
         $validated = $request->validate([
             'name' => [
                 'required',

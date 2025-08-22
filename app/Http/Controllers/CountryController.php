@@ -124,7 +124,7 @@ class CountryController extends Controller
 
     public function store(Request $request)
     {
-        dd("hello");
+       
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:10',
