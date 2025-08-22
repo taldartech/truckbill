@@ -215,18 +215,18 @@
               </div>
   
               <div class="col-md-6">
-                <label for="state_country_id" class="form-label">Country *</label>
-                <select class="form-select" id="state_country_id" name="country_id" required>
+                <label for="state_code" class="form-label">State Code *</label>
+                <input type="text" class="form-control" id="state_code" name="code" required maxlength="10">
+              </div>
+  
+              <div class="col-md-12">
+                <label for="modal_state_country_id" class="form-label">Country *</label>
+                <select class="form-select" id="modal_state_country_id" name="country_id" required>
                   <option value="">Select Country</option>
                   @foreach($countries as $country)
                     <option value="{{ $country->id }}">{{ $country->name }}</option>
                   @endforeach
                 </select>
-              </div>
-  
-              <div class="col-md-6">
-                <label for="state_code" class="form-label">Code *</label>
-                <input type="text" class="form-control" id="state_code" name="code" required>
               </div>
             </div>
           </div>
@@ -301,8 +301,8 @@
 @section('scripts')
 <script>
   document.addEventListener('DOMContentLoaded', function () {
-      const modalCountry = document.querySelector('#addCityModal #city_country_id');
-      const modalState = document.querySelector('#addCityModal #city_state_id');
+      const modalCountry = document.querySelector('#addCityModal #modal_city_country_id');
+      const modalState = document.querySelector('#addCityModal #modal_city_state_id');
   
       if (modalCountry && modalState) {
           modalCountry.addEventListener('change', function () {
@@ -373,39 +373,41 @@
     citySelect.length = 0;
     citySelect.innerHTML = '<option value="">Select City</option>';
     if (!oldCountry && !oldState){
-    if (countryId) {
-        fetch(`/api/states/${countryId}`)
-            .then(response => response.json())
-            .then(states => {
-                states.forEach(state => {
-                    const option = document.createElement('option');
-                    option.value = state.id;
-                    option.textContent = state.name;
-                    stateSelect.appendChild(option);
+        if (countryId) {
+            fetch(`/api/states/${countryId}`)
+                .then(response => response.json())
+                .then(states => {
+                    states.forEach(state => {
+                        const option = document.createElement('option');
+                        option.value = state.id;
+                        option.textContent = state.name;
+                        stateSelect.appendChild(option);
+                    });
+                    stateSelect.required = true;
                 });
-                stateSelect.required = true;
-            });
+        }
+        
+        stateSelect.addEventListener('change', function() {
+            const stateId = this.value;
+            citySelect.length = 0;
+            citySelect.innerHTML = '<option value="">Select City</option>';
+            if (!oldState && !oldCity){
+                if (stateId) {
+                    fetch(`/api/cities/${stateId}`)
+                        .then(response => response.json())
+                        .then(cities => {
+                            cities.forEach(city => {
+                                const option = document.createElement('option');
+                                option.value = city.id;
+                                option.textContent = city.name;
+                                citySelect.appendChild(option);
+                            });
+                            citySelect.required = true;
+                        });
+                }
+            }
+        });
     }
-    stateSelect.addEventListener('change', function() {
-    const stateId = this.value;
-    citySelect.length = 0;
-    citySelect.innerHTML = '<option value="">Select City</option>';
-    if (!oldState && !oldCity){
-    if (stateId) {
-        fetch(`/api/cities/${stateId}`)
-            .then(response => response.json())
-            .then(cities => {
-                cities.forEach(city => {
-                    const option = document.createElement('option');
-                    option.value = city.id;
-                    option.textContent = city.name;
-                    citySelect.appendChild(option);
-                });
-                citySelect.required = true;
-            });
-    }
-});
-}
 
 
 
@@ -462,46 +464,57 @@
         $('#addCountryForm').on('submit', function(e) {
             e.preventDefault();
             
-            const submitBtn = $(this).find('button[type="submit"]');
+            const form = $(this);
+            const submitBtn = form.find('button[type="submit"]');
             const spinner = submitBtn.find('.spinner-border');
             const errorDiv = $('#countryFormErrors');
+            const countryName = $('#country_name').val();
+            const countryCode = $('#country_code').val();
+            const csrfToken = $('meta[name="csrf-token"]').attr('content');
             
             // Show loading state
             submitBtn.prop('disabled', true);
             spinner.removeClass('d-none');
             errorDiv.addClass('d-none');
             
+            // Create FormData object
+            const formData = new FormData();
+            formData.append('name', countryName);
+            formData.append('code', countryCode);
+            formData.append('from_modal', '1');
+            formData.append('_token', csrfToken);
+            
+            // Use jQuery AJAX instead of fetch for better FormData handling
             $.ajax({
                 url: '{{ route("master.countries.store") }}',
-                method: 'POST',
-                data: $(this).serialize() + '&from_modal=1',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
                 headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
                 },
-                success: function(response) {
-                    if (response.success) {
+                success: function(data) {
+                    console.log('Country creation response:', data);
+                    if (data && data.success && data.country) {
                         // Add new country to the main dropdown
-                        $('#country_id').append(`<option value="${response.country.id}">${response.country.name}</option>`);
+                        $('#country_id').append(`<option value="${data.country.id}">${data.country.name}</option>`);
+                        
                         // Select the newly created country
-                        $('#country_id').val(response.country.id).trigger('change');
-                        // Close modal
+                        $('#country_id').val(data.country.id).trigger('change');
+                        
+                        // Close modal and remove backdrop
                         $('#addCountryModal').modal('hide');
-                        // Reset form
-                        $('#addCountryForm')[0].reset();
-                        // Show success message
-                        showSuccessMessage('Country added successfully!');
+                        $('.modal-backdrop').remove();
+                        $('body').removeClass('modal-open').css('padding-right', '');
                     }
                 },
-                error: function(xhr) {
-                    if (xhr.status === 422) {
-                        let errors = xhr.responseJSON.errors;
-                        let errorHtml = '<ul class="mb-0">';
-                        for (let field in errors) {
-                            errorHtml += `<li>${errors[field][0]}</li>`;
-                        }
-                        errorHtml += '</ul>';
-                        errorDiv.html(errorHtml).removeClass('d-none');
+                error: function(xhr, status, error) {
+                    console.error('Error:', error);
+                    if (xhr.responseJSON && xhr.responseJSON.errors) {
+                        let errorMessages = Object.values(xhr.responseJSON.errors).flat().join('<br>');
+                        errorDiv.html(errorMessages).removeClass('d-none');
                     } else {
                         errorDiv.html('An error occurred while adding the country.').removeClass('d-none');
                     }
@@ -518,46 +531,59 @@
         $('#addStateForm').on('submit', function(e) {
             e.preventDefault();
             
-            const submitBtn = $(this).find('button[type="submit"]');
+            const form = $(this);
+            const submitBtn = form.find('button[type="submit"]');
             const spinner = submitBtn.find('.spinner-border');
             const errorDiv = $('#stateFormErrors');
+            const stateName = $('#state_name').val();
+            const stateCode = $('#state_code').val();
+            const countryId = $('#modal_state_country_id').val();
+            const csrfToken = $('meta[name="csrf-token"]').attr('content');
             
             // Show loading state
             submitBtn.prop('disabled', true);
             spinner.removeClass('d-none');
             errorDiv.addClass('d-none');
             
+            // Create FormData object
+            const formData = new FormData();
+            formData.append('name', stateName);
+            formData.append('code', stateCode);
+            formData.append('country_id', countryId);
+            formData.append('from_modal', '1');
+            formData.append('_token', csrfToken);
+            
+            // Use jQuery AJAX instead of fetch for better FormData handling
             $.ajax({
                 url: '{{ route("master.states.store") }}',
-                method: 'POST',
-                data: $(this).serialize() + '&from_modal=1',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
                 headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
                 },
-                success: function(response) {
-                    if (response.success) {
+                success: function(data) {
+                    console.log('State creation response:', data);
+                    if (data && data.success && data.state) {
                         // Add new state to the main dropdown
-                        $('#state_id').append(`<option value="${response.state.id}">${response.state.name}</option>`);
+                        $('#state_id').append(`<option value="${data.state.id}">${data.state.name}</option>`);
+                        
                         // Select the newly created state
-                        $('#state_id').val(response.state.id).trigger('change');
-                        // Close modal
+                        $('#state_id').val(data.state.id).trigger('change');
+                        
+                        // Close modal and remove backdrop
                         $('#addStateModal').modal('hide');
-                        // Reset form
-                        $('#addStateForm')[0].reset();
-                        // Show success message
-                        showSuccessMessage('State added successfully!');
+                        $('.modal-backdrop').remove();
+                        $('body').removeClass('modal-open').css('padding-right', '');
                     }
                 },
-                error: function(xhr) {
-                    if (xhr.status === 422) {
-                        let errors = xhr.responseJSON.errors;
-                        let errorHtml = '<ul class="mb-0">';
-                        for (let field in errors) {
-                            errorHtml += `<li>${errors[field][0]}</li>`;
-                        }
-                        errorHtml += '</ul>';
-                        errorDiv.html(errorHtml).removeClass('d-none');
+                error: function(xhr, status, error) {
+                    console.error('Error:', error);
+                    if (xhr.responseJSON && xhr.responseJSON.errors) {
+                        let errorMessages = Object.values(xhr.responseJSON.errors).flat().join('<br>');
+                        errorDiv.html(errorMessages).removeClass('d-none');
                     } else {
                         errorDiv.html('An error occurred while adding the state.').removeClass('d-none');
                     }
@@ -574,46 +600,57 @@
         $('#addCityForm').on('submit', function(e) {
             e.preventDefault();
             
-            const submitBtn = $(this).find('button[type="submit"]');
+            const form = $(this);
+            const submitBtn = form.find('button[type="submit"]');
             const spinner = submitBtn.find('.spinner-border');
             const errorDiv = $('#cityFormErrors');
+            const cityName = $('#city_name').val();
+            const stateId = $('#modal_city_state_id').val();
+            const csrfToken = $('meta[name="csrf-token"]').attr('content');
             
             // Show loading state
             submitBtn.prop('disabled', true);
             spinner.removeClass('d-none');
             errorDiv.addClass('d-none');
             
+            // Create FormData object
+            const formData = new FormData();
+            formData.append('name', cityName);
+            formData.append('state_id', stateId);
+            formData.append('from_modal', '1');
+            formData.append('_token', csrfToken);
+            
+            // Use jQuery AJAX instead of fetch for better FormData handling
             $.ajax({
                 url: '{{ route("master.cities.store") }}',
-                method: 'POST',
-                data: $(this).serialize() + '&from_modal=1',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
                 headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-                    'X-Requested-With': 'XMLHttpRequest'
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
                 },
-                success: function(response) {
-                    if (response.success) {
+                success: function(data) {
+                    console.log('City creation response:', data);
+                    if (data && data.success && data.city) {
                         // Add new city to the main dropdown
-                        $('#city_id').append(`<option value="${response.city.id}">${response.city.name}</option>`);
+                        $('#city_id').append(`<option value="${data.city.id}">${data.city.name}</option>`);
+                        
                         // Select the newly created city
-                        $('#city_id').val(response.city.id);
-                        // Close modal
+                        $('#city_id').val(data.city.id).trigger('change');
+                        
+                        // Close modal and remove backdrop
                         $('#addCityModal').modal('hide');
-                        // Reset form
-                        $('#addCityForm')[0].reset();
-                        // Show success message
-                        showSuccessMessage('City added successfully!');
+                        $('.modal-backdrop').remove();
+                        $('body').removeClass('modal-open').css('padding-right', '');
                     }
                 },
-                error: function(xhr) {
-                    if (xhr.status === 422) {
-                        let errors = xhr.responseJSON.errors;
-                        let errorHtml = '<ul class="mb-0">';
-                        for (let field in errors) {
-                            errorHtml += `<li>${errors[field][0]}</li>`;
-                        }
-                        errorHtml += '</ul>';
-                        errorDiv.html(errorHtml).removeClass('d-none');
+                error: function(xhr, status, error) {
+                    console.error('Error:', error);
+                    if (xhr.responseJSON && xhr.responseJSON.errors) {
+                        let errorMessages = Object.values(xhr.responseJSON.errors).flat().join('<br>');
+                        errorDiv.html(errorMessages).removeClass('d-none');
                     } else {
                         errorDiv.html('An error occurred while adding the city.').removeClass('d-none');
                     }

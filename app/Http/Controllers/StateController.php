@@ -134,8 +134,15 @@ class StateController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'code' => 'required|string|max:10',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                \Illuminate\Validation\Rule::unique('states')->where(function ($query) use ($request) {
+                    return $query->where('country_id', $request->country_id);
+                })
+            ],
+            'code' => 'nullable|string|max:10',
             'country_id' => 'required|exists:countries,id',
         ]);
 
@@ -162,8 +169,15 @@ class StateController extends Controller
     public function update(Request $request, State $state)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'code' => 'required|string|max:10',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                \Illuminate\Validation\Rule::unique('states')->where(function ($query) use ($request) {
+                    return $query->where('country_id', $request->country_id);
+                })->ignore($state->id)
+            ],
+            'code' => 'nullable|string|max:10',
             'country_id' => 'required|exists:countries,id',
         ]);
 
