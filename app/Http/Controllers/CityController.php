@@ -151,9 +151,20 @@ class CityController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                \Illuminate\Validation\Rule::unique('cities')->where(function ($query) use ($request) {
+                    return $query->where('state_id', $request->state_id);
+                })
+            ],
             'state_id' => 'required|exists:states,id',
         ]);
+
+        // Get country_id from the selected state
+        $state = \App\Models\State::find($request->state_id);
+        $validated['country_id'] = $state->country_id;
 
         $city = City::create($validated);
 
@@ -178,9 +189,20 @@ class CityController extends Controller
     public function update(Request $request, City $city)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                \Illuminate\Validation\Rule::unique('cities')->where(function ($query) use ($request) {
+                    return $query->where('state_id', $request->state_id);
+                })->ignore($city->id)
+            ],
             'state_id' => 'required|exists:states,id',
         ]);
+
+        // Get country_id from the selected state
+        $state = \App\Models\State::find($request->state_id);
+        $validated['country_id'] = $state->country_id;
 
         $city->update($validated);
         return redirect()->route('master.cities.index')->with('success', 'City updated successfully');
