@@ -124,6 +124,7 @@ class CountryController extends Controller
 
     public function store(Request $request)
     {
+        dd("hello");
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:10',
@@ -133,6 +134,7 @@ class CountryController extends Controller
 
         // Check if it's an AJAX request
         if ($request->ajax() || $request->has('from_modal')) {
+           
             return response()->json([
                 'success' => true,
                 'message' => 'Country created successfully',
