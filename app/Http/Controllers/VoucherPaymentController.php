@@ -12,7 +12,8 @@ class VoucherPaymentController extends Controller
 {
     public function index(Request $request)
     {
-        $query = \App\Models\VoucherPayment::with([
+        // Start with base query
+        $baseQuery = \App\Models\VoucherPayment::with([
             'voucher', 
             'company',
             'freight_booking.lr.customer',
@@ -23,14 +24,49 @@ class VoucherPaymentController extends Controller
 
         // Only apply company_id filter for non-super_admin users
         if (auth()->user()->userRole->name !== 'super_admin') {
-            $query->where('company_id', auth()->user()->company_id);
+            $baseQuery->where('company_id', auth()->user()->company_id);
         }
+        
+        // Apply filters
         if ($request->filled('payment_status')) {
-            $query->where('payment_status', $request->payment_status);
+            $baseQuery->where('payment_status', $request->payment_status);
         }
-        $payments = $query->orderByDesc('id')->paginate(20);
+        
+        if ($request->filled('voucher_number')) {
+            $baseQuery->where('voucher_number', 'like', '%' . $request->voucher_number . '%');
+        }
+        
+        // Get unique voucher numbers with their latest payment and total amount
+        $voucherGroups = $baseQuery->select('voucher_number')
+            ->selectRaw('MAX(id) as latest_payment_id')
+            ->selectRaw('SUM(amount) as total_amount')
+            ->groupBy('voucher_number')
+            ->orderByDesc('latest_payment_id')
+            ->paginate(20)
+            ->appends($request->except('page'));
+            
+        // Get the actual payment records with all relationships
+        $voucherNumbers = $voucherGroups->pluck('voucher_number')->toArray();
+        $latestPaymentIds = $voucherGroups->pluck('latest_payment_id')->toArray();
+        
+        // Get the latest payment for each voucher number to display representative data
+        $payments = \App\Models\VoucherPayment::with([
+            'voucher', 
+            'company',
+            'freight_booking.lr.customer',
+            'freight_booking.lr.truck',
+            'freight_booking.lr.consignor.city',
+            'freight_booking.lr.consignee.city'
+        ])->whereIn('id', $latestPaymentIds)->get()->keyBy('voucher_number');
+        
+        // Get total amounts for each voucher
+        $totalAmounts = [];
+        foreach ($voucherGroups as $group) {
+            $totalAmounts[$group->voucher_number] = $group->total_amount;
+        }
+        
         $companies = \App\Models\Company::all();
-        return view('voucher_payments.index', compact('payments','companies'));
+        return view('voucher_payments.index', compact('payments', 'voucherGroups', 'totalAmounts', 'companies'));
     }
 
     public function create(Request $request)
@@ -461,5 +497,46 @@ class VoucherPaymentController extends Controller
         $payments = $query->orderByDesc('created_at')->paginate(15)->appends($request->query());
         
         return view('voucher_payments.daily', compact('payments', 'selectedDate'));
+    }
+    
+    /**
+     * Display details for a specific voucher number
+     */
+    public function show($voucherNumber)
+    {
+        // Get all payments for this voucher number
+        $query = VoucherPayment::with([
+            'voucher',
+            'company',
+            'freight_booking.lr.customer',
+            'freight_booking.lr.truck',
+            'freight_booking.lr.consignor.city',
+            'freight_booking.lr.consignee.city',
+            'pump'
+        ])->where('voucher_number', $voucherNumber);
+        
+        // Only apply company_id filter for non-super_admin users
+        if (auth()->user()->userRole->name !== 'super_admin') {
+            $query->where('company_id', auth()->user()->company_id);
+        }
+        
+        $payments = $query->orderByDesc('created_at')->get();
+        
+        // If no payments found, redirect back with error
+        if ($payments->isEmpty()) {
+            return redirect()->route('voucher_payments.index')
+                ->with('error', 'No payments found for voucher number: ' . $voucherNumber);
+        }
+        
+        // Get the first payment to access related data
+        $firstPayment = $payments->first();
+        
+        // Calculate total amount
+        $totalAmount = $payments->sum('amount');
+        
+        // Get freight booking details
+        $freightBooking = $firstPayment->freight_booking;
+        
+        return view('voucher_payments.show', compact('payments', 'voucherNumber', 'totalAmount', 'freightBooking'));
     }
 }
