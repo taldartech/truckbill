@@ -236,10 +236,6 @@ $(document).ready(function() {
                                             <td class="fw-bold">Contact Number:</td>
                                             <td>${data.contact_number}</td>
                                         </tr>
-                                        <tr>
-                                            <td class="fw-bold">Email:</td>
-                                            <td>${data.email}</td>
-                                        </tr>
                                     </table>
                                 </div>
                             </div>
