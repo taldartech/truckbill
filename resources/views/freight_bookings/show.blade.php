@@ -243,34 +243,28 @@
                     </div>
                     <div class="card-body">
                         <div class="row">
-                            <div class="col-md-2">
-                                <div class="info-row">
-                                    <span class="info-label">Detention:</span>
-                                    <span class="info-value">₹{{ number_format($freight_booking->detention ?? 0, 2) }}</span>
-                                </div>
-                            </div>
-                            <div class="col-md-2">
-                                <div class="info-row">
-                                    <span class="info-label">Deviation:</span>
-                                    <span class="info-value">₹{{ number_format($freight_booking->deviation ?? 0, 2) }}</span>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="info-row">
-                                    <span class="info-label">Misc. Expense:</span>
-                                    <span class="info-value">₹{{ number_format($freight_booking->misc_expense ?? 0, 2) }}</span>
-                                </div>
-                            </div>
-                            <div class="col-md-2">
-                                <div class="info-row">
-                                    <span class="info-label">Damage Amount:</span>
-                                    <span class="info-value">₹{{ number_format($freight_booking->damage_amount ?? 0, 2) }}</span>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="info-row">
-                                    <span class="info-label">Shortage Amount:</span>
-                                    <span class="info-value">₹{{ number_format($freight_booking->shortage_amount ?? 0, 2) }}</span>
+                            <div class="col-md-12">
+                                <div class="d-flex flex-wrap">
+                                    <div class="me-4 mb-2">
+                                        <span class="info-label">Detention: </span>
+                                        <span class="fw-bold">₹{{ number_format($freight_booking->detention ?? 0, 2) }}</span>
+                                    </div>
+                                    <div class="me-4 mb-2">
+                                        <span class="info-label">Deviation: </span>
+                                        <span class="fw-bold">₹{{ number_format($freight_booking->deviation ?? 0, 2) }}</span>
+                                    </div>
+                                    <div class="me-4 mb-2">
+                                        <span class="info-label">Misc. Expense: </span>
+                                        <span class="fw-bold">₹{{ number_format($freight_booking->misc_expense ?? 0, 2) }}</span>
+                                    </div>
+                                    <div class="me-4 mb-2">
+                                        <span class="info-label">Damage Amount: </span>
+                                        <span class="fw-bold">₹{{ number_format($freight_booking->damage_amount ?? 0, 2) }}</span>
+                                    </div>
+                                    <div class="me-4 mb-2">
+                                        <span class="info-label">Shortage Amount: </span>
+                                        <span class="fw-bold">₹{{ number_format($freight_booking->shortage_amount ?? 0, 2) }}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
