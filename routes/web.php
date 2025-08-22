@@ -134,8 +134,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/trucks/report', [TruckController::class, 'report'])->name('trucks.report');
 
     // Lorry Receipt CRUD
-    Route::resource('lorry_receipts', LorryReceiptController::class);
     Route::get('/lorry_receipts/data', [LorryReceiptController::class, 'getLorryReceiptsData'])->name('lorry_receipts.data');
+    Route::resource('lorry_receipts', LorryReceiptController::class);
     Route::post('lorry_receipts/bulk-payment', [LorryReceiptController::class, 'bulkPayment'])->name('lorry_receipts.bulkPayment');
     Route::post('lorry_receipts/bulk-voucher-payment', [LorryReceiptController::class, 'bulkVoucherPayment'])->name('lorry_receipts.bulkVoucherPayment');
     Route::get('lorry_receipts/lrs-by-memo/{memo_id}', [LorryReceiptController::class, 'getLRsByMemo'])->name('lorry_receipts.lrsByMemo');
