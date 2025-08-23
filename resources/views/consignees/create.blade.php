@@ -606,9 +606,9 @@
             const errorDiv = $('#cityFormErrors');
             const cityName = $('#modal_city_name').val();
             const stateId = $('#modal_city_state_id').val();
-            const countryId = $('#modal_city_country_id').val();
+          
             const csrfToken = $('meta[name="csrf-token"]').attr('content');
-            console.log(cityName, stateId, countryId, csrfToken);
+            console.log(cityName, stateId, csrfToken);
             // Show loading state
             submitBtn.prop('disabled', true);
             spinner.removeClass('d-none');
@@ -618,7 +618,7 @@
             const formData = new FormData();
             formData.append('name', cityName);
             formData.append('state_id', stateId);
-            formData.append('country_id', countryId);
+          
 
             formData.append('from_modal', '1');
             formData.append('_token', csrfToken);
