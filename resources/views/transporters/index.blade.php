@@ -33,8 +33,8 @@
                         <th>Name</th>
                         {{-- <th>GST Number</th> --}}
                         {{-- <th>GST Type</th> --}}
-                        <th>PAN Number</th>
-                        <th>Location</th>
+                        <th>Short Name</th>
+                        <th>Contact Person</th>
                         <th>Contact Number</th>
                         <th>Advance Amount</th>
                         {{-- <th>Company</th> --}}
@@ -166,13 +166,13 @@ $(document).ready(function() {
             },
            
             {
-                data: 'pan_number',
-                name: 'pan_number',
+                data: 'short_name',
+                name: 'short_name',
                 width: '120px'
             },
                 {
-    data: 'location',
-    name: 'location',
+    data: 'contact_person',
+    name: 'contact_person',
     width: '150px'
 },
 {

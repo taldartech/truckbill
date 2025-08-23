@@ -64,13 +64,11 @@ class TransporterController extends Controller
                         case 1: // Name
                             $query->where('transporters.name', 'like', "%{$searchValue}%");
                             break;
-                        case 2: // PAN Number
-                            $query->where('transporters.pan_number', 'like', "%{$searchValue}%");
+                        case 2: // Short Name
+                            $query->where('transporters.short_name', 'like', "%{$searchValue}%");
                             break;
-                        case 3: // Location
-                            $query->whereHas('city', function($q) use ($searchValue) {
-                                $q->where('name', 'like', "%{$searchValue}%");
-                            });
+                        case 3: // Contact Person
+                            $query->where('transporters.contact_person_name', 'like', "%{$searchValue}%");
                             break;
                         case 4: // Contact Number
                             $query->where('transporters.mobile_number', 'like', "%{$searchValue}%");
@@ -104,13 +102,11 @@ class TransporterController extends Controller
                 case 1: // Name
                     $query->orderBy('transporters.name', $orderDirection);
                     break;
-                case 2: // PAN Number
-                    $query->orderBy('transporters.pan_number', $orderDirection);
+                case 2: // Short Number
+                    $query->orderBy('transporters.short_name', $orderDirection);
                     break;
-                case 3: // Location
-                    $query->leftJoin('cities', 'cities.id', '=', 'transporters.city_id')
-                          ->orderBy('cities.name', $orderDirection)
-                          ->select('transporters.*');
+                case 3: // Contact Person
+                    $query->orderBy('transporters.contact_person_name', $orderDirection);
                     break;
                 case 4: // Contact Number
                     $query->orderBy('transporters.mobile_number', $orderDirection);
@@ -151,8 +147,9 @@ class TransporterController extends Controller
             return [
                 'sr_no' => $start + $index + 1,
                 'name' => '<a href="javascript:void(0)" class="text-primary fw-bold transporter-name-link" data-id="' . $transporter->id . '" style="cursor: pointer; text-decoration: none;">' . ($transporter->name ?: '-') . '</a>',
-                'pan_number' => $transporter->pan_number ?: '-',
-                'location' => optional($transporter->city)->name ?: '-',
+                'short_name' => $transporter->short_name ?: '-',
+                'contact_person' => $transporter->contact_person_name ?: '-',
+               
                 'contact_number' => $transporter->mobile_number ?: '-',
                 'declaration_given' => $transporter->declaration_given ? 'Yes' : 'No',
                 'advance_amount' => '₹' . number_format($transporter->advance_amount ?: 0, 2),
