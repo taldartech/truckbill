@@ -144,7 +144,7 @@
                         @error('declaration_given') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4">
-                        <label for="total_trucks" class="form-label">Total Trucks *</label>
+                        <label for="total_trucks" class="form-label">Total Trucks</label>
                         <input type="number" class="form-control @error('total_trucks') is-invalid @enderror" id="total_trucks" name="total_trucks" min="0" required value="{{ old('total_trucks', 0) }}" placeholder="Enter total trucks">
                         @error('total_trucks') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
