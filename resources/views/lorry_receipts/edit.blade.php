@@ -1665,5 +1665,64 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 });
+// Handle Add Goods Type Form Submission
+document.getElementById('addGoodsTypeForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    let form = this;
+    let submitBtn = form.querySelector('button[type="submit"]');
+    let spinner = submitBtn.querySelector('.spinner-border');
+    let errorBox = document.getElementById('goodsTypeFormErrors');
+
+    // Reset error
+    errorBox.classList.add('d-none');
+    errorBox.innerHTML = '';
+
+    // Show spinner
+    spinner.classList.remove('d-none');
+    submitBtn.disabled = true;
+
+    fetch("{{ route('master.goods-types.store') }}", {
+        method: "POST",
+        headers: {
+            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            name: document.getElementById('goods_type_name').value,
+            from_modal: true
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        spinner.classList.add('d-none');
+        submitBtn.disabled = false;
+
+        if (data.success) {
+            // Add new option to Goods Type dropdown
+            let select = document.getElementById('good_type');
+            let newOption = new Option(data.goodsType.name, data.goodsType.name, true, true);
+            select.add(newOption);
+            select.value = data.goodsType.name;
+
+            // Close modal
+            bootstrap.Modal.getInstance(document.getElementById('addGoodsTypeModal')).hide();
+
+            // Reset form
+            form.reset();
+        } else {
+            errorBox.classList.remove('d-none');
+            errorBox.innerHTML = 'Failed to add goods type';
+        }
+    })
+    .catch(error => {
+        spinner.classList.add('d-none');
+        submitBtn.disabled = false;
+        errorBox.classList.remove('d-none');
+        errorBox.innerHTML = '⚠️ Error: ' + error.message;
+    });
+});
+
 </script>
 

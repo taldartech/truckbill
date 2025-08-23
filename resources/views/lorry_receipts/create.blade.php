@@ -232,6 +232,7 @@
                     <input type="hidden" id="lane" name="lane" value="Road">
                     <div class="col-md-4">
                         <label for="good_type" class="form-label">Goods Type *</label>
+                        <div class="input-group">
                         <select class="form-select" id="good_type" name="good_type" required>
                             <option value="">Select Goods Type</option>
                             @foreach($goodsTypes as $goodsType)
@@ -240,6 +241,10 @@
                                 </option>
                             @endforeach
                         </select>
+                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addGoodsTypeModal" title="Add New Goods Type">
+                            <i class="bi bi-plus"></i>
+                        </button>
+                        </div>
                         @error('good_type') <div class="text-danger">{{ $message }}</div> @enderror
                         <div class="invalid-feedback">Please select a goods type.</div>
                     </div>
@@ -293,6 +298,38 @@
         </div>
     </form>
 </div>
+<!-- Add Goods Type Modal -->
+<div class="modal fade" id="addGoodsTypeModal" tabindex="-1" aria-labelledby="addGoodsTypeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-md">
+      <div class="modal-content">
+        <form id="addGoodsTypeForm">
+          @csrf
+          <div class="modal-header">
+            <h5 class="modal-title" id="addGoodsTypeModalLabel">Add Goods Type</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+  
+          <div class="modal-body">
+            <div id="goodsTypeFormErrors" class="alert alert-danger d-none"></div>
+  
+            <div class="mb-3">
+              <label for="goods_type_name" class="form-label">Goods Type Name *</label>
+              <input type="text" class="form-control" id="goods_type_name" name="name" required>
+            </div>
+          </div>
+  
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-info">
+              <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+              Submit
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
 
 <!-- Load Select2 from CDN -->
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -1181,7 +1218,74 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 });
+// Handle Add Goods Type Form Submission
+document.getElementById('addGoodsTypeForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    let form = this;
+    let submitBtn = form.querySelector('button[type="submit"]');
+    let spinner = submitBtn.querySelector('.spinner-border');
+    let errorBox = document.getElementById('goodsTypeFormErrors');
+
+    // Reset error
+    errorBox.classList.add('d-none');
+    errorBox.innerHTML = '';
+
+    // Show spinner
+    spinner.classList.remove('d-none');
+    submitBtn.disabled = true;
+
+    fetch("{{ route('master.goods-types.store') }}", {
+        method: "POST",
+        headers: {
+            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            name: document.getElementById('goods_type_name').value,
+            from_modal: true
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        spinner.classList.add('d-none');
+        submitBtn.disabled = false;
+
+        if (data.success) {
+            // Add new option to Goods Type dropdown
+            $('#goodsTypeModal').modal('hide');
+
+            // ✅ Remove backdrop if still visible
+            $('.modal-backdrop').remove();
+            $('body').removeClass('modal-open');
+            let select = document.getElementById('good_type');
+
+            let newOption = new Option(data.goodsType.name, data.goodsType.name, true, true);
+            select.add(newOption);
+            select.value = data.goodsType.name;
+
+            // Close modal
+            bootstrap.Modal.getInstance(document.getElementById('addGoodsTypeModal')).hide();
+
+            // Reset form
+            form.reset();
+        } else {
+            errorBox.classList.remove('d-none');
+            errorBox.innerHTML = 'Failed to add goods type';
+        }
+    })
+    .catch(error => {
+        spinner.classList.add('d-none');
+        submitBtn.disabled = false;
+        errorBox.classList.remove('d-none');
+        errorBox.innerHTML = '⚠️ Error: ' + error.message;
+    });
+});
+
+
 </script>
 
 
 @endsection
+

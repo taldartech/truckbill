@@ -114,11 +114,19 @@ class GoodsTypeController extends Controller
 
     public function store(Request $request)
     {
+       
         $validated = $request->validate([
             'name' => 'required|string|max:255',
         ]);
 
-        GoodsType::create($validated);
+        $goodsType = GoodsType::create($validated);
+        if ($request->ajax() || $request->has('from_modal')) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Goods type created successfully',
+                'goodsType' => $goodsType
+            ]);
+        }
         return redirect()->route('master.goods-types.index')->with('success', 'Goods type created successfully');
     }
 
