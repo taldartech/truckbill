@@ -347,9 +347,12 @@ class TransporterController extends Controller
         // PAN active → check 4th character
         $fourthChar = strtoupper(substr($validated['pan_number'], 3, 1));
         $validChars = ['C', 'F', 'A', 'B', 'J', 'L', 'T'];
+        $nonValidChars = ['P', 'H'];
 
         if (in_array($fourthChar, $validChars)) {
             $validated['tds_percentage'] = 2.00;
+        } else if (in_array($fourthChar, $nonValidChars)) {
+            $validated['tds_percentage'] = 1.00;
         } else {
             // Default if PAN active but not in the given list
             $validated['tds_percentage'] = null;
@@ -455,9 +458,12 @@ class TransporterController extends Controller
         // PAN active → check 4th character
         $fourthChar = strtoupper(substr($validated['pan_number'], 3, 1));
         $validChars = ['C', 'F', 'A', 'B', 'J', 'L', 'T'];
+        $nonValidChars = ['P', 'H'];
 
         if (in_array($fourthChar, $validChars)) {
             $validated['tds_percentage'] = 2.00;
+        } else if (in_array($fourthChar, $nonValidChars)) {
+            $validated['tds_percentage'] = 1.00;
         } else {
             // Default if PAN active but not in the given list
             $validated['tds_percentage'] = 20.00;
@@ -481,9 +487,12 @@ class TransporterController extends Controller
             // PAN is active, check 4th character
             $fourthChar = strtoupper(substr($panNumber, 3, 1));
             $validChars = ['C', 'F', 'A', 'B', 'J', 'L', 'T'];
+            $nonValidChars = ['P', 'H'];
             
             if (in_array($fourthChar, $validChars)) {
                 $tdsPercentage = 2.00;
+            } else if (in_array($fourthChar, $nonValidChars)) {
+                $tdsPercentage = 1.00;
             } else {
                 $tdsPercentage = 20.00;
             }

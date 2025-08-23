@@ -262,8 +262,10 @@ class TruckOwnerController extends Controller
                 $fourthChar = strtoupper(substr($validated['pan_number'], 3, 1));
                 if (in_array($fourthChar, ['P', 'H'])) {
                     $validated['tds_percentage'] = 1.00;
+                } else if (in_array($fourthChar, ['C', 'F', 'A', 'B', 'J', 'L', 'T'])) {
+                    $validated['tds_percentage'] = 2.00;
                 } else {
-                    $validated['tds_percentage'] = null;
+                    $validated['tds_percentage'] = 20.00;
                 }
             }
         }
@@ -293,8 +295,10 @@ class TruckOwnerController extends Controller
                 $fourthChar = strtoupper(substr($panNumber, 3, 1));
                 if (in_array($fourthChar, ['P', 'H'])) {
                     $tdsPercentage = 1.00;
+                } else if (in_array($fourthChar, ['C', 'F', 'A', 'B', 'J', 'L', 'T'])) {
+                    $tdsPercentage = 2.00;
                 } else {
-                    $tdsPercentage = 0.00; // Changed from null to 0.00 for display consistency
+                    $tdsPercentage = 20.00; // Changed from null to 0.00 for display consistency
                 }
             }
         }
@@ -463,6 +467,8 @@ class TruckOwnerController extends Controller
                 $fourthChar = strtoupper(substr($validated['pan_number'], 3, 1));
                 if (in_array($fourthChar, ['P', 'H'])) {
                     $validated['tds_percentage'] = 1.00;
+                } else if (in_array($fourthChar, ['C', 'F', 'A', 'B', 'J', 'L', 'T'])) {
+                    $validated['tds_percentage'] = 2.00;
                 } else {
                     $validated['tds_percentage'] = 20.00;
                 }
