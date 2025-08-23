@@ -100,6 +100,7 @@
                             const option = document.createElement('option');
                             option.value = state.id;
                             option.text = state.name;
+                            option.selected = state.id === {{ old('state_id', isset($city) ? $city->state_id : '') }};
                             stateSelect.appendChild(option);
                         });
                         

@@ -184,7 +184,8 @@ class CityController extends Controller
     public function edit(City $city)
     {
         $states = State::with('country')->get();
-        return view('master.cities-form', compact('city', 'states'));
+        $countries = Country::all();
+        return view('master.cities-form', compact('city', 'states', 'countries'));
     }
 
     public function update(Request $request, City $city)
