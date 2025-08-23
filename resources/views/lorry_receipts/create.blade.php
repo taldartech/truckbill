@@ -329,7 +329,9 @@ $(document).ready(function() {
                 $('#truck_id').select2({
                     placeholder: 'Search and select truck...',
                     allowClear: true,
-                    width: '100%'
+                    width: '100%',
+                    minimumInputLength: 0,
+                    matcher: matchCustom
                 });
                 console.log('✅ Select2 initialized successfully for truck dropdown');
             } else {
@@ -341,7 +343,9 @@ $(document).ready(function() {
                 $('#customer_id').select2({
                     placeholder: 'Search and select customer...',
                     allowClear: true,
-                    width: '100%'
+                    width: '100%',
+                    minimumInputLength: 0,
+                    matcher: matchCustom
                 });
                 console.log('✅ Select2 initialized successfully for customer dropdown');
             } else {
@@ -353,7 +357,9 @@ $(document).ready(function() {
                 $('#consignor_id').select2({
                     placeholder: 'Search and select consignor...',
                     allowClear: true,
-                    width: '100%'
+                    width: '100%',
+                    minimumInputLength: 0,
+                    matcher: matchCustom
                 });
                 console.log('✅ Select2 initialized successfully for consignor dropdown');
             } else {
@@ -365,11 +371,47 @@ $(document).ready(function() {
                 $('#consignee_id').select2({
                     placeholder: 'Search and select consignee...',
                     allowClear: true,
-                    width: '100%'
+                    width: '100%',
+                    minimumInputLength: 0,
+                    matcher: matchCustom
                 });
                 console.log('✅ Select2 initialized successfully for consignee dropdown');
             } else {
                 console.error('❌ Consignee element not found');
+            }
+            
+            // Initialize transporter_type dropdown
+            if ($('#transporter_type').length > 0) {
+                $('#transporter_type').select2({
+                    placeholder: 'Select Type...',
+                    allowClear: true,
+                    width: '100%'
+                });
+                console.log('✅ Select2 initialized successfully for transporter type dropdown');
+            } else {
+                console.error('❌ Transporter type element not found');
+            }
+            
+            // Custom matcher function for better searching
+            function matchCustom(params, data) {
+                // If there are no search terms, return all of the data
+                if ($.trim(params.term) === '') {
+                    return data;
+                }
+                
+                // Do not display the item if there is no 'text' property
+                if (typeof data.text === 'undefined') {
+                    return null;
+                }
+                
+                // `params.term` should be the term that is used for searching
+                // `data.text` is the text that is displayed for the data object
+                if (data.text.toLowerCase().indexOf(params.term.toLowerCase()) > -1) {
+                    return data;
+                }
+                
+                // Return `null` if the term should not be displayed
+                return null;
             }
         }, 100);
     }).catch(() => {
