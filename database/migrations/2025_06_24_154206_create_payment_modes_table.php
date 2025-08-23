@@ -17,10 +17,11 @@ return new class extends Migration
         // Insert initial payment modes
         \DB::table('payment_modes')->insert([
             ['name' => 'cash'],
-            ['name' => 'bank'],
-            ['name' => 'online'],
-            ['name' => 'advance'],
-            ['name' => 'fuel'],
+            ['name' => 'bank transfer'],
+            ['name' => 'cheque'],
+            ['name' => 'upi/qr'],
+            ['name' => 'adjust in advance'],
+            ['name' => 'fuel(paid to pump)'],
         ]);
     }
 
