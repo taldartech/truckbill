@@ -13,11 +13,14 @@ class VoucherPayment extends Model
         'voucher_number',
         'payment_type',
         'payment_mode',
+        'payment_type_id',
+        'payment_mode_id',
         'amount',
         'remark',
         'payment_status',
         'company_id',
-        'pump_id'
+        'pump_id',
+        'reference_transaction_id'
     ];
 
     public function voucher()

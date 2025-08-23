@@ -760,6 +760,8 @@ class FreightBookingController extends Controller
             
             // Validate the request
             $validated = $request->validate([
+                'payment_type_id' => 'required|exists:payment_types,id',
+                'payment_mode_id' => 'required|exists:payment_modes,id',
                 'payment_type' => 'required|string',
                 'payment_mode' => 'required|string',
                 'booking_ids' => 'required|array',
@@ -785,12 +787,18 @@ class FreightBookingController extends Controller
                 if ($amount > 0) {
                     $freightBooking = FreightBooking::findOrFail($bookingId);
                     
+                    // Get payment type and mode from their IDs
+                    $paymentType = \App\Models\PaymentType::find($validated['payment_type_id']);
+                    $paymentMode = \App\Models\PaymentMode::find($validated['payment_mode_id']);
+                    
                     // Create voucher payment record
                     $voucherPayment = \App\Models\VoucherPayment::create([
                         'freight_booking_id' => $bookingId,
                         'voucher_number' => $freightBooking->voucher_number,
-                        'payment_type' => $validated['payment_type'],
-                        'payment_mode' => $validated['payment_mode'],
+                        'payment_type' => $paymentType->name,
+                        'payment_mode' => $paymentMode->name,
+                        'payment_type_id' => $validated['payment_type_id'],
+                        'payment_mode_id' => $validated['payment_mode_id'],
                         'amount' => $amount,
                         'remark' => $validated['notes'] ?? null,
                         'payment_status' => 'paid',
