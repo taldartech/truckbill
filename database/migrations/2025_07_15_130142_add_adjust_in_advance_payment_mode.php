@@ -7,18 +7,12 @@ return new class extends Migration
 {
     public function up()
     {
-        // Insert Adjust in Advance payment mode
-        DB::table('payment_modes')->insert([
-            'id' => 4,
-            'name' => 'Adjust in Advance',
-            'created_at' => now(),
-            'updated_at' => now()
-        ]);
+        // This payment mode is now added in the initial migration
+        // No action needed here
     }
 
     public function down()
     {
-        // Remove Adjust in Advance payment mode
-        DB::table('payment_modes')->where('id', 4)->delete();
+        // No action needed as the payment mode is managed in the initial migration
     }
 };
