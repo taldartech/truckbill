@@ -268,6 +268,7 @@
                     <label class="form-label">Delivery Status</label>
                     <div class="d-flex gap-4">
                         <div class="form-check form-switch">
+                            <input type="hidden" name="is_delivered" value="{{ $freight_booking->is_delivered }}">
                             <input class="form-check-input" type="checkbox" id="is_delivered" name="is_delivered" value="1" {{ old('is_delivered', $freight_booking->is_delivered) ? 'checked' : '' }} {{ ($freight_booking->is_delivered && $freight_booking->lr && $freight_booking->lr->memo_id) || $freight_booking->is_cancelled ? 'disabled' : '' }}>
                             <label class="form-check-label" for="is_delivered">
                                 <i class="fas fa-truck"></i> Delivered
@@ -279,6 +280,7 @@
                             </label>
                         </div>
                         <div class="form-check form-switch">
+                            <input type="hidden" name="is_cancelled" value="{{ $freight_booking->is_cancelled }}">
                             <input class="form-check-input" type="checkbox" id="is_cancelled" name="is_cancelled" value="1" {{ old('is_cancelled', $freight_booking->is_cancelled) ? 'checked' : '' }} {{ $freight_booking->is_delivered || $freight_booking->is_cancelled ? 'disabled' : '' }}>
                             <label class="form-check-label" for="is_cancelled">
                                 <i class="fas fa-times-circle"></i> Cancelled
