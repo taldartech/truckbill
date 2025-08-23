@@ -66,31 +66,33 @@
                
                 <!--begin::Col-->
                 <div class="col-md-4">
-                    <label for="payment_type" class="form-label">Payment Type *</label>
-                    <select name="payment_type" id="payment_type" class="form-select" required>
+                    <label for="payment_type_id" class="form-label">Payment Type *</label>
+                    <select name="payment_type_id" id="payment_type_id" class="form-select" required>
                         <option value="">Select Payment Type</option>
                         @foreach($paymentTypes as $paymentType)
-                            <option value="{{ $paymentType->name }}" {{ old('payment_type', $voucher_payment->payment_type) == $paymentType->name ? 'selected' : '' }}>
+                            <option value="{{ $paymentType->id }}" {{ old('payment_type_id', $voucher_payment->payment_type_id) == $paymentType->id ? 'selected' : '' }}>
                                 {{ $paymentType->name }}
                             </option>
                         @endforeach
                     </select>
-                    @error('payment_type') <div class="text-danger">{{ $message }}</div> @enderror
+                    <input type="hidden" name="payment_type" id="payment_type" value="{{ old('payment_type', $voucher_payment->payment_type) }}">
+                    @error('payment_type_id') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please select a payment type.</div>
                 </div>
                 <!--end::Col-->
                 <!--begin::Col-->
                 <div class="col-md-4">
-                    <label for="payment_mode" class="form-label">Payment Mode *</label>
-                    <select name="payment_mode" id="payment_mode" class="form-select" required>
+                    <label for="payment_mode_id" class="form-label">Payment Mode *</label>
+                    <select name="payment_mode_id" id="payment_mode_id" class="form-select" required>
                         <option value="">Select Payment Mode</option>
                         @foreach($paymentModes as $paymentMode)
-                            <option value="{{ $paymentMode->name }}" {{ old('payment_mode', $voucher_payment->payment_mode) == $paymentMode->name ? 'selected' : '' }}>
+                            <option value="{{ $paymentMode->id }}" {{ old('payment_mode_id', $voucher_payment->payment_mode_id) == $paymentMode->id ? 'selected' : '' }}>
                                 {{ $paymentMode->name }}
                             </option>
                         @endforeach
                     </select>
-                    @error('payment_mode') <div class="text-danger">{{ $message }}</div> @enderror
+                    <input type="hidden" name="payment_mode" id="payment_mode" value="{{ old('payment_mode', $voucher_payment->payment_mode) }}">
+                    @error('payment_mode_id') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please select a payment mode.</div>
                 </div>
                 <!--end::Col-->
@@ -185,21 +187,43 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const paymentModeSelect = document.getElementById('payment_mode');
+        const paymentModeIdSelect = document.getElementById('payment_mode_id');
+        const paymentModeInput = document.getElementById('payment_mode');
+        const paymentTypeIdSelect = document.getElementById('payment_type_id');
+        const paymentTypeInput = document.getElementById('payment_type');
         const pumpDropdownContainer = document.getElementById('pumpDropdownContainer');
         const pumpSelect = document.getElementById('pump_id');
     
+        // Update hidden input with text value when select changes
+        paymentModeIdSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            paymentModeInput.value = selectedOption.text;
+            togglePumpDropdown();
+        });
+        
+        paymentTypeIdSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            paymentTypeInput.value = selectedOption.text;
+        });
+        
+        // Set initial values
+        if (paymentModeIdSelect.selectedIndex > 0) {
+            paymentModeInput.value = paymentModeIdSelect.options[paymentModeIdSelect.selectedIndex].text;
+        }
+        
+        if (paymentTypeIdSelect.selectedIndex > 0) {
+            paymentTypeInput.value = paymentTypeIdSelect.options[paymentTypeIdSelect.selectedIndex].text;
+        }
+    
         function togglePumpDropdown() {
-            const selectedValue = paymentModeSelect.value.toLowerCase();
-            if (selectedValue === 'fuel') {
+            const selectedText = paymentModeIdSelect.options[paymentModeIdSelect.selectedIndex]?.text.toLowerCase() || '';
+            if (selectedText === 'fuel') {
                 pumpDropdownContainer.style.display = 'block';
             } else {
                 pumpDropdownContainer.style.display = 'none';
                 pumpSelect.value = ''; // Reset pump selection
             }
         }
-    
-        paymentModeSelect.addEventListener('change', togglePumpDropdown);
     
         // Run on page load (for edit forms or validation errors)
         togglePumpDropdown();
@@ -209,7 +233,7 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const paymentModeSelect = document.getElementById('payment_mode');
+        const paymentModeIdSelect = document.getElementById('payment_mode_id');
         const paymentStatusSelect = document.getElementById('payment_status');
         const paidOption = document.getElementById('paidOption');
         const referenceBox = document.getElementById('reference_transaction_box');
@@ -219,7 +243,8 @@
         const dbStatus = @json($currentStatus); // ← value from DB like 'in-progress'
 
         function updateStatusOptionsAndReferenceBox() {
-            const selectedMode = paymentModeSelect.value.toLowerCase();
+            const selectedOption = paymentModeIdSelect.options[paymentModeIdSelect.selectedIndex];
+            const selectedMode = selectedOption ? selectedOption.text.toLowerCase() : '';
             const selectedStatus = paymentStatusSelect.value.toLowerCase();
 
             console.log("Selected Payment Mode:", selectedMode);
@@ -254,7 +279,7 @@
             }
         }
 
-        paymentModeSelect.addEventListener('change', updateStatusOptionsAndReferenceBox);
+        paymentModeIdSelect.addEventListener('change', updateStatusOptionsAndReferenceBox);
         paymentStatusSelect.addEventListener('change', updateStatusOptionsAndReferenceBox);
         updateStatusOptionsAndReferenceBox(); // run once on page load
     });

@@ -116,6 +116,8 @@ class VoucherPaymentController extends Controller
         $data = $request->validate([
             'freight_booking_id' => 'required|exists:freight_bookings,id',
             'voucher_number' => 'required|string',
+            'payment_type_id' => 'required|exists:payment_types,id',
+            'payment_mode_id' => 'required|exists:payment_modes,id',
             'payment_type' => 'required|string',
             'payment_mode' => 'required|string',
             'amount' => 'required|numeric|min:0',
@@ -189,6 +191,8 @@ class VoucherPaymentController extends Controller
             'freight_booking_id' => 'required|exists:freight_bookings,id',
             'voucher_number' => 'required|string',
           
+            'payment_type_id' => 'required|exists:payment_types,id',
+            'payment_mode_id' => 'required|exists:payment_modes,id',
             'payment_type' => 'required|string',
             'payment_mode' => 'required|string',
             
