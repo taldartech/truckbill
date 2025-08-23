@@ -1555,20 +1555,26 @@ function submitVoucherPayment() {
     const referenceId = document.getElementById('referenceId')?.value;
     const remarks = document.getElementById('paymentRemarks')?.value;
     
-    // Get the text values instead of IDs
-    const paymentType = paymentTypeSelect?.options[paymentTypeSelect.selectedIndex]?.text || '';
-    const paymentMode = paymentModeSelect?.options[paymentModeSelect.selectedIndex]?.text || '';
+    // Get the selected values
+    const paymentTypeValue = paymentTypeSelect?.value || '';
+    const paymentModeValue = paymentModeSelect?.value || '';
     
     // Validate required fields
-    if (!paymentType) {
+    if (!paymentTypeValue) {
         alert('Please select a payment type');
+        paymentTypeSelect.focus();
         return;
     }
     
-    if (!paymentMode) {
+    if (!paymentModeValue) {
         alert('Please select a payment mode');
+        paymentModeSelect.focus();
         return;
     }
+    
+    // Get the text values for display purposes
+    const paymentType = paymentTypeSelect?.options[paymentTypeSelect.selectedIndex]?.text || '';
+    const paymentMode = paymentModeSelect?.options[paymentModeSelect.selectedIndex]?.text || '';
     
     // Get selected freight booking IDs
     const selectedIds = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value);
@@ -1588,7 +1594,10 @@ function submitVoucherPayment() {
     // Create form data
     const formData = new FormData();
     
-    // Append payment type and mode (now using text values directly)
+    // Append payment type and mode IDs for backend processing
+    formData.append('payment_type_id', paymentTypeValue);
+    formData.append('payment_mode_id', paymentModeValue);
+    // Also append text values for display if needed
     formData.append('payment_type', paymentType);
     formData.append('payment_mode', paymentMode);
     formData.append('total_amount', totalAmount.toFixed(2));
