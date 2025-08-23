@@ -130,7 +130,64 @@
                 {{-- Advance amount is now hidden as per truck owner requirements --}}
             </div>
             <div class="card mb-4 p-3 bg-light">
-            <div class="row mb-3">
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="country_id" class="form-label">Country *</label>
+                        <div class="input-group">
+                            <select class="form-select" id="country_id" name="country_id" required>
+                                <option value="">Select Country</option>
+                                @foreach($countries as $country)
+                                    <option value="{{ $country->id }}" {{ old('country_id') == $country->id ? 'selected' : '' }}>
+                                        {{ $country->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addCountryModal" title="Add New Country">
+                                <i class="bi bi-plus"></i>
+                            </button>
+                        </div>
+                        @error('country_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label for="state_id" class="form-label">State *</label>
+                        <div class="input-group">
+                            <select class="form-select" id="state_id" name="state_id" required>
+                                <option value="">Select State</option>
+                                @if(old('country_id'))
+                                    @foreach($states as $state)
+                                        <option value="{{ $state->id }}" {{ old('state_id') == $state->id ? 'selected' : '' }}>
+                                            {{ $state->name }}
+                                        </option>
+                                    @endforeach
+                                @endif
+                            </select>
+                            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addStateModal" title="Add New State">
+                                <i class="bi bi-plus"></i>
+                            </button>
+                        </div>
+                        @error('state_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label for="city_id" class="form-label">City *</label>
+                        <div class="input-group">
+                            <select class="form-select" id="city_id" name="city_id" required>
+                                <option value="">Select City</option>
+                                @if(old('state_id'))
+                                    @foreach($cities as $city)
+                                        <option value="{{ $city->id }}" {{ old('city_id') == $city->id ? 'selected' : '' }}>
+                                            {{ $city->name }}
+                                        </option>
+                                    @endforeach
+                                @endif
+                            </select>
+                            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addCityModal" title="Add New City">
+                                <i class="bi bi-plus"></i>
+                            </button>
+                        </div>
+                        @error('city_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+            {{-- <div class="row mb-3">
                 <div class="col-md-4">
                     <label for="country_id" class="form-label">Country * </label>
                     <select class="form-select" id="country_id" name="country_id" required>
@@ -177,7 +234,7 @@
                 </div>
                 
                 <!--end::Col-->
-            </div>  
+            </div>   --}}
             <div class="row mb-3">          
                 <!--begin::Col-->
                 <div class="col-md-6">
@@ -508,6 +565,139 @@
         </div>
     </div>
 </div>
+<div class="modal fade" id="addCountryModal" tabindex="-1" aria-labelledby="addCountryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form id="addCountryForm">
+          @csrf
+          <div class="modal-header">
+            <h5 class="modal-title" id="addCountryModalLabel">Add Country</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+  
+          <div class="modal-body">
+            <div id="countryFormErrors" class="alert alert-danger d-none"></div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="country_name" class="form-label">Country Name *</label>
+                <input type="text" class="form-control" id="country_name" name="name" required>
+              </div>
+  
+              <div class="col-md-6">
+                <label for="country_code" class="form-label">Country Code *</label>
+                <input type="text" class="form-control" id="country_code" name="code" required>
+              </div>
+            </div>
+          </div>
+  
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-info">
+              <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+              Submit form
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <!-- Add State Modal -->
+<div class="modal fade" id="addStateModal" tabindex="-1" aria-labelledby="addStateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form id="addStateForm">
+          @csrf
+          <div class="modal-header">
+            <h5 class="modal-title" id="addStateModalLabel">Add State</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+  
+          <div class="modal-body">
+            <div id="stateFormErrors" class="alert alert-danger d-none"></div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="state_name" class="form-label">State Name *</label>
+                <input type="text" class="form-control" id="state_name" name="name" required>
+              </div>
+  
+              <div class="col-md-6">
+                <label for="state_code" class="form-label">State Code *</label>
+                <input type="text" class="form-control" id="state_code" name="code" required maxlength="10">
+              </div>
+  
+              <div class="col-md-12">
+                <label for="modal_state_country_id" class="form-label">Country *</label>
+                <select class="form-select" id="modal_state_country_id" name="country_id" required>
+                  <option value="">Select Country</option>
+                  @foreach($countries as $country)
+                    <option value="{{ $country->id }}">{{ $country->name }}</option>
+                  @endforeach
+                </select>
+              </div>
+            </div>
+          </div>
+  
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-info">
+              <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+              Submit form
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <!-- Add City Modal -->
+<div class="modal fade" id="addCityModal" tabindex="-1" aria-labelledby="addCityModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form id="addCityForm">
+          @csrf
+          <div class="modal-header">
+            <h5 class="modal-title" id="addCityModalLabel">Add City</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+  
+          <div class="modal-body">
+            <div id="cityFormErrors" class="alert alert-danger d-none"></div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="modal_city_name" class="form-label">City Name *</label>
+                <input type="text" class="form-control" id="modal_city_name" name="name" required>
+              </div>
+
+              <div class="col-md-6">
+                <label for="modal_city_country_id" class="form-label">Country *</label>
+                <select class="form-select" id="modal_city_country_id" name="country_id" required>
+                  <option value="">Select Country</option>
+                  @foreach($countries as $country)
+                    <option value="{{ $country->id }}">{{ $country->name }}</option>
+                  @endforeach
+                </select>
+                
+              </div>
+              
+              <div class="col-md-6">
+                <label for="modal_city_state_id" class="form-label">State *</label>
+                <select class="form-select" id="modal_city_state_id" name="state_id" required>
+                  <option value="">Select State</option>
+                </select>
+              </div>
+            </div>
+          </div>
+  
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-info">
+              <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+              Submit form
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 
 {{-- JS for confirmation modal --}}
 <script>

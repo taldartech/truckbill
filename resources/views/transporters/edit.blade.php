@@ -324,6 +324,139 @@
         </div>
     </div>
 </div>
+<div class="modal fade" id="addCountryModal" tabindex="-1" aria-labelledby="addCountryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form id="addCountryForm">
+          @csrf
+          <div class="modal-header">
+            <h5 class="modal-title" id="addCountryModalLabel">Add Country</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+  
+          <div class="modal-body">
+            <div id="countryFormErrors" class="alert alert-danger d-none"></div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="country_name" class="form-label">Country Name *</label>
+                <input type="text" class="form-control" id="country_name" name="name" required>
+              </div>
+  
+              <div class="col-md-6">
+                <label for="country_code" class="form-label">Country Code *</label>
+                <input type="text" class="form-control" id="country_code" name="code" required>
+              </div>
+            </div>
+          </div>
+  
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-info">
+              <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+              Submit form
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <!-- Add State Modal -->
+<div class="modal fade" id="addStateModal" tabindex="-1" aria-labelledby="addStateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form id="addStateForm">
+          @csrf
+          <div class="modal-header">
+            <h5 class="modal-title" id="addStateModalLabel">Add State</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+  
+          <div class="modal-body">
+            <div id="stateFormErrors" class="alert alert-danger d-none"></div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="state_name" class="form-label">State Name *</label>
+                <input type="text" class="form-control" id="state_name" name="name" required>
+              </div>
+  
+              <div class="col-md-6">
+                <label for="state_code" class="form-label">State Code *</label>
+                <input type="text" class="form-control" id="state_code" name="code" required maxlength="10">
+              </div>
+  
+              <div class="col-md-12">
+                <label for="modal_state_country_id" class="form-label">Country *</label>
+                <select class="form-select" id="modal_state_country_id" name="country_id" required>
+                  <option value="">Select Country</option>
+                  @foreach($countries as $country)
+                    <option value="{{ $country->id }}">{{ $country->name }}</option>
+                  @endforeach
+                </select>
+              </div>
+            </div>
+          </div>
+  
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-info">
+              <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+              Submit form
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <!-- Add City Modal -->
+<div class="modal fade" id="addCityModal" tabindex="-1" aria-labelledby="addCityModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form id="addCityForm">
+          @csrf
+          <div class="modal-header">
+            <h5 class="modal-title" id="addCityModalLabel">Add City</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+  
+          <div class="modal-body">
+            <div id="cityFormErrors" class="alert alert-danger d-none"></div>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="modal_city_name" class="form-label">City Name *</label>
+                <input type="text" class="form-control" id="modal_city_name" name="name" required>
+              </div>
+
+              <div class="col-md-6">
+                <label for="modal_city_country_id" class="form-label">Country *</label>
+                <select class="form-select" id="modal_city_country_id" name="country_id" required>
+                  <option value="">Select Country</option>
+                  @foreach($countries as $country)
+                    <option value="{{ $country->id }}">{{ $country->name }}</option>
+                  @endforeach
+                </select>
+                
+              </div>
+              
+              <div class="col-md-6">
+                <label for="modal_city_state_id" class="form-label">State *</label>
+                <select class="form-select" id="modal_city_state_id" name="state_id" required>
+                  <option value="">Select State</option>
+                </select>
+              </div>
+            </div>
+          </div>
+  
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-info">
+              <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+              Submit form
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 
 <script>
 // Function to show confirmation modal with form data
@@ -486,7 +619,136 @@ $(document).ready(function() {
     }
 });
 
-$(document).ready(function() {
+
+</script>
+<script>
+    // Example starter JavaScript for disabling form submissions if there are invalid fields
+    (() => {
+        'use strict';
+
+        // Fetch all the forms we want to apply custom Bootstrap validation styles to
+        const forms = document.querySelectorAll('.needs-validation');
+
+        // Loop over them and prevent submission
+        Array.from(forms).forEach((form) => {
+            form.addEventListener(
+                'submit',
+                (event) => {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+
+                    form.classList.add('was-validated');
+                },
+                false,
+            );
+        });
+    })();
+
+    // Country, State, City cascading selects
+    const countrySelect = document.getElementById('country_id');
+    const stateSelect = document.getElementById('state_id');
+    const citySelect = document.getElementById('city_id');
+
+    const oldCountry = "{{ old('country_id') }}";
+    const oldState = "{{ old('state_id') }}";
+    const oldCity = "{{ old('city_id') }}";
+
+    countrySelect.addEventListener('change', function() {
+    const countryId = this.value;
+    stateSelect.length = 0;
+    stateSelect.innerHTML = '<option value="">Select State</option>';
+    citySelect.length = 0;
+    citySelect.innerHTML = '<option value="">Select City</option>';
+    if (!oldCountry && !oldState){
+        if (countryId) {
+            fetch(`/api/states/${countryId}`)
+                .then(response => response.json())
+                .then(states => {
+                    states.forEach(state => {
+                        const option = document.createElement('option');
+                        option.value = state.id;
+                        option.textContent = state.name;
+                        stateSelect.appendChild(option);
+                    });
+                    stateSelect.required = true;
+                });
+        }
+        
+        stateSelect.addEventListener('change', function() {
+            const stateId = this.value;
+            citySelect.length = 0;
+            citySelect.innerHTML = '<option value="">Select City</option>';
+            if (!oldState && !oldCity){
+                if (stateId) {
+                    fetch(`/api/cities/${stateId}`)
+                        .then(response => response.json())
+                        .then(cities => {
+                            cities.forEach(city => {
+                                const option = document.createElement('option');
+                                option.value = city.id;
+                                option.textContent = city.name;
+                                citySelect.appendChild(option);
+                            });
+                            citySelect.required = true;
+                        });
+                }
+            }
+        });
+    }
+
+
+
+});
+
+
+
+
+    // countrySelect.addEventListener('change', function() {
+    //     const countryId = this.value;
+    //     if (countryId) {
+    //         fetch(`/api/states/${countryId}`)
+    //             .then(response => response.json())
+    //             .then(states => {
+    //                 stateSelect.innerHTML = '<option value="">Select State</option>';
+    //                 states.forEach(state => {
+    //                     const option = document.createElement('option');
+    //                     option.value = state.id;
+    //                     option.textContent = state.name;
+    //                     stateSelect.appendChild(option);
+    //                 });
+    //                 stateSelect.required = true;
+    //             });
+    //     } else {
+    //         stateSelect.innerHTML = '<option value="">Select State</option>';
+    //         stateSelect.required = false;
+    //     }
+    // });
+
+    // stateSelect.addEventListener('change', function() {
+    //     const stateId = this.value;
+    //     if (stateId) {
+    //         fetch(`/api/cities/${stateId}`)
+    //             .then(response => response.json())
+    //             .then(cities => {
+    //                 citySelect.innerHTML = '<option value="">Select City</option>';
+    //                 cities.forEach(city => {
+    //                     const option = document.createElement('option');
+    //                     option.value = city.id;
+    //                     option.textContent = city.name;
+    //                     citySelect.appendChild(option);
+    //                 });
+    //                 citySelect.required = true;
+    //             });
+    //     } else {
+    //         citySelect.innerHTML = '<option value="">Select City</option>';
+    //         citySelect.required = false;
+    //     }
+    // });
+
+    // Modal form submissions with AJAX
+    $(document).ready(function() {
         // Handle Country Modal Form Submission
         $('#addCountryForm').on('submit', function(e) {
             e.preventDefault();
@@ -760,6 +1022,90 @@ $(document).ready(function() {
             }
         }
     });
+</script>
+
+<script>
+// Example starter JavaScript for disabling form submissions if there are invalid fields
+(() => {
+    'use strict';
+
+    // Fetch all the forms we want to apply custom Bootstrap validation styles to
+    const forms = document.querySelectorAll('.needs-validation');
+
+    // Loop over them and prevent submission
+    Array.from(forms).forEach((form) => {
+        form.addEventListener(
+            'submit',
+            (event) => {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+
+                form.classList.add('was-validated');
+            },
+            false,
+        );
+    });
+})();
+
+// Country, State, City cascading selects
+const countrySelect = document.getElementById('country_id');
+const stateSelect = document.getElementById('state_id');
+const citySelect = document.getElementById('city_id');
+
+const oldCountry = "{{ old('country_id') }}";
+const oldState = "{{ old('state_id') }}";
+const oldCity = "{{ old('city_id') }}";
+
+countrySelect.addEventListener('change', function() {
+const countryId = this.value;
+stateSelect.length = 0;
+stateSelect.innerHTML = '<option value="">Select State</option>';
+citySelect.length = 0;
+citySelect.innerHTML = '<option value="">Select City</option>';
+if (!oldCountry && !oldState){
+if (countryId) {
+    fetch(`/api/states/${countryId}`)
+        .then(response => response.json())
+        .then(states => {
+            states.forEach(state => {
+                const option = document.createElement('option');
+                option.value = state.id;
+                option.textContent = state.name;
+                stateSelect.appendChild(option);
+            });
+            stateSelect.required = true;
+        });
+}
+stateSelect.addEventListener('change', function() {
+const stateId = this.value;
+citySelect.length = 0;
+citySelect.innerHTML = '<option value="">Select City</option>';
+if (!oldState && !oldCity){
+if (stateId) {
+    fetch(`/api/cities/${stateId}`)
+        .then(response => response.json())
+        .then(cities => {
+            cities.forEach(city => {
+                const option = document.createElement('option');
+                option.value = city.id;
+                option.textContent = city.name;
+                citySelect.appendChild(option);
+            });
+            citySelect.required = true;
+        });
+}
+});
+}
+
+
+
+});
+
+
+
+
 </script>
     
 
