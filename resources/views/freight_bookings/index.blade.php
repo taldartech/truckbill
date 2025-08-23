@@ -400,7 +400,7 @@ $(document).ready(function() {
                     <td>${voucherNumber}</td>
                     <td class="text-end">₹${balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                     <td>
-                        <input type="number" class="form-control payment-amount" 
+                        <input type="number" class="form-control payment-amount allocated-input" 
                                data-id="${checkbox.val()}" 
                                value="${balance}" 
                                min="0" 
@@ -417,7 +417,7 @@ $(document).ready(function() {
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label class="form-label">Payment Type</label>
-                        <select name="payment_type_id" class="form-select" required>
+                        <select name="payment_type_id" id="paymentType" class="form-select" required>
                             <option value="">Select Payment Type</option>
                             @foreach($paymentTypes as $type)
                                 <option value="{{ $type->id }}">{{ $type->name }}</option>
@@ -426,7 +426,7 @@ $(document).ready(function() {
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Payment Mode</label>
-                        <select name="payment_mode_id" class="form-select" required>
+                        <select name="payment_mode_id" id="paymentMode" class="form-select" required>
                             <option value="">Select Payment Mode</option>
                             @foreach($paymentModes as $mode)
                                 <option value="{{ $mode->id }}">{{ $mode->name }}</option>
@@ -460,7 +460,11 @@ $(document).ready(function() {
                 
                 <div class="mb-3">
                     <label class="form-label">Remarks</label>
-                    <textarea name="remarks" class="form-control" rows="3"></textarea>
+                    <textarea name="remarks" id="paymentRemarks" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Reference ID (Optional)</label>
+                    <input type="text" name="reference_id" id="referenceId" class="form-control">
                 </div>
             </form>
         `;
@@ -1546,10 +1550,14 @@ function updateTotalPayment() {
 // Function to submit voucher payment
 function submitVoucherPayment() {
     // Get form values
-    const paymentType = document.getElementById('paymentType')?.value;
-    const paymentMode = document.getElementById('paymentMode')?.value;
+    const paymentTypeSelect = document.getElementById('paymentType');
+    const paymentModeSelect = document.getElementById('paymentMode');
     const referenceId = document.getElementById('referenceId')?.value;
     const remarks = document.getElementById('paymentRemarks')?.value;
+    
+    // Get the text values instead of IDs
+    const paymentType = paymentTypeSelect?.options[paymentTypeSelect.selectedIndex]?.text || '';
+    const paymentMode = paymentModeSelect?.options[paymentModeSelect.selectedIndex]?.text || '';
     
     // Validate required fields
     if (!paymentType) {
@@ -1579,6 +1587,8 @@ function submitVoucherPayment() {
     
     // Create form data
     const formData = new FormData();
+    
+    // Append payment type and mode (now using text values directly)
     formData.append('payment_type', paymentType);
     formData.append('payment_mode', paymentMode);
     formData.append('total_amount', totalAmount.toFixed(2));

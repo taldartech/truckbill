@@ -168,7 +168,8 @@ Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->nam
     Route::get('vouchers/{voucher}/payments-section', [VoucherController::class, 'paymentsSection']);
 
     // Voucher Payments
-    Route::resource('voucher_payments', VoucherPaymentController::class);
+    Route::get('voucher_payments/voucher/{voucherNumber}', [VoucherPaymentController::class, 'show'])->name('voucher_payments.show');
+    Route::resource('voucher_payments', VoucherPaymentController::class)->except(['show']);
     Route::post('voucher_payments/bulk-update', [VoucherPaymentController::class, 'bulkUpdateStatus'])->name('voucher_payments.bulkUpdateStatus');
     Route::post('voucher_payments/bulk-payment', [VoucherPaymentController::class, 'bulkPayment'])->name('voucher_payments.bulkPayment');
     Route::get('daily-payments', [VoucherPaymentController::class, 'dailyPayments'])->name('voucher_payments.daily');

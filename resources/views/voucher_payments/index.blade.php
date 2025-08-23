@@ -156,17 +156,19 @@
                         <th>Truck No</th>
                         <th>Source</th>
                         <th>Destination</th>
-                        <th>Payment Type</th>
-                        <th>Payment Mode</th>
-                        <th>Amount</th>
-                        <th>Status</th>
+                        <th>Freight Booking No</th>
+                        <th>Lorry Receipt No</th>
                         @if(auth()->check() && auth()->user()->userRole->name === 'admin')
                         <th>Actions</th>
                         @endif
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($payments as $payment)
+                    @forelse($voucherGroups as $group)
+                        @php
+                            $payment = $payments[$group->voucher_number] ?? null;
+                            if (!$payment) continue;
+                        @endphp
                         <tr class="align-middle">
                             @if(auth()->user()->userRole->name === 'admin')
                             <td>
@@ -176,7 +178,12 @@
                             </td>
                             @endif
                             <td>{{ $payment->id }}</td>
-                            <td><strong>{{ $payment->voucher_number }}</strong></td>
+                            <td>
+                                <a href="{{ route('voucher_payments.show', $payment->voucher_number) }}" class="fw-bold text-decoration-none">
+                                    {{ $payment->voucher_number }}
+                                    <i class="bi bi-box-arrow-up-right ms-1 small"></i>
+                                </a>
+                            </td>
                             <td>
                                 @if($payment->freight_booking && $payment->freight_booking->lr && $payment->freight_booking->lr->customer)
                                     <span class="badge bg-info">{{ $payment->freight_booking->lr->customer->name }}</span>
@@ -205,34 +212,35 @@
                                     <span class="text-muted">-</span>
                                 @endif
                             </td>
-                            <td>{{ ucfirst($payment->payment_type) }}</td>
-                            <td>{{ ucfirst(str_replace('_', ' ', $payment->payment_mode)) }}</td>
-                            <td class="text-success fw-bold">₹{{ number_format($payment->amount, 2) }}</td>
-                            <td>{!! $payment->getPaymentStatusBadge() !!}</td>
+                            <td>
+                                @if($payment->freight_booking)
+                                    <span class="badge bg-secondary">{{ $payment->freight_booking->id }}</span>
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($payment->freight_booking && $payment->freight_booking->lr)
+                                    <span class="badge bg-dark">{{ $payment->freight_booking->lr->lr_number }}</span>
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </td>
                             @if(auth()->check() && auth()->user()->userRole->name === 'admin')
                             <td>
                                 <div class="d-flex gap-1">
-                                    <a href="{{ route('voucher_payments.edit', $payment) }}?lorry_receipt_id={{ $payment->freight_booking ? $payment->freight_booking->lr_id : '' }}&freight_booking_id={{ $payment->freight_booking_id }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" 
+                                    <a href="{{ route('voucher_payments.show', $payment->voucher_number) }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" 
                             data-bs-placement="top" 
-                            title="Edit Payment">
-                                        <i class="bi bi-pencil"></i>
+                            title="View Details">
+                                        <i class="bi bi-eye"></i>
                                     </a>
-                                    <form action="{{ route('voucher_payments.destroy', $payment) }}" method="POST" style="display:inline-block;">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger" data-bs-toggle="tooltip" 
-                            data-bs-placement="top" 
-                            title="Delete Payment" onclick="return confirm('Delete this payment?')">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
                                 </div>
                             </td>
                             @endif
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="text-center">
+                            <td colspan="10" class="text-center">
                                 <div class="empty-state">
                                     <i class="bi bi-box"></i>
                                     <p class="mt-2">No payments found.</p>
@@ -242,7 +250,7 @@
                     @endforelse
                 </tbody>
             </table>
-            {{ $payments->links() }}
+            {{ $voucherGroups->links() }}
         </div>
     </div>
 </div>
@@ -255,183 +263,118 @@
 
         if (checkbox.checked) {
             field.classList.remove('d-none');
+            if (input) input.disabled = false;
         } else {
             field.classList.add('d-none');
-            if (input) input.value = '';
+            if (input) input.disabled = true;
         }
-    }
-
-    // Handle select all/deselect all
-    function toggleAllChecks(checked) {
-        const checkboxes = document.querySelectorAll('.row-check');
-        checkboxes.forEach(checkbox => {
-            checkbox.checked = checked;
-        });
-    }
-
-    // Get selected payment IDs
-    function getSelectedPayments() {
-        const checkboxes = document.querySelectorAll('.row-check:checked');
-        return Array.from(checkboxes).map(checkbox => checkbox.value);
     }
 
     // Initialize filter fields based on URL parameters
     document.addEventListener('DOMContentLoaded', function() {
-        // Get all filter checkboxes
-        const checkboxes = document.querySelectorAll('.form-check-input');
+        const urlParams = new URLSearchParams(window.location.search);
         
-        // Check each checkbox based on URL parameters
-        checkboxes.forEach(checkbox => {
-            const value = checkbox.value;
-            const fieldId = 'field_' + value;
-            const field = document.getElementById(fieldId);
-            const urlValue = new URLSearchParams(window.location.search).get(value);
-            
-            if (urlValue) {
+        // Check each filter checkbox if its parameter exists in URL
+        document.querySelectorAll('#advanced-search-box input[type="checkbox"]').forEach(checkbox => {
+            const paramName = checkbox.value;
+            if (urlParams.has(paramName) && urlParams.get(paramName)) {
                 checkbox.checked = true;
-                field.classList.remove('d-none');
+                toggleField(checkbox);
             }
         });
+
+        // Show the filter box if any filter is applied
+        if (Array.from(urlParams.keys()).some(key => [
+            'voucher_number', 'payment_type', 'payment_mode', 'transaction_id', 'status'
+        ].includes(key))) {
+            document.getElementById('advanced-search-box').classList.remove('d-none');
+        }
+
+        // Add event listeners to all checkboxes
+        document.querySelectorAll('.row-check').forEach(checkbox => {
+            checkbox.addEventListener('change', updateBulkUpdateButtonVisibility);
+        });
+        
+        // Initial check for bulk update button visibility
+        updateBulkUpdateButtonVisibility();
     });
 
-    // Update bulk update button visibility
-    function updateBulkButtonVisibility() {
+    function toggleAllChecks(checked) {
+        document.querySelectorAll('.row-check').forEach(checkbox => {
+            checkbox.checked = checked;
+        });
+        updateBulkUpdateButtonVisibility();
+    }
+
+    function updateBulkUpdateButtonVisibility() {
+        const checkedBoxes = document.querySelectorAll('.row-check:checked');
         const bulkUpdateBtn = document.getElementById('bulkUpdateBtn');
-        const selectedCount = document.querySelectorAll('.row-check:checked').length;
-        bulkUpdateBtn.classList.toggle('d-none', selectedCount === 0);
-    }
-
-    // Show bulk update modal
-    function showBulkUpdateModal() {
-        const selectedPayments = getSelectedPayments();
-        if (selectedPayments.length === 0) {
-            alert('Please select at least one payment to update');
-            return;
-        }
-
-        const modal = new bootstrap.Modal(document.getElementById('bulkUpdateModal'));
-        modal.show();
-    }
-
-    // Submit bulk update
-    async function submitBulkUpdate() {
-        const selectedPayments = getSelectedPayments();
-        const newStatus = document.getElementById('bulkPaymentStatus').value;
-
-        if (!newStatus) {
-            alert('Please select a payment status');
-            return;
-        }
-
-        if (!confirm(`Are you sure you want to update ${selectedPayments.length} payment(s) to status: ${newStatus}?`)) {
-            return;
-        }
-
-        try {
-            const response = await fetch('{{ route('voucher_payments.bulkUpdateStatus') }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify({
-                    _token: '{{ csrf_token() }}',
-                    payment_ids: selectedPayments,
-                    new_status: newStatus
-                })
-            });
-
-            const result = await response.json();
-
-            if (response.ok) {
-                alert('Payment status updated successfully');
-                window.location.reload();
-            } else {
-                alert(result.message || 'Failed to update payment status');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('An error occurred while updating payment status');
-        }
-    }
-</script>
-    <script>
-        // Toggle all checkboxes
-        function toggleAllChecks(checked) {
-            document.querySelectorAll('.row-check').forEach(checkbox => {
-                checkbox.checked = checked;
-            });
-            updateBulkUpdateButton();
-        }
-
-        // Update bulk update button visibility based on selected rows
-        function updateBulkUpdateButton() {
-            const selectedChecks = document.querySelectorAll('.row-check:checked');
-            const bulkUpdateBtn = document.getElementById('bulkUpdateBtn');
-            
-            if (selectedChecks.length > 0) {
+        
+        if (bulkUpdateBtn) {
+            if (checkedBoxes.length > 0) {
                 bulkUpdateBtn.classList.remove('d-none');
             } else {
                 bulkUpdateBtn.classList.add('d-none');
             }
         }
+    }
 
-        // Show bulk update modal
-        function showBulkUpdateModal() {
-            const selectedChecks = document.querySelectorAll('.row-check:checked');
-            if (selectedChecks.length === 0) {
-                alert('Please select at least one payment to update');
-                return;
-            }
-            
-            const modal = new bootstrap.Modal(document.getElementById('bulkUpdateModal'));
-            modal.show();
-        }
+    function showBulkUpdateModal() {
+        const modal = new bootstrap.Modal(document.getElementById('bulkUpdateModal'));
+        modal.show();
+    }
 
-        // Submit bulk update
-        async function submitBulkUpdate() {
-            const form = document.getElementById('bulkUpdateForm');
-            if (!form.checkValidity()) {
-                form.classList.add('was-validated');
-                return;
-            }
-
-            const selectedChecks = document.querySelectorAll('.row-check:checked');
-            const paymentIds = Array.from(selectedChecks).map(checkbox => checkbox.value);
-            const newStatus = document.getElementById('bulkPaymentStatus').value;
-
-            try {
-                const response = await fetch('{{ route('voucher_payments.bulkUpdateStatus') }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({
-                        payment_ids: paymentIds,
-                        new_status: newStatus
-                    })
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    alert('Payment statuses updated successfully');
-                    window.location.reload();
-                } else {
-                    alert(result.message || 'Failed to update payment statuses');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('An error occurred while updating payment statuses');
-            }
-        }
-
-        // Add event listeners to individual checkboxes
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.row-check').forEach(checkbox => {
-                checkbox.addEventListener('change', updateBulkUpdateButton);
-            });
+    function submitBulkUpdate() {
+        const selectedIds = [];
+        document.querySelectorAll('.row-check:checked').forEach(checkbox => {
+            selectedIds.push(checkbox.dataset.paymentId);
         });
-    </script>
+
+        const paymentStatus = document.getElementById('bulkPaymentStatus').value;
+        
+        if (!paymentStatus) {
+            document.getElementById('bulkPaymentStatus').classList.add('is-invalid');
+            return;
+        }
+
+        // Create form data
+        const formData = new FormData();
+        formData.append('payment_ids', JSON.stringify(selectedIds));
+        formData.append('payment_status', paymentStatus);
+        formData.append('_token', '{{ csrf_token() }}');
+
+        // Submit via fetch
+        fetch('{{ route("voucher_payments.bulkUpdateStatus") }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Close modal
+                bootstrap.Modal.getInstance(document.getElementById('bulkUpdateModal')).hide();
+                
+                // Show success message
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                alertDiv.innerHTML = `
+                    ${data.message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                `;
+                document.querySelector('.container').prepend(alertDiv);
+                
+                // Reload page after a short delay
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while updating payment statuses');
+        });
+    }
+</script>
 @endsection
