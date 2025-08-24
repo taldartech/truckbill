@@ -137,7 +137,7 @@
             <div class="card mb-4 p-3 bg-light">
                 <div class="row"><div class="col"><h5 class="mb-3">Location Details</h5></div></div>
                 <div class="row mb-3">
-                    {{-- <div class="col-md-4">
+                    <div class="col-md-4">
                         <label for="country_id" class="form-label">Country *</label>
                         <select class="form-select @error('country_id') is-invalid @enderror" id="country_id" name="country_id" required>
                             <option value="">Select Country</option>
@@ -172,63 +172,6 @@
                             @endforeach
                         </select>
                         @error('city_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div> --}}
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label for="country_id" class="form-label">Country *</label>
-                            <div class="input-group">
-                                <select class="form-select" id="country_id" name="country_id" required>
-                                    <option value="">Select Country</option>
-                                    @foreach($countries as $country)
-                                        <option value="{{ $country->id }}" {{ old('country_id') == $country->id ? 'selected' : '' }}>
-                                            {{ $country->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addCountryModal" title="Add New Country">
-                                    <i class="bi bi-plus"></i>
-                                </button>
-                            </div>
-                            @error('country_id') <div class="text-danger">{{ $message }}</div> @enderror
-                        </div>
-                        <div class="col-md-4">
-                            <label for="state_id" class="form-label">State *</label>
-                            <div class="input-group">
-                                <select class="form-select" id="state_id" name="state_id" required>
-                                    <option value="">Select State</option>
-                                    @if(old('country_id'))
-                                        @foreach($states as $state)
-                                            <option value="{{ $state->id }}" {{ old('state_id') == $state->id ? 'selected' : '' }}>
-                                                {{ $state->name }}
-                                            </option>
-                                        @endforeach
-                                    @endif
-                                </select>
-                                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addStateModal" title="Add New State">
-                                    <i class="bi bi-plus"></i>
-                                </button>
-                            </div>
-                            @error('state_id') <div class="text-danger">{{ $message }}</div> @enderror
-                        </div>
-                        <div class="col-md-4">
-                            <label for="city_id" class="form-label">City *</label>
-                            <div class="input-group">
-                                <select class="form-select" id="city_id" name="city_id" required>
-                                    <option value="">Select City</option>
-                                    @if(old('state_id'))
-                                        @foreach($cities as $city)
-                                            <option value="{{ $city->id }}" {{ old('city_id') == $city->id ? 'selected' : '' }}>
-                                                {{ $city->name }}
-                                            </option>
-                                        @endforeach
-                                    @endif
-                                </select>
-                                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addCityModal" title="Add New City">
-                                    <i class="bi bi-plus"></i>
-                                </button>
-                            </div>
-                            @error('city_id') <div class="text-danger">{{ $message }}</div> @enderror
-                        </div>
                     </div>
                 </div>
                 <div class="row mb-3">
@@ -646,106 +589,6 @@ $(document).ready(function() {
         });
     })();
 
-    // Country, State, City cascading selects
-    const countrySelect = document.getElementById('country_id');
-    const stateSelect = document.getElementById('state_id');
-    const citySelect = document.getElementById('city_id');
-
-    const oldCountry = "{{ old('country_id') }}";
-    const oldState = "{{ old('state_id') }}";
-    const oldCity = "{{ old('city_id') }}";
-
-    countrySelect.addEventListener('change', function() {
-    const countryId = this.value;
-    stateSelect.length = 0;
-    stateSelect.innerHTML = '<option value="">Select State</option>';
-    citySelect.length = 0;
-    citySelect.innerHTML = '<option value="">Select City</option>';
-    if (!oldCountry && !oldState){
-        if (countryId) {
-            fetch(`/api/states/${countryId}`)
-                .then(response => response.json())
-                .then(states => {
-                    states.forEach(state => {
-                        const option = document.createElement('option');
-                        option.value = state.id;
-                        option.textContent = state.name;
-                        stateSelect.appendChild(option);
-                    });
-                    stateSelect.required = true;
-                });
-        }
-        
-        stateSelect.addEventListener('change', function() {
-            const stateId = this.value;
-            citySelect.length = 0;
-            citySelect.innerHTML = '<option value="">Select City</option>';
-            if (!oldState && !oldCity){
-                if (stateId) {
-                    fetch(`/api/cities/${stateId}`)
-                        .then(response => response.json())
-                        .then(cities => {
-                            cities.forEach(city => {
-                                const option = document.createElement('option');
-                                option.value = city.id;
-                                option.textContent = city.name;
-                                citySelect.appendChild(option);
-                            });
-                            citySelect.required = true;
-                        });
-                }
-            }
-        });
-    }
-
-
-
-});
-
-
-
-
-    // countrySelect.addEventListener('change', function() {
-    //     const countryId = this.value;
-    //     if (countryId) {
-    //         fetch(`/api/states/${countryId}`)
-    //             .then(response => response.json())
-    //             .then(states => {
-    //                 stateSelect.innerHTML = '<option value="">Select State</option>';
-    //                 states.forEach(state => {
-    //                     const option = document.createElement('option');
-    //                     option.value = state.id;
-    //                     option.textContent = state.name;
-    //                     stateSelect.appendChild(option);
-    //                 });
-    //                 stateSelect.required = true;
-    //             });
-    //     } else {
-    //         stateSelect.innerHTML = '<option value="">Select State</option>';
-    //         stateSelect.required = false;
-    //     }
-    // });
-
-    // stateSelect.addEventListener('change', function() {
-    //     const stateId = this.value;
-    //     if (stateId) {
-    //         fetch(`/api/cities/${stateId}`)
-    //             .then(response => response.json())
-    //             .then(cities => {
-    //                 citySelect.innerHTML = '<option value="">Select City</option>';
-    //                 cities.forEach(city => {
-    //                     const option = document.createElement('option');
-    //                     option.value = city.id;
-    //                     option.textContent = city.name;
-    //                     citySelect.appendChild(option);
-    //                 });
-    //                 citySelect.required = true;
-    //             });
-    //     } else {
-    //         citySelect.innerHTML = '<option value="">Select City</option>';
-    //         citySelect.required = false;
-    //     }
-    // });
 
     // Modal form submissions with AJAX
     $(document).ready(function() {
@@ -1049,66 +892,55 @@ $(document).ready(function() {
     });
 })();
 
-// Country, State, City cascading selects
+// Country, State, City cascading selects for edit form
 const countrySelect = document.getElementById('country_id');
 const stateSelect = document.getElementById('state_id');
 const citySelect = document.getElementById('city_id');
 
-const oldCountry = "{{ old('country_id') }}";
-const oldState = "{{ old('state_id') }}";
-const oldCity = "{{ old('city_id') }}";
-
-countrySelect.addEventListener('change', function() {
-const countryId = this.value;
-stateSelect.length = 0;
-stateSelect.innerHTML = '<option value="">Select State</option>';
-citySelect.length = 0;
-citySelect.innerHTML = '<option value="">Select City</option>';
-if (!oldCountry && !oldState){
-if (countryId) {
-    fetch(`/api/states/${countryId}`)
-        .then(response => response.json())
-        .then(states => {
-            states.forEach(state => {
-                const option = document.createElement('option');
-                option.value = state.id;
-                option.textContent = state.name;
-                stateSelect.appendChild(option);
-            });
-            stateSelect.required = true;
-        });
+if (countrySelect && stateSelect && citySelect) {
+    countrySelect.addEventListener('change', function() {
+        const countryId = this.value;
+        stateSelect.length = 0;
+        stateSelect.innerHTML = '<option value="">Select State</option>';
+        citySelect.length = 0;
+        citySelect.innerHTML = '<option value="">Select City</option>';
+        
+        if (countryId) {
+            fetch(`/api/states/${countryId}`)
+                .then(response => response.json())
+                .then(states => {
+                    states.forEach(state => {
+                        const option = document.createElement('option');
+                        option.value = state.id;
+                        option.textContent = state.name;
+                        stateSelect.appendChild(option);
+                    });
+                });
+        }
+    });
+    
+    stateSelect.addEventListener('change', function() {
+        const stateId = this.value;
+        citySelect.length = 0;
+        citySelect.innerHTML = '<option value="">Select City</option>';
+        
+        if (stateId) {
+            fetch(`/api/cities/${stateId}`)
+                .then(response => response.json())
+                .then(cities => {
+                    cities.forEach(city => {
+                        const option = document.createElement('option');
+                        option.value = city.id;
+                        option.textContent = city.name;
+                        citySelect.appendChild(option);
+                    });
+                });
+        }
+    });
 }
-stateSelect.addEventListener('change', function() {
-const stateId = this.value;
-citySelect.length = 0;
-citySelect.innerHTML = '<option value="">Select City</option>';
-if (!oldState && !oldCity){
-if (stateId) {
-    fetch(`/api/cities/${stateId}`)
-        .then(response => response.json())
-        .then(cities => {
-            cities.forEach(city => {
-                const option = document.createElement('option');
-                option.value = city.id;
-                option.textContent = city.name;
-                citySelect.appendChild(option);
-            });
-            citySelect.required = true;
-        });
-}
-});
-}
-
-
-
-});
-
-
-
 
 </script>
     
 
     
 @endsection
-
