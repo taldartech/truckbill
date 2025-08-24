@@ -459,6 +459,53 @@
 
     // Modal form submissions with AJAX
     $(document).ready(function() {
+        // Function to show success message
+        function showSuccessMessage(message) {
+            // Remove any existing alerts
+            $('.alert-success').remove();
+            
+            // Create and show success alert
+            const alertHtml = `
+                <div class="alert alert-success alert-dismissible fade show mt-2" role="alert">
+                    <i class="bi bi-check-circle-fill"></i> ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+            
+            // Insert after the page title or at the top of the form
+            if ($('.card-header').length) {
+                $('.card-header').after(alertHtml);
+            } else {
+                $('form').before(alertHtml);
+            }
+            
+            // Auto-hide after 5 seconds
+            setTimeout(function() {
+                $('.alert-success').fadeOut();
+            }, 5000);
+        }
+
+        // Function to show error message
+        function showErrorMessage(message) {
+            // Remove any existing alerts
+            $('.alert-danger').remove();
+            
+            // Create and show error alert
+            const alertHtml = `
+                <div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill"></i> ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+            
+            // Insert after the page title or at the top of the form
+            if ($('.card-header').length) {
+                $('.card-header').after(alertHtml);
+            } else {
+                $('form').before(alertHtml);
+            }
+        }
+
         // Handle Country Modal Form Submission
         $('#addCountryForm').on('submit', function(e) {
             e.preventDefault();
@@ -499,6 +546,10 @@
                     if (data && data.success && data.country) {
                         // Add new country to the main dropdown
                         $('#country_id').append(`<option value="${data.country.id}">${data.country.name}</option>`);
+                        
+                        // Add new country to modal dropdowns
+                        $('#modal_state_country_id').append(`<option value="${data.country.id}">${data.country.name}</option>`);
+                        $('#modal_city_country_id').append(`<option value="${data.country.id}">${data.country.name}</option>`);
                         
                         // Select the newly created country
                         $('#country_id').val(data.country.id).trigger('change');
@@ -568,6 +619,9 @@
                     if (data && data.success && data.state) {
                         // Add new state to the main dropdown
                         $('#state_id').append(`<option value="${data.state.id}">${data.state.name}</option>`);
+                        
+                        // Add new state to city modal dropdown
+                        $('#modal_city_state_id').append(`<option value="${data.state.id}">${data.state.name}</option>`);
                         
                         // Select the newly created state
                         $('#state_id').val(data.state.id).trigger('change');
@@ -684,53 +738,6 @@
                     });
             }
         });
-
-        // Function to show success message
-        function showSuccessMessage(message) {
-            // Remove any existing alerts
-            $('.alert-success').remove();
-            
-            // Create and show success alert
-            const alertHtml = `
-                <div class="alert alert-success alert-dismissible fade show mt-2" role="alert">
-                    <i class="bi bi-check-circle-fill"></i> ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            `;
-            
-            // Insert after the page title or at the top of the form
-            if ($('.card-header').length) {
-                $('.card-header').after(alertHtml);
-            } else {
-                $('form').before(alertHtml);
-            }
-            
-            // Auto-hide after 5 seconds
-            setTimeout(function() {
-                $('.alert-success').fadeOut();
-            }, 5000);
-        }
-
-        // Function to show error message
-        function showErrorMessage(message) {
-            // Remove any existing alerts
-            $('.alert-danger').remove();
-            
-            // Create and show error alert
-            const alertHtml = `
-                <div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
-                    <i class="bi bi-exclamation-triangle-fill"></i> ${message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            `;
-            
-            // Insert after the page title or at the top of the form
-            if ($('.card-header').length) {
-                $('.card-header').after(alertHtml);
-            } else {
-                $('form').before(alertHtml);
-            }
-        }
     });
 </script>
 @endsection
