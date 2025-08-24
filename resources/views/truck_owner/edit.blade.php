@@ -1153,5 +1153,232 @@
             }
         });
     });
+
+    // Handle Country Modal Form Submission
+    $('#addCountryForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const form = $(this);
+        const submitBtn = form.find('button[type="submit"]');
+        const spinner = submitBtn.find('.spinner-border');
+        const errorDiv = $('#countryFormErrors');
+        const countryName = $('#country_name').val();
+        const countryCode = $('#country_code').val();
+        const csrfToken = $('meta[name="csrf-token"]').attr('content');
+        
+        // Show loading state
+        submitBtn.prop('disabled', true);
+        spinner.removeClass('d-none');
+        errorDiv.addClass('d-none');
+        
+        // Create FormData object
+        const formData = new FormData();
+        formData.append('name', countryName);
+        formData.append('code', countryCode);
+        formData.append('from_modal', '1');
+        formData.append('_token', csrfToken);
+        
+        $.ajax({
+            url: '{{ route("master.countries.store") }}',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            success: function(data) {
+                console.log('Country creation response:', data);
+                if (data && data.success && data.country) {
+                    // Add new country to the main dropdown
+                    $('#country_id').append(`<option value="${data.country.id}">${data.country.name}</option>`);
+                    
+                    // Add new country to modal dropdowns
+                    $('#modal_state_country_id').append(`<option value="${data.country.id}">${data.country.name}</option>`);
+                    $('#modal_city_country_id').append(`<option value="${data.country.id}">${data.country.name}</option>`);
+                    
+                    // Select the newly created country
+                    $('#country_id').val(data.country.id).trigger('change');
+                    
+                    // Close modal and remove backdrop
+                    $('#addCountryModal').modal('hide');
+                    $('.modal-backdrop').remove();
+                    $('body').removeClass('modal-open').css('padding-right', '');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error:', error);
+                if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    let errorHtml = '<ul class="mb-0">';
+                    Object.values(xhr.responseJSON.errors).forEach(function(errorArray) {
+                        errorArray.forEach(function(errorMessage) {
+                            errorHtml += '<li>' + errorMessage + '</li>';
+                        });
+                    });
+                    errorHtml += '</ul>';
+                    errorDiv.html(errorHtml).removeClass('d-none');
+                } else {
+                    errorDiv.html('An error occurred while adding the country.').removeClass('d-none');
+                }
+            },
+            complete: function() {
+                // Hide loading state
+                submitBtn.prop('disabled', false);
+                spinner.addClass('d-none');
+            }
+        });
+    });
+
+    // Handle State Modal Form Submission
+    $('#addStateForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const form = $(this);
+        const submitBtn = form.find('button[type="submit"]');
+        const spinner = submitBtn.find('.spinner-border');
+        const errorDiv = $('#stateFormErrors');
+        const stateName = $('#state_name').val();
+        const stateCode = $('#state_code').val();
+        const countryId = $('#modal_state_country_id').val();
+        const csrfToken = $('meta[name="csrf-token"]').attr('content');
+        
+        // Show loading state
+        submitBtn.prop('disabled', true);
+        spinner.removeClass('d-none');
+        errorDiv.addClass('d-none');
+        
+        // Create FormData object
+        const formData = new FormData();
+        formData.append('name', stateName);
+        formData.append('code', stateCode);
+        formData.append('country_id', countryId);
+        formData.append('from_modal', '1');
+        formData.append('_token', csrfToken);
+        
+        $.ajax({
+            url: '{{ route("master.states.store") }}',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            success: function(data) {
+                console.log('State creation response:', data);
+                if (data && data.success && data.state) {
+                    // Add new state to the main dropdown
+                    $('#state_id').append(`<option value="${data.state.id}">${data.state.name}</option>`);
+                    
+                    // Add new state to city modal dropdown
+                    $('#modal_city_state_id').append(`<option value="${data.state.id}">${data.state.name}</option>`);
+                    
+                    // Select the newly created state
+                    $('#state_id').val(data.state.id).trigger('change');
+                    
+                    // Close modal and remove backdrop
+                    $('#addStateModal').modal('hide');
+                    $('.modal-backdrop').remove();
+                    $('body').removeClass('modal-open').css('padding-right', '');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error:', error);
+                if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    let errorHtml = '<ul class="mb-0">';
+                    Object.values(xhr.responseJSON.errors).forEach(function(errorArray) {
+                        errorArray.forEach(function(errorMessage) {
+                            errorHtml += '<li>' + errorMessage + '</li>';
+                        });
+                    });
+                    errorHtml += '</ul>';
+                    errorDiv.html(errorHtml).removeClass('d-none');
+                } else {
+                    errorDiv.html('An error occurred while adding the state.').removeClass('d-none');
+                }
+            },
+            complete: function() {
+                // Hide loading state
+                submitBtn.prop('disabled', false);
+                spinner.addClass('d-none');
+            }
+        });
+    });
+
+    // Handle City Modal Form Submission
+    $('#addCityForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const form = $(this);
+        const submitBtn = form.find('button[type="submit"]');
+        const spinner = submitBtn.find('.spinner-border');
+        const errorDiv = $('#cityFormErrors');
+        const cityName = $('#modal_city_name').val();
+        const cityCode = $('#modal_city_code').val();
+        const stateId = $('#modal_city_state_id').val();
+        const csrfToken = $('meta[name="csrf-token"]').attr('content');
+        
+        // Show loading state
+        submitBtn.prop('disabled', true);
+        spinner.removeClass('d-none');
+        errorDiv.addClass('d-none');
+        
+        // Create FormData object
+        const formData = new FormData();
+        formData.append('name', cityName);
+        formData.append('code', cityCode);
+        formData.append('state_id', stateId);
+        formData.append('from_modal', '1');
+        formData.append('_token', csrfToken);
+        
+        $.ajax({
+            url: '{{ route("master.cities.store") }}',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            },
+            success: function(data) {
+                console.log('City creation response:', data);
+                if (data && data.success && data.city) {
+                    // Add new city to the main dropdown
+                    $('#city_id').append(`<option value="${data.city.id}">${data.city.name}</option>`);
+                    
+                    // Select the newly created city
+                    $('#city_id').val(data.city.id);
+                    
+                    // Close modal and remove backdrop
+                    $('#addCityModal').modal('hide');
+                    $('.modal-backdrop').remove();
+                    $('body').removeClass('modal-open').css('padding-right', '');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error:', error);
+                if (xhr.responseJSON && xhr.responseJSON.errors) {
+                    let errorHtml = '<ul class="mb-0">';
+                    Object.values(xhr.responseJSON.errors).forEach(function(errorArray) {
+                        errorArray.forEach(function(errorMessage) {
+                            errorHtml += '<li>' + errorMessage + '</li>';
+                        });
+                    });
+                    errorHtml += '</ul>';
+                    errorDiv.html(errorHtml).removeClass('d-none');
+                } else {
+                    errorDiv.html('An error occurred while adding the city.').removeClass('d-none');
+                }
+            },
+            complete: function() {
+                // Hide loading state
+                submitBtn.prop('disabled', false);
+                spinner.addClass('d-none');
+            }
+        });
+    });
     </script>
 @endsection

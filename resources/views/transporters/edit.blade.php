@@ -633,6 +633,10 @@ $(document).ready(function() {
                         // Add new country to the main dropdown
                         $('#country_id').append(`<option value="${data.country.id}">${data.country.name}</option>`);
                         
+                        // Add new country to modal dropdowns
+                        $('#modal_state_country_id').append(`<option value="${data.country.id}">${data.country.name}</option>`);
+                        $('#modal_city_country_id').append(`<option value="${data.country.id}">${data.country.name}</option>`);
+                        
                         // Select the newly created country
                         $('#country_id').val(data.country.id).trigger('change');
                         
@@ -701,6 +705,9 @@ $(document).ready(function() {
                     if (data && data.success && data.state) {
                         // Add new state to the main dropdown
                         $('#state_id').append(`<option value="${data.state.id}">${data.state.name}</option>`);
+                        
+                        // Add new state to city modal dropdown
+                        $('#modal_city_state_id').append(`<option value="${data.state.id}">${data.state.name}</option>`);
                         
                         // Select the newly created state
                         $('#state_id').val(data.state.id).trigger('change');
