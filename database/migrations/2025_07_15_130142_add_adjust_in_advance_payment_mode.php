@@ -16,3 +16,4 @@ return new class extends Migration
         // No action needed as the payment mode is managed in the initial migration
     }
 };
+
