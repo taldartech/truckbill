@@ -373,7 +373,7 @@
                         <i class="bi bi-x-circle"></i> Cannot Update - Cancelled
                     </button>
                 @else
-                    <button class="btn btn-success me-2" type="submit">
+                    <button class="btn btn-success me-2" type="button" id="showConfirmationBtn">
                         <i class="bi bi-check-circle"></i> Update Freight Booking
                     </button>
                 @endif
@@ -383,6 +383,106 @@
             </div>
         </div>
     </form>
+</div>
+
+<!-- Confirmation Modal for Freight Booking Update -->
+<div class="modal fade" id="updateConfirmationModal" tabindex="-1" aria-labelledby="updateConfirmationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="updateConfirmationModalLabel">
+                    <i class="fas fa-info-circle me-2"></i> Confirm Freight Booking Update
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> Please review the booking details below before confirming your update.
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <h6 class="border-bottom pb-2"><i class="fas fa-truck me-2"></i> Lorry Receipt Information</h6>
+                    </div>
+                    <div class="col-md-4">
+                        <p class="mb-1"><strong>LR Number:</strong> <span id="confirm-lr-number"></span></p>
+                    </div>
+                    <div class="col-md-4">
+                        <p class="mb-1"><strong>Transporter:</strong> <span id="confirm-transporter"></span></p>
+                    </div>
+                    <div class="col-md-4">
+                        <p class="mb-1"><strong>Truck:</strong> <span id="confirm-truck"></span></p>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <h6 class="border-bottom pb-2"><i class="fas fa-money-bill-wave me-2"></i> Financial Details</h6>
+                    </div>
+                    <div class="col-md-3">
+                        <p class="mb-1"><strong>TR Freight Rate:</strong> <span id="confirm-tr-rate"></span></p>
+                    </div>
+                    <div class="col-md-3">
+                        <p class="mb-1"><strong>TR Amount:</strong> <span id="confirm-tr-amount"></span></p>
+                    </div>
+                    <div class="col-md-3">
+                        <p class="mb-1"><strong>TDS Amount:</strong> <span id="confirm-tds-amount"></span></p>
+                    </div>
+                    <div class="col-md-3">
+                        <p class="mb-1"><strong>Balance Amount:</strong> <span id="confirm-balance-amount"></span></p>
+                    </div>
+                </div>
+                
+                <div class="row mb-3" id="confirm-delivery-status-row">
+                    <div class="col-12">
+                        <h6 class="border-bottom pb-2"><i class="fas fa-clipboard-check me-2"></i> Status</h6>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-1"><strong>Delivery Status:</strong> <span id="confirm-delivery-status"></span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-1"><strong>Cancellation Status:</strong> <span id="confirm-cancellation-status"></span></p>
+                    </div>
+                </div>
+                
+                <div class="row mb-3" id="confirm-additional-charges-row">
+                    <div class="col-12">
+                        <h6 class="border-bottom pb-2"><i class="fas fa-plus-circle me-2"></i> Additional Charges</h6>
+                    </div>
+                    <div class="col-md-4">
+                        <p class="mb-1"><strong>Detention:</strong> <span id="confirm-detention"></span></p>
+                    </div>
+                    <div class="col-md-4">
+                        <p class="mb-1"><strong>Deviation:</strong> <span id="confirm-deviation"></span></p>
+                    </div>
+                    <div class="col-md-4">
+                        <p class="mb-1"><strong>Misc Expense:</strong> <span id="confirm-misc-expense"></span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-1"><strong>Damage Amount:</strong> <span id="confirm-damage-amount"></span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-1"><strong>Shortage Amount:</strong> <span id="confirm-shortage-amount"></span></p>
+                    </div>
+                </div>
+                
+                <div class="row mb-3" id="confirm-remark-row">
+                    <div class="col-12">
+                        <h6 class="border-bottom pb-2"><i class="fas fa-comment-alt me-2"></i> Remarks</h6>
+                        <p class="mb-1" id="confirm-remark"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-success" id="confirmUpdateBtn">
+                    <i class="fas fa-check-circle me-1"></i> Confirm Update
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Modal for Memo ID Entry -->
@@ -485,6 +585,86 @@
     };
 
     document.addEventListener('DOMContentLoaded', function() {
+        // Handle the confirmation modal for form submission
+        const showConfirmationBtn = document.getElementById('showConfirmationBtn');
+        const confirmUpdateBtn = document.getElementById('confirmUpdateBtn');
+        const editForm = document.querySelector('form[action*="freight_bookings"]');
+        
+        if (showConfirmationBtn && confirmUpdateBtn && editForm) {
+            showConfirmationBtn.addEventListener('click', function() {
+                // Populate confirmation modal with current form values
+                document.getElementById('confirm-lr-number').textContent = '{{ $freight_booking->lr ? $freight_booking->lr->lr_number : "N/A" }}';
+                document.getElementById('confirm-transporter').textContent = '{{ $freight_booking->transporter_name ?? "N/A" }}';
+                document.getElementById('confirm-truck').textContent = '{{ $freight_booking->lr && $freight_booking->lr->truck ? $freight_booking->lr->truck->truck_number : "N/A" }}';
+                
+                // Financial details
+                const trRate = document.getElementById('tr_fr_rate').value;
+                const trAmount = document.getElementById('tr_amount').value;
+                const tdsAmount = document.getElementById('tds_amount').value;
+                const balanceAmount = document.getElementById('balance_amount').value;
+                
+                document.getElementById('confirm-tr-rate').textContent = '₹' + parseFloat(trRate).toFixed(2) + ' per ton';
+                document.getElementById('confirm-tr-amount').textContent = '₹' + parseFloat(trAmount).toFixed(2);
+                document.getElementById('confirm-tds-amount').textContent = '₹' + parseFloat(tdsAmount).toFixed(2);
+                document.getElementById('confirm-balance-amount').textContent = '₹' + parseFloat(balanceAmount).toFixed(2);
+                
+                // Status
+                const isDelivered = document.getElementById('is_delivered').checked;
+                const isCancelled = document.getElementById('is_cancelled').checked;
+                
+                document.getElementById('confirm-delivery-status').innerHTML = isDelivered ? 
+                    '<span class="badge bg-success">Delivered</span>' : 
+                    '<span class="badge bg-warning text-dark">Not Delivered</span>';
+                    
+                document.getElementById('confirm-cancellation-status').innerHTML = isCancelled ? 
+                    '<span class="badge bg-danger">Cancelled</span>' : 
+                    '<span class="badge bg-secondary">Not Cancelled</span>';
+                
+                // Additional charges (only show if delivered)
+                const additionalChargesRow = document.getElementById('confirm-additional-charges-row');
+                if (isDelivered) {
+                    additionalChargesRow.style.display = 'flex';
+                    
+                    const detention = document.getElementById('detention').value || '0.00';
+                    const deviation = document.getElementById('deviation').value || '0.00';
+                    const miscExpense = document.getElementById('misc_expense').value || '0.00';
+                    const damageAmount = document.getElementById('damage_amount').value || '0.00';
+                    const shortageAmount = document.getElementById('shortage_amount').value || '0.00';
+                    
+                    document.getElementById('confirm-detention').textContent = '₹' + parseFloat(detention).toFixed(2);
+                    document.getElementById('confirm-deviation').textContent = '₹' + parseFloat(deviation).toFixed(2);
+                    document.getElementById('confirm-misc-expense').textContent = '₹' + parseFloat(miscExpense).toFixed(2);
+                    document.getElementById('confirm-damage-amount').textContent = '₹' + parseFloat(damageAmount).toFixed(2);
+                    document.getElementById('confirm-shortage-amount').textContent = '₹' + parseFloat(shortageAmount).toFixed(2);
+                } else {
+                    additionalChargesRow.style.display = 'none';
+                }
+                
+                // Remarks
+                const remark = document.getElementById('remark').value;
+                const remarkRow = document.getElementById('confirm-remark-row');
+                const remarkElement = document.getElementById('confirm-remark');
+                
+                if (remark && remark.trim() !== '') {
+                    remarkRow.style.display = 'flex';
+                    remarkElement.textContent = remark;
+                } else {
+                    remarkRow.style.display = 'none';
+                    remarkElement.textContent = 'No remarks provided.';
+                }
+                
+                // Show the confirmation modal
+                const modal = new bootstrap.Modal(document.getElementById('updateConfirmationModal'));
+                modal.show();
+            });
+            
+            // Handle form submission after confirmation
+            confirmUpdateBtn.addEventListener('click', function() {
+                // Submit the form
+                editForm.submit();
+            });
+        }
+        
         // Get all required elements with null checks
         const weightElement = document.getElementById('weight');
         const weight = weightElement ? parseFloat(weightElement.value || 0) : 0;
