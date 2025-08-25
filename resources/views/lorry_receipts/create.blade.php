@@ -1254,19 +1254,33 @@ document.getElementById('addGoodsTypeForm').addEventListener('submit', function 
 
         if (data.success) {
             // Add new option to Goods Type dropdown
-            $('#goodsTypeModal').modal('hide');
-
-            // ✅ Remove backdrop if still visible
-            $('.modal-backdrop').remove();
-            $('body').removeClass('modal-open');
             let select = document.getElementById('good_type');
-
             let newOption = new Option(data.goodsType.name, data.goodsType.name, true, true);
             select.add(newOption);
             select.value = data.goodsType.name;
 
-            // Close modal
-            bootstrap.Modal.getInstance(document.getElementById('addGoodsTypeModal')).hide();
+            // Close modal properly
+            let modal = bootstrap.Modal.getInstance(document.getElementById('addGoodsTypeModal'));
+            if (modal) {
+                modal.hide();
+            } else {
+                $('#addGoodsTypeModal').modal('hide');
+            }
+
+            // Force complete modal cleanup and scroll restoration
+            setTimeout(() => {
+                $('.modal-backdrop').remove();
+                $('body').removeClass('modal-open').removeAttr('style');
+                $('html').removeClass('modal-open').removeAttr('style');
+                
+                // Force scroll restoration
+                document.body.style.overflow = 'auto';
+                document.documentElement.style.overflow = 'auto';
+                
+                // Remove any lingering modal classes
+                $('body').removeClass('modal-open');
+                $('.modal').removeClass('show');
+            }, 100);
 
             // Reset form
             form.reset();
