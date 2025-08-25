@@ -165,7 +165,7 @@ class CityController extends Controller
 
         // Get country_id from the selected state
         $state = \App\Models\State::find($request->state_id);
-        $validated['country_id'] = $state->country_id;
+        // $validated['country_id'] = $state->country_id;
 
         $city = City::create($validated);
 
@@ -204,7 +204,7 @@ class CityController extends Controller
 
         // Get country_id from the selected state
         $state = \App\Models\State::find($request->state_id);
-        $validated['country_id'] = $state->country_id;
+        // $validated['country_id'] = $state->country_id;
 
         $city->update($validated);
         return redirect()->route('master.cities.index')->with('success', 'City updated successfully');
