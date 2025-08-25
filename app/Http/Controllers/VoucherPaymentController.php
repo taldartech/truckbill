@@ -543,4 +543,41 @@ class VoucherPaymentController extends Controller
         
         return view('voucher_payments.show', compact('payments', 'voucherNumber', 'totalAmount', 'freightBooking'));
     }
+    
+    /**
+     * Remove the specified voucher payment from storage (soft delete).
+     *
+     * @param  \App\Models\VoucherPayment  $voucher_payment
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy(VoucherPayment $voucher_payment)
+    {
+        try {
+            // Get the freight booking and voucher number before deletion
+            $freightBooking = $voucher_payment->freight_booking;
+            $voucherNumber = $voucher_payment->voucher_number;
+            
+            // Soft delete the voucher payment
+            $voucher_payment->delete();
+            
+            // If this was accessed from the voucher detail page, redirect back there
+            if (url()->previous() === route('voucher_payments.show', $voucherNumber)) {
+                return redirect()->route('voucher_payments.show', $voucherNumber)
+                    ->with('success', 'Payment deleted successfully.');
+            }
+            
+            // Otherwise redirect to the index page
+            return redirect()->route('voucher_payments.index')
+                ->with('success', 'Payment deleted successfully.');
+                
+        } catch (\Exception $e) {
+            \Log::error('Error deleting voucher payment: ' . $e->getMessage(), [
+                'voucher_payment_id' => $voucher_payment->id,
+                'user_id' => auth()->id()
+            ]);
+            
+            return redirect()->back()
+                ->with('error', 'An error occurred while deleting the payment. Please try again.');
+        }
+    }
 }
