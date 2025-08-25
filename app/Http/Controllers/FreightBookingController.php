@@ -866,9 +866,11 @@ class FreightBookingController extends Controller
                     ]);
                     
                     // Update freight booking balance
+                    $newadvance_amount = $freightBooking->advance_amount + $amount;
                     $newBalance = max(0, $freightBooking->balance_amount - $amount);
                     $freightBooking->update([
-                        'balance_amount' => $newBalance
+                        'balance_amount' => $newBalance,
+                        'advance_amount' => $newadvance_amount
                     ]);
                     
                     $processedPayments[] = $voucherPayment->id;
@@ -876,7 +878,8 @@ class FreightBookingController extends Controller
                     \Log::info('Processed payment for booking', [
                         'booking_id' => $bookingId,
                         'amount' => $amount,
-                        'new_balance' => $newBalance
+                        'new_balance' => $newBalance,
+                        'new_advance_amount' => $newadvance_amount
                     ]);
                 }
             }
