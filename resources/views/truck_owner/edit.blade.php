@@ -1380,5 +1380,313 @@
             }
         });
     });
+
+    // Fresh approach using fetch API for modal submissions
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // Country Modal Handler
+        const countryForm = document.getElementById('addCountryForm');
+        if (countryForm) {
+            countryForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const spinner = submitBtn.querySelector('.spinner-border');
+                const errorDiv = document.getElementById('countryFormErrors');
+                
+                // Show loading
+                submitBtn.disabled = true;
+                spinner?.classList.remove('d-none');
+                errorDiv?.classList.add('d-none');
+                
+                try {
+                    const formData = new FormData(this);
+                    formData.append('from_modal', '1');
+                    
+                    const response = await fetch('{{ route("master.countries.store") }}', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success && data.country) {
+                        // Update all dropdowns
+                        updateCountryDropdowns(data.country);
+                        
+                        // Select new country
+                        document.getElementById('country_id').value = data.country.id;
+                        document.getElementById('country_id').dispatchEvent(new Event('change'));
+                        
+                        // Clean close modal
+                        closeModalClean('addCountryModal');
+                        
+                        // Reset form
+                        this.reset();
+                    } else {
+                        throw new Error(data.message || 'Failed to add country');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    if (errorDiv) {
+                        errorDiv.innerHTML = error.message || 'An error occurred while adding the country.';
+                        errorDiv.classList.remove('d-none');
+                    }
+                } finally {
+                    submitBtn.disabled = false;
+                    spinner?.classList.add('d-none');
+                }
+            });
+        }
+
+        // State Modal Handler
+        const stateForm = document.getElementById('addStateForm');
+        if (stateForm) {
+            stateForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const spinner = submitBtn.querySelector('.spinner-border');
+                const errorDiv = document.getElementById('stateFormErrors');
+                
+                // Show loading
+                submitBtn.disabled = true;
+                spinner?.classList.remove('d-none');
+                errorDiv?.classList.add('d-none');
+                
+                try {
+                    const formData = new FormData(this);
+                    formData.append('from_modal', '1');
+                    
+                    const response = await fetch('{{ route("master.states.store") }}', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success && data.state) {
+                        // Update dropdowns
+                        updateStateDropdowns(data.state);
+                        
+                        // Select new state
+                        document.getElementById('state_id').value = data.state.id;
+                        document.getElementById('state_id').dispatchEvent(new Event('change'));
+                        
+                        // Clean close modal
+                        closeModalClean('addStateModal');
+                        
+                        // Reset form
+                        this.reset();
+                    } else {
+                        throw new Error(data.message || 'Failed to add state');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    if (errorDiv) {
+                        errorDiv.innerHTML = error.message || 'An error occurred while adding the state.';
+                        errorDiv.classList.remove('d-none');
+                    }
+                } finally {
+                    submitBtn.disabled = false;
+                    spinner?.classList.add('d-none');
+                }
+            });
+        }
+
+        // City Modal Handler
+        const cityForm = document.getElementById('addCityForm');
+        if (cityForm) {
+            cityForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const spinner = submitBtn.querySelector('.spinner-border');
+                const errorDiv = document.getElementById('cityFormErrors');
+                
+                // Show loading
+                submitBtn.disabled = true;
+                spinner?.classList.remove('d-none');
+                errorDiv?.classList.add('d-none');
+                
+                try {
+                    const formData = new FormData(this);
+                    formData.append('from_modal', '1');
+                    
+                    const response = await fetch('{{ route("master.cities.store") }}', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success && data.city) {
+                        // Update dropdown
+                        updateCityDropdown(data.city);
+                        
+                        // Select new city
+                        document.getElementById('city_id').value = data.city.id;
+                        document.getElementById('city_id').dispatchEvent(new Event('change'));
+                        
+                        // Clean close modal
+                        closeModalClean('addCityModal');
+                        
+                        // Reset form
+                        this.reset();
+                    } else {
+                        throw new Error(data.message || 'Failed to add city');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    if (errorDiv) {
+                        errorDiv.innerHTML = error.message || 'An error occurred while adding the city.';
+                        errorDiv.classList.remove('d-none');
+                    }
+                } finally {
+                    submitBtn.disabled = false;
+                    spinner?.classList.add('d-none');
+                }
+            });
+        }
+        
+        // Handle country change with validation and reset
+        $('#country_id').on('change', function() {
+            const countryId = $(this).val();
+            const stateSelect = $('#state_id');
+            const citySelect = $('#city_id');
+            
+            // Reset state and city dropdowns when country changes
+            stateSelect.html('<option value="">Select State</option>').val('');
+            citySelect.html('<option value="">Select City</option>').val('');
+            
+            // Clear validation errors
+            stateSelect.removeClass('is-invalid');
+            citySelect.removeClass('is-invalid');
+            stateSelect.next('.invalid-feedback').remove();
+            citySelect.next('.invalid-feedback').remove();
+            
+            if (countryId) {
+                $.get(`/api/states/${countryId}`)
+                    .done(function(data) {
+                        data.forEach(function(state) {
+                            stateSelect.append(`<option value="${state.id}">${state.name}</option>`);
+                        });
+                    })
+                    .fail(function() {
+                        console.error('Error loading states for selected country');
+                    });
+            }
+        });
+
+        // Handle state change with validation and reset
+        $('#state_id').on('change', function() {
+            const stateId = $(this).val();
+            const countryId = $('#country_id').val();
+            const citySelect = $('#city_id');
+            
+            // Reset city dropdown when state changes
+            citySelect.html('<option value="">Select City</option>').val('');
+            
+            // Clear validation errors
+            citySelect.removeClass('is-invalid');
+            citySelect.next('.invalid-feedback').remove();
+            
+            if (stateId) {
+                $.get(`/api/cities/${stateId}`)
+                    .done(function(data) {
+                        data.forEach(function(city) {
+                            citySelect.append(`<option value="${city.id}">${city.name}</option>`);
+                        });
+                    })
+                    .fail(function() {
+                        console.error('Error loading cities for selected state');
+                    });
+            }
+        });
+        
+        // Handle city change with validation
+        $('#city_id').on('change', function() {
+            const cityId = $(this).val();
+            const stateId = $('#state_id').val();
+            const countryId = $('#country_id').val();
+            
+            // Clear validation errors
+            $(this).removeClass('is-invalid');
+            $(this).next('.invalid-feedback').remove();
+            
+            // Additional client-side validation
+            if (cityId && (!stateId || !countryId)) {
+                $(this).addClass('is-invalid');
+                $(this).after('<div class="invalid-feedback">Please select country and state first.</div>');
+            }
+        });
+    });
+
+    // Helper functions for modal management
+    function updateCountryDropdowns(country) {
+        const dropdowns = ['country_id', 'modal_state_country_id', 'modal_city_country_id'];
+        dropdowns.forEach(id => {
+            const select = document.getElementById(id);
+            if (select) {
+                const option = document.createElement('option');
+                option.value = country.id;
+                option.textContent = country.name;
+                select.appendChild(option);
+            }
+        });
+    }
+    
+    function updateStateDropdowns(state) {
+        const dropdowns = ['state_id', 'modal_city_state_id'];
+        dropdowns.forEach(id => {
+            const select = document.getElementById(id);
+            if (select) {
+                const option = document.createElement('option');
+                option.value = state.id;
+                option.textContent = state.name;
+                select.appendChild(option);
+            }
+        });
+    }
+    
+    function updateCityDropdown(city) {
+        const select = document.getElementById('city_id');
+        if (select) {
+            const option = document.createElement('option');
+            option.value = city.id;
+            option.textContent = city.name;
+            select.appendChild(option);
+        }
+    }
+    
+    function closeModalClean(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            // Use Bootstrap's modal instance
+            const bsModal = bootstrap.Modal.getInstance(modal) || new bootstrap.Modal(modal);
+            bsModal.hide();
+            
+            // Clean up after hide completes
+            modal.addEventListener('hidden.bs.modal', function cleanup() {
+                document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
+                document.body.classList.remove('modal-open');
+                document.body.style.overflow = '';
+                document.body.style.paddingRight = '';
+                modal.removeEventListener('hidden.bs.modal', cleanup);
+            }, { once: true });
+        }
+    }
     </script>
 @endsection
