@@ -181,7 +181,7 @@
     @php
     $weight = $weight ?? 0; // default fallback
 @endphp
-    <form method="POST" action="{{ route('freight_bookings.store') }}" class="needs-validation" novalidate="">
+    <form method="POST" action="{{ route('freight_bookings.confirm') }}" class="needs-validation" novalidate="">
         @csrf
         <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
         <!--begin::Body-->
@@ -345,11 +345,9 @@
             </a>
             <div>
                 <button class="btn btn-success me-2" type="submit" name="action" value="save">
-                    <i class="bi bi-check-circle"></i> Submit Form
+                    <i class="bi bi-check-circle"></i> Continue to Review
                 </button>
-                <button class="btn btn-primary" type="submit" name="action" value="save_and_pay" title="Save the form and make voucher payment">
-                    <i class="bi bi-credit-card"></i> Save & Make Payment
-                </button>
+
             </div>
         </div>
         <!--end::Footer-->

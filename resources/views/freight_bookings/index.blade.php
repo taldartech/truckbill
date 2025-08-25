@@ -403,9 +403,10 @@ $(document).ready(function() {
                         <input type="number" class="form-control payment-amount allocated-input" 
                                data-id="${checkbox.val()}" 
                                value="${balance}" 
-                               min="0" 
+                               min="0.01" 
                                max="${balance}" 
                                step="0.01">
+                        <div class="form-text">Amount must be greater than zero and not exceed balance</div>
                     </td>
                 </tr>
             `;
@@ -769,16 +770,48 @@ $(document).ready(function() {
         const max = parseFloat(input.data('max'));
         const value = parseFloat(input.val()) || 0;
         
-        if (value > max) {
-            input.val(max.toFixed(2));
+        // Validate amount is greater than zero
+        if (value <= 0) {
+            input.addClass('is-invalid');
+            if (!input.next('.invalid-feedback').length) {
+                input.after('<div class="invalid-feedback">Amount must be greater than zero</div>');
+            } else {
+                input.next('.invalid-feedback').text('Amount must be greater than zero');
+            }
+        }
+        // Validate amount doesn't exceed balance
+        else if (value > max) {
+            input.addClass('is-invalid');
+            if (!input.next('.invalid-feedback').length) {
+                input.after(`<div class="invalid-feedback">Amount cannot exceed balance (₹${max.toFixed(2)})</div>`);
+            } else {
+                input.next('.invalid-feedback').text(`Amount cannot exceed balance (₹${max.toFixed(2)})`);
+            }
+            input.val(max.toFixed(2)); // Correct the value to maximum allowed
+        }
+        // Valid amount
+        else {
+            input.removeClass('is-invalid').addClass('is-valid');
+            input.next('.invalid-feedback').remove();
         }
         
         // Update total
         let total = 0;
+        let hasError = false;
+        
         $('.payment-amount').each(function() {
-            total += parseFloat($(this).val()) || 0;
+            const inputVal = parseFloat($(this).val()) || 0;
+            total += inputVal;
+            if ($(this).hasClass('is-invalid')) {
+                hasError = true;
+            }
         });
+        
         $('#totalPaymentAmount').text('₹' + total.toLocaleString('en-IN', {minimumFractionDigits: 2}));
+        
+        // Enable/disable submit button based on validation
+        const submitBtn = $('#voucherPaymentModal .btn-success');
+        submitBtn.prop('disabled', hasError || total <= 0);
     });
     
     // Handle bulk memo ID button
@@ -1422,10 +1455,10 @@ function handleIndividualVoucherPayment(button) {
                         <label for="individualTotalAmountInput" class="form-label">Payment Amount *</label>
                         <div class="input-group">
                             <span class="input-group-text">₹</span>
-                            <input type="number" step="0.01" class="form-control" name="total_amount" id="individualTotalAmountInput" value="${balance.toFixed(2)}" max="${balance}" required>
+                            <input type="number" step="0.01" class="form-control" name="total_amount" id="individualTotalAmountInput" value="${balance.toFixed(2)}" min="0.01" max="${balance}" required>
                         </div>
                         <div class="invalid-feedback">Please enter a valid payment amount.</div>
-                        <small class="text-muted">Maximum amount: ₹${balance.toFixed(2)}</small>
+                        <small class="text-muted">Amount must be greater than zero and not exceed ₹${balance.toFixed(2)}</small>
                     </div>
                 </div>
             </div>
@@ -1448,10 +1481,27 @@ $('#submitIndividualPayment').on('click', function() {
     // Validate form
     const paymentType = document.getElementById('individual_payment_type').value;
     const paymentMode = document.getElementById('individual_payment_mode').value;
-    const totalAmount = document.getElementById('individualTotalAmountInput').value;
+    const totalAmountInput = document.getElementById('individualTotalAmountInput');
+    const totalAmount = totalAmountInput.value;
+    const maxAmount = parseFloat(totalAmountInput.getAttribute('max')) || 0;
+    const amountValue = parseFloat(totalAmount) || 0;
     
-    if (!paymentType || !paymentMode || !totalAmount || parseFloat(totalAmount) <= 0) {
-        alert('Please fill in all required fields with valid values.');
+    if (!paymentType || !paymentMode) {
+        alert('Please fill in all required fields.');
+        return;
+    }
+    
+    // Validate amount is greater than zero
+    if (amountValue <= 0) {
+        alert('Payment amount must be greater than zero.');
+        totalAmountInput.focus();
+        return;
+    }
+    
+    // Validate amount doesn't exceed balance
+    if (amountValue > maxAmount) {
+        alert(`Payment amount (₹${amountValue.toFixed(2)}) cannot exceed the balance amount (₹${maxAmount.toFixed(2)}).`);
+        totalAmountInput.focus();
         return;
     }
     
@@ -1538,13 +1588,62 @@ function fetchPaymentHistory(freightBookingIds) {
 function updateTotalPayment() {
     const allocatedInputs = document.querySelectorAll('.allocated-input');
     let total = 0;
+    let hasError = false;
+    
     allocatedInputs.forEach(input => {
-        total += parseFloat(input.value) || 0;
+        const value = parseFloat(input.value) || 0;
+        const maxValue = parseFloat(input.getAttribute('max')) || 0;
+        
+        // Validate amount is greater than zero
+        if (value <= 0) {
+            input.classList.add('is-invalid');
+            if (!input.nextElementSibling || !input.nextElementSibling.classList.contains('invalid-feedback')) {
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'invalid-feedback';
+                errorMsg.textContent = 'Amount must be greater than zero';
+                input.parentNode.insertBefore(errorMsg, input.nextSibling);
+            } else {
+                input.nextElementSibling.textContent = 'Amount must be greater than zero';
+            }
+            hasError = true;
+        }
+        // Validate amount doesn't exceed balance
+        else if (value > maxValue) {
+            input.classList.add('is-invalid');
+            if (!input.nextElementSibling || !input.nextElementSibling.classList.contains('invalid-feedback')) {
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'invalid-feedback';
+                errorMsg.textContent = `Amount cannot exceed balance (₹${maxValue.toFixed(2)})`;
+                input.parentNode.insertBefore(errorMsg, input.nextSibling);
+            } else {
+                input.nextElementSibling.textContent = `Amount cannot exceed balance (₹${maxValue.toFixed(2)})`;
+            }
+            hasError = true;
+        }
+        // Valid amount
+        else {
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+            if (input.nextElementSibling && input.nextElementSibling.classList.contains('invalid-feedback')) {
+                input.nextElementSibling.textContent = '';
+            }
+        }
+        
+        total += value;
     });
+    
     const totalElement = document.getElementById('totalPaymentAmount');
     if (totalElement) {
         totalElement.textContent = total.toFixed(2);
     }
+    
+    // Disable/enable submit button based on validation
+    const submitBtn = document.querySelector('#voucherPaymentModal .btn-success');
+    if (submitBtn) {
+        submitBtn.disabled = hasError || total <= 0;
+    }
+    
+    return !hasError;
 }
 
 // Function to submit voucher payment
@@ -1581,7 +1680,36 @@ function submitVoucherPayment() {
     
     // Get allocated amounts
     const allocatedInputs = document.querySelectorAll('.allocated-input');
-    const paymentAmounts = Array.from(allocatedInputs).map(input => parseFloat(input.value) || 0);
+    
+    // Validate all payment amounts
+    let hasValidationError = false;
+    const paymentAmounts = [];
+    
+    allocatedInputs.forEach(input => {
+        const amount = parseFloat(input.value) || 0;
+        const maxAmount = parseFloat(input.getAttribute('max')) || 0;
+        const lrNumber = input.getAttribute('data-lr') || 'Unknown';
+        
+        if (amount <= 0) {
+            alert(`Error: Payment amount for LR ${lrNumber} must be greater than zero.`);
+            input.focus();
+            hasValidationError = true;
+            return;
+        }
+        
+        if (amount > maxAmount) {
+            alert(`Error: Payment amount for LR ${lrNumber} (₹${amount.toFixed(2)}) exceeds the balance amount (₹${maxAmount.toFixed(2)}).`);
+            input.focus();
+            hasValidationError = true;
+            return;
+        }
+        
+        paymentAmounts.push(amount);
+    });
+    
+    if (hasValidationError) {
+        return;
+    }
     
     // Calculate total amount
     const totalAmount = paymentAmounts.reduce((sum, amount) => sum + amount, 0);

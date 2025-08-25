@@ -1,11 +1,17 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Models\AdvancePayment;
 use App\Models\FreightBooking;
 use App\Models\LorryReceipt;
+use App\Models\Transporter;
+use App\Models\Truck;
+use App\Models\VoucherPayment;
 use Illuminate\Http\Request;
-use App\Helpers\TdsHelper;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\Validator;
 
 class FreightBookingController extends Controller
 {
@@ -346,9 +352,63 @@ class FreightBookingController extends Controller
 }
 
 
+    /**
+     * Confirm the freight booking details before final submission
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function confirm(Request $request)
+    {
+        // Validate the form data
+        $validator = Validator::make($request->all(), [
+            'lr_id' => 'required|exists:lorry_receipts,id',
+            'tr_fr_rate' => 'required|numeric',
+            'tr_amount' => 'required|numeric',
+            'advance_amount' => 'nullable|numeric',
+            'balance_amount' => 'required|numeric',
+            'tds_amount' => 'nullable|numeric',
+            'eway_bill_number' => 'nullable|string',
+            'good_type' => 'nullable|string',
+            'pan_verified' => 'required|boolean',
+            'remark' => 'nullable|string',
+            'is_delivered' => 'boolean',
+            'is_cancelled' => 'boolean',
+            'company_id' => 'required|exists:companies,id',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()
+                ->withErrors($validator)
+                ->withInput();
+        }
+
+        // Get the validated form data
+        $formData = $validator->validated();
+
+        // Get the lorry receipt with its relationships
+        $lorry_receipt = LorryReceipt::with(['transporter', 'truck', 'customer', 'consignor', 'consignee'])
+            ->findOrFail($formData['lr_id']);
+
+        // Return the confirmation view with the form data and lorry receipt
+        return view('freight_bookings.confirm', compact('formData', 'lorry_receipt'));
+    }
+
+    /**
+     * Store a newly created freight booking in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
     public function store(Request $request)
- {
-         $data = $request->validate([
+    {
+        // Check if the form has been confirmed
+        if (!$request->has('confirmed')) {
+            return redirect()->route('freight_bookings.create')
+                ->with('error', 'Please confirm the freight booking details before submission.');
+        }
+        
+        $data = $request->validate([
             'lr_id' => 'required|exists:lorry_receipts,id',
             'tr_fr_rate' => 'required|numeric',
             'tr_amount' => 'required|numeric',
