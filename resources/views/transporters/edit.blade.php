@@ -992,7 +992,8 @@ if (countrySelect && stateSelect && citySelect) {
                         body: formData,
                         headers: {
                             'X-Requested-With': 'XMLHttpRequest',
-                            'Accept': 'application/json'
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                         }
                     });
                     
@@ -1051,7 +1052,8 @@ if (countrySelect && stateSelect && citySelect) {
                         body: formData,
                         headers: {
                             'X-Requested-With': 'XMLHttpRequest',
-                            'Accept': 'application/json'
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                         }
                     });
                     
@@ -1110,7 +1112,8 @@ if (countrySelect && stateSelect && citySelect) {
                         body: formData,
                         headers: {
                             'X-Requested-With': 'XMLHttpRequest',
-                            'Accept': 'application/json'
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                         }
                     });
                     

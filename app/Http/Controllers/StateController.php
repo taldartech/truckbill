@@ -133,31 +133,63 @@ class StateController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => [
-                'required',
-                'string',
-                'max:255',
-                \Illuminate\Validation\Rule::unique('states')->where(function ($query) use ($request) {
-                    return $query->where('country_id', $request->country_id);
-                })
-            ],
-            'code' => 'nullable|string|max:10',
-            'country_id' => 'required|exists:countries,id',
-        ]);
-
-        $state = State::create($validated);
-
-        // Check if it's an AJAX request
-        if ($request->ajax() || $request->has('from_modal')) {
-            return response()->json([
-                'success' => true,
-                'message' => 'State created successfully',
-                'state' => $state
+        try {
+            $validated = $request->validate([
+                'name' => [
+                    'required',
+                    'string',
+                    'max:255',
+                    \Illuminate\Validation\Rule::unique('states')->where(function ($query) use ($request) {
+                        return $query->where('country_id', $request->country_id);
+                    })
+                ],
+                'code' => 'nullable|string|max:10',
+                'country_id' => 'required|exists:countries,id',
             ]);
-        }
 
-        return redirect()->route('master.states.index')->with('success', 'State created successfully');
+            $state = State::create($validated);
+
+            // Check if it's an AJAX request
+            if ($request->ajax() || $request->has('from_modal')) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'State created successfully',
+                    'state' => $state
+                ]);
+            }
+
+            return redirect()->route('master.states.index')->with('success', 'State created successfully');
+            
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Handle validation errors
+            if ($request->ajax() || $request->has('from_modal')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            
+            return back()->withErrors($e->errors())->withInput();
+            
+        } catch (\Exception $e) {
+            // Handle other errors (like database constraints)
+            $errorMessage = 'Failed to create state';
+            
+            // Check for duplicate entry error
+            if (str_contains($e->getMessage(), 'Duplicate entry')) {
+                $errorMessage = 'A state with this name already exists in the selected country';
+            }
+            
+            if ($request->ajax() || $request->has('from_modal')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMessage
+                ], 500);
+            }
+            
+            return back()->with('error', $errorMessage)->withInput();
+        }
     }
 
     public function edit(State $state)

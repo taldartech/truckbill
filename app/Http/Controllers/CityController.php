@@ -150,35 +150,66 @@ class CityController extends Controller
 
     public function store(Request $request)
     {
-        // dd("hello");
-        $validated = $request->validate([
-            'name' => [
-                'required',
-                'string',
-                'max:255',
-                \Illuminate\Validation\Rule::unique('cities')->where(function ($query) use ($request) {
-                    return $query->where('state_id', $request->state_id);
-                })
-            ],
-            'state_id' => 'required|exists:states,id',
-        ]);
-
-        // Get country_id from the selected state
-        $state = \App\Models\State::find($request->state_id);
-        $validated['country_id'] = $state->country_id;
-
-        $city = City::create($validated);
-
-        // Check if it's an AJAX request
-        if ($request->ajax() || $request->has('from_modal')) {
-            return response()->json([
-                'success' => true,
-                'message' => 'City created successfully',
-                'city' => $city
+        try {
+            $validated = $request->validate([
+                'name' => [
+                    'required',
+                    'string',
+                    'max:255',
+                    \Illuminate\Validation\Rule::unique('cities')->where(function ($query) use ($request) {
+                        return $query->where('state_id', $request->state_id);
+                    })
+                ],
+                'state_id' => 'required|exists:states,id',
             ]);
+
+            // Get country_id from the selected state
+            $state = \App\Models\State::find($request->state_id);
+            $validated['country_id'] = $state->country_id;
+
+            $city = City::create($validated);
+
+            // Check if it's an AJAX request
+            if ($request->ajax() || $request->has('from_modal')) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'City created successfully',
+                    'city' => $city
+                ]);
+            }
+
+            return redirect()->route('master.cities.index')->with('success', 'City created successfully');
+            
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Handle validation errors
+            if ($request->ajax() || $request->has('from_modal')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            
+            return back()->withErrors($e->errors())->withInput();
+            
+        } catch (\Exception $e) {
+            // Handle other errors (like database constraints)
+            $errorMessage = 'Failed to create city';
+            
+            // Check for duplicate entry error
+            if (str_contains($e->getMessage(), 'Duplicate entry')) {
+                $errorMessage = 'A city with this name already exists in the selected state';
+            }
+            
+            if ($request->ajax() || $request->has('from_modal')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMessage
+                ], 500);
+            }
+            
+            return back()->with('error', $errorMessage)->withInput();
         }
-    
-        return redirect()->route('master.cities.index')->with('success', 'City created successfully');
     }
 
     public function edit(City $city)

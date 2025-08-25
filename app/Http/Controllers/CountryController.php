@@ -124,25 +124,61 @@ class CountryController extends Controller
 
     public function store(Request $request)
     {
-       
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'code' => 'required|string|max:10',
-        ]);
-
-        $country = Country::create($validated);
-
-        // Check if it's an AJAX request
-        if ($request->ajax() || $request->has('from_modal')) {
-           
-            return response()->json([
-                'success' => true,
-                'message' => 'Country created successfully',
-                'country' => $country
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255|unique:countries,name',
+                'code' => 'required|string|max:10|unique:countries,code',
             ]);
-        }
 
-        return redirect()->route('master.countries.index')->with('success', 'Country created successfully');
+            $country = Country::create($validated);
+
+            // Check if it's an AJAX request
+            if ($request->ajax() || $request->has('from_modal')) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Country created successfully',
+                    'country' => $country
+                ]);
+            }
+
+            return redirect()->route('master.countries.index')->with('success', 'Country created successfully');
+            
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Handle validation errors
+            if ($request->ajax() || $request->has('from_modal')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            
+            return back()->withErrors($e->errors())->withInput();
+            
+        } catch (\Exception $e) {
+            // Handle other errors (like database constraints)
+            $errorMessage = 'Failed to create country';
+            
+            // Check for duplicate entry error
+            if (str_contains($e->getMessage(), 'Duplicate entry')) {
+                if (str_contains($e->getMessage(), 'countries_name_unique')) {
+                    $errorMessage = 'A country with this name already exists';
+                } elseif (str_contains($e->getMessage(), 'countries_code_unique')) {
+                    $errorMessage = 'A country with this code already exists';
+                } else {
+                    $errorMessage = 'This country already exists';
+                }
+            }
+            
+            if ($request->ajax() || $request->has('from_modal')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMessage
+                ], 500);
+            }
+            
+            return back()->with('error', $errorMessage)->withInput();
+        }
     }
 
     public function edit(Country $country)

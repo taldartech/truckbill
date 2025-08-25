@@ -1408,13 +1408,14 @@
                         body: formData,
                         headers: {
                             'X-Requested-With': 'XMLHttpRequest',
-                            'Accept': 'application/json'
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                         }
                     });
                     
                     const data = await response.json();
                     
-                    if (data.success && data.country) {
+                    if (response.ok && data.success && data.country) {
                         // Update all dropdowns
                         updateCountryDropdowns(data.country);
                         
@@ -1428,12 +1429,28 @@
                         // Reset form
                         this.reset();
                     } else {
-                        throw new Error(data.message || 'Failed to add country');
+                        // Handle validation errors or server errors
+                        let errorMessage = data.message || 'Failed to add country';
+                        
+                        if (data.errors) {
+                            // Handle validation errors
+                            let errorHtml = '<ul class="mb-0">';
+                            Object.values(data.errors).forEach(errors => {
+                                errors.forEach(error => {
+                                    errorHtml += `<li>${error}</li>`;
+                                });
+                            });
+                            errorHtml += '</ul>';
+                            errorDiv.innerHTML = errorHtml;
+                        } else {
+                            errorDiv.innerHTML = errorMessage;
+                        }
+                        errorDiv.classList.remove('d-none');
                     }
                 } catch (error) {
                     console.error('Error:', error);
                     if (errorDiv) {
-                        errorDiv.innerHTML = error.message || 'An error occurred while adding the country.';
+                        errorDiv.innerHTML = 'An error occurred while adding the country. Please try again.';
                         errorDiv.classList.remove('d-none');
                     }
                 } finally {
@@ -1467,13 +1484,14 @@
                         body: formData,
                         headers: {
                             'X-Requested-With': 'XMLHttpRequest',
-                            'Accept': 'application/json'
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                         }
                     });
                     
                     const data = await response.json();
                     
-                    if (data.success && data.state) {
+                    if (response.ok && data.success && data.state) {
                         // Update dropdowns
                         updateStateDropdowns(data.state);
                         
@@ -1487,12 +1505,28 @@
                         // Reset form
                         this.reset();
                     } else {
-                        throw new Error(data.message || 'Failed to add state');
+                        // Handle validation errors or server errors
+                        let errorMessage = data.message || 'Failed to add state';
+                        
+                        if (data.errors) {
+                            // Handle validation errors
+                            let errorHtml = '<ul class="mb-0">';
+                            Object.values(data.errors).forEach(errors => {
+                                errors.forEach(error => {
+                                    errorHtml += `<li>${error}</li>`;
+                                });
+                            });
+                            errorHtml += '</ul>';
+                            errorDiv.innerHTML = errorHtml;
+                        } else {
+                            errorDiv.innerHTML = errorMessage;
+                        }
+                        errorDiv.classList.remove('d-none');
                     }
                 } catch (error) {
                     console.error('Error:', error);
                     if (errorDiv) {
-                        errorDiv.innerHTML = error.message || 'An error occurred while adding the state.';
+                        errorDiv.innerHTML = 'An error occurred while adding the state. Please try again.';
                         errorDiv.classList.remove('d-none');
                     }
                 } finally {
@@ -1526,13 +1560,14 @@
                         body: formData,
                         headers: {
                             'X-Requested-With': 'XMLHttpRequest',
-                            'Accept': 'application/json'
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                         }
                     });
                     
                     const data = await response.json();
                     
-                    if (data.success && data.city) {
+                    if (response.ok && data.success && data.city) {
                         // Update dropdown
                         updateCityDropdown(data.city);
                         
@@ -1546,12 +1581,28 @@
                         // Reset form
                         this.reset();
                     } else {
-                        throw new Error(data.message || 'Failed to add city');
+                        // Handle validation errors or server errors
+                        let errorMessage = data.message || 'Failed to add city';
+                        
+                        if (data.errors) {
+                            // Handle validation errors
+                            let errorHtml = '<ul class="mb-0">';
+                            Object.values(data.errors).forEach(errors => {
+                                errors.forEach(error => {
+                                    errorHtml += `<li>${error}</li>`;
+                                });
+                            });
+                            errorHtml += '</ul>';
+                            errorDiv.innerHTML = errorHtml;
+                        } else {
+                            errorDiv.innerHTML = errorMessage;
+                        }
+                        errorDiv.classList.remove('d-none');
                     }
                 } catch (error) {
                     console.error('Error:', error);
                     if (errorDiv) {
-                        errorDiv.innerHTML = error.message || 'An error occurred while adding the city.';
+                        errorDiv.innerHTML = 'An error occurred while adding the city. Please try again.';
                         errorDiv.classList.remove('d-none');
                     }
                 } finally {
