@@ -627,60 +627,60 @@
     })();
 
     // Country, State, City cascading selects
-    const countrySelect = document.getElementById('country_id');
-    const stateSelect = document.getElementById('state_id');
-    const citySelect = document.getElementById('city_id');
+//     const countrySelect = document.getElementById('country_id');
+//     const stateSelect = document.getElementById('state_id');
+//     const citySelect = document.getElementById('city_id');
 
-    const oldCountry = "{{ old('country_id') }}";
-    const oldState = "{{ old('state_id') }}";
-    const oldCity = "{{ old('city_id') }}";
+//     const oldCountry = "{{ old('country_id') }}";
+//     const oldState = "{{ old('state_id') }}";
+//     const oldCity = "{{ old('city_id') }}";
 
-    countrySelect.addEventListener('change', function() {
-    const countryId = this.value;
-    stateSelect.length = 0;
-    stateSelect.innerHTML = '<option value="">Select State</option>';
-    citySelect.length = 0;
-    citySelect.innerHTML = '<option value="">Select City</option>';
-    if (!oldCountry && !oldState){
-        if (countryId) {
-            fetch(`/api/states/${countryId}`)
-                .then(response => response.json())
-                .then(states => {
-                    states.forEach(state => {
-                        const option = document.createElement('option');
-                        option.value = state.id;
-                        option.textContent = state.name;
-                        stateSelect.appendChild(option);
-                    });
-                    stateSelect.required = true;
-                });
-        }
+//     countrySelect.addEventListener('change', function() {
+//     const countryId = this.value;
+//     stateSelect.length = 0;
+//     stateSelect.innerHTML = '<option value="">Select State</option>';
+//     citySelect.length = 0;
+//     citySelect.innerHTML = '<option value="">Select City</option>';
+//     if (!oldCountry && !oldState){
+//         if (countryId) {
+//             fetch(`/api/states/${countryId}`)
+//                 .then(response => response.json())
+//                 .then(states => {
+//                     states.forEach(state => {
+//                         const option = document.createElement('option');
+//                         option.value = state.id;
+//                         option.textContent = state.name;
+//                         stateSelect.appendChild(option);
+//                     });
+//                     stateSelect.required = true;
+//                 });
+//         }
         
-        stateSelect.addEventListener('change', function() {
-            const stateId = this.value;
-            citySelect.length = 0;
-            citySelect.innerHTML = '<option value="">Select City</option>';
-            if (!oldState && !oldCity){
-                if (stateId) {
-                    fetch(`/api/cities/${stateId}`)
-                        .then(response => response.json())
-                        .then(cities => {
-                            cities.forEach(city => {
-                                const option = document.createElement('option');
-                                option.value = city.id;
-                                option.textContent = city.name;
-                                citySelect.appendChild(option);
-                            });
-                            citySelect.required = true;
-                        });
-                }
-            }
-        });
-    }
+//         stateSelect.addEventListener('change', function() {
+//             const stateId = this.value;
+//             citySelect.length = 0;
+//             citySelect.innerHTML = '<option value="">Select City</option>';
+//             if (!oldState && !oldCity){
+//                 if (stateId) {
+//                     fetch(`/api/cities/${stateId}`)
+//                         .then(response => response.json())
+//                         .then(cities => {
+//                             cities.forEach(city => {
+//                                 const option = document.createElement('option');
+//                                 option.value = city.id;
+//                                 option.textContent = city.name;
+//                                 citySelect.appendChild(option);
+//                             });
+//                             citySelect.required = true;
+//                         });
+//                 }
+//             }
+//         });
+//     }
 
 
 
-});
+// });
 
 
 
@@ -988,61 +988,7 @@
     })();
 
     // Country, State, City cascading selects
-    const countrySelect = document.getElementById('country_id');
-    const stateSelect = document.getElementById('state_id');
-    const citySelect = document.getElementById('city_id');
-
-    const oldCountry = "{{ old('country_id') }}";
-    const oldState = "{{ old('state_id') }}";
-    const oldCity = "{{ old('city_id') }}";
-
-    countrySelect.addEventListener('change', function() {
-    const countryId = this.value;
-    stateSelect.length = 0;
-    stateSelect.innerHTML = '<option value="">Select State</option>';
-    citySelect.length = 0;
-    citySelect.innerHTML = '<option value="">Select City</option>';
-    if (!oldCountry && !oldState){
-        if (countryId) {
-            fetch(`/api/states/${countryId}`)
-                .then(response => response.json())
-                .then(states => {
-                    states.forEach(state => {
-                        const option = document.createElement('option');
-                        option.value = state.id;
-                        option.textContent = state.name;
-                        stateSelect.appendChild(option);
-                    });
-                    stateSelect.required = true;
-                });
-        }
-        
-        stateSelect.addEventListener('change', function() {
-            const stateId = this.value;
-            citySelect.length = 0;
-            citySelect.innerHTML = '<option value="">Select City</option>';
-            if (!oldState && !oldCity){
-                if (stateId) {
-                    fetch(`/api/cities/${stateId}`)
-                        .then(response => response.json())
-                        .then(cities => {
-                            cities.forEach(city => {
-                                const option = document.createElement('option');
-                                option.value = city.id;
-                                option.textContent = city.name;
-                                citySelect.appendChild(option);
-                            });
-                            citySelect.required = true;
-                        });
-                }
-            }
-        });
-    }
-
-
-
-});
-
+  
 
 
 
@@ -1255,25 +1201,7 @@
             });
         });
 
-        // Handle country change in city modal
-        $('#modal_city_country_id').on('change', function() {
-            const countryId = $(this).val();
-            const stateSelect = $('#modal_city_state_id');
-            
-            stateSelect.html('<option value="">Select State</option>');
-            
-            if (countryId) {
-                $.get(`/api/states/${countryId}`)
-                    .done(function(data) {
-                        data.forEach(function(state) {
-                            stateSelect.append(`<option value="${state.id}">${state.name}</option>`);
-                        });
-                    })
-                    .fail(function() {
-                        showErrorMessage('Error loading states');
-                    });
-            }
-        });
+      
 
         // Function to show success message
         function showSuccessMessage(message) {
@@ -1348,60 +1276,8 @@
         });
     })();
     
-    // Country, State, City cascading selects
-    const countrySelect = document.getElementById('country_id');
-    const stateSelect = document.getElementById('state_id');
-    const citySelect = document.getElementById('city_id');
     
-    const oldCountry = "{{ old('country_id') }}";
-    const oldState = "{{ old('state_id') }}";
-    const oldCity = "{{ old('city_id') }}";
-    
-    countrySelect.addEventListener('change', function() {
-    const countryId = this.value;
-    stateSelect.length = 0;
-    stateSelect.innerHTML = '<option value="">Select State</option>';
-    citySelect.length = 0;
-    citySelect.innerHTML = '<option value="">Select City</option>';
-    if (!oldCountry && !oldState){
-    if (countryId) {
-        fetch(`/api/states/${countryId}`)
-            .then(response => response.json())
-            .then(states => {
-                states.forEach(state => {
-                    const option = document.createElement('option');
-                    option.value = state.id;
-                    option.textContent = state.name;
-                    stateSelect.appendChild(option);
-                });
-                stateSelect.required = true;
-            });
-    }
-    stateSelect.addEventListener('change', function() {
-    const stateId = this.value;
-    citySelect.length = 0;
-    citySelect.innerHTML = '<option value="">Select City</option>';
-    if (!oldState && !oldCity){
-    if (stateId) {
-        fetch(`/api/cities/${stateId}`)
-            .then(response => response.json())
-            .then(cities => {
-                cities.forEach(city => {
-                    const option = document.createElement('option');
-                    option.value = city.id;
-                    option.textContent = city.name;
-                    citySelect.appendChild(option);
-                });
-                citySelect.required = true;
-            });
-    }
-    });
-    }
-    
-    
-    
-    });
-
+   
     $('#addStateModal, #addCityModal, #addCountryModal').on('shown.bs.modal', function () {
     $('.modal-backdrop').remove();
 });
