@@ -434,9 +434,37 @@ class TransporterController extends Controller
             'advance_amount' => 'nullable|numeric',
             'pan_active' => 'required|boolean',
             'address' => 'nullable|string|max:255',
-            'city_id' => 'nullable|exists:cities,id',
-            'state_id' => 'nullable|exists:states,id',
             'country_id' => 'nullable|exists:countries,id',
+            'state_id' => [
+                'nullable',
+                'exists:states,id',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($value && $request->country_id) {
+                        $state = \App\Models\State::find($value);
+                        if ($state && $state->country_id != $request->country_id) {
+                            $fail('The selected state does not belong to the selected country.');
+                        }
+                    }
+                },
+            ],
+            'city_id' => [
+                'nullable',
+                'exists:cities,id',
+                function ($attribute, $value, $fail) use ($request) {
+                    if ($value && $request->state_id) {
+                        $city = \App\Models\City::find($value);
+                        if ($city && $city->state_id != $request->state_id) {
+                            $fail('The selected city does not belong to the selected state.');
+                        }
+                    }
+                    if ($value && $request->country_id) {
+                        $city = \App\Models\City::find($value);
+                        if ($city && $city->country_id != $request->country_id) {
+                            $fail('The selected city does not belong to the selected country.');
+                        }
+                    }
+                },
+            ],
             'mobile_number' => [
                 'required',
                 'digits:10',
