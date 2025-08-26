@@ -220,8 +220,17 @@ class ConsigneeController extends Controller
                 'nullable',
                 'digits:10',
             ],
-            'gst_number' => 'nullable|string|max:255',
-            'pan_number' => 'nullable|string|size:10|regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
+            'gst_number' => [
+                'nullable',
+                'string',
+                'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
+            ],
+                        'pan_number' => [
+                            'nullable',
+                            'string',
+                            'size:10',
+                            'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/'
+                        ],
         ]);
 
         if (!empty($validated['pan_number'])) {
@@ -288,8 +297,17 @@ class ConsigneeController extends Controller
                 'nullable',
                 'digits:10',
             ],
-            'gst_number' => 'nullable|string|max:255',
-            'pan_number' => 'nullable|string|size:10|regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
+            'gst_number' => [
+                'nullable',
+                'string',
+                'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
+            ],
+                        'pan_number' => [
+                            'nullable',
+                            'string',
+                            'size:10',
+                            'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/'
+                        ],
         ]);
 
         if (!empty($validated['pan_number'])) {
