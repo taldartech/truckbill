@@ -50,6 +50,11 @@ class FreightBooking extends Model
         return $this->belongsTo(Company::class);
     }
 
+    public function truck()
+    {
+        return $this->belongsTo(Truck::class);
+    }
+
     public function consignee()
     {
         return $this->belongsTo(Consignee::class);
@@ -60,8 +65,23 @@ class FreightBooking extends Model
         return $this->belongsTo(FreightBooking::class, 'linked_freight_booking_id');
     }
 
+    public function sourceCity()
+    {
+        return $this->belongsTo(City::class, 'source_city_id');
+    }
+
+    public function destinationCity()
+    {
+        return $this->belongsTo(City::class, 'destination_city_id');
+    }
+
     public function transporter()
     {
         return $this->belongsTo(Transporter::class, 'transporter_id');
+    }
+
+    public function voucherPayments()
+    {
+        return $this->hasMany(VoucherPayment::class, 'freight_booking_id');
     }
 }

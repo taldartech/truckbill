@@ -111,47 +111,16 @@
     </form>
 
     {{-- Main content card --}}
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        
-        @if(auth()->user()->userRole->name === 'admin')
-        <div>
-            <button type="button" id="bulkUpdateBtn" 
-                    class="btn btn-lg btn-primary d-none"
-                    onclick="showBulkUpdateModal()"
-                    style="position: fixed; bottom: 20px; right: 20px; z-index: 1050;">
-                <i class="bi bi-cash-coin"></i> Bulk Update
-            </button>
-        </div>
-        @endif
-    </div>
-
-    <!-- Bulk Update Modal -->
-    <div class="modal fade" id="bulkUpdateModal" tabindex="-1" aria-labelledby="bulkUpdateModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="bulkUpdateModalLabel">Bulk Update Payment Status</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="bulkUpdateForm">
-                        <div class="mb-3">
-                            <label for="bulkPaymentStatus" class="form-label">Select New Payment Status *</label>
-                            <select name="payment_status" id="bulkPaymentStatus" class="form-select" required>
-                                <option value="pending">Pending</option>
-                                <option value="in-progress">In-Progress</option>
-                                <option value="paid">Paid</option>
-                            </select>
-                            <div class="invalid-feedback">Please select a payment status.</div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="submitBulkUpdate()">Update Status</button>
-                </div>
-            </div>
-        </div>
+    <div class="d-flex justify-content-end gap-2 mb-3">
+        <a href="{{ route('voucher_payments.daily') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-calendar-day"></i> Daily Report
+        </a>
+        <!-- <a href="{{ route('voucher_payments.export.excel') }}" class="btn btn-success">
+            <i class="bi bi-file-earmark-excel"></i> Export to Excel
+        </a>
+        <a href="{{ route('voucher_payments.export.pdf') }}" class="btn btn-danger">
+            <i class="bi bi-file-pdf"></i> Export to PDF
+        </a> -->
     </div>
     <div class="card mb-4">
         <div class="card-header"><h3 class="card-title">Voucher Payments List</h3></div>
@@ -159,13 +128,6 @@
             <table class="table table-bordered">
                 <thead>
                     <tr>
-                        @if(auth()->user()->userRole->name === 'admin')
-                        <th style="width: 30px">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="select-all" onchange="toggleAllChecks(this.checked)">
-                            </div>
-                        </th>
-                        @endif
                         <th style="width: 10px">ID</th>
                         <th>Voucher #</th>
                         <th>Customer</th>
@@ -187,13 +149,6 @@
                             if (!$payment) continue;
                         @endphp
                         <tr class="align-middle">
-                            @if(auth()->user()->userRole->name === 'admin')
-                            <td>
-                                <div class="form-check">
-                                    <input class="form-check-input row-check" type="checkbox" value="{{ $payment->id }}" data-payment-id="{{ $payment->id }}">
-                                </div>
-                            </td>
-                            @endif
                             <td>{{ $payment->id }}</td>
                             <td>
                                 <a href="{{ route('voucher_payments.show', $payment->voucher_number) }}" class="fw-bold text-decoration-none">
@@ -317,92 +272,6 @@
         ].includes(key))) {
             document.getElementById('advanced-search-box').classList.remove('d-none');
         }
-
-        // Add event listeners to all checkboxes
-        document.querySelectorAll('.row-check').forEach(checkbox => {
-            checkbox.addEventListener('change', updateBulkUpdateButtonVisibility);
-        });
-        
-        // Initial check for bulk update button visibility
-        updateBulkUpdateButtonVisibility();
     });
-
-    function toggleAllChecks(checked) {
-        document.querySelectorAll('.row-check').forEach(checkbox => {
-            checkbox.checked = checked;
-        });
-        updateBulkUpdateButtonVisibility();
-    }
-
-    function updateBulkUpdateButtonVisibility() {
-        const checkedBoxes = document.querySelectorAll('.row-check:checked');
-        const bulkUpdateBtn = document.getElementById('bulkUpdateBtn');
-        
-        if (bulkUpdateBtn) {
-            if (checkedBoxes.length > 0) {
-                bulkUpdateBtn.classList.remove('d-none');
-            } else {
-                bulkUpdateBtn.classList.add('d-none');
-            }
-        }
-    }
-
-    function showBulkUpdateModal() {
-        const modal = new bootstrap.Modal(document.getElementById('bulkUpdateModal'));
-        modal.show();
-    }
-
-    function submitBulkUpdate() {
-        const selectedIds = [];
-        document.querySelectorAll('.row-check:checked').forEach(checkbox => {
-            selectedIds.push(checkbox.dataset.paymentId);
-        });
-
-        const paymentStatus = document.getElementById('bulkPaymentStatus').value;
-        
-        if (!paymentStatus) {
-            document.getElementById('bulkPaymentStatus').classList.add('is-invalid');
-            return;
-        }
-
-        // Create form data
-        const formData = new FormData();
-        formData.append('payment_ids', JSON.stringify(selectedIds));
-        formData.append('payment_status', paymentStatus);
-        formData.append('_token', '{{ csrf_token() }}');
-
-        // Submit via fetch
-        fetch('{{ route("voucher_payments.bulkUpdateStatus") }}', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Close modal
-                bootstrap.Modal.getInstance(document.getElementById('bulkUpdateModal')).hide();
-                
-                // Show success message
-                const alertDiv = document.createElement('div');
-                alertDiv.className = 'alert alert-success alert-dismissible fade show';
-                alertDiv.innerHTML = `
-                    ${data.message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                `;
-                document.querySelector('.container').prepend(alertDiv);
-                
-                // Reload page after a short delay
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1500);
-            } else {
-                alert('Error: ' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while updating payment statuses');
-        });
-    }
 </script>
 @endsection

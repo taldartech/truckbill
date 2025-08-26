@@ -6,7 +6,15 @@ use App\Models\VoucherPayment;
 use App\Models\PaymentType;
 use App\Models\PaymentMode;
 use App\Models\Pump;
+use App\Models\Company;
+use App\Models\City;
+use App\Models\Transporter;
+use App\Models\Truck;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\VoucherPaymentsExport;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class VoucherPaymentController extends Controller
 {

@@ -655,16 +655,29 @@
                   </li>
                   @endif
                   
-                  {{-- Operational menus visible to all authenticated users including moderators --}}
-                  @if(auth()->check())
+                  @endif
+                  
+                  {{-- Reports Section - Visible to all authenticated users --}}
+                  @auth
                   <li class="nav-item">
-                    <a href="/reports" class="nav-link{{ Request::is('reports*') ? ' active' : '' }}">
-                        <i class="fas fa-chart-bar"></i> 
-                      <p>Reports</p>
+                    <a class="nav-link{{ Request::is('reports*') ? ' active' : '' }}" href="#reportsMenu" data-lte-toggle="collapse">
+                      <i class="fas fa-chart-pie"></i>
+                      <p>
+                        Reports
+                        <i class="nav-arrow bi bi-chevron-right"></i>
+                      </p>
                     </a>
+                    <ul class="nav nav-treeview collapse{{ Request::is('reports*') ? ' show' : '' }}" id="reportsMenu">
+                      <!-- <li class="nav-item">
+                        <a href="{{ route('reports.index') }}" class="nav-link{{ Request::is('reports') ? ' active' : '' }}">
+                          <i class="fas fa-file-alt"></i>
+                          <p>Generate Report</p>
+                        </a>
+                      </li> -->
+
+                    </ul>
                   </li>
-                  @endif
-                  @endif
+                  @endauth
                 </ul>
                 <!--end::Sidebar Menu-->
               </nav>

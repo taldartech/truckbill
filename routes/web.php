@@ -26,6 +26,7 @@ use App\Http\Controllers\CityController;
 use App\Http\Controllers\StateController;
 use App\Http\Controllers\CountryController;
 use App\Http\Controllers\PumpController;
+use App\Http\Controllers\ReportController;
 
 // Authentication Routes
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -135,6 +136,10 @@ Route::middleware(['auth'])->group(function () {
 
     // Lorry Receipt CRUD
     Route::get('/lorry_receipts/data', [LorryReceiptController::class, 'getLorryReceiptsData'])->name('lorry_receipts.data');
+
+    // Reports
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/generate', [ReportController::class, 'generateReport'])->name('reports.generate');
     Route::resource('lorry_receipts', LorryReceiptController::class);
     Route::post('lorry_receipts/bulk-payment', [LorryReceiptController::class, 'bulkPayment'])->name('lorry_receipts.bulkPayment');
     Route::post('lorry_receipts/bulk-voucher-payment', [LorryReceiptController::class, 'bulkVoucherPayment'])->name('lorry_receipts.bulkVoucherPayment');
@@ -169,13 +174,14 @@ Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->nam
     Route::get('vouchers/{voucher}/payments-section', [VoucherController::class, 'paymentsSection']);
 
     // Voucher Payments
-    Route::get('voucher_payments/voucher/{voucherNumber}', [VoucherPaymentController::class, 'show'])->name('voucher_payments.show');
-    Route::resource('voucher_payments', VoucherPaymentController::class)->except(['show']);
+    Route::get('/voucher_payments/daily', [VoucherPaymentController::class, 'dailyPayments'])->name('voucher_payments.daily');
+    Route::get('/voucher_payments/export/excel', [VoucherPaymentController::class, 'exportToExcel'])->name('voucher_payments.export.excel');
+    Route::get('/voucher_payments/export/pdf', [VoucherPaymentController::class, 'exportToPdf'])->name('voucher_payments.export.pdf');
+    Route::resource('voucher_payments', VoucherPaymentController::class);
     Route::post('voucher_payments/bulk-update', [VoucherPaymentController::class, 'bulkUpdateStatus'])->name('voucher_payments.bulkUpdateStatus');
     Route::post('voucher_payments/bulk-payment', [VoucherPaymentController::class, 'bulkPayment'])->name('voucher_payments.bulkPayment');
     Route::get('daily-payments', [VoucherPaymentController::class, 'dailyPayments'])->name('voucher_payments.daily');
     Route::put('voucher_payments/update-status', [VoucherPaymentController::class, 'updateStatus'])->name('voucher_payments.update_status');
-
 
 
     // Truck_Owner Bank Accounts
@@ -312,6 +318,17 @@ Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->nam
         }
     
         return response()->json(['transporter_name' => null]);
+    });
+
+    // Reports
+    Route::prefix('reports')->group(function () {
+        Route::get('/', [ReportController::class, 'index'])->name('reports.index');
+        Route::post('/generate', [ReportController::class, 'generateReport'])->name('reports.generate');
+        Route::get('/truck', [ReportController::class, 'truckReport'])->name('reports.truck');
+        
+        // Export Routes
+        Route::get('/export/pdf', [ReportController::class, 'exportPdf'])->name('reports.export.pdf');
+        Route::get('/export/excel', [ReportController::class, 'exportExcel'])->name('reports.export.excel');
     });
     
 });

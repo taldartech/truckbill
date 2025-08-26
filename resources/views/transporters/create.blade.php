@@ -1369,5 +1369,7 @@
 
 </script>
 
-<script src="/js/dynamic-dropdowns.js"></script>
+@section('scripts')
+    @parent
+    <script src="/js/dynamic-dropdowns.js"></script>
 @endsection
