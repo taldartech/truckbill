@@ -101,7 +101,7 @@
                 @error('status') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
         </div>
-        <button type="submit" class="btn btn-success">Update</button>
+        <button type="submit" class="btn btn-success" id="updateVoucherBtn">Update</button>
         <a href="{{ route('vouchers.index') }}" class="btn btn-secondary ms-2">Back to List</a>
     </form>
 
@@ -193,6 +193,18 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
 $(function() {
+    // Voucher update form confirmation
+    $('form[action="{{ route('vouchers.update', $voucher->id) }}"]').on('submit', function(e) {
+        e.preventDefault();
+        var form = $(this);
+        
+        // Show confirmation dialog
+        if (confirm('Are you sure you want to update this voucher? This action cannot be undone.')) {
+            form.off('submit').submit();
+        }
+    });
+    
+    // Payment form AJAX submission
     $('form[action="{{ route('voucher_payments.store') }}"]').on('submit', function(e) {
         e.preventDefault();
         var form = $(this);

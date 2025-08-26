@@ -173,16 +173,18 @@ class VoucherPaymentController extends Controller
             ->select('id', 'lr_number', 'transporter_id', 'truck_id', 'customer_id', 'consignor_id', 'consignee_id')
             ->where('id', $lorry_receipt_id)
             ->get();
-             // Get balance amount from freight booking
+             // Get freight booking details with relationships
         $balanceAmount = null;
+        $freightBooking = null;
         if ($freight_booking_id) {
-            $freightBooking = \App\Models\FreightBooking::find($freight_booking_id);
+            $freightBooking = \App\Models\FreightBooking::with(['transporter'])
+                ->find($freight_booking_id);
             if ($freightBooking) {
                 $balanceAmount = $freightBooking->balance_amount;
             }
         }
 
-        return view('voucher_payments.edit', compact('voucher_payment', 'vouchers', 'paymentTypes', 'paymentModes', 'lorry_receipt', 'freight_booking_id', 'companies','balanceAmount','pumps'));
+        return view('voucher_payments.edit', compact('voucher_payment', 'vouchers', 'paymentTypes', 'paymentModes', 'lorry_receipt', 'freight_booking_id', 'companies', 'balanceAmount', 'pumps', 'freightBooking'));
     }
 
     public function update(Request $request, VoucherPayment $voucher_payment)
