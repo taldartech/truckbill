@@ -1,5 +1,21 @@
 @extends('layouts.app')
 
+@push('styles')
+<!-- DataTables CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+@endpush
+
+@push('scripts')
+<!-- DataTables JS -->
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+@endpush
+
 @section('content')
 <div class="container mt-4">
     <div class="col-sm-6"><h3 class="mb-0">Freight Bookings Management</h3></div>
@@ -893,14 +909,8 @@ $(document).ready(function() {
         visibility: visible;
         opacity: 1;
     }
-</style>
 
 <script>
-// Function to open voucher payment modal
-function openVoucherPaymentModal() {
-    $('#voucherPaymentModal').modal('show');
-}
-
 $(document).ready(function() {
     // Initialize tooltips
     $('[data-bs-toggle="tooltip"]').tooltip();
