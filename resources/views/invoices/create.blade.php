@@ -59,6 +59,9 @@
                                     <strong>Customer:</strong> <span id="selectedCustomerName"></span>
                                 </div>
                                 <div class="col-md-6">
+                                    <strong>Location:</strong> <span id="selectedLocation"></span>
+                                </div>
+                                <div class="col-md-6">
                                     <strong>Memo(s):</strong> <span id="selectedMemoIds"></span>
                                 </div>
                             </div>
@@ -406,6 +409,19 @@ document.addEventListener('DOMContentLoaded', function () {
             // Prefill hidden and readonly customer fields
          document.getElementById('prefilledCustomerId').value = selectedCustomerId;
         document.getElementById('prefilledCustomerName').value = customerName;
+
+        fetch(`/consignees/${selectedCustomerId}`, {
+    cache: 'no-store',
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+})
+.then(response => response.json())
+.then(data => {
+    document.getElementById('selectedLocation').textContent = data.state || 'N/A';
+})
+.catch(err => {
+    console.error("Error fetching consignee location:", err);
+    document.getElementById('selectedLocation').textContent = 'N/A';
+});
 
             // // Set value in the main invoice form's customer select
             // const customerSelect = document.querySelector('select[name="customer_id"]');

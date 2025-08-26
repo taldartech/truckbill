@@ -291,6 +291,7 @@ Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->nam
 
     // Route::resource('advance-payments', AdvancePaymentController::class)->except(['create']);
 
+    Route::get('/consignees/{id}', [ConsigneeController::class, 'getConsigneeDetails']);
   
   
   

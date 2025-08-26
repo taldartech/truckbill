@@ -246,6 +246,17 @@ class ConsigneeController extends Controller
         return redirect()->route('consignees.index')
             ->with('success', 'Consignee created successfully!');
     }
+    public function getConsigneeDetails($id)
+{
+    $consignee = \App\Models\Consignee::with('state') // assuming relation
+        ->findOrFail($id);
+
+    return response()->json([
+        'id' => $consignee->id,
+        'name' => $consignee->name,
+        'state' => $consignee->state ? $consignee->state->name : null,
+    ]);
+}
 
 
 
@@ -307,6 +318,7 @@ class ConsigneeController extends Controller
                             'string',
                             'size:10',
                             'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/'
+                            
                         ],
         ]);
 
