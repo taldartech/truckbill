@@ -78,15 +78,12 @@
                             <th style="width: 80px;">Sr. No</th>
                             <th>FR Number</th>
                             <th>LR Number</th>
-                            <th>Voucher No</th>
+                            <th>Transporter</th>
+                            <th>Truck Number</th>
                             <th>Source City</th>
                             <th>Destination City</th>
-                            <th>Truck Number</th>
-                            <th class="text-end">TR Rate</th>
-                            {{-- <th class="text-end">TR Amount</th> --}}
-                            <th class="text-end">Advance</th>
-                            <th class="text-end">Balance</th>
                             <th class="text-center">GR Date</th>
+                            <th class="text-end">Balance</th>
                             <th class="text-center" style="width: 120px;">Actions</th>
                         </tr>
                     </thead>
@@ -117,17 +114,24 @@
                                 <td class="text-center">{{ $bookings->firstItem() + $index }}</td>
                                 <td><a href="{{ route('freight_bookings.show', $booking->id) }}" class="text-primary text-decoration-underline">{{ $booking->id ? $booking->id : '-' }}</a></td>
                                 <td>{{ $booking->lr ? $booking->lr->lr_number : '-' }}</td>
-                                <td>{{ $booking->voucher_number ?? '-' }}</td>
+                                <td>
+                                    @php
+                                        $transporterName = $booking->transporter_name ?? ($booking->transporter ? $booking->transporter->name : '-');
+                                        $badge = '';
+                                        
+                                        if ($booking->transporter && $booking->transporter->is_owner) {
+                                            $badge = '<span class="badge bg-success ms-1" title="Truck Owner"><i class="bi bi-truck"></i></span>';
+                                        } else {
+                                            $badge = '<span class="badge bg-info ms-1" title="Agency"><i class="bi bi-building"></i></span>';
+                                        }
+                                    @endphp
+                                    {!! $transporterName . ' ' . $badge !!}
+                                </td>
+                                <td>{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->truck_number : '-' }}</td>
                                 <td>{{ $booking->lr && $booking->lr->source_city ? $booking->lr->source_city : '-' }}</td>
                                 <td>{{ $booking->lr && $booking->lr->destination_city ? $booking->lr->destination_city : '-' }}</td>
-                                <td>{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->truck_number : '-' }}</td>
-                                <td class="text-end">₹{{ number_format($booking->tr_fr_rate ?? 0, 2) }}</td>
-                                {{-- <td class="text-end">₹{{ number_format($booking->tr_amount ?? 0, 2) }}</td> --}}
-                                <td class="text-end">₹{{ number_format($booking->advance_amount ?? 0, 2) }}</td>
+                                <td class="text-center">{{ $booking->lr && $booking->lr->gr_date ? date('d-m-Y', strtotime($booking->lr->gr_date)) : '-' }}</td>
                                 <td class="text-end">₹{{ number_format($booking->balance_amount ?? 0, 2) }}</td>
-                                <td class="text-center">
-                                    {{ $booking->lr && $booking->lr->gr_date ? date('d-m-Y', strtotime($booking->lr->gr_date)) : '-' }}
-                                </td>
                                 <td class="text-center">
                                     <div class="btn-group" role="group">
                                         <a href="{{ route('freight_bookings.show', $booking->id) }}" class="btn btn-sm btn-outline-info" title="View">

@@ -52,7 +52,7 @@ class FreightBookingController extends Controller
         try {
             \Log::info('FreightBookings DataTables request started');
             
-            $query = FreightBooking::with(['lr.truck', 'linkedFreightBooking', 'company'])
+            $query = FreightBooking::with(['lr.truck', 'linkedFreightBooking', 'company', 'transporter'])
                 ->select('freight_bookings.*');
 
             // Only apply company_id filter for non-super_admin users
@@ -91,6 +91,21 @@ class FreightBookingController extends Controller
                 })
                 ->addColumn('destination_city', function ($row) {
                     return $row->lr && $row->lr->destination_city ? $row->lr->destination_city : '-';
+                })
+                ->addColumn('transporter', function ($row) {
+                    $transporterName = $row->transporter_name ?? ($row->transporter ? $row->transporter->name : '-');
+                    $badge = '';
+                    
+                    if ($row->transporter && $row->transporter->is_owner) {
+                        $badge = '<span class="badge bg-success ms-1" title="Truck Owner"><i class="bi bi-truck"></i></span>';
+                    } else {
+                        $badge = '<span class="badge bg-info ms-1" title="Agency"><i class="bi bi-building"></i></span>';
+                    }
+                    
+                    return $transporterName . ' ' . $badge;
+                })
+                ->addColumn('truck_number', function ($row) {
+                    return $row->lr && $row->lr->truck ? $row->lr->truck->truck_number : '-';
                 })
                
                 ->addColumn('tr_rate_formatted', function ($row) {
@@ -134,7 +149,7 @@ class FreightBookingController extends Controller
                         $q->where('lr_number', 'like', "%{$keyword}%");
                     });
                 })
-                ->rawColumns(['checkbox', 'actions']);
+                ->rawColumns(['checkbox', 'actions', 'transporter']);
             
             \Log::info('DataTables processing complete');
             return $dataTable->make(true);
