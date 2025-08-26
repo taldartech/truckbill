@@ -207,6 +207,107 @@
     </div>
 </div>
 
+<script>
+// Function to submit voucher payment
+function submitVoucherPayment() {
+    // Get form values
+    const paymentTypeSelect = document.getElementById('paymentType');
+    const paymentModeSelect = document.getElementById('paymentMode');
+    const referenceId = document.getElementById('referenceId')?.value;
+    const remarks = document.getElementById('paymentRemarks')?.value;
+    
+    // Get the selected values
+    const paymentTypeValue = paymentTypeSelect?.value || '';
+    const paymentModeValue = paymentModeSelect?.value || '';
+    
+    // Validate required fields
+    if (!paymentTypeValue) {
+        alert('Please select a payment type');
+        paymentTypeSelect.focus();
+        return;
+    }
+    
+    if (!paymentModeValue) {
+        alert('Please select a payment mode');
+        paymentModeSelect.focus();
+        return;
+    }
+    
+    // Get all payment rows
+    const paymentRows = document.querySelectorAll('.payment-row');
+    const payments = [];
+    let hasError = false;
+    
+    paymentRows.forEach(row => {
+        const freightBookingId = row.dataset.bookingId;
+        const amountInput = row.querySelector('.allocated-input');
+        const amount = parseFloat(amountInput.value) || 0;
+        
+        if (amount > 0) {
+            payments.push({
+                freight_booking_id: freightBookingId,
+                amount: amount
+            });
+        }
+    });
+    
+    if (payments.length === 0) {
+        alert('Please allocate payment amounts to at least one booking');
+        return;
+    }
+    
+    // Prepare the data
+    const data = {
+        payment_type: paymentTypeValue,
+        payment_mode: paymentModeValue,
+        reference_id: referenceId,
+        remarks: remarks,
+        payments: payments
+    };
+    
+    // Show loading state
+    const submitBtn = document.querySelector('#voucherPaymentModal .btn-success');
+    const originalBtnText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+    
+    // Submit the data via AJAX
+    fetch('{{ route("voucher_payments.store") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message
+            alert('Payment processed successfully!');
+            // Close the modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('voucherPaymentModal'));
+            modal.hide();
+            // Reload the page to update the data
+            window.location.reload();
+        } else {
+            // Show error message
+            alert(data.message || 'An error occurred while processing the payment');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while processing the payment');
+    })
+    .finally(() => {
+        // Restore button state
+        submitBtn.innerHTML = originalBtnText;
+        submitBtn.disabled = false;
+    });
+}
+</script>
+
 <!-- Voucher Payment Modal -->
 <div class="modal fade" id="voucherPaymentModal" tabindex="-1" aria-labelledby="voucherPaymentModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">
@@ -220,7 +321,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" onclick="submitVoucherPayment()">💰 Process Payment</button>
+                <button type="button" id="submitVoucherPaymentBtn" class="btn btn-success">💰 Process Payment</button>
             </div>
         </div>
     </div>
@@ -746,6 +847,12 @@ function openVoucherPaymentModal() {
 $(document).ready(function() {
     // Initialize tooltips
     $('[data-bs-toggle="tooltip"]').tooltip();
+    
+    // Voucher Payment Submit Button
+    $(document).on('click', '#submitVoucherPaymentBtn', function(e) {
+        e.preventDefault();
+        submitVoucherPayment();
+    });
     
     // Voucher Payment Modal
     $('#voucher-payment-btn').on('click', function() {
@@ -1676,99 +1783,92 @@ function updateTotalPayment() {
     return !hasError;
 }
 
-// Function to submit voucher payment
 function submitVoucherPayment() {
     // Get form values
-    const paymentTypeSelect = document.getElementById('paymentType');
-    const paymentModeSelect = document.getElementById('paymentMode');
+    const paymentType = document.getElementById('paymentType')?.value;
+    const paymentMode = document.getElementById('paymentMode')?.value;
     const referenceId = document.getElementById('referenceId')?.value;
     const remarks = document.getElementById('paymentRemarks')?.value;
     
-    // Get the selected values
-    const paymentTypeValue = paymentTypeSelect?.value || '';
-    const paymentModeValue = paymentModeSelect?.value || '';
+    // Get all allocated amounts from the modal
+    const modal = document.getElementById('voucherPaymentModal');
+    const tbody = modal.querySelector('table tbody');
+    const rows = tbody ? Array.from(tbody.rows) : [];
     
-    // Validate required fields
-    if (!paymentTypeValue) {
-        alert('Please select a payment type');
-        paymentTypeSelect.focus();
-        return;
-    }
+    let totalAllocated = 0;
+    const allocations = [];
     
-    if (!paymentModeValue) {
-        alert('Please select a payment mode');
-        paymentModeSelect.focus();
-        return;
-    }
+    console.log('Found rows:', rows.length); // Debug log
     
-    // Get the text values for display purposes
-    const paymentType = paymentTypeSelect?.options[paymentTypeSelect.selectedIndex]?.text || '';
-    const paymentMode = paymentModeSelect?.options[paymentModeSelect.selectedIndex]?.text || '';
-    
-    // Get selected freight booking IDs
-    const selectedIds = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value);
-    
-    // Get allocated amounts
-    const allocatedInputs = document.querySelectorAll('.allocated-input');
-    
-    // Validate all payment amounts
-    let hasValidationError = false;
-    const paymentAmounts = [];
-    
-    allocatedInputs.forEach(input => {
+    // Process each row in the table
+    rows.forEach((row, index) => {
+        // Get the input field in the last cell of the row
+        const input = row.querySelector('input.allocated-input');
+        if (!input) return;
+        
         const amount = parseFloat(input.value) || 0;
-        const maxAmount = parseFloat(input.getAttribute('max')) || 0;
-        const lrNumber = input.getAttribute('data-lr') || 'Unknown';
+        console.log(`Row ${index + 1} amount:`, amount); // Debug log
         
-        if (amount <= 0) {
-            alert(`Error: Payment amount for LR ${lrNumber} must be greater than zero.`);
-            input.focus();
-            hasValidationError = true;
-            return;
+        if (amount > 0) {
+            // Get cells from the row
+            const cells = row.cells;
+            if (cells.length < 5) return; // Skip if not enough cells
+            
+            // Get FR Number (first cell) and LR Number (second cell)
+            const frNumber = cells[0]?.textContent.trim() || `FR-${Date.now()}-${index}`;
+            const lrNumber = cells[1]?.textContent.trim() || input.getAttribute('data-lr');
+            
+            console.log('Adding allocation:', { frNumber, lrNumber, amount }); // Debug log
+            
+            allocations.push({
+                lr_number: lrNumber,
+                fr_number: frNumber,
+                amount: amount
+            });
+            totalAllocated += amount;
         }
-        
-        if (amount > maxAmount) {
-            alert(`Error: Payment amount for LR ${lrNumber} (₹${amount.toFixed(2)}) exceeds the balance amount (₹${maxAmount.toFixed(2)}).`);
-            input.focus();
-            hasValidationError = true;
-            return;
-        }
-        
-        paymentAmounts.push(amount);
     });
     
-    if (hasValidationError) {
+    console.log('Total allocations:', allocations.length, 'Total amount:', totalAllocated);
+    
+    if (allocations.length === 0) {
+        alert('Please enter a payment amount greater than 0 for at least one booking');
+        return false;
+    }
+
+    // Validate required fields
+    if (!paymentType) {
+        alert('Please select a payment type');
+        document.getElementById('paymentType').focus();
         return;
     }
     
-    // Calculate total amount
-    const totalAmount = paymentAmounts.reduce((sum, amount) => sum + amount, 0);
+    if (!paymentMode) {
+        alert('Please select a payment mode');
+        document.getElementById('paymentMode').focus();
+        return;
+    }
     
-    if (totalAmount <= 0) {
-        alert('Please enter valid payment amounts');
+    if (totalAllocated <= 0) {
+        alert('Please enter a valid payment amount');
         return;
     }
     
     // Create form data
     const formData = new FormData();
-    
-    // Append payment type and mode IDs for backend processing
-    formData.append('payment_type_id', paymentTypeValue);
-    formData.append('payment_mode_id', paymentModeValue);
-    // Also append text values for display if needed
     formData.append('payment_type', paymentType);
     formData.append('payment_mode', paymentMode);
-    formData.append('total_amount', totalAmount.toFixed(2));
-    formData.append('payment_date', new Date().toISOString().split('T')[0]);
+    formData.append('amount', totalAllocated);
     
-    if (referenceId) formData.append('reference_number', referenceId);
-    if (remarks) formData.append('notes', remarks);
-    
-    // Add booking IDs and payment amounts
-    selectedIds.forEach((id, index) => {
-        formData.append('booking_ids[]', id);
-        formData.append('payment_amounts[]', paymentAmounts[index] || 0);
+    // Add allocated amounts for each booking
+    allocations.forEach((allocation, index) => {
+        formData.append(`allocations[${index}][lr_number]`, allocation.lr_number);
+        formData.append(`allocations[${index}][fr_number]`, allocation.fr_number);
+        formData.append(`allocations[${index}][amount]`, allocation.amount);
     });
+    
+    if (referenceId) formData.append('reference_id', referenceId);
+    if (remarks) formData.append('remarks', remarks);
     
     // Add CSRF token
     formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
@@ -1780,34 +1880,32 @@ function submitVoucherPayment() {
     submitBtn.disabled = true;
     
     // Submit the form via AJAX
-    fetch('{{ route("freight_bookings.voucher_payment") }}', {
+    fetch('{{ route("voucher_payments.store") }}', {
         method: 'POST',
         body: formData,
         headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json'
         }
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
+    .then(response => response.json())
     .then(data => {
-        // Hide modal
-        $('#voucherPaymentModal').modal('hide');
-        
         if (data.success) {
-            alert(data.message || 'Payment processed successfully!');
-            // Refresh the page or table
-            location.reload();
+            // Show success message
+            alert('Payment processed successfully!');
+            // Close the modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('voucherPaymentModal'));
+            modal.hide();
+            // Reload the page to update the data
+            window.location.reload();
         } else {
-            alert(data.message || 'Error processing payment. Please try again.');
+            // Show error message
+            alert(data.message || 'An error occurred while processing the payment');
         }
     })
     .catch(error => {
-        console.error('Payment error:', error);
-        alert('An error occurred while processing the payment. Please try again.');
+        console.error('Error:', error);
+        alert('An error occurred while processing the payment');
     })
     .finally(() => {
         // Restore button state
