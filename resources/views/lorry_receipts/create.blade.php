@@ -1259,28 +1259,38 @@ document.getElementById('addGoodsTypeForm').addEventListener('submit', function 
             select.add(newOption);
             select.value = data.goodsType.name;
 
-            // Close modal properly
-            let modal = bootstrap.Modal.getInstance(document.getElementById('addGoodsTypeModal'));
+            // Close modal properly using Bootstrap's API
+            const modalElement = document.getElementById('addGoodsTypeModal');
+            const modal = bootstrap.Modal.getInstance(modalElement);
+            
             if (modal) {
                 modal.hide();
+                
+                // Properly clean up modal after it's hidden
+                modalElement.addEventListener('hidden.bs.modal', function (event) {
+                    // Remove all modal backdrops
+                    document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+                        backdrop.remove();
+                    });
+                    
+                    // Fix body classes and styles
+                    document.body.classList.remove('modal-open');
+                    document.body.style.overflow = '';
+                    document.body.style.paddingRight = '';
+                }, { once: true }); // Only listen once
             } else {
+                // Fallback for older Bootstrap versions
                 $('#addGoodsTypeModal').modal('hide');
+                
+                setTimeout(() => {
+                    // Clean up modal backdrop and body classes
+                    $('.modal-backdrop').remove();
+                    $('body').removeClass('modal-open').css({
+                        'overflow': '',
+                        'padding-right': ''
+                    });
+                }, 500);
             }
-
-            // Force complete modal cleanup and scroll restoration
-            setTimeout(() => {
-                $('.modal-backdrop').remove();
-                $('body').removeClass('modal-open').removeAttr('style');
-                $('html').removeClass('modal-open').removeAttr('style');
-                
-                // Force scroll restoration
-                document.body.style.overflow = 'auto';
-                document.documentElement.style.overflow = 'auto';
-                
-                // Remove any lingering modal classes
-                $('body').removeClass('modal-open');
-                $('.modal').removeClass('show');
-            }, 100);
 
             // Reset form
             form.reset();
