@@ -56,9 +56,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/cities/{id}', [\App\Http\Controllers\CityController::class, 'show'])->name('cities.show');
     Route::get('/states/{id}', [\App\Http\Controllers\StateController::class, 'show'])->name('states.show');
 
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
     
     Route::get('/dashboard2', function () {
         return view('dashboard2');

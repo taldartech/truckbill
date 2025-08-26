@@ -160,6 +160,7 @@ return [
          * Application Service Providers...
          */
         App\Providers\AppServiceProvider::class,
+        App\Providers\DatabaseServiceProvider::class,
         
         // App\Providers\BroadcastServiceProvider::class,
        
