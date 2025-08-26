@@ -51,7 +51,7 @@
             <div class="col-md-4 mb-3">
                 <label class="form-label">Payment Status *</label>
                 <select name="payment_status" class="form-select" required>
-                    <option value="due" {{ old('payment_status', $invoice->payment_status) == 'pending' ? 'selected' : '' }}>Pending</option>
+                    <option value="pending" {{ old('payment_status', $invoice->payment_status) == 'pending' ? 'selected' : '' }}>Pending</option>
                     <option value="partial" {{ old('payment_status', $invoice->payment_status) == 'partial' ? 'selected' : '' }}>Partial</option>
                     <option value="paid" {{ old('payment_status', $invoice->payment_status) == 'paid' ? 'selected' : '' }}>Paid</option>
                 </select>
