@@ -10,6 +10,97 @@ use Illuminate\Http\Request;
 
 class VoucherPaymentController extends Controller
 {
+    /**
+     * Display the daily payments report
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\View\View
+     */
+    public function dailyPayments(Request $request)
+    {
+        // Get selected date (default to today)
+        $selectedDate = $request->get('date', date('Y-m-d'));
+
+        // Start building the query with relationships
+        $query = VoucherPayment::with([
+            'freight_booking.lr',
+            'company',
+            'pump',
+            'freight_booking.transporter',
+            'freight_booking.lr.consignor.city',
+            'freight_booking.lr.consignee.city',
+            'freight_booking.lr.truck'
+        ])->whereDate('created_at', $selectedDate);
+
+        // Apply company filter for non-super admin users
+        if (auth()->user()->userRole->name !== 'super_admin') {
+            $query->where('company_id', auth()->user()->company_id);
+        }
+
+        // Apply Truck No filter
+        if ($request->filled('truck_no')) {
+            $query->whereHas('freight_booking.lr.truck', function($q) use ($request) {
+                $q->where('truck_number', 'like', '%' . $request->truck_no . '%');
+            });
+        }
+
+        // Apply Transporter filter
+        if ($request->filled('transporter')) {
+            $query->whereHas('freight_booking.transporter', function($q) use ($request) {
+                $q->where('id', $request->transporter);
+            });
+        }
+
+        // Apply Source filter
+        if ($request->filled('source')) {
+            $query->whereHas('freight_booking.lr.consignor', function($q) use ($request) {
+                $q->where('city_id', $request->source);
+            });
+        }
+
+        // Apply Destination filter
+        if ($request->filled('destination')) {
+            $query->whereHas('freight_booking.lr.consignee', function($q) use ($request) {
+                $q->where('city_id', $request->destination);
+            });
+        }
+
+        // Apply Lorry Receipt No filter
+        if ($request->filled('lr_no')) {
+            $query->whereHas('freight_booking.lr', function($q) use ($request) {
+                $q->where('lr_number', 'like', '%' . $request->lr_no . '%');
+            });
+        }
+
+        // Apply Freight Booking No filter
+        if ($request->filled('freight_booking_no')) {
+            $query->whereHas('freight_booking', function($q) use ($request) {
+                $q->where('id', 'like', '%' . $request->freight_booking_no . '%')
+                  ->orWhere('voucher_number', 'like', '%' . $request->freight_booking_no . '%');
+            });
+        }
+
+        // Apply Status filter
+        if ($request->filled('status')) {
+            $query->where('payment_status', $request->status);
+        }
+
+        // Get paginated results with all query parameters
+        $payments = $query->orderBy('created_at', 'desc')
+                         ->paginate(15)
+                         ->appends($request->query());
+
+        // Get filter data for dropdowns
+        $transporters = \App\Models\Transporter::orderBy('name')->get();
+        $cities = \App\Models\City::orderBy('name')->get();
+
+        return view('voucher_payments.daily', [
+            'payments' => $payments,
+            'selectedDate' => $selectedDate,
+            'transporters' => $transporters,
+            'cities' => $cities
+        ]);
+    }
     public function index(Request $request)
     {
         // Start with base query
@@ -35,6 +126,44 @@ class VoucherPaymentController extends Controller
         
         if ($request->filled('voucher_number')) {
             $baseQuery->where('voucher_number', 'like', '%' . $request->voucher_number . '%');
+        }
+        
+        // New filters
+        if ($request->filled('truck_no')) {
+            $baseQuery->whereHas('freight_booking.lr.truck', function($q) use ($request) {
+                $q->where('truck_number', 'like', '%' . $request->truck_no . '%');
+            });
+        }
+        
+        if ($request->filled('transporter')) {
+            $baseQuery->whereHas('freight_booking.transporter', function($q) use ($request) {
+                $q->where('id', $request->transporter);
+            });
+        }
+        
+        if ($request->filled('source')) {
+            $baseQuery->whereHas('freight_booking.lr.consignor', function($q) use ($request) {
+                $q->where('city_id', $request->source);
+            });
+        }
+        
+        if ($request->filled('destination')) {
+            $baseQuery->whereHas('freight_booking.lr.consignee', function($q) use ($request) {
+                $q->where('city_id', $request->destination);
+            });
+        }
+        
+        if ($request->filled('lr_no')) {
+            $baseQuery->whereHas('freight_booking.lr', function($q) use ($request) {
+                $q->where('lr_number', 'like', '%' . $request->lr_no . '%');
+            });
+        }
+        
+        if ($request->filled('freight_booking_no')) {
+            $baseQuery->whereHas('freight_booking', function($q) use ($request) {
+                $q->where('id', 'like', '%' . $request->freight_booking_no . '%')
+                  ->orWhere('voucher_number', 'like', '%' . $request->freight_booking_no . '%');
+            });
         }
         
         // Get unique voucher numbers with their latest payment and total amount
@@ -541,73 +670,45 @@ class VoucherPaymentController extends Controller
             return redirect()->back()->with('error', 'Error updating payment status: ' . $e->getMessage());
         }
     }
+        
+//         // Save the freight booking
+//         $freightBooking->save();
+        
+//         \Log::info('Successfully updated freight booking:', [
+//             'freight_booking_id' => $freightBooking->id,
+//             'new_advance_amount' => $freightBooking->advance_amount,
+//             'new_balance_amount' => $freightBooking->balance_amount
+//         ]);
+//     } else {
+//         \Log::error('Failed to create voucher payment:', $paymentData);
+//     }
 
-    public function dailyPayments(Request $request)
-    {
-        // Get selected date (default to today)
-        $selectedDate = $request->get('date', date('Y-m-d'));
-        
-        // Build query for voucher payments
-        $query = VoucherPayment::with([
-            'freight_booking.lr.customer',
-            'freight_booking.lr.truck', 
-            'freight_booking.lr.consignor.city',
-            'freight_booking.lr.consignee.city',
-            'company', 
-            'pump'
-        ])->whereDate('created_at', $selectedDate);
-        
-        // Filter by company for operators
-        if (auth()->user()->userRole->name === 'operator') {
-            $query->where('company_id', auth()->user()->company_id);
-        }
-        
-        // Get payments with pagination
-        $payments = $query->orderByDesc('created_at')->paginate(15)->appends($request->query());
-        
-        return view('voucher_payments.daily', compact('payments', 'selectedDate'));
-    }
-    
-    /**
-     * Display details for a specific voucher number
-     */
-    public function show($voucherNumber)
-    {
-        // Get all payments for this voucher number
-        $query = VoucherPayment::with([
-            'voucher',
-            'company',
-            'freight_booking.lr.customer',
-            'freight_booking.lr.truck',
-            'freight_booking.lr.consignor.city',
-            'freight_booking.lr.consignee.city',
-            'pump'
-        ])->where('voucher_number', $voucherNumber);
-        
-        // Only apply company_id filter for non-super_admin users
-        if (auth()->user()->userRole->name !== 'super_admin') {
-            $query->where('company_id', auth()->user()->company_id);
-        }
-        
-        $payments = $query->orderByDesc('created_at')->get();
-        
-        // If no payments found, redirect back with error
-        if ($payments->isEmpty()) {
-            return redirect()->route('voucher_payments.index')
-                ->with('error', 'No payments found for voucher number: ' . $voucherNumber);
-        }
-        
-        // Get the first payment to access related data
-        $firstPayment = $payments->first();
-        
-        // Calculate total amount
-        $totalAmount = $payments->sum('amount');
-        
-        // Get freight booking details
-        $freightBooking = $firstPayment->freight_booking;
-        
-        return view('voucher_payments.show', compact('payments', 'voucherNumber', 'totalAmount', 'freightBooking'));
-    }
+//     $freightBooking = \App\Models\FreightBooking::find($freightBookingId);
+//     if (!$freightBooking) {
+//         continue;
+//     }
+
+//     // Create voucher payment
+//     VoucherPayment::create([
+//         'voucher_id' => $freightBooking->voucher_id, // Use voucher_id from freight booking
+//         'payment_type' => $validated['payment_type'],
+//         'payment_mode' => $validated['payment_mode'],
+//         'amount' => $amount,
+//         'transaction_id' => $reference_transaction_id,
+//         'remark' => $remark,
+//         'payment_status' => $payment_status,
+//         'company_id' => $company_id
+//     ]);
+
+//     // Log the creation
+//     \Log::info('Created voucher payment:', [
+//         'voucher_id' => $freightBooking->voucher_id,
+//         'amount' => $amount,
+//         'freight_booking_id' => $freightBooking->id,
+//         'lorry_receipt_id' => $lorryReceiptId,
+//         'company_id' => $company_id
+//     ]);
+// }
     
     /**
      * Remove the specified voucher payment from storage (soft delete).

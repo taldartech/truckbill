@@ -24,62 +24,78 @@
             <div class="col-md-12">
                 <label class="form-label fw-bold">Choose Filter Fields:</label>
                 <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" value="voucher_number" id="filter_voucher" onchange="toggleField(this)">
-                    <label class="form-check-label" for="filter_voucher">Voucher Number</label>
+                    <input class="form-check-input" type="checkbox" value="truck_no" id="filter_truck_no" onchange="toggleField(this)">
+                    <label class="form-check-label" for="filter_truck_no">Truck No</label>
                 </div>
                 <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" value="payment_type" id="filter_payment_type" onchange="toggleField(this)">
-                    <label class="form-check-label" for="filter_payment_type">Payment Type</label>
+                    <input class="form-check-input" type="checkbox" value="transporter" id="filter_transporter" onchange="toggleField(this)">
+                    <label class="form-check-label" for="filter_transporter">Transporter</label>
                 </div>
                 <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" value="payment_mode" id="filter_payment_mode" onchange="toggleField(this)">
-                    <label class="form-check-label" for="filter_payment_mode">Payment Mode</label>
+                    <input class="form-check-input" type="checkbox" value="source" id="filter_source" onchange="toggleField(this)">
+                    <label class="form-check-label" for="filter_source">Source</label>
                 </div>
                 <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" value="transaction_id" id="filter_transaction" onchange="toggleField(this)">
-                    <label class="form-check-label" for="filter_transaction">Transaction ID</label>
+                    <input class="form-check-input" type="checkbox" value="destination" id="filter_destination" onchange="toggleField(this)">
+                    <label class="form-check-label" for="filter_destination">Destination</label>
                 </div>
                 <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="checkbox" value="status" id="filter_status" onchange="toggleField(this)">
-                    <label class="form-check-label" for="filter_status">Status</label>
+                    <input class="form-check-input" type="checkbox" value="lr_no" id="filter_lr_no" onchange="toggleField(this)">
+                    <label class="form-check-label" for="filter_lr_no">Lorry Receipt No</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" value="freight_booking_no" id="filter_freight_booking_no" onchange="toggleField(this)">
+                    <label class="form-check-label" for="filter_freight_booking_no">Freight Booking No</label>
                 </div>
             </div>
         </div>
 
         {{-- Conditionally visible filter fields --}}
         <div class="row g-3 mt-2" id="filter-fields">
-            <div class="col-md-3 d-none" id="field_voucher_number">
-                <label class="form-label">Voucher Number</label>
-                <input type="text" name="voucher_number" class="form-control" value="{{ request('voucher_number') }}">
+            <div class="col-md-3 d-none" id="field_truck_no">
+                <label class="form-label">Truck No</label>
+                <input type="text" name="truck_no" class="form-control" value="{{ request('truck_no') }}">
             </div>
-            <div class="col-md-3 d-none" id="field_payment_type">
-                <label class="form-label">Payment Type</label>
-                <select name="payment_type" class="form-select">
-                    <option value="">All</option>
-                    <option value="advance" {{ request('payment_type') == 'advance' ? 'selected' : '' }}>Advance</option>
-                    <option value="final" {{ request('payment_type') == 'final' ? 'selected' : '' }}>Final</option>
+            <div class="col-md-3 d-none" id="field_transporter">
+                <label class="form-label">Transporter</label>
+                <select name="transporter" class="form-select">
+                    <option value="">All Transporters</option>
+                    @foreach(\App\Models\Transporter::all() as $transporter)
+                        <option value="{{ $transporter->id }}" {{ request('transporter') == $transporter->id ? 'selected' : '' }}>
+                            {{ $transporter->name }}
+                        </option>
+                    @endforeach
                 </select>
             </div>
-            <div class="col-md-3 d-none" id="field_payment_mode">
-                <label class="form-label">Payment Mode</label>
-                <select name="payment_mode" class="form-select">
-                    <option value="">All</option>
-                    <option value="cash" {{ request('payment_mode') == 'cash' ? 'selected' : '' }}>Cash</option>
-                    <option value="bank_transfer" {{ request('payment_mode') == 'bank_transfer' ? 'selected' : '' }}>Bank Transfer</option>
-                    <option value="online_transfer" {{ request('payment_mode') == 'online_transfer' ? 'selected' : '' }}>Online Transfer</option>
+            <div class="col-md-3 d-none" id="field_source">
+                <label class="form-label">Source</label>
+                <select name="source" class="form-select">
+                    <option value="">All Sources</option>
+                    @foreach(\App\Models\City::orderBy('name')->get() as $city)
+                        <option value="{{ $city->id }}" {{ request('source') == $city->id ? 'selected' : '' }}>
+                            {{ $city->name }}
+                        </option>
+                    @endforeach
                 </select>
             </div>
-            <div class="col-md-3 d-none" id="field_transaction_id">
-                <label class="form-label">Transaction ID</label>
-                <input type="text" name="transaction_id" class="form-control" value="{{ request('transaction_id') }}">
-            </div>
-            <div class="col-md-3 d-none" id="field_status">
-                <label class="form-label">Status</label>
-                <select name="status" class="form-select">
-                    <option value="">All</option>
-                    <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                    <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Completed</option>
+            <div class="col-md-3 d-none" id="field_destination">
+                <label class="form-label">Destination</label>
+                <select name="destination" class="form-select">
+                    <option value="">All Destinations</option>
+                    @foreach(\App\Models\City::orderBy('name')->get() as $city)
+                        <option value="{{ $city->id }}" {{ request('destination') == $city->id ? 'selected' : '' }}>
+                            {{ $city->name }}
+                        </option>
+                    @endforeach
                 </select>
+            </div>
+            <div class="col-md-3 d-none" id="field_lr_no">
+                <label class="form-label">Lorry Receipt No</label>
+                <input type="text" name="lr_no" class="form-control" value="{{ request('lr_no') }}">
+            </div>
+            <div class="col-md-3 d-none" id="field_freight_booking_no">
+                <label class="form-label">Freight Booking No</label>
+                <input type="text" name="freight_booking_no" class="form-control" value="{{ request('freight_booking_no') }}">
             </div>
         </div>
 

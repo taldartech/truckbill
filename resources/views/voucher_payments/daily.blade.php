@@ -12,23 +12,97 @@
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
-    <!-- Date Selection -->
+    <!-- Search and Filter Section -->
     <div class="card mb-4">
-        <div class="card-header">
-            <h5 class="mb-0">Select Date</h5>
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Search & Filter</h5>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleAdvancedSearch()">
+                <i class="bi bi-funnel"></i> Toggle Filters
+            </button>
         </div>
         <div class="card-body">
-            <form method="GET" action="{{ route('voucher_payments.daily') }}">
-                <div class="row">
+            <form method="GET" action="{{ route('voucher_payments.daily') }}" id="searchForm">
+                <div class="row mb-3">
                     <div class="col-md-4">
                         <label class="form-label">Date <span class="text-danger">*</span></label>
-                        <input type="date" name="date" class="form-control" value="{{ $selectedDate }}" onchange="this.form.submit()">
+                        <input type="date" name="date" class="form-control" value="{{ $selectedDate }}" required>
                     </div>
                     <div class="col-md-8 d-flex align-items-end">
                         <div class="ms-3">
                             <strong>Selected Date:</strong> {{ \Carbon\Carbon::parse($selectedDate)->format('d M Y') }}
                             <span class="badge bg-primary ms-2">{{ $payments->total() }} payments</span>
                         </div>
+                    </div>
+                </div>
+                
+                <!-- Advanced Search Fields (initially hidden) -->
+                <div id="advancedSearchFields" class="d-none">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Truck No</label>
+                            <input type="text" name="truck_no" class="form-control" value="{{ request('truck_no') }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Transporter</label>
+                            <select name="transporter" class="form-select">
+                                <option value="">All Transporters</option>
+                                @foreach(\App\Models\Transporter::all() as $transporter)
+                                    <option value="{{ $transporter->id }}" {{ request('transporter') == $transporter->id ? 'selected' : '' }}>
+                                        {{ $transporter->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Source</label>
+                            <select name="source" class="form-select">
+                                <option value="">All Sources</option>
+                                @foreach(\App\Models\City::orderBy('name')->get() as $city)
+                                    <option value="{{ $city->id }}" {{ request('source') == $city->id ? 'selected' : '' }}>
+                                        {{ $city->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Destination</label>
+                            <select name="destination" class="form-select">
+                                <option value="">All Destinations</option>
+                                @foreach(\App\Models\City::orderBy('name')->get() as $city)
+                                    <option value="{{ $city->id }}" {{ request('destination') == $city->id ? 'selected' : '' }}>
+                                        {{ $city->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Lorry Receipt No</label>
+                            <input type="text" name="lr_no" class="form-control" value="{{ request('lr_no') }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Freight Booking No</label>
+                            <input type="text" name="freight_booking_no" class="form-control" value="{{ request('freight_booking_no') }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Payment Status</label>
+                            <select name="status" class="form-select">
+                                <option value="">All Statuses</option>
+                                <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                                <option value="in-progress" {{ request('status') == 'in-progress' ? 'selected' : '' }}>In Progress</option>
+                                <option value="paid" {{ request('status') == 'paid' ? 'selected' : '' }}>Paid</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-12 text-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                        <a href="{{ route('voucher_payments.daily') }}?date={{ $selectedDate }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-clockwise"></i> Reset
+                        </a>
                     </div>
                 </div>
             </form>
@@ -267,6 +341,23 @@
 
 @push('scripts')
 <script>
+    // Toggle advanced search fields
+    function toggleAdvancedSearch() {
+        const advancedSearch = document.getElementById('advancedSearchFields');
+        advancedSearch.classList.toggle('d-none');
+    }
+    
+    // Show advanced search if any filter is set
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const hasFilters = Array.from(urlParams.keys()).some(key => 
+            !['date', 'page'].includes(key) && urlParams.get(key) !== ''
+        );
+        
+        if (hasFilters) {
+            document.getElementById('advancedSearchFields').classList.remove('d-none');
+        }
+    });
     // Single payment status update
     function updateStatus(paymentId, status) {
         if (confirm('Are you sure you want to update the payment status to ' + status + '?')) {
