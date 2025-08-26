@@ -494,6 +494,11 @@ class VoucherPaymentController extends Controller
      */
     public function bulkUpdateStatus(Request $request)
     {
+        // Check if user is admin or super_admin
+        if (!in_array(auth()->user()->userRole->name, ['admin', 'super_admin'])) {
+            return redirect()->back()->with('error', 'You do not have permission to update payment status.');
+        }
+        
         $validated = $request->validate([
             'payment_ids' => 'required|array|min:1',
             'payment_ids.*' => 'required|integer|exists:voucher_payments,id',
@@ -501,18 +506,39 @@ class VoucherPaymentController extends Controller
         ]);
 
         try {
+            // Get all selected payments
+            $payments = VoucherPayment::whereIn('id', $validated['payment_ids'])->get();
+            
+            // Check if all payments have the same current status
+            $currentStatuses = $payments->pluck('payment_status')->unique();
+            if ($currentStatuses->count() > 1) {
+                return redirect()->back()->with('error', 'Selected payments must have the same status.');
+            }
+            
+            $currentStatus = $currentStatuses->first();
+            
+            // Validate status transition
+            if (!$this->isValidStatusTransition($currentStatus, $validated['new_status'])) {
+                return redirect()->back()->with('error', 'Invalid status transition. Payments can only progress from pending to in-progress to paid.');
+            }
+            
+            // Don't allow updating paid payments
+            if ($currentStatus === 'paid') {
+                return redirect()->back()->with('error', 'Paid payments cannot be updated.');
+            }
+            
+            // Update all payments
             VoucherPayment::whereIn('id', $validated['payment_ids'])
                 ->update(['payment_status' => $validated['new_status']]);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Payment status updated successfully'
-            ]);
+            return redirect()->back()->with('success', count($validated['payment_ids']) . ' payments updated successfully.');
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error updating payment status: ' . $e->getMessage()
-            ], 500);
+            \Log::error('Error in bulk update: ' . $e->getMessage(), [
+                'payment_ids' => $validated['payment_ids'],
+                'new_status' => $validated['new_status']
+            ]);
+            
+            return redirect()->back()->with('error', 'Error updating payment status: ' . $e->getMessage());
         }
     }
 
@@ -628,14 +654,30 @@ class VoucherPaymentController extends Controller
      */
     public function updateStatus(Request $request)
     {
+        // Check if user is admin or super_admin
+        if (!in_array(auth()->user()->userRole->name, ['admin', 'super_admin'])) {
+            return redirect()->back()->with('error', 'You do not have permission to update payment status.');
+        }
+        
         $validated = $request->validate([
             'payment_id' => 'required|integer|exists:voucher_payments,id',
-            'status' => 'required|in:' . implode(',', \App\Models\VoucherPayment::$validStatuses),
+            'status' => 'required|in:pending,in-progress,paid',
             'redirect' => 'nullable|string'
         ]);
         
         try {
             $payment = VoucherPayment::findOrFail($validated['payment_id']);
+            
+            // Don't allow updating paid payments
+            if ($payment->payment_status === 'paid') {
+                return redirect()->back()->with('error', 'Paid payments cannot be updated.');
+            }
+            
+            // Validate status progression
+            if (!$this->isValidStatusTransition($payment->payment_status, $validated['status'])) {
+                return redirect()->back()->with('error', 'Invalid status transition. Payments can only progress from pending to in-progress to paid.');
+            }
+            
             $payment->payment_status = $validated['status'];
             $payment->save();
             
@@ -667,5 +709,24 @@ class VoucherPaymentController extends Controller
             return redirect()->back()
                 ->with('error', 'An error occurred while updating the payment status. Please try again.');
         }
+    }
+    
+    /**
+     * Check if the status transition is valid
+     * 
+     * @param string $currentStatus
+     * @param string $newStatus
+     * @return bool
+     */
+    private function isValidStatusTransition($currentStatus, $newStatus)
+    {
+        // Valid transitions
+        $validTransitions = [
+            'pending' => ['in-progress'],
+            'in-progress' => ['paid', 'pending'], // Allow going back to pending from in-progress
+            'paid' => []
+        ];
+        
+        return in_array($newStatus, $validTransitions[$currentStatus] ?? []);
     }
 }
