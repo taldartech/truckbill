@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Consignee;
+use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 
 class ConsigneeController extends Controller
@@ -312,14 +313,15 @@ class ConsigneeController extends Controller
                 'nullable',
                 'string',
                 'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
+                Rule::unique('consignees', 'gst_number')->ignore($consignee->id),
             ],
-                        'pan_number' => [
-                            'nullable',
-                            'string',
-                            'size:10',
-                            'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/'
-                            
-                        ],
+            'pan_number' => [
+                'nullable',
+                'string',
+                'size:10',
+                'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
+                Rule::unique('consignees', 'pan_number')->ignore($consignee->id),
+            ],
         ]);
 
         if (!empty($validated['pan_number'])) {
