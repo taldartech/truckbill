@@ -192,18 +192,51 @@ class VoucherPaymentController extends Controller
         $data = $request->validate([
             'freight_booking_id' => 'required|exists:freight_bookings,id',
             'voucher_number' => 'required|string',
-          
             'payment_type_id' => 'required|exists:payment_types,id',
             'payment_mode_id' => 'required|exists:payment_modes,id',
             'payment_type' => 'required|string',
             'payment_mode' => 'required|string',
-            
+            'amount' => 'required|numeric|min:0',
             'reference_transaction_id' => 'nullable|string',
             'remark' => 'nullable|string',
             'payment_status' => 'required|in:pending,in-progress,paid',
             'company_id' => 'required|exists:companies,id',
             'pump_id' => 'nullable|exists:pumps,id',
         ]);
+        
+        // Get the freight booking
+        $freightBooking = \App\Models\FreightBooking::findOrFail($data['freight_booking_id']);
+        
+        // Calculate the difference in amount
+        $amountDifference = $data['amount'] - $voucher_payment->amount;
+        
+        // Check if the amount has changed
+        if ($amountDifference != 0) {
+            // Validate that advance amount won't exceed TR amount or go below 0
+            $newAdvanceAmount = $freightBooking->advance_amount + $amountDifference;
+            
+            if ($newAdvanceAmount > $freightBooking->tr_amount) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Advance amount cannot exceed TR amount. Maximum allowed: ₹' . 
+                        number_format($freightBooking->tr_amount - ($freightBooking->advance_amount - $voucher_payment->amount), 2));
+            }
+            
+            if ($newAdvanceAmount < 0) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Advance amount cannot be negative. Minimum allowed: ₹0');
+            }
+            
+            // Update advance_amount
+            $freightBooking->advance_amount = $newAdvanceAmount;
+            
+            // Recalculate balance_amount
+            $freightBooking->balance_amount = $freightBooking->tr_amount - $freightBooking->advance_amount;
+            
+            // Save the freight booking
+            $freightBooking->save();
+        }
         
         // Update payment status if conditions are met
         if (
@@ -218,7 +251,9 @@ class VoucherPaymentController extends Controller
         
         $voucher_payment->update($data);
         
-        return redirect()->route('voucher_payments.index')->with('success', 'Voucher Payment updated successfully.');
+        return redirect()->route('voucher_payments.index')
+            ->with('success', 'Voucher Payment updated successfully' . 
+                ($amountDifference != 0 ? '. Freight booking advance and balance amounts have been adjusted.' : '.'));
     }
 
     public function bulkPayment(Request $request)
