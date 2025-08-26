@@ -69,11 +69,13 @@
             <div class="col-md-4">
                     <label for="gst_number" class="form-label">GST Number</label>
                     <input placeholder="Enter GST Number" type="text" class="form-control" id="gst_number" name="gst_number" value="{{ old('gst_number', $consignee->gst_number) }}">
+                    <div class="invalid-feedback" id="gst_number_feedback"></div>
                     @error('gst_number') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-4">
                     <label for="pan_number" class="form-label">PAN Number</label>
                     <input placeholder="Enter PAN Number (e.g., ABCDE1234F)" type="text" class="form-control" id="pan_number" name="pan_number" value="{{ old('pan_number', $consignee->pan_number) }}" maxlength="10" style="text-transform: uppercase;">
+                    <div class="invalid-feedback" id="pan_number_feedback"></div>
                     @error('pan_number') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
                 
@@ -924,6 +926,136 @@
             
             // Note: The country, state, and city cascading selects are handled by dynamic-dropdowns.js
             // No need for duplicate event listeners here
+            
+            // GST and PAN number validation
+            const gstNumberInput = document.getElementById('gst_number');
+            const panNumberInput = document.getElementById('pan_number');
+            const gstFeedback = document.getElementById('gst_number_feedback');
+            const panFeedback = document.getElementById('pan_number_feedback');
+            let gstTimeout = null;
+            let panTimeout = null;
+            let gstValid = true;
+            let panValid = true;
+            const consigneeId = {{ $consignee->id }}; // Current consignee ID for exclusion
+            
+            // Form validation
+            const consigneeForm = document.getElementById('consigneeForm');
+            if (consigneeForm) {
+                consigneeForm.addEventListener('submit', function(event) {
+                    // Check if GST or PAN is invalid
+                    if (!gstValid || !panValid) {
+                        event.preventDefault();
+                        alert('Please fix the validation errors before submitting the form.');
+                        return false;
+                    }
+                });
+            }
+            
+            // Check GST number availability with debounce
+            if (gstNumberInput) {
+                gstNumberInput.addEventListener('input', function() {
+                    const gstNumber = this.value.trim().toUpperCase();
+                    this.value = gstNumber; // Force uppercase
+                    
+                    clearTimeout(gstTimeout);
+                    
+                    if (gstNumber.length > 0) {
+                        gstTimeout = setTimeout(() => {
+                            validateGstNumber(gstNumber, consigneeId);
+                        }, 500);
+                    } else {
+                        gstNumberInput.classList.remove('is-invalid');
+                        gstFeedback.textContent = '';
+                        gstValid = true;
+                    }
+                });
+            }
+            
+            // Check PAN number availability with debounce
+            if (panNumberInput) {
+                panNumberInput.addEventListener('input', function() {
+                    const panNumber = this.value.trim().toUpperCase();
+                    this.value = panNumber; // Force uppercase
+                    
+                    clearTimeout(panTimeout);
+                    
+                    if (panNumber.length === 10) { // Only validate complete PAN numbers
+                        panTimeout = setTimeout(() => {
+                            validatePanNumber(panNumber, consigneeId);
+                        }, 500);
+                    } else {
+                        panNumberInput.classList.remove('is-invalid');
+                        panFeedback.textContent = '';
+                        panValid = true;
+                    }
+                });
+            }
+            
+            // Validate GST number against API
+            function validateGstNumber(gstNumber, excludeId) {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                
+                fetch('/api/validate/gst-number', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({ 
+                        gst_number: gstNumber,
+                        exclude_id: excludeId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.available) {
+                        gstNumberInput.classList.add('is-invalid');
+                        gstFeedback.textContent = 'This GST Number is already in use';
+                        gstValid = false;
+                    } else {
+                        gstNumberInput.classList.remove('is-invalid');
+                        gstFeedback.textContent = '';
+                        gstValid = true;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking GST number:', error);
+                    gstValid = true; // Default to valid on error to not block submission
+                });
+            }
+            
+            // Validate PAN number against API
+            function validatePanNumber(panNumber, excludeId) {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                
+                fetch('/api/validate/pan-number', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({ 
+                        pan_number: panNumber,
+                        exclude_id: excludeId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.available) {
+                        panNumberInput.classList.add('is-invalid');
+                        panFeedback.textContent = 'This PAN Number is already in use';
+                        panValid = false;
+                    } else {
+                        panNumberInput.classList.remove('is-invalid');
+                        panFeedback.textContent = '';
+                        panValid = true;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking PAN number:', error);
+                    panValid = true; // Default to valid on error to not block submission
+                });
+            }
             
             // Handle city change with validation
             $('#city_id').on('change', function() {

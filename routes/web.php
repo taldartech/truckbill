@@ -298,6 +298,10 @@ Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->nam
     // API routes for dynamic dropdowns
     Route::get('/api/states/{countryId}', [\App\Http\Controllers\Api\DropdownController::class, 'states']);
     Route::get('/api/cities/{stateId}', [\App\Http\Controllers\Api\DropdownController::class, 'cities']);
+    
+    // Validation routes
+    Route::post('/api/validate/gst-number', [\App\Http\Controllers\ValidationController::class, 'checkGstNumber']);
+    Route::post('/api/validate/pan-number', [\App\Http\Controllers\ValidationController::class, 'checkPanNumber']);
     Route::get('/get-transporter-name/{truck}', function ($truckId) {
         $truck = \App\Models\Truck::with('transporter')->find($truckId);
     
