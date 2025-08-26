@@ -154,6 +154,7 @@
                         <th>Voucher #</th>
                         <th>Customer</th>
                         <th>Truck No</th>
+                        <th>Transporter</th>
                         <th>Source</th>
                         <th>Destination</th>
                         <th>Freight Booking No</th>
@@ -194,6 +195,17 @@
                             <td>
                                 @if($payment->freight_booking && $payment->freight_booking->lr && $payment->freight_booking->lr->truck)
                                     <span class="badge bg-primary">{{ $payment->freight_booking->lr->truck->truck_number }}</span>
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($payment->freight_booking && $payment->freight_booking->transporter)
+                                    @if($payment->freight_booking->transporter->is_owner)
+                                        <span class="badge bg-success"><i class="bi bi-truck"></i> {{ $payment->freight_booking->transporter->name }}</span>
+                                    @else
+                                        <span class="badge bg-primary"><i class="bi bi-building"></i> {{ $payment->freight_booking->transporter->name }}</span>
+                                    @endif
                                 @else
                                     <span class="text-muted">-</span>
                                 @endif
