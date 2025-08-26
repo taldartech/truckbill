@@ -65,13 +65,19 @@ class FreightBookingController extends Controller
             $dataTable = DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('checkbox', function ($row) {
+                    // Hide checkbox if freight booking is delivered and balance is zero
+                    if ($row->is_delivered && ($row->balance_amount <= 0)) {
+                        return '<span class="text-muted" title="No checkbox available: Delivered with zero balance"><i class="bi bi-dash-circle"></i></span>';
+                    }
+                    
                     return sprintf(
-                        '<input type="checkbox" class="row-checkbox" value="%s" data-lr="%s" data-truck="%s" data-balance="%s" data-voucher_number="%s">',
+                        '<input type="checkbox" class="row-checkbox" value="%s" data-lr="%s" data-truck="%s" data-balance="%s" data-voucher_number="%s" data-is-delivered="%s">',
                         $row->id,
                         $row->lr ? $row->lr->lr_number : '',
                         $row->lr && $row->lr->truck ? $row->lr->truck->truck_number : '',
                         $row->balance_amount ?? 0,
-                        $row->voucher_number ?? ''
+                        $row->voucher_number ?? '',
+                        $row->is_delivered ? '1' : '0'
                     );
                 })
                 ->addColumn('fr_number', function ($row) {
