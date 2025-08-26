@@ -37,8 +37,9 @@
                 </div>
             </div>
         </div>
+        
         <div class="card-footer text-center">
-            <button type="button" class="btn btn-primary" id="showInvoiceFormBtn">OK</button>
+            <button type="button" class="btn btn-primary" id="showInvoiceFormBtn" disabled >Next-></button>
         </div>
     </div>
 </div>
@@ -207,12 +208,14 @@ document.addEventListener('DOMContentLoaded', function () {
         const showMemoOptionsBtn = document.getElementById('showMemoOptions');
         const memoOptionsContainer = document.getElementById('memoOptionsContainer');
         const memoCheckboxes = document.getElementById('memoCheckboxes');
+        // const nextBtn = document.getElementById('showInvoiceFormBtn'); // Next button
 
         // Load memos when customer is selected
         preCustomerSelect.addEventListener('change', function() {
             const customerId = this.value;
             if (!customerId) {
                 memoOptionsContainer.style.display = 'none';
+                showInvoiceFormBtn.disabled = true;
                 return;
             }
 
@@ -230,16 +233,26 @@ document.addEventListener('DOMContentLoaded', function () {
                         const checkbox = document.createElement('div');
                         checkbox.className = 'form-check mb-2';
                         checkbox.innerHTML = `
-                            <input class="form-check-input" type="checkbox" value="${memo.id}" id="memo_${memo.id}">
+                            <input class="form-check-input memo-checkbox" type="checkbox" value="${memo.id}" id="memo_${memo.id}">
                             <label class="form-check-label" for="memo_${memo.id}">
                                 ${memo.memo_number}
                             </label>
                         `;
                         memoCheckboxes.appendChild(checkbox);
                     });
-                    // memoOptionsContainer.style.display = 'block';
+                    memoOptionsContainer.style.display = 'block';
+            showInvoiceFormBtn.disabled = true; // keep disabled until user selects
+
+            // Add change listener to each checkbox
+            memoCheckboxes.querySelectorAll('.memo-checkbox').forEach(cb => {
+                cb.addEventListener('change', function () {
+                    const anyChecked = memoCheckboxes.querySelectorAll('.memo-checkbox:checked').length > 0;
+                    showInvoiceFormBtn.disabled = !anyChecked; // enable only if at least one checked
+                });
+            });
                 } else {
                     memoOptionsContainer.style.display = 'none';
+                    showInvoiceFormBtn.disabled = true;
                 }
             })
             .catch(error => {
