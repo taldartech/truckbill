@@ -87,19 +87,17 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Invoice Type *</label>
-                        <select name="invoice_type" placeholder="Invoice Type" class="form-select" required>
-                            <option value="">Select</option>
-                            <option value="Forward" {{ old('invoice_type') == 'Forward' ? 'selected' : '' }}>Forward</option>
-                            <option value="Reverse" {{ old('invoice_type') == 'Reverse' ? 'selected' : '' }}>Reverse</option>
+                        <select class="form-select" disabled>
+                            <option value="Forward" {{ ($company->gst_scheme ?? '') == 'forward charge' ? 'selected' : '' }}>Forward</option>
+                            <option value="Reverse" {{ ($company->gst_scheme ?? '') == 'reverse charge' ? 'selected' : '' }}>Reverse</option>
                         </select>
-                        @error('invoice_type') 
-                            <div class="text-danger">{{ $message }}</div> 
-                        @enderror
-                        <div class="invalid-feedback">Please select an invoice type.</div>
+                        <!-- Hidden input to actually submit the value -->
+                        <input type="hidden" name="invoice_type" value="{{ $company->gst_scheme ?? '' }}">
                     </div>
+                    
                     <div class="col-md-4">
                         <label class="form-label">Generated Date *</label>
-                        <input type="date" placeholder="Generated Date" name="generated_date" class="form-control" required value="{{ old('generated_date') }}">
+                        <input type="date" placeholder="Generated Date" name="generated_date" class="form-control" required value="{{ date('Y-m-d') }}">
                         @error('generated_date') 
                             <div class="text-danger">{{ $message }}</div> 
                         @enderror
@@ -160,8 +158,7 @@
                 </div>
             </div>
             <div class="card-footer">
-                <button class="btn btn-info" type="submit">Submit form</button>
-                <a href="{{ route('invoices.index') }}" class="btn btn-info">Back to List</a>
+                <button class="btn btn-info" type="submit">Generate Invoice</button>
             </div>
         </form>
     </div>

@@ -154,11 +154,19 @@ class InvoiceController extends Controller
     //     return view('invoices.create', compact('companies', 'customers', 'memos'));
     // }
     public function create()
-{
-    $companies = Company::all();
-    $consignees = Consignee::all();
-    return view('invoices.create', compact('companies', 'consignees'));
-}
+    {
+        $user = auth()->user();
+        $company = null;
+    
+        if ($user && $user->company_id) {
+            $company = Company::find($user->company_id);
+        }
+    
+        $consignees = Consignee::all();
+    
+        return view('invoices.create', compact('company', 'consignees'));
+    }
+    
 
 
 public function getCustomerMemos($customerId)
