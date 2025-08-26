@@ -72,9 +72,15 @@
         </div>
         <div class="card-toolbar">
             @if(!$freight_booking->is_cancelled)
-                <button type="button" class="btn btn-sm btn-success me-2" onclick="openVoucherPaymentModal({{ $freight_booking->id }})">
-                    <i class="bi bi-credit-card"></i> Voucher Payment
-                </button>
+                @if($freight_booking->balance_amount > 0)
+                    <button type="button" class="btn btn-sm btn-success me-2" onclick="openVoucherPaymentModal({{ $freight_booking->id }})">
+                        <i class="bi bi-credit-card"></i> Voucher Payment
+                    </button>
+                @else
+                    <button type="button" class="btn btn-sm btn-secondary me-2" disabled title="No balance amount to pay">
+                        <i class="bi bi-credit-card"></i> Voucher Payment
+                    </button>
+                @endif
                 <a href="{{ route('freight_bookings.edit', $freight_booking->id) }}" class="btn btn-sm btn-primary me-2">
                     <i class="bi bi-pencil"></i> Edit
                 </a>
@@ -412,8 +418,9 @@
                                             <td>
                                                 <input type="number" class="form-control allocated-input" 
                                                        data-fb-id="{{ $freight_booking->id }}" 
-                                                       step="0.01" min="0" 
+                                                       step="0.01" min="0.01" 
                                                        max="{{ $freight_booking->balance_amount ?? 0 }}"
+                                                       oninput="validatePaymentAmount(this)"
                                                        onchange="updateTotalPayment()">
                                             </td>
                                         </tr>
@@ -571,16 +578,69 @@ function loadPaymentHistory(freightBookingIds) {
     });
 }
 
+// Function to validate payment amount in real-time
+function validatePaymentAmount(input) {
+    const value = parseFloat(input.value) || 0;
+    const min = parseFloat(input.min) || 0;
+    const max = parseFloat(input.max) || 0;
+    
+    // Remove any existing validation messages
+    const existingFeedback = input.nextElementSibling;
+    if (existingFeedback && existingFeedback.classList.contains('invalid-feedback')) {
+        existingFeedback.remove();
+    }
+    
+    // Reset validation classes
+    input.classList.remove('is-invalid', 'is-valid');
+    
+    // Validate amount is greater than zero
+    if (value <= 0) {
+        input.classList.add('is-invalid');
+        const errorMsg = document.createElement('div');
+        errorMsg.className = 'invalid-feedback';
+        errorMsg.textContent = 'Amount must be greater than zero';
+        input.parentNode.insertBefore(errorMsg, input.nextSibling);
+        return false;
+    }
+    // Validate amount doesn't exceed balance
+    else if (value > max) {
+        input.classList.add('is-invalid');
+        const errorMsg = document.createElement('div');
+        errorMsg.className = 'invalid-feedback';
+        errorMsg.textContent = `Amount cannot exceed balance (₹${max.toFixed(2)})`;
+        input.parentNode.insertBefore(errorMsg, input.nextSibling);
+        return false;
+    }
+    // Valid amount
+    else {
+        input.classList.add('is-valid');
+        return true;
+    }
+}
+
 // Function to update total payment amount
 function updateTotalPayment() {
     const allocatedInputs = document.querySelectorAll('.allocated-input');
     let total = 0;
+    let hasError = false;
+    
     allocatedInputs.forEach(input => {
+        // Check if input has validation error
+        if (input.classList.contains('is-invalid')) {
+            hasError = true;
+        }
         total += parseFloat(input.value) || 0;
     });
+    
     const totalElement = document.getElementById('totalPaymentAmount');
     if (totalElement) {
         totalElement.textContent = total.toFixed(2);
+    }
+    
+    // Enable/disable submit button based on validation
+    const submitBtn = document.querySelector('#voucherPaymentModal .btn-primary');
+    if (submitBtn) {
+        submitBtn.disabled = hasError || total <= 0;
     }
 }
 
@@ -611,11 +671,31 @@ function submitVoucherPayment() {
     
     // Get freight booking ID and allocated amount
     const allocatedInput = document.querySelector('.allocated-input');
-    const freightBookingId = allocatedInput?.getAttribute('data-fb-id');
-    const paymentAmount = parseFloat(allocatedInput?.value) || 0;
+    if (!allocatedInput) {
+        alert('Error: Payment input field not found');
+        return;
+    }
     
+    const freightBookingId = allocatedInput.getAttribute('data-fb-id');
+    if (!freightBookingId) {
+        alert('Error: Freight booking ID not found');
+        return;
+    }
+    
+    const paymentAmount = parseFloat(allocatedInput.value) || 0;
+    const maxBalance = parseFloat(allocatedInput.getAttribute('max')) || 0;
+    
+    // Validate payment amount is greater than zero
     if (paymentAmount <= 0) {
-        alert('Please enter a valid payment amount');
+        alert('Payment amount must be greater than zero');
+        allocatedInput.focus();
+        return;
+    }
+    
+    // Validate payment amount doesn't exceed balance
+    if (paymentAmount > maxBalance) {
+        alert(`Payment amount (₹${paymentAmount.toFixed(2)}) cannot exceed the balance amount (₹${maxBalance.toFixed(2)})`);
+        allocatedInput.focus();
         return;
     }
     

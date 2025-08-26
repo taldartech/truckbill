@@ -1,40 +1,165 @@
 @extends('layouts.app')
+
 @section('content')
+<style>
+/* Prevent form expansion on validation errors */
+.form-control, .form-select {
+    min-height: 38px;
+    box-sizing: border-box;
+}
+
+.text-danger {
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    word-wrap: break-word;
+}
+
+/* Ensure consistent column widths */
+.row .col-md-4 {
+    flex: 0 0 33.333333%;
+    max-width: 33.333333%;
+}
+
+/* Prevent card from expanding */
+.card {
+    overflow: hidden;
+}
+
+/* Consistent spacing for form groups */
+.mb-3 {
+    margin-bottom: 1rem !important;
+}
+</style>
+
 @if (session('error'))
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
         {{ session('error') }}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 @endif
-<div class="card card-info card-outline mb-4" style="width: 70%;align-items: center;margin: auto;">
-    
-    <div class="row g-3">
-         <div class="col-md-3 ps-4">
-            <p><strong>LR Number:</strong> {{ $lorry_receipt->first()->lr_number }}</p>
+<!-- LR and Freight Booking Information Card -->
+<div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
+    <div class="card-header">
+        <div class="card-title h5">Lorry Receipt & Freight Booking Information</div>
+    </div>
+    <div class="card-body">
+        <!-- LR Information Section -->
+        <h6 class="border-bottom pb-2 mb-3">Lorry Receipt Details</h6>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="mb-2">
+                    <strong>LR Number:</strong><br>
+                    <span class="text-primary">{{ $lorry_receipt->first()->lr_number }}</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-2">
+                    <strong>Transporter:</strong><br>
+                    <span>{{ $lorry_receipt->first()->transporter->name }}</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-2">
+                    <strong>Truck:</strong><br>
+                    <span>{{ $lorry_receipt->first()->truck->truck_number }}</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-2">
+                    <strong>Customer:</strong><br>
+                    <span>{{ $lorry_receipt->first()->customer->name }}</span>
+                </div>
+            </div>
         </div>
-        <div class="col-md-3">
-            <p><strong>Transporter:</strong> {{ $lorry_receipt->first()->transporter->name }}</p>
+        <div class="row mt-2">
+            <div class="col-md-3">
+                <div class="mb-2">
+                    <strong>Consignor:</strong><br>
+                    <span>{{ $lorry_receipt->first()->consignor->name }}</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-2">
+                    <strong>Consignee:</strong><br>
+                    <span>{{ $lorry_receipt->first()->consignee->name }}</span>
+                </div>
+            </div>
         </div>
-        <div class="col-md-3">
-            <p><strong>Truck:</strong> {{ $lorry_receipt->first()->truck->truck_number }}</p>
+        
+        <!-- Freight Booking Information Section -->
+        @if($freightBooking)
+        <h6 class="border-bottom pb-2 mb-3 mt-4">Freight Booking Details</h6>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="mb-2">
+                    <strong>FR Number:</strong><br>
+                    <span class="text-primary">{{ $freightBooking->id }}</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-2">
+                    <strong>Voucher Number:</strong><br>
+                    <span>{{ $freightBooking->voucher_number ?? 'N/A' }}</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-2">
+                    <strong>TR Amount:</strong><br>
+                    <span>₹{{ number_format($freightBooking->tr_amount, 2) }}</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-2">
+                    <strong>Advance Amount:</strong><br>
+                    <span>₹{{ number_format($freightBooking->advance_amount, 2) }}</span>
+                </div>
+            </div>
         </div>
-        <div class="col-md-3">
-            <p><strong>Customer:</strong> {{ $lorry_receipt->first()->customer->name }}</p>
+        <div class="row mt-2">
+            <div class="col-md-3">
+                <div class="mb-2">
+                    <strong>Balance Amount:</strong><br>
+                    <span class="text-success fw-bold">₹{{ number_format($balanceAmount, 2) }}</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-2">
+                    <strong>Status:</strong><br>
+                    <span>
+                        @if($freightBooking->is_delivered)
+                            <span class="badge bg-success">Delivered</span>
+                        @else
+                            <span class="badge bg-warning">Not Delivered</span>
+                        @endif
+                        @if($freightBooking->is_cancelled)
+                            <span class="badge bg-danger ms-1">Cancelled</span>
+                        @endif
+                    </span>
+                </div>
+            </div>
+            @if($freightBooking->transporter)
+            <div class="col-md-3">
+                <div class="mb-2">
+                    <strong>Transporter Type:</strong><br>
+                    <span>
+                        @if($freightBooking->transporter->is_owner)
+                            <span class="badge bg-success"><i class="bi bi-truck me-1"></i> Truck Owner</span>
+                        @else
+                            <span class="badge bg-info"><i class="bi bi-building me-1"></i> Agency</span>
+                        @endif
+                    </span>
+                </div>
+            </div>
+            @endif
         </div>
-        <div class="col-md-3 ps-4">
-            <p><strong>Consignor:</strong> {{ $lorry_receipt->first()->consignor->name }}</p>
-        </div>
-        <div class="col-md-3">
-            <p><strong>Consignee:</strong> {{ $lorry_receipt->first()->consignee->name }}</p>
-        </div>
-        <div class="col-md-3">
-            <p><strong>Amount:</strong> {{ $balanceAmount }}</p>
-        </div>
+        @endif
     </div>
 </div>
-<div class="card card-info card-outline mb-4" style="width: 70%;align-items: center;margin: auto;">
+<div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
     <!--begin::Header-->
-    <div class="card-header"><div class="card-title">Edit Voucher Payment</div></div>
+    <div class="card-header">
+        <div class="card-title h4">Edit Voucher Payment</div>
+    </div>
     <!--end::Header-->
     <!--begin::Form-->
     <form method="POST" action="{{ route('voucher_payments.update', $voucher_payment->id) }}" class="needs-validation" novalidate>
@@ -48,9 +173,9 @@
         <!--begin::Body-->
         <div class="card-body">
             <!--begin::Row-->
-            <div class="row g-3">
+            <div class="row mb-3">
                 <!--begin::Col-->
-                <div class="col-md-4">
+                <div class="col-md-4 mb-3">
                     <label for="voucher_number" class="form-label">Voucher *</label>
                     <input type="text" 
                            name="voucher_number" 
@@ -65,7 +190,7 @@
                 <!--end::Col-->
                
                 <!--begin::Col-->
-                <div class="col-md-4">
+                <div class="col-md-4 mb-3">
                     <label for="payment_type_id" class="form-label">Payment Type *</label>
                     <select name="payment_type_id" id="payment_type_id" class="form-select" required>
                         <option value="">Select Payment Type</option>
@@ -81,7 +206,7 @@
                 </div>
                 <!--end::Col-->
                 <!--begin::Col-->
-                <div class="col-md-4">
+                <div class="col-md-4 mb-3">
                     <label for="payment_mode_id" class="form-label">Payment Mode *</label>
                     <select name="payment_mode_id" id="payment_mode_id" class="form-select" required>
                         <option value="">Select Payment Mode</option>
@@ -96,7 +221,7 @@
                     <div class="invalid-feedback">Please select a payment mode.</div>
                 </div>
                 <!--end::Col-->
-                <div class="col-md-4 mt-3" id="pumpDropdownContainer" style="display: none;">
+                <div class="col-md-4 mb-3" id="pumpDropdownContainer" style="display: none;">
                     <label for="pump_id" class="form-label">Select Pump</label>
                     <select name="pump_id" id="pump_id" class="form-select">
                         <option value="">Select Pump</option>
@@ -117,9 +242,9 @@
                 </div> --}}
                 <!--end::Col-->
                 <!--begin::Col-->
-                <div class="col-md-6">
+                <div class="col-md-6 mb-3">
                     <label for="remark" class="form-label">Remark</label>
-                    <textarea name="remark" id="remark" class="form-control">{{ old('remark', $voucher_payment->remark) }}</textarea>
+                    <textarea name="remark" id="remark" class="form-control" rows="3">{{ old('remark', $voucher_payment->remark) }}</textarea>
                     @error('remark') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
                 <!--end::Col-->
@@ -129,7 +254,7 @@
                 @php
     $isAdmin = auth()->user()->userRole && auth()->user()->userRole->name === 'admin';
 @endphp
-                <div class="col-md-4" @if(!$isAdmin) style="display: none;" @endif>
+                <div class="col-md-4 mb-3" @if(!$isAdmin) style="display: none;" @endif>
                     <label for="payment_status" class="form-label">Payment Status *</label>
                     <select name="payment_status" id="payment_status" class="form-select" required>
                         <option value="pending" {{ old('payment_status', $voucher_payment->payment_status) == 'pending' ? 'selected' : '' }}>Pending</option>
@@ -149,14 +274,17 @@
                 </div> --}}
                 <!--end::Col-->
                 <!--begin::Col-->
-                <div class="col-md-4">
+                <div class="col-md-4 mb-3">
                     <label for="amount" class="form-label">Amount *</label>
-                    <input type="number" step="0.01" name="amount" id="amount" class="form-control" value="{{ old('amount', $voucher_payment->amount) }}" required>
+                    <div class="input-group">
+                        <span class="input-group-text">₹</span>
+                        <input type="number" step="0.01" name="amount" id="amount" class="form-control" value="{{ old('amount', $voucher_payment->amount) }}" required>
+                    </div>
                     @error('amount') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please enter an amount.</div>
                 </div>
                 <!--end::Col-->
-                <div class="col-md-4" id="reference_transaction_box" style="display: none;">
+                <div class="col-md-4 mb-3" id="reference_transaction_box" style="display: none;">
                     <label for="reference_transaction_id" class="form-label">Reference Transaction ID *</label>
                     <input type="text" class="form-control"
                            id="reference_transaction_id"
@@ -169,9 +297,11 @@
         </div>
       
         <!--begin::Footer-->
-        <div class="card-footer">
-            <button class="btn btn-info" type="submit">Update</button>
-            <a href="{{ route('voucher_payments.index') }}" class="btn btn-info">Back to List</a>
+        <div class="card-footer d-flex justify-content-between">
+            <div>
+                <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i> Update</button>
+                <a href="{{ route('voucher_payments.index') }}" class="btn btn-secondary ms-2"><i class="bi bi-arrow-left me-1"></i> Back to List</a>
+            </div>
         </div>
     </form>
 </div>
