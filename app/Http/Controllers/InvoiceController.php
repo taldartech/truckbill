@@ -222,7 +222,7 @@ public function getCustomerMemos($customerId)
 
           // Separate memo_ids from the rest of invoice data
     $memoIds = $request->input('memo_ids', []);
-    unset($data['memo_ids']);
+    // unset($data['memo_ids']);
 
     // ✅ Update lorry_receipts before invoice creation
     if (!empty($memoIds)) {

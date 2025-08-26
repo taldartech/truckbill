@@ -16,6 +16,11 @@ class Invoice extends Model
         'customer_id',
         'total_amount',
         'payment_status',
+        'memo_ids',
+    ];
+    protected $casts = [
+        'memo_ids' => 'array',
+      
     ];
 
     public function consignee()

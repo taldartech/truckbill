@@ -95,7 +95,7 @@
                             <option value="Reverse" {{ ($company->gst_scheme ?? '') == 'reverse charge' ? 'selected' : '' }}>Reverse</option>
                         </select>
                         <!-- Hidden input to actually submit the value -->
-                        <input type="hidden" name="invoice_type" value="{{ $company->gst_scheme ?? '' }}">
+                        <input type="hidden" name="invoice_type" @if($company->gst_scheme == 'reverse charge') value="Reverse" @else value="Forward" @endif>
                     </div>
                     
                     <div class="col-md-4">
