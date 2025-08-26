@@ -325,6 +325,7 @@ public function getCustomerMemos($customerId)
         $lrs = LorryReceipt::whereIn('memo_id', $memoIds)
             ->with(['transporter', 'consignor', 'consignee','truck'])
             ->select('lr_number', 'memo_id', 'source_city', 'destination_city', 'transporter_id', 'consignor_id', 'consignee_id', 'gr_date', 'amount', 'truck_id', 'weight')
+            ->where('invoice_generated', 0)
             ->get()
             ->groupBy('memo_id');
 
