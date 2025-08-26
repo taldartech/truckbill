@@ -47,7 +47,8 @@
                         <th style="width: 10px">ID</th>
                         <th>Voucher Number</th>
                         <th>LR Number</th>
-                        <th>Customer</th>
+                        <th>FR Number</th>
+                        <th>Transporter</th>
                         <th>Truck No</th>
                         <th>Source</th>
                         <th>Destination</th>
@@ -55,9 +56,8 @@
                         <th>Payment Mode</th>
                         <th>Amount</th>
                         <th>Status</th>
-                        <th>Pump</th>
                         <th>Created Time</th>
-                        <th>Remark</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -66,21 +66,32 @@
                         <td>{{ $payment->id }}</td>
                         <td>
                             @if($payment->voucher_number)
-                                <span class="badge bg-primary">{{ $payment->voucher_number }}</span>
+                                {{ $payment->voucher_number }}
                             @else
                                 <span class="text-muted">-</span>
                             @endif
                         </td>
                         <td>
                             @if($payment->freight_booking && $payment->freight_booking->lr)
-                                <span class="badge bg-info">{{ $payment->freight_booking->lr->lr_number }}</span>
+                                {{ $payment->freight_booking->lr->lr_number }}
                             @else
                                 <span class="text-muted">-</span>
                             @endif
                         </td>
                         <td>
-                            @if($payment->freight_booking && $payment->freight_booking->lr && $payment->freight_booking->lr->customer)
-                                <span class="badge bg-info">{{ $payment->freight_booking->lr->customer->name }}</span>
+                            @if($payment->freight_booking)
+                                {{ $payment->freight_booking->id }}
+                            @else
+                                <span class="text-muted">-</span>
+                            @endif
+                        </td>
+                        <td>
+                            @if($payment->freight_booking && $payment->freight_booking->transporter)
+                                @if($payment->freight_booking->transporter->is_owner)
+                                    <i class="bi bi-truck"></i> {{ $payment->freight_booking->transporter->name }}
+                                @else
+                                    <i class="bi bi-building"></i> {{ $payment->freight_booking->transporter->name }}
+                                @endif
                             @else
                                 <span class="text-muted">-</span>
                             @endif
@@ -94,28 +105,28 @@
                         </td>
                         <td>
                             @if($payment->freight_booking && $payment->freight_booking->lr && $payment->freight_booking->lr->consignor && $payment->freight_booking->lr->consignor->city)
-                                <span class="badge bg-success">{{ $payment->freight_booking->lr->consignor->city->name }}</span>
+                                {{ $payment->freight_booking->lr->consignor->city->name }}
                             @else
                                 <span class="text-muted">-</span>
                             @endif
                         </td>
                         <td>
                             @if($payment->freight_booking && $payment->freight_booking->lr && $payment->freight_booking->lr->consignee && $payment->freight_booking->lr->consignee->city)
-                                <span class="badge bg-warning">{{ $payment->freight_booking->lr->consignee->city->name }}</span>
+                                {{ $payment->freight_booking->lr->consignee->city->name }}
                             @else
                                 <span class="text-muted">-</span>
                             @endif
                         </td>
                         <td>
                             @if($payment->payment_type)
-                                <span class="badge bg-secondary">{{ ucfirst($payment->payment_type) }}</span>
+                                {{ ucfirst($payment->payment_type) }}
                             @else
                                 <span class="text-muted">-</span>
                             @endif
                         </td>
                         <td>
                             @if($payment->payment_mode)
-                                <span class="badge bg-dark">{{ ucfirst($payment->payment_mode) }}</span>
+                                {{ ucfirst($payment->payment_mode) }}
                             @else
                                 <span class="text-muted">-</span>
                             @endif
@@ -150,26 +161,25 @@
                             @endif
                         </td>
                         <td>
-                            @if($payment->pump)
-                                <span class="badge bg-success">{{ $payment->pump->name }}</span>
-                            @else
-                                <span class="text-muted">-</span>
-                            @endif
-                        </td>
-                        <td>
                             <small>{{ $payment->created_at->setTimezone('Asia/Kolkata')->format('h:i A') }}</small>
                         </td>
                         <td>
-                            @if($payment->remark)
-                                <small class="text-muted">{{ Str::limit($payment->remark, 30) }}</small>
-                            @else
-                                <span class="text-muted">-</span>
-                            @endif
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="actionDropdown{{ $payment->id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-gear"></i>
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="actionDropdown{{ $payment->id }}">
+                                    <li><a class="dropdown-item" href="#" onclick="updateStatus({{ $payment->id }}, 'pending')"><i class="bi bi-hourglass text-warning"></i> Mark as Pending</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="updateStatus({{ $payment->id }}, 'in-progress')"><i class="bi bi-arrow-repeat text-info"></i> Mark as In Progress</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="updateStatus({{ $payment->id }}, 'paid')"><i class="bi bi-check-circle text-success"></i> Mark as Paid</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="updateStatus({{ $payment->id }}, 'cancelled')"><i class="bi bi-x-circle text-danger"></i> Mark as Cancelled</a></li>
+                                </ul>
+                            </div>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="10" class="text-center">
+                        <td colspan="14" class="text-center">
                             <div class="empty-state">
                                 <i class="bi bi-calendar-x fa-3x text-muted mb-3"></i>
                                 <h5>No Payments Found</h5>
@@ -228,3 +238,55 @@
     @endif
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    function updateStatus(paymentId, status) {
+        if (confirm('Are you sure you want to update the payment status to ' + status + '?')) {
+            // Create a form and submit it
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ route("voucher_payments.update_status") }}';
+            
+            // CSRF Token
+            const csrfToken = document.createElement('input');
+            csrfToken.type = 'hidden';
+            csrfToken.name = '_token';
+            csrfToken.value = '{{ csrf_token() }}';
+            form.appendChild(csrfToken);
+            
+            // Method field
+            const methodField = document.createElement('input');
+            methodField.type = 'hidden';
+            methodField.name = '_method';
+            methodField.value = 'PUT';
+            form.appendChild(methodField);
+            
+            // Payment ID
+            const paymentIdField = document.createElement('input');
+            paymentIdField.type = 'hidden';
+            paymentIdField.name = 'payment_id';
+            paymentIdField.value = paymentId;
+            form.appendChild(paymentIdField);
+            
+            // Status
+            const statusField = document.createElement('input');
+            statusField.type = 'hidden';
+            statusField.name = 'status';
+            statusField.value = status;
+            form.appendChild(statusField);
+            
+            // Redirect back
+            const redirectField = document.createElement('input');
+            redirectField.type = 'hidden';
+            redirectField.name = 'redirect';
+            redirectField.value = window.location.href;
+            form.appendChild(redirectField);
+            
+            // Append to body and submit
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+</script>
+@endpush

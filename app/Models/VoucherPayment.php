@@ -4,6 +4,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Transporter;
 
 class VoucherPayment extends Model
 {
@@ -55,6 +56,33 @@ class VoucherPayment extends Model
                 return '<span class="badge bg-success">Paid</span>';
             default:
                 return '<span class="badge bg-secondary">Unknown</span>';
+        }
+    }
+    
+    /**
+     * Get the transporter associated with this voucher payment through freight booking
+     */
+    public function transporter()
+    {
+        return $this->belongsTo(Transporter::class, 'transporter_id');
+    }
+    
+    /**
+     * Get the transporter badge based on is_owner status
+     */
+    public function getTransporterBadge()
+    {
+        if (!$this->freight_booking || !$this->freight_booking->transporter) {
+            return '<span class="text-muted">-</span>';
+        }
+        
+        $transporter = $this->freight_booking->transporter;
+        $name = $transporter->name;
+        
+        if ($transporter->is_owner) {
+            return '<span class="badge bg-success"><i class="bi bi-truck"></i> ' . e($name) . '</span>';
+        } else {
+            return '<span class="badge bg-primary"><i class="bi bi-building"></i> ' . e($name) . '</span>';
         }
     }
 }

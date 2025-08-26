@@ -439,9 +439,12 @@
                                     <label for="paymentType" class="form-label">Payment Type *</label>
                                     <select class="form-select" id="paymentType" required>
                                         <option value="">Select Payment Type</option>
-                                        <option value="advance" data-id="1">Advance</option>
-                                        <option value="balance" data-id="2">Balance</option>
-                                        <option value="full" data-id="3">Full Payment</option>
+                                        @foreach($paymentTypes as $type)
+                                            <option value="{{ $type->name }}" data-id="{{ $type->id }}" 
+                                                {{ isset($existingPayment) && $existingPayment->payment_type_id == $type->id ? 'selected' : '' }}>
+                                                {{ $type->name }}
+                                            </option>
+                                        @endforeach
                                     </select>
                                 </div>
                             </div>
@@ -450,10 +453,12 @@
                                     <label for="paymentMode" class="form-label">Payment Mode *</label>
                                     <select class="form-select" id="paymentMode" required>
                                         <option value="">Select Payment Mode</option>
-                                        <option value="cash" data-id="1">Cash</option>
-                                        <option value="cheque" data-id="2">Cheque</option>
-                                        <option value="online" data-id="3">Online Transfer</option>
-                                        <option value="upi" data-id="4">UPI</option>
+                                        @foreach($paymentModes as $mode)
+                                            <option value="{{ $mode->name }}" data-id="{{ $mode->id }}" 
+                                                {{ isset($existingPayment) && $existingPayment->payment_mode_id == $mode->id ? 'selected' : '' }}>
+                                                {{ $mode->name }}
+                                            </option>
+                                        @endforeach
                                     </select>
                                 </div>
                             </div>
@@ -463,13 +468,14 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="referenceId" class="form-label">Reference Transaction ID</label>
-                                    <input type="text" class="form-control" id="referenceId" placeholder="Enter reference ID">
+                                    <input type="text" class="form-control" id="referenceId" placeholder="Enter reference ID" 
+                                        value="{{ isset($existingPayment) ? $existingPayment->reference_transaction_id : '' }}">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="paymentRemarks" class="form-label">Remarks</label>
-                                    <textarea class="form-control" id="paymentRemarks" rows="2" placeholder="Enter remarks"></textarea>
+                                    <textarea class="form-control" id="paymentRemarks" rows="2" placeholder="Enter remarks">{{ isset($existingPayment) ? $existingPayment->remark : '' }}</textarea>
                                 </div>
                             </div>
                         </div>

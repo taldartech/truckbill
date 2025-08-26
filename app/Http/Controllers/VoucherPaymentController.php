@@ -19,7 +19,8 @@ class VoucherPaymentController extends Controller
             'freight_booking.lr.customer',
             'freight_booking.lr.truck',
             'freight_booking.lr.consignor.city',
-            'freight_booking.lr.consignee.city'
+            'freight_booking.lr.consignee.city',
+            'freight_booking.transporter' // Add transporter relationship
         ]);
 
         // Only apply company_id filter for non-super_admin users
@@ -56,7 +57,8 @@ class VoucherPaymentController extends Controller
             'freight_booking.lr.customer',
             'freight_booking.lr.truck',
             'freight_booking.lr.consignor.city',
-            'freight_booking.lr.consignee.city'
+            'freight_booking.lr.consignee.city',
+            'freight_booking.transporter' // Add transporter relationship
         ])->whereIn('id', $latestPaymentIds)->get()->keyBy('voucher_number');
         
         // Get total amounts for each voucher
@@ -615,6 +617,55 @@ class VoucherPaymentController extends Controller
             
             return redirect()->back()
                 ->with('error', 'An error occurred while deleting the payment. Please try again.');
+        }
+    }
+    
+    /**
+     * Update the payment status for a single payment
+     * 
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function updateStatus(Request $request)
+    {
+        $validated = $request->validate([
+            'payment_id' => 'required|integer|exists:voucher_payments,id',
+            'status' => 'required|in:pending,in-progress,paid,cancelled',
+            'redirect' => 'nullable|string'
+        ]);
+        
+        try {
+            $payment = VoucherPayment::findOrFail($validated['payment_id']);
+            $payment->payment_status = $validated['status'];
+            $payment->save();
+            
+            // Log the status change
+            \Log::info('Payment status updated', [
+                'payment_id' => $payment->id,
+                'voucher_number' => $payment->voucher_number,
+                'old_status' => $payment->getOriginal('payment_status'),
+                'new_status' => $validated['status'],
+                'updated_by' => auth()->id()
+            ]);
+            
+            // Redirect to the specified URL or back to the previous page
+            if (!empty($validated['redirect'])) {
+                return redirect($validated['redirect'])
+                    ->with('success', 'Payment status updated successfully to ' . ucfirst($validated['status']));
+            }
+            
+            return redirect()->back()
+                ->with('success', 'Payment status updated successfully to ' . ucfirst($validated['status']));
+                
+        } catch (\Exception $e) {
+            \Log::error('Error updating payment status: ' . $e->getMessage(), [
+                'payment_id' => $validated['payment_id'],
+                'status' => $validated['status'],
+                'user_id' => auth()->id()
+            ]);
+            
+            return redirect()->back()
+                ->with('error', 'An error occurred while updating the payment status. Please try again.');
         }
     }
 }

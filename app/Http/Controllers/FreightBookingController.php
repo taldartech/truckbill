@@ -511,7 +511,16 @@ class FreightBookingController extends Controller
                 abort(403, 'Unauthorized access to freight booking.');
             }
             
-            return view('freight_bookings.show', compact('freight_booking'));
+            // Load payment types and modes for the voucher payment modal
+            $paymentTypes = \App\Models\PaymentType::all();
+            $paymentModes = \App\Models\PaymentMode::all();
+            
+            // Get existing payment data for this freight booking if available
+            $existingPayment = \App\Models\VoucherPayment::where('freight_booking_id', $id)
+                ->orderBy('created_at', 'desc')
+                ->first();
+            
+            return view('freight_bookings.show', compact('freight_booking', 'paymentTypes', 'paymentModes', 'existingPayment'));
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return redirect()->route('freight_bookings.index')
                 ->with('error', 'Freight booking not found.');
