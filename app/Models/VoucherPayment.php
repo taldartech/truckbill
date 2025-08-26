@@ -45,12 +45,17 @@ class VoucherPayment extends Model
         return $this->belongsTo(Pump::class);
     }
 
+    /**
+     * Valid payment statuses
+     */
+    public static $validStatuses = ['pending', 'in progress', 'paid'];
+    
     public function getPaymentStatusBadge()
     {
         switch ($this->payment_status) {
             case 'pending':
                 return '<span class="badge bg-warning">Pending</span>';
-            case 'in-progress':
+            case 'in progress':
                 return '<span class="badge bg-info">In Progress</span>';
             case 'paid':
                 return '<span class="badge bg-success">Paid</span>';

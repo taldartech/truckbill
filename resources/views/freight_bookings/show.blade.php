@@ -551,7 +551,8 @@ function loadPaymentHistory(freightBookingIds) {
             
             data.payments.forEach(payment => {
                 const statusBadge = payment.payment_status === 'paid' ? 'bg-success' : 
-                                  payment.payment_status === 'pending' ? 'bg-warning' : 'bg-secondary';
+                                  payment.payment_status === 'pending' ? 'bg-warning' : 
+                                  payment.payment_status === 'in progress' ? 'bg-info' : 'bg-secondary';
                 
                 tableHtml += `
                     <tr>
