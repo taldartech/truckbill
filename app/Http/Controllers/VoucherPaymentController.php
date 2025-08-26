@@ -630,7 +630,7 @@ class VoucherPaymentController extends Controller
     {
         $validated = $request->validate([
             'payment_id' => 'required|integer|exists:voucher_payments,id',
-            'status' => 'required|in:pending,in-progress,paid,cancelled',
+            'status' => 'required|in:' . implode(',', \App\Models\VoucherPayment::$validStatuses),
             'redirect' => 'nullable|string'
         ]);
         

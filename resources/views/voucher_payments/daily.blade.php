@@ -144,14 +144,11 @@
                                     @case('pending')
                                         <span class="badge bg-warning">Pending</span>
                                         @break
-                                    @case('in-progress')
+                                    @case('in progress')
                                         <span class="badge bg-info">In Progress</span>
                                         @break
                                     @case('paid')
                                         <span class="badge bg-success">Paid</span>
-                                        @break
-                                    @case('cancelled')
-                                        <span class="badge bg-danger">Cancelled</span>
                                         @break
                                     @default
                                         <span class="badge bg-secondary">{{ ucfirst($payment->payment_status) }}</span>
@@ -170,9 +167,8 @@
                                 </button>
                                 <ul class="dropdown-menu" aria-labelledby="actionDropdown{{ $payment->id }}">
                                     <li><a class="dropdown-item" href="#" onclick="updateStatus({{ $payment->id }}, 'pending')"><i class="bi bi-hourglass text-warning"></i> Mark as Pending</a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="updateStatus({{ $payment->id }}, 'in-progress')"><i class="bi bi-arrow-repeat text-info"></i> Mark as In Progress</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="updateStatus({{ $payment->id }}, 'in progress')"><i class="bi bi-arrow-repeat text-info"></i> Mark as In Progress</a></li>
                                     <li><a class="dropdown-item" href="#" onclick="updateStatus({{ $payment->id }}, 'paid')"><i class="bi bi-check-circle text-success"></i> Mark as Paid</a></li>
-                                    <li><a class="dropdown-item" href="#" onclick="updateStatus({{ $payment->id }}, 'cancelled')"><i class="bi bi-x-circle text-danger"></i> Mark as Cancelled</a></li>
                                 </ul>
                             </div>
                         </td>

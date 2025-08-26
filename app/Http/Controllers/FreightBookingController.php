@@ -881,6 +881,18 @@ class FreightBookingController extends Controller
                     $paymentType = \App\Models\PaymentType::find($validated['payment_type_id']);
                     $paymentMode = \App\Models\PaymentMode::find($validated['payment_mode_id']);
                     
+                    // Determine payment status based on payment mode
+                    $paymentStatus = 'pending'; // Default status
+                    
+                    // Set status based on payment mode
+                    if (strtolower($paymentMode->name) === 'cash' || strtolower($paymentMode->name) === 'adjust in advance') {
+                        $paymentStatus = 'in-progress';
+                    } else if (strtolower($paymentMode->name) === 'bank transfer' || 
+                              strtolower($paymentMode->name) === 'fuel' || 
+                              strpos(strtolower($paymentMode->name), 'pump') !== false) {
+                        $paymentStatus = 'pending';
+                    }
+                    
                     // Create voucher payment record
                     $voucherPayment = \App\Models\VoucherPayment::create([
                         'freight_booking_id' => $bookingId,
@@ -891,8 +903,13 @@ class FreightBookingController extends Controller
                         'payment_mode_id' => $validated['payment_mode_id'],
                         'amount' => $amount,
                         'remark' => $validated['notes'] ?? null,
-                        'payment_status' => 'paid',
+                        'payment_status' => $paymentStatus,
                         'company_id' => auth()->user()->company_id
+                    ]);
+                    
+                    \Log::info('Payment status set based on payment mode', [
+                        'payment_mode' => $paymentMode->name,
+                        'payment_status' => $paymentStatus
                     ]);
                     
                     // Update freight booking balance
