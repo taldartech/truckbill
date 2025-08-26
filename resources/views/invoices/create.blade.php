@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
+
 <div class="container mt-4" id="preFormContainer">
     <div class="card card-warning card-outline" style="width: 50%; margin: auto;">
         <div class="card-header">
@@ -10,7 +11,7 @@
             <div class="row g-3">
                 <div class="col-md-6">
                     <label class="form-label">Customer *</label>
-                    <select id="preCustomerSelect" class="form-select" required>
+                    <select id="preCustomerSelect" style="width:100%"  required>
                         <option value="">Select</option>
                         @foreach($consignees as $consignee)
                             <option value="{{ $consignee->id }}">{{ $consignee->name }}</option>
@@ -42,9 +43,8 @@
     </div>
 </div>
 
+<div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto; display: none;"  id="mainInvoiceForm">
 
-<div class="container mt-4" id="mainInvoiceForm" style="display: none;">
-    <div class="card card-info card-outline" style="width: 70%;align-items: center;margin: auto;">
         <div class="card-header">
             <h3 class="card-title">Add New Invoice</h3>
         </div>
@@ -76,29 +76,10 @@
             @endphp
             <div class="card-body">
                 <div class="row g-3">
-                    <div class="col-md-4">
-                        <label for="company_id" class="form-label">Company *</label>
-                        @if($canEditCompany)
-                            <select class="form-select" id="company_id" name="company_id" required>
-                                <option value="">Select</option>
-                                @foreach($companies as $company)
-                                    <option value="{{ $company->id }}" {{ old('company_id') == $company->id ? 'selected' : '' }}>{{ $company->name }}</option>
-                                @endforeach
-                            </select>
-                            <div class="invalid-feedback">Please select a company.</div>
-                        @else
-                            <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
-                            <div class="form-control-plaintext">
-                                {{ $companies->firstWhere('id', $userCompanyId)->name ?? '' }}
-                            </div>
-                        @endif
-                        @error('company_id') 
-                            <div class="text-danger">{{ $message }}</div> 
-                        @enderror
-                    </div>
+                   
                     <div class="col-md-4">
                         <label class="form-label">Manual Invoice #</label>
-                        <input type="text" name="manual_invoice_number" class="form-control" value="{{ old('manual_invoice_number') }}">
+                        <input type="text" placeholder="Invoice Number" name="manual_invoice_number" class="form-control" value="{{ old('manual_invoice_number') }}">
                         @error('manual_invoice_number') 
                             <div class="text-danger">{{ $message }}</div> 
                         @enderror
@@ -106,7 +87,7 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Invoice Type *</label>
-                        <select name="invoice_type" class="form-select" required>
+                        <select name="invoice_type" placeholder="Invoice Type" class="form-select" required>
                             <option value="">Select</option>
                             <option value="Forward" {{ old('invoice_type') == 'Forward' ? 'selected' : '' }}>Forward</option>
                             <option value="Reverse" {{ old('invoice_type') == 'Reverse' ? 'selected' : '' }}>Reverse</option>
@@ -118,7 +99,7 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Generated Date *</label>
-                        <input type="date" name="generated_date" class="form-control" required value="{{ old('generated_date') }}">
+                        <input type="date" placeholder="Generated Date" name="generated_date" class="form-control" required value="{{ old('generated_date') }}">
                         @error('generated_date') 
                             <div class="text-danger">{{ $message }}</div> 
                         @enderror
@@ -145,7 +126,7 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Total Amount *</label>
-                        <input type="number" name="total_amount" class="form-control" step="0.01" min="0" required value="{{ old('total_amount') }}">
+                        <input type="number" placeholder="Total Amount" name="total_amount" class="form-control" step="0.01" min="0" required value="{{ old('total_amount') }}">
                         @error('total_amount') 
                             <div class="text-danger">{{ $message }}</div> 
                         @enderror
@@ -196,6 +177,25 @@
             </div>
         </div>
     </div>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    
+
+<script>
+   
+document.addEventListener('DOMContentLoaded', function () {
+    new Choices('#preCustomerSelect', {
+        searchEnabled: true,      // enable search box
+        itemSelectText: '',       // hide "press to select" text
+        shouldSort: false,        // keep original order
+        placeholderValue: 'Select Customer',
+        searchPlaceholderValue: 'Type to search...',
+    });
+});
+
+</script>
+
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {

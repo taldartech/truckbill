@@ -206,15 +206,23 @@ class LorryReceiptController extends Controller
                     return $row->amount ? '₹' . number_format($row->amount, 2) : '₹0.00';
                 })
                 ->addColumn('status_badge', function ($row) {
-                    $statusClass = match($row->delivery_status) {
-                        'Pending' => 'warning',
-                        'Delivered' => 'success',
-                        'Cancelled' => 'danger',
-                        'In-Progress' => 'info',
-                        default => 'secondary'
-                    };
-                    return '<span class="badge bg-' . $statusClass . '">' . ($row->delivery_status ?? 'Unknown') . '</span>';
+                    if ($row->invoice_generated == 1) {
+                        $statusClass = 'success';
+                        $statusText = 'Invoiced';
+                    } else {
+                        $statusClass = match($row->delivery_status) {
+                            'Pending' => 'warning',
+                            'Delivered' => 'success',
+                            'Cancelled' => 'danger',
+                            'In-Progress' => 'info',
+                            default => 'secondary',
+                        };
+                        $statusText = $row->delivery_status ?? 'Unknown';
+                    }
+                
+                    return '<span class="badge bg-' . $statusClass . '">' . $statusText . '</span>';
                 })
+                
                 ->addColumn('actions', function ($row) {
                     return $this->getActionButtons($row);
                 })

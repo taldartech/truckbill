@@ -200,7 +200,6 @@ public function getCustomerMemos($customerId)
     //   dd($request->all());
         $data = $request->validate([
             'manual_invoice_number' => 'nullable|string',
-            'company_id' => 'required|exists:companies,id',
             'invoice_type' => 'required|in:Reverse,Forward',
             'generated_date' => 'required|date',
            'customer_id' => 'required|exists:consignees,id',
@@ -210,6 +209,7 @@ public function getCustomerMemos($customerId)
             'memo_ids.*' => 'exists:lorry_receipts,memo_id',
         ]);
         $data['payment_status'] = 'pending';
+        $data['company_id'] = auth()->user()->company_id;
 
 
           // Separate memo_ids from the rest of invoice data
@@ -291,7 +291,7 @@ public function getCustomerMemos($customerId)
     {
         $data = $request->validate([
             'manual_invoice_number' => 'nullable|string',
-            'company_id' => 'required|exists:companies,id',
+           
             'invoice_type' => 'required|in:Reverse,Forward',
             'generated_date' => 'required|date',
             'customer_id' => 'required|exists:consignees,id',
@@ -304,6 +304,7 @@ public function getCustomerMemos($customerId)
         // Handle memo_ids separately since it's not a direct column
         $memoIds = $data['memo_ids'] ?? [];
         unset($data['memo_ids']);
+        $data['company_id'] = auth()->user()->company_id;
         
         $invoice->update($data);
         
