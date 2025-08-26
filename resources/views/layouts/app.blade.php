@@ -1003,7 +1003,6 @@ if (sparkline3Element) {
 }
 </script>
 <!--end::Script-->
-    <script src="/js/dynamic-dropdowns.js"></script>
     @yield('scripts')
     @stack('scripts')
 </body>

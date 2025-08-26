@@ -432,9 +432,9 @@
                                     <label for="paymentType" class="form-label">Payment Type *</label>
                                     <select class="form-select" id="paymentType" required>
                                         <option value="">Select Payment Type</option>
-                                        <option value="advance">Advance</option>
-                                        <option value="balance">Balance</option>
-                                        <option value="full">Full Payment</option>
+                                        <option value="advance" data-id="1">Advance</option>
+                                        <option value="balance" data-id="2">Balance</option>
+                                        <option value="full" data-id="3">Full Payment</option>
                                     </select>
                                 </div>
                             </div>
@@ -443,10 +443,10 @@
                                     <label for="paymentMode" class="form-label">Payment Mode *</label>
                                     <select class="form-select" id="paymentMode" required>
                                         <option value="">Select Payment Mode</option>
-                                        <option value="cash">Cash</option>
-                                        <option value="cheque">Cheque</option>
-                                        <option value="online">Online Transfer</option>
-                                        <option value="upi">UPI</option>
+                                        <option value="cash" data-id="1">Cash</option>
+                                        <option value="cheque" data-id="2">Cheque</option>
+                                        <option value="online" data-id="3">Online Transfer</option>
+                                        <option value="upi" data-id="4">UPI</option>
                                     </select>
                                 </div>
                             </div>
@@ -587,8 +587,10 @@ function updateTotalPayment() {
 // Function to submit voucher payment
 function submitVoucherPayment() {
     // Get form values
-    const paymentType = document.getElementById('paymentType')?.value;
-    const paymentMode = document.getElementById('paymentMode')?.value;
+    const paymentTypeSelect = document.getElementById('paymentType');
+    const paymentModeSelect = document.getElementById('paymentMode');
+    const paymentType = paymentTypeSelect?.value;
+    const paymentMode = paymentModeSelect?.value;
     const referenceId = document.getElementById('referenceId')?.value;
     const remarks = document.getElementById('paymentRemarks')?.value;
     
@@ -602,6 +604,10 @@ function submitVoucherPayment() {
         alert('Please select a payment mode');
         return;
     }
+    
+    // Get payment type and mode IDs from the selected options
+    const paymentTypeId = paymentTypeSelect.options[paymentTypeSelect.selectedIndex].dataset.id;
+    const paymentModeId = paymentModeSelect.options[paymentModeSelect.selectedIndex].dataset.id;
     
     // Get freight booking ID and allocated amount
     const allocatedInput = document.querySelector('.allocated-input');
@@ -621,6 +627,8 @@ function submitVoucherPayment() {
         booking_ids: [freightBookingId],
         payment_amounts: [paymentAmount],
         total_amount: totalAmount,
+        payment_type_id: paymentTypeId,
+        payment_mode_id: paymentModeId,
         payment_type: paymentType,
         payment_mode: paymentMode,
         reference_number: referenceId,
