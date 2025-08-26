@@ -299,6 +299,7 @@
 @endsection
 
 @section('scripts')
+<script src="/js/dynamic-dropdowns.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
       const modalCountry = document.querySelector('#addCityModal #modal_city_country_id');
@@ -357,60 +358,15 @@
         });
     })();
 
-    // Country, State, City cascading selects
-    const countrySelect = document.getElementById('country_id');
-    const stateSelect = document.getElementById('state_id');
-    const citySelect = document.getElementById('city_id');
-
+    // Note: Country, State, City cascading selects are handled by dynamic-dropdowns.js
     const oldCountry = "{{ old('country_id') }}";
     const oldState = "{{ old('state_id') }}";
     const oldCity = "{{ old('city_id') }}";
-
-    countrySelect.addEventListener('change', function() {
-        const countryId = this.value;
-        stateSelect.length = 0;
-        stateSelect.innerHTML = '<option value="">Select State</option>';
-        citySelect.length = 0;
-        citySelect.innerHTML = '<option value="">Select City</option>';
-        
-        if (!oldCountry && !oldState) {
-            if (countryId) {
-                fetch(`/api/states/${countryId}`)
-                    .then(response => response.json())
-                    .then(states => {
-                        states.forEach(state => {
-                            const option = document.createElement('option');
-                            option.value = state.id;
-                            option.textContent = state.name;
-                            stateSelect.appendChild(option);
-                        });
-                        stateSelect.required = true;
-                    });
-            }
-        }
-    });
     
-    stateSelect.addEventListener('change', function() {
-        const stateId = this.value;
-        citySelect.length = 0;
-        citySelect.innerHTML = '<option value="">Select City</option>';
-        
-        if (!oldState && !oldCity) {
-            if (stateId) {
-                fetch(`/api/cities/${stateId}`)
-                    .then(response => response.json())
-                    .then(cities => {
-                        cities.forEach(city => {
-                            const option = document.createElement('option');
-                            option.value = city.id;
-                            option.textContent = city.name;
-                            citySelect.appendChild(option);
-                        });
-                        citySelect.required = true;
-                    });
-            }
-        }
-    });
+    // These variables are used elsewhere in the code
+    const countrySelect = document.getElementById('country_id');
+    const stateSelect = document.getElementById('state_id');
+    const citySelect = document.getElementById('city_id');
 
 
 
@@ -922,60 +878,8 @@
                 });
             }
             
-            // Handle country change with validation and reset
-            $('#country_id').on('change', function() {
-                const countryId = $(this).val();
-                const stateSelect = $('#state_id');
-                const citySelect = $('#city_id');
-                
-                // Reset state and city dropdowns when country changes
-                stateSelect.html('<option value="">Select State</option>').val('');
-                citySelect.html('<option value="">Select City</option>').val('');
-                
-                // Clear validation errors
-                stateSelect.removeClass('is-invalid');
-                citySelect.removeClass('is-invalid');
-                stateSelect.next('.invalid-feedback').remove();
-                citySelect.next('.invalid-feedback').remove();
-                
-                if (countryId) {
-                    $.get(`/api/states/${countryId}`)
-                        .done(function(data) {
-                            data.forEach(function(state) {
-                                stateSelect.append(`<option value="${state.id}">${state.name}</option>`);
-                            });
-                        })
-                        .fail(function() {
-                            console.error('Error loading states for selected country');
-                        });
-                }
-            });
-
-            // Handle state change with validation and reset
-            $('#state_id').on('change', function() {
-                const stateId = $(this).val();
-                const countryId = $('#country_id').val();
-                const citySelect = $('#city_id');
-                
-                // Reset city dropdown when state changes
-                citySelect.html('<option value="">Select City</option>').val('');
-                
-                // Clear validation errors
-                citySelect.removeClass('is-invalid');
-                citySelect.next('.invalid-feedback').remove();
-                
-                if (stateId) {
-                    $.get(`/api/cities/${stateId}`)
-                        .done(function(data) {
-                            data.forEach(function(city) {
-                                citySelect.append(`<option value="${city.id}">${city.name}</option>`);
-                            });
-                        })
-                        .fail(function() {
-                            console.error('Error loading cities for selected state');
-                        });
-                }
-            });
+            // Note: The country, state, and city cascading selects are handled by dynamic-dropdowns.js
+            // No need for duplicate event listeners here
             
             // Handle city change with validation
             $('#city_id').on('change', function() {
