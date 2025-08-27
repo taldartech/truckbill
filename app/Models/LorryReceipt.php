@@ -80,9 +80,24 @@ class LorryReceipt extends Model
     public function consignee() { return $this->belongsTo(Consignee::class); }
     
 
-    public function freightBooking()
+    public function freightBookings()
     {
-        return $this->belongsTo(FreightBooking::class, 'freight_booking_id');
+        return $this->hasMany(FreightBooking::class, 'lr_id');
+    }
+    
+    protected static function booted()
+    {
+        static::deleting(function($lorryReceipt) {
+            // Delete related freight bookings and their associated voucher payments
+            $lorryReceipt->freightBookings->each(function($freightBooking) {
+                // Delete associated voucher payments
+                if ($freightBooking->voucherPayments) {
+                    $freightBooking->voucherPayments()->delete();
+                }
+                // Delete the freight booking
+                $freightBooking->delete();
+            });
+        });
     }
     public function customer() { return $this->belongsTo(Consignee::class, 'customer_id'); }
 }

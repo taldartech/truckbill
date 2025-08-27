@@ -25,7 +25,7 @@ class LorryReceiptController extends Controller
 
         $statuses = ['Pending', 'Delivered', 'Cancelled','In-Progress'];
         $customers = \App\Models\Consignee::all();
-        $query = \App\Models\LorryReceipt::with(['truck', 'transporter', 'consignor', 'consignee', 'company','customer','freightBooking']);
+        $query = \App\Models\LorryReceipt::with(['truck', 'transporter', 'consignor', 'consignee', 'company','customer','freightBookings']);
 
         // Only apply company_id filter for non-super_admin users
         if (auth()->user()->userRole->name !== 'super_admin') {
@@ -680,8 +680,24 @@ class LorryReceiptController extends Controller
 
     public function destroy(\App\Models\LorryReceipt $lorry_receipt)
     {
-        $lorry_receipt->delete();
-        return redirect()->route('lorry_receipts.index')->with('success', 'Lorry Receipt deleted successfully!');
+        // Use transaction to ensure data consistency
+        \DB::beginTransaction();
+        
+        try {
+            // This will trigger the deleting event in the model
+            // which will handle the related FreightBookings and VoucherPayments
+            $lorry_receipt->delete();
+            
+            \DB::commit();
+            return redirect()->route('lorry_receipts.index')
+                ->with('success', 'Lorry receipt and all associated data deleted successfully!');
+                
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            \Log::error('Error deleting lorry receipt: ' . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Error deleting lorry receipt. Please try again.');
+        }
     }
 
     public function details($id)
