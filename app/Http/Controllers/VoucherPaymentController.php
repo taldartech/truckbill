@@ -295,6 +295,44 @@ class VoucherPaymentController extends Controller
             ->with('success', 'Payment allocated successfully.');
     }
 
+    /**
+     * Display the specified voucher payment.
+     *
+     * @param  string  $voucherNumber
+     * @return \Illuminate\View\View
+     */
+    public function show($voucherNumber)
+    {
+        // Get all payments for this voucher number with relationships
+        $payments = VoucherPayment::with([
+            'freight_booking.lr.customer',
+            'freight_booking.lr.consignor.city',
+            'freight_booking.lr.consignee.city',
+            'freight_booking.lr.truck',
+            'freight_booking.company',
+            'pump'
+        ])->where('voucher_number', $voucherNumber)
+          ->orderBy('created_at', 'desc')
+          ->get();
+
+        if ($payments->isEmpty()) {
+            abort(404, 'Voucher not found');
+        }
+
+        // Get the first payment to get common data
+        $firstPayment = $payments->first();
+        $freightBooking = $firstPayment->freight_booking;
+        $totalAmount = $payments->sum('amount');
+
+        return view('voucher_payments.show', [
+            'voucherNumber' => $voucherNumber,
+            'freightBooking' => $freightBooking,
+            'totalAmount' => $totalAmount,
+            'payments' => $payments,
+            'firstPayment' => $firstPayment
+        ]);
+    }
+
     public function edit(Request $request, VoucherPayment $voucher_payment)
     {
         $vouchers = \App\Models\FreightBooking::select('id', 'voucher_number')->get();
