@@ -1114,6 +1114,29 @@ document.addEventListener('DOMContentLoaded', function () {
     frRateInput.addEventListener('input', validateFreightRate);
     frRateInput.addEventListener('blur', validateFreightRate);
 
+    // Function to format date to DD-MM-YYYY
+    function formatDate(dateString) {
+        if (!dateString) return 'Not selected';
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return dateString; // Return original if invalid date
+        
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+    }
+    
+    // Function to get current date and time in DD-MM-YYYY HH:MM format
+    function getCurrentDateTime() {
+        const now = new Date();
+        const day = String(now.getDate()).padStart(2, '0');
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const year = now.getFullYear();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        return `${day}-${month}-${year} ${hours}:${minutes}`;
+    }
+
     // Function to show confirmation dialog with form details
     function showConfirmationDialog(form) {
         const formData = new FormData(form);
@@ -1124,6 +1147,10 @@ document.addEventListener('DOMContentLoaded', function () {
         const consigneeName = document.querySelector('#consignee_id option:checked')?.textContent || 'Not selected';
         const truckNumber = document.querySelector('#truck_id option:checked')?.textContent || 'Not selected';
         const transporterName = document.querySelector('#transporter_id option:checked')?.textContent || 'Not selected';
+        
+        // Format dates
+        const formattedGrDate = formatDate(formData.get('gr_date'));
+        const currentDateTime = getCurrentDateTime();
         
         // Build confirmation message
         const confirmationHTML = `
@@ -1136,7 +1163,8 @@ document.addEventListener('DOMContentLoaded', function () {
                             <div class="card-header bg-light"><strong>📄 Basic Information</strong></div>
                             <div class="card-body">
                                 <p><strong>LR Number:</strong> ${formData.get('lr_number') || 'Not entered'}</p>
-                                <p><strong>GR Date:</strong> ${formData.get('gr_date') || 'Not selected'}</p>
+                                <p><strong>GR Date:</strong> ${formattedGrDate}</p>
+                                <p><strong>Creation Date & Time:</strong> ${currentDateTime}</p>
                                 <p><strong>Customer:</strong> ${customerName}</p>
                             </div>
                         </div>
