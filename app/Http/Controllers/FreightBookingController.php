@@ -22,12 +22,33 @@ class FreightBookingController extends Controller
             return $this->getFreightBookingsData($request);
         }
 
-        $query = FreightBooking::with(['lr.truck', 'linkedFreightBooking', 'company']);
+        $query = FreightBooking::with(['lr.truck', 'linkedFreightBooking', 'company', 'transporter']);
 
         // Only apply company_id filter for non-super_admin users
         if (auth()->user()->userRole->name !== 'super_admin') {
-            $query->where('company_id', auth()->user()->company_id);
+            $query->where('freight_bookings.company_id', auth()->user()->company_id);
         }
+
+        // Default date range: last 7 days
+        $endDate = now()->format('Y-m-d');
+        $startDate = now()->subDays(7)->format('Y-m-d');
+        
+        // Apply date range filter if provided
+        if ($request->filled('start_date')) {
+            $startDate = $request->start_date;
+        }
+        if ($request->filled('end_date')) {
+            $endDate = $request->end_date;
+        }
+        
+        // Ensure date range doesn't exceed 3 months
+        $maxEndDate = (new \DateTime($startDate))->modify('+3 months')->format('Y-m-d');
+        if ($endDate > $maxEndDate) {
+            $endDate = $maxEndDate;
+        }
+        
+        $query->whereDate('freight_bookings.created_at', '>=', $startDate)
+              ->whereDate('freight_bookings.created_at', '<=', $endDate);
 
         // Search functionality
         if ($request->filled('search')) {
@@ -39,12 +60,41 @@ class FreightBookingController extends Controller
                   });
             });
         }
+        
+        // Transporter filter
+        if ($request->filled('transporter_id')) {
+            $query->where(function($q) use ($request) {
+                $q->where('transporter_id', $request->transporter_id)
+                  ->orWhere('transporter_name', 'LIKE', "%{$request->transporter_id}%");
+            });
+        }
+        
+        // Truck owner filter
+        if ($request->filled('truck_owner_id')) {
+            $query->whereHas('lr.truck', function($q) use ($request) {
+                $q->where('owner_id', $request->truck_owner_id);
+            });
+        }
 
-        $bookings = $query->orderByDesc('id')->paginate(20);
+        $bookings = $query->orderByDesc('freight_bookings.id')->paginate(20);
+        
+        // Get filter data
+        $transporters = Transporter::where('is_owner', 0)->orderBy('name')->get();
+        $truckOwners = Transporter::where('is_owner', 1)->orderBy('name')->get();
         $lrs = LorryReceipt::all();
         $paymentTypes = \App\Models\PaymentType::all();
         $paymentModes = \App\Models\PaymentMode::all();
-        return view('freight_bookings.index', compact('bookings', 'lrs', 'paymentTypes', 'paymentModes'));
+        
+        return view('freight_bookings.index', compact(
+            'bookings', 
+            'lrs', 
+            'paymentTypes', 
+            'paymentModes',
+            'transporters',
+            'truckOwners',
+            'startDate',
+            'endDate'
+        ));
     }
 
     public function getFreightBookingsData(Request $request)
