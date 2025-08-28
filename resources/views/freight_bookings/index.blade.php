@@ -142,22 +142,22 @@
             <div class="table-responsive">
                 <table class="table table-bordered table-striped">
                     <thead class="table-dark">
-                        <tr>
+                        <tr class="text-center" style="font-size: 14px;">
                             <th style="width: 40px;"><input type="checkbox" id="select-all"></th>
                             {{-- <th style="width: 80px;">Sr. No</th>
                             <th>FR Number</th> --}}
                             <th class="text-center">GR Date</th>
 
-                            <th>LR Number</th>
+                            <th>LR No</th>
                             <th>Transporter</th>
                             <th>Short Name</th>
-                            <th>Truck Number</th>
+                            <th>Truck No</th>
                             <th>Source City</th>
                             <th>Destination City</th>
-                            <th>Quantity</th>
+                            <th>Weight</th>
                             <th>Tr Rate</th>
                             <th class="text-end">Balance</th>
-                            <th class="text-center" style="width: 120px;">Actions</th>
+                            <th class="text-center" style="width: 80px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -214,10 +214,10 @@
                                 <td class="text-end">₹{{ number_format($booking->balance_amount ?? 0, 2) }}</td>
                                 <td class="text-center">
                                     <div class="btn-group" role="group">
-                                        <a href="{{ route('freight_bookings.show', $booking->id) }}" class="btn btn-sm btn-outline-info" title="View">
+                                        <a href="{{ route('freight_bookings.show', $booking->id) }}" class="btn btn-sm btn-outline-info" style="padding: 8px;" title="View">
                                             <i class="bi bi-eye"></i>
                                         </a>
-                                        <a href="{{ route('freight_bookings.edit', $booking->id) }}" class="btn btn-sm btn-outline-primary" title="Edit">
+                                        <a href="{{ route('freight_bookings.edit', $booking->id) }}" class="btn btn-sm btn-outline-primary" style="padding: 8px;" title="Edit">
                                             <i class="bi bi-pencil"></i>
                                         </a>
                                     </div>
