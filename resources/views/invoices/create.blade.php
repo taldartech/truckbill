@@ -128,7 +128,7 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Total Amount *</label>
-                        <input type="number" placeholder="Total Amount" name="total_amount" class="form-control" step="0.01" min="0" required value="{{ old('total_amount') }}">
+                        <input type="number" placeholder="Total Amount" name="total_amount" class="form-control" step="0.01" min="0" required readonly value="{{ old('total_amount') }}">
                         @error('total_amount') 
                             <div class="text-danger">{{ $message }}</div> 
                         @enderror
