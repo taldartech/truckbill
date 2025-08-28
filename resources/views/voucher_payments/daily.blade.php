@@ -149,9 +149,9 @@
                         <th>Amount</th>
                         <th>Status</th>
                         <th>Created Time</th>
-                        @if(auth()->user()->userRole->name === 'admin' || auth()->user()->userRole->name === 'super_admin')
+                        {{-- @if(auth()->user()->userRole->name === 'admin' || auth()->user()->userRole->name === 'super_admin')
                         <th>Action</th>
-                        @endif
+                        @endif --}}
                     </tr>
                 </thead>
                 <tbody>
@@ -261,7 +261,7 @@
                         <td>
                             <small>{{ $payment->created_at->setTimezone('Asia/Kolkata')->format('h:i A') }}</small>
                         </td>
-                        @if(auth()->user()->userRole->name === 'admin' || auth()->user()->userRole->name === 'super_admin')
+                        {{-- @if(auth()->user()->userRole->name === 'admin' || auth()->user()->userRole->name === 'super_admin')
                         <td>
                             <div class="dropdown">
                                 <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="actionDropdown{{ $payment->id }}" data-bs-toggle="dropdown" aria-expanded="false">
@@ -280,7 +280,7 @@
                                 </ul>
                             </div>
                         </td>
-                        @endif
+                        @endif --}}
                     </tr>
                     @empty
                     <tr>
