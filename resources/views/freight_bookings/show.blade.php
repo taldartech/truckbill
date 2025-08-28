@@ -224,7 +224,13 @@
                         </div>
                         <div class="info-row">
                             <span class="info-label">Balance:</span>
-                            <span class="info-value">₹{{ number_format($freight_booking->balance_amount ?? 0, 2) }}</span>
+                            <span class="info-value">
+                                @php
+                               
+                                $badgeClass = 'bg-success';
+                            @endphp
+                            <span class="badge {{ $badgeClass }} badge-status">₹{{ number_format($freight_booking->balance_amount ?? 0, 2) }}</span>
+                            </span>
                         </div>
                        
                     </div>
