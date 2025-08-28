@@ -177,25 +177,23 @@
                         <h5 class="mb-0">Basic Information</h5>
                     </div>
                     <div class="card-body">
-                        {{-- <div class="info-row">
-                            <span class="info-label">FR Number:</span>
-                            <span class="info-value">#{{ $freight_booking->id }}</span>
-                        </div> --}}
+                       
                         <div class="info-row">
                             <span class="info-label">LR Number:</span>
                             <span class="info-value">{{ $freight_booking->lr ? $freight_booking->lr->lr_number : 'N/A' }}</span>
                         </div>
-                        {{-- <div class="info-row">
-                            <span class="info-label">Voucher Number:</span>
-                            <span class="info-value">{{ $freight_booking->voucher_number ?? 'N/A' }}</span>
-                        </div> --}}
-                        {{-- <div class="info-row">
-                            <span class="info-label">Company:</span>
-                            <span class="info-value">{{ $freight_booking->company ? $freight_booking->company->name : 'N/A' }}</span>
-                        </div> --}}
+                      
                         <div class="info-row">
                             <span class="info-label">GR Date:</span>
                             <span class="info-value">{{ $freight_booking->lr && $freight_booking->lr->gr_date ? date('d-m-Y', strtotime($freight_booking->lr->gr_date)) : 'N/A' }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">E-way Bill:</span>
+                            <span class="info-value">{{ $freight_booking->eway_bill_number ?? 'N/A' }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Good Type:</span>
+                            <span class="info-value">{{ $freight_booking->good_type ?? 'N/A' }}</span>
                         </div>
                     </div>
                 </div>
@@ -283,14 +281,7 @@
                         <h5 class="mb-0">Additional Information</h5>
                     </div>
                     <div class="card-body">
-                        <div class="info-row">
-                            <span class="info-label">E-way Bill:</span>
-                            <span class="info-value">{{ $freight_booking->eway_bill_number ?? 'N/A' }}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Good Type:</span>
-                            <span class="info-value">{{ $freight_booking->good_type ?? 'N/A' }}</span>
-                        </div>
+                       
                         <div class="info-row">
                             <span class="info-label">Remark:</span>
                             <span class="info-value">{{ $freight_booking->remark ?? 'N/A' }}</span>
