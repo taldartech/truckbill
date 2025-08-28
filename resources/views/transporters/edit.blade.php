@@ -109,7 +109,7 @@
                 <div class="row mb-3">
                     <div class="col-md-4">
                         <label for="gst_number" class="form-label">GST Number</label>
-                        <input type="text" class="form-control @error('gst_number') is-invalid @enderror" id="gst_number" name="gst_number" value="{{ old('gst_number', $transporter->gst_number) }}" maxlength="15">
+                        <input type="text" class="form-control @error('gst_number') is-invalid @enderror" id="gst_number" name="gst_number" value="{{ old('gst_number', $transporter->gst_number) }}" maxlength="15" style="text-transform: uppercase;">
                         @error('gst_number') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4">
@@ -798,7 +798,7 @@ $(document).ready(function() {
                         // Add new city to the main dropdown
                         $('#city_id').append(`<option value="${data.city.id}">${data.city.name}</option>`);
                         
-                        // Select the newly created city
+                        // Select new city
                         $('#city_id').val(data.city.id).trigger('change');
                         
                         // Close modal and remove backdrop
@@ -852,7 +852,7 @@ $(document).ready(function() {
             // Create and show success alert
             const alertHtml = `
                 <div class="alert alert-success alert-dismissible fade show mt-2" role="alert">
-                    <i class="bi bi-check-circle-fill"></i> ${message}
+                    <i class="fas fa-check-circle-fill"></i> ${message}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             `;
@@ -878,7 +878,7 @@ $(document).ready(function() {
             // Create and show error alert
             const alertHtml = `
                 <div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
-                    <i class="bi bi-exclamation-triangle-fill"></i> ${message}
+                    <i class="fas fa-exclamation-triangle-fill"></i> ${message}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             `;
@@ -1229,4 +1229,31 @@ if (countrySelect && stateSelect && citySelect) {
 
 <script src="/js/dynamic-dropdowns.js"></script>
     
+@endsection
+
+@section('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Function to convert input to uppercase
+        function convertToUpperCase(input) {
+            input.value = input.value.toUpperCase();
+        }
+
+        // PAN Number field
+        const panField = document.getElementById('pan_number');
+        if (panField) {
+            panField.addEventListener('input', function() {
+                convertToUpperCase(this);
+            });
+        }
+
+        // GST Number field
+        const gstField = document.getElementById('gst_number');
+        if (gstField) {
+            gstField.addEventListener('input', function() {
+                convertToUpperCase(this);
+            });
+        }
+    });
+</script>
 @endsection
