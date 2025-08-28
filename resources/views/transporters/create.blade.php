@@ -458,7 +458,9 @@
     </div>
   </div>
  
-  
+  @endsection
+@section('scripts')
+@parent
   
    
     <script>
@@ -1369,9 +1371,9 @@
 
 </script>
 
-@section('scripts')
-    @parent
-    <script src="/js/dynamic-dropdowns.js"></script>
+{{-- @section('scripts') --}}
+    {{-- @parent --}}
+    {{-- <script src="/js/dynamic-dropdowns.js"></script> --}}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Function to convert input to uppercase
@@ -1396,4 +1398,6 @@
             }
         });
     </script>
+    <script src="/js/dynamic-dropdowns.js"></script>
+
 @endsection
