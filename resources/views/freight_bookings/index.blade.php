@@ -56,35 +56,88 @@
             </div>
             
             <!-- Search and Filter Section -->
-            <div class="row mb-3">
-                <div class="col-md-4">
-                    <form method="GET" action="{{ route('freight_bookings.index') }}">
-                        <div class="input-group">
-                            <input type="text" class="form-control" name="search" value="{{ request('search') }}" placeholder="Search LR Number, Voucher Number...">
-                            <button class="btn btn-outline-secondary" type="submit">
-                                <i class="bi bi-search"></i>
-                            </button>
-                            @if(request('search'))
-                                <a href="{{ route('freight_bookings.index') }}" class="btn btn-outline-danger">
-                                    <i class="bi bi-x"></i>
-                                </a>
-                            @endif
-                        </div>
-                    </form>
-                </div>
-                <div class="col-md-8 text-end">
-                    <small class="text-muted">
-                        Showing {{ $bookings->firstItem() ?? 0 }} to {{ $bookings->lastItem() ?? 0 }} of {{ $bookings->total() }} results
-                    </small>
-                </div>
+          <!-- Search and Filter Section -->
+          <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Search & Filters</h5>
             </div>
+            <div class="card-body">
+                <form method="GET" action="{{ route('freight_bookings.index') }}" id="searchForm">
+                    <div class="row g-3">
+                        <!-- Search Input -->
+                        <div class="col-md-3">
+                            <label class="form-label">Search</label>
+                            <input type="text" class="form-control" name="search" value="{{ request('search') }}" placeholder="LR Number, Voucher No...">
+                        </div>
+                        
+                        <!-- Date Range -->
+                        <div class="col-md-2">
+                            <label class="form-label">From Date</label>
+                            <input type="date" class="form-control" name="start_date" value="{{ $startDate }}" max="{{ date('Y-m-d') }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">To Date</label>
+                            <input type="date" class="form-control" name="end_date" value="{{ $endDate }}" max="{{ date('Y-m-d') }}">
+                        </div>
+                        
+                        <!-- Transporter Filter -->
+                        <div class="col-md-2">
+                            <label class="form-label">Transporter</label>
+                            <select class="form-select" name="transporter_id">
+                                <option value="">All Transporters</option>
+                                @foreach($transporters as $transporter)
+                                    <option value="{{ $transporter->id }}" {{ request('transporter_id') == $transporter->id ? 'selected' : '' }}>
+                                        {{ $transporter->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        
+                        <!-- Truck Owner Filter -->
+                        <div class="col-md-2">
+                            <label class="form-label">Truck Owner</label>
+                            <select class="form-select" name="truck_owner_id">
+                                <option value="">All Owners</option>
+                                @foreach($truckOwners as $owner)
+                                    <option value="{{ $owner->id }}" {{ request('truck_owner_id') == $owner->id ? 'selected' : '' }}>
+                                        {{ $owner->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        
+                        <!-- Buttons -->
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-search"></i> Apply
+                            </button>
+                        </div>
+                        <div class="col-md-1 d-flex align-items-end">
+                            <a href="{{ route('freight_bookings.index') }}" class="btn btn-outline-secondary w-100">
+                                <i class="bi bi-arrow-counterclockwise"></i> Reset
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Results Count -->
+        <div class="row mb-3">
+            <div class="col-12 text-end">
+                <small class="text-muted">
+                    Showing {{ $bookings->firstItem() ?? 0 }} to {{ $bookings->lastItem() ?? 0 }} of {{ $bookings->total() }} results
+                </small>
+            </div>
+        </div>
+        </div>
 
-            @if(request('search'))
-                <div class="alert alert-info">
-                    <i class="bi bi-info-circle"></i> Search results for: <strong>"{{ request('search') }}"</strong>
-                    <a href="{{ route('freight_bookings.index') }}" class="btn btn-sm btn-outline-primary ms-2">Clear Search</a>
-                </div>
-            @endif
+        @if(request('search'))
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i> Search results for: <strong>"{{ request('search') }}"</strong>
+                <a href="{{ route('freight_bookings.index') }}" class="btn btn-sm btn-outline-primary ms-2">Clear Search</a>
+            </div>
+        @endif
 
             <div class="table-responsive">
                 <table class="table table-bordered table-striped">
