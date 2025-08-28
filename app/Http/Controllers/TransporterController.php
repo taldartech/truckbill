@@ -334,7 +334,7 @@ class TransporterController extends Controller
                 'digits:10',
                 'unique:transporters,mobile_number'
             ],
-            'short_name' => 'nullable|string|max:255|unique:transporters,short_name',
+            'short_name' => 'nullable|string|max:255|unique:transporters',
             'contact_person_name' => 'nullable|string|max:255',
         ], [
             'pan_number.unique' => 'This PAN number is already associated with another transporter and cannot be used.',

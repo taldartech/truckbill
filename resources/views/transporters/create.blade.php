@@ -58,11 +58,6 @@
                     @error('name') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-4">
-                    <label for="short_name" class="form-label">Short Name *</label>
-                    <input placeholder="Enter Short Name" type="text" class="form-control" id="short_name" name="short_name" value="{{ old('short_name') }}">
-                    @error('short_name') <div class="text-danger">{{ $message }}</div> @enderror
-                </div>
-                <div class="col-md-4">
                     <label for="contact_person_name" class="form-label">Contact Person Name</label>
                     <input type="text" class="form-control @error('contact_person_name') is-invalid @enderror" id="contact_person_name" name="contact_person_name" value="{{ old('contact_person_name') }}" placeholder="Enter Contact Person Name">
                     @error('contact_person_name') <div class="text-danger">{{ $message }}</div> @enderror
@@ -275,7 +270,6 @@
                         <h6 class="text-primary mb-3"><i class="fas fa-user me-2"></i>Basic Information</h6>
                         <table class="table table-sm table-borderless">
                             <tr><td class="fw-bold">Name:</td><td id="confirm-name">-</td></tr>
-                            <tr><td class="fw-bold">Short Name:</td><td id="confirm-short-name">-</td></tr>
                             <tr><td class="fw-bold">Contact Person:</td><td id="confirm-contact-person">-</td></tr>
                             <tr><td class="fw-bold">Mobile Number:</td><td id="confirm-mobile">-</td></tr>
                         </table>
@@ -476,7 +470,6 @@
 
           // Get form values with safe access
           const name = document.getElementById('name')?.value || '-';
-          const shortName = document.getElementById('short_name')?.value || '-';
           const contactPerson = document.getElementById('contact_person_name')?.value || '-';
           const mobile = document.getElementById('mobile_number')?.value || '-';
           
@@ -499,7 +492,6 @@
 
           // Populate modal with values
           document.getElementById('confirm-name').textContent = name;
-          document.getElementById('confirm-short-name').textContent = shortName;
           document.getElementById('confirm-contact-person').textContent = contactPerson;
           document.getElementById('confirm-mobile').textContent = mobile;
           

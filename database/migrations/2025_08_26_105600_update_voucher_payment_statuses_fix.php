@@ -1,7 +1,9 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class UpdateVoucherPaymentStatusesFix extends Migration
 {
@@ -10,8 +12,13 @@ class UpdateVoucherPaymentStatusesFix extends Migration
      */
     public function up()
     {
-        // Update 'in-progress' to 'in progress' with proper string quoting
-        DB::statement("UPDATE `voucher_payments` SET `payment_status` = 'in progress' WHERE `payment_status` = 'in-progress'");
+        // Increase column length first to prevent truncation
+        Schema::table('voucher_payments', function (Blueprint $table) {
+            $table->string('payment_status', 20)->change();
+        });
+        
+        // Then update the values
+        DB::statement("UPDATE voucher_payments SET payment_status = 'in progress' WHERE payment_status = 'in-progress'");
     }
 
     /**
@@ -20,6 +27,6 @@ class UpdateVoucherPaymentStatusesFix extends Migration
     public function down()
     {
         // Revert back to 'in-progress' if needed
-        DB::statement("UPDATE `voucher_payments` SET `payment_status` = 'in-progress' WHERE `payment_status` = 'in progress'");
+        DB::statement("UPDATE voucher_payments SET payment_status = 'in-progress' WHERE payment_status = 'in progress'");
     }
 }
