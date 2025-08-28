@@ -240,7 +240,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         `;
                         memoCheckboxes.appendChild(checkbox);
                     });
-                    memoOptionsContainer.style.display = 'block';
+                    // memoOptionsContainer.style.display = 'block';
             showInvoiceFormBtn.disabled = true; // keep disabled until user selects
 
             // Add change listener to each checkbox
