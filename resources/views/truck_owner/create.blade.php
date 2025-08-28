@@ -64,28 +64,14 @@
                         @error('name') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4">
-                        <label for="short_name" class="form-label">Short Name</label>
-                        <input type="text" class="form-control @error('short_name') is-invalid @enderror" id="short_name" name="short_name" value="{{ old('short_name') }}" placeholder="Enter Short Name">
-                        @error('short_name') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
                         <label for="contact_person_name" class="form-label">Contact Person Name</label>
                         <input type="text" class="form-control @error('contact_person_name') is-invalid @enderror" id="contact_person_name" name="contact_person_name" value="{{ old('contact_person_name') }}" placeholder="Enter Contact Person Name">
                         @error('contact_person_name') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
-                </div>
-                <div class="row mb-3">
                     <div class="col-md-4">
                         <label for="mobile_number" class="form-label">Mobile Number *</label>
                         <input type="tel" class="form-control @error('mobile_number') is-invalid @enderror" id="mobile_number" name="mobile_number" value="{{ old('mobile_number') }}" placeholder="Enter 10-digit mobile number" maxlength="10" pattern="[0-9]{10}" required>
                         @error('mobile_number') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4 offset-md-4">
-                        <input type="hidden" name="is_owner" value="1">
-                        <input type="hidden" name="advance_amount" value="0">
-                        <label class="form-label">Advance Amount</label>
-                        <input type="text" class="form-control" value="₹0.00" readonly>
-                        <small class="text-muted d-block">Read-only field</small>
                     </div>
                     
                 </div>
@@ -300,7 +286,6 @@
                         <h6 class="text-primary mb-3"><i class="fas fa-user me-2"></i>Basic Information</h6>
                         <table class="table table-sm table-borderless">
                             <tr><td class="fw-bold">Name:</td><td id="confirm-name">-</td></tr>
-                            <tr><td class="fw-bold">Short Name:</td><td id="confirm-short-name">-</td></tr>
                             <tr><td class="fw-bold">Contact Person:</td><td id="confirm-contact-person">-</td></tr>
                             <tr><td class="fw-bold">Mobile Number:</td><td id="confirm-mobile">-</td></tr>
                         </table>
@@ -493,7 +478,6 @@
 
         // Get form values with safe access
         const name = document.getElementById('name')?.value || '-';
-        const shortName = document.getElementById('short_name')?.value || '-';
         const contactPerson = document.getElementById('contact_person_name')?.value || '-';
         const mobile = document.getElementById('mobile_number')?.value || '-';
         
@@ -516,7 +500,6 @@
 
         // Populate modal with values
         document.getElementById('confirm-name').textContent = name;
-        document.getElementById('confirm-short-name').textContent = shortName;
         document.getElementById('confirm-contact-person').textContent = contactPerson;
         document.getElementById('confirm-mobile').textContent = mobile;
         
@@ -715,14 +698,12 @@
                 success: function(data) {
                     console.log('State creation response:', data);
                     if (data && data.success && data.state) {
-                        // Add new state to the main dropdown
-                        $('#state_id').append(`<option value="${data.state.id}">${data.state.name}</option>`);
+                        // Update dropdowns
+                        updateStateDropdowns(data.state);
                         
-                        // Add new state to city modal dropdown
-                        $('#modal_city_state_id').append(`<option value="${data.state.id}">${data.state.name}</option>`);
-                        
-                        // Select the newly created state
-                        $('#state_id').val(data.state.id).trigger('change');
+                        // Select new state
+                        document.getElementById('state_id').value = data.state.id;
+                        document.getElementById('state_id').dispatchEvent(new Event('change'));
                         
                         // Close modal and remove backdrop
                         $('#addStateModal').modal('hide');
@@ -788,11 +769,12 @@
                 success: function(data) {
                     console.log('City creation response:', data);
                     if (data && data.success && data.city) {
-                        // Add new city to the main dropdown
-                        $('#city_id').append(`<option value="${data.city.id}">${data.city.name}</option>`);
+                        // Update dropdown
+                        updateCityDropdown(data.city);
                         
-                        // Select the newly created city
-                        $('#city_id').val(data.city.id).trigger('change');
+                        // Select new city
+                        document.getElementById('city_id').value = data.city.id;
+                        document.getElementById('city_id').dispatchEvent(new Event('change'));
                         
                         // Close modal and remove backdrop
                         $('#addCityModal').modal('hide');
