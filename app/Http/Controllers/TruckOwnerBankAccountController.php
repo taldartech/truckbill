@@ -103,6 +103,7 @@ class TruckOwnerBankAccountController extends Controller
                 // Check uniqueness but exclude current transporter
                 \Illuminate\Validation\Rule::unique('transporters', 'beneficiary_id')->ignore($transporter->id)
             ],
+            'short_name' => 'required|string|max:255|unique:transporters,short_name,' . $transporter->id,
         ], [
             'beneficiary_id.unique' => 'This Beneficiary ID is already in use by another transporter/truck owner.',
         ]);

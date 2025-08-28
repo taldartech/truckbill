@@ -75,6 +75,7 @@
                     <tr>
                         <th style="width: 10px">ID</th>
                         <th>Name</th>
+                        <th>Short Name</th>
                         <th>GST Number</th>
                         <th>PAN Number</th>
                         <th>Bank Beneficiary ID</th>
@@ -86,6 +87,7 @@
                     <tr class="align-middle">
                         <td>{{ $truckOwner->id }}</td>
                         <td>{{ $truckOwner->name }}</td>
+                        <td>{{ $truckOwner->short_name ?? '-' }}</td>
                         <td>{{ $truckOwner->gst_number ?? '-' }}</td>
                         <td>{{ $truckOwner->pan_number ?? '-' }}</td>
                         <td>
@@ -119,6 +121,13 @@
                                             <input type="text" class="form-control" value="{{ $truckOwner->name }}" readonly>
                                         </div>
                                         <div class="mb-3">
+                                            <label class="form-label">Short Name <span class="text-danger">*</span></label>
+                                            <input type="text" name="short_name" class="form-control {{ $errors->has('short_name') ? 'is-invalid' : '' }}" value="{{ old('short_name', $truckOwner->short_name) }}">
+                                            @error('short_name')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                        <div class="mb-3">
                                             <label class="form-label">Beneficiary ID <span class="text-danger">*</span></label>
                                             <input type="text" name="beneficiary_id" class="form-control {{ $errors->has('beneficiary_id') ? 'is-invalid' : '' }}" value="{{ old('beneficiary_id', $truckOwner->beneficiary_id) }}" required>
                                             @error('beneficiary_id')
@@ -136,7 +145,7 @@
                     </div>
                     @empty
                     <tr>
-                        <td colspan="6" class="text-center">
+                        <td colspan="7" class="text-center">
                             <div class="empty-state">
                                 <i class="bi bi-truck"></i>
                                 <p class="mt-2">No truck owners found for this company.</p>
@@ -168,13 +177,18 @@
     @endif
 </div>
 
-@if($errors->has('beneficiary_id'))
+@if($errors->has('beneficiary_id') || $errors->has('short_name'))
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Find the modal that should be opened based on the error
-        // Since we can't easily identify which specific modal had the error,
-        // we'll show an alert with the error message
-        alert('{{ $errors->first('beneficiary_id') }}');
+        let message = '';
+        @if($errors->has('beneficiary_id'))
+            message = '{{ $errors->first('beneficiary_id') }}';
+        @elseif($errors->has('short_name'))
+            message = '{{ $errors->first('short_name') }}';
+        @endif
+        if (message) {
+            alert(message);
+        }
     });
 </script>
 @endif
