@@ -1372,4 +1372,28 @@
 @section('scripts')
     @parent
     <script src="/js/dynamic-dropdowns.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Function to convert input to uppercase
+            function convertToUpperCase(input) {
+                input.value = input.value.toUpperCase();
+            }
+
+            // PAN Number field
+            const panField = document.getElementById('pan_number');
+            if (panField) {
+                panField.addEventListener('input', function() {
+                    convertToUpperCase(this);
+                });
+            }
+
+            // GST Number field
+            const gstField = document.getElementById('gst_number');
+            if (gstField) {
+                gstField.addEventListener('input', function() {
+                    convertToUpperCase(this);
+                });
+            }
+        });
+    </script>
 @endsection

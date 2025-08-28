@@ -334,13 +334,28 @@ class TransporterController extends Controller
                 'digits:10',
                 'unique:transporters,mobile_number'
             ],
-            'short_name' => 'nullable|string|max:255',
+            'short_name' => 'nullable|string|max:255|unique:transporters,short_name',
             'contact_person_name' => 'nullable|string|max:255',
         ], [
             'pan_number.unique' => 'This PAN number is already associated with another transporter and cannot be used.',
             'mobile_number.unique' => 'This mobile number is already associated with another transporter.',
-            
+            'short_name.unique' => 'This short name is already associated with another transporter and cannot be used.',
         ]);
+
+        // Handle duplicate short name
+        if (!empty($validated['short_name'])) {
+            $existingShortName = Transporter::where('short_name', $validated['short_name'])->first();
+            if ($existingShortName) {
+                // Append a suffix to make it unique
+                $suffix = 1;
+                do {
+                    $newShortName = $validated['short_name'] . '-' . $suffix;
+                    $existingShortName = Transporter::where('short_name', $newShortName)->first();
+                    $suffix++;
+                } while ($existingShortName);
+                $validated['short_name'] = $newShortName;
+            }
+        }
 
         // Ensure uppercase PAN and GST numbers
     if (!empty($validated['pan_number'])) {
@@ -470,13 +485,14 @@ class TransporterController extends Controller
                 'digits:10',
                 \Illuminate\Validation\Rule::unique('transporters', 'mobile_number')->ignore($transporter->id)
             ],
-            'short_name' => 'nullable|string|max:255',
+            'short_name' => 'nullable|string|max:255|unique:transporters,short_name,' . $transporter->id,
             'contact_person_name' => 'nullable|string|max:255',
             
 
         ], [
             'pan_number.unique' => 'This PAN number is already associated with another transporter and cannot be used.',
             'mobile_number.unique' => 'This mobile number is already associated with another transporter.',
+            'short_name.unique' => 'This short name is already associated with another transporter and cannot be used.',
         ]); 
             // Ensure uppercase PAN and GST numbers
     if (!empty($validated['pan_number'])) {
