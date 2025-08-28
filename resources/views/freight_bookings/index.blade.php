@@ -56,79 +56,27 @@
             </div>
             
             <!-- Search and Filter Section -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">Search & Filters</h5>
-                </div>
-                <div class="card-body">
-                    <form method="GET" action="{{ route('freight_bookings.index') }}" id="searchForm">
-                        <div class="row g-3">
-                            <!-- Search Input -->
-                            <div class="col-md-3">
-                                <label class="form-label">Search</label>
-                                <input type="text" class="form-control" name="search" value="{{ request('search') }}" placeholder="LR Number, Voucher No...">
-                            </div>
-                            
-                            <!-- Date Range -->
-                            <div class="col-md-2">
-                                <label class="form-label">From Date</label>
-                                <input type="date" class="form-control" name="start_date" value="{{ $startDate }}" max="{{ date('Y-m-d') }}">
-                            </div>
-                            <div class="col-md-2">
-                                <label class="form-label">To Date</label>
-                                <input type="date" class="form-control" name="end_date" value="{{ $endDate }}" max="{{ date('Y-m-d') }}">
-                            </div>
-                            
-                            <!-- Transporter Filter -->
-                            <div class="col-md-2">
-                                <label class="form-label">Transporter</label>
-                                <select class="form-select" name="transporter_id">
-                                    <option value="">All Transporters</option>
-                                    @foreach($transporters as $transporter)
-                                        <option value="{{ $transporter->id }}" {{ request('transporter_id') == $transporter->id ? 'selected' : '' }}>
-                                            {{ $transporter->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            
-                            <!-- Truck Owner Filter -->
-                            <div class="col-md-2">
-                                <label class="form-label">Truck Owner</label>
-                                <select class="form-select" name="truck_owner_id">
-                                    <option value="">All Owners</option>
-                                    @foreach($truckOwners as $owner)
-                                        <option value="{{ $owner->id }}" {{ request('truck_owner_id') == $owner->id ? 'selected' : '' }}>
-                                            {{ $owner->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            
-                            <!-- Buttons -->
-                            <div class="col-md-1 d-flex align-items-end">
-                                <button type="submit" class="btn btn-primary w-100">
-                                    <i class="bi bi-search"></i> Apply
-                                </button>
-                            </div>
-                            <div class="col-md-1 d-flex align-items-end">
-                                <a href="{{ route('freight_bookings.index') }}" class="btn btn-outline-secondary w-100">
-                                    <i class="bi bi-arrow-counterclockwise"></i> Reset
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <form method="GET" action="{{ route('freight_bookings.index') }}">
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="search" value="{{ request('search') }}" placeholder="Search LR Number, Voucher Number...">
+                            <button class="btn btn-outline-secondary" type="submit">
+                                <i class="bi bi-search"></i>
+                            </button>
+                            @if(request('search'))
+                                <a href="{{ route('freight_bookings.index') }}" class="btn btn-outline-danger">
+                                    <i class="bi bi-x"></i>
                                 </a>
-                            </div>
+                            @endif
                         </div>
                     </form>
                 </div>
-            </div>
-            
-            <!-- Results Count -->
-            <div class="row mb-3">
-                <div class="col-12 text-end">
+                <div class="col-md-8 text-end">
                     <small class="text-muted">
                         Showing {{ $bookings->firstItem() ?? 0 }} to {{ $bookings->lastItem() ?? 0 }} of {{ $bookings->total() }} results
                     </small>
                 </div>
-            </div>
             </div>
 
             @if(request('search'))
@@ -259,107 +207,6 @@
     </div>
 </div>
 
-<script>
-// Function to submit voucher payment
-function submitVoucherPayment() {
-    // Get form values
-    const paymentTypeSelect = document.getElementById('paymentType');
-    const paymentModeSelect = document.getElementById('paymentMode');
-    const referenceId = document.getElementById('referenceId')?.value;
-    const remarks = document.getElementById('paymentRemarks')?.value;
-    
-    // Get the selected values
-    const paymentTypeValue = paymentTypeSelect?.value || '';
-    const paymentModeValue = paymentModeSelect?.value || '';
-    
-    // Validate required fields
-    if (!paymentTypeValue) {
-        alert('Please select a payment type');
-        paymentTypeSelect.focus();
-        return;
-    }
-    
-    if (!paymentModeValue) {
-        alert('Please select a payment mode');
-        paymentModeSelect.focus();
-        return;
-    }
-    
-    // Get all payment rows
-    const paymentRows = document.querySelectorAll('.payment-row');
-    const payments = [];
-    let hasError = false;
-    
-    paymentRows.forEach(row => {
-        const freightBookingId = row.dataset.bookingId;
-        const amountInput = row.querySelector('.allocated-input');
-        const amount = parseFloat(amountInput.value) || 0;
-        
-        if (amount > 0) {
-            payments.push({
-                freight_booking_id: freightBookingId,
-                amount: amount
-            });
-        }
-    });
-    
-    if (payments.length === 0) {
-        alert('Please allocate payment amounts to at least one booking');
-        return;
-    }
-    
-    // Prepare the data
-    const data = {
-        payment_type: paymentTypeValue,
-        payment_mode: paymentModeValue,
-        reference_id: referenceId,
-        remarks: remarks,
-        payments: payments
-    };
-    
-    // Show loading state
-    const submitBtn = document.querySelector('#voucherPaymentModal .btn-success');
-    const originalBtnText = submitBtn.innerHTML;
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
-    
-    // Submit the data via AJAX
-    fetch('{{ route("voucher_payments.store") }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            'Accept': 'application/json'
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Show success message
-            alert('Payment processed successfully!');
-            // Close the modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById('voucherPaymentModal'));
-            modal.hide();
-            // Reload the page to update the data
-            window.location.reload();
-        } else {
-            // Show error message
-            alert(data.message || 'An error occurred while processing the payment');
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred while processing the payment');
-    })
-    .finally(() => {
-        // Restore button state
-        submitBtn.innerHTML = originalBtnText;
-        submitBtn.disabled = false;
-    });
-}
-</script>
-
 <!-- Voucher Payment Modal -->
 <div class="modal fade" id="voucherPaymentModal" tabindex="-1" aria-labelledby="voucherPaymentModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">
@@ -373,7 +220,7 @@ function submitVoucherPayment() {
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" id="submitVoucherPaymentBtn" class="btn btn-success">💰 Process Payment</button>
+                <button type="button" class="btn btn-success" onclick="submitVoucherPayment()">💰 Process Payment</button>
             </div>
         </div>
     </div>
@@ -469,6 +316,11 @@ function submitVoucherPayment() {
 @endpush
 
 @push('scripts')
+<script>
+    const paymentTypes = @json($paymentTypes);
+    const paymentModes = @json($paymentModes);
+</script>
+
 <script>
 $(document).ready(function() {
     // Select all checkbox functionality
@@ -900,12 +752,6 @@ $(document).ready(function() {
     // Initialize tooltips
     $('[data-bs-toggle="tooltip"]').tooltip();
     
-    // Voucher Payment Submit Button
-    $(document).on('click', '#submitVoucherPaymentBtn', function(e) {
-        e.preventDefault();
-        submitVoucherPayment();
-    });
-    
     // Voucher Payment Modal
     $('#voucher-payment-btn').on('click', function() {
         const checkedBoxes = $('.row-checkbox:checked');
@@ -1068,6 +914,8 @@ $(document).ready(function() {
         visibility: visible;
         opacity: 1;
     }
+
+    </style>
 
 <script>
 $(document).ready(function() {
@@ -1444,20 +1292,18 @@ function handleVoucherPayment() {
                         <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Type *</label>
                         <select id="paymentType" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
                             <option value="">Select Payment Type</option>
-                            <option value="advance">Advance</option>
-                            <option value="balance">Balance</option>
-                            <option value="full">Full Payment</option>
+                            ${paymentTypes.map(type => 
+                                `<option value="${type.id}">${type.name}</option>`
+                            ).join('')}
                         </select>
                     </div>
                     <div style="flex: 1;">
                         <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Mode *</label>
                         <select id="paymentMode" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
                             <option value="">Select Payment Mode</option>
-                            <option value="cash">Cash</option>
-                            <option value="cheque">Cheque</option>
-                            <option value="upi">UPI</option>
-                            <option value="neft">NEFT</option>
-                            <option value="rtgs">RTGS</option>
+                            ${paymentModes.map(mode => 
+                                `<option value="${mode.id}">${mode.name}</option>`
+                            ).join('')}
                         </select>
                     </div>
                 </div>
@@ -1524,20 +1370,18 @@ function handleVoucherPayment() {
                         <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Type *</label>
                         <select id="paymentType" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
                             <option value="">Select Payment Type</option>
-                            <option value="advance">Advance</option>
-                            <option value="balance">Balance</option>
-                            <option value="full">Full Payment</option>
+                            ${paymentTypes.map(type => 
+                                `<option value="${type.id}">${type.name}</option>`
+                            ).join('')}
                         </select>
                     </div>
                     <div style="flex: 1;">
                         <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Mode *</label>
                         <select id="paymentMode" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
                             <option value="">Select Payment Mode</option>
-                            <option value="cash">Cash</option>
-                            <option value="cheque">Cheque</option>
-                            <option value="upi">UPI</option>
-                            <option value="neft">NEFT</option>
-                            <option value="rtgs">RTGS</option>
+                            ${paymentModes.map(mode => 
+                                `<option value="${mode.id}">${mode.name}</option>`
+                            ).join('')}
                         </select>
                     </div>
                 </div>
@@ -1835,92 +1679,99 @@ function updateTotalPayment() {
     return !hasError;
 }
 
+// Function to submit voucher payment
 function submitVoucherPayment() {
     // Get form values
-    const paymentType = document.getElementById('paymentType')?.value;
-    const paymentMode = document.getElementById('paymentMode')?.value;
+    const paymentTypeSelect = document.getElementById('paymentType');
+    const paymentModeSelect = document.getElementById('paymentMode');
     const referenceId = document.getElementById('referenceId')?.value;
     const remarks = document.getElementById('paymentRemarks')?.value;
     
-    // Get all allocated amounts from the modal
-    const modal = document.getElementById('voucherPaymentModal');
-    const tbody = modal.querySelector('table tbody');
-    const rows = tbody ? Array.from(tbody.rows) : [];
+    // Get the selected values
+    const paymentTypeValue = paymentTypeSelect?.value || '';
+    const paymentModeValue = paymentModeSelect?.value || '';
     
-    let totalAllocated = 0;
-    const allocations = [];
+    // Validate required fields
+    if (!paymentTypeValue) {
+        alert('Please select a payment type');
+        paymentTypeSelect.focus();
+        return;
+    }
     
-    console.log('Found rows:', rows.length); // Debug log
+    if (!paymentModeValue) {
+        alert('Please select a payment mode');
+        paymentModeSelect.focus();
+        return;
+    }
     
-    // Process each row in the table
-    rows.forEach((row, index) => {
-        // Get the input field in the last cell of the row
-        const input = row.querySelector('input.allocated-input');
-        if (!input) return;
-        
+    // Get the text values for display purposes
+    const paymentType = paymentTypeSelect?.options[paymentTypeSelect.selectedIndex]?.text || '';
+    const paymentMode = paymentModeSelect?.options[paymentModeSelect.selectedIndex]?.text || '';
+    
+    // Get selected freight booking IDs
+    const selectedIds = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value);
+    
+    // Get allocated amounts
+    const allocatedInputs = document.querySelectorAll('.allocated-input');
+    
+    // Validate all payment amounts
+    let hasValidationError = false;
+    const paymentAmounts = [];
+    
+    allocatedInputs.forEach(input => {
         const amount = parseFloat(input.value) || 0;
-        console.log(`Row ${index + 1} amount:`, amount); // Debug log
+        const maxAmount = parseFloat(input.getAttribute('max')) || 0;
+        const lrNumber = input.getAttribute('data-lr') || 'Unknown';
         
-        if (amount > 0) {
-            // Get cells from the row
-            const cells = row.cells;
-            if (cells.length < 5) return; // Skip if not enough cells
-            
-            // Get FR Number (first cell) and LR Number (second cell)
-            const frNumber = cells[0]?.textContent.trim() || `FR-${Date.now()}-${index}`;
-            const lrNumber = cells[1]?.textContent.trim() || input.getAttribute('data-lr');
-            
-            console.log('Adding allocation:', { frNumber, lrNumber, amount }); // Debug log
-            
-            allocations.push({
-                lr_number: lrNumber,
-                fr_number: frNumber,
-                amount: amount
-            });
-            totalAllocated += amount;
+        if (amount <= 0) {
+            alert(`Error: Payment amount for LR ${lrNumber} must be greater than zero.`);
+            input.focus();
+            hasValidationError = true;
+            return;
         }
+        
+        if (amount > maxAmount) {
+            alert(`Error: Payment amount for LR ${lrNumber} (₹${amount.toFixed(2)}) exceeds the balance amount (₹${maxAmount.toFixed(2)}).`);
+            input.focus();
+            hasValidationError = true;
+            return;
+        }
+        
+        paymentAmounts.push(amount);
     });
     
-    console.log('Total allocations:', allocations.length, 'Total amount:', totalAllocated);
-    
-    if (allocations.length === 0) {
-        alert('Please enter a payment amount greater than 0 for at least one booking');
-        return false;
-    }
-
-    // Validate required fields
-    if (!paymentType) {
-        alert('Please select a payment type');
-        document.getElementById('paymentType').focus();
+    if (hasValidationError) {
         return;
     }
     
-    if (!paymentMode) {
-        alert('Please select a payment mode');
-        document.getElementById('paymentMode').focus();
-        return;
-    }
+    // Calculate total amount
+    const totalAmount = paymentAmounts.reduce((sum, amount) => sum + amount, 0);
     
-    if (totalAllocated <= 0) {
-        alert('Please enter a valid payment amount');
+    if (totalAmount <= 0) {
+        alert('Please enter valid payment amounts');
         return;
     }
     
     // Create form data
     const formData = new FormData();
+    
+    // Append payment type and mode IDs for backend processing
+    formData.append('payment_type_id', paymentTypeValue);
+    formData.append('payment_mode_id', paymentModeValue);
+    // Also append text values for display if needed
     formData.append('payment_type', paymentType);
     formData.append('payment_mode', paymentMode);
-    formData.append('amount', totalAllocated);
+    formData.append('total_amount', totalAmount.toFixed(2));
+    formData.append('payment_date', new Date().toISOString().split('T')[0]);
     
-    // Add allocated amounts for each booking
-    allocations.forEach((allocation, index) => {
-        formData.append(`allocations[${index}][lr_number]`, allocation.lr_number);
-        formData.append(`allocations[${index}][fr_number]`, allocation.fr_number);
-        formData.append(`allocations[${index}][amount]`, allocation.amount);
+    if (referenceId) formData.append('reference_number', referenceId);
+    if (remarks) formData.append('notes', remarks);
+    
+    // Add booking IDs and payment amounts
+    selectedIds.forEach((id, index) => {
+        formData.append('booking_ids[]', id);
+        formData.append('payment_amounts[]', paymentAmounts[index] || 0);
     });
-    
-    if (referenceId) formData.append('reference_id', referenceId);
-    if (remarks) formData.append('remarks', remarks);
     
     // Add CSRF token
     formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
@@ -1932,32 +1783,34 @@ function submitVoucherPayment() {
     submitBtn.disabled = true;
     
     // Submit the form via AJAX
-    fetch('{{ route("voucher_payments.store") }}', {
+    fetch('{{ route("freight_bookings.voucher_payment") }}', {
         method: 'POST',
         body: formData,
         headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'Accept': 'application/json'
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
     .then(data => {
+        // Hide modal
+        $('#voucherPaymentModal').modal('hide');
+        
         if (data.success) {
-            // Show success message
-            alert('Payment processed successfully!');
-            // Close the modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById('voucherPaymentModal'));
-            modal.hide();
-            // Reload the page to update the data
-            window.location.reload();
+            alert(data.message || 'Payment processed successfully!');
+            // Refresh the page or table
+            location.reload();
         } else {
-            // Show error message
-            alert(data.message || 'An error occurred while processing the payment');
+            alert(data.message || 'Error processing payment. Please try again.');
         }
     })
     .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred while processing the payment');
+        console.error('Payment error:', error);
+        alert('An error occurred while processing the payment. Please try again.');
     })
     .finally(() => {
         // Restore button state
