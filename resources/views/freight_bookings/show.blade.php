@@ -101,6 +101,74 @@
     
     <!--begin::Body-->
     <div class="card-body">
+        @if($freight_booking->lr)
+        <div class="row">
+            <div class="col-12">
+                <div class="info-card card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Related Lorry Receipt Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="info-row">
+                                    <span class="info-label">Customer:</span>
+                                    <span class="info-value">{{ $freight_booking->lr->customer ? $freight_booking->lr->customer->name : 'N/A' }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Consignor:</span>
+                                    <span class="info-value">{{ $freight_booking->lr->consignor ? $freight_booking->lr->consignor->name : 'N/A' }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Consignee:</span>
+                                    <span class="info-value">{{ $freight_booking->lr->consignee ? $freight_booking->lr->consignee->name : 'N/A' }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="info-row">
+                                    <span class="info-label">Source City:</span>
+                                    <span class="info-value">{{ $freight_booking->lr->source_city ?? 'N/A' }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Destination City:</span>
+                                    <span class="info-value">{{ $freight_booking->lr->destination_city ?? 'N/A' }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Weight:</span>
+                                    <span class="info-value">{{ $freight_booking->lr->weight ?? 'N/A' }} kg</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="info-row">
+                                    <span class="info-label">Truck Number:</span>
+                                    <span class="info-value">{{ $freight_booking->lr->truck ? $freight_booking->lr->truck->truck_number : 'N/A' }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Transporter:</span>
+                                    <span class="info-value">{{ $freight_booking->lr->transporter ? $freight_booking->lr->transporter->name : 'N/A' }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Delivery Status:</span>
+                                    <span class="info-value">
+                                        @php
+                                            $status = $freight_booking->lr->delivery_status ?? 'Pending';
+                                            $badgeClass = match($status) {
+                                                'Delivered' => 'bg-success',
+                                                'Cancelled' => 'bg-danger',
+                                                'In-Progress' => 'bg-info',
+                                                default => 'bg-warning'
+                                            };
+                                        @endphp
+                                        <span class="badge {{ $badgeClass }} badge-status">{{ $status }}</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @endif
         <div class="row">
             <!-- Basic Information -->
             <div class="col-md-6">
@@ -109,22 +177,22 @@
                         <h5 class="mb-0">Basic Information</h5>
                     </div>
                     <div class="card-body">
-                        <div class="info-row">
+                        {{-- <div class="info-row">
                             <span class="info-label">FR Number:</span>
                             <span class="info-value">#{{ $freight_booking->id }}</span>
-                        </div>
+                        </div> --}}
                         <div class="info-row">
                             <span class="info-label">LR Number:</span>
                             <span class="info-value">{{ $freight_booking->lr ? $freight_booking->lr->lr_number : 'N/A' }}</span>
                         </div>
-                        <div class="info-row">
+                        {{-- <div class="info-row">
                             <span class="info-label">Voucher Number:</span>
                             <span class="info-value">{{ $freight_booking->voucher_number ?? 'N/A' }}</span>
-                        </div>
-                        <div class="info-row">
+                        </div> --}}
+                        {{-- <div class="info-row">
                             <span class="info-label">Company:</span>
                             <span class="info-value">{{ $freight_booking->company ? $freight_booking->company->name : 'N/A' }}</span>
-                        </div>
+                        </div> --}}
                         <div class="info-row">
                             <span class="info-label">GR Date:</span>
                             <span class="info-value">{{ $freight_booking->lr && $freight_booking->lr->gr_date ? date('d-m-Y', strtotime($freight_booking->lr->gr_date)) : 'N/A' }}</span>
@@ -153,13 +221,14 @@
                             <span class="info-value">₹{{ number_format($freight_booking->advance_amount ?? 0, 2) }}</span>
                         </div>
                         <div class="info-row">
-                            <span class="info-label">Balance:</span>
-                            <span class="info-value">₹{{ number_format($freight_booking->balance_amount ?? 0, 2) }}</span>
-                        </div>
-                        <div class="info-row">
                             <span class="info-label">TDS Amount:</span>
                             <span class="info-value">₹{{ number_format($freight_booking->tds_amount ?? 0, 2) }}</span>
                         </div>
+                        <div class="info-row">
+                            <span class="info-label">Balance:</span>
+                            <span class="info-value">₹{{ number_format($freight_booking->balance_amount ?? 0, 2) }}</span>
+                        </div>
+                       
                     </div>
                 </div>
             </div>
@@ -280,74 +349,7 @@
         </div>
         @endif
 
-        @if($freight_booking->lr)
-        <div class="row">
-            <div class="col-12">
-                <div class="info-card card">
-                    <div class="card-header">
-                        <h5 class="mb-0">Related Lorry Receipt Information</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="info-row">
-                                    <span class="info-label">Customer:</span>
-                                    <span class="info-value">{{ $freight_booking->lr->customer ? $freight_booking->lr->customer->name : 'N/A' }}</span>
-                                </div>
-                                <div class="info-row">
-                                    <span class="info-label">Consignor:</span>
-                                    <span class="info-value">{{ $freight_booking->lr->consignor ? $freight_booking->lr->consignor->name : 'N/A' }}</span>
-                                </div>
-                                <div class="info-row">
-                                    <span class="info-label">Consignee:</span>
-                                    <span class="info-value">{{ $freight_booking->lr->consignee ? $freight_booking->lr->consignee->name : 'N/A' }}</span>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="info-row">
-                                    <span class="info-label">Source City:</span>
-                                    <span class="info-value">{{ $freight_booking->lr->source_city ?? 'N/A' }}</span>
-                                </div>
-                                <div class="info-row">
-                                    <span class="info-label">Destination City:</span>
-                                    <span class="info-value">{{ $freight_booking->lr->destination_city ?? 'N/A' }}</span>
-                                </div>
-                                <div class="info-row">
-                                    <span class="info-label">Weight:</span>
-                                    <span class="info-value">{{ $freight_booking->lr->weight ?? 'N/A' }} kg</span>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="info-row">
-                                    <span class="info-label">Truck Number:</span>
-                                    <span class="info-value">{{ $freight_booking->lr->truck ? $freight_booking->lr->truck->truck_number : 'N/A' }}</span>
-                                </div>
-                                <div class="info-row">
-                                    <span class="info-label">Transporter:</span>
-                                    <span class="info-value">{{ $freight_booking->lr->transporter ? $freight_booking->lr->transporter->name : 'N/A' }}</span>
-                                </div>
-                                <div class="info-row">
-                                    <span class="info-label">Delivery Status:</span>
-                                    <span class="info-value">
-                                        @php
-                                            $status = $freight_booking->lr->delivery_status ?? 'Pending';
-                                            $badgeClass = match($status) {
-                                                'Delivered' => 'bg-success',
-                                                'Cancelled' => 'bg-danger',
-                                                'In-Progress' => 'bg-info',
-                                                default => 'bg-warning'
-                                            };
-                                        @endphp
-                                        <span class="badge {{ $badgeClass }} badge-status">{{ $status }}</span>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        @endif
+       
     </div>
     <!--end::Body-->
 </div>

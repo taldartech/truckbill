@@ -150,6 +150,7 @@
 
                             <th>LR Number</th>
                             <th>Transporter</th>
+                            <th>Short Name</th>
                             <th>Truck Number</th>
                             <th>Source City</th>
                             <th>Destination City</th>
@@ -200,6 +201,10 @@
                                     @endphp
                                     {!! $transporterName . ' ' . $badge !!}
                                 </td>
+                                <td>@php 
+                                $shortName = $booking->transporter_name ? $booking->transporter->short_name : '-';
+                                @endphp
+                                {!! $shortName !!}</td>
                                 <td>{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->truck_number : '-' }}</td>
                                 <td>{{ $booking->lr && $booking->lr->source_city ? $booking->lr->source_city : '-' }}</td>
                                 <td>{{ $booking->lr && $booking->lr->destination_city ? $booking->lr->destination_city : '-' }}</td>
