@@ -45,19 +45,15 @@ class TransporterBankAccountController extends Controller
         $transporter = Transporter::findOrFail($transporterId);
         
         $validated = $request->validate([
-            'beneficiary_id' => [
-                'required',
-                'string',
-                'max:255',
-                // Check uniqueness but exclude current transporter
-                \Illuminate\Validation\Rule::unique('transporters', 'beneficiary_id')->ignore($transporter->id)
-            ],
+            'beneficiary_id' => 'required|string|max:255|unique:transporters,beneficiary_id,' . $transporter->id,
+            'short_name' => 'required|string|max:255|unique:transporters,short_name,' . $transporter->id,
         ], [
             'beneficiary_id.unique' => 'This Beneficiary ID is already in use by another transporter/truck owner.',
+            'short_name.unique' => 'This Short Name is already in use by another transporter/truck owner.',
         ]);
 
-        $transporter->update(['beneficiary_id' => $validated['beneficiary_id']]);
+        $transporter->update(['beneficiary_id' => $validated['beneficiary_id'], 'short_name' => $validated['short_name']]);
 
-        return redirect()->back()->with('success', 'Beneficiary ID updated successfully!');
+        return redirect()->back()->with('success', 'Beneficiary ID and Short Name updated successfully!');
     }
 }

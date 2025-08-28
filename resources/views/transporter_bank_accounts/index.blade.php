@@ -75,6 +75,7 @@
                     <tr>
                         <th style="width: 10px">ID</th>
                         <th>Name</th>
+                        <th>Short Name</th>
                         <th>GST Number</th>
                         <th>PAN Number</th>
                         <th>Bank Beneficiary ID</th>
@@ -86,6 +87,7 @@
                     <tr class="align-middle">
                         <td>{{ $transporter->id }}</td>
                         <td>{{ $transporter->name }}</td>
+                        <td>{{ $transporter->short_name ?? '-' }}</td>
                         <td>{{ $transporter->gst_number ?? '-' }}</td>
                         <td>{{ $transporter->pan_number ?? '-' }}</td>
                         <td>
@@ -119,6 +121,13 @@
                                             <input type="text" class="form-control" value="{{ $transporter->name }}" readonly>
                                         </div>
                                         <div class="mb-3">
+                                            <label class="form-label">Short Name <span class="text-danger">*</span></label>
+                                            <input type="text" name="short_name" class="form-control {{ $errors->has('short_name') ? 'is-invalid' : '' }}" value="{{ old('short_name', $transporter->short_name) }}" required>
+                                            @error('short_name')
+                                                <div class="invalid-feedback">{{ $message }}</div>
+                                            @enderror
+                                        </div>
+                                        <div class="mb-3">
                                             <label class="form-label">Beneficiary ID <span class="text-danger">*</span></label>
                                             <input type="text" name="beneficiary_id" class="form-control {{ $errors->has('beneficiary_id') ? 'is-invalid' : '' }}" value="{{ old('beneficiary_id', $transporter->beneficiary_id) }}" required>
                                             @error('beneficiary_id')
@@ -136,7 +145,7 @@
                     </div>
                     @empty
                     <tr>
-                        <td colspan="6" class="text-center">
+                        <td colspan="7" class="text-center">
                             <div class="empty-state">
                                 <i class="bi bi-truck"></i>
                                 <p class="mt-2">No transporters found for this company.</p>
@@ -168,11 +177,18 @@
     @endif
 </div>
 
-@if($errors->has('beneficiary_id'))
+@if($errors->has('beneficiary_id') || $errors->has('short_name'))
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Show alert with the validation error message
-        alert('{{ $errors->first('beneficiary_id') }}');
+        let message = '';
+        @if($errors->has('beneficiary_id'))
+            message = '{{ $errors->first('beneficiary_id') }}';
+        @elseif($errors->has('short_name'))
+            message = '{{ $errors->first('short_name') }}';
+        @endif
+        if (message) {
+            alert(message);
+        }
     });
 </script>
 @endif
