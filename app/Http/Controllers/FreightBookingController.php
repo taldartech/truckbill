@@ -72,7 +72,7 @@ class FreightBookingController extends Controller
         // Truck owner filter
         if ($request->filled('truck_owner_id')) {
             $query->whereHas('lr.truck', function($q) use ($request) {
-                $q->where('owner_id', $request->truck_owner_id);
+                $q->where('transporter_id', $request->truck_owner_id);
             });
         }
 
