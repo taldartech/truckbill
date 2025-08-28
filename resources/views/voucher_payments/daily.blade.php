@@ -136,10 +136,9 @@
                             </div>
                         </th>
                         @endif
-                        <th style="width: 10px">ID</th>
-                        <th>Voucher Number</th>
-                        <th>LR Number</th>
-                        <th>FR Number</th>
+                       
+                      
+                        <th>LR No</th>
                         <th>Transporter</th>
                         <th>Truck No</th>
                         <th>Source</th>
@@ -164,14 +163,8 @@
                             </div>
                         </td>
                         @endif
-                        <td>{{ $payment->id }}</td>
-                        <td>
-                            @if($payment->voucher_number)
-                                {{ $payment->voucher_number }}
-                            @else
-                                <span class="text-muted">-</span>
-                            @endif
-                        </td>
+                       
+                        
                         <td>
                             @if($payment->freight_booking && $payment->freight_booking->lr)
                                 {{ $payment->freight_booking->lr->lr_number }}
@@ -179,13 +172,7 @@
                                 <span class="text-muted">-</span>
                             @endif
                         </td>
-                        <td>
-                            @if($payment->freight_booking)
-                                {{ $payment->freight_booking->id }}
-                            @else
-                                <span class="text-muted">-</span>
-                            @endif
-                        </td>
+                       
                         <td>
                             @if($payment->freight_booking && $payment->freight_booking->transporter)
                                 @if($payment->freight_booking->transporter->is_owner)
@@ -245,7 +232,7 @@
                                     @case('pending')
                                         <span class="badge bg-warning">Pending</span>
                                         @break
-                                    @case('in progress')
+                                    @case('in-progress')
                                         <span class="badge bg-info">In Progress</span>
                                         @break
                                     @case('paid')

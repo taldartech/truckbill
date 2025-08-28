@@ -55,7 +55,7 @@ class VoucherPayment extends Model
         switch ($this->payment_status) {
             case 'pending':
                 return '<span class="badge bg-warning">Pending</span>';
-            case 'in progress':
+            case 'in-progress':
                 return '<span class="badge bg-info">In Progress</span>';
             case 'paid':
                 return '<span class="badge bg-success">Paid</span>';

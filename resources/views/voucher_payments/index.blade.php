@@ -128,15 +128,16 @@
             <table class="table table-bordered">
                 <thead>
                     <tr>
-                        <th style="width: 10px">ID</th>
+                      
                         <th>Voucher #</th>
+                        <th>Lorry Receipt No</th>
                         <th>Customer</th>
                         <th>Truck No</th>
                         <th>Transporter</th>
                         <th>Source</th>
                         <th>Destination</th>
-                        <th>Freight Booking No</th>
-                        <th>Lorry Receipt No</th>
+                       
+                       
                         @if(auth()->check() && auth()->user()->userRole->name === 'admin')
                         <th>Actions</th>
                         @endif
@@ -149,12 +150,19 @@
                             if (!$payment) continue;
                         @endphp
                         <tr class="align-middle">
-                            <td>{{ $payment->id }}</td>
+                            
                             <td>
                                 <a href="{{ route('voucher_payments.show', $payment->voucher_number) }}" class="fw-bold text-decoration-none">
                                     {{ $payment->voucher_number }}
                                     <i class="bi bi-box-arrow-up-right ms-1 small"></i>
                                 </a>
+                            </td>
+                            <td>
+                                @if($payment->freight_booking && $payment->freight_booking->lr)
+                                    <span class="badge bg-dark">{{ $payment->freight_booking->lr->lr_number }}</span>
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
                             </td>
                             <td>
                                 @if($payment->freight_booking && $payment->freight_booking->lr && $payment->freight_booking->lr->customer)
@@ -195,20 +203,8 @@
                                     <span class="text-muted">-</span>
                                 @endif
                             </td>
-                            <td>
-                                @if($payment->freight_booking)
-                                    <span class="badge bg-secondary">{{ $payment->freight_booking->id }}</span>
-                                @else
-                                    <span class="text-muted">-</span>
-                                @endif
-                            </td>
-                            <td>
-                                @if($payment->freight_booking && $payment->freight_booking->lr)
-                                    <span class="badge bg-dark">{{ $payment->freight_booking->lr->lr_number }}</span>
-                                @else
-                                    <span class="text-muted">-</span>
-                                @endif
-                            </td>
+                            
+                            
                             @if(auth()->check() && auth()->user()->userRole->name === 'admin')
                             <td>
                                 <div class="d-flex gap-1">
