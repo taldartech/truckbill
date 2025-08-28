@@ -430,10 +430,15 @@ $(document).ready(function() {
    
 });
 
-
-
-
-
+// Helper function to format GR Date to DD-MM-YYYY
+function formatGRDate(dateString) {
+    if (!dateString) return 'N/A';
+    const parts = dateString.split('-')
+    if (parts.length === 3 && parts[0].length === 4) {
+        return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+    return dateString;
+}
 
 // Show LR Details function
 function showLRDetails(id) {
@@ -470,7 +475,7 @@ function showLRDetails(id) {
                                     </tr>
                                     <tr>
                                         <td class="fw-bold">GR Date:</td>
-                                        <td>${lr.gr_date}</td>
+                                        <td>${formatGRDate(lr.gr_date)}</td>
                                     </tr>
                                     <tr>
                                         <td class="fw-bold">Status:</td>
