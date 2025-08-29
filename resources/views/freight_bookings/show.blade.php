@@ -433,7 +433,8 @@
 
                         <!-- Payment Details Section -->
                         <div class="row">
-                            <div class="col-md-6">
+                            <!-- Payment Type -->
+                            <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="paymentType" class="form-label">Payment Type *</label>
                                     <select class="form-select" id="paymentType" required>
@@ -447,7 +448,9 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                        
+                            <!-- Payment Mode -->
+                            <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="paymentMode" class="form-label">Payment Mode *</label>
                                     <select class="form-select" id="paymentMode" required>
@@ -461,8 +464,21 @@
                                     </select>
                                 </div>
                             </div>
+                        
+                            <!-- Pump Name (hidden by default) -->
+                            <div class="col-md-4" id="pumpNameContainer" style="display: none;">
+                                <div class="mb-3">
+                                    <label for="pumpName" class="form-label">Pump Name *</label>
+                                    <select class="form-select" id="pumpName">
+                                        <option value="">Select Pump</option>
+                                        @foreach($pumps as $pump)
+                                            <option value="{{ $pump->id }}">{{ $pump->pump_name }} ({{ $pump->contact_name }})</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
                         </div>
-
+                        
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
@@ -758,4 +774,36 @@ function submitVoucherPayment() {
     });
 }
 </script>
+<script>
+    function togglePumpName() {
+        const paymentModeDropdown = document.getElementById("paymentMode");
+        if (!paymentModeDropdown) return;
+    
+        const selectedText = paymentModeDropdown.options[paymentModeDropdown.selectedIndex]?.text.toLowerCase() || "";
+        const pumpNameContainer = document.getElementById("pumpNameContainer");
+    
+        if (selectedText.includes("fuel")) {
+            pumpNameContainer.style.display = "block";
+        } else {
+            pumpNameContainer.style.display = "none";
+            document.getElementById("pumpName").value = ""; // reset
+        }
+    }
+    
+    // Run when dropdown changes
+    document.addEventListener("change", function(e) {
+        if (e.target && e.target.id === "paymentMode") {
+            togglePumpName();
+        }
+    });
+    
+    // ✅ Run once on page load (or when modal opens)
+    document.addEventListener("DOMContentLoaded", togglePumpName);
+    
+    // ✅ If this modal is loaded dynamically via Bootstrap, run on modal show
+    $('#voucherPaymentModal').on('shown.bs.modal', function () {
+        togglePumpName();
+    });
+    </script>
+    
 @endsection

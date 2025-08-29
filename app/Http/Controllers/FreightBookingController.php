@@ -12,11 +12,14 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Validator;
+use App\Models\Pump;
 
 class FreightBookingController extends Controller
 {
     public function index(Request $request)
     {
+
+        $pumps = Pump::all();
         // Handle DataTables AJAX request
         if ($request->ajax()) {
             return $this->getFreightBookingsData($request);
@@ -93,7 +96,8 @@ class FreightBookingController extends Controller
             'transporters',
             'truckOwners',
             'startDate',
-            'endDate'
+            'endDate',
+            'pumps'
         ));
     }
 
@@ -552,6 +556,7 @@ class FreightBookingController extends Controller
 
     public function show($id)
     {
+        
         try {
             $freight_booking = FreightBooking::with(['lr', 'linkedFreightBooking', 'company'])->findOrFail($id);
             
@@ -560,6 +565,7 @@ class FreightBookingController extends Controller
                 $freight_booking->company_id !== auth()->user()->company_id) {
                 abort(403, 'Unauthorized access to freight booking.');
             }
+            $pumps = Pump::all();
             
             // Load payment types and modes for the voucher payment modal
             $paymentTypes = \App\Models\PaymentType::all();
@@ -570,7 +576,7 @@ class FreightBookingController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->first();
             
-            return view('freight_bookings.show', compact('freight_booking', 'paymentTypes', 'paymentModes', 'existingPayment'));
+            return view('freight_bookings.show', compact('freight_booking', 'paymentTypes', 'paymentModes', 'existingPayment','pumps'));
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return redirect()->route('freight_bookings.index')
                 ->with('error', 'Freight booking not found.');
@@ -910,7 +916,8 @@ class FreightBookingController extends Controller
                 'payment_amounts.*' => 'required|numeric|min:0',
                 'total_amount' => 'required|numeric|min:0',
                 'reference_number' => 'nullable|string',
-                'notes' => 'nullable|string'
+                'notes' => 'nullable|string',
+                'pump_id' => 'nullable|exists:pumps,id',
             ]);
 
             \Log::info('Validation passed', $validated);
@@ -951,6 +958,7 @@ class FreightBookingController extends Controller
                         'payment_mode' => $paymentMode->name,
                         'payment_type_id' => $validated['payment_type_id'],
                         'payment_mode_id' => $validated['payment_mode_id'],
+                        'pump_id' => $validated['pump_id'] ?? null,
                         'amount' => $amount,
                         'remark' => $validated['notes'] ?? null,
                         'payment_status' => $paymentStatus,

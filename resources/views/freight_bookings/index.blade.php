@@ -1349,7 +1349,8 @@ function handleVoucherPayment() {
             <div style="background-color: #e3f2fd; padding: 10px; margin: 10px 0; border-radius: 4px;">
                 <strong>TOTAL PAYMENT: ₹<span id="totalPaymentAmount">${lrData.reduce((sum, item) => sum + item.balance, 0).toFixed(2)}</span></strong>
             </div>
-            
+
+           
             <div style="margin: 15px 0;">
                 <div style="display: flex; gap: 15px; margin-bottom: 15px;">
                     <div style="flex: 1;">
@@ -1370,7 +1371,18 @@ function handleVoucherPayment() {
                             ).join('')}
                         </select>
                     </div>
+                     <div id="pumpNameContainer" style="display: none ; margin-bottom: 15px; flex: 1;">
+    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Pump Name *</label>
+    <select id="pumpName" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+        <option value="">Select Pump</option>
+        @foreach($pumps as $pump)
+            <option value="{{ $pump->id }}">{{ $pump->pump_name}} ({{$pump->contact_name}}) </option>
+        @endforeach
+    </select>
+</div>
                 </div>
+               
+
                 <div style="margin-bottom: 15px;">
                     <label style="display: block; margin-bottom: 5px; font-weight: bold;">Reference Transaction ID</label>
                     <input type="text" id="referenceId" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Enter reference/transaction ID (optional)">
@@ -1748,6 +1760,7 @@ function submitVoucherPayment() {
     // Get form values
     const paymentTypeSelect = document.getElementById('paymentType');
     const paymentModeSelect = document.getElementById('paymentMode');
+    const pumpId = document.getElementById('pumpName')?.value || null;
     const referenceId = document.getElementById('referenceId')?.value;
     const remarks = document.getElementById('paymentRemarks')?.value;
     
@@ -1825,6 +1838,7 @@ function submitVoucherPayment() {
     // Also append text values for display if needed
     formData.append('payment_type', paymentType);
     formData.append('payment_mode', paymentMode);
+    formData.append('pump_id', pumpId);
     formData.append('total_amount', totalAmount.toFixed(2));
     formData.append('payment_date', new Date().toISOString().split('T')[0]);
     
@@ -1883,6 +1897,22 @@ function submitVoucherPayment() {
     });
 }
 </script>
+<script>
+    document.addEventListener("change", function(e) {
+        if (e.target && e.target.id === "paymentMode") {
+            const paymentModeDropdown = e.target;
+            const selectedText = paymentModeDropdown.options[paymentModeDropdown.selectedIndex].text.toLowerCase();
+            const pumpNameContainer = document.getElementById("pumpNameContainer");
+    
+            if (selectedText.includes("fuel")) {
+                pumpNameContainer.style.display = "block";
+            } else {
+                pumpNameContainer.style.display = "none";
+                document.getElementById("pumpName").value = ""; // reset
+            }
+        }
+    });
+    </script>
 
 @endpush
 
