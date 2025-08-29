@@ -576,39 +576,6 @@ class LorryReceiptController extends Controller
 
     public function update(Request $request, \App\Models\LorryReceipt $lorry_receipt)
     {
-        // $validated = $request->validate([
-        //     'truck_id' => 'nullable|exists:trucks,id',
-        //     'transporter_id' => 'nullable|exists:transporters,id',
-        //     'delivery_status' => 'nullable|in:Pending,Delivered,Cancelled,In-Progress',
-        //     'customer_id' => 'required|integer',
-        //     'consignor_contact_number' => [
-        //         'nullable',
-        //         'digits:10',
-        //     ],
-        //     'consignee_contact_number' => [
-        //         'nullable',
-        //         'digits:10',
-        //     ],
-        //     'source_city' => 'required|string|max:100',
-        //     'destination_city' => 'required|string|max:100',
-        //     'source_state' => 'required|string|max:100',
-        //     'destination_state' => 'required|string|max:100',
-        //     'weight' => 'required|numeric',
-        //     'no_of_units' => 'required|integer',
-        //     'good_type' => 'required|string|max:100',
-        //     'fr_rate' => 'required|numeric',
-        //     'amount' => 'required|numeric',
-        //     'linked_lr_id' => 'nullable|integer',
-        //     'gr_date' => 'required|date',
-        //     'memo_id' => 'nullable|integer',
-        //     'consignor_id' => 'required|integer',
-        //     'consignee_id' => 'required|integer',
-        //     'lane' => 'required|string',
-        //     'damage_amount' => 'nullable|numeric',
-        //     'shortage_amount' => 'nullable|numeric',
-        //     'lr_number' => 'required|string|max:100',
-        // ]);
-        // $lorry_receipt->update($validated);
         $validated = $request->validate([
             'customer_id' => 'required|exists:consignees,id',
            'lr_number' => 'required|string|max:100|unique:lorry_receipts,lr_number,' . $lorry_receipt->id . ',id',

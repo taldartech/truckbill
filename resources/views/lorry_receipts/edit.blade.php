@@ -124,16 +124,8 @@
                 </div>
                 <div class="row mb-3">
                     <div class="col-md-4">
-                        <label for="memo_id" class="form-label">Memo ID <small class="text-muted">(Read-only)</small></label>
-                        <div class="input-group">
-                            <input type="text" class="form-control" id="memo_id" name="memo_id" value="{{ $lorry_receipt->memo_id }}" readonly>
-                            @if($lorry_receipt->memo_id)
-                                <span class="input-group-text bg-info text-white"><i class="bi bi-file-earmark-text"></i></span>
-                            @else
-                                <span class="input-group-text bg-secondary text-white"><i class="bi bi-dash-circle"></i></span>
-                            @endif
-                        </div>
-                        <small class="text-muted">{{ $lorry_receipt->memo_id ? 'This LR is linked to a memo' : 'No memo linked to this LR' }}</small>
+                        <label for="memo_id" class="form-label">Memo ID</label>
+                        <input type="text" class="form-control" id="memo_id" name="memo_id" value="{{ old('memo_id', $lorry_receipt->memo_id) }}">
                     </div>
                 </div>
                 <div class="row mb-3">
@@ -421,6 +413,93 @@ document.addEventListener('DOMContentLoaded', function() {
             form.classList.add('was-validated');
         }, false);
     });
+});
+</script>
+
+<script>
+// Handle consignor and consignee contact number and location details
+document.addEventListener('DOMContentLoaded', function() {
+    const consignorSelect = document.getElementById('consignor_id');
+    const consignorContact = document.getElementById('consignor_contact_number');
+    const consignorLocation = document.getElementById('consignor_location');
+            const consigneeSelect = document.getElementById('consignee_id');
+            const consigneeContact = document.getElementById('consignee_contact_number');
+            const consigneeLocation = document.getElementById('consignee_location');
+
+            function updateConsignorDetails() {
+                const selectedConsignor = consignorSelect.value;
+                if (!selectedConsignor) {
+                    consignorContact.value = '';
+                    consignorLocation.value = '';
+                    return;
+                }
+
+                fetch(`/api/consignors/${selectedConsignor}`, {
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(consignor => {
+                    consignorContact.value = consignor.contact_number;
+                    consignorLocation.value = `${consignor.city}, ${consignor.state}`;
+                })
+                .catch(error => console.error('Error:', error));
+            }
+
+            function updateConsigneeDetails() {
+                const selectedConsignee = consigneeSelect.value;
+                if (!selectedConsignee) {
+                    consigneeContact.value = '';
+                    consigneeLocation.value = '';
+                    return;
+                }
+
+                fetch(`/api/consignees/${selectedConsignee}`, {
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(consignee => {
+                    consigneeContact.value = consignee.contact_number;
+                    consigneeLocation.value = `${consignee.city}, ${consignee.state}`;
+                })
+                .catch(error => console.error('Error:', error));
+            }
+
+    consignorSelect.addEventListener('change', updateConsignorDetails);
+    consigneeSelect.addEventListener('change', updateConsigneeDetails);
+});
+</script>
+
+<script>
+// Handle truck selection and transporter details
+document.getElementById('truck_id').addEventListener('change', function () {
+    let truckId = this.value;
+
+    if (truckId) {
+        fetch(`/get-transporter-name/${truckId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.transporter_name) {
+                    document.getElementById('transporter_name').value = data.transporter_name;
+                    if(data.transporter.is_owner == 1){
+                        document.getElementById('ownerTransporterSelect').style.display = 'block';
+                    }
+                } else {
+                    document.getElementById('ownerTransporterSelect').style.display = 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('ownerTransporterSelect').style.display = 'none';
+            });
+    } else {
+        document.getElementById('ownerTransporterSelect').style.display = 'none';
+    }
 });
 </script>
 
@@ -1725,4 +1804,3 @@ document.getElementById('addGoodsTypeForm').addEventListener('submit', function 
 });
 
 </script>
-
