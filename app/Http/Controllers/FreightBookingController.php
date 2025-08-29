@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Pump;
+use Illuminate\Validation\ValidationException;
 
 class FreightBookingController extends Controller
 {
@@ -913,7 +914,9 @@ class FreightBookingController extends Controller
      */
     public function voucherPayment(Request $request)
     {
+    
         try {
+            // dd($request->all());
             \Log::info('Voucher payment request received', $request->all());
             
             // Validate the request
@@ -988,8 +991,19 @@ class FreightBookingController extends Controller
                     // $freightBooking->update([
                     //     'balance_amount' => $newBalance,
                     //     'advance_amount' => $newadvance_amount
-                    // ]);
+                    // ]);  
                     // Update freight booking balance / transporter advance
+                    if (strtolower($paymentMode->name) === 'fuel(paid to pump)') {
+                        if (empty($validated['pump_id'])) {
+                            throw ValidationException::withMessages([
+                                'pump_id' => ['Please select Pump for fuel payment.']
+                            ]);
+                        }
+                    
+                        // 👉 If pump_id is valid, you can proceed with pump-related logic
+                        $pumpId = $validated['pump_id'];
+                        // your pump payment logic here
+                    }
 if (strtolower($paymentMode->name) === 'adjust in advance') {
     // make sure transporter exists for this booking
     $transporter = \App\Models\Transporter::find($freightBooking->transporter_id);
@@ -1003,10 +1017,10 @@ if (strtolower($paymentMode->name) === 'adjust in advance') {
     }
 
     // reduce from transporter advance
-    $newTransporterAdvance = $transporter->advance_amount - $amount;
-    $transporter->update([
-        'advance_amount' => $newTransporterAdvance
-    ]);
+    // $newTransporterAdvance = $transporter->advance_amount - $amount;
+    // $transporter->update([
+    //     'advance_amount' => $newTransporterAdvance
+    // ]);
 
     // update only balance in freight booking
     $newBalance = max(0, $freightBooking->balance_amount - $amount);
@@ -1014,11 +1028,33 @@ if (strtolower($paymentMode->name) === 'adjust in advance') {
         'balance_amount' => $newBalance
     ]);
 
+    // \App\Models\AdvancePayment::create([
+    //     'company_id'      => $freightBooking->company_id,
+    //     'transporter_id'  => $transporter->id,
+    //     'advance_amount'  => -$amount,
+    //     'payment_date'    => now(), // current date-time
+    //     'remark'          => "LR#{$freightBooking->lr_number}", 
+    // ]);
+      // Call AdvancePaymentController@store logic
+      $advanceRequest = new \Illuminate\Http\Request([
+        'company_id' => $freightBooking->company_id,
+        'transporter_id' => $transporter->id,
+        'advance_amount' => -$amount, // NEGATIVE because adjusting
+        'payment_date'   => now()->toDateString(),
+        'remark'         => "LR#{$freightBooking->lr_number}",
+    ]);
+
+    // mark request as ajax so it won’t redirect
+    $advanceRequest->headers->set('X-Requested-With', 'XMLHttpRequest');
+
+    app(\App\Http\Controllers\AdvancePaymentController::class)->store($advanceRequest);
+
     \Log::info('Adjusted from transporter advance', [
+
         'transporter_id' => $transporter->id,
         'old_advance' => $transporter->getOriginal('advance_amount'),
         'deducted' => $amount,
-        'new_advance' => $newTransporterAdvance,
+        'new_advance' => $transporter->advance_amount,
         'booking_id' => $bookingId,
         'new_balance' => $newBalance
     ]);

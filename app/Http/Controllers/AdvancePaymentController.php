@@ -109,7 +109,7 @@ class AdvancePaymentController extends Controller
     {
         $validated = $request->validate([
             'transporter_id' => 'required|exists:transporters,id',
-            'advance_amount' => 'required|numeric|min:0.01',
+            'advance_amount' => 'required|numeric',
             'payment_date' => 'required|date',
             'remark' => 'nullable|string|max:1000',
         ]);

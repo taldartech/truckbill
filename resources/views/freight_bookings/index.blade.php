@@ -1858,7 +1858,10 @@ formData.append('pump_id', pumpId || '');
     })
     .then(data => {
         // Hide modal
+        
+
         $('#voucherPaymentModal').modal('hide');
+        
         
         if (data.success) {
             alert(data.message || 'Payment processed successfully!');
