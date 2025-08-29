@@ -602,12 +602,13 @@ class FreightBookingController extends Controller
     public function edit($id)
     {
         try {
+            $freightBooking = FreightBooking::findOrFail($id);
+            
             // Check if user has access to this freight booking (company-based filtering)
             if (auth()->user()->userRole->name !== 'super_admin' && 
                 $freightBooking->company_id !== auth()->user()->company_id) {
                 abort(403, 'Unauthorized access to freight booking.');
             }
-
             $companies = \App\Models\Company::all();
             // Get the LorryReceipt details
             $lorryReceipt = LorryReceipt::find($freightBooking->lr_id);
