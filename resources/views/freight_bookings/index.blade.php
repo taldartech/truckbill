@@ -114,179 +114,193 @@
             </div>
         @endif
 
-            <div class="table-responsive">
-                <table class="table table-bordered table-striped">
-                    <thead class="table-dark">
-                        <tr class="text-center" style="font-size: 14px;">
-                            <th style="width: 40px;"><input type="checkbox" id="select-all"></th>
-                            {{-- <th style="width: 80px;">Sr. No</th>
-                            <th>FR Number</th> --}}
-                            <th class="text-center">GR Date</th>
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+                <thead class="table-dark">
+                    <tr class="text-center" style="font-size: 14px;">
+                        <th style="width: 40px;"><input type="checkbox" id="select-all"></th>
+                        {{-- <th style="width: 80px;">Sr. No</th>
+                        <th>FR Number</th> --}}
+                        <th class="text-center">GR Date</th>
 
-                            <th>LR No</th>
-                            <th>Short Name</th>
-                            <th>Truck No</th>
-                            <th>Source City</th>
-                            <th>Destination City</th>
-                            <th>Weight</th>
-                            <th>Tr Rate</th>
-                            <th class="text-end">Balance</th>
-                            <th class="text-center" style="width: 80px;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($bookings as $index => $booking)
-                            <tr class="@if($booking->is_cancelled) table-danger @elseif($booking->is_delivered) table-success @endif">
-                                <td class="text-center">
-                                    @if($booking->is_delivered && ($booking->balance_amount <= 0))
-                                        <span class="text-muted" title="No checkbox available: Delivered with zero balance"><i class="bi bi-dash-circle"></i></span>
-                                    @else
-                                        <input type="checkbox" class="row-checkbox" value="{{ $booking->id }}" 
-                                               data-lr="{{ $booking->lr ? $booking->lr->lr_number : '' }}" 
-                                               data-lr-id="{{ $booking->lr ? $booking->lr->id : '' }}"
-                                               data-truck="{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->truck_number : '' }}" 
-                                               data-truck-id="{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->id : '' }}"
-                                               data-balance="{{ $booking->balance_amount ?? 0 }}" 
-                                               data-voucher_number="{{ $booking->voucher_number ?? '' }}"
-                                               data-freight-booking-id="{{ $booking->id }}"
-                                               data-is-cancelled="{{ $booking->is_cancelled ? '1' : '0' }}"
-                                               data-is-delivered="{{ $booking->is_delivered ? '1' : '0' }}"
-                                               data-transporter="{{ $booking->transporter ? $booking->transporter->name : '' }}"
-                                               data-lr-transporter="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->name : '' }}"
-                                               data-fb-transporter="{{ $booking->transporter_name ?? ($booking->transporter ? $booking->transporter->name : '') }}"
-                                               data-tds-percentage="{{ $booking->transporter_tds_percentage ?? '' }}">
-                                    @endif
-                                </td>
-                                {{-- <td class="text-center">{{ $bookings->firstItem() + $index }}</td>
-                                <td><a href="{{ route('freight_bookings.show', $booking->id) }}" class="text-primary text-decoration-underline">{{ $booking->id ? $booking->id : '-' }}</a></td> --}}
-                                <td class="text-center">{{ $booking->lr && $booking->lr->gr_date ? date('d-m-Y', strtotime($booking->lr->gr_date)) : '-' }}</td>
-                                 <td>{{ $booking->lr ? $booking->lr->lr_number : '-' }}</td>
-                                <td>
-                                @php 
-                                $shortName = $booking->transporter_name ? $booking->transporter->short_name : '-';
+                        <th>LR No</th>
+                        <th>Transporter</th>
+                        <th>Short Name</th>
+                        <th>Truck No</th>
+                        <th>Source City</th>
+                        <th>Destination City</th>
+                        <th>Weight</th>
+                        <th>Tr Rate</th>
+                        <th class="text-end">Balance</th>
+                        <th class="text-center" style="width: 80px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($bookings as $index => $booking)
+                        <tr class="@if($booking->is_cancelled) table-danger @elseif($booking->is_delivered) table-success @endif">
+                            <td class="text-center">
+                                @if($booking->is_delivered && ($booking->balance_amount <= 0))
+                                    <span class="text-muted" title="No checkbox available: Delivered with zero balance"><i class="bi bi-dash-circle"></i></span>
+                                @else
+                                    <input type="checkbox" class="row-checkbox" value="{{ $booking->id }}" 
+                                           data-lr="{{ $booking->lr ? $booking->lr->lr_number : '' }}" 
+                                           data-lr-id="{{ $booking->lr ? $booking->lr->id : '' }}"
+                                           data-truck="{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->truck_number : '' }}" 
+                                           data-truck-id="{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->id : '' }}"
+                                           data-transporter-id="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->id : '' }}"
+                                           data-balance="{{ $booking->balance_amount ?? 0 }}" 
+                                           data-voucher_number="{{ $booking->voucher_number ?? '' }}"
+                                           data-freight-booking-id="{{ $booking->id }}"
+                                           data-is-cancelled="{{ $booking->is_cancelled ? '1' : '0' }}"
+                                           data-is-delivered="{{ $booking->is_delivered ? '1' : '0' }}"
+                                           data-transporter="{{ $booking->transporter ? $booking->transporter->name : '' }}"
+                                           data-lr-transporter="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->name : '' }}"
+                                           data-fb-transporter="{{ $booking->transporter_name ?? ($booking->transporter ? $booking->transporter->name : '') }}"
+                                           data-tds-percentage="{{ $booking->transporter_tds_percentage ?? '' }}">
+                                @endif
+                            </td>
+                            {{-- <td class="text-center">{{ $bookings->firstItem() + $index }}</td>
+                            <td><a href="{{ route('freight_bookings.show', $booking->id) }}" class="text-primary text-decoration-underline">{{ $booking->id ? $booking->id : '-' }}</a></td> --}}
+                            <td class="text-center">{{ $booking->lr && $booking->lr->gr_date ? date('d-m-Y', strtotime($booking->lr->gr_date)) : '-' }}</td>
+                             <td>{{ $booking->lr ? $booking->lr->lr_number : '-' }}</td>
+                            <td>
+                                @php
+                                    $transporterName = $booking->transporter_name ?? ($booking->transporter ? $booking->transporter->name : '-');
+                                    $badge = '';
+                                    
+                                    if ($booking->transporter && $booking->transporter->is_owner) {
+                                        $badge = '<span class="badge bg-success ms-1" title="Truck Owner"><i class="bi bi-truck"></i></span>';
+                                    } else {
+                                        $badge = '<span class="badge bg-info ms-1" title="Agency"><i class="bi bi-building"></i></span>';
+                                    }
                                 @endphp
-                                {!! $shortName !!}
-                                </td>
-                                <td>{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->truck_number : '-' }}</td>
-                                <td>{{ $booking->lr && $booking->lr->source_city ? $booking->lr->source_city : '-' }}</td>
-                                <td>{{ $booking->lr && $booking->lr->destination_city ? $booking->lr->destination_city : '-' }}</td>
-                                <td>{{ $booking->lr && $booking->lr->weight ? $booking->lr->weight : '-' }}</td>
-                                <td>{{ $booking->lr && $booking->tr_fr_rate ? $booking->tr_fr_rate : '-' }}</td>
-                                
-                                <td class="text-end">₹{{ number_format($booking->balance_amount ?? 0, 2) }}</td>
-                                <td class="text-center">
-                                    <div class="btn-group" role="group">
-                                        <a href="{{ route('freight_bookings.show', $booking->id) }}" class="btn btn-sm btn-outline-info" style="padding: 8px;" title="View">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                        <a href="{{ route('freight_bookings.edit', $booking->id) }}" class="btn btn-sm btn-outline-primary" style="padding: 8px;" title="Edit">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="12" class="text-center py-4">
-                                    <div class="text-muted">
-                                        <i class="bi bi-inbox display-4"></i>
-                                        <p class="mt-2">No freight bookings found</p>
-                                        @if(request('search'))
-                                            <p>Try adjusting your search criteria</p>
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Pagination -->
-            @if($bookings->hasPages())
-                <div class="d-flex justify-content-center mt-4">
-                    {{ $bookings->appends(request()->query())->links() }}
-                </div>
-            @endif
+                                {!! $transporterName . ' ' . $badge !!}
+                            </td>
+                            <td>@php 
+                            $shortName = $booking->transporter_name ? $booking->transporter->short_name : '-';
+                            @endphp
+                            {!! $shortName !!}</td>
+                            <td>{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->truck_number : '-' }}</td>
+                            <td>{{ $booking->lr && $booking->lr->source_city ? $booking->lr->source_city : '-' }}</td>
+                            <td>{{ $booking->lr && $booking->lr->destination_city ? $booking->lr->destination_city : '-' }}</td>
+                            <td>{{ $booking->lr && $booking->lr->weight ? $booking->lr->weight : '-' }}</td>
+                            <td>{{ $booking->lr && $booking->tr_fr_rate ? $booking->tr_fr_rate : '-' }}</td>
+                            
+                            <td class="text-end">₹{{ number_format($booking->balance_amount ?? 0, 2) }}</td>
+                            <td class="text-center">
+                                <div class="btn-group" role="group">
+                                    <a href="{{ route('freight_bookings.show', $booking->id) }}" class="btn btn-sm btn-outline-info" style="padding: 8px;" title="View">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{{ route('freight_bookings.edit', $booking->id) }}" class="btn btn-sm btn-outline-primary" style="padding: 8px;" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="12" class="text-center py-4">
+                                <div class="text-muted">
+                                    <i class="bi bi-inbox display-4"></i>
+                                    <p class="mt-2">No freight bookings found</p>
+                                    @if(request('search'))
+                                        <p>Try adjusting your search criteria</p>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
+
+        <!-- Pagination -->
+        @if($bookings->hasPages())
+            <div class="d-flex justify-content-center mt-4">
+                {{ $bookings->appends(request()->query())->links() }}
+            </div>
+        @endif
     </div>
+</div>
 </div>
 
 <!-- LR Details Modal -->
 <div class="modal fade" id="lrDetailsModal" tabindex="-1" aria-labelledby="lrDetailsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="lrDetailsModalLabel">LR Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="lrDetailsContent">
-                <!-- Content will be loaded dynamically -->
-                <div class="text-center">
-                    <div class="spinner-border" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
+<div class="modal-dialog modal-lg">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title" id="lrDetailsModalLabel">LR Details</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="lrDetailsContent">
+            <!-- Content will be loaded dynamically -->
+            <div class="text-center">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
                 </div>
             </div>
-        
+        </div>
     </div>
+    
+</div>
 </div>
 
 <!-- Voucher Payment Modal -->
 <div class="modal fade" id="voucherPaymentModal" tabindex="-1" aria-labelledby="voucherPaymentModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="voucherPaymentModalLabel">💳 Voucher Payment</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="voucherPaymentBody">
-                <!-- Dynamic content will be loaded here -->
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" onclick="submitVoucherPayment()">💰 Process Payment</button>
-            </div>
+<div class="modal-dialog modal-xl">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title" id="voucherPaymentModalLabel">💳 Voucher Payment</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="voucherPaymentBody">
+            <!-- Dynamic content will be loaded here -->
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-success" onclick="submitVoucherPayment()">💰 Process Payment</button>
         </div>
     </div>
+</div>
 </div>
 
 <!-- Individual Voucher Payment Modal -->
 <div class="modal fade" id="individualPaymentModal" tabindex="-1" aria-labelledby="individualPaymentModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="individualPaymentModalLabel">💳 Individual Voucher Payment</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="individualPaymentBody">
-                <!-- Dynamic content will be loaded here -->
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" id="submitIndividualPayment">💰 Process Payment</button>
-            </div>
+<div class="modal-dialog modal-lg">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title" id="individualPaymentModalLabel">💳 Individual Voucher Payment</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="individualPaymentBody">
+            <!-- Dynamic content will be loaded here -->
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-success" id="submitIndividualPayment">💰 Process Payment</button>
         </div>
     </div>
 </div>
+</div>
 
 <!-- Bulk Memo ID Modal -->
-<div class="modal fade" id="bulkMemoIdModal" tabindex="-1" aria-labelledby="bulkMemoIdModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-clipboard-check"></i> Bulk Memo ID Assignment</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="bulkMemoIdBody">
-                <!-- Dynamic content will be inserted here -->
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" form="bulkMemoIdForm" class="btn btn-primary">Assign Memo ID</button>
-            </div>
+<div class="modal fade" id="bulkMemoIdModal"  tabindex="-1" aria-labelledby="bulkMemoIdModalLabel" aria-hidden="true">
+<div class="modal-dialog modal-lg">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title"><i class="bi bi-clipboard-check"></i> Bulk Memo ID Assignment</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" id="bulkMemoIdBody">
+            <!-- Dynamic content will be inserted here -->
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" form="bulkMemoIdForm" class="btn btn-primary">Assign Memo ID</button>
         </div>
     </div>
+</div>
 </div>
 
 @endsection
@@ -771,6 +785,7 @@ function openVoucherPaymentModal() {
     }
 </style>
 
+
 @push('scripts')
 <script>
 $(document).ready(function() {
@@ -1196,9 +1211,9 @@ function handleVoucherPayment() {
     `;
 
     // Collect LR data for allocation
-    const lrData = Array.from(checkboxes).map((item, index) => ({
-        lrNumber: item.getAttribute('data-lr'),
-        balance: parseFloat(item.getAttribute('data-balance') || 0)
+    const lrData = Array.from(checkboxes).map(checkbox => ({
+        lrNumber: checkbox.getAttribute('data-lr'),
+        balance: parseFloat(checkbox.getAttribute('data-balance') || 0)
     }));
 
         // Add transporter details section
@@ -1493,6 +1508,7 @@ function handleIndividualVoucherPayment(button) {
                                 </option>
                             @endforeach
                         </select>
+                        <div class="invalid-feedback">Please select a payment type.</div>
                     </div>
                     <div class="col-md-6">
                         <label for="individual_payment_mode" class="form-label">Payment Mode *</label>
@@ -1504,6 +1520,7 @@ function handleIndividualVoucherPayment(button) {
                                 </option>
                             @endforeach
                         </select>
+                        <div class="invalid-feedback">Please select a payment mode.</div>
                     </div>
                 </div>
 
@@ -1783,6 +1800,8 @@ function submitVoucherPayment() {
     // Calculate total amount
     const totalAmount = paymentAmounts.reduce((sum, amount) => sum + amount, 0);
     
+
+    
     if (totalAmount <= 0) {
         alert('Please enter valid payment amounts');
         return;
@@ -1790,14 +1809,18 @@ function submitVoucherPayment() {
     
     // Create form data
     const formData = new FormData();
-    
+//     if (pumpId) {
+//     formData.append('pump_id', pumpId);
+// }
+// formData.append('pump_id', pumpId || null);
+formData.append('pump_id', pumpId || '');
     // Append payment type and mode IDs for backend processing
     formData.append('payment_type_id', paymentTypeValue);
     formData.append('payment_mode_id', paymentModeValue);
     // Also append text values for display if needed
     formData.append('payment_type', paymentType);
     formData.append('payment_mode', paymentMode);
-    formData.append('pump_id', pumpId);
+  
     formData.append('total_amount', totalAmount.toFixed(2));
     formData.append('payment_date', new Date().toISOString().split('T')[0]);
     
@@ -1874,3 +1897,4 @@ function submitVoucherPayment() {
     </script>
 
 @endpush
+

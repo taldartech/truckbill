@@ -675,6 +675,7 @@ function submitVoucherPayment() {
     const paymentMode = paymentModeSelect?.value;
     const referenceId = document.getElementById('referenceId')?.value;
     const remarks = document.getElementById('paymentRemarks')?.value;
+    const pumpId = document.getElementById('pumpName')?.value || null;
     
     // Validate required fields
     if (!paymentType) {
@@ -734,7 +735,8 @@ function submitVoucherPayment() {
         payment_type: paymentType,
         payment_mode: paymentMode,
         reference_number: referenceId,
-        notes: remarks
+        notes: remarks,
+        pump_id: pumpId
     };
     
     // Show loading state
