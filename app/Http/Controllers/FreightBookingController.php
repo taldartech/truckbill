@@ -567,11 +567,11 @@ class FreightBookingController extends Controller
     {
         
         try {
-            $freight_booking = FreightBooking::with(['lr', 'linkedFreightBooking', 'company'])->findOrFail($id);
+            $freightBooking = FreightBooking::with(['lr', 'linkedFreightBooking', 'company'])->findOrFail($id);
             
             // Check if user has access to this freight booking (company-based filtering)
             if (auth()->user()->userRole->name !== 'super_admin' && 
-                $freight_booking->company_id !== auth()->user()->company_id) {
+                $freightBooking->company_id !== auth()->user()->company_id) {
                 abort(403, 'Unauthorized access to freight booking.');
             }
             $pumps = Pump::all();
@@ -585,7 +585,11 @@ class FreightBookingController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->first();
             
-            return view('freight_bookings.show', compact('freight_booking', 'paymentTypes', 'paymentModes', 'existingPayment','pumps'));
+            $payments = \App\Models\VoucherPayment::where('freight_booking_id', $id)
+                ->orderBy('created_at', 'desc')
+                ->get();
+            
+            return view('freight_bookings.show', compact('freightBooking', 'paymentTypes', 'paymentModes', 'existingPayment','pumps','payments'));
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return redirect()->route('freight_bookings.index')
                 ->with('error', 'Freight booking not found.');
@@ -598,17 +602,15 @@ class FreightBookingController extends Controller
     public function edit($id)
     {
         try {
-            $freight_booking = FreightBooking::with(['lr', 'linkedFreightBooking', 'company'])->findOrFail($id);
-            
             // Check if user has access to this freight booking (company-based filtering)
             if (auth()->user()->userRole->name !== 'super_admin' && 
-                $freight_booking->company_id !== auth()->user()->company_id) {
+                $freightBooking->company_id !== auth()->user()->company_id) {
                 abort(403, 'Unauthorized access to freight booking.');
             }
 
             $companies = \App\Models\Company::all();
             // Get the LorryReceipt details
-            $lorryReceipt = LorryReceipt::find($freight_booking->lr_id);
+            $lorryReceipt = LorryReceipt::find($freightBooking->lr_id);
              // Get TDS percentages from config
              $tdsPercentages = [
                 'default' => env('TDS_PERCENTAGE_DEFAULT', 20),
@@ -636,7 +638,7 @@ class FreightBookingController extends Controller
 
         
         // Get linked bookings
-        $linkedBookings = FreightBooking::where('id', '!=', $freight_booking->id)->get();
+        $linkedBookings = FreightBooking::where('id', '!=', $freightBooking->id)->get();
          // If lorry_receipt_id is provided, fetch LR number and related data
          if ($lorryReceipt) {
             $lr = \App\Models\LorryReceipt::find($lorryReceipt->id);
@@ -693,7 +695,7 @@ class FreightBookingController extends Controller
     
                 
                 return view('freight_bookings.edit', [
-                    'freight_booking' => $freight_booking,
+                    'freightBooking' => $freightBooking,
                     'companies' => $companies,
                     'lrs' => $lrs,
                     'linkedBookings' => $linkedBookings,
@@ -723,18 +725,18 @@ class FreightBookingController extends Controller
         }
         
         return view('freight_bookings.edit', [
-            'freight_booking' => $freight_booking,
+            'freightBooking' => $freightBooking,
             'lorry_receipt' => $lrs,
             'linkedBookings' => $linkedBookings,
             'goods_type' => $goodsTypes,
             'transporter' => $transporter,
             'truck' => $truck,
             'preFilled' => [
-                'lr_number' => $freight_booking->lr ? $freight_booking->lr->lr_number : '',
-                'lr_id' => $freight_booking->lr_id,
-                'transporter_id' => $freight_booking->lr ? $freight_booking->lr->transporter_id : '',
+                'lr_number' => $freightBooking->lr ? $freightBooking->lr->lr_number : '',
+                'lr_id' => $freightBooking->lr_id,
+                'transporter_id' => $freightBooking->lr ? $freightBooking->lr->transporter_id : '',
                 'transporter_name' => $transporter ? $transporter->name : '',
-                'truck_id' => $freight_booking->lr ? $freight_booking->lr->truck_id : '',
+                'truck_id' => $freightBooking->lr ? $freightBooking->lr->truck_id : '',
                 'truck_number' => $truck ? $truck->truck_number : '',
                 'pan_verified' => $transporter ? $transporter->pan_active : 0,
                 'is_owner' => $transporter ? $transporter->is_owner : 0,
@@ -776,16 +778,16 @@ class FreightBookingController extends Controller
         return response()->json($truck);
     }
 
-    public function update(Request $request, FreightBooking $freight_booking)
+    public function update(Request $request, FreightBooking $freightBooking)
     {
         // Prevent updates to cancelled freight bookings
-        if ($freight_booking->is_cancelled) {
+        if ($freightBooking->is_cancelled) {
             return redirect()->back()->withErrors(['general' => 'Cannot update a cancelled freight booking. Please contact administrator if changes are needed.']);
         }
 
         // Add debug logging
         \Log::info('Freight booking update started', [
-            'freight_booking_id' => $freight_booking->id,
+            'freight_booking_id' => $freightBooking->id,
             'request_data' => $request->all()
         ]);
        
@@ -836,7 +838,7 @@ class FreightBookingController extends Controller
        
 
         // Update freight booking with lorry receipt's LR number
-        $freight_booking->update(array_merge($data, [
+        $freightBooking->update(array_merge($data, [
             'lr_number' => $lorryReceipt->lr_number
         ]));
 
@@ -848,7 +850,7 @@ class FreightBookingController extends Controller
             $lorryReceipt->refresh();
             
             \Log::info('FREIGHT BOOKING UPDATE: Starting LR status update', [
-                'freight_booking_id' => $freight_booking->id,
+                'freight_booking_id' => $freightBooking->id,
                 'lr_id' => $lorryReceipt->id,
                 'lr_number' => $lorryReceipt->lr_number,
                 'current_memo_id' => $lorryReceipt->memo_id,
@@ -880,9 +882,9 @@ class FreightBookingController extends Controller
             }
             
             $lorryReceipt->delivery_status = $deliveryStatus;
-            $lorryReceipt->damage_amount = $freight_booking->damage_amount;
-            $lorryReceipt->shortage_amount = $freight_booking->shortage_amount;
-            $lorryReceipt->amount = $lorryReceipt->amount-($freight_booking->damage_amount + $freight_booking->shortage_amount);
+            $lorryReceipt->damage_amount = $freightBooking->damage_amount;
+            $lorryReceipt->shortage_amount = $freightBooking->shortage_amount;
+            $lorryReceipt->amount = $lorryReceipt->amount-($freightBooking->damage_amount + $freightBooking->shortage_amount);
             $lorryReceipt->save();
             
             \Log::info('FREIGHT BOOKING UPDATE: Final LR state after save', [

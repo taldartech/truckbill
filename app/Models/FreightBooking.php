@@ -84,4 +84,9 @@ class FreightBooking extends Model
     {
         return $this->hasMany(VoucherPayment::class, 'freight_booking_id');
     }
+
+    public function payments()
+    {
+        return $this->hasMany(\App\Models\VoucherPayment::class, 'freight_booking_id');
+    }
 }

@@ -45,7 +45,7 @@
 }
 </style>
 
-@if($freight_booking->is_cancelled)
+@if($freightBooking->is_cancelled)
 <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="max-width: 1200px; margin: 0 auto;">
     <div class="d-flex align-items-center">
         <i class="fas fa-times-circle fa-2x me-3"></i>
@@ -59,21 +59,21 @@
 </div>
 @endif
 
-<div class="card {{ $freight_booking->is_cancelled ? 'border-danger' : 'card-info' }} card-outline mb-4" style="max-width: 1200px; margin: 0 auto; {{ $freight_booking->is_cancelled ? 'opacity: 0.8;' : '' }}">
+<div class="card {{ $freightBooking->is_cancelled ? 'border-danger' : 'card-info' }} card-outline mb-4" style="max-width: 1200px; margin: 0 auto; {{ $freightBooking->is_cancelled ? 'opacity: 0.8;' : '' }}">
     <!--begin::Header-->
-    <div class="card-header d-flex justify-content-between align-items-center {{ $freight_booking->is_cancelled ? 'bg-danger-subtle' : '' }}">
+    <div class="card-header d-flex justify-content-between align-items-center {{ $freightBooking->is_cancelled ? 'bg-danger-subtle' : '' }}">
         <div class="card-title h4">
-            Freight Booking Details - #{{ $freight_booking->id }}
-            @if($freight_booking->is_cancelled)
+            Freight Booking Details - #{{ $freightBooking->id }}
+            @if($freightBooking->is_cancelled)
                 <span class="badge bg-danger ms-2">
                     <i class="fas fa-times-circle"></i> CANCELLED
                 </span>
             @endif
         </div>
         <div class="card-toolbar">
-            @if(!$freight_booking->is_cancelled)
-                @if($freight_booking->balance_amount > 0)
-                    <button type="button" class="btn btn-sm btn-success me-2" onclick="openVoucherPaymentModal({{ $freight_booking->id }})">
+            @if(!$freightBooking->is_cancelled)
+                @if($freightBooking->balance_amount > 0)
+                    <button type="button" class="btn btn-sm btn-success me-2" onclick="openVoucherPaymentModal({{ $freightBooking->id }})">
                         <i class="bi bi-credit-card"></i> Voucher Payment
                     </button>
                 @else
@@ -81,7 +81,7 @@
                         <i class="bi bi-credit-card"></i> Voucher Payment
                     </button>
                 @endif
-                <a href="{{ route('freight_bookings.edit', $freight_booking->id) }}" class="btn btn-sm btn-primary me-2">
+                <a href="{{ route('freight_bookings.edit', $freightBooking->id) }}" class="btn btn-sm btn-primary me-2">
                     <i class="bi bi-pencil"></i> Edit
                 </a>
             @else
@@ -101,7 +101,7 @@
     
     <!--begin::Body-->
     <div class="card-body">
-        @if($freight_booking->lr)
+        @if($freightBooking->lr)
         <div class="row">
             <div class="col-12">
                 <div class="info-card card">
@@ -113,45 +113,45 @@
                             <div class="col-md-4">
                                 <div class="info-row">
                                     <span class="info-label">Customer:</span>
-                                    <span class="info-value">{{ $freight_booking->lr->customer ? $freight_booking->lr->customer->name : 'N/A' }}</span>
+                                    <span class="info-value">{{ $freightBooking->lr->customer ? $freightBooking->lr->customer->name : 'N/A' }}</span>
                                 </div>
                                 <div class="info-row">
                                     <span class="info-label">Consignor:</span>
-                                    <span class="info-value">{{ $freight_booking->lr->consignor ? $freight_booking->lr->consignor->name : 'N/A' }}</span>
+                                    <span class="info-value">{{ $freightBooking->lr->consignor ? $freightBooking->lr->consignor->name : 'N/A' }}</span>
                                 </div>
                                 <div class="info-row">
                                     <span class="info-label">Consignee:</span>
-                                    <span class="info-value">{{ $freight_booking->lr->consignee ? $freight_booking->lr->consignee->name : 'N/A' }}</span>
+                                    <span class="info-value">{{ $freightBooking->lr->consignee ? $freightBooking->lr->consignee->name : 'N/A' }}</span>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="info-row">
                                     <span class="info-label">Source City:</span>
-                                    <span class="info-value">{{ $freight_booking->lr->source_city ?? 'N/A' }}</span>
+                                    <span class="info-value">{{ $freightBooking->lr->source_city ?? 'N/A' }}</span>
                                 </div>
                                 <div class="info-row">
                                     <span class="info-label">Destination City:</span>
-                                    <span class="info-value">{{ $freight_booking->lr->destination_city ?? 'N/A' }}</span>
+                                    <span class="info-value">{{ $freightBooking->lr->destination_city ?? 'N/A' }}</span>
                                 </div>
                                 <div class="info-row">
                                     <span class="info-label">Weight:</span>
-                                    <span class="info-value">{{ $freight_booking->lr->weight ?? 'N/A' }} kg</span>
+                                    <span class="info-value">{{ $freightBooking->lr->weight ?? 'N/A' }} kg</span>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="info-row">
                                     <span class="info-label">Truck Number:</span>
-                                    <span class="info-value">{{ $freight_booking->lr->truck ? $freight_booking->lr->truck->truck_number : 'N/A' }}</span>
+                                    <span class="info-value">{{ $freightBooking->lr->truck ? $freightBooking->lr->truck->truck_number : 'N/A' }}</span>
                                 </div>
                                 <div class="info-row">
                                     <span class="info-label">Transporter:</span>
-                                    <span class="info-value">{{ $freight_booking->lr->transporter ? $freight_booking->lr->transporter->name : 'N/A' }}</span>
+                                    <span class="info-value">{{ $freightBooking->lr->transporter ? $freightBooking->lr->transporter->name : 'N/A' }}</span>
                                 </div>
                                 <div class="info-row">
                                     <span class="info-label">Delivery Status:</span>
                                     <span class="info-value">
                                         @php
-                                            $status = $freight_booking->lr->delivery_status ?? 'Pending';
+                                            $status = $freightBooking->lr->delivery_status ?? 'Pending';
                                             $badgeClass = match($status) {
                                                 'Delivered' => 'bg-success',
                                                 'Cancelled' => 'bg-danger',
@@ -180,20 +180,20 @@
                        
                         <div class="info-row">
                             <span class="info-label">LR Number:</span>
-                            <span class="info-value">{{ $freight_booking->lr ? $freight_booking->lr->lr_number : 'N/A' }}</span>
+                            <span class="info-value">{{ $freightBooking->lr ? $freightBooking->lr->lr_number : 'N/A' }}</span>
                         </div>
                       
                         <div class="info-row">
                             <span class="info-label">GR Date:</span>
-                            <span class="info-value">{{ $freight_booking->lr && $freight_booking->lr->gr_date ? date('d-m-Y', strtotime($freight_booking->lr->gr_date)) : 'N/A' }}</span>
+                            <span class="info-value">{{ $freightBooking->lr && $freightBooking->lr->gr_date ? date('d-m-Y', strtotime($freightBooking->lr->gr_date)) : 'N/A' }}</span>
                         </div>
                         <div class="info-row">
                             <span class="info-label">E-way Bill:</span>
-                            <span class="info-value">{{ $freight_booking->eway_bill_number ?? 'N/A' }}</span>
+                            <span class="info-value">{{ $freightBooking->eway_bill_number ?? 'N/A' }}</span>
                         </div>
                         <div class="info-row">
                             <span class="info-label">Good Type:</span>
-                            <span class="info-value">{{ $freight_booking->good_type ?? 'N/A' }}</span>
+                            <span class="info-value">{{ $freightBooking->good_type ?? 'N/A' }}</span>
                         </div>
                     </div>
                 </div>
@@ -208,19 +208,19 @@
                     <div class="card-body">
                         <div class="info-row">
                             <span class="info-label">TR Rate:</span>
-                            <span class="info-value">₹{{ number_format($freight_booking->tr_fr_rate ?? 0, 2) }}</span>
+                            <span class="info-value">₹{{ number_format($freightBooking->tr_fr_rate ?? 0, 2) }}</span>
                         </div>
                         <div class="info-row">
                             <span class="info-label">TR Amount:</span>
-                            <span class="info-value">₹{{ number_format($freight_booking->tr_amount ?? 0, 2) }}</span>
+                            <span class="info-value">₹{{ number_format($freightBooking->tr_amount ?? 0, 2) }}</span>
                         </div>
                         <div class="info-row">
                             <span class="info-label">Advance:</span>
-                            <span class="info-value">₹{{ number_format($freight_booking->advance_amount ?? 0, 2) }}</span>
+                            <span class="info-value">₹{{ number_format($freightBooking->advance_amount ?? 0, 2) }}</span>
                         </div>
                         <div class="info-row">
                             <span class="info-label">TDS Amount:</span>
-                            <span class="info-value">₹{{ number_format($freight_booking->tds_amount ?? 0, 2) }}</span>
+                            <span class="info-value">₹{{ number_format($freightBooking->tds_amount ?? 0, 2) }}</span>
                         </div>
                         <div class="info-row">
                             <span class="info-label">Balance:</span>
@@ -229,7 +229,7 @@
                                
                                 $badgeClass = 'bg-success';
                             @endphp
-                            <span class="badge {{ $badgeClass }} badge-status">₹{{ number_format($freight_booking->balance_amount ?? 0, 2) }}</span>
+                            <span class="badge {{ $badgeClass }} badge-status">₹{{ number_format($freightBooking->balance_amount ?? 0, 2) }}</span>
                             </span>
                         </div>
                        
@@ -249,7 +249,7 @@
                         <div class="info-row">
                             <span class="info-label">Delivered:</span>
                             <span class="info-value">
-                                @if($freight_booking->is_delivered)
+                                @if($freightBooking->is_delivered)
                                     <span class="badge bg-success badge-status">Yes</span>
                                 @else
                                     <span class="badge bg-warning badge-status">No</span>
@@ -259,7 +259,7 @@
                         <div class="info-row">
                             <span class="info-label">Cancelled:</span>
                             <span class="info-value">
-                                @if($freight_booking->is_cancelled)
+                                @if($freightBooking->is_cancelled)
                                     <span class="badge bg-danger badge-status">Yes</span>
                                 @else
                                     <span class="badge bg-secondary badge-status">No</span>
@@ -269,7 +269,7 @@
                         <div class="info-row">
                             <span class="info-label">PAN Verified:</span>
                             <span class="info-value">
-                                @if($freight_booking->pan_verified)
+                                @if($freightBooking->pan_verified)
                                     <span class="badge bg-success badge-status">Yes</span>
                                 @else
                                     <span class="badge bg-warning badge-status">No</span>
@@ -290,15 +290,15 @@
                        
                         <div class="info-row">
                             <span class="info-label">Remark:</span>
-                            <span class="info-value">{{ $freight_booking->remark ?? 'N/A' }}</span>
+                            <span class="info-value">{{ $freightBooking->remark ?? 'N/A' }}</span>
                         </div>
                         <div class="info-row">
                             <span class="info-label">Created:</span>
-                            <span class="info-value">{{ $freight_booking->created_at ? $freight_booking->created_at->format('d-m-Y H:i') : 'N/A' }}</span>
+                            <span class="info-value">{{ $freightBooking->created_at ? $freightBooking->created_at->format('d-m-Y H:i') : 'N/A' }}</span>
                         </div>
                         <div class="info-row">
                             <span class="info-label">Updated:</span>
-                            <span class="info-value">{{ $freight_booking->updated_at ? $freight_booking->updated_at->format('d-m-Y H:i') : 'N/A' }}</span>
+                            <span class="info-value">{{ $freightBooking->updated_at ? $freightBooking->updated_at->format('d-m-Y H:i') : 'N/A' }}</span>
                         </div>
                     </div>
                 </div>
@@ -306,7 +306,7 @@
         </div>
 
         <!-- Additional Charges Section -->
-        @if($freight_booking->is_delivered)
+        @if($freightBooking->is_delivered)
         <div class="row">
             <div class="col-12">
                 <div class="info-card card">
@@ -319,23 +319,23 @@
                                 <div class="d-flex flex-wrap">
                                     <div class="me-4 mb-2">
                                         <span class="info-label">Detention: </span>
-                                        <span class="fw-bold">₹{{ number_format($freight_booking->detention ?? 0, 2) }}</span>
+                                        <span class="fw-bold">₹{{ number_format($freightBooking->detention ?? 0, 2) }}</span>
                                     </div>
                                     <div class="me-4 mb-2">
                                         <span class="info-label">Deviation: </span>
-                                        <span class="fw-bold">₹{{ number_format($freight_booking->deviation ?? 0, 2) }}</span>
+                                        <span class="fw-bold">₹{{ number_format($freightBooking->deviation ?? 0, 2) }}</span>
                                     </div>
                                     <div class="me-4 mb-2">
                                         <span class="info-label">Misc. Expense: </span>
-                                        <span class="fw-bold">₹{{ number_format($freight_booking->misc_expense ?? 0, 2) }}</span>
+                                        <span class="fw-bold">₹{{ number_format($freightBooking->misc_expense ?? 0, 2) }}</span>
                                     </div>
                                     <div class="me-4 mb-2">
                                         <span class="info-label">Damage Amount: </span>
-                                        <span class="fw-bold">₹{{ number_format($freight_booking->damage_amount ?? 0, 2) }}</span>
+                                        <span class="fw-bold">₹{{ number_format($freightBooking->damage_amount ?? 0, 2) }}</span>
                                     </div>
                                     <div class="me-4 mb-2">
                                         <span class="info-label">Shortage Amount: </span>
-                                        <span class="fw-bold">₹{{ number_format($freight_booking->shortage_amount ?? 0, 2) }}</span>
+                                        <span class="fw-bold">₹{{ number_format($freightBooking->shortage_amount ?? 0, 2) }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -356,7 +356,7 @@
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="voucherPaymentModalLabel">Voucher Payment - FR #{{ $freight_booking->id }}</h5>
+                <h5 class="modal-title" id="voucherPaymentModalLabel">Voucher Payment - FR #{{ $freightBooking->id }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -379,19 +379,19 @@
                             <div class="row">
                                 <div class="col-md-3">
                                     <strong>FB Transporter:</strong><br>
-                                    <span id="fbTransporter">{{ $freight_booking->transporter_name ?? ($freight_booking->transporter ? $freight_booking->transporter->name : 'N/A') }}</span>
+                                    <span id="fbTransporter">{{ $freightBooking->transporter_name ?? ($freightBooking->transporter ? $freightBooking->transporter->name : 'N/A') }}</span>
                                 </div>
                                 <div class="col-md-3">
                                     <strong>LR Transporter:</strong><br>
-                                    <span id="lrTransporter">{{ $freight_booking->lr && $freight_booking->lr->transporter ? $freight_booking->lr->transporter->name : 'N/A' }}</span>
+                                    <span id="lrTransporter">{{ $freightBooking->lr && $freightBooking->lr->transporter ? $freightBooking->lr->transporter->name : 'N/A' }}</span>
                                 </div>
                                 <div class="col-md-3">
                                     <strong>TDS Percentage:</strong><br>
-                                    <span id="tdsPercentage">{{ $freight_booking->transporter_tds_percentage ? $freight_booking->transporter_tds_percentage . '%' : 'N/A' }}</span>
+                                    <span id="tdsPercentage">{{ $freightBooking->transporter_tds_percentage ? $freightBooking->transporter_tds_percentage . '%' : 'N/A' }}</span>
                                 </div>
                                 <div class="col-md-3">
                                     <strong>Truck Number:</strong><br>
-                                    <span id="truckNumber">{{ $freight_booking->lr && $freight_booking->lr->truck ? $freight_booking->lr->truck->truck_number : 'N/A' }}</span>
+                                    <span id="truckNumber">{{ $freightBooking->lr && $freightBooking->lr->truck ? $freightBooking->lr->truck->truck_number : 'N/A' }}</span>
                                 </div>
                             </div>
                         </div>
@@ -411,14 +411,14 @@
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td>#{{ $freight_booking->id }}</td>
-                                            <td>{{ $freight_booking->lr ? $freight_booking->lr->lr_number : 'N/A' }}</td>
-                                            <td>₹{{ number_format($freight_booking->balance_amount ?? 0, 2) }}</td>
+                                            <td>#{{ $freightBooking->id }}</td>
+                                            <td>{{ $freightBooking->lr ? $freightBooking->lr->lr_number : 'N/A' }}</td>
+                                            <td>₹{{ number_format($freightBooking->balance_amount ?? 0, 2) }}</td>
                                             <td>
                                                 <input type="number" class="form-control allocated-input" 
-                                                       data-fb-id="{{ $freight_booking->id }}" 
+                                                       data-fb-id="{{ $freightBooking->id }}" 
                                                        step="0.01" min="0.01" 
-                                                       max="{{ $freight_booking->balance_amount ?? 0 }}"
+                                                       max="{{ $freightBooking->balance_amount ?? 0 }}"
                                                        oninput="validatePaymentAmount(this)"
                                                        onchange="updateTotalPayment()">
                                             </td>
@@ -774,6 +774,7 @@ function submitVoucherPayment() {
     });
 }
 </script>
+<<<<<<< HEAD
 <script>
     function togglePumpName() {
         const paymentModeDropdown = document.getElementById("paymentMode");
@@ -806,4 +807,56 @@ function submitVoucherPayment() {
     });
     </script>
     
+=======
+
+<!-- Payment History Section -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5>Payment History</h5>
+    </div>
+    <div class="card-body">
+        @if($payments->count() > 0)
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Voucher</th>
+                    <th>Amount</th>
+                    <th>Payment Type</th>
+                    <th>Payment Mode</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($payments as $payment)
+                <tr>
+                    <td>{{ $payment->voucher_number ?? 'N/A' }}</td>
+                    <td>₹{{ number_format($payment->amount, 2) }}</td>
+                    <td>{{ $payment->payment_type ?? 'N/A' }}</td>
+                    <td>{{ $payment->payment_mode ?? 'N/A' }}</td>
+                    <td>{{ $payment->created_at ? \Carbon\Carbon::parse($payment->created_at)->format('d-m-Y') : 'N/A' }}</td>
+                    <td>
+                        @if($payment->payment_status === 'paid')
+                            <span class="badge bg-success">Paid</span>
+                        @elseif($payment->payment_status === 'pending')
+                            <span class="badge bg-warning">Pending</span>
+                        @elseif($payment->payment_status === 'in progress')
+                            <span class="badge bg-info">In Progress</span>
+                        @else
+                            <span class="badge bg-secondary">Unknown</span>
+                        @endif
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+        @else
+        <div class="alert alert-info">
+            No payment history found.
+        </div>
+        @endif
+    </div>
+</div>
+
+>>>>>>> b6c8064 (added payment history on FR show)
 @endsection
