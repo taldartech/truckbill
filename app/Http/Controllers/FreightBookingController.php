@@ -56,7 +56,16 @@ class FreightBookingController extends Controller
             $query->where(function($q) use ($search) {
                 $q->where('voucher_number', 'LIKE', "%{$search}%")
                   ->orWhereHas('lr', function($lrQuery) use ($search) {
-                      $lrQuery->where('lr_number', 'LIKE', "%{$search}%");
+                      $lrQuery->where('lr_number', 'LIKE', "%{$search}%")
+                             ->orWhere('source_city', 'LIKE', "%{$search}%")
+                             ->orWhere('destination_city', 'LIKE', "%{$search}%")
+                             ->orWhereHas('truck', function($truckQuery) use ($search) {
+                                 $truckQuery->where('truck_number', 'LIKE', "%{$search}%");
+                             })
+                             ->orWhereHas('transporter', function($transporterQuery) use ($search) {
+                                 $transporterQuery->where('name', 'LIKE', "%{$search}%")
+                                                 ->orWhere('short_name', 'LIKE', "%{$search}%");
+                             });
                   });
             });
         }

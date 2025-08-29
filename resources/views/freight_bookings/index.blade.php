@@ -65,9 +65,9 @@
                 <form method="GET" action="{{ route('freight_bookings.index') }}" id="searchForm">
                     <div class="row g-3">
                         <!-- Search Input -->
-                        <div class="col-md-3">
-                            <label class="form-label">Search</label>
-                            <input type="text" class="form-control" name="search" value="{{ request('search') }}" placeholder="LR Number, Voucher No...">
+                        <div class="col-md-5">
+                            <label class="form-label">Search By LR, Truck, Srouce or Destination City & Transporter</label>
+                            <input type="text" class="form-control" name="search" value="{{ request('search') }}" placeholder="LR , Truck, City & Transporter...">
                         </div>
                         
                         <!-- Date Range -->
@@ -80,31 +80,6 @@
                             <input type="date" class="form-control" name="end_date" value="{{ $endDate }}" max="{{ date('Y-m-d') }}">
                         </div>
                         
-                        <!-- Transporter Filter -->
-                        <div class="col-md-2">
-                            <label class="form-label">Transporter</label>
-                            <select class="form-select" name="transporter_id">
-                                <option value="">All Transporters</option>
-                                @foreach($transporters as $transporter)
-                                    <option value="{{ $transporter->id }}" {{ request('transporter_id') == $transporter->id ? 'selected' : '' }}>
-                                        {{ $transporter->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        
-                        <!-- Truck Owner Filter -->
-                        <div class="col-md-2">
-                            <label class="form-label">Truck Owner</label>
-                            <select class="form-select" name="truck_owner_id">
-                                <option value="">All Owners</option>
-                                @foreach($truckOwners as $owner)
-                                    <option value="{{ $owner->id }}" {{ request('truck_owner_id') == $owner->id ? 'selected' : '' }}>
-                                        {{ $owner->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
                         
                         <!-- Buttons -->
                         <div class="col-md-1 d-flex align-items-end">
@@ -149,7 +124,6 @@
                             <th class="text-center">GR Date</th>
 
                             <th>LR No</th>
-                            <th>Transporter</th>
                             <th>Short Name</th>
                             <th>Truck No</th>
                             <th>Source City</th>
@@ -172,7 +146,6 @@
                                                data-lr-id="{{ $booking->lr ? $booking->lr->id : '' }}"
                                                data-truck="{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->truck_number : '' }}" 
                                                data-truck-id="{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->id : '' }}"
-                                               data-transporter-id="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->id : '' }}"
                                                data-balance="{{ $booking->balance_amount ?? 0 }}" 
                                                data-voucher_number="{{ $booking->voucher_number ?? '' }}"
                                                data-freight-booking-id="{{ $booking->id }}"
@@ -189,22 +162,11 @@
                                 <td class="text-center">{{ $booking->lr && $booking->lr->gr_date ? date('d-m-Y', strtotime($booking->lr->gr_date)) : '-' }}</td>
                                  <td>{{ $booking->lr ? $booking->lr->lr_number : '-' }}</td>
                                 <td>
-                                    @php
-                                        $transporterName = $booking->transporter_name ?? ($booking->transporter ? $booking->transporter->name : '-');
-                                        $badge = '';
-                                        
-                                        if ($booking->transporter && $booking->transporter->is_owner) {
-                                            $badge = '<span class="badge bg-success ms-1" title="Truck Owner"><i class="bi bi-truck"></i></span>';
-                                        } else {
-                                            $badge = '<span class="badge bg-info ms-1" title="Agency"><i class="bi bi-building"></i></span>';
-                                        }
-                                    @endphp
-                                    {!! $transporterName . ' ' . $badge !!}
-                                </td>
-                                <td>@php 
+                                @php 
                                 $shortName = $booking->transporter_name ? $booking->transporter->short_name : '-';
                                 @endphp
-                                {!! $shortName !!}</td>
+                                {!! $shortName !!}
+                                </td>
                                 <td>{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->truck_number : '-' }}</td>
                                 <td>{{ $booking->lr && $booking->lr->source_city ? $booking->lr->source_city : '-' }}</td>
                                 <td>{{ $booking->lr && $booking->lr->destination_city ? $booking->lr->destination_city : '-' }}</td>
@@ -266,7 +228,6 @@
                     </div>
                 </div>
             </div>
-        </div>
         
     </div>
 </div>
@@ -1235,9 +1196,9 @@ function handleVoucherPayment() {
     `;
 
     // Collect LR data for allocation
-    const lrData = Array.from(checkboxes).map(checkbox => ({
-        lrNumber: checkbox.getAttribute('data-lr'),
-        balance: parseFloat(checkbox.getAttribute('data-balance') || 0)
+    const lrData = Array.from(checkboxes).map((item, index) => ({
+        lrNumber: item.getAttribute('data-lr'),
+        balance: parseFloat(item.getAttribute('data-balance') || 0)
     }));
 
         // Add transporter details section
@@ -1520,7 +1481,6 @@ function handleIndividualVoucherPayment(button) {
                                 </option>
                             @endforeach
                         </select>
-                        <div class="invalid-feedback">Please select a payment type.</div>
                     </div>
                     <div class="col-md-6">
                         <label for="individual_payment_mode" class="form-label">Payment Mode *</label>
@@ -1532,7 +1492,6 @@ function handleIndividualVoucherPayment(button) {
                                 </option>
                             @endforeach
                         </select>
-                        <div class="invalid-feedback">Please select a payment mode.</div>
                     </div>
                 </div>
 
@@ -1885,5 +1844,3 @@ function submitVoucherPayment() {
 </script>
 
 @endpush
-
-
