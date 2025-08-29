@@ -1283,7 +1283,7 @@ function handleVoucherPayment() {
                     <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">
                         <input type="number" step="0.01" min="0" max="${item.balance}" 
                                style="width: 80px; text-align: right; border: 1px solid #ccc; padding: 2px;" 
-                               class="allocated-input" data-lr="${item.lrNumber}" data-advance="${item.advance_amount}" 
+                               class="allocated-input" data-lr="${item.lrNumber}" 
                                onchange="updateTotalPayment()" value="${item.balance.toFixed(2)}">
                     </td>
                 </tr>
@@ -1872,28 +1872,5 @@ function submitVoucherPayment() {
         }
     });
     </script>
-    <script>
-        document.addEventListener("change", function(e) {
-            if (e.target && e.target.id === "paymentMode") {
-                const selectedText = e.target.options[e.target.selectedIndex].text.toLowerCase();
-                const allocatedInputs = document.querySelectorAll(".allocated-input");
-        
-                allocatedInputs.forEach(input => {
-                    input.addEventListener("input", function() {
-                        if (selectedText.includes("adjust in advance")) {
-                            const advanceAmount = parseFloat(input.dataset.advance || 0);
-                            const enteredValue = parseFloat(input.value) || 0;
-        
-                            if (enteredValue > advanceAmount) {
-                                alert(`Cannot adjust in advance. Entered ₹${enteredValue.toFixed(2)} is greater than available advance ₹${advanceAmount.toFixed(2)}.`);
-                                input.value = advanceAmount.toFixed(2); // reset to max allowed
-                            }
-                        }
-                    });
-                });
-            }
-        });
-        </script>
-        
 
 @endpush

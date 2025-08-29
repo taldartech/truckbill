@@ -427,7 +427,7 @@
                                 </table>
                             </div>
                             <div class="text-end mt-2">
-                                <strong>Total Payment Amount: ₹<span id="totalPaymentAmount">0.00</span></strong>
+                                <strong>Total Payment Amount: ₹<span id="totalPaymentAmount" >0.00</span></strong>
                             </div>
                         </div>
 

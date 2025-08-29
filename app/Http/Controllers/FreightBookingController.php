@@ -982,21 +982,67 @@ class FreightBookingController extends Controller
                     ]);
                     
                     // Update freight booking balance
-                    $newadvance_amount = $freightBooking->advance_amount + $amount;
-                    $newBalance = max(0, $freightBooking->balance_amount - $amount);
-                    $freightBooking->update([
-                        'balance_amount' => $newBalance,
-                        'advance_amount' => $newadvance_amount
-                    ]);
-                    
+                    // $newadvance_amount = $freightBooking->advance_amount + $amount;
+                    // $newBalance = max(0, $freightBooking->balance_amount - $amount);
+                    // $freightBooking->update([
+                    //     'balance_amount' => $newBalance,
+                    //     'advance_amount' => $newadvance_amount
+                    // ]);
+                    // Update freight booking balance / transporter advance
+if (strtolower($paymentMode->name) === 'adjust in advance') {
+    // make sure transporter exists for this booking
+    $transporter = \App\Models\Transporter::find($freightBooking->transporter_id);
+
+    if (!$transporter) {
+        throw new \Exception("Transporter not found for booking ID {$bookingId}");
+    }
+
+    if ($amount > $transporter->advance_amount) {
+        throw new \Exception("Allocated amount ₹{$amount} cannot exceed transporter available advance ₹{$transporter->advance_amount}");
+    }
+
+    // reduce from transporter advance
+    $newTransporterAdvance = $transporter->advance_amount - $amount;
+    $transporter->update([
+        'advance_amount' => $newTransporterAdvance
+    ]);
+
+    // update only balance in freight booking
+    $newBalance = max(0, $freightBooking->balance_amount - $amount);
+    $freightBooking->update([
+        'balance_amount' => $newBalance
+    ]);
+
+    \Log::info('Adjusted from transporter advance', [
+        'transporter_id' => $transporter->id,
+        'old_advance' => $transporter->getOriginal('advance_amount'),
+        'deducted' => $amount,
+        'new_advance' => $newTransporterAdvance,
+        'booking_id' => $bookingId,
+        'new_balance' => $newBalance
+    ]);
+
+} else {
+    // normal payment flow (cash, bank, fuel, etc.)
+    $newAdvanceAmount = $freightBooking->advance_amount + $amount;
+    $newBalance = max(0, $freightBooking->balance_amount - $amount);
+
+    $freightBooking->update([
+        'balance_amount' => $newBalance,
+        'advance_amount' => $newAdvanceAmount
+    ]);
+
+    \Log::info('Processed normal payment for booking', [
+        'booking_id' => $bookingId,
+        'amount' => $amount,
+        'new_balance' => $newBalance,
+        'new_advance_amount' => $newAdvanceAmount
+    ]);
+}
+
                     $processedPayments[] = $voucherPayment->id;
                     
-                    \Log::info('Processed payment for booking', [
-                        'booking_id' => $bookingId,
-                        'amount' => $amount,
-                        'new_balance' => $newBalance,
-                        'new_advance_amount' => $newadvance_amount
-                    ]);
+                   
                 }
             }
             
