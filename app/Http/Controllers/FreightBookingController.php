@@ -29,9 +29,9 @@ class FreightBookingController extends Controller
             $query->where('freight_bookings.company_id', auth()->user()->company_id);
         }
 
-        // Default date range: last 7 days
-        $endDate = now()->format('Y-m-d');
-        $startDate = now()->subDays(7)->format('Y-m-d');
+        // Default date range: last 15 days
+        $endDate = $request->input('end_date', date('Y-m-d'));
+        $startDate = $request->input('start_date', date('Y-m-d', strtotime('-15 days')));
         
         // Apply date range filter if provided
         if ($request->filled('start_date')) {
