@@ -774,7 +774,7 @@ function submitVoucherPayment() {
     });
 }
 </script>
-<<<<<<< HEAD
+
 <script>
     function togglePumpName() {
         const paymentModeDropdown = document.getElementById("paymentMode");
@@ -807,7 +807,6 @@ function submitVoucherPayment() {
     });
     </script>
     
-=======
 
 <!-- Payment History Section -->
 <div class="card mt-4">
@@ -858,5 +857,4 @@ function submitVoucherPayment() {
     </div>
 </div>
 
->>>>>>> b6c8064 (added payment history on FR show)
 @endsection
