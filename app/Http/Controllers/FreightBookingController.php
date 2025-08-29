@@ -32,9 +32,9 @@ class FreightBookingController extends Controller
             $query->where('freight_bookings.company_id', auth()->user()->company_id);
         }
 
-        // Default date range: last 7 days
-        $endDate = now()->format('Y-m-d');
-        $startDate = now()->subDays(7)->format('Y-m-d');
+        // Default date range: last 15 days
+        $endDate = $request->input('end_date', date('Y-m-d'));
+        $startDate = $request->input('start_date', date('Y-m-d', strtotime('-15 days')));
         
         // Apply date range filter if provided
         if ($request->filled('start_date')) {
@@ -59,7 +59,16 @@ class FreightBookingController extends Controller
             $query->where(function($q) use ($search) {
                 $q->where('voucher_number', 'LIKE', "%{$search}%")
                   ->orWhereHas('lr', function($lrQuery) use ($search) {
-                      $lrQuery->where('lr_number', 'LIKE', "%{$search}%");
+                      $lrQuery->where('lr_number', 'LIKE', "%{$search}%")
+                             ->orWhere('source_city', 'LIKE', "%{$search}%")
+                             ->orWhere('destination_city', 'LIKE', "%{$search}%")
+                             ->orWhereHas('truck', function($truckQuery) use ($search) {
+                                 $truckQuery->where('truck_number', 'LIKE', "%{$search}%");
+                             })
+                             ->orWhereHas('transporter', function($transporterQuery) use ($search) {
+                                 $transporterQuery->where('name', 'LIKE', "%{$search}%")
+                                                 ->orWhere('short_name', 'LIKE', "%{$search}%");
+                             });
                   });
             });
         }
