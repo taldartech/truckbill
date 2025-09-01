@@ -1265,6 +1265,31 @@ if (strtolower($paymentMode->name) === 'adjust in advance') {
                 'freight_booking_ids.*' => 'required|integer|exists:freight_bookings,id'
             ]);
 
+            $customers = \App\Models\LorryReceipt::whereIn('id', $validated['lr_ids'])
+            ->pluck('customer_id')
+            ->unique();
+        
+        // ❌ If multiple customers found → return with warning
+        if ($customers->count() > 1) {
+            return redirect()->back()
+                ->with('warning', 'Selected Lorry Receipts belong to different customers. Please select LRs of the same customer only.')
+                ->withInput();
+        }
+        
+        $customerId = $customers->first();
+        
+        // ✅ Check globally if this memo_id is already linked to a different customer
+        $conflict = \App\Models\LorryReceipt::where('memo_id', $validated['memo_id'])
+            ->where('customer_id', '!=', $customerId)
+            ->exists();
+        
+        if ($conflict) {
+            return redirect()->back()
+                ->with('warning', 'This Memo ID is already used by another customer.')
+                ->withInput();
+        }
+
+
             \DB::transaction(function () use ($validated) {
                 // Update memo_id and delivery_status for lorry receipts
                 \App\Models\LorryReceipt::whereIn('id', $validated['lr_ids'])

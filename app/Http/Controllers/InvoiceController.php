@@ -215,6 +215,10 @@ public function getCustomerMemos($customerId)
          
             
             'memo_ids.*' => 'exists:lorry_receipts,memo_id',
+            'net_amount' => 'nullable|numeric|min:0',
+            'sgst' => 'nullable|numeric|min:0',
+            'cgst' => 'nullable|numeric|min:0',
+            'igst' => 'nullable|numeric|min:0',
         ]);
         $data['payment_status'] = 'pending';
         $data['company_id'] = auth()->user()->company_id;
@@ -307,6 +311,10 @@ public function getCustomerMemos($customerId)
             'payment_status' => 'required|in:pending,partial,paid',
             'memo_ids' => 'nullable|array',
             'memo_ids.*' => 'exists:lorry_receipts,memo_id',
+            'net_amount' => 'nullable|numeric|min:0',
+            'sgst' => 'nullable|numeric|min:0',
+            'cgst' => 'nullable|numeric|min:0',
+            'igst' => 'nullable|numeric|min:0',
         ]);
         
         // Handle memo_ids separately since it's not a direct column

@@ -605,6 +605,9 @@ class LorryReceiptController extends Controller
             'transporter_type' => 'nullable|in:owner,agency',
         ]);
 
+
+
+
         // Check if consignor and consignee are the same
         if ($validated['consignor_id'] === $validated['consignee_id']) {
             return redirect()->back()->withErrors([
@@ -612,6 +615,32 @@ class LorryReceiptController extends Controller
                 'consignee_id' => 'Consignor and Consignee cannot be the same.'
             ])->withInput();
         }
+
+
+        $customers = \App\Models\LorryReceipt::whereIn('id', $validated['lr_ids'])
+    ->pluck('customer_id')
+    ->unique();
+
+// ❌ If multiple customers found → return with warning
+if ($customers->count() > 1) {
+    return redirect()->back()
+        ->with('warning', 'Selected Lorry Receipts belong to different customers. Please select LRs of the same customer only.')
+        ->withInput();
+}
+
+$customerId = $customers->first();
+
+// ✅ Check globally if this memo_id is already linked to a different customer
+$conflict = \App\Models\LorryReceipt::where('memo_id', $validated['memo_id'])
+    ->where('customer_id', '!=', $customerId)
+    ->exists();
+
+if ($conflict) {
+    return redirect()->back()
+        ->with('warning', 'This Memo ID is already used by another customer.')
+        ->withInput();
+}
+
 
         // Set truck_id to null if not provided
         $validated['truck_id'] = $validated['truck_id'] ?? null;

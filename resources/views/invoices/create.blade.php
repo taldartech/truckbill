@@ -60,7 +60,7 @@
                                     <strong>Customer:</strong> <span id="selectedCustomerName"></span>
                                 </div>
                                 <div class="col-md-6">
-                                    <strong>Location:</strong> <span id="selectedLocation"></span>
+                                    <strong>Location:</strong> <span id="selectedLocation" name="location"></span>
                                 </div>
                                 <div class="col-md-6">
                                     <strong>Memo(s):</strong> <span id="selectedMemoIds"></span>
@@ -161,6 +161,11 @@
                     </div>
                 </div>
             </div>
+            <input type="hidden" name="sgst" id="sgstInput" value="0">
+<input type="hidden" name="cgst" id="cgstInput" value="0">
+<input type="hidden" name="igst" id="igstInput" value="0">
+<input type="hidden" name="net_amount" id="netAmountInput" value="0">
+
             <div class="card-footer">
                 <button class="btn btn-info" type="submit">Generate Invoice</button>
             </div>
@@ -195,6 +200,88 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
+</script>
+
+
+
+<script>
+    // Example starter JavaScript for disabling form submissions if there are invalid fields
+    (() => {
+        'use strict';
+
+        // Fetch all the forms we want to apply custom Bootstrap validation styles to
+        const forms = document.querySelectorAll('.needs-validation');
+
+        // Loop over them and prevent submission
+        Array.from(forms).forEach((form) => {
+            form.addEventListener(
+                'submit',
+                (event) => {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+
+                    form.classList.add('was-validated');
+                },
+                false,
+            );
+        });
+    })();
+
+    // Memo loading script
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("🚀 Script loaded");
+        const customerSelect = document.querySelector('select[name="customer_id"]');
+        const memoDiv = document.getElementById('memoDiv');
+        const memoSelect = document.getElementById('memoSelect');
+
+        customerSelect.addEventListener('change', function () {
+            const customerId = this.value;
+            console.log("📦 Customer selected:", customerId);
+            memoDiv.style.display = customerId ? 'block' : 'none';
+            memoSelect.innerHTML = ''; // clear old options
+
+            if (customerId) {
+                fetch(`/invoices/memos/${customerId}`, {
+                    cache: 'no-store',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("✅ AJAX response:", data);
+                    memoSelect.innerHTML = ''; // Clear existing options
+                    
+                    if (Array.isArray(data) && data.length > 0) {
+                        data.forEach(memo => {
+                            const option = document.createElement('option');
+                            option.value = memo.id;
+                            option.text = memo.memo_number;
+                            option.selected = memo.selected;
+                            memoSelect.appendChild(option);
+                        });
+                    } else {
+                        const option = document.createElement('option');
+                        option.value = '';
+                        option.text = 'No memos found';
+                        option.disabled = true;
+                        memoSelect.appendChild(option);
+                    }
+                })
+                .catch(error => {
+                    console.error("❌ AJAX fetch error:", error);
+                    memoSelect.innerHTML = '<option value="">Error loading memos</option>';
+                });
+            }
+        });
+    });
 </script>
 
 
@@ -380,21 +467,218 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
       // ✅ Only add Grand Total if there's data
-      if (tableHtml !== '') {
-        tableHtml += `
-            <div class="card border-dark">
-                <div class="card-body text-end">
-                    <h5 class="mb-0 fw-bold">Grand Total Amount: ₹${grandTotalAmount.toFixed(2)}</h5>
-                </div>
+    //   if (tableHtml !== '') {
+    //     tableHtml += `
+    //         <div class="card border-dark">
+    //             <div class="card-body text-end">
+    //                 <h5 class="mb-0 fw-bold">Grand Total Amount: ₹${grandTotalAmount.toFixed(2)}</h5>
+    //             </div>
+    //         </div>
+    //     `;
+    // }
+    // ✅ Only add Grand Total if there's data
+// if (tableHtml !== '') {
+//     tableHtml += `
+//         <div class="card border-dark">
+//             <div class="card-body text-end">
+//                 <h5 class="mb-0 fw-bold">Grand Total Amount: ₹${grandTotalAmount.toFixed(2)}</h5>
+//             </div>
+//         </div>
+//     `;
+
+//     const invoiceTypeInput = document.querySelector('input[name="invoice_type"]');
+//     // const state = document.getElementById('selectedLocation').textContent.trim().toLowerCase();
+//     const state = document.querySelector('span[name="location"]').textContent.trim().toLowerCase();
+//     console.log("state",state);
+
+//     if (invoiceTypeInput) {
+//         const invoiceType = invoiceTypeInput.value.trim().toLowerCase();
+
+//         if (invoiceType === "forward") {
+//             const sgst = grandTotalAmount * 0.025;
+//             const cgst = grandTotalAmount * 0.025;
+//             const netTotal = grandTotalAmount + sgst + cgst;
+
+//             tableHtml += `
+//                 <div class="card border-dark">
+//                     <div class="card-body text-end">
+//                         <p class="mb-1" name="sgst">SGST (2.5%): ₹${sgst.toFixed(2)}</p>
+//                         <p class="mb-1" name="cgst">CGST (2.5%): ₹${cgst.toFixed(2)}</p>
+//                         <h5 class="mb-0 fw-bold" name="net_total">Net Total: ₹${netTotal.toFixed(2)}</h5>
+//                     </div>
+//                 </div>
+//             `;
+//             const totalAmountInput = document.querySelector('input[name="total_amount"]');
+//             if (totalAmountInput) {
+//                 totalAmountInput.value = netTotal.toFixed(2);
+//             }
+//             // document.querySelector('input[name="total_amount"]').value = netTotal.toFixed(2);
+//         } else {
+//             const sgst = grandTotalAmount * 0.025;
+//             const cgst = grandTotalAmount * 0.025;
+//             const gst = grandTotalAmount * 0.05; // if IGST applies under RCM
+//     const netTotal = grandTotalAmount + gst;
+
+//     tableHtml += `
+//         <div class="card border-dark">
+//             <div class="card-body text-end">
+//                   <p class="mb-1" name="sgst">SGST (2.5%): ₹${sgst.toFixed(2)}</p>
+//                         <p class="mb-1" name="cgst">CGST (2.5%): ₹${cgst.toFixed(2)}</p>
+//                 <h5 class="mb-0 fw-bold" name="net_total"> Total: ₹${netTotal.toFixed(2)}</h5>
+
+//                   <p class="mb-1" name="gst">Tax under RCM: ₹${gst.toFixed(2)}</p>
+//                   <h5 class="mb-0 fw-bold" name="net_total">Net Total: ₹${grandTotalAmount.toFixed(2)}</h5>
+                  
+//             </div>
+//         </div>
+//     `;
+//             const totalAmountInput = document.querySelector('input[name="total_amount"]');
+//             if (totalAmountInput) {
+//                 totalAmountInput.value = grandTotalAmount.toFixed(2);
+//             }
+//             // document.querySelector('input[name="total_amount"]').value = grandTotalAmount.toFixed(2);
+//         }
+//     }
+// }
+if (tableHtml !== '') {
+    tableHtml += `
+        <div class="card border-dark">
+            <div class="card-body text-end">
+                <h5 class="mb-0 fw-bold">Grand Total Amount: ₹${grandTotalAmount.toFixed(2)}</h5>
             </div>
-        `;
-    }
+        </div>
+    `;
+
+    const invoiceTypeInput = document.querySelector('input[name="invoice_type"]');
+    const customerId = document.getElementById('prefilledCustomerId').value; // get selected customer
+
+    // Fetch state again before calculating taxes
+    fetch(`/consignees/${customerId}`, {
+        cache: 'no-store',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const state = data.state?.toLowerCase() || 'n/a';
+        document.getElementById('selectedLocation').textContent = data.state || 'N/A';
+        console.log("state fetched for tax calculation:", state);
+
+        if (invoiceTypeInput) {
+            const invoiceType = invoiceTypeInput.value.trim().toLowerCase();
+
+            if(state === "rajasthan"){
+
+            if (invoiceType === "forward") {
+                const sgst = grandTotalAmount * 0.025;
+                const cgst = grandTotalAmount * 0.025;
+                const netTotal = grandTotalAmount + sgst + cgst;
+
+
+                document.getElementById('sgstInput').value = sgst.toFixed(2);
+                document.getElementById('cgstInput').value = cgst.toFixed(2);
+                document.getElementById('igstInput').value = 0;
+                document.getElementById('netAmountInput').value = netTotal.toFixed(2);
+
+                tableHtml += `
+                    <div class="card border-dark">
+                        <div class="card-body text-end">
+                            <p class="mb-1" name="sgst">SGST (2.5%): ₹${sgst.toFixed(2)}</p>
+                            <p class="mb-1" name="cgst">CGST (2.5%): ₹${cgst.toFixed(2)}</p>
+                            <h5 class="mb-0 fw-bold" name="net_amount">Net Total: ₹${netTotal.toFixed(2)}</h5>
+                        </div>
+                    </div>
+                `;
+                document.querySelector('input[name="total_amount"]').value = netTotal.toFixed(2);
+            } else {
+            const sgst = grandTotalAmount * 0.025;
+            const cgst = grandTotalAmount * 0.025;
+            const gst = grandTotalAmount * 0.05; // if IGST applies under RCM
+    const netTotal = grandTotalAmount + gst;
+
+    document.getElementById('sgstInput').value = sgst.toFixed(2);
+    document.getElementById('cgstInput').value = cgst.toFixed(2);
+    document.getElementById('igstInput').value = 0;
+    document.getElementById('netAmountInput').value = netTotal.toFixed(2);
+
+    tableHtml += `
+        <div class="card border-dark">
+            <div class="card-body text-end">
+                  <p class="mb-1" name="sgst">SGST (2.5%): ₹${sgst.toFixed(2)}</p>
+                        <p class="mb-1" name="cgst">CGST (2.5%): ₹${cgst.toFixed(2)}</p>
+                <h5 class="mb-0 fw-bold" name="net_amount"> Total: ₹${netTotal.toFixed(2)}</h5>
+
+                  <p class="mb-1" name="gst">Tax under RCM: ₹${gst.toFixed(2)}</p>
+                  <h5 class="mb-0 fw-bold" >Net Total: ₹${grandTotalAmount.toFixed(2)}</h5>
+                  
+            </div>
+        </div>
+    `;
+            const totalAmountInput = document.querySelector('input[name="total_amount"]');
+            if (totalAmountInput) {
+                totalAmountInput.value = grandTotalAmount.toFixed(2);
+            }
+            // document.querySelector('input[name="total_amount"]').value = grandTotalAmount.toFixed(2);
+        }
+        }
+        else{
+            if (invoiceType === "forward") {
+                const igst = grandTotalAmount * 0.05;
+                const netTotal = grandTotalAmount + igst;
+
+                document.getElementById('sgstInput').value = 0;
+                document.getElementById('cgstInput').value = 0;
+                document.getElementById('igstInput').value = igst.toFixed(2);
+                document.getElementById('netAmountInput').value = netTotal.toFixed(2);
+
+                tableHtml += `
+                    <div class="card border-dark">
+                        <div class="card-body text-end">
+                            <p class="mb-1" name="igst">IGST (5%): ₹${igst.toFixed(2)}</p>
+                            <h5 class="mb-0 fw-bold" name="net_amount">Net Total: ₹${netTotal.toFixed(2)}</h5>
+                        </div>
+                    </div>
+                `;
+                document.querySelector('input[name="total_amount"]').value = netTotal.toFixed(2);
+            } else {
+                const igst = grandTotalAmount * 0.05; // RCM
+                const netTotal = grandTotalAmount + igst;
+
+                document.getElementById('sgstInput').value = 0;
+                document.getElementById('cgstInput').value = 0;
+                document.getElementById('igstInput').value = igst.toFixed(2);
+                document.getElementById('netAmountInput').value = netTotal.toFixed(2);
+
+                tableHtml += `
+                    <div class="card border-dark">
+                        <div class="card-body text-end">
+                            <p class="mb-1" name="igst">IGST (5%): ₹${igst.toFixed(2)}</p>
+                            <h5 class="mb-0 fw-bold" name="net_amount"> Total: ₹${netTotal.toFixed(2)}</h5>
+                            <p class="mb-1" name="gst">Tax under RCM: ₹${igst.toFixed(2)}</p>
+                            <h5 class="mb-0 fw-bold">Net Total: ₹${grandTotalAmount.toFixed(2)}</h5>
+                            
+                        </div>
+                    </div>
+                `;
+                document.querySelector('input[name="total_amount"]').value = grandTotalAmount.toFixed(2);
+            }
+        }
+        }
+
+        // Update LR details with tax info
+        document.getElementById('lrDetailsContent').innerHTML = `<div class="row">${tableHtml}</div>`;
+    })
+    .catch(err => {
+        console.error("Error fetching customer state for tax:", err);
+    });
+}
+
+
 
      // ✅ Fill the total_amount input field
-     const totalAmountInput = document.querySelector('input[name="total_amount"]');
-    if (totalAmountInput) {
-        totalAmountInput.value = grandTotalAmount.toFixed(2);
-    }
+    //  const totalAmountInput = document.querySelector('input[name="total_amount"]');
+    // if (totalAmountInput) {
+    //     totalAmountInput.value = grandTotalAmount.toFixed(2);
+    // }
 
     // Show the LR details container
     document.getElementById('lrDetailsContainer').style.display = 'block';
@@ -458,86 +742,6 @@ document.addEventListener('DOMContentLoaded', function () {
             // Hide pre-form, show main form
             preFormContainer.style.display = 'none';
             mainFormContainer.style.display = 'block';
-        });
-    });
-</script>
-
-<script>
-    // Example starter JavaScript for disabling form submissions if there are invalid fields
-    (() => {
-        'use strict';
-
-        // Fetch all the forms we want to apply custom Bootstrap validation styles to
-        const forms = document.querySelectorAll('.needs-validation');
-
-        // Loop over them and prevent submission
-        Array.from(forms).forEach((form) => {
-            form.addEventListener(
-                'submit',
-                (event) => {
-                    if (!form.checkValidity()) {
-                        event.preventDefault();
-                        event.stopPropagation();
-                    }
-
-                    form.classList.add('was-validated');
-                },
-                false,
-            );
-        });
-    })();
-
-    // Memo loading script
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log("🚀 Script loaded");
-        const customerSelect = document.querySelector('select[name="customer_id"]');
-        const memoDiv = document.getElementById('memoDiv');
-        const memoSelect = document.getElementById('memoSelect');
-
-        customerSelect.addEventListener('change', function () {
-            const customerId = this.value;
-            console.log("📦 Customer selected:", customerId);
-            memoDiv.style.display = customerId ? 'block' : 'none';
-            memoSelect.innerHTML = ''; // clear old options
-
-            if (customerId) {
-                fetch(`/invoices/memos/${customerId}`, {
-                    cache: 'no-store',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! Status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log("✅ AJAX response:", data);
-                    memoSelect.innerHTML = ''; // Clear existing options
-                    
-                    if (Array.isArray(data) && data.length > 0) {
-                        data.forEach(memo => {
-                            const option = document.createElement('option');
-                            option.value = memo.id;
-                            option.text = memo.memo_number;
-                            option.selected = memo.selected;
-                            memoSelect.appendChild(option);
-                        });
-                    } else {
-                        const option = document.createElement('option');
-                        option.value = '';
-                        option.text = 'No memos found';
-                        option.disabled = true;
-                        memoSelect.appendChild(option);
-                    }
-                })
-                .catch(error => {
-                    console.error("❌ AJAX fetch error:", error);
-                    memoSelect.innerHTML = '<option value="">Error loading memos</option>';
-                });
-            }
         });
     });
 </script>

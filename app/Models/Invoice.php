@@ -17,6 +17,10 @@ class Invoice extends Model
         'total_amount',
         'payment_status',
         'memo_ids',
+        'net_amount',
+        'sgst',
+        'cgst',
+        'igst',
     ];
     protected $casts = [
         'memo_ids' => 'array',

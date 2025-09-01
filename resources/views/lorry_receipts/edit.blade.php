@@ -1,8 +1,19 @@
 @extends('layouts.app')
 
 @section('content')
+
 <!-- SweetAlert2 CSS -->
 <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet" />
+@if(session('warning'))
+<script>
+    Swal.fire({
+        icon: 'warning',
+        title: 'Warning',
+        text: "{{ session('warning') }}",
+        confirmButtonColor: '#f39c12'
+    });
+</script>
+@endif
 <style>
 /* Prevent form expansion on validation errors */
 .form-control, .form-select {
