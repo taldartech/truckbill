@@ -328,9 +328,9 @@
                     <div class="col-md-4">
                         <button class="btn btn-success w-100" type="submit">💾 Update Lorry Receipt</button>
                     </div>
-                    <div class="col-md-4">
+                    {{-- <div class="col-md-4">
                         <a href="{{ route('lorry_receipts.show', $lorry_receipt->id) }}" class="btn btn-info w-100">👁️ View Details</a>
-                    </div>
+                    </div> --}}
                     <div class="col-md-4">
                         <a href="{{ route('lorry_receipts.index') }}" class="btn btn-outline-dark w-100">📄 Back to List</a>
                     </div>
