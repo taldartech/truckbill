@@ -48,7 +48,7 @@
                 <button id="bulk-memo-id-btn" class="btn btn-primary" style="display: none;" data-bs-toggle="modal" data-bs-target="#bulkMemoIdModal">
                     <i class="bi bi-clipboard-check"></i> Bulk Memo ID
                 </button>
-                <button id="voucher-payment-btn" class="btn btn-info" style="display: none;" data-bs-toggle="modal" data-bs-target="#voucherPaymentModal">
+                <button id="voucher-payment-btn" class="btn btn-info" style="display: none;" >
                     <i class="bi bi-receipt"></i> Voucher Payment
                 </button>
             </div>
@@ -439,11 +439,18 @@ $(document).ready(function() {
                 firstTransporterId = transporterId;
             } else {
                 // Check if current selection has different truck or transporter
-                if (truckId !== firstTruckId || transporterId !== firstTransporterId) {
+                console.log("truckId", truckId);
+                console.log("firstTruckId", firstTruckId);
+                console.log("transporterId", transporterId);
+                console.log("firstTransporterId", firstTransporterId);
+                if (transporterId !== firstTransporterId) {
                     allSameTruckAndTransporter = false;
+                   
                 }
             }
         });
+        console.log("allSameTruckAndTransporter", allSameTruckAndTransporter);
+        console.log("hasAnyCancelled", hasAnyCancelled);
         
         // Show both buttons only if:
         // 1. All selections have same truck and transporter
@@ -453,6 +460,11 @@ $(document).ready(function() {
         } else {
             // Hide both buttons if conditions are not met
             $('#bulk-memo-id-btn, #voucher-payment-btn').hide();
+            if (!allSameTruckAndTransporter && checkedBoxes.length > 1) {
+                $('#voucher-payment-btn').hide();
+            console.log('Cannot process payment: Selected bookings have different transporters');
+            return;
+        }
         }
     }
 
@@ -464,6 +476,8 @@ $(document).ready(function() {
             alert('Please select at least one freight booking.');
             return;
         }
+
+        
 
         let tableBody = '';
         let totalAmount = 0;
@@ -652,6 +666,7 @@ $(document).ready(function() {
 
 // Function to open voucher payment modal
 function openVoucherPaymentModal() {
+    updatePaymentButtonsVisibility();
     $('#voucherPaymentModal').modal('show');
 }
 </script>
@@ -816,6 +831,20 @@ $(document).ready(function() {
             return;
         }
         
+        // ✅ Collect transporter IDs from selected rows
+    let transporterIds = [];
+    checkedBoxes.each(function() {
+        transporterIds.push($(this).data('transporter-id'));
+    });
+
+    // ✅ Check if all transporter IDs are the same
+    const uniqueTransporters = [...new Set(transporterIds)];
+    if (uniqueTransporters.length > 1) {
+        alert('You can only create a voucher for bookings from the same transporter.');
+        $('#voucherPaymentModal').hide();
+     
+        return;
+    }
         // Clear previous data
         $('#voucherPaymentTableBody').empty();
         
@@ -1129,14 +1158,71 @@ $(document).ready(function() {
     });
     
     // Function to update payment buttons visibility
-    function updatePaymentButtonsVisibility() {
-        const checkedCount = $('.row-checkbox:checked').length;
-        if (checkedCount > 0) {
-            $('#bulk-payment-btn, #voucher-payment-btn').show();
-        } else {
-            $('#bulk-payment-btn, #voucher-payment-btn').hide();
-        }
-    }
+    // function updatePaymentButtonsVisibility() {
+    //     const checkedCount = $('.row-checkbox:checked').length;
+    //     if (checkedCount > 0) {
+    //         $('#bulk-payment-btn, #voucher-payment-btn').show();
+    //     } else {
+    //         $('#bulk-payment-btn, #voucher-payment-btn').hide();
+    //     }
+    // }
+    // function updatePaymentButtonsVisibility() {
+    //     const checkedBoxes = $('.row-checkbox:checked');
+        
+    //     if (checkedBoxes.length === 0) {
+    //         // No selection - hide all buttons
+    //         $('#bulk-memo-id-btn, #voucher-payment-btn').hide();
+    //         return;
+    //     }
+        
+    //     if (checkedBoxes.length === 1) {
+    //         // Single selection - show only voucher payment button
+    //         $('#voucher-payment-btn').show();
+    //         $('#bulk-memo-id-btn').hide();
+    //         return;
+    //     }
+        
+    //     // Multiple selections - check if they have same truck and transporter
+    //     let firstTruckId = null;
+    //     let firstTransporterId = null;
+    //     let allSameTruckAndTransporter = true;
+    //     let hasAnyCancelled = false;
+        
+    //     checkedBoxes.each(function() {
+    //         const checkbox = $(this);
+    //         const truckId = checkbox.data('truck-id');
+    //         const transporterId = checkbox.data('transporter-id');
+    //         const isCancelled = checkbox.data('is-cancelled') === '1';
+            
+    //         // Check if any freight booking is cancelled
+    //         if (isCancelled) {
+    //             hasAnyCancelled = true;
+    //         }
+            
+    //         if (firstTruckId === null) {
+    //             firstTruckId = truckId;
+    //             firstTransporterId = transporterId;
+    //         } else {
+    //             // Check if current selection has different truck or transporter
+    //             if (truckId !== firstTruckId && transporterId !== firstTransporterId) {
+    //                 allSameTruckAndTransporter = false;
+    //             }
+    //         }
+    //     });
+        
+    //     // Show both buttons only if:
+    //     // 1. All selections have same truck and transporter
+    //     // 2. None of the freight bookings are cancelled
+    //     if (allSameTruckAndTransporter && !hasAnyCancelled) {
+    //         $('#bulk-memo-id-btn, #voucher-payment-btn').show();
+    //     } else {
+    //         // Hide both buttons if conditions are not met
+    //         $('#bulk-memo-id-btn, #voucher-payment-btn').hide();
+    //         if (!allSameTransporter && checkedBoxes.length > 1) {
+    //         console.log('Cannot process payment: Selected bookings have different transporters');
+    //     }
+    //     }
+    // }
     
     // Delete confirmation
     $(document).on('click', '.delete-btn', function(e) {
@@ -1464,6 +1550,7 @@ function handleVoucherPayment() {
         `;
         
         // Show the modal
+        updatePaymentButtonsVisibility();
         $('#voucherPaymentModal').modal('show');
     });
 }
