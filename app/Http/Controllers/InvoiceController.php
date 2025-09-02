@@ -310,15 +310,30 @@ public function getCustomerMemos($customerId)
         return redirect()->route('invoices.index')->with('success', 'Invoice created successfully.');
     }
 
-    public function show(Invoice $invoice)
+    public function show(Request $request, Invoice $invoice)
     {
-        $invoice->load(['company', 'customer']);
+        $invoice->load(['company', 'consignee']);
         // Get memos directly from lorry_receipts using the invoice's customer_id
         $memos = DB::table('lorry_receipts')
             ->select('memo_id', 'lr_number', 'source_city as from_location', 'destination_city as to_location', 'fr_rate as rate', 'amount')
             ->where('customer_id', $invoice->customer_id)
             ->whereNotNull('memo_id')
             ->get();
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'id' => $invoice->id,
+                    'manual_invoice_number' => $invoice->manual_invoice_number,
+                    'invoice_type' => $invoice->invoice_type,
+                    'generated_date' => $invoice->generated_date,
+                    'payment_status' => $invoice->payment_status,
+                    'total_amount' => $invoice->total_amount,
+                    'paid_amount' => $invoice->paid_amount,
+                    'company' => $invoice->company,
+                    'consignee' => $invoice->consignee,
+                    'memos' => $memos,
+                ]);
+            }
         
         return view('invoices.show', compact('invoice', 'memos'));
     }

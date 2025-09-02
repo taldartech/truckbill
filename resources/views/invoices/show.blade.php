@@ -28,7 +28,7 @@
                             </tr>
                             <tr>
                                 <th>Customer:</th>
-                                <td>{{ $invoice->customer->name }}</td>
+                                <td>{{ $invoice->consignee ? $invoice->consignee->name : 'N/A' }}</td>
                             </tr>
                             <tr>
                                 <th>Total Amount:</th>

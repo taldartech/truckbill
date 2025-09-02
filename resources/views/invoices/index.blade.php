@@ -124,7 +124,11 @@
                     @forelse($invoices as $invoice)
                         <tr class="align-middle">
                             <td>{{ $invoice->id }}</td>
-                            <td>{{ $invoice->manual_invoice_number }}</td>
+                            <td>
+                                <a href="#" class="text-primary invoice-details-link" data-id="{{ $invoice->id }}">
+                                    {{ $invoice->manual_invoice_number }}
+                                </a>
+                            </td>
                             <td>{{ $invoice->company ? $invoice->company->name : '-' }}</td>
                             <td>{{ $invoice->invoice_type }}</td>
                             <td>{{ $invoice->generated_date }}</td>
@@ -174,7 +178,168 @@
     </div>
 </div>
 
+<!-- Invoice Details Modal -->
+<div class="modal fade" id="invoiceDetailsModal" tabindex="-1" aria-labelledby="invoiceDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="invoiceDetailsModalLabel">
+                    <i class="bi bi-receipt"></i> Invoice Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="invoiceDetailsContent">
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading invoice details...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="#" class="btn btn-primary" id="viewFullInvoiceBtn" style="display: none;">
+                    <i class="bi bi-eye"></i> View Full Invoice
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
+// Handle invoice details link click
+$(document).on('click', '.invoice-details-link', function(e) {
+    e.preventDefault();
+    var invoiceId = $(this).data('id');
+    
+    // Show modal with loading state
+    var modal = new bootstrap.Modal(document.getElementById('invoiceDetailsModal'));
+    modal.show();
+    
+    $('#invoiceDetailsContent').html(`
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading invoice details...</p>
+        </div>
+    `);
+    
+    // Show view full invoice button
+    $('#viewFullInvoiceBtn').attr('href', '/invoices/' + invoiceId).show();
+    
+    // Fetch invoice details
+    $.ajax({
+        url: '/invoices/' + invoiceId,
+        type: 'GET',
+        success: function(data) {
+            var detailsHtml = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="bi bi-receipt"></i> Invoice Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-borderless table-sm">
+                                    <tr>
+                                        <td class="fw-bold">Invoice #:</td>
+                                        <td>${data.manual_invoice_number || 'N/A'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Type:</td>
+                                        <td>${data.invoice_type || 'N/A'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Date:</td>
+                                        <td>${data.generated_date || 'N/A'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Status:</td>
+                                        <td><span class="badge bg-${data.payment_status === 'paid' ? 'success' : data.payment_status === 'partial' ? 'warning' : 'danger'}">${data.payment_status || 'N/A'}</span></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="bi bi-person"></i> Customer Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-borderless table-sm">
+                                    <tr>
+                                        <td class="fw-bold">Name:</td>
+                                        <td>${data.consignee ? data.consignee.name : 'N/A'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Company:</td>
+                                        <td>${data.company ? data.company.name : 'N/A'}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="bi bi-currency-rupee"></i> Financial Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="fw-bold">Total Amount:</span>
+                                            <span>₹${data.total_amount ? parseFloat(data.total_amount).toFixed(2) : '0.00'}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="fw-bold">Paid Amount:</span>
+                                            <span>₹${data.paid_amount ? parseFloat(data.paid_amount).toFixed(2) : '0.00'}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="fw-bold">Balance:</span>
+                                            <span class="fw-bold ${(data.total_amount - data.paid_amount) > 0 ? 'text-danger' : 'text-success'}">
+                                                ₹${(data.total_amount - data.paid_amount).toFixed(2)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            $('#invoiceDetailsContent').html(detailsHtml);
+        },
+        error: function(xhr, status, error) {
+            var errorMessage = 'Error loading invoice details. Please try again.';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMessage = xhr.responseJSON.message;
+            }
+            $('#invoiceDetailsContent').html(`
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i> ${errorMessage}
+                </div>
+            `);
+        }
+    });
+});
+
+// Initialize tooltips
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl);
+});
+
     function toggleField(checkbox) {
         const fieldId = 'field_' + checkbox.value;
         const field = document.getElementById(fieldId);
