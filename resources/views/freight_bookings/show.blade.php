@@ -841,7 +841,7 @@ function submitVoucherPayment() {
                             <span class="badge bg-success">Paid</span>
                         @elseif($payment->payment_status === 'pending')
                             <span class="badge bg-warning">Pending</span>
-                        @elseif($payment->payment_status === 'in progress')
+                        @elseif($payment->payment_status === 'in-progress')
                             <span class="badge bg-info">In Progress</span>
                         @else
                             <span class="badge bg-secondary">Unknown</span>
