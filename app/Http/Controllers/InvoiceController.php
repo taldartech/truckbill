@@ -223,6 +223,59 @@ public function getCustomerMemos($customerId)
         $data['payment_status'] = 'pending';
         $data['company_id'] = auth()->user()->company_id;
 
+    // 🔹 Fetch customer state
+    $customer = \App\Models\Consignee::findOrFail($data['customer_id']);
+    $state = strtolower($customer->state);
+
+    $grandTotal = $data['total_amount'];   // this is the form’s base total
+    $invoiceType = strtolower($data['invoice_type']);
+
+    // 🔹 Recalculate expected tax values
+    $expected = [
+        'sgst' => 0,
+        'cgst' => 0,
+        'igst' => 0,
+        'net_amount' => $grandTotal,
+        'total_amount' => $grandTotal, // also track base amount
+    ];
+
+    if ($state === 'rajasthan') {
+        if ($invoiceType === 'forward') {
+            $expected['sgst'] = $grandTotal * 0.025;
+            $expected['cgst'] = $grandTotal * 0.025;
+            $expected['net_amount'] = $grandTotal + $expected['sgst'] + $expected['cgst'];
+            $expected['total_amount'] = $expected['net_amount']; // frontend sets total_amount=net in this case
+        } else { // Reverse
+            $expected['sgst'] = $grandTotal * 0.025;
+            $expected['cgst'] = $grandTotal * 0.025;
+            $gst = $grandTotal * 0.05;
+            $expected['net_amount'] = $grandTotal + $gst;
+            $expected['total_amount'] = $grandTotal; // frontend keeps base amount for reverse
+        }
+    } else {
+        if ($invoiceType === 'forward') {
+            $expected['igst'] = $grandTotal * 0.05;
+            $expected['net_amount'] = $grandTotal + $expected['igst'];
+            $expected['total_amount'] = $expected['net_amount'];
+        } else { // Reverse
+            $expected['igst'] = $grandTotal * 0.05;
+            $expected['net_amount'] = $grandTotal + $expected['igst'];
+            $expected['total_amount'] = $grandTotal;
+        }
+    }
+
+    // 🔹 Compare request values with expected (including total_amount)
+    if (
+        round($data['sgst'], 2) !== round($expected['sgst'], 2) ||
+        round($data['cgst'], 2) !== round($expected['cgst'], 2) ||
+        round($data['igst'], 2) !== round($expected['igst'], 2) ||
+        round($data['net_amount'], 2) !== round($expected['net_amount'], 2) ||
+        round($data['total_amount'], 2) !== round($expected['total_amount'], 2)
+    ) {
+        return back()->with('warning', '⚠️ Invoice mismatch detected (Amount/Tax). Please re-check and try again.');
+    }
+
+
 
           // Separate memo_ids from the rest of invoice data
     $memoIds = $request->input('memo_ids', []);
