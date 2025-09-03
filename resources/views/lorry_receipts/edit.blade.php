@@ -299,6 +299,7 @@
                         <small class="text-muted">💰 Range: ₹1 - ₹20,000 per ton</small>
                     </div>
                     <div class="col-md-2">
+                        <input type="hidden" id="shortage_amount" name="shortage_amount" value="{{ old('shortage_amount', $lorry_receipt->shortage_amount) }}">
                         <label for="shortage_amount" class="form-label">Shortage Amount</label>
                         <input type="number" step="0.01" class="form-control" id="shortage_amount" 
                                value="{{ old('shortage_amount', $lorry_receipt->shortage_amount) }}" disabled>
@@ -306,6 +307,7 @@
                     </div>
                 
                     <div class="col-md-2">
+                        <input type="hidden" id="damage_amount" name="damage_amount" value="{{ old('damage_amount', $lorry_receipt->damage_amount) }}">
                         <label for="damage_amount" class="form-label">Damage Amount</label>
                         <input type="number" step="0.01" class="form-control" id="damage_amount" 
                                value="{{ old('damage_amount', $lorry_receipt->damage_amount) }}" disabled>
@@ -375,6 +377,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const weightInput = document.getElementById('weight');
     const frRateInput = document.getElementById('fr_rate');
     const amountInput = document.getElementById('amount');
+    const shortageAmountInput = document.getElementById('shortage_amount');
+    const damageAmountInput = document.getElementById('damage_amount');
     let isManuallyEdited = false;
     
     function calculateAmount() {
@@ -384,7 +388,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const frRate = parseFloat(frRateInput.value) || 0;
         
         if (weight > 0 && frRate > 0) {
-            const calculatedAmount = weight * frRate;
+            const calculatedAmount = weight * frRate - (parseFloat(shortageAmountInput.value) || 0) - (parseFloat(damageAmountInput.value) || 0);
             amountInput.value = calculatedAmount.toFixed(2);
             
             // Visual feedback for auto-calculation
@@ -874,7 +878,9 @@ if (dbTransporterType) {
         function calculateAmount() {
             const weight = parseFloat($('#weight').val()) || 0;
             const frRate = parseFloat($('#fr_rate').val()) || 0;
-            const amount = weight * frRate;
+            const shortageAmount = parseFloat($('#shortage_amount').val()) || 0;
+            const damageAmount = parseFloat($('#damage_amount').val()) || 0;
+            const amount = weight * frRate - (shortageAmount + damageAmount);
             
             if (weight > 0 && frRate > 0) {
                 $('#amount').val(amount.toFixed(2));
@@ -1470,13 +1476,17 @@ document.addEventListener('DOMContentLoaded', function () {
     const weightInput = document.getElementById('weight');
     const frRateInput = document.getElementById('fr_rate');
     const amountInput = document.getElementById('amount');
+    const shortageAmountInput = document.getElementById('shortage_amount');
+    const damageAmountInput = document.getElementById('damage_amount');
     
     function calculateAmount() {
         const weight = parseFloat(weightInput.value) || 0;
         const frRate = parseFloat(frRateInput.value) || 0;
+        const shortageAmount = parseFloat(shortageAmountInput.value) || 0;
+        const damageAmount = parseFloat(damageAmountInput.value) || 0;
         
         if (weight > 0 && frRate > 0) {
-            const calculatedAmount = weight * frRate;
+            const calculatedAmount = weight * frRate - (shortageAmount + damageAmount);
             amountInput.value = calculatedAmount.toFixed(2);
             
             // Add visual feedback to show it's auto-calculated
