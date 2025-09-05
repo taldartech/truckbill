@@ -71,7 +71,7 @@
                 </div>
                 <div class="col-md-3 mb-3">
                     <div class="confirmation-label">Weight</div>
-                    <div class="confirmation-value">{{ number_format($lorry_receipt->weight, 2) }} kg</div>
+                    <div class="confirmation-value">{{ number_format($lorry_receipt->weight, 2) }} MT</div>
                 </div>
             </div>
             <div class="row">
@@ -184,6 +184,9 @@
                 <div>
                     <button type="submit" name="action" value="save" class="btn btn-success me-2">
                         <i class="fas fa-check-circle me-1"></i> Confirm & Submit
+                    </button>
+                    <button type="submit" name="action" value="save_and_view" class="btn btn-primary">
+                        <i class="bi bi-eye me-1"></i> Save & do payment
                     </button>
                     
                 </div>

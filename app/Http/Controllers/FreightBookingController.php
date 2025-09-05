@@ -560,8 +560,12 @@ class FreightBookingController extends Controller
             return redirect()->route('voucher_payments.create', ['freight_booking_id' => $freightBooking->id])
                 ->with('success', 'Freight Booking created successfully. Ready to make payment.');
         }
+        if ($request->has('action') && $request->action === 'save_and_view') {
+            return redirect()->route('freight_bookings.show', $freightBooking->id)
+                ->with('success', 'Freight Booking created successfully. You can view it now.');
+        }
 
-        return redirect()->route('lorry_receipts.index')->with('success', 'Freight Booking created successfully.');
+        return redirect()->route('freight_bookings.index')->with('success', 'Freight Booking created successfully.');
     }
 
     public function show($id)
