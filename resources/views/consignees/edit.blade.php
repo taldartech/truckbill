@@ -62,6 +62,11 @@
                     <input placeholder="Enter Contact Number" type="text" class="form-control" id="contact_number" name="contact_number" required value="{{ old('contact_number', $consignee->contact_number) }}">
                     @error('contact_number') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
+                <div class="col-md-4">
+                    <label for="email" class="form-label">Email</label>
+                    <input placeholder="Enter Email" type="email" class="form-control" id="email" name="email" value="{{ old('email', $consignee->email) }}">
+                    @error('email') <div class="text-danger">{{ $message }}</div> @enderror
+                </div>
                 
             </div>
             

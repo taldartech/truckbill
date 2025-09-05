@@ -232,6 +232,7 @@ class ConsigneeController extends Controller
                             'size:10',
                             'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/'
                         ],
+                        'email' => 'nullable|email',
         ]);
 
         if (!empty($validated['pan_number'])) {
@@ -256,6 +257,7 @@ class ConsigneeController extends Controller
         'id' => $consignee->id,
         'name' => $consignee->name,
         'state' => $consignee->state ? $consignee->state->name : null,
+        'email' => $consignee->email,
     ]);
 }
 
@@ -322,6 +324,7 @@ class ConsigneeController extends Controller
                 'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
                 Rule::unique('consignees', 'pan_number')->ignore($consignee->id),
             ],
+            'email' => 'nullable|email',
         ]);
 
         if (!empty($validated['pan_number'])) {
