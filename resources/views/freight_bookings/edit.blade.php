@@ -239,7 +239,7 @@
             <div class="row mb-3">
                 <div class="col-md-4">
                     <label for="advance_amount_main" class="form-label">Advance Amount</label>
-                    <input type="number" step="0.01" class="form-control" id="advance_amount_main" value="{{ old('advance_amount', $freightBooking->advance_amount) }}" readonly style="background-color: #f8f9fa;">
+                    <input type="number" step="0.01" class="form-control" id="advance_amount_main" name="advance_amount" value="{{ old('advance_amount', $freightBooking->advance_amount) }}" readonly style="background-color: #f8f9fa;">
                     <small class="form-text text-muted">
                         <i class="fas fa-info-circle"></i> Read-only field
                     </small>

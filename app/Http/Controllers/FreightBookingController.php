@@ -782,6 +782,7 @@ class FreightBookingController extends Controller
 
     public function update(Request $request, FreightBooking $freightBooking)
     {
+        
         // Prevent updates to cancelled freight bookings
         if ($freightBooking->is_cancelled) {
             return redirect()->back()->withErrors(['general' => 'Cannot update a cancelled freight booking. Please contact administrator if changes are needed.']);
