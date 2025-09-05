@@ -283,6 +283,13 @@
                     @error('amount') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please enter an amount.</div>
                 </div>
+                <div class="col-md-4 mb-3">
+                    <label for="date" class="form-label">Date *</label>
+                    <input type="date" name="date" id="date" class="form-control" value="{{ old('date', $voucher_payment->date) }}" required>
+                    @error('date') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="invalid-feedback">Please select a date.</div>
+                </div>
+
                 <!--end::Col-->
                 <div class="col-md-4 mb-3" id="reference_transaction_box" style="display: none;">
                     <label for="reference_transaction_id" class="form-label">Reference Transaction ID *</label>

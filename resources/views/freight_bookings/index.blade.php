@@ -1351,7 +1351,7 @@ function handleVoucherPayment() {
             paymentHistory.forEach(payment => {
                 paymentRows += `
                     <tr>
-                        <td>${new Date(payment.created_at).toLocaleDateString()}</td>
+                        <td>${new Date(payment.date).toLocaleDateString()}</td>
                         <td>${payment.freight_booking_id || 'N/A'}</td>
                         <td>${payment.freight_booking?.lr?.lr_number || 'N/A'}</td>
                         <td>${payment.payment_type}</td>
@@ -1459,11 +1459,19 @@ function handleVoucherPayment() {
 </div>
                 </div>
                
+<div style="display: flex; gap: 20px; margin-bottom: 15px;">
+    <!-- Reference Transaction ID -->
+    <div style="flex: 1;">
+        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Reference Transaction ID</label>
+        <input type="text" id="referenceId" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Enter reference/transaction ID (optional)">
+    </div>
 
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Reference Transaction ID</label>
-                    <input type="text" id="referenceId" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Enter reference/transaction ID (optional)">
-                </div>
+    <!-- Payment Date -->
+    <div style="flex: 1;">
+        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Date</label>
+        <input type="date" id="paymentDate" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+    </div>
+</div>
                 <div style="margin-bottom: 15px;">
                     <label style="display: block; margin-bottom: 5px; font-weight: bold;">Remarks</label>
                     <textarea id="paymentRemarks" style="width: 100%; height: 60px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Enter any remarks..."></textarea>
@@ -1840,6 +1848,7 @@ function submitVoucherPayment() {
     const paymentModeSelect = document.getElementById('paymentMode');
     const pumpId = document.getElementById('pumpName')?.value || null;
     const referenceId = document.getElementById('referenceId')?.value;
+    const paymentDate = document.getElementById('paymentDate')?.value;
     const remarks = document.getElementById('paymentRemarks')?.value;
     
     // Get the selected values
@@ -1924,7 +1933,8 @@ formData.append('pump_id', pumpId || '');
     formData.append('payment_mode', paymentMode);
   
     formData.append('total_amount', totalAmount.toFixed(2));
-    formData.append('payment_date', new Date().toISOString().split('T')[0]);
+    // formData.append('payment_date', new Date().toISOString().split('T')[0]);
+    formData.append('date', paymentDate);
     
     if (referenceId) formData.append('reference_number', referenceId);
     if (remarks) formData.append('notes', remarks);

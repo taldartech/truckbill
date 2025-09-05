@@ -38,7 +38,7 @@ class VoucherPaymentController extends Controller
             'freight_booking.lr.consignor.city',
             'freight_booking.lr.consignee.city',
             'freight_booking.lr.truck'
-        ])->whereDate('created_at', $selectedDate);
+        ])->whereDate('date', $selectedDate);
 
         // Apply company filter for non-super admin users
         if (auth()->user()->userRole->name !== 'super_admin') {
@@ -384,6 +384,9 @@ class VoucherPaymentController extends Controller
             'date' => 'nullable|date',
         ]);
         
+        if (empty($data['date'])) {
+            $data['date'] = now()->toDateString();
+        }
         // Get the freight booking
         $freightBooking = \App\Models\FreightBooking::findOrFail($data['freight_booking_id']);
         

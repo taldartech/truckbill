@@ -46,7 +46,7 @@
                         </tr>
                         <tr>
                             <th>GR Date:</th>
-                            <td>{{ $freightBooking && $freightBooking->lr && $freightBooking->lr->gr_date ? date('d-m-Y', strtotime($freightBooking->lr->gr_date)) : date('d-m-Y') }}</td>
+                            <td>{{ $freightBooking && $freightBooking->lr && $freightBooking->lr->gr_date ? date('Y-m-d', strtotime($freightBooking->lr->gr_date)) : date('Y-m-d') }}</td>
                         </tr>
                     </table>
                 </div>
@@ -157,7 +157,7 @@
                     @forelse($payments as $payment)
                         <tr class="align-middle">
                             <td>{{ $payment->id }}</td>
-                            <td>{{ $payment->created_at->format('d-m-Y') }}</td>
+                            <td>{{ $payment->date }}</td>
                             <td>{{ ucfirst($payment->payment_type) }}</td>
                             <td>{{ ucfirst(str_replace('_', ' ', $payment->payment_mode)) }}</td>
                             <td class="text-success fw-bold">₹{{ number_format($payment->amount, 2) }}</td>

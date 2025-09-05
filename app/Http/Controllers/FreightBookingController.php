@@ -984,7 +984,7 @@ class FreightBookingController extends Controller
                         'remark' => $validated['notes'] ?? null,
                         'payment_status' => $paymentStatus,
                         'company_id' => auth()->user()->company_id,
-                        'date' => $validated['date'] ?? null,
+                        'date' => $validated['date'] ?? now()->toDateString(),
                     ]);
                     
                     \Log::info('Payment status set based on payment mode', [
