@@ -509,8 +509,14 @@ class LorryReceiptController extends Controller
         // dd($validated);
 
         
-        \App\Models\LorryReceipt::create($validated);
+        $lorryReceipt =  \App\Models\LorryReceipt::create($validated);
         // dd($validated);
+
+          // Check if user clicked "Save & Create FR"
+    if ($request->has('redirect_to_fr')) {
+        return redirect()->route('freight_bookings.create', ['lorry_receipt_id' => $lorryReceipt->id])
+            ->with('success', 'Lorry Receipt saved! Now create Freight Booking.');
+    }
         return redirect()->route('lorry_receipts.index')->with('success', 'Lorry Receipt created successfully!');
     }
 

@@ -1215,8 +1215,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 html: confirmationHTML,
                 icon: 'question',
                 showCancelButton: true,
+                showDenyButton: true,
                 confirmButtonColor: '#28a745',
                 cancelButtonColor: '#6c757d',
+                denyButtonColor: '#28a745',
+                denyButtonText: '💾 Save & Create FR',
                 confirmButtonText: '✅ Yes, Submit',
                 cancelButtonText: '❌ Cancel',
                 width: '90%',
@@ -1227,6 +1230,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (result.isConfirmed) {
                     // Actually submit the form
                     form.submit();
+                }
+                else if (result.isDenied) {
+                    // Save & Create FR
+                    saveAndRedirect();
                 }
             });
         } else {
@@ -1245,6 +1252,18 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     }
+    function saveAndRedirect() {
+    // Get form
+    let form = $('#lorryReceiptForm');
+
+    // Append hidden input to tell backend to redirect to FR
+    if ($('#redirect_to_fr').length === 0) {
+        form.append('<input type="hidden" name="redirect_to_fr" id="redirect_to_fr" value="1">');
+        
+    }
+
+    form.submit();
+}
 });
 // Handle Add Goods Type Form Submission
 document.getElementById('addGoodsTypeForm').addEventListener('submit', function (e) {
