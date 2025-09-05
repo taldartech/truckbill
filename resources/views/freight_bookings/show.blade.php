@@ -135,7 +135,7 @@
                                 </div>
                                 <div class="info-row">
                                     <span class="info-label">Weight:</span>
-                                    <span class="info-value">{{ $freightBooking->lr->weight ?? 'N/A' }} kg</span>
+                                    <span class="info-value">{{ $freightBooking->lr->weight ?? 'N/A' }} MT</span>
                                 </div>
                             </div>
                             <div class="col-md-4">

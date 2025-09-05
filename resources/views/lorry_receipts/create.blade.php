@@ -133,7 +133,7 @@
                         <div class="invalid-feedback">Please select a truck.</div>
                     </div>
                     <div class="col-md-4">
-                        <label for="transporter_type" class="form-label" id="transporterTypeLabel">Select Type *</label>
+                        <label for="transporter_type" class="form-label" id="transporterTypeLabel">Select Payment Type *</label>
                         <select class="form-select" id="transporter_type" name="transporter_type" required>
                             <option value="">Select Type</option>
                             <option value="owner">Truck Owner</option>

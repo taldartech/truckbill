@@ -111,7 +111,7 @@
             <div class="col-md-2">
                 <div class="mb-2">
                     <strong>Weight:</strong><br>
-                    <span class="text-info fw-bold">{{ $lorry_receipt->first() ? number_format($lorry_receipt->first()->weight ?? 0, 2) : '0.00' }} kg</span>
+                    <span class="text-info fw-bold">{{ $lorry_receipt->first() ? number_format($lorry_receipt->first()->weight ?? 0, 2) : '0.00' }} MT</span>
                 </div>
             </div>
             <div class="col-md-2">
@@ -209,7 +209,7 @@
                     <label for="tr_amount" class="form-label">TR Amount *</label>
                     <input type="number" step="0.01" min="0.01" class="form-control" name="tr_amount" id="tr_amount" value="{{ old('tr_amount') }}" placeholder="Auto-calculated (editable)" required>
                     <small class="form-text text-muted">
-                        <i class="fas fa-info-circle"></i> Auto-calculated: TR Freight Rate × Weight ({{ $lorry_receipt->first() ? number_format($lorry_receipt->first()->weight ?? 0, 2) : '0.00' }} kg). Must be greater than ₹0.
+                        <i class="fas fa-info-circle"></i> Auto-calculated: TR Freight Rate × Weight ({{ $lorry_receipt->first() ? number_format($lorry_receipt->first()->weight ?? 0, 2) : '0.00' }} MT). Must be greater than ₹0.
                     </small>
                     @error('tr_amount') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
