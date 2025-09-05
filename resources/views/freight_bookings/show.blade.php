@@ -485,17 +485,23 @@
                         </div>
                         
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="referenceId" class="form-label">Reference Transaction ID</label>
                                     <input type="text" class="form-control" id="referenceId" placeholder="Enter reference ID" 
                                         value="{{ isset($existingPayment) ? $existingPayment->reference_transaction_id : '' }}">
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="paymentRemarks" class="form-label">Remarks</label>
                                     <textarea class="form-control" id="paymentRemarks" rows="2" placeholder="Enter remarks">{{ isset($existingPayment) ? $existingPayment->remark : '' }}</textarea>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="paymentDate" class="form-label">Payment Date</label>
+                                    <input type="date" class="form-control" name="date" id="paymentDate" value="{{ isset($existingPayment) ? $existingPayment->date : '' }}">
                                 </div>
                             </div>
                         </div>
@@ -582,7 +588,7 @@ function loadPaymentHistory(freightBookingIds) {
                         <td>₹${parseFloat(payment.amount || 0).toFixed(2)}</td>
                         <td>${payment.payment_type || 'N/A'}</td>
                         <td>${payment.payment_mode || 'N/A'}</td>
-                        <td>${new Date(payment.created_at).toLocaleDateString('en-IN')}</td>
+                        <td>${new Date(payment.date).toLocaleDateString('en-IN')}</td>
                         <td><span class="badge ${statusBadge}">${payment.payment_status || 'N/A'}</span></td>
                     </tr>
                 `;
@@ -676,6 +682,7 @@ function submitVoucherPayment() {
     // Get form values
     const paymentTypeSelect = document.getElementById('paymentType');
     const paymentModeSelect = document.getElementById('paymentMode');
+    const paymentDate = document.getElementById('paymentDate');
     const paymentType = paymentTypeSelect?.value;
     const paymentMode = paymentModeSelect?.value;
     const referenceId = document.getElementById('referenceId')?.value;
@@ -696,6 +703,7 @@ function submitVoucherPayment() {
     // Get payment type and mode IDs from the selected options
     const paymentTypeId = paymentTypeSelect.options[paymentTypeSelect.selectedIndex].dataset.id;
     const paymentModeId = paymentModeSelect.options[paymentModeSelect.selectedIndex].dataset.id;
+    
     
     // Get freight booking ID and allocated amount
     const allocatedInput = document.querySelector('.allocated-input');
@@ -741,7 +749,8 @@ function submitVoucherPayment() {
         payment_mode: paymentMode,
         reference_number: referenceId,
         notes: remarks,
-        pump_id: pumpId
+        pump_id: pumpId,
+        date: paymentDate.value
     };
     
     // Show loading state
@@ -840,7 +849,7 @@ function submitVoucherPayment() {
                     <td>₹{{ number_format($payment->amount, 2) }}</td>
                     <td>{{ $payment->payment_type ?? 'N/A' }}</td>
                     <td>{{ $payment->payment_mode ?? 'N/A' }}</td>
-                    <td>{{ $payment->created_at ? \Carbon\Carbon::parse($payment->created_at)->format('d-m-Y') : 'N/A' }}</td>
+                    <td>{{ $payment->date ? \Carbon\Carbon::parse($payment->date)->format('d-m-Y') : 'N/A' }}</td>
                     <td>
                         @if($payment->payment_status === 'paid')
                             <span class="badge bg-success">Paid</span>

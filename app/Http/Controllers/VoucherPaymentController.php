@@ -252,6 +252,7 @@ class VoucherPaymentController extends Controller
     public function store(Request $request)
     {
         // Validate basic fields
+        
         $data = $request->validate([
             'freight_booking_id' => 'required|exists:freight_bookings,id',
             'voucher_number' => 'required|string',
@@ -263,6 +264,7 @@ class VoucherPaymentController extends Controller
             'remark' => 'nullable|string',
             'payment_status' => 'required|in:pending,in-progress,paid',
             'pump_id' => 'nullable|exists:pumps,id',
+            'date' => 'nullable|date',
         ]);
 
         // Add company_id to data
@@ -379,6 +381,7 @@ class VoucherPaymentController extends Controller
             'payment_status' => 'required|in:pending,in-progress,paid',
             'company_id' => 'required|exists:companies,id',
             'pump_id' => 'nullable|exists:pumps,id',
+            'date' => 'nullable|date',
         ]);
         
         // Get the freight booking
@@ -457,6 +460,7 @@ class VoucherPaymentController extends Controller
                 'amounts' => 'required|array',
                 'company_id' => 'required|exists:companies,id',
                 'pump_id' => 'nullable|exists:pumps,id',
+                'date' => 'nullable|date',
             ]);
            
     
@@ -636,7 +640,9 @@ class VoucherPaymentController extends Controller
                     'transaction_id' => $reference_transaction_id,
                     'remark' => $remark,
                     'payment_status' => $payment_status,
-                    'company_id' => $company_id
+                    'company_id' => $company_id,
+                    'pump_id' => $validated['pump_id'],
+                    'date' => $validated['date'],
                 ]);
             
                 // Update advance and balance

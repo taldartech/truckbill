@@ -328,17 +328,17 @@
                     <div class="col-md-3">
                         <label for="damage_amount" class="form-label">Damage Amount</label>
                         <input type="number" step="0.01" min="0" class="form-control form-control-sm @error('damage_amount') is-invalid @enderror" name="damage_amount" id="damage_amount" value="{{ old('damage_amount', $freightBooking->damage_amount) }}" placeholder="Enter damage amount" {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
-                        <small class="form-text text-muted">
+                        {{-- <small class="form-text text-muted">
                             <i class="fas fa-info-circle"></i> Must be ≥ 0 and < TR Amount
-                        </small>
+                        </small> --}}
                         @error('damage_amount') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-3">
                         <label for="shortage_amount" class="form-label">Shortage Amount</label>
                         <input type="number" step="0.01" min="0" class="form-control form-control-sm @error('shortage_amount') is-invalid @enderror" name="shortage_amount" id="shortage_amount" value="{{ old('shortage_amount', $freightBooking->shortage_amount) }}" placeholder="Enter shortage amount" {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
-                        <small class="form-text text-muted">
+                        {{-- <small class="form-text text-muted">
                             <i class="fas fa-info-circle"></i> Must be ≥ 0 and < TR Amount
-                        </small>
+                        </small> --}}
                         @error('shortage_amount') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
                 </div>
@@ -726,7 +726,7 @@
         // Validation for additional charges fields
         function validateAdditionalCharges() {
             const trAmount = parseFloat(trAmountInput ? trAmountInput.value : 0) || 0;
-            const fieldsToValidate = ['detention', 'deviation', 'misc_expense', 'damage_amount', 'shortage_amount'];
+            const fieldsToValidate = ['detention', 'deviation', 'misc_expense'];
             
             fieldsToValidate.forEach(fieldName => {
                 const field = document.getElementById(fieldName);

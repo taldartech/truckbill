@@ -562,7 +562,7 @@ class FreightBookingController extends Controller
         }
         if ($request->has('action') && $request->action === 'save_and_view') {
             return redirect()->route('freight_bookings.show', $freightBooking->id)
-                ->with('success', 'Freight Booking created successfully. You can view it now.');
+                ->with('success', 'Freight Booking created successfully. Ready to make payment.');
         }
 
         return redirect()->route('freight_bookings.index')->with('success', 'Freight Booking created successfully.');
@@ -938,6 +938,7 @@ class FreightBookingController extends Controller
                 'reference_number' => 'nullable|string',
                 'notes' => 'nullable|string',
                 'pump_id' => 'nullable|exists:pumps,id',
+                'date' => 'nullable|date',
             ]);
 
             \Log::info('Validation passed', $validated);
@@ -982,7 +983,8 @@ class FreightBookingController extends Controller
                         'amount' => $amount,
                         'remark' => $validated['notes'] ?? null,
                         'payment_status' => $paymentStatus,
-                        'company_id' => auth()->user()->company_id
+                        'company_id' => auth()->user()->company_id,
+                        'date' => $validated['date'] ?? null,
                     ]);
                     
                     \Log::info('Payment status set based on payment mode', [

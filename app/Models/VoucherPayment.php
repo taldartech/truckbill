@@ -22,7 +22,8 @@ class VoucherPayment extends Model
         'payment_status',
         'company_id',
         'pump_id',
-        'reference_transaction_id'
+        'reference_transaction_id',
+        'date'
     ];
 
     public function voucher()
