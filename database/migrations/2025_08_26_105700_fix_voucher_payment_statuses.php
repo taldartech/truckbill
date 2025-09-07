@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class FixVoucherPaymentStatuses extends Migration
 {
@@ -16,11 +17,18 @@ class FixVoucherPaymentStatuses extends Migration
             ->distinct()
             ->pluck('payment_status');
             
-        // Convert any 'in progress' to 'in-progress' to match the ENUM
+        // If there are records with 'in progress' (with space), update them to 'in-progress'
         if ($statuses->contains('in progress')) {
+            // Temporarily modify the column to accept any string value
+            DB::statement("ALTER TABLE voucher_payments MODIFY payment_status VARCHAR(20) NOT NULL DEFAULT 'pending'");
+            
+            // Update the values
             DB::table('voucher_payments')
                 ->where('payment_status', 'in progress')
                 ->update(['payment_status' => 'in-progress']);
+                
+            // Change the column back to ENUM with correct values
+            DB::statement("ALTER TABLE voucher_payments MODIFY payment_status ENUM('pending', 'in-progress', 'paid') NOT NULL DEFAULT 'pending'");
         }
     }
 
@@ -29,9 +37,7 @@ class FixVoucherPaymentStatuses extends Migration
      */
     public function down()
     {
-        // Revert back if needed (though this shouldn't be necessary as it's fixing to match ENUM)
-        DB::table('voucher_payments')
-            ->where('payment_status', 'in-progress')
-            ->update(['payment_status' => 'in progress']);
+        // This is a one-way migration to fix data integrity
+        // No need to implement down() as we don't want to go back to invalid data
     }
 }
