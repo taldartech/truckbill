@@ -162,7 +162,7 @@ class InvoiceController extends Controller
             $company = Company::find($user->company_id);
         }
     
-        $consignees = Consignee::all();
+        $consignees = Consignee::all()->where('company_id', $user->company_id);
     
         return view('invoices.create', compact('company', 'consignees'));
     }
@@ -183,6 +183,7 @@ public function getCustomerMemos($customerId)
     // Get memos from lorry_receipts
     $memos = DB::table('lorry_receipts')
         ->select('memo_id')
+        ->where('company_id', auth()->user()->company_id)
         ->where('customer_id', $customerId)
         ->where('invoice_generated', 0) // ✅ Only those not yet invoiced
         ->whereNotNull('memo_id')
