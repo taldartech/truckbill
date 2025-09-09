@@ -505,7 +505,7 @@
   </div>
 
 <!-- Modal for Memo ID Entry -->
-<div class="modal fade" id="memoIdModal" tabindex="-1" aria-labelledby="memoIdModalLabel" aria-hidden="true">
+<div class="modal fade" id="memoIdModal" tabindex="-1" aria-labelledby="memoIdModalLabel" aria-hidden="true" data-bs-backdrop="false">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
@@ -539,12 +539,12 @@
 </div>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
+ document.addEventListener("DOMContentLoaded", function () {
     let deliveredSwitch = document.getElementById("is_delivered");
 
-    deliveredSwitch.addEventListener("change", function (e) {
+    deliveredSwitch.addEventListener("change", function () {
         if (this.checked) {
-            // Prevent form submit side-effects
+            // Reset it temporarily
             this.checked = false; 
 
             // Show confirmation modal instead
@@ -559,16 +559,21 @@
         new bootstrap.Modal(document.getElementById('memoIdModal')).show();
     });
 
-    // If NO → Show Additional charges section
+    // If NO → Ask extra confirmation
     document.getElementById("noMemoBtn").addEventListener("click", function () {
         var askModal = bootstrap.Modal.getInstance(document.getElementById('askMemoModal'));
         askModal.hide();
-        document.getElementById("additional-charges-section").style.display = "block";
 
-        // Now check the delivered switch
-        deliveredSwitch.checked = true;
+        // Show extra confirmation alert
+        if (confirm("⚠️ This delivery status cannot be changed again. Do you want to continue?")) {
+            document.getElementById("additional-charges-section").style.display = "block";
+            deliveredSwitch.checked = true; // now lock delivered
+        } else {
+            deliveredSwitch.checked = false; // keep it unchecked
+        }
     });
 });
+
 
     // Function to save memo ID for delivery
     window.saveMemoId = function() {
