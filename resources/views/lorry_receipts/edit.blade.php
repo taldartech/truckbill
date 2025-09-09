@@ -91,7 +91,7 @@
         @csrf
         @method('PUT')
         <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
-                
+
         <div class="card-body">
             <!-- General Details -->
             <div class="card mb-4 p-3 bg-light">
@@ -115,7 +115,7 @@
                         <!-- Debug info -->
                         <!-- Customer ID: {{ $lorry_receipt->customer_id }} -->
                         <!-- Customer Name: {{ $lorry_receipt->customer ? $lorry_receipt->customer->name : 'Not found' }} -->
-                        
+
                         <select class="form-select" id="customer_id" name="customer_id" required>
                             <option value="">Select Customer</option>
                             @foreach($customers as $customer)
@@ -146,7 +146,7 @@
                             <option value="">Select Trucks</option>
                             @foreach($trucks as $truck)
                                 <option value="{{ $truck->id }}" {{ $truck->id == $lorry_receipt->truck_id ? 'selected' : '' }}>
-                                    {{ $truck->truck_number }} 
+                                    {{ $truck->truck_number }}
                                     @if($truck->driver)
                                         - Driver: {{ $truck->driver->name }}
                                     @endif
@@ -185,6 +185,21 @@
                         </div>
                     </div>
                 </div>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="reference_by" class="form-label">Reference By</label>
+                        <select class="form-select" id="reference_by" name="reference_by" data-placeholder="Search and select reference...">
+                            <option value="">Select Reference</option>
+                            @foreach($agencies as $agency)
+                                <option value="{{ $agency->id }}" {{ $lorry_receipt->reference_by == $agency->id ? 'selected' : '' }}>
+                                    {{ $agency->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('reference_by') <div class="text-danger">{{ $message }}</div> @enderror
+                        <div class="invalid-feedback">Please select a reference if applicable.</div>
+                    </div>
+                </div>
             </div>
 
             <!-- Consignor & Consignee Details -->
@@ -208,7 +223,7 @@
                         <label for="consignor_contact_number" class="form-label">Consignor Contact Number</label>
                         <input type="text" class="form-control" id="consignor_contact_number" name="consignor_contact_number" value="{{ $lorry_receipt->consignor->contact_number ?? '' }}" readonly>
                     </div>
-                  
+
                 </div>
                 <div class="row mb-3">
                 <div class="col-md-4">
@@ -273,7 +288,7 @@
                         @error('good_type') <div class="text-danger">{{ $message }}</div> @enderror
                         <div class="invalid-feedback">Please select a goods type.</div>
                     </div>
-                    
+
                     <div class="col-md-4">
                         <label for="no_of_units" class="form-label">No. of Units <small class="text-muted">(Optional)</small></label>
                         <input type="number" class="form-control" id="no_of_units" name="no_of_units" value="{{ old('no_of_units', $lorry_receipt->no_of_units) }}" min="1" max="100000" title="Maximum 100,000 units allowed">
@@ -281,7 +296,7 @@
                         <div class="invalid-feedback">Please enter a valid number of units (max 100,000).</div>
                         <small class="text-muted">📦 Max: 100,000 units</small>
                     </div>
-                    
+
                 </div>
                 <div class="row mb-3">
                     <div class="col-md-4">
@@ -301,15 +316,15 @@
                     <div class="col-md-2">
                         <input type="hidden" id="shortage_amount" name="shortage_amount" value="{{ old('shortage_amount', $lorry_receipt->shortage_amount) }}">
                         <label for="shortage_amount" class="form-label">Shortage Amount</label>
-                        <input type="number" step="0.01" class="form-control" id="shortage_amount" 
+                        <input type="number" step="0.01" class="form-control" id="shortage_amount"
                                value="{{ old('shortage_amount', $lorry_receipt->shortage_amount) }}" disabled>
                         <small class="text-muted">🔒 Auto-filled</small>
                     </div>
-                
+
                     <div class="col-md-2">
                         <input type="hidden" id="damage_amount" name="damage_amount" value="{{ old('damage_amount', $lorry_receipt->damage_amount) }}">
                         <label for="damage_amount" class="form-label">Damage Amount</label>
-                        <input type="number" step="0.01" class="form-control" id="damage_amount" 
+                        <input type="number" step="0.01" class="form-control" id="damage_amount"
                                value="{{ old('damage_amount', $lorry_receipt->damage_amount) }}" disabled>
                         <small class="text-muted">🔒 Auto-filled</small>
                     </div>
@@ -349,7 +364,7 @@
     window.addEventListener('load', function() {
         // Fetch all the forms we want to apply custom Bootstrap validation styles to
         var forms = document.getElementsByClassName('needs-validation');
-        
+
         // Loop over them and prevent submission
         Array.from(forms).forEach((form) => {
             form.addEventListener('submit', function(event) {
@@ -372,7 +387,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Lorry Receipt Edit Form initialized');
-    
+
     // Auto-calculate amount based on weight × freight rate
     const weightInput = document.getElementById('weight');
     const frRateInput = document.getElementById('fr_rate');
@@ -380,28 +395,28 @@ document.addEventListener('DOMContentLoaded', function() {
     const shortageAmountInput = document.getElementById('shortage_amount');
     const damageAmountInput = document.getElementById('damage_amount');
     let isManuallyEdited = false;
-    
+
     function calculateAmount() {
         if (isManuallyEdited) return;
-        
+
         const weight = parseFloat(weightInput.value) || 0;
         const frRate = parseFloat(frRateInput.value) || 0;
-        
+
         if (weight > 0 && frRate > 0) {
             const calculatedAmount = weight * frRate - (parseFloat(shortageAmountInput.value) || 0) - (parseFloat(damageAmountInput.value) || 0);
             amountInput.value = calculatedAmount.toFixed(2);
-            
+
             // Visual feedback for auto-calculation
             amountInput.classList.remove('amount-manually-edited');
             amountInput.classList.add('amount-auto-calculated');
             console.log(`💰 Auto-calculated amount: ₹${calculatedAmount.toFixed(2)} (${weight} tons × ₹${frRate}/ton)`);
         }
     }
-    
+
     // Auto-calculate on weight or freight rate change
     weightInput.addEventListener('input', calculateAmount);
     frRateInput.addEventListener('input', calculateAmount);
-    
+
     // Track manual edits to amount field
     amountInput.addEventListener('input', function() {
         isManuallyEdited = true;
@@ -409,14 +424,14 @@ document.addEventListener('DOMContentLoaded', function() {
         this.classList.add('amount-manually-edited');
         console.log('✏️ Amount manually edited by user');
     });
-    
+
     // Initialize Select2 for better dropdowns
     $('#customer_id, #consignor_id, #consignee_id, #transporter_id, #truck_id').select2({
         theme: 'bootstrap-5',
         placeholder: 'Select an option...',
         allowClear: true
     });
-    
+
     // Bootstrap form validation
     const forms = document.querySelectorAll('.needs-validation');
     Array.from(forms).forEach(form => {
@@ -624,7 +639,7 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(waitForJQuery, 100);
         }
     }
-    
+
     function checkSelect2() {
         if (typeof $.fn.select2 !== 'undefined') {
             console.log('✅ Select2 is available');
@@ -640,27 +655,27 @@ document.addEventListener('DOMContentLoaded', function() {
             document.head.appendChild(script);
         }
     }
-    
+
     waitForJQuery();
 });
 
 function initializeLorryReceiptForm() {
     $(document).ready(function() {
         console.log('🚀 Lorry Receipt Edit Form initialized');
-        
+
         // Initialize other dropdowns with Select2
         $('#truck_id, #transporter_id, #consignor_id, #consignee_id, #good_type').select2({
             theme: 'bootstrap-5',
             width: '100%',
             allowClear: true
         });
-        
+
         // Access the customer data from the window object
-        console.log('Selected customer data:', { 
-            id: window.selectedCustomerId, 
-            name: window.selectedCustomerName 
+        console.log('Selected customer data:', {
+            id: window.selectedCustomerId,
+            name: window.selectedCustomerName
         });
-        
+
         // Initialize customer dropdown with Select2
         $('#customer_id').select2({
             theme: 'bootstrap-5',
@@ -669,27 +684,27 @@ function initializeLorryReceiptForm() {
             // Log when dropdown is opened
             console.log('Customer dropdown opened');
         });
-        
+
         // Create a function to ensure the customer is selected
         function ensureCustomerSelected() {
             if (window.selectedCustomerId) {
                 // Make sure the option exists
                 const optionExists = $('#customer_id option[value="' + window.selectedCustomerId + '"]').length > 0;
-                
+
                 if (!optionExists) {
                     // Create the option if it doesn't exist
                     const newOption = new Option(window.selectedCustomerName, window.selectedCustomerId, true, true);
                     $('#customer_id').append(newOption);
                     console.log('Created missing option for customer:', window.selectedCustomerName);
                 }
-                
+
                 // Set the value and trigger change
                 $('#customer_id').val(window.selectedCustomerId).trigger('change');
-                
+
                 // Verify the selection
                 const currentVal = $('#customer_id').val();
                 console.log('Customer dropdown value after setting:', currentVal);
-                
+
                 if (currentVal == window.selectedCustomerId) {
                     console.log('✅ Customer dropdown set successfully');
                 } else {
@@ -697,13 +712,13 @@ function initializeLorryReceiptForm() {
                 }
             }
         }
-        
+
         // Call immediately
         ensureCustomerSelected();
-        
+
         // And also after a short delay to ensure Select2 is fully initialized
         setTimeout(ensureCustomerSelected, 300);
-        
+
         console.log('✅ All dropdowns initialized successfully');
         console.log('Truck ID:', $('#truck_id').val());
         console.log('Transporter ID:', $('#transporter_id').val());
@@ -715,7 +730,7 @@ function initializeLorryReceiptForm() {
             source: '{{ $lorry_receipt->source ?? '' }}',
             destination: '{{ $lorry_receipt->destination ?? '' }}'
         });
-        
+
         // Ensure customer dropdown is properly initialized with the correct value
         const customerSelect = $('#customer_id');
         if (customerSelect.length) {
@@ -743,7 +758,7 @@ function initializeLorryReceiptForm() {
         updateConsigneeContact();
         updateTruckDetails();
         updateTransporterDetails();
-        
+
         // Set transporter type based on current truck selection
         const dbTransporterType = "{{ $lorry_receipt->transporter_type ?? '' }}";
 
@@ -758,7 +773,7 @@ if (dbTransporterType) {
             console.log('Set transporter type to:', transporterType);
         }
     }
-        
+
         // Trigger Select2 to refresh and show selected values
         setTimeout(function() {
             $('#customer_id, #truck_id, #transporter_id, #consignor_id, #consignee_id, #good_type').trigger('change.select2');
@@ -834,7 +849,7 @@ if (dbTransporterType) {
             if (transporterId && transporters[transporterId]) {
                 const transporter = transporters[transporterId];
                 const tdsPercentage = transporter.tds_percentage || 0;
-                
+
                 // Update TDS badge
                 if (tdsPercentage > 0) {
                     $('#tds-badge').text(`TDS: ${tdsPercentage}%`).removeClass('d-none');
@@ -849,21 +864,21 @@ if (dbTransporterType) {
         function populateTransporterDropdown() {
             const truckId = $('#truck_id').val();
             const currentTransporterId = $('#transporter_id').val();
-            
+
             if (truckId && trucks[truckId]) {
                 const truck = trucks[truckId];
                 const transporterType = truck.transporter_type;
-                
+
                 // Clear and repopulate transporter dropdown
                 $('#transporter_id').empty().append('<option value="">Select Transporter</option>');
-                
+
                 Object.values(transporters).forEach(transporter => {
                     if (transporter.transporter_type === transporterType) {
                         const selected = transporter.id == currentTransporterId ? 'selected' : '';
                         $('#transporter_id').append(`<option value="${transporter.id}" ${selected}>${transporter.name}</option>`);
                     }
                 });
-                
+
                 $('#transporter_id').trigger('change');
             } else {
                 $('#transporter_id').empty().append('<option value="">Select Transporter</option>');
@@ -881,7 +896,7 @@ if (dbTransporterType) {
             const shortageAmount = parseFloat($('#shortage_amount').val()) || 0;
             const damageAmount = parseFloat($('#damage_amount').val()) || 0;
             const amount = weight * frRate - (shortageAmount + damageAmount);
-            
+
             if (weight > 0 && frRate > 0) {
                 $('#amount').val(amount.toFixed(2));
             }
@@ -891,10 +906,10 @@ if (dbTransporterType) {
         $('#no_of_units').on('input blur', function() {
             const value = parseInt($(this).val());
             const isValid = !value || (value >= 1 && value <= 100000);
-            
+
             $(this).toggleClass('is-valid', isValid && value)
                    .toggleClass('is-invalid', !isValid && value);
-            
+
             if (!isValid && value) {
                 this.setCustomValidity('Number of units must be between 1 and 100,000');
             } else {
@@ -929,7 +944,7 @@ function waitForSelect2() {
             resolve();
             return;
         }
-        
+
         // Wait for Select2 to load
         const checkSelect2 = setInterval(() => {
             if (typeof $.fn.select2 !== 'undefined') {
@@ -957,7 +972,7 @@ $(document).ready(function() {
             } else {
                 console.error('❌ Truck element not found');
             }
-            
+
             // Initialize customer dropdown
             if ($('#customer_id').length > 0) {
                 $('#customer_id').select2({
@@ -969,7 +984,7 @@ $(document).ready(function() {
             } else {
                 console.error('❌ Customer element not found');
             }
-            
+
             // Initialize consignor dropdown
             if ($('#consignor_id').length > 0) {
                 $('#consignor_id').select2({
@@ -981,7 +996,7 @@ $(document).ready(function() {
             } else {
                 console.error('❌ Consignor element not found');
             }
-            
+
             // Initialize consignee dropdown
             if ($('#consignee_id').length > 0) {
                 $('#consignee_id').select2({
@@ -1007,7 +1022,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const truckSelect = document.getElementById('truck_id');
     const transporterSelect = document.getElementById('transporter_id');
     const transporterLabel = document.getElementById('transporterLabel');
-    
+
     // Store truck data for easy access
     let trucksData = {};
 
@@ -1015,26 +1030,26 @@ document.addEventListener('DOMContentLoaded', function () {
     function showValidationError(element, message) {
         // Remove existing error message
         clearValidationError(element);
-        
+
         // Add error styling
         element.classList.add('is-invalid');
-        
+
         // Create and add error message
         const errorDiv = document.createElement('div');
         errorDiv.className = 'invalid-feedback d-block';
         errorDiv.textContent = message;
         errorDiv.id = element.id + '_validation_error';
-        
+
         // Insert after the element
         element.parentNode.insertBefore(errorDiv, element.nextSibling);
-        
+
         console.log('🚨 Validation error shown:', message);
     }
 
     function clearValidationError(element) {
         // Remove error styling
         element.classList.remove('is-invalid');
-        
+
         // Remove error message
         const existingError = document.getElementById(element.id + '_validation_error');
         if (existingError) {
@@ -1045,28 +1060,28 @@ document.addEventListener('DOMContentLoaded', function () {
     // Handle truck selection change
     $('#truck_id').on('select2:select', function (e) {
         const selectedTruckId = e.params.data.id;
-        
+
         console.log('🚛 Truck selected:', selectedTruckId);
-        
+
         // Get truck data from the selected option
         const selectedOption = $(this).find('option:selected');
         const truckText = selectedOption.text().trim();
-        
+
         console.log('📝 Truck text:', truckText);
-        
+
         // Extract transporter info from truck text (format: "TruckNumber - Driver: DriverName (TransporterName)")
         const transporterMatch = truckText.match(/\(([^)]+)\)$/);
         if (transporterMatch) {
             const transporterName = transporterMatch[1].trim();
-            
+
             console.log('🏢 Extracted transporter name:', transporterName);
-            
+
             // Store truck-transporter relationship
             trucksData[selectedTruckId] = {
                 transporterName: transporterName,
                 truckText: truckText
             };
-            
+
             // If "Truck Owner" is selected, auto-select the truck owner
             if (transporterTypeSelect.value === 'owner') {
                 console.log('🎯 Auto-selecting truck owner for:', transporterName);
@@ -1086,16 +1101,16 @@ document.addEventListener('DOMContentLoaded', function () {
             // Trigger the same logic as select2:select
             const selectedOption = $(this).find('option:selected');
             const truckText = selectedOption.text().trim();
-            
+
             const transporterMatch = truckText.match(/\(([^)]+)\)$/);
             if (transporterMatch) {
                 const transporterName = transporterMatch[1].trim();
-                
+
                 trucksData[selectedTruckId] = {
                     transporterName: transporterName,
                     truckText: truckText
                 };
-                
+
                 if (transporterTypeSelect.value === 'owner') {
                     autoSelectTruckOwner(selectedTruckId, transporterName);
                 }
@@ -1107,13 +1122,13 @@ document.addEventListener('DOMContentLoaded', function () {
     transporterTypeSelect.addEventListener('change', function () {
         const selectedType = this.value;
         const selectedTruckId = truckSelect.value;
-        
+
         transporterSelect.innerHTML = '<option value="">Select Transporter</option>';
         transporterSelect.disabled = false; // Reset disabled state
-        
+
         if (selectedType === 'owner') {
             transporterLabel.textContent = 'Truck Owner *';
-            
+
             // If a truck is already selected, auto-select its owner
             if (selectedTruckId && trucksData[selectedTruckId]) {
                 autoSelectTruckOwner(selectedTruckId, trucksData[selectedTruckId].transporterName);
@@ -1145,11 +1160,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
         }
     });
-    
+
     // Function to auto-select truck owner
     function autoSelectTruckOwner(truckId, transporterName) {
         console.log('🔄 Fetching truck owners from API...');
-        
+
         // Fetch truck owners and find the matching one
         fetch('/api/truck-owners')
             .then(response => {
@@ -1161,19 +1176,19 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .then(data => {
                 console.log('📊 Truck owners data received:', data);
-                
+
                 transporterSelect.innerHTML = '<option value="">Select Transporter</option>';
-                
+
                 let ownerFound = false;
                 let matchedOwner = null;
-                
+
                 data.forEach(owner => {
                     const option = document.createElement('option');
                     option.value = owner.id;
                     option.textContent = owner.name;
-                    
+
                     console.log('🔍 Comparing:', owner.name, 'with', transporterName);
-                    
+
                     // Auto-select if this is the truck's owner (case-insensitive comparison)
                     if (owner.name.toLowerCase().trim() === transporterName.toLowerCase().trim()) {
                         option.selected = true;
@@ -1181,16 +1196,16 @@ document.addEventListener('DOMContentLoaded', function () {
                         matchedOwner = owner;
                         console.log('✅ Found matching owner:', owner.name);
                     }
-                    
+
                     transporterSelect.appendChild(option);
                 });
-                
+
                 if (ownerFound) {
                     // Disable the dropdown since it's auto-selected
                     // transporterSelect.disabled = true;
                     // transporterSelect.style.backgroundColor = '#e9ecef';
                     // transporterSelect.title = 'Automatically selected based on truck owner';
-                    
+
                     // console.log(`✅ Auto-selected truck owner: ${matchedOwner.name} (ID: ${matchedOwner.id})`);
                     transporterSelect.value = matchedOwner.id;
     transporterSelect.disabled = true;
@@ -1205,13 +1220,13 @@ document.addEventListener('DOMContentLoaded', function () {
     transporterSelect.form.appendChild(hiddenInput);
 
     console.log(`✅ Auto-selected truck owner: ${matchedOwner.name} (ID: ${matchedOwner.id})`);
-                    
+
                     // Show TDS percentage for auto-selected truck owner
                     showTdsPercentage(matchedOwner.id);
                 } else {
                     console.warn(`⚠️ No matching truck owner found for: "${transporterName}"`);
                     console.log('Available owners:', data.map(o => o.name));
-                    
+
                     // Re-enable the dropdown if no match found
                     transporterSelect.disabled = false;
                     transporterSelect.style.backgroundColor = '';
@@ -1220,7 +1235,7 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .catch(error => {
                 console.error('❌ Error fetching truck owners:', error);
-                
+
                 // Re-enable the dropdown on error
                 transporterSelect.disabled = false;
                 transporterSelect.style.backgroundColor = '';
@@ -1232,12 +1247,12 @@ document.addEventListener('DOMContentLoaded', function () {
     function showTdsPercentage(transporterId) {
         const tdsDisplay = document.getElementById('tdsRateDisplay');
         const tdsValue = document.getElementById('tdsPercentageValue');
-        
+
         if (transporterId) {
             // Show loading state
             tdsDisplay.style.display = 'block';
             tdsValue.textContent = 'Loading...';
-            
+
             // Fetch transporter details to get TDS percentage
             fetch(`/api/transporters/${transporterId}`)
                 .then(response => response.json())
@@ -1273,13 +1288,13 @@ document.addEventListener('DOMContentLoaded', function () {
     // Handle consignor selection with Select2 support
     function handleConsignorSelection(consignorId) {
         console.log('👤 Consignor selected:', consignorId);
-        
+
         // Check if consignor and consignee are the same
         const consigneeId = consigneeSelect.value;
         if (consignorId && consigneeId && consignorId === consigneeId) {
             console.warn('⚠️ Consignor and Consignee cannot be the same!');
             showValidationError(consignorSelect, 'Consignor and Consignee cannot be the same');
-            
+
             // Clear the consignor selection
             $('#consignor_id').val(null).trigger('change');
             consignorContactInput.value = '';
@@ -1289,7 +1304,7 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
             clearValidationError(consignorSelect);
         }
-        
+
         if (consignorId) {
             console.log('🔄 Fetching consignor data from API...');
             fetch(`/api/consignees/${consignorId}`)
@@ -1303,13 +1318,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 .then(data => {
                     console.log('📊 Consignor data received:', data);
                     console.log('📊 Consignor data keys:', Object.keys(data));
-                    
+
                     // Auto-populate consignor fields
                     consignorContactInput.value = data.contact_number || '';
                     // Use city and state names from the API response
                     sourceCityInput.value = data.city || '';
                     sourceStateInput.value = data.state || '';
-                    
+
                     console.log('✅ Auto-populated consignor fields:');
                     console.log('  📞 Contact:', data.contact_number || 'N/A');
                     console.log('  🏙️ City:', data.city || 'N/A');
@@ -1347,13 +1362,13 @@ document.addEventListener('DOMContentLoaded', function () {
     // Handle consignee selection with Select2 support
     function handleConsigneeSelection(consigneeId) {
         console.log('🏢 Consignee selected:', consigneeId);
-        
+
         // Check if consignor and consignee are the same
         const consignorId = consignorSelect.value;
         if (consigneeId && consignorId && consigneeId === consignorId) {
             console.warn('⚠️ Consignee and Consignor cannot be the same!');
             showValidationError(consigneeSelect, 'Consignee and Consignor cannot be the same');
-            
+
             // Clear the consignee selection
             $('#consignee_id').val(null).trigger('change');
             consigneeContactInput.value = '';
@@ -1363,7 +1378,7 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
             clearValidationError(consigneeSelect);
         }
-        
+
         if (consigneeId) {
             console.log('🔄 Fetching consignee data from API...');
             fetch(`/api/consignees/${consigneeId}`)
@@ -1377,13 +1392,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 .then(data => {
                     console.log('📊 Consignee data received:', data);
                     console.log('📊 Consignee data keys:', Object.keys(data));
-                    
+
                     // Auto-populate consignee fields
                     consigneeContactInput.value = data.contact_number || '';
                     // Use city and state names from the API response
                     destinationCityInput.value = data.city || '';
                     destinationStateInput.value = data.state || '';
-                    
+
                     console.log('✅ Auto-populated consignee fields:');
                     console.log('  📞 Contact:', data.contact_number || 'N/A');
                     console.log('  🏙️ Destination City:', data.city || 'N/A');
@@ -1432,13 +1447,13 @@ document.addEventListener('DOMContentLoaded', function () {
     function validateConsignorConsignee() {
         const consignorId = consignorSelect.value;
         const consigneeId = consigneeSelect.value;
-        
+
         if (consignorId && consigneeId && consignorId === consigneeId) {
             showValidationError(consignorSelect, 'Consignor and Consignee cannot be the same');
             showValidationError(consigneeSelect, 'Consignor and Consignee cannot be the same');
             return false;
         }
-        
+
         clearValidationError(consignorSelect);
         clearValidationError(consigneeSelect);
         return true;
@@ -1453,10 +1468,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Always prevent default submission first
                 event.preventDefault();
                 event.stopPropagation();
-                
+
                 // Run custom validation first
                 const customValidationPassed = validateConsignorConsignee();
-                
+
                 if (!form.checkValidity() || !customValidationPassed) {
                     if (!customValidationPassed) {
                         console.error('🚨 Form submission blocked: Consignor and Consignee cannot be the same');
@@ -1464,7 +1479,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     form.classList.add('was-validated');
                     return;
                 }
-                
+
                 // If validation passes, show confirmation dialog
                 showConfirmationDialog(form);
                 form.classList.add('was-validated');
@@ -1478,40 +1493,40 @@ document.addEventListener('DOMContentLoaded', function () {
     const amountInput = document.getElementById('amount');
     const shortageAmountInput = document.getElementById('shortage_amount');
     const damageAmountInput = document.getElementById('damage_amount');
-    
+
     function calculateAmount() {
         const weight = parseFloat(weightInput.value) || 0;
         const frRate = parseFloat(frRateInput.value) || 0;
         const shortageAmount = parseFloat(shortageAmountInput.value) || 0;
         const damageAmount = parseFloat(damageAmountInput.value) || 0;
-        
+
         if (weight > 0 && frRate > 0) {
             const calculatedAmount = weight * frRate - (shortageAmount + damageAmount);
             amountInput.value = calculatedAmount.toFixed(2);
-            
+
             // Add visual feedback to show it's auto-calculated
             amountInput.style.backgroundColor = '#e8f5e8';
             amountInput.title = `Auto-calculated: ${weight} × ${frRate} = ${calculatedAmount.toFixed(2)}`;
-            
+
             console.log(`💰 Amount auto-calculated: ${weight} × ${frRate} = ${calculatedAmount.toFixed(2)}`);
         }
     }
-    
+
     // Add event listeners for weight and freight rate changes
     weightInput.addEventListener('input', function() {
         validateWeight();
         calculateAmount();
     });
     frRateInput.addEventListener('input', calculateAmount);
-    
+
     // Weight validation function
     function validateWeight() {
         const weight = parseFloat(weightInput.value);
-        
+
         if (isNaN(weight)) {
             return; // Let HTML5 validation handle empty/invalid input
         }
-        
+
         if (weight < 0.1) {
             weightInput.setCustomValidity('Weight must be at least 0.1 tons');
             weightInput.classList.add('is-invalid');
@@ -1526,10 +1541,10 @@ document.addEventListener('DOMContentLoaded', function () {
             console.log('✅ Valid weight:', weight, 'tons');
         }
     }
-    
+
     // Add blur validation for weight
     weightInput.addEventListener('blur', validateWeight);
-    
+
     // Allow user to manually edit amount (remove auto-calculated styling when manually edited)
     amountInput.addEventListener('input', function() {
         // Remove auto-calculated styling when user manually edits
@@ -1537,7 +1552,7 @@ document.addEventListener('DOMContentLoaded', function () {
         this.title = 'Manually edited amount';
         console.log('✏️ Amount manually edited by user');
     });
-    
+
     // Calculate amount on page load if values exist
     if (weightInput.value && frRateInput.value) {
         calculateAmount();
@@ -1549,18 +1564,18 @@ document.addEventListener('DOMContentLoaded', function () {
     const lrNumberInput = document.getElementById('lr_number');
     const lrNumberFeedback = document.getElementById('lr-number-feedback');
     let lrNumberTimeout;
-    
+
     function checkLrNumberUniqueness(lrNumber) {
         if (!lrNumber || lrNumber.length < 2) {
             lrNumberFeedback.innerHTML = '';
             lrNumberInput.classList.remove('is-valid', 'is-invalid');
             return;
         }
-        
+
         // Show loading state
         lrNumberFeedback.innerHTML = '<small class="text-info">🔍 Checking availability...</small>';
         lrNumberInput.classList.remove('is-valid', 'is-invalid');
-        
+
         fetch('/api/check-lr-number-uniqueness', {
             method: 'POST',
             headers: {
@@ -1591,20 +1606,20 @@ document.addEventListener('DOMContentLoaded', function () {
             lrNumberInput.classList.remove('is-valid', 'is-invalid');
         });
     }
-    
+
     // Add debounced input listener for LR Number
     lrNumberInput.addEventListener('input', function() {
         const lrNumber = this.value.trim();
-        
+
         // Clear previous timeout
         clearTimeout(lrNumberTimeout);
-        
+
         // Set new timeout for debounced checking
         lrNumberTimeout = setTimeout(() => {
             checkLrNumberUniqueness(lrNumber);
         }, 500); // 500ms delay
     });
-    
+
     // Check on blur as well
     lrNumberInput.addEventListener('blur', function() {
         const lrNumber = this.value.trim();
@@ -1616,10 +1631,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // No. of Units validation
     const noOfUnitsInput = document.getElementById('no_of_units');
-    
+
     function validateNoOfUnits() {
         const value = parseFloat(noOfUnitsInput.value);
-        
+
         if (noOfUnitsInput.value && (isNaN(value) || value < 1 || value > 100000)) {
             noOfUnitsInput.setCustomValidity('Please enter a valid number of units between 1 and 100,000.');
             noOfUnitsInput.classList.add('is-invalid');
@@ -1634,7 +1649,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     }
-    
+
     // Add event listeners for No. of Units validation
     noOfUnitsInput.addEventListener('input', validateNoOfUnits);
     noOfUnitsInput.addEventListener('blur', validateNoOfUnits);
@@ -1642,7 +1657,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Freight Rate validation (using existing frRateInput variable)
     function validateFreightRate() {
         const value = parseFloat(frRateInput.value);
-        
+
         if (frRateInput.value && (isNaN(value) || value < 1 || value > 20000)) {
             frRateInput.setCustomValidity('Please enter a valid freight rate between ₹1 and ₹20,000.');
             frRateInput.classList.add('is-invalid');
@@ -1656,7 +1671,7 @@ document.addEventListener('DOMContentLoaded', function () {
             frRateInput.classList.remove('is-invalid', 'is-valid');
         }
     }
-    
+
     // Add event listeners for Freight Rate validation
     frRateInput.addEventListener('input', validateFreightRate);
     frRateInput.addEventListener('blur', validateFreightRate);
@@ -1664,19 +1679,20 @@ document.addEventListener('DOMContentLoaded', function () {
     // Function to show confirmation dialog with form details
     function showConfirmationDialog(form) {
         const formData = new FormData(form);
-        
+
         // Get display values for dropdowns
         const customerName = document.querySelector('#customer_id option:checked')?.textContent || 'Not selected';
         const consignorName = document.querySelector('#consignor_id option:checked')?.textContent || 'Not selected';
         const consigneeName = document.querySelector('#consignee_id option:checked')?.textContent || 'Not selected';
         const truckNumber = document.querySelector('#truck_id option:checked')?.textContent || 'Not selected';
         const transporterName = document.querySelector('#transporter_id option:checked')?.textContent || 'Not selected';
-        
+        const referenceBy = document.querySelector('#reference_by option:checked')?.textContent || 'Not selected';
+
         // Build confirmation message
         const confirmationHTML = `
             <div class="confirmation-details">
                 <h5 class="text-primary mb-3">📋 Please verify the following details:</h5>
-                
+
                 <div class="row">
                     <div class="col-md-6">
                         <div class="card mb-3">
@@ -1687,16 +1703,17 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <p><strong>Customer:</strong> ${customerName}</p>
                             </div>
                         </div>
-                        
+
                         <div class="card mb-3">
                             <div class="card-header bg-light"><strong>🚛 Transport Details</strong></div>
                             <div class="card-body">
                                 <p><strong>Truck:</strong> ${truckNumber}</p>
                                 <p><strong>Transporter:</strong> ${transporterName}</p>
+                                <p><strong>Reference By:</strong> ${referenceBy}</p>
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="col-md-6">
                         <div class="card mb-3">
                             <div class="card-header bg-light"><strong>👥 Consignor & Consignee</strong></div>
@@ -1707,7 +1724,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <p><strong>Destination:</strong> ${formData.get('destination_city') || 'Not entered'}, ${formData.get('destination_state') || 'Not entered'}</p>
                             </div>
                         </div>
-                        
+
                         <div class="card mb-3">
                             <div class="card-header bg-light"><strong>📦 Goods & Charges</strong></div>
                             <div class="card-body">
@@ -1720,13 +1737,13 @@ document.addEventListener('DOMContentLoaded', function () {
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="alert alert-info mt-3">
                     <i class="fas fa-info-circle"></i> Please review all details carefully before confirming submission.
                 </div>
             </div>
         `;
-        
+
         // Show confirmation dialog using SweetAlert2 or Bootstrap modal
         if (typeof Swal !== 'undefined') {
             Swal.fire({
@@ -1758,7 +1775,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 `Weight: ${formData.get('weight')} tons\n` +
                 `Amount: ₹${formData.get('amount')}\n\n` +
                 `Do you want to submit this lorry receipt?`;
-                
+
             if (confirm(confirmText)) {
                 form.submit();
             }

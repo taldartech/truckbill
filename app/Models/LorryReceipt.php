@@ -16,6 +16,7 @@ class LorryReceipt extends Model
     protected $fillable = [
         'truck_id',
         'transporter_id',
+        'reference_by',
         'delivery_status',
         'consignor_id',
         'customer_id',
@@ -58,7 +59,7 @@ class LorryReceipt extends Model
     public function syncStatusWithFreightBooking()
     {
         $freightBooking = \App\Models\FreightBooking::where('lr_id', $this->id)->first();
-        
+
         if (!$freightBooking) {
             return false;
         }
@@ -78,13 +79,13 @@ class LorryReceipt extends Model
     public function transporter() { return $this->belongsTo(Transporter::class); }
     public function consignor() { return $this->belongsTo(Consignee::class, 'consignor_id'); }
     public function consignee() { return $this->belongsTo(Consignee::class); }
-    
+
 
     public function freightBookings()
     {
         return $this->hasMany(FreightBooking::class, 'lr_id');
     }
-    
+
     protected static function booted()
     {
         static::deleting(function($lorryReceipt) {
