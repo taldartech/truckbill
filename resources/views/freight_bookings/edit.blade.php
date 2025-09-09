@@ -566,10 +566,12 @@
 
         // Show extra confirmation alert
         if (confirm("⚠️ This delivery status cannot be changed again. Do you want to continue?")) {
-            document.getElementById("additional-charges-section").style.display = "block";
             deliveredSwitch.checked = true; // now lock delivered
+            document.getElementById("additional-charges-section").style.display = "block";
+
         } else {
             deliveredSwitch.checked = false; // keep it unchecked
+            document.getElementById("additional-charges-section").style.display = "none";
         }
     });
 });
@@ -638,21 +640,21 @@
             spinner.style.display = 'none';
         });
     };
-document.addEventListener("DOMContentLoaded", function() {
-    // If user chooses YES → Show Memo Modal
-    document.getElementById("yesMemoBtn").addEventListener("click", function() {
-        var askModal = bootstrap.Modal.getInstance(document.getElementById('askMemoModal'));
-        askModal.hide();
-        new bootstrap.Modal(document.getElementById('memoIdModal')).show();
-    });
+// document.addEventListener("DOMContentLoaded", function() {
+//     // If user chooses YES → Show Memo Modal
+//     document.getElementById("yesMemoBtn").addEventListener("click", function() {
+//         var askModal = bootstrap.Modal.getInstance(document.getElementById('askMemoModal'));
+//         askModal.hide();
+//         new bootstrap.Modal(document.getElementById('memoIdModal')).show();
+//     });
 
-    // If user chooses NO → Show Additional Charges Section
-    document.getElementById("noMemoBtn").addEventListener("click", function() {
-        var askModal = bootstrap.Modal.getInstance(document.getElementById('askMemoModal'));
-        askModal.hide();
-        document.getElementById("additional-charges-section").style.display = "block";
-    });
-});
+//     // If user chooses NO → Show Additional Charges Section
+//     document.getElementById("noMemoBtn").addEventListener("click", function() {
+//         var askModal = bootstrap.Modal.getInstance(document.getElementById('askMemoModal'));
+//         askModal.hide();
+//         document.getElementById("additional-charges-section").style.display = "block";
+//     });
+// });
 
     document.addEventListener('DOMContentLoaded', function() {
         // Handle the confirmation modal for form submission
