@@ -101,4 +101,5 @@ class LorryReceipt extends Model
         });
     }
     public function customer() { return $this->belongsTo(Consignee::class, 'customer_id'); }
+    public function reference_by() { return $this->belongsTo(Transporter::class, 'reference_by'); }
 }
