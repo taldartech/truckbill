@@ -269,10 +269,10 @@
                     <div class="d-flex gap-4">
                         <div class="form-check form-switch">
                             <input type="hidden" name="is_delivered" value="{{ $freightBooking->is_delivered }}">
-                            <input class="form-check-input" type="checkbox" id="is_delivered" name="is_delivered" value="1" {{ old('is_delivered', $freightBooking->is_delivered) ? 'checked' : '' }} {{ ($freightBooking->is_delivered && $freightBooking->lr || $freightBooking->lr->memo_id) || $freightBooking->is_cancelled ? 'disabled' : '' }}>
+                            <input class="form-check-input" type="checkbox" id="is_delivered" name="is_delivered" value="1" {{ old('is_delivered', $freightBooking->is_delivered) ? 'checked' : '' }} {{ (($freightBooking->is_delivered && $freightBooking->lr )|| $freightBooking->lr->memo_id) || $freightBooking->is_cancelled ? 'disabled' : '' }}>
                             <label class="form-check-label" for="is_delivered">
                                 <i class="fas fa-truck"></i> Delivered
-                                @if($freightBooking->is_delivered && $freightBooking->lr || $freightBooking->lr->memo_id)
+                                @if(($freightBooking->is_delivered && $freightBooking->lr) || $freightBooking->lr->memo_id)
                                     <small class="text-muted ms-2">
                                         <i class="fas fa-lock"></i> Locked (Memo ID: {{ $freightBooking->lr->memo_id ?? 'N/A' }})
                                     </small>
