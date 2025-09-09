@@ -97,6 +97,7 @@ class FreightBookingController extends Controller
         $lrs = LorryReceipt::all();
         $paymentTypes = \App\Models\PaymentType::all();
         $paymentModes = \App\Models\PaymentMode::all();
+        $customers = \App\Models\Consignee::all();
         
         return view('freight_bookings.index', compact(
             'bookings', 
@@ -107,7 +108,8 @@ class FreightBookingController extends Controller
             'truckOwners',
             'startDate',
             'endDate',
-            'pumps'
+            'pumps',
+            'customers'
         ));
     }
 

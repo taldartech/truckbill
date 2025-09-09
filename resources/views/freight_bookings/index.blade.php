@@ -139,6 +139,7 @@
                         <th class="text-center">GR Date</th>
 
                         <th>LR No</th>
+                        <th>Customer</th>
                         <th>Transporter</th>
                         <th>Short Name</th>
                         <th>Truck No</th>
@@ -154,8 +155,8 @@
                     @forelse($bookings as $index => $booking)
                         <tr class="@if($booking->is_cancelled) table-danger @elseif($booking->is_delivered) table-success @endif">
                             <td class="text-center">
-                                @if($booking->is_delivered && ($booking->balance_amount <= 0))
-                                    <span class="text-muted" title="No checkbox available: Delivered with zero balance"><i class="bi bi-dash-circle"></i></span>
+                                @if(($booking->lr && $booking->lr->memo_id) && ($booking->balance_amount <= 0))
+                                    <span class="text-muted" title="No checkbox available: memo_id is added and balance is zero"><i class="bi bi-dash-circle"></i></span>
                                 @else
                                     <input type="checkbox" class="row-checkbox" value="{{ $booking->id }}" 
                                            data-lr="{{ $booking->lr ? $booking->lr->lr_number : '' }}" 
@@ -178,6 +179,7 @@
                             <td><a href="{{ route('freight_bookings.show', $booking->id) }}" class="text-primary text-decoration-underline">{{ $booking->id ? $booking->id : '-' }}</a></td> --}}
                             <td class="text-center">{{ $booking->lr && $booking->lr->gr_date ? date('d-m-Y', strtotime($booking->lr->gr_date)) : '-' }}</td>
                              <td>{{ $booking->lr ? $booking->lr->lr_number : '-' }}</td>
+                             <td>{{ $booking->lr ? $booking->lr->customer->name : '-' }}</td>
                             <td>
                                 @php
                                     $transporterName = $booking->transporter_name ?? ($booking->transporter ? $booking->transporter->name : '-');
@@ -413,7 +415,7 @@ $(document).ready(function() {
         if (checkedBoxes.length === 1) {
             // Single selection - show only voucher payment button
             $('#voucher-payment-btn').show();
-            $('#bulk-memo-id-btn').hide();
+            $('#bulk-memo-id-btn').show();
             return;
         }
         
