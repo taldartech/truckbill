@@ -692,7 +692,7 @@ class LorryReceiptController extends Controller
             'consignor',
             'consignee',
             'customer', // Add customer relationship
-            'reference_by' // Add reference_by relationship
+            'reference' // Add reference_by relationship
         ])->findOrFail($id);
 
         return response()->json($lorry_receipt);

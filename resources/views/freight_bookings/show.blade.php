@@ -103,7 +103,7 @@
         </div>
     </div>
     <!--end::Header-->
-    
+
     <!--begin::Body-->
     <div class="card-body">
         @if($freightBooking->lr)
@@ -127,6 +127,10 @@
                                 <div class="info-row">
                                     <span class="info-label">Consignee:</span>
                                     <span class="info-value">{{ $freightBooking->lr->consignee ? $freightBooking->lr->consignee->name : 'N/A' }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Reference By:</span>
+                                    <span class="info-value">{{ $freightBooking->lr->reference ? $freightBooking->lr->reference->name : 'N/A' }}</span>
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -182,12 +186,12 @@
                         <h5 class="mb-0">Basic Information</h5>
                     </div>
                     <div class="card-body">
-                       
+
                         <div class="info-row">
                             <span class="info-label">LR Number:</span>
                             <span class="info-value">{{ $freightBooking->lr ? $freightBooking->lr->lr_number : 'N/A' }}</span>
                         </div>
-                      
+
                         <div class="info-row">
                             <span class="info-label">GR Date:</span>
                             <span class="info-value">{{ $freightBooking->lr && $freightBooking->lr->gr_date ? date('d-m-Y', strtotime($freightBooking->lr->gr_date)) : 'N/A' }}</span>
@@ -231,13 +235,13 @@
                             <span class="info-label">Balance:</span>
                             <span class="info-value">
                                 @php
-                               
+
                                 $badgeClass = 'bg-success';
                             @endphp
                             <span class="badge {{ $badgeClass }} badge-status">₹{{ number_format($freightBooking->balance_amount ?? 0, 2) }}</span>
                             </span>
                         </div>
-                       
+
                     </div>
                 </div>
             </div>
@@ -292,7 +296,7 @@
                         <h5 class="mb-0">Additional Information</h5>
                     </div>
                     <div class="card-body">
-                       
+
                         <div class="info-row">
                             <span class="info-label">Remark:</span>
                             <span class="info-value">{{ $freightBooking->remark ?? 'N/A' }}</span>
@@ -351,7 +355,7 @@
         </div>
         @endif
 
-       
+
     </div>
     <!--end::Body-->
 </div>
@@ -420,9 +424,9 @@
                                             <td>{{ $freightBooking->lr ? $freightBooking->lr->lr_number : 'N/A' }}</td>
                                             <td>₹{{ number_format($freightBooking->balance_amount ?? 0, 2) }}</td>
                                             <td>
-                                                <input type="number" class="form-control allocated-input" 
-                                                       data-fb-id="{{ $freightBooking->id }}" 
-                                                       step="0.01" min="0.01" 
+                                                <input type="number" class="form-control allocated-input"
+                                                       data-fb-id="{{ $freightBooking->id }}"
+                                                       step="0.01" min="0.01"
                                                        max="{{ $freightBooking->balance_amount ?? 0 }}"
                                                        oninput="validatePaymentAmount(this)"
                                                        onchange="updateTotalPayment()">
@@ -445,7 +449,7 @@
                                     <select class="form-select" id="paymentType" required>
                                         <option value="">Select Payment Type</option>
                                         @foreach($paymentTypes as $type)
-                                            <option value="{{ $type->name }}" data-id="{{ $type->id }}" 
+                                            <option value="{{ $type->name }}" data-id="{{ $type->id }}"
                                                 {{ isset($existingPayment) && $existingPayment->payment_type_id == $type->id ? 'selected' : '' }}>
                                                 {{ $type->name }}
                                             </option>
@@ -453,7 +457,7 @@
                                     </select>
                                 </div>
                             </div>
-                        
+
                             <!-- Payment Mode -->
                             <div class="col-md-4">
                                 <div class="mb-3">
@@ -461,7 +465,7 @@
                                     <select class="form-select" id="paymentMode" required>
                                         <option value="">Select Payment Mode</option>
                                         @foreach($paymentModes as $mode)
-                                            <option value="{{ $mode->name }}" data-id="{{ $mode->id }}" 
+                                            <option value="{{ $mode->name }}" data-id="{{ $mode->id }}"
                                                 {{ isset($existingPayment) && $existingPayment->payment_mode_id == $mode->id ? 'selected' : '' }}>
                                                 {{ $mode->name }}
                                             </option>
@@ -469,7 +473,7 @@
                                     </select>
                                 </div>
                             </div>
-                        
+
                             <!-- Pump Name (hidden by default) -->
                             <div class="col-md-4" id="pumpNameContainer" style="display: none;">
                                 <div class="mb-3">
@@ -483,12 +487,12 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="row">
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="referenceId" class="form-label">Reference Transaction ID</label>
-                                    <input type="text" class="form-control" id="referenceId" placeholder="Enter reference ID" 
+                                    <input type="text" class="form-control" id="referenceId" placeholder="Enter reference ID"
                                         value="{{ isset($existingPayment) ? $existingPayment->reference_transaction_id : '' }}">
                                 </div>
                             </div>
@@ -523,7 +527,7 @@ function openVoucherPaymentModal(freightBookingId) {
     // Show the modal
     const modal = new bootstrap.Modal(document.getElementById('voucherPaymentModal'));
     modal.show();
-    
+
     // Load payment history for this specific freight booking
     loadPaymentHistory([freightBookingId]);
 }
@@ -531,7 +535,7 @@ function openVoucherPaymentModal(freightBookingId) {
 // Function to load payment history
 function loadPaymentHistory(freightBookingIds) {
     const tableContainer = document.getElementById('previousPaymentsTable');
-    
+
     // Show loading state
     tableContainer.innerHTML = `
         <div class="text-center">
@@ -541,7 +545,7 @@ function loadPaymentHistory(freightBookingIds) {
             Loading payment history...
         </div>
     `;
-    
+
     // Make AJAX request to get payment history
     fetch('/freight_bookings/payment-history', {
         method: 'POST',
@@ -574,12 +578,12 @@ function loadPaymentHistory(freightBookingIds) {
                         </thead>
                         <tbody>
             `;
-            
+
             data.payments.forEach(payment => {
-                const statusBadge = payment.payment_status === 'paid' ? 'bg-success' : 
-                                  payment.payment_status === 'pending' ? 'bg-warning' : 
+                const statusBadge = payment.payment_status === 'paid' ? 'bg-success' :
+                                  payment.payment_status === 'pending' ? 'bg-warning' :
                                   payment.payment_status === 'in progress' ? 'bg-info' : 'bg-secondary';
-                
+
                 tableHtml += `
                     <tr>
                         <td>#${payment.id}</td>
@@ -593,13 +597,13 @@ function loadPaymentHistory(freightBookingIds) {
                     </tr>
                 `;
             });
-            
+
             tableHtml += `
                         </tbody>
                     </table>
                 </div>
             `;
-            
+
             tableContainer.innerHTML = tableHtml;
         } else {
             tableContainer.innerHTML = '<p class="text-muted mb-0">No previous payments found.</p>';
@@ -616,16 +620,16 @@ function validatePaymentAmount(input) {
     const value = parseFloat(input.value) || 0;
     const min = parseFloat(input.min) || 0;
     const max = parseFloat(input.max) || 0;
-    
+
     // Remove any existing validation messages
     const existingFeedback = input.nextElementSibling;
     if (existingFeedback && existingFeedback.classList.contains('invalid-feedback')) {
         existingFeedback.remove();
     }
-    
+
     // Reset validation classes
     input.classList.remove('is-invalid', 'is-valid');
-    
+
     // Validate amount is greater than zero
     if (value <= 0) {
         input.classList.add('is-invalid');
@@ -656,7 +660,7 @@ function updateTotalPayment() {
     const allocatedInputs = document.querySelectorAll('.allocated-input');
     let total = 0;
     let hasError = false;
-    
+
     allocatedInputs.forEach(input => {
         // Check if input has validation error
         if (input.classList.contains('is-invalid')) {
@@ -664,12 +668,12 @@ function updateTotalPayment() {
         }
         total += parseFloat(input.value) || 0;
     });
-    
+
     const totalElement = document.getElementById('totalPaymentAmount');
     if (totalElement) {
         totalElement.textContent = total.toFixed(2);
     }
-    
+
     // Enable/disable submit button based on validation
     const submitBtn = document.querySelector('#voucherPaymentModal .btn-primary');
     if (submitBtn) {
@@ -688,56 +692,56 @@ function submitVoucherPayment() {
     const referenceId = document.getElementById('referenceId')?.value;
     const remarks = document.getElementById('paymentRemarks')?.value;
     const pumpId = document.getElementById('pumpName')?.value || null;
-    
+
     // Validate required fields
     if (!paymentType) {
         alert('Please select a payment type');
         return;
     }
-    
+
     if (!paymentMode) {
         alert('Please select a payment mode');
         return;
     }
-    
+
     // Get payment type and mode IDs from the selected options
     const paymentTypeId = paymentTypeSelect.options[paymentTypeSelect.selectedIndex].dataset.id;
     const paymentModeId = paymentModeSelect.options[paymentModeSelect.selectedIndex].dataset.id;
-    
-    
+
+
     // Get freight booking ID and allocated amount
     const allocatedInput = document.querySelector('.allocated-input');
     if (!allocatedInput) {
         alert('Error: Payment input field not found');
         return;
     }
-    
+
     const freightBookingId = allocatedInput.getAttribute('data-fb-id');
     if (!freightBookingId) {
         alert('Error: Freight booking ID not found');
         return;
     }
-    
+
     const paymentAmount = parseFloat(allocatedInput.value) || 0;
     const maxBalance = parseFloat(allocatedInput.getAttribute('max')) || 0;
-    
+
     // Validate payment amount is greater than zero
     if (paymentAmount <= 0) {
         alert('Payment amount must be greater than zero');
         allocatedInput.focus();
         return;
     }
-    
+
     // Validate payment amount doesn't exceed balance
     if (paymentAmount > maxBalance) {
         alert(`Payment amount (₹${paymentAmount.toFixed(2)}) cannot exceed the balance amount (₹${maxBalance.toFixed(2)})`);
         allocatedInput.focus();
         return;
     }
-    
+
     // Calculate total amount
     const totalAmount = paymentAmount;
-    
+
     // Prepare form data
     const formData = {
         booking_ids: [freightBookingId],
@@ -752,13 +756,13 @@ function submitVoucherPayment() {
         pump_id: pumpId,
         date: paymentDate.value
     };
-    
+
     // Show loading state
     const submitBtn = document.querySelector('#voucherPaymentModal .btn-primary');
     const originalText = submitBtn.innerHTML;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
     submitBtn.disabled = true;
-    
+
     // Submit payment
     fetch('/freight_bookings/voucher-payment', {
         method: 'POST',
@@ -795,10 +799,10 @@ function submitVoucherPayment() {
     function togglePumpName() {
         const paymentModeDropdown = document.getElementById("paymentMode");
         if (!paymentModeDropdown) return;
-    
+
         const selectedText = paymentModeDropdown.options[paymentModeDropdown.selectedIndex]?.text.toLowerCase() || "";
         const pumpNameContainer = document.getElementById("pumpNameContainer");
-    
+
         if (selectedText.includes("fuel")) {
             pumpNameContainer.style.display = "block";
         } else {
@@ -806,23 +810,23 @@ function submitVoucherPayment() {
             document.getElementById("pumpName").value = ""; // reset
         }
     }
-    
+
     // Run when dropdown changes
     document.addEventListener("change", function(e) {
         if (e.target && e.target.id === "paymentMode") {
             togglePumpName();
         }
     });
-    
+
     // ✅ Run once on page load (or when modal opens)
     document.addEventListener("DOMContentLoaded", togglePumpName);
-    
+
     // ✅ If this modal is loaded dynamically via Bootstrap, run on modal show
     $('#voucherPaymentModal').on('shown.bs.modal', function () {
         togglePumpName();
     });
     </script>
-    
+
 
 <!-- Payment History Section -->
 <div class="card mt-4">

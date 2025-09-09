@@ -76,6 +76,12 @@
                     <span>{{ $freightBooking->lr && $freightBooking->lr->truck ? $freightBooking->lr->truck->truck_number : 'N/A' }}</span>
                 </div>
             </div>
+            <div class="col-md-2">
+                <div class="mb-2">
+                    <strong>Reference By:</strong><br>
+                    <span>{{ $freightBooking->lr && $freightBooking->lr->reference_by ? $freightBooking->lr->reference->name : 'N/A' }}</span>
+                </div>
+            </div>
         </div>
         <div class="row">
             <div class="col-md-4">
@@ -97,7 +103,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Goods Type Details Section -->
         <div class="row">
             <div class="col-md-3">
@@ -119,7 +125,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Route Details Section -->
         <div class="row">
             <div class="col-md-6">
@@ -171,7 +177,7 @@
             $canEditCompany = auth()->check() && auth()->user()->userRole->name === 'super_admin';
             $userCompanyId = auth()->user()->company_id ?? null;
         @endphp
-        
+
         <div class="card-body">
             {{-- Company field hidden as requested --}}
             @if($canEditCompany)
@@ -352,8 +358,8 @@
             <input type="hidden" name="lr_id" value="{{ $freightBooking->lr_id }}">
 
 
-         
-            
+
+
 
             <div class="row mb-3">
                 <div class="col-md-12">
@@ -364,7 +370,7 @@
             </div>
 
         </div>
-        
+
         <!--end::Footer-->
         <div class="card-footer">
             <div>
@@ -399,7 +405,7 @@
                 <div class="alert alert-info">
                     <i class="fas fa-info-circle me-2"></i> Please review the booking details below before confirming your update.
                 </div>
-                
+
                 <div class="row mb-3">
                     <div class="col-12">
                         <h6 class="border-bottom pb-2"><i class="fas fa-truck me-2"></i> Lorry Receipt Information</h6>
@@ -414,7 +420,7 @@
                         <p class="mb-1"><strong>Truck:</strong> <span id="confirm-truck"></span></p>
                     </div>
                 </div>
-                
+
                 <div class="row mb-3">
                     <div class="col-12">
                         <h6 class="border-bottom pb-2"><i class="fas fa-money-bill-wave me-2"></i> Financial Details</h6>
@@ -432,7 +438,7 @@
                         <p class="mb-1"><strong>Balance Amount:</strong> <span id="confirm-balance-amount"></span></p>
                     </div>
                 </div>
-                
+
                 <div class="row mb-3" id="confirm-delivery-status-row">
                     <div class="col-12">
                         <h6 class="border-bottom pb-2"><i class="fas fa-clipboard-check me-2"></i> Status</h6>
@@ -444,7 +450,7 @@
                         <p class="mb-1"><strong>Cancellation Status:</strong> <span id="confirm-cancellation-status"></span></p>
                     </div>
                 </div>
-                
+
                 <div class="row mb-3" id="confirm-additional-charges-row">
                     <div class="col-12">
                         <h6 class="border-bottom pb-2"><i class="fas fa-plus-circle me-2"></i> Additional Charges</h6>
@@ -465,7 +471,7 @@
                         <p class="mb-1"><strong>Shortage Amount:</strong> <span id="confirm-shortage-amount"></span></p>
                     </div>
                 </div>
-                
+
                 <div class="row mb-3" id="confirm-remark-row">
                     <div class="col-12">
                         <h6 class="border-bottom pb-2"><i class="fas fa-comment-alt me-2"></i> Remarks</h6>
@@ -527,7 +533,7 @@
         const spinner = saveBtn.querySelector('.spinner-border');
         const errorDiv = document.getElementById('memoModalError');
         const errorMessage = document.getElementById('memoErrorMessage');
-        
+
         if (!memoId) {
             errorMessage.textContent = 'Please enter a Memo ID';
             errorDiv.style.display = 'block';
@@ -558,13 +564,13 @@
                 // Close modal and enable delivered toggle
                 const modal = bootstrap.Modal.getInstance(document.getElementById('memoIdModal'));
                 modal.hide();
-                
+
                 // Show additional charges sections
                 document.getElementById('additional-charges-section').style.display = 'block';
-                
+
                 // Show success message
                 alert('Memo ID saved successfully. Freight booking marked as delivered.');
-                
+
                 // Optionally reload to reflect changes
                 location.reload();
             } else {
@@ -589,48 +595,48 @@
         const showConfirmationBtn = document.getElementById('showConfirmationBtn');
         const confirmUpdateBtn = document.getElementById('confirmUpdateBtn');
         const editForm = document.querySelector('form[action*="freight_bookings"]');
-        
+
         if (showConfirmationBtn && confirmUpdateBtn && editForm) {
             showConfirmationBtn.addEventListener('click', function() {
                 // Populate confirmation modal with current form values
                 document.getElementById('confirm-lr-number').textContent = '{{ $freightBooking->lr ? $freightBooking->lr->lr_number : "N/A" }}';
                 document.getElementById('confirm-transporter').textContent = '{{ $freightBooking->transporter_name ?? "N/A" }}';
                 document.getElementById('confirm-truck').textContent = '{{ $freightBooking->lr && $freightBooking->lr->truck ? $freightBooking->lr->truck->truck_number : "N/A" }}';
-                
+
                 // Financial details
                 const trRate = document.getElementById('tr_fr_rate').value;
                 const trAmount = document.getElementById('tr_amount').value;
                 const tdsAmount = document.getElementById('tds_amount').value;
                 const balanceAmount = document.getElementById('balance_amount').value;
-                
+
                 document.getElementById('confirm-tr-rate').textContent = '₹' + parseFloat(trRate).toFixed(2) + ' per ton';
                 document.getElementById('confirm-tr-amount').textContent = '₹' + parseFloat(trAmount).toFixed(2);
                 document.getElementById('confirm-tds-amount').textContent = '₹' + parseFloat(tdsAmount).toFixed(2);
                 document.getElementById('confirm-balance-amount').textContent = '₹' + parseFloat(balanceAmount).toFixed(2);
-                
+
                 // Status
                 const isDelivered = document.getElementById('is_delivered').checked;
                 const isCancelled = document.getElementById('is_cancelled').checked;
-                
-                document.getElementById('confirm-delivery-status').innerHTML = isDelivered ? 
-                    '<span class="badge bg-success">Delivered</span>' : 
+
+                document.getElementById('confirm-delivery-status').innerHTML = isDelivered ?
+                    '<span class="badge bg-success">Delivered</span>' :
                     '<span class="badge bg-warning text-dark">Not Delivered</span>';
-                    
-                document.getElementById('confirm-cancellation-status').innerHTML = isCancelled ? 
-                    '<span class="badge bg-danger">Cancelled</span>' : 
+
+                document.getElementById('confirm-cancellation-status').innerHTML = isCancelled ?
+                    '<span class="badge bg-danger">Cancelled</span>' :
                     '<span class="badge bg-secondary">Not Cancelled</span>';
-                
+
                 // Additional charges (only show if delivered)
                 const additionalChargesRow = document.getElementById('confirm-additional-charges-row');
                 if (isDelivered) {
                     additionalChargesRow.style.display = 'flex';
-                    
+
                     const detention = document.getElementById('detention').value || '0.00';
                     const deviation = document.getElementById('deviation').value || '0.00';
                     const miscExpense = document.getElementById('misc_expense').value || '0.00';
                     const damageAmount = document.getElementById('damage_amount').value || '0.00';
                     const shortageAmount = document.getElementById('shortage_amount').value || '0.00';
-                    
+
                     document.getElementById('confirm-detention').textContent = '₹' + parseFloat(detention).toFixed(2);
                     document.getElementById('confirm-deviation').textContent = '₹' + parseFloat(deviation).toFixed(2);
                     document.getElementById('confirm-misc-expense').textContent = '₹' + parseFloat(miscExpense).toFixed(2);
@@ -639,12 +645,12 @@
                 } else {
                     additionalChargesRow.style.display = 'none';
                 }
-                
+
                 // Remarks
                 const remark = document.getElementById('remark').value;
                 const remarkRow = document.getElementById('confirm-remark-row');
                 const remarkElement = document.getElementById('confirm-remark');
-                
+
                 if (remark && remark.trim() !== '') {
                     remarkRow.style.display = 'flex';
                     remarkElement.textContent = remark;
@@ -652,19 +658,19 @@
                     remarkRow.style.display = 'none';
                     remarkElement.textContent = 'No remarks provided.';
                 }
-                
+
                 // Show the confirmation modal
                 const modal = new bootstrap.Modal(document.getElementById('updateConfirmationModal'));
                 modal.show();
             });
-            
+
             // Handle form submission after confirmation
             confirmUpdateBtn.addEventListener('click', function() {
                 // Submit the form
                 editForm.submit();
             });
         }
-        
+
         // Get all required elements with null checks
         const weightElement = document.getElementById('weight');
         const weight = weightElement ? parseFloat(weightElement.value || 0) : 0;
@@ -687,13 +693,13 @@
             const miscExpense = parseFloat(document.getElementById('misc_expense') ? document.getElementById('misc_expense').value : 0) || 0;
             const damageAmount = parseFloat(document.getElementById('damage_amount') ? document.getElementById('damage_amount').value : 0) || 0;
             const shortageAmount = parseFloat(document.getElementById('shortage_amount') ? document.getElementById('shortage_amount').value : 0) || 0;
-            
+
             // Calculate TDS Amount based on TR Amount
             const tdsAmount = (trAmount * (tdsPercentage / 100)).toFixed(2);
             if (tdsAmountInput) {
                 tdsAmountInput.value = tdsAmount;
             }
-            
+
             // Calculate Balance Amount: TR Amount - Advance - TDS + Detention + Deviation - Misc Expense - Damage - Shortage
             const balance = trAmount - advanceAmount - parseFloat(tdsAmount) + detention + deviation - miscExpense - damageAmount - shortageAmount;
             if (balanceAmountInput) {
@@ -709,7 +715,7 @@
                 if (amountInput) {
                     amountInput.value = amount;
                 }
-                
+
                 // Recalculate TDS and Balance when TR Amount changes
                 calculateTdsAndBalance();
             });
@@ -727,7 +733,7 @@
         function validateAdditionalCharges() {
             const trAmount = parseFloat(trAmountInput ? trAmountInput.value : 0) || 0;
             const fieldsToValidate = ['detention', 'deviation', 'misc_expense'];
-            
+
             fieldsToValidate.forEach(fieldName => {
                 const field = document.getElementById(fieldName);
                 if (field && !field.hasValidationListener) {
@@ -735,11 +741,11 @@
                     field.addEventListener('input', function() {
                         const value = parseFloat(field.value || 0);
                         const isValid = value >= 0 && value <= trAmount;
-                        
+
                         if (!isValid && value > 0) {
                             field.classList.add('is-invalid');
                             field.classList.remove('is-valid');
-                            
+
                             // Show custom validation message
                             let errorDiv = field.parentNode.querySelector('.validation-error');
                             if (!errorDiv) {
@@ -751,7 +757,7 @@
                         } else {
                             field.classList.remove('is-invalid');
                             field.classList.add('is-valid');
-                            
+
                             // Remove error message
                             const errorDiv = field.parentNode.querySelector('.validation-error');
                             if (errorDiv) {
@@ -791,59 +797,59 @@
             // Check if toggle should be frozen (memo_id exists)
             const currentMemoId = '{{ $freightBooking->lr && $freightBooking->lr->memo_id ? $freightBooking->lr->memo_id : "" }}';
             const isCurrentlyDelivered = {{ $freightBooking->is_delivered ? 'true' : 'false' }};
-            
+
             // If delivered and memo_id exists, freeze the toggle
             if (isCurrentlyDelivered && currentMemoId) {
                 isDeliveredToggle.disabled = true;
             }
-            
+
             // Show additional charges if currently delivered
             if (isCurrentlyDelivered) {
                 document.getElementById('additional-charges-section').style.display = 'block';
             }
-            
+
             isDeliveredToggle.addEventListener('change', function() {
                 const isCancelledToggle = document.getElementById('is_cancelled');
-                
+
                 // Prevent unchecking if memo_id exists
                 if (!this.checked && currentMemoId) {
                     this.checked = true;
                     alert('Cannot unmark as delivered - Memo ID has been set. Contact administrator if changes are needed.');
                     return;
                 }
-                
+
                 if (this.checked) {
                     // Disable cancelled toggle when delivered is checked
                     if (isCancelledToggle) {
                         isCancelledToggle.disabled = true;
                         isCancelledToggle.checked = false; // Uncheck cancelled if it was checked
-                        
+
                         // Update label to show it's disabled
                         const cancelledLabel = isCancelledToggle.parentNode.querySelector('label');
                         if (cancelledLabel && !cancelledLabel.querySelector('.text-muted')) {
                             cancelledLabel.innerHTML += '<small class="text-muted ms-2"><i class="fas fa-lock"></i> Cannot cancel after delivery</small>';
                         }
                     }
-                    
+
                     // Show additional charges immediately when delivered is checked
                     document.getElementById('additional-charges-section').style.display = 'block';
-                    
+
                     // Check if memo_id already exists
                     if (!currentMemoId) {
                         // Show memo ID modal
                         const modal = new bootstrap.Modal(document.getElementById('memoIdModal'));
                         modal.show();
-                        
+
                         // Reset toggle if user cancels
                         document.getElementById('memoIdModal').addEventListener('hidden.bs.modal', function() {
                             if (!document.getElementById('deliveryMemoId').value) {
                                 isDeliveredToggle.checked = false;
                                 document.getElementById('additional-charges-section').style.display = 'none';
-                                
+
                                 // Re-enable cancelled toggle
                                 if (isCancelledToggle) {
                                     isCancelledToggle.disabled = false;
-                                    
+
                                     // Remove disabled message
                                     const cancelledLabel = isCancelledToggle.parentNode.querySelector('label');
                                     const disabledMsg = cancelledLabel.querySelector('.text-muted');
@@ -858,7 +864,7 @@
                     // Re-enable cancelled toggle when delivered is unchecked
                     if (isCancelledToggle) {
                         isCancelledToggle.disabled = false;
-                        
+
                         // Remove disabled message
                         const cancelledLabel = isCancelledToggle.parentNode.querySelector('label');
                         const disabledMsg = cancelledLabel.querySelector('.text-muted');
@@ -866,7 +872,7 @@
                             disabledMsg.remove();
                         }
                     }
-                    
+
                     // Hide additional charges when not delivered
                     document.getElementById('additional-charges-section').style.display = 'none';
                 }
@@ -887,7 +893,7 @@
                         '• This change cannot be undone easily\n\n' +
                         'Click OK to proceed or Cancel to abort.'
                     );
-                    
+
                     if (!confirmed) {
                         // User cancelled, uncheck the toggle
                         this.checked = false;
@@ -899,7 +905,7 @@
                         'Are you sure you want to uncancel this freight booking?\n\n' +
                         'This will restore the freight booking to its previous state.'
                     );
-                    
+
                     if (!confirmed) {
                         // User cancelled, keep it checked
                         this.checked = true;

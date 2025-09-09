@@ -58,6 +58,10 @@
             </div>
             <div class="row">
                 <div class="col-md-3 mb-3">
+                    <div class="confirmation-label">Reference By</div>
+                    <div class="confirmation-value">{{ $lorry_receipt->reference ? $lorry_receipt->reference->name : 'N/A' }}</div>
+                </div>
+                <div class="col-md-3 mb-3">
                     <div class="confirmation-label">Customer</div>
                     <div class="confirmation-value">{{ $lorry_receipt->customer ? $lorry_receipt->customer->name : 'N/A' }}</div>
                 </div>
@@ -69,12 +73,12 @@
                     <div class="confirmation-label">Consignee</div>
                     <div class="confirmation-value">{{ $lorry_receipt->consignee ? $lorry_receipt->consignee->name : 'N/A' }}</div>
                 </div>
+              </div>
+              <div class="row">
                 <div class="col-md-3 mb-3">
                     <div class="confirmation-label">Weight</div>
                     <div class="confirmation-value">{{ number_format($lorry_receipt->weight, 2) }} MT</div>
                 </div>
-            </div>
-            <div class="row">
                 <div class="col-md-3 mb-3">
                     <div class="confirmation-label">Goods Type</div>
                     <div class="confirmation-value">{{ $lorry_receipt->good_type ?? 'N/A' }}</div>
@@ -87,6 +91,8 @@
                     <div class="confirmation-label">Destination</div>
                     <div class="confirmation-value">{{ $lorry_receipt->destination_city }}, {{ $lorry_receipt->destination_state }}</div>
                 </div>
+            </div>
+            <div class="row">
                 <div class="col-md-3 mb-3">
                     <div class="confirmation-label">TDS Percentage</div>
                     <div class="confirmation-value">{{ number_format($lorry_receipt->transporter->tds_percentage, 2) }}%</div>
@@ -188,7 +194,7 @@
                     <button type="submit" name="action" value="save_and_view" class="btn btn-primary">
                         <i class="bi bi-eye me-1"></i> Save & do payment
                     </button>
-                    
+
                 </div>
             </div>
         </form>

@@ -512,7 +512,7 @@ function showLRDetails(id) {
                                     </tr>
                                     <tr>
                                         <td class="fw-bold">Reference By:</td>
-                                        <td>${lr.reference_by ? lr.reference_by.name : 'N/A'}</td>
+                                        <td>${lr.reference_by ? lr.reference.name : 'N/A'}</td>
                                     </tr>
                                 </table>
                             </div>
