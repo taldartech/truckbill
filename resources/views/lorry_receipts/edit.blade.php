@@ -782,7 +782,7 @@
             console.log('🚀 Lorry Receipt Edit Form initialized');
 
             // Initialize other dropdowns with Select2
-            $('#truck_id, #transporter_id, #consignor_id, #consignee_id, #good_type').select2({
+            $('#truck_id, #transporter_id, #consignor_id, #consignee_id, #good_type, #reference_by').select2({
                 theme: 'bootstrap-5',
                 width: '100%',
                 // allowClear: true
