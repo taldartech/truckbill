@@ -137,6 +137,7 @@
                     <div class="col-md-4">
                         <label for="memo_id" class="form-label">Memo ID</label>
                         <input type="text" class="form-control" id="memo_id" name="memo_id" value="{{ old('memo_id', $lorry_receipt->memo_id) }}">
+                        <small id="memo_id_feedback" class="text-danger"></small>
                     </div>
                 </div>
                 <div class="row mb-3">
@@ -341,6 +342,46 @@
         </div>
     </form>
 </div>
+
+<script>
+    document.getElementById('memo_id').addEventListener('blur', function() {
+        let memoId = this.value;
+        let customerId = "{{ $lorry_receipt->customer_id }}";
+        let lrId = "{{ $lorry_receipt->id }}";
+        let feedback = document.getElementById('memo_id_feedback');
+    
+        if(memoId.trim() === '') return;
+    
+        fetch("{{ route('lorry_receipts.checkMemo') }}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN": "{{ csrf_token() }}"
+            },
+            body: JSON.stringify({
+                memo_id: memoId,
+                customer_id: customerId,
+                lorry_receipt_id: lrId
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === "ok") {
+                feedback.textContent = data.message;
+                feedback.classList.remove("text-danger");
+                feedback.classList.add("text-success");
+            } else {
+                feedback.textContent = data.message;
+                feedback.classList.remove("text-success");
+                feedback.classList.add("text-danger");
+                document.getElementById('memo_id').focus();
+            }
+        })
+        .catch(err => {
+            console.error(err);
+        });
+    });
+    </script>
 
 <script>
 // Bootstrap form validation
