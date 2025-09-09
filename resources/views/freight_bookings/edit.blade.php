@@ -269,12 +269,12 @@
                     <div class="d-flex gap-4">
                         <div class="form-check form-switch">
                             <input type="hidden" name="is_delivered" value="{{ $freightBooking->is_delivered }}">
-                            <input class="form-check-input" type="checkbox" id="is_delivered" name="is_delivered" value="1" {{ old('is_delivered', $freightBooking->is_delivered) ? 'checked' : '' }} {{ ($freightBooking->is_delivered && $freightBooking->lr && $freightBooking->lr->memo_id) || $freightBooking->is_cancelled ? 'disabled' : '' }}>
+                            <input class="form-check-input" type="checkbox" id="is_delivered" name="is_delivered" value="1" {{ old('is_delivered', $freightBooking->is_delivered) ? 'checked' : '' }} {{ ($freightBooking->is_delivered && $freightBooking->lr || $freightBooking->lr->memo_id) || $freightBooking->is_cancelled ? 'disabled' : '' }}>
                             <label class="form-check-label" for="is_delivered">
                                 <i class="fas fa-truck"></i> Delivered
-                                @if($freightBooking->is_delivered && $freightBooking->lr && $freightBooking->lr->memo_id)
+                                @if($freightBooking->is_delivered && $freightBooking->lr || $freightBooking->lr->memo_id)
                                     <small class="text-muted ms-2">
-                                        <i class="fas fa-lock"></i> Locked (Memo ID: {{ $freightBooking->lr->memo_id }})
+                                        <i class="fas fa-lock"></i> Locked (Memo ID: {{ $freightBooking->lr->memo_id ?? 'N/A' }})
                                     </small>
                                 @endif
                             </label>
@@ -484,6 +484,25 @@
         </div>
     </div>
 </div>
+<!-- Step 1: Confirmation Modal -->
+<div class="modal fade" id="askMemoModal" tabindex="-1" aria-labelledby="askMemoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="askMemoModalLabel">Memo ID Confirmation</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Do you want to enter a Memo ID for this delivery?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-danger" id="noMemoBtn">No, Continue Without Memo</button>
+          <button type="button" class="btn btn-primary" id="yesMemoBtn">Yes, Enter Memo ID</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
 <!-- Modal for Memo ID Entry -->
 <div class="modal fade" id="memoIdModal" tabindex="-1" aria-labelledby="memoIdModalLabel" aria-hidden="true">
@@ -520,6 +539,37 @@
 </div>
 
 <script>
+    document.addEventListener("DOMContentLoaded", function () {
+    let deliveredSwitch = document.getElementById("is_delivered");
+
+    deliveredSwitch.addEventListener("change", function (e) {
+        if (this.checked) {
+            // Prevent form submit side-effects
+            this.checked = false; 
+
+            // Show confirmation modal instead
+            new bootstrap.Modal(document.getElementById('askMemoModal')).show();
+        }
+    });
+
+    // If YES → Show Memo modal
+    document.getElementById("yesMemoBtn").addEventListener("click", function () {
+        var askModal = bootstrap.Modal.getInstance(document.getElementById('askMemoModal'));
+        askModal.hide();
+        new bootstrap.Modal(document.getElementById('memoIdModal')).show();
+    });
+
+    // If NO → Show Additional charges section
+    document.getElementById("noMemoBtn").addEventListener("click", function () {
+        var askModal = bootstrap.Modal.getInstance(document.getElementById('askMemoModal'));
+        askModal.hide();
+        document.getElementById("additional-charges-section").style.display = "block";
+
+        // Now check the delivered switch
+        deliveredSwitch.checked = true;
+    });
+});
+
     // Function to save memo ID for delivery
     window.saveMemoId = function() {
         const memoId = document.getElementById('deliveryMemoId').value.trim();
@@ -583,6 +633,21 @@
             spinner.style.display = 'none';
         });
     };
+document.addEventListener("DOMContentLoaded", function() {
+    // If user chooses YES → Show Memo Modal
+    document.getElementById("yesMemoBtn").addEventListener("click", function() {
+        var askModal = bootstrap.Modal.getInstance(document.getElementById('askMemoModal'));
+        askModal.hide();
+        new bootstrap.Modal(document.getElementById('memoIdModal')).show();
+    });
+
+    // If user chooses NO → Show Additional Charges Section
+    document.getElementById("noMemoBtn").addEventListener("click", function() {
+        var askModal = bootstrap.Modal.getInstance(document.getElementById('askMemoModal'));
+        askModal.hide();
+        document.getElementById("additional-charges-section").style.display = "block";
+    });
+});
 
     document.addEventListener('DOMContentLoaded', function() {
         // Handle the confirmation modal for form submission
