@@ -146,7 +146,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('lorry_receipts/lrs-by-memo/{memo_id}', [LorryReceiptController::class, 'getLRsByMemo'])->name('lorry_receipts.lrsByMemo');
     Route::get('/api/lorry-receipts/{id}/details', [LorryReceiptController::class, 'details'])->name('lorry_receipts.details');
     Route::post('/lorry_receipts/update-status', [LorryReceiptController::class, 'updateDeliveryStatus'])->name('lorry_receipts.update-status');
-    Route::post('/lorry-receipts/check-memo', [\App\Http\Controllers\LorryReceiptController::class, 'checkMemo'])->name('lorry_receipts.checkMemo');
+   
 
 
     // Freight Bookings

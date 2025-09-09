@@ -579,38 +579,6 @@ class LorryReceiptController extends Controller
             'tdsPercentages' => $tdsPercentages,
         ]);
     }
-    public function checkMemo(Request $request)
-{
-   
-    $request->validate([
-        'memo_id' => 'required|string',
-        'customer_id' => 'required|exists:customers,id',
-        'lorry_receipt_id' => 'nullable|exists:lorry_receipts,id'
-    ]);
-
-    $memoId = $request->memo_id;
-    $customerId = $request->customer_id;
-    $lorryReceiptId = $request->lorry_receipt_id;
-
-    $query = \App\Models\LorryReceipt::where('memo_id', $memoId);
-
-    // Exclude the current LR being edited
-    if ($lorryReceiptId) {
-        $query->where('id', '!=', $lorryReceiptId);
-    }
-
-    $existing = $query->first();
-
-    if (!$existing) {
-        return response()->json(['status' => 'ok', 'message' => 'Memo ID is available.']);
-    }
-
-    if ($existing->customer_id == $customerId) {
-        return response()->json(['status' => 'ok', 'message' => 'Memo ID is allowed for this customer.']);
-    }
-
-    return response()->json(['status' => 'error', 'message' => 'Memo ID already exists for another customer.']);
-}
 
 
     public function update(Request $request, \App\Models\LorryReceipt $lorry_receipt)
