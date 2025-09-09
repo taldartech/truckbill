@@ -902,7 +902,7 @@ class FreightBookingController extends Controller
             ]);
         }
 
-        return redirect()->route('lorry_receipts.index')->with('success', 'Freight Booking updated successfully.');
+        return redirect()->route('freight_bookings.index')->with('success', 'Freight Booking updated successfully.');
     }
 
     public function destroy(FreightBooking $freight_booking)
