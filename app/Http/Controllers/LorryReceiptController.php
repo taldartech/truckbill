@@ -581,7 +581,7 @@ class LorryReceiptController extends Controller
     }
     public function checkMemo(Request $request)
 {
-    dd($request->all());
+   
     $request->validate([
         'memo_id' => 'required|string',
         'customer_id' => 'required|exists:customers,id',
@@ -619,7 +619,21 @@ class LorryReceiptController extends Controller
             'customer_id' => 'required|exists:consignees,id',
            'lr_number' => 'required|string|max:100|unique:lorry_receipts,lr_number,' . $lorry_receipt->id . ',id',
           
-            'memo_id' => 'nullable|integer',
+           'memo_id' => [
+            'nullable',
+            'integer',
+            function ($attribute, $value, $fail) use ($request, $lorry_receipt) {
+                if ($value) {
+                    $exists = \App\Models\LorryReceipt::where('memo_id', $value)
+                        ->where('id', '!=', $lorry_receipt->id) // ignore current LR
+                        ->first();
+    
+                    if ($exists && $exists->customer_id != $request->customer_id) {
+                        $fail("Memo ID $value is already used by another customer.");
+                    }
+                }
+            }
+        ],
             'truck_id' => 'nullable|exists:trucks,id',
             'transporter_id' => 'nullable|exists:transporters,id',
             'consignor_id' => 'required|exists:consignees,id',
