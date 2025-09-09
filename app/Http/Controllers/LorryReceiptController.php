@@ -72,7 +72,7 @@ class LorryReceiptController extends Controller
     //     // Handle voucher payment submission
     //     if ($request->isMethod('post')) {
     // //   dd("heelo");
-           
+
     //         try {
     //             // Get all required inputs
     //             $voucherNumber = $request->input('voucher_number');
@@ -137,7 +137,7 @@ class LorryReceiptController extends Controller
     //             // Update freight booking
     //             $freightBooking->advance_amount += $amount;
     //             $freightBooking->balance_amount = $freightBooking->tr_amount - $freightBooking->advance_amount;
-                
+
     //             if (!$freightBooking->save()) {
     //                 throw new \Exception('Failed to update freight booking');
     //             }
@@ -167,7 +167,7 @@ class LorryReceiptController extends Controller
     {
         try {
             \Log::info('DataTables request started');
-            
+
             $query = LorryReceipt::with(['truck', 'transporter', 'consignor', 'consignee', 'company', 'customer']);
 
             // Only apply company_id filter for non-super_admin users
@@ -178,11 +178,11 @@ class LorryReceiptController extends Controller
             \Log::info('Query built successfully');
 
             return DataTables::of($query)
-           
+
             // ->addColumn('row_class', function ($row) {
             //     return $row->memo_id ? 'memo-assigned' : '';
             // })
-           
+
             ->addColumn('sr_no', function ($row) {
                 static $counter = 0;
                 return ++$counter;
@@ -219,10 +219,10 @@ class LorryReceiptController extends Controller
                         };
                         $statusText = $row->delivery_status ?? 'Unknown';
                     }
-                
+
                     return '<span class="badge bg-' . $statusClass . '">' . $statusText . '</span>';
                 })
-                
+
                 ->addColumn('actions', function ($row) {
                     return $this->getActionButtons($row);
                 })
@@ -238,10 +238,10 @@ class LorryReceiptController extends Controller
     private function getActionButtons($lorryReceipt)
     {
         $buttons = '<div class="d-flex gap-1">';
-        
+
         // Freight booking button - check if freight booking already exists
         $freightBooking = FreightBooking::where('lr_id', $lorryReceipt->id)->first();
-        
+
         if ($freightBooking) {
             // If freight booking exists, redirect to edit form
             $buttons .= '<a href="' . route('freight_bookings.edit', $freightBooking->id) . '" class="btn btn-sm btn-warning" title="Edit Freight Booking" data-bs-toggle="tooltip">';
@@ -253,7 +253,7 @@ class LorryReceiptController extends Controller
             $buttons .= '<i class="bi bi-truck"></i>';
             $buttons .= '</a>';
         }
-        
+
         // Edit button - check if freight booking exists and add confirmation
         $editUrl = route('lorry_receipts.edit', $lorryReceipt->id);
         if ($freightBooking) {
@@ -265,16 +265,16 @@ class LorryReceiptController extends Controller
             $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit" data-bs-toggle="tooltip">';
             $buttons .= '<i class="bi bi-pencil"></i></a>';
         }
-        
+
         // Delete button
         $deleteUrl = route('lorry_receipts.destroy', $lorryReceipt->id);
         $buttons .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this lorry receipt?\')">';
         $buttons .= csrf_field() . method_field('DELETE');
         $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete" data-bs-toggle="tooltip">';
         $buttons .= '<i class="bi bi-trash"></i></button></form>';
-        
+
         $buttons .= '</div>';
-        
+
         return $buttons;
     }
 
@@ -297,7 +297,7 @@ class LorryReceiptController extends Controller
             'owner' => env('TDS_PERCENTAGE_OWNER', 1)
         ];
 
-        
+
         return view('lorry_receipts.create', compact('companies', 'customers','trucks', 'transporters', 'consignees', 'goodsTypes', 'statuses','truckOwners','agencies','tdsPercentages'));
     }
     public function getTdsInfo($id)
@@ -438,7 +438,7 @@ class LorryReceiptController extends Controller
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update Memo ID: ' . $e->getMessage()
@@ -455,13 +455,14 @@ class LorryReceiptController extends Controller
             'memo_id' => 'nullable|integer',
             'truck_id' => 'nullable|exists:trucks,id',
             'transporter_id' => 'nullable|exists:transporters,id',
+            'reference_by' => 'nullable|exists:transporters,id',
             'consignor_id' => 'required|exists:consignees,id',
             'consignor_contact_number' => 'nullable|string|max:20',
             'consignee_id' => 'required|exists:consignees,id',
             'consignee_contact_number' => 'nullable|string|max:20',
             'gr_date' => 'required|date',
             'company_id' => 'required|exists:companies,id',
-        
+
             'delivery_status' => 'nullable|in:Pending,Delivered,Cancelled,In-Progress',
             'source_city' => 'required|string|max:100',
             'source_state' => 'required|string|max:100',
@@ -490,12 +491,12 @@ class LorryReceiptController extends Controller
         // Set truck_id to null if not provided
         $validated['truck_id'] = $validated['truck_id'] ?? null;
         // dd($validated);
-        
+
         // Set default delivery_status
         $validated['delivery_status'] = 'Pending';
         // dd($validated);
 
-        
+
         // Check if lr_number already exists
         if (\App\Models\LorryReceipt::where('lr_number', $validated['lr_number'])->exists()) {
             return redirect()->back()->withErrors(['lr_number' => 'LR Number already exists. Please use a unique LR Number.']);
@@ -508,7 +509,7 @@ class LorryReceiptController extends Controller
         $validated['company_id'] = auth()->user()->company_id;
         // dd($validated);
 
-        
+
         $lorryReceipt =  \App\Models\LorryReceipt::create($validated);
         // dd($validated);
 
@@ -523,22 +524,22 @@ class LorryReceiptController extends Controller
     public function checkLrNumberUniqueness(Request $request)
     {
         $lrNumber = $request->input('lr_number');
-        
+
         if (!$lrNumber) {
             return response()->json(['valid' => false, 'message' => 'LR Number is required']);
         }
-        
+
         $exists = \App\Models\LorryReceipt::where('lr_number', $lrNumber)->exists();
-        
+
         if ($exists) {
             return response()->json([
-                'valid' => false, 
+                'valid' => false,
                 'message' => 'LR Number already exists. Please use a unique LR Number.'
             ]);
         }
-        
+
         return response()->json([
-            'valid' => true, 
+            'valid' => true,
             'message' => 'LR Number is available'
         ]);
     }
@@ -547,7 +548,7 @@ class LorryReceiptController extends Controller
     {
         // Eager load all necessary relationships
         $lorry_receipt = $lorry_receipt->load(['truck.transporter', 'truck.driver', 'customer', 'transporter', 'consignor', 'consignee']);
-        
+
         $companies = \App\Models\Company::all();
         $trucks = Truck::with(['transporter', 'driver'])->get(); // Load both transporter and driver relationships
 
@@ -564,7 +565,7 @@ class LorryReceiptController extends Controller
             'owner' => env('TDS_PERCENTAGE_OWNER', 1)
         ];
         $statuses = ['Pending', 'Delivered', 'Cancelled','In-Progress'];
-        
+
         return view('lorry_receipts.edit', [
             'lorry_receipt' => $lorry_receipt,
             'trucks' => $trucks,
@@ -604,13 +605,14 @@ class LorryReceiptController extends Controller
         ],
             'truck_id' => 'nullable|exists:trucks,id',
             'transporter_id' => 'nullable|exists:transporters,id',
+            'reference_by' => 'nullable|exists:transporters,id',
             'consignor_id' => 'required|exists:consignees,id',
             'consignor_contact_number' => 'nullable|string|max:20',
             'consignee_id' => 'required|exists:consignees,id',
             'consignee_contact_number' => 'nullable|string|max:20',
             'gr_date' => 'required|date',
             'company_id' => 'required|exists:companies,id',
-        
+
             'delivery_status' => 'nullable|in:Pending,Delivered,Cancelled,In-Progress',
             'source_city' => 'required|string|max:100',
             'source_state' => 'required|string|max:100',
@@ -639,17 +641,17 @@ class LorryReceiptController extends Controller
         }
 
 
-    
+
 
 
 
         // Set truck_id to null if not provided
         $validated['truck_id'] = $validated['truck_id'] ?? null;
-        
+
         // Preserve existing delivery_status - don't override it
         // Remove delivery_status from validated data to keep existing value
         unset($validated['delivery_status']);
-        
+
         // Check if lr_number already exists
         // if (\App\Models\LorryReceipt::where('lr_number', $validated['lr_number'])->exists()) {
         //     return redirect()->back()->withErrors(['lr_number' => 'LR Number already exists. Please use a unique LR Number.']);
@@ -657,20 +659,20 @@ class LorryReceiptController extends Controller
          // Calculate expected amount from weight and freight rate
         //  $expectedAmount = ($validated['weight'] * $validated['fr_rate'])->round(2);
         $expectedAmount = round($validated['weight'] * $validated['fr_rate'] - ($validated['shortage_amount'] + $validated['damage_amount']), 2);
-        
+
          // Check if entered amount matches calculated amount
          if ($validated['amount'] != $expectedAmount) {
              return redirect()->back()->withErrors([
-                 'amount' => 'The entered amount does not match the calculated amount. ' . 
-                            'Expected amount is: ' . $expectedAmount . 
+                 'amount' => 'The entered amount does not match the calculated amount. ' .
+                            'Expected amount is: ' . $expectedAmount .
                             ' (Weight: ' . $validated['weight'] . ' × FR Rate: ' . $validated['fr_rate'] . ')'
              ])->withInput();
          }
- 
+
 
         // Add company_id to validated data
         $validated['company_id'] = auth()->user()->company_id;
-        
+
         $lorry_receipt->update($validated);
         return redirect()->route('lorry_receipts.index')->with('success', 'Lorry Receipt updated successfully!');
     }
@@ -679,16 +681,16 @@ class LorryReceiptController extends Controller
     {
         // Use transaction to ensure data consistency
         \DB::beginTransaction();
-        
+
         try {
             // This will trigger the deleting event in the model
             // which will handle the related FreightBookings and VoucherPayments
             $lorry_receipt->delete();
-            
+
             \DB::commit();
             return redirect()->route('lorry_receipts.index')
                 ->with('success', 'Lorry receipt and all associated data deleted successfully!');
-                
+
         } catch (\Exception $e) {
             \DB::rollBack();
             \Log::error('Error deleting lorry receipt: ' . $e->getMessage());
@@ -704,7 +706,8 @@ class LorryReceiptController extends Controller
             'transporter',
             'consignor',
             'consignee',
-            'customer' // Add customer relationship
+            'customer', // Add customer relationship
+            'reference' // Add reference_by relationship
         ])->findOrFail($id);
 
         return response()->json($lorry_receipt);
@@ -712,7 +715,7 @@ class LorryReceiptController extends Controller
 
     /**
      * Process bulk voucher payments for multiple lorry receipts
-     * 
+     *
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
@@ -742,9 +745,9 @@ class LorryReceiptController extends Controller
                 try {
                     // Get the lorry receipt and check company ownership
                     $lorryReceipt = \App\Models\LorryReceipt::findOrFail($payment['lorry_receipt_id']);
-                    
+
                     // Security check: Ensure user can only process payments for their company
-                    if (auth()->user()->userRole->name !== 'super_admin' && 
+                    if (auth()->user()->userRole->name !== 'super_admin' &&
                         $lorryReceipt->company_id !== auth()->user()->company_id) {
                         $errors[] = "Security violation: LR #{$lorryReceipt->lr_number} does not belong to your company";
                         continue;
@@ -752,7 +755,7 @@ class LorryReceiptController extends Controller
 
                     // Get the freight booking
                     $freightBooking = \App\Models\FreightBooking::findOrFail($payment['freight_booking_id']);
-                    
+
                     // Verify freight booking belongs to the lorry receipt
                     if ($freightBooking->lorry_receipt_id != $lorryReceipt->id) {
                         $errors[] = "Freight booking #{$payment['freight_booking_id']} does not belong to LR #{$lorryReceipt->lr_number}";

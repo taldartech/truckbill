@@ -29,7 +29,7 @@
             <table id="lorryReceiptsTable" class="table table-bordered table-striped">
                 <thead>
                     <tr>
-     
+
                         <th style="width: 80px;">Sr. No</th>
                         <th>LR Number</th>
                         <th>Customer</th>
@@ -133,7 +133,7 @@
         padding: 0.35em 0.65em;
     }
     .badge.bg-warning { color: #000; }
-    
+
     /* Floating buttons */
     .floating-buttons button {
         display: block;
@@ -198,17 +198,17 @@
     .table-link:hover {
         text-decoration: underline !important;
     }
-    
+
     /* Highlight rows with memo_id */
     tr.memo-assigned {
         background-color: #e6f7ff !important;
         position: relative;
     }
-    
+
     tr.memo-assigned:hover {
         background-color: #cceeff !important;
     }
-    
+
     tr.memo-assigned td:first-child::before {
         content: "📝";
         position: absolute;
@@ -218,7 +218,7 @@
         font-size: 14px;
         margin-left: 3px;
     }
-    
+
     /* Improved card styling */
     .card {
         border: none;
@@ -226,38 +226,38 @@
         box-shadow: 0 0 20px rgba(0,0,0,0.05);
         transition: all 0.3s ease;
     }
-    
+
     .card:hover {
         box-shadow: 0 5px 25px rgba(0,0,0,0.1);
     }
-    
+
     .card-header {
         background: linear-gradient(to right, #f8f9fa, #e9ecef);
         border-bottom: 1px solid #e9ecef;
         padding: 15px 20px;
         border-radius: 10px 10px 0 0 !important;
     }
-    
+
     .card-body {
         padding: 20px;
     }
-    
+
     /* Button styling */
     .btn-info, .btn-success {
         transition: all 0.2s ease;
     }
-    
+
     .btn-info:hover, .btn-success:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
-    
+
     /* Table improvements */
     .table {
         border-collapse: separate;
         border-spacing: 0;
     }
-    
+
     .table th {
         background-color: #f8f9fa;
         border-bottom: 2px solid #dee2e6;
@@ -266,12 +266,12 @@
         font-size: 0.8rem;
         letter-spacing: 0.5px;
     }
-    
+
     /* Tooltip enhancement */
     [data-bs-toggle="tooltip"] {
         position: relative;
     }
-    
+
     /* Memo badge */
     .memo-badge {
         position: absolute;
@@ -315,11 +315,11 @@ $(document).ready(function() {
             lrNumberCell.on('click', function() {
                 showLRDetails(data.id);
             });
-            
+
             // Apply memo-assigned class to rows with memo_id
             if (data.row_class && data.row_class.includes('memo-assigned')) {
                 $(row).addClass('memo-assigned');
-                
+
                 // Add tooltip to show memo ID
                 var memoId = $(row).find('input.rowCheckbox').data('memo-id');
                 if (memoId) {
@@ -338,7 +338,7 @@ $(document).ready(function() {
             }
         },
         columns: [
-            
+
             {
                 data: 'sr_no',
                 name: 'sr_no',
@@ -351,7 +351,7 @@ $(document).ready(function() {
                 data: 'lr_number',
                 name: 'lr_number',
                 render: function(data, type, row) {
-                    
+
                     return '<a href="#" class="lr-number-link" data-id="' + row.id + '">' + data + '</a>';
                 }
             },
@@ -418,16 +418,16 @@ $(document).ready(function() {
         drawCallback: function(settings) {
             // Reinitialize tooltips after each draw
             $('[data-bs-toggle="tooltip"]').tooltip();
-            
-         
+
+
         }
     });
 
-   
 
-    
 
-   
+
+
+
 });
 
 // Helper function to format GR Date to DD-MM-YYYY
@@ -510,6 +510,10 @@ function showLRDetails(id) {
                                         <td class="fw-bold">Transporter:</td>
                                         <td>${lr.transporter ? lr.transporter.name : 'N/A'}</td>
                                     </tr>
+                                    <tr>
+                                        <td class="fw-bold">Reference By:</td>
+                                        <td>${lr.reference_by ? lr.reference.name : 'N/A'}</td>
+                                    </tr>
                                 </table>
                             </div>
                         </div>
@@ -549,13 +553,13 @@ function showLRDetails(id) {
             `;
 
             contentDiv.innerHTML = detailsHtml;
-            
+
             // Update the edit button's href with the correct URL
             const editBtn = document.getElementById('editLorryReceiptBtn');
             if (editBtn) {
                 editBtn.href = `/lorry_receipts/${id}/edit`;
             }
-            
+
             modal.show();
         })
         .catch(error => {

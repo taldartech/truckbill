@@ -82,7 +82,12 @@
                     <span>{{ $lorry_receipt->first() && $lorry_receipt->first()->truck ? $lorry_receipt->first()->truck->truck_number : 'N/A' }}</span>
                 </div>
             </div>
-            
+            <div class="col-md-2">
+                <div class="mb-2">
+                    <strong>Reference By:</strong><br>
+                    <span>{{ $lorry_receipt->first() && $lorry_receipt->first()->reference_by ? $lorry_receipt->first()->reference->name : 'N/A' }}</span>
+                </div>
+            </div>
         </div>
         <div class="row">
         <div class="col-md-4">
@@ -103,9 +108,9 @@
                     <span>{{ $lorry_receipt->first() && $lorry_receipt->first()->consignee ? $lorry_receipt->first()->consignee->name : 'N/A' }}</span>
                 </div>
             </div>
-            
+
         </div>
-        
+
         <!-- Goods Type Details Section -->
         <div class="row mt-3">
             <div class="col-md-2">
@@ -140,7 +145,7 @@
             </div>
             @endif
         </div>
-        
+
         <!-- Route Details Section -->
         <div class="row mt-3">
             <div class="col-md-3">
@@ -232,8 +237,8 @@
             </div>
 
             <div class="row mb-3">
-              
-               
+
+
             </div>
 
             <!-- Hidden weight input (if needed for JS) -->
@@ -272,8 +277,8 @@
                 <!-- Hidden delivered field with default value 0 -->
                 <input type="hidden" name="is_delivered" id="is_delivered" value="0">
             </div>
-    
-    
+
+
         <div class="row">
             {{-- <div class="col-md-4 mb-3">
                 <label for="deviation" class="form-label">Deviation</label>
@@ -285,7 +290,7 @@
                 <input type="number" step="0.01" class="form-control" name="misc_expense" id="misc_expense" value="{{ old('misc_expense') }}">
                 @error('misc_expense') <div class="text-danger">{{ $message }}</div> @enderror
             </div>
-            
+
             <div class="col-md-4 mb-3">
                 <label for="damage_qty" class="form-label">Damage Quantity</label>
                 <input type="number" step="0.01" class="form-control" name="damage_qty" id="damage_qty" value="{{ old('damage_qty') }}">
@@ -316,7 +321,7 @@
                 <input type="number" step="0.01" class="form-control" name="shortage_amount" id="shortage_amount" value="{{ old('shortage_amount') }}">
                 @error('shortage_amount') <div class="text-danger">{{ $message }}</div> @enderror
             </div> --}}
-            
+
         </div>
             <div class="row mb-3">
                 <div class="col-md-12">
@@ -379,13 +384,13 @@
         // Function to calculate TDS and Balance amounts
         function calculateTdsAndBalance() {
             const trAmount = parseFloat(trAmountInput ? trAmountInput.value : 0) || 0;
-            
+
             // Calculate TDS Amount based on TR Amount
             const tdsAmount = (trAmount * (tdsPercentage / 100)).toFixed(2);
             if (tdsAmountInput) {
                 tdsAmountInput.value = tdsAmount;
             }
-            
+
             // Calculate Balance Amount (TR Amount - TDS Amount)
             const balance = trAmount - parseFloat(tdsAmount);
             if (balanceAmountInput) {
@@ -401,7 +406,7 @@
                 if (amountInput) {
                     amountInput.value = amount;
                 }
-                
+
                 // Recalculate TDS and Balance when TR Amount changes
                 calculateTdsAndBalance();
             });
@@ -411,7 +416,7 @@
         if (trAmountInput) {
             trAmountInput.addEventListener('input', calculateTdsAndBalance);
         }
-        
+
         // Update balance when Advance Amount changes
         if (advanceAmountInput) {
             advanceAmountInput.addEventListener('input', calculateTdsAndBalance);
@@ -462,14 +467,14 @@
                     // Set transporter
                     const transporterSelect = document.getElementById('transporter_id');
                     const truckSelect = document.getElementById('truck_id');
-                    
+
                     // Get transporter name
                     fetch(`/api/transporters/${lr.transporter_id}`)
                         .then(response => response.json())
                         .then(transporter => {
                             transporterSelect.value = `${transporter.name}`;
                         });
-                    
+
                     // Get truck number
                     fetch(`/api/trucks/${lr.truck_id}`)
                         .then(response => response.json())
@@ -485,7 +490,7 @@
 
 <script>
     const IS_OWNER = {{ $preFilled['is_owner'] ?? 0 }};
-    
+
     document.addEventListener('DOMContentLoaded', function() {
         // Get all required elements with null checks
         const weightElement = document.getElementById('weight');
@@ -506,13 +511,13 @@
         // Function to calculate TDS and Balance amounts
         function calculateTdsAndBalance() {
             const trAmount = parseFloat(trAmountInput ? trAmountInput.value : 0) || 0;
-            
+
             // Calculate TDS Amount based on TR Amount
             const tdsAmount = (trAmount * (tdsPercentage / 100)).toFixed(2);
             if (tdsAmountInput) {
                 tdsAmountInput.value = tdsAmount;
             }
-            
+
             // Calculate Balance Amount (TR Amount - TDS Amount)
             const balance = trAmount - parseFloat(tdsAmount);
             if (balanceAmountInput) {
@@ -528,7 +533,7 @@
                 if (amountInput) {
                     amountInput.value = amount;
                 }
-                
+
                 // Recalculate TDS and Balance when TR Amount changes
                 calculateTdsAndBalance();
             });
@@ -538,7 +543,7 @@
         if (trAmountInput) {
             trAmountInput.addEventListener('input', calculateTdsAndBalance);
         }
-        
+
         // Update balance when Advance Amount changes
         if (advanceAmountInput) {
             advanceAmountInput.addEventListener('input', calculateTdsAndBalance);
@@ -593,7 +598,7 @@
                     // Set transporter
                     const transporterSelect = document.getElementById('transporter_id');
                     const truckSelect = document.getElementById('truck_id');
-                    
+
                     // Get transporter name
                     if (lr.transporter_id) {
                         fetch(`/api/transporters/${lr.transporter_id}`)
@@ -605,7 +610,7 @@
                             })
                             .catch(error => console.error('Error fetching transporter:', error));
                     }
-                    
+
                     // Get truck number
                     if (lr.truck_id) {
                         fetch(`/api/trucks/${lr.truck_id}`)
@@ -625,7 +630,7 @@
         if (transporterSelect) {
             transporterSelect.addEventListener('change', updateTrucks);
         }
-        
+
         // Load LR details when LR changes
         if (lrSelect) {
             lrSelect.addEventListener('change', loadLRDetails);
