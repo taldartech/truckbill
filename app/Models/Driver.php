@@ -14,6 +14,7 @@ class Driver extends Model
         'mobile',
         'license_number',
         'address',
+        'company_id',
     ];
     
     protected $dates = ['deleted_at'];
@@ -21,4 +22,8 @@ class Driver extends Model
     // Add hasMany trucks if needed later
 
     //
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
 }

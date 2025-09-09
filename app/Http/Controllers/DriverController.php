@@ -8,13 +8,15 @@ class DriverController extends Controller
 {
     public function index(Request $request)
     {
-        return view('drivers.index');
+        $company_id = auth()->user()->company_id;
+        return view('drivers.index', compact('company_id'));
     }
 
     public function getDriversData(Request $request)
     {
         $query = \App\Models\Driver::query();
-
+        $company_id = auth()->user()->company_id;
+        $query->where('company_id', $company_id);
         // Handle search
         if ($request->has('search') && !empty($request->search['value'])) {
             $searchValue = $request->search['value'];
@@ -131,8 +133,9 @@ class DriverController extends Controller
     public function getDriversApi()
     {
         $drivers = \App\Models\Driver::select('id', 'name', 'mobile')
-            ->orderBy('name')
-            ->get();
+        ->where('company_id', auth()->user()->company_id) // ✅ filter by company
+        ->orderBy('name')
+        ->get();
         
         return response()->json($drivers);
     }
@@ -145,6 +148,7 @@ class DriverController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+           
             'name' => 'required|string|max:100',
             'mobile' => [
                 'required',
@@ -158,6 +162,7 @@ class DriverController extends Controller
             ],
             'address' => 'nullable|string|max:255',
         ]);
+        $validated['company_id'] = auth()->user()->company_id;
         
         $driver = \App\Models\Driver::create($validated);
         
@@ -181,6 +186,7 @@ class DriverController extends Controller
     public function update(Request $request, \App\Models\Driver $driver)
     {
         $validated = $request->validate([
+            'company_id' => 'required|exists:companies,id',
             'name' => 'required|string|max:100',
             'mobile' => [
                 'required',
