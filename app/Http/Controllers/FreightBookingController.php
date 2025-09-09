@@ -874,14 +874,7 @@ class FreightBookingController extends Controller
                 \Log::info('FREIGHT BOOKING UPDATE: Setting status to Pending (cancelled)');
             } elseif (isset($data['is_delivered']) && $data['is_delivered'] === '1') {
                 // Only set to 'Delivered' if memo_id exists on the lorry receipt
-                if (!empty($lorryReceipt->memo_id)) {
-                    $deliveryStatus = 'Delivered';
-                    \Log::info('FREIGHT BOOKING UPDATE: Setting status to Delivered (memo_id exists)', ['memo_id' => $lorryReceipt->memo_id]);
-                } else {
-                    // If is_delivered is true but no memo_id, keep it as In-Progress
-                    $deliveryStatus = 'In-Progress';
-                    \Log::info('FREIGHT BOOKING UPDATE: Setting status to In-Progress (no memo_id)');
-                }
+                $deliveryStatus = 'Delivered';
             } else {
                 // If not delivered and not cancelled, set to In-Progress
                 $deliveryStatus = 'In-Progress';
