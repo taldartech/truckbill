@@ -19,6 +19,9 @@
         <a href="{{ route('lorry_receipts.create') }}" class="btn btn-info">
             <i class="bi bi-plus"></i> Create
         </a>
+        <a href="{{ route('lorry_receipts.createLinked') }}" class="btn btn-info">
+            <i class="bi bi-plus"></i> Create Linked
+        </a>
     </div>
 
     <div class="card mb-4">
