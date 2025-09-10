@@ -59,11 +59,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
-    
+
     Route::get('/dashboard2', function () {
         return view('dashboard2');
     });
-    
+
     // Company Registration
     Route::get('/company/create', [CompanyController::class, 'create'])->name('company.create');
     Route::post('/company', [CompanyController::class, 'store'])->name('company.store');
@@ -140,15 +140,14 @@ Route::middleware(['auth'])->group(function () {
     // Reports
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/generate', [ReportController::class, 'generateReport'])->name('reports.generate');
-    Route::get('/lorry_receipts/linked-create', [LorryReceiptController::class, 'linkedCreate'])->name('lorry_receipts.linkedCreate');
-
+    Route::get('lorry_receipts/create-linked', [LorryReceiptController::class, 'createLinked'])->name('lorry_receipts.createLinked');
     Route::resource('lorry_receipts', LorryReceiptController::class);
     Route::post('lorry_receipts/bulk-payment', [LorryReceiptController::class, 'bulkPayment'])->name('lorry_receipts.bulkPayment');
     Route::post('lorry_receipts/bulk-voucher-payment', [LorryReceiptController::class, 'bulkVoucherPayment'])->name('lorry_receipts.bulkVoucherPayment');
     Route::get('lorry_receipts/lrs-by-memo/{memo_id}', [LorryReceiptController::class, 'getLRsByMemo'])->name('lorry_receipts.lrsByMemo');
     Route::get('/api/lorry-receipts/{id}/details', [LorryReceiptController::class, 'details'])->name('lorry_receipts.details');
     Route::post('/lorry_receipts/update-status', [LorryReceiptController::class, 'updateDeliveryStatus'])->name('lorry_receipts.update-status');
-   
+
 
 
     // Freight Bookings
@@ -264,7 +263,7 @@ Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->nam
     Route::delete('/pumps/{pump}', [PumpController::class, 'destroy'])->name('master.pump.destroy');
     });
 
-   
+
 
 
     // Transporters CRUD
@@ -302,25 +301,25 @@ Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->nam
     // Route::resource('advance-payments', AdvancePaymentController::class)->except(['create']);
 
     Route::get('/consignees/{id}', [ConsigneeController::class, 'getConsigneeDetails']);
-  
-  
-  
-  
-  
+
+
+
+
+
     // API routes for dynamic dropdowns
     Route::get('/api/states/{countryId}', [\App\Http\Controllers\Api\DropdownController::class, 'states']);
     Route::get('/api/cities/{stateId}', [\App\Http\Controllers\Api\DropdownController::class, 'cities']);
-    
+
     // Validation routes
     Route::post('/api/validate/gst-number', [\App\Http\Controllers\ValidationController::class, 'checkGstNumber']);
     Route::post('/api/validate/pan-number', [\App\Http\Controllers\ValidationController::class, 'checkPanNumber']);
     Route::get('/get-transporter-name/{truck}', function ($truckId) {
         $truck = \App\Models\Truck::with('transporter')->find($truckId);
-    
+
         if ($truck && $truck->transporter) {
             return response()->json(['transporter_name' => $truck->transporter->name]);
         }
-    
+
         return response()->json(['transporter_name' => null]);
     });
 
@@ -329,10 +328,10 @@ Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->nam
         Route::get('/', [ReportController::class, 'index'])->name('reports.index');
         Route::post('/generate', [ReportController::class, 'generateReport'])->name('reports.generate');
         Route::get('/truck', [ReportController::class, 'truckReport'])->name('reports.truck');
-        
+
         // Export Routes
         Route::get('/export/pdf', [ReportController::class, 'exportPdf'])->name('reports.export.pdf');
         Route::get('/export/excel', [ReportController::class, 'exportExcel'])->name('reports.export.excel');
     });
-    
+
 });

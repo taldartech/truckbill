@@ -19,11 +19,8 @@
         <a href="{{ route('lorry_receipts.create') }}" class="btn btn-info">
             <i class="bi bi-plus"></i> Create
         </a>
-    </div>
-
-    <div class="d-flex justify-content-end gap-2 mb-3">
-        <a href="{{ route('lorry_receipts.linkedCreate') }}" class="btn btn-info">
-            <i class="bi bi-plus"></i> Create Linked LR
+        <a href="{{ route('lorry_receipts.createLinked') }}" class="btn btn-info">
+            <i class="bi bi-plus"></i> Create Linked
         </a>
     </div>
 </div>
