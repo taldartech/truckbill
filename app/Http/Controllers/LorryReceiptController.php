@@ -304,6 +304,32 @@ class LorryReceiptController extends Controller
 
         return view('lorry_receipts.create', compact('companies', 'customers','trucks', 'transporters', 'consignees', 'goodsTypes', 'statuses','truckOwners','agencies','tdsPercentages'));
     }
+    public function linkedCreate(){
+        $companies = \App\Models\Company::all();
+        // $trucks = Truck::all();
+        $trucks = Truck::with(['transporter', 'driver'])
+        ->whereHas('transporter', function ($query) {
+            $query->where('company_id', auth()->user()->company_id);
+        })
+        ->get(); // Load both transporter and driver relationships
+
+        $transporters = Transporter::all();
+        $truckOwners = Transporter::where('is_owner', 1)->get();
+        $agencies = Transporter::where('is_owner', 0)->get();
+        $customers = Customer::where('company_id', auth()->user()->company_id)->orderBy('name')->get();
+        $consignees = Consignee::where('company_id', auth()->user()->company_id)->orderBy('name')->get();
+        $goodsTypes = GoodType::all();
+        $statuses = ['Pending', 'Delivered', 'Cancelled','In-Progress'];
+        $tdsPercentages = [
+            'default' => env('TDS_PERCENTAGE_DEFAULT', 20),
+            'agency' => env('TDS_PERCENTAGE_AGENCY', 2),
+            'owner' => env('TDS_PERCENTAGE_OWNER', 1)
+        ];
+
+
+        return view('lorry_receipts.linked_create', compact('companies', 'customers','trucks', 'transporters', 'consignees', 'goodsTypes', 'statuses','truckOwners','agencies','tdsPercentages'));
+
+    }
     public function getTdsInfo($id)
 {
     $transporter = Transporter::findOrFail($id);
