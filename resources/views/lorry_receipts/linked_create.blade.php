@@ -555,7 +555,8 @@
                       <select class="form-select consignor-select" name="consignor_id[]" required>
     <option value="">Select Consignor</option>
     @foreach ($consignees as $consignor)
-        <option value="{{ $consignor->id }}" data-contact="{{ $consignor->contact_number ?? '' }}">
+        <option value="{{ $consignor->id }}" data-contact="{{ $consignor->contact_number ?? '' }}"  data-city="{{ $consignor->city ?? '' }}"
+        data-state="{{ $consignor->state ?? '' }}">
             {{ $consignor->name }}
         </option>
     @endforeach
@@ -572,7 +573,8 @@
                        <select class="form-select consignee-select" name="consignee_id[]" required>
     <option value="">Select Consignee</option>
     @foreach ($consignees as $consignee)
-        <option value="{{ $consignee->id }}" data-contact="{{ $consignee->contact_number ?? '' }}">
+        <option value="{{ $consignee->id }}" data-contact="{{ $consignee->contact_number ?? '' }}"  data-city="{{ $consignee->city ?? '' }}"
+        data-state="{{ $consignee->state ?? '' }}">
             {{ $consignee->name }}
         </option>
     @endforeach
@@ -584,13 +586,13 @@
                     <!-- Source City -->
                     <div class="col-md-4">
                         <label class="form-label">Source City *</label>
-                        <input type="text" class="form-control" name="source_city[]" placeholder="Source City" required>
+                        <input type="text" class="form-control source-city" name="source_city[]" placeholder="Source City" readonly>
                     </div>
     
                     <!-- Destination City -->
                     <div class="col-md-4">
                         <label class="form-label">Destination City *</label>
-                        <input type="text" class="form-control" name="destination_city[]" placeholder="Destination City" required>
+                        <input type="text" class="form-control destination-city" name="destination_city[]" placeholder="Destination City" readonly>
                     </div>
                 </div>
     
@@ -655,20 +657,26 @@ $(document).on('select2:select', '.consignee-select', function(e) {
         document.addEventListener('DOMContentLoaded', function () {
 
 // Auto-fill Consignor contact number
+// Auto-fill Consignor contact and source city
 $(document).on('select2:select', '.consignor-select', function(e) {
-    const selectedData = e.params.data;
-    const contactNumber = $(selectedData.element).data('contact') || '';
+    const selectedOption = $(this).find(':selected');
     const contactInput = $(this).closest('.more-details').find('.consignor-contact');
-    contactInput.val(contactNumber);
+    const sourceCityInput = $(this).closest('.more-details').find('.source-city');
+
+    contactInput.val(selectedOption.data('contact') || '');
+    sourceCityInput.val(selectedOption.data('city') || '');
 });
 
-// Auto-fill Consignee contact
+// Auto-fill Consignee contact and destination city
 $(document).on('select2:select', '.consignee-select', function(e) {
-    const selectedData = e.params.data;
-    const contactNumber = $(selectedData.element).data('contact') || '';
+    const selectedOption = $(this).find(':selected');
     const contactInput = $(this).closest('.more-details').find('.consignee-contact');
-    contactInput.val(contactNumber);
+    const destinationCityInput = $(this).closest('.more-details').find('.destination-city');
+
+    contactInput.val(selectedOption.data('contact') || '');
+    destinationCityInput.val(selectedOption.data('city') || '');
 });
+
 
 });
 
