@@ -183,9 +183,9 @@
         </div>
 
         <!-- Top 5 Lists -->
-        <div class="row mt-4">
+         <div class="row mt-4">
             <!-- Top 5 Trucks -->
-            <div class="col-md-6 col-lg-3">
+          {{--  <div class="col-md-6 col-lg-3">
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title">Top 5 Trucks</h3>
@@ -215,7 +215,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> --}}
 
             <!-- Top 5 Transporters -->
             <div class="col-md-6 col-lg-3">
