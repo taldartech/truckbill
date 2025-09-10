@@ -479,8 +479,7 @@ class LorryReceiptController extends Controller
     public function store(Request $request)
     {
         // dd($request->all());
-        $count = count($request->lr_number);
-        for ($i = 0; $i < $count; $i++) {
+        
         $validated = $request->validate([
             'customer_id' => 'required|exists:consignees,id',
             'lr_number' => 'required|string|max:100|unique:lorry_receipts,lr_number',
@@ -550,7 +549,6 @@ class LorryReceiptController extends Controller
         return redirect()->route('freight_bookings.create', ['lorry_receipt_id' => $lorryReceipt->id])
             ->with('success', 'Lorry Receipt saved! Now create Freight Booking.');
     }
-}
         return redirect()->route('lorry_receipts.index')->with('success', 'Lorry Receipt created successfully!');
     }
 
