@@ -432,7 +432,7 @@
 </div> --}}
 <!-- Main LR Number Row (first entry always visible) -->
 <div class="row mb-3 align-items-end">
-    <div class="col-md-4">
+    {{-- <div class="col-md-4">
         <label for="lr_number" class="form-label">LR Number * <small class="text-muted">(Must be unique)</small></label>
         <input type="text" class="form-control" name="lr_number[]" 
             value="{{ old('lr_number') }}" required placeholder="Enter unique LR Number">
@@ -441,17 +441,26 @@
         @enderror
         <div class="invalid-feedback">Please enter a unique LR number.</div>
         <div class="lr-number-feedback mt-1 text-danger"></div>
-    </div>
+    </div> --}}
 
-    <div class="col-md-4 text-end">
+    {{-- <div class="col-md-4 text-end">
+        <button type="button" id="addMoreDetailsBtn" class="btn btn-primary">
+            ➕ Add More Details
+        </button>
+    </div> --}}
+</div>
+
+
+<!-- Container where new blocks will appear -->
+<div id="moreDetailsContainer"></div>
+<div class="row mb-3">
+    <div class="col d-flex justify-content-end">
         <button type="button" id="addMoreDetailsBtn" class="btn btn-primary">
             ➕ Add More Details
         </button>
     </div>
 </div>
 
-<!-- Container where new blocks will appear -->
-<div id="moreDetailsContainer"></div>
 
                 <!-- Submit Actions -->
                 <div class="card mb-4 p-3 bg-light">
@@ -523,7 +532,7 @@
                         <label for="lr_number" class="form-label">LR Number * 
                             <small class="text-muted">(Must be unique)</small>
                         </label>
-                        <input type="text" class="form-control" name="lr_number[]" 
+                        <input type="text" class="form-control" id="lr_number" name="lr_number[]" 
                             required placeholder="Enter unique LR Number">
                         <div class="invalid-feedback">Please enter a unique LR number.</div>
                         <div class="lr-number-feedback mt-1 text-danger"></div>
@@ -534,7 +543,7 @@
                         <label for="customer_id" class="form-label">Customer *</label>
                         <select class="form-select" name="customer_id[]" required>
                             <option value="">Select Customer</option>
-                            @foreach ($customers as $customer)
+                            @foreach ($consignees as $customer)
                                 <option value="{{ $customer->id }}">{{ $customer->name }}</option>
                             @endforeach
                         </select>
@@ -543,14 +552,16 @@
                     <!-- Consignor -->
                     <div class="col-md-4">
                         <label for="consignor_id" class="form-label">Consignor *</label>
-                        <select class="form-select" name="consignor_id[]" required>
-                            <option value="">Select Consignor</option>
-                            @foreach ($consignors as $consignor)
-                                <option value="{{ $consignor->id }}">{{ $consignor->name }}</option>
-                            @endforeach
-                        </select>
-                        <input type="text" class="form-control mt-2" name="consignor_contact_number[]" 
-                            placeholder="Consignor Contact Number" readonly>
+                      <select class="form-select consignor-select" name="consignor_id[]" required>
+    <option value="">Select Consignor</option>
+    @foreach ($consignees as $consignor)
+        <option value="{{ $consignor->id }}" data-contact="{{ $consignor->contact_number ?? '' }}">
+            {{ $consignor->name }}
+        </option>
+    @endforeach
+</select>
+<input type="text" class="form-control mt-2 consignor-contact" name="consignor_contact_number[]" 
+    placeholder="Consignor Contact Number" readonly>
                     </div>
                 </div>
     
@@ -558,14 +569,16 @@
                     <!-- Consignee -->
                     <div class="col-md-4">
                         <label for="consignee_id" class="form-label">Consignee *</label>
-                        <select class="form-select" name="consignee_id[]" required>
-                            <option value="">Select Consignee</option>
-                            @foreach ($consignees as $consignee)
-                                <option value="{{ $consignee->id }}">{{ $consignee->name }}</option>
-                            @endforeach
-                        </select>
-                        <input type="text" class="form-control mt-2" name="consignee_contact_number[]" 
-                            placeholder="Consignee Contact Number" readonly>
+                       <select class="form-select consignee-select" name="consignee_id[]" required>
+    <option value="">Select Consignee</option>
+    @foreach ($consignees as $consignee)
+        <option value="{{ $consignee->id }}" data-contact="{{ $consignee->contact_number ?? '' }}">
+            {{ $consignee->name }}
+        </option>
+    @endforeach
+</select>
+<input type="text" class="form-control mt-2 consignee-contact" name="consignee_contact_number[]" 
+    placeholder="Consignee Contact Number" readonly>
                     </div>
     
                     <!-- Source City -->
@@ -582,11 +595,7 @@
                 </div>
     
                 <div class="row mb-3">
-                    <!-- Lane -->
-                    <div class="col-md-4">
-                        <label class="form-label">Lane</label>
-                        <input type="text" class="form-control" name="lane[]" placeholder="Lane">
-                    </div>
+                   
     
                     <!-- Goods Type -->
                     <div class="col-md-4">
@@ -632,6 +641,106 @@
         
 
     <script>
+        $(document).on('select2:select', '.consignor-select', function(e) {
+    const select = e.target;
+    const contactInput = select.closest('.more-details').querySelector('.consignor-contact');
+    contactInput.value = select.selectedOptions[0].dataset.contact || '';
+});
+
+$(document).on('select2:select', '.consignee-select', function(e) {
+    const select = e.target;
+    const contactInput = select.closest('.more-details').querySelector('.consignee-contact');
+    contactInput.value = select.selectedOptions[0].dataset.contact || '';
+});
+        document.addEventListener('DOMContentLoaded', function () {
+
+// Auto-fill Consignor contact number
+$(document).on('select2:select', '.consignor-select', function(e) {
+    const selectedData = e.params.data;
+    const contactNumber = $(selectedData.element).data('contact') || '';
+    const contactInput = $(this).closest('.more-details').find('.consignor-contact');
+    contactInput.val(contactNumber);
+});
+
+// Auto-fill Consignee contact
+$(document).on('select2:select', '.consignee-select', function(e) {
+    const selectedData = e.params.data;
+    const contactNumber = $(selectedData.element).data('contact') || '';
+    const contactInput = $(this).closest('.more-details').find('.consignee-contact');
+    contactInput.val(contactNumber);
+});
+
+});
+
+        document.addEventListener('DOMContentLoaded', function () {
+
+// Function to check uniqueness of a specific input
+function checkLrNumberUniqueness(input) {
+    const lrNumber = input.value.trim();
+    const feedback = input.closest('.col-md-4').querySelector('.lr-number-feedback');
+
+    if (!lrNumber || lrNumber.length < 2) {
+        feedback.innerHTML = '';
+        input.classList.remove('is-valid', 'is-invalid');
+        return;
+    }
+
+    feedback.innerHTML = '<small class="text-info">🔍 Checking availability...</small>';
+    input.classList.remove('is-valid', 'is-invalid');
+
+    fetch('/api/check-lr-number-uniqueness', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({ lr_number: lrNumber })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.valid) {
+            feedback.innerHTML = '<small class="text-success">✅ ' + data.message + '</small>';
+            input.classList.remove('is-invalid');
+            input.classList.add('is-valid');
+            input.setCustomValidity('');
+        } else {
+            feedback.innerHTML = '<small class="text-danger">❌ ' + data.message + '</small>';
+            input.classList.remove('is-valid');
+            input.classList.add('is-invalid');
+            input.setCustomValidity(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error checking LR Number uniqueness:', error);
+        feedback.innerHTML = '<small class="text-warning">⚠️ Unable to check availability</small>';
+        input.classList.remove('is-valid', 'is-invalid');
+    });
+}
+
+// Use event delegation for dynamically added inputs
+document.body.addEventListener('input', function(e) {
+    if (e.target.matches('input[name="lr_number[]"]')) {
+        const input = e.target;
+        clearTimeout(input.lrTimeout);
+
+        input.lrTimeout = setTimeout(() => {
+            checkLrNumberUniqueness(input);
+        }, 500);
+    }
+});
+
+
+// Also check on blur
+document.body.addEventListener('blur', function(e) {
+    if (e.target.matches('input[name="lr_number[]"]')) {
+        const input = e.target;
+        clearTimeout(input.lrTimeout);
+        checkLrNumberUniqueness(input);
+    }
+}, true);
+
+});
+
         // Wait for DOM and jQuery to be ready
         document.addEventListener('DOMContentLoaded', function() {
             // Wait for jQuery to be available
@@ -663,8 +772,20 @@
 
             waitForJQuery();
         });
+        function initializeSelect2ForNewRow(container) {
+    container.find('.consignor-select, .consignee-select').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        placeholder: 'Select...',
+        allowClear: false
+    });
+}
 
         function initializeLorryReceiptForm() {
+            $(document).on('click', '#addMoreDetailsBtn', function () {
+        $("#moreDetailsContainer").append(moreDetailsTemplate);
+        initializeSelect2ForNewRow($('#moreDetailsContainer').children().last());
+    });
             $(document).ready(function() {
                 console.log('🚀 Lorry Receipt Edit Form initialized');
 
