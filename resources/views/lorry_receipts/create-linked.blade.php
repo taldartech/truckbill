@@ -271,12 +271,18 @@
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label">Goods Type *</label>
-                                    <select class="form-select select2 goods-type" required>
-                                        <option value="">Select Goods Type</option>
-                                        @foreach ($goodsTypes as $goodsType)
-                                            <option value="{{ $goodsType->name }}">{{ $goodsType->name }}</option>
-                                        @endforeach
-                                    </select>
+                                    <div class="input-group flex-nowrap">
+                                        <select class="form-select select2 goods-type" required>
+                                            <option value="">Select Goods Type</option>
+                                            @foreach ($goodsTypes as $goodsType)
+                                                <option value="{{ $goodsType->name }}">{{ $goodsType->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        <button type="button" class="btn btn-outline-primary"
+                                            onclick="displayGoodAdd(this)" title="Add New Goods Type">
+                                            <i class="bi bi-plus"></i>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label">No. of Units</label>
@@ -348,6 +354,7 @@
                             <input type="text" class="form-control" id="goods_type_name" name="name" required>
                         </div>
                     </div>
+                    <input type="hidden" name="good_type_field" id="good_type_field" value="">
 
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -421,19 +428,19 @@
         console.log('🚀 Linked  Receipts Form initialized');
         // For consignor
 
-        $(document).on('change', '.consignor-select', function () {
-    console.log('🔥 Change event fired', $(this).val());
-});
-$(document).on('select2:select', '.consignor-select', function (e) {
-    const scope = this.closest('.lr-item');
-    handleConsignorSelection(e.params.data.id, scope);
-});
+        $(document).on('change', '.consignor-select', function() {
+            console.log('🔥 Change event fired', $(this).val());
+        });
+        $(document).on('select2:select', '.consignor-select', function(e) {
+            const scope = this.closest('.lr-item');
+            handleConsignorSelection(e.params.data.id, scope);
+        });
 
-// For consignee
-$(document).on('select2:select', '.consignee-select', function (e) {
-    const scope = this.closest('.lr-item');
-    handleConsigneeSelection(e.params.data.id, scope);
-});
+        // For consignee
+        $(document).on('select2:select', '.consignee-select', function(e) {
+            const scope = this.closest('.lr-item');
+            handleConsigneeSelection(e.params.data.id, scope);
+        });
         document.addEventListener('DOMContentLoaded', function() {
 
             const transporterTypeSelect = document.getElementById('transporter_type');
@@ -1107,13 +1114,13 @@ $(document).on('select2:select', '.consignee-select', function (e) {
                                             <div class="card mb-3"><div class="card-header bg-light"><strong>LR Items</strong></div>
                                             <div class="card-body">
                                               ${items.map((it, i) => `
-                                                            <div class='mb-2'>
-                                                              <strong>${i+1}. LR:</strong> ${it.lr_number} | <strong>Customer:</strong> ${it.customer}<br/>
-                                                              <strong>Consignor:</strong> ${it.consignor} | <strong>Consignee:</strong> ${it.consignee}<br/>
-                                                              <strong>Route:</strong> ${it.source} → ${it.destination}<br/>
-                                                              <strong>Goods:</strong> ${it.good_type} | <strong>Weight:</strong> ${it.weight} | <strong>FR:</strong> ₹${it.fr_rate} | <strong>Amount:</strong> ₹${it.amount}
-                                                            </div>
-                                                          `).join('')}
+                                                                            <div class='mb-2'>
+                                                                              <strong>${i+1}. LR:</strong> ${it.lr_number} | <strong>Customer:</strong> ${it.customer}<br/>
+                                                                              <strong>Consignor:</strong> ${it.consignor} | <strong>Consignee:</strong> ${it.consignee}<br/>
+                                                                              <strong>Route:</strong> ${it.source} → ${it.destination}<br/>
+                                                                              <strong>Goods:</strong> ${it.good_type} | <strong>Weight:</strong> ${it.weight} | <strong>FR:</strong> ₹${it.fr_rate} | <strong>Amount:</strong> ₹${it.amount}
+                                                                            </div>
+                                                                          `).join('')}
                                             </div></div>
                                           </div>
                                       </div>
@@ -1204,6 +1211,16 @@ $(document).on('select2:select', '.consignee-select', function (e) {
                 form.submit();
             }
         });
+
+        function displayGoodAdd(btn) {
+            // Using Bootstrap's Modal API to show the modal
+            const modalElement = document.getElementById('addGoodsTypeModal');
+            const goodTypeField = document.getElementById('good_type_field');
+            goodTypeField.value = btn.closest('.input-group').querySelector('.goods-type').dataset.select2Id;
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        }
+
         // Handle Add Goods Type Form Submission
         document.getElementById('addGoodsTypeForm').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -1239,11 +1256,21 @@ $(document).on('select2:select', '.consignee-select', function (e) {
                     submitBtn.disabled = false;
 
                     if (data.success) {
+                        console.log(data);
                         // Add new option to Goods Type dropdown
-                        let select = document.getElementById('good_type');
-                        let newOption = new Option(data.goodsType.name, data.goodsType.name, true, true);
-                        select.add(newOption);
-                        select.value = data.goodsType.name;
+                        let selects = document.querySelectorAll('.goods-type');
+                        let newOption = new Option(data.goodsType.name, data.goodsType.name);
+
+                        selects.forEach(select => {
+                            select.add(new Option(data.goodsType.name, data.goodsType.name));
+                        });
+
+                        // Select the newly added option in the relevant dropdown
+                        const goodTypeField = document.getElementById('good_type_field');
+                        if (goodTypeField && goodTypeField.value) {
+                            document.querySelector(`[data-select2-id="${goodTypeField.value}"]`).value = data
+                                .goodsType.name;
+                        }
 
                         // Close modal properly using Bootstrap's API
                         const modalElement = document.getElementById('addGoodsTypeModal');

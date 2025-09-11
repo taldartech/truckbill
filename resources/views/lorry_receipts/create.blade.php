@@ -316,7 +316,7 @@
                         <input type="hidden" id="lane" name="lane" value="Road">
                         <div class="col-md-4">
                             <label for="good_type" class="form-label">Goods Type *</label>
-                            <div class="input-group">
+                            <div class="input-group flex-nowrap">
                                 <select class="form-select" id="good_type" name="good_type" required>
                                     <option value="">Select Goods Type</option>
                                     @foreach ($goodsTypes as $goodsType)
