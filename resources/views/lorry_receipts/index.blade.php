@@ -14,7 +14,7 @@
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
-
+<div class="d-flex justify-content-end gap-2 mb-3">
     <div class="d-flex justify-content-end gap-2 mb-3">
         <a href="{{ route('lorry_receipts.create') }}" class="btn btn-info">
             <i class="bi bi-plus"></i> Create
@@ -23,6 +23,7 @@
             <i class="bi bi-plus"></i> Create Linked
         </a>
     </div>
+</div>
 
     <div class="card mb-4">
         <div class="card-header">

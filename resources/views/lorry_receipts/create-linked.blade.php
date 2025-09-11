@@ -418,6 +418,22 @@
     </script>
 
     <script>
+        console.log('🚀 Linked  Receipts Form initialized');
+        // For consignor
+
+        $(document).on('change', '.consignor-select', function () {
+    console.log('🔥 Change event fired', $(this).val());
+});
+$(document).on('select2:select', '.consignor-select', function (e) {
+    const scope = this.closest('.lr-item');
+    handleConsignorSelection(e.params.data.id, scope);
+});
+
+// For consignee
+$(document).on('select2:select', '.consignee-select', function (e) {
+    const scope = this.closest('.lr-item');
+    handleConsigneeSelection(e.params.data.id, scope);
+});
         document.addEventListener('DOMContentLoaded', function() {
 
             const transporterTypeSelect = document.getElementById('transporter_type');
@@ -722,103 +738,142 @@
                 }
             });
 
-            // Fetch consignor details for a specific item row
+            // Fetch consignor details
             function handleConsignorSelection(consignorId, scope) {
                 console.log('👤 Consignor selected:', consignorId);
-                // Prevent same consignor & consignee
+
                 const consigneeId = scope.querySelector('.consignee-select')?.value;
                 if (consignorId && consigneeId && String(consignorId) === String(consigneeId)) {
                     const msg = 'Consignor and Consignee cannot be the same.';
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire('Invalid Selection', msg, 'warning');
-                    } else {
-                        alert(msg);
-                    }
-                    // Reset consignor select and clear fields
+                    Swal ? Swal.fire('Invalid Selection', msg, 'warning') : alert(msg);
+
                     $(scope).find('.consignor-select').val(null).trigger('change.select2');
                     scope.querySelector('.consignor-contact').value = '';
                     scope.querySelector('.source-city').value = '';
                     scope.querySelector('.source-state').value = '';
                     return;
                 }
+
                 if (consignorId) {
-                    console.log('🔄 Fetching consignor data from API...');
                     fetch(`/api/consignees/${consignorId}`)
-                        .then(response => {
-                            console.log('📡 Consignor API response status:', response.status);
-                            if (!response.ok) {
-                                throw new Error(`HTTP error! status: ${response.status}`);
+                        .then(res => {
+                            if (!res.ok) {
+                                throw new Error('Network response was not ok');
                             }
-                            return response.json();
+                            return res.json();
                         })
                         .then(data => {
                             console.log('📊 Consignor data received:', data);
-                            console.log('📊 Consignor data keys:', Object.keys(data));
 
-                            // Populate within the scope row
+                            // Update contact number
                             scope.querySelector('.consignor-contact').value = data.contact_number || '';
-                            scope.querySelector('.source-city').value = data.city || '';
-                            scope.querySelector('.source-state').value = data.state || '';
+
+                            // Handle both nested and flat city/state structures
+                            const cityValue = data.city?.name || data.city || '';
+                            const stateValue = data.state?.name || data.state || '';
+
+                            scope.querySelector('.source-city').value = cityValue;
+                            scope.querySelector('.source-state').value = stateValue;
+
+                            console.log('Updated consignor fields:', {
+                                contact: data.contact_number,
+                                city: cityValue,
+                                state: stateValue
+                            });
                         })
-                        .catch(error => {
-                            console.error('❌ Error fetching consignor data:', error);
+                        .catch(err => {
+                            console.error('❌ Consignor fetch error:', err);
+                            // Clear fields on error
+                            scope.querySelector('.consignor-contact').value = '';
+                            scope.querySelector('.source-city').value = '';
+                            scope.querySelector('.source-state').value = '';
                         });
                 } else {
-                    console.log('🧹 Clearing consignor fields...');
+                    // Clear fields if no consignor selected
                     scope.querySelector('.consignor-contact').value = '';
                     scope.querySelector('.source-city').value = '';
                     scope.querySelector('.source-state').value = '';
                 }
             }
 
-            // Fetch consignee details for a specific item row
+            // Fetch consignee details
             function handleConsigneeSelection(consigneeId, scope) {
                 console.log('🏢 Consignee selected:', consigneeId);
-                // Prevent same consignor & consignee
+
                 const consignorId = scope.querySelector('.consignor-select')?.value;
                 if (consigneeId && consignorId && String(consigneeId) === String(consignorId)) {
                     const msg = 'Consignee and Consignor cannot be the same.';
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire('Invalid Selection', msg, 'warning');
-                    } else {
-                        alert(msg);
-                    }
-                    // Reset consignee select and clear fields
+                    Swal ? Swal.fire('Invalid Selection', msg, 'warning') : alert(msg);
+
                     $(scope).find('.consignee-select').val(null).trigger('change.select2');
                     scope.querySelector('.consignee-contact').value = '';
                     scope.querySelector('.destination-city').value = '';
                     scope.querySelector('.destination-state').value = '';
                     return;
                 }
+
                 if (consigneeId) {
-                    console.log('🔄 Fetching consignee data from API...');
                     fetch(`/api/consignees/${consigneeId}`)
-                        .then(response => {
-                            console.log('📡 Consignee API response status:', response.status);
-                            if (!response.ok) {
-                                throw new Error(`HTTP error! status: ${response.status}`);
+                        .then(res => {
+                            if (!res.ok) {
+                                throw new Error('Network response was not ok');
                             }
-                            return response.json();
+                            return res.json();
                         })
                         .then(data => {
                             console.log('📊 Consignee data received:', data);
-                            console.log('📊 Consignee data keys:', Object.keys(data));
 
-                            // Populate within the scope row
+                            // Update contact number
                             scope.querySelector('.consignee-contact').value = data.contact_number || '';
-                            scope.querySelector('.destination-city').value = data.city || '';
-                            scope.querySelector('.destination-state').value = data.state || '';
+
+                            // Handle both nested and flat city/state structures
+                            const cityValue = data.city?.name || data.city || '';
+                            const stateValue = data.state?.name || data.state || '';
+
+                            scope.querySelector('.destination-city').value = cityValue;
+                            scope.querySelector('.destination-state').value = stateValue;
+
+                            console.log('Updated consignee fields:', {
+                                contact: data.contact_number,
+                                city: cityValue,
+                                state: stateValue
+                            });
                         })
-                        .catch(error => {
-                            console.error('❌ Error fetching consignee data:', error);
+                        .catch(err => {
+                            console.error('❌ Consignee fetch error:', err);
+                            // Clear fields on error
+                            scope.querySelector('.consignee-contact').value = '';
+                            scope.querySelector('.destination-city').value = '';
+                            scope.querySelector('.destination-state').value = '';
                         });
                 } else {
-                    console.log('🧹 Clearing consignee fields...');
+                    // Clear fields if no consignee selected
                     scope.querySelector('.consignee-contact').value = '';
                     scope.querySelector('.destination-city').value = '';
                     scope.querySelector('.destination-state').value = '';
                 }
             }
+
+            // Update event listeners to handle both change and select2:select events
+            $(document).on('change', '.consignor-select', function() {
+                const scope = this.closest('.lr-item');
+                handleConsignorSelection(this.value, scope);
+            });
+
+            $(document).on('select2:select', '.consignor-select', function(e) {
+                const scope = this.closest('.lr-item');
+                handleConsignorSelection(e.params.data.id, scope);
+            });
+
+            $(document).on('change', '.consignee-select', function() {
+                const scope = this.closest('.lr-item');
+                handleConsigneeSelection(this.value, scope);
+            });
+
+            $(document).on('select2:select', '.consignee-select', function(e) {
+                const scope = this.closest('.lr-item');
+                handleConsigneeSelection(e.params.data.id, scope);
+            });
 
             // Delegate change/input/blur events inside LR items for selects and calculations
             lrItemsContainer.addEventListener('change', function(e) {
@@ -828,7 +883,12 @@
                     handleConsignorSelection(e.target.value, scope);
                 } else if (e.target.classList.contains('consignee-select')) {
                     handleConsigneeSelection(e.target.value, scope);
-                } else if (e.target.classList.contains('weight') || e.target.classList.contains(
+                }
+            });
+            lrItemsContainer.addEventListener('input', function(e) {
+                const scope = e.target.closest('.lr-item');
+                if (!scope) return;
+                if (e.target.classList.contains('weight') || e.target.classList.contains(
                         'fr-rate')) {
                     calculateAmount(scope);
                 }
@@ -1233,6 +1293,145 @@
                     errorBox.classList.remove('d-none');
                     errorBox.innerHTML = '⚠️ Error: ' + error.message;
                 });
+        });
+    </script>
+
+    <script>
+        // Fetch consignor details
+        function handleConsignorSelection(consignorId, scope) {
+            console.log('👤 Consignor selected:', consignorId);
+
+            const consigneeId = scope.querySelector('.consignee-select')?.value;
+            if (consignorId && consigneeId && String(consignorId) === String(consigneeId)) {
+                const msg = 'Consignor and Consignee cannot be the same.';
+                Swal ? Swal.fire('Invalid Selection', msg, 'warning') : alert(msg);
+
+                $(scope).find('.consignor-select').val(null).trigger('change.select2');
+                scope.querySelector('.consignor-contact').value = '';
+                scope.querySelector('.source-city').value = '';
+                scope.querySelector('.source-state').value = '';
+                return;
+            }
+
+            if (consignorId) {
+                fetch(`/api/consignees/${consignorId}`)
+                    .then(res => {
+                        if (!res.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return res.json();
+                    })
+                    .then(data => {
+                        console.log('📊 Consignor data received:', data);
+
+                        // Update contact number
+                        scope.querySelector('.consignor-contact').value = data.contact_number || '';
+
+                        // Handle both nested and flat city/state structures
+                        const cityValue = data.city?.name || data.city || '';
+                        const stateValue = data.state?.name || data.state || '';
+
+                        scope.querySelector('.source-city').value = cityValue;
+                        scope.querySelector('.source-state').value = stateValue;
+
+                        console.log('Updated consignor fields:', {
+                            contact: data.contact_number,
+                            city: cityValue,
+                            state: stateValue
+                        });
+                    })
+                    .catch(err => {
+                        console.error('❌ Consignor fetch error:', err);
+                        // Clear fields on error
+                        scope.querySelector('.consignor-contact').value = '';
+                        scope.querySelector('.source-city').value = '';
+                        scope.querySelector('.source-state').value = '';
+                    });
+            } else {
+                // Clear fields if no consignor selected
+                scope.querySelector('.consignor-contact').value = '';
+                scope.querySelector('.source-city').value = '';
+                scope.querySelector('.source-state').value = '';
+            }
+        }
+
+        // Fetch consignee details
+        function handleConsigneeSelection(consigneeId, scope) {
+            console.log('🏢 Consignee selected:', consigneeId);
+
+            const consignorId = scope.querySelector('.consignor-select')?.value;
+            if (consigneeId && consignorId && String(consigneeId) === String(consignorId)) {
+                const msg = 'Consignee and Consignor cannot be the same.';
+                Swal ? Swal.fire('Invalid Selection', msg, 'warning') : alert(msg);
+
+                $(scope).find('.consignee-select').val(null).trigger('change.select2');
+                scope.querySelector('.consignee-contact').value = '';
+                scope.querySelector('.destination-city').value = '';
+                scope.querySelector('.destination-state').value = '';
+                return;
+            }
+
+            if (consigneeId) {
+                fetch(`/api/consignees/${consigneeId}`)
+                    .then(res => {
+                        if (!res.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return res.json();
+                    })
+                    .then(data => {
+                        console.log('📊 Consignee data received:', data);
+
+                        // Update contact number
+                        scope.querySelector('.consignee-contact').value = data.contact_number || '';
+
+                        // Handle both nested and flat city/state structures
+                        const cityValue = data.city?.name || data.city || '';
+                        const stateValue = data.state?.name || data.state || '';
+
+                        scope.querySelector('.destination-city').value = cityValue;
+                        scope.querySelector('.destination-state').value = stateValue;
+
+                        console.log('Updated consignee fields:', {
+                            contact: data.contact_number,
+                            city: cityValue,
+                            state: stateValue
+                        });
+                    })
+                    .catch(err => {
+                        console.error('❌ Consignee fetch error:', err);
+                        // Clear fields on error
+                        scope.querySelector('.consignee-contact').value = '';
+                        scope.querySelector('.destination-city').value = '';
+                        scope.querySelector('.destination-state').value = '';
+                    });
+            } else {
+                // Clear fields if no consignee selected
+                scope.querySelector('.consignee-contact').value = '';
+                scope.querySelector('.destination-city').value = '';
+                scope.querySelector('.destination-state').value = '';
+            }
+        }
+
+        // Update event listeners to handle both change and select2:select events
+        $(document).on('change', '.consignor-select', function() {
+            const scope = this.closest('.lr-item');
+            handleConsignorSelection(this.value, scope);
+        });
+
+        $(document).on('select2:select', '.consignor-select', function(e) {
+            const scope = this.closest('.lr-item');
+            handleConsignorSelection(e.params.data.id, scope);
+        });
+
+        $(document).on('change', '.consignee-select', function() {
+            const scope = this.closest('.lr-item');
+            handleConsigneeSelection(this.value, scope);
+        });
+
+        $(document).on('select2:select', '.consignee-select', function(e) {
+            const scope = this.closest('.lr-item');
+            handleConsigneeSelection(e.params.data.id, scope);
         });
     </script>
 @endsection
