@@ -174,7 +174,7 @@ class LorryReceiptController extends Controller
       if (auth()->user()->userRole->name !== 'super_admin') {
         $query->where('company_id', auth()->user()->company_id);
       }
-
+      $query->orderBy('gr_date', 'desc')->orderBy('linked_lr_id', 'desc');
       \Log::info('Query built successfully');
 
       return DataTables::of($query)

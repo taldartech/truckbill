@@ -291,6 +291,11 @@
         justify-content: center;
         box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
+
+    .lr-number-link {
+        color: #0d6efd;
+        text-decoration: none;
+    }
 </style>
 
 @push('scripts')
@@ -354,8 +359,7 @@ $(document).ready(function() {
                 data: 'lr_number',
                 name: 'lr_number',
                 render: function(data, type, row) {
-
-                    return '<a href="#" class="lr-number-link" data-id="' + row.id + '">' + data + '</a>';
+                  return '<a href="#" class="lr-number-link" data-id="' + row.id + '">' + data + (row.linked_lr_id ? ' <span class="p-1 badge text-bg-info">[' + row.linked_lr_id + ']</span>' : '') + '</a>';
                 }
             },
             {
