@@ -255,33 +255,15 @@
                                 </div>
                             </div>
                             <div class="row mb-3">
-<<<<<<< HEAD
+
                                 <input type="hidden" class="form-control source-city" readonly>
                                 <input type="hidden" class="form-control source-state" readonly>
-                                {{-- <div class="col-md-3" style="display: none;">
-=======
-
-                                <div class="col-md-3" style="display: none;">
->>>>>>> 46f1439572b438cee0c5347d441fcc1e2cd85b26
-                                    <label class="form-label">Source City *</label>
-                                    <input type="text" class="form-control source-city" required readonly>
-                                </div> --}}
-                                <div class="col-md-3" style="display: none;">
-                                    <label class="form-label">Source State *</label>
-                                    <input type="text" class="form-control source-state" required readonly>
-                                </div>
+                               
                             </div>
                             <div class="row mb-3">
                                 <input type="hidden" class="form-control destination-city" readonly>
                                 <input type="hidden" class="form-control destination-state" readonly>
-                                {{-- <div class="col-md-3" style="display: none;">
-                                    <label class="form-label">Destination City *</label>
-                                    <input type="text" class="form-control destination-city" required readonly>
-                                </div>
-                                <div class="col-md-3" style="display: none;">
-                                    <label class="form-label">Destination State *</label>
-                                    <input type="text" class="form-control destination-state" required readonly>
-                                </div>--}}
+                               
                             </div>
                             </div>
                             <div class="card mb-4 p-3 bg-light">
