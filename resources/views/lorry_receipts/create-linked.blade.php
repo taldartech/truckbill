@@ -191,8 +191,6 @@
                 <div class="card mb-4 p-3 bg-light">
                     <div class="d-flex align-items-center mb-3">
                         <h5 class="mb-0">LR Items</h5>
-                        <button type="button" class="btn btn-sm btn-primary ms-auto" id="add-lr-item"><i
-                                class="bi bi-plus"></i> Add LR</button>
                     </div>
                     <div id="lr-items-container"></div>
                     <template id="lr-item-template">
@@ -312,6 +310,8 @@
                             </div>
                         </div>
                     </template>
+                    <button type="button" class="btn btn-sm btn-primary ms-auto" id="add-lr-item"><i
+                            class="bi bi-plus"></i> Add LR</button>
                 </div>
                 <!-- Submit Actions -->
                 <div class="card mb-4 p-3 bg-light">
@@ -1114,13 +1114,13 @@
                                             <div class="card mb-3"><div class="card-header bg-light"><strong>LR Items</strong></div>
                                             <div class="card-body">
                                               ${items.map((it, i) => `
-                                                                            <div class='mb-2'>
-                                                                              <strong>${i+1}. LR:</strong> ${it.lr_number} | <strong>Customer:</strong> ${it.customer}<br/>
-                                                                              <strong>Consignor:</strong> ${it.consignor} | <strong>Consignee:</strong> ${it.consignee}<br/>
-                                                                              <strong>Route:</strong> ${it.source} → ${it.destination}<br/>
-                                                                              <strong>Goods:</strong> ${it.good_type} | <strong>Weight:</strong> ${it.weight} | <strong>FR:</strong> ₹${it.fr_rate} | <strong>Amount:</strong> ₹${it.amount}
-                                                                            </div>
-                                                                          `).join('')}
+                                                                                <div class='mb-2'>
+                                                                                  <strong>${i+1}. LR:</strong> ${it.lr_number} | <strong>Customer:</strong> ${it.customer}<br/>
+                                                                                  <strong>Consignor:</strong> ${it.consignor} | <strong>Consignee:</strong> ${it.consignee}<br/>
+                                                                                  <strong>Route:</strong> ${it.source} → ${it.destination}<br/>
+                                                                                  <strong>Goods:</strong> ${it.good_type} | <strong>Weight:</strong> ${it.weight} | <strong>FR:</strong> ₹${it.fr_rate} | <strong>Amount:</strong> ₹${it.amount}
+                                                                                </div>
+                                                                              `).join('')}
                                             </div></div>
                                           </div>
                                       </div>
