@@ -130,7 +130,7 @@
         @endif
 
         <div class="table-responsive">
-            <table class="table table-bordered table-striped">
+            <table id="freightBookingsTable" class="table table-bordered table-striped">
                 <thead class="table-dark">
                     <tr class="text-center" style="font-size: 14px;">
                         <th style="width: 40px;"><input type="checkbox" id="select-all"></th>
@@ -231,13 +231,16 @@
                 </tbody>
             </table>
         </div>
+        <div class="d-flex justify-content-center mt-3">
+            {{ $bookings->links('pagination::bootstrap-5') }}
+        </div>
 
         <!-- Pagination -->
-        @if($bookings->hasPages())
+        {{-- @if($bookings->hasPages())
             <div class="d-flex justify-content-center mt-4">
                 {{ $bookings->appends(request()->query())->links() }}
             </div>
-        @endif
+        @endif --}}
     </div>
 </div>
 </div>
@@ -323,6 +326,7 @@
 @endsection
 
 @push('styles')
+
 <style>
     /* Status row highlighting */
     .table-success {
@@ -672,6 +676,7 @@ function openVoucherPaymentModal() {
     $('#voucherPaymentModal').modal('show');
 }
 </script>
+
 @endpush
 
 <style>
@@ -819,6 +824,7 @@ function openVoucherPaymentModal() {
 
 
 @push('scripts')
+
 <script>
 $(document).ready(function() {
     // Initialize tooltips
@@ -1010,6 +1016,17 @@ $(document).ready(function() {
     
     // DataTable initialization
     var table = $('#freightBookingsTable').DataTable({
+        paging: true,       
+    info: true,
+    searching: true,
+    ordering: true,
+    responsive: true,
+    lengthChange: true,   // enable "Show X entries" dropdown
+    pageLength: 10,       // default
+    lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+    drawCallback: function() {
+        updatePaymentButtonsVisibility();
+    }
         processing: true,
         serverSide: true,
         ajax: {
@@ -1126,17 +1143,17 @@ $(document).ready(function() {
                 className: 'text-center align-middle'
             }
         ],
-        order: [[1, 'desc']],
-        pageLength: 25,
-        lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100, "All"]],
-        dom: 'Bfrtip',
-        buttons: [
-            'excel'
-        ],
-        responsive: true,
-        drawCallback: function() {
-            updatePaymentButtonsVisibility();
-        }
+        // order: [[1, 'desc']],
+        // pageLength: 25,
+        // lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100, "All"]],
+        // dom: 'Bfrtip',
+        // buttons: [
+        //     'excel'
+        // ],
+        // responsive: true,
+        // drawCallback: function() {
+        //     updatePaymentButtonsVisibility();
+        // }
     });
     
     // Apply column search

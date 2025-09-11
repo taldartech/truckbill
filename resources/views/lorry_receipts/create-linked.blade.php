@@ -116,9 +116,6 @@
                             @enderror
                             <div class="invalid-feedback">Please select a GR date.</div>
                         </div>
-                    </div>
-                    <!-- Memo ID field removed from creation form as it cannot be present at creation time -->
-                    <div class="row mb-3">
                         <div class="col-md-4">
                             <label for="truck_id" class="form-label">Truck *</label>
                             <select class="form-select" id="truck_id" name="truck_id" required
@@ -150,6 +147,10 @@
                             </select>
                             <div class="invalid-feedback">Please select transporter type.</div>
                         </div>
+                    </div>
+                    <!-- Memo ID field removed from creation form as it cannot be present at creation time -->
+                    <div class="row mb-3">
+                        
                         <div class="col-md-4">
                             <label for="transporter_id" id="transporterLabel" class="form-label">Transporter *</label>
                             <select class="form-select" id="transporter_id" name="transporter_id" required>
@@ -166,8 +167,6 @@
                                 </span>
                             </div>
                         </div>
-                    </div>
-                    <div class="row mb-3">
                         <div class="col-md-4">
                             <label for="reference_by" class="form-label">Reference By</label>
                             <select class="form-select" id="reference_by" name="reference_by"
@@ -201,6 +200,7 @@
                                     class="btn btn-sm btn-outline-danger ms-auto remove-lr-item">Remove</button>
                             </div>
                             <input type="hidden" class="lane-input" value="Road">
+                            <div class="card mb-4 p-3 bg-light">
                             <div class="row mb-3">
                                 <div class="col-md-3">
                                     <label class="form-label">LR Number *</label>
@@ -227,14 +227,15 @@
                                             <option value="{{ $consignee->id }}">{{ $consignee->name }}</option>
                                         @endforeach
                                     </select>
+                                    <small class="form-text text-muted d-block consignor-contact-text"></small>
+                                    <small class="form-text text-muted d-block consignor-city-text"></small>
+                                    <small class="form-text text-muted d-block consignor-state-text"></small>
                                     <div class="invalid-feedback">Please select a consignor.</div>
                                 </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">Consignor Contact</label>
+                                <div class="col-md-3" style="display: none;">
+                                    <label class="form-label" >Consignor Contact</label>
                                     <input type="text" class="form-control consignor-contact" readonly>
                                 </div>
-                            </div>
-                            <div class="row mb-3">
                                 <div class="col-md-3">
                                     <label class="form-label">Consignee *</label>
                                     <select class="form-select select2 consignee-select" required>
@@ -243,30 +244,40 @@
                                             <option value="{{ $consignee->id }}">{{ $consignee->name }}</option>
                                         @endforeach
                                     </select>
+                                    <small class="form-text text-muted d-block consignee-contact-text"></small>
+                                    <small class="form-text text-muted d-block consignee-city-text"></small>
+                                    <small class="form-text text-muted d-block consignee-state-text"></small>
                                     <div class="invalid-feedback">Please select a consignee.</div>
                                 </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">Consignee Contact</label>
+                                <div class="col-md-3" style="display: none;">
+                                    <label class="form-label" >Consignee Contact</label>
                                     <input type="text" class="form-control consignee-contact" readonly>
                                 </div>
-                                <div class="col-md-3">
+                            </div>
+                            <div class="row mb-3">
+                                
+                                <div class="col-md-3" style="display: none;">
                                     <label class="form-label">Source City *</label>
                                     <input type="text" class="form-control source-city" required readonly>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-3" style="display: none;">
                                     <label class="form-label">Source State *</label>
                                     <input type="text" class="form-control source-state" required readonly>
                                 </div>
                             </div>
                             <div class="row mb-3">
-                                <div class="col-md-3">
+                                <div class="col-md-3" style="display: none;">
                                     <label class="form-label">Destination City *</label>
                                     <input type="text" class="form-control destination-city" required readonly>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-3" style="display: none;">
                                     <label class="form-label">Destination State *</label>
                                     <input type="text" class="form-control destination-state" required readonly>
                                 </div>
+                            </div>
+                            </div>
+                            <div class="card mb-4 p-3 bg-light">
+                            <div class="row mb-3">
                                 <div class="col-md-3">
                                     <label class="form-label">Goods Type *</label>
                                     <div class="input-group flex-nowrap">
@@ -287,6 +298,7 @@
                                     <input type="number" class="form-control units" min="1" max="100000">
                                 </div>
                             </div>
+
                             <div class="row mb-3">
                                 <div class="col-md-3">
                                     <label class="form-label">Weight (Tons) *</label>
@@ -303,10 +315,8 @@
                                     <input type="number" step="0.01" class="form-control amount" required>
                                     <small class="text-muted">Auto: Weight × FR Rate</small>
                                 </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">Lane</label>
-                                    <input type="text" class="form-control lane" value="Road" readonly>
-                                </div>
+                                <input type="hidden" class="form-control lane" value="Road" readonly>
+                            </div>
                             </div>
                         </div>
                     </template>
@@ -758,6 +768,9 @@
                     scope.querySelector('.consignor-contact').value = '';
                     scope.querySelector('.source-city').value = '';
                     scope.querySelector('.source-state').value = '';
+                    scope.querySelector('.consignor-contact-text').textContent = '';
+                    scope.querySelector('.consignor-city-text').textContent = '';
+                    scope.querySelector('.consignor-state-text').textContent = '';
                     return;
                 }
 
@@ -774,10 +787,13 @@
 
                             // Update contact number
                             scope.querySelector('.consignor-contact').value = data.contact_number || '';
+                            scope.querySelector('.consignor-contact-text').textContent = "Contact Number: " + data.contact_number || '';
 
                             // Handle both nested and flat city/state structures
                             const cityValue = data.city?.name || data.city || '';
                             const stateValue = data.state?.name || data.state || '';
+                            scope.querySelector('.consignor-city-text').textContent = "Source City: " + cityValue || '';
+                            scope.querySelector('.consignor-state-text').textContent = "Source State: " + stateValue || '';
 
                             scope.querySelector('.source-city').value = cityValue;
                             scope.querySelector('.source-state').value = stateValue;
@@ -794,12 +810,18 @@
                             scope.querySelector('.consignor-contact').value = '';
                             scope.querySelector('.source-city').value = '';
                             scope.querySelector('.source-state').value = '';
+                            scope.querySelector('.consignor-contact-text').textContent = '';
+                            scope.querySelector('.consignor-city-text').textContent = '';
+                            scope.querySelector('.consignor-state-text').textContent = '';
                         });
                 } else {
                     // Clear fields if no consignor selected
                     scope.querySelector('.consignor-contact').value = '';
                     scope.querySelector('.source-city').value = '';
                     scope.querySelector('.source-state').value = '';
+                    scope.querySelector('.consignor-contact-text').textContent = '';
+                    scope.querySelector('.consignor-city-text').textContent = '';
+                    scope.querySelector('.consignor-state-text').textContent = '';
                 }
             }
 
@@ -816,6 +838,9 @@
                     scope.querySelector('.consignee-contact').value = '';
                     scope.querySelector('.destination-city').value = '';
                     scope.querySelector('.destination-state').value = '';
+                    scope.querySelector('.consignee-contact-text').textContent = '';
+                    scope.querySelector('.consignee-city-text').textContent = '';
+                    scope.querySelector('.consignee-state-text').textContent = '';
                     return;
                 }
 
@@ -832,10 +857,13 @@
 
                             // Update contact number
                             scope.querySelector('.consignee-contact').value = data.contact_number || '';
+                            scope.querySelector('.consignee-contact-text').textContent = "Contact Number: " + data.contact_number || '';
 
                             // Handle both nested and flat city/state structures
                             const cityValue = data.city?.name || data.city || '';
                             const stateValue = data.state?.name || data.state || '';
+                            scope.querySelector('.consignee-city-text').textContent = "Destination City: " + cityValue || '';
+                            scope.querySelector('.consignee-state-text').textContent = "Destination State: " + stateValue || '';
 
                             scope.querySelector('.destination-city').value = cityValue;
                             scope.querySelector('.destination-state').value = stateValue;
@@ -852,12 +880,18 @@
                             scope.querySelector('.consignee-contact').value = '';
                             scope.querySelector('.destination-city').value = '';
                             scope.querySelector('.destination-state').value = '';
+                            scope.querySelector('.consignee-contact-text').textContent = '';
+                            scope.querySelector('.consignee-city-text').textContent = '';
+                            scope.querySelector('.consignee-state-text').textContent = '';
                         });
                 } else {
                     // Clear fields if no consignee selected
                     scope.querySelector('.consignee-contact').value = '';
                     scope.querySelector('.destination-city').value = '';
                     scope.querySelector('.destination-state').value = '';
+                    scope.querySelector('.consignee-contact-text').textContent = '';
+                    scope.querySelector('.consignee-city-text').textContent = '';
+                    scope.querySelector('.consignee-state-text').textContent = '';
                 }
             }
 
