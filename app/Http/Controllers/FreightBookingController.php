@@ -89,7 +89,7 @@ class FreightBookingController extends Controller
             });
         }
 
-        $bookings = $query->orderByDesc('freight_bookings.id')->paginate(20);
+        $bookings = $query->orderByDesc('freight_bookings.id')->paginate(10);
 
         // Get filter data
         $transporters = Transporter::where('is_owner', 0)->orderBy('name')->get();
