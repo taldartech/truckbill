@@ -150,7 +150,7 @@
                     </div>
                     <!-- Memo ID field removed from creation form as it cannot be present at creation time -->
                     <div class="row mb-3">
-                        
+
                         <div class="col-md-4">
                             <label for="transporter_id" id="transporterLabel" class="form-label">Transporter *</label>
                             <select class="form-select" id="transporter_id" name="transporter_id" required>
@@ -255,9 +255,14 @@
                                 </div>
                             </div>
                             <div class="row mb-3">
+<<<<<<< HEAD
                                 <input type="hidden" class="form-control source-city" readonly>
                                 <input type="hidden" class="form-control source-state" readonly>
                                 {{-- <div class="col-md-3" style="display: none;">
+=======
+
+                                <div class="col-md-3" style="display: none;">
+>>>>>>> 46f1439572b438cee0c5347d441fcc1e2cd85b26
                                     <label class="form-label">Source City *</label>
                                     <input type="text" class="form-control source-city" required readonly>
                                 </div> --}}
@@ -1033,6 +1038,18 @@
                     inputEl.classList.remove('is-valid', 'is-invalid');
                     return;
                 }
+                let allLrNumbers = Array.from(document.querySelectorAll(
+                    '.lr-number-input')).map(el => el.value.trim().toLowerCase());
+                let duplicateCount = allLrNumbers.filter(num => num === lrNumber.toLowerCase())
+                    .length;
+                if (duplicateCount > 1) {
+                    feedbackEl.innerHTML =
+                        '<small class="text-danger">❌ This LR number is duplicated in the form.</small>';
+                    inputEl.classList.remove('is-valid');
+                    inputEl.classList.add('is-invalid');
+                    inputEl.setCustomValidity('This LR number is duplicated in the form.');
+                    return;
+                }
                 feedbackEl.innerHTML = '<small class="text-info">🔍 Checking availability...</small>';
                 inputEl.classList.remove('is-valid', 'is-invalid');
                 fetch('/api/check-lr-number-uniqueness', {
@@ -1314,6 +1331,12 @@
                         selects.forEach(select => {
                             select.add(new Option(data.goodsType.name, data.goodsType.name));
                         });
+
+                        // Add in template as well for future items
+                        const templateSelect = document.getElementById('lr-item-template').content.querySelector('.goods-type');
+                        if (templateSelect) {
+                            templateSelect.add(new Option(data.goodsType.name, data.goodsType.name));
+                        }
 
                         // Select the newly added option in the relevant dropdown
                         const goodTypeField = document.getElementById('good_type_field');
