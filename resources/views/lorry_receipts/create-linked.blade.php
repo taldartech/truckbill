@@ -1311,6 +1311,12 @@
                             select.add(new Option(data.goodsType.name, data.goodsType.name));
                         });
 
+                        // Add in template as well for future items
+                        const templateSelect = document.getElementById('lr-item-template').content.querySelector('.goods-type');
+                        if (templateSelect) {
+                            templateSelect.add(new Option(data.goodsType.name, data.goodsType.name));
+                        }
+
                         // Select the newly added option in the relevant dropdown
                         const goodTypeField = document.getElementById('good_type_field');
                         if (goodTypeField && goodTypeField.value) {
