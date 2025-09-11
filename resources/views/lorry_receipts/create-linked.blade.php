@@ -150,7 +150,7 @@
                     </div>
                     <!-- Memo ID field removed from creation form as it cannot be present at creation time -->
                     <div class="row mb-3">
-                        
+
                         <div class="col-md-4">
                             <label for="transporter_id" id="transporterLabel" class="form-label">Transporter *</label>
                             <select class="form-select" id="transporter_id" name="transporter_id" required>
@@ -255,7 +255,7 @@
                                 </div>
                             </div>
                             <div class="row mb-3">
-                                
+
                                 <div class="col-md-3" style="display: none;">
                                     <label class="form-label">Source City *</label>
                                     <input type="text" class="form-control source-city" required readonly>
@@ -1023,6 +1023,18 @@
                 if (!lrNumber || lrNumber.length < 2) {
                     feedbackEl.innerHTML = '';
                     inputEl.classList.remove('is-valid', 'is-invalid');
+                    return;
+                }
+                let allLrNumbers = Array.from(document.querySelectorAll(
+                    '.lr-number-input')).map(el => el.value.trim().toLowerCase());
+                let duplicateCount = allLrNumbers.filter(num => num === lrNumber.toLowerCase())
+                    .length;
+                if (duplicateCount > 1) {
+                    feedbackEl.innerHTML =
+                        '<small class="text-danger">❌ This LR number is duplicated in the form.</small>';
+                    inputEl.classList.remove('is-valid');
+                    inputEl.classList.add('is-invalid');
+                    inputEl.setCustomValidity('This LR number is duplicated in the form.');
                     return;
                 }
                 feedbackEl.innerHTML = '<small class="text-info">🔍 Checking availability...</small>';
