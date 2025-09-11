@@ -119,7 +119,7 @@
                         <div class="col-md-4">
                             <label for="truck_id" class="form-label">Truck *</label>
                             <select class="form-select" id="truck_id" name="truck_id" required
-                                data-placeholder="Search and select truck...">
+                               >
                                 <option value="">Select Trucks</option>
                                 @foreach ($trucks as $truck)
                                     <option value="{{ $truck->id }}"
@@ -170,7 +170,7 @@
                         <div class="col-md-4">
                             <label for="reference_by" class="form-label">Reference By</label>
                             <select class="form-select" id="reference_by" name="reference_by"
-                                data-placeholder="Search and select reference...">
+                               >
                                 <option value="">Select Reference</option>
                                 @foreach ($agencies as $agency)
                                     <option value="{{ $agency->id }}"
@@ -255,30 +255,33 @@
                                 </div>
                             </div>
                             <div class="row mb-3">
-                                
-                                <div class="col-md-3" style="display: none;">
+                                <input type="hidden" class="form-control source-city" readonly>
+                                <input type="hidden" class="form-control source-state" readonly>
+                                {{-- <div class="col-md-3" style="display: none;">
                                     <label class="form-label">Source City *</label>
                                     <input type="text" class="form-control source-city" required readonly>
-                                </div>
+                                </div> --}}
                                 <div class="col-md-3" style="display: none;">
                                     <label class="form-label">Source State *</label>
                                     <input type="text" class="form-control source-state" required readonly>
                                 </div>
                             </div>
                             <div class="row mb-3">
-                                <div class="col-md-3" style="display: none;">
+                                <input type="hidden" class="form-control destination-city" readonly>
+                                <input type="hidden" class="form-control destination-state" readonly>
+                                {{-- <div class="col-md-3" style="display: none;">
                                     <label class="form-label">Destination City *</label>
                                     <input type="text" class="form-control destination-city" required readonly>
                                 </div>
                                 <div class="col-md-3" style="display: none;">
                                     <label class="form-label">Destination State *</label>
                                     <input type="text" class="form-control destination-state" required readonly>
-                                </div>
+                                </div>--}}
                             </div>
                             </div>
                             <div class="card mb-4 p-3 bg-light">
                             <div class="row mb-3">
-                                <div class="col-md-3">
+                                <div class="col-md-2 ">
                                     <label class="form-label">Goods Type *</label>
                                     <div class="input-group flex-nowrap">
                                         <select class="form-select select2 goods-type" required>
@@ -293,28 +296,33 @@
                                         </button>
                                     </div>
                                 </div>
-                                <div class="col-md-3">
+                                <div class="col-md-2 ms-4">
                                     <label class="form-label">No. of Units</label>
                                     <input type="number" class="form-control units" min="1" max="100000">
+                                    <small class="text-muted">📦 Max: 100,000 units</small>
                                 </div>
-                            </div>
-
-                            <div class="row mb-3">
-                                <div class="col-md-3">
+                                <div class="col-md-2">
                                     <label class="form-label">Weight (Tons) *</label>
                                     <input type="number" step="0.01" class="form-control weight" min="0.1"
                                         max="100" required>
+                                        <small class="text-muted">📏 Range: 0.1 - 100 tons</small>
                                 </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">Freight Rate (₹/ton) *</label>
+                                <div class="col-md-2">
+                                    <label class="form-label">Fr Rate (₹/ton) *</label>
                                     <input type="number" step="0.01" class="form-control fr-rate" min="1"
                                         max="20000" required>
+                                        <small class="text-muted">💰 Range: ₹1 - ₹20,000 per ton</small>
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label">Amount *</label>
                                     <input type="number" step="0.01" class="form-control amount" required>
                                     <small class="text-muted">Auto: Weight × FR Rate</small>
                                 </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                
+                                
                                 <input type="hidden" class="form-control lane" value="Road" readonly>
                             </div>
                             </div>
@@ -960,7 +968,7 @@
             });
 
             // Weight validation on blur
-            lrItemsContainer.addEventListener('blur', function(e) {
+            lrItemsContainer.addEventListener('input', function(e) {
                 if (e.target.classList.contains('weight')) {
                     const weightInput = e.target;
                     const weight = parseFloat(weightInput.value);
@@ -1118,9 +1126,11 @@
                         destination: `${item.querySelector('.destination-city').value}, ${item.querySelector('.destination-state').value}`,
                         good_type: $(item).find('.goods-type option:selected')
                             .text(),
+                        no_of_units: item.querySelector('.units').value,
                         weight: item.querySelector('.weight').value,
                         fr_rate: item.querySelector('.fr-rate').value,
                         amount: item.querySelector('.amount').value,
+
                     }));
 
                     const grDate = document.getElementById('gr_date').value;
@@ -1135,6 +1145,7 @@
                                   <div class="confirmation-details">
                                       <h5 class="text-primary mb-3">📋 Verify details</h5>
                                       <div class="row">
+                                        <div class="col-md-3"></div>
                                           <div class="col-md-6">
                                             <div class="card mb-3"><div class="card-header bg-light"><strong>Shared</strong></div>
                                             <div class="card-body">
@@ -1144,19 +1155,24 @@
                                               <p><strong>Reference By:</strong> ${referenceBy}</p>
                                             </div></div>
                                           </div>
-                                          <div class="col-md-6">
-                                            <div class="card mb-3"><div class="card-header bg-light"><strong>LR Items</strong></div>
-                                            <div class="card-body">
+                                          <div class="col-md-3"></div>
+                                        
                                               ${items.map((it, i) => `
+                                                <div class="col-md-6">
+                                            <div class="card mb-3"><div class="card-header bg-light"><strong> ${i+1}. LR:</strong> ${it.lr_number}</strong></div>
+                                            <div class="card-body">
                                                                                 <div class='mb-2'>
-                                                                                  <strong>${i+1}. LR:</strong> ${it.lr_number} | <strong>Customer:</strong> ${it.customer}<br/>
+                                                                                  <strong>Customer:</strong> ${it.customer}<br/>
                                                                                   <strong>Consignor:</strong> ${it.consignor} | <strong>Consignee:</strong> ${it.consignee}<br/>
                                                                                   <strong>Route:</strong> ${it.source} → ${it.destination}<br/>
-                                                                                  <strong>Goods:</strong> ${it.good_type} | <strong>Weight:</strong> ${it.weight} | <strong>FR:</strong> ₹${it.fr_rate} | <strong>Amount:</strong> ₹${it.amount}
+                                                                                  <strong>Goods:</strong> ${it.good_type} | <strong>No. of Units:</strong> ${it.no_of_units} <br/>
+                                                                                  <strong>Weight:</strong> ${it.weight} | <strong>FR:</strong> ₹${it.fr_rate} | <strong>Amount:</strong> ₹${it.amount}
                                                                                 </div>
+                                                                                 </div></div>
+                                                                                 </div>
                                                                               `).join('')}
-                                            </div></div>
-                                          </div>
+                                           
+                                          
                                       </div>
                                   </div>`;
 

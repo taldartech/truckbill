@@ -178,7 +178,14 @@
                             {{-- <td class="text-center">{{ $bookings->firstItem() + $index }}</td>
                             <td><a href="{{ route('freight_bookings.show', $booking->id) }}" class="text-primary text-decoration-underline">{{ $booking->id ? $booking->id : '-' }}</a></td> --}}
                             <td class="text-center">{{ $booking->lr && $booking->lr->gr_date ? date('d-m-Y', strtotime($booking->lr->gr_date)) : '-' }}</td>
-                             <td>{{ $booking->lr ? $booking->lr->lr_number : '-' }}</td>
+                             <td>  @if($booking->lr)
+                                {{ $booking->lr->lr_number }}
+                                @if($booking->linked_lr_id)
+                                    <span class="badge text-bg-info">[{{ $booking->linked_lr_id }}]</span>
+                                @endif
+                            @else
+                                -
+                            @endif</td>
                              <td>{{ $booking->lr ? $booking->lr->customer->name : '-' }}</td>
                             <td>
                                 @php
@@ -1062,21 +1069,14 @@ $(document).ready(function() {
                 width: '50px',
                 className: 'text-center align-middle'
             },
-            {
-                data: 'fr_number',
-                name: 'fr_number',
-                className: 'align-middle'
-            },
+            
             {
                 data: 'lr_number',
                 name: 'lr_number',
-                className: 'align-middle'
+                className: 'align-middle',
+                 
             },
-            {
-                data: 'voucher_number',
-                name: 'voucher_number',
-                className: 'align-middle'
-            },
+            
             {
                 data: 'source_city',
                 name: 'source_city',

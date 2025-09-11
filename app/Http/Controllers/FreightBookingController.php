@@ -88,8 +88,27 @@ class FreightBookingController extends Controller
                 $q->where('transporter_id', $request->truck_owner_id);
             });
         }
+  
+      
+    // $bookings = $query->orderByDesc('freight_bookings.id')->paginate(10);
+    $bookings = $query
+    ->select('freight_bookings.*')
+    ->leftJoin(DB::raw('(
+            SELECT linked_lr_id, MAX(id) as max_id
+            FROM freight_bookings
+            WHERE linked_lr_id IS NOT NULL
+            GROUP BY linked_lr_id
+        ) as fb_group'),
+        function ($join) {
+            $join->on('freight_bookings.linked_lr_id', '=', 'fb_group.linked_lr_id');
+        })
+    ->orderByDesc(DB::raw('COALESCE(fb_group.max_id, freight_bookings.id)')) // latest group OR latest row
+    ->orderByDesc('freight_bookings.id') // inside group
+    ->paginate(10);
 
-        $bookings = $query->orderByDesc('freight_bookings.id')->paginate(10);
+
+
+  
 
         // Get filter data
         $transporters = Transporter::where('is_owner', 0)->orderBy('name')->get();
@@ -535,11 +554,14 @@ class FreightBookingController extends Controller
             ];
         }
 
+        $linkedLrId = $lorryReceipt->linked_lr_id ?? null;
+
         $freightBooking = FreightBooking::create(array_merge($data, [
             'lr_number' => $lorryReceipt->lr_number,
             'voucher_number' => $nextVoucherNumber,
             'pan_verified' => (bool)$data['pan_verified'],
-            'company_id' => $data['company_id']
+            'company_id' => $data['company_id'],
+            'linked_lr_id' => $linkedLrId,
         ], $transporterInfo));
 
         // Update lorry receipt status and damage amount
@@ -844,12 +866,15 @@ class FreightBookingController extends Controller
 
         // Skip balance validation - let frontend handle it
         // The balance amount will be recalculated and stored correctly
+        // dd($lorryReceipt->linked_lr_id);
 
-
+        $linkedLrId = $lorryReceipt->linked_lr_id ?? null;
+        // dd($linkedLrId);
 
         // Update freight booking with lorry receipt's LR number
         $freightBooking->update(array_merge($data, [
-            'lr_number' => $lorryReceipt->lr_number
+            'lr_number' => $lorryReceipt->lr_number,
+            'linked_lr_id' => $linkedLrId
         ]));
 
 
