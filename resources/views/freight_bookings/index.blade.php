@@ -69,7 +69,7 @@
                     <span>Pending</span>
                 </div>
             </div>
-            
+
             <!-- Search and Filter Section -->
           <!-- Search and Filter Section -->
           <div class="card mb-4">
@@ -84,7 +84,7 @@
                             <label class="form-label">Search By LR, Truck, Srouce or Destination City & Transporter</label>
                             <input type="text" class="form-control" name="search" value="{{ request('search') }}" placeholder="LR , Truck, City & Transporter...">
                         </div>
-                        
+
                         <!-- Date Range -->
                         <div class="col-md-2">
                             <label class="form-label">From Date</label>
@@ -94,8 +94,8 @@
                             <label class="form-label">To Date</label>
                             <input type="date" class="form-control" name="end_date" value="{{ $endDate }}" max="{{ date('Y-m-d') }}">
                         </div>
-                        
-                        
+
+
                         <!-- Buttons -->
                         <div class="col-md-1 d-flex align-items-end">
                             <button type="submit" class="btn btn-primary w-100">
@@ -111,7 +111,7 @@
                 </form>
             </div>
         </div>
-        
+
         <!-- Results Count -->
         <div class="row mb-3">
             <div class="col-12 text-end">
@@ -158,13 +158,13 @@
                                 @if(($booking->lr && $booking->lr->memo_id) && ($booking->balance_amount <= 0))
                                     <span class="text-muted" title="No checkbox available: memo_id is added and balance is zero"><i class="bi bi-dash-circle"></i></span>
                                 @else
-                                    <input type="checkbox" class="row-checkbox" value="{{ $booking->id }}" 
-                                           data-lr="{{ $booking->lr ? $booking->lr->lr_number : '' }}" 
+                                    <input type="checkbox" class="row-checkbox" value="{{ $booking->id }}"
+                                           data-lr="{{ $booking->lr ? $booking->lr->lr_number : '' }}"
                                            data-lr-id="{{ $booking->lr ? $booking->lr->id : '' }}"
-                                           data-truck="{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->truck_number : '' }}" 
+                                           data-truck="{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->truck_number : '' }}"
                                            data-truck-id="{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->id : '' }}"
                                            data-transporter-id="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->id : '' }}"
-                                           data-balance="{{ $booking->balance_amount ?? 0 }}" 
+                                           data-balance="{{ $booking->balance_amount ?? 0 }}"
                                            data-voucher_number="{{ $booking->voucher_number ?? '' }}"
                                            data-freight-booking-id="{{ $booking->id }}"
                                            data-is-cancelled="{{ $booking->is_cancelled ? '1' : '0' }}"
@@ -191,7 +191,7 @@
                                 @php
                                     $transporterName = $booking->transporter_name ?? ($booking->transporter ? $booking->transporter->name : '-');
                                     $badge = '';
-                                    
+
                                     if ($booking->transporter && $booking->transporter->is_owner) {
                                         $badge = '<span class="badge bg-success ms-1" title="Truck Owner"><i class="bi bi-truck"></i></span>';
                                     } else {
@@ -200,7 +200,7 @@
                                 @endphp
                                 {!! $transporterName . ' ' . $badge !!}
                             </td>
-                            <td>@php 
+                            <td>@php
                             $shortName = $booking->transporter_name ? $booking->transporter->short_name : '-';
                             @endphp
                             {!! $shortName !!}</td>
@@ -209,7 +209,7 @@
                             <td>{{ $booking->lr && $booking->lr->destination_city ? $booking->lr->destination_city : '-' }}</td>
                             <td>{{ $booking->lr && $booking->lr->weight ? $booking->lr->weight : '-' }}</td>
                             <td>{{ $booking->lr && $booking->tr_fr_rate ? $booking->tr_fr_rate : '-' }}</td>
-                            
+
                             <td class="text-end">₹{{ number_format($booking->balance_amount ?? 0, 2) }}</td>
                             <td class="text-center">
                                 <div class="btn-group" role="group">
@@ -269,7 +269,7 @@
             </div>
         </div>
     </div>
-    
+
 </div>
 </div>
 
@@ -340,12 +340,12 @@
         background-color: #d1e7dd !important;
         border-color: #badbcc !important;
     }
-    
+
     .table-danger {
         background-color: #f8d7da !important;
         border-color: #f5c2c7 !important;
     }
-    
+
     /* Legend for status colors */
     .status-legend {
         display: flex;
@@ -354,28 +354,28 @@
         margin-bottom: 15px;
         font-size: 0.875rem;
     }
-    
+
     .legend-item {
         display: flex;
         align-items: center;
         gap: 5px;
     }
-    
+
     .legend-color {
         width: 20px;
         height: 15px;
         border-radius: 3px;
         border: 1px solid #dee2e6;
     }
-    
+
     .legend-delivered {
         background-color: #d1e7dd;
     }
-    
+
     .legend-cancelled {
         background-color: #f8d7da;
     }
-    
+
     .legend-pending {
         background-color: #ffffff;
     }
@@ -400,11 +400,11 @@ $(document).ready(function() {
     // Individual checkbox change
     $(document).on('change', '.row-checkbox', function() {
         updatePaymentButtonsVisibility();
-        
+
         // Update select-all checkbox state
         const totalCheckboxes = $('.row-checkbox').length;
         const checkedCheckboxes = $('.row-checkbox:checked').length;
-        
+
         if (checkedCheckboxes === 0) {
             $('#select-all').prop('indeterminate', false).prop('checked', false);
         } else if (checkedCheckboxes === totalCheckboxes) {
@@ -416,37 +416,37 @@ $(document).ready(function() {
 
     function updatePaymentButtonsVisibility() {
         const checkedBoxes = $('.row-checkbox:checked');
-        
+
         if (checkedBoxes.length === 0) {
             // No selection - hide all buttons
             $('#bulk-memo-id-btn, #voucher-payment-btn').hide();
             return;
         }
-        
+
         if (checkedBoxes.length === 1) {
             // Single selection - show only voucher payment button
             $('#voucher-payment-btn').show();
             $('#bulk-memo-id-btn').show();
             return;
         }
-        
+
         // Multiple selections - check if they have same truck and transporter
         let firstTruckId = null;
         let firstTransporterId = null;
         let allSameTruckAndTransporter = true;
         let hasAnyCancelled = false;
-        
+
         checkedBoxes.each(function() {
             const checkbox = $(this);
             const truckId = checkbox.data('truck-id');
             const transporterId = checkbox.data('transporter-id');
             const isCancelled = checkbox.data('is-cancelled') === '1';
-            
+
             // Check if any freight booking is cancelled
             if (isCancelled) {
                 hasAnyCancelled = true;
             }
-            
+
             if (firstTruckId === null) {
                 firstTruckId = truckId;
                 firstTransporterId = transporterId;
@@ -458,13 +458,13 @@ $(document).ready(function() {
                 console.log("firstTransporterId", firstTransporterId);
                 if (transporterId !== firstTransporterId) {
                     allSameTruckAndTransporter = false;
-                   
+
                 }
             }
         });
         console.log("allSameTruckAndTransporter", allSameTruckAndTransporter);
         console.log("hasAnyCancelled", hasAnyCancelled);
-        
+
         // Show both buttons only if:
         // 1. All selections have same truck and transporter
         // 2. None of the freight bookings are cancelled
@@ -484,13 +484,13 @@ $(document).ready(function() {
     // Voucher Payment Modal
     $('#voucher-payment-btn').on('click', function() {
         const checkedBoxes = $('.row-checkbox:checked');
-        
+
         if (checkedBoxes.length === 0) {
             alert('Please select at least one freight booking.');
             return;
         }
 
-        
+
 
         let tableBody = '';
         let totalAmount = 0;
@@ -511,11 +511,11 @@ $(document).ready(function() {
                     <td>${voucherNumber}</td>
                     <td class="text-end">₹${balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                     <td>
-                        <input type="number" class="form-control payment-amount allocated-input" 
-                               data-id="${checkbox.val()}" 
-                               value="${balance}" 
-                               min="0.01" 
-                               max="${balance}" 
+                        <input type="number" class="form-control payment-amount allocated-input"
+                               data-id="${checkbox.val()}"
+                               value="${balance}"
+                               min="0.01"
+                               max="${balance}"
                                step="0.01">
                         <div class="form-text">Amount must be greater than zero and not exceed balance</div>
                     </td>
@@ -546,7 +546,7 @@ $(document).ready(function() {
                         </select>
                     </div>
                 </div>
-                
+
                 <div class="table-responsive">
                     <table class="table table-sm">
                         <thead>
@@ -569,7 +569,7 @@ $(document).ready(function() {
                         </tfoot>
                     </table>
                 </div>
-                
+
                 <div class="mb-3">
                     <label class="form-label">Remarks</label>
                     <textarea name="remarks" id="paymentRemarks" class="form-control" rows="3"></textarea>
@@ -587,7 +587,7 @@ $(document).ready(function() {
     // Bulk Memo ID Modal
     $('#bulk-memo-id-btn').on('click', function() {
         const checkedBoxes = $('.row-checkbox:checked');
-        
+
         if (checkedBoxes.length === 0) {
             alert('Please select at least one freight booking.');
             return;
@@ -607,7 +607,7 @@ $(document).ready(function() {
 
             // Get LR ID from the freight booking (we'll need to add this data attribute)
             const lrId = checkbox.data('lr-id'); // We'll need to add this
-            
+
             if (lrId) {
                 lrIds.push(lrId);
             }
@@ -635,7 +635,7 @@ $(document).ready(function() {
                         <div class="form-text">This memo ID will be assigned to all selected lorry receipts</div>
                     </div>
                 </div>
-                
+
                 <div class="table-responsive">
                     <table class="table table-sm">
                         <thead>
@@ -651,7 +651,7 @@ $(document).ready(function() {
                         </tbody>
                     </table>
                 </div>
-                
+
                 <div class="alert alert-info">
                     <i class="bi bi-info-circle"></i>
                     <strong>Note:</strong> Assigning memo ID will:
@@ -738,7 +738,7 @@ function openVoucherPaymentModal() {
         padding: 0.35em 0.65em;
     }
     .badge.bg-warning { color: #000; }
-    
+
     /* Animation effects */
     .wavy-animation {
         animation: waveMove 2s ease-in-out infinite;
@@ -751,7 +751,7 @@ function openVoucherPaymentModal() {
         50%  { transform: translateY(-5px); }
         100% { transform: translateY(0); }
     }
-    
+
     /* Floating buttons */
     .floating-buttons button {
         display: block;
@@ -764,7 +764,7 @@ function openVoucherPaymentModal() {
         transform: translateY(-2px);
         box-shadow: 0 6px 20px rgba(0,0,0,0.3);
     }
-    
+
     /* Table links */
     .table-link {
         color: inherit !important;
@@ -774,7 +774,7 @@ function openVoucherPaymentModal() {
     .table-link:hover {
         text-decoration: underline !important;
     }
-    
+
     /* Improved card styling */
     .card {
         border: none;
@@ -782,38 +782,38 @@ function openVoucherPaymentModal() {
         box-shadow: 0 0 20px rgba(0,0,0,0.05);
         transition: all 0.3s ease;
     }
-    
+
     .card:hover {
         box-shadow: 0 5px 25px rgba(0,0,0,0.1);
     }
-    
+
     .card-header {
         background: linear-gradient(to right, #f8f9fa, #e9ecef);
         border-bottom: 1px solid #e9ecef;
         padding: 15px 20px;
         border-radius: 10px 10px 0 0 !important;
     }
-    
+
     .card-body {
         padding: 20px;
     }
-    
+
     /* Button styling */
     .btn-info, .btn-success, .btn-primary, .btn-warning {
         transition: all 0.2s ease;
     }
-    
+
     .btn-info:hover, .btn-success:hover, .btn-primary:hover, .btn-warning:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
-    
+
     /* Table improvements */
     .table {
         border-collapse: separate;
         border-spacing: 0;
     }
-    
+
     .table th {
         background-color: #f8f9fa;
         border-bottom: 2px solid #dee2e6;
@@ -822,7 +822,7 @@ function openVoucherPaymentModal() {
         font-size: 0.8rem;
         letter-spacing: 0.5px;
     }
-    
+
     /* Tooltip enhancement */
     [data-bs-toggle="tooltip"] {
         position: relative;
@@ -836,16 +836,16 @@ function openVoucherPaymentModal() {
 $(document).ready(function() {
     // Initialize tooltips
     $('[data-bs-toggle="tooltip"]').tooltip();
-    
+
     // Voucher Payment Modal
     $('#voucher-payment-btn').on('click', function() {
         const checkedBoxes = $('.row-checkbox:checked');
-        
+
         if (checkedBoxes.length === 0) {
             alert('Please select at least one freight booking.');
             return;
         }
-        
+
         // ✅ Collect transporter IDs from selected rows
     let transporterIds = [];
     checkedBoxes.each(function() {
@@ -857,12 +857,12 @@ $(document).ready(function() {
     if (uniqueTransporters.length > 1) {
         alert('You can only create a voucher for bookings from the same transporter.');
         $('#voucherPaymentModal').hide();
-     
+
         return;
     }
         // Clear previous data
         $('#voucherPaymentTableBody').empty();
-        
+
         let totalBalance = 0;
         checkedBoxes.each(function() {
             const checkbox = $(this);
@@ -870,35 +870,35 @@ $(document).ready(function() {
             const balance = parseFloat(checkbox.data('balance')) || 0;
             const freightBookingId = checkbox.data('freight-booking-id');
             const voucherNumber = checkbox.data('voucher_number') || '-';
-            
+
             totalBalance += balance;
-            
+
             const row = `
                 <tr>
                     <td>${lrNumber}</td>
                     <td>${voucherNumber}</td>
                     <td class="text-end">₹${balance.toFixed(2)}</td>
                     <td>
-                        <input type="number" class="form-control form-control-sm payment-amount" 
-                               name="payments[${freightBookingId}]" 
-                               min="0" max="${balance}" step="0.01" 
-                               value="${balance.toFixed(2)}" 
+                        <input type="number" class="form-control form-control-sm payment-amount"
+                               name="payments[${freightBookingId}]"
+                               min="0" max="${balance}" step="0.01"
+                               value="${balance.toFixed(2)}"
                                data-max="${balance}">
                     </td>
                 </tr>
             `;
             $('#voucherPaymentTableBody').append(row);
         });
-        
+
         $('#totalPaymentAmount').text('₹' + totalBalance.toLocaleString('en-IN', {minimumFractionDigits: 2}));
     });
-    
+
     // Payment amount validation
     $(document).on('input', '.payment-amount', function() {
         const input = $(this);
         const max = parseFloat(input.data('max'));
         const value = parseFloat(input.val()) || 0;
-        
+
         // Validate amount is greater than zero
         if (value <= 0) {
             input.addClass('is-invalid');
@@ -923,11 +923,11 @@ $(document).ready(function() {
             input.removeClass('is-invalid').addClass('is-valid');
             input.next('.invalid-feedback').remove();
         }
-        
+
         // Update total
         let total = 0;
         let hasError = false;
-        
+
         $('.payment-amount').each(function() {
             const inputVal = parseFloat($(this).val()) || 0;
             total += inputVal;
@@ -935,32 +935,32 @@ $(document).ready(function() {
                 hasError = true;
             }
         });
-        
+
         $('#totalPaymentAmount').text('₹' + total.toLocaleString('en-IN', {minimumFractionDigits: 2}));
-        
+
         // Enable/disable submit button based on validation
         const submitBtn = $('#voucherPaymentModal .btn-success');
         submitBtn.prop('disabled', hasError || total <= 0);
     });
-    
+
     // Handle bulk memo ID button
     $('#bulk-memo-id-btn').on('click', function() {
         const checkedBoxes = $('.row-checkbox:checked');
-        
+
         if (checkedBoxes.length === 0) {
             alert('Please select freight bookings first.');
             return;
         }
-        
+
         // Clear previous data
         $('#bulkMemoTableBody').empty();
-        
+
         checkedBoxes.each(function() {
             const checkbox = $(this);
             const lrNumber = checkbox.data('lr');
             const lrId = checkbox.data('lr-id');
             const freightBookingId = checkbox.data('freight-booking-id');
-            
+
             const row = `
                 <tr>
                     <td>
@@ -1020,21 +1020,21 @@ $(document).ready(function() {
 $(document).ready(function() {
     // Initialize tooltips
     $('[data-bs-toggle="tooltip"]').tooltip();
-    
+
     // DataTable initialization
     var table = $('#freightBookingsTable').DataTable({
-        paging: true,       
+        paging: true,
     info: true,
-    searching: true,
-    ordering: true,
+    searching: false,
+    ordering: false,
     responsive: true,
-    lengthChange: true,   // enable "Show X entries" dropdown
-    pageLength: 10,       // default
-    lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+    lengthChange: false,   // enable "Show X entries" dropdown
+    // pageLength: 10,       // default
+    // lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
     drawCallback: function() {
         updatePaymentButtonsVisibility();
-    }
-        processing: true,
+    },
+        // processing: true,
         serverSide: true,
         ajax: {
             url: '{{ route("freight_bookings.datatable") }}',
@@ -1069,14 +1069,21 @@ $(document).ready(function() {
                 width: '50px',
                 className: 'text-center align-middle'
             },
-            
+            {
+                data: 'fr_number',
+                name: 'fr_number',
+                className: 'align-middle'
+            },
             {
                 data: 'lr_number',
                 name: 'lr_number',
-                className: 'align-middle',
-                 
+                className: 'align-middle'
             },
-            
+            {
+                data: 'voucher_number',
+                name: 'voucher_number',
+                className: 'align-middle'
+            },
             {
                 data: 'source_city',
                 name: 'source_city',
@@ -1155,27 +1162,27 @@ $(document).ready(function() {
         //     updatePaymentButtonsVisibility();
         // }
     });
-    
+
     // Apply column search
     $('#filterrow th input.column-search').on('keyup change', function() {
         const index = $(this).closest('th').index();
         table.column(index).search(this.value).draw();
     });
-    
+
     // Select all checkbox handler
     $('#select-all').on('change', function() {
         const checked = this.checked;
         $('.row-checkbox').prop('checked', checked);
         updatePaymentButtonsVisibility();
     });
-    
+
     // Individual checkbox handler
     $(document).on('change', '.row-checkbox', function() {
         const allChecked = $('.row-checkbox:checked').length === $('.row-checkbox').length;
         $('#select-all').prop('checked', allChecked);
         updatePaymentButtonsVisibility();
     });
-    
+
     // Function to update payment buttons visibility
     // function updatePaymentButtonsVisibility() {
     //     const checkedCount = $('.row-checkbox:checked').length;
@@ -1187,37 +1194,37 @@ $(document).ready(function() {
     // }
     // function updatePaymentButtonsVisibility() {
     //     const checkedBoxes = $('.row-checkbox:checked');
-        
+
     //     if (checkedBoxes.length === 0) {
     //         // No selection - hide all buttons
     //         $('#bulk-memo-id-btn, #voucher-payment-btn').hide();
     //         return;
     //     }
-        
+
     //     if (checkedBoxes.length === 1) {
     //         // Single selection - show only voucher payment button
     //         $('#voucher-payment-btn').show();
     //         $('#bulk-memo-id-btn').hide();
     //         return;
     //     }
-        
+
     //     // Multiple selections - check if they have same truck and transporter
     //     let firstTruckId = null;
     //     let firstTransporterId = null;
     //     let allSameTruckAndTransporter = true;
     //     let hasAnyCancelled = false;
-        
+
     //     checkedBoxes.each(function() {
     //         const checkbox = $(this);
     //         const truckId = checkbox.data('truck-id');
     //         const transporterId = checkbox.data('transporter-id');
     //         const isCancelled = checkbox.data('is-cancelled') === '1';
-            
+
     //         // Check if any freight booking is cancelled
     //         if (isCancelled) {
     //             hasAnyCancelled = true;
     //         }
-            
+
     //         if (firstTruckId === null) {
     //             firstTruckId = truckId;
     //             firstTransporterId = transporterId;
@@ -1228,7 +1235,7 @@ $(document).ready(function() {
     //             }
     //         }
     //     });
-        
+
     //     // Show both buttons only if:
     //     // 1. All selections have same truck and transporter
     //     // 2. None of the freight bookings are cancelled
@@ -1242,7 +1249,7 @@ $(document).ready(function() {
     //     }
     //     }
     // }
-    
+
     // Delete confirmation
     $(document).on('click', '.delete-btn', function(e) {
         e.preventDefault();
@@ -1250,13 +1257,13 @@ $(document).ready(function() {
             $(this).closest('form').submit();
         }
     });
-    
+
     // Voucher payment button click handler
     $('#voucher-payment-btn').on('click', function(e) {
         e.preventDefault();
         handleVoucherPayment();
     });
-    
+
     // Bulk payment button click handler
     $('#bulk-payment-btn').on('click', function(e) {
         e.preventDefault();
@@ -1269,7 +1276,7 @@ $(document).ready(function() {
 function handleVoucherPayment() {
     const checkboxes = document.querySelectorAll('.row-checkbox:checked');
     const modalBody = document.getElementById('voucherPaymentBody');
-    
+
     modalBody.innerHTML = '';
 
     if (checkboxes.length === 0) {
@@ -1295,13 +1302,13 @@ function handleVoucherPayment() {
         alert(message);
         return;
     }
-    
+
     // Check if all selected bookings have zero balance
     const allZeroBalance = Array.from(checkboxes).every(cb => {
         const balance = parseFloat(cb.getAttribute('data-balance') || 0);
         return balance <= 0;
     });
-    
+
     if (allZeroBalance) {
         alert("All selected freight bookings have zero balance. No payment is required.");
         return;
@@ -1342,7 +1349,7 @@ function handleVoucherPayment() {
         // Get FB transporter and TDS info from first selected booking
         const firstFbTransporter = checkboxes[0].getAttribute('data-fb-transporter');
         const firstTdsPercentage = checkboxes[0].getAttribute('data-tds-percentage');
-        
+
         modalBody.innerHTML += `
             <div class="alert alert-primary mb-3">
                 <h6 class="mb-2"><i class="fas fa-truck"></i> Transporter Details</h6>
@@ -1379,7 +1386,7 @@ function handleVoucherPayment() {
                     </tr>
                 `;
             });
-            
+
             modalBody.innerHTML += `
                 <div class="alert alert-info mb-3">
                     <h6 class="mb-2"><i class="fas fa-history"></i> Previous Payments</h6>
@@ -1403,7 +1410,7 @@ function handleVoucherPayment() {
                 </div>
             `;
         }
-        
+
         // Continue with original layout - show payment form in original SweetAlert style
         const lrRows = lrData.map((item, index) => {
             const voucherNumber = checkboxes[index].getAttribute('data-voucher_number');
@@ -1416,15 +1423,15 @@ function handleVoucherPayment() {
                     <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${voucherNumber || 'N/A'}</td>
                     <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">₹${item.balance.toFixed(2)}</td>
                     <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">
-                        <input type="number" step="0.01" min="0" max="${item.balance}" 
-                               style="width: 80px; text-align: right; border: 1px solid #ccc; padding: 2px;" 
-                               class="allocated-input" data-lr="${item.lrNumber}" 
+                        <input type="number" step="0.01" min="0" max="${item.balance}"
+                               style="width: 80px; text-align: right; border: 1px solid #ccc; padding: 2px;"
+                               class="allocated-input" data-lr="${item.lrNumber}"
                                onchange="updateTotalPayment()" value="${item.balance.toFixed(2)}">
                     </td>
                 </tr>
             `;
         }).join('');
-        
+
         modalBody.innerHTML += `
             <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
                 <thead>
@@ -1441,19 +1448,19 @@ function handleVoucherPayment() {
                     ${lrRows}
                 </tbody>
             </table>
-            
+
             <div style="background-color: #e3f2fd; padding: 10px; margin: 10px 0; border-radius: 4px;">
                 <strong>TOTAL PAYMENT: ₹<span id="totalPaymentAmount">${lrData.reduce((sum, item) => sum + item.balance, 0).toFixed(2)}</span></strong>
             </div>
 
-           
+
             <div style="margin: 15px 0;">
                 <div style="display: flex; gap: 15px; margin-bottom: 15px;">
                     <div style="flex: 1;">
                         <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Type *</label>
                         <select id="paymentType" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
                             <option value="">Select Payment Type</option>
-                            ${paymentTypes.map(type => 
+                            ${paymentTypes.map(type =>
                                 `<option value="${type.id}">${type.name}</option>`
                             ).join('')}
                         </select>
@@ -1462,7 +1469,7 @@ function handleVoucherPayment() {
                         <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Mode *</label>
                         <select id="paymentMode" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
                             <option value="">Select Payment Mode</option>
-                            ${paymentModes.map(mode => 
+                            ${paymentModes.map(mode =>
                                 `<option value="${mode.id}">${mode.name}</option>`
                             ).join('')}
                         </select>
@@ -1477,7 +1484,7 @@ function handleVoucherPayment() {
     </select>
 </div>
                 </div>
-               
+
 <div style="display: flex; gap: 20px; margin-bottom: 15px;">
     <!-- Reference Transaction ID -->
     <div style="flex: 1;">
@@ -1497,7 +1504,7 @@ function handleVoucherPayment() {
                 </div>
             </div>
         `;
-        
+
         // Show the modal
         $('#voucherPaymentModal').modal('show');
     }).catch(error => {
@@ -1514,15 +1521,15 @@ function handleVoucherPayment() {
                     <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${voucherNumber || 'N/A'}</td>
                     <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">₹${item.balance.toFixed(2)}</td>
                     <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">
-                        <input type="number" step="0.01" min="0" max="${item.balance}" 
-                               style="width: 80px; text-align: right; border: 1px solid #ccc; padding: 2px;" 
-                               class="allocated-input" data-lr="${item.lrNumber}" 
+                        <input type="number" step="0.01" min="0" max="${item.balance}"
+                               style="width: 80px; text-align: right; border: 1px solid #ccc; padding: 2px;"
+                               class="allocated-input" data-lr="${item.lrNumber}"
                                onchange="updateTotalPayment()" value="${item.balance.toFixed(2)}">
                     </td>
                 </tr>
             `;
         }).join('');
-        
+
         modalBody.innerHTML += `
             <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
                 <thead>
@@ -1539,18 +1546,18 @@ function handleVoucherPayment() {
                     ${lrRows}
                 </tbody>
             </table>
-            
+
             <div style="background-color: #e3f2fd; padding: 10px; margin: 10px 0; border-radius: 4px;">
                 <strong>TOTAL PAYMENT: ₹<span id="totalPaymentAmount">${lrData.reduce((sum, item) => sum + item.balance, 0).toFixed(2)}</span></strong>
             </div>
-            
+
             <div style="margin: 15px 0;">
                 <div style="display: flex; gap: 15px; margin-bottom: 15px;">
                     <div style="flex: 1;">
                         <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Type *</label>
                         <select id="paymentType" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
                             <option value="">Select Payment Type</option>
-                            ${paymentTypes.map(type => 
+                            ${paymentTypes.map(type =>
                                 `<option value="${type.id}">${type.name}</option>`
                             ).join('')}
                         </select>
@@ -1559,7 +1566,7 @@ function handleVoucherPayment() {
                         <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Mode *</label>
                         <select id="paymentMode" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
                             <option value="">Select Payment Mode</option>
-                            ${paymentModes.map(mode => 
+                            ${paymentModes.map(mode =>
                                 `<option value="${mode.id}">${mode.name}</option>`
                             ).join('')}
                         </select>
@@ -1575,7 +1582,7 @@ function handleVoucherPayment() {
                 </div>
             </div>
         `;
-        
+
         // Show the modal
         updatePaymentButtonsVisibility();
         $('#voucherPaymentModal').modal('show');
@@ -1589,10 +1596,10 @@ function handleIndividualVoucherPayment(button) {
     const voucherNumber = button.data('voucher_number');
     const balance = parseFloat(button.data('balance'));
     const truckNumber = button.data('truck');
-    
+
     const modalBody = document.getElementById('individualPaymentBody');
     modalBody.innerHTML = '';
-    
+
     // Show freight booking details
     modalBody.innerHTML = `
         <div class="lr-details-section">
@@ -1622,7 +1629,7 @@ function handleIndividualVoucherPayment(button) {
                 </div>
             </div>
         </div>
-        
+
         <div class="lr-details-section mt-3">
             <h5>Payment Details</h5>
             <div class="lr-details-content">
@@ -1678,10 +1685,10 @@ function handleIndividualVoucherPayment(button) {
             </div>
         </div>
     `;
-    
+
     // Store freight booking ID for submission
     $('#individualPaymentModal').data('freight-booking-id', freightBookingId);
-    
+
     // Show the modal
     $('#individualPaymentModal').modal('show');
 }
@@ -1691,7 +1698,7 @@ $('#submitIndividualPayment').on('click', function() {
     const freightBookingId = $('#individualPaymentModal').data('freight-booking-id');
     const submitBtn = this;
     const originalBtnText = submitBtn.innerHTML;
-    
+
     // Validate form
     const paymentType = document.getElementById('individual_payment_type').value;
     const paymentMode = document.getElementById('individual_payment_mode').value;
@@ -1699,30 +1706,30 @@ $('#submitIndividualPayment').on('click', function() {
     const totalAmount = totalAmountInput.value;
     const maxAmount = parseFloat(totalAmountInput.getAttribute('max')) || 0;
     const amountValue = parseFloat(totalAmount) || 0;
-    
+
     if (!paymentType || !paymentMode) {
         alert('Please fill in all required fields.');
         return;
     }
-    
+
     // Validate amount is greater than zero
     if (amountValue <= 0) {
         alert('Payment amount must be greater than zero.');
         totalAmountInput.focus();
         return;
     }
-    
+
     // Validate amount doesn't exceed balance
     if (amountValue > maxAmount) {
         alert(`Payment amount (₹${amountValue.toFixed(2)}) cannot exceed the balance amount (₹${maxAmount.toFixed(2)}).`);
         totalAmountInput.focus();
         return;
     }
-    
+
     // Show loading state
     submitBtn.innerHTML = '<i class="spinner-border spinner-border-sm me-2"></i>Processing...';
     submitBtn.disabled = true;
-    
+
     // Prepare payment data
     const paymentData = {
         freight_booking_ids: [freightBookingId],
@@ -1736,7 +1743,7 @@ $('#submitIndividualPayment').on('click', function() {
         },
         _token: '{{ csrf_token() }}'
     };
-    
+
     // Submit payment
     fetch('{{ route("voucher_payments.store") }}', {
         method: 'POST',
@@ -1803,11 +1810,11 @@ function updateTotalPayment() {
     const allocatedInputs = document.querySelectorAll('.allocated-input');
     let total = 0;
     let hasError = false;
-    
+
     allocatedInputs.forEach(input => {
         const value = parseFloat(input.value) || 0;
         const maxValue = parseFloat(input.getAttribute('max')) || 0;
-        
+
         // Validate amount is greater than zero
         if (value <= 0) {
             input.classList.add('is-invalid');
@@ -1842,21 +1849,21 @@ function updateTotalPayment() {
                 input.nextElementSibling.textContent = '';
             }
         }
-        
+
         total += value;
     });
-    
+
     const totalElement = document.getElementById('totalPaymentAmount');
     if (totalElement) {
         totalElement.textContent = total.toFixed(2);
     }
-    
+
     // Disable/enable submit button based on validation
     const submitBtn = document.querySelector('#voucherPaymentModal .btn-success');
     if (submitBtn) {
         submitBtn.disabled = hasError || total <= 0;
     }
-    
+
     return !hasError;
 }
 
@@ -1869,74 +1876,74 @@ function submitVoucherPayment() {
     const referenceId = document.getElementById('referenceId')?.value;
     const paymentDate = document.getElementById('paymentDate')?.value;
     const remarks = document.getElementById('paymentRemarks')?.value;
-    
+
     // Get the selected values
     const paymentTypeValue = paymentTypeSelect?.value || '';
     const paymentModeValue = paymentModeSelect?.value || '';
-    
+
     // Validate required fields
     if (!paymentTypeValue) {
         alert('Please select a payment type');
         paymentTypeSelect.focus();
         return;
     }
-    
+
     if (!paymentModeValue) {
         alert('Please select a payment mode');
         paymentModeSelect.focus();
         return;
     }
-    
+
     // Get the text values for display purposes
     const paymentType = paymentTypeSelect?.options[paymentTypeSelect.selectedIndex]?.text || '';
     const paymentMode = paymentModeSelect?.options[paymentModeSelect.selectedIndex]?.text || '';
-    
+
     // Get selected freight booking IDs
     const selectedIds = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value);
-    
+
     // Get allocated amounts
     const allocatedInputs = document.querySelectorAll('.allocated-input');
-    
+
     // Validate all payment amounts
     let hasValidationError = false;
     const paymentAmounts = [];
-    
+
     allocatedInputs.forEach(input => {
         const amount = parseFloat(input.value) || 0;
         const maxAmount = parseFloat(input.getAttribute('max')) || 0;
         const lrNumber = input.getAttribute('data-lr') || 'Unknown';
-        
+
         if (amount <= 0) {
             alert(`Error: Payment amount for LR ${lrNumber} must be greater than zero.`);
             input.focus();
             hasValidationError = true;
             return;
         }
-        
+
         if (amount > maxAmount) {
             alert(`Error: Payment amount for LR ${lrNumber} (₹${amount.toFixed(2)}) exceeds the balance amount (₹${maxAmount.toFixed(2)}).`);
             input.focus();
             hasValidationError = true;
             return;
         }
-        
+
         paymentAmounts.push(amount);
     });
-    
+
     if (hasValidationError) {
         return;
     }
-    
+
     // Calculate total amount
     const totalAmount = paymentAmounts.reduce((sum, amount) => sum + amount, 0);
-    
 
-    
+
+
     if (totalAmount <= 0) {
         alert('Please enter valid payment amounts');
         return;
     }
-    
+
     // Create form data
     const formData = new FormData();
 //     if (pumpId) {
@@ -1950,29 +1957,29 @@ formData.append('pump_id', pumpId || '');
     // Also append text values for display if needed
     formData.append('payment_type', paymentType);
     formData.append('payment_mode', paymentMode);
-  
+
     formData.append('total_amount', totalAmount.toFixed(2));
     // formData.append('payment_date', new Date().toISOString().split('T')[0]);
     formData.append('date', paymentDate);
-    
+
     if (referenceId) formData.append('reference_number', referenceId);
     if (remarks) formData.append('notes', remarks);
-    
+
     // Add booking IDs and payment amounts
     selectedIds.forEach((id, index) => {
         formData.append('booking_ids[]', id);
         formData.append('payment_amounts[]', paymentAmounts[index] || 0);
     });
-    
+
     // Add CSRF token
     formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
-    
+
     // Show loading state
     const submitBtn = document.querySelector('#voucherPaymentModal .btn-success');
     const originalBtnText = submitBtn.innerHTML;
     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
     submitBtn.disabled = true;
-    
+
     // Submit the form via AJAX
     fetch('{{ route("freight_bookings.voucher_payment") }}', {
         method: 'POST',
@@ -1989,11 +1996,11 @@ formData.append('pump_id', pumpId || '');
     })
     .then(data => {
         // Hide modal
-        
+
 
         $('#voucherPaymentModal').modal('hide');
-        
-        
+
+
         if (data.success) {
             alert(data.message || 'Payment processed successfully!');
             // Refresh the page or table
@@ -2019,7 +2026,7 @@ formData.append('pump_id', pumpId || '');
             const paymentModeDropdown = e.target;
             const selectedText = paymentModeDropdown.options[paymentModeDropdown.selectedIndex].text.toLowerCase();
             const pumpNameContainer = document.getElementById("pumpNameContainer");
-    
+
             if (selectedText.includes("fuel")) {
                 pumpNameContainer.style.display = "block";
             } else {
