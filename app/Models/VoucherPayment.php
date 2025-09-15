@@ -23,7 +23,8 @@ class VoucherPayment extends Model
         'company_id',
         'pump_id',
         'reference_transaction_id',
-        'date'
+        'date',
+        'linked_voucher_id',
     ];
 
     public function voucher()
@@ -46,11 +47,16 @@ class VoucherPayment extends Model
         return $this->belongsTo(Pump::class);
     }
 
+    public function voucher_linked()
+    {
+        return $this->belongsTo(VoucherLinked::class);
+    }
+
     /**
      * Valid payment statuses
      */
     public static $validStatuses = ['pending', 'in progress', 'paid'];
-    
+
     public function getPaymentStatusBadge()
     {
         switch ($this->payment_status) {
@@ -64,7 +70,7 @@ class VoucherPayment extends Model
                 return '<span class="badge bg-secondary">Unknown</span>';
         }
     }
-    
+
     /**
      * Get the transporter associated with this voucher payment through freight booking
      */
@@ -72,7 +78,7 @@ class VoucherPayment extends Model
     {
         return $this->belongsTo(Transporter::class, 'transporter_id');
     }
-    
+
     /**
      * Get the transporter badge based on is_owner status
      */
@@ -81,10 +87,10 @@ class VoucherPayment extends Model
         if (!$this->freight_booking || !$this->freight_booking->transporter) {
             return '<span class="text-muted">-</span>';
         }
-        
+
         $transporter = $this->freight_booking->transporter;
         $name = $transporter->name;
-        
+
         if ($transporter->is_owner) {
             return '<span class="badge bg-success"><i class="bi bi-truck"></i> ' . e($name) . '</span>';
         } else {

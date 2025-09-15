@@ -151,6 +151,7 @@ Route::middleware(['auth'])->group(function () {
 
 
     // Freight Bookings
+    Route::post('/freight_bookings/store_combined_payment', [FreightBookingController::class, 'storeCombinedPayment'])->name('freight_bookings.store_combined_payment');
     Route::get('/freight_bookings/data', [FreightBookingController::class, 'getFreightBookingsData'])->name('freight_bookings.datatable');
     Route::post('/freight_bookings/confirm', [FreightBookingController::class, 'confirm'])->name('freight_bookings.confirm');
     Route::resource('freight_bookings', FreightBookingController::class);
