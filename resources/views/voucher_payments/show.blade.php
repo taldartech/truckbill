@@ -12,7 +12,7 @@
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
-    
+
     @if(session('error'))
         <div class="alert alert-danger">{{ session('error') }}</div>
     @endif
@@ -50,7 +50,7 @@
                         </tr>
                     </table>
                 </div>
-                
+
                 <!-- Shipment & Financial Information -->
                 <div class="col-md-6">
                     <h6 class="border-bottom pb-2">Shipment & Financial Details</h6>
@@ -98,7 +98,7 @@
                     </table>
                 </div>
             </div>
-            
+
             <!-- Financial Information Section -->
             <div class="mt-3">
                 <h6 class="border-bottom pb-2">Financial Breakdown</h6>
@@ -162,20 +162,20 @@
                             <td>{{ ucfirst(str_replace('_', ' ', $payment->payment_mode)) }}</td>
                             <td class="text-success fw-bold">₹{{ number_format($payment->amount, 2) }}</td>
                             <td>{!! $payment->getPaymentStatusBadge() !!}</td>
-                            <td>{{ $payment->remark ?? '-' }}</td>
+                            <td>{!! $payment->remark ?? '-' !!}</td>
                             @if(auth()->check() && auth()->user()->userRole->name === 'admin')
                             <td>
                                 <div class="d-flex gap-1">
-                                    <a href="{{ route('voucher_payments.edit', $payment) }}?lorry_receipt_id={{ $payment->freight_booking ? $payment->freight_booking->lr_id : '' }}&freight_booking_id={{ $payment->freight_booking_id }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip" 
-                            data-bs-placement="top" 
+                                    <a href="{{ route('voucher_payments.edit', $payment) }}?lorry_receipt_id={{ $payment->freight_booking ? $payment->freight_booking->lr_id : '' }}&freight_booking_id={{ $payment->freight_booking_id }}" class="btn btn-sm btn-info" data-bs-toggle="tooltip"
+                            data-bs-placement="top"
                             title="Edit Payment">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                     <form action="{{ route('voucher_payments.destroy', $payment) }}" method="POST" style="display:inline-block;">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger" data-bs-toggle="tooltip" 
-                            data-bs-placement="top" 
+                                        <button type="submit" class="btn btn-sm btn-danger" data-bs-toggle="tooltip"
+                            data-bs-placement="top"
                             title="Delete Payment" onclick="return confirm('Are you sure you want to delete this payment?')">
                                             <i class="bi bi-trash"></i>
                                         </button>

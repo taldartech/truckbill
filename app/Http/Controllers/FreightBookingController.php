@@ -610,6 +610,14 @@ class FreightBookingController extends Controller
       'notes' => 'nullable|string|max:1000',
     ]);
 
+    $lr_ids = FreightBooking::whereIn('id', $request->input('booking_ids'))
+      ->pluck('lr_id')
+      ->toArray();
+    $lrs = LorryReceipt::whereIn('id', $lr_ids)->get()->select('lr_number')->toArray();
+    $lrs = array_map(function ($item) {
+      return $item['lr_number'];
+    }, $lrs);
+
     $data = [];
     $data['pump_id'] = $request->input('pump_id');
     $data['payment_type_id'] = $request->input('payment_type');
@@ -621,7 +629,8 @@ class FreightBookingController extends Controller
     $data['booking_ids'] = $request->input('booking_ids');
     $data['payment_amounts'] = $request->input('payment_amounts');
     $data['reference_number'] = $request->input('reference_number');
-    $data['notes'] = $request->input('notes');
+    $data['notes'] = $request->input('notes')  . "<br>Combined Payment: " . ($request->input('combined_amount'))
+      . ". [LR IDs: " . implode(', ', $lrs) . "], Date: " . $data['date'];
     if (strtolower($data['payment_mode']) === 'cash' || strtolower($data['payment_mode']) === 'adjust in advance') {
       $paymentStatus = 'in-progress';
     } else if (

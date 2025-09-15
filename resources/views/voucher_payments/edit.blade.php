@@ -85,7 +85,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Freight Booking Information Section -->
         @if($freightBooking)
         <h6 class="border-bottom pb-2 mb-3 mt-4">Freight Booking Details</h6>
@@ -166,7 +166,7 @@
         @csrf
         @method('PUT')
         <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
-        
+
         @if(isset($freight_booking_id))
             <input type="hidden" name="freight_booking_id" value="{{ $freight_booking_id }}">
         @endif
@@ -177,18 +177,18 @@
                 <!--begin::Col-->
                 <div class="col-md-4 mb-3">
                     <label for="voucher_number" class="form-label">Voucher *</label>
-                    <input type="text" 
-                           name="voucher_number" 
-                           id="voucher_number" 
-                           class="form-control" 
+                    <input type="text"
+                           name="voucher_number"
+                           id="voucher_number"
+                           class="form-control"
                            value="{{ $voucher_payment->voucher_number }}"
-                           readonly 
+                           readonly
                            required>
                     @error('voucher_number') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please enter a voucher number.</div>
                 </div>
                 <!--end::Col-->
-               
+
                 <!--begin::Col-->
                 <div class="col-md-4 mb-3">
                     <label for="payment_type_id" class="form-label">Payment Type *</label>
@@ -244,13 +244,13 @@
                 <!--begin::Col-->
                 <div class="col-md-6 mb-3">
                     <label for="remark" class="form-label">Remark</label>
-                    <textarea name="remark" id="remark" class="form-control" rows="3">{{ old('remark', $voucher_payment->remark) }}</textarea>
+                    <textarea name="remark" id="remark" class="form-control" rows="3">{{ old('remark', str_replace('<br>', "\n", $voucher_payment->remark)) }}</textarea>
                     @error('remark') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
                 <!--end::Col-->
                 <!--begin::Col-->
                 <!-- Hidden payment_status for operators -->
-               
+
                 @php
     $isAdmin = auth()->user()->userRole && auth()->user()->userRole->name === 'admin';
 @endphp
@@ -302,7 +302,7 @@
             </div>
             <!--end::Row-->
         </div>
-      
+
         <!--begin::Footer-->
         <div class="card-footer d-flex justify-content-between">
             <div>
@@ -330,28 +330,28 @@
         const paymentTypeInput = document.getElementById('payment_type');
         const pumpDropdownContainer = document.getElementById('pumpDropdownContainer');
         const pumpSelect = document.getElementById('pump_id');
-    
+
         // Update hidden input with text value when select changes
         paymentModeIdSelect.addEventListener('change', function() {
             const selectedOption = this.options[this.selectedIndex];
             paymentModeInput.value = selectedOption.text;
             togglePumpDropdown();
         });
-        
+
         paymentTypeIdSelect.addEventListener('change', function() {
             const selectedOption = this.options[this.selectedIndex];
             paymentTypeInput.value = selectedOption.text;
         });
-        
+
         // Set initial values
         if (paymentModeIdSelect.selectedIndex > 0) {
             paymentModeInput.value = paymentModeIdSelect.options[paymentModeIdSelect.selectedIndex].text;
         }
-        
+
         if (paymentTypeIdSelect.selectedIndex > 0) {
             paymentTypeInput.value = paymentTypeIdSelect.options[paymentTypeIdSelect.selectedIndex].text;
         }
-    
+
         function togglePumpDropdown() {
             const selectedText = paymentModeIdSelect.options[paymentModeIdSelect.selectedIndex]?.text.toLowerCase() || '';
             if (selectedText === 'fuel') {
@@ -361,12 +361,12 @@
                 pumpSelect.value = ''; // Reset pump selection
             }
         }
-    
+
         // Run on page load (for edit forms or validation errors)
         togglePumpDropdown();
     });
     </script>
-    
+
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
