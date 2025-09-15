@@ -399,11 +399,11 @@ class VoucherPaymentController extends Controller
       // Validate that advance amount won't exceed TR amount or go below 0
       $newAdvanceAmount = $freightBooking->advance_amount + $amountDifference;
 
-      if ($newAdvanceAmount > $freightBooking->tr_amount) {
+      if ($newAdvanceAmount > ($freightBooking->tr_amount - $freightBooking->tds_amount)) {
         return redirect()->back()
           ->withInput()
           ->with('error', 'Advance amount cannot exceed TR amount. Maximum allowed: ₹' .
-            number_format($freightBooking->tr_amount - ($freightBooking->advance_amount - $voucher_payment->amount), 2));
+            number_format(($freightBooking->tr_amount - $freightBooking->tds_amount) - ($freightBooking->advance_amount - $voucher_payment->amount), 2));
       }
 
       if ($newAdvanceAmount < 0) {
@@ -416,7 +416,7 @@ class VoucherPaymentController extends Controller
       $freightBooking->advance_amount = $newAdvanceAmount;
 
       // Recalculate balance_amount
-      $freightBooking->balance_amount = $freightBooking->tr_amount - $freightBooking->advance_amount;
+      $freightBooking->balance_amount = ($freightBooking->tr_amount - $freightBooking->tds_amount) - $freightBooking->advance_amount;
 
       // Save the freight booking
       $freightBooking->save();
