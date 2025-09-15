@@ -871,6 +871,9 @@
             // Handle submit of Combined Payment via AJAX
             $(document).off('submit', '#combinedPaymentForm').on('submit', '#combinedPaymentForm', function(e) {
                 e.preventDefault();
+                if (!confirm("Please review all payment details carefully before proceeding.\nOnce the voucher status is marked as PAID, it cannot be edited or changed.\nEnsure the information is correct before saving.")) {
+                    return;
+                }
                 const form = this;
                 const url = $(form).attr('action');
                 const formData = new FormData(form);
@@ -2322,6 +2325,10 @@
                 return;
             }
 
+            if (!confirm("Please review all payment details carefully before proceeding.\nOnce the voucher status is marked as PAID, it cannot be edited or changed.\nEnsure the information is correct before saving.")) {
+                return;
+            }
+
             // Create form data
             const formData = new FormData();
             //     if (pumpId) {
@@ -2358,6 +2365,8 @@
             submitBtn.innerHTML =
                 '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
             submitBtn.disabled = true;
+
+
 
             // Submit the form via AJAX
             fetch('{{ route('freight_bookings.voucher_payment') }}', {

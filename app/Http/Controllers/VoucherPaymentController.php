@@ -15,6 +15,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\VoucherPaymentsExport;
+use App\Models\VoucherLinked;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class VoucherPaymentController extends Controller
@@ -369,6 +370,10 @@ class VoucherPaymentController extends Controller
 
   public function update(Request $request, VoucherPayment $voucher_payment)
   {
+    if ($voucher_payment->payment_status === 'paid') {
+      return redirect()->back()
+        ->with('error', 'Paid payments cannot be edited.');
+    }
     $data = $request->validate([
       'freight_booking_id' => 'required|exists:freight_bookings,id',
       'voucher_number' => 'required|string',
@@ -398,12 +403,13 @@ class VoucherPaymentController extends Controller
     if ($amountDifference != 0) {
       // Validate that advance amount won't exceed TR amount or go below 0
       $newAdvanceAmount = $freightBooking->advance_amount + $amountDifference;
+      $tds_amount = $freightBooking->tds_amount ?? 0;
 
-      if ($newAdvanceAmount > ($freightBooking->tr_amount - $freightBooking->tds_amount)) {
+      if ($newAdvanceAmount > ($freightBooking->tr_amount - $tds_amount)) {
         return redirect()->back()
           ->withInput()
           ->with('error', 'Advance amount cannot exceed TR amount. Maximum allowed: ₹' .
-            number_format(($freightBooking->tr_amount - $freightBooking->tds_amount) - ($freightBooking->advance_amount - $voucher_payment->amount), 2));
+            number_format(($freightBooking->tr_amount - $tds_amount) - ($freightBooking->advance_amount - $voucher_payment->amount), 2));
       }
 
       if ($newAdvanceAmount < 0) {
@@ -416,7 +422,7 @@ class VoucherPaymentController extends Controller
       $freightBooking->advance_amount = $newAdvanceAmount;
 
       // Recalculate balance_amount
-      $freightBooking->balance_amount = ($freightBooking->tr_amount - $freightBooking->tds_amount) - $freightBooking->advance_amount;
+      $freightBooking->balance_amount = ($freightBooking->tr_amount - $tds_amount) - $freightBooking->advance_amount;
 
       // Save the freight booking
       $freightBooking->save();
@@ -431,6 +437,13 @@ class VoucherPaymentController extends Controller
       $request->filled('reference_transaction_id')
     ) {
       $data['payment_status'] = 'paid';
+    }
+
+    if ($voucher_payment->linked_voucher_id != null) {
+      $linked_voucher = VoucherLinked::find($voucher_payment->linked_voucher_id);
+      $linked_voucher->update([
+        'amount' => $linked_voucher->amount + ($data['amount'] - $voucher_payment->amount)
+      ]);
     }
 
     $voucher_payment->update($data);
@@ -773,6 +786,10 @@ class VoucherPaymentController extends Controller
    */
   public function destroy(VoucherPayment $voucher_payment)
   {
+    if ($voucher_payment->payment_status === 'paid') {
+      return redirect()->back()
+        ->with('error', 'Paid payments cannot be deleted.');
+    }
     try {
       // Get the freight booking and voucher number before deletion
       $freightBooking = $voucher_payment->freight_booking;

@@ -629,7 +629,7 @@ class FreightBookingController extends Controller
     $data['booking_ids'] = $request->input('booking_ids');
     $data['payment_amounts'] = $request->input('payment_amounts');
     $data['reference_number'] = $request->input('reference_number');
-    $data['notes'] = $request->input('notes')  . "<br>Combined Payment: " . ($request->input('combined_amount'))
+    $data['notes'] = $request->input('notes')  . "   Combined Payment: " . ($request->input('combined_amount'))
       . ". [LR IDs: " . implode(', ', $lrs) . "], Date: " . $data['date'];
     if (strtolower($data['payment_mode']) === 'cash' || strtolower($data['payment_mode']) === 'adjust in advance') {
       $paymentStatus = 'in-progress';
