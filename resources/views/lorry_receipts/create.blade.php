@@ -180,7 +180,7 @@
                         </div>
                         <div class="col-md-4">
                             <label for="transporter_id" id="transporterLabel" class="form-label">Transporter *</label>
-                            <select class="form-select" id="transporter_id" name="transporter_id" required>
+                            <select class="form-select" id="transporter_id" name="transporter_id" required onchange="showTdsPercentage(this.value)">
                                 <option value="">Select Transporter</option>
                                 {{-- This will be filled via JavaScript --}}
                             </select>
@@ -750,36 +750,6 @@
                         transporterSelect.style.backgroundColor = '';
                         transporterSelect.title = '';
                     });
-            }
-
-            // Function to show TDS percentage for a transporter
-            function showTdsPercentage(transporterId) {
-                const tdsDisplay = document.getElementById('tdsRateDisplay');
-                const tdsValue = document.getElementById('tdsPercentageValue');
-
-                if (transporterId) {
-                    // Show loading state
-                    tdsDisplay.style.display = 'block';
-                    tdsValue.textContent = 'Loading...';
-
-                    // Fetch transporter details to get TDS percentage
-                    fetch(`/api/transporters/${transporterId}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.tds_percentage !== null && data.tds_percentage !== undefined) {
-                                tdsValue.textContent = `${parseFloat(data.tds_percentage).toFixed(2)}%`;
-                            } else {
-                                tdsValue.textContent = 'Not Set';
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error fetching transporter TDS percentage:', error);
-                            tdsValue.textContent = 'Error';
-                        });
-                } else {
-                    // Hide TDS display when no transporter selected
-                    tdsDisplay.style.display = 'none';
-                }
             }
 
             // Handle transporter selection to show TDS percentage
@@ -1438,5 +1408,34 @@
                     errorBox.innerHTML = '⚠️ Error: ' + error.message;
                 });
         });
+        // Function to show TDS percentage for a transporter
+        function showTdsPercentage(transporterId) {
+            const tdsDisplay = document.getElementById('tdsRateDisplay');
+            const tdsValue = document.getElementById('tdsPercentageValue');
+
+            if (transporterId) {
+                // Show loading state
+                tdsDisplay.style.display = 'block';
+                tdsValue.textContent = 'Loading...';
+
+                // Fetch transporter details to get TDS percentage
+                fetch(`/api/transporters/${transporterId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.tds_percentage !== null && data.tds_percentage !== undefined) {
+                            tdsValue.textContent = `${parseFloat(data.tds_percentage).toFixed(2)}%`;
+                        } else {
+                            tdsValue.textContent = 'Not Set';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching transporter TDS percentage:', error);
+                        tdsValue.textContent = 'Error';
+                    });
+            } else {
+                // Hide TDS display when no transporter selected
+                tdsDisplay.style.display = 'none';
+            }
+        }
     </script>
 @endsection

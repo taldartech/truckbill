@@ -118,8 +118,7 @@
                         </div>
                         <div class="col-md-4">
                             <label for="truck_id" class="form-label">Truck *</label>
-                            <select class="form-select" id="truck_id" name="truck_id" required
-                               >
+                            <select class="form-select" id="truck_id" name="truck_id" required>
                                 <option value="">Select Trucks</option>
                                 @foreach ($trucks as $truck)
                                     <option value="{{ $truck->id }}"
@@ -153,7 +152,8 @@
 
                         <div class="col-md-4">
                             <label for="transporter_id" id="transporterLabel" class="form-label">Transporter *</label>
-                            <select class="form-select" id="transporter_id" name="transporter_id" required>
+                            <select class="form-select" id="transporter_id" name="transporter_id" required
+                                onchange="showTdsPercentage(this.value)">
                                 <option value="">Select Transporter</option>
                                 {{-- This will be filled via JavaScript --}}
                             </select>
@@ -169,8 +169,7 @@
                         </div>
                         <div class="col-md-4">
                             <label for="reference_by" class="form-label">Reference By</label>
-                            <select class="form-select" id="reference_by" name="reference_by"
-                               >
+                            <select class="form-select" id="reference_by" name="reference_by">
                                 <option value="">Select Reference</option>
                                 @foreach ($agencies as $agency)
                                     <option value="{{ $agency->id }}"
@@ -201,117 +200,118 @@
                             </div>
                             <input type="hidden" class="lane-input" value="Road">
                             <div class="card mb-4 p-3 bg-light">
-                            <div class="row mb-3">
-                                <div class="col-md-3">
-                                    <label class="form-label">LR Number *</label>
-                                    <input type="text" class="form-control lr-number-input" required
-                                        placeholder="Unique LR Number">
-                                    <div class="invalid-feedback">Please enter a unique LR number.</div>
-                                    <div class="lr-number-feedback mt-1"></div>
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">Customer *</label>
-                                    <select class="form-select select2 customer-select" required>
-                                        <option value="">Select Customer</option>
-                                        @foreach ($consignees as $consignee)
-                                            <option value="{{ $consignee->id }}">{{ $consignee->name }}</option>
-                                        @endforeach
-                                    </select>
-                                    <div class="invalid-feedback">Please select a customer.</div>
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">Consignor *</label>
-                                    <select class="form-select select2 consignor-select" required>
-                                        <option value="">Select Consignor</option>
-                                        @foreach ($consignees as $consignee)
-                                            <option value="{{ $consignee->id }}">{{ $consignee->name }}</option>
-                                        @endforeach
-                                    </select>
-                                    <small class="form-text text-muted d-block consignor-contact-text"></small>
-                                    <small class="form-text text-muted d-block consignor-city-text"></small>
-                                    <small class="form-text text-muted d-block consignor-state-text"></small>
-                                    <div class="invalid-feedback">Please select a consignor.</div>
-                                </div>
-                                <div class="col-md-3" style="display: none;">
-                                    <label class="form-label" >Consignor Contact</label>
-                                    <input type="text" class="form-control consignor-contact" readonly>
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">Consignee *</label>
-                                    <select class="form-select select2 consignee-select" required>
-                                        <option value="">Select Consignee</option>
-                                        @foreach ($consignees as $consignee)
-                                            <option value="{{ $consignee->id }}">{{ $consignee->name }}</option>
-                                        @endforeach
-                                    </select>
-                                    <small class="form-text text-muted d-block consignee-contact-text"></small>
-                                    <small class="form-text text-muted d-block consignee-city-text"></small>
-                                    <small class="form-text text-muted d-block consignee-state-text"></small>
-                                    <div class="invalid-feedback">Please select a consignee.</div>
-                                </div>
-                                <div class="col-md-3" style="display: none;">
-                                    <label class="form-label" >Consignee Contact</label>
-                                    <input type="text" class="form-control consignee-contact" readonly>
-                                </div>
-                            </div>
-                            <div class="row mb-3">
-
-                                <input type="hidden" class="form-control source-city" readonly>
-                                <input type="hidden" class="form-control source-state" readonly>
-                               
-                            </div>
-                            <div class="row mb-3">
-                                <input type="hidden" class="form-control destination-city" readonly>
-                                <input type="hidden" class="form-control destination-state" readonly>
-                               
-                            </div>
-                            </div>
-                            <div class="card mb-4 p-3 bg-light">
-                            <div class="row mb-3">
-                                <div class="col-md-2 ">
-                                    <label class="form-label">Goods Type *</label>
-                                    <div class="input-group flex-nowrap">
-                                        <select class="form-select select2 goods-type" required>
-                                            <option value="">Select Goods Type</option>
-                                            @foreach ($goodsTypes as $goodsType)
-                                                <option value="{{ $goodsType->name }}">{{ $goodsType->name }}</option>
+                                <div class="row mb-3">
+                                    <div class="col-md-3">
+                                        <label class="form-label">LR Number *</label>
+                                        <input type="text" class="form-control lr-number-input" required
+                                            placeholder="Unique LR Number">
+                                        <div class="invalid-feedback">Please enter a unique LR number.</div>
+                                        <div class="lr-number-feedback mt-1"></div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Customer *</label>
+                                        <select class="form-select select2 customer-select" required>
+                                            <option value="">Select Customer</option>
+                                            @foreach ($consignees as $consignee)
+                                                <option value="{{ $consignee->id }}">{{ $consignee->name }}</option>
                                             @endforeach
                                         </select>
-                                        <button type="button" class="btn btn-outline-primary"
-                                            onclick="displayGoodAdd(this)" title="Add New Goods Type">
-                                            <i class="bi bi-plus"></i>
-                                        </button>
+                                        <div class="invalid-feedback">Please select a customer.</div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Consignor *</label>
+                                        <select class="form-select select2 consignor-select" required>
+                                            <option value="">Select Consignor</option>
+                                            @foreach ($consignees as $consignee)
+                                                <option value="{{ $consignee->id }}">{{ $consignee->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        <small class="form-text text-muted d-block consignor-contact-text"></small>
+                                        <small class="form-text text-muted d-block consignor-city-text"></small>
+                                        <small class="form-text text-muted d-block consignor-state-text"></small>
+                                        <div class="invalid-feedback">Please select a consignor.</div>
+                                    </div>
+                                    <div class="col-md-3" style="display: none;">
+                                        <label class="form-label">Consignor Contact</label>
+                                        <input type="text" class="form-control consignor-contact" readonly>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Consignee *</label>
+                                        <select class="form-select select2 consignee-select" required>
+                                            <option value="">Select Consignee</option>
+                                            @foreach ($consignees as $consignee)
+                                                <option value="{{ $consignee->id }}">{{ $consignee->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        <small class="form-text text-muted d-block consignee-contact-text"></small>
+                                        <small class="form-text text-muted d-block consignee-city-text"></small>
+                                        <small class="form-text text-muted d-block consignee-state-text"></small>
+                                        <div class="invalid-feedback">Please select a consignee.</div>
+                                    </div>
+                                    <div class="col-md-3" style="display: none;">
+                                        <label class="form-label">Consignee Contact</label>
+                                        <input type="text" class="form-control consignee-contact" readonly>
                                     </div>
                                 </div>
-                                <div class="col-md-2 ms-4">
-                                    <label class="form-label">No. of Units</label>
-                                    <input type="number" class="form-control units" min="1" max="100000">
-                                    <small class="text-muted">📦 Max: 100,000 units</small>
-                                </div>
-                                <div class="col-md-2">
-                                    <label class="form-label">Weight (Tons) *</label>
-                                    <input type="number" step="0.01" class="form-control weight" min="0.1"
-                                        max="100" required>
-                                        <small class="text-muted">📏 Range: 0.1 - 100 tons</small>
-                                </div>
-                                <div class="col-md-2">
-                                    <label class="form-label">Fr Rate (₹/ton) *</label>
-                                    <input type="number" step="0.01" class="form-control fr-rate" min="1"
-                                        max="20000" required>
-                                        <small class="text-muted">💰 Range: ₹1 - ₹20,000 per ton</small>
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">Amount *</label>
-                                    <input type="number" step="0.01" class="form-control amount" required>
-                                    <small class="text-muted">Auto: Weight × FR Rate</small>
-                                </div>
-                            </div>
+                                <div class="row mb-3">
 
-                            <div class="row mb-3">
-                                
-                                
-                                <input type="hidden" class="form-control lane" value="Road" readonly>
+                                    <input type="hidden" class="form-control source-city" readonly>
+                                    <input type="hidden" class="form-control source-state" readonly>
+
+                                </div>
+                                <div class="row mb-3">
+                                    <input type="hidden" class="form-control destination-city" readonly>
+                                    <input type="hidden" class="form-control destination-state" readonly>
+
+                                </div>
                             </div>
+                            <div class="card mb-4 p-3 bg-light">
+                                <div class="row mb-3">
+                                    <div class="col-md-2 ">
+                                        <label class="form-label">Goods Type *</label>
+                                        <div class="input-group flex-nowrap">
+                                            <select class="form-select select2 goods-type" required>
+                                                <option value="">Select Goods Type</option>
+                                                @foreach ($goodsTypes as $goodsType)
+                                                    <option value="{{ $goodsType->name }}">{{ $goodsType->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            <button type="button" class="btn btn-outline-primary"
+                                                onclick="displayGoodAdd(this)" title="Add New Goods Type">
+                                                <i class="bi bi-plus"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2 ms-4">
+                                        <label class="form-label">No. of Units</label>
+                                        <input type="number" class="form-control units" min="1" max="100000">
+                                        <small class="text-muted">📦 Max: 100,000 units</small>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Weight (Tons) *</label>
+                                        <input type="number" step="0.01" class="form-control weight" min="0.1"
+                                            max="100" required>
+                                        <small class="text-muted">📏 Range: 0.1 - 100 tons</small>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label class="form-label">Fr Rate (₹/ton) *</label>
+                                        <input type="number" step="0.01" class="form-control fr-rate" min="1"
+                                            max="20000" required>
+                                        <small class="text-muted">💰 Range: ₹1 - ₹20,000 per ton</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label">Amount *</label>
+                                        <input type="number" step="0.01" class="form-control amount" required>
+                                        <small class="text-muted">Auto: Weight × FR Rate</small>
+                                    </div>
+                                </div>
+
+                                <div class="row mb-3">
+
+
+                                    <input type="hidden" class="form-control lane" value="Road" readonly>
+                                </div>
                             </div>
                         </div>
                     </template>
@@ -677,36 +677,6 @@
                     });
             }
 
-            // Function to show TDS percentage for a transporter
-            function showTdsPercentage(transporterId) {
-                const tdsDisplay = document.getElementById('tdsRateDisplay');
-                const tdsValue = document.getElementById('tdsPercentageValue');
-
-                if (transporterId) {
-                    // Show loading state
-                    tdsDisplay.style.display = 'block';
-                    tdsValue.textContent = 'Loading...';
-
-                    // Fetch transporter details to get TDS percentage
-                    fetch(`/api/transporters/${transporterId}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.tds_percentage !== null && data.tds_percentage !== undefined) {
-                                tdsValue.textContent = `${parseFloat(data.tds_percentage).toFixed(2)}%`;
-                            } else {
-                                tdsValue.textContent = 'Not Set';
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error fetching transporter TDS percentage:', error);
-                            tdsValue.textContent = 'Error';
-                        });
-                } else {
-                    // Hide TDS display when no transporter selected
-                    tdsDisplay.style.display = 'none';
-                }
-            }
-
             // Handle transporter selection to show TDS percentage
             transporterSelect.addEventListener('change', function() {
                 const transporterId = this.value;
@@ -782,13 +752,16 @@
 
                             // Update contact number
                             scope.querySelector('.consignor-contact').value = data.contact_number || '';
-                            scope.querySelector('.consignor-contact-text').textContent = "Contact Number: " + data.contact_number || '';
+                            scope.querySelector('.consignor-contact-text').textContent = "Contact Number: " +
+                                data.contact_number || '';
 
                             // Handle both nested and flat city/state structures
                             const cityValue = data.city?.name || data.city || '';
                             const stateValue = data.state?.name || data.state || '';
-                            scope.querySelector('.consignor-city-text').textContent = "Source City: " + cityValue || '';
-                            scope.querySelector('.consignor-state-text').textContent = "Source State: " + stateValue || '';
+                            scope.querySelector('.consignor-city-text').textContent = "Source City: " +
+                                cityValue || '';
+                            scope.querySelector('.consignor-state-text').textContent = "Source State: " +
+                                stateValue || '';
 
                             scope.querySelector('.source-city').value = cityValue;
                             scope.querySelector('.source-state').value = stateValue;
@@ -852,13 +825,16 @@
 
                             // Update contact number
                             scope.querySelector('.consignee-contact').value = data.contact_number || '';
-                            scope.querySelector('.consignee-contact-text').textContent = "Contact Number: " + data.contact_number || '';
+                            scope.querySelector('.consignee-contact-text').textContent = "Contact Number: " +
+                                data.contact_number || '';
 
                             // Handle both nested and flat city/state structures
                             const cityValue = data.city?.name || data.city || '';
                             const stateValue = data.state?.name || data.state || '';
-                            scope.querySelector('.consignee-city-text').textContent = "Destination City: " + cityValue || '';
-                            scope.querySelector('.consignee-state-text').textContent = "Destination State: " + stateValue || '';
+                            scope.querySelector('.consignee-city-text').textContent = "Destination City: " +
+                                cityValue || '';
+                            scope.querySelector('.consignee-state-text').textContent = "Destination State: " +
+                                stateValue || '';
 
                             scope.querySelector('.destination-city').value = cityValue;
                             scope.querySelector('.destination-state').value = stateValue;
@@ -1155,23 +1131,23 @@
                                             </div></div>
                                           </div>
                                           <div class="col-md-3"></div>
-                                        
+
                                               ${items.map((it, i) => `
-                                                <div class="col-md-6">
-                                            <div class="card mb-3"><div class="card-header bg-light"><strong> ${i+1}. LR:</strong> ${it.lr_number}</strong></div>
-                                            <div class="card-body">
-                                                                                <div class='mb-2'>
-                                                                                  <strong>Customer:</strong> ${it.customer}<br/>
-                                                                                  <strong>Consignor:</strong> ${it.consignor} | <strong>Consignee:</strong> ${it.consignee}<br/>
-                                                                                  <strong>Route:</strong> ${it.source} → ${it.destination}<br/>
-                                                                                  <strong>Goods:</strong> ${it.good_type} | <strong>No. of Units:</strong> ${it.no_of_units} <br/>
-                                                                                  <strong>Weight:</strong> ${it.weight} | <strong>FR:</strong> ₹${it.fr_rate} | <strong>Amount:</strong> ₹${it.amount}
-                                                                                </div>
-                                                                                 </div></div>
-                                                                                 </div>
-                                                                              `).join('')}
-                                           
-                                          
+                                                    <div class="col-md-6">
+                                                <div class="card mb-3"><div class="card-header bg-light"><strong> ${i+1}. LR:</strong> ${it.lr_number}</strong></div>
+                                                <div class="card-body">
+                                                                                    <div class='mb-2'>
+                                                                                      <strong>Customer:</strong> ${it.customer}<br/>
+                                                                                      <strong>Consignor:</strong> ${it.consignor} | <strong>Consignee:</strong> ${it.consignee}<br/>
+                                                                                      <strong>Route:</strong> ${it.source} → ${it.destination}<br/>
+                                                                                      <strong>Goods:</strong> ${it.good_type} | <strong>No. of Units:</strong> ${it.no_of_units} <br/>
+                                                                                      <strong>Weight:</strong> ${it.weight} | <strong>FR:</strong> ₹${it.fr_rate} | <strong>Amount:</strong> ₹${it.amount}
+                                                                                    </div>
+                                                                                     </div></div>
+                                                                                     </div>
+                                                                                  `).join('')}
+
+
                                       </div>
                                   </div>`;
 
@@ -1315,7 +1291,8 @@
                         });
 
                         // Add in template as well for future items
-                        const templateSelect = document.getElementById('lr-item-template').content.querySelector('.goods-type');
+                        const templateSelect = document.getElementById('lr-item-template').content
+                            .querySelector('.goods-type');
                         if (templateSelect) {
                             templateSelect.add(new Option(data.goodsType.name, data.goodsType.name));
                         }
@@ -1515,5 +1492,35 @@
             const scope = this.closest('.lr-item');
             handleConsigneeSelection(e.params.data.id, scope);
         });
+
+        // Function to show TDS percentage for a transporter
+        function showTdsPercentage(transporterId) {
+            const tdsDisplay = document.getElementById('tdsRateDisplay');
+            const tdsValue = document.getElementById('tdsPercentageValue');
+
+            if (transporterId) {
+                // Show loading state
+                tdsDisplay.style.display = 'block';
+                tdsValue.textContent = 'Loading...';
+
+                // Fetch transporter details to get TDS percentage
+                fetch(`/api/transporters/${transporterId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.tds_percentage !== null && data.tds_percentage !== undefined) {
+                            tdsValue.textContent = `${parseFloat(data.tds_percentage).toFixed(2)}%`;
+                        } else {
+                            tdsValue.textContent = 'Not Set';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching transporter TDS percentage:', error);
+                        tdsValue.textContent = 'Error';
+                    });
+            } else {
+                // Hide TDS display when no transporter selected
+                tdsDisplay.style.display = 'none';
+            }
+        }
     </script>
 @endsection
