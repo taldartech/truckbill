@@ -201,14 +201,23 @@
                             <input type="hidden" class="lane-input" value="Road">
                             <div class="card mb-4 p-3 bg-light">
                                 <div class="row mb-3">
-                                    <div class="col-md-3">
+                                    <div class="col-md-4">
                                         <label class="form-label">LR Number *</label>
                                         <input type="text" class="form-control lr-number-input" required
                                             placeholder="Unique LR Number">
                                         <div class="invalid-feedback">Please enter a unique LR number.</div>
                                         <div class="lr-number-feedback mt-1"></div>
                                     </div>
-                                    <div class="col-md-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label">Invoice Number</label>
+                                        <input type="text" class="form-control invoice-number-input"
+                                            placeholder="Unique Invoice Number">
+                                        <div class="invalid-feedback">Please enter a unique Invoice number.</div>
+                                        <div class="invoice-number-feedback mt-1"></div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
                                         <label class="form-label">Customer *</label>
                                         <select class="form-select select2 customer-select" required>
                                             <option value="">Select Customer</option>
@@ -218,7 +227,7 @@
                                         </select>
                                         <div class="invalid-feedback">Please select a customer.</div>
                                     </div>
-                                    <div class="col-md-3">
+                                    <div class="col-md-4">
                                         <label class="form-label">Consignor *</label>
                                         <select class="form-select select2 consignor-select" required>
                                             <option value="">Select Consignor</option>
@@ -235,7 +244,7 @@
                                         <label class="form-label">Consignor Contact</label>
                                         <input type="text" class="form-control consignor-contact" readonly>
                                     </div>
-                                    <div class="col-md-3">
+                                    <div class="col-md-4">
                                         <label class="form-label">Consignee *</label>
                                         <select class="form-select select2 consignee-select" required>
                                             <option value="">Select Consignee</option>
@@ -987,6 +996,7 @@
                 }
             });
 
+
             // LR number uniqueness per row
             let lrNumberTimeout;
 
@@ -1048,7 +1058,7 @@
             lrItemsContainer.addEventListener('input', function(e) {
                 if (e.target.classList.contains('lr-number-input')) {
                     const inputEl = e.target;
-                    const feedbackEl = e.target.closest('.col-md-3').querySelector(
+                    const feedbackEl = e.target.closest('.col-md-4').querySelector(
                         '.lr-number-feedback');
                     const lrNumber = inputEl.value.trim();
                     clearTimeout(lrNumberTimeout);
@@ -1059,12 +1069,96 @@
             lrItemsContainer.addEventListener('blur', function(e) {
                 if (e.target.classList.contains('lr-number-input')) {
                     const inputEl = e.target;
-                    const feedbackEl = e.target.closest('.col-md-3').querySelector(
+                    const feedbackEl = e.target.closest('.col-md-4').querySelector(
                         '.lr-number-feedback');
                     const lrNumber = inputEl.value.trim();
                     if (lrNumber) {
                         clearTimeout(lrNumberTimeout);
                         checkLrUniq(lrNumber, feedbackEl, inputEl);
+                    }
+                }
+            }, true);
+
+
+            // Invoice number uniqueness per row
+            let invoiceNumberTimeout;
+
+            function checkInvoiceUniq(invoiceNumber, feedbackEl, inputEl) {
+                if (!invoiceNumber || invoiceNumber.length < 2) {
+                    feedbackEl.innerHTML = '';
+                    inputEl.classList.remove('is-valid', 'is-invalid');
+                    return;
+                }
+                let allInvoiceNumbers = Array.from(document.querySelectorAll(
+                    '.invoice-number-input')).map(el => el.value.trim().toLowerCase());
+                let duplicateCount = allInvoiceNumbers.filter(num => num === invoiceNumber.toLowerCase())
+                    .length;
+                if (duplicateCount > 1) {
+                    feedbackEl.innerHTML =
+                        '<small class="text-danger">❌ This Invoice number is duplicated in the form.</small>';
+                    inputEl.classList.remove('is-valid');
+                    inputEl.classList.add('is-invalid');
+                    inputEl.setCustomValidity('This Invoice number is duplicated in the form.');
+                    return;
+                }
+                feedbackEl.innerHTML = '<small class="text-info">🔍 Checking availability...</small>';
+                inputEl.classList.remove('is-valid', 'is-invalid');
+                fetch('/api/check-invoice-number-uniqueness', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
+                                .getAttribute('content')
+                        },
+                        body: JSON.stringify({
+                            invoice_number: invoiceNumber
+                        })
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.valid) {
+                            feedbackEl.innerHTML = '<small class="text-success">✅ ' + data.message +
+                                '</small>';
+                            inputEl.classList.remove('is-invalid');
+                            inputEl.classList.add('is-valid');
+                            inputEl.setCustomValidity('');
+                        } else {
+                            feedbackEl.innerHTML = '<small class="text-danger">❌ ' + data.message +
+                                '</small>';
+                            inputEl.classList.remove('is-valid');
+                            inputEl.classList.add('is-invalid');
+                            inputEl.setCustomValidity(data.message);
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Invoice uniq check error', err);
+                        feedbackEl.innerHTML =
+                            '<small class="text-warning">⚠️ Unable to check availability</small>';
+                        inputEl.classList.remove('is-valid', 'is-invalid');
+                    });
+            }
+
+            lrItemsContainer.addEventListener('input', function(e) {
+                if (e.target.classList.contains('invoice-number-input')) {
+                    const inputEl = e.target;
+                    const feedbackEl = e.target.closest('.col-md-4').querySelector(
+                        '.invoice-number-feedback');
+                    const invoiceNumber = inputEl.value.trim();
+                    clearTimeout(invoiceNumberTimeout);
+                    invoiceNumberTimeout = setTimeout(() => checkInvoiceUniq(invoiceNumber, feedbackEl,
+                        inputEl), 500);
+                }
+            });
+
+            lrItemsContainer.addEventListener('blur', function(e) {
+                if (e.target.classList.contains('invoice-number-input')) {
+                    const inputEl = e.target;
+                    const feedbackEl = e.target.closest('.col-md-4').querySelector(
+                        '.invoice-number-feedback');
+                    const invoiceNumber = inputEl.value.trim();
+                    if (invoiceNumber) {
+                        clearTimeout(invoiceNumberTimeout);
+                        checkInvoiceUniq(invoiceNumber, feedbackEl, inputEl);
                     }
                 }
             }, true);
@@ -1091,6 +1185,7 @@
                     const items = Array.from(document.querySelectorAll(
                         '#lr-items-container .lr-item')).map((item, i) => ({
                         lr_number: item.querySelector('.lr-number-input').value,
+                        invoice_number: item.querySelector('.invoice-number-input').value,
                         customer: $(item).find('.customer-select option:selected')
                             .text(),
                         consignor: $(item).find('.consignor-select option:selected')
@@ -1133,19 +1228,19 @@
                                           <div class="col-md-3"></div>
 
                                               ${items.map((it, i) => `
-                                                    <div class="col-md-6">
-                                                <div class="card mb-3"><div class="card-header bg-light"><strong> ${i+1}. LR:</strong> ${it.lr_number}</strong></div>
-                                                <div class="card-body">
-                                                                                    <div class='mb-2'>
-                                                                                      <strong>Customer:</strong> ${it.customer}<br/>
-                                                                                      <strong>Consignor:</strong> ${it.consignor} | <strong>Consignee:</strong> ${it.consignee}<br/>
-                                                                                      <strong>Route:</strong> ${it.source} → ${it.destination}<br/>
-                                                                                      <strong>Goods:</strong> ${it.good_type} | <strong>No. of Units:</strong> ${it.no_of_units} <br/>
-                                                                                      <strong>Weight:</strong> ${it.weight} | <strong>FR:</strong> ₹${it.fr_rate} | <strong>Amount:</strong> ₹${it.amount}
-                                                                                    </div>
-                                                                                     </div></div>
-                                                                                     </div>
-                                                                                  `).join('')}
+                                                                <div class="col-md-6">
+                                                            <div class="card mb-3"><div class="card-header bg-light"><strong> ${i+1}. LR:</strong> ${it.lr_number}</strong></div>
+                                                            <div class="card-body">
+                                                              <div class='mb-2'>
+                                                                <strong>Invoice Number:</strong> ${it.invoice_number} | <strong>Customer:</strong> ${it.customer}<br/>
+                                                                <strong>Consignor:</strong> ${it.consignor} | <strong>Consignee:</strong> ${it.consignee}<br/>
+                                                                <strong>Route:</strong> ${it.source} → ${it.destination}<br/>
+                                                                <strong>Goods:</strong> ${it.good_type} | <strong>No. of Units:</strong> ${it.no_of_units} <br/>
+                                                                <strong>Weight:</strong> ${it.weight} | <strong>FR:</strong> ₹${it.fr_rate} | <strong>Amount:</strong> ₹${it.amount}
+                                                              </div>
+                                                                </div></div>
+                                                                </div>
+                                                            `).join('')}
 
 
                                       </div>
@@ -1192,6 +1287,7 @@
                 items.forEach((item, idx) => {
                     const pairs = {
                         lr_number: item.querySelector('.lr-number-input').value,
+                        invoice_number: item.querySelector('.invoice-number-input').value,
                         customer_id: item.querySelector('.customer-select').value,
                         consignor_id: item.querySelector('.consignor-select').value,
                         consignor_contact_number: item.querySelector('.consignor-contact')

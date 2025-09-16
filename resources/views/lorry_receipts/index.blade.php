@@ -489,6 +489,10 @@ function showLRDetails(id) {
                                         <td class="fw-bold">Status:</td>
                                         <td><span class="badge ${lr.delivery_status === 'Delivered' ? 'bg-success' : 'bg-warning'}">${lr.delivery_status}</span></td>
                                     </tr>
+                                    <tr>
+                                        <td class="fw-bold">Invoice Number:</td>
+                                        <td>${lr.invoice_number || 'N/A'}</td>
+                                    </tr>
                                 </table>
                             </div>
                         </div>

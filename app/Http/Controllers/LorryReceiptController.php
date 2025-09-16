@@ -493,6 +493,7 @@ class LorryReceiptController extends Controller
       $perItemRules = [
         'lrs' => 'nullable|array|min:1',
         'lrs.*.lr_number' => 'nullable|string|max:100|distinct|unique:lorry_receipts,lr_number',
+        'lrs.*.invoice_number' => 'nullable|string|max:256|distinct|unique:lorry_receipts,invoice_number',
         'lrs.*.customer_id' => 'nullable|exists:consignees,id',
         'lrs.*.consignor_id' => 'nullable|exists:consignees,id',
         'lrs.*.consignor_contact_number' => 'nullable|string|max:20',
@@ -531,6 +532,7 @@ class LorryReceiptController extends Controller
 
           $data = [
             'lr_number' => $item['lr_number'],
+            'invoice_number' => $item['invoice_number'],
             'customer_id' => $item['customer_id'],
             'consignor_id' => $item['consignor_id'],
             'consignor_contact_number' => $item['consignor_contact_number'] ?? '1234567890',
@@ -558,7 +560,6 @@ class LorryReceiptController extends Controller
             'delivery_status' => 'Pending',
             'linked_lr_id' => $nextLinkedId,
           ];
-
           $created[] = \App\Models\LorryReceipt::create($data);
         }
 
@@ -574,6 +575,7 @@ class LorryReceiptController extends Controller
     $validated = $request->validate([
       'customer_id' => 'required|exists:consignees,id',
       'lr_number' => 'required|string|max:100|unique:lorry_receipts,lr_number',
+      'invoice_number' => 'nullable|string|max:256|unique:lorry_receipts,invoice_number',
       'memo_id' => 'nullable|integer',
       'truck_id' => 'nullable|exists:trucks,id',
       'transporter_id' => 'nullable|exists:transporters,id',
@@ -646,12 +648,15 @@ class LorryReceiptController extends Controller
   public function checkLrNumberUniqueness(Request $request)
   {
     $lrNumber = $request->input('lr_number');
+    $excludeId = $request->input('exclude_id') ?? null;
 
     if (!$lrNumber) {
       return response()->json(['valid' => false, 'message' => 'LR Number is required']);
     }
 
-    $exists = \App\Models\LorryReceipt::where('lr_number', $lrNumber)->exists();
+    $exists = \App\Models\LorryReceipt::where('lr_number', $lrNumber)
+      ->where('id', '!=', $excludeId)
+      ->exists();
 
     if ($exists) {
       return response()->json([
@@ -663,6 +668,32 @@ class LorryReceiptController extends Controller
     return response()->json([
       'valid' => true,
       'message' => 'LR Number is available'
+    ]);
+  }
+
+  public function checkInvoiceNumberUniqueness(Request $request)
+  {
+    $invoiceNumber = $request->input('invoice_number');
+    $excludeId = $request->input('exclude_id') ?? null;
+
+    if (!$invoiceNumber) {
+      return response()->json(['valid' => false, 'message' => 'Invoice Number is required']);
+    }
+
+    $exists = \App\Models\LorryReceipt::where('invoice_number', $invoiceNumber)
+      ->where('id', '!=', $excludeId)
+      ->exists();
+
+    if ($exists) {
+      return response()->json([
+        'valid' => false,
+        'message' => 'Invoice Number already exists. Please use a unique Invoice Number.'
+      ]);
+    }
+
+    return response()->json([
+      'valid' => true,
+      'message' => 'Invoice Number is available'
     ]);
   }
 
@@ -713,6 +744,7 @@ class LorryReceiptController extends Controller
     $validated = $request->validate([
       'customer_id' => 'required|exists:consignees,id',
       'lr_number' => 'required|string|max:100|unique:lorry_receipts,lr_number,' . $lorry_receipt->id . ',id',
+      'invoice_number' => 'nullable|string|max:256|unique:lorry_receipts,invoice_number,' . $lorry_receipt->id . ',id',
 
       'memo_id' => [
         'nullable',

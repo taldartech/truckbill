@@ -180,7 +180,8 @@
                         </div>
                         <div class="col-md-4">
                             <label for="transporter_id" id="transporterLabel" class="form-label">Transporter *</label>
-                            <select class="form-select" id="transporter_id" name="transporter_id" required onchange="showTdsPercentage(this.value)">
+                            <select class="form-select" id="transporter_id" name="transporter_id" required
+                                onchange="showTdsPercentage(this.value)">
                                 <option value="">Select Transporter</option>
                                 {{-- This will be filled via JavaScript --}}
                             </select>
@@ -212,6 +213,17 @@
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
                             <div class="invalid-feedback">Please select a reference.</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="invoice_number" class="form-label">Invoice Number <small
+                                    class="text-muted">(Optional)</small></label>
+                            <input type="text" class="form-control" id="invoice_number" name="invoice_number"
+                                value="{{ old('invoice_number') }}" placeholder="Enter Invoice Number">
+                            @error('invoice_number')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                            <div class="invalid-feedback">Please enter a valid invoice number.</div>
+                            <div id="invoice-number-feedback" class="mt-1"></div>
                         </div>
                     </div>
                 </div>
@@ -1112,6 +1124,79 @@
                 }
             });
 
+            // Invoice Number uniqueness validation
+            const invoiceNumberInput = document.getElementById('invoice_number');
+            const invoiceNumberFeedback = document.getElementById('invoice-number-feedback');
+            let invoiceNumberTimeout;
+
+            function checkInvoiceNumberUniqueness(invoiceNumber) {
+                if (!invoiceNumber) {
+                    invoiceNumberFeedback.innerHTML = '';
+                    invoiceNumberInput.classList.remove('is-valid', 'is-invalid');
+                    return;
+                }
+
+                // Show loading state
+                invoiceNumberFeedback.innerHTML = '<small class="text-info">🔍 Checking availability...</small>';
+                invoiceNumberInput.classList.remove('is-valid', 'is-invalid');
+
+                fetch('/api/check-invoice-number-uniqueness', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                                'content')
+                        },
+                        body: JSON.stringify({
+                            invoice_number: invoiceNumber
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.valid) {
+                            invoiceNumberFeedback.innerHTML = '<small class="text-success">✅ ' + data.message +
+                                '</small>';
+                            invoiceNumberInput.classList.remove('is-invalid');
+                            invoiceNumberInput.classList.add('is-valid');
+                            invoiceNumberInput.setCustomValidity('');
+                        } else {
+                            invoiceNumberFeedback.innerHTML = '<small class="text-danger">❌ ' + data.message +
+                                '</small>';
+                            invoiceNumberInput.classList.remove('is-valid');
+                            invoiceNumberInput.classList.add('is-invalid');
+                            invoiceNumberInput.setCustomValidity(data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error checking Invoice Number uniqueness:', error);
+                        invoiceNumberFeedback.innerHTML =
+                            '<small class="text-warning">⚠️ Unable to check availability</small>';
+                        invoiceNumberInput.classList.remove('is-valid', 'is-invalid');
+                    });
+            }
+
+            // Add debounced input listener for Invoice Number
+            invoiceNumberInput.addEventListener('input', function() {
+                const invoiceNumber = this.value.trim();
+
+                // Clear previous timeout
+                clearTimeout(invoiceNumberTimeout);
+
+                // Set new timeout for debounced checking
+                invoiceNumberTimeout = setTimeout(() => {
+                    checkInvoiceNumberUniqueness(invoiceNumber);
+                }, 500); // 500ms delay
+            });
+
+            // Check on blur as well
+            invoiceNumberInput.addEventListener('blur', function() {
+                const invoiceNumber = this.value.trim();
+                if (invoiceNumber) {
+                    clearTimeout(invoiceNumberTimeout);
+                    checkInvoiceNumberUniqueness(invoiceNumber);
+                }
+            });
+
             // No. of Units validation
             const noOfUnitsInput = document.getElementById('no_of_units');
 
@@ -1218,6 +1303,7 @@
                                 <p><strong>GR Date:</strong> ${formattedGrDate}</p>
                                 <p><strong>Creation Date & Time:</strong> ${currentDateTime}</p>
                                 <p><strong>Customer:</strong> ${customerName}</p>
+                                <p><strong>Invoice Number:</strong> ${formData.get('invoice_number') || 'Not entered'}</p>
                             </div>
                         </div>
 
