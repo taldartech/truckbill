@@ -290,7 +290,7 @@ class LorryReceiptController extends Controller
 
     $transporters = Transporter::all();
     $truckOwners = Transporter::where('is_owner', 1)->get();
-    $agencies = Transporter::where('is_owner', 0)->get();
+    $agencies = Transporter::where('is_owner', 0)->where('company_id', auth()->user()->company_id)->get();
     $customers = Customer::where('company_id', auth()->user()->company_id)->orderBy('name')->get();
     $consignees = Consignee::where('company_id', auth()->user()->company_id)->orderBy('name')->get();
     $goodsTypes = GoodType::all();
@@ -317,7 +317,7 @@ class LorryReceiptController extends Controller
 
     $transporters = Transporter::all();
     $truckOwners = Transporter::where('is_owner', 1)->get();
-    $agencies = Transporter::where('is_owner', 0)->get();
+    $agencies = Transporter::where('is_owner', 0)->where('company_id', auth()->user()->company_id)->get();
     $customers = Customer::where('company_id', auth()->user()->company_id)->orderBy('name')->get();
     $consignees = Consignee::where('company_id', auth()->user()->company_id)->orderBy('name')->get();
     $goodsTypes = GoodType::all();
