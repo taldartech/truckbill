@@ -657,6 +657,7 @@ class FreightBookingController extends Controller
       'reference_transaction_id' => $data['reference_number'],
       'remark' => $data['notes'],
       'payment_status' => $paymentStatus,
+      'freight_booking_id' => $request->input('booking_ids')[0] ?? null,
     ]);
 
     foreach ($voucherPayments as $index => $voucherId) {

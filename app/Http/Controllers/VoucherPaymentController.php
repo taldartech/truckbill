@@ -40,11 +40,22 @@ class VoucherPaymentController extends Controller
       'freight_booking.lr.consignor.city',
       'freight_booking.lr.consignee.city',
       'freight_booking.lr.truck'
+    ])->whereDate('date', $selectedDate)
+      ->whereNull('linked_voucher_id');
+    $query1 = VoucherLinked::with([
+      'freight_booking.lr',
+      'company',
+      'pump',
+      'freight_booking.transporter',
+      'freight_booking.lr.consignor.city',
+      'freight_booking.lr.consignee.city',
+      'freight_booking.lr.truck'
     ])->whereDate('date', $selectedDate);
 
     // Apply company filter for non-super admin users
     if (auth()->user()->userRole->name !== 'super_admin') {
       $query->where('company_id', auth()->user()->company_id);
+      $query1->where('company_id', auth()->user()->company_id);
     }
 
     // Apply Truck No filter
@@ -52,11 +63,17 @@ class VoucherPaymentController extends Controller
       $query->whereHas('freight_booking.lr.truck', function ($q) use ($request) {
         $q->where('truck_number', 'like', '%' . $request->truck_no . '%');
       });
+      $query1->whereHas('freight_booking.lr.truck', function ($q) use ($request) {
+        $q->where('truck_number', 'like', '%' . $request->truck_no . '%');
+      });
     }
 
     // Apply Transporter filter
     if ($request->filled('transporter')) {
       $query->whereHas('freight_booking.transporter', function ($q) use ($request) {
+        $q->where('id', $request->transporter);
+      });
+      $query1->whereHas('freight_booking.transporter', function ($q) use ($request) {
         $q->where('id', $request->transporter);
       });
     }
@@ -93,19 +110,20 @@ class VoucherPaymentController extends Controller
     // Apply Status filter
     if ($request->filled('status')) {
       $query->where('payment_status', $request->status);
+      $query1->where('payment_status', $request->status);
     }
 
-    // Get paginated results with all query parameters
     $payments = $query->orderBy('created_at', 'desc')
-      ->paginate(15)
-      ->appends($request->query());
-
+      ->get();
+    $payments1 = $query1->orderBy('created_at', 'desc')
+      ->get();
     // Get filter data for dropdowns
     $transporters = \App\Models\Transporter::orderBy('name')->get();
     $cities = \App\Models\City::orderBy('name')->get();
 
     return view('voucher_payments.daily', [
       'payments' => $payments,
+      'payments1' => $payments1,
       'selectedDate' => $selectedDate,
       'transporters' => $transporters,
       'cities' => $cities
@@ -697,21 +715,26 @@ class VoucherPaymentController extends Controller
     }
 
     $validated = $request->validate([
-      'payment_ids' => 'required|array|min:1',
+      'payment_ids' => 'nullable|array',
       'payment_ids.*' => 'required|integer|exists:voucher_payments,id',
+      'multiple_payment_ids' => 'nullable|array',
+      'multiple_payment_ids.*' => 'required|integer|exists:voucher_linkeds,id',
       'new_status' => 'required|in:pending,in-progress,paid'
     ]);
 
     try {
       // Get all selected payments
       $payments = VoucherPayment::whereIn('id', $validated['payment_ids'])->get();
+      $linkedPayments = VoucherLinked::whereIn('id', $validated['multiple_payment_ids'])->get();
 
       // Check if all payments have the same current status
       $currentStatuses = $payments->pluck('payment_status')->unique();
+      $linkedStatuses = $linkedPayments->pluck('payment_status')->unique();
+      $currentStatuses = $currentStatuses->merge($linkedStatuses)->unique();
+
       if ($currentStatuses->count() > 1) {
         return redirect()->back()->with('error', 'Selected payments must have the same status.');
       }
-
       $currentStatus = $currentStatuses->first();
 
       // Validate status transition
@@ -723,15 +746,28 @@ class VoucherPaymentController extends Controller
       if ($currentStatus === 'paid') {
         return redirect()->back()->with('error', 'Paid payments cannot be updated.');
       }
-
+      $voucher_ids = [];
+      foreach ($validated['multiple_payment_ids'] as $id) {
+        $voucher_ids = array_merge($voucher_ids, json_decode(VoucherLinked::find($id)->voucher_ids));
+      }
+      $voucher_ids = array_merge( $validated['payment_ids'], $voucher_ids);
       // Update all payments
-      VoucherPayment::whereIn('id', $validated['payment_ids'])
+      VoucherPayment::whereIn('id', $voucher_ids)
+        ->update(['payment_status' => $validated['new_status']]);
+      VoucherLinked::whereIn('id', $validated['multiple_payment_ids'])
         ->update(['payment_status' => $validated['new_status']]);
 
-      return redirect()->back()->with('success', count($validated['payment_ids']) . ' payments updated successfully.');
+      foreach ($validated['multiple_payment_ids'] as $id) {
+
+      }
+
+      $updatedCount = count($validated['payment_ids']) + count($validated['multiple_payment_ids']);
+
+      return redirect()->back()->with('success', $updatedCount . ' payments updated successfully.');
     } catch (\Exception $e) {
       \Log::error('Error in bulk update: ' . $e->getMessage(), [
         'payment_ids' => $validated['payment_ids'],
+        'multiple_payment_ids' => $validated['multiple_payment_ids'],
         'new_status' => $validated['new_status']
       ]);
 
