@@ -79,7 +79,7 @@ class FreightBooking extends Model
 
     public function transporter()
     {
-        return $this->belongsTo(Transporter::class, 'transporter_id');
+        return $this->belongsTo(Transporter::class, 'transporter_id')->withTrashed();
     }
 
     public function voucherPayments()
