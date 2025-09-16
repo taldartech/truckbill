@@ -16,6 +16,12 @@
         @if (session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>
         @endif
+        @if (session('error'))
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
 
         <!-- Search and Filter Section -->
         <div class="card mb-4">
@@ -665,17 +671,10 @@
                             }
 
                             // Update select all checkbox
-                            if (selectAllCheckbox) {
-                                const eligibleCheckboxes = Array.from(paymentCheckboxes).filter(
-                                    cb => !cb.disabled && (currentSelectedStatus === null || cb.dataset
-                                        .status === currentSelectedStatus)
-                                );
-                                selectAllCheckbox.checked = eligibleCheckboxes.length > 0 &&
-                                    eligibleCheckboxes.every(cb => cb.checked);
-                            }
+                            updateSelectAllCheckbox();
 
                             // Show/hide bulk action button
-                            bulkActionBtn.classList.toggle('d-none', checkedBoxes.length === 0);
+                            updateBulkActionVisibility();
                         });
                     });
 
@@ -702,19 +701,35 @@
                             }
 
                             // Update select all checkbox
-                            if (selectAllCheckbox) {
-                                const eligibleCheckboxes = Array.from(multiplePaymentCheckboxes).filter(
-                                    cb => !cb.disabled && (currentSelectedStatus === null || cb.dataset
-                                        .status === currentSelectedStatus)
-                                );
-                                selectAllCheckbox.checked = eligibleCheckboxes.length > 0 &&
-                                    eligibleCheckboxes.every(cb => cb.checked);
-                            }
+                            updateSelectAllCheckbox();
 
                             // Show/hide bulk action button
-                            bulkActionBtn.classList.toggle('d-none', checkedBoxes.length === 0);
+                            updateBulkActionVisibility();
                         });
                     });
+
+                    function updateBulkActionVisibility() {
+                        const anyChecked =
+                            Array.from(paymentCheckboxes).some(cb => cb.checked) ||
+                            Array.from(multiplePaymentCheckboxes).some(cb => cb.checked);
+
+                        bulkActionBtn.classList.toggle('d-none', !anyChecked);
+                    }
+
+                    function updateSelectAllCheckbox() {
+                        if (!selectAllCheckbox) return;
+
+                        const allCheckboxes = [...paymentCheckboxes, ...multiplePaymentCheckboxes];
+
+                        const eligibleCheckboxes = allCheckboxes.filter(cb =>
+                            !cb.disabled &&
+                            (currentSelectedStatus === null || cb.dataset.status === currentSelectedStatus)
+                        );
+
+                        const allChecked = eligibleCheckboxes.length > 0 && eligibleCheckboxes.every(cb => cb.checked);
+
+                        selectAllCheckbox.checked = allChecked;
+                    }
 
                     // Handle bulk action button click
                     if (bulkActionBtn) {

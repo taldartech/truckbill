@@ -722,10 +722,13 @@ class VoucherPaymentController extends Controller
       'new_status' => 'required|in:pending,in-progress,paid'
     ]);
 
+    $payment_ids = $validated['payment_ids'] ?? [];
+    $multiple_payment_ids = $validated['multiple_payment_ids'] ?? [];
+
     try {
       // Get all selected payments
-      $payments = VoucherPayment::whereIn('id', $validated['payment_ids'])->get();
-      $linkedPayments = VoucherLinked::whereIn('id', $validated['multiple_payment_ids'])->get();
+      $payments = VoucherPayment::whereIn('id', $payment_ids)->get();
+      $linkedPayments = VoucherLinked::whereIn('id', $multiple_payment_ids)->get();
 
       // Check if all payments have the same current status
       $currentStatuses = $payments->pluck('payment_status')->unique();
@@ -747,27 +750,23 @@ class VoucherPaymentController extends Controller
         return redirect()->back()->with('error', 'Paid payments cannot be updated.');
       }
       $voucher_ids = [];
-      foreach ($validated['multiple_payment_ids'] as $id) {
+      foreach ($multiple_payment_ids as $id) {
         $voucher_ids = array_merge($voucher_ids, json_decode(VoucherLinked::find($id)->voucher_ids));
       }
-      $voucher_ids = array_merge( $validated['payment_ids'], $voucher_ids);
+      $voucher_ids = array_merge($payment_ids, $voucher_ids);
       // Update all payments
       VoucherPayment::whereIn('id', $voucher_ids)
         ->update(['payment_status' => $validated['new_status']]);
-      VoucherLinked::whereIn('id', $validated['multiple_payment_ids'])
+      VoucherLinked::whereIn('id', $multiple_payment_ids)
         ->update(['payment_status' => $validated['new_status']]);
 
-      foreach ($validated['multiple_payment_ids'] as $id) {
-
-      }
-
-      $updatedCount = count($validated['payment_ids']) + count($validated['multiple_payment_ids']);
+      $updatedCount = count($payment_ids) + count($multiple_payment_ids);
 
       return redirect()->back()->with('success', $updatedCount . ' payments updated successfully.');
     } catch (\Exception $e) {
       \Log::error('Error in bulk update: ' . $e->getMessage(), [
-        'payment_ids' => $validated['payment_ids'],
-        'multiple_payment_ids' => $validated['multiple_payment_ids'],
+        'payment_ids' => $payment_ids,
+        'multiple_payment_ids' => $multiple_payment_ids,
         'new_status' => $validated['new_status']
       ]);
 
