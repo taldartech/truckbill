@@ -219,6 +219,10 @@
                                 <span class="info-value">{{ $freightBooking->eway_bill_number ?? 'N/A' }}</span>
                             </div>
                             <div class="info-row">
+                                <span class="info-label">E-way Bill Expiry:</span>
+                                <span class="info-value">{{ $freightBooking->eway_bill_expiry ? date('d-m-Y', strtotime($freightBooking->eway_bill_expiry)) : 'N/A' }}</span>
+                            </div>
+                            <div class="info-row">
                                 <span class="info-label">Good Type:</span>
                                 <span class="info-value">{{ $freightBooking->good_type ?? 'N/A' }}</span>
                             </div>

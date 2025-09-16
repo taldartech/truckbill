@@ -258,6 +258,11 @@
                     @error('eway_bill_number') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-4">
+                    <label for="eway_bill_expiry" class="form-label">E-Way Bill Expiry Date</label>
+                    <input type="date" class="form-control" name="eway_bill_expiry" id="eway_bill_expiry" value="{{ old('eway_bill_expiry') }}">
+                    @error('eway_bill_expiry') <div class="text-danger">{{ $message }}</div> @enderror
+                </div>
+                <div class="col-md-4">
                     <label for="pan_verified" class="form-label">PAN Verified *</label>
                     <input type="hidden" name="pan_verified" id="pan_verified" value="{{ isset($preFilled['pan_verified']) ? (int)$preFilled['pan_verified'] : (old('pan_verified') ? 1 : 0) }}" required>
                     <input type="text" class="form-control" readonly value="{{ isset($preFilled['pan_verified']) && $preFilled['pan_verified'] ? 'Yes' : 'No' }}" style="background-color: #f8f9fa;">

@@ -127,6 +127,10 @@
                     <div class="confirmation-value">{{ $formData['eway_bill_number'] ?? 'Not provided' }}</div>
                 </div>
                 <div class="col-md-4 mb-3">
+                    <div class="confirmation-label">E-Way Bill Expiry Date</div>
+                    <div class="confirmation-value">{{ $formData['eway_bill_expiry'] ? date('d-m-Y', strtotime($formData['eway_bill_expiry'])) : 'Not provided' }}</div>
+                </div>
+                <div class="col-md-4 mb-3">
                     <div class="confirmation-label">PAN Verified</div>
                     <div class="confirmation-value">
                         @if($formData['pan_verified'])

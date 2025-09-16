@@ -38,6 +38,7 @@ class FreightBooking extends Model
         'voucher_number',
         'company_id',
         'eway_bill_number',
+        'eway_bill_expiry',
         'linked_lr_id',
     ];
 

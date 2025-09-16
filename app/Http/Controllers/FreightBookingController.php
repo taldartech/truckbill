@@ -479,6 +479,7 @@ class FreightBookingController extends Controller
       'balance_amount' => 'required|numeric',
       'tds_amount' => 'nullable|numeric',
       'eway_bill_number' => 'nullable|string',
+      'eway_bill_expiry' => 'nullable|date',
       'good_type' => 'nullable|string',
       'pan_verified' => 'required|boolean',
       'remark' => 'nullable|string',
@@ -526,6 +527,7 @@ class FreightBookingController extends Controller
       'balance_amount' => 'required|numeric',
       'tds_amount' => 'nullable|numeric',
       'eway_bill_number' => 'nullable|string',
+      'eway_bill_expiry' => 'nullable|date',
       'good_type' => 'nullable|string',
 
       'pan_verified' => 'required|boolean',
@@ -925,6 +927,7 @@ class FreightBookingController extends Controller
       'is_cancelled' => 'boolean',
       'linked_freight_booking_id' => 'nullable|exists:freight_bookings,id',
       'eway_bill_number' => 'nullable|string',
+      'eway_bill_expiry' => 'nullable|date',
     ]);
 
 
