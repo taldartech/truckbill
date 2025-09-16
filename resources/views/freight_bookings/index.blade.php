@@ -2376,21 +2376,12 @@
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                     }
                 })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
                     // Hide modal
-
-
-                    $('#voucherPaymentModal').modal('hide');
-
-
                     if (data.success) {
-                        alert(data.message || 'Payment processed successfully!');
+                      alert(data.message || 'Payment processed successfully!');
+                      $('#voucherPaymentModal').modal('hide');
                         // Refresh the page or table
                         location.reload();
                     } else {

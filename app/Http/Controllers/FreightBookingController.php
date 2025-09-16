@@ -644,6 +644,10 @@ class FreightBookingController extends Controller
     }
     $response = $this->VoucherPayment(new Request($data));
     $response = json_decode($response->getContent(), true);
+    if ($response['success'] !== true) {
+      return $response;
+    }
+
     $voucherPayments = $response['processed_payments'] ?? [];
 
     $VoucherLinked = \App\Models\VoucherLinked::create([
