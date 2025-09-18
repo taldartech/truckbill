@@ -14,19 +14,19 @@ class TruckOwnerBankAccountController extends Controller
     {
         // Get all companies for super admin
         $companies = \App\Models\Company::all();
-        
+
         // Get selected company ID and search term
         $selectedCompanyId = $request->get('company_id');
         $search = $request->get('search');
-        
+
         // Initialize empty collections
         $truckOwners = collect();
-        
+
         // If company is selected, get truck owners for that company
         if ($selectedCompanyId) {
             $query = Transporter::where('is_owner', 1)
                 ->where('company_id', $selectedCompanyId);
-            
+
             // Add search functionality
             if ($search) {
                 $query->where(function($q) use ($search) {
@@ -36,10 +36,10 @@ class TruckOwnerBankAccountController extends Controller
                       ->orWhere('beneficiary_id', 'LIKE', '%' . $search . '%');
                 });
             }
-            
+
             $truckOwners = $query->paginate(10)->appends($request->query());
         }
-        
+
         return view('truck_owner_bank_accounts.index', compact('companies', 'truckOwners', 'selectedCompanyId', 'search'));
     }
 
@@ -94,7 +94,7 @@ class TruckOwnerBankAccountController extends Controller
     public function updateBeneficiaryId(Request $request, $transporterId)
     {
         $transporter = Transporter::findOrFail($transporterId);
-        
+
         $validated = $request->validate([
             'beneficiary_id' => [
                 'required',
@@ -108,7 +108,10 @@ class TruckOwnerBankAccountController extends Controller
             'beneficiary_id.unique' => 'This Beneficiary ID is already in use by another transporter/truck owner.',
         ]);
 
-        $transporter->update(['beneficiary_id' => $validated['beneficiary_id']]);
+        $transporter->update([
+          'beneficiary_id' => $validated['beneficiary_id'],
+          'short_name' => $validated['short_name']
+        ]);
 
         return redirect()->back()->with('success', 'Beneficiary ID updated successfully!');
     }
