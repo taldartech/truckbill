@@ -166,9 +166,13 @@
                             <tr
                                 class="@if ($booking->is_cancelled) table-danger @elseif($booking->is_delivered) table-success @endif">
                                 <td class="text-center">
-                                    @if ($booking->lr && $booking->lr->memo_id && $booking->balance_amount <= 0)
+                                    @if ($booking->lr && $booking->lr->memo_id && $booking->balance_amount <= 0 )
                                         <span class="text-muted"
                                             title="No checkbox available: memo_id is added and balance is zero"><i
+                                                class="bi bi-dash-circle"></i></span>
+                                    @elseif($booking->is_cancelled)
+                                        <span class="text-muted"
+                                            title="No checkbox available: Freight Booking is cancelled"><i
                                                 class="bi bi-dash-circle"></i></span>
                                     @else
                                         <input type="checkbox" class="row-checkbox" value="{{ $booking->id }}"

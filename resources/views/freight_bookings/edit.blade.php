@@ -164,12 +164,21 @@
         style="max-width: 1000px; margin: 0 auto; {{ $freightBooking->is_cancelled ? 'opacity: 0.8;' : '' }}">
         <!--begin::Header-->
         <div class="card-header {{ $freightBooking->is_cancelled ? 'bg-danger-subtle' : '' }}">
-            <div class="card-title h4">
-                Edit Freight Booking
-                @if ($freightBooking->is_cancelled)
-                    <span class="badge bg-danger ms-2">
-                        <i class="fas fa-times-circle"></i> CANCELLED
-                    </span>
+            <div class="card-title h4 d-flex justify-content-between align-items-center w-100">
+                <div>
+                    Edit Freight Booking
+                    @if ($freightBooking->is_cancelled)
+                        <span class="badge bg-danger ms-2">
+                            <i class="fas fa-times-circle"></i> CANCELLED
+                        </span>
+                    @endif
+                </div>
+                @if ($freightBooking->linked_freight_booking_id)
+                    <div class="card-toolbar">
+                        <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#viewCancelledModal">
+                            View Cancelled
+                        </button>
+                    </div>
                 @endif
             </div>
         </div>
@@ -490,6 +499,7 @@
                         </a>
                     </div>
                 </div>
+            </div>
         </form>
     </div>
 
@@ -651,6 +661,50 @@
                         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"
                             style="display: none;"></span>
                         Save Memo ID
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="viewCancelledModal" tabindex="-1" aria-labelledby="viewCancelledModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title" id="viewCancelledModalLabel">
+                        <i class="fas fa-info-circle me-2"></i> Cancelled Freight Booking Details
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="cancelledDetailsContent">
+                        @php
+                            $cancelledfr = App\Models\FreightBooking::where(
+                                'id',
+                                $freightBooking->linked_freight_booking_id,
+                            )->first();
+                        @endphp
+                        @if ($cancelledfr)
+                            <p><strong>TR Freight Rate:</strong> ₹{{ number_format($cancelledfr->tr_fr_rate, 2) }}</p>
+                            <p><strong>TR Amount:</strong> ₹{{ number_format($cancelledfr->tr_amount, 2) }}</p>
+                            <p><strong>TDS Amount:</strong> ₹{{ number_format($cancelledfr->tds_amount, 2) }}</p>
+                            <p><strong>Balance Amount:</strong> ₹{{ number_format($cancelledfr->balance_amount, 2) }}</p>
+                            <p><strong>Advance Amount:</strong> ₹{{ number_format($cancelledfr->advance_amount, 2) }}</p>
+                            <p><strong>E-Way Bill Number:</strong> {{ $cancelledfr->eway_bill_number ?? 'N/A' }}</p>
+                            <p><strong>E-Way Bill Expiry Date:</strong>
+                                {{ $cancelledfr->eway_bill_expiry ? $cancelledfr->eway_bill_expiry->format('d M Y') : 'N/A' }}
+                            </p>
+                            <p><strong>Remark:</strong> {{ $cancelledfr->remark ?? 'N/A' }}</p>
+                            <p><strong>Cancelled On:</strong> {{ $cancelledfr->updated_at->format('d M Y, h:i A') }}</p>
+                        @else
+                            <p>No cancelled freight booking details found.</p>
+                        @endif
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i> Close
                     </button>
                 </div>
             </div>
@@ -951,7 +1005,7 @@
 
                                 // Remove error message
                                 const errorDiv = field.parentNode.querySelector(
-                                '.validation-error');
+                                    '.validation-error');
                                 if (errorDiv) {
                                     errorDiv.remove();
                                 }
@@ -1010,7 +1064,8 @@
                     if (!this.checked && currentMemoId) {
                         this.checked = true;
                         alert(
-                            'Cannot unmark as delivered - Memo ID has been set. Contact administrator if changes are needed.');
+                            'Cannot unmark as delivered - Memo ID has been set. Contact administrator if changes are needed.'
+                        );
                         return;
                     }
 

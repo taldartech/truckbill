@@ -545,6 +545,10 @@ class FreightBookingController extends Controller
       return redirect()->back()->withErrors(['lr_id' => 'Invalid lorry receipt']);
     }
 
+    if ($lorryReceipt->freight_booking_id) {
+      return redirect()->route('freight_bookings.index')->with('error', 'This Lorry Receipt is already linked to a Freight Booking.');
+    }
+
     // Create freight booking with lorry receipt's LR number
     // Get the next voucher number
     $nextVoucherNumber = FreightBooking::max('voucher_number') + 1;
@@ -560,9 +564,11 @@ class FreightBookingController extends Controller
     }
 
     $linkedLrId = $lorryReceipt->linked_lr_id ?? null;
+    $linked_freight_booking_id = FreightBooking::where('lr_id', $lorryReceipt->id)->orderBy('id', 'desc')->first()->id ?? null;
 
     $freightBooking = FreightBooking::create(array_merge($data, [
       'lr_number' => $lorryReceipt->lr_number,
+      'linked_freight_booking_id' => $linked_freight_booking_id,
       'voucher_number' => $nextVoucherNumber,
       'pan_verified' => (bool)$data['pan_verified'],
       'company_id' => $data['company_id'],
@@ -988,6 +994,7 @@ class FreightBookingController extends Controller
       if (isset($data['is_cancelled']) && $data['is_cancelled'] === '1') {
         // When freight booking is cancelled, lorry receipt goes back to Pending
         $deliveryStatus = 'Pending';
+        $lorryReceipt->freight_booking_id = null; // Unlink freight booking
         \Log::info('FREIGHT BOOKING UPDATE: Setting status to Pending (cancelled)');
       } elseif (isset($data['is_delivered']) && $data['is_delivered'] === '1') {
         // Only set to 'Delivered' if memo_id exists on the lorry receipt

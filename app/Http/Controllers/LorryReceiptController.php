@@ -240,11 +240,12 @@ class LorryReceiptController extends Controller
     $buttons = '<div class="d-flex gap-1">';
 
     // Freight booking button - check if freight booking already exists
-    $freightBooking = FreightBooking::where('lr_id', $lorryReceipt->id)->first();
+    $freight_booking_id = $lorryReceipt->freight_booking_id;
+    $freightBooking = FreightBooking::find($freight_booking_id);
 
-    if ($freightBooking) {
+    if ($freight_booking_id) {
       // If freight booking exists, redirect to edit form
-      $buttons .= '<a href="' . route('freight_bookings.edit', $freightBooking->id) . '" class="btn btn-sm btn-warning" title="Edit Freight Booking" data-bs-toggle="tooltip">';
+      $buttons .= '<a href="' . route('freight_bookings.edit', $freight_booking_id) . '" class="btn btn-sm btn-warning" title="Edit Freight Booking" data-bs-toggle="tooltip">';
       $buttons .= '<i class="bi bi-truck"></i>';
       $buttons .= '</a>';
     } else {
