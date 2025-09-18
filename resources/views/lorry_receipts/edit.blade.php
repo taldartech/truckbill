@@ -164,6 +164,7 @@
                             <div class="invalid-feedback">Please select a customer.</div>
                         </div>
                     </div>
+                    @if ($lorry_receipt->delivery_status == 'Delivered')
                     <div class="row mb-3">
                         <div class="col-md-4">
                             <label for="memo_id" class="form-label">Memo ID</label>
@@ -179,6 +180,7 @@
                             <small id="memo_id_feedback"></small>
                         </div>
                     </div>
+                    @endif
                     <div class="row mb-3">
                         <div class="col-md-4">
                             <label for="truck_id" class="form-label">Truck *</label>
