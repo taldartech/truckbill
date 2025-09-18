@@ -226,6 +226,7 @@
                             class="form-control @error('tr_fr_rate') is-invalid @enderror" name="tr_fr_rate" id="tr_fr_rate"
                             value="{{ old('tr_fr_rate', $freightBooking->tr_fr_rate) }}"
                             placeholder="Enter freight rate (₹1 - ₹20,000 per ton)" required
+                            {{ $freightBooking->is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
                             {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
                         <small class="form-text text-muted">
                             <i class="fas fa-info-circle"></i> Rate must be between ₹1 and ₹20,000 per ton
@@ -240,6 +241,7 @@
                             class="form-control @error('tr_amount') is-invalid @enderror" name="tr_amount" id="tr_amount"
                             value="{{ old('tr_amount', $freightBooking->tr_amount) }}"
                             placeholder="Auto-calculated (editable)" required
+                            {{ $freightBooking->is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
                             {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
                         <small class="form-text text-muted">
                             <i class="fas fa-info-circle"></i> Auto-calculated: TR Freight Rate × Weight. Must be greater
@@ -277,6 +279,7 @@
                                 name="eway_bill_number" id="eway_bill_number"
                                 value="{{ old('eway_bill_number', $freightBooking->eway_bill_number) }}"
                                 placeholder="Enter E-way bill number"
+                                {{ $freightBooking->is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
                                 {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
                             <a href="https://ewaybillgst.gov.in/Login.aspx" target="_blank" class="btn btn-outline-info"
                                 title="Check E-way Bill Status">
@@ -289,6 +292,7 @@
                         <input type="date" class="form-control @error('eway_bill_expiry') is-invalid @enderror"
                             name="eway_bill_expiry" id="eway_bill_expiry"
                             value="{{ old('eway_bill_expiry', $freightBooking->eway_bill_expiry ? $freightBooking->eway_bill_expiry : '') }}"
+                            {{ $freightBooking->is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
                             {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
                         @error('eway_bill_expiry')
                             <div class="text-danger">{{ $message }}</div>

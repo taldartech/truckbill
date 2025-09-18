@@ -267,12 +267,14 @@ class LorryReceiptController extends Controller
       $buttons .= '<i class="bi bi-pencil"></i></a>';
     }
 
-    // Delete button
-    $deleteUrl = route('lorry_receipts.destroy', $lorryReceipt->id);
-    $buttons .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this lorry receipt?\')">';
-    $buttons .= csrf_field() . method_field('DELETE');
-    $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete" data-bs-toggle="tooltip">';
-    $buttons .= '<i class="bi bi-trash"></i></button></form>';
+    if ($lorryReceipt->delivery_status != 'Delivered') {
+      // Delete button
+      $deleteUrl = route('lorry_receipts.destroy', $lorryReceipt->id);
+      $buttons .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this lorry receipt?\')">';
+      $buttons .= csrf_field() . method_field('DELETE');
+      $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete" data-bs-toggle="tooltip">';
+      $buttons .= '<i class="bi bi-trash"></i></button></form>';
+    }
 
     $buttons .= '</div>';
 
@@ -742,6 +744,28 @@ class LorryReceiptController extends Controller
 
   public function update(Request $request, \App\Models\LorryReceipt $lorry_receipt)
   {
+    if ($lorry_receipt->delivery_status == 'Delivered') {
+      // only allow updating memo_id if already delivered
+      $validated = $request->validate([
+        'memo_id' => [
+          'nullable',
+          'integer',
+          function ($attribute, $value, $fail) use ($request, $lorry_receipt) {
+            if ($value) {
+              $exists = \App\Models\LorryReceipt::where('memo_id', $value)
+                ->where('id', '!=', $lorry_receipt->id) // ignore current LR
+                ->first();
+
+              if ($exists && $exists->customer_id != $request->customer_id) {
+                $fail("Memo ID $value is already used by another customer.");
+              }
+            }
+          }
+        ],
+      ]);
+      $lorry_receipt->update($validated);
+      return redirect()->route('lorry_receipts.index')->with('success', 'Lorry Receipt updated successfully! Only Memo ID could be updated as the LR is already delivered.');
+    }
     $validated = $request->validate([
       'customer_id' => 'required|exists:consignees,id',
       'lr_number' => 'required|string|max:100|unique:lorry_receipts,lr_number,' . $lorry_receipt->id . ',id',
