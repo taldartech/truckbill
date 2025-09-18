@@ -92,9 +92,17 @@
                             <i class="bi bi-credit-card"></i> Voucher Payment
                         </button>
                     @endif
-                    <a href="{{ route('freight_bookings.edit', $freightBooking->id) }}" class="btn btn-sm btn-primary me-2">
-                        <i class="bi bi-pencil"></i> Edit
-                    </a>
+                    @if ($freightBooking->lr && $freightBooking->lr->invoice_generated == 1)
+                        <button type="button" class="btn btn-sm btn-secondary me-2" disabled
+                            title="Cannot edit booking as an invoice has been generated for its associated Lorry Receipt">
+                            <i class="bi bi-pencil"></i> Edit
+                        </button>
+                    @else
+                        <a href="{{ route('freight_bookings.edit', $freightBooking->id) }}"
+                            class="btn btn-sm btn-primary me-2">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a>
+                    @endif
                 @else
                     <button type="button" class="btn btn-sm btn-secondary me-2" disabled
                         title="Cannot perform actions on cancelled booking">
@@ -220,7 +228,8 @@
                             </div>
                             <div class="info-row">
                                 <span class="info-label">E-way Bill Expiry:</span>
-                                <span class="info-value">{{ $freightBooking->eway_bill_expiry ? date('d-m-Y', strtotime($freightBooking->eway_bill_expiry)) : 'N/A' }}</span>
+                                <span
+                                    class="info-value">{{ $freightBooking->eway_bill_expiry ? date('d-m-Y', strtotime($freightBooking->eway_bill_expiry)) : 'N/A' }}</span>
                             </div>
                             <div class="info-row">
                                 <span class="info-label">Good Type:</span>
@@ -775,7 +784,7 @@
             if (paymentAmount > maxBalance) {
                 alert(
                     `Payment amount (₹${paymentAmount.toFixed(2)}) cannot exceed the balance amount (₹${maxBalance.toFixed(2)})`
-                    );
+                );
                 allocatedInput.focus();
                 return;
             }

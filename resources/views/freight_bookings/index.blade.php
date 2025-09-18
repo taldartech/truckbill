@@ -245,10 +245,17 @@
                                             class="btn btn-sm btn-outline-info" style="padding: 8px;" title="View">
                                             <i class="bi bi-eye"></i>
                                         </a>
+                                        @if ($booking->lr && $booking->lr->invoice_generated == 1)
+                                            <button class="btn btn-sm btn-outline-warning"
+                                                style="padding: 8px;" title="Edit Disabled">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                        @else
                                         <a href="{{ route('freight_bookings.edit', $booking->id) }}"
                                             class="btn btn-sm btn-outline-primary" style="padding: 8px;" title="Edit">
                                             <i class="bi bi-pencil"></i>
                                         </a>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>

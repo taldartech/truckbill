@@ -257,14 +257,16 @@ class LorryReceiptController extends Controller
 
     // Edit button - check if freight booking exists and add confirmation
     $editUrl = route('lorry_receipts.edit', $lorryReceipt->id);
-    if ($freightBooking) {
-      // If freight booking exists, add confirmation dialog
-      $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit" data-bs-toggle="tooltip" onclick="return confirm(\'A freight booking already exists for this Lorry Receipt. Do you still want to continue and edit it?\')">';
-      $buttons .= '<i class="bi bi-pencil"></i></a>';
-    } else {
-      // If no freight booking exists, normal edit button
-      $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit" data-bs-toggle="tooltip">';
-      $buttons .= '<i class="bi bi-pencil"></i></a>';
+    if ($lorryReceipt->invoice_generated == 0) {
+      if ($freightBooking) {
+        // If freight booking exists, add confirmation dialog
+        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit" data-bs-toggle="tooltip" onclick="return confirm(\'A freight booking already exists for this Lorry Receipt. Do you still want to continue and edit it?\')">';
+        $buttons .= '<i class="bi bi-pencil"></i></a>';
+      } else {
+        // If no freight booking exists, normal edit button
+        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit" data-bs-toggle="tooltip">';
+        $buttons .= '<i class="bi bi-pencil"></i></a>';
+      }
     }
 
     if ($lorryReceipt->delivery_status != 'Delivered') {
@@ -744,6 +746,9 @@ class LorryReceiptController extends Controller
 
   public function update(Request $request, \App\Models\LorryReceipt $lorry_receipt)
   {
+    if ($lorry_receipt->invoice_generated == 1) {
+      return redirect()->route('lorry_receipts.index')->with('error', 'Cannot edit Lorry Receipt as invoice has already been generated.');
+    }
     if ($lorry_receipt->delivery_status == 'Delivered') {
       // only allow updating memo_id if already delivered
       $validated = $request->validate([
@@ -766,6 +771,7 @@ class LorryReceiptController extends Controller
       $lorry_receipt->update($validated);
       return redirect()->route('lorry_receipts.index')->with('success', 'Lorry Receipt updated successfully! Only Memo ID could be updated as the LR is already delivered.');
     }
+
     $validated = $request->validate([
       'customer_id' => 'required|exists:consignees,id',
       'lr_number' => 'required|string|max:100|unique:lorry_receipts,lr_number,' . $lorry_receipt->id . ',id',
