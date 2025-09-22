@@ -190,7 +190,8 @@
                                             data-lr-transporter="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->name : '' }}"
                                             data-fb-transporter="{{ $booking->transporter_name ?? ($booking->transporter ? $booking->transporter->name : '') }}"
                                             data-tds-percentage="{{ $booking->transporter_tds_percentage ?? '' }}"
-                                            data-linked-lr-id="{{ $booking->linked_lr_id ?? '' }}">
+                                            data-linked-lr-id="{{ $booking->linked_lr_id ?? '' }}"
+                                            data-customer-id="{{ $booking->lr && $booking->lr->customer ? $booking->lr->customer->id : '' }}">
                                     @endif
                                 </td>
                                 {{-- <td class="text-center">{{ $bookings->firstItem() + $index }}</td>
