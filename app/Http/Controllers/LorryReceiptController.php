@@ -192,7 +192,7 @@ public function getLinkedLRs($linkedLrId)
     try {
         $linkedLRs = LorryReceipt::with(['consignor', 'consignee', 'customer', 'transporter', 'truck', 'reference'])
             ->where('linked_lr_id', $linkedLrId)
-            ->orWhere('id', $linkedLrId) // include parent LR also
+            
             ->get();
 
         if ($linkedLRs->isEmpty()) {
@@ -220,7 +220,7 @@ public function getLinkedLRs($linkedLrId)
                 'id' => $lr->id,
                 'lr_number' => $lr->lr_number,
                 'gr_date' => $lr->gr_date,
-                'status' => $lr->status,
+                'status' => $lr->delivery_status,
                 'customer' => $lr->customer ? $lr->customer->name : null,
                 'consignor' => $lr->consignor ? $lr->consignor->name : null,
                 'consignee' => $lr->consignee ? $lr->consignee->name : null,

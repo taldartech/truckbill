@@ -588,7 +588,7 @@ if (lr.linked_lr_id) {
             let commonHtml = `
                 <div class="card mb-3">
                     <div class="card-header bg-light">
-                        <h6 class="mb-0"><i class="bi bi-truck"></i> Common Transport Details</h6>
+                        <h6 class="mb-0"><i class="bi bi-truck"></i> Common Details</h6>
                     </div>
                     <div class="card-body">
                         <table class="table table-borderless table-sm">
