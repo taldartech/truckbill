@@ -265,11 +265,12 @@ class LorryReceiptController extends Controller
     $buttons = '<div class="d-flex gap-1">';
 
     // Freight booking button - check if freight booking already exists
-    $freightBooking = FreightBooking::where('lr_id', $lorryReceipt->id)->first();
+    $freight_booking_id = $lorryReceipt->freight_booking_id;
+    $freightBooking = FreightBooking::find($freight_booking_id);
 
-    if ($freightBooking) {
+    if ($freight_booking_id) {
       // If freight booking exists, redirect to edit form
-      $buttons .= '<a href="' . route('freight_bookings.edit', $freightBooking->id) . '" class="btn btn-sm btn-warning" title="Edit Freight Booking" data-bs-toggle="tooltip">';
+      $buttons .= '<a href="' . route('freight_bookings.edit', $freight_booking_id) . '" class="btn btn-sm btn-warning" title="Edit Freight Booking" data-bs-toggle="tooltip">';
       $buttons .= '<i class="bi bi-truck"></i>';
       $buttons .= '</a>';
     } else {
@@ -281,22 +282,26 @@ class LorryReceiptController extends Controller
 
     // Edit button - check if freight booking exists and add confirmation
     $editUrl = route('lorry_receipts.edit', $lorryReceipt->id);
-    if ($freightBooking) {
-      // If freight booking exists, add confirmation dialog
-      $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit" data-bs-toggle="tooltip" onclick="return confirm(\'A freight booking already exists for this Lorry Receipt. Do you still want to continue and edit it?\')">';
-      $buttons .= '<i class="bi bi-pencil"></i></a>';
-    } else {
-      // If no freight booking exists, normal edit button
-      $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit" data-bs-toggle="tooltip">';
-      $buttons .= '<i class="bi bi-pencil"></i></a>';
+    if ($lorryReceipt->invoice_generated == 0) {
+      if ($freightBooking) {
+        // If freight booking exists, add confirmation dialog
+        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit" data-bs-toggle="tooltip" onclick="return confirm(\'A freight booking already exists for this Lorry Receipt. Do you still want to continue and edit it?\')">';
+        $buttons .= '<i class="bi bi-pencil"></i></a>';
+      } else {
+        // If no freight booking exists, normal edit button
+        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit" data-bs-toggle="tooltip">';
+        $buttons .= '<i class="bi bi-pencil"></i></a>';
+      }
     }
 
-    // Delete button
-    $deleteUrl = route('lorry_receipts.destroy', $lorryReceipt->id);
-    $buttons .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this lorry receipt?\')">';
-    $buttons .= csrf_field() . method_field('DELETE');
-    $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete" data-bs-toggle="tooltip">';
-    $buttons .= '<i class="bi bi-trash"></i></button></form>';
+    if ($lorryReceipt->delivery_status != 'Delivered') {
+      // Delete button
+      $deleteUrl = route('lorry_receipts.destroy', $lorryReceipt->id);
+      $buttons .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this lorry receipt?\')">';
+      $buttons .= csrf_field() . method_field('DELETE');
+      $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete" data-bs-toggle="tooltip">';
+      $buttons .= '<i class="bi bi-trash"></i></button></form>';
+    }
 
     $buttons .= '</div>';
 
@@ -315,7 +320,7 @@ class LorryReceiptController extends Controller
 
     $transporters = Transporter::all();
     $truckOwners = Transporter::where('is_owner', 1)->get();
-    $agencies = Transporter::where('is_owner', 0)->get();
+    $agencies = Transporter::where('is_owner', 0)->where('company_id', auth()->user()->company_id)->get();
     $customers = Customer::where('company_id', auth()->user()->company_id)->orderBy('name')->get();
     $consignees = Consignee::where('company_id', auth()->user()->company_id)->orderBy('name')->get();
     $goodsTypes = GoodType::all();
@@ -342,7 +347,7 @@ class LorryReceiptController extends Controller
 
     $transporters = Transporter::all();
     $truckOwners = Transporter::where('is_owner', 1)->get();
-    $agencies = Transporter::where('is_owner', 0)->get();
+    $agencies = Transporter::where('is_owner', 0)->where('company_id', auth()->user()->company_id)->get();
     $customers = Customer::where('company_id', auth()->user()->company_id)->orderBy('name')->get();
     $consignees = Consignee::where('company_id', auth()->user()->company_id)->orderBy('name')->get();
     $goodsTypes = GoodType::all();
@@ -518,6 +523,7 @@ class LorryReceiptController extends Controller
       $perItemRules = [
         'lrs' => 'nullable|array|min:1',
         'lrs.*.lr_number' => 'nullable|string|max:100|distinct|unique:lorry_receipts,lr_number',
+        'lrs.*.invoice_number' => 'nullable|string|max:256|distinct|unique:lorry_receipts,invoice_number',
         'lrs.*.customer_id' => 'nullable|exists:consignees,id',
         'lrs.*.consignor_id' => 'nullable|exists:consignees,id',
         'lrs.*.consignor_contact_number' => 'nullable|string|max:20',
@@ -556,6 +562,7 @@ class LorryReceiptController extends Controller
 
           $data = [
             'lr_number' => $item['lr_number'],
+            'invoice_number' => $item['invoice_number'],
             'customer_id' => $item['customer_id'],
             'consignor_id' => $item['consignor_id'],
             'consignor_contact_number' => $item['consignor_contact_number'] ?? '1234567890',
@@ -583,7 +590,6 @@ class LorryReceiptController extends Controller
             'delivery_status' => 'Pending',
             'linked_lr_id' => $nextLinkedId,
           ];
-
           $created[] = \App\Models\LorryReceipt::create($data);
         }
 
@@ -599,6 +605,7 @@ class LorryReceiptController extends Controller
     $validated = $request->validate([
       'customer_id' => 'required|exists:consignees,id',
       'lr_number' => 'required|string|max:100|unique:lorry_receipts,lr_number',
+      'invoice_number' => 'nullable|string|max:256|unique:lorry_receipts,invoice_number',
       'memo_id' => 'nullable|integer',
       'truck_id' => 'nullable|exists:trucks,id',
       'transporter_id' => 'nullable|exists:transporters,id',
@@ -671,12 +678,15 @@ class LorryReceiptController extends Controller
   public function checkLrNumberUniqueness(Request $request)
   {
     $lrNumber = $request->input('lr_number');
+    $excludeId = $request->input('exclude_id') ?? null;
 
     if (!$lrNumber) {
       return response()->json(['valid' => false, 'message' => 'LR Number is required']);
     }
 
-    $exists = \App\Models\LorryReceipt::where('lr_number', $lrNumber)->exists();
+    $exists = \App\Models\LorryReceipt::where('lr_number', $lrNumber)
+      ->where('id', '!=', $excludeId)
+      ->exists();
 
     if ($exists) {
       return response()->json([
@@ -688,6 +698,32 @@ class LorryReceiptController extends Controller
     return response()->json([
       'valid' => true,
       'message' => 'LR Number is available'
+    ]);
+  }
+
+  public function checkInvoiceNumberUniqueness(Request $request)
+  {
+    $invoiceNumber = $request->input('invoice_number');
+    $excludeId = $request->input('exclude_id') ?? null;
+
+    if (!$invoiceNumber) {
+      return response()->json(['valid' => false, 'message' => 'Invoice Number is required']);
+    }
+
+    $exists = \App\Models\LorryReceipt::where('invoice_number', $invoiceNumber)
+      ->where('id', '!=', $excludeId)
+      ->exists();
+
+    if ($exists) {
+      return response()->json([
+        'valid' => false,
+        'message' => 'Invoice Number already exists. Please use a unique Invoice Number.'
+      ]);
+    }
+
+    return response()->json([
+      'valid' => true,
+      'message' => 'Invoice Number is available'
     ]);
   }
 
@@ -735,9 +771,36 @@ class LorryReceiptController extends Controller
 
   public function update(Request $request, \App\Models\LorryReceipt $lorry_receipt)
   {
+    if ($lorry_receipt->invoice_generated == 1) {
+      return redirect()->route('lorry_receipts.index')->with('error', 'Cannot edit Lorry Receipt as invoice has already been generated.');
+    }
+    if ($lorry_receipt->delivery_status == 'Delivered') {
+      // only allow updating memo_id if already delivered
+      $validated = $request->validate([
+        'memo_id' => [
+          'nullable',
+          'integer',
+          function ($attribute, $value, $fail) use ($request, $lorry_receipt) {
+            if ($value) {
+              $exists = \App\Models\LorryReceipt::where('memo_id', $value)
+                ->where('id', '!=', $lorry_receipt->id) // ignore current LR
+                ->first();
+
+              if ($exists && $exists->customer_id != $request->customer_id) {
+                $fail("Memo ID $value is already used by another customer.");
+              }
+            }
+          }
+        ],
+      ]);
+      $lorry_receipt->update($validated);
+      return redirect()->route('lorry_receipts.index')->with('success', 'Lorry Receipt updated successfully! Only Memo ID could be updated as the LR is already delivered.');
+    }
+
     $validated = $request->validate([
       'customer_id' => 'required|exists:consignees,id',
       'lr_number' => 'required|string|max:100|unique:lorry_receipts,lr_number,' . $lorry_receipt->id . ',id',
+      'invoice_number' => 'nullable|string|max:256|unique:lorry_receipts,invoice_number,' . $lorry_receipt->id . ',id',
 
       'memo_id' => [
         'nullable',

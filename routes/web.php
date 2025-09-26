@@ -49,6 +49,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/api/calculate-tds-percentage', [TransporterController::class, 'calculateTdsPercentage']);
     Route::post('/api/calculate-truck-owner-tds-percentage', [TruckOwnerController::class, 'calculateTruckOwnerTdsPercentage']);
     Route::post('/api/check-lr-number-uniqueness', [LorryReceiptController::class, 'checkLrNumberUniqueness']);
+    Route::post('/api/check-invoice-number-uniqueness', [LorryReceiptController::class, 'checkInvoiceNumberUniqueness']);
     Route::get('/api/dropdown/states/{countryId}', [\App\Http\Controllers\Api\DropdownController::class, 'states']);
     Route::get('/api/dropdown/cities/{stateId}', [\App\Http\Controllers\Api\DropdownController::class, 'cities']);
 

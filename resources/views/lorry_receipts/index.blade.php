@@ -14,6 +14,9 @@
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
+    @if(session('error'))
+        <div class="alert alert-danger">{{ session('error') }}</div>
+    @endif
 <div class="d-flex justify-content-end gap-2 mb-3">
     <div class="d-flex justify-content-end gap-2 mb-3">
         <a href="{{ route('lorry_receipts.create') }}" class="btn btn-info">
@@ -488,6 +491,10 @@ function showLRDetails(id) {
                                     <tr>
                                         <td class="fw-bold">Status:</td>
                                         <td><span class="badge ${lr.delivery_status === 'Delivered' ? 'bg-success' : 'bg-warning'}">${lr.delivery_status}</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Invoice Number:</td>
+                                        <td>${lr.invoice_number || 'N/A'}</td>
                                     </tr>
                                 </table>
                             </div>

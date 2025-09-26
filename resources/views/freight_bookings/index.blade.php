@@ -170,6 +170,10 @@
                                         <span class="text-muted"
                                             title="No checkbox available: memo_id is added and balance is zero"><i
                                                 class="bi bi-dash-circle"></i></span>
+                                    @elseif($booking->is_cancelled)
+                                        <span class="text-muted"
+                                            title="No checkbox available: Freight Booking is cancelled"><i
+                                                class="bi bi-dash-circle"></i></span>
                                     @else
                                         <input type="checkbox" class="row-checkbox" value="{{ $booking->id }}"
                                             data-lr="{{ $booking->lr ? $booking->lr->lr_number : '' }}"
@@ -186,7 +190,8 @@
                                             data-lr-transporter="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->name : '' }}"
                                             data-fb-transporter="{{ $booking->transporter_name ?? ($booking->transporter ? $booking->transporter->name : '') }}"
                                             data-tds-percentage="{{ $booking->transporter_tds_percentage ?? '' }}"
-                                            data-linked-lr-id="{{ $booking->linked_lr_id ?? '' }}">
+                                            data-linked-lr-id="{{ $booking->linked_lr_id ?? '' }}"
+                                            data-customer-id="{{ $booking->lr && $booking->lr->customer ? $booking->lr->customer->id : '' }}">
                                     @endif
                                 </td>
                                 {{-- <td class="text-center">{{ $bookings->firstItem() + $index }}</td>
@@ -241,10 +246,18 @@
                                             class="btn btn-sm btn-outline-info" style="padding: 8px;" title="View">
                                             <i class="bi bi-eye"></i>
                                         </a>
-                                        <a href="{{ route('freight_bookings.edit', $booking->id) }}"
-                                            class="btn btn-sm btn-outline-primary" style="padding: 8px;" title="Edit">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
+                                        @if ($booking->lr && $booking->lr->invoice_generated == 1)
+                                            <button class="btn btn-sm btn-outline-warning" style="padding: 8px;"
+                                                title="Edit Disabled">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                        @else
+                                            <a href="{{ route('freight_bookings.edit', $booking->id) }}"
+                                                class="btn btn-sm btn-outline-primary" style="padding: 8px;"
+                                                title="Edit">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -467,84 +480,57 @@
 
             function updatePaymentButtonsVisibility() {
                 const checkedBoxes = $('.row-checkbox:checked');
-
+                $('#bulk-memo-id-btn, #voucher-payment-btn, #combined-payment-btn').hide();
                 if (checkedBoxes.length === 0) {
-                    // No selection - hide all buttons
-                    $('#bulk-memo-id-btn, #voucher-payment-btn, #combined-payment-btn').hide();
-                    return;
+                    return; // nothing selected
                 }
-
                 if (checkedBoxes.length === 1) {
-                    // Single selection - show only voucher payment button
-                    $('#voucher-payment-btn').show();
-                    $('#bulk-memo-id-btn').show();
-                    $('#combined-payment-btn').hide();
+                    $('#bulk-memo-id-btn, #voucher-payment-btn').show();
                     return;
                 }
-
-                // Multiple selections - check if they have same transporter and same linked_lr_id
-                let firstTruckId = null;
+                let firstCustomerId = null;
                 let firstTransporterId = null;
-                let allSameTruckAndTransporter = true;
-                let hasAnyCancelled = false;
                 let firstLinkedLrId = null;
+                let allSameCustomer = true;
+                let allSameTransporter = true;
                 let allSameLinked = true;
 
                 checkedBoxes.each(function() {
                     const checkbox = $(this);
-                    const truckId = checkbox.data('truck-id');
+                    const customerId = checkbox.data('customer-id');
                     const transporterId = checkbox.data('transporter-id');
-                    const isCancelled = checkbox.data('is-cancelled') === '1';
                     const linkedLrId = checkbox.data('linked-lr-id') || '';
 
-                    // Check if any freight booking is cancelled
-                    if (isCancelled) {
-                        hasAnyCancelled = true;
-                    }
-
-                    if (firstTruckId === null) {
-                        firstTruckId = truckId;
+                    if (firstCustomerId === null) {
+                        firstCustomerId = customerId;
                         firstTransporterId = transporterId;
                         firstLinkedLrId = linkedLrId;
                     } else {
-                        // Check if current selection has different truck or transporter
-                        console.log("truckId", truckId);
-                        console.log("firstTruckId", firstTruckId);
-                        console.log("transporterId", transporterId);
-                        console.log("firstTransporterId", firstTransporterId);
+                        if (customerId !== firstCustomerId) {
+                            allSameCustomer = false;
+                        }
                         if (transporterId !== firstTransporterId) {
-                            allSameTruckAndTransporter = false;
-
+                            allSameTransporter = false;
                         }
                         if (linkedLrId !== firstLinkedLrId) {
                             allSameLinked = false;
                         }
                     }
                 });
-                console.log("allSameTruckAndTransporter", allSameTruckAndTransporter);
-                console.log("hasAnyCancelled", hasAnyCancelled);
-                console.log("allSameLinked", allSameLinked);
 
-                // Show both buttons only if:
-                // 1. All selections have same truck and transporter
-                // 2. None of the freight bookings are cancelled
-                if (allSameTruckAndTransporter && !hasAnyCancelled) {
-                    $('#bulk-memo-id-btn, #voucher-payment-btn').show();
-                } else {
-                    // Hide both buttons if conditions are not met
-                    $('#bulk-memo-id-btn, #voucher-payment-btn').hide();
-                    if (!allSameTruckAndTransporter && checkedBoxes.length > 1) {
-                        $('#voucher-payment-btn').hide();
-                        console.log('Cannot process payment: Selected bookings have different transporters');
-                        return;
-                    }
+                // 1. Bulk Memo ID button → if customer same
+                if (allSameCustomer) {
+                    $('#bulk-memo-id-btn').show();
                 }
 
-                // Combined Payment button visibility: only when same linked_lr_id (non-empty), >1 and not cancelled
-                if (checkedBoxes.length > 1 && allSameLinked && !hasAnyCancelled && firstLinkedLrId) {
+                // 2. Voucher Payment button → if transporter same
+                if (allSameTransporter) {
+                    $('#voucher-payment-btn').show();
+                }
+
+                // 3. Combined Payment button → if linked_lr_id same and not empty
+                if (allSameLinked && firstLinkedLrId) {
                     $('#combined-payment-btn').show();
-                } else {
-                    $('#combined-payment-btn').hide();
                 }
             }
 
@@ -871,6 +857,11 @@
             // Handle submit of Combined Payment via AJAX
             $(document).off('submit', '#combinedPaymentForm').on('submit', '#combinedPaymentForm', function(e) {
                 e.preventDefault();
+                if (!confirm(
+                        "Please review all payment details carefully before proceeding.\nOnce the voucher status is marked as PAID, it cannot be edited or changed.\nEnsure the information is correct before saving."
+                        )) {
+                    return;
+                }
                 const form = this;
                 const url = $(form).attr('action');
                 const formData = new FormData(form);
@@ -2322,6 +2313,12 @@
                 return;
             }
 
+            if (!confirm(
+                    "Please review all payment details carefully before proceeding.\nOnce the voucher status is marked as PAID, it cannot be edited or changed.\nEnsure the information is correct before saving."
+                    )) {
+                return;
+            }
+
             // Create form data
             const formData = new FormData();
             //     if (pumpId) {
@@ -2359,6 +2356,8 @@
                 '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
             submitBtn.disabled = true;
 
+
+
             // Submit the form via AJAX
             fetch('{{ route('freight_bookings.voucher_payment') }}', {
                     method: 'POST',
@@ -2367,21 +2366,12 @@
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                     }
                 })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
                     // Hide modal
-
-
-                    $('#voucherPaymentModal').modal('hide');
-
-
                     if (data.success) {
                         alert(data.message || 'Payment processed successfully!');
+                        $('#voucherPaymentModal').modal('hide');
                         // Refresh the page or table
                         location.reload();
                     } else {

@@ -15,6 +15,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\VoucherPaymentsExport;
+use App\Models\VoucherLinked;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class VoucherPaymentController extends Controller
@@ -39,11 +40,22 @@ class VoucherPaymentController extends Controller
       'freight_booking.lr.consignor.city',
       'freight_booking.lr.consignee.city',
       'freight_booking.lr.truck'
+    ])->whereDate('date', $selectedDate)
+      ->whereNull('linked_voucher_id');
+    $query1 = VoucherLinked::with([
+      'freight_booking.lr',
+      'company',
+      'pump',
+      'freight_booking.transporter',
+      'freight_booking.lr.consignor.city',
+      'freight_booking.lr.consignee.city',
+      'freight_booking.lr.truck'
     ])->whereDate('date', $selectedDate);
 
     // Apply company filter for non-super admin users
     if (auth()->user()->userRole->name !== 'super_admin') {
       $query->where('company_id', auth()->user()->company_id);
+      $query1->where('company_id', auth()->user()->company_id);
     }
 
     // Apply Truck No filter
@@ -51,11 +63,17 @@ class VoucherPaymentController extends Controller
       $query->whereHas('freight_booking.lr.truck', function ($q) use ($request) {
         $q->where('truck_number', 'like', '%' . $request->truck_no . '%');
       });
+      $query1->whereHas('freight_booking.lr.truck', function ($q) use ($request) {
+        $q->where('truck_number', 'like', '%' . $request->truck_no . '%');
+      });
     }
 
     // Apply Transporter filter
     if ($request->filled('transporter')) {
       $query->whereHas('freight_booking.transporter', function ($q) use ($request) {
+        $q->where('id', $request->transporter);
+      });
+      $query1->whereHas('freight_booking.transporter', function ($q) use ($request) {
         $q->where('id', $request->transporter);
       });
     }
@@ -92,19 +110,20 @@ class VoucherPaymentController extends Controller
     // Apply Status filter
     if ($request->filled('status')) {
       $query->where('payment_status', $request->status);
+      $query1->where('payment_status', $request->status);
     }
 
-    // Get paginated results with all query parameters
     $payments = $query->orderBy('created_at', 'desc')
-      ->paginate(15)
-      ->appends($request->query());
-
+      ->get();
+    $payments1 = $query1->orderBy('created_at', 'desc')
+      ->get();
     // Get filter data for dropdowns
     $transporters = \App\Models\Transporter::orderBy('name')->get();
     $cities = \App\Models\City::orderBy('name')->get();
 
     return view('voucher_payments.daily', [
       'payments' => $payments,
+      'payments1' => $payments1,
       'selectedDate' => $selectedDate,
       'transporters' => $transporters,
       'cities' => $cities
@@ -369,6 +388,10 @@ class VoucherPaymentController extends Controller
 
   public function update(Request $request, VoucherPayment $voucher_payment)
   {
+    if ($voucher_payment->payment_status === 'paid') {
+      return redirect()->back()
+        ->with('error', 'Paid payments cannot be edited.');
+    }
     $data = $request->validate([
       'freight_booking_id' => 'required|exists:freight_bookings,id',
       'voucher_number' => 'required|string',
@@ -398,12 +421,13 @@ class VoucherPaymentController extends Controller
     if ($amountDifference != 0) {
       // Validate that advance amount won't exceed TR amount or go below 0
       $newAdvanceAmount = $freightBooking->advance_amount + $amountDifference;
+      $tds_amount = $freightBooking->tds_amount ?? 0;
 
-      if ($newAdvanceAmount > ($freightBooking->tr_amount - $freightBooking->tds_amount)) {
+      if ($newAdvanceAmount > ($freightBooking->tr_amount - $tds_amount)) {
         return redirect()->back()
           ->withInput()
           ->with('error', 'Advance amount cannot exceed TR amount. Maximum allowed: ₹' .
-            number_format(($freightBooking->tr_amount - $freightBooking->tds_amount) - ($freightBooking->advance_amount - $voucher_payment->amount), 2));
+            number_format(($freightBooking->tr_amount - $tds_amount) - ($freightBooking->advance_amount - $voucher_payment->amount), 2));
       }
 
       if ($newAdvanceAmount < 0) {
@@ -416,7 +440,7 @@ class VoucherPaymentController extends Controller
       $freightBooking->advance_amount = $newAdvanceAmount;
 
       // Recalculate balance_amount
-      $freightBooking->balance_amount = ($freightBooking->tr_amount - $freightBooking->tds_amount) - $freightBooking->advance_amount;
+      $freightBooking->balance_amount = ($freightBooking->tr_amount - $tds_amount) - $freightBooking->advance_amount;
 
       // Save the freight booking
       $freightBooking->save();
@@ -431,6 +455,13 @@ class VoucherPaymentController extends Controller
       $request->filled('reference_transaction_id')
     ) {
       $data['payment_status'] = 'paid';
+    }
+
+    if ($voucher_payment->linked_voucher_id != null) {
+      $linked_voucher = VoucherLinked::find($voucher_payment->linked_voucher_id);
+      $linked_voucher->update([
+        'amount' => $linked_voucher->amount + ($data['amount'] - $voucher_payment->amount)
+      ]);
     }
 
     $voucher_payment->update($data);
@@ -684,21 +715,29 @@ class VoucherPaymentController extends Controller
     }
 
     $validated = $request->validate([
-      'payment_ids' => 'required|array|min:1',
+      'payment_ids' => 'nullable|array',
       'payment_ids.*' => 'required|integer|exists:voucher_payments,id',
+      'multiple_payment_ids' => 'nullable|array',
+      'multiple_payment_ids.*' => 'required|integer|exists:voucher_linkeds,id',
       'new_status' => 'required|in:pending,in-progress,paid'
     ]);
 
+    $payment_ids = $validated['payment_ids'] ?? [];
+    $multiple_payment_ids = $validated['multiple_payment_ids'] ?? [];
+
     try {
       // Get all selected payments
-      $payments = VoucherPayment::whereIn('id', $validated['payment_ids'])->get();
+      $payments = VoucherPayment::whereIn('id', $payment_ids)->get();
+      $linkedPayments = VoucherLinked::whereIn('id', $multiple_payment_ids)->get();
 
       // Check if all payments have the same current status
       $currentStatuses = $payments->pluck('payment_status')->unique();
+      $linkedStatuses = $linkedPayments->pluck('payment_status')->unique();
+      $currentStatuses = $currentStatuses->merge($linkedStatuses)->unique();
+
       if ($currentStatuses->count() > 1) {
         return redirect()->back()->with('error', 'Selected payments must have the same status.');
       }
-
       $currentStatus = $currentStatuses->first();
 
       // Validate status transition
@@ -710,15 +749,24 @@ class VoucherPaymentController extends Controller
       if ($currentStatus === 'paid') {
         return redirect()->back()->with('error', 'Paid payments cannot be updated.');
       }
-
+      $voucher_ids = [];
+      foreach ($multiple_payment_ids as $id) {
+        $voucher_ids = array_merge($voucher_ids, json_decode(VoucherLinked::find($id)->voucher_ids));
+      }
+      $voucher_ids = array_merge($payment_ids, $voucher_ids);
       // Update all payments
-      VoucherPayment::whereIn('id', $validated['payment_ids'])
+      VoucherPayment::whereIn('id', $voucher_ids)
+        ->update(['payment_status' => $validated['new_status']]);
+      VoucherLinked::whereIn('id', $multiple_payment_ids)
         ->update(['payment_status' => $validated['new_status']]);
 
-      return redirect()->back()->with('success', count($validated['payment_ids']) . ' payments updated successfully.');
+      $updatedCount = count($payment_ids) + count($multiple_payment_ids);
+
+      return redirect()->back()->with('success', $updatedCount . ' payments updated successfully.');
     } catch (\Exception $e) {
       \Log::error('Error in bulk update: ' . $e->getMessage(), [
-        'payment_ids' => $validated['payment_ids'],
+        'payment_ids' => $payment_ids,
+        'multiple_payment_ids' => $multiple_payment_ids,
         'new_status' => $validated['new_status']
       ]);
 
@@ -773,6 +821,10 @@ class VoucherPaymentController extends Controller
    */
   public function destroy(VoucherPayment $voucher_payment)
   {
+    if ($voucher_payment->payment_status === 'paid') {
+      return redirect()->back()
+        ->with('error', 'Paid payments cannot be deleted.');
+    }
     try {
       // Get the freight booking and voucher number before deletion
       $freightBooking = $voucher_payment->freight_booking;

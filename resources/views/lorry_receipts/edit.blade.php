@@ -164,24 +164,23 @@
                             <div class="invalid-feedback">Please select a customer.</div>
                         </div>
                     </div>
+                    @if ($lorry_receipt->delivery_status == 'Delivered')
                     <div class="row mb-3">
                         <div class="col-md-4">
                             <label for="memo_id" class="form-label">Memo ID</label>
-                            <input type="text" 
-                                   class="form-control @error('memo_id') is-invalid @enderror" 
-                                   id="memo_id" 
-                                   name="memo_id" 
-                                   value="{{ old('memo_id', $lorry_receipt->memo_id) }}">
-                            
+                            <input type="text" class="form-control @error('memo_id') is-invalid @enderror" id="memo_id"
+                                name="memo_id" value="{{ old('memo_id', $lorry_receipt->memo_id) }}">
+
                             {{-- Backend validation error --}}
                             @error('memo_id')
                                 <small class="text-danger">{{ $message }}</small>
                             @enderror
-                    
+
                             {{-- AJAX validation error/success --}}
                             <small id="memo_id_feedback"></small>
                         </div>
                     </div>
+                    @endif
                     <div class="row mb-3">
                         <div class="col-md-4">
                             <label for="truck_id" class="form-label">Truck *</label>
@@ -254,6 +253,18 @@
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
                             <div class="invalid-feedback">Please select a reference if applicable.</div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label for="invoice_number" class="form-label">Invoice Number <small
+                                    class="text-muted">(Optional)</small></label>
+                            <input type="text" class="form-control" id="invoice_number" name="invoice_number"
+                                value="{{ old('invoice_number', $lorry_receipt->invoice_number) }}" placeholder="Enter Invoice Number">
+                            @error('invoice_number')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                            <div class="invalid-feedback">Please enter a valid invoice number.</div>
+                            <div id="invoice-number-feedback" class="mt-1"></div>
                         </div>
                     </div>
                 </div>
@@ -1715,7 +1726,8 @@
                             'content')
                     },
                     body: JSON.stringify({
-                        lr_number: lrNumber
+                        lr_number: lrNumber,
+                        exclude_id: '{{ $lorry_receipt->id }}' // Exclude current LR ID for edit
                     })
                 })
                 .then(response => response.json())
@@ -1761,6 +1773,80 @@
             if (lrNumber) {
                 clearTimeout(lrNumberTimeout);
                 checkLrNumberUniqueness(lrNumber);
+            }
+        });
+
+        // Invoice Number uniqueness validation
+        const invoiceNumberInput = document.getElementById('invoice_number');
+        const invoiceNumberFeedback = document.getElementById('invoice-number-feedback');
+        let invoiceNumberTimeout;
+
+        function checkInvoiceNumberUniqueness(invoiceNumber) {
+            if (!invoiceNumber) {
+                invoiceNumberFeedback.innerHTML = '';
+                invoiceNumberInput.classList.remove('is-valid', 'is-invalid');
+                return;
+            }
+
+            // Show loading state
+            invoiceNumberFeedback.innerHTML = '<small class="text-info">🔍 Checking availability...</small>';
+            invoiceNumberInput.classList.remove('is-valid', 'is-invalid');
+
+            fetch('/api/check-invoice-number-uniqueness', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                            'content')
+                    },
+                    body: JSON.stringify({
+                        invoice_number: invoiceNumber,
+                        exclude_id: '{{ $lorry_receipt->id }}' // Exclude current LR ID for edit
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.valid) {
+                        invoiceNumberFeedback.innerHTML = '<small class="text-success">✅ ' + data.message +
+                            '</small>';
+                        invoiceNumberInput.classList.remove('is-invalid');
+                        invoiceNumberInput.classList.add('is-valid');
+                        invoiceNumberInput.setCustomValidity('');
+                    } else {
+                        invoiceNumberFeedback.innerHTML = '<small class="text-danger">❌ ' + data.message +
+                            '</small>';
+                        invoiceNumberInput.classList.remove('is-valid');
+                        invoiceNumberInput.classList.add('is-invalid');
+                        invoiceNumberInput.setCustomValidity(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking Invoice Number uniqueness:', error);
+                    invoiceNumberFeedback.innerHTML =
+                        '<small class="text-warning">⚠️ Unable to check availability</small>';
+                    invoiceNumberInput.classList.remove('is-valid', 'is-invalid');
+                });
+        }
+
+        // Add debounced input listener for Invoice Number
+        invoiceNumberInput.addEventListener('input', function() {
+            const invoiceNumber = this.value.trim();
+
+            // Clear previous timeout
+            clearTimeout(invoiceNumberTimeout);
+
+            // Set new timeout for debounced checking
+            invoiceNumberTimeout = setTimeout(() => {
+                checkInvoiceNumberUniqueness(invoiceNumber);
+            }, 500); // 500ms delay
+        });
+
+        // Check on blur as well
+        invoiceNumberInput.addEventListener('blur', function() {
+            const invoiceNumber = this.value.trim();
+            if (invoiceNumber) {
+                clearTimeout(invoiceNumberTimeout);
+                checkInvoiceNumberUniqueness(invoiceNumber);
             }
         });
 
@@ -1842,6 +1928,7 @@
                                 <p><strong>LR Number:</strong> ${formData.get('lr_number') || 'Not entered'}</p>
                                 <p><strong>GR Date:</strong> ${formData.get('gr_date') || 'Not selected'}</p>
                                 <p><strong>Customer:</strong> ${customerName}</p>
+                                <p><strong>Invoice Number:</strong> ${formData.get('invoice_number') || 'Not entered'}</p>
                             </div>
                         </div>
 

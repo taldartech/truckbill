@@ -21,10 +21,11 @@ class Invoice extends Model
         'sgst',
         'cgst',
         'igst',
+        'lr_ids',
     ];
     protected $casts = [
         'memo_ids' => 'array',
-      
+        'lr_ids' => 'array',
     ];
 
     public function consignee()

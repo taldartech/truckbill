@@ -15,20 +15,20 @@ class TransporterController extends Controller
     public function index(Request $request)
     {
         // Handle DataTables AJAX request
-        
+
         if ($request->ajax()) {
             return $this->getTransportersData($request);
         }
-        
+
         $companies = \App\Models\Company::all();
         return view('transporters.index', compact('companies'));
     }
-    
+
     private function getTransportersData(Request $request)
     {
         try {
             \Log::info('DataTables request started for transporters');
-            
+
             $query = \App\Models\Transporter::with(['company', 'city'])
                 ->where('is_owner', 0); // Default to show only Agencies
 
@@ -36,9 +36,9 @@ class TransporterController extends Controller
             if (auth()->user()->userRole->name !== 'super_admin') {
                 $query->where('company_id', auth()->user()->company_id);
             }
-            
+
             \Log::info('Query built successfully');
-        
+
         // Handle global search
         if ($request->has('search') && $request->search['value']) {
             $searchValue = $request->search['value'];
@@ -54,7 +54,7 @@ class TransporterController extends Controller
                   });
             });
         }
-        
+
         // Handle column-specific search
         if ($request->has('columns')) {
             foreach ($request->columns as $index => $column) {
@@ -89,12 +89,12 @@ class TransporterController extends Controller
                 }
             }
         }
-        
+
         // Handle sorting
         if ($request->has('order')) {
             $orderColumn = $request->order[0]['column'];
             $orderDirection = $request->order[0]['dir'];
-            
+
             switch ($orderColumn) {
                 case 0: // Sr. No (ID)
                     $query->orderBy('transporters.id', $orderDirection);
@@ -128,7 +128,7 @@ class TransporterController extends Controller
         } else {
             $query->orderBy('transporters.created_at', 'desc');
         }
-        
+
         // Get total count before pagination
         $totalQuery = \App\Models\Transporter::where('is_owner', 0);
         if (auth()->user()->userRole->name !== 'super_admin') {
@@ -136,12 +136,12 @@ class TransporterController extends Controller
         }
         $totalRecords = $totalQuery->count();
         $filteredRecords = $query->count();
-        
+
         // Handle pagination
         $start = $request->start ?? 0;
         $length = $request->length ?? 10;
         $transporters = $query->offset($start)->limit($length)->get();
-        
+
         // Format data for DataTables
         $data = $transporters->map(function($transporter, $index) use ($start) {
             return [
@@ -149,7 +149,7 @@ class TransporterController extends Controller
                 'name' => '<a href="javascript:void(0)" class="text-primary fw-bold transporter-name-link" data-id="' . $transporter->id . '" style="cursor: pointer; text-decoration: none;">' . ($transporter->name ?: '-') . '</a>',
                 'short_name' => $transporter->short_name ?: '-',
                 'contact_person' => $transporter->contact_person_name ?: '-',
-               
+
                 'contact_number' => $transporter->mobile_number ?: '-',
                 'declaration_given' => $transporter->declaration_given ? 'Yes' : 'No',
                 'advance_amount' => '₹' . number_format($transporter->advance_amount ?: 0, 2),
@@ -157,18 +157,18 @@ class TransporterController extends Controller
                 'actions' => $this->getActionButtons($transporter)
             ];
         });
-        
+
             return response()->json([
                 'draw' => intval($request->draw),
                 'recordsTotal' => $totalRecords,
                 'recordsFiltered' => $filteredRecords,
                 'data' => $data
             ]);
-            
+
         } catch (\Exception $e) {
             \Log::error('DataTables error in transporters: ' . $e->getMessage());
             \Log::error('Stack trace: ' . $e->getTraceAsString());
-            
+
             return response()->json([
                 'draw' => intval($request->draw ?? 0),
                 'recordsTotal' => 0,
@@ -178,29 +178,29 @@ class TransporterController extends Controller
             ], 500);
         }
     }
-    
+
     private function getActionButtons($transporter)
     {
         $buttons = '<div class="d-flex gap-1">';
-        
-       
+
+
             $buttons .= '<button type="button" class="btn btn-sm btn-outline-success advance-payment-btn " title="Advance Payment" data-bs-toggle="tooltip" data-transporter-id="' . $transporter->id . '" data-transporter-name="' . htmlspecialchars($transporter->name) . '">';
             $buttons .= '<i class="bi bi-currency-rupee "></i>';
             $buttons .= '</button>';
-        
+
 
     // Edit button
         $editUrl = route('transporters.edit', $transporter->id);
         $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info " title="Edit Transporter" data-bs-toggle="tooltip">';
         $buttons .= '<i class="bi bi-pencil "></i></a>';
-        
+
         // Delete button
         $deleteUrl = route('transporters.destroy', $transporter->id);
         $buttons .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Delete this transporter?\')">';
         $buttons .= csrf_field() . method_field('DELETE');
         $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete Transporter" data-bs-toggle="tooltip">';
         $buttons .= '<i class="bi bi-trash"></i></button></form>';
-        
+
         $buttons .= '</div>';
         return $buttons;
     }
@@ -208,12 +208,12 @@ class TransporterController extends Controller
     public function show($id)
     {
         $transporter = \App\Models\Transporter::with(['company', 'city.state.country'])->findOrFail($id);
-        
+
         // Check if user has permission to view this transporter
         if (auth()->user()->userRole->name !== 'super_admin' && $transporter->company_id !== auth()->user()->company_id) {
             abort(403, 'Unauthorized access to this transporter.');
         }
-        
+
         // Get last 10 advance payments for this transporter
         $advancePayments = \App\Models\AdvancePayment::where('transporter_id', $id)
             ->orderBy('created_at', 'desc')
@@ -228,7 +228,7 @@ class TransporterController extends Controller
                     'created_at' => $payment->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i')
                 ];
             });
-        
+
         return response()->json([
             'id' => $transporter->id,
             'name' => $transporter->name,
@@ -256,17 +256,17 @@ class TransporterController extends Controller
     public function create()
     {
         $companies = \App\Models\Company::all();
-        
+
         // For create, we can't filter trucks as we don't have transporter_id yet
         $trucks = \App\Models\Truck::all();
         $countries = \App\Models\Country::all();
         $states = [];
         $cities = [];
-    
+
     if (old('country_id')) {
         $states = \App\Models\State::where('country_id', old('country_id'))->get();
     }
-    
+
     if (old('state_id')) {
         $cities = \App\Models\City::where('state_id', old('state_id'))->get();
     }
@@ -371,11 +371,11 @@ class TransporterController extends Controller
         if (!isset($validated['is_owner'])) {
             $validated['is_owner'] = 0;
         }
-        
+
         // Set declaration_given and total_trucks with default values for transporters
         $validated['declaration_given'] = false;
         $validated['total_trucks'] = 0;
-        
+
         // Convert pan_active to boolean
         $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
         // dd($validated);
@@ -395,12 +395,12 @@ class TransporterController extends Controller
             $validated['tds_percentage'] = 1.00;
         } else {
             // Default if PAN active but not in the given list
-            $validated['tds_percentage'] = null;
+            $validated['tds_percentage'] = 20.00;
         }
     }
-       
+
         \App\Models\Transporter::create($validated);
-       
+
         return redirect()->route('transporters.index')->with('success', 'Transporter created successfully!');
     }
 
@@ -412,11 +412,11 @@ class TransporterController extends Controller
         $countries = \App\Models\Country::all();
         $states = [];
         $cities = [];
-    
+
     if (old('country_id')) {
         $states = \App\Models\State::where('country_id', old('country_id'))->get();
     }
-    
+
     if (old('state_id')) {
         $cities = \App\Models\City::where('state_id', old('state_id'))->get();
     }
@@ -487,13 +487,13 @@ class TransporterController extends Controller
             ],
             'short_name' => 'nullable|string|max:255|unique:transporters,short_name,' . $transporter->id,
             'contact_person_name' => 'nullable|string|max:255',
-            
+
 
         ], [
             'pan_number.unique' => 'This PAN number is already associated with another transporter and cannot be used.',
             'mobile_number.unique' => 'This mobile number is already associated with another transporter.',
             'short_name.unique' => 'This short name is already associated with another transporter and cannot be used.',
-        ]); 
+        ]);
             // Ensure uppercase PAN and GST numbers
     if (!empty($validated['pan_number'])) {
         $validated['pan_number'] = strtoupper($validated['pan_number']);
@@ -509,21 +509,21 @@ class TransporterController extends Controller
         if (!isset($validated['is_owner'])) {
             $validated['is_owner'] = 0;
         }
-        
+
         // Set declaration_given and total_trucks with default values for transporters
         $validated['declaration_given'] = false;
         $validated['total_trucks'] = 0;
-        
+
         // Convert pan_active to boolean
         $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
               // Determine TDS Percentage
-          
+
     if ($validated['pan_active'] == false) {
-        
+
         // PAN not active → 20%
         $validated['tds_percentage'] = 20.00;
     } else {
-       
+
         // PAN active → check 4th character
         $fourthChar = strtoupper(substr($validated['pan_number'], 3, 1));
         $validChars = ['C', 'F', 'A', 'B', 'J', 'L', 'T'];
@@ -546,9 +546,9 @@ class TransporterController extends Controller
     {
         $panNumber = $request->input('pan_number');
         $panActive = $request->input('pan_active');
-        
+
         $tdsPercentage = 0.00;
-        
+
         if ($panActive == '0') {
             // PAN not active
             $tdsPercentage = 20.00;
@@ -557,7 +557,7 @@ class TransporterController extends Controller
             $fourthChar = strtoupper(substr($panNumber, 3, 1));
             $validChars = ['C', 'F', 'A', 'B', 'J', 'L', 'T'];
             $nonValidChars = ['P', 'H'];
-            
+
             if (in_array($fourthChar, $validChars)) {
                 $tdsPercentage = 2.00;
             } else if (in_array($fourthChar, $nonValidChars)) {
@@ -566,7 +566,7 @@ class TransporterController extends Controller
                 $tdsPercentage = 20.00;
             }
         }
-        
+
         return response()->json([
             'tds_percentage' => number_format($tdsPercentage, 2)
         ]);
@@ -585,16 +585,16 @@ class TransporterController extends Controller
     {
         try {
             $query = \App\Models\Transporter::where('is_owner', 1);
-            
+
             // Apply company filter for non-super admin users
             if (auth()->user()->userRole->name !== 'super_admin') {
                 $query->where('company_id', auth()->user()->company_id);
             }
-            
+
             $truckOwners = $query->select('id', 'name')
                                 ->orderBy('name')
                                 ->get();
-            
+
             return response()->json($truckOwners);
         } catch (\Exception $e) {
             \Log::error('Error fetching truck owners: ' . $e->getMessage());
@@ -609,16 +609,16 @@ class TransporterController extends Controller
     {
         try {
             $query = \App\Models\Transporter::where('is_owner', 0);
-            
+
             // Apply company filter for non-super admin users
             if (auth()->user()->userRole->name !== 'super_admin') {
                 $query->where('company_id', auth()->user()->company_id);
             }
-            
+
             $agencies = $query->select('id', 'name')
                              ->orderBy('name')
                              ->get();
-            
+
             return response()->json($agencies);
         } catch (\Exception $e) {
             \Log::error('Error fetching agencies: ' . $e->getMessage());
