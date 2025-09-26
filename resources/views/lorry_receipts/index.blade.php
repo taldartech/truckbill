@@ -471,6 +471,9 @@ function showLRDetails(id) {
         .then(response => response.json())
         .then(lr => {
             let detailsHtml = `
+            
+
+            ${lr.linked_lr_id === null ? `
                 <div class="row">
                     <!-- Basic Information -->
                     <div class="col-md-6">
@@ -564,68 +567,86 @@ function showLRDetails(id) {
                             </div>
                         </div>
                     </div>
-                     
-
-    `;
-    detailsHtml += `
-    ${lr.linked_lr_id ? `
-    <div class="row mt-3">
+     ` : ''}  
+     <div class="row mt-3">
         <div class="col-md-12">
-            <div class="card">
-                <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="bi bi-truck"></i> Linked LR Details</h6>
-                </div>
-                <div class="card-body">
-                    <table class="table table-bordered">
-                        <thead class="table-light">
-                            <tr>
-                                <th>LR Number</th>
-                                <th>Date</th>
-                                <th>From</th>
-                                <th>To</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="linkedLRsContainer">
-                            <tr>
-                                <td colspan="5" class="text-center">Loading linked LRs...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            <div id="linkedLRSection"></div>
         </div>
-    </div>
-    ` : ''}
-`;
+    </div>              
+
+    `; 
+   
 
 // After setting contentDiv.innerHTML, load the linked LRs if needed
 if (lr.linked_lr_id) {
-    // Fetch linked LRs
     fetch(`/api/lorry-receipts/linked/${lr.linked_lr_id}`)
         .then(response => response.json())
-        .then(linkedLRs => {
-            const container = document.getElementById('linkedLRsContainer');
-            if (linkedLRs.length > 0) {
-                container.innerHTML = linkedLRs.map(linkedLR => `
-                    <tr>
-                        <td>${linkedLR.lr_number || 'N/A'}</td>
-                        <td>${linkedLR.gr_date ? new Date(linkedLR.gr_date).toLocaleDateString() : 'N/A'}</td>
-                        <td>${linkedLR.consignor?.name || 'N/A'}</td>
-                        <td>${linkedLR.consignee?.name || 'N/A'}</td>
-                        <td><span class="badge bg-${linkedLR.status === 'delivered' ? 'success' : 'warning'}">${linkedLR.status || 'N/A'}</span></td>
-                    </tr>
-                `).join('');
-            } else {
-                container.innerHTML = '<tr><td colspan="5" class="text-center">No linked LRs found</td></tr>';
-            }
+        .then(data => {
+            const linkedSection = document.getElementById('linkedLRSection');
+            const { common, lrs } = data;
+
+            let commonHtml = `
+                <div class="card mb-3">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="bi bi-truck"></i> Common Transport Details</h6>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-borderless table-sm">
+                            <tr><td class="fw-bold">Transporter:</td><td>${common.transporter || 'Varies'}</td></tr>
+                            <tr><td class="fw-bold">Truck Number:</td><td>${common.truck_number || 'Varies'}</td></tr>
+                            <tr><td class="fw-bold">GR Date:</td><td>${common.gr_date ? new Date(common.gr_date).toLocaleDateString() : 'Varies'}</td></tr>
+                            <tr><td class="fw-bold">Reference By:</td><td>${common.reference_by || 'Varies'}</td></tr>
+                        </table>
+                    </div>
+                </div>
+            `;
+
+            let lrRows = lrs.map(linkedLR => `
+                <tr>
+                    <td>${linkedLR.lr_number}</td>
+                    <td>${linkedLR.customer || 'N/A'}</td>
+                    <td>${linkedLR.consignor || 'N/A'}</td>
+                    <td>${linkedLR.consignee || 'N/A'}</td>
+                    <td>${linkedLR.good_type || 'N/A'}</td>
+                    <td>${linkedLR.weight || 'N/A'}</td>
+                    <td class="fw-bold text-success">${linkedLR.amount || '0'}</td>
+                    <td><span class="badge bg-${linkedLR.status === 'delivered' ? 'success' : 'warning'}">${linkedLR.status || 'N/A'}</span></td>
+                </tr>
+            `).join('');
+
+            linkedSection.innerHTML = `
+                ${commonHtml}
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0"><i class="bi bi-list"></i> Linked Lorry Receipts</h6>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>LR Number</th>
+                                    <th>Customer</th>
+                                    <th>Consignor</th>
+                                    <th>Consignee</th>
+                                    <th>Goods</th>
+                                    <th>Weight</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>${lrRows}</tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
         })
         .catch(error => {
             console.error('Error fetching linked LRs:', error);
-            document.getElementById('linkedLRsContainer').innerHTML = 
-                '<tr><td colspan="5" class="text-center text-danger">Error loading linked LRs</td></tr>';
+            document.getElementById('linkedLRSection').innerHTML =
+                '<div class="alert alert-danger">Error loading linked LR details</div>';
         });
 }
+
 
             contentDiv.innerHTML = detailsHtml;
 

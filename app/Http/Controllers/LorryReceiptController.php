@@ -162,31 +162,85 @@ class LorryReceiptController extends Controller
 
     return view('lorry_receipts.show', compact('lorryReceipt'));
   }
-  public function getLinkedLRs($linkedLrId)
+//   public function getLinkedLRs($linkedLrId)
+// {
+//     try {
+//         $linkedLRs = LorryReceipt::with(['consignor', 'consignee'])
+//             ->where('linked_lr_id', $linkedLrId)
+//             ->orWhere('id', $linkedLrId) // Include the parent LR as well
+//             ->get()
+//             ->map(function ($lr) {
+//                 return [
+//                     'id' => $lr->id,
+//                     'lr_number' => $lr->lr_number,
+//                     'gr_date' => $lr->gr_date,
+//                     'consignor' => $lr->consignor,
+//                     'consignee' => $lr->consignee,
+//                     'status' => $lr->status,
+//                     // Add any other fields you need
+//                 ];
+//             });
+
+//         return response()->json($linkedLRs);
+//     } catch (\Exception $e) {
+//         \Log::error('Error fetching linked LRs: ' . $e->getMessage());
+//         return response()->json(['error' => 'Failed to fetch linked LRs'], 500);
+//     }
+// }
+public function getLinkedLRs($linkedLrId)
 {
     try {
-        $linkedLRs = LorryReceipt::with(['consignor', 'consignee'])
+        $linkedLRs = LorryReceipt::with(['consignor', 'consignee', 'customer', 'transporter', 'truck', 'reference'])
             ->where('linked_lr_id', $linkedLrId)
-            ->orWhere('id', $linkedLrId) // Include the parent LR as well
-            ->get()
-            ->map(function ($lr) {
-                return [
-                    'id' => $lr->id,
-                    'lr_number' => $lr->lr_number,
-                    'gr_date' => $lr->gr_date,
-                    'consignor' => $lr->consignor,
-                    'consignee' => $lr->consignee,
-                    'status' => $lr->status,
-                    // Add any other fields you need
-                ];
-            });
+            ->orWhere('id', $linkedLrId) // include parent LR also
+            ->get();
 
-        return response()->json($linkedLRs);
+        if ($linkedLRs->isEmpty()) {
+            return response()->json([]);
+        }
+
+        // Find common fields across all LRs
+        $common = [
+            'transporter' => $linkedLRs->pluck('transporter.name')->unique()->count() === 1 
+                                ? $linkedLRs->first()->transporter->name ?? null 
+                                : null,
+            'truck_number' => $linkedLRs->pluck('truck.truck_number')->unique()->count() === 1 
+                                ? $linkedLRs->first()->truck->truck_number ?? null 
+                                : null,
+            'gr_date' => $linkedLRs->pluck('gr_date')->unique()->count() === 1 
+                                ? $linkedLRs->first()->gr_date 
+                                : null,
+            'reference_by' => $linkedLRs->pluck('reference.name')->unique()->count() === 1 
+                                ? $linkedLRs->first()->reference->name ?? null 
+                                : null,
+        ];
+
+        $details = $linkedLRs->map(function ($lr) {
+            return [
+                'id' => $lr->id,
+                'lr_number' => $lr->lr_number,
+                'gr_date' => $lr->gr_date,
+                'status' => $lr->status,
+                'customer' => $lr->customer ? $lr->customer->name : null,
+                'consignor' => $lr->consignor ? $lr->consignor->name : null,
+                'consignee' => $lr->consignee ? $lr->consignee->name : null,
+                'good_type' => $lr->good_type,
+                'weight' => $lr->weight,
+                'amount' => $lr->amount,
+            ];
+        });
+
+        return response()->json([
+            'common' => $common,
+            'lrs' => $details
+        ]);
+
     } catch (\Exception $e) {
         \Log::error('Error fetching linked LRs: ' . $e->getMessage());
         return response()->json(['error' => 'Failed to fetch linked LRs'], 500);
     }
 }
+
 
   public function getLorryReceiptsData(Request $request)
   {
