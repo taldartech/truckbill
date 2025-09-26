@@ -557,8 +557,68 @@ function showLRDetails(id) {
                             </div>
                         </div>
                     </div>
+                     
+
+    `;
+    detailsHtml += `
+    ${lr.linked_lr_id ? `
+    <div class="row mt-3">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-truck"></i> Linked LR Details</h6>
                 </div>
-            `;
+                <div class="card-body">
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>LR Number</th>
+                                <th>Date</th>
+                                <th>From</th>
+                                <th>To</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="linkedLRsContainer">
+                            <tr>
+                                <td colspan="5" class="text-center">Loading linked LRs...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    ` : ''}
+`;
+
+// After setting contentDiv.innerHTML, load the linked LRs if needed
+if (lr.linked_lr_id) {
+    // Fetch linked LRs
+    fetch(`/api/lorry-receipts/linked/${lr.linked_lr_id}`)
+        .then(response => response.json())
+        .then(linkedLRs => {
+            const container = document.getElementById('linkedLRsContainer');
+            if (linkedLRs.length > 0) {
+                container.innerHTML = linkedLRs.map(linkedLR => `
+                    <tr>
+                        <td>${linkedLR.lr_number || 'N/A'}</td>
+                        <td>${linkedLR.gr_date ? new Date(linkedLR.gr_date).toLocaleDateString() : 'N/A'}</td>
+                        <td>${linkedLR.consignor?.name || 'N/A'}</td>
+                        <td>${linkedLR.consignee?.name || 'N/A'}</td>
+                        <td><span class="badge bg-${linkedLR.status === 'delivered' ? 'success' : 'warning'}">${linkedLR.status || 'N/A'}</span></td>
+                    </tr>
+                `).join('');
+            } else {
+                container.innerHTML = '<tr><td colspan="5" class="text-center">No linked LRs found</td></tr>';
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching linked LRs:', error);
+            document.getElementById('linkedLRsContainer').innerHTML = 
+                '<tr><td colspan="5" class="text-center text-danger">Error loading linked LRs</td></tr>';
+        });
+}
 
             contentDiv.innerHTML = detailsHtml;
 

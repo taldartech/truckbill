@@ -162,6 +162,31 @@ class LorryReceiptController extends Controller
 
     return view('lorry_receipts.show', compact('lorryReceipt'));
   }
+  public function getLinkedLRs($linkedLrId)
+{
+    try {
+        $linkedLRs = LorryReceipt::with(['consignor', 'consignee'])
+            ->where('linked_lr_id', $linkedLrId)
+            ->orWhere('id', $linkedLrId) // Include the parent LR as well
+            ->get()
+            ->map(function ($lr) {
+                return [
+                    'id' => $lr->id,
+                    'lr_number' => $lr->lr_number,
+                    'gr_date' => $lr->gr_date,
+                    'consignor' => $lr->consignor,
+                    'consignee' => $lr->consignee,
+                    'status' => $lr->status,
+                    // Add any other fields you need
+                ];
+            });
+
+        return response()->json($linkedLRs);
+    } catch (\Exception $e) {
+        \Log::error('Error fetching linked LRs: ' . $e->getMessage());
+        return response()->json(['error' => 'Failed to fetch linked LRs'], 500);
+    }
+}
 
   public function getLorryReceiptsData(Request $request)
   {
