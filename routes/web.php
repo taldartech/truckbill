@@ -29,13 +29,15 @@ use App\Http\Controllers\PumpController;
 use App\Http\Controllers\ReportController;
 
 // Authentication Routes
-Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [LoginController::class, 'login']);
-Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
-
+Route::group(['middleware' => 'guest'], function () {
+  Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
+  Route::post('/login', [LoginController::class, 'login']);
+  Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+});
 // Protected Routes
 Route::middleware(['auth'])->group(function () {
     // API Routes
+    Route::redirect('/', '/dashboard');
     Route::get('/api/transporters/{transporter}/trucks', [TruckController::class, 'getTrucksForTransporter']);
     Route::get('/api/trucks/{truck}/owner-transporters', [TruckController::class, 'getOwnerTransporters']);
     Route::get('/api/trucks/{truck}/agency-transporters', [TruckController::class, 'getAgencyTransporters']);
