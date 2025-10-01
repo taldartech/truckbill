@@ -2,6 +2,57 @@
 
 @section('title', 'Consignor & Consignee wise Report')
 
+@push('styles')
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        /* Select2 custom styling for truck dropdown */
+        .select2-container--bootstrap-5 .select2-selection {
+            min-height: 38px;
+        }
+
+        .select2-result-truck {
+            padding: 4px 0;
+        }
+
+        .truck-info {
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+            padding-left: 12px;
+            padding-right: 20px;
+            color: #212529;
+            line-height: 36px;
+            background: var(--bs-body-bg);
+            border: var(--bs-border-width) solid var(--bs-border-color);
+            border-radius: 0.375rem;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single:focus-visible {
+            border-color: var(--bs-primary);
+            box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+            outline: 0;
+            border-radius: 0.375rem;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+            height: 36px;
+            right: 12px;
+        }
+
+        .select2-dropdown {
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+        }
+
+        .select2-results__option--highlighted {
+            background-color: var(--bs-primary);
+            color: white;
+        }
+    </style>
+@endpush
+
 @section('content')
     <div class="card mb-4">
         <div class="card-body">
@@ -18,7 +69,7 @@
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Consignor</label>
-                        <select name="consignor_id" class="form-select">
+                        <select name="consignor_id" class="form-select select2">
                             <option value="">Select Consignor</option>
                             @foreach ($consignees as $consignor)
                                 <option @if ($consignorId == $consignor->id) selected @endif value="{{ $consignor->id }}">
@@ -28,7 +79,7 @@
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Consignee</label>
-                        <select name="consignee_id" class="form-select">
+                        <select name="consignee_id" class="form-select select2">
                             <option value="">Select Consignee</option>
                             @foreach ($consignees as $consignee)
                                 <option @if ($consigneeId == $consignee->id) selected @endif value="{{ $consignee->id }}">
@@ -99,7 +150,8 @@
                         @foreach ($lrs as $index => $lr)
                             <tr>
                                 <td>{{ $index + 1 }}</td>
-                                <td style="white-space: nowrap;">{{ \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') }}</td>
+                                <td style="white-space: nowrap;">{{ \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') }}
+                                </td>
                                 <td>{{ $lr->lr_number }}</td>
                                 <td>{{ $lr->invoice_number }}</td>
                                 <td>{{ $lr->truck_id ? $lr->truck->truck_number : 'N/A' }}</td>
@@ -120,6 +172,17 @@
 @endsection
 
 @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('.select2').each(function() {
+                $(this).select2({
+                    theme: 'bootstrap-5',
+                    width: '100%'
+                });
+            });
+        });
+    </script>
     <script>
         function validateForm(event) {
             event.preventDefault();
