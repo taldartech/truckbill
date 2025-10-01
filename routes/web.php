@@ -329,6 +329,8 @@ Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->nam
     Route::group(['prefix' => 'reports'], function () {
       Route::get('/consignor-consignee', [ReportController::class, 'consignor_consignee'])->name('reports.consignor-consignee');
       Route::get('/consignor-consignee-export', [ReportController::class, 'consignor_consignee_export'])->name('reports.consignor-consignee-export');
+      Route::get('/tds', [ReportController::class, 'tds'])->name('reports.tds');
+      Route::get('/tds-export', [ReportController::class, 'tds_export'])->name('reports.tds-export');
     });
 
 });

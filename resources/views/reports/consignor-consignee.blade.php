@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Party Ledger')
+@section('title', 'Consignor & Consignee wise Report')
 
 @section('content')
     <div class="card mb-4">

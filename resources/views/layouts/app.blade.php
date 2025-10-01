@@ -667,14 +667,19 @@
                         <i class="nav-arrow bi bi-chevron-right"></i>
                       </p>
                     </a>
-                    <ul class="nav nav-treeview collapse{{ Request::is('reports*') ? ' show' : '' }}" id="reportsMenu">
+                    <ul class="nav nav-treeview collapse {{ Request::is('reports*') ? ' show' : '' }}" id="reportsMenu">
+                      <li class="nav-item">
+                        <a href="{{ route('reports.tds') }}" class="nav-link{{ Request::is('reports/tds') ? ' active' : '' }}">
+                          <i class="fas fa-file-alt"></i>
+                          <p>TDS</p>
+                        </a>
+                      </li>
                       <li class="nav-item">
                         <a href="{{ route('reports.consignor-consignee') }}" class="nav-link{{ Request::is('reports/consignor-consignee') ? ' active' : '' }}">
                           <i class="fas fa-file-alt"></i>
                           <p>Consignor Consignee</p>
                         </a>
                       </li>
-
                     </ul>
                   </li>
                   @endauth
