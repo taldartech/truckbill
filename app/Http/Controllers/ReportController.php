@@ -87,4 +87,34 @@ class ReportController extends Controller
     $export = Excel::download(new TDSExport($startDate, $endDate), 'tds_report.xlsx');
     return $export;
   }
+  public function dispatch(Request $request)
+  {
+    $endDate = $request->input('end_date') ?? date('Y-m-d');
+    $startDate = max($request->input('start_date') ?? date('Y-m-d', strtotime('-3 months')), date('Y-m-d', strtotime('-3 months', strtotime($endDate))));
+
+    $user = Auth::user()->company_id;
+    if ($request->input('end_date') || $request->input('start_date')) {
+      $query = FreightBooking::whereHas('lr', function($query) use ($startDate, $endDate) {
+        $query->whereBetween('gr_date', [$startDate, $endDate]);
+      });
+      if ($user) {
+        $query->where('company_id', $user);
+      }
+      $query->where('tds_amount', '>', 0);
+      $lrs = $query->get();
+      $generated = true;
+    } else {
+      $lrs = [];
+      $generated = false;
+    }
+    return view('reports.tds', compact('lrs', 'startDate', 'endDate', 'generated'));
+  }
+  public function dispatch_export(Request $request)
+  {
+    $startDate = $request->input('start_date');
+    $endDate = $request->input('end_date');
+
+    $export = Excel::download(new DispatchExport($startDate, $endDate), 'dispatch_report.xlsx');
+    return $export;
+  }
 }

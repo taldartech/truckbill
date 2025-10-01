@@ -331,6 +331,8 @@ Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->nam
       Route::get('/consignor-consignee-export', [ReportController::class, 'consignor_consignee_export'])->name('reports.consignor-consignee-export');
       Route::get('/tds', [ReportController::class, 'tds'])->name('reports.tds');
       Route::get('/tds-export', [ReportController::class, 'tds_export'])->name('reports.tds-export');
+      Route::get('/dispatch', [ReportController::class, 'dispatch'])->name('reports.dispatch');
+      Route::get('/dispatch-export', [ReportController::class, 'dispatch_export'])->name('reports.dispatch-export');
     });
 
 });
