@@ -26,7 +26,6 @@ use App\Http\Controllers\CityController;
 use App\Http\Controllers\StateController;
 use App\Http\Controllers\CountryController;
 use App\Http\Controllers\PumpController;
-use App\Http\Controllers\ReportController;
 
 // Authentication Routes
 Route::group(['middleware' => 'guest'], function () {
@@ -141,8 +140,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/lorry_receipts/data', [LorryReceiptController::class, 'getLorryReceiptsData'])->name('lorry_receipts.data');
 
     // Reports
-    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
-    Route::get('/reports/generate', [ReportController::class, 'generateReport'])->name('reports.generate');
     Route::get('lorry_receipts/create-linked', [LorryReceiptController::class, 'createLinked'])->name('lorry_receipts.createLinked');
     Route::resource('lorry_receipts', LorryReceiptController::class);
     Route::post('lorry_receipts/bulk-payment', [LorryReceiptController::class, 'bulkPayment'])->name('lorry_receipts.bulkPayment');
@@ -326,17 +323,6 @@ Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->nam
         }
 
         return response()->json(['transporter_name' => null]);
-    });
-
-    // Reports
-    Route::prefix('reports')->group(function () {
-        Route::get('/', [ReportController::class, 'index'])->name('reports.index');
-        Route::post('/generate', [ReportController::class, 'generateReport'])->name('reports.generate');
-        Route::get('/truck', [ReportController::class, 'truckReport'])->name('reports.truck');
-
-        // Export Routes
-        Route::get('/export/pdf', [ReportController::class, 'exportPdf'])->name('reports.export.pdf');
-        Route::get('/export/excel', [ReportController::class, 'exportExcel'])->name('reports.export.excel');
     });
 
 });
