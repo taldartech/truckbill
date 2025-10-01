@@ -12,14 +12,14 @@ class CompanyController extends Controller
         if ($request->ajax()) {
             return $this->getCompaniesData($request);
         }
-        
+
         return view('company.index');
     }
-    
+
     private function getCompaniesData(Request $request)
     {
         $query = \App\Models\Company::query();
-        
+
         // Handle search
         if ($request->has('search') && $request->search['value']) {
             $searchValue = $request->search['value'];
@@ -34,7 +34,7 @@ class CompanyController extends Controller
                   ->orWhere('contact_number', 'like', "%{$searchValue}%");
             });
         }
-        
+
         // Handle column-specific search
         if ($request->has('columns')) {
             foreach ($request->columns as $index => $column) {
@@ -69,12 +69,12 @@ class CompanyController extends Controller
                 }
             }
         }
-        
+
         // Handle sorting
         if ($request->has('order')) {
             $orderColumn = $request->order[0]['column'];
             $orderDirection = $request->order[0]['dir'];
-            
+
             switch ($orderColumn) {
                 case 0: // ID
                     $query->orderBy('id', $orderDirection);
@@ -109,16 +109,16 @@ class CompanyController extends Controller
         } else {
             $query->orderBy('created_at', 'desc');
         }
-        
+
         // Get total count before pagination
         $totalRecords = \App\Models\Company::count();
         $filteredRecords = $query->count();
-        
+
         // Handle pagination
         $start = $request->start ?? 0;
         $length = $request->length ?? 10;
         $companies = $query->skip($start)->take($length)->get();
-        
+
         // Format data for DataTables
         $data = $companies->map(function($company, $index) use ($start) {
             return [
@@ -134,7 +134,7 @@ class CompanyController extends Controller
                 'actions' => $this->getActionButtons($company)
             ];
         });
-        
+
         return response()->json([
             'draw' => intval($request->draw),
             'recordsTotal' => $totalRecords,
@@ -142,23 +142,23 @@ class CompanyController extends Controller
             'data' => $data
         ]);
     }
-    
+
     private function getActionButtons($company)
     {
         $buttons = '<div class="d-flex gap-1">';
-        
+
         // Edit button
         $editUrl = route('company.edit', $company->id);
         $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit Company">';
         $buttons .= '<i class="bi bi-pencil"></i></a>';
-        
+
         // Delete button
         $deleteUrl = route('company.destroy', $company->id);
         $buttons .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this company?\')">';
         $buttons .= csrf_field() . method_field('DELETE');
         $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete Company">';
         $buttons .= '<i class="bi bi-trash"></i></button></form>';
-        
+
         $buttons .= '</div>';
         return $buttons;
     }
@@ -166,7 +166,10 @@ class CompanyController extends Controller
     public function edit($id)
     {
         $company = \App\Models\Company::findOrFail($id);
-        return view('company.edit', compact('company'));
+        $countries = \App\Models\Country::all();
+        $states = \App\Models\State::where('country_id', $company->country_id)->get();
+        $cities = \App\Models\City::where('state_id', $company->state_id)->get();
+        return view('company.edit', compact('company', 'countries', 'states', 'cities'));
     }
 
     public function update(Request $request, $id)
@@ -193,7 +196,12 @@ class CompanyController extends Controller
     'nullable',
     'digits:10',
 ],
+            'country_id' => 'nullable|exists:countries,id',
+            'state_id' => 'nullable|exists:states,id',
+            'city_id' => 'nullable|exists:cities,id',
+            'pin_code' => 'nullable|string|max:10',
         ]);
+        // dd($validated);
         $company->update($validated);
         return redirect()->route('company.index')->with('success', 'Company updated successfully!');
     }
@@ -232,13 +240,17 @@ class CompanyController extends Controller
     'nullable',
     'digits:10',
 ],
+            'country_id' => 'nullable|exists:countries,id',
+            'state_id' => 'nullable|exists:states,id',
+            'city_id' => 'nullable|exists:cities,id',
+            'pin_code' => 'nullable|string|max:10',
         ]);
-        
+
         // Set default GST type to regular if not provided
         if (!$request->filled('gst_type')) {
             $validated['gst_type'] = 'regular';
         }
-        
+
         \App\Models\Company::create($validated);
         return redirect()->route('company.create')->with('success', 'Company registered successfully!');
     }

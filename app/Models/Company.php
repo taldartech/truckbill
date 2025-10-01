@@ -15,5 +15,24 @@ class Company extends Model
         'address',
         'contact_person',
         'contact_number',
+        'country_id',
+        'state_id',
+        'city_id',
+        'pin_code',
     ];
+
+    public function country()
+    {
+        return $this->belongsTo(Country::class);
+    }
+
+    public function state()
+    {
+        return $this->belongsTo(State::class);
+    }
+
+    public function city()
+    {
+        return $this->belongsTo(City::class);
+    }
 }

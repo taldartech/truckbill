@@ -56,13 +56,53 @@
                     <label for="gst_type" class="form-label">GST Type *</label>
                     <input type="text" class="form-control" id="gst_type" name="gst_type" value="Regular" disabled>
                     @error('gst_type') <div class="text-danger">{{ $message }}</div> @enderror
-                </div> 
+                </div>
                 <!--end::Col-->
                 <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="address" class="form-label">Address</label>
                     <textarea class="form-control" id="address" name="address">{{ old('address') }}</textarea>
                     @error('address') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="valid-feedback">Looks good!</div>
+                </div>
+                <!--end::Col-->
+                <!--begin::Col-->
+                <div class="col-md-6">
+                    <label for="country_id" class="form-label">Country</label>
+                    <select class="form-select" id="country_id" name="country_id" onchange="fetchStates(this.value)">
+                        <option value="">Select Country</option>
+                        @foreach(\App\Models\Country::all() as $country)
+                            <option value="{{ $country->id }}" {{ old('country_id') == $country->id ? 'selected' : '' }}>{{ $country->name }}</option>
+                        @endforeach
+                    </select>
+                    @error('country_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="valid-feedback">Looks good!</div>
+                </div>
+                <!--end::Col-->
+                <!--begin::Col-->
+                <div class="col-md-6">
+                    <label for="state_id" class="form-label">State</label>
+                    <select class="form-select" id="state_id" name="state_id" onchange="fetchCities(this.value)">
+                        <option value="">Select State</option>
+                    </select>
+                    @error('state_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="valid-feedback">Looks good!</div>
+                </div>
+                <!--end::Col-->
+                <!--begin::Col-->
+                <div class="col-md-6">
+                    <label for="city_id" class="form-label">City</label>
+                    <select class="form-select" id="city_id" name="city_id">
+                        <option value="">Select City</option>
+                    </select>
+                    @error('city_id') <div class="text-danger">{{ $message }}</div> @enderror
+                </div>
+                <!--end::Col-->
+                <!--begin::Col-->
+                <div class="col-md-6">
+                    <label for="pin_code" class="form-label">Pin Code</label>
+                    <input type="text" class="form-control" id="pin_code" name="pin_code" value="{{ old('pin_code') }}">
+                    @error('pin_code') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="valid-feedback">Looks good!</div>
                 </div>
                 <!--end::Col-->
@@ -119,6 +159,39 @@
                 );
             });
         })();
+        function fetchStates(countryId) {
+            fetch(`/api/states/${countryId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const stateSelect = document.getElementById('state_id');
+                    stateSelect.innerHTML = '<option value="">Select State</option>';
+                    data.forEach(state => {
+                        const option = document.createElement('option');
+                        option.value = state.id;
+                        option.textContent = state.name;
+                        stateSelect.appendChild(option);
+                    });
+                    // Clear city dropdown
+                    const citySelect = document.getElementById('city_id');
+                    citySelect.innerHTML = '<option value="">Select City</option>';
+                })
+                .catch(error => console.error('Error fetching states:', error));
+        }
+        function fetchCities(stateId) {
+            fetch(`/api/cities/${stateId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const citySelect = document.getElementById('city_id');
+                    citySelect.innerHTML = '<option value="">Select City</option>';
+                    data.forEach(city => {
+                        const option = document.createElement('option');
+                        option.value = city.id;
+                        option.textContent = city.name;
+                        citySelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error fetching cities:', error));
+        }
     </script>
     <!--end::JavaScript-->
 </div>
