@@ -149,7 +149,7 @@
     --lte-sidebar-submenu-active-color: #fff;
     --lte-sidebar-submenu-active-bg: rgba(255, 255, 255, 0.1);
     --lte-sidebar-header-color: #c5cad2;
-      
+
       }
       .sidebar-brand .brand-text  {
         color: #fff;
@@ -159,12 +159,12 @@
         color: #fff;
       font-weight: 700;
       }
-      
+
 
       /* .nav-link {
         color: #003366 !important;
       } */
-      
+
   </style>
   @stack('styles')
 </head>
@@ -183,23 +183,23 @@
                     <i class="fa-solid fa-bars"></i>
                   </a>
                 </li>
-                <li class="nav-item d-none d-md-block"  ><a href="#" class="nav-link" >  
+                <li class="nav-item d-none d-md-block"  ><a href="#" class="nav-link" >
                      @auth
                     <span class="align-middle ms-3 me-2 border-start ps-3 small text-muted"  style="font-size: 1em;">
                         <i class="fas fa-building me-1"></i>{{ Auth::user()->company ? Auth::user()->company->name : '' }}
                     </span>
                 @endauth</a>
             </li>
-               
+
               </ul>
               <!--end::Start Navbar Links-->
               <!--begin::End Navbar Links-->
               <ul class="navbar-nav ms-auto">
-              
-               
-            
-              
-               
+
+
+
+
+
                 <!--begin::User Menu Dropdown-->
                 <!--begin::User Menu Dropdown-->
                 <li class="nav-item dropdown user-menu">
@@ -242,7 +242,7 @@
             <div class="sidebar-brand">
               <!--begin::Brand Link-->
               <a href="#" class="brand-link">
-               
+
                 <!--begin::Brand Text-->
                 <span class="brand-text " style="font-size: 1.2em;"> <strong>TruckMate-TMS</strong></span>
                 <!--end::Brand Text-->
@@ -265,10 +265,10 @@
                       <i class="nav-icon bi bi-speedometer"></i>
                       <p>
                         Dashboard
-                       
+
                       </p>
                     </a>
-                   
+
                   </li>
                   @if(auth()->check() && auth()->user()->userRole->name === 'super_admin')
                   <li class="nav-item">
@@ -281,13 +281,13 @@
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
                             <a href="/company" class="nav-link{{ Request::is('company') ? ' active' : '' }}">
-                                <i class="fas fa-list"></i> 
+                                <i class="fas fa-list"></i>
                               <p>Company List</p>
                             </a>
                           </li>
                           <li class="nav-item">
                             <a href="/company/create" class="nav-link{{ Request::is('company/create') ? ' active' : '' }}">
-                              <i class="fas fa-plus"></i> 
+                              <i class="fas fa-plus"></i>
                             <p>Register Company</p>
                             </a>
                           </li>
@@ -295,13 +295,13 @@
                   </li>
                   <li class="nav-item">
                     <a href="/users" class="nav-link{{ Request::is('users*') ? ' active' : '' }}">
-                        <i class="fas fa-users"></i> 
+                        <i class="fas fa-users"></i>
                         <p>Users</p>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link{{ (Request::is('truck_owner_bank_accounts*') || Request::is('transporter_bank_accounts*')) ? ' active' : '' }}" href="#bankAccountMenu">
-                        <i class="fas fa-university"></i> 
+                        <i class="fas fa-university"></i>
                         <p>
                             Bank Account Setup
                             <i class="nav-arrow bi bi-chevron-right"></i>
@@ -310,13 +310,13 @@
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
                             <a href="/truck_owner_bank_accounts/index" class="nav-link{{ Request::is('truck_owner_bank_accounts/index') ? ' active' : '' }}">
-                                <i class="fas fa-truck"></i> 
+                                <i class="fas fa-truck"></i>
                                 <p>Truck Owners</p>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="/transporter_bank_accounts/index" class="nav-link{{ Request::is('transporter_bank_accounts/index') ? ' active' : '' }}">
-                                <i class="fas fa-shipping-fast"></i> 
+                                <i class="fas fa-shipping-fast"></i>
                                 <p>Transporters</p>
                             </a>
                         </li>
@@ -332,60 +332,60 @@
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
                             <a href="/master/countries" class="nav-link">
-                                <i class="fas fa-list"></i> 
+                                <i class="fas fa-list"></i>
                               <p>Countries</p>
                             </a>
                           </li>
                           <li class="nav-item">
                             <a href="/master/states" class="nav-link">
-                              <i class="fas fa-plus"></i> 
+                              <i class="fas fa-plus"></i>
                             <p>States</p>
                             </a>
                           </li>
                           <li class="nav-item">
                             <a href="/master/cities" class="nav-link">
-                              <i class="fas fa-plus"></i> 
+                              <i class="fas fa-plus"></i>
                             <p>Cities</p>
                             </a>
                           </li>
                           <li class="nav-item">
                             <a href="/master/goods-types" class="nav-link">
-                              <i class="fas fa-plus"></i> 
+                              <i class="fas fa-plus"></i>
                             <p>Goods Types</p>
                             </a>
                           </li>
                           <li class="nav-item">
                             <a href="/master/pumps" class="nav-link">
-                              <i class="fas fa-plus"></i> 
+                              <i class="fas fa-plus"></i>
                             <p>Pumps</p>
                             </a>
                           </li>
                     </ul>
                 </li>
-    
+
                   {{-- end master --}}
-                    
-                 
+
+
                   @endif
-                  
+
                   {{-- Master data menus hidden from moderator/accountant/operator users --}}
                   @if(auth()->check() && !in_array(auth()->user()->userRole->name, [ 'accountant','super_admin']))
                   <li class="nav-item">
                     <a class="nav-link{{ (Request::is('transporters*') || Request::is('transporters/create')) ? ' active' : '' }}" href="#transporterMenu">
-                        <i class="fas fa-truck"></i> 
+                        <i class="fas fa-truck"></i>
                         <p> Transporter </p>
                         <i class="nav-arrow bi bi-chevron-right"></i>
                     </a>
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
                             <a href="/transporters" class="nav-link{{ Request::is('transporters*') ? ' active' : '' }}">
-                                <i class="fas fa-list"></i> 
+                                <i class="fas fa-list"></i>
                               <p>Transporter List</p>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a href="/transporters/create" class="nav-link{{ Request::is('transporters/create') ? ' active' : '' }}">
-                              <i class="fas fa-plus"></i> 
+                              <i class="fas fa-plus"></i>
                             <p>Register</p>
                             </a>
                         </li>
@@ -395,20 +395,20 @@
 
                   <li class="nav-item">
                     <a class="nav-link{{ (Request::is('truck_owners*') || Request::is('truck_owners/create') || Request::is('truck_owner_bank_accounts/create')) ? ' active' : '' }}" href="#truckOwnerMenu">
-                        <i class="fas fa-truck"></i> 
+                        <i class="fas fa-truck"></i>
                         <p> Truck Owner </p>
                         <i class="nav-arrow bi bi-chevron-right"></i>
                     </a>
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
                             <a href="/truck_owners" class="nav-link{{ Request::is('truck_owners*') ? ' active' : '' }}">
-                                <i class="fas fa-list"></i> 
+                                <i class="fas fa-list"></i>
                               <p>Truck Owner List</p>
                             </a>
                           </li>
                           <li class="nav-item">
                             <a href="/truck_owners/create" class="nav-link{{ Request::is('truck_owners/create') ? ' active' : '' }}">
-                              <i class="fas fa-plus"></i> 
+                              <i class="fas fa-plus"></i>
                             <p>Register</p>
                             </a>
                           </li>
@@ -425,13 +425,13 @@
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
                             <a href="/trucks" class="nav-link{{ Request::is('trucks*') ? ' active' : '' }}">
-                                <i class="fas fa-list"></i> 
+                                <i class="fas fa-list"></i>
                               <p>Truck List</p>
                             </a>
                           </li>
                           {{-- <li class="nav-item">
                             <a href="/trucks/create" class="nav-link{{ Request::is('trucks/create') ? ' active' : '' }}">
-                              <i class="fas fa-plus"></i> 
+                              <i class="fas fa-plus"></i>
                             <p>Register Truck</p>
                             </a>
                           </li> --}}
@@ -453,13 +453,13 @@
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
                             <a href="/customers" class="nav-link{{ Request::is('customers*') ? ' active' : '' }}">
-                                <i class="fas fa-list"></i> 
+                                <i class="fas fa-list"></i>
                               <p>Customer List</p>
                             </a>
                           </li>
                           <li class="nav-item">
                             <a href="/customers/create" class="nav-link{{ Request::is('customers/create') ? ' active' : '' }}">
-                              <i class="fas fa-plus"></i> 
+                              <i class="fas fa-plus"></i>
                             <p>Register</p>
                             </a>
                           </li>
@@ -477,20 +477,20 @@
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
                             <a href="/consignees" class="nav-link{{ Request::is('consignees*') ? ' active' : '' }}">
-                                <i class="fas fa-list"></i> 
+                                <i class="fas fa-list"></i>
                               <p>Consignee/Customer List</p>
                             </a>
                           </li>
                           <li class="nav-item">
                             <a href="/consignees/create" class="nav-link{{ Request::is('consignees/create') ? ' active' : '' }}">
-                              <i class="fas fa-plus"></i> 
+                              <i class="fas fa-plus"></i>
                             <p>Register</p>
                             </a>
                           </li>
                     </ul>
                   </li>
                   @endif
-                  
+
                   {{-- Operational menus visible to all authenticated users including moderators --}}
                   @if(auth()->check() && !in_array(auth()->user()->userRole->name, [ 'super_admin']))
                   <li class="nav-item">
@@ -503,13 +503,13 @@
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
                             <a href="/lorry_receipts" class="nav-link{{ Request::is('lorry_receipts*') ? ' active' : '' }}">
-                                <i class="fas fa-list"></i> 
+                                <i class="fas fa-list"></i>
                               <p> Listing</p>
                             </a>
                           </li>
                           <li class="nav-item">
                             <a href="/lorry_receipts/create" class="nav-link{{ Request::is('lorry_receipts/create') ? ' active' : '' }}">
-                              <i class="fas fa-plus"></i> 
+                              <i class="fas fa-plus"></i>
                             <p>Register</p>
                             </a>
                           </li>
@@ -525,13 +525,13 @@
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
                             <a href="/freight_bookings" class="nav-link{{ Request::is('freight_bookings*') ? ' active' : '' }}">
-                                <i class="fas fa-list"></i> 
+                                <i class="fas fa-list"></i>
                               <p> Listing</p>
                             </a>
                           </li>
                           {{-- <li class="nav-item">
                             <a href="/freight_bookings/create" class="nav-link{{ Request::is('freight_bookings/create') ? ' active' : '' }}">
-                              <i class="fas fa-plus"></i> 
+                              <i class="fas fa-plus"></i>
                             <p>Register</p>
                             </a>
                           </li> --}}
@@ -547,19 +547,19 @@
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
                             <a href="/vouchers" class="nav-link{{ Request::is('vouchers*') ? ' active' : '' }}">
-                                <i class="fas fa-list"></i> 
+                                <i class="fas fa-list"></i>
                               <p> Listing</p>
                             </a>
                           </li>
                           <li class="nav-item">
                             <a href="/vouchers/create" class="nav-link{{ Request::is('vouchers/create') ? ' active' : '' }}">
-                              <i class="fas fa-plus"></i> 
+                              <i class="fas fa-plus"></i>
                             <p>Register</p>
                             </a>
                           </li>
                     </ul>
                   </li> --}}
-    
+
                   <li class="nav-item">
                     <a class="nav-link{{ (Request::is('voucher_payments*') || Request::is('voucher_payments/create')) ? ' active' : '' }}"  href="#voucherPaymentMenu"  >
                         <i class="fas fa-money-bill-wave"></i><p>
@@ -570,21 +570,21 @@
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
                             <a href="/voucher_payments" class="nav-link{{ Request::is('voucher_payments*') && !Request::is('daily-payments') ? ' active' : '' }}">
-                                <i class="fas fa-list"></i> 
+                                <i class="fas fa-list"></i>
                               <p> Listing</p>
                             </a>
                           </li>
                           @if(in_array(auth()->user()->userRole->name, ['admin', 'moderator']))
                           <li class="nav-item">
                             <a href="{{ route('voucher_payments.daily') }}" class="nav-link{{ Request::is('daily-payments') ? ' active' : '' }}">
-                              <i class="fas fa-calendar-day"></i> 
+                              <i class="fas fa-calendar-day"></i>
                             <p>Daily Payments</p>
                             </a>
                           </li>
                           @endif
                           {{-- <li class="nav-item">
                             <a href="/voucher_payments/create" class="nav-link{{ Request::is('voucher_payments/create') ? ' active' : '' }}">
-                              <i class="fas fa-plus"></i> 
+                              <i class="fas fa-plus"></i>
                             <p>Register</p>
                             </a>
                           </li> --}}
@@ -600,13 +600,13 @@
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
                             <a href="/invoices" class="nav-link{{ Request::is('invoices*') ? ' active' : '' }}">
-                                <i class="fas fa-list"></i> 
+                                <i class="fas fa-list"></i>
                               <p> Listing</p>
                             </a>
                           </li>
                           <li class="nav-item">
                             <a href="/invoices/create" class="nav-link{{ Request::is('invoices/create') ? ' active' : '' }}">
-                              <i class="fas fa-plus"></i> 
+                              <i class="fas fa-plus"></i>
                             <p>Register</p>
                             </a>
                           </li>
@@ -623,40 +623,40 @@
                     <ul class="nav nav-treeview">
                         <li class="nav-item">
                             <a href="/master/countries" class="nav-link">
-                                <i class="fas fa-list"></i> 
+                                <i class="fas fa-list"></i>
                               <p>Countries</p>
                             </a>
                           </li>
                           <li class="nav-item">
                             <a href="/master/states" class="nav-link">
-                              <i class="fas fa-plus"></i> 
+                              <i class="fas fa-plus"></i>
                             <p>States</p>
                             </a>
                           </li>
                           <li class="nav-item">
                             <a href="/master/cities" class="nav-link">
-                              <i class="fas fa-plus"></i> 
+                              <i class="fas fa-plus"></i>
                             <p>Cities</p>
                             </a>
                           </li>
                           <li class="nav-item">
                             <a href="/master/goods-types" class="nav-link">
-                              <i class="fas fa-plus"></i> 
+                              <i class="fas fa-plus"></i>
                             <p>Goods Types</p>
                             </a>
                           </li>
                           <li class="nav-item">
                             <a href="/master/pumps" class="nav-link">
-                              <i class="fas fa-plus"></i> 
+                              <i class="fas fa-plus"></i>
                             <p>Pumps</p>
                             </a>
                           </li>
                     </ul>
                   </li>
                   @endif
-                  
+
                   @endif
-                  
+
                   {{-- Reports Section - Visible to all authenticated users --}}
                   @auth
                   <li class="nav-item">
@@ -668,12 +668,12 @@
                       </p>
                     </a>
                     <ul class="nav nav-treeview collapse{{ Request::is('reports*') ? ' show' : '' }}" id="reportsMenu">
-                      <!-- <li class="nav-item">
-                        <a href="{{ route('reports.index') }}" class="nav-link{{ Request::is('reports') ? ' active' : '' }}">
+                      <li class="nav-item">
+                        <a href="{{ route('reports.consignor-consignee') }}" class="nav-link{{ Request::is('reports/consignor-consignee') ? ' active' : '' }}">
                           <i class="fas fa-file-alt"></i>
-                          <p>Generate Report</p>
+                          <p>Consignor Consignee</p>
                         </a>
-                      </li> -->
+                      </li>
 
                     </ul>
                   </li>
@@ -682,7 +682,7 @@
                 <!--end::Sidebar Menu-->
               </nav>
             </div>
-    
+
             <!--end::Sidebar Wrapper-->
           </aside>
           <main class="app-main">
@@ -692,7 +692,7 @@
               <div class="container-fluid">
                 <!--begin::Row-->
                 @yield('content')
-                  
+
                 <!-- /.row (main row) -->
               </div>
               <!--end::Container-->
@@ -712,22 +712,22 @@
         <!--begin::Copyright-->
         <strong>
         Copyright All Rights Reserved © 2025
-         
+
         </strong>
-  
+
         <!--end::Copyright-->
       </footer>
       <!--end::Footer-->
 
         </div>
-          
 
-        
-          
+
+
+
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
- 
-   
-      
+
+
+
       <script
       src="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.10.1/browser/overlayscrollbars.browser.es6.min.js"
       integrity="sha256-dghWARbRe2eLlIJ56wNB+b760ywulqK3DzZYEpsg2fQ="
@@ -779,28 +779,28 @@
                     $.AdminLTE.layout.fix();
                     $.AdminLTE.layout.fixSidebar();
                 }
-                
+
                 // Initialize dropdowns
                 if ($.AdminLTE.dropdown) {
                     $.AdminLTE.dropdown.init();
                 }
             }
-            
+
             // Initialize all dropdowns
             $('.dropdown-toggle').dropdown();
-            
+
             // Add click handler for dropdowns
             $('.dropdown-toggle').on('click', function(e) {
                 e.preventDefault();
                 $(this).dropdown('toggle');
             });
-            
+
             // Initialize tooltips and popovers
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
                 return new bootstrap.Tooltip(tooltipTriggerEl);
             });
-            
+
             var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
             var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
                 return new bootstrap.Popover(popoverTriggerEl);

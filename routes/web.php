@@ -26,6 +26,7 @@ use App\Http\Controllers\CityController;
 use App\Http\Controllers\StateController;
 use App\Http\Controllers\CountryController;
 use App\Http\Controllers\PumpController;
+use App\Http\Controllers\ReportController;
 
 // Authentication Routes
 Route::group(['middleware' => 'guest'], function () {
@@ -323,6 +324,11 @@ Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->nam
         }
 
         return response()->json(['transporter_name' => null]);
+    });
+
+    Route::group(['prefix' => 'reports'], function () {
+      Route::get('/consignor-consignee', [ReportController::class, 'consignor_consignee'])->name('reports.consignor-consignee');
+      Route::get('/consignor-consignee-export', [ReportController::class, 'consignor_consignee_export'])->name('reports.consignor-consignee-export');
     });
 
 });
