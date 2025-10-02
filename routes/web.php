@@ -28,6 +28,7 @@ use App\Http\Controllers\CountryController;
 use App\Http\Controllers\PumpController;
 use App\Http\Controllers\ReportController;
 
+
 // Authentication Routes
 Route::group(['middleware' => 'guest'], function () {
   Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');

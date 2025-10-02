@@ -161,6 +161,7 @@ return [
          */
         App\Providers\AppServiceProvider::class,
         App\Providers\DatabaseServiceProvider::class,
+        Maatwebsite\Excel\ExcelServiceProvider::class,
 
         // App\Providers\BroadcastServiceProvider::class,
 
@@ -219,6 +220,7 @@ return [
 
         // ✅ Add DataTables alias
         'DataTables' => Yajra\DataTables\Facades\DataTables::class,
+        'Excel' => Maatwebsite\Excel\Facades\Excel::class,
 
     ],
 

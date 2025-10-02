@@ -680,8 +680,15 @@
                           <p>Consignor Consignee</p>
                         </a>
                       </li>
+                      <li class="nav-item">
+                        <a href="{{ route('reports.dispatch') }}" class="nav-link{{ Request::is('reports/dispatch') ? ' active' : '' }}">
+                          <i class="fas fa-file-alt"></i>
+                          <p>Dispatch</p>
+                        </a>
+                      </li>
                     </ul>
                   </li>
+                  
                   @endauth
                 </ul>
                 <!--end::Sidebar Menu-->

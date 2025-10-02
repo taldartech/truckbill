@@ -8,7 +8,7 @@ use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 
-class TDSExport implements FromCollection, WithHeadings, ShouldAutoSize
+class DispatchExport implements FromCollection, WithHeadings, ShouldAutoSize
 {
   private $startDate, $endDate;
 
@@ -56,15 +56,47 @@ class TDSExport implements FromCollection, WithHeadings, ShouldAutoSize
   public function headings(): array
   {
     return [
-      "Sr No",
-      "Date",
+     "Sr No",
+      "GR Date",
       "LR No",
       "Truck No",
       "Destination",
-      "TR Freight",
+      "Invoice No.",
+      "Invoice Date",
+      "Weight",
+      "Bags",
+      "Fr rate",
+      " Amount",
+      "Unloading st.",
+      "Distt. ",
+      "State",
+      "Consignor",
+      "Consignee",
+      "GST Number",
+      "Tr Rate",
+      "Tr Freight",
       "TDS",
-      "Rate",
+      "Cash Advance",
+      "Bank",
+      "Adjust In Advance",
+      "Diesel",
+      "Total",
+      "Damage Amount",
+      "Shortage Amount",
+      "Detention",
+      "Deviation",
+      "Misc.",
+      "Balance",
+      "Memo No.",
+      "Bill No.",
+      "Driver No.",
       "Transport Name",
+      "MAde to Payment",
+      "Payment Made to",
+      "TDS Deducted",
+      "E-way Bill No.",
+      "E-way Bill Expiry Date",
+      "Remarks",
       "PAN No",
     ];
   }

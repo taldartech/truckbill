@@ -10,6 +10,7 @@ use App\Models\LorryReceipt;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\DispatchExport;
 
 class ReportController extends Controller
 {
@@ -107,7 +108,7 @@ class ReportController extends Controller
       $lrs = [];
       $generated = false;
     }
-    return view('reports.tds', compact('lrs', 'startDate', 'endDate', 'generated'));
+    return view('reports.dispatch', compact('lrs', 'startDate', 'endDate', 'generated'));
   }
   public function dispatch_export(Request $request)
   {

@@ -5,7 +5,7 @@
 @section('content')
     <div class="card mb-4">
         <div class="card-body">
-            <form method="GET" action="{{ route('reports.tds') }}" id="searchForm" onsubmit="validateForm(event)">
+            <form method="GET" action="{{ route('reports.dispatch') }}" id="searchForm" onsubmit="validateForm(event)">
                 <div class="row mb-2">
                     <div class="col-md-3">
                         <label class="form-label">Start Date <span class="text-danger">*</span></label>
@@ -45,11 +45,11 @@
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h3 class="card-title mb-0">TDS Report</h3>
+                        <h3 class="card-title mb-0">Dispatch Report</h3>
                     </div>
                     <div class="d-flex">
                         <a class="btn btn-warning ms-2"
-                            href="{{ route('reports.tds-export', ['start_date' => $startDate, 'end_date' => $endDate]) }}">
+                            href="{{ route('reports.dispatch-export', ['start_date' => $startDate, 'end_date' => $endDate]) }}">
                             <i class="bi bi-file-earmark-spreadsheet"></i> Export
                         </a>
                     </div>
@@ -60,14 +60,48 @@
                     <thead>
                         <tr>
                           <th>Sr No</th>
-                          <th>Date</th>
+                          <th>GR Date</th>
                           <th>LR No</th>
                           <th>Truck No</th>
                           <th>Destination</th>
-                          <th>TR Freight</th>
+                          <th>Invoice No.</th>
+                          <th>Invoice Date</th>
+                          <th>Weight</th>
+                          <th>Bags</th>
+                          <th>Fr rate</th>
+                          <th> Amount</th>
+                          <th>Unloading st.</th>
+                          <th>Distt. </th>
+                          <th>State</th>
+                          <th>Consignor</th>
+                          <th>Consignee</th>
+                          <th>GST Number</th>
+                          <th>Tr Rate</th>
+                          <th>Tr Freight</th>
+                          
                           <th>TDS</th>
-                          <th>Rate</th>
+                          <th>Cash Advance</th>
+                          <th>Bank</th>
+                          <th>Adjust In Advance</th>
+                          <th>Diesel</th>
+                          <th>Total</th>
+                          
+                          <th>Damage Amount</th>
+                          <th>Shortage Amount</th>
+                          <th>Detention</th>
+                          <th>Deviation</th>
+                          <th>Misc.</th>
+                          <th>Balance</th>
+                          <th>Memo No.</th>
+                          <th>Bill No.</th>
+                          <th>Driver No.</th>
                           <th>Transport Name</th>
+                          <th>MAde to Payment</th>
+                          <th>Payment Made to</th>
+                          <th>TDS Deducted</th>
+                          <th>E-way Bill No.</th>
+                          <th>E-way Bill Expiry Date</th>
+                          <th>Remarks</th>
                           <th>PAN No</th>
                         </tr>
                     </thead>
