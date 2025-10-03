@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\DispatchExport;
+use App\Exports\PartyLedgerExport;
 
 class ReportController extends Controller
 {
@@ -163,6 +164,43 @@ class ReportController extends Controller
     $endDate = $request->input('end_date');
 
     $export = Excel::download(new DispatchExport($startDate, $endDate), 'dispatch_report.xlsx');
+    return $export;
+  }
+
+  public function party_ledger(Request $request)
+  {
+    $consignees = Consignee::all();
+    $endDate = $request->input('end_date') ?? date('Y-m-d');
+    $startDate = max($request->input('start_date') ?? date('Y-m-d', strtotime('-3 months')), date('Y-m-d', strtotime('-3 months', strtotime($endDate))));
+
+    $customerId = $request->input('customer_id') ?? null;
+
+    if ($customerId) {
+      $user = Auth::user()->company_id;
+      $query = LorryReceipt::whereBetween('gr_date', [$startDate, $endDate]);
+      $query->where('invoice_generated', 1);
+      if ($user) {
+        $query->where('company_id', $user);
+      }
+
+      if ($customerId) {
+        $query->where('customer_id', $customerId);
+      }
+
+      $lrs = $query->get();
+    } else {
+      $lrs = [];
+    }
+    return view('reports.party-ledger', compact('lrs', 'consignees', 'startDate', 'endDate', 'customerId'));
+  }
+
+  public function party_ledger_export(Request $request)
+  {
+    $startDate = $request->input('start_date');
+    $endDate = $request->input('end_date');
+    $customerId = $request->input('customer_id');
+
+    $export = Excel::download(new PartyLedgerExport($startDate, $endDate, $customerId), 'party_ledger_report.xlsx');
     return $export;
   }
 }
