@@ -686,9 +686,15 @@
                           <p>Dispatch</p>
                         </a>
                       </li>
+                      <li class="nav-item">
+                        <a href="{{ route('reports.party-ledger') }}" class="nav-link{{ Request::is('reports/party-ledger') ? ' active' : '' }}">
+                          <i class="fas fa-file-alt"></i>
+                          <p>Party Ledger</p>
+                        </a>
+                      </li>
                     </ul>
                   </li>
-                  
+
                   @endauth
                 </ul>
                 <!--end::Sidebar Menu-->
