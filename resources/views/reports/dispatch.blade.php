@@ -183,7 +183,15 @@
                                 <td>{{ $lr->amount - ($freightBooking->balance_amount ?? 0) }}</td>
                                 
                                 <td>{{ $lr->memo_id ?? 'N/A' }}</td>
-                                <td>{{ $lr->invoice_number ?? 'N/A' }}</td>
+                                {{-- use this memo_id to get invoice number from invoice table --}}
+                                {{-- this memo_ids are stored in array from in invoice table --}}
+                                @php
+                                $lrIds = $lr->id;
+                                // in invoice table lr_ids are stored in array form
+
+                              $invoice = App\Models\Invoice::whereJsonContains('lr_ids', $lrIds)->first();
+                                @endphp
+                                <td>{{ $invoice->manual_invoice_number ?? 'N/A' }}</td>
                                 <td>{{ $lr->driver_number ?? 'N/A' }}</td>
                                 <td>{{ $lr->transporter->name ?? 'N/A' }}</td>
                                 <td>{{ $lr->transporter->short_name ?? 'N/A' }}</td>
