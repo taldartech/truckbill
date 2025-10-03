@@ -95,13 +95,15 @@ class ReportController extends Controller
 
     $user = Auth::user()->company_id;
     if ($request->input('end_date') || $request->input('start_date')) {
-      $query = FreightBooking::whereHas('lr', function($query) use ($startDate, $endDate) {
+     
+
+      $query = FreightBooking::with('voucherPayments')->whereHas('lr', function($query) use ($startDate, $endDate) {
         $query->whereBetween('gr_date', [$startDate, $endDate]);
       });
       if ($user) {
         $query->where('company_id', $user);
       }
-      $query->where('tds_amount', '>', 0);
+      // $query->where('tds_amount', '>', 0);
       $lrs = $query->get();
       $generated = true;
     } else {
