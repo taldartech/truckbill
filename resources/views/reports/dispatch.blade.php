@@ -64,6 +64,7 @@
                           <th>LR No</th>
                           <th>Truck No</th>
                           <th>Destination</th>
+
                           <th>Invoice No.</th>
                         
                           <th>Weight</th>
@@ -92,11 +93,12 @@
                           <th>Deviation</th>
                           <th>Misc.</th>
                           <th>Balance</th>
+                          <th>Diff</th>
                           <th>Memo No.</th>
                           <th>Bill No.</th>
                           <th>Driver No.</th>
                           <th>Transport Name</th>
-                          <th>MAde to Payment</th>
+                          <th>Made to Payment</th>
                           <th>Payment Made to</th>
                           <th>TDS Deducted</th>
                           <th>E-way Bill No.</th>
@@ -107,64 +109,91 @@
                     </thead>
                     <tbody>
                         @foreach ($lrs as $index => $lr)
-                        @php
-                        $freightBooking = $lr->lr->freightBooking ?? null;
-                        $cashAdvance = 0;
-                        $adjustInAdvance = 0;
-                        $bank = 0;
-                        $diesel = 0;
-                    
-                        if ($freightBooking && $freightBooking->relationLoaded('voucherPayments')) {
-                            $cashAdvance = $freightBooking->voucherPayments
-                                ->where('payment_mode', 'cash')
-                                ->sum('amount');
+                            @php
+                                // Get the first freight booking (or null if none exists)
+                                $freightBooking = $lr->freightBookings->first();
                                 
-                            $adjustInAdvance = $freightBooking->voucherPayments
-                                ->where('payment_mode', 'adjust_in_advance')
-                                ->sum('amount');
-                                
-                            $bank = $freightBooking->voucherPayments
-                                ->where('payment_mode', 'bank transfer')
-                                ->sum('amount');
-                                
-                            $diesel = $freightBooking->voucherPayments
-                                ->where('payment_mode', 'fuel(paid to pump)')
-                                ->sum('amount');
-                        }
-                    @endphp
+                                // Initialize payments array with all payment types
+                                $payments = [
+                                    'cash' => 0,
+                                    'adjust in advance' => 0,
+                                    'bank transfer' => 0,
+                                    'fuel(paid to pump)' => 0,
+                                ];
+
+                                // If we have a freight booking with loaded voucher payments
+                                if ($freightBooking && $freightBooking->relationLoaded('voucherPayments')) {
+                                    // Group payments by payment mode and sum amounts
+                                    $paymentSums = $freightBooking->voucherPayments
+                                        ->groupBy('payment_mode')
+                                        ->map(function ($payments) {
+                                            return $payments->sum('amount');
+                                        });
+
+                                    // Map the grouped payments to our expected keys
+                                    foreach ($payments as $mode => $amount) {
+                                        $normalizedMode = strtolower(trim($mode));
+                                        $matchingMode = $paymentSums->keys()->first(function ($key) use ($normalizedMode) {
+                                            return strtolower(trim($key)) === $normalizedMode;
+                                        });
+                                        
+                                        if ($matchingMode !== null) {
+                                            $payments[$mode] = $paymentSums[$matchingMode];
+                                        }
+                                    }
+                                }
+                            @endphp
                             <tr>
                                 <td>{{ $index + 1 }}</td>
-                                <td style="white-space: nowrap;">{{ \Carbon\Carbon::parse($lr->lr->gr_date)->format('d-m-Y') }}
-                                </td>
-                                <td>{{ $lr->lr->lr_number }}</td>
-                                <td>{{ $lr->lr->truck->truck_number ?? 'N/A' }}</td>
-                                <td>{{ $lr->lr->destination_city . ', ' . $lr->lr->destination_state }}</td>
-                                <td>{{ $lr->lr->invoice_number }}</td>
+                                <td style="white-space: nowrap;">{{ \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') }}</td>
+                                <td>{{ $lr->lr_number }}</td>
+                                <td>{{ $lr->truck->truck_number ?? 'N/A' }}</td>
+                                <td>{{ $lr->destination_city }}</td>
                                
-                                <td>{{ $lr->lr->weight }}</td>
-                                <td>{{ $lr->lr->no_of_units }}</td>
-                                <td>{{ $lr->lr->fr_rate }}</td>
-                                <td>{{ $lr->lr->amount }}</td>
-                                <td>{{ $lr->lr->destination_city }}</td>
-                                <td>{{ $lr->lr->destination_city }}</td>
-                                <td>{{ $lr->lr->destination_state }}</td>
-                                <td>{{ $lr->lr->consignor->name }}</td>
-                                <td>{{ $lr->lr->consignee->name }}</td>
-                                <td>{{ $lr->lr->customer->gst_number }}</td>
-                                <td>{{ $lr->tr_fr_rate }}</td>
-                                <td>{{ $lr->tr_amount }}</td>
-                                <td>{{ $lr->tds_amount }}</td>
-                                <td>{{ $cashAdvance }}</td>
-                                <td>{{ $adjustInAdvance }}</td>
-                                <td>{{ $bank }}</td>
-                                <td>{{ $diesel }}</td>
-
-                                <td>{{ $lr->lr->tr_rate }}</td>
-                                <td>{{ number_format($lr->tr_fr_rate, 2) }}</td>
-                                <td>{{ number_format($lr->tds_amount, 2) }}</td>
-                                <td>{{ $lr->transporter_tds_percentage }}%</td>
-                                <td>{{ $lr->lr->transporter->name ?? 'N/A' }}</td>
-                                <td>{{ $lr->lr->transporter->pan_number ?? 'N/A' }}</td>
+                                <td>{{ $lr->invoice_number }}</td>
+                               
+                                <td>{{ $lr->weight }}</td>
+                                <td>{{ $lr->no_of_units }}</td>
+                                <td>{{ $lr->fr_rate }}</td>
+                                <td>{{ $lr->amount }}</td>
+                                <td>{{ $lr->destination_state }}</td>
+                                <td>{{ $lr->destination_city }}</td>
+                                <td>{{ $lr->destination_state }}</td>
+                                <td>{{ $lr->consignor->name ?? 'N/A' }}</td>
+                                <td>{{ $lr->consignee->name ?? 'N/A' }}</td>
+                                <td>{{ $lr->customer->gst_number ?? 'N/A' }}</td>
+                                <td>{{ $freightBooking->tr_fr_rate ?? 'N/A' }}</td>
+                                <td>{{ $freightBooking->tr_amount ?? 'N/A' }}</td>
+                                <td>{{ $freightBooking->tds_amount ?? 'N/A' }}</td>
+                                <td>{{ $payments['cash'] }}</td>
+                                <td>{{ $payments['bank transfer'] }}</td>
+                                <td>{{ $payments['adjust in advance'] }}</td>
+                                <td>{{ $payments['fuel(paid to pump)'] }}</td>
+                               
+                                @php
+                                $total = $payments['cash'] + $payments['bank transfer'] + $payments['adjust in advance'] + $payments['fuel(paid to pump)'] + ($freightBooking->tds_amount ?? 0);
+                                @endphp
+                                <td>{{ $total }}</td>
+                                <td>{{ $freightBooking->damage_amount ?? '0' }}</td>
+                                <td>{{ $freightBooking->shortage_amount ?? '0' }}</td>
+                                <td>{{ $freightBooking->detention ?? '0' }}</td>
+                                <td>{{ $freightBooking->deviation ?? '0' }}</td>
+                                <td>{{ $freightBooking->misc ?? '0' }}</td>
+                                <td>{{ $freightBooking->balance_amount ?? '0' }}</td>
+                                <td>{{ $lr->amount - ($freightBooking->balance_amount ?? 0) }}</td>
+                                
+                                <td>{{ $lr->memo_id ?? 'N/A' }}</td>
+                                <td>{{ $lr->invoice_number ?? 'N/A' }}</td>
+                                <td>{{ $lr->driver_number ?? 'N/A' }}</td>
+                                <td>{{ $lr->transporter->name ?? 'N/A' }}</td>
+                                <td>{{ $lr->transporter->short_name ?? 'N/A' }}</td>
+                                <td>{{ $lr->transporter_type ?? 'N/A' }}</td>
+                                <td>{{ $lr->transporter->tds_percentage == 0 ? 'No' : 'Yes' }}</td>
+                                <td>{{ $freightBooking->eway_bill_no ?? 'N/A' }}</td>
+                                <td>{{ $freightBooking->eway_bill_expiry_date ?? 'N/A' }}</td>
+                                <td>{{ $lr->delivery_status ?? 'N/A' }}</td>
+                                <td>{{ $lr->transporter->pan_number ?? 'N/A' }}</td>
+                                {{-- Rest of the row remains the same --}}
                             </tr>
                         @endforeach
                     </tbody>
