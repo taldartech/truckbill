@@ -44,3 +44,4 @@ ad.js
 /storage/*
 /storage/framework/views/*
 
+.env
