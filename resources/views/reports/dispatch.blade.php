@@ -190,9 +190,14 @@
                                 // in invoice table lr_ids are stored in array form
 
                               $invoice = App\Models\Invoice::whereJsonContains('lr_ids', $lrIds)->first();
+                            //   in truck table their is dirver id from that find mobile number
+                            $truck = App\Models\Truck::where('driver_id', $lr->truck->driver_id)->first();
+                           
+                            
                                 @endphp
+                                
                                 <td>{{ $invoice->manual_invoice_number ?? 'N/A' }}</td>
-                                <td>{{ $lr->driver_number ?? 'N/A' }}</td>
+                                <td>{{ $truck->driver->mobile ?? 'N/A' }}</td>
                                 <td>{{ $lr->transporter->name ?? 'N/A' }}</td>
                                 <td>{{ $lr->transporter->short_name ?? 'N/A' }}</td>
                                 <td>{{ $lr->transporter_type ?? 'N/A' }}</td>
