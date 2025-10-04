@@ -244,7 +244,7 @@
               <a href="#" class="brand-link">
 
                 <!--begin::Brand Text-->
-                <span class="brand-text " style="font-size: 1.2em;"> <strong>TruckMate-TMS</strong></span>
+                <span class="brand-text " style="font-size: 1.2em;"> <strong>TruckBill-TMS</strong></span>
                 <!--end::Brand Text-->
               </a>
               <!--end::Brand Link-->
