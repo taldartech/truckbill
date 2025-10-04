@@ -692,6 +692,12 @@
                           <p>Party Ledger</p>
                         </a>
                       </li>
+                      <li class="nav-item">
+                        <a href="{{ route('reports.invoice') }}" class="nav-link{{ Request::is('reports/invoice') ? ' active' : '' }}">
+                          <i class="fas fa-file-alt"></i>
+                          <p>Invoice</p>
+                        </a>
+                      </li>
                     </ul>
                   </li>
 

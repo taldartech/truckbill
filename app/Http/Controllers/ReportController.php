@@ -203,4 +203,32 @@ class ReportController extends Controller
     $export = Excel::download(new PartyLedgerExport($startDate, $endDate, $customerId), 'party_ledger_report.xlsx');
     return $export;
   }
+  public function invoice(Request $request)
+  {
+    $endDate = $request->input('end_date') ?? date('Y-m-d');
+    $startDate = max($request->input('start_date') ?? date('Y-m-d', strtotime('-3 months')), date('Y-m-d', strtotime('-3 months', strtotime($endDate))));
+
+    $user = Auth::user()->company_id;
+    if ($request->input('end_date') || $request->input('start_date')) {
+      $query = LorryReceipt::whereBetween('gr_date', [$startDate, $endDate]);
+      if ($user) {
+        $query->where('company_id', $user);
+      }
+      $query->where('invoice_generated', 1);
+      $lrs = $query->get();
+      $generated = true;
+    } else {
+      $lrs = [];
+      $generated = false;
+    }
+    return view('reports.invoice', compact('lrs', 'startDate', 'endDate', 'generated'));
+  }
+  public function invoice_export(Request $request)
+  {
+    $startDate = $request->input('start_date');
+    $endDate = $request->input('end_date');
+
+    $export = Excel::download(new InvoiceExport($startDate, $endDate), 'invoice_report.xlsx');
+    return $export;
+  }
 }
