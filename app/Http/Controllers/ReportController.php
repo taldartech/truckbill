@@ -13,6 +13,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\DispatchExport;
 use App\Exports\PartyLedgerExport;
 use App\Models\Invoice;
+use App\Exports\InvoiceExport;
 use App\Models\Consignees;
 
 class ReportController extends Controller

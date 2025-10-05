@@ -36,13 +36,15 @@ class InvoiceExport implements FromCollection, WithHeadings, ShouldAutoSize
         return $invoices->map(function ($invoice, $index) {
             return [
                 'Sr No' => $index + 1,
-                'Date' => $invoice->generated_date ? Carbon::parse($invoice->generated_date)->format('d-m-Y') : 'N/A',
                 'Invoice No' => $invoice->manual_invoice_number ?? 'N/A',
+                'Date' => $invoice->generated_date ? Carbon::parse($invoice->generated_date)->format('d-m-Y') : 'N/A',
                 'Amount' => number_format($invoice->net_amount ?? 0, 2),
                 'State' => $invoice->consignee->state->name ?? 'N/A',
-                'Reverse Charge' => $invoice->reverse_charge ?? 'N/A',
-                'Tax %' => ($invoice->applicable_tax_percentage ?? '0') . '%',
-                'Invoice Type' => $invoice->invoice_type ?? 'N/A',
+                'Reverse Charge' => $invoice->invoice_type == 'reverse_charge' ? 'Yes' : 'No',
+                'Applicable % of Tax' => "-",
+                'Invoice Type' => "Regular B2B",
+                'Rate' => "5.00",
+                'Taxable Value' => number_format($invoice->net_amount ?? 0, 2),
             ];
         });
     }
@@ -51,13 +53,15 @@ class InvoiceExport implements FromCollection, WithHeadings, ShouldAutoSize
     {
         return [
             'Sr No',
-            'Date',
             'Invoice No',
+            'Date',
             'Amount',
             'State',
             'Reverse Charge',
-            'Tax %',
+            'Applicable % of Tax',
             'Invoice Type',
+            'Rate',
+            'Taxable Value',
         ];
     }
 }
