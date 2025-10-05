@@ -13,7 +13,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\DispatchExport;
 use App\Exports\PartyLedgerExport;
 use App\Models\Invoice;
-use App\Models\Customer;
+use App\Models\Consignees;
 
 class ReportController extends Controller
 {
@@ -211,20 +211,21 @@ class ReportController extends Controller
     $startDate = max($request->input('start_date') ?? date('Y-m-d', strtotime('-3 months')), date('Y-m-d', strtotime('-3 months', strtotime($endDate))));
 
     $user = Auth::user()->company_id;
-     if ($request->input('end_date') || $request->input('start_date')) {
-      $query = Invoice::whereHas('customer', function($query) use ($startDate, $endDate) {
-        $query->whereBetween('created_at', [$startDate, $endDate]);
-      });
+    $invoices = [];
+    $generated = false;
+
+    if ($request->input('end_date') || $request->input('start_date')) {
+      $query = Invoice::with(['consignee', 'consignee.state'])
+          ->whereBetween('generated_date', [$startDate, $endDate]);
+      
       if ($user) {
         $query->where('company_id', $user);
       }
      
-      $invoices = $query->get();
+      $invoices = $query->orderBy('generated_date', 'desc')->get();
       $generated = true;
-    } else {
-      $invoices = [];
-      $generated = false;
     }
+    
     return view('reports.invoice', compact('invoices', 'startDate', 'endDate', 'generated'));
   }
   public function invoice_export(Request $request)

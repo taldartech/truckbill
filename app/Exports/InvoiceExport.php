@@ -2,70 +2,62 @@
 
 namespace App\Exports;
 
-use App\Models\FreightBooking;
+use App\Models\Invoice;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use Carbon\Carbon;
 
-class TDSExport implements FromCollection, WithHeadings, ShouldAutoSize
+class InvoiceExport implements FromCollection, WithHeadings, ShouldAutoSize
 {
-  private $startDate, $endDate;
+    private $startDate, $endDate;
 
-  public function __construct($startDate, $endDate)
-  {
-    $this->startDate = $startDate;
-    $this->endDate = $endDate;
-  }
-
-  /**
-   * @return \Illuminate\Support\Collection
-   */
-  public function collection()
-  {
-    // Fetch data based on the provided parameters
-    $company_id = Auth::user()->company_id;
-    $query = FreightBooking::whereHas('lr', function ($query) {
-      $query->whereBetween('gr_date', [$this->startDate, $this->endDate]);
-    });
-
-    if ($company_id) {
-      $query->where('company_id', $company_id);
+    public function __construct($startDate, $endDate)
+    {
+        // Ensure dates are in the correct format
+        $this->startDate = Carbon::parse($startDate)->startOfDay();
+        $this->endDate = Carbon::parse($endDate)->endOfDay();
     }
-    $query->where('tds_amount', '>', 0);
 
-    $lrs = $query->get();
+    public function collection()
+    {
+        $companyId = Auth::user()->company_id;
+        
+        $query = Invoice::with(['consignee', 'consignee.state'])
+            ->whereBetween('generated_date', [$this->startDate, $this->endDate]);
+            
+        if ($companyId) {
+            $query->where('company_id', $companyId);
+        }
 
-    // Map data to the desired format
-    return $lrs->map(function ($lr, $index) {
-      return [
-        "Sr No" => $index + 1,
-        "Date" => $lr->lr->gr_date,
-        "LR No" => $lr->lr->lr_number,
-        "Truck No" => $lr->lr->truck->truck_number ?? 'N/A',
-        "Destination" => $lr->lr->destination_city . ', ' . $lr->lr->destination_state,
-        "TR Freight" => number_format($lr->tr_fr_rate, 2),
-        "TDS" => (string) number_format($lr->tds_amount, 2),
-        "Rate" => (string) $lr->transporter_tds_percentage . '%',
-        "Transport Name" => $lr->lr->transporter->name ?? 'N/A',
-        "PAN No" => $lr->lr->transporter->pan_number ?? 'N/A',
-      ];
-    });
-  }
+        $invoices = $query->orderBy('generated_date', 'desc')->get();
 
-  public function headings(): array
-  {
-    return [
-      "Sr No",
-      "Date",
-      "LR No",
-      "Truck No",
-      "Destination",
-      "TR Freight",
-      "TDS",
-      "Rate",
-      "Transport Name",
-      "PAN No",
-    ];
-  }
+        return $invoices->map(function ($invoice, $index) {
+            return [
+                'Sr No' => $index + 1,
+                'Date' => $invoice->generated_date ? Carbon::parse($invoice->generated_date)->format('d-m-Y') : 'N/A',
+                'Invoice No' => $invoice->manual_invoice_number ?? 'N/A',
+                'Amount' => number_format($invoice->net_amount ?? 0, 2),
+                'State' => $invoice->consignee->state->name ?? 'N/A',
+                'Reverse Charge' => $invoice->reverse_charge ?? 'N/A',
+                'Tax %' => ($invoice->applicable_tax_percentage ?? '0') . '%',
+                'Invoice Type' => $invoice->invoice_type ?? 'N/A',
+            ];
+        });
+    }
+
+    public function headings(): array
+    {
+        return [
+            'Sr No',
+            'Date',
+            'Invoice No',
+            'Amount',
+            'State',
+            'Reverse Charge',
+            'Tax %',
+            'Invoice Type',
+        ];
+    }
 }

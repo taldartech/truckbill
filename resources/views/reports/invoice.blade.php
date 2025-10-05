@@ -36,7 +36,7 @@
         <div class="alert alert-warning">
             Please generate the report by selecting at Dates.
         </div>
-    @elseif (empty($lrs) || $lrs->isEmpty())
+    @elseif (empty($invoices) || $invoices->isEmpty())
         <div class="alert alert-info">
             No records found for the selected criteria.
         </div>
@@ -75,16 +75,16 @@
                         @foreach ($invoices as $index => $invoice)
                             <tr>
                                 <td>{{ $index + 1 }}</td>
-                                <td style="white-space: nowrap;">{{ \Carbon\Carbon::parse($invoice->created_at)->format('d-m-Y') }}
-                                </td>
                                 <td>{{ $invoice->manual_invoice_number }}</td>
+                                <td style="white-space: nowrap;">{{ \Carbon\Carbon::parse($invoice->generated_date)->format('d-m-Y') }}
+                                </td>
                                 <td>{{ $invoice->net_amount }}</td>
-                                <td>{{ $invoice->customer->state->name }}</td>
-                                <td>{{ $invoice->reverse_charge }}</td>
+                                <td>{{ $invoice->consignee->state->name }}</td>
+                                <td>{{ $invoice->invoice_type == 'reverse_charge' ? 'Yes' : 'No' }}</td>
                                 <td>{{ $invoice->applicable_tax_percentage }}%</td>
-                                <td>{{ $invoice->invoice_type }}</td>
-                                <td>{{ $invoice->rate }}</td>
-                                <td>{{ $invoice->taxable_value }}</td>
+                                <td>{{ "Regular B2B" }}</td>
+                                <td>{{ "5.00" }}</td>
+                                <td>{{ $invoice->net_amount }}</td>
                             </tr>
                         @endforeach
                     </tbody>
