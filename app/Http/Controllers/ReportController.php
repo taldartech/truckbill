@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\DispatchExport;
 use App\Exports\PartyLedgerExport;
+use App\Models\Invoice;
+use App\Models\Customer;
 
 class ReportController extends Controller
 {
@@ -209,19 +211,21 @@ class ReportController extends Controller
     $startDate = max($request->input('start_date') ?? date('Y-m-d', strtotime('-3 months')), date('Y-m-d', strtotime('-3 months', strtotime($endDate))));
 
     $user = Auth::user()->company_id;
-    if ($request->input('end_date') || $request->input('start_date')) {
-      $query = LorryReceipt::whereBetween('gr_date', [$startDate, $endDate]);
+     if ($request->input('end_date') || $request->input('start_date')) {
+      $query = Invoice::whereHas('customer', function($query) use ($startDate, $endDate) {
+        $query->whereBetween('created_at', [$startDate, $endDate]);
+      });
       if ($user) {
         $query->where('company_id', $user);
       }
-      $query->where('invoice_generated', 1);
-      $lrs = $query->get();
+     
+      $invoices = $query->get();
       $generated = true;
     } else {
-      $lrs = [];
+      $invoices = [];
       $generated = false;
     }
-    return view('reports.invoice', compact('lrs', 'startDate', 'endDate', 'generated'));
+    return view('reports.invoice', compact('invoices', 'startDate', 'endDate', 'generated'));
   }
   public function invoice_export(Request $request)
   {

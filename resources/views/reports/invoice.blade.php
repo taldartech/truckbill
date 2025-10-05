@@ -1,11 +1,11 @@
 @extends('layouts.app')
 
-@section('title', 'TDS Report')
+@section('title', 'Invoice Report')
 
 @section('content')
     <div class="card mb-4">
         <div class="card-body">
-            <form method="GET" action="{{ route('reports.tds') }}" id="searchForm" onsubmit="validateForm(event)">
+            <form method="GET" action="{{ route('reports.invoice') }}" id="searchForm" onsubmit="validateForm(event)">
                 <div class="row mb-2">
                     <div class="col-md-3">
                         <label class="form-label">Start Date <span class="text-danger">*</span></label>
@@ -45,11 +45,11 @@
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h3 class="card-title mb-0">TDS Report</h3>
+                        <h3 class="card-title mb-0">Invoice Report</h3>
                     </div>
                     <div class="d-flex">
                         <a class="btn btn-warning ms-2"
-                            href="{{ route('reports.tds-export', ['start_date' => $startDate, 'end_date' => $endDate]) }}">
+                            href="{{ route('reports.invoice-export', ['start_date' => $startDate, 'end_date' => $endDate]) }}">
                             <i class="bi bi-file-earmark-spreadsheet"></i> Export
                         </a>
                     </div>
@@ -60,31 +60,31 @@
                     <thead>
                         <tr>
                           <th>Sr No</th>
-                          <th>Date</th>
-                          <th>LR No</th>
-                          <th>Truck No</th>
-                          <th>Destination</th>
-                          <th>TR Freight</th>
-                          <th>TDS</th>
+                          <th>Invoice Number</th>
+                          <th>Invoice Date</th>
+                          <th>Invoice Value</th>
+                          <th>Place of Supply</th>
+                          <th>Reverse Charge</th>
+                          <th>Applicable % of Tax</th>
+                          <th>Invoice Type</th>
                           <th>Rate</th>
-                          <th>Transport Name</th>
-                          <th>PAN No</th>
+                          <th>Taxable Value</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($lrs as $index => $lr)
+                        @foreach ($invoices as $index => $invoice)
                             <tr>
                                 <td>{{ $index + 1 }}</td>
-                                <td style="white-space: nowrap;">{{ \Carbon\Carbon::parse($lr->lr->gr_date)->format('d-m-Y') }}
+                                <td style="white-space: nowrap;">{{ \Carbon\Carbon::parse($invoice->created_at)->format('d-m-Y') }}
                                 </td>
-                                <td>{{ $lr->lr->lr_number }}</td>
-                                <td>{{ $lr->lr->truck->truck_number ?? 'N/A' }}</td>
-                                <td>{{ $lr->lr->destination_city . ', ' . $lr->lr->destination_state }}</td>
-                                <td>{{ number_format($lr->tr_fr_rate, 2) }}</td>
-                                <td>{{ number_format($lr->tds_amount, 2) }}</td>
-                                <td>{{ $lr->transporter_tds_percentage }}%</td>
-                                <td>{{ $lr->lr->transporter->name ?? 'N/A' }}</td>
-                                <td>{{ $lr->lr->transporter->pan_number ?? 'N/A' }}</td>
+                                <td>{{ $invoice->manual_invoice_number }}</td>
+                                <td>{{ $invoice->net_amount }}</td>
+                                <td>{{ $invoice->customer->state->name }}</td>
+                                <td>{{ $invoice->reverse_charge }}</td>
+                                <td>{{ $invoice->applicable_tax_percentage }}%</td>
+                                <td>{{ $invoice->invoice_type }}</td>
+                                <td>{{ $invoice->rate }}</td>
+                                <td>{{ $invoice->taxable_value }}</td>
                             </tr>
                         @endforeach
                     </tbody>
