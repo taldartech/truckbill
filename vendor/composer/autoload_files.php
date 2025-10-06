@@ -36,4 +36,5 @@ return array(
     '58571171fd5812e6e447dce228f52f4d' => $vendorDir . '/laravel/framework/src/Illuminate/Support/helpers.php',
     'a1cfe24d14977df6878b9bf804af2d1c' => $vendorDir . '/nunomaduro/collision/src/Adapters/Phpunit/Autoload.php',
     '0b47d6d4a00ca9112ba3953b49e7c9a4' => $vendorDir . '/yajra/laravel-datatables-oracle/src/helper.php',
+    'f37cde8d6489044af025718b9892e84a' => $baseDir . '/app/Helpers/NumberHelpers.php',
 );
