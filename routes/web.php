@@ -56,6 +56,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/api/dropdown/states/{countryId}', [\App\Http\Controllers\Api\DropdownController::class, 'states']);
     Route::get('/api/dropdown/cities/{stateId}', [\App\Http\Controllers\Api\DropdownController::class, 'cities']);
     Route::get('/api/lorry-receipts/{customerId}', [LorryReceiptController::class, 'getLorryReceiptsForCustomer']);
+    Route::get('/api/invoice-numbers/{customerId}', [InvoiceController::class, 'getInvoiceNumbersForCustomer']);
 
     // City and State routes
     Route::get('/cities/{id}', [\App\Http\Controllers\CityController::class, 'show'])->name('cities.show');
@@ -345,8 +346,15 @@ Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->nam
       Route::get('/shortage-damage-export', [ReportController::class, 'shortage_damage_export'])->name('reports.shortage-damage-export');
       Route::get('/eway-bill', [ReportController::class, 'eway_bill'])->name('reports.eway-bill');
       Route::get('/eway-bill-export', [ReportController::class, 'eway_bill_export'])->name('reports.eway-bill-export');
+<<<<<<< HEAD
       Route::get('/pump', [ReportController::class, 'pump'])->name('reports.pump');
       Route::get('/pump-export', [ReportController::class, 'pump_export'])->name('reports.pump-export');
+=======
+      Route::get('/party-bill', [ReportController::class, 'party_bill'])->name('reports.party-bill');
+      Route::get('/party-bill-export', [ReportController::class, 'party_bill_export'])->name('reports.party-bill-export');
+      Route::get('/ultratech-bill', [ReportController::class, 'ultratech_bill'])->name('reports.ultratech-bill');
+      Route::get('/ultratech-bill-export', [ReportController::class, 'ultratech_bill_export'])->name('reports.ultratech-bill-export');
+>>>>>>> fed400f283e812d5ec1a37a811505f9382ab9742
     });
 
 });

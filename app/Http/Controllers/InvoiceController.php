@@ -9,6 +9,7 @@ use App\Models\Memo;
 use App\Models\InvoiceMemoMap;
 use App\Models\LorryReceipt;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
@@ -437,5 +438,15 @@ class InvoiceController extends Controller
     }
 
     return response()->json($result);
+  }
+
+  public function getInvoiceNumbersForCustomer($customerId)
+  {
+    $invoices = Invoice::where('customer_id', $customerId)
+      ->where('company_id', Auth::user()->company_id)
+      ->orderByDesc('id')
+      ->get(['id', 'manual_invoice_number']);
+
+    return response()->json($invoices);
   }
 }

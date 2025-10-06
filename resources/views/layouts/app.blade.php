@@ -717,9 +717,21 @@
                         </a>
                       </li>
                       <li class="nav-item">
+<<<<<<< HEAD
                         <a href="{{ route('reports.pump') }}" class="nav-link{{ Request::is('reports/pump') ? ' active' : '' }}">
                           <i class="fas fa-file-alt"></i>
                           <p>Pump</p>
+=======
+                        <a href="{{ route('reports.party-bill') }}" class="nav-link{{ Request::is('reports/party-bill') ? ' active' : '' }}">
+                          <i class="fas fa-file-alt"></i>
+                          <p>Party Bill</p>
+                        </a>
+                      </li>
+                      <li class="nav-item">
+                        <a href="{{ route('reports.ultratech-bill') }}" class="nav-link{{ Request::is('reports/ultratech-bill') ? ' active' : '' }}">
+                          <i class="fas fa-file-alt"></i>
+                          <p>Ultratech Bill</p>
+>>>>>>> fed400f283e812d5ec1a37a811505f9382ab9742
                         </a>
                       </li>
                     </ul>
