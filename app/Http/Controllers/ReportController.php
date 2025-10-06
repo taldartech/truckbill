@@ -22,6 +22,7 @@ use App\Exports\EwayBillExport;
 use App\Models\Pump;
 use App\Exports\PumpExport;
 use App\Models\VoucherPayment;
+use Carbon\Carbon;
 
 class ReportController extends Controller
 {
@@ -431,7 +432,7 @@ class ReportController extends Controller
                     'freight_booking_id' => $payment['freight_booking_id'],
                     'total_amount' => $payment['total_amount'],
                     'lrs' => $lrDetails,
-                    'date' => $date,
+                    'date' => Carbon::parse($date)->format('d-m-Y'),
                 ];
             })->values();
             
