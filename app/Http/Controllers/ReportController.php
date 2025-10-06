@@ -18,6 +18,8 @@ use App\Exports\InvoiceExport;
 use App\Models\Consignees;
 use App\Exports\ShortageDamageExport;
 use App\Exports\EwayBillExport;
+use App\Models\Pump;
+use App\Exports\PumpExport;
 
 class ReportController extends Controller
 {
@@ -377,6 +379,7 @@ class ReportController extends Controller
     $export = Excel::download(new EwayBillExport($startDate, $endDate), 'eway_bill_report.xlsx');
     return $export;
   }
+  
   public function pump(Request $request)
 {
   $pumps = Pump::all();
@@ -387,6 +390,7 @@ class ReportController extends Controller
     );
 
     $pumpId = $request->input('pump_id');
+  
     $userCompanyId = Auth::user()->company_id;
 
     $pumpData = collect(); // default empty collection
@@ -397,6 +401,7 @@ class ReportController extends Controller
             ->where('company_id', $userCompanyId)
             ->whereBetween('date', [$startDate, $endDate])
             ->get();
+          
 
         if ($voucherPayments->isNotEmpty()) {
             // Step 2: Group by freight_booking_id and calculate total amount
@@ -409,26 +414,35 @@ class ReportController extends Controller
 
             // Step 3: Fetch all LR records related to these freight booking IDs
             $freightBookingIds = $groupedPayments->pluck('freight_booking_id')->toArray();
-
+           
             $lrs = \App\Models\LorryReceipt::whereIn('freight_booking_id', $freightBookingIds)
-                ->select('freight_booking_id', 'lr_number', 'destination')
+                ->select('freight_booking_id', 'lr_number', 'destination_state')
                 ->get();
-
+            
             // Step 4: Merge LR data with payment sums
             $pumpData = $groupedPayments->map(function ($payment) use ($lrs) {
                 $lrDetails = $lrs->where('freight_booking_id', $payment['freight_booking_id'])->values();
-
+              
                 return [
                     'freight_booking_id' => $payment['freight_booking_id'],
                     'total_amount' => $payment['total_amount'],
                     'lrs' => $lrDetails,
                 ];
             })->values();
+            
         }
     }
 
     // Step 5: Return view with data
     return view('reports.pump', compact('pumpData', 'startDate', 'endDate', 'pumpId', 'pumps'));
 }
+public function pump_export(Request $request)
+{
+    $startDate = $request->input('start_date');
+    $endDate = $request->input('end_date');
+    $pumpId = $request->input('pump_id');
 
+    $export = Excel::download(new PumpExport($startDate, $endDate, $pumpId), 'pump_report.xlsx');
+    return $export;
+}
 }

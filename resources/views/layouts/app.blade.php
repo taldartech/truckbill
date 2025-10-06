@@ -716,6 +716,12 @@
                           <p>Eway Bill</p>
                         </a>
                       </li>
+                      <li class="nav-item">
+                        <a href="{{ route('reports.pump') }}" class="nav-link{{ Request::is('reports/pump') ? ' active' : '' }}">
+                          <i class="fas fa-file-alt"></i>
+                          <p>Pump</p>
+                        </a>
+                      </li>
                     </ul>
                   </li>
 
