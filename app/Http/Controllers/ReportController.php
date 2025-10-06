@@ -15,6 +15,7 @@ use App\Exports\PartyLedgerExport;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Invoice;
 use App\Exports\InvoiceExport;
+use App\Exports\PartyBillExport;
 use App\Models\Consignees;
 use App\Exports\ShortageDamageExport;
 use App\Exports\EwayBillExport;
@@ -246,7 +247,7 @@ class ReportController extends Controller
 
     if ($request->input('end_date') || $request->input('start_date')) {
       $query = Invoice::with(['consignee', 'consignee.state'])
-          ->whereBetween('generated_date', [$startDate, $endDate]);
+        ->whereBetween('generated_date', [$startDate, $endDate]);
 
       if ($user) {
         $query->where('company_id', $user);
@@ -292,7 +293,7 @@ class ReportController extends Controller
       }
 
       $lrs = $query->get();
-      
+
       // Debug: Log the first few records to check relationships
       if ($lrs->isNotEmpty()) {
           \Log::info('First LorryReceipt data:', [
@@ -300,18 +301,18 @@ class ReportController extends Controller
               'lr_number' => $lrs[0]->lr_number,
               'has_freight_bookings' => $lrs[0]->relationLoaded('freightBookings') && $lrs[0]->freightBookings->isNotEmpty(),
               'freight_booking_count' => $lrs[0]->freightBookings->count(),
-              'voucher_payments' => $lrs[0]->freightBookings->isNotEmpty() ? 
+              'voucher_payments' => $lrs[0]->freightBookings->isNotEmpty() ?
                   $lrs[0]->freightBookings[0]->voucherPayments->toArray() : 'No freight bookings'
           ]);
       }
-      
+
       $generated = true;
   } else {
       $lrs = [];
       $generated = false;
   }
-  
-    
+
+
     return view('reports.shortage-damage', compact('lrs', 'startDate', 'endDate', 'generated'));
   }
   public function shortage_damage_export(Request $request)
@@ -348,7 +349,7 @@ class ReportController extends Controller
       }
 
       $lrs = $query->get();
-      
+
       // Debug: Log the first few records to check relationships
       if ($lrs->isNotEmpty()) {
           \Log::info('First LorryReceipt data:', [
@@ -356,17 +357,17 @@ class ReportController extends Controller
               'lr_number' => $lrs[0]->lr_number,
               'has_freight_bookings' => $lrs[0]->relationLoaded('freightBookings') && $lrs[0]->freightBookings->isNotEmpty(),
               'freight_booking_count' => $lrs[0]->freightBookings->count(),
-              'voucher_payments' => $lrs[0]->freightBookings->isNotEmpty() ? 
+              'voucher_payments' => $lrs[0]->freightBookings->isNotEmpty() ?
                   $lrs[0]->freightBookings[0]->voucherPayments->toArray() : 'No freight bookings'
           ]);
       }
-      
+
       $generated = true;
   } else {
       $lrs = [];
       $generated = false;
   }
-    
+
     return view('reports.eway-bill', compact('lrs', 'startDate', 'endDate', 'generated'));
   }
   public function eway_bill_export(Request $request)
@@ -375,6 +376,30 @@ class ReportController extends Controller
     $endDate = $request->input('end_date');
 
     $export = Excel::download(new EwayBillExport($startDate, $endDate), 'eway_bill_report.xlsx');
+    return $export;
+  }
+
+  public function party_bill(Request $request)
+  {
+    $customers = Consignee::all();
+    $customerId = $request->input('customer_id') ?? null;
+    $id = $request->input('invoice_number') ?? null;
+    $invoices = [];
+    $invoice = null;
+    if ($customerId) {
+      $invoices = Invoice::where('customer_id', $customerId)->get();
+      $invoice = Invoice::find($id);
+    }
+    return view('reports.party-bill', compact('customers', 'customerId', 'id', 'invoices', 'invoice',));
+  }
+
+  public function party_bill_export(Request $request)
+  {
+    if (!$request->input('invoice_number')) {
+      return redirect()->back()->with('error', 'Please select an Invoice to export.');
+    }
+    $id = $request->input('invoice_number');
+    $export = Excel::download(new PartyBillExport($id), 'party_bill.xlsx');
     return $export;
   }
 }

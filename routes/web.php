@@ -56,6 +56,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/api/dropdown/states/{countryId}', [\App\Http\Controllers\Api\DropdownController::class, 'states']);
     Route::get('/api/dropdown/cities/{stateId}', [\App\Http\Controllers\Api\DropdownController::class, 'cities']);
     Route::get('/api/lorry-receipts/{customerId}', [LorryReceiptController::class, 'getLorryReceiptsForCustomer']);
+    Route::get('/api/invoice-numbers/{customerId}', [InvoiceController::class, 'getInvoiceNumbersForCustomer']);
 
     // City and State routes
     Route::get('/cities/{id}', [\App\Http\Controllers\CityController::class, 'show'])->name('cities.show');
@@ -345,6 +346,8 @@ Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->nam
       Route::get('/shortage-damage-export', [ReportController::class, 'shortage_damage_export'])->name('reports.shortage-damage-export');
       Route::get('/eway-bill', [ReportController::class, 'eway_bill'])->name('reports.eway-bill');
       Route::get('/eway-bill-export', [ReportController::class, 'eway_bill_export'])->name('reports.eway-bill-export');
+      Route::get('/party-bill', [ReportController::class, 'party_bill'])->name('reports.party-bill');
+      Route::get('/party-bill-export', [ReportController::class, 'party_bill_export'])->name('reports.party-bill-export');
     });
 
 });
