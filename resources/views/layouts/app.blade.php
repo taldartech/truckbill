@@ -244,7 +244,7 @@
               <a href="#" class="brand-link">
 
                 <!--begin::Brand Text-->
-                <span class="brand-text " style="font-size: 1.2em;"> <strong>TruckMate-TMS</strong></span>
+                <span class="brand-text " style="font-size: 1.2em;"> <strong>TruckBill-TMS</strong></span>
                 <!--end::Brand Text-->
               </a>
               <!--end::Brand Link-->
@@ -690,6 +690,12 @@
                         <a href="{{ route('reports.party-ledger') }}" class="nav-link{{ Request::is('reports/party-ledger') ? ' active' : '' }}">
                           <i class="fas fa-file-alt"></i>
                           <p>Party Ledger</p>
+                        </a>
+                      </li>
+                      <li class="nav-item">
+                        <a href="{{ route('reports.lr-copy') }}" class="nav-link{{ Request::is('reports/lr-copy') ? ' active' : '' }}">
+                          <i class="fas fa-file-alt"></i>
+                          <p>LR Copy</p>
                         </a>
                       </li>
                       <li class="nav-item">
