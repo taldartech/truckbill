@@ -710,6 +710,12 @@
                           <p>Shortage Damage</p>
                         </a>
                       </li>
+                      <li class="nav-item">
+                        <a href="{{ route('reports.eway-bill') }}" class="nav-link{{ Request::is('reports/eway-bill') ? ' active' : '' }}">
+                          <i class="fas fa-file-alt"></i>
+                          <p>Eway Bill</p>
+                        </a>
+                      </li>
                     </ul>
                   </li>
 

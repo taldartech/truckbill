@@ -1,11 +1,11 @@
 @extends('layouts.app')
 
-@section('title', 'Dispatch Report')
+@section('title', 'Shortage Damage Report')
 
 @section('content')
     <div class="card mb-4">
         <div class="card-body">
-            <form method="GET" action="{{ route('reports.dispatch') }}" id="searchForm" onsubmit="validateForm(event)">
+            <form method="GET" action="{{ route('reports.shortage-damage') }}" id="searchForm" onsubmit="validateForm(event)">
                 <div class="row mb-2">
                     <div class="col-md-3">
                         <label class="form-label">Start Date <span class="text-danger">*</span></label>
@@ -45,7 +45,7 @@
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h3 class="card-title mb-0">Dispatch Report</h3>
+                        <h3 class="card-title mb-0">Shortage Damage Report</h3>
                     </div>
                     <div class="d-flex">
                         <a class="btn btn-warning ms-2"
