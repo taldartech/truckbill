@@ -19,6 +19,7 @@ use App\Exports\PartyBillExport;
 use App\Models\Consignees;
 use App\Exports\ShortageDamageExport;
 use App\Exports\EwayBillExport;
+use App\Exports\UltratechBillExport;
 
 class ReportController extends Controller
 {
@@ -400,6 +401,30 @@ class ReportController extends Controller
     }
     $id = $request->input('invoice_number');
     $export = Excel::download(new PartyBillExport($id), 'party_bill.xlsx');
+    return $export;
+  }
+
+  public function ultratech_bill(Request $request)
+  {
+    $customers = Consignee::all();
+    $customerId = $request->input('customer_id') ?? null;
+    $id = $request->input('invoice_number') ?? null;
+    $invoices = [];
+    $invoice = null;
+    if ($customerId) {
+      $invoices = Invoice::where('customer_id', $customerId)->get();
+      $invoice = Invoice::find($id);
+    }
+    return view('reports.ultratech-bill', compact('customers', 'customerId', 'id', 'invoices', 'invoice',));
+  }
+
+  public function ultratech_bill_export(Request $request)
+  {
+    if (!$request->input('invoice_number')) {
+      return redirect()->back()->with('error', 'Please select an Invoice to export.');
+    }
+    $id = $request->input('invoice_number');
+    $export = Excel::download(new UltratechBillExport($id), 'ultratech_bill.xlsx');
     return $export;
   }
 }

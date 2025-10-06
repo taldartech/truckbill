@@ -348,6 +348,8 @@ Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->nam
       Route::get('/eway-bill-export', [ReportController::class, 'eway_bill_export'])->name('reports.eway-bill-export');
       Route::get('/party-bill', [ReportController::class, 'party_bill'])->name('reports.party-bill');
       Route::get('/party-bill-export', [ReportController::class, 'party_bill_export'])->name('reports.party-bill-export');
+      Route::get('/ultratech-bill', [ReportController::class, 'ultratech_bill'])->name('reports.ultratech-bill');
+      Route::get('/ultratech-bill-export', [ReportController::class, 'ultratech_bill_export'])->name('reports.ultratech-bill-export');
     });
 
 });
