@@ -1,3 +1,4 @@
+
 @extends('layouts.app')
 
 @section('title', 'Pump Wise Report')
@@ -57,11 +58,11 @@
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Pump</label>
-                        <select name="pump_id" class="form-select select2">
+                        <select name="pump_id" class="form-select select2" required>
                             <option value="">Select Pump</option>
                             @foreach ($pumps as $pump)
                                 <option value="{{ $pump->id }}" {{ $pumpId == $pump->id ? 'selected' : '' }}>
-                                    {{ $pump->pump_name }} 
+                                    {{ $pump->pump_name }}
                                 </option>
                             @endforeach
                         </select>
@@ -86,11 +87,11 @@
         <div class="alert alert-warning">
             Please select a pump to generate the report.
         </div>
-    @elseif($generated && $pumpData->isEmpty())
+    @elseif($pumpData->isEmpty())
         <div class="alert alert-info">
             No records found for the selected criteria.
         </div>
-    @elseif($generated)
+    @else
         <div class="card mb-4">
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center">
@@ -99,7 +100,11 @@
                     </div>
                     <div class="d-flex">
                         <a class="btn btn-warning ms-2"
-                            href="{{ route('reports.pump-export', ['start_date' => $startDate, 'end_date' => $endDate, 'pump_id' => $pumpId]) }}">
+                            href="{{ route('reports.pump-export', [
+                                'start_date' => $startDate,
+                                'end_date' => $endDate,
+                                'pump_id' => $pumpId
+                            ]) }}">
                             <i class="bi bi-file-earmark-spreadsheet"></i> Export
                         </a>
                     </div>
@@ -109,45 +114,41 @@
                 <table class="table table-bordered table-striped" style="font-size: 12px !important;">
                     <thead>
                         <tr>
-                            <th>Sr No</th>
+                            <th>Sr.no</th>
+                            <th>LR Number</th>
                             <th>Date</th>
-                            <th>Voucher No</th>
-                            <th>LR No</th>
-                            <th>Truck No</th>
-                            <th>Driver</th>
+                            <th>Truck No.</th>
                             <th>Destination</th>
-                            <th>Amount</th>
-                            <th>Status</th>
+                            <th>Diesel Amount</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @php $totalAmount = 0; @endphp
-                        @foreach($pumpData as $index => $transaction)
-                            @php $totalAmount += $transaction['total_amount']; @endphp
-                            @foreach($transaction['vouchers'] as $voucher)
+                        @php $grandTotal = 0; @endphp
+                        @foreach($pumpData as $index => $item)
+                            @php $grandTotal += $item['total_amount']; @endphp
+                            @foreach($item['lrs'] as $lr)
                                 <tr>
                                     <td>{{ $loop->parent->iteration }}</td>
-                                    <td>{{ \Carbon\Carbon::parse($voucher['date'])->format('d-m-Y') }}</td>
-                                    <td>{{ $voucher['voucher_number'] ?? 'N/A' }}</td>
-                                    <td>{{ $transaction['lr']['lr_number'] ?? 'N/A' }}</td>
-                                    <td>{{ $transaction['truck']['truck_number'] ?? 'N/A' }}</td>
-                                    <td>{{ $transaction['truck']['driver_name'] ?? 'N/A' }}</td>
-                                    <td>{{ $transaction['lr']['destination_state'] ?? 'N/A' }}</td>
-                                    <td class="text-end">₹{{ number_format($voucher['amount'], 2) }}</td>
-                                    <td>
-                                        <span class="badge bg-{{ $voucher['payment_status'] === 'paid' ? 'success' : 'warning' }}">
-                                            {{ ucfirst($voucher['payment_status']) }}
-                                        </span>
-                                    </td>
+                                    
+                                    <td>{{ $lr->lr_number ?? 'N/A' }}</td>
+                                    <td>{{ $item['date'] ?? 'N/A' }}</td>
+                                    {{-- in lr table their is truck_id from that fetch truck number --}}
+                                    @php
+                                        $truck = App\Models\Truck::find($lr->truck_id);
+                                    @endphp
+                                    <td>{{ $truck->truck_number ?? 'N/A' }}</td>
+
+                                    <td>{{ $lr->destination_state ?? 'N/A' }}</td>
+                                   
+                                    <td class="text-end">₹{{ number_format($item['total_amount'], 2) }}</td>
                                 </tr>
                             @endforeach
                         @endforeach
                     </tbody>
                     <tfoot>
                         <tr>
-                            <th colspan="7" class="text-end">Total Amount:</th>
-                            <th class="text-end">₹{{ number_format($totalAmount, 2) }}</th>
-                            <th></th>
+                            <th colspan="5" class="text-end">Grand Total:</th>
+                            <th class="text-end">₹{{ number_format($grandTotal, 2) }}</th>
                         </tr>
                     </tfoot>
                 </table>
