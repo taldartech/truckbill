@@ -55,6 +55,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/api/check-invoice-number-uniqueness', [LorryReceiptController::class, 'checkInvoiceNumberUniqueness']);
     Route::get('/api/dropdown/states/{countryId}', [\App\Http\Controllers\Api\DropdownController::class, 'states']);
     Route::get('/api/dropdown/cities/{stateId}', [\App\Http\Controllers\Api\DropdownController::class, 'cities']);
+    Route::get('/api/lorry-receipts/{customerId}', [LorryReceiptController::class, 'getLorryReceiptsForCustomer']);
 
     // City and State routes
     Route::get('/cities/{id}', [\App\Http\Controllers\CityController::class, 'show'])->name('cities.show');
@@ -336,6 +337,8 @@ Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->nam
       Route::get('/dispatch-export', [ReportController::class, 'dispatch_export'])->name('reports.dispatch-export');
       Route::get('/party-ledger', [ReportController::class, 'party_ledger'])->name('reports.party-ledger');
       Route::get('/party-ledger-export', [ReportController::class, 'party_ledger_export'])->name('reports.party-ledger-export');
+      Route::get('/lr-copy', [ReportController::class, 'lr_copy'])->name('reports.lr-copy');
+      Route::get('/lr-copy-export', [ReportController::class, 'lr_copy_export'])->name('reports.lr-copy-export');
       Route::get('/invoice', [ReportController::class, 'invoice'])->name('reports.invoice');
       Route::get('/invoice-export', [ReportController::class, 'invoice_export'])->name('reports.invoice-export');
     });

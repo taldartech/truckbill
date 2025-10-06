@@ -693,6 +693,12 @@
                         </a>
                       </li>
                       <li class="nav-item">
+                        <a href="{{ route('reports.lr-copy') }}" class="nav-link{{ Request::is('reports/lr-copy') ? ' active' : '' }}">
+                          <i class="fas fa-file-alt"></i>
+                          <p>LR Copy</p>
+                        </a>
+                      </li>
+                      <li class="nav-item">
                         <a href="{{ route('reports.invoice') }}" class="nav-link{{ Request::is('reports/invoice') ? ' active' : '' }}">
                           <i class="fas fa-file-alt"></i>
                           <p>Invoice</p>

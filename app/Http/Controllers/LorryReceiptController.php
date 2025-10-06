@@ -192,7 +192,7 @@ public function getLinkedLRs($linkedLrId)
     try {
         $linkedLRs = LorryReceipt::with(['consignor', 'consignee', 'customer', 'transporter', 'truck', 'reference'])
             ->where('linked_lr_id', $linkedLrId)
-            
+
             ->get();
 
         if ($linkedLRs->isEmpty()) {
@@ -201,17 +201,17 @@ public function getLinkedLRs($linkedLrId)
 
         // Find common fields across all LRs
         $common = [
-            'transporter' => $linkedLRs->pluck('transporter.name')->unique()->count() === 1 
-                                ? $linkedLRs->first()->transporter->name ?? null 
+            'transporter' => $linkedLRs->pluck('transporter.name')->unique()->count() === 1
+                                ? $linkedLRs->first()->transporter->name ?? null
                                 : null,
-            'truck_number' => $linkedLRs->pluck('truck.truck_number')->unique()->count() === 1 
-                                ? $linkedLRs->first()->truck->truck_number ?? null 
+            'truck_number' => $linkedLRs->pluck('truck.truck_number')->unique()->count() === 1
+                                ? $linkedLRs->first()->truck->truck_number ?? null
                                 : null,
-            'gr_date' => $linkedLRs->pluck('gr_date')->unique()->count() === 1 
-                                ? $linkedLRs->first()->gr_date 
+            'gr_date' => $linkedLRs->pluck('gr_date')->unique()->count() === 1
+                                ? $linkedLRs->first()->gr_date
                                 : null,
-            'reference_by' => $linkedLRs->pluck('reference.name')->unique()->count() === 1 
-                                ? $linkedLRs->first()->reference->name ?? null 
+            'reference_by' => $linkedLRs->pluck('reference.name')->unique()->count() === 1
+                                ? $linkedLRs->first()->reference->name ?? null
                                 : null,
         ];
 
@@ -1111,5 +1111,14 @@ public function getLinkedLRs($linkedLrId)
         'message' => 'An error occurred while processing voucher payments: ' . $e->getMessage()
       ], 500);
     }
+  }
+
+  public function getLorryReceiptsForCustomer($customerId)
+  {
+    $lorryReceipts = LorryReceipt::where('customer_id', $customerId)
+      ->where('company_id', auth()->user()->company_id)
+      ->get(['id', 'lr_number']);
+
+    return response()->json($lorryReceipts);
   }
 }
