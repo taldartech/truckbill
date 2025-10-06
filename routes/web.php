@@ -345,6 +345,8 @@ Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->nam
       Route::get('/shortage-damage-export', [ReportController::class, 'shortage_damage_export'])->name('reports.shortage-damage-export');
       Route::get('/eway-bill', [ReportController::class, 'eway_bill'])->name('reports.eway-bill');
       Route::get('/eway-bill-export', [ReportController::class, 'eway_bill_export'])->name('reports.eway-bill-export');
+      Route::get('/pump', [ReportController::class, 'pump'])->name('reports.pump');
+      Route::get('/pump-export', [ReportController::class, 'pump_export'])->name('reports.pump-export');
     });
 
 });
