@@ -22,7 +22,7 @@
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-search"></i> Search
                         </button>
-                        <a href="{{ route('voucher_payments.daily') }}?date={{ date('Y-m-d') }}"
+                        <a href="{{ route('reports.dispatch') }}?date={{ date('Y-m-d') }}"
                             class="btn btn-outline-secondary">
                             <i class="bi bi-arrow-clockwise"></i> Reset
                         </a>

@@ -698,6 +698,12 @@
                           <p>Invoice</p>
                         </a>
                       </li>
+                      <li class="nav-item">
+                        <a href="{{ route('reports.shortage-damage') }}" class="nav-link{{ Request::is('reports/shortage-damage') ? ' active' : '' }}">
+                          <i class="fas fa-file-alt"></i>
+                          <p>Shortage Damage</p>
+                        </a>
+                      </li>
                     </ul>
                   </li>
 
