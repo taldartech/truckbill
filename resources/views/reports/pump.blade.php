@@ -1,15 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'Pump Report')
+@section('title', 'Pump Wise Report')
 
 @push('styles')
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
-        /* Select2 custom styling for dropdowns */
         .select2-container--bootstrap-5 .select2-selection {
             min-height: 38px;
         }
-
         .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
             padding-left: 12px;
             padding-right: 20px;
@@ -19,27 +17,27 @@
             border: var(--bs-border-width) solid var(--bs-border-color);
             border-radius: 0.375rem;
         }
-
         .select2-container--bootstrap-5 .select2-selection--single:focus-visible {
             border-color: var(--bs-primary);
             box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
             outline: 0;
             border-radius: 0.375rem;
         }
-
         .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
             height: 36px;
             right: 12px;
         }
-
         .select2-dropdown {
             border: 1px solid #dee2e6;
             border-radius: 0.375rem;
         }
-
         .select2-results__option--highlighted {
             background-color: var(--bs-primary);
             color: white;
+        }
+        .table th, .table td {
+            white-space: nowrap;
+            vertical-align: middle;
         }
     </style>
 @endpush
@@ -62,13 +60,12 @@
                         <select name="pump_id" class="form-select select2">
                             <option value="">Select Pump</option>
                             @foreach ($pumps as $pump)
-                                <option @if ($pumpId == $pump->id) selected @endif value="{{ $pump->id }}">
-                                    {{ $pump->pump_name }}
+                                <option value="{{ $pump->id }}" {{ $pumpId == $pump->id ? 'selected' : '' }}>
+                                    {{ $pump->pump_name }} 
                                 </option>
                             @endforeach
                         </select>
                     </div>
-                   
                 </div>
 
                 <div class="row">
@@ -85,7 +82,15 @@
         </div>
     </div>
 
-    @if (isset($pumpTransactions) && $pumpTransactions->isNotEmpty())
+    @if(!$pumpId)
+        <div class="alert alert-warning">
+            Please select a pump to generate the report.
+        </div>
+    @elseif($generated && $pumpData->isEmpty())
+        <div class="alert alert-info">
+            No records found for the selected criteria.
+        </div>
+    @elseif($generated)
         <div class="card mb-4">
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center">
@@ -94,7 +99,7 @@
                     </div>
                     <div class="d-flex">
                         <a class="btn btn-warning ms-2"
-                            href="{{ route('reports.pump-export', ['start_date' => $startDate, 'end_date' => $endDate, 'pump_id' => $pumpId, 'truck_id' => $truckId]) }}">
+                            href="{{ route('reports.pump-export', ['start_date' => $startDate, 'end_date' => $endDate, 'pump_id' => $pumpId]) }}">
                             <i class="bi bi-file-earmark-spreadsheet"></i> Export
                         </a>
                     </div>
@@ -106,38 +111,47 @@
                         <tr>
                             <th>Sr No</th>
                             <th>Date</th>
+                            <th>Voucher No</th>
                             <th>LR No</th>
-                          
                             <th>Truck No</th>
-                         
-                           <th>Destination</th>
-                            <th>Diesel Amount</th>
-                          
-                            
+                            <th>Driver</th>
+                            <th>Destination</th>
+                            <th>Amount</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($pumpTransactions as $index => $transaction)
-                            <tr>
-                                <td>{{ $index + 1 }}</td>
-                                <td>{{ \Carbon\Carbon::parse($transaction->transaction_date)->format('d-m-Y') }}</td>
-
-                                <td>{{ $transaction->lr->lr_number ?? 'N/A' }}</td>
-                                <td>{{ $transaction->truck->truck_number ?? 'N/A' }}</td>
-                                <td>{{ $transaction->destination }}</td>
-                                <td>{{ number_format($transaction->amount, 2) }}</td>
-                                
-                                
-                                
-                            </tr>
+                        @php $totalAmount = 0; @endphp
+                        @foreach($pumpData as $index => $transaction)
+                            @php $totalAmount += $transaction['total_amount']; @endphp
+                            @foreach($transaction['vouchers'] as $voucher)
+                                <tr>
+                                    <td>{{ $loop->parent->iteration }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($voucher['date'])->format('d-m-Y') }}</td>
+                                    <td>{{ $voucher['voucher_number'] ?? 'N/A' }}</td>
+                                    <td>{{ $transaction['lr']['lr_number'] ?? 'N/A' }}</td>
+                                    <td>{{ $transaction['truck']['truck_number'] ?? 'N/A' }}</td>
+                                    <td>{{ $transaction['truck']['driver_name'] ?? 'N/A' }}</td>
+                                    <td>{{ $transaction['lr']['destination_state'] ?? 'N/A' }}</td>
+                                    <td class="text-end">₹{{ number_format($voucher['amount'], 2) }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ $voucher['payment_status'] === 'paid' ? 'success' : 'warning' }}">
+                                            {{ ucfirst($voucher['payment_status']) }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            @endforeach
                         @endforeach
                     </tbody>
+                    <tfoot>
+                        <tr>
+                            <th colspan="7" class="text-end">Total Amount:</th>
+                            <th class="text-end">₹{{ number_format($totalAmount, 2) }}</th>
+                            <th></th>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
-        </div>
-    @elseif(request()->has('start_date') && request()->has('end_date'))
-        <div class="alert alert-info">
-            No pump transactions found for the selected criteria.
         </div>
     @endif
 @endsection
@@ -146,32 +160,30 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         $(document).ready(function() {
-            $('.select2').each(function() {
-                $(this).select2({
-                    theme: 'bootstrap-5',
-                    width: '100%'
-                });
+            $('.select2').select2({
+                theme: 'bootstrap-5',
+                width: '100%'
             });
         });
 
         function validateForm(event) {
-            event.preventDefault();
-            
             const startDate = $('input[name="start_date"]').val();
             const endDate = $('input[name="end_date"]').val();
-            
-            if (!startDate || !endDate) {
-                alert('Please select both start and end dates.');
-                return false;
-            }
-            
-            if (new Date(startDate) > new Date(endDate)) {
-                alert('Start date cannot be after end date.');
+            const pumpId = $('select[name="pump_id"]').val();
+
+            if (!pumpId) {
+                alert('Please select a pump');
+                event.preventDefault();
                 return false;
             }
 
-            // If validation passes, submit the form
-            event.target.submit();
+            if (new Date(startDate) > new Date(endDate)) {
+                alert('Start date cannot be greater than end date');
+                event.preventDefault();
+                return false;
+            }
+
+            return true;
         }
     </script>
 @endpush
