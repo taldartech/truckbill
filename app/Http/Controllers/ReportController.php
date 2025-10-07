@@ -23,6 +23,7 @@ use App\Exports\MemoCopyExport;
 use App\Models\Pump;
 use App\Exports\PumpExport;
 use App\Models\VoucherPayment;
+use App\Exports\BankExport;
 use Carbon\Carbon;
 
 class ReportController extends Controller
