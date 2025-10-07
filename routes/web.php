@@ -171,6 +171,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('invoices', InvoiceController::class);
 Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->name('invoices.lrs');
     Route::get('/invoices/memos/{customerId}', [InvoiceController::class, 'getCustomerMemos']);
+    Route::get('/invoices/all-memos/{customerId}', [InvoiceController::class, 'getAllCustomerMemos']);
     Route::get('invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
 
     // Customers
@@ -353,6 +354,8 @@ Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->nam
       Route::get('/party-bill-export', [ReportController::class, 'party_bill_export'])->name('reports.party-bill-export');
       Route::get('/ultratech-bill', [ReportController::class, 'ultratech_bill'])->name('reports.ultratech-bill');
       Route::get('/ultratech-bill-export', [ReportController::class, 'ultratech_bill_export'])->name('reports.ultratech-bill-export');
+      Route::get('/memo-copy', [ReportController::class, 'memo_copy'])->name('reports.memo-copy');
+      Route::get('/memo-copy-export', [ReportController::class, 'memo_copy_export'])->name('reports.memo-copy-export');
     });
 
 });

@@ -734,6 +734,12 @@
                           <p>Ultratech Bill</p>
                         </a>
                       </li>
+                      <li class="nav-item">
+                        <a href="{{ route('reports.memo-copy') }}" class="nav-link{{ Request::is('reports/memo-copy') ? ' active' : '' }}">
+                          <i class="fas fa-file-alt"></i>
+                          <p>Memo Copy</p>
+                        </a>
+                      </li>
                     </ul>
                   </li>
 

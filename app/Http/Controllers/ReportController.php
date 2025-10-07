@@ -19,6 +19,7 @@ use App\Exports\PartyBillExport;
 use App\Models\Consignees;
 use App\Exports\ShortageDamageExport;
 use App\Exports\EwayBillExport;
+use App\Exports\MemoCopyExport;
 use App\Models\Pump;
 use App\Exports\PumpExport;
 use App\Models\VoucherPayment;
@@ -283,38 +284,38 @@ class ReportController extends Controller
     if ($request->input('end_date') || $request->input('start_date')) {
       // First, get the LorryReceipts with their freight bookings and voucher payments
       $query = LorryReceipt::with([
-          'freightBookings' => function($q) {
-              $q->with(['voucherPayments']);
-          },
-          'consignor',
-          'consignee',
-          'customer',
-          'truck'
+        'freightBookings' => function ($q) {
+          $q->with(['voucherPayments']);
+        },
+        'consignor',
+        'consignee',
+        'customer',
+        'truck'
       ])->whereBetween('gr_date', [$startDate, $endDate]);
 
       if ($user) {
-          $query->where('company_id', $user);
+        $query->where('company_id', $user);
       }
 
       $lrs = $query->get();
 
       // Debug: Log the first few records to check relationships
       if ($lrs->isNotEmpty()) {
-          \Log::info('First LorryReceipt data:', [
-              'lr_id' => $lrs[0]->id,
-              'lr_number' => $lrs[0]->lr_number,
-              'has_freight_bookings' => $lrs[0]->relationLoaded('freightBookings') && $lrs[0]->freightBookings->isNotEmpty(),
-              'freight_booking_count' => $lrs[0]->freightBookings->count(),
-              'voucher_payments' => $lrs[0]->freightBookings->isNotEmpty() ?
-                  $lrs[0]->freightBookings[0]->voucherPayments->toArray() : 'No freight bookings'
-          ]);
+        \Log::info('First LorryReceipt data:', [
+          'lr_id' => $lrs[0]->id,
+          'lr_number' => $lrs[0]->lr_number,
+          'has_freight_bookings' => $lrs[0]->relationLoaded('freightBookings') && $lrs[0]->freightBookings->isNotEmpty(),
+          'freight_booking_count' => $lrs[0]->freightBookings->count(),
+          'voucher_payments' => $lrs[0]->freightBookings->isNotEmpty() ?
+            $lrs[0]->freightBookings[0]->voucherPayments->toArray() : 'No freight bookings'
+        ]);
       }
 
       $generated = true;
-  } else {
+    } else {
       $lrs = [];
       $generated = false;
-  }
+    }
 
 
     return view('reports.shortage-damage', compact('lrs', 'startDate', 'endDate', 'generated'));
@@ -339,38 +340,38 @@ class ReportController extends Controller
     if ($request->input('end_date') || $request->input('start_date')) {
       // First, get the LorryReceipts with their freight bookings and voucher payments
       $query = LorryReceipt::with([
-          'freightBookings' => function($q) {
-              $q->with(['voucherPayments']);
-          },
-          'consignor',
-          'consignee',
-          'customer',
-          'truck'
+        'freightBookings' => function ($q) {
+          $q->with(['voucherPayments']);
+        },
+        'consignor',
+        'consignee',
+        'customer',
+        'truck'
       ])->whereBetween('gr_date', [$startDate, $endDate]);
 
       if ($user) {
-          $query->where('company_id', $user);
+        $query->where('company_id', $user);
       }
 
       $lrs = $query->get();
 
       // Debug: Log the first few records to check relationships
       if ($lrs->isNotEmpty()) {
-          \Log::info('First LorryReceipt data:', [
-              'lr_id' => $lrs[0]->id,
-              'lr_number' => $lrs[0]->lr_number,
-              'has_freight_bookings' => $lrs[0]->relationLoaded('freightBookings') && $lrs[0]->freightBookings->isNotEmpty(),
-              'freight_booking_count' => $lrs[0]->freightBookings->count(),
-              'voucher_payments' => $lrs[0]->freightBookings->isNotEmpty() ?
-                  $lrs[0]->freightBookings[0]->voucherPayments->toArray() : 'No freight bookings'
-          ]);
+        \Log::info('First LorryReceipt data:', [
+          'lr_id' => $lrs[0]->id,
+          'lr_number' => $lrs[0]->lr_number,
+          'has_freight_bookings' => $lrs[0]->relationLoaded('freightBookings') && $lrs[0]->freightBookings->isNotEmpty(),
+          'freight_booking_count' => $lrs[0]->freightBookings->count(),
+          'voucher_payments' => $lrs[0]->freightBookings->isNotEmpty() ?
+            $lrs[0]->freightBookings[0]->voucherPayments->toArray() : 'No freight bookings'
+        ]);
       }
 
       $generated = true;
-  } else {
+    } else {
       $lrs = [];
       $generated = false;
-  }
+    }
 
     return view('reports.eway-bill', compact('lrs', 'startDate', 'endDate', 'generated'));
   }
@@ -382,7 +383,7 @@ class ReportController extends Controller
     $export = Excel::download(new EwayBillExport($startDate, $endDate), 'eway_bill_report.xlsx');
     return $export;
   }
-  
+
   public function pump(Request $request)
 {
   $pumps = Pump::all();
@@ -393,7 +394,7 @@ class ReportController extends Controller
     );
 
     $pumpId = $request->input('pump_id');
-  
+
     $userCompanyId = Auth::user()->company_id;
 
     $pumpData = collect(); // default empty collection
@@ -404,7 +405,7 @@ class ReportController extends Controller
             ->where('company_id', $userCompanyId)
             ->whereBetween('date', [$startDate, $endDate])
             ->get();
-          
+
 
         if ($voucherPayments->isNotEmpty()) {
             // Step 2: Group by freight_booking_id and calculate total amount
@@ -417,11 +418,11 @@ class ReportController extends Controller
 
             // Step 3: Fetch all LR records related to these freight booking IDs
             $freightBookingIds = $groupedPayments->pluck('freight_booking_id')->toArray();
-           
+
             $lrs = \App\Models\LorryReceipt::whereIn('freight_booking_id', $freightBookingIds)
                 ->select('freight_booking_id', 'lr_number', 'destination_state','truck_id')
                 ->get();
-            
+
             // Step 4: Merge LR data with payment sums
             $pumpData = $groupedPayments->map(function ($payment) use ($lrs) {
                 $lrDetails = $lrs->where('freight_booking_id', $payment['freight_booking_id'])->values();
@@ -435,7 +436,7 @@ class ReportController extends Controller
                     'date' => Carbon::parse($date)->format('d-m-Y'),
                 ];
             })->values();
-            
+
         }
     }
 
@@ -451,4 +452,37 @@ public function pump_export(Request $request)
     $export = Excel::download(new PumpExport($startDate, $endDate, $pumpId), 'pump_report.xlsx');
     return $export;
 }
+
+  public function memo_copy(Request $request)
+  {
+    $customers = Consignee::all();
+    $customerId = $request->input('customer_id') ?? null;
+    $memo_id = $request->input('memo_id') ?? null;
+
+    $memo_ids = [];
+    $lrs = [];
+    if ($customerId) {
+      $memo_ids = LorryReceipt::where('customer_id', $customerId)
+        ->whereNotNull('memo_id')
+        ->pluck('memo_id')->unique();
+      $lrs = LorryReceipt::where('memo_id', $memo_id)->get();
+    }
+    return view('reports.memo-copy', compact('customers', 'customerId', 'memo_id', 'memo_ids', 'lrs'));
+  }
+
+  public function memo_copy_export(Request $request)
+  {
+    if (!$request->input('memo_id')) {
+      return redirect()->back()->with('error', 'Please select a Memo to export.');
+    }
+    $memo_id = $request->input('memo_id');
+
+    try {
+      $export = Excel::download(new MemoCopyExport($memo_id), 'memo_copy.xlsx');
+    } catch (\Exception $e) {
+      dd($e);
+    }
+
+    return $export;
+  }
 }
