@@ -535,14 +535,14 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-4">
+                        {{-- <div class="col-md-4">
                             <div class="mb-3">
                                 <label for="referenceId" class="form-label">Reference Transaction ID</label>
                                 <input type="text" class="form-control" id="referenceId"
                                     placeholder="Enter reference ID"
                                     value="{{ isset($existingPayment) ? $existingPayment->reference_transaction_id : '' }}">
                             </div>
-                        </div>
+                        </div> --}}
                         <div class="col-md-4">
                             <div class="mb-3">
                                 <label for="paymentRemarks" class="form-label">Remarks</label>

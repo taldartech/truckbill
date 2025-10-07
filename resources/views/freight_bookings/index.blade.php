@@ -783,22 +783,20 @@
                         </div>
                       </div>
                       <div style="display: flex; gap: 20px; margin-bottom: 15px;">
-                          <!-- Reference Transaction ID -->
-                          <div style="flex: 1;">
-                              <label style="display: block; margin-bottom: 5px; font-weight: bold;">Reference Transaction ID</label>
-                              <input type="text" id="referenceId" name="reference_number" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Enter reference/transaction ID (optional)">
-                          </div>
-
                           <!-- Payment Date -->
                           <div style="flex: 1;">
                               <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Date</label>
                               <input type="date" id="paymentDate" name="payment_date" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
                           </div>
+                          <!-- Reference Transaction ID -->
+                          <div style="flex: 1;">
+                              <label style="display: block; margin-bottom: 5px; font-weight: bold;">Remarks</label>
+                          <textarea id="paymentRemarks" style="width: 100%; height: 60px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Enter any remarks..."></textarea>
+                          </div>
+
+                        
                       </div>
-                      <div style="margin-bottom: 15px;">
-                          <label style="display: block; margin-bottom: 5px; font-weight: bold;">Remarks</label>
-                          <textarea id="paymentRemarks" name="notes" style="width: 100%; height: 60px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Enter any remarks..."></textarea>
-                      </div>
+                     
                     </form>
                   `;
 
@@ -1847,22 +1845,20 @@
                           </div>
                       </div>
                       <div style="display: flex; gap: 20px; margin-bottom: 15px;">
-                          <!-- Reference Transaction ID -->
-                          <div style="flex: 1;">
-                              <label style="display: block; margin-bottom: 5px; font-weight: bold;">Reference Transaction ID</label>
-                              <input type="text" id="referenceId" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Enter reference/transaction ID (optional)">
-                          </div>
-
-                          <!-- Payment Date -->
+                         <!-- Payment Date -->
                           <div style="flex: 1;">
                               <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Date</label>
                               <input type="date" id="paymentDate" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
                           </div>
-                      </div>
-                      <div style="margin-bottom: 15px;">
-                          <label style="display: block; margin-bottom: 5px; font-weight: bold;">Remarks</label>
+                          <!-- Reference Transaction ID -->
+                          <div style="flex: 1;">
+                             <label style="display: block; margin-bottom: 5px; font-weight: bold;">Remarks</label>
                           <textarea id="paymentRemarks" style="width: 100%; height: 60px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Enter any remarks..."></textarea>
+                          </div>
+
+                         
                       </div>
+                      
                   </div>
                 `;
 
