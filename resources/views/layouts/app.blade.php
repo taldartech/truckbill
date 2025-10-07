@@ -723,6 +723,12 @@
                         </a>
                       </li>
                       <li class="nav-item">
+                        <a href="{{ route('reports.bank') }}" class="nav-link{{ Request::is('reports/bank') ? ' active' : '' }}">
+                          <i class="fas fa-file-alt"></i>
+                          <p>Bank</p>
+                        </a>
+                      </li>
+                      <li class="nav-item">
                         <a href="{{ route('reports.party-bill') }}" class="nav-link{{ Request::is('reports/party-bill') ? ' active' : '' }}">
                           <i class="fas fa-file-alt"></i>
                           <p>Party Bill</p>

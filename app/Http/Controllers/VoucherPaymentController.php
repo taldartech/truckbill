@@ -286,6 +286,10 @@ class VoucherPaymentController extends Controller
       'pump_id' => 'nullable|exists:pumps,id',
       'date' => 'nullable|date',
     ]);
+    //if date is null than store created_at date
+    if ($request->date == null) {
+      $data['date'] = $request->created_at;
+    }
 
     // Add company_id to data
     $data['company_id'] = auth()->user()->company_id;

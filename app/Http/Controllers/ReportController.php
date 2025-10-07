@@ -451,4 +451,52 @@ public function pump_export(Request $request)
     $export = Excel::download(new PumpExport($startDate, $endDate, $pumpId), 'pump_report.xlsx');
     return $export;
 }
+
+  public function bank(Request $request)
+  {
+    $companyId = Auth::user()->company_id;
+    
+    $query = VoucherPayment::with([
+          'freight_booking.lr',
+          'freight_booking.truck',
+          'freight_booking.transporter'
+      ])
+      ->where('payment_mode', 'Bank')
+      ->whereHas('freight_booking', function($q) use ($companyId) {
+        if ($companyId) {
+          $q->where('company_id', $companyId);
+        }
+      });
+
+    // Apply date filters if provided
+    if ($request->filled('start_date')) {
+      $query->where('date', '>=', $request->input('start_date'));
+    }
+    
+    if ($request->filled('end_date')) {
+      $query->where('date', '<=', $request->input('end_date'));
+    }
+
+    $payments = $query->get()
+      ->map(function($payment) {
+        return [
+          'lr_number' => $payment->freight_booking->lr->lr_number ?? 'N/A',
+          'truck_number' => $payment->freight_booking->truck->truck_number ?? 'N/A',
+          'amount' => $payment->amount,
+          'transporter_name' => $payment->freight_booking->transporter->name ?? 'N/A',
+          'beneficiary_id' => $payment->freight_booking->transporter->beneficiary_id ?? 'N/A',
+          'date' => $payment->date,
+        ];
+      });
+
+    return view('reports.bank', compact('payments'));
+  }
+  public function bank_export(Request $request)
+  {
+    $startDate = $request->input('start_date');
+    $endDate = $request->input('end_date');
+
+    $export = Excel::download(new BankExport($startDate, $endDate), 'bank_report.xlsx');
+    return $export;
+  }
 }
