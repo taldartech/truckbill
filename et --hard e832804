@@ -1,0 +1,20 @@
+[33m6ad9bd8[m[33m ([m[1;36mHEAD -> [m[1;32mreports[m[33m, [m[1;31morigin/reports[m[33m)[m remove guard from authentication
+[33m6335d08[m remove logout from guest middleware
+[33me832804[m merge conflict resolve
+[33mfe8e855[m changes in bank report
+[33mb680da7[m added bank report
+[33mecc15c6[m Memo Copy
+[33mc0d5a48[m changes in pump export
+[33m2722b78[m changes in pump export
+[33m7845abc[m resolve merge conflict
+[33m5a3ebd1[m changes in pump view
+[33m75ee2cb[m changes in pump report
+[33md5ab871[m added pump report
+[33mfed400f[m Number helper for getIndianCurrency
+[33ma2b9beb[m added pump report
+[33mb94e493[m Ultratech Invoice
+[33m96c1bb5[m Party Bill
+[33mdc6e996[m added eway bill report
+[33mc9a12b0[m Merge branch 'reports' of github.com:taldartech/transport into reports
+[33mcea7f5a[m added shortage and damage report
+[33me274ff0[m LR copy
