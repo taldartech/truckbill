@@ -847,6 +847,7 @@ public function getLinkedLRs($linkedLrId)
           }
         ],
       ]);
+     
       $lorry_receipt->update($validated);
       return redirect()->route('lorry_receipts.index')->with('success', 'Lorry Receipt updated successfully! Only Memo ID could be updated as the LR is already delivered.');
     }
@@ -895,8 +896,10 @@ public function getLinkedLRs($linkedLrId)
       'damage_amount' => 'nullable|numeric',
       'shortage_amount' => 'nullable|numeric',
       'transporter_type' => 'nullable|in:owner,agency',
+      
     ]);
-
+   //if mamo_id is null and freight booking id exist for that lr than delivery status to be in-progress
+  
 
 
 
@@ -918,7 +921,7 @@ public function getLinkedLRs($linkedLrId)
 
     // Preserve existing delivery_status - don't override it
     // Remove delivery_status from validated data to keep existing value
-    unset($validated['delivery_status']);
+    // unset($validated['delivery_status']);
 
     // Check if lr_number already exists
     // if (\App\Models\LorryReceipt::where('lr_number', $validated['lr_number'])->exists()) {
@@ -940,7 +943,8 @@ public function getLinkedLRs($linkedLrId)
 
     // Add company_id to validated data
     $validated['company_id'] = auth()->user()->company_id;
-
+   
+   
     $lorry_receipt->update($validated);
     return redirect()->route('lorry_receipts.index')->with('success', 'Lorry Receipt updated successfully!');
   }
