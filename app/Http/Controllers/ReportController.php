@@ -24,6 +24,7 @@ use App\Models\Pump;
 use App\Exports\PumpExport;
 use App\Models\VoucherPayment;
 use App\Exports\BankExport;
+use App\Models\VoucherLinked;
 use Carbon\Carbon;
 
 class ReportController extends Controller
@@ -486,46 +487,136 @@ public function pump_export(Request $request)
 
     return $export;
   }
+  // public function bank(Request $request)
+  //   {
+  //       $companyId = Auth::user()->company_id;
+  //       //take those only whose linked_voucher_id is null
+
+  //       $query = VoucherPayment::with([
+  //               'freight_booking.lr',
+  //               'freight_booking.truck',
+  //               'freight_booking.transporter'
+  //           ])
+  //           ->where('payment_mode', 'bank transfer')
+  //           ->where('linked_voucher_id', null)
+          
+  //           ->whereHas('freight_booking', function($q) use ($companyId) {
+  //               if ($companyId) {
+  //                   $q->where('company_id', $companyId);
+  //               }
+  //           });
+
+  //           //check for linked_voucher payment id exist and take the run same query 
+  //           $linkedQuery = VoucherLinked::with([
+  //               'freight_booking.lr',
+  //               'freight_booking.truck',
+  //               'freight_booking.transporter'
+  //           ])
+  //           ->where('payment_mode', 'bank transfer')
+  //           ->whereHas('freight_booking', function($q) use ($companyId) {
+  //               if ($companyId) {
+  //                   $q->where('company_id', $companyId);
+  //               }
+  //           });
+
+  //       // Apply date filters if provided
+  //       if ($request->filled('start_date')) {
+  //           $query->where('date', '>=', $request->input('start_date'));
+  //       }
+        
+  //       if ($request->filled('end_date')) {
+  //           $query->where('date', '<=', $request->input('end_date'));
+  //       }
+
+  //       $payments = $query->get()
+  //           ->map(function($payment) {
+              
+  //               return [
+  //                   'lr_number' => $payment->freight_booking->lr->lr_number ?? 'N/A',
+  //                   'truck_number' => $payment->freight_booking->lr->truck->truck_number ?? 'N/A',
+  //                   'amount' => $payment->amount,
+  //                   'transporter_name' => $payment->freight_booking->transporter->name ?? 'N/A',
+  //                   "name" => $payment->freight_booking->transporter->short_name ?? 'N/A',
+  //                   'beneficiary_id' => $payment->freight_booking->transporter->beneficiary_id ?? 'N/A',
+  //                   'date' => $payment->date,
+  //               ];
+  //           });
+
+  //       return view('reports.bank', compact('payments'));
+  //   }
   public function bank(Request $request)
-    {
-        $companyId = Auth::user()->company_id;
-        
-        $query = VoucherPayment::with([
-                'freight_booking.lr',
-                'freight_booking.truck',
-                'freight_booking.transporter'
-            ])
-            ->where('payment_mode', 'bank transfer')
-            ->whereHas('freight_booking', function($q) use ($companyId) {
-                if ($companyId) {
-                    $q->where('company_id', $companyId);
-                }
-            });
+{
+    $companyId = Auth::user()->company_id;
 
-        // Apply date filters if provided
-        if ($request->filled('start_date')) {
-            $query->where('date', '>=', $request->input('start_date'));
-        }
-        
-        if ($request->filled('end_date')) {
-            $query->where('date', '<=', $request->input('end_date'));
-        }
+    // --- Step 1: Query payments without any linked voucher ---
+    $paymentQuery = VoucherPayment::with([
+            'freight_booking.lr',
+            'freight_booking.truck',
+            'freight_booking.transporter'
+        ])
+        ->where('payment_mode', 'bank transfer')
+        ->whereNull('linked_voucher_id')
+        ->whereHas('freight_booking', function ($q) use ($companyId) {
+            if ($companyId) {
+                $q->where('company_id', $companyId);
+            }
+        });
 
-        $payments = $query->get()
-            ->map(function($payment) {
-                return [
-                    'lr_number' => $payment->freight_booking->lr->lr_number ?? 'N/A',
-                    'truck_number' => $payment->freight_booking->lr->truck->truck_number ?? 'N/A',
-                    'amount' => $payment->amount,
-                    'transporter_name' => $payment->freight_booking->transporter->name ?? 'N/A',
-                    "name" => $payment->freight_booking->transporter->short_name ?? 'N/A',
-                    'beneficiary_id' => $payment->freight_booking->transporter->beneficiary_id ?? 'N/A',
-                    'date' => $payment->date,
-                ];
-            });
+    // --- Step 2: Query linked vouchers (combined ones) ---
+    $linkedQuery = VoucherLinked::with([
+            'freight_booking.lr',
+            'freight_booking.truck',
+            'freight_booking.transporter'
+        ])
+        ->where('payment_mode', 'bank transfer')
+        ->whereHas('freight_booking', function ($q) use ($companyId) {
+            if ($companyId) {
+                $q->where('company_id', $companyId);
+            }
+        });
 
-        return view('reports.bank', compact('payments'));
+    // --- Step 3: Apply date filters ---
+    if ($request->filled('start_date')) {
+        $paymentQuery->where('date', '>=', $request->input('start_date'));
+        $linkedQuery->where('date', '>=', $request->input('start_date'));
     }
+
+    if ($request->filled('end_date')) {
+        $paymentQuery->where('date', '<=', $request->input('end_date'));
+        $linkedQuery->where('date', '<=', $request->input('end_date'));
+    }
+
+    // --- Step 4: Fetch both datasets ---
+    $payments = $paymentQuery->get()->map(function ($payment) {
+        return [
+            'lr_number'       => $payment->freight_booking->lr->lr_number ?? 'N/A',
+            'truck_number'    => $payment->freight_booking->lr->truck->truck_number ?? 'N/A',
+            'amount'          => $payment->amount,
+            'transporter_name'=> $payment->freight_booking->transporter->name ?? 'N/A',
+            'name'            => $payment->freight_booking->transporter->short_name ?? 'N/A',
+            'beneficiary_id'  => $payment->freight_booking->transporter->beneficiary_id ?? 'N/A',
+            'date'            => $payment->date,
+        ];
+    });
+
+    $linkedPayments = $linkedQuery->get()->map(function ($linked) {
+        return [
+            'lr_number'       => $linked->freight_booking->lr->lr_number ?? 'N/A',
+            'truck_number'    => $linked->freight_booking->lr->truck->truck_number ?? 'N/A',
+            'amount'          => $linked->amount,
+            'transporter_name'=> $linked->freight_booking->transporter->name ?? 'N/A',
+            'name'            => $linked->freight_booking->transporter->short_name ?? 'N/A',
+            'beneficiary_id'  => $linked->freight_booking->transporter->beneficiary_id ?? 'N/A',
+            'date'            => $linked->date,
+        ];
+    });
+
+    // --- Step 5: Merge both sets ---
+    $allPayments = $payments->merge($linkedPayments);
+
+    return view('reports.bank', ['payments' => $allPayments]);
+}
+
     public function bank_export(Request $request)
     {
         $startDate = $request->input('start_date');

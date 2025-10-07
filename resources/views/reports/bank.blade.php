@@ -98,7 +98,7 @@
                     </tbody>
                     <tfoot>
                         <tr>
-                            <th colspan="6" class="text-end">Grand Total:</th>
+                            <th colspan="7" class="text-end">Grand Total:</th>
                             <th class="text-end">₹{{ number_format($grandTotal, 2) }}</th>
                         </tr>
                     </tfoot>
