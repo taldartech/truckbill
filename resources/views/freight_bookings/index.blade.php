@@ -209,7 +209,17 @@
                                         -
                                     @endif
                                 </td>
-                                <td>{{ $booking->lr ? $booking->lr->customer->name : '-' }}</td>
+                                {{-- <td>{{ $booking->lr ? $booking->lr->customer->name : '-' }}</td> --}}
+                                <td>
+                                    @if($booking->lr)
+                                        {{ $booking->lr->customer->name }}
+                                        @if($booking->lr->memo_id)
+                                            <span class="badge text-bg-info ms-1">[{{ $booking->lr->memo_id }}]</span>
+                                        @endif
+                                    @else
+                                        -
+                                    @endif
+                                </td>
                                 <td>
                                     @php
                                         $transporterName =
