@@ -458,10 +458,10 @@ public function pump_export(Request $request)
     
     $query = VoucherPayment::with([
           'freight_booking.lr',
-          'freight_booking.truck',
+          'freight_booking.lr.truck',
           'freight_booking.transporter'
       ])
-      ->where('payment_mode', 'Bank')
+      ->where('payment_mode', 'bank transfer')
       ->whereHas('freight_booking', function($q) use ($companyId) {
         if ($companyId) {
           $q->where('company_id', $companyId);
@@ -481,9 +481,10 @@ public function pump_export(Request $request)
       ->map(function($payment) {
         return [
           'lr_number' => $payment->freight_booking->lr->lr_number ?? 'N/A',
-          'truck_number' => $payment->freight_booking->truck->truck_number ?? 'N/A',
+          'truck_number' => $payment->freight_booking->lr->truck->truck_number ?? 'N/A',
           'amount' => $payment->amount,
           'transporter_name' => $payment->freight_booking->transporter->name ?? 'N/A',
+          "name" => $payment->freight_booking->transporter->short_name ?? 'N/A',
           'beneficiary_id' => $payment->freight_booking->transporter->beneficiary_id ?? 'N/A',
           'date' => $payment->date,
         ];
