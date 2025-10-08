@@ -141,13 +141,13 @@
                             <button id="bulkActionBtn" class="btn btn-primary d-none">
                                 <i class="bi bi-arrow-up-circle"></i> Update Status
                             </button>
-                            @if (
+                            {{-- @if (
                                 $payments->where('payment_status', 'pending')->where('payment_mode', 'bank transfer')->count() > 0 ||
                                     $payments1->where('payment_status', 'pending')->where('payment_mode', 'bank transfer')->count() > 0)
                                 <a class="btn btn-warning ms-2" href="{{ route('voucher_payments.export_pending', ['date' => $selectedDate]) }}">
                                     <i class="bi bi-file-earmark-spreadsheet"></i> Export Pending Bank Payments
                                 </a>
-                            @endif
+                            @endif --}}
                         </div>
                     @endif
                 </div>

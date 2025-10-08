@@ -387,12 +387,12 @@ class ReportController extends Controller
   }
 
   public function pump(Request $request)
-{
-  $pumps = Pump::all();
+  {
+    $pumps = Pump::all();
     $endDate = $request->input('end_date') ?? date('Y-m-d');
     $startDate = max(
-        $request->input('start_date') ?? date('Y-m-d', strtotime('-3 months')),
-        date('Y-m-d', strtotime('-3 months', strtotime($endDate)))
+      $request->input('start_date') ?? date('Y-m-d', strtotime('-3 months')),
+      date('Y-m-d', strtotime('-3 months', strtotime($endDate)))
     );
 
     $pumpId = $request->input('pump_id');
@@ -402,58 +402,57 @@ class ReportController extends Controller
     $pumpData = collect(); // default empty collection
 
     if ($pumpId) {
-        // Step 1: Get all voucher payments with this pump id and company
-        $voucherPayments = \App\Models\VoucherPayment::where('pump_id', $pumpId)
-            ->where('company_id', $userCompanyId)
-            ->whereBetween('date', [$startDate, $endDate])
-            ->get();
+      // Step 1: Get all voucher payments with this pump id and company
+      $voucherPayments = \App\Models\VoucherPayment::where('pump_id', $pumpId)
+        ->where('company_id', $userCompanyId)
+        ->whereBetween('date', [$startDate, $endDate])
+        ->get();
 
 
-        if ($voucherPayments->isNotEmpty()) {
-            // Step 2: Group by freight_booking_id and calculate total amount
-            $groupedPayments = $voucherPayments->groupBy('freight_booking_id')->map(function ($group) {
-                return [
-                    'freight_booking_id' => $group->first()->freight_booking_id,
-                    'total_amount' => $group->sum('amount'),
-                ];
-            });
+      if ($voucherPayments->isNotEmpty()) {
+        // Step 2: Group by freight_booking_id and calculate total amount
+        $groupedPayments = $voucherPayments->groupBy('freight_booking_id')->map(function ($group) {
+          return [
+            'freight_booking_id' => $group->first()->freight_booking_id,
+            'total_amount' => $group->sum('amount'),
+          ];
+        });
 
-            // Step 3: Fetch all LR records related to these freight booking IDs
-            $freightBookingIds = $groupedPayments->pluck('freight_booking_id')->toArray();
+        // Step 3: Fetch all LR records related to these freight booking IDs
+        $freightBookingIds = $groupedPayments->pluck('freight_booking_id')->toArray();
 
-            $lrs = \App\Models\LorryReceipt::whereIn('freight_booking_id', $freightBookingIds)
-                ->select('freight_booking_id', 'lr_number', 'destination_state','truck_id')
-                ->get();
+        $lrs = \App\Models\LorryReceipt::whereIn('freight_booking_id', $freightBookingIds)
+          ->select('freight_booking_id', 'lr_number', 'destination_state', 'truck_id')
+          ->get();
 
-            // Step 4: Merge LR data with payment sums
-            $pumpData = $groupedPayments->map(function ($payment) use ($lrs) {
-                $lrDetails = $lrs->where('freight_booking_id', $payment['freight_booking_id'])->values();
-              //send date from voucher payment
-              $voucherPayment = \App\Models\VoucherPayment::where('freight_booking_id', $payment['freight_booking_id'])->first();
-              $date = $voucherPayment->date;
-                return [
-                    'freight_booking_id' => $payment['freight_booking_id'],
-                    'total_amount' => $payment['total_amount'],
-                    'lrs' => $lrDetails,
-                    'date' => Carbon::parse($date)->format('d-m-Y'),
-                ];
-            })->values();
-
-        }
+        // Step 4: Merge LR data with payment sums
+        $pumpData = $groupedPayments->map(function ($payment) use ($lrs) {
+          $lrDetails = $lrs->where('freight_booking_id', $payment['freight_booking_id'])->values();
+          //send date from voucher payment
+          $voucherPayment = \App\Models\VoucherPayment::where('freight_booking_id', $payment['freight_booking_id'])->first();
+          $date = $voucherPayment->date;
+          return [
+            'freight_booking_id' => $payment['freight_booking_id'],
+            'total_amount' => $payment['total_amount'],
+            'lrs' => $lrDetails,
+            'date' => Carbon::parse($date)->format('d-m-Y'),
+          ];
+        })->values();
+      }
     }
 
     // Step 5: Return view with data
     return view('reports.pump', compact('pumpData', 'startDate', 'endDate', 'pumpId', 'pumps'));
-}
-public function pump_export(Request $request)
-{
+  }
+  public function pump_export(Request $request)
+  {
     $startDate = $request->input('start_date');
     $endDate = $request->input('end_date');
     $pumpId = $request->input('pump_id');
 
     $export = Excel::download(new PumpExport($startDate, $endDate, $pumpId), 'pump_report.xlsx');
     return $export;
-}
+  }
 
   public function memo_copy(Request $request)
   {
@@ -499,14 +498,14 @@ public function pump_export(Request $request)
   //           ])
   //           ->where('payment_mode', 'bank transfer')
   //           ->where('linked_voucher_id', null)
-          
+
   //           ->whereHas('freight_booking', function($q) use ($companyId) {
   //               if ($companyId) {
   //                   $q->where('company_id', $companyId);
   //               }
   //           });
 
-  //           //check for linked_voucher payment id exist and take the run same query 
+  //           //check for linked_voucher payment id exist and take the run same query
   //           $linkedQuery = VoucherLinked::with([
   //               'freight_booking.lr',
   //               'freight_booking.truck',
@@ -523,14 +522,14 @@ public function pump_export(Request $request)
   //       if ($request->filled('start_date')) {
   //           $query->where('date', '>=', $request->input('start_date'));
   //       }
-        
+
   //       if ($request->filled('end_date')) {
   //           $query->where('date', '<=', $request->input('end_date'));
   //       }
 
   //       $payments = $query->get()
   //           ->map(function($payment) {
-              
+
   //               return [
   //                   'lr_number' => $payment->freight_booking->lr->lr_number ?? 'N/A',
   //                   'truck_number' => $payment->freight_booking->lr->truck->truck_number ?? 'N/A',
@@ -544,6 +543,7 @@ public function pump_export(Request $request)
 
   //       return view('reports.bank', compact('payments'));
   //   }
+
   public function bank(Request $request)
 {
     $companyId = Auth::user()->company_id;
@@ -622,7 +622,51 @@ public function pump_export(Request $request)
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
 
-        $export = Excel::download(new BankExport($startDate, $endDate), 'bank_report.xlsx');
-        return $export;
+    $export = Excel::download(new BankExport($startDate, $endDate), 'bank_report.xlsx');
+    return $export;
+  }
+
+  public function voucher_receipt_export(Request $request)
+  {
+    if (!$request->input('lr_id')) {
+      return redirect()->back()->with('error', 'Please select a Lorry Receipt to export.');
     }
+    $lr = LorryReceipt::find($request->input('lr_id'));
+    if ($lr->linked_lr_id) {
+      $lrs = LorryReceipt::where('linked_lr_id', $lr->linked_lr_id)->get();
+    } else {
+      $lrs = collect([$lr]);
+    }
+
+    // Set the font configuration for the PDF
+    $html = view('reports.exports.voucher-receipt', compact('lrs'))->render();
+
+    // Render with mPDF for proper Devanagari shaping
+    $defaultConfig = (new \Mpdf\Config\ConfigVariables())->getDefaults();
+    $fontDirs = $defaultConfig['fontDir'];
+
+    $defaultFontConfig = (new \Mpdf\Config\FontVariables())->getDefaults();
+    $fontData = $defaultFontConfig['fontdata'];
+
+    $mpdf = new \Mpdf\Mpdf([
+        'mode' => 'utf-8',
+        'format' => 'A4',
+        'orientation' => 'P',
+        'fontDir' => array_merge($fontDirs, [storage_path('fonts')]),
+        'fontdata' => $fontData + [
+            'notosansdevanagari' => [
+                'R' => 'NotoSansDevanagari-Regular.ttf',
+                'B' => 'NotoSansDevanagari-Bold.ttf',
+            ],
+        ],
+        'default_font' => 'notosansdevanagari',
+        'useOTL' => 0xFF, // Enable OpenType layout (Indic shaping)
+        'useKerning' => true,
+        'autoScriptToLang' => true,
+        'autoLangToFont' => true,
+    ]);
+
+    $mpdf->WriteHTML($html);
+    return $mpdf->Output('voucher_receipt.pdf', 'I');
+  }
 }
