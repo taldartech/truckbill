@@ -139,10 +139,10 @@
                 </div>
             @endif
 
-            <div class="table-responsive">
+            <div class="table-responsive" style="font-size: 12px;">
                 <table id="freightBookingsTable" class="table table-bordered table-striped">
                     <thead class="table-dark">
-                        <tr class="text-center" style="font-size: 14px;">
+                        <tr class="text-center" style="font-size: 12px;">
                             <th style="width: 40px;"><input type="checkbox" id="select-all"></th>
                             {{-- <th style="width: 80px;">Sr. No</th>
                         <th>FR Number</th> --}}
@@ -214,7 +214,7 @@
                                     @if($booking->lr)
                                         {{ $booking->lr->customer->name }}
                                         @if($booking->lr->memo_id)
-                                            <span class="badge text-bg-info ms-1">[{{ $booking->lr->memo_id }}]</span>
+                                            <span class="badge text-bg-success ms-1">[{{ $booking->lr->memo_id }}]</span>
                                         @endif
                                     @else
                                         -
@@ -1344,6 +1344,9 @@
     </script>
 
     <style>
+        .badge{
+            font-size: 0.65em;
+        }
         .clickable {
             cursor: pointer;
             color: #0d6efd;
