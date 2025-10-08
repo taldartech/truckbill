@@ -290,7 +290,7 @@
                 </table>
             </div>
             <div class="d-flex justify-content-center mt-3">
-                {{ $bookings->links('pagination::bootstrap-5') }}
+                {{ $bookings->appends(request()->query())->links('pagination::bootstrap-5') }}
             </div>
 
             <!-- Pagination -->
@@ -827,9 +827,9 @@
                           <textarea id="paymentRemarks" style="width: 100%; height: 60px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Enter any remarks..."></textarea>
                           </div>
 
-                        
+
                       </div>
-                     
+
                     </form>
                   `;
 
@@ -1892,9 +1892,9 @@
                           <textarea id="paymentRemarks" style="width: 100%; height: 60px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Enter any remarks..."></textarea>
                           </div>
 
-                         
+
                       </div>
-                      
+
                   </div>
                 `;
 
