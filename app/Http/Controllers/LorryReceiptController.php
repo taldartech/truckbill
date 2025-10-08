@@ -165,21 +165,36 @@ class LorryReceiptController extends Controller
   public function getByLinkedId($linkedId)
   {
       try {
-          $lrs = \App\Models\LorryReceipt::with(['truck', 'freightBookings'])
-              ->where('linked_lr_id', $linkedId)
-              ->get()
-              ->map(function ($lr) {
-                  if (!$lr) return null;
+          // $lrs = \App\Models\LorryReceipt::with(['truck', 'freightBookings'])
+          //     ->where('linked_lr_id', $linkedId)
+          //     ->get()
+          //     ->map(function ($lr) {
+          //         if (!$lr) return null;
                   
-                  return [
-                      'id' => $lr->id,
-                      'lr_number' => $lr->lr_number,
-                      'truck_number' => $lr->truck ? $lr->truck->truck_number : '',
-                      'freight_booking_id' => $lr->freightBooking ? $lr->freightBooking->id : null,
-                      'balance_amount' => $lr->freightBooking ? (float)$lr->freightBooking->balance_amount : 0,
-                  ];
-              })
-              ->filter() ;// Remove any null entries from the collection
+          //         return [
+          //             'id' => $lr->id,
+          //             'lr_number' => $lr->lr_number,
+          //             'truck_number' => $lr->truck ? $lr->truck->truck_number : '',
+          //             'freight_booking_id' => $lr->freightBooking ? $lr->freightBooking->id : null,
+          //             'balance_amount' => $lr->freightBooking ? (float)$lr->freightBooking->balance_amount : 0,
+          //         ];
+              // ->filter() ;// Remove any null entries from the collection
+              //     })
+          $lrs = \App\Models\LorryReceipt::with(['truck', 'freightBookings'])
+    ->where('linked_lr_id', $linkedId)
+    ->get()
+    ->map(function ($lr) {
+        $firstFreight = $lr->freightBookings->first();
+        return [
+            'id' => $lr->id,
+            'lr_number' => $lr->lr_number,
+            'truck_number' => $lr->truck ? $lr->truck->truck_number : '',
+            'freight_booking_id' => $firstFreight ? $firstFreight->id : null,
+            'balance_amount' => $firstFreight ? (float)$firstFreight->balance_amount : 0,
+        ];  
+    }) ->sortBy('balance_amount') // 🔹 Sort ascending by balance
+    ->values();
+              \Log::info('Linked LRs fetched successfully', $lrs->toArray());
   
           return response()->json($lrs->values());
       } catch (\Exception $e) {
