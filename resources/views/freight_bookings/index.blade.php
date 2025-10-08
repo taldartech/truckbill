@@ -177,6 +177,8 @@
                                     @else
                                         <input type="checkbox" class="row-checkbox" value="{{ $booking->id }}"
                                             data-lr="{{ $booking->lr ? $booking->lr->lr_number : '' }}"
+                                            data-linked-lr-id="{{ $booking->lr ? $booking->lr->linked_lr_id : '' }}"
+                                            
                                             data-lr-id="{{ $booking->lr ? $booking->lr->id : '' }}"
                                             data-truck="{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->truck_number : '' }}"
                                             data-truck-id="{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->id : '' }}"
@@ -495,7 +497,11 @@
                     return; // nothing selected
                 }
                 if (checkedBoxes.length === 1) {
-                    $('#bulk-memo-id-btn, #voucher-payment-btn').show();
+                    const singleLinkedLrId = checkedBoxes.data('linked-lr-id');
+        if (!singleLinkedLrId) {
+            $('#voucher-payment-btn').show(); // show only if linked_lr_id is null
+        }
+                    $('#bulk-memo-id-btn').show();
                     return;
                 }
                 let firstCustomerId = null;
@@ -504,12 +510,18 @@
                 let allSameCustomer = true;
                 let allSameTransporter = true;
                 let allSameLinked = true;
+                let anyLinkedLrExists = false;
 
                 checkedBoxes.each(function() {
                     const checkbox = $(this);
                     const customerId = checkbox.data('customer-id');
                     const transporterId = checkbox.data('transporter-id');
                     const linkedLrId = checkbox.data('linked-lr-id') || '';
+                    console.log(linkedLrId);
+
+                    
+
+                    if (linkedLrId){ anyLinkedLrExists = true;}
 
                     if (firstCustomerId === null) {
                         firstCustomerId = customerId;
@@ -534,8 +546,10 @@
                 }
 
                 // 2. Voucher Payment button → if transporter same
-                if (allSameTransporter) {
-                    $('#voucher-payment-btn').show();
+                if (allSameTransporter ) {
+                    if (!anyLinkedLrExists) {
+                        $('#voucher-payment-btn').show();
+                    }
                 }
 
                 // 3. Combined Payment button → if linked_lr_id same and not empty
