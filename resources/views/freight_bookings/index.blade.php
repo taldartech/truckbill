@@ -501,6 +501,10 @@
         if (!singleLinkedLrId) {
             $('#voucher-payment-btn').show(); // show only if linked_lr_id is null
         }
+        if (singleLinkedLrId) {
+            $('#combined-payment-btn').show();
+        }
+            
             const singleMemoId = checkedBoxes.data('memo-id');
             if (!singleMemoId) {
                 $('#bulk-memo-id-btn').show();
@@ -673,10 +677,10 @@
             // Combined Payment Modal
             $('#combined-payment-btn').on('click', function() {
                 const checkedBoxes = $('.row-checkbox:checked');
-                if (checkedBoxes.length < 2) {
-                    alert('Select at least two bookings with the same Linked LR to use Combined Payment.');
-                    return;
-                }
+                // if (checkedBoxes.length < 2) {
+                //     alert('Select at least two bookings with the same Linked LR to use Combined Payment.');
+                //     return;
+                // }
 
                 let rowsHtml = '';
                 const bookingIds = [];

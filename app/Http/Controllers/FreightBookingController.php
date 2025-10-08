@@ -1016,6 +1016,17 @@ class FreightBookingController extends Controller
     return redirect()->route('freight_bookings.index')->with('success', 'Freight Booking updated successfully.');
   }
 
+  public function getByLinkedLr($linkedLrId)
+  {
+      $bookings = \App\Models\FreightBooking::with(['lr.truck'])
+          ->whereHas('lr', function ($q) use ($linkedLrId) {
+              $q->where('linked_lr_id', $linkedLrId);
+          })
+          ->get();
+  
+      return response()->json($bookings);
+  }
+  
   public function destroy(FreightBooking $freight_booking)
   {
     $freight_booking->delete();
