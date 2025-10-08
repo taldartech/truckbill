@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="hi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>भाड़ा-चालान - विनोद गुड्स केरियर</title>
+    <style>
+        body {
+            font-family: 'NotoSansDevanagari', Arial, sans-serif;
+            font-size: 10px;
+            margin: 10px;
+        }
+
+        .container {
+            width: 100%;
+            border: 1px solid #000;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 1px solid #000;
+            padding-bottom: 5px;
+            margin-bottom: 5px;
+        }
+
+        .header h2 {
+            margin: 0;
+            font-weight: bold;
+        }
+
+        /* ===== Top Line Section ===== */
+        .top-line-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .top-line-table td {
+            border: none;
+            vertical-align: top;
+            padding: 3px;
+        }
+
+        .details {
+            /* border-bottom: 1px solid #000; */
+            padding-bottom: 5px;
+            margin-bottom: 5px;
+            width: 100%;
+            line-height: 1.5;
+            font-size: 12px;
+        }
+
+        table.main-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        table.main-table th,
+        table.main-table td {
+            border: 1px solid #000;
+            /* padding: 4px; */
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        /* ===== Summary Section ===== */
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            border-top: 1px solid #000;
+            margin-top: 5px;
+        }
+
+        .summary-table td {
+            border: none;
+            vertical-align: top;
+            padding: 3px;
+        }
+
+        .summary-left {
+            font-size: 11px;
+            width: 70%;
+        }
+
+        .summary-right {
+            border: 1px solid #000;
+            width: 30%;
+        }
+
+        .summary-right table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .summary-right td {
+            border: 1px solid #000;
+            padding: 3px;
+            font-size: 11px;
+        }
+
+        .footer {
+            margin-top: 5px;
+            font-size: 11px;
+            border-top: 1px solid #000;
+            padding-top: 5px;
+        }
+
+        .dotted-underline {
+            border-bottom: 1px dotted #000;
+            display: inline-block;
+            padding: 0 5px;
+            min-width: 100px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <!-- Top Line (Replaced Flex with Table) -->
+        <table class="top-line-table">
+            <tr>
+                <td style="width:26%; text-align:left;">
+                    सर्व विवादों का न्याय क्षेत्र उदयपुर ही रहेगा।<br>
+                    <span style="font-size: 18px"><b>(भाड़ा-चालान)</b></span>
+                </td>
+                <td style="width:48%; text-align:center;">
+                    <b>॥ श्री महावीराय नमः ॥<br>
+                        <span style="font-size: 25px">विनोद गुड्स केरियर</span>
+                    </b><br>
+                    मन्दियाणा रेलवे क्रॉसिंग के पास, बिरला व्हाईट प्लान्ट, मन्दियाणा, राजसमंद
+                </td>
+                <td style="width:26%; text-align:right;">
+                    <b>Tel.:</b> 91161 33293<br>
+                    91161 33295<br>
+                    <br>
+                    चालान नं. ............................
+                </td>
+            </tr>
+        </table>
+        @php
+            $firstLr = $lrs->first();
+            $totalAmount = 0;
+            $detention = 0;
+            $deviation = 0;
+            $misc = 0;
+            $shortage = 0;
+            $damage = 0;
+            $tds = 0;
+
+            $isLinked = count($lrs) > 1 ? true : false;
+            $paymentNames = \App\Models\PaymentMode::pluck('name')->toArray();
+            $payments = array_fill_keys($paymentNames, 0);
+        @endphp
+
+        <!-- Details Section (Replaced Flex with Table) -->
+        <div class="details">
+            ट्रक नं.
+            @if (!empty($firstLr->truck->truck_number))
+                <span class="dotted-underline">{{ $firstLr->truck->truck_number }}</span>
+            @else
+                ...........................
+            @endif
+            ड्राईवर श्री
+            @if (!empty(optional($firstLr->truck->driver)->name))
+                <span class="dotted-underline">{{ $firstLr->truck->driver->name }}</span>
+            @else
+                ...........................
+            @endif
+            फोन नं.
+            @if (!empty(optional($firstLr->truck->driver)->mobile))
+                <span class="dotted-underline">{{ $firstLr->truck->driver->mobile }}</span>
+            @else
+                ...........................
+            @endif
+            पिता श्री ........................................................
+
+            निवासी
+            @if (!empty(optional($firstLr->truck->driver)->address))
+                <span class="dotted-underline">{{ $firstLr->truck->driver->address }}</span>
+            @else
+                ................................................
+            @endif
+            लाइसेंस नं.
+            @if (!empty(optional($firstLr->truck->driver)->license_number))
+                <span class="dotted-underline">{{ $firstLr->truck->driver->license_number }}</span>
+            @else
+                ...........................
+            @endif
+            ट्रक मालिक का नाम
+            @if (!empty(optional($firstLr->truck->transporter)->name))
+                <span class="dotted-underline">{{ $firstLr->truck->transporter->name }}</span>
+            @else
+                ...........................
+            @endif
+            पता
+            @if (
+                !empty(optional($firstLr->truck->transporter)->address) ||
+                    !empty(optional($firstLr->truck->transporter->city)->name))
+                <span class="dotted-underline">
+                    {{ $firstLr->truck->transporter->address ?? '' }},
+                    {{ optional($firstLr->truck->transporter->city)->name ?? '' }}
+                </span>
+            @else
+                ...........................
+            @endif
+            कहाँ से
+            @if (!empty($firstLr->source_city))
+                <span class="dotted-underline">{{ $firstLr->source_city }}</span>
+            @else
+                ...........................
+            @endif
+            कहाँ को
+            @if (!empty($firstLr->destination_city))
+                <span class="dotted-underline">{{ $firstLr->destination_city }}</span>
+            @else
+                ...........................
+            @endif
+            दिनांक
+            @if (!empty(optional(optional($firstLr->freightBookings)->last())->created_at))
+                <span
+                    class="dotted-underline">{{ $firstLr->freightBookings->last()->created_at->format('d-m-Y') }}</span>
+            @else
+                ...........................
+            @endif
+
+        </div>
+
+        <!-- Main Table -->
+        <table class="main-table">
+            <thead>
+                <tr>
+                    <th style="width: 17%;">भेजने वाले का नाम</th>
+                    <th style="width: 17%;">पाने वाले का नाम</th>
+                    <th style="width: 13%;">बिल्टी नं.</th>
+                    <th style="width: 14%;">विवरण</th>
+                    <th style="width: 8%;">कहे</th>
+                    <th style="width: 8%;">वजन</th>
+                    <th style="width: 10%;">रेट</th>
+                    <th style="width: 12%;">कुल रकम</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($lrs as $lr)
+                    @php
+                        $freightBooking = $lr->freightBookings->last();
+                        $totalAmount += $freightBooking->tr_amount ?? 0;
+                        $detention += $freightBooking->detention ?? 0;
+                        $deviation += $freightBooking->deviation ?? 0;
+                        $misc += $freightBooking->misc_expense ?? 0;
+                        $shortage += $lr->shortage_amount ?? 0;
+                        $damage += $lr->damage_amount ?? 0;
+                        $tds += $freightBooking->tds_amount ?? 0;
+                        if ($isLinked) {
+                            $vouchers = \App\Models\VoucherLinked::where(
+                                'freight_booking_id',
+                                $freightBooking->id,
+                            )->get();
+                        } else {
+                            $vouchers = \App\Models\VoucherPayment::where(
+                                'freight_booking_id',
+                                $freightBooking->id,
+                            )->get();
+                        }
+                        foreach ($vouchers as $voucher) {
+                            $payments[$voucher->payment_mode] += $voucher->amount;
+                        }
+                    @endphp
+                    <tr>
+                        <td>{{ $lr->consignor->name }}</td>
+                        <td>{{ $lr->consignee->name }}</td>
+                        <td>{{ $lr->lr_number }}</td>
+                        <td>{{ $lr->good_type }}</td>
+                        <td>{{ $lr->no_of_units }}</td>
+                        <td>{{ $lr->weight }}</td>
+                        <td>{{ $freightBooking->tr_fr_rate }}</td>
+                        <td>{{ $freightBooking->tr_amount }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+
+        <!-- Summary Section -->
+        <table class="summary-table">
+            <tr>
+                <td class="summary-left" style="font-size: 12px;">
+                    <p><b>R.C. PAN / TDS FORM:</b> जमा □ &nbsp;&nbsp;&nbsp; बाकी □</p>
+                    <br>
+                    <p>माल E-WAY BILL में बताये समय में पहुँचना आवश्यक है अन्यथा जो भी जुर्माना होगा वह गाड़ी वाले की
+                        भुगतावत पड़ेगा। अगर गाड़ी रास्ते में खराब हो जाती है तो सबको सूचित करें।</p>
+                    <br>
+                    <p>उदयपुर में भाड़ा लेने का पता <b>‘श्री श्री रोड लाइन्स’</b> डी-57, ट्रांसपोर्ट नगर, प्रतापनगर,
+                        उदयपुर, मो.: 9799584222</p>
+                    <br>
+                    <p>मैंने उपर्युक्त बिल्टियों के अनुसार इस चालान का सारा माल सही व अच्छी हालत में सम्भाल लिया है व
+                        ऊपर लिखे स्थान पर माल पहुँचाने की मेरी व मेरे मालिक की पूरी जिम्मेदारी है।</p>
+                </td>
+                <td class="summary-right">
+                    <table>
+                        <tr>
+                            @php
+                                $expenses = $detention + $deviation;
+                            @endphp
+                            <td>Detention/Deviation</td>
+                            <td>{{ number_format($expenses, 2) }}</td>
+                        </tr>
+                        <tr>
+                            @php
+                                $totalWithExtras = $totalAmount + $expenses;
+                            @endphp
+                            <td>Total</td>
+                            <td>{{ number_format($totalWithExtras, 2) }}</td>
+                        </tr>
+                        <tr>
+                            @php
+                                $totalDeductions = $shortage + $damage + $misc;
+                            @endphp
+                            <td>Short/Other</td>
+                            <td>{{ number_format($totalDeductions, 2) }}</td>
+                        </tr>
+                        <tr>
+                            @php
+                                $grandTotal = $totalWithExtras - $totalDeductions;
+                            @endphp
+                            <td>Amount</td>
+                            <td>{{ number_format($grandTotal, 2) }}</td>
+                        </tr>
+                        @foreach ($payments as $mode => $amount)
+                            <tr>
+                                <td>{{ $mode }}</td>
+                                <td>{{ number_format($amount, 2) }}</td>
+                            </tr>
+                        @endforeach
+                        <tr>
+                            <td>TDS</td>
+                            <td>{{ number_format($tds, 2) }}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Balance</b></td>
+                            <td>
+                                <b>{{ number_format($grandTotal - array_sum($payments) - $tds, 2) }}</b>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+
+    </div>
+</body>
+
+</html>
