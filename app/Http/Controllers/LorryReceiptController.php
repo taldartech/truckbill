@@ -833,7 +833,7 @@ public function getLinkedLRs($linkedLrId)
       $validated = $request->validate([
         'memo_id' => [
           'nullable',
-          'integer',
+          'string',
           function ($attribute, $value, $fail) use ($request, $lorry_receipt) {
             if ($value) {
               $exists = \App\Models\LorryReceipt::where('memo_id', $value)
@@ -859,7 +859,7 @@ public function getLinkedLRs($linkedLrId)
 
       'memo_id' => [
         'nullable',
-        'integer',
+        'string',
         function ($attribute, $value, $fail) use ($request, $lorry_receipt) {
           if ($value) {
             $exists = \App\Models\LorryReceipt::where('memo_id', $value)

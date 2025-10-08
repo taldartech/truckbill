@@ -479,7 +479,7 @@ class FreightBookingController extends Controller
       'balance_amount' => 'required|numeric',
       'tds_amount' => 'nullable|numeric',
       'eway_bill_number' => 'nullable|string',
-      'eway_bill_expiry' => 'nullable|date',
+      'eway_bill_date' => 'nullable|date',
       'good_type' => 'nullable|string',
       'pan_verified' => 'required|boolean',
       'remark' => 'nullable|string',
@@ -527,7 +527,7 @@ class FreightBookingController extends Controller
       'balance_amount' => 'required|numeric',
       'tds_amount' => 'nullable|numeric',
       'eway_bill_number' => 'nullable|string',
-      'eway_bill_expiry' => 'nullable|date',
+      'eway_bill_date' => 'nullable|date',
       'good_type' => 'nullable|string',
 
       'pan_verified' => 'required|boolean',
@@ -545,10 +545,6 @@ class FreightBookingController extends Controller
       return redirect()->back()->withErrors(['lr_id' => 'Invalid lorry receipt']);
     }
 
-    if ($lorryReceipt->freight_booking_id) {
-      return redirect()->route('freight_bookings.index')->with('error', 'This Lorry Receipt is already linked to a Freight Booking.');
-    }
-
     // Create freight booking with lorry receipt's LR number
     // Get the next voucher number
     $nextVoucherNumber = FreightBooking::max('voucher_number') + 1;
@@ -564,11 +560,9 @@ class FreightBookingController extends Controller
     }
 
     $linkedLrId = $lorryReceipt->linked_lr_id ?? null;
-    $linked_freight_booking_id = FreightBooking::where('lr_id', $lorryReceipt->id)->orderBy('id', 'desc')->first()->id ?? null;
 
     $freightBooking = FreightBooking::create(array_merge($data, [
       'lr_number' => $lorryReceipt->lr_number,
-      'linked_freight_booking_id' => $linked_freight_booking_id,
       'voucher_number' => $nextVoucherNumber,
       'pan_verified' => (bool)$data['pan_verified'],
       'company_id' => $data['company_id'],
@@ -637,7 +631,7 @@ class FreightBookingController extends Controller
     $data['booking_ids'] = $request->input('booking_ids');
     $data['payment_amounts'] = $request->input('payment_amounts');
     $data['reference_number'] = $request->input('reference_number');
-    $data['notes'] = $request->input('notes')  . "   Combined Payment: " . ($request->input('combined_amount'))
+    $data['notes'] = $request->input('notes')  . "<br>Combined Payment: " . ($request->input('combined_amount'))
       . ". [LR IDs: " . implode(', ', $lrs) . "], Date: " . $data['date'];
     if (strtolower($data['payment_mode']) === 'cash' || strtolower($data['payment_mode']) === 'adjust in advance') {
       $paymentStatus = 'in-progress';
@@ -650,10 +644,6 @@ class FreightBookingController extends Controller
     }
     $response = $this->VoucherPayment(new Request($data));
     $response = json_decode($response->getContent(), true);
-    if ($response['success'] !== true) {
-      return $response;
-    }
-
     $voucherPayments = $response['processed_payments'] ?? [];
 
     $VoucherLinked = \App\Models\VoucherLinked::create([
@@ -669,7 +659,6 @@ class FreightBookingController extends Controller
       'reference_transaction_id' => $data['reference_number'],
       'remark' => $data['notes'],
       'payment_status' => $paymentStatus,
-      'freight_booking_id' => $request->input('booking_ids')[0] ?? null,
     ]);
 
     foreach ($voucherPayments as $index => $voucherId) {
@@ -882,6 +871,12 @@ class FreightBookingController extends Controller
     if (!$lr) {
       return response()->json(['error' => 'LR not found'], 404);
     }
+    //check if lr(particular id) has linked_lr_id in lorryreceipt table
+    // $linked_lr = LorryReceipt::where('linked_lr_id', $id)->first();
+    // if ($linked_lr) {
+    //   return response()->json(['error' => 'LR is linked to another LR'], 400);
+    // }
+
     return response()->json($lr);
   }
 
@@ -911,10 +906,6 @@ class FreightBookingController extends Controller
       return redirect()->back()->withErrors(['general' => 'Cannot update a cancelled freight booking. Please contact administrator if changes are needed.']);
     }
 
-    if ($freightBooking->lr && $freightBooking->lr->invoice_generated == 1) {
-      return redirect()->route('freight_bookings.index')->with('error', 'Cannot update this freight booking as an invoice has already been generated for its associated Lorry Receipt.');
-    }
-
     // Add debug logging
     \Log::info('Freight booking update started', [
       'freight_booking_id' => $freightBooking->id,
@@ -941,7 +932,7 @@ class FreightBookingController extends Controller
       'is_cancelled' => 'boolean',
       'linked_freight_booking_id' => 'nullable|exists:freight_bookings,id',
       'eway_bill_number' => 'nullable|string',
-      'eway_bill_expiry' => 'nullable|date',
+      'eway_bill_date' => 'nullable|date',
     ]);
 
 
@@ -998,7 +989,6 @@ class FreightBookingController extends Controller
       if (isset($data['is_cancelled']) && $data['is_cancelled'] === '1') {
         // When freight booking is cancelled, lorry receipt goes back to Pending
         $deliveryStatus = 'Pending';
-        $lorryReceipt->freight_booking_id = null; // Unlink freight booking
         \Log::info('FREIGHT BOOKING UPDATE: Setting status to Pending (cancelled)');
       } elseif (isset($data['is_delivered']) && $data['is_delivered'] === '1') {
         // Only set to 'Delivered' if memo_id exists on the lorry receipt
