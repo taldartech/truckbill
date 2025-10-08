@@ -178,7 +178,7 @@
                                         <input type="checkbox" class="row-checkbox" value="{{ $booking->id }}"
                                             data-lr="{{ $booking->lr ? $booking->lr->lr_number : '' }}"
                                             data-linked-lr-id="{{ $booking->lr ? $booking->lr->linked_lr_id : '' }}"
-                                            
+                                            data-memo-id="{{ $booking->lr ? $booking->lr->memo_id : '' }}"
                                             data-lr-id="{{ $booking->lr ? $booking->lr->id : '' }}"
                                             data-truck="{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->truck_number : '' }}"
                                             data-truck-id="{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->id : '' }}"
@@ -501,7 +501,10 @@
         if (!singleLinkedLrId) {
             $('#voucher-payment-btn').show(); // show only if linked_lr_id is null
         }
-                    $('#bulk-memo-id-btn').show();
+            const singleMemoId = checkedBoxes.data('memo-id');
+            if (!singleMemoId) {
+                $('#bulk-memo-id-btn').show();
+            }
                     return;
                 }
                 let firstCustomerId = null;
@@ -511,17 +514,21 @@
                 let allSameTransporter = true;
                 let allSameLinked = true;
                 let anyLinkedLrExists = false;
+                let allSameMemoId = true;
 
                 checkedBoxes.each(function() {
                     const checkbox = $(this);
                     const customerId = checkbox.data('customer-id');
                     const transporterId = checkbox.data('transporter-id');
                     const linkedLrId = checkbox.data('linked-lr-id') || '';
+                    const memoId = checkbox.data('memo-id');
+
                     console.log(linkedLrId);
 
                     
 
                     if (linkedLrId){ anyLinkedLrExists = true;}
+                    if (memoId){ allSameMemoId = false;}
 
                     if (firstCustomerId === null) {
                         firstCustomerId = customerId;
@@ -542,7 +549,9 @@
 
                 // 1. Bulk Memo ID button → if customer same
                 if (allSameCustomer) {
-                    $('#bulk-memo-id-btn').show();
+                    if (allSameMemoId) {
+                        $('#bulk-memo-id-btn').show();
+                    }
                 }
 
                 // 2. Voucher Payment button → if transporter same
