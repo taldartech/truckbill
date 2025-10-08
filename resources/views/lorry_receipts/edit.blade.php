@@ -165,21 +165,21 @@
                         </div>
                     </div>
                     @if ($lorry_receipt->delivery_status == 'Delivered')
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label for="memo_id" class="form-label">Memo ID</label>
-                            <input type="text" class="form-control @error('memo_id') is-invalid @enderror" id="memo_id"
-                                name="memo_id" value="{{ old('memo_id', $lorry_receipt->memo_id) }}">
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="memo_id" class="form-label">Memo ID</label>
+                                <input type="text" class="form-control @error('memo_id') is-invalid @enderror"
+                                    id="memo_id" name="memo_id" value="{{ old('memo_id', $lorry_receipt->memo_id) }}">
 
-                            {{-- Backend validation error --}}
-                            @error('memo_id')
-                                <small class="text-danger">{{ $message }}</small>
-                            @enderror
+                                {{-- Backend validation error --}}
+                                @error('memo_id')
+                                    <small class="text-danger">{{ $message }}</small>
+                                @enderror
 
-                            {{-- AJAX validation error/success --}}
-                            <small id="memo_id_feedback"></small>
+                                {{-- AJAX validation error/success --}}
+                                <small id="memo_id_feedback"></small>
+                            </div>
                         </div>
-                    </div>
                     @endif
                     <div class="row mb-3">
                         <div class="col-md-4">
@@ -216,7 +216,7 @@
                         </div>
                         <div class="col-md-4">
                             <label for="transporter_id" id="transporterLabel" class="form-label">Transporter *</label>
-                            <select class="form-select" id="transporter_id" name="transporter_id" required>
+                            <select class="form-select" id="transporter_id" name="transporter_id" required onchange="showTdsPercentage(this.value)">
                                 <option value="">Select Transporter</option>
                                 @foreach ($transporters as $transporter)
                                     <option value="{{ $transporter->id }}"
@@ -259,7 +259,8 @@
                             <label for="invoice_number" class="form-label">Invoice Number <small
                                     class="text-muted">(Optional)</small></label>
                             <input type="text" class="form-control" id="invoice_number" name="invoice_number"
-                                value="{{ old('invoice_number', $lorry_receipt->invoice_number) }}" placeholder="Enter Invoice Number">
+                                value="{{ old('invoice_number', $lorry_receipt->invoice_number) }}"
+                                placeholder="Enter Invoice Number">
                             @error('invoice_number')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
@@ -1158,7 +1159,14 @@
         const transporterLabel = document.getElementById('transporterLabel');
 
         // Store truck data for easy access
-        let trucksData = {};
+        let trucksData = {
+          @foreach ($trucks as $truck)
+            {{ $truck->id }}: {
+                transporterName: '{{ $truck->transporter ? $truck->transporter->name : '' }}',
+                truckText: '{{ $truck->truck_number }}' + '\n'
+            },
+          @endforeach
+        };
 
         // Validation helper functions
         function showValidationError(element, message) {
@@ -1379,36 +1387,6 @@
                     transporterSelect.style.backgroundColor = '';
                     transporterSelect.title = '';
                 });
-        }
-
-        // Function to show TDS percentage for a transporter
-        function showTdsPercentage(transporterId) {
-            const tdsDisplay = document.getElementById('tdsRateDisplay');
-            const tdsValue = document.getElementById('tdsPercentageValue');
-
-            if (transporterId) {
-                // Show loading state
-                tdsDisplay.style.display = 'block';
-                tdsValue.textContent = 'Loading...';
-
-                // Fetch transporter details to get TDS percentage
-                fetch(`/api/transporters/${transporterId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.tds_percentage !== null && data.tds_percentage !== undefined) {
-                            tdsValue.textContent = `${parseFloat(data.tds_percentage).toFixed(2)}%`;
-                        } else {
-                            tdsValue.textContent = 'Not Set';
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error fetching transporter TDS percentage:', error);
-                        tdsValue.textContent = 'Error';
-                    });
-            } else {
-                // Hide TDS display when no transporter selected
-                tdsDisplay.style.display = 'none';
-            }
         }
 
         // Handle transporter selection to show TDS percentage
@@ -2068,4 +2046,34 @@
                 errorBox.innerHTML = '⚠️ Error: ' + error.message;
             });
     });
+
+    // Function to show TDS percentage for a transporter
+    function showTdsPercentage(transporterId) {
+        const tdsDisplay = document.getElementById('tdsRateDisplay');
+        const tdsValue = document.getElementById('tdsPercentageValue');
+
+        if (transporterId) {
+            // Show loading state
+            tdsDisplay.style.display = 'block';
+            tdsValue.textContent = 'Loading...';
+
+            // Fetch transporter details to get TDS percentage
+            fetch(`/api/transporters/${transporterId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.tds_percentage !== null && data.tds_percentage !== undefined) {
+                        tdsValue.textContent = `${parseFloat(data.tds_percentage).toFixed(2)}%`;
+                    } else {
+                        tdsValue.textContent = 'Not Set';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching transporter TDS percentage:', error);
+                    tdsValue.textContent = 'Error';
+                });
+        } else {
+            // Hide TDS display when no transporter selected
+            tdsDisplay.style.display = 'none';
+        }
+    }
 </script>
