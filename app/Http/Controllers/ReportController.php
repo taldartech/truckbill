@@ -533,9 +533,18 @@ public function pump(Request $request)
         // --- Step 2: Prepare merged data ---
         $pumpData = $voucherPayments->map(function ($payment) {
             // If linked_voucher_id exists, fetch from voucher_linked table
+           
+           
             if ($payment->linked_voucher_id) {
-                $linked = \App\Models\VoucherLinked::find($payment->linked_voucher_id)->where('pump_id', $payment->pump_id)->first();
+                // $linked = \App\Models\VoucherLinked::find($payment->linked_voucher_id)->where('pump_id', $payment->pump_id)->first();
+                 //from voucherlinked do not display same lr number from voucherlinked table 2 times
+                $linked = \App\Models\VoucherLinked::where('id', $payment->linked_voucher_id)
+                ->where('company_id', $payment->company_id)
+                ->where('freight_booking_id', $payment->freight_booking_id)
 
+                ->where('pump_id', $payment->pump_id)
+    ->first();
+    
                 if ($linked) {
                     $lrDetails = \App\Models\LorryReceipt::where('freight_booking_id', $linked->freight_booking_id)
                         ->select('freight_booking_id', 'lr_number', 'destination_state', 'truck_id')
@@ -566,6 +575,7 @@ public function pump(Request $request)
             }
         })->filter(); // remove nulls
     }
+    
 
     // --- Step 3: Return view ---
     return view('reports.pump', compact('pumpData', 'startDate', 'endDate', 'pumpId', 'pumps'));
