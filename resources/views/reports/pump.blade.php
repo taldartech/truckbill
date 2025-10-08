@@ -125,7 +125,7 @@
                     <tbody>
                         @php $grandTotal = 0; @endphp
                         @foreach($pumpData as $index => $item)
-                            @php $grandTotal += $item['total_amount']; @endphp
+                            @php $grandTotal += $item['amount']; @endphp
                             @foreach($item['lrs'] as $lr)
                                 <tr>
                                     <td>{{ $loop->parent->iteration }}</td>
@@ -140,7 +140,7 @@
 
                                     <td>{{ $lr->destination_state ?? 'N/A' }}</td>
                                    
-                                    <td class="text-end">₹{{ number_format($item['total_amount'], 2) }}</td>
+                                    <td class="text-end">₹{{ number_format($item['amount'], 2) }}</td>
                                 </tr>
                             @endforeach
                         @endforeach
