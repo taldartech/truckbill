@@ -150,6 +150,9 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/api/lorry-receipts/{id}/details', [LorryReceiptController::class, 'details'])->name('lorry_receipts.details');
   Route::post('/lorry_receipts/update-status', [LorryReceiptController::class, 'updateDeliveryStatus'])->name('lorry_receipts.update-status');
   Route::get('/api/lorry-receipts/linked/{linkedLrId}', [LorryReceiptController::class, 'getLinkedLRs']);
+  Route::get('/lorryreceipts/by-linked/{linkedId}', [App\Http\Controllers\LorryReceiptController::class, 'getByLinkedId'])
+    ->name('lorryreceipts.by_linked');
+
 
 
 
@@ -164,7 +167,7 @@ Route::middleware(['auth'])->group(function () {
   Route::post('/freight_bookings/bulk-payment', [FreightBookingController::class, 'bulkPayment'])->name('freight_bookings.bulk_payment');
   Route::post('/freight_bookings/bulk-memo-id', [FreightBookingController::class, 'bulkMemoId'])->name('freight_bookings.bulk_memo_id');
   Route::post('/freight_bookings/payment-history', [FreightBookingController::class, 'getPaymentHistory'])->name('freight_bookings.payment_history');
-  Route::get('/freight-bookings/by-linked-lr/{linkedLrId}', [FreightBookingController::class, 'getByLinkedLr']);
+ 
 
 
   // Invoices

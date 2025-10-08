@@ -162,6 +162,34 @@ class LorryReceiptController extends Controller
 
     return view('lorry_receipts.show', compact('lorryReceipt'));
   }
+  public function getByLinkedId($linkedId)
+  {
+      try {
+          $lrs = \App\Models\LorryReceipt::with(['truck', 'freightBookings'])
+              ->where('linked_lr_id', $linkedId)
+              ->get()
+              ->map(function ($lr) {
+                  if (!$lr) return null;
+                  
+                  return [
+                      'id' => $lr->id,
+                      'lr_number' => $lr->lr_number,
+                      'truck_number' => $lr->truck ? $lr->truck->truck_number : '',
+                      'freight_booking_id' => $lr->freightBooking ? $lr->freightBooking->id : null,
+                      'balance_amount' => $lr->freightBooking ? (float)$lr->freightBooking->balance_amount : 0,
+                  ];
+              })
+              ->filter() ;// Remove any null entries from the collection
+  
+          return response()->json($lrs->values());
+      } catch (\Exception $e) {
+          \Log::error('Error in getByLinkedId: ' . $e->getMessage());
+          return response()->json([
+              'error' => 'An error occurred while fetching linked LRs',
+              'message' => $e->getMessage()
+          ], 500);
+      }
+  }
 //   public function getLinkedLRs($linkedLrId)
 // {
 //     try {
