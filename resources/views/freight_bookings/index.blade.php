@@ -504,7 +504,7 @@
         if (singleLinkedLrId) {
             $('#combined-payment-btn').show();
         }
-            
+
             const singleMemoId = checkedBoxes.data('memo-id');
             if (!singleMemoId) {
                 $('#bulk-memo-id-btn').show();
@@ -529,7 +529,7 @@
 
                     console.log(linkedLrId);
 
-                    
+
 
                     if (linkedLrId){ anyLinkedLrExists = true;}
                     if (memoId){ allSameMemoId = false;}
@@ -924,7 +924,7 @@
 //                     <td>${truckNo}</td>
 //                     <td class="text-end">₹${balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
 //                     <td class="text-end" style="max-width:160px;">
-//                         <input type="number" 
+//                         <input type="number"
 //                                class="form-control form-control-sm allocated-input"
 //                                name="payment_amounts[]"
 //                                data-fb-id="${fbId}"
@@ -1031,7 +1031,7 @@ $('#combined-payment-btn').on('click', function() {
     // Get first selected checkbox
     const firstCb = checkedBoxes.first();
     const linkedLrId = firstCb.data('linked-lr-id');
-    
+
     // If there's a linked LR ID, fetch all related LRs
     if (linkedLrId) {
         $.get(`/lorryreceipts/by-linked/${linkedLrId}`, function(response) {
@@ -1093,9 +1093,7 @@ function buildCombinedModal(lrData) {
             <tr>
                 <td>${lrNo}</td>
                 <td>${truckNo}</td>
-                <td class="text-end">₹${balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                <td class="text-end" style="max-width: 160px;">
-                    <input type="number"
+                    <input type="hidden"
                         class="form-control form-control-sm allocated-input"
                         name="payment_amounts[]"
                         data-fb-id="${fbId}"
@@ -1103,11 +1101,6 @@ function buildCombinedModal(lrData) {
                         min="0" max="${balance}"
                         step="0.01"
                         value="${balance.toFixed(2)}">
-                    <small class="text-muted">${percentage.toFixed(2)}% of total</small>
-                    <div class="invalid-feedback">
-                        Amount must be between 0 and ₹${balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}
-                    </div>
-                </td>
             </tr>
         `;
     });
@@ -1123,14 +1116,14 @@ function buildCombinedModal(lrData) {
                 <div class="d-flex align-items-center gap-2">
                     <label class="form-label mb-0">Combined Amount *</label>
                     <div>
-                        <input type="number" 
-                               step="0.01" 
-                               min="0.01" 
-                               max="${totalBalance}" 
-                               class="form-control" 
-                               id="combinedAmountInput" 
-                               name="combined_amount" 
-                               style="width: 200px;" 
+                        <input type="number"
+                               step="0.01"
+                               min="0.01"
+                               max="${totalBalance}"
+                               class="form-control"
+                               id="combinedAmountInput"
+                               name="combined_amount"
+                               style="width: 200px;"
                                value="${totalBalance.toFixed(2)}"
                                required>
                         <div class="invalid-feedback">
@@ -1145,14 +1138,12 @@ function buildCombinedModal(lrData) {
                         <tr>
                             <th>LR Number</th>
                             <th>Truck Number</th>
-                            <th class="text-end">Balance</th>
-                            <th class="text-end">Allocated</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${rowsHtml}
                     </tbody>
-                    <tfoot>
+                    <tfoot class="d-none">
                         <tr class="table-info">
                             <th colspan="3" class="text-end">Total Allocated:</th>
                             <th class="text-end" id="combinedAllocatedTotal">₹${totalBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</th>
@@ -1167,7 +1158,7 @@ function buildCombinedModal(lrData) {
                     <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Type *</label>
                     <select id="paymentType" name="payment_type" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
                         <option value="">Select Payment Type</option>
-                        ${paymentTypes.map(type => 
+                        ${paymentTypes.map(type =>
                             `<option value="${type.id}">${type.name}</option>`
                         ).join('')}
                     </select>
@@ -1176,7 +1167,7 @@ function buildCombinedModal(lrData) {
                     <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Mode *</label>
                     <select id="paymentMode" name="payment_mode" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
                         <option value="">Select Payment Mode</option>
-                        ${paymentModes.map(mode => 
+                        ${paymentModes.map(mode =>
                             `<option value="${mode.id}">${mode.name}</option>`
                         ).join('')}
                     </select>
@@ -1206,7 +1197,7 @@ function buildCombinedModal(lrData) {
 
     // Update modal content
     $('#combinedPaymentBody').html(modalContent);
-    
+
     // Show the modal
     const modal = new bootstrap.Modal(document.getElementById('combinedPaymentModal'));
     modal.show();
@@ -1219,18 +1210,18 @@ function initializeAmountAllocation(totalBalance) {
     $(document).off('input', '#combinedAmountInput').on('input', '#combinedAmountInput', function() {
         const totalAmount = parseFloat($(this).val()) || 0;
         const maxAmount = parseFloat($(this).attr('max')) || 0;
-        
+
         // Validation
         if (totalAmount > maxAmount || totalAmount < 0) {
             $(this).addClass('is-invalid');
             return;
         }
         $(this).removeClass('is-invalid');
-        
+
         // Sequential allocation logic
         let remaining = totalAmount;
         let allocatedTotal = 0;
-        
+
         $('.allocated-input').each(function() {
             const $input = $(this);
             const balance = parseFloat($input.data('balance')) || 0;
@@ -1291,28 +1282,28 @@ function initializeAmountAllocation(totalBalance) {
 //     $(document).off('input', '#combinedAmountInput').on('input', '#combinedAmountInput', function() {
 //         const totalAmount = parseFloat($(this).val()) || 0;
 //         const maxAmount = parseFloat($(this).attr('max')) || 0;
-        
+
 //         if (totalAmount > maxAmount || totalAmount < 0) {
 //             $(this).addClass('is-invalid');
 //             return;
 //         }
 //         $(this).removeClass('is-invalid');
-        
+
 //         // Distribute amount proportionally
 //         let remaining = totalAmount;
 //         let allocatedTotal = 0;
-        
+
 //         $('.allocated-input').each(function() {
 //             const $input = $(this);
 //             const balance = parseFloat($input.data('balance')) || 0;
 //             const percentage = totalBalance > 0 ? (balance / totalBalance) : 0;
 //             const allocated = Math.min(balance, Math.round(totalAmount * percentage * 100) / 100);
-            
+
 //             $input.val(allocated.toFixed(2));
 //             remaining -= allocated;
 //             allocatedTotal += allocated;
 //         });
-        
+
 //         // Handle any remaining amount due to rounding
 //         if (remaining > 0) {
 //             $('.allocated-input').first().val(
@@ -1320,7 +1311,7 @@ function initializeAmountAllocation(totalBalance) {
 //             );
 //             allocatedTotal += remaining;
 //         }
-        
+
 //         // Update total allocated display
 //         $('#combinedAllocatedTotal').text('₹' + allocatedTotal.toLocaleString('en-IN', {minimumFractionDigits: 2}));
 //     });
@@ -1330,19 +1321,19 @@ function initializeAmountAllocation(totalBalance) {
 //         const $input = $(this);
 //         const val = parseFloat($input.val()) || 0;
 //         const max = parseFloat($input.attr('max')) || 0;
-        
+
 //         if (val > max || val < 0) {
 //             $input.addClass('is-invalid');
 //         } else {
 //             $input.removeClass('is-invalid');
 //         }
-        
+
 //         // Update total allocated
 //         let allocatedTotal = 0;
 //         $('.allocated-input').each(function() {
 //             allocatedTotal += parseFloat($(this).val() || 0);
 //         });
-        
+
 //         $('#combinedAllocatedTotal').text('₹' + allocatedTotal.toLocaleString('en-IN', {minimumFractionDigits: 2}));
 //         $('#combinedAmountInput').val(allocatedTotal.toFixed(2));
 //     });
