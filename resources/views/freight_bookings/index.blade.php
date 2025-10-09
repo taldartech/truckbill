@@ -270,6 +270,10 @@
                                                 <i class="bi bi-pencil"></i>
                                             </a>
                                         @endif
+                                        <a href="{{ route('reports.voucher-receipt-export', ['lr_id' => $booking->lr->id]) }}"
+                                            target="_blank" class="btn btn-sm btn-outling-success">
+                                            <i class="fa fa-file"></i>
+                                        </a>
                                     </div>
                                 </td>
                             </tr>
