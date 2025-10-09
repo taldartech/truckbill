@@ -30,7 +30,7 @@ class PumpExport implements FromCollection, ShouldAutoSize, WithEvents
     public function collection()
     {
         $data = collect();
-        $userCompanyId = auth()->user()->company_id;
+        $companyId = auth()->user()->company_id;
 
         // Get the pump name
         $pump = \App\Models\Pump::find($this->pumpId);
@@ -38,79 +38,89 @@ class PumpExport implements FromCollection, ShouldAutoSize, WithEvents
             return $data;
         }
 
-        // Add the pump name as the first row
+        // Add the pump name and date range as the first rows
         $data->push(['Pump:', $pump->pump_name]);
-
-        // Add an empty row
-        $data->push([]);
-         $data->push([
+        $data->push(['Date Range:', $this->startDate . ' to ' . $this->endDate]);
+        $data->push([]); // Empty row
+        
+        // Add headers
+        $data->push([
             'LR Number',
             'Date',
             'Truck Number',
             'Destination',
-            'Amount (₹)'
+            'Amount (₹)',
+            
         ]);
-
-        // Add the headers
-        // $data->push($this->headings());
 
         // Get all voucher payments for the selected pump and date range
         $voucherPayments = \App\Models\VoucherPayment::with(['freight_booking.lr', 'pump'])
             ->where('pump_id', $this->pumpId)
-            ->where('company_id', $userCompanyId)
+            ->where('company_id', $companyId)
             ->whereBetween('date', [$this->startDate, $this->endDate])
             ->get();
 
-        if ($voucherPayments->isNotEmpty()) {
-            // Group by freight_booking_id and calculate total amount
-            $groupedPayments = $voucherPayments->groupBy('freight_booking_id')->map(function ($group) {
-                return [
-                    'freight_booking_id' => $group->first()->freight_booking_id,
-                    'total_amount' => $group->sum('amount'),
-                    'date' => $group->first()->date
-                ];
-            });
+        $processedFreightBookingIds = [];
+        $totalAmount = 0;
 
-            // Fetch all LR records related to these freight booking IDs
-            $freightBookingIds = $groupedPayments->pluck('freight_booking_id')->toArray();
-           
-            $lrs = \App\Models\LorryReceipt::whereIn('freight_booking_id', $freightBookingIds)
-                ->select('freight_booking_id', 'lr_number', 'destination_state', 'truck_id')
-                ->with('truck')
-                ->get();
-
-            // Format data for export
-            foreach ($groupedPayments as $payment) {
-                $lrDetails = $lrs->where('freight_booking_id', $payment['freight_booking_id'])->first();
-                if ($lrDetails) {
-                    $data->push([
-                        $lrDetails->lr_number ?? 'N/A',
-                        \Carbon\Carbon::parse($payment['date'])->format('d-m-Y'),
-                        $lrDetails->truck->truck_number ?? 'N/A',
-                        $lrDetails->destination_state ?? 'N/A',
-                        $payment['total_amount'],
-                    ]);
-                }
+        foreach ($voucherPayments as $payment) {
+            // Skip if we've already processed this freight booking
+            if (in_array($payment->freight_booking_id, $processedFreightBookingIds)) {
+                continue;
             }
 
-            // Add total row
-            $totalAmount = $groupedPayments->sum('total_amount');
-            $data->push(['', '', '', 'Total:', $totalAmount]);
+            $lrDetails = null;
+            $amount = 0;
+            $date = null;
+          
+
+            if ($payment->linked_voucher_id) {
+                // Handle linked voucher
+                $linked = \App\Models\VoucherLinked::where('id', $payment->linked_voucher_id)
+                    ->where('company_id', $companyId)
+                    ->where('freight_booking_id', $payment->freight_booking_id)
+                    ->where('pump_id', $payment->pump_id)
+                    ->first();
+
+                if ($linked) {
+                    $lrDetails = \App\Models\LorryReceipt::where('freight_booking_id', $linked->freight_booking_id)
+                        ->select('freight_booking_id', 'lr_number', 'destination_state', 'truck_id')
+                        ->with('truck')
+                        ->first();
+                    
+                    $amount = $linked->amount;
+                    $date = $linked->date;
+                }
+            } else {
+                // Handle unlinked voucher
+                $lrDetails = \App\Models\LorryReceipt::where('freight_booking_id', $payment->freight_booking_id)
+                    ->select('freight_booking_id', 'lr_number', 'destination_state', 'truck_id')
+                    ->with('truck')
+                    ->first();
+                
+                $amount = $payment->amount;
+                $date = $payment->date;
+            }
+
+            if ($lrDetails) {
+                $data->push([
+                    $lrDetails->lr_number ?? 'N/A',
+                    \Carbon\Carbon::parse($date)->format('d-m-Y'),
+                    $lrDetails->truck->truck_number ?? 'N/A',
+                    $lrDetails->destination_state ?? 'N/A',
+                    $amount,
+                ]);
+
+                $totalAmount += $amount;
+                $processedFreightBookingIds[] = $payment->freight_booking_id;
+            }
         }
+
+        // Add total row
+        $data->push(['', '', '', 'Total:', $totalAmount, '']);
 
         return $data;
     }
-
-    // public function headings(): array
-    // {
-    //     return [
-    //         'LR Number',
-    //         'Date',
-    //         'Truck Number',
-    //         'Destination',
-    //         'Amount (₹)'
-    //     ];
-    // }
 
     public function registerEvents(): array
     {
