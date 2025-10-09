@@ -1214,68 +1214,139 @@ function buildCombinedModal(lrData) {
     // Initialize amount allocation
     initializeAmountAllocation(totalBalance);
 }
-
 function initializeAmountAllocation(totalBalance) {
     // Handle allocation when combined amount changes
     $(document).off('input', '#combinedAmountInput').on('input', '#combinedAmountInput', function() {
         const totalAmount = parseFloat($(this).val()) || 0;
         const maxAmount = parseFloat($(this).attr('max')) || 0;
         
+        // Validation
         if (totalAmount > maxAmount || totalAmount < 0) {
             $(this).addClass('is-invalid');
             return;
         }
         $(this).removeClass('is-invalid');
         
-        // Distribute amount proportionally
+        // Sequential allocation logic
         let remaining = totalAmount;
         let allocatedTotal = 0;
         
         $('.allocated-input').each(function() {
             const $input = $(this);
             const balance = parseFloat($input.data('balance')) || 0;
-            const percentage = totalBalance > 0 ? (balance / totalBalance) : 0;
-            const allocated = Math.min(balance, Math.round(totalAmount * percentage * 100) / 100);
-            
-            $input.val(allocated.toFixed(2));
-            remaining -= allocated;
-            allocatedTotal += allocated;
+            let alloc = 0;
+
+            if (remaining > 0) {
+                alloc = Math.min(balance, remaining);
+                remaining -= alloc;
+            }
+
+            $input.val(alloc.toFixed(2));
+            allocatedTotal += alloc;
         });
-        
-        // Handle any remaining amount due to rounding
+
+        // Handle any remaining (rounding adjustments)
         if (remaining > 0) {
-            $('.allocated-input').first().val(
-                (parseFloat($('.allocated-input').first().val()) + remaining).toFixed(2)
-            );
+            const $first = $('.allocated-input').first();
+            const updated = parseFloat($first.val()) + remaining;
+            $first.val(updated.toFixed(2));
             allocatedTotal += remaining;
         }
-        
+
         // Update total allocated display
-        $('#combinedAllocatedTotal').text('₹' + allocatedTotal.toLocaleString('en-IN', {minimumFractionDigits: 2}));
+        $('#combinedAllocatedTotal').text(
+            '₹' + allocatedTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })
+        );
     });
 
-    // Handle individual input changes
+    // Handle manual input changes in individual allocations
     $(document).off('input', '.allocated-input').on('input', '.allocated-input', function() {
         const $input = $(this);
         const val = parseFloat($input.val()) || 0;
         const max = parseFloat($input.attr('max')) || 0;
-        
+
+        // Validation
         if (val > max || val < 0) {
             $input.addClass('is-invalid');
         } else {
             $input.removeClass('is-invalid');
         }
-        
-        // Update total allocated
+
+        // Recalculate total allocated
         let allocatedTotal = 0;
         $('.allocated-input').each(function() {
-            allocatedTotal += parseFloat($(this).val() || 0);
+            allocatedTotal += parseFloat($(this).val()) || 0;
         });
-        
-        $('#combinedAllocatedTotal').text('₹' + allocatedTotal.toLocaleString('en-IN', {minimumFractionDigits: 2}));
+
+        // Update totals
+        $('#combinedAllocatedTotal').text(
+            '₹' + allocatedTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })
+        );
         $('#combinedAmountInput').val(allocatedTotal.toFixed(2));
     });
 }
+
+// function initializeAmountAllocation(totalBalance) {
+//     // Handle allocation when combined amount changes
+//     $(document).off('input', '#combinedAmountInput').on('input', '#combinedAmountInput', function() {
+//         const totalAmount = parseFloat($(this).val()) || 0;
+//         const maxAmount = parseFloat($(this).attr('max')) || 0;
+        
+//         if (totalAmount > maxAmount || totalAmount < 0) {
+//             $(this).addClass('is-invalid');
+//             return;
+//         }
+//         $(this).removeClass('is-invalid');
+        
+//         // Distribute amount proportionally
+//         let remaining = totalAmount;
+//         let allocatedTotal = 0;
+        
+//         $('.allocated-input').each(function() {
+//             const $input = $(this);
+//             const balance = parseFloat($input.data('balance')) || 0;
+//             const percentage = totalBalance > 0 ? (balance / totalBalance) : 0;
+//             const allocated = Math.min(balance, Math.round(totalAmount * percentage * 100) / 100);
+            
+//             $input.val(allocated.toFixed(2));
+//             remaining -= allocated;
+//             allocatedTotal += allocated;
+//         });
+        
+//         // Handle any remaining amount due to rounding
+//         if (remaining > 0) {
+//             $('.allocated-input').first().val(
+//                 (parseFloat($('.allocated-input').first().val()) + remaining).toFixed(2)
+//             );
+//             allocatedTotal += remaining;
+//         }
+        
+//         // Update total allocated display
+//         $('#combinedAllocatedTotal').text('₹' + allocatedTotal.toLocaleString('en-IN', {minimumFractionDigits: 2}));
+//     });
+
+//     // Handle individual input changes
+//     $(document).off('input', '.allocated-input').on('input', '.allocated-input', function() {
+//         const $input = $(this);
+//         const val = parseFloat($input.val()) || 0;
+//         const max = parseFloat($input.attr('max')) || 0;
+        
+//         if (val > max || val < 0) {
+//             $input.addClass('is-invalid');
+//         } else {
+//             $input.removeClass('is-invalid');
+//         }
+        
+//         // Update total allocated
+//         let allocatedTotal = 0;
+//         $('.allocated-input').each(function() {
+//             allocatedTotal += parseFloat($(this).val() || 0);
+//         });
+        
+//         $('#combinedAllocatedTotal').text('₹' + allocatedTotal.toLocaleString('en-IN', {minimumFractionDigits: 2}));
+//         $('#combinedAmountInput').val(allocatedTotal.toFixed(2));
+//     });
+// }
 
 
             // Handle submit of Combined Payment via AJAX

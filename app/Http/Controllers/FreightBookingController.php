@@ -479,7 +479,7 @@ class FreightBookingController extends Controller
       'balance_amount' => 'required|numeric',
       'tds_amount' => 'nullable|numeric',
       'eway_bill_number' => 'nullable|string',
-      'eway_bill_date' => 'nullable|date',
+      'eway_bill_expiry' => 'nullable|date',
       'good_type' => 'nullable|string',
       'pan_verified' => 'required|boolean',
       'remark' => 'nullable|string',
@@ -527,7 +527,7 @@ class FreightBookingController extends Controller
       'balance_amount' => 'required|numeric',
       'tds_amount' => 'nullable|numeric',
       'eway_bill_number' => 'nullable|string',
-      'eway_bill_date' => 'nullable|date',
+      'eway_bill_expiry' => 'nullable|date',
       'good_type' => 'nullable|string',
 
       'pan_verified' => 'required|boolean',
@@ -599,6 +599,7 @@ class FreightBookingController extends Controller
 
   public function storeCombinedPayment(Request $request)
   {
+    dd($request->all());
     $request->validate([
       'combined_amount' => 'required|numeric|min:1',
       'payment_type' => 'required|exists:payment_types,id',
@@ -658,6 +659,7 @@ class FreightBookingController extends Controller
       'amount' => $data['total_amount'],
       'reference_transaction_id' => $data['reference_number'],
       'remark' => $data['notes'],
+      
       'payment_status' => $paymentStatus,
     ]);
 
@@ -932,7 +934,7 @@ class FreightBookingController extends Controller
       'is_cancelled' => 'boolean',
       'linked_freight_booking_id' => 'nullable|exists:freight_bookings,id',
       'eway_bill_number' => 'nullable|string',
-      'eway_bill_date' => 'nullable|date',
+      'eway_bill_expiry' => 'nullable|date',
     ]);
 
 
@@ -1016,16 +1018,7 @@ class FreightBookingController extends Controller
     return redirect()->route('freight_bookings.index')->with('success', 'Freight Booking updated successfully.');
   }
 
-  public function getByLinkedLr($linkedLrId)
-  {
-      $bookings = \App\Models\FreightBooking::with(['lr.truck'])
-          ->whereHas('lr', function ($q) use ($linkedLrId) {
-              $q->where('linked_lr_id', $linkedLrId);
-          })
-          ->get();
-  
-      return response()->json($bookings);
-  }
+ 
   
   public function destroy(FreightBooking $freight_booking)
   {
