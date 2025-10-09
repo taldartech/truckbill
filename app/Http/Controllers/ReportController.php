@@ -24,6 +24,7 @@ use App\Models\Pump;
 use App\Exports\PumpExport;
 use App\Models\VoucherPayment;
 use App\Exports\BankExport;
+use App\Exports\UltratechBillExport;
 use App\Models\VoucherLinked;
 use Carbon\Carbon;
 
@@ -386,131 +387,131 @@ class ReportController extends Controller
     return $export;
   }
 
-//   public function pump(Request $request)
-// {
-//   $pumps = Pump::all();
-//     $endDate = $request->input('end_date') ?? date('Y-m-d');
-//     $startDate = max(
-//         $request->input('start_date') ?? date('Y-m-d', strtotime('-3 months')),
-//         date('Y-m-d', strtotime('-3 months', strtotime($endDate)))
-//     );
+  //   public function pump(Request $request)
+  // {
+  //   $pumps = Pump::all();
+  //     $endDate = $request->input('end_date') ?? date('Y-m-d');
+  //     $startDate = max(
+  //         $request->input('start_date') ?? date('Y-m-d', strtotime('-3 months')),
+  //         date('Y-m-d', strtotime('-3 months', strtotime($endDate)))
+  //     );
 
-//     $pumpId = $request->input('pump_id');
+  //     $pumpId = $request->input('pump_id');
 
-//     $userCompanyId = Auth::user()->company_id;
+  //     $userCompanyId = Auth::user()->company_id;
 
-//     $pumpData = collect(); // default empty collection
+  //     $pumpData = collect(); // default empty collection
 
-//     if ($pumpId) {
-//         // Step 1: Get all voucher payments with this pump id and company
-//         $voucherPayments = \App\Models\VoucherPayment::where('pump_id', $pumpId)
-        
-//         ->whereNull('linked_voucher_id')
-//             ->where('company_id', $userCompanyId)
-//             ->whereBetween('date', [$startDate, $endDate])
-//             ->get();
+  //     if ($pumpId) {
+  //         // Step 1: Get all voucher payments with this pump id and company
+  //         $voucherPayments = \App\Models\VoucherPayment::where('pump_id', $pumpId)
+
+  //         ->whereNull('linked_voucher_id')
+  //             ->where('company_id', $userCompanyId)
+  //             ->whereBetween('date', [$startDate, $endDate])
+  //             ->get();
 
 
-//         if ($voucherPayments->isNotEmpty()) {
-//             // Step 2: Group by freight_booking_id and calculate total amount
-//             // $groupedPayments = $voucherPayments->groupBy('freight_booking_id')->map(function ($group) {
-//             //     return [
-//             //         'freight_booking_id' => $group->first()->freight_booking_id,
-//             //         'total_amount' => $group->first()->amount,
-//             //     ];
-//             // });
+  //         if ($voucherPayments->isNotEmpty()) {
+  //             // Step 2: Group by freight_booking_id and calculate total amount
+  //             // $groupedPayments = $voucherPayments->groupBy('freight_booking_id')->map(function ($group) {
+  //             //     return [
+  //             //         'freight_booking_id' => $group->first()->freight_booking_id,
+  //             //         'total_amount' => $group->first()->amount,
+  //             //     ];
+  //             // });
 
-//             // Step 3: Fetch all LR records related to these freight booking IDs
-//             $freightBookingIds = $voucherPayments->pluck('freight_booking_id')->toArray();
+  //             // Step 3: Fetch all LR records related to these freight booking IDs
+  //             $freightBookingIds = $voucherPayments->pluck('freight_booking_id')->toArray();
 
-//             $lrs = \App\Models\LorryReceipt::whereIn('freight_booking_id', $freightBookingIds)
-//                 ->select('freight_booking_id', 'lr_number', 'destination_state','truck_id')
-//                 ->get();
+  //             $lrs = \App\Models\LorryReceipt::whereIn('freight_booking_id', $freightBookingIds)
+  //                 ->select('freight_booking_id', 'lr_number', 'destination_state','truck_id')
+  //                 ->get();
 
-//             // Step 4: Merge LR data with payment sums
-//             $pumpData = $voucherPayments->map(function ($payment) use ($lrs) {
-//                 $lrDetails = $lrs->where('freight_booking_id', $payment['freight_booking_id'])->values();
-//               //send date from voucher payment
-//               $voucherPayment = \App\Models\VoucherPayment::where('freight_booking_id', $payment['freight_booking_id'])->first();
-//               $date = $voucherPayment->date;
-//                 return [
-//                     'freight_booking_id' => $payment['freight_booking_id'],
-//                     'amount' => $payment['amount'],
-//                     'lrs' => $lrDetails,
-//                     'date' => Carbon::parse($date)->format('d-m-Y'),
-//                 ];
-//             })->values();
+  //             // Step 4: Merge LR data with payment sums
+  //             $pumpData = $voucherPayments->map(function ($payment) use ($lrs) {
+  //                 $lrDetails = $lrs->where('freight_booking_id', $payment['freight_booking_id'])->values();
+  //               //send date from voucher payment
+  //               $voucherPayment = \App\Models\VoucherPayment::where('freight_booking_id', $payment['freight_booking_id'])->first();
+  //               $date = $voucherPayment->date;
+  //                 return [
+  //                     'freight_booking_id' => $payment['freight_booking_id'],
+  //                     'amount' => $payment['amount'],
+  //                     'lrs' => $lrDetails,
+  //                     'date' => Carbon::parse($date)->format('d-m-Y'),
+  //                 ];
+  //             })->values();
 
-//         }
-//     }
+  //         }
+  //     }
 
-//     // Step 5: Return view with data
-//     return view('reports.pump', compact('pumpData', 'startDate', 'endDate', 'pumpId', 'pumps'));
-// }
-// public function pump(Request $request)
-// {
-//     $pumps = Pump::all();
-//     $endDate = $request->input('end_date') ?? date('Y-m-d');
-//     $startDate = max(
-//         $request->input('start_date') ?? date('Y-m-d', strtotime('-3 months')),
-//         date('Y-m-d', strtotime('-3 months', strtotime($endDate)))
-//     );
+  //     // Step 5: Return view with data
+  //     return view('reports.pump', compact('pumpData', 'startDate', 'endDate', 'pumpId', 'pumps'));
+  // }
+  // public function pump(Request $request)
+  // {
+  //     $pumps = Pump::all();
+  //     $endDate = $request->input('end_date') ?? date('Y-m-d');
+  //     $startDate = max(
+  //         $request->input('start_date') ?? date('Y-m-d', strtotime('-3 months')),
+  //         date('Y-m-d', strtotime('-3 months', strtotime($endDate)))
+  //     );
 
-//     $pumpId = $request->input('pump_id');
-//     $companyId = Auth::user()->company_id;
+  //     $pumpId = $request->input('pump_id');
+  //     $companyId = Auth::user()->company_id;
 
-//     // --- Step 1: Query unlinked (direct) payments ---
-//     $paymentQuery = \App\Models\VoucherPayment::with([
-//             'freight_booking.lr.truck'
-//         ])
-//         ->where('payment_mode', 'bank transfer') // or 'pump'? Adjust if needed
-//         ->whereNull('linked_voucher_id')
-//         ->where('company_id', $companyId)
-//         ->when($pumpId, fn($q) => $q->where('pump_id', $pumpId))
-//         ->whereBetween('date', [$startDate, $endDate]);
+  //     // --- Step 1: Query unlinked (direct) payments ---
+  //     $paymentQuery = \App\Models\VoucherPayment::with([
+  //             'freight_booking.lr.truck'
+  //         ])
+  //         ->where('payment_mode', 'bank transfer') // or 'pump'? Adjust if needed
+  //         ->whereNull('linked_voucher_id')
+  //         ->where('company_id', $companyId)
+  //         ->when($pumpId, fn($q) => $q->where('pump_id', $pumpId))
+  //         ->whereBetween('date', [$startDate, $endDate]);
 
-//     // --- Step 2: Query linked vouchers ---
-//     $linkedQuery = \App\Models\VoucherLinked::with([
-//             'freight_booking.lr.truck'
-//         ])
-//         ->where('payment_mode', 'bank transfer') // or 'pump'? Adjust if needed
-//         ->where('company_id', $companyId)
-//         ->when($pumpId, fn($q) => $q->where('pump_id', $pumpId))
-//         ->whereBetween('date', [$startDate, $endDate]);
+  //     // --- Step 2: Query linked vouchers ---
+  //     $linkedQuery = \App\Models\VoucherLinked::with([
+  //             'freight_booking.lr.truck'
+  //         ])
+  //         ->where('payment_mode', 'bank transfer') // or 'pump'? Adjust if needed
+  //         ->where('company_id', $companyId)
+  //         ->when($pumpId, fn($q) => $q->where('pump_id', $pumpId))
+  //         ->whereBetween('date', [$startDate, $endDate]);
 
-//     // --- Step 3: Fetch both datasets ---
-//     $payments = $paymentQuery->get()->map(function ($payment) {
-//         return [
-//             'freight_booking_id' => $payment->freight_booking_id,
-//             'lr_number'          => $payment->freight_booking->lr->lr_number ?? 'N/A',
-//             'truck_number'       => $payment->freight_booking->lr->truck->truck_number ?? 'N/A',
-//             'destination_state'  => $payment->freight_booking->lr->destination_state ?? 'N/A',
-//             'amount'             => $payment->amount,
-//             'date'               => \Carbon\Carbon::parse($payment->date)->format('d-m-Y'),
-//             'type'               => 'Unlinked', // for clarity
-//         ];
-//     });
+  //     // --- Step 3: Fetch both datasets ---
+  //     $payments = $paymentQuery->get()->map(function ($payment) {
+  //         return [
+  //             'freight_booking_id' => $payment->freight_booking_id,
+  //             'lr_number'          => $payment->freight_booking->lr->lr_number ?? 'N/A',
+  //             'truck_number'       => $payment->freight_booking->lr->truck->truck_number ?? 'N/A',
+  //             'destination_state'  => $payment->freight_booking->lr->destination_state ?? 'N/A',
+  //             'amount'             => $payment->amount,
+  //             'date'               => \Carbon\Carbon::parse($payment->date)->format('d-m-Y'),
+  //             'type'               => 'Unlinked', // for clarity
+  //         ];
+  //     });
 
-//     $linkedPayments = $linkedQuery->get()->map(function ($linked) {
-//         return [
-//             'freight_booking_id' => $linked->freight_booking_id,
-//             'lr_number'          => $linked->freight_booking->lr->lr_number ?? 'N/A',
-//             'truck_number'       => $linked->freight_booking->lr->truck->truck_number ?? 'N/A',
-//             'destination_state'  => $linked->freight_booking->lr->destination_state ?? 'N/A',
-//             'amount'             => $linked->amount,
-//             'date'               => \Carbon\Carbon::parse($linked->date)->format('d-m-Y'),
-//             'type'               => 'Linked',
-//         ];
-//     });
+  //     $linkedPayments = $linkedQuery->get()->map(function ($linked) {
+  //         return [
+  //             'freight_booking_id' => $linked->freight_booking_id,
+  //             'lr_number'          => $linked->freight_booking->lr->lr_number ?? 'N/A',
+  //             'truck_number'       => $linked->freight_booking->lr->truck->truck_number ?? 'N/A',
+  //             'destination_state'  => $linked->freight_booking->lr->destination_state ?? 'N/A',
+  //             'amount'             => $linked->amount,
+  //             'date'               => \Carbon\Carbon::parse($linked->date)->format('d-m-Y'),
+  //             'type'               => 'Linked',
+  //         ];
+  //     });
 
-//     // --- Step 4: Merge both ---
-//     $pumpData = $payments->merge($linkedPayments);
+  //     // --- Step 4: Merge both ---
+  //     $pumpData = $payments->merge($linkedPayments);
 
-//     // --- Step 5: Return to view ---
-//     return view('reports.pump', compact('pumpData', 'startDate', 'endDate', 'pumpId', 'pumps'));
-// }
-public function pump(Request $request)
-{
+  //     // --- Step 5: Return to view ---
+  //     return view('reports.pump', compact('pumpData', 'startDate', 'endDate', 'pumpId', 'pumps'));
+  // }
+  public function pump(Request $request)
+  {
     $pumps = Pump::all();
     $endDate = $request->input('end_date') ?? date('Y-m-d');
     $startDate = max(
@@ -524,69 +525,69 @@ public function pump(Request $request)
     $pumpData = collect(); // default empty collection
 
     if ($pumpId) {
-        // --- Step 1: Fetch voucher payments (unlinked + linked) ---
-        $voucherPayments = \App\Models\VoucherPayment::where('pump_id', $pumpId)
-            ->where('company_id', $companyId)
-            ->whereBetween('date', [$startDate, $endDate])
+      // --- Step 1: Fetch voucher payments (unlinked + linked) ---
+      $voucherPayments = \App\Models\VoucherPayment::where('pump_id', $pumpId)
+        ->where('company_id', $companyId)
+        ->whereBetween('date', [$startDate, $endDate])
+        ->get();
+
+      // --- Step 2: Prepare merged data ---
+      $pumpData = $voucherPayments->map(function ($payment) {
+        // If linked_voucher_id exists, fetch from voucher_linked table
+
+
+        if ($payment->linked_voucher_id) {
+          // $linked = \App\Models\VoucherLinked::find($payment->linked_voucher_id)->where('pump_id', $payment->pump_id)->first();
+          //from voucherlinked do not display same lr number from voucherlinked table 2 times
+          $linked = \App\Models\VoucherLinked::where('id', $payment->linked_voucher_id)
+            ->where('company_id', $payment->company_id)
+            ->where('freight_booking_id', $payment->freight_booking_id)
+
+            ->where('pump_id', $payment->pump_id)
+            ->first();
+
+          if ($linked) {
+            $lrDetails = \App\Models\LorryReceipt::where('freight_booking_id', $linked->freight_booking_id)
+              ->select('freight_booking_id', 'lr_number', 'destination_state', 'truck_id')
+              ->get();
+
+            return [
+              'freight_booking_id' => $linked->freight_booking_id,
+              'amount'             => $linked->amount,
+              'lrs'                => $lrDetails,
+              'date'               => \Carbon\Carbon::parse($linked->date)->format('d-m-Y'),
+              'type'               => 'Linked',
+            ];
+          }
+        }
+        // Else fetch directly from voucher payments (unlinked)
+        else {
+          $lrDetails = \App\Models\LorryReceipt::where('freight_booking_id', $payment->freight_booking_id)
+            ->select('freight_booking_id', 'lr_number', 'destination_state', 'truck_id')
             ->get();
 
-        // --- Step 2: Prepare merged data ---
-        $pumpData = $voucherPayments->map(function ($payment) {
-            // If linked_voucher_id exists, fetch from voucher_linked table
-           
-           
-            if ($payment->linked_voucher_id) {
-                // $linked = \App\Models\VoucherLinked::find($payment->linked_voucher_id)->where('pump_id', $payment->pump_id)->first();
-                 //from voucherlinked do not display same lr number from voucherlinked table 2 times
-                $linked = \App\Models\VoucherLinked::where('id', $payment->linked_voucher_id)
-                ->where('company_id', $payment->company_id)
-                ->where('freight_booking_id', $payment->freight_booking_id)
-
-                ->where('pump_id', $payment->pump_id)
-    ->first();
-    
-                if ($linked) {
-                    $lrDetails = \App\Models\LorryReceipt::where('freight_booking_id', $linked->freight_booking_id)
-                        ->select('freight_booking_id', 'lr_number', 'destination_state', 'truck_id')
-                        ->get();
-
-                    return [
-                        'freight_booking_id' => $linked->freight_booking_id,
-                        'amount'             => $linked->amount,
-                        'lrs'                => $lrDetails,
-                        'date'               => \Carbon\Carbon::parse($linked->date)->format('d-m-Y'),
-                        'type'               => 'Linked',
-                    ];
-                }
-            } 
-            // Else fetch directly from voucher payments (unlinked)
-            else {
-                $lrDetails = \App\Models\LorryReceipt::where('freight_booking_id', $payment->freight_booking_id)
-                    ->select('freight_booking_id', 'lr_number', 'destination_state', 'truck_id')
-                    ->get();
-
-                return [
-                    'freight_booking_id' => $payment->freight_booking_id,
-                    'amount'             => $payment->amount,
-                    'lrs'                => $lrDetails,
-                    'date'               => \Carbon\Carbon::parse($payment->date)->format('d-m-Y'),
-                    'type'               => 'Unlinked',
-                ];
-            }
-        })->filter(); // remove nulls
+          return [
+            'freight_booking_id' => $payment->freight_booking_id,
+            'amount'             => $payment->amount,
+            'lrs'                => $lrDetails,
+            'date'               => \Carbon\Carbon::parse($payment->date)->format('d-m-Y'),
+            'type'               => 'Unlinked',
+          ];
+        }
+      })->filter(); // remove nulls
     }
-    
+
 
     // --- Step 3: Return view ---
     return view('reports.pump', compact('pumpData', 'startDate', 'endDate', 'pumpId', 'pumps'));
-}
+  }
 
 
 
 
 
-public function pump_export(Request $request)
-{
+  public function pump_export(Request $request)
+  {
     $startDate = $request->input('start_date');
     $endDate = $request->input('end_date');
     $pumpId = $request->input('pump_id');
@@ -686,82 +687,82 @@ public function pump_export(Request $request)
   //   }
 
   public function bank(Request $request)
-{
+  {
     $companyId = Auth::user()->company_id;
 
     // --- Step 1: Query payments without any linked voucher ---
     $paymentQuery = VoucherPayment::with([
-            'freight_booking.lr',
-            'freight_booking.truck',
-            'freight_booking.transporter'
-        ])
-        ->where('payment_mode', 'bank transfer')
-        ->whereNull('linked_voucher_id')
-        ->whereHas('freight_booking', function ($q) use ($companyId) {
-            if ($companyId) {
-                $q->where('company_id', $companyId);
-            }
-        });
+      'freight_booking.lr',
+      'freight_booking.truck',
+      'freight_booking.transporter'
+    ])
+      ->where('payment_mode', 'bank transfer')
+      ->whereNull('linked_voucher_id')
+      ->whereHas('freight_booking', function ($q) use ($companyId) {
+        if ($companyId) {
+          $q->where('company_id', $companyId);
+        }
+      });
 
     // --- Step 2: Query linked vouchers (combined ones) ---
     $linkedQuery = VoucherLinked::with([
-            'freight_booking.lr',
-            'freight_booking.truck',
-            'freight_booking.transporter'
-        ])
-        ->where('payment_mode', 'bank transfer')
-        ->whereHas('freight_booking', function ($q) use ($companyId) {
-            if ($companyId) {
-                $q->where('company_id', $companyId);
-            }
-        });
+      'freight_booking.lr',
+      'freight_booking.truck',
+      'freight_booking.transporter'
+    ])
+      ->where('payment_mode', 'bank transfer')
+      ->whereHas('freight_booking', function ($q) use ($companyId) {
+        if ($companyId) {
+          $q->where('company_id', $companyId);
+        }
+      });
 
     // --- Step 3: Apply date filters ---
     if ($request->filled('start_date')) {
-        $paymentQuery->where('date', '>=', $request->input('start_date'));
-        $linkedQuery->where('date', '>=', $request->input('start_date'));
+      $paymentQuery->where('date', '>=', $request->input('start_date'));
+      $linkedQuery->where('date', '>=', $request->input('start_date'));
     }
 
     if ($request->filled('end_date')) {
-        $paymentQuery->where('date', '<=', $request->input('end_date'));
-        $linkedQuery->where('date', '<=', $request->input('end_date'));
+      $paymentQuery->where('date', '<=', $request->input('end_date'));
+      $linkedQuery->where('date', '<=', $request->input('end_date'));
     }
 
     // --- Step 4: Fetch both datasets ---
     $payments = $paymentQuery->get()->map(function ($payment) {
-        return [
-            'lr_number'       => $payment->freight_booking->lr->lr_number ?? 'N/A',
-            'truck_number'    => $payment->freight_booking->lr->truck->truck_number ?? 'N/A',
-            'amount'          => $payment->amount,
-            'transporter_name'=> $payment->freight_booking->transporter->name ?? 'N/A',
-            'name'            => $payment->freight_booking->transporter->short_name ?? 'N/A',
-            'beneficiary_id'  => $payment->freight_booking->transporter->beneficiary_id ?? 'N/A',
-            'date'            => $payment->date,
-        ];
+      return [
+        'lr_number'       => $payment->freight_booking->lr->lr_number ?? 'N/A',
+        'truck_number'    => $payment->freight_booking->lr->truck->truck_number ?? 'N/A',
+        'amount'          => $payment->amount,
+        'transporter_name' => $payment->freight_booking->transporter->name ?? 'N/A',
+        'name'            => $payment->freight_booking->transporter->short_name ?? 'N/A',
+        'beneficiary_id'  => $payment->freight_booking->transporter->beneficiary_id ?? 'N/A',
+        'date'            => $payment->date,
+      ];
     });
 
     $linkedPayments = $linkedQuery->get()->map(function ($linked) {
-        return [
-            'lr_number'       => $linked->freight_booking->lr->lr_number ?? 'N/A',
-            'truck_number'    => $linked->freight_booking->lr->truck->truck_number ?? 'N/A',
-            'amount'          => $linked->amount,
-            'transporter_name'=> $linked->freight_booking->transporter->name ?? 'N/A',
-            'name'            => $linked->freight_booking->transporter->short_name ?? 'N/A',
-            'beneficiary_id'  => $linked->freight_booking->transporter->beneficiary_id ?? 'N/A',
-            'date'            => $linked->date,
-        ];
+      return [
+        'lr_number'       => $linked->freight_booking->lr->lr_number ?? 'N/A',
+        'truck_number'    => $linked->freight_booking->lr->truck->truck_number ?? 'N/A',
+        'amount'          => $linked->amount,
+        'transporter_name' => $linked->freight_booking->transporter->name ?? 'N/A',
+        'name'            => $linked->freight_booking->transporter->short_name ?? 'N/A',
+        'beneficiary_id'  => $linked->freight_booking->transporter->beneficiary_id ?? 'N/A',
+        'date'            => $linked->date,
+      ];
     });
 
     // --- Step 5: Merge both sets ---
     $allPayments = $payments->merge($linkedPayments);
 
     return view('reports.bank', ['payments' => $allPayments]);
-}
+  }
 
-    public function bank_export(Request $request)
-    {
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
+  public function bank_export(Request $request)
+  {
+    $startDate = $request->input('start_date');
+    $endDate = $request->input('end_date');
 
     $export = Excel::download(new BankExport($startDate, $endDate), 'bank_report.xlsx');
     return $export;
@@ -790,24 +791,72 @@ public function pump_export(Request $request)
     $fontData = $defaultFontConfig['fontdata'];
 
     $mpdf = new \Mpdf\Mpdf([
-        'mode' => 'utf-8',
-        'format' => 'A4',
-        'orientation' => 'P',
-        'fontDir' => array_merge($fontDirs, [storage_path('fonts')]),
-        'fontdata' => $fontData + [
-            'notosansdevanagari' => [
-                'R' => 'NotoSansDevanagari-Regular.ttf',
-                'B' => 'NotoSansDevanagari-Bold.ttf',
-            ],
+      'mode' => 'utf-8',
+      'format' => 'A4',
+      'orientation' => 'P',
+      'fontDir' => array_merge($fontDirs, [storage_path('fonts')]),
+      'fontdata' => $fontData + [
+        'notosansdevanagari' => [
+          'R' => 'NotoSansDevanagari-Regular.ttf',
+          'B' => 'NotoSansDevanagari-Bold.ttf',
         ],
-        'default_font' => 'notosansdevanagari',
-        'useOTL' => 0xFF, // Enable OpenType layout (Indic shaping)
-        'useKerning' => true,
-        'autoScriptToLang' => true,
-        'autoLangToFont' => true,
+      ],
+      'default_font' => 'notosansdevanagari',
+      'useOTL' => 0xFF, // Enable OpenType layout (Indic shaping)
+      'useKerning' => true,
+      'autoScriptToLang' => true,
+      'autoLangToFont' => true,
     ]);
 
     $mpdf->WriteHTML($html);
     return $mpdf->Output('voucher_receipt.pdf', 'I');
+  }
+
+  public function party_bill(Request $request)
+  {
+    $customers = Consignee::all();
+    $customerId = $request->input('customer_id') ?? null;
+    $id = $request->input('invoice_number') ?? null;
+    $invoices = [];
+    $invoice = null;
+    if ($customerId) {
+      $invoices = Invoice::where('customer_id', $customerId)->get();
+      $invoice = Invoice::find($id);
+    }
+    return view('reports.party-bill', compact('customers', 'customerId', 'id', 'invoices', 'invoice',));
+  }
+
+  public function party_bill_export(Request $request)
+  {
+    if (!$request->input('invoice_number')) {
+      return redirect()->back()->with('error', 'Please select an Invoice to export.');
+    }
+    $id = $request->input('invoice_number');
+    $export = Excel::download(new PartyBillExport($id), 'party_bill.xlsx');
+    return $export;
+  }
+
+  public function ultratech_bill(Request $request)
+  {
+    $customers = Consignee::all();
+    $customerId = $request->input('customer_id') ?? null;
+    $id = $request->input('invoice_number') ?? null;
+    $invoices = [];
+    $invoice = null;
+    if ($customerId) {
+      $invoices = Invoice::where('customer_id', $customerId)->get();
+      $invoice = Invoice::find($id);
+    }
+    return view('reports.ultratech-bill', compact('customers', 'customerId', 'id', 'invoices', 'invoice',));
+  }
+
+  public function ultratech_bill_export(Request $request)
+  {
+    if (!$request->input('invoice_number')) {
+      return redirect()->back()->with('error', 'Please select an Invoice to export.');
+    }
+    $id = $request->input('invoice_number');
+    $export = Excel::download(new UltratechBillExport($id), 'ultratech_bill.xlsx');
+    return $export;
   }
 }
