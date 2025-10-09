@@ -599,7 +599,7 @@ class FreightBookingController extends Controller
 
   public function storeCombinedPayment(Request $request)
   {
-    dd($request->all());
+   
     $request->validate([
       'combined_amount' => 'required|numeric|min:1',
       'payment_type' => 'required|exists:payment_types,id',
