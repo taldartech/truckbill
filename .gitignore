@@ -40,8 +40,8 @@ ad.js
 /.cache/
 
 #storage folder
-/storage/
-/storage/*
+# /storage/
+# /storage/*
 /storage/framework/views/*
 
 .env
