@@ -4,7 +4,8 @@
 
 @push('styles')
     <style>
-        .table th, .table td {
+        .table th,
+        .table td {
             white-space: nowrap;
             vertical-align: middle;
         }
@@ -18,11 +19,11 @@
                 <div class="row mb-2">
                     <div class="col-md-3">
                         <label class="form-label">Start Date <span class="text-danger">*</span></label>
-                        <input type="date" name="start_date" class="form-control" value="{{ request('start_date', now()->startOfMonth()->format('Y-m-d')) }}" required>
+                        <input type="date" name="start_date" class="form-control" value="{{ $startDate }}" required>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">End Date <span class="text-danger">*</span></label>
-                        <input type="date" name="end_date" class="form-control" value="{{ request('end_date', now()->format('Y-m-d')) }}" required>
+                        <input type="date" name="end_date" class="form-control" value="{{ $endDate }}" required>
                     </div>
                 </div>
 
@@ -40,11 +41,11 @@
         </div>
     </div>
 
-    @if(!request()->has('start_date') || !request()->has('end_date'))
+    @if (!request()->has('start_date') || !request()->has('end_date'))
         <div class="alert alert-warning">
             Please select date range to generate the report.
         </div>
-    @elseif($payments->isEmpty())
+    @elseif((empty($payments) && empty($linked_payments)) || ($payments->isEmpty() && $linked_payments->isEmpty()))
         <div class="alert alert-info">
             No records found for the selected criteria.
         </div>
@@ -58,8 +59,8 @@
                     <div class="d-flex">
                         <a class="btn btn-warning ms-2"
                             href="{{ route('reports.bank-export', [
-                                'start_date' => request('start_date'),
-                                'end_date' => request('end_date')
+                                'start_date' => $startDate,
+                                'end_date' => $endDate,
                             ]) }}">
                             <i class="bi bi-file-earmark-spreadsheet"></i> Export
                         </a>
@@ -81,17 +82,33 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @php $grandTotal = 0; @endphp
-                        @foreach($payments as $index => $payment)
+                        @php
+                            $grandTotal = 0;
+                            $count = 1;
+                        @endphp
+                        @foreach ($payments as $index => $payment)
                             @php $grandTotal += $payment['amount']; @endphp
                             <tr>
-                                <td>{{ $loop->iteration }}</td>
+                                <td>{{ $count++ }}</td>
                                 <td>{{ \Carbon\Carbon::parse($payment['date'])->format('d-m-Y') }}</td>
-                                <td>{{ $payment['lr_number'] ?? 'N/A' }}</td>
-                                <td>{{ $payment['truck_number'] ?? 'N/A' }}</td>
-                                <td>{{ $payment['transporter_name'] ?? 'N/A' }}</td>
-                                <td>{{$payment['name'] ?? 'N/A'}} </td>
-                                <td>{{ $payment['beneficiary_id'] ?? 'N/A' }}</td>
+                                <td>{{ $payment->freight_booking->lr->lr_number ?? 'N/A' }}</td>
+                                <td>{{ $payment->freight_booking->lr->truck->truck_number ?? 'N/A' }}</td>
+                                <td>{{ $payment->freight_booking->lr->transporter->name ?? 'N/A' }}</td>
+                                <td>{{ $payment->freight_booking->lr->transporter->short_name ?? 'N/A' }} </td>
+                                <td>{{ $payment->freight_booking->lr->transporter->beneficiary_id ?? 'N/A' }}</td>
+                                <td class="text-end">₹{{ number_format($payment['amount'], 2) }}</td>
+                            </tr>
+                        @endforeach
+                        @foreach ($linked_payments as $index => $payment)
+                            @php $grandTotal += $payment['amount']; @endphp
+                            <tr>
+                                <td>{{ $count++ }}</td>
+                                <td>{{ \Carbon\Carbon::parse($payment['date'])->format('d-m-Y') }}</td>
+                                <td>{{ $payment->freight_booking->lr->lr_number ?? 'N/A' }}</td>
+                                <td>{{ $payment->freight_booking->lr->truck->truck_number ?? 'N/A' }}</td>
+                                <td>{{ $payment->freight_booking->lr->transporter->name ?? 'N/A' }}</td>
+                                <td>{{ $payment->freight_booking->lr->transporter->short_name ?? 'N/A' }} </td>
+                                <td>{{ $payment->freight_booking->lr->transporter->beneficiary_id ?? 'N/A' }}</td>
                                 <td class="text-end">₹{{ number_format($payment['amount'], 2) }}</td>
                             </tr>
                         @endforeach
@@ -127,10 +144,10 @@
         document.addEventListener('DOMContentLoaded', function() {
             const today = new Date();
             const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-            
+
             const startDate = document.querySelector('input[name="start_date"]');
             const endDate = document.querySelector('input[name="end_date"]');
-            
+
             if (startDate && !startDate.value) {
                 startDate.valueAsDate = firstDay;
             }
