@@ -32,7 +32,7 @@ class ReportController extends Controller
 {
   public function consignor_consignee(Request $request)
   {
-    $consignees = Consignee::all();
+    $consignees = Consignee::where('company_id', Auth::user()->company_id)->get();
     $endDate = $request->input('end_date') ?? date('Y-m-d');
     $startDate = max($request->input('start_date') ?? date('Y-m-d', strtotime('-3 months')), date('Y-m-d', strtotime('-3 months', strtotime($endDate))));
 
@@ -184,7 +184,7 @@ class ReportController extends Controller
 
   public function party_ledger(Request $request)
   {
-    $consignees = Consignee::all();
+    $consignees = Consignee::where('company_id', Auth::user()->company_id)->get();
     $endDate = $request->input('end_date') ?? date('Y-m-d');
     $startDate = max($request->input('start_date') ?? date('Y-m-d', strtotime('-3 months')), date('Y-m-d', strtotime('-3 months', strtotime($endDate))));
 
@@ -221,7 +221,7 @@ class ReportController extends Controller
 
   public function lr_copy(Request $request)
   {
-    $customers = Consignee::all();
+    $customers = Consignee::where('company_id', Auth::user()->company_id)->get();
     $lr = null;
     $customerId = $request->input('customer_id') ?? null;
     $lrs = LorryReceipt::where('customer_id', $customerId)->get();
@@ -598,7 +598,7 @@ class ReportController extends Controller
 
   public function memo_copy(Request $request)
   {
-    $customers = Consignee::all();
+    $customers = Consignee::where('company_id', Auth::user()->company_id)->get();
     $customerId = $request->input('customer_id') ?? null;
     $memo_id = $request->input('memo_id') ?? null;
 
@@ -814,7 +814,7 @@ class ReportController extends Controller
 
   public function party_bill(Request $request)
   {
-    $customers = Consignee::all();
+    $customers = Consignee::where('company_id', Auth::user()->company_id)->get();
     $customerId = $request->input('customer_id') ?? null;
     $id = $request->input('invoice_number') ?? null;
     $invoices = [];
@@ -838,7 +838,7 @@ class ReportController extends Controller
 
   public function ultratech_bill(Request $request)
   {
-    $customers = Consignee::all();
+    $customers = Consignee::where('company_id', Auth::user()->company_id)->get();
     $customerId = $request->input('customer_id') ?? null;
     $id = $request->input('invoice_number') ?? null;
     $invoices = [];
