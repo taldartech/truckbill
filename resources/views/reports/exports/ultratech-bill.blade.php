@@ -18,7 +18,7 @@
     </tr>
     <tr>
         <td style="text-align: center; font-size: 15px!important" colspan="12">
-            {{ $company->city->name . ', ' . $company->state->name . ' - ' . $company->pin_code . ' Phone No ' . $company->contact_number }}
+            {{ optional($company->city)->name . ', ' . optional($company->state)->name . ' - ' . $company->pin_code ?? '' . ' Phone No ' . $company->contact_number }}
         </td>
     </tr>
     <tr>

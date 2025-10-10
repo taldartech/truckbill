@@ -75,7 +75,7 @@
                     <td colspan="12" class="text-center fw-bold">
                         <p class="fs-5">{{ $company->name }}</p>
                         <p class="">
-                            {{ $company->address . ', ' . $company->country->name . ', ' . $company->state->name . ', ' . $company->city->name . ' - ' . $company->pin_code . ', Ph. ' . $company->contact_number }}
+                            {{ $company->address . ', ' . optional($company->country)->name . ', ' . optional($company->state)->name . ', ' . optional($company->city)->name . ' - ' . $company->pin_code ?? '' . ', Ph. ' . $company->contact_number }}
                         </p>
                         <p class="">GST No: {{ $company->gst_number }}, PAN No: {{ $company->pan_number }}</p>
                     </td>
@@ -191,7 +191,7 @@
                     <td colspan="12" class="text-center fw-bold">
                         <p class="fs-5">{{ $company->name }}</p>
                         <p class="">
-                            {{ $company->address . ', ' . $company->country->name . ', ' . $company->state->name . ', ' . $company->city->name . ' - ' . $company->pin_code . ', Ph. ' . $company->contact_number }}
+                            {{ $company->address . ', ' . optional($company->country)->name . ', ' . optional($company->state)->name . ', ' . optional($company->city)->name . ' - ' . $company->pin_code ?? '' . ', Ph. ' . $company->contact_number }}
                         </p>
                         <p class="">GST No: {{ $company->gst_number }}, PAN No: {{ $company->pan_number }}</p>
                     </td>

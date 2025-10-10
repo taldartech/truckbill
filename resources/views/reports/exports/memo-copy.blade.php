@@ -30,7 +30,7 @@
     </tr>
     <tr>
         <td style="text-align: center; font-weight: bold; font-size: 16px!important;" colspan="13">
-            {{ $company->address }}, {{ $company->city->name }}
+            {{ $company->address }}, {{ optional($company->city)->name }}
         </td>
     </tr>
     <tr>
