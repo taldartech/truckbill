@@ -254,7 +254,7 @@ class ReportController extends Controller
     $generated = false;
 
     if ($request->input('end_date') || $request->input('start_date')) {
-      $query = Invoice::with(['consignee', 'consignee.state'])
+      $query = Invoice::with(['consignee', 'consignee.state','company'])
         ->whereBetween('generated_date', [$startDate, $endDate]);
 
       if ($user) {
@@ -272,7 +272,7 @@ class ReportController extends Controller
     $startDate = $request->input('start_date');
     $endDate = $request->input('end_date');
 
-    $export = Excel::download(new InvoiceExport($startDate, $endDate), 'invoice_report.xlsx');
+    $export = Excel::download(new InvoiceExport($startDate, $endDate), 'GSTR1.xlsx');
     return $export;
   }
   public function shortage_damage(Request $request)

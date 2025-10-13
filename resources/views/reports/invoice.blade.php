@@ -60,6 +60,8 @@
                     <thead>
                         <tr>
                           <th>Sr No</th>
+                          <th>GSTIN/UIN of Recipient</th>
+                          <th>Receiver</th>
                           <th>Invoice Number</th>
                           <th>Invoice Date</th>
                           <th>Invoice Value</th>
@@ -67,24 +69,30 @@
                           <th>Reverse Charge</th>
                           <th>Applicable % of Tax</th>
                           <th>Invoice Type</th>
+                          <th>E-Commerce GSTIN</th>
                           <th>Rate</th>
                           <th>Taxable Value</th>
+                          <th>Cess Amount</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($invoices as $index => $invoice)
                             <tr>
                                 <td>{{ $index + 1 }}</td>
+                                <td>{{ $invoice->consignee->gst_number }}</td>
+                                <td>{{ $invoice->consignee->name }}</td>
                                 <td>{{ $invoice->manual_invoice_number }}</td>
                                 <td style="white-space: nowrap;">{{ \Carbon\Carbon::parse($invoice->generated_date)->format('d-m-Y') }}
                                 </td>
                                 <td>{{ $invoice->net_amount }}</td>
                                 <td>{{ $invoice->consignee->state->name }}</td>
-                                <td>{{ $invoice->invoice_type == 'reverse_charge' ? 'Yes' : 'No' }}</td>
+                                <td>{{ $invoice->company->gst_scheme == 'reverse charge' ? 'Yes' : 'No' }}</td>
                                 <td>{{ $invoice->applicable_tax_percentage }}%</td>
                                 <td>{{ "Regular B2B" }}</td>
+                                <td></td>
                                 <td>{{ "5.00" }}</td>
                                 <td>{{ $invoice->net_amount }}</td>
+                                <td></td>
                             </tr>
                         @endforeach
                     </tbody>

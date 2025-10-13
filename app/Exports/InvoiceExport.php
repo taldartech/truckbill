@@ -24,7 +24,7 @@ class InvoiceExport implements FromCollection, WithHeadings, ShouldAutoSize
     {
         $companyId = Auth::user()->company_id;
         
-        $query = Invoice::with(['consignee', 'consignee.state'])
+        $query = Invoice::with(['consignee', 'consignee.state','company'])
             ->whereBetween('generated_date', [$this->startDate, $this->endDate]);
             
         if ($companyId) {
@@ -36,15 +36,19 @@ class InvoiceExport implements FromCollection, WithHeadings, ShouldAutoSize
         return $invoices->map(function ($invoice, $index) {
             return [
                 'Sr No' => $index + 1,
+                'GSTIN/UIN of Recipient' => $invoice->consignee->gst_number ?? 'N/A',
+                'Receiver' => $invoice->consignee->name ?? 'N/A',
                 'Invoice No' => $invoice->manual_invoice_number ?? 'N/A',
                 'Date' => $invoice->generated_date ? Carbon::parse($invoice->generated_date)->format('d-m-Y') : 'N/A',
                 'Amount' => number_format($invoice->net_amount ?? 0, 2),
                 'State' => $invoice->consignee->state->name ?? 'N/A',
-                'Reverse Charge' => $invoice->invoice_type == 'reverse_charge' ? 'Yes' : 'No',
+                'Reverse Charge' => $invoice->company->gst_scheme == 'reverse charge' ? 'Yes' : 'No',
                 'Applicable % of Tax' => "-",
                 'Invoice Type' => "Regular B2B",
+                'E-Commerce GSTIN' => "",
                 'Rate' => "5.00",
                 'Taxable Value' => number_format($invoice->net_amount ?? 0, 2),
+                'Cess Amount' => "",
             ];
         });
     }
@@ -53,6 +57,8 @@ class InvoiceExport implements FromCollection, WithHeadings, ShouldAutoSize
     {
         return [
             'Sr No',
+            'GSTIN/UIN of Recipient',
+            'Receiver',
             'Invoice No',
             'Date',
             'Amount',
@@ -60,8 +66,10 @@ class InvoiceExport implements FromCollection, WithHeadings, ShouldAutoSize
             'Reverse Charge',
             'Applicable % of Tax',
             'Invoice Type',
+            'E-Commerce GSTIN',
             'Rate',
             'Taxable Value',
+            'Cess Amount',
         ];
     }
 }
