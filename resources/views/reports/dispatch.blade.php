@@ -156,7 +156,7 @@
                                 <td>{{ $lr->no_of_units }}</td>
                                 <td>{{ $lr->fr_rate }}</td>
                                 <td>{{ $lr->amount }}</td>
-                                <td>{{ $lr->destination_state }}</td>
+                                <td>{{ $lr->unloading_station ?? 'N/A' }}</td>
                                 <td>{{ $lr->destination_city }}</td>
                                 <td>{{ $lr->destination_state }}</td>
                                 <td>{{ $lr->consignor->name ?? 'N/A' }}</td>

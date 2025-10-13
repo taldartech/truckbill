@@ -215,8 +215,6 @@
                                         <div class="invalid-feedback">Please enter a unique Invoice number.</div>
                                         <div class="invoice-number-feedback mt-1"></div>
                                     </div>
-                                </div>
-                                <div class="row">
                                     <div class="col-md-4">
                                         <label class="form-label">Customer *</label>
                                         <select class="form-select select2 customer-select" required>
@@ -227,6 +225,10 @@
                                         </select>
                                         <div class="invalid-feedback">Please select a customer.</div>
                                     </div>
+                                   
+                                </div>
+                                <div class="row">
+                                    
                                     <div class="col-md-4">
                                         <label class="form-label">Consignor *</label>
                                         <select class="form-select select2 consignor-select" required>
@@ -260,6 +262,11 @@
                                     <div class="col-md-3" style="display: none;">
                                         <label class="form-label">Consignee Contact</label>
                                         <input type="text" class="form-control consignee-contact" readonly>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="unloading_station" class="form-label">Unloading Station </label>
+                                        <input type="text" class="form-control" id="unloading_station" name="unloading_station"
+                                            value="{{ old('unloading_station') }}">
                                     </div>
                                 </div>
                                 <div class="row mb-3">
@@ -1299,6 +1306,7 @@
                         source_state: item.querySelector('.source-state').value,
                         destination_city: item.querySelector('.destination-city').value,
                         destination_state: item.querySelector('.destination-state').value,
+                        unloading_station: item.querySelector('#unloading_station').value,
                         lane: item.querySelector('.lane').value || 'Road',
                         good_type: item.querySelector('.goods-type').value,
                         no_of_units: item.querySelector('.units').value,

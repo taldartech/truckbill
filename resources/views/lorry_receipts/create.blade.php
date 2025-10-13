@@ -305,15 +305,20 @@
                         </div>
                     </div>
                     <div class="row mb-3">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label for="destination_city" class="form-label">Destination City *</label>
                             <input type="text" class="form-control" id="destination_city" name="destination_city"
                                 required value="{{ old('destination_city') }}" readonly>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label for="destination_state" class="form-label">Destination State *</label>
                             <input type="text" class="form-control" id="destination_state" name="destination_state"
                                 required value="{{ old('destination_state') }}" readonly>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="unloading_station" class="form-label">Unloading Station</label>
+                            <input type="text" class="form-control" id="unloading_station" name="unloading_station"
+                                 value="{{ old('unloading_station') }}">
                         </div>
                     </div>
                 </div>

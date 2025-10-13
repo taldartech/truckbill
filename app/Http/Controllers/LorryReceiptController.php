@@ -630,6 +630,7 @@ public function getLinkedLRs($linkedLrId)
         'lrs.*.source_state' => 'nullable|string|max:100',
         'lrs.*.destination_city' => 'nullable|string|max:100',
         'lrs.*.destination_state' => 'nullable|string|max:100',
+        'lrs.*.unloading_station' => 'nullable|string|max:100',
         'lrs.*.lane' => 'nullable|string|max:100',
         'lrs.*.good_type' => 'nullable|string|max:100',
         'lrs.*.weight' => 'nullable|numeric|min:0',
@@ -669,6 +670,7 @@ public function getLinkedLRs($linkedLrId)
             'source_state' => $item['source_state'] ?? 'Rajasthan',
             'destination_city' => $item['destination_city'] ?? 'Delhi',
             'destination_state' => $item['destination_state'] ?? 'Delhi',
+            'unloading_station' => $item['unloading_station'] ?? null,
             'lane' => $item['lane'],
             'good_type' => $item['good_type'],
             'weight' => $item['weight'],
@@ -719,6 +721,7 @@ public function getLinkedLRs($linkedLrId)
       'source_state' => 'required|string|max:100',
       'destination_city' => 'required|string|max:100',
       'destination_state' => 'required|string|max:100',
+      'unloading_station' => 'nullable|string|max:100',
       'lane' => 'required|string|max:100',
       'good_type' => 'required|string|max:100',
       'weight' => 'required|numeric|min:0',
@@ -868,6 +871,7 @@ public function getLinkedLRs($linkedLrId)
 
   public function update(Request $request, \App\Models\LorryReceipt $lorry_receipt)
   {
+    
     if ($lorry_receipt->invoice_generated == 1) {
       return redirect()->route('lorry_receipts.index')->with('error', 'Cannot edit Lorry Receipt as invoice has already been generated.');
     }
@@ -930,6 +934,7 @@ public function getLinkedLRs($linkedLrId)
       'source_state' => 'required|string|max:100',
       'destination_city' => 'required|string|max:100',
       'destination_state' => 'required|string|max:100',
+      'unloading_station' => 'nullable|string|max:100',
       'lane' => 'required|string|max:100',
       'good_type' => 'required|string|max:100',
       'weight' => 'required|numeric|min:0',
