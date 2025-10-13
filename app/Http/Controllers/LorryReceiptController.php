@@ -620,6 +620,7 @@ public function getLinkedLRs($linkedLrId)
       $perItemRules = [
         'lrs' => 'nullable|array|min:1',
         'lrs.*.lr_number' => 'nullable|string|max:100|distinct|unique:lorry_receipts,lr_number',
+        'lrs.*.gr_number' => 'nullable|string|max:100|distinct|unique:lorry_receipts,gr_number',
         'lrs.*.invoice_number' => 'nullable|string|max:256|distinct|unique:lorry_receipts,invoice_number',
         'lrs.*.customer_id' => 'nullable|exists:consignees,id',
         'lrs.*.consignor_id' => 'nullable|exists:consignees,id',
@@ -660,6 +661,7 @@ public function getLinkedLRs($linkedLrId)
 
           $data = [
             'lr_number' => $item['lr_number'],
+            'gr_number' => $item['gr_number'],
             'invoice_number' => $item['invoice_number'],
             'customer_id' => $item['customer_id'],
             'consignor_id' => $item['consignor_id'],
@@ -689,6 +691,11 @@ public function getLinkedLRs($linkedLrId)
             'delivery_status' => 'Pending',
             'linked_lr_id' => $nextLinkedId,
           ];
+
+          //if gr number is null than trim lr number from left side till 0 when 0 finishes stop trim method and take that value
+          if ($data['gr_number'] == null) {
+            $data['gr_number'] = trim($data['lr_number'], '0');
+          }
           $created[] = \App\Models\LorryReceipt::create($data);
         }
 
@@ -704,6 +711,7 @@ public function getLinkedLRs($linkedLrId)
     $validated = $request->validate([
       'customer_id' => 'required|exists:consignees,id',
       'lr_number' => 'required|string|max:100|unique:lorry_receipts,lr_number',
+      'gr_number' => 'nullable|string|max:100|unique:lorry_receipts,gr_number',
       'invoice_number' => 'nullable|string|max:256|unique:lorry_receipts,invoice_number',
       'memo_id' => 'nullable|integer',
       'truck_id' => 'nullable|exists:trucks,id',
@@ -752,6 +760,10 @@ public function getLinkedLRs($linkedLrId)
 
 
     // Check if lr_number already exists
+    if ($validated['gr_number'] == null) {
+      // Remove "LR" prefix, then trim leading zeros
+      $validated['gr_number'] = ltrim(str_ireplace('LR', '', $validated['lr_number']), '0');
+  }
     if (\App\Models\LorryReceipt::where('lr_number', $validated['lr_number'])->exists()) {
       return redirect()->back()->withErrors(['lr_number' => 'LR Number already exists. Please use a unique LR Number.']);
     }
@@ -824,6 +836,34 @@ public function getLinkedLRs($linkedLrId)
     return response()->json([
       'valid' => true,
       'message' => 'Invoice Number is available'
+    ]);
+  }
+
+  public function checkGRNumberUniqueness(Request $request)
+  {
+    $grNumber = $request->input('gr_number');
+    $excludeId = $request->input('exclude_id') ?? null;
+
+    if (!$grNumber) {
+      return response()->json(['valid' => true, 'message' => '']);
+    }
+
+    $exists = \App\Models\LorryReceipt::where('gr_number', $grNumber)
+      ->when($excludeId, function($query) use ($excludeId) {
+        return $query->where('id', '!=', $excludeId);
+      })
+      ->exists();
+
+    if ($exists) {
+      return response()->json([
+        'valid' => false,
+        'message' => 'GR Number already exists. Please use a unique GR Number.'
+      ]);
+    }
+
+    return response()->json([
+      'valid' => true,
+      'message' => 'GR Number is available'
     ]);
   }
 
@@ -902,6 +942,7 @@ public function getLinkedLRs($linkedLrId)
     $validated = $request->validate([
       'customer_id' => 'required|exists:consignees,id',
       'lr_number' => 'required|string|max:100|unique:lorry_receipts,lr_number,' . $lorry_receipt->id . ',id',
+      'gr_number' => 'nullable|string|max:100|unique:lorry_receipts,gr_number,' . $lorry_receipt->id . ',id',
       'invoice_number' => 'nullable|string|max:256|unique:lorry_receipts,invoice_number,' . $lorry_receipt->id . ',id',
 
       'memo_id' => [
@@ -958,7 +999,10 @@ public function getLinkedLRs($linkedLrId)
         'consignee_id' => 'Consignor and Consignee cannot be the same.'
       ])->withInput();
     }
-
+    if ($validated['gr_number'] == null) {
+      // Remove "LR" prefix, then trim leading zeros
+      $validated['gr_number'] = ltrim(str_ireplace('LR', '', $validated['lr_number']), '0');
+  }
 
 
 

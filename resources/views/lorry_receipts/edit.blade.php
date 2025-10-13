@@ -267,6 +267,18 @@
                             <div class="invalid-feedback">Please enter a valid invoice number.</div>
                             <div id="invoice-number-feedback" class="mt-1"></div>
                         </div>
+                        <div class="col-md-4">
+                            <label for="gr_number" class="form-label">GR Number <small
+                                    class="text-muted">(Optional)</small></label>
+                            <input type="text" class="form-control" id="gr_number" name="gr_number"
+                                value="{{ old('gr_number', $lorry_receipt->gr_number) }}"
+                                placeholder="Enter GR Number">
+                            @error('gr_number')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                            <div class="invalid-feedback">Please enter a valid GR number.</div>
+                            <div id="gr-number-feedback" class="mt-1"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -1833,6 +1845,68 @@
                 checkInvoiceNumberUniqueness(invoiceNumber);
             }
         });
+
+                // Add this function for GR number validation
+function checkGRNumberUniqueness(grNumber) {
+    if (!grNumber) {
+        grNumberFeedback.innerHTML = '';
+        grNumberInput.classList.remove('is-valid', 'is-invalid');
+        return;
+    }
+
+    // Show loading state
+    grNumberFeedback.innerHTML = '<small class="text-info">🔍 Checking availability...</small>';
+    grNumberInput.classList.remove('is-valid', 'is-invalid');
+
+    fetch('/api/check-gr-number-uniqueness', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+                gr_number: grNumber
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.valid) {
+                grNumberFeedback.innerHTML = '<small class="text-success">✅ ' + data.message + '</small>';
+                grNumberInput.classList.remove('is-invalid');
+                grNumberInput.classList.add('is-valid');
+                grNumberInput.setCustomValidity('');
+            } else {
+                grNumberFeedback.innerHTML = '<small class="text-danger">❌ ' + data.message + '</small>';
+                grNumberInput.classList.remove('is-valid');
+                grNumberInput.classList.add('is-invalid');
+                grNumberInput.setCustomValidity(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error checking GR Number uniqueness:', error);
+            grNumberFeedback.innerHTML = '<small class="text-warning">⚠️ Unable to check availability</small>';
+            grNumberInput.classList.remove('is-valid', 'is-invalid');
+        });
+}
+
+// Add debounced input listener for GR Number
+let grNumberTimeout;
+grNumberInput.addEventListener('input', function() {
+    const grNumber = this.value.trim();
+    clearTimeout(grNumberTimeout);
+    grNumberTimeout = setTimeout(() => {
+        checkGRNumberUniqueness(grNumber);
+    }, 500);
+});
+
+// Check on blur as well
+grNumberInput.addEventListener('blur', function() {
+    const grNumber = this.value.trim();
+    if (grNumber) {
+        clearTimeout(grNumberTimeout);
+        checkGRNumberUniqueness(grNumber);
+    }
+});
 
         // No. of Units validation
         const noOfUnitsInput = document.getElementById('no_of_units');

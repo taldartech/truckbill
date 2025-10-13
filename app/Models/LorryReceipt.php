@@ -43,6 +43,7 @@ class LorryReceipt extends Model
         'linked_lr_id',
         'invoice_number',
         'unloading_station',
+        'gr_number',
     ];
 
     protected $attributes = [
