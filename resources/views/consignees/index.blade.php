@@ -255,10 +255,7 @@ $(document).ready(function() {
                                             <td class="fw-bold">PAN Number:</td>
                                             <td>${data.pan_number}</td>
                                         </tr>
-                                        <tr>
-                                            <td class="fw-bold">Company:</td>
-                                            <td>${data.company}</td>
-                                        </tr>
+                                       
                                     </table>
                                 </div>
                             </div>
