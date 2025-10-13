@@ -115,8 +115,10 @@
                             class="values">{{ \Carbon\Carbon::parse($lr->gr_date)->format('d.m.Y') }}</span></td>
                     <td colspan="2" class="fw-bold">Truck No: <span
                             class="values">{{ $lr->truck->truck_number }}</span></td>
-                    <td colspan="2" class="fw-bold">Shipment No: <span class="values">132964906</span></td>
-                    <td colspan="2" class="fw-bold">ShptDt: <span class="values">22.09.2025</span></td>
+                    <td colspan="2" class="fw-bold">Shipment No: <span
+                            class="values">{{ $lr->invoice_number ?? '' }}</span></td>
+                    <td colspan="2" class="fw-bold">ShptDt: <span
+                            class="values">{{ \Carbon\Carbon::parse($lr->gr_date)->format('d.m.Y') }}</span></td>
                 </tr>
                 <tr>
                     <td colspan="8">
@@ -162,11 +164,21 @@
                     <td colspan="2" class="values text-end">{{ $lr->weight }}</td>
                 </tr>
                 <tr>
-                    <td colspan="3" class="fw-bold">FREIGHT Amt: <span
-                            class="values">{{ number_format($lr->amount, 2) }}</span></td>
+                    <td colspan="3" class="fw-bold">FREIGHT Amt:
+                        <span class="values">
+                            @if (request()->has('show_freight') && request()->get('show_freight') == 1)
+                                {{ number_format($lr->amount, 2) }}
+                            @endif
+                        </span>
+                    </td>
                     <td colspan="3" class="fw-bold">Del.Chrgs.: <span class="values"></span></td>
-                    <td colspan="3" class="fw-bold">TotalFreight: <span
-                            class="values">{{ number_format($lr->amount, 2) }}</span></td>
+                    <td colspan="3" class="fw-bold">TotalFreight:
+                        <span class="values">
+                            @if (request()->has('show_freight') && request()->get('show_freight') == 1)
+                                {{ number_format($lr->amount, 2) }}
+                            @endif
+                        </span>
+                    </td>
                     <td colspan="3" class="fw-bold">Freight/MT: <span class="values"></span></td>
                 </tr>
                 <tr>
@@ -231,8 +243,10 @@
                             class="values">{{ \Carbon\Carbon::parse($lr->gr_date)->format('d.m.Y') }}</span></td>
                     <td colspan="2" class="fw-bold">Truck No: <span
                             class="values">{{ $lr->truck->truck_number }}</span></td>
-                    <td colspan="2" class="fw-bold">Shipment No: <span class="values">132964906</span></td>
-                    <td colspan="2" class="fw-bold">ShptDt: <span class="values">22.09.2025</span></td>
+                    <td colspan="2" class="fw-bold">Shipment No: <span
+                            class="values">{{ $lr->invoice_number ?? '' }}</span></td>
+                    <td colspan="2" class="fw-bold">ShptDt: <span
+                            class="values">{{ \Carbon\Carbon::parse($lr->gr_date)->format('d.m.Y') }}</span></td>
                 </tr>
                 <tr>
                     <td colspan="8">
@@ -278,11 +292,21 @@
                     <td colspan="2" class="values text-end">{{ $lr->weight }}</td>
                 </tr>
                 <tr>
-                    <td colspan="3" class="fw-bold">FREIGHT Amt: <span
-                            class="values">{{ number_format($lr->amount, 2) }}</span></td>
+                    <td colspan="3" class="fw-bold">FREIGHT Amt:
+                        <span class="values">
+                            @if (request()->has('show_freight') && request()->get('show_freight') == 1)
+                                {{ number_format($lr->amount, 2) }}
+                            @endif
+                        </span>
+                    </td>
                     <td colspan="3" class="fw-bold">Del.Chrgs.: <span class="values"></span></td>
-                    <td colspan="3" class="fw-bold">TotalFreight: <span
-                            class="values">{{ number_format($lr->amount, 2) }}</span></td>
+                    <td colspan="3" class="fw-bold">TotalFreight:
+                        <span class="values">
+                            @if (request()->has('show_freight') && request()->get('show_freight') == 1)
+                                {{ number_format($lr->amount, 2) }}
+                            @endif
+                        </span>
+                    </td>
                     <td colspan="3" class="fw-bold">Freight/MT: <span class="values"></span></td>
                 </tr>
                 <tr>

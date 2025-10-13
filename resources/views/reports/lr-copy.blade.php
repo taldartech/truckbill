@@ -78,6 +78,15 @@
                             @endforeach
                         </select>
                     </div>
+                    <div class="col-md-3 align-self-end p-2">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="show_freight" id="show_freight"
+                                value="1" @if (request()->has('show_freight')) checked @endif>
+                            <label class="form-check-label" for="show_freight">
+                                Show Freight
+                            </label>
+                        </div>
+                    </div>
                     <div class="col-md-3 text-end d-flex align-items-end justify-content-end gap-2">
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-search"></i> Search
@@ -105,14 +114,14 @@
                     </div>
                     <div class="d-flex">
                         <a class="btn btn-warning ms-2" target="_blank"
-                            href="{{ route('reports.lr-copy-export', ['lr_id' => $lr_id]) }}">
+                            href="{{ route('reports.lr-copy-export', ['lr_id' => $lr_id, 'show_freight' => request()->has('show_freight') ? 1 : 0]) }}">
                             <i class="bi bi-file-earmark-spreadsheet"></i> Export
                         </a>
                     </div>
                 </div>
             </div>
             <div class="card-body" style="overflow-x: auto;">
-                <iframe src="{{ route('reports.lr-copy-export', ['customer_id' => $customerId, 'lr_id' => $lr_id]) }}"
+                <iframe src="{{ route('reports.lr-copy-export', ['customer_id' => $customerId, 'lr_id' => $lr_id, 'show_freight' => request()->has('show_freight') ? 1 : 0]) }}"
                     style="width: 100%; height: 600px; border: none;"></iframe>
             </div>
         </div>
