@@ -31,8 +31,9 @@
                 <table id="truckOwnersTable" class="table table-bordered table-striped">
                     <thead>
                         <tr>
-                            <th style="width: 80px;">Sr. No</th>
+                            
                             <th>Name</th>
+                            <th>Short Name</th>
                             {{-- <th>GST Number</th> --}}
                             {{-- <th>GST Type</th> --}}
                             <th>PAN Number</th>
@@ -298,17 +299,17 @@
                         'X-Requested-With': 'XMLHttpRequest'
                     }
                 },
-                columns: [{
-                        data: 'sr_no',
-                        name: 'sr_no',
-                        width: '80px',
-                        className: 'text-center',
-                        orderable: false,
-                        searchable: false
-                    },
+                columns: [
                     {
                         data: 'name',
                         name: 'name',
+                        render: function(data, type, row) {
+                            return data; // Allow HTML rendering for clickable links
+                        }
+                    },
+                    {
+                        data: 'short_name',
+                        name: 'short_name',
                         render: function(data, type, row) {
                             return data; // Allow HTML rendering for clickable links
                         }

@@ -59,18 +59,21 @@ class TruckOwnerController extends Controller
                         case 1: // Name
                             $query->where('transporters.name', 'like', "%{$searchValue}%");
                             break;
-                        case 2: // PAN Number
+                        case 2: // Short Name
+                            $query->where('transporters.short_name', 'like', "%{$searchValue}%");
+                            break;
+                        case 3: // PAN Number
                             $query->where('transporters.pan_number', 'like', "%{$searchValue}%");
                             break;
-                        case 3: // Location (City)
+                        case 4: // Location (City)
                             $query->whereHas('city', function($cityQuery) use ($searchValue) {
                                 $cityQuery->where('name', 'like', "%{$searchValue}%");
                             });
                             break;
-                        case 4: // Contact Number (Mobile)
+                        case 5: // Contact Number (Mobile)
                             $query->where('transporters.mobile_number', 'like', "%{$searchValue}%");
                             break;
-                        case 5: // Declaration Given
+                        case 6: // Declaration Given
                             if (strtolower($searchValue) === 'yes') {
                                 $query->where('transporters.declaration_given', 1);
                             } elseif (strtolower($searchValue) === 'no') {
@@ -91,21 +94,24 @@ class TruckOwnerController extends Controller
                 case 1: // Name
                     $query->orderBy('transporters.name', $orderDir);
                     break;
-                case 2: // PAN Number
+                case 2: // Short Name
+                    $query->orderBy('transporters.short_name', $orderDir);
+                    break;
+                case 3: // PAN Number
                     $query->orderBy('transporters.pan_number', $orderDir);
                     break;
-                case 3: // Location (City)
+                case 4: // Location (City)
                     $query->join('cities', 'transporters.city_id', '=', 'cities.id')
                           ->orderBy('cities.name', $orderDir)
                           ->select('transporters.*');
                     break;
-                case 4: // Contact Number (Mobile)
+                case 5: // Contact Number (Mobile)
                     $query->orderBy('transporters.mobile_number', $orderDir);
                     break;
-                case 5: // Declaration Given
+                case 6: // Declaration Given
                     $query->orderBy('transporters.declaration_given', $orderDir);
                     break;
-                case 6: // Advance Amount
+                case 7: // Advance Amount
                     $query->orderBy('transporters.advance_amount', $orderDir);
                     break;
                 default:
@@ -126,8 +132,8 @@ class TruckOwnerController extends Controller
         $data = [];
         foreach ($truckOwners as $index => $truckOwner) {
             $data[] = [
-                'sr_no' => $start + $index + 1,
                 'name' => '<a href="#" class="truck-owner-name-link text-primary fw-bold" data-id="' . $truckOwner->id . '" style="text-decoration: none;">' . ($truckOwner->name ?? 'N/A') . '</a>',
+                'short_name' => $truckOwner->short_name ?? 'N/A',
                 'pan_number' => $truckOwner->pan_number ?? 'N/A',
                 'location' => $truckOwner->city->name ?? 'N/A',
                 'contact_number' => $truckOwner->mobile_number ?? 'N/A',

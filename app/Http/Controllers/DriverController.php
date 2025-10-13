@@ -186,7 +186,7 @@ class DriverController extends Controller
     public function update(Request $request, \App\Models\Driver $driver)
     {
         $validated = $request->validate([
-            'company_id' => 'required|exists:companies,id',
+            'company_id' => 'nullable|exists:companies,id',
             'name' => 'required|string|max:100',
             'mobile' => [
                 'required',
