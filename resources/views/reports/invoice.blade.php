@@ -69,10 +69,10 @@
                           <th>Reverse Charge</th>
                           <th>Applicable % of Tax</th>
                           <th>Invoice Type</th>
-                          <th>E-Commerce GSTIN</th>
+                          {{-- <th>E-Commerce GSTIN</th> --}}
                           <th>Rate</th>
                           <th>Taxable Value</th>
-                          <th>Cess Amount</th>
+                          {{-- <th>Cess Amount</th> --}}
                         </tr>
                     </thead>
                     <tbody>
@@ -89,10 +89,10 @@
                                 <td>{{ $invoice->company->gst_scheme == 'reverse charge' ? 'Yes' : 'No' }}</td>
                                 <td>{{ $invoice->applicable_tax_percentage }}%</td>
                                 <td>{{ "Regular B2B" }}</td>
-                                <td></td>
+                                {{-- <td></td> --}}
                                 <td>{{ "5.00" }}</td>
                                 <td>{{ $invoice->net_amount }}</td>
-                                <td></td>
+                                {{-- <td></td> --}}
                             </tr>
                         @endforeach
                     </tbody>
