@@ -254,7 +254,7 @@ class ReportController extends Controller
     $generated = false;
 
     if ($request->input('end_date') || $request->input('start_date')) {
-      $query = Invoice::with(['consignee', 'consignee.state','company'])
+      $query = Invoice::with(['consignee', 'consignee.state', 'company'])
         ->whereBetween('generated_date', [$startDate, $endDate]);
 
       if ($user) {
@@ -770,11 +770,37 @@ class ReportController extends Controller
       $query1->where('company_id', $companyId);
       $query1->where('payment_mode', 'bank transfer');
       $linked_payments = $query1->get();
-    } else {
-      $payments = [];
-      $linked_payments = [];
     }
-    return view('reports.bank', compact('payments', 'linked_payments', 'startDate', 'endDate'));
+    $allPayments = [];
+    if (isset($payments)) {
+      foreach ($payments as $payment) {
+        $allPayments[] = [
+          'date' => $payment->date,
+          'lr_number' => $payment->freight_booking->lr->lr_number ?? 'N/A',
+          'truck_number' => $payment->freight_booking->lr->truck->truck_number ?? 'N/A',
+          'transporter_name' => $payment->freight_booking->lr->transporter->name ?? 'N/A',
+          'name' => $payment->freight_booking->lr->transporter->short_name ?? 'N/A',
+          'beneficiary_id' => $payment->freight_booking->lr->transporter->beneficiary_id ?? 'N/A',
+          'amount' => $payment['amount'],
+        ];
+      }
+    }
+    if (isset($linked_payments)) {
+      foreach ($linked_payments as $linked_payment) {
+        $allPayments[] = [
+          'date' => $linked_payment->date,
+          'lr_number' => $linked_payment->freight_booking->lr->lr_number ?? 'N/A',
+          'truck_number' => $linked_payment->freight_booking->lr->truck->truck_number ?? 'N/A',
+          'transporter_name' => $linked_payment->freight_booking->lr->transporter->name ?? 'N/A',
+          'name' => $linked_payment->freight_booking->lr->transporter->short_name ?? 'N/A',
+          'beneficiary_id' => $linked_payment->freight_booking->lr->transporter->beneficiary_id ?? 'N/A',
+          'amount' => $linked_payment['amount'],
+        ];
+      }
+      $allPayments = collect($allPayments)->sortBy('date')->values();
+    }
+
+    return view('reports.bank', compact('startDate', 'endDate', 'allPayments'));
   }
 
   public function bank_export(Request $request)

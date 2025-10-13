@@ -45,7 +45,7 @@
         <div class="alert alert-warning">
             Please select date range to generate the report.
         </div>
-    @elseif((empty($payments) && empty($linked_payments)) || ($payments->isEmpty() && $linked_payments->isEmpty()))
+    @elseif((empty($allPayments)) || ($allPayments->isEmpty()))
         <div class="alert alert-info">
             No records found for the selected criteria.
         </div>
@@ -86,29 +86,16 @@
                             $grandTotal = 0;
                             $count = 1;
                         @endphp
-                        @foreach ($payments as $index => $payment)
+                        @foreach ($allPayments as $index => $payment)
                             @php $grandTotal += $payment['amount']; @endphp
                             <tr>
                                 <td>{{ $count++ }}</td>
                                 <td>{{ \Carbon\Carbon::parse($payment['date'])->format('d-m-Y') }}</td>
-                                <td>{{ $payment->freight_booking->lr->lr_number ?? 'N/A' }}</td>
-                                <td>{{ $payment->freight_booking->lr->truck->truck_number ?? 'N/A' }}</td>
-                                <td>{{ $payment->freight_booking->lr->transporter->name ?? 'N/A' }}</td>
-                                <td>{{ $payment->freight_booking->lr->transporter->short_name ?? 'N/A' }} </td>
-                                <td>{{ $payment->freight_booking->lr->transporter->beneficiary_id ?? 'N/A' }}</td>
-                                <td class="text-end">₹{{ number_format($payment['amount'], 2) }}</td>
-                            </tr>
-                        @endforeach
-                        @foreach ($linked_payments as $index => $payment)
-                            @php $grandTotal += $payment['amount']; @endphp
-                            <tr>
-                                <td>{{ $count++ }}</td>
-                                <td>{{ \Carbon\Carbon::parse($payment['date'])->format('d-m-Y') }}</td>
-                                <td>{{ $payment->freight_booking->lr->lr_number ?? 'N/A' }}</td>
-                                <td>{{ $payment->freight_booking->lr->truck->truck_number ?? 'N/A' }}</td>
-                                <td>{{ $payment->freight_booking->lr->transporter->name ?? 'N/A' }}</td>
-                                <td>{{ $payment->freight_booking->lr->transporter->short_name ?? 'N/A' }} </td>
-                                <td>{{ $payment->freight_booking->lr->transporter->beneficiary_id ?? 'N/A' }}</td>
+                                <td>{{ $payment['lr_number'] ?? 'N/A' }}</td>
+                                <td>{{ $payment['truck_number'] ?? 'N/A' }}</td>
+                                <td>{{ $payment['transporter_name'] ?? 'N/A' }}</td>
+                                <td>{{ $payment['name'] ?? 'N/A' }} </td>
+                                <td>{{ $payment['beneficiary_id'] ?? 'N/A' }}</td>
                                 <td class="text-end">₹{{ number_format($payment['amount'], 2) }}</td>
                             </tr>
                         @endforeach
