@@ -42,7 +42,7 @@
         <td style="text-align: right; font-weight: bold;" colspan="13">Service Tax Regn No :</td>
     </tr>
     <tr>
-        <td style="font-weight: bold;" colspan="2">Bill No.: {{ $memo_id }}</td>
+        <td style="font-weight: bold;" colspan="2">Memo No.: {{ $memo_id }}</td>
         <td style="font-weight: bold;" colspan="8">
             {{ $customer->name }}, {{ $customer->address }}, {{ $customer->city->name }}
         </td>
