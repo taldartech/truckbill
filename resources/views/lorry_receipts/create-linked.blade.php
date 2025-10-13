@@ -436,7 +436,19 @@
                 // Initialize shared dropdowns with Select2
                 $('#truck_id, #transporter_id, #reference_by').select2({
                     theme: 'bootstrap-5',
-                    width: '100%'
+                    width: '100%',
+                    minimumResultsForSearch: 0
+                });
+
+                // Ensure Select2 search input gets autofocus on open (works for dynamic elements too)
+                $(document).off('select2:open.autofocus').on('select2:open.autofocus', function() {
+                    // Delay to let the search input render
+                    setTimeout(function() {
+                        const searchInput = document.querySelector('.select2-container--open .select2-search__field');
+                        if (searchInput) {
+                            searchInput.focus();
+                        }
+                    }, 0);
                 });
 
                 // Add first LR item by default
@@ -721,7 +733,8 @@
             function initSelect2In(scope) {
                 $(scope).find('.select2').select2({
                     theme: 'bootstrap-5',
-                    width: '100%'
+                    width: '100%',
+                    minimumResultsForSearch: 0
                 });
             }
 

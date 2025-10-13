@@ -520,7 +520,20 @@
                 $('#truck_id, #transporter_id, #consignor_id, #consignee_id, #good_type, #reference_by').select2({
                     theme: 'bootstrap-5',
                     width: '100%',
+                    minimumResultsForSearch: 0
                     // allowClear: true
+                });
+
+
+                // Ensure Select2 search input gets autofocus on open (works for dynamic elements too)
+                $(document).off('select2:open.autofocus').on('select2:open.autofocus', function() {
+                    // Delay to let the search input render
+                    setTimeout(function() {
+                        const searchInput = document.querySelector('.select2-container--open .select2-search__field');
+                        if (searchInput) {
+                            searchInput.focus();
+                        }
+                    }, 0);
                 });
 
                 // Access the customer data from the window object
