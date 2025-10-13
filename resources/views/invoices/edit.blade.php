@@ -57,14 +57,15 @@
                     <label for="payment_status" class="form-label">Payment Status *</label>
                     <select name="payment_status" class="form-select" required id="payment_status">
                         @if ($invoice->payment_status == 'pending')
-                        <option value="pending"
-                            {{ old('payment_status', $invoice->payment_status) == 'pending' ? 'selected' : '' }}>Pending
-                        </option>
+                            <option value="pending"
+                                {{ old('payment_status', $invoice->payment_status) == 'pending' ? 'selected' : '' }}>Pending
+                            </option>
                         @endif
-                        @if ($invoice->payment_status != 'pending')
-                        <option value="partial"
-                            {{ old('payment_status', $invoice->payment_status) == 'partial' ? 'selected' : '' }}>Partial
-                        </option>
+                        @if ($invoice->payment_status != 'paid')
+                            <option value="partial"
+                                {{ old('payment_status', $invoice->payment_status) == 'partial' ? 'selected' : '' }}>
+                                Partial
+                            </option>
                         @endif
                         <option value="paid"
                             {{ old('payment_status', $invoice->payment_status) == 'paid' ? 'selected' : '' }}>Paid</option>
