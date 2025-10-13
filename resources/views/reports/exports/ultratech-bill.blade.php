@@ -64,7 +64,7 @@
     <tr>
         <td colspan="9"></td>
         <td style="font-weight: bold;">SAC Code:</td>
-        <td colspan="2"></td>
+        <td colspan="2">996511</td>
     </tr>
     <tr>
         <td style="font-weight: bold;">Sr.No.</td>
@@ -145,7 +145,7 @@
         <td colspan="9"></td>
         <td style="font-weight: bold;" colspan="2">Total Amount</td>
         @php
-            $grandTotal = $totalAmount + $totalgst;
+            $grandTotal = $company->gst_scheme == 'reverse charge' ? $totalAmount : $totalAmount + $totalgst;
         @endphp
         <td>{{ number_format($grandTotal, 2) }}</td>
     </tr>
