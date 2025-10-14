@@ -342,41 +342,18 @@ class ReportController extends Controller
 
     if ($request->input('end_date') || $request->input('start_date')) {
       // First, get the LorryReceipts with their freight bookings and voucher payments
-      $query = LorryReceipt::with([
-        'freightBookings' => function ($q) {
-          $q->with(['voucherPayments']);
-        },
-        'consignor',
-        'consignee',
-        'customer',
-        'truck'
-      ])->whereBetween('gr_date', [$startDate, $endDate]);
-
+      $query = FreightBooking::whereBetween('eway_bill_expiry', [$startDate, $endDate]);
       if ($user) {
         $query->where('company_id', $user);
       }
-
-      $lrs = $query->get();
-
-      // Debug: Log the first few records to check relationships
-      if ($lrs->isNotEmpty()) {
-        \Log::info('First LorryReceipt data:', [
-          'lr_id' => $lrs[0]->id,
-          'lr_number' => $lrs[0]->lr_number,
-          'has_freight_bookings' => $lrs[0]->relationLoaded('freightBookings') && $lrs[0]->freightBookings->isNotEmpty(),
-          'freight_booking_count' => $lrs[0]->freightBookings->count(),
-          'voucher_payments' => $lrs[0]->freightBookings->isNotEmpty() ?
-            $lrs[0]->freightBookings[0]->voucherPayments->toArray() : 'No freight bookings'
-        ]);
-      }
-
+      $frs = $query->get();
       $generated = true;
     } else {
-      $lrs = [];
+      $frs = [];
       $generated = false;
     }
 
-    return view('reports.eway-bill', compact('lrs', 'startDate', 'endDate', 'generated'));
+    return view('reports.eway-bill', compact('frs', 'startDate', 'endDate', 'generated'));
   }
   public function eway_bill_export(Request $request)
   {
