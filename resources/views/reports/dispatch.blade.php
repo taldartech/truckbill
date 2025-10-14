@@ -129,7 +129,7 @@
                             <th>Bill No.</th>
                             <th>Driver No.</th>
                             <th>Transport Name</th>
-                            <th>Made to Payment</th>
+                            <th>Reference By</th>
                             <th>Payment Made to</th>
                             <th>TDS Deducted</th>
                             <th>E-way Bill No.</th>
@@ -237,7 +237,7 @@
                                 <td>{{ $invoice->manual_invoice_number ?? 'N/A' }}</td>
                                 <td>{{ $truck->driver->mobile ?? 'N/A' }}</td>
                                 <td>{{ $lr->transporter->name ?? 'N/A' }}</td>
-                                <td>{{ $lr->transporter->short_name ?? 'N/A' }}</td>
+                                <td>{{ $lr->reference->name ?? 'N/A' }}</td>
                                 <td>{{ $lr->transporter_type ?? 'N/A' }}</td>
                                 <td>{{ $lr->transporter->tds_percentage == 0 ? 'No' : 'Yes' }}</td>
                                 <td>{{ $freightBooking->eway_bill_no ?? 'N/A' }}</td>
