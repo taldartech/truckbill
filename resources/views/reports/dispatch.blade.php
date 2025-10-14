@@ -55,56 +55,87 @@
                     </div>
                 </div>
             </div>
-            <div class="card-body" style="overflow-x: auto;">
+            <style>
+                .table-sticky {
+                    width: 100%;
+                    /* Set your desired width */
+                    max-height: 400px;
+                    /* Adjust as needed */
+                    overflow-y: auto;
+                    /* Enables vertical scroll */
+                    overflow-x: auto;
+                    /* Enables horizontal scroll */
+                    display: block;
+                    padding-top: 0px;
+                }
+
+                .table-sticky table {
+                    border-collapse: collapse;
+                    width: max-content;
+                    /* Adjust if you want wider tables */
+                    min-width: 100%;
+                }
+
+                .table-sticky thead th {
+                    position: sticky;
+                    top: 0;
+                    background: #fff;
+                    /* Ensures visibility */
+                    z-index: 2;
+                    /* Keeps header above table rows */
+                    border-bottom: 1px solid #ddd;
+                }
+            </style>
+            <div class="card-body table-sticky">
                 <table class="table table-bordered table-striped" style="font-size: 12px !important;">
                     <thead>
                         <tr>
-                          <th>Sr No</th>
-                          <th>GR Date</th>
-                          <th>LR No</th>
-                          <th>Truck No</th>
-                          <th>Destination</th>
+                            <th>Sr No</th>
+                            <th>GR Date</th>
+                            <th>LR No</th>
+                            <th>Truck No</th>
+                            <th>Destination</th>
 
-                          <th>Invoice No.</th>
-                        
-                          <th>Weight</th>
-                          <th>Bags</th>
-                          <th>Fr rate</th>
-                          <th> Amount</th>
-                          <th>Unloading st.</th>
-                          <th>Distt. </th>
-                          <th>State</th>
-                          <th>Consignor</th>
-                          <th>Consignee</th>
-                          <th>GST Number</th>
-                          <th>Tr Rate</th>
-                          <th>Tr Freight</th>
-                          
-                          <th>TDS</th>
-                          <th>Cash Advance</th>
-                          <th>Bank</th>
-                          <th>Adjust In Advance</th>
-                          <th>Diesel</th>
-                          <th>Total</th>
-                          
-                          <th>Damage Amount</th>
-                          <th>Shortage Amount</th>
-                          <th>Detention</th>
-                          <th>Deviation</th>
-                          <th>Misc.</th>
-                          <th>Balance</th>
-                          <th>Diff</th>
-                          <th>Memo No.</th>
-                          <th>Bill No.</th>
-                          <th>Driver No.</th>
-                          <th>Transport Name</th>
-                          <th>Made to Payment</th>
-                          <th>Payment Made to</th>
-                          <th>TDS Deducted</th>
-                          <th>E-way Bill No.</th>
-                          <th>E-way Bill Expiry Date</th>
-                          <th>Remarks</th>
-                          <th>PAN No</th>
+                            <th>Invoice No.</th>
+
+                            <th>Weight</th>
+                            <th>Bags</th>
+                            <th>Fr rate</th>
+                            <th> Amount</th>
+                            <th>Unloading st.</th>
+                            <th>Distt. </th>
+                            <th>State</th>
+                            <th>Consignor</th>
+                            <th>Consignee</th>
+                            <th>GST Number</th>
+                            <th>Tr Rate</th>
+                            <th>Tr Freight</th>
+
+                            <th>TDS</th>
+                            <th>Cash Advance</th>
+                            <th>Bank</th>
+                            <th>Adjust In Advance</th>
+                            <th>Diesel</th>
+                            <th>Total</th>
+
+                            <th>Damage Amount</th>
+                            <th>Shortage Amount</th>
+                            <th>Detention</th>
+                            <th>Deviation</th>
+                            <th>Misc.</th>
+                            <th>Balance</th>
+                            <th>Diff</th>
+                            <th>Memo No.</th>
+                            <th>Bill No.</th>
+                            <th>Driver No.</th>
+                            <th>Transport Name</th>
+                            <th>Made to Payment</th>
+                            <th>Payment Made to</th>
+                            <th>TDS Deducted</th>
+                            <th>E-way Bill No.</th>
+                            <th>E-way Bill Expiry Date</th>
+                            <th>Remarks</th>
+                            <th>PAN No</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -112,7 +143,7 @@
                             @php
                                 // Get the first freight booking (or null if none exists)
                                 $freightBooking = $lr->freightBookings->first();
-                                
+
                                 // Initialize payments array with all payment types
                                 $payments = [
                                     'cash' => 0,
@@ -133,10 +164,12 @@
                                     // Map the grouped payments to our expected keys
                                     foreach ($payments as $mode => $amount) {
                                         $normalizedMode = strtolower(trim($mode));
-                                        $matchingMode = $paymentSums->keys()->first(function ($key) use ($normalizedMode) {
-                                            return strtolower(trim($key)) === $normalizedMode;
-                                        });
-                                        
+                                        $matchingMode = $paymentSums
+                                            ->keys()
+                                            ->first(function ($key) use ($normalizedMode) {
+                                                return strtolower(trim($key)) === $normalizedMode;
+                                            });
+
                                         if ($matchingMode !== null) {
                                             $payments[$mode] = $paymentSums[$matchingMode];
                                         }
@@ -145,13 +178,14 @@
                             @endphp
                             <tr>
                                 <td>{{ $index + 1 }}</td>
-                                <td style="white-space: nowrap;">{{ \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') }}</td>
+                                <td style="white-space: nowrap;">{{ \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') }}
+                                </td>
                                 <td>{{ $lr->lr_number }}</td>
                                 <td>{{ $lr->truck->truck_number ?? 'N/A' }}</td>
                                 <td>{{ $lr->destination_city }}</td>
-                               
+
                                 <td>{{ $lr->invoice_number }}</td>
-                               
+
                                 <td>{{ $lr->weight }}</td>
                                 <td>{{ $lr->no_of_units }}</td>
                                 <td>{{ $lr->fr_rate }}</td>
@@ -169,9 +203,14 @@
                                 <td>{{ $payments['bank transfer'] }}</td>
                                 <td>{{ $payments['adjust in advance'] }}</td>
                                 <td>{{ $payments['fuel(paid to pump)'] }}</td>
-                               
+
                                 @php
-                                $total = $payments['cash'] + $payments['bank transfer'] + $payments['adjust in advance'] + $payments['fuel(paid to pump)'] + ($freightBooking->tds_amount ?? 0);
+                                    $total =
+                                        $payments['cash'] +
+                                        $payments['bank transfer'] +
+                                        $payments['adjust in advance'] +
+                                        $payments['fuel(paid to pump)'] +
+                                        ($freightBooking->tds_amount ?? 0);
                                 @endphp
                                 <td>{{ $total }}</td>
                                 <td>{{ $freightBooking->damage_amount ?? '0' }}</td>
@@ -181,21 +220,20 @@
                                 <td>{{ $freightBooking->misc ?? '0' }}</td>
                                 <td>{{ $freightBooking->balance_amount ?? '0' }}</td>
                                 <td>{{ $lr->amount - ($freightBooking->balance_amount ?? 0) }}</td>
-                                
+
                                 <td>{{ $lr->memo_id ?? 'N/A' }}</td>
                                 {{-- use this memo_id to get invoice number from invoice table --}}
                                 {{-- this memo_ids are stored in array from in invoice table --}}
                                 @php
-                                $lrIds = $lr->id;
-                                // in invoice table lr_ids are stored in array form
+                                    $lrIds = $lr->id;
+                                    // in invoice table lr_ids are stored in array form
 
-                              $invoice = App\Models\Invoice::whereJsonContains('lr_ids', $lrIds)->first();
-                            //   in truck table their is dirver id from that find mobile number
-                            $truck = App\Models\Truck::where('driver_id', $lr->truck->driver_id)->first();
-                           
-                            
+                                    $invoice = App\Models\Invoice::whereJsonContains('lr_ids', $lrIds)->first();
+                                    //   in truck table their is dirver id from that find mobile number
+                                    $truck = App\Models\Truck::where('driver_id', $lr->truck->driver_id)->first();
+
                                 @endphp
-                                
+
                                 <td>{{ $invoice->manual_invoice_number ?? 'N/A' }}</td>
                                 <td>{{ $truck->driver->mobile ?? 'N/A' }}</td>
                                 <td>{{ $lr->transporter->name ?? 'N/A' }}</td>
