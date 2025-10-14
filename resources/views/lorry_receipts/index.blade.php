@@ -28,9 +28,74 @@
     </div>
 </div>
 
-    <div class="card mb-4">
+    {{-- <div class="card mb-4">
         <div class="card-header">
             <h3 class="card-title">Lorry Receipts List</h3>
+            <!-- Add this right after the create buttons div, before the card -->
+<div class="row mb-3">
+    <div class="col-md-8">
+        <div class="row">
+            <div class="col-md-3">
+                <label for="fromDate" class="form-label">From Date</label>
+                <input type="date" class="form-control" id="fromDate">
+            </div>
+            <div class="col-md-3">
+                <label for="toDate" class="form-label">To Date</label>
+                <input type="date" class="form-control" id="toDate">
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="button" class="btn btn-primary me-2" id="filterBtn">
+                    <i class="bi bi-funnel"></i> Filter
+                </button>
+                <button type="button" class="btn btn-secondary" id="resetDateFilter">
+                    <i class="bi bi-arrow-counterclockwise"></i> Reset
+                </button>
+            </div>
+        </div>
+    </div>
+</div> --}}
+<div class="card mb-4">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <!-- Left: Title -->
+            <h3 class="card-title mb-0">Lorry Receipts List</h3>
+            <!-- Right: Date Filter -->
+            <div>
+                <div class="row g-2 align-items-end">
+                    <div class="col-auto">
+                        <label for="fromDate" class="form-label mb-0">From Date</label>
+                        <input type="date" class="form-control" id="fromDate">
+                    </div>
+                    <div class="col-auto">
+                        <label for="toDate" class="form-label mb-0">To Date</label>
+                        <input type="date" class="form-control" id="toDate">
+                    </div>
+                    <div class="col-auto">
+                        <button type="button" class="btn btn-primary me-2" id="filterBtn">
+                            <i class="bi bi-funnel"></i> Filter
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="resetDateFilter">
+                            <i class="bi bi-arrow-counterclockwise"></i> Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+   
+</div>
+
+
+<!-- Add this CSS in your style section -->
+<style>
+    .date-filter-container {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        border: 1px solid #dee2e6;
+    }
+</style>
         </div>
         <div class="card-body">
             <table id="lorryReceiptsTable" class="table table-bordered table-striped">
@@ -344,10 +409,14 @@ $(document).ready(function() {
         ajax: {
             url: '{{ route("lorry_receipts.data") }}',
             type: 'GET',
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-                'X-Requested-With': 'XMLHttpRequest'
-            }
+            data: function(d) {
+            d.gr_date_from = $('#fromDate').val();
+            d.gr_date_to = $('#toDate').val();
+        },
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+            'X-Requested-With': 'XMLHttpRequest'
+        }
         },
         columns: [
 
@@ -429,6 +498,17 @@ $(document).ready(function() {
 
 
 
+    $('#filterBtn').on('click', function() {
+    $('#lorryReceiptsTable').DataTable().ajax.reload();
+
+    
+});
+
+$('#resetDateFilter').on('click', function() {
+    $('#fromDate').val('');
+    $('#toDate').val('');
+    dataTable.ajax.reload();
+});
 
 
 

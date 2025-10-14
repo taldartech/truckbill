@@ -297,6 +297,9 @@ public function getLinkedLRs($linkedLrId)
         $query->where('company_id', auth()->user()->company_id);
       }
       $query->orderBy('gr_date', 'desc')->orderBy('linked_lr_id', 'desc');
+      $query->when($request->has('gr_date_from') && $request->has('gr_date_to'), function ($query) use ($request) {
+        $query->whereBetween('gr_date', [$request->gr_date_from, $request->gr_date_to]);
+      });
       \Log::info('Query built successfully');
 
       return DataTables::of($query)
