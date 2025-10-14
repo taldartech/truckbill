@@ -27,75 +27,55 @@ class BankExport implements FromCollection, WithHeadings, WithTitle, ShouldAutoS
     public function collection()
     {
         $companyId = Auth::user()->company_id;
-        
-        // Query for regular payments
-        $paymentQuery = VoucherPayment::with([
-                'freight_booking.lr',
-                'freight_booking.truck',
-                'freight_booking.transporter'
-            ])
-            ->where('payment_mode', 'bank transfer')
-            ->whereNull('linked_voucher_id')
-            ->whereHas('freight_booking', function($q) use ($companyId) {
-                if ($companyId) {
-                    $q->where('company_id', $companyId);
-                }
-            });
 
-        // Query for linked vouchers
-        $linkedQuery = VoucherLinked::with([
-                'freight_booking.lr',
-                'freight_booking.truck',
-                'freight_booking.transporter'
-            ])
-            ->where('payment_mode', 'bank transfer')
-            ->whereHas('freight_booking', function($q) use ($companyId) {
-                if ($companyId) {
-                    $q->where('company_id', $companyId);
-                }
-            });
+      $query = VoucherPayment::whereBetween('date', [$this->startDate, $this->endDate]);
+      $query->where('company_id', $companyId);
+      $query->whereNull('linked_voucher_id');
+      $query->where('payment_mode', 'bank transfer');
+      $query->where('payment_status', 'in-progress');
+      $payments = $query->get();
 
-        // Apply date filters
-        if ($this->startDate) {
-            $paymentQuery->where('date', '>=', $this->startDate);
-            $linkedQuery->where('date', '>=', $this->startDate);
-        }
-        
-        if ($this->endDate) {
-            $paymentQuery->where('date', '<=', $this->endDate);
-            $linkedQuery->where('date', '<=', $this->endDate);
-        }
+      $query1 = VoucherLinked::whereBetween('date', [$this->startDate, $this->endDate]);
+      $query1->where('company_id', $companyId);
+      $query1->where('payment_mode', 'bank transfer');
+      $query1->where('payment_status', 'in-progress');
+      $linked_payments = $query1->get();
+    $allPayments = [];
+    if (isset($payments)) {
+      foreach ($payments as $payment) {
+        $tds_deducted = $payment->freight_booking->tds_amount == 0 ? 'No' : 'Yes';
+        $allPayments[] = [
+          'Date' => $payment->date,
+          'LR Number' => $payment->freight_booking->lr->lr_number ?? 'N/A',
+          'Truck Number' => $payment->freight_booking->lr->truck->truck_number ?? 'N/A',
+          'Transporter Name' => $payment->freight_booking->lr->transporter->name ?? 'N/A',
+          'Short Name' => $payment->freight_booking->lr->transporter->short_name ?? 'N/A',
+          'Beneficiary ID' => $payment->freight_booking->lr->transporter->beneficiary_id ?? 'N/A',
+          'Amount' => $payment['amount'],
+          'Narration' => $payment->freight_booking->lr->gr_number ?? 'N/A',
+          'TDS Deducted' => $tds_deducted,
+        ];
+      }
+    }
+    if (isset($linked_payments)) {
+      foreach ($linked_payments as $linked_payment) {
+        $tds_deducted = $linked_payment->freight_booking->tds_amount == 0 ? 'No' : 'Yes';
+        $allPayments[] = [
+          'Date' => $linked_payment->date,
+          'LR Number' => $linked_payment->freight_booking->lr->lr_number ?? 'N/A',
+          'Truck Number' => $linked_payment->freight_booking->lr->truck->truck_number ?? 'N/A',
+          'Transporter Name' => $linked_payment->freight_booking->lr->transporter->name ?? 'N/A',
+          'Short Name' => $linked_payment->freight_booking->lr->transporter->short_name ?? 'N/A',
+          'Beneficiary ID' => $linked_payment->freight_booking->lr->transporter->beneficiary_id ?? 'N/A',
+          'Amount' => $linked_payment['amount'],
+          'Narration' => $linked_payment->freight_booking->lr->gr_number ?? 'N/A',
+          'TDS Deducted' => $tds_deducted,
+        ];
+      }
+      $allPayments = collect($allPayments)->sortBy('date')->values();
+    }
 
-        // Process regular payments
-        $payments = $paymentQuery->get()
-            ->map(function($payment) {
-                return [
-                    'date' => $payment->date,
-                    'lr_number' => $payment->freight_booking->lr->lr_number ?? 'N/A',
-                    'truck_number' => $payment->freight_booking->lr->truck->truck_number ?? 'N/A',
-                    'party' => $payment->freight_booking->transporter->name ?? 'N/A',
-                    'name' => $payment->freight_booking->transporter->short_name ?? 'N/A',
-                    'beneficiary_id' => $payment->freight_booking->transporter->beneficiary_id ?? 'N/A',
-                    'amount' => $payment->amount,
-                ];
-            });
-
-        // Process linked payments
-        $linkedPayments = $linkedQuery->get()
-            ->map(function($linked) {
-                return [
-                    'date' => $linked->date,
-                    'lr_number' => $linked->freight_booking->lr->lr_number ?? 'N/A',
-                    'truck_number' => $linked->freight_booking->lr->truck->truck_number ?? 'N/A',
-                    'party' => $linked->freight_booking->transporter->name ?? 'N/A',
-                    'name' => $linked->freight_booking->transporter->short_name ?? 'N/A',
-                    'beneficiary_id' => $linked->freight_booking->transporter->beneficiary_id ?? 'N/A',
-                    'amount' => $linked->amount,
-                ];
-            });
-
-        // Merge and sort by date
-        return $payments->merge($linkedPayments)->sortBy('date');
+    return $allPayments;
     }
 
     public function headings(): array
@@ -104,10 +84,12 @@ class BankExport implements FromCollection, WithHeadings, WithTitle, ShouldAutoS
             'Date',
             'LR Number',
             'Truck Number',
-            'Party',
-            'Name',
+            'Transporter/Truck Owner Name',
+            'Short Name',
             'Beneficiary ID',
-            'Amount (₹)'
+            'Amount (₹)',
+            'Narration',
+            'TDS Deducted',
         ];
     }
 

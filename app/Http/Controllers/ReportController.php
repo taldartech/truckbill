@@ -665,73 +665,6 @@ class ReportController extends Controller
 
   public function bank(Request $request)
   {
-
-    // // --- Step 1: Query payments without any linked voucher ---
-    // $paymentQuery = VoucherPayment::with([
-    //   'freight_booking.lr',
-    //   'freight_booking.truck',
-    //   'freight_booking.transporter'
-    // ])
-    //   ->where('payment_mode', 'bank transfer')
-    //   ->whereNull('linked_voucher_id')
-    //   ->whereHas('freight_booking', function ($q) use ($companyId) {
-    //     if ($companyId) {
-    //       $q->where('company_id', $companyId);
-    //     }
-    //   });
-
-    // // --- Step 2: Query linked vouchers (combined ones) ---
-    // $linkedQuery = VoucherLinked::with([
-    //   'freight_booking.lr',
-    //   'freight_booking.truck',
-    //   'freight_booking.transporter'
-    // ])
-    //   ->where('payment_mode', 'bank transfer')
-    //   ->whereHas('freight_booking', function ($q) use ($companyId) {
-    //     if ($companyId) {
-    //       $q->where('company_id', $companyId);
-    //     }
-    //   });
-
-    // // --- Step 3: Apply date filters ---
-    // if ($request->filled('start_date')) {
-    //   $paymentQuery->where('date', '>=', $request->input('start_date'));
-    //   $linkedQuery->where('date', '>=', $request->input('start_date'));
-    // }
-
-    // if ($request->filled('end_date')) {
-    //   $paymentQuery->where('date', '<=', $request->input('end_date'));
-    //   $linkedQuery->where('date', '<=', $request->input('end_date'));
-    // }
-
-    // // --- Step 4: Fetch both datasets ---
-    // $payments = $paymentQuery->get()->map(function ($payment) {
-    //   return [
-    //     'lr_number'       => $payment->freight_booking->lr->lr_number ?? 'N/A',
-    //     'truck_number'    => $payment->freight_booking->lr->truck->truck_number ?? 'N/A',
-    //     'amount'          => $payment->amount,
-    //     'transporter_name' => $payment->freight_booking->transporter->name ?? 'N/A',
-    //     'name'            => $payment->freight_booking->transporter->short_name ?? 'N/A',
-    //     'beneficiary_id'  => $payment->freight_booking->transporter->beneficiary_id ?? 'N/A',
-    //     'date'            => $payment->date,
-    //   ];
-    // });
-
-    // $linkedPayments = $linkedQuery->get()->map(function ($linked) {
-    //   return [
-    //     'lr_number'       => $linked->freight_booking->lr->lr_number ?? 'N/A',
-    //     'truck_number'    => $linked->freight_booking->lr->truck->truck_number ?? 'N/A',
-    //     'amount'          => $linked->amount,
-    //     'transporter_name' => $linked->freight_booking->transporter->name ?? 'N/A',
-    //     'name'            => $linked->freight_booking->transporter->short_name ?? 'N/A',
-    //     'beneficiary_id'  => $linked->freight_booking->transporter->beneficiary_id ?? 'N/A',
-    //     'date'            => $linked->date,
-    //   ];
-    // });
-
-    // // --- Step 5: Merge both sets ---
-    // $allPayments = $payments->merge($linkedPayments);
-
     $companyId = Auth::user()->company_id;
     $endDate = $request->input('end_date') ?? date('Y-m-d');
     $startDate = max($request->input('start_date') ?? date('Y-m-d', strtotime('-3 months')), date('Y-m-d', strtotime('-3 months', strtotime($endDate))));
@@ -741,37 +674,45 @@ class ReportController extends Controller
       $query->where('company_id', $companyId);
       $query->whereNull('linked_voucher_id');
       $query->where('payment_mode', 'bank transfer');
+      $query->where('payment_status', 'in-progress');
       $payments = $query->get();
 
       $query1 = VoucherLinked::whereBetween('date', [$startDate, $endDate]);
       $query1->where('company_id', $companyId);
       $query1->where('payment_mode', 'bank transfer');
+      $query1->where('payment_status', 'in-progress');
       $linked_payments = $query1->get();
     }
     $allPayments = [];
     if (isset($payments)) {
       foreach ($payments as $payment) {
+        $tds_deducted = $payment->freight_booking->tds_amount == 0 ? 'No' : 'Yes';
         $allPayments[] = [
           'date' => $payment->date,
           'lr_number' => $payment->freight_booking->lr->lr_number ?? 'N/A',
+          'gr_number' => $payment->freight_booking->lr->gr_number ?? 'N/A',
           'truck_number' => $payment->freight_booking->lr->truck->truck_number ?? 'N/A',
           'transporter_name' => $payment->freight_booking->lr->transporter->name ?? 'N/A',
           'name' => $payment->freight_booking->lr->transporter->short_name ?? 'N/A',
           'beneficiary_id' => $payment->freight_booking->lr->transporter->beneficiary_id ?? 'N/A',
           'amount' => $payment['amount'],
+          'tds_deducted' => $tds_deducted,
         ];
       }
     }
     if (isset($linked_payments)) {
       foreach ($linked_payments as $linked_payment) {
+        $tds_deducted = $linked_payment->freight_booking->tds_amount == 0 ? 'No' : 'Yes';
         $allPayments[] = [
           'date' => $linked_payment->date,
           'lr_number' => $linked_payment->freight_booking->lr->lr_number ?? 'N/A',
+          'gr_number' => $linked_payment->freight_booking->lr->gr_number ?? 'N/A',
           'truck_number' => $linked_payment->freight_booking->lr->truck->truck_number ?? 'N/A',
           'transporter_name' => $linked_payment->freight_booking->lr->transporter->name ?? 'N/A',
           'name' => $linked_payment->freight_booking->lr->transporter->short_name ?? 'N/A',
           'beneficiary_id' => $linked_payment->freight_booking->lr->transporter->beneficiary_id ?? 'N/A',
           'amount' => $linked_payment['amount'],
+          'tds_deducted' => $tds_deducted,
         ];
       }
       $allPayments = collect($allPayments)->sortBy('date')->values();
