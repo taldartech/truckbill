@@ -46,7 +46,7 @@
                         </tr>
                         <tr>
                             <th>GR Date:</th>
-                            <td>{{ $freightBooking && $freightBooking->lr && $freightBooking->lr->gr_date ? date('Y-m-d', strtotime($freightBooking->lr->gr_date)) : date('Y-m-d') }}</td>
+                            <td>{{ $freightBooking && $freightBooking->lr && $freightBooking->lr->gr_date ? date('d-m-Y', strtotime($freightBooking->lr->gr_date)) : date('d-m-Y') }}</td>
                         </tr>
                     </table>
                 </div>
