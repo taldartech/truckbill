@@ -226,15 +226,13 @@
                                         <div class="invalid-feedback">Please select a customer.</div>
                                     </div>
                                     <div class="col-md-3">
-                                        <label for="gr_number" class="form-label">GR Number <small
-                                                class="text-muted">(Optional)</small></label>
-                                        <input type="text" class="form-control" id="gr_number" name="gr_number"
-                                            value="{{ old('gr_number') }}" placeholder="Enter GR Number">
+                                        <label for="gr_number" class="form-label">GR Number <small class="text-muted">(Optional)</small></label>
+                                        <input type="text" class="form-control gr-number-input" id="gr_number" name="gr_number"
+                                               value="{{ old('gr_number') }}" placeholder="Enter GR Number">
+                                        <div class="gr-number-feedback mt-1"></div>
                                         @error('gr_number')
                                             <div class="text-danger">{{ $message }}</div>
                                         @enderror
-                                        <div class="invalid-feedback">Please enter a valid GR number.</div>
-                                        <div id="gr-number-feedback" class="mt-1"></div>
                                     </div>
                                    
                                 </div>
@@ -1089,7 +1087,7 @@
             lrItemsContainer.addEventListener('input', function(e) {
                 if (e.target.classList.contains('lr-number-input')) {
                     const inputEl = e.target;
-                    const feedbackEl = e.target.closest('.col-md-4').querySelector(
+                    const feedbackEl = e.target.closest('.col-md-3').querySelector(
                         '.lr-number-feedback');
                     const lrNumber = inputEl.value.trim();
                     clearTimeout(lrNumberTimeout);
@@ -1100,7 +1098,7 @@
             lrItemsContainer.addEventListener('blur', function(e) {
                 if (e.target.classList.contains('lr-number-input')) {
                     const inputEl = e.target;
-                    const feedbackEl = e.target.closest('.col-md-4').querySelector(
+                    const feedbackEl = e.target.closest('.col-md-3').querySelector(
                         '.lr-number-feedback');
                     const lrNumber = inputEl.value.trim();
                     if (lrNumber) {
@@ -1172,7 +1170,7 @@
             lrItemsContainer.addEventListener('input', function(e) {
                 if (e.target.classList.contains('invoice-number-input')) {
                     const inputEl = e.target;
-                    const feedbackEl = e.target.closest('.col-md-4').querySelector(
+                    const feedbackEl = e.target.closest('.col-md-3').querySelector(
                         '.invoice-number-feedback');
                     const invoiceNumber = inputEl.value.trim();
                     clearTimeout(invoiceNumberTimeout);
@@ -1184,7 +1182,7 @@
             lrItemsContainer.addEventListener('blur', function(e) {
                 if (e.target.classList.contains('invoice-number-input')) {
                     const inputEl = e.target;
-                    const feedbackEl = e.target.closest('.col-md-4').querySelector(
+                    const feedbackEl = e.target.closest('.col-md-3').querySelector(
                         '.invoice-number-feedback');
                     const invoiceNumber = inputEl.value.trim();
                     if (invoiceNumber) {
@@ -1194,6 +1192,70 @@
                 }
             }, true);
 
+
+            // Add GR number timeout variable
+let grNumberTimeout;
+
+// Add GR number check function
+function checkGrUniq(grNumber, feedbackEl, inputEl) {
+    if (!grNumber) {
+        feedbackEl.innerHTML = '';
+        inputEl.classList.remove('is-valid', 'is-invalid');
+        return;
+    }
+
+    fetch('/api/check-gr-number-uniqueness', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                gr_number: grNumber
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.available) {
+                feedbackEl.innerHTML = '<small class="text-success">✓ Available</small>';
+                inputEl.classList.remove('is-invalid');
+                inputEl.classList.add('is-valid');
+            } else {
+                feedbackEl.innerHTML = '<small class="text-danger">✗ Already in use</small>';
+                inputEl.classList.remove('is-valid');
+                inputEl.classList.add('is-invalid');
+            }
+        })
+        .catch(err => {
+            console.error('GR number check error', err);
+            feedbackEl.innerHTML = '<small class="text-warning">⚠️ Unable to check availability</small>';
+            inputEl.classList.remove('is-valid', 'is-invalid');
+        });
+}
+
+// Add GR number input event listeners
+lrItemsContainer.addEventListener('input', function(e) {
+    if (e.target.classList.contains('gr-number-input')) {
+        const inputEl = e.target;
+        const feedbackEl = inputEl.nextElementSibling;
+        const grNumber = inputEl.value.trim();
+        clearTimeout(grNumberTimeout);
+        grNumberTimeout = setTimeout(() => checkGrUniq(grNumber, feedbackEl, inputEl), 500);
+    }
+});
+
+lrItemsContainer.addEventListener('blur', function(e) {
+    if (e.target.classList.contains('gr-number-input')) {
+        const inputEl = e.target;
+        const feedbackEl = inputEl.nextElementSibling;
+        const grNumber = inputEl.value.trim();
+        if (grNumber) {
+            clearTimeout(grNumberTimeout);
+            checkGrUniq(grNumber, feedbackEl, inputEl);
+        }
+    }
+});
             // Bootstrap validation and SweetAlert confirmation similar to single create
             (function() {
                 const form = document.getElementById('lorryReceiptForm');

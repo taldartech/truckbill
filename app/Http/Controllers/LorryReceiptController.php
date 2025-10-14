@@ -694,8 +694,9 @@ public function getLinkedLRs($linkedLrId)
 
           //if gr number is null than trim lr number from left side till 0 when 0 finishes stop trim method and take that value
           if ($data['gr_number'] == null) {
-            $data['gr_number'] = trim($data['lr_number'], '0');
-          }
+            // Remove "LR" prefix, then trim leading zeros
+            $data['gr_number'] = ltrim(str_ireplace('LR', '', $data['lr_number']), '0');
+        }
           $created[] = \App\Models\LorryReceipt::create($data);
         }
 
@@ -839,33 +840,45 @@ public function getLinkedLRs($linkedLrId)
     ]);
   }
 
+  // public function checkGRNumberUniqueness(Request $request)
+  // {
+  //   $grNumber = $request->input('gr_number');
+  //   $excludeId = $request->input('exclude_id') ?? null;
+
+  //   if (!$grNumber) {
+  //     return response()->json(['valid' => true, 'message' => '']);
+  //   }
+
+  //   $exists = \App\Models\LorryReceipt::where('gr_number', $grNumber)
+  //     ->when($excludeId, function($query) use ($excludeId) {
+  //       return $query->where('id', '!=', $excludeId);
+  //     })
+  //     ->exists();
+
+  //   if ($exists) {
+  //     return response()->json([
+  //       'valid' => false,
+  //       'message' => 'GR Number already exists. Please use a unique GR Number.'
+  //     ]);
+  //   }
+
+  //   return response()->json([
+  //     'valid' => true,
+  //     'message' => 'GR Number is available'
+  //   ]);
+  // }
   public function checkGRNumberUniqueness(Request $request)
-  {
-    $grNumber = $request->input('gr_number');
-    $excludeId = $request->input('exclude_id') ?? null;
-
-    if (!$grNumber) {
-      return response()->json(['valid' => true, 'message' => '']);
-    }
-
-    $exists = \App\Models\LorryReceipt::where('gr_number', $grNumber)
-      ->when($excludeId, function($query) use ($excludeId) {
-        return $query->where('id', '!=', $excludeId);
-      })
-      ->exists();
-
-    if ($exists) {
-      return response()->json([
-        'valid' => false,
-        'message' => 'GR Number already exists. Please use a unique GR Number.'
-      ]);
-    }
-
-    return response()->json([
-      'valid' => true,
-      'message' => 'GR Number is available'
+{
+    $request->validate([
+        'gr_number' => 'required|string'
     ]);
-  }
+
+    $exists = LorryReceipt::where('gr_number', $request->gr_number)
+        ->where('company_id', auth()->user()->company_id)
+        ->exists();
+
+    return response()->json(['available' => !$exists]);
+}
 
   public function edit(\App\Models\LorryReceipt $lorry_receipt)
   {
