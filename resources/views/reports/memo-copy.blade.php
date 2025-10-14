@@ -108,6 +108,10 @@
                             href="{{ route('reports.memo-copy-export', ['memo_id' => $memo_id]) }}">
                             <i class="bi bi-file-earmark-spreadsheet"></i> Export
                         </a>
+                        <a class="btn btn-danger ms-2" target="_blank"
+                        href="{{ route('reports.memo-copy-export', ['memo_id' => $memo_id, 'type' => 'pdf']) }}">
+                        <i class="bi bi-file-earmark-pdf"></i> PDF
+                    </a>
                     </div>
                 </div>
             </div>
