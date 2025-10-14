@@ -651,6 +651,15 @@ function showLRDetails(id) {
    
 
 // After setting contentDiv.innerHTML, load the linked LRs if needed
+function formatGRDate(dateString) {
+    if (!dateString) return 'Varies';
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+}
+
 if (lr.linked_lr_id) {
     fetch(`/api/lorry-receipts/linked/${lr.linked_lr_id}`)
         .then(response => response.json())
@@ -667,7 +676,11 @@ if (lr.linked_lr_id) {
                         <table class="table table-borderless table-sm">
                             <tr><td class="fw-bold">Transporter:</td><td>${common.transporter || 'Varies'}</td></tr>
                             <tr><td class="fw-bold">Truck Number:</td><td>${common.truck_number || 'Varies'}</td></tr>
-                            <tr><td class="fw-bold">GR Date:</td><td>${common.gr_date ? new Date(common.gr_date).toLocaleDateString() : 'Varies'}</td></tr>
+                           <tr>
+  <td class="fw-bold">GR Date:</td>
+  <td>${common.gr_date ? formatGRDate(common.gr_date) : 'Varies'}</td>
+</tr>
+
                             <tr><td class="fw-bold">Reference By:</td><td>${common.reference_by || 'Varies'}</td></tr>
                         </table>
                     </div>
