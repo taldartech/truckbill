@@ -36,7 +36,7 @@
         <div class="alert alert-warning">
             Please generate the report by selecting at Dates.
         </div>
-    @elseif (empty($lrs) || $lrs->isEmpty())
+    @elseif (empty($frs) || $frs->isEmpty())
         <div class="alert alert-info">
             No records found for the selected criteria.
         </div>
@@ -62,7 +62,6 @@
                           <th>Sr No</th>
                           <th>LR No</th>
                           <th>GR Date</th>
-                        
                           <th>Truck No</th>
                           <th>Weight</th>
                           <th>LR Rate</th>
@@ -74,20 +73,15 @@
                           <th>Eway Bill Expiry Date</th>
                           <th>Transporter/Truck Owner Name</th>
                           <th>Transporter/Truck Owner Mobile No.</th>
-                          
-
-                         
-                        
-                          
-                          
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($lrs as $index => $lr)
+                        @foreach ($frs as $index => $freightBooking)
                             @php
                                 // Get the first freight booking (or null if none exists)
-                                $freightBooking = $lr->freightBookings->first();
-                                
+                                // $freightBooking = $lr->freightBookings->first();
+                                $lr = $freightBooking->lr;
+
                                 // Initialize payments array with all payment types
                                 $payments = [
                                     'cash' => 0,
@@ -111,7 +105,7 @@
                                         $matchingMode = $paymentSums->keys()->first(function ($key) use ($normalizedMode) {
                                             return strtolower(trim($key)) === $normalizedMode;
                                         });
-                                        
+
                                         if ($matchingMode !== null) {
                                             $payments[$mode] = $paymentSums[$matchingMode];
                                         }
@@ -122,7 +116,6 @@
                                 <td>{{ $index + 1 }}</td>
                                 <td>{{ $lr->lr_number }}</td>
                                 <td style="white-space: nowrap;">{{ \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') }}</td>
-                               
                                 <td>{{ $lr->truck->truck_number ?? 'N/A' }}</td>
                                 <td>{{ $lr->weight }}</td>
                                 <td>{{ $lr->fr_rate }}</td>
@@ -134,9 +127,6 @@
                                 <td>{{ $freightBooking->eway_bill_expiry ?? '0' }}</td>
                                 <td>{{$lr->transporter->name ?? 'N/A'}}</td>
                                 <td>{{$lr->transporter->mobile_number ?? 'N/A'}}</td>
-                               
-                               
-                             
                             </tr>
                         @endforeach
                     </tbody>
