@@ -37,13 +37,13 @@
                 <thead>
                     <tr>
 
-                        <th style="width: 80px;">Sr. No</th>
+                        <th>GR Date</th>
                         <th>LR Number</th>
                         <th>Customer</th>
                         <th>Consignor</th>
                         <th>Consignee</th>
                         <th>Status</th>
-                        <th>GR Date</th>
+                      
                         <th>Truck Number</th>
                         <th>Weight</th>
                         <th>Amount</th>
@@ -351,13 +351,9 @@ $(document).ready(function() {
         },
         columns: [
 
-            {
-                data: 'sr_no',
-                name: 'sr_no',
-                width: '80px',
-                className: 'text-center',
-                orderable: false,
-                searchable: false
+        {
+                data: 'gr_date_formatted',
+                name: 'gr_date'
             },
             {
                 data: 'lr_number',
@@ -382,10 +378,7 @@ $(document).ready(function() {
                 data: 'status_badge',
                 name: 'delivery_status'
             },
-            {
-                data: 'gr_date_formatted',
-                name: 'gr_date'
-            },
+           
             {
                 data: 'truck_number',
                 name: 'truck.truck_number'
