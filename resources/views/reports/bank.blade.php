@@ -75,10 +75,12 @@
                             <th>Date</th>
                             <th>LR Number</th>
                             <th>Truck Number</th>
-                            <th>Transporter Name</th>
-                            <th>Name</th>
+                            <th>Transporter/Truck Owner Name</th>
+                            <th>Short Name</th>
                             <th>Beneficiary ID</th>
                             <th>Amount (₹)</th>
+                            <th>Narration</th>
+                            <th>TDS Deducted</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -97,6 +99,8 @@
                                 <td>{{ $payment['name'] ?? 'N/A' }} </td>
                                 <td>{{ $payment['beneficiary_id'] ?? 'N/A' }}</td>
                                 <td class="text-end">₹{{ number_format($payment['amount'], 2) }}</td>
+                                <td>{{ $payment['gr_number'] ?? 'N/A' }}</td>
+                                <td>{{ $payment['tds_deducted'] ?? 'N/A' }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -104,6 +108,7 @@
                         <tr>
                             <th colspan="7" class="text-end">Grand Total:</th>
                             <th class="text-end">₹{{ number_format($grandTotal, 2) }}</th>
+                            <th colspan="2"></th>
                         </tr>
                     </tfoot>
                 </table>
