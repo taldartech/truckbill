@@ -177,7 +177,13 @@
             @else
                 ...........................
             @endif
-            पिता श्री ........................................................
+            संदर्भ द्वारा 
+            @if (!empty(optional($firstLr->reference)->name))
+            <span
+                class="dotted-underline">{{ $firstLr->reference->name }}</span>
+        @else
+            ...........................................
+        @endif
 
             निवासी
             @if (!empty(optional($firstLr->truck->driver)->address))
