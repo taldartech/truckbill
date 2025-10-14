@@ -115,6 +115,11 @@
                             href="{{ route('reports.party-bill-export', ['invoice_number' => $id]) }}">
                             <i class="bi bi-file-earmark-spreadsheet"></i> Export
                         </a>
+                        <a href="{{ route('reports.party-bill-export', ['invoice_number' => $invoice->id, 'type' => 'pdf']) }}" 
+                            class="btn btn-danger btn-sm" 
+                            target="_blank">
+                             <i class="fas fa-file-pdf"></i> PDF
+                         </a>
                     </div>
                 </div>
             </div>
