@@ -157,6 +157,7 @@
                             <th>Destination City</th>
                             <th>Weight</th>
                             <th>Tr Rate</th>
+                            <th>Total Amount</th>
                             <th class="text-end">Balance</th>
                             <th class="text-center" style="width: 80px;">Actions</th>
                         </tr>
@@ -250,6 +251,7 @@
                                 </td>
                                 <td>{{ $booking->lr && $booking->lr->weight ? $booking->lr->weight : '-' }}</td>
                                 <td>{{ $booking->lr && $booking->tr_fr_rate ? $booking->tr_fr_rate : '-' }}</td>
+                                <td>{{ $booking->lr && $booking->tr_fr_rate ? $booking->tr_amount : '-' }}</td>
 
                                 <td class="text-end">₹{{ number_format($booking->balance_amount ?? 0, 2) }}</td>
                                 <td class="text-center">
@@ -1960,12 +1962,12 @@ function initializeAmountAllocation(totalBalance) {
                         className: 'text-end align-middle',
                         orderable: false
                     },
-                    // {
-                    // data: 'tr_amount_formatted',
-                    // name: 'tr_amount_formatted',
-                    // className: 'text-end align-middle',
-                    // orderable: false
-                    // },
+                    {
+                    data: 'tr_amount_formatted',
+                    name: 'tr_amount_formatted',
+                    className: 'text-end align-middle',
+                    orderable: false
+                    },
                     {
                         data: 'advance_formatted',
                         name: 'advance_formatted',

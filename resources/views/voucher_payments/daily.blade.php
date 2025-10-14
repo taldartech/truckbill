@@ -110,6 +110,18 @@
                                     </option>
                                 </select>
                             </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Payment Mode</label>
+                                <select name="payment_mode" class="form-select">
+                                    <option value="">All Payment Modes</option>
+                                    @foreach ($paymentModes as $paymentMode)
+                                        <option value="{{ $paymentMode->name }}"
+                                            {{ request('payment_mode') == $paymentMode->name ? 'selected' : '' }}>
+                                            {{ $paymentMode->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
                     </div>
 
