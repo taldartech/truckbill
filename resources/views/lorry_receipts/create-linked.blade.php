@@ -201,21 +201,21 @@
                             <input type="hidden" class="lane-input" value="Road">
                             <div class="card mb-4 p-3 bg-light">
                                 <div class="row mb-3">
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <label class="form-label">LR Number *</label>
                                         <input type="text" class="form-control lr-number-input" required
                                             placeholder="Unique LR Number">
                                         <div class="invalid-feedback">Please enter a unique LR number.</div>
                                         <div class="lr-number-feedback mt-1"></div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <label class="form-label">Invoice Number</label>
                                         <input type="text" class="form-control invoice-number-input"
                                             placeholder="Unique Invoice Number">
                                         <div class="invalid-feedback">Please enter a unique Invoice number.</div>
                                         <div class="invoice-number-feedback mt-1"></div>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <label class="form-label">Customer *</label>
                                         <select class="form-select select2 customer-select" required>
                                             <option value="">Select Customer</option>
@@ -224,6 +224,17 @@
                                             @endforeach
                                         </select>
                                         <div class="invalid-feedback">Please select a customer.</div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label for="gr_number" class="form-label">GR Number <small
+                                                class="text-muted">(Optional)</small></label>
+                                        <input type="text" class="form-control" id="gr_number" name="gr_number"
+                                            value="{{ old('gr_number') }}" placeholder="Enter GR Number">
+                                        @error('gr_number')
+                                            <div class="text-danger">{{ $message }}</div>
+                                        @enderror
+                                        <div class="invalid-feedback">Please enter a valid GR number.</div>
+                                        <div id="gr-number-feedback" class="mt-1"></div>
                                     </div>
                                    
                                 </div>
@@ -1309,6 +1320,7 @@
                         lr_number: item.querySelector('.lr-number-input').value,
                         invoice_number: item.querySelector('.invoice-number-input').value,
                         customer_id: item.querySelector('.customer-select').value,
+                        gr_number: item.querySelector('#gr_number').value,
                         consignor_id: item.querySelector('.consignor-select').value,
                         consignor_contact_number: item.querySelector('.consignor-contact')
                             .value,
