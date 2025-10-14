@@ -911,6 +911,7 @@ public function getLinkedLRs($linkedLrId)
 
   public function update(Request $request, \App\Models\LorryReceipt $lorry_receipt)
   {
+    // dd($request->all());
     
     if ($lorry_receipt->invoice_generated == 1) {
       return redirect()->route('lorry_receipts.index')->with('error', 'Cannot edit Lorry Receipt as invoice has already been generated.');
@@ -1003,6 +1004,9 @@ public function getLinkedLRs($linkedLrId)
       // Remove "LR" prefix, then trim leading zeros
       $validated['gr_number'] = ltrim(str_ireplace('LR', '', $validated['lr_number']), '0');
   }
+
+  // dd($validated['gr_number']);
+
 
 
 
