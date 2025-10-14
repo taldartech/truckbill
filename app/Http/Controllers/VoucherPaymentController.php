@@ -113,6 +113,11 @@ class VoucherPaymentController extends Controller
       $query1->where('payment_status', $request->status);
     }
 
+    if ($request->filled('payment_mode')) {
+      $query->where('payment_mode', $request->payment_mode);
+      $query1->where('payment_mode', $request->payment_mode);
+    }
+
     $payments = $query->orderBy('created_at', 'desc')
       ->get();
     $payments1 = $query1->orderBy('created_at', 'desc')
@@ -120,13 +125,15 @@ class VoucherPaymentController extends Controller
     // Get filter data for dropdowns
     $transporters = \App\Models\Transporter::orderBy('name')->get();
     $cities = \App\Models\City::orderBy('name')->get();
+    $paymentModes = \App\Models\PaymentMode::select('name')->get();
 
     return view('voucher_payments.daily', [
       'payments' => $payments,
       'payments1' => $payments1,
       'selectedDate' => $selectedDate,
       'transporters' => $transporters,
-      'cities' => $cities
+      'cities' => $cities,
+      'paymentModes' => $paymentModes
     ]);
   }
   public function index(Request $request)
@@ -766,7 +773,15 @@ class VoucherPaymentController extends Controller
 
       $updatedCount = count($payment_ids) + count($multiple_payment_ids);
 
-      return redirect()->back()->with('success', $updatedCount . ' payments updated successfully.');
+      $previousUrl = url()->previous();
+      $parsedUrl = parse_url($previousUrl);
+      parse_str($parsedUrl['query'] ?? '', $queryParams);
+      if (isset($queryParams['status']) && $queryParams['status'] !== '') {
+        $queryParams['status'] = $validated['new_status'];
+      }
+      $newQuery = http_build_query($queryParams);
+      $newUrl = $parsedUrl['path'].'?'.$newQuery;
+      return redirect($newUrl)->with('success', $updatedCount . ' payments updated successfully.');
     } catch (\Exception $e) {
       \Log::error('Error in bulk update: ' . $e->getMessage(), [
         'payment_ids' => $payment_ids,
