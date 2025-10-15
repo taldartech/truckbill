@@ -24,7 +24,10 @@ use App\Models\Pump;
 use App\Exports\PumpExport;
 use App\Models\VoucherPayment;
 use App\Exports\BankExport;
+use App\Exports\TransporterReportExport;
 use App\Exports\UltratechBillExport;
+use App\Models\Transporter;
+use App\Models\Truck;
 use App\Models\VoucherLinked;
 use Carbon\Carbon;
 
@@ -859,6 +862,58 @@ class ReportController extends Controller
     }
     $id = $request->input('invoice_number');
     $export = Excel::download(new UltratechBillExport($id), 'ultratech_bill.xlsx');
+    return $export;
+  }
+
+  public function transporter_report(Request $request)
+  {
+    $endDate = $request->input('end_date') ?? date('Y-m-d');
+    $startDate = max($request->input('start_date') ?? date('Y-m-d', strtotime('-3 months')), date('Y-m-d', strtotime('-3 months', strtotime($endDate))));
+
+    $transporters = Transporter::where('company_id', Auth::user()->company_id)->get();
+    $transporterId = $request->input('transporter_id') ?? null;
+    $trucks = [];
+    $truckId = $request->input('truck_id') ?? null;
+    $references = [];
+    $referenceId = $request->input('reference_by') ?? null;
+    if ($request->input('end_date') || $request->input('start_date')) {
+      $query = LorryReceipt::whereBetween('gr_date', [$startDate, $endDate]);
+      $query->whereNotNull('freight_booking_id');
+      if (Auth::user()->company_id) {
+        $query->where('company_id', Auth::user()->company_id);
+      }
+      if ($transporterId) {
+        $trucks = LorryReceipt::where('transporter_id', $transporterId)
+          ->get(['truck_id']);
+        $trucks = Truck::whereIn('id', $trucks->pluck('truck_id'))->get();
+        $query->where('transporter_id', $transporterId);
+      }
+      if ($truckId) {
+        $query->where('truck_id', $truckId);
+        $references = LorryReceipt::where('truck_id', $truckId)
+          ->get(['reference_by']);
+        $references = Transporter::whereIn('id', $references->pluck('reference_by'))->get();
+      }
+      if ($referenceId) {
+        $query->where('reference_by', $referenceId);
+      }
+      $lrs = $query->get();
+    } else {
+      $lrs = [];
+    }
+
+    return view('reports.transporter-report', compact('transporters', 'transporterId', 'startDate', 'endDate', 'trucks', 'truckId', 'lrs', 'references', 'referenceId'));
+  }
+
+  public function transporter_report_export(Request $request)
+  {
+    $startDate = $request->input('start_date');
+    $endDate = $request->input('end_date');
+    $transporterId = $request->input('transporter_id') ?? null;
+    $truckId = $request->input('truck_id') ?? null;
+    $referenceId = $request->input('reference_by') ?? null;
+
+    $export = Excel::download(new TransporterReportExport($startDate, $endDate, $transporterId, $truckId, $referenceId), 'transporter_report.xlsx');
     return $export;
   }
 }

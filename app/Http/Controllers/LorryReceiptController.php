@@ -164,125 +164,124 @@ class LorryReceiptController extends Controller
   }
   public function getByLinkedId($linkedId)
   {
-      try {
-          // $lrs = \App\Models\LorryReceipt::with(['truck', 'freightBookings'])
-          //     ->where('linked_lr_id', $linkedId)
-          //     ->get()
-          //     ->map(function ($lr) {
-          //         if (!$lr) return null;
-                  
-          //         return [
-          //             'id' => $lr->id,
-          //             'lr_number' => $lr->lr_number,
-          //             'truck_number' => $lr->truck ? $lr->truck->truck_number : '',
-          //             'freight_booking_id' => $lr->freightBooking ? $lr->freightBooking->id : null,
-          //             'balance_amount' => $lr->freightBooking ? (float)$lr->freightBooking->balance_amount : 0,
-          //         ];
-              // ->filter() ;// Remove any null entries from the collection
-              //     })
-          $lrs = \App\Models\LorryReceipt::with(['truck', 'freightBookings'])
-    ->where('linked_lr_id', $linkedId)
-    ->get()
-    ->map(function ($lr) {
-        $firstFreight = $lr->freightBookings->first();
-        return [
+    try {
+      // $lrs = \App\Models\LorryReceipt::with(['truck', 'freightBookings'])
+      //     ->where('linked_lr_id', $linkedId)
+      //     ->get()
+      //     ->map(function ($lr) {
+      //         if (!$lr) return null;
+
+      //         return [
+      //             'id' => $lr->id,
+      //             'lr_number' => $lr->lr_number,
+      //             'truck_number' => $lr->truck ? $lr->truck->truck_number : '',
+      //             'freight_booking_id' => $lr->freightBooking ? $lr->freightBooking->id : null,
+      //             'balance_amount' => $lr->freightBooking ? (float)$lr->freightBooking->balance_amount : 0,
+      //         ];
+      // ->filter() ;// Remove any null entries from the collection
+      //     })
+      $lrs = \App\Models\LorryReceipt::with(['truck', 'freightBookings'])
+        ->where('linked_lr_id', $linkedId)
+        ->get()
+        ->map(function ($lr) {
+          $firstFreight = $lr->freightBookings->first();
+          return [
             'id' => $lr->id,
             'lr_number' => $lr->lr_number,
             'truck_number' => $lr->truck ? $lr->truck->truck_number : '',
             'freight_booking_id' => $firstFreight ? $firstFreight->id : null,
             'balance_amount' => $firstFreight ? (float)$firstFreight->balance_amount : 0,
-        ];  
-    }) ->sortBy('balance_amount') // 🔹 Sort ascending by balance
-    ->values();
-              \Log::info('Linked LRs fetched successfully', $lrs->toArray());
-  
-          return response()->json($lrs->values());
-      } catch (\Exception $e) {
-          \Log::error('Error in getByLinkedId: ' . $e->getMessage());
-          return response()->json([
-              'error' => 'An error occurred while fetching linked LRs',
-              'message' => $e->getMessage()
-          ], 500);
-      }
-  }
-//   public function getLinkedLRs($linkedLrId)
-// {
-//     try {
-//         $linkedLRs = LorryReceipt::with(['consignor', 'consignee'])
-//             ->where('linked_lr_id', $linkedLrId)
-//             ->orWhere('id', $linkedLrId) // Include the parent LR as well
-//             ->get()
-//             ->map(function ($lr) {
-//                 return [
-//                     'id' => $lr->id,
-//                     'lr_number' => $lr->lr_number,
-//                     'gr_date' => $lr->gr_date,
-//                     'consignor' => $lr->consignor,
-//                     'consignee' => $lr->consignee,
-//                     'status' => $lr->status,
-//                     // Add any other fields you need
-//                 ];
-//             });
+          ];
+        })->sortBy('balance_amount') // 🔹 Sort ascending by balance
+        ->values();
+      \Log::info('Linked LRs fetched successfully', $lrs->toArray());
 
-//         return response()->json($linkedLRs);
-//     } catch (\Exception $e) {
-//         \Log::error('Error fetching linked LRs: ' . $e->getMessage());
-//         return response()->json(['error' => 'Failed to fetch linked LRs'], 500);
-//     }
-// }
-public function getLinkedLRs($linkedLrId)
-{
-    try {
-        $linkedLRs = LorryReceipt::with(['consignor', 'consignee', 'customer', 'transporter', 'truck', 'reference'])
-            ->where('linked_lr_id', $linkedLrId)
-
-            ->get();
-
-        if ($linkedLRs->isEmpty()) {
-            return response()->json([]);
-        }
-
-        // Find common fields across all LRs
-        $common = [
-            'transporter' => $linkedLRs->pluck('transporter.name')->unique()->count() === 1
-                                ? $linkedLRs->first()->transporter->name ?? null
-                                : null,
-            'truck_number' => $linkedLRs->pluck('truck.truck_number')->unique()->count() === 1
-                                ? $linkedLRs->first()->truck->truck_number ?? null
-                                : null,
-            'gr_date' => $linkedLRs->pluck('gr_date')->unique()->count() === 1
-                                ? $linkedLRs->first()->gr_date
-                                : null,
-            'reference_by' => $linkedLRs->pluck('reference.name')->unique()->count() === 1
-                                ? $linkedLRs->first()->reference->name ?? null
-                                : null,
-        ];
-
-        $details = $linkedLRs->map(function ($lr) {
-            return [
-                'id' => $lr->id,
-                'lr_number' => $lr->lr_number,
-                'gr_date' => $lr->gr_date,
-                'status' => $lr->delivery_status,
-                'customer' => $lr->customer ? $lr->customer->name : null,
-                'consignor' => $lr->consignor ? $lr->consignor->name : null,
-                'consignee' => $lr->consignee ? $lr->consignee->name : null,
-                'good_type' => $lr->good_type,
-                'weight' => $lr->weight,
-                'amount' => $lr->amount,
-            ];
-        });
-
-        return response()->json([
-            'common' => $common,
-            'lrs' => $details
-        ]);
-
+      return response()->json($lrs->values());
     } catch (\Exception $e) {
-        \Log::error('Error fetching linked LRs: ' . $e->getMessage());
-        return response()->json(['error' => 'Failed to fetch linked LRs'], 500);
+      \Log::error('Error in getByLinkedId: ' . $e->getMessage());
+      return response()->json([
+        'error' => 'An error occurred while fetching linked LRs',
+        'message' => $e->getMessage()
+      ], 500);
     }
-}
+  }
+  //   public function getLinkedLRs($linkedLrId)
+  // {
+  //     try {
+  //         $linkedLRs = LorryReceipt::with(['consignor', 'consignee'])
+  //             ->where('linked_lr_id', $linkedLrId)
+  //             ->orWhere('id', $linkedLrId) // Include the parent LR as well
+  //             ->get()
+  //             ->map(function ($lr) {
+  //                 return [
+  //                     'id' => $lr->id,
+  //                     'lr_number' => $lr->lr_number,
+  //                     'gr_date' => $lr->gr_date,
+  //                     'consignor' => $lr->consignor,
+  //                     'consignee' => $lr->consignee,
+  //                     'status' => $lr->status,
+  //                     // Add any other fields you need
+  //                 ];
+  //             });
+
+  //         return response()->json($linkedLRs);
+  //     } catch (\Exception $e) {
+  //         \Log::error('Error fetching linked LRs: ' . $e->getMessage());
+  //         return response()->json(['error' => 'Failed to fetch linked LRs'], 500);
+  //     }
+  // }
+  public function getLinkedLRs($linkedLrId)
+  {
+    try {
+      $linkedLRs = LorryReceipt::with(['consignor', 'consignee', 'customer', 'transporter', 'truck', 'reference'])
+        ->where('linked_lr_id', $linkedLrId)
+
+        ->get();
+
+      if ($linkedLRs->isEmpty()) {
+        return response()->json([]);
+      }
+
+      // Find common fields across all LRs
+      $common = [
+        'transporter' => $linkedLRs->pluck('transporter.name')->unique()->count() === 1
+          ? $linkedLRs->first()->transporter->name ?? null
+          : null,
+        'truck_number' => $linkedLRs->pluck('truck.truck_number')->unique()->count() === 1
+          ? $linkedLRs->first()->truck->truck_number ?? null
+          : null,
+        'gr_date' => $linkedLRs->pluck('gr_date')->unique()->count() === 1
+          ? $linkedLRs->first()->gr_date
+          : null,
+        'reference_by' => $linkedLRs->pluck('reference.name')->unique()->count() === 1
+          ? $linkedLRs->first()->reference->name ?? null
+          : null,
+      ];
+
+      $details = $linkedLRs->map(function ($lr) {
+        return [
+          'id' => $lr->id,
+          'lr_number' => $lr->lr_number,
+          'gr_date' => $lr->gr_date,
+          'status' => $lr->delivery_status,
+          'customer' => $lr->customer ? $lr->customer->name : null,
+          'consignor' => $lr->consignor ? $lr->consignor->name : null,
+          'consignee' => $lr->consignee ? $lr->consignee->name : null,
+          'good_type' => $lr->good_type,
+          'weight' => $lr->weight,
+          'amount' => $lr->amount,
+        ];
+      });
+
+      return response()->json([
+        'common' => $common,
+        'lrs' => $details
+      ]);
+    } catch (\Exception $e) {
+      \Log::error('Error fetching linked LRs: ' . $e->getMessage());
+      return response()->json(['error' => 'Failed to fetch linked LRs'], 500);
+    }
+  }
 
 
   public function getLorryReceiptsData(Request $request)
@@ -699,7 +698,7 @@ public function getLinkedLRs($linkedLrId)
           if ($data['gr_number'] == null) {
             // Remove "LR" prefix, then trim leading zeros
             $data['gr_number'] = ltrim(str_ireplace('LR', '', $data['lr_number']), '0');
-        }
+          }
           $created[] = \App\Models\LorryReceipt::create($data);
         }
 
@@ -767,7 +766,7 @@ public function getLinkedLRs($linkedLrId)
     if ($validated['gr_number'] == null) {
       // Remove "LR" prefix, then trim leading zeros
       $validated['gr_number'] = ltrim(str_ireplace('LR', '', $validated['lr_number']), '0');
-  }
+    }
     if (\App\Models\LorryReceipt::where('lr_number', $validated['lr_number'])->exists()) {
       return redirect()->back()->withErrors(['lr_number' => 'LR Number already exists. Please use a unique LR Number.']);
     }
@@ -871,17 +870,17 @@ public function getLinkedLRs($linkedLrId)
   //   ]);
   // }
   public function checkGRNumberUniqueness(Request $request)
-{
+  {
     $request->validate([
-        'gr_number' => 'required|string'
+      'gr_number' => 'required|string'
     ]);
 
     $exists = LorryReceipt::where('gr_number', $request->gr_number)
-        ->where('company_id', auth()->user()->company_id)
-        ->exists();
+      ->where('company_id', auth()->user()->company_id)
+      ->exists();
 
     return response()->json(['available' => !$exists]);
-}
+  }
 
   public function edit(\App\Models\LorryReceipt $lorry_receipt)
   {
@@ -928,7 +927,7 @@ public function getLinkedLRs($linkedLrId)
   public function update(Request $request, \App\Models\LorryReceipt $lorry_receipt)
   {
     // dd($request->all());
-    
+
     if ($lorry_receipt->invoice_generated == 1) {
       return redirect()->route('lorry_receipts.index')->with('error', 'Cannot edit Lorry Receipt as invoice has already been generated.');
     }
@@ -951,7 +950,7 @@ public function getLinkedLRs($linkedLrId)
           }
         ],
       ]);
-     
+
       $lorry_receipt->update($validated);
       return redirect()->route('lorry_receipts.index')->with('success', 'Lorry Receipt updated successfully! Only Memo ID could be updated as the LR is already delivered.');
     }
@@ -1002,10 +1001,10 @@ public function getLinkedLRs($linkedLrId)
       'damage_amount' => 'nullable|numeric',
       'shortage_amount' => 'nullable|numeric',
       'transporter_type' => 'nullable|in:owner,agency',
-      
+
     ]);
-   //if mamo_id is null and freight booking id exist for that lr than delivery status to be in-progress
-  
+    //if mamo_id is null and freight booking id exist for that lr than delivery status to be in-progress
+
 
 
 
@@ -1019,9 +1018,9 @@ public function getLinkedLRs($linkedLrId)
     if ($validated['gr_number'] == null) {
       // Remove "LR" prefix, then trim leading zeros
       $validated['gr_number'] = ltrim(str_ireplace('LR', '', $validated['lr_number']), '0');
-  }
+    }
 
-  // dd($validated['gr_number']);
+    // dd($validated['gr_number']);
 
 
 
@@ -1055,8 +1054,8 @@ public function getLinkedLRs($linkedLrId)
 
     // Add company_id to validated data
     $validated['company_id'] = auth()->user()->company_id;
-   
-   
+
+
     $lorry_receipt->update($validated);
     return redirect()->route('lorry_receipts.index')->with('success', 'Lorry Receipt updated successfully!');
   }
@@ -1236,5 +1235,18 @@ public function getLinkedLRs($linkedLrId)
       ->get(['id', 'lr_number']);
 
     return response()->json($lorryReceipts);
+  }
+
+  public function getReferencesForTransporterTruck($transporterId, $truckId)
+  {
+    $lrs = LorryReceipt::where('transporter_id', $transporterId)
+      ->where('truck_id', $truckId)
+      ->where('company_id', auth()->user()->company_id)
+      ->get(['reference_by']);
+
+    $references = $lrs->pluck('reference_by')->unique()->filter();
+    $references = Transporter::whereIn('id', $references)->get(['id', 'name']);
+
+    return response()->json($references);
   }
 }
