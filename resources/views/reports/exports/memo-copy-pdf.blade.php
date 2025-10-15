@@ -77,11 +77,7 @@
         $customer = $lrs->first() ? $lrs->first()->customer : null;
     @endphp
 
-    <div class="header">
-        <h2>{{ $company->name }}</h2>
-        <p>{{ $company->address }}, {{ optional($company->city)->name }}</p>
-        <p>Phone: {{ $company->contact_number }}</p>
-    </div>
+    
 
     @include('reports.exports.memo-copy')
 
