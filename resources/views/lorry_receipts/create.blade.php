@@ -199,8 +199,7 @@
                     <div class="row mb-3">
                         <div class="col-md-4">
                             <label for="reference_by" class="form-label">Reference By</label>
-                            <select class="form-select" id="reference_by" name="reference_by"
-                                data-placeholder="Search and select reference...">
+                            <select class="form-select" id="reference_by" name="reference_by">
                                 <option value="">Select Reference</option>
                                 @foreach ($agencies as $agency)
                                     <option value="{{ $agency->id }}"
