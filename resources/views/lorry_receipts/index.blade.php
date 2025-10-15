@@ -381,6 +381,32 @@
 
 <script>
 $(document).ready(function() {
+    // Set default date values
+    function setDefaultDates() {
+        const today = new Date();
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(today.getDate() - 7);
+        
+        // Format dates as YYYY-MM-DD
+        const formatDate = (date) => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+
+        // Set default values if not already set
+        if (!$('#fromDate').val()) {
+            $('#fromDate').val(formatDate(oneWeekAgo));
+        }
+        if (!$('#toDate').val()) {
+            $('#toDate').val(formatDate(today));
+        }
+    }
+
+    // Call the function when the page loads
+    setDefaultDates();
+
     // Initialize DataTable
     var table = $('#lorryReceiptsTable').DataTable({
         processing: true,
