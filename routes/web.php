@@ -40,6 +40,7 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/api/transporters/{transporter}/trucks', [TruckController::class, 'getTrucksForTransporter']);
   Route::get('/api/trucks/{truck}/owner-transporters', [TruckController::class, 'getOwnerTransporters']);
   Route::get('/api/trucks/{truck}/agency-transporters', [TruckController::class, 'getAgencyTransporters']);
+  Route::get('/api/trucks/{transporter}/lrs', [TruckController::class, 'getTrucksFromLrs']);
   Route::get('/api/drivers', [DriverController::class, 'getDriversApi']);
   Route::get('/api/lorry_receipts/{id}', [FreightBookingController::class, 'getLorryReceipt']);
   Route::get('/api/transporters/{id}', [FreightBookingController::class, 'getTransporter']);
@@ -56,6 +57,7 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/api/dropdown/cities/{stateId}', [\App\Http\Controllers\Api\DropdownController::class, 'cities']);
   Route::get('/api/lorry-receipts/{customerId}', [LorryReceiptController::class, 'getLorryReceiptsForCustomer']);
   Route::get('/api/invoice-numbers/{customerId}', [InvoiceController::class, 'getInvoiceNumbersForCustomer']);
+  Route::get('/api/references/{transporterId}/{truckId}/lrs', [LorryReceiptController::class, 'getReferencesForTransporterTruck']);
 
   // City and State routes
   Route::get('/cities/{id}', [\App\Http\Controllers\CityController::class, 'show'])->name('cities.show');
@@ -168,7 +170,7 @@ Route::middleware(['auth'])->group(function () {
   Route::post('/freight_bookings/bulk-payment', [FreightBookingController::class, 'bulkPayment'])->name('freight_bookings.bulk_payment');
   Route::post('/freight_bookings/bulk-memo-id', [FreightBookingController::class, 'bulkMemoId'])->name('freight_bookings.bulk_memo_id');
   Route::post('/freight_bookings/payment-history', [FreightBookingController::class, 'getPaymentHistory'])->name('freight_bookings.payment_history');
- 
+
 
 
   // Invoices
@@ -363,5 +365,7 @@ Route::middleware(['auth'])->group(function () {
       Route::get('/bank', [ReportController::class, 'bank'])->name('reports.bank');
       Route::get('/bank-export', [ReportController::class, 'bank_export'])->name('reports.bank-export');
       Route::get('/voucher-receipt-export', [ReportController::class, 'voucher_receipt_export'])->name('reports.voucher-receipt-export');
+      Route::get('/transporter-report', [ReportController::class, 'transporter_report'])->name('reports.transporter-report');
+      Route::get('/transporter-report-export', [ReportController::class, 'transporter_report_export'])->name('reports.transporter-report-export');
   });
 });

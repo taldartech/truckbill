@@ -22,18 +22,18 @@ class TruckController extends Controller
         if ($request->ajax()) {
             return $this->getTrucksData($request);
         }
-        
+
         $transporters = \App\Models\Transporter::where('company_id', auth()->user()->company_id)->get();
         $drivers = \App\Models\Driver::all();
         return view('trucks.index', compact('transporters', 'drivers'));
     }
-    
+
     private function getTrucksData(Request $request)
     {
         $query = \App\Models\Truck::with(['transporter', 'driver'])->whereHas('transporter', function($q) {
             $q->where('company_id', auth()->user()->company_id);
         });
-        
+
         // Handle search
         if ($request->has('search') && $request->search['value']) {
             $searchValue = $request->search['value'];
@@ -49,7 +49,7 @@ class TruckController extends Controller
                   });
             });
         }
-        
+
         // Handle column-specific search
         if ($request->has('columns')) {
             foreach ($request->columns as $index => $column) {
@@ -79,12 +79,12 @@ class TruckController extends Controller
                 }
             }
         }
-        
+
         // Handle sorting
         if ($request->has('order')) {
             $orderColumn = $request->order[0]['column'];
             $orderDirection = $request->order[0]['dir'];
-            
+
             switch ($orderColumn) {
                 case 0: // ID
                     $query->orderBy('id', $orderDirection);
@@ -114,19 +114,19 @@ class TruckController extends Controller
         } else {
             $query->orderBy('created_at', 'desc');
         }
-        
+
         // Get total count before pagination
         $totalQuery = \App\Models\Truck::whereHas('transporter', function($q) {
             $q->where('company_id', auth()->user()->company_id);
         });
         $totalRecords = $totalQuery->count();
         $filteredRecords = $query->count();
-        
+
         // Handle pagination
         $start = $request->start ?? 0;
         $length = $request->length ?? 10;
         $trucks = $query->skip($start)->take($length)->get();
-        
+
         // Format data for DataTables
         $data = $trucks->map(function($truck, $index) use ($start) {
             return [
@@ -142,7 +142,7 @@ class TruckController extends Controller
                         : ''  // empty string for non-admins
             ];
         });
-        
+
         return response()->json([
             'draw' => intval($request->draw),
             'recordsTotal' => $totalRecords,
@@ -150,11 +150,11 @@ class TruckController extends Controller
             'data' => $data
         ]);
     }
-    
+
     private function getActionButtons($truck)
     {
         $buttons = '<div class="d-flex gap-1">';
-        
+
         // Assign Driver button
         $buttons .= '<button type="button" class="btn btn-sm btn-outline-success assign-driver-btn" title="Assign Driver" data-bs-toggle="tooltip" ';
         $buttons .= 'data-truck-id="' . $truck->id . '" ';
@@ -164,14 +164,14 @@ class TruckController extends Controller
         $buttons .= 'data-current-driver-id="' . ($truck->driver_id ?: '') . '" ';
         $buttons .= 'data-current-driver-name="' . htmlspecialchars($truck->driver->name ?? '') . '">';
         $buttons .= '<i class="bi bi-person-plus"></i></button>';
-        
+
         // Delete button
         $deleteUrl = route('trucks.destroy', $truck->id);
         $buttons .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this truck?\')">';
         $buttons .= csrf_field() . method_field('DELETE');
         $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete Truck" data-bs-toggle="tooltip">';
         $buttons .= '<i class="bi bi-trash"></i></button></form>';
-        
+
         $buttons .= '</div>';
         return $buttons;
     }
@@ -226,7 +226,7 @@ class TruckController extends Controller
         $transporter = \App\Models\Transporter::where('company_id', auth()->user()->company_id)
             ->where('id', $transporter_id)
             ->firstOrFail();
-            
+
         $drivers = \App\Models\Driver::all();
         return view('trucks.create', compact('transporter', 'drivers'));
     }
@@ -250,7 +250,7 @@ class TruckController extends Controller
 
         try {
             $truck = \App\Models\Truck::create($validated);
-            
+
             // Return JSON response for AJAX requests
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
@@ -259,14 +259,14 @@ class TruckController extends Controller
                     'truck' => $truck
                 ]);
             }
-            
+
             return redirect()->route('trucks.index')->with('success', 'Truck created successfully!');
-            
+
         } catch (\Illuminate\Database\QueryException $e) {
             // Handle database constraint violations
             if ($e->errorInfo[1] == 1062) { // Duplicate entry error
                 $errorMessage = 'This truck number is already registered in the system. Please use a different truck number.';
-                
+
                 if ($request->expectsJson() || $request->ajax()) {
                     return response()->json([
                         'success' => false,
@@ -274,20 +274,20 @@ class TruckController extends Controller
                         'errors' => ['truck_number' => [$errorMessage]]
                     ], 422);
                 }
-                
+
                 return redirect()->back()->withErrors(['truck_number' => $errorMessage])->withInput();
             }
-            
+
             // Handle other database errors
             $genericError = 'Unable to create truck due to a database error. Please try again.';
-            
+
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => false,
                     'message' => $genericError
                 ], 500);
             }
-            
+
             return redirect()->back()->withErrors(['general' => $genericError])->withInput();
         }
     }
@@ -324,7 +324,7 @@ class TruckController extends Controller
 
         try {
             $truck->update($validated);
-            
+
             // Return JSON response for AJAX requests
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
@@ -333,14 +333,14 @@ class TruckController extends Controller
                     'truck' => $truck->fresh()
                 ]);
             }
-            
+
             return redirect()->route('trucks.index')->with('success', 'Truck updated successfully!');
-            
+
         } catch (\Illuminate\Database\QueryException $e) {
             // Handle database constraint violations
             if ($e->errorInfo[1] == 1062) { // Duplicate entry error
                 $errorMessage = 'This truck number is already registered in the system. Please use a different truck number.';
-                
+
                 if ($request->expectsJson() || $request->ajax()) {
                     return response()->json([
                         'success' => false,
@@ -348,20 +348,20 @@ class TruckController extends Controller
                         'errors' => ['truck_number' => [$errorMessage]]
                     ], 422);
                 }
-                
+
                 return redirect()->back()->withErrors(['truck_number' => $errorMessage])->withInput();
             }
-            
+
             // Handle other database errors
             $genericError = 'Unable to update truck due to a database error. Please try again.';
-            
+
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => false,
                     'message' => $genericError
                 ], 500);
             }
-            
+
             return redirect()->back()->withErrors(['general' => $genericError])->withInput();
         }
     }
@@ -371,7 +371,7 @@ class TruckController extends Controller
         try {
             // Soft delete the truck
             $truck->delete();
-            
+
             // Return JSON response for AJAX requests
             if (request()->expectsJson() || request()->ajax()) {
                 return response()->json([
@@ -379,20 +379,20 @@ class TruckController extends Controller
                     'message' => 'Truck deleted successfully!'
                 ]);
             }
-            
+
             return redirect()->route('trucks.index')->with('success', 'Truck deleted successfully!');
-            
+
         } catch (\Exception $e) {
             // Handle any errors during deletion
             $errorMessage = 'Unable to delete truck. Please try again.';
-            
+
             if (request()->expectsJson() || request()->ajax()) {
                 return response()->json([
                     'success' => false,
                     'message' => $errorMessage
                 ], 500);
             }
-            
+
             return redirect()->back()->withErrors(['general' => $errorMessage]);
         }
     }
@@ -401,12 +401,12 @@ class TruckController extends Controller
     {
         // Load relationships
         $truck->load(['transporter', 'driver']);
-        
+
         // Check if user has access to this truck (same company)
         if ($truck->transporter->company_id !== auth()->user()->company_id) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
-        
+
         // Format the data for display
         $truckData = [
             'id' => $truck->id,
@@ -431,7 +431,7 @@ class TruckController extends Controller
             'created_at' => $truck->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y h:i A'),
             'updated_at' => $truck->updated_at->setTimezone('Asia/Kolkata')->format('d-m-Y h:i A'),
         ];
-        
+
         return response()->json($truckData);
     }
 
@@ -498,5 +498,12 @@ class TruckController extends Controller
             'Open', 'Closed', 'Container', 'Trailer', 'Tanker', 'Refrigerated', 'Flatbed', 'Tipper', 'Other'
         ];
         return view('trucks.report', compact('trucks', 'total', 'transporters', 'drivers', 'truckTypes'));
+    }
+
+    public function getTrucksFromLrs($transporterId)
+    {
+        $lrs = \App\Models\LorryReceipt::where('transporter_id', $transporterId)->get(['truck_id']);
+        $trucks = \App\Models\Truck::whereIn('id', $lrs->pluck('truck_id'))->get();
+        return response()->json($trucks);
     }
 }

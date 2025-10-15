@@ -746,6 +746,12 @@
                           <p>Memo Copy</p>
                         </a>
                       </li>
+                      <li class="nav-item">
+                        <a href="{{ route('reports.transporter-report') }} " class="nav-link{{ Request::is('reports/transporter-report') ? ' active' : '' }}">
+                          <i class="fas fa-file-alt"></i>
+                          <p>Transporter Report</p>
+                        </a>
+                      </li>
                     </ul>
                   </li>
 
