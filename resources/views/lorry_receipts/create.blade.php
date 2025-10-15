@@ -670,11 +670,17 @@
                 const selectedType = this.value;
                 const selectedTruckId = truckSelect.value;
 
+                document.querySelectorAll('input[type="hidden"][name="transporter_id"]').forEach(el => el.remove());
+
                 transporterSelect.innerHTML = '<option value="">Select Transporter</option>';
                 transporterSelect.disabled = false; // Reset disabled state
 
+                
+
+                transporterLabel.textContent = selectedType === 'owner' ? 'Truck Owner *' : 'Agency *';
+
                 if (selectedType === 'owner') {
-                    transporterLabel.textContent = 'Truck Owner *';
+                    // transporterLabel.textContent = 'Truck Owner *';
 
                     // If a truck is already selected, auto-select its owner
                     if (selectedTruckId && trucksData[selectedTruckId]) {
@@ -693,7 +699,7 @@
                             });
                     }
                 } else if (selectedType === 'agency') {
-                    transporterLabel.textContent = 'Agency *';
+                    // transporterLabel.textContent = 'Agency *';
                     // Fetch agencies
                     fetch('/api/agencies')
                         .then(response => response.json())
