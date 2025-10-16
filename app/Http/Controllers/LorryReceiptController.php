@@ -894,9 +894,10 @@ class LorryReceiptController extends Controller
       })
       ->get(); // Load both transporter and driver relationships
 
-    $transporters = Transporter::all();
-    $truckOwners = Transporter::where('is_owner', 1)->get();
-    $agencies = Transporter::where('is_owner', 0)->get();
+
+    $transporters = Transporter::where('company_id', auth()->user()->company_id)->get();
+    $truckOwners = Transporter::where('company_id', auth()->user()->company_id)->where('is_owner', 1)->get();
+    $agencies = Transporter::where('company_id', auth()->user()->company_id)->where('is_owner', 0)->get();
     $customers = Customer::where('company_id', auth()->user()->company_id)->orderBy('name')->get();
     $consignees = Consignee::where('company_id', auth()->user()->company_id)->orderBy('name')->get();
     $goodsTypes = GoodType::all();
