@@ -543,4 +543,45 @@ class TruckController extends Controller
         $trucks = \App\Models\Truck::whereIn('id', $lrs->pluck('truck_id'))->get();
         return response()->json($trucks);
     }
+
+    /**
+     * Assign a truck owner to a truck
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function assignOwner(Request $request)
+    {
+        $request->validate([
+            'truck_id' => 'required|exists:trucks,id',
+            'transporter_id' => 'required|exists:transporters,id,is_owner,1,company_id,' . auth()->user()->company_id,
+        ]);
+
+        try {
+            $truck = \App\Models\Truck::findOrFail($request->truck_id);
+            
+            // Check if the truck already has this owner
+            if ($truck->transporter_id == $request->transporter_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This truck is already assigned to the selected owner.'
+                ]);
+            }
+
+            $truck->transporter_id = $request->transporter_id;
+            $truck->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Truck owner assigned successfully.'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error assigning truck owner: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to assign truck owner. Please try again.'
+            ], 500);
+        }
+    }
 }
