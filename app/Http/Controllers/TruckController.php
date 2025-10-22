@@ -30,9 +30,17 @@ class TruckController extends Controller
 
     private function getTrucksData(Request $request)
     {
-        $query = \App\Models\Truck::with(['transporter', 'driver'])->whereHas('transporter', function($q) {
-            $q->where('company_id', auth()->user()->company_id);
-        });
+        // $query = \App\Models\Truck::with(['transporter', 'driver'])->whereHas('transporter', function($q) {
+        //     $q->where('company_id', auth()->user()->company_id);
+           
+        // });
+        $query = \App\Models\Truck::with(['transporter', 'driver'])
+    ->where(function ($q) {
+        $q->whereHas('transporter', function ($subQuery) {
+            $subQuery->where('company_id', auth()->user()->company_id);
+        })
+        ->orWhereNull('transporter_id');  // Include trucks with no transporter
+    });
 
         // Handle search
         if ($request->has('search') && $request->search['value']) {
@@ -116,8 +124,14 @@ class TruckController extends Controller
         }
 
         // Get total count before pagination
-        $totalQuery = \App\Models\Truck::whereHas('transporter', function($q) {
-            $q->where('company_id', auth()->user()->company_id);
+        // $totalQuery = \App\Models\Truck::whereHas('transporter', function($q) {
+        //     $q->where('company_id', auth()->user()->company_id);
+        // });
+        $totalQuery = \App\Models\Truck::where(function ($q) {
+            $q->whereHas('transporter', function ($subQuery) {
+                $subQuery->where('company_id', auth()->user()->company_id);
+            })
+            ->orWhereNull('transporter_id');
         });
         $totalRecords = $totalQuery->count();
         $filteredRecords = $query->count();
@@ -160,7 +174,9 @@ class TruckController extends Controller
         $buttons .= 'data-truck-id="' . $truck->id . '" ';
         $buttons .= 'data-truck-number="' . htmlspecialchars($truck->truck_number) . '" ';
         $buttons .= 'data-truck-type="' . htmlspecialchars($truck->truck_type) . '" ';
-        $buttons .= 'data-transporter-name="' . htmlspecialchars($truck->transporter->name) . '" ';
+        // $buttons .= 'data-transporter-name="' . htmlspecialchars($truck->transporter->name) . '":"-" ';
+        $buttons .= 'data-transporter-name="' . htmlspecialchars($truck->transporter ? $truck->transporter->name : '-') . '" ';
+
         $buttons .= 'data-current-driver-id="' . ($truck->driver_id ?: '') . '" ';
         $buttons .= 'data-current-driver-name="' . htmlspecialchars($truck->driver->name ?? '') . '">';
         $buttons .= '<i class="bi bi-person-plus"></i></button>';
@@ -171,6 +187,18 @@ class TruckController extends Controller
         $buttons .= csrf_field() . method_field('DELETE');
         $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete Truck" data-bs-toggle="tooltip">';
         $buttons .= '<i class="bi bi-trash"></i></button></form>';
+
+        //show button to assign truck owner for those whose transporter_id is null
+        if ($truck->transporter_id == null) {
+            $buttons .= '<button type="button" class="btn btn-sm btn-outline-primary assign-owner-btn" title="Assign Truck Owner" data-bs-toggle="tooltip" ';
+            $buttons .= 'data-truck-id="' . $truck->id . '" ';
+            $buttons .= 'data-truck-number="' . htmlspecialchars($truck->truck_number) . '" ';
+            $buttons .= 'data-truck-type="' . htmlspecialchars($truck->truck_type) . '" ';
+            $buttons .= 'data-transporter-name="' . htmlspecialchars($truck->transporter ? $truck->transporter->name : '-') . '" ';
+            $buttons .= 'data-current-driver-id="' . ($truck->driver_id ?: '') . '" ';
+            $buttons .= 'data-current-driver-name="' . htmlspecialchars($truck->driver->name ?? '') . '">';
+            $buttons .= '<i class="bi bi-truck"></i></button>';
+        }
 
         $buttons .= '</div>';
         return $buttons;
@@ -365,6 +393,15 @@ class TruckController extends Controller
             return redirect()->back()->withErrors(['general' => $genericError])->withInput();
         }
     }
+    public function removeTransporter(\App\Models\Truck $truck)
+{
+
+    $truck->update(['transporter_id' => null]);
+    
+    return response()->json([
+        'message' => 'Truck has been removed from the transporter successfully'
+    ]);
+}
 
     public function destroy(\App\Models\Truck $truck)
     {
