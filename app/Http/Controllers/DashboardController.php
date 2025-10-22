@@ -11,6 +11,7 @@ use App\Models\LorryReceipt;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\FreightBooking;
 
 class DashboardController extends Controller
 {
@@ -88,6 +89,18 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
+            
+
+            $expiredEwayBills = FreightBooking::where('eway_bill_expiry', '<=', now()->endOfDay())
+
+->with('lr')
+            ->where('company_id', auth()->user()->company_id)
+            
+            ->where('eway_bill_expiry', '>=', now()->subDays(2)->startOfDay())
+            
+            ->orderBy('eway_bill_expiry', 'desc')
+            ->get();
+
         return view('dashboard', compact(
             'monthlyStats',
             'revenueData',
@@ -96,7 +109,8 @@ class DashboardController extends Controller
             'pendingApprovals',
             'topTrucks',
             'topTransporters',
-            'topConsignees'
+            'topConsignees',
+            'expiredEwayBills'
         ));
     }
 }

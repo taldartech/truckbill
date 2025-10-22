@@ -283,6 +283,66 @@
                 </div>
             </div>
         </div>
+
+        {{-- Expired Eway bills --}}
+        <div class="row mt-4">
+            <div class="col-md-12 col-lg-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Expired Eway Bills</h3>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>SR no.</th>
+                                        <th>LR Number</th>
+                                        <th>Truck Number</th>
+                                        <th>Driver Mobile Number</th>
+                                        <th>Destination</th>
+                                        <th>Expiry Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($expiredEwayBills as $ewayBill)
+                                    <tr>
+                                        <td>{{ $loop->iteration }}</td>
+                                        <td>{{ $ewayBill->lr->lr_number }}</td>
+                                        <td>{{ $ewayBill->lr->truck->truck_number }}</td>
+                                        <td>{{ $ewayBill->lr->truck->driver->mobile }}</td>
+                                        <td>{{ $ewayBill->lr->destination_city }}</td>
+                                        <td 
+    @php
+        $expiryDate = \Carbon\Carbon::parse($ewayBill->eway_bill_expiry);
+        $today = \Carbon\Carbon::today();
+    @endphp
+
+    @if ($expiryDate->isSameDay($today))
+        style="background-color: #FF0000;"
+    @elseif ($expiryDate->isSameDay($today->copy()->subDay()))
+        style="background-color: #FFFF00;"
+    
+    @else
+        style="background-color: #00FF00;"
+    @endif
+>
+    {{ $ewayBill->eway_bill_expiry }}
+</td>
+
+                                    </tr>
+                                    @empty
+                                    <tr>
+                                        <td colspan="2" class="text-center">No expired Eway bills</td>
+                                    </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 @endsection
