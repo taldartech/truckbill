@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Http\Controllers;
+use Carbon\Carbon;
+
 
 use Illuminate\Http\Request;
 
@@ -148,9 +150,41 @@ class CompanyController extends Controller
         $buttons = '<div class="d-flex gap-1">';
 
         // Edit button
-        $editUrl = route('company.edit', $company->id);
-        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit Company">';
-        $buttons .= '<i class="bi bi-pencil"></i></a>';
+        //this edit button should only visible when their in no invoice created  for that financial year
+        //take invoice value from 1 st april of that year to 21 march of next year
+        //take latest year
+       // Determine start and end of financial year
+$startOfYear = Carbon::now()->month >= 4
+? Carbon::create(Carbon::now()->year, 4, 1)->startOfDay()
+: Carbon::create(Carbon::now()->year - 1, 4, 1)->startOfDay();
+
+$endOfYear = $startOfYear->copy()->addYear()->subDay()->endOfDay();
+
+// Count invoices for the company in financial year
+    //take latest year
+       // Determine start and end of financial year
+       $invoiceCount = \App\Models\Invoice::where('company_id', $company->id)
+       ->whereBetween('created_at', [$startOfYear, $endOfYear])
+       ->count();
+   
+   if ($invoiceCount == 0) {
+       $editUrl = route('company.edit', $company->id);
+       $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit Company">
+                       <i class="bi bi-pencil"></i></a>';
+   } else {
+       $buttons .= '<a href="javascript:void(0)" class="btn btn-sm btn-info disabled" title="Edit Disabled">
+                       <i class="bi bi-pencil"></i></a>';
+   }
+
+        // if ($invoiceCount == 0) {
+        //     $editUrl = route('company.edit', $company->id);
+        //     $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit Company">';
+        //     $buttons .= '<i class="bi bi-pencil"></i></a>';
+        // }
+        // else{
+        //     $buttons .= '<a href="javascript:void(0)" class="btn btn-sm btn-info" title="Edit Company">';
+        //     $buttons .= '<i class="bi bi-pencil"></i></a>';
+        // }
 
         // Delete button
         $deleteUrl = route('company.destroy', $company->id);
