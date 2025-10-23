@@ -42,7 +42,7 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/api/trucks/{truck}/agency-transporters', [TruckController::class, 'getAgencyTransporters']);
   Route::get('/api/trucks/{transporter}/lrs', [TruckController::class, 'getTrucksFromLrs']);
   Route::patch('/trucks/{truck}/remove-transporter', [TruckController::class, 'removeTransporter'])
-    ->name('trucks.remove-transporter');
+  ->name('trucks.remove-transporter');
   Route::get('/api/drivers', [DriverController::class, 'getDriversApi']);
   Route::get('/api/lorry_receipts/{id}', [FreightBookingController::class, 'getLorryReceipt']);
   Route::get('/api/transporters/{id}', [FreightBookingController::class, 'getTransporter']);
@@ -126,14 +126,20 @@ Route::middleware(['auth'])->group(function () {
   Route::delete('/advance-payments/{advancePayment}', [AdvancePaymentController::class, 'destroy'])->name('advance-payments.destroy');
 
   // Truck Management
-  Route::prefix('trucks')->group(function () {
-    Route::get('/', [TruckController::class, 'index'])->name('trucks.index');
-    Route::post('/', [TruckController::class, 'store'])->name('trucks.store');
-    Route::get('/{truck}/edit', [TruckController::class, 'edit'])->name('trucks.edit');
-    Route::put('/{truck}', [TruckController::class, 'update'])->name('trucks.update');
-    Route::delete('/{truck}', [TruckController::class, 'destroy'])->name('trucks.destroy');
-    Route::post('/assign-owner', [TruckController::class, 'assignOwner'])->name('trucks.assign-owner');
-    Route::patch('/{truck}/remove-transporter', [TruckController::class, 'removeTransporter'])->name('trucks.remove-transporter');
+  Route::get('/trucks', [TruckController::class, 'index'])->name('trucks.index');
+  Route::get('/trucks/create/{transporter_id}', [TruckController::class, 'create'])->name('trucks.create');
+  Route::post('/trucks', [TruckController::class, 'store'])->name('trucks.store');
+  Route::get('/trucks/{truck}', [TruckController::class, 'show'])->name('trucks.show');
+  Route::get('/trucks/{truck}/edit', [TruckController::class, 'edit'])->name('trucks.edit');
+  Route::put('/trucks/{truck}', [TruckController::class, 'update'])->name('trucks.update');
+  Route::put('/trucks/{truck}/assign-driver', [TruckController::class, 'assignDriver'])->name('trucks.assign-driver');
+  Route::delete('/trucks/{truck}', [TruckController::class, 'destroy'])->name('trucks.destroy');
+  Route::post('/assign-owner', [TruckController::class, 'assignOwner'])->name('trucks.assign-owner');
+  // Route::patch('/{truck}/remove-transporter', [TruckController::class, 'removeTransporter'])->name('trucks.remove-transporter');
+  // Route::get('/check-truck-number', [TruckController::class, 'checkTruckNumber'])->name('check.truck.number');
+  Route::get('/check-truck-number', function (Illuminate\Http\Request $request) {
+    $exists = \App\Models\Truck::where('truck_number', $request->truck_number)->exists();
+    return response()->json(['exists' => $exists]);
   });
 
   // Truck Reporting
