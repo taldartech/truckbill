@@ -312,23 +312,28 @@
                                         <td>{{ $ewayBill->lr->truck->truck_number }}</td>
                                         <td>{{ $ewayBill->lr->truck->driver->mobile }}</td>
                                         <td>{{ $ewayBill->lr->destination_city }}</td>
-                                        <td 
-    @php
-        $expiryDate = \Carbon\Carbon::parse($ewayBill->eway_bill_expiry);
-        $today = \Carbon\Carbon::today();
-    @endphp
+                                        @php
+                                        
+                                    
+                                        $expiryDate = \Carbon\Carbon::parse($ewayBill->eway_bill_expiry);
+                                        $today = \Carbon\Carbon::today();
+                                    @endphp
+                                    
+                                    <td 
+                                        @if ($expiryDate->isSameDay($today) || $expiryDate->lessThan($today))
+                                            style="background-color: #FF0000; color: white;"
+                                        @elseif ($expiryDate->isSameDay($today->copy()->addDay()))
+                                            style="background-color: #FFFF00;"
+                                        @else
+                                            @if($expiryDate->isSameDay($today->copy()->addDays(2)))
+                                            style="background-color: #00FF00;"
+                                            @endif
+                                        @endif
+                                    >
+                                        {{ $ewayBill->eway_bill_expiry }}
+                                    </td>
+                                    
 
-    @if ($expiryDate->isSameDay($today))
-        style="background-color: #FF0000;"
-    @elseif ($expiryDate->isSameDay($today->copy()->subDay()))
-        style="background-color: #FFFF00;"
-    
-    @else
-        style="background-color: #00FF00;"
-    @endif
->
-    {{ $ewayBill->eway_bill_expiry }}
-</td>
 
                                     </tr>
                                     @empty

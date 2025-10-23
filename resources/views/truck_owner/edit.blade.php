@@ -343,6 +343,13 @@
                                             data-truck-number="{{ $truck->truck_number }}">
                                         <i class="bi bi-trash"></i>
                                     </button>
+                                    {{-- add remove icon here --}}
+                                    <button type="button" class="btn btn-sm btn-outline-danger remove-truck-btn" 
+                                            title="Remove Truck" 
+                                            data-truck-id="{{ $truck->id }}"
+                                            data-truck-number="{{ $truck->truck_number }}">
+                                        <i class="bi bi-x-circle"></i>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -1010,6 +1017,67 @@
                     
                     setTimeout(function() {
                         $('.alert-danger').fadeOut();
+                    }, 5000);
+                }
+            });
+        }
+    });
+
+    // Handle truck removal (unlink from transporter)
+    $(document).on('click', '.remove-truck-btn', function() {
+        const truckId = $(this).data('truck-id');
+        const truckNumber = $(this).data('truck-number');
+        
+        if (confirm(`Are you sure you want to remove truck "${truckNumber}" from this transporter?`)) {
+            $.ajax({
+                url: `/trucks/${truckId}/remove-transporter`,
+                type: 'POST',
+                data: {
+                    '_token': $('meta[name="csrf-token"]').attr('content'),
+                    '_method': 'PATCH'
+                },
+                success: function(response) {
+                    // Remove the row from the table
+                    $(`#truck-row-${truckId}`).fadeOut(400, function() {
+                        $(this).remove();
+                    });
+                    
+                    // Show success message
+                    $('body').prepend(`
+                        <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                            <i class="bi bi-check-circle"></i>
+                            <strong>Success!</strong> Truck "${truckNumber}" has been removed from this transporter.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    `);
+                    
+                    // Auto-remove the alert after 5 seconds
+                    setTimeout(() => {
+                        $('.alert').fadeOut(400, function() {
+                            $(this).remove();
+                        });
+                    }, 5000);
+                },
+                error: function(xhr) {
+                    let errorMessage = 'An error occurred while removing the truck from the transporter.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    }
+                    
+                    // Show error message
+                    $('body').prepend(`
+                        <div class="alert alert-danger alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>Error!</strong> ${errorMessage}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    `);
+                    
+                    // Auto-remove the alert after 5 seconds
+                    setTimeout(() => {
+                        $('.alert').fadeOut(400, function() {
+                            $(this).remove();
+                        });
                     }, 5000);
                 }
             });

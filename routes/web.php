@@ -41,6 +41,8 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/api/trucks/{truck}/owner-transporters', [TruckController::class, 'getOwnerTransporters']);
   Route::get('/api/trucks/{truck}/agency-transporters', [TruckController::class, 'getAgencyTransporters']);
   Route::get('/api/trucks/{transporter}/lrs', [TruckController::class, 'getTrucksFromLrs']);
+  Route::patch('/trucks/{truck}/remove-transporter', [TruckController::class, 'removeTransporter'])
+  ->name('trucks.remove-transporter');
   Route::get('/api/drivers', [DriverController::class, 'getDriversApi']);
   Route::get('/api/lorry_receipts/{id}', [FreightBookingController::class, 'getLorryReceipt']);
   Route::get('/api/transporters/{id}', [FreightBookingController::class, 'getTransporter']);
@@ -132,6 +134,8 @@ Route::middleware(['auth'])->group(function () {
   Route::put('/trucks/{truck}', [TruckController::class, 'update'])->name('trucks.update');
   Route::put('/trucks/{truck}/assign-driver', [TruckController::class, 'assignDriver'])->name('trucks.assign-driver');
   Route::delete('/trucks/{truck}', [TruckController::class, 'destroy'])->name('trucks.destroy');
+  Route::post('/assign-owner', [TruckController::class, 'assignOwner'])->name('trucks.assign-owner');
+  // Route::patch('/{truck}/remove-transporter', [TruckController::class, 'removeTransporter'])->name('trucks.remove-transporter');
   // Route::get('/check-truck-number', [TruckController::class, 'checkTruckNumber'])->name('check.truck.number');
   Route::get('/check-truck-number', function (Illuminate\Http\Request $request) {
     $exists = \App\Models\Truck::where('truck_number', $request->truck_number)->exists();

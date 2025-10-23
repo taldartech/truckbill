@@ -178,7 +178,52 @@
         </div>
     </div>
 </div>
-@endsection
+
+<!-- Assign Owner Modal -->
+<div class="modal fade" id="assignOwnerModal" tabindex="-1" aria-labelledby="assignOwnerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="assignOwnerModalLabel">Assign Truck Owner</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="assignOwnerForm" action="{{ route('trucks.assign-owner') }}" method="POST">
+                @csrf
+                <input type="hidden" name="truck_id" id="assignTruckId">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="transporter_id" class="form-label">Select Truck Owner</label>
+                        <select class="form-select select2" id="transporter_id" name="transporter_id" required>
+                            <option value="">-- Select Owner --</option>
+                            @foreach(\App\Models\Transporter::where('is_owner', 1)->where('company_id', auth()->user()->company_id)->get() as $owner)
+                                <option value="{{ $owner->id }}">{{ $owner->name }} ({{ $owner->pan_number ?? 'No PAN' }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Assign Owner</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@push('styles')
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    .select2-container--default .select2-selection--single {
+        height: 38px;
+        padding: 5px;
+        border: 1px solid #ced4da;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px;
+    }
+</style>
+@endpush
 
 @push('scripts')
 <!-- DataTables JS -->
@@ -625,6 +670,60 @@ $(document).ready(function() {
             }
         });
     });
+    
+    // Initialize Select2
+    $('.select2').select2({
+        placeholder: 'Search for a truck owner...',
+        allowClear: true,
+        width: '100%',
+        dropdownParent: $('#assignOwnerModal')
+    });
+
+    // Handle assign owner button click
+    $(document).on('click', '.assign-owner-btn', function() {
+        var truckId = $(this).data('truck-id');
+        var truckNumber = $(this).data('truck-number');
+        
+        $('#assignTruckId').val(truckId);
+        $('#assignOwnerModalLabel').text('Assign Owner for Truck: ' + truckNumber);
+        $('#assignOwnerModal').modal('show');
+    });
+
+    // Handle form submission
+    $('#assignOwnerForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        $.ajax({
+            url: $(this).attr('action'),
+            type: 'POST',
+            data: $(this).serialize(),
+            success: function(response) {
+                if (response.success) {
+                    $('#assignOwnerModal').modal('hide');
+                    // Show success message
+                    alert('Truck owner assigned successfully!');
+                    // Reload the page to reflect changes
+                    location.reload();
+                } else {
+                    alert('Error: ' + (response.message || 'Failed to assign owner'));
+                }
+            },
+            error: function(xhr) {
+                let errorMessage = 'An error occurred while assigning the owner.';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                }
+                alert(errorMessage);
+            }
+        });
+    });
 });
 </script>
 @endpush
+
+@push('scripts')
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+@endpush
+
+@endsection
