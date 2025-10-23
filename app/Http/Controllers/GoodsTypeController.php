@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\GoodsType;
+use App\Models\GoodType;
 use Illuminate\Http\Request;
 
 class GoodsTypeController extends Controller
@@ -13,20 +13,20 @@ class GoodsTypeController extends Controller
         if ($request->ajax()) {
             return $this->getGoodsTypesData($request);
         }
-        
+
         return view('master.goods-types');
     }
-    
+
     private function getGoodsTypesData(Request $request)
     {
-        $query = GoodsType::query();
-        
+        $query = GoodType::query();
+
         // Handle search
         if ($request->has('search') && $request->search['value']) {
             $searchValue = $request->search['value'];
             $query->where('name', 'like', "%{$searchValue}%");
         }
-        
+
         // Handle column-specific search
         if ($request->has('columns')) {
             foreach ($request->columns as $index => $column) {
@@ -40,12 +40,12 @@ class GoodsTypeController extends Controller
                 }
             }
         }
-        
+
         // Handle sorting
         if ($request->has('order')) {
             $orderColumn = $request->order[0]['column'];
             $orderDirection = $request->order[0]['dir'];
-            
+
             switch ($orderColumn) {
                 case 0: // ID
                     $query->orderBy('id', $orderDirection);
@@ -59,16 +59,16 @@ class GoodsTypeController extends Controller
         } else {
             $query->orderBy('id', 'asc');
         }
-        
+
         // Get total count before pagination
-        $totalRecords = GoodsType::count();
+        $totalRecords = GoodType::count();
         $filteredRecords = $query->count();
-        
+
         // Handle pagination
         $start = $request->start ?? 0;
         $length = $request->length ?? 10;
         $goodsTypes = $query->skip($start)->take($length)->get();
-        
+
         // Format data for DataTables
         $data = $goodsTypes->map(function($goodsType) {
             return [
@@ -77,7 +77,7 @@ class GoodsTypeController extends Controller
                 'actions' => $this->getActionButtons($goodsType)
             ];
         });
-        
+
         return response()->json([
             'draw' => intval($request->draw),
             'recordsTotal' => $totalRecords,
@@ -85,12 +85,12 @@ class GoodsTypeController extends Controller
             'data' => $data
         ]);
     }
-    
+
     private function getActionButtons($goodsType)
     {
         $editUrl = route('master.goods-types.edit', $goodsType->id);
         $deleteUrl = route('master.goods-types.destroy', $goodsType->id);
-        
+
         return '
             <div class="d-flex gap-1">
                 <a href="' . $editUrl . '" class="btn btn-sm btn-info">
@@ -114,12 +114,12 @@ class GoodsTypeController extends Controller
 
     public function store(Request $request)
     {
-       
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
         ]);
 
-        $goodsType = GoodsType::create($validated);
+        $goodsType = GoodType::create($validated);
         if ($request->ajax() || $request->has('from_modal')) {
             return response()->json([
                 'success' => true,
@@ -130,12 +130,12 @@ class GoodsTypeController extends Controller
         return redirect()->route('master.goods-types.index')->with('success', 'Goods type created successfully');
     }
 
-    public function edit(GoodsType $goodsType)
+    public function edit(GoodType $goodsType)
     {
         return view('master.goods-types-form', compact('goodsType'));
     }
 
-    public function update(Request $request, GoodsType $goodsType)
+    public function update(Request $request, GoodType $goodsType)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -145,7 +145,7 @@ class GoodsTypeController extends Controller
         return redirect()->route('master.goods-types.index')->with('success', 'Goods type updated successfully');
     }
 
-    public function destroy(GoodsType $goodsType)
+    public function destroy(GoodType $goodsType)
     {
         $goodsType->delete();
         return redirect()->route('master.goods-types.index')->with('success', 'Goods type deleted successfully');
