@@ -35,4 +35,8 @@ class Company extends Model
     {
         return $this->belongsTo(City::class);
     }
+    public function branches()
+{
+    return $this->hasMany(Branch::class, 'company_id');
+}
 }
