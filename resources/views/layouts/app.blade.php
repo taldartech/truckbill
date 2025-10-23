@@ -294,6 +294,28 @@
                     </ul>
                   </li>
                   <li class="nav-item">
+                    <a class="nav-link{{ (Request::is('branches*') || Request::is('branches/create')) ? ' active' : '' }}"  href="#branchesMenu"  >
+                        <i class="fas fa-money-check-alt"></i>  <p>
+                            Branch
+                            <i class="nav-arrow bi bi-chevron-right"></i>
+                          </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="/branches" class="nav-link{{ Request::is('branches') ? ' active' : '' }}">
+                                <i class="fas fa-list"></i>
+                              <p>Branch List</p>
+                            </a>
+                          </li>
+                          <li class="nav-item">
+                            <a href="/branches/create" class="nav-link{{ Request::is('branches/create') ? ' active' : '' }}">
+                              <i class="fas fa-plus"></i>
+                            <p>Register Branch</p>
+                            </a>
+                          </li>
+                    </ul>
+                  </li>
+                  <li class="nav-item">
                     <a href="/users" class="nav-link{{ Request::is('users*') ? ' active' : '' }}">
                         <i class="fas fa-users"></i>
                         <p>Users</p>

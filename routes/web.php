@@ -27,6 +27,7 @@ use App\Http\Controllers\StateController;
 use App\Http\Controllers\CountryController;
 use App\Http\Controllers\PumpController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\BranchController;
 
 
 // Authentication Routes
@@ -72,6 +73,15 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/dashboard2', function () {
     return view('dashboard2');
   });
+
+  Route::prefix('branches')->group(function () {
+    Route::get('/', [BranchController::class, 'index'])->name('branches.index');
+    Route::get('/create', [BranchController::class, 'create'])->name('branches.create');
+    Route::post('/store', [BranchController::class, 'store'])->name('branches.store');
+    Route::get('/{branch}/edit', [BranchController::class, 'edit'])->name('branches.edit');
+    Route::put('/{branch}', [BranchController::class, 'update'])->name('branches.update');
+    Route::delete('/{branch}', [BranchController::class, 'destroy'])->name('branches.destroy');
+});
 
   // Company Registration
   Route::get('/company/create', [CompanyController::class, 'create'])->name('company.create');
