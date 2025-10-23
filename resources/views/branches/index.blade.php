@@ -95,8 +95,8 @@ $(document).ready(function() {
                 defaultContent: 'N/A'
             },
             {
-                data: 'actions',
-                name: 'actions',
+                data: 'action',
+                name: 'action',
                 orderable: false,
                 searchable: false,
                 width: '120px',
