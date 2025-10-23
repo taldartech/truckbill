@@ -96,7 +96,7 @@ $expiredEwayBills = FreightBooking::with('lr')
     ->where('company_id', auth()->user()->company_id)
     ->where('is_delivered', 0)
     ->where('eway_bill_expiry', '<=', now()->addDays(2)->endOfDay())
-    ->orderBy('eway_bill_expiry', 'desc')
+    ->orderBy('eway_bill_expiry', 'asc')
     ->get();
 
         return view('dashboard', compact(
