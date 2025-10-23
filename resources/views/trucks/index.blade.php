@@ -195,9 +195,9 @@
                         <label for="transporter_id" class="form-label">Select Truck Owner</label>
                         <select class="form-select select2" id="transporter_id" name="transporter_id" required>
                             <option value="">-- Select Owner --</option>
-                            @foreach(\App\Models\Transporter::where('is_owner', 1)->where('company_id', auth()->user()->company_id)->get() as $owner)
-                                <option value="{{ $owner->id }}">{{ $owner->name }} ({{ $owner->pan_number ?? 'No PAN' }})</option>
-                            @endforeach
+                            @foreach($owners as $owner)
+                            <option value="{{ $owner->id }}">{{ $owner->name }} ({{ $owner->pan_number ?? 'No PAN' }})</option>
+                        @endforeach
                         </select>
                     </div>
                 </div>

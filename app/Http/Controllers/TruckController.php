@@ -22,10 +22,14 @@ class TruckController extends Controller
         if ($request->ajax()) {
             return $this->getTrucksData($request);
         }
+           // Get only transporters who are owners
+    $owners = \App\Models\Transporter::where('is_owner', 1)
+    ->where('company_id', auth()->user()->company_id)
+    ->get();
 
         $transporters = \App\Models\Transporter::where('company_id', auth()->user()->company_id)->get();
         $drivers = \App\Models\Driver::all();
-        return view('trucks.index', compact('transporters', 'drivers'));
+        return view('trucks.index', compact('transporters', 'drivers', 'owners'));
     }
 
     private function getTrucksData(Request $request)
