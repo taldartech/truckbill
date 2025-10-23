@@ -82,7 +82,8 @@ class BranchController extends Controller
     // Delete branch
     public function destroy(Branch $branch)
     {
-        $branch->delete();
+        $branch->delete(); // soft delete
         return redirect()->route('branches.index')->with('success', 'Branch deleted successfully!');
     }
+    
 }
