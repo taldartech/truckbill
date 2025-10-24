@@ -84,6 +84,28 @@
                 <!--end::Col-->
             </div>
             <!--end::Row-->
+            <!--begin::Row-->
+            <div class="row g-3">
+                <!--begin::Col-->
+                <div class="col-md-6">
+                    <label for="branch_id" class="form-label">Branch</label>
+                    @if($canEdit)
+                        <select class="form-select" id="branch_id" name="branch_id">
+                            <option value="">Select</option>
+                            @foreach($branches as $branch)
+                                <option value="{{ $branch->id }}" {{ old('branch_id') == $branch->id ? 'selected' : '' }}>{{ $branch->branch_name }}</option>
+                            @endforeach
+                        </select>
+                    @else
+                        <input type="hidden" name="branch_id" value="{{ auth()->user()->branch_id }}">
+                        <div class="form-control-plaintext">{{ auth()->user()->branch->branch_name ?? '' }}</div>
+                    @endif
+                    @error('branch_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="valid-feedback">Looks good!</div>
+                </div>
+                <!--end::Col-->
+            </div>
+            <!--end::Row-->
         </div>
         <!--end::Body-->
         <!--begin::Footer-->

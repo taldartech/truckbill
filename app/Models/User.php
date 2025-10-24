@@ -15,11 +15,17 @@ class User extends Authenticatable
         'password',
         'user_role_id',
         'company_id',
+        'branch_id',
     ];
 
     public function company()
     {
         return $this->belongsTo(Company::class);
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
     }
 
     public function userRole()

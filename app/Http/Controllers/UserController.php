@@ -169,7 +169,8 @@ class UserController extends Controller
     {
         $companies = \App\Models\Company::all();
         $roles = ['admin', 'moderator', 'accountant'];
-        return view('users.create', compact('companies', 'roles'));
+        $branches = \App\Models\Branch::all();
+        return view('users.create', compact('companies', 'roles', 'branches'));
     }
 
     /**

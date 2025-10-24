@@ -1024,65 +1024,89 @@
     });
 
     // Handle truck removal (unlink from transporter)
+    
     $(document).on('click', '.remove-truck-btn', function() {
-        const truckId = $(this).data('truck-id');
-        const truckNumber = $(this).data('truck-number');
+    const truckId = $(this).data('truck-id');
+    const truckNumber = $(this).data('truck-number');
+    const $row = $(`#truck-row-${truckId}`);
+    const $button = $(this);
+    
+    console.log('Remove button clicked for truck ID:', truckId); // Debug log
+    
+    if (confirm(`Are you sure you want to remove truck "${truckNumber}" from this transporter?`)) {
+        // Show loading state
+        $button.prop('disabled', true).html('<i class="bi bi-arrow-repeat fa-spin"></i> Removing...');
         
-        if (confirm(`Are you sure you want to remove truck "${truckNumber}" from this transporter?`)) {
-            $.ajax({
-                url: `/trucks/${truckId}/remove-transporter`,
-                type: 'POST',
-                data: {
-                    '_token': $('meta[name="csrf-token"]').attr('content'),
-                    '_method': 'PATCH'
-                },
-                success: function(response) {
-                    // Remove the row from the table
-                    $(`#truck-row-${truckId}`).fadeOut(400, function() {
-                        $(this).remove();
-                    });
-                    
-                    // Show success message
-                    $('body').prepend(`
-                        <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
-                            <i class="bi bi-check-circle"></i>
-                            <strong>Success!</strong> Truck "${truckNumber}" has been removed from this transporter.
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    `);
-                    
-                    // Auto-remove the alert after 5 seconds
-                    setTimeout(() => {
-                        $('.alert').fadeOut(400, function() {
-                            $(this).remove();
-                        });
-                    }, 5000);
-                },
-                error: function(xhr) {
-                    let errorMessage = 'An error occurred while removing the truck from the transporter.';
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                        errorMessage = xhr.responseJSON.message;
-                    }
-                    
-                    // Show error message
-                    $('body').prepend(`
-                        <div class="alert alert-danger alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
-                            <i class="bi bi-exclamation-triangle"></i>
-                            <strong>Error!</strong> ${errorMessage}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    `);
-                    
-                    // Auto-remove the alert after 5 seconds
-                    setTimeout(() => {
-                        $('.alert').fadeOut(400, function() {
-                            $(this).remove();
-                        });
-                    }, 5000);
-                }
-            });
-        }
-    });
+        console.log('Sending AJAX request...'); // Debug log
+        
+        $.ajax({
+            url: `/trucks/${truckId}/remove-transporter`,
+            type: 'POST',
+            data: {
+                '_token': $('meta[name="csrf-token"]').attr('content'),
+                '_method': 'PATCH'
+            },
+            success: function(response) {
+    console.log('Success response:', response); // Debug log
+    // Re-enable the button in both success and error cases
+    $button.prop('disabled', false).html('<i class="bi bi-x-circle"></i>');
+    
+    if (response.success) {
+        // Remove the row from the table
+        $row.fadeOut(400, function() {
+            $(this).remove();
+        });
+        
+        // Show success message
+        showAlert('success', `<i class="bi bi-check-circle"></i> ${response.success}`);
+    } else if (response.error) {
+        // Show error message from response
+        showAlert('danger', `<i class="bi bi-exclamation-triangle"></i> ${response.error}`);
+    } else {
+        // Fallback error message
+        showAlert('danger', '<i class="bi bi-exclamation-triangle"></i> An unknown error occurred');
+    }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', status, error); // Debug log
+                console.error('Response:', xhr.responseJSON); // Debug log
+                
+                // Show error message
+                const errorMsg = xhr.responseJSON && xhr.responseJSON.error 
+                    ? xhr.responseJSON.error 
+                    : 'An error occurred while removing the truck. Please try again.';
+                
+                showAlert('danger', `<i class="bi bi-exclamation-triangle"></i> ${errorMsg}`);
+                
+                // Re-enable the button
+                $button.prop('disabled', false).html('<i class="bi bi-x-circle"></i>');
+            }
+        });
+    }
+    
+});
+function showAlert(type, message) {
+    const alertId = 'alert-' + Math.random().toString(36).substr(2, 9);
+    const $alert = $(`
+        <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show position-fixed" 
+             style="top: 20px; right: 20px; z-index: 1060; min-width: 300px;">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    `);
+    
+    // Remove any existing alerts
+    $('.alert-dismissible.position-fixed').remove();
+    
+    // Add new alert
+    $('body').prepend($alert);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        $alert.alert('close');
+    }, 5000);
+}
+
 
     // Reset truck modal when hidden
     $('#truckModal').on('hidden.bs.modal', function() {
