@@ -848,6 +848,15 @@
     <!-- AdminLTE JS -->
     <script src="/theme/dist/js/adminlte.min.js"></script>
     <script>
+      $(document).off('select2:open.autofocus').on('select2:open.autofocus', function() {
+            // Delay to let the search input render
+            setTimeout(function() {
+                const searchInput = document.querySelector('.select2-container--open .select2-search__field');
+                if (searchInput) {
+                    searchInput.focus();
+                }
+            }, 0);
+        });
         // Initialize AdminLTE
         $(document).ready(function () {
             // Check if AdminLTE is loaded
