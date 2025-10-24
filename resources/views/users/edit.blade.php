@@ -143,6 +143,7 @@
             if (option.value === '') return; // Skip the "Select Branch" option
             
             const branchCompanyId = option.getAttribute('data-company');
+           
             if (companyId && branchCompanyId === companyId) {
                 option.style.display = 'block';
                 hasVisibleOptions = true;
@@ -178,8 +179,10 @@
     });
     
     // Initialize with the selected company if any
+   
     if (companySelect.value) {
         filterBranches(companySelect.value);
+        branchSelect.value = "{{ old('branch_id', $user->branch_id) }}";
     } else if ("{{ old('company_id') }}") {
         filterBranches("{{ old('company_id') }}");
     }
