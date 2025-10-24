@@ -184,6 +184,7 @@ class UserController extends Controller
             'password' => 'required|string|min:6|confirmed',
             'role' => 'required|in:super_admin,admin,moderator,accountant',
             'company_id' => 'required|exists:companies,id',
+            'branch_id' => 'required|exists:branches,id',
         ]);
         $validated['password'] = bcrypt($validated['password']);
         $userRole = UserRole::where('name', $validated['role'])->first();
@@ -212,7 +213,8 @@ class UserController extends Controller
     {
         $companies = \App\Models\Company::all();
         $roles = ['admin', 'moderator', 'accountant'];
-        return view('users.edit', compact('user', 'companies', 'roles'));
+        $branches = \App\Models\Branch::all();
+        return view('users.edit', compact('user', 'companies', 'roles', 'branches'));
     }
 
     /**
@@ -226,6 +228,7 @@ class UserController extends Controller
             'password' => 'nullable|string|min:6|confirmed',
             'role' => 'required|in:super_admin,admin,moderator,accountant',
             'company_id' => 'required|exists:companies,id',
+            'branch_id' => 'required|exists:branches,id',
         ]);
         if ($validated['password']) {
             $validated['password'] = bcrypt($validated['password']);

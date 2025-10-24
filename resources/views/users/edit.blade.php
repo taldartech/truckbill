@@ -59,6 +59,21 @@
     @endif
     @error('company_id') <div class="text-danger">{{ $message }}</div> @enderror
 </div>
+<div class="mb-3">
+    <label for="branch_id" class="form-label">Branch *</label>
+    @if($canEdit)
+        <select class="form-select" id="branch_id" name="branch_id" required>
+            <option value="">Select</option>
+            @foreach($branches as $branch)
+                <option value="{{ $branch->id }}" {{ old('branch_id', $user->branch_id) == $branch->id ? 'selected' : '' }}>{{ $branch->branch_name }}({{ $branch->head_office == 1 ? 'Head Office' : 'Branch' }})</option>
+            @endforeach
+        </select>
+    @else
+        <input type="hidden" name="branch_id" value="{{ $user->branch_id }}">
+        <div class="form-control-plaintext">{{ $user->branch->branch_name ?? '' }}</div>
+    @endif
+    @error('branch_id') <div class="text-danger">{{ $message }}</div> @enderror
+</div>
         <button type="submit" class="btn btn-success">Update User</button>
         <a href="{{ route('users.index') }}" class="btn btn-secondary ms-2">Back to List</a>
     </form>

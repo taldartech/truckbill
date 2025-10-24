@@ -88,12 +88,12 @@
             <div class="row g-3">
                 <!--begin::Col-->
                 <div class="col-md-6">
-                    <label for="branch_id" class="form-label">Branch</label>
+                    <label for="branch_id" class="form-label">Branch *</label>
                     @if($canEdit)
-                        <select class="form-select" id="branch_id" name="branch_id">
+                        <select class="form-select" id="branch_id" name="branch_id" required>
                             <option value="">Select</option>
                             @foreach($branches as $branch)
-                                <option value="{{ $branch->id }}" {{ old('branch_id') == $branch->id ? 'selected' : '' }}>{{ $branch->branch_name }}</option>
+                                <option value="{{ $branch->id }}" {{ old('branch_id') == $branch->id ? 'selected' : '' }}>{{ $branch->branch_name }}({{ $branch->head_office == 1 ? 'Head Office' : 'Branch' }})</option>
                             @endforeach
                         </select>
                     @else
