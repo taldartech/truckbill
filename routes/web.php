@@ -329,6 +329,8 @@ Route::middleware(['auth'])->group(function () {
 
   Route::get('/consignees/{id}', [ConsigneeController::class, 'getConsigneeDetails']);
 
+  Route::get('/branches/by-company/{companyId}', [BranchController::class, 'getByCompany'])->name('branches.by-company');
+
 
 
 
