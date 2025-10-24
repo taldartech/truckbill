@@ -243,7 +243,7 @@
             </div>   --}}
             </div>
             <!-- Registered Trucks Section -->
-<div class="card mb-4 p-3 bg-light">
+{{-- <div class="card mb-4 p-3 bg-light">
     <div class="row">
         <div class="col">
             <h5 class="mb-3">Registered Trucks</h5>
@@ -277,7 +277,7 @@
             </tbody>
         </table>
     </div>
-</div>
+</div> --}}
 
             <!-- Form Actions -->
             <div class="d-flex justify-content-between align-items-center mt-4">
