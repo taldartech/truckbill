@@ -339,7 +339,7 @@ class FreightBookingController extends Controller
       'consignee:id,name',
       'reference:id,name'
     ])
-      ->select('id', 'lr_number', 'transporter_id', 'truck_id', 'reference_by', 'customer_id', 'consignor_id', 'consignee_id', 'good_type', 'source_city', 'destination_city', 'source_state', 'destination_state', 'weight', 'no_of_units', 'amount')
+      ->select('id', 'lr_number', 'transporter_id', 'truck_id', 'reference_by', 'customer_id', 'consignor_id', 'consignee_id', 'good_type', 'source_city', 'destination_city', 'source_state', 'destination_state', 'weight', 'no_of_units', 'amount','fr_rate')
       ->when($lorry_receipt_id, function ($query) use ($lorry_receipt_id) {
         $query->where('id', $lorry_receipt_id);
       })

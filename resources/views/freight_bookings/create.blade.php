@@ -136,13 +136,24 @@
                         <span>{{ $lorry_receipt->first() ? $lorry_receipt->first()->no_of_units ?? 'N/A' : 'N/A' }}</span>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="mb-2">
                         <strong>Amount:</strong><br>
                         <span
                             class="badge bg-success text-white fs-6">₹{{ $lorry_receipt->first() ? number_format($lorry_receipt->first()->amount ?? 0, 2) : '0.00' }}</span>
                     </div>
+                   
                 </div>
+                <div class="col-md-2">
+                    <div class="mb-2">
+                        <strong>Rate:</strong><br>
+                        <span
+                        @php
+                            $rate = $lorry_receipt->first() ? $lorry_receipt->first()->fr_rate : 0;
+                        @endphp
+                            class="badge bg-success text-white fs-6">₹{{ number_format($rate, 2) }}</span>
+                    </div>
+                    </div>
                 @if ($lorry_receipt->first() && $lorry_receipt->first()->freight_booking_id)
                     <div class="col-md-3">
                         <div class="alert alert-danger mb-0">

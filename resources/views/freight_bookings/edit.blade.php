@@ -124,6 +124,13 @@
                             class="badge bg-success text-white fs-6">₹{{ $freightBooking->lr ? number_format($freightBooking->lr->amount ?? 0, 2) : '0.00' }}</span>
                     </div>
                 </div>
+                <div class="col-md-3">
+                    <div class="mb-2">
+                        <strong>Rate:</strong><br>
+                        <span
+                            class="badge bg-success text-white fs-6">₹{{ $freightBooking->lr ? number_format($freightBooking->lr->fr_rate ?? 0, 2) : '0.00' }}</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Route Details Section -->
