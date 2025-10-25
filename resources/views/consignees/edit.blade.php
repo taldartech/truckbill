@@ -150,11 +150,7 @@
                     <input placeholder="Enter Address" type="text" class="form-control" id="address" name="address" value="{{ old('address', $consignee->address) }}">
                     @error('address') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
-                <div class="col-md-4">
-                    <label for="contact_number" class="form-label">Contact Number *</label>
-                    <input placeholder="Enter Contact Number" type="text" class="form-control" id="contact_number" name="contact_number" value="{{ old('contact_number', $consignee->contact_number) }}" required>
-                    @error('contact_number') <div class="text-danger">{{ $message }}</div> @enderror
-                </div>
+               
             </div>
         </div>
         

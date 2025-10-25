@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Branch;
 use App\Models\Company;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Validation\Rule;
 
 class BranchController extends Controller
 {
@@ -71,8 +72,16 @@ class BranchController extends Controller
             'company_id' => 'required|exists:companies,id',
             'branch_name' => 'required|string|max:255',
             'branch_address' => 'nullable|string',
-            'branch_contact_number' => 'nullable|unique:branches,branch_contact_number|string|max:20',
+            'branch_contact_number' => [
+                'nullable',
+                'string',
+                'max:20',
+                Rule::unique('branches', 'branch_contact_number')->ignore($branch->id),
+            ],
             'head_office' => 'required|boolean',
+        ], [
+            'branch_contact_number.unique' => 'This contact number is already used by another branch.',
+            'branch_contact_number.max' => 'The contact number must not exceed 20 digits.',
         ]);
 
         $branch->update($request->all());

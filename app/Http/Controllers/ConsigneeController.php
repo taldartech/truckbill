@@ -219,7 +219,13 @@ class ConsigneeController extends Controller
             ],
             'contact_number' => [
                 'nullable',
+               
                 'digits:10',
+                Rule::unique('consignees', 'contact_number')
+                ->where(function ($query) use ($request) {
+                    return $query->where('company_id', $request->company_id);
+                })
+                
             ],
             'gst_number' => [
                 'nullable',
@@ -309,7 +315,13 @@ class ConsigneeController extends Controller
             ],
             'contact_number' => [
                 'nullable',
+               
                 'digits:10',
+                Rule::unique('consignees', 'contact_number')
+                ->where(function ($query) use ($request) {
+                    return $query->where('company_id', $request->company_id);
+                })
+                ->ignore($consignee->id),
             ],
             'gst_number' => [
                 'nullable',

@@ -325,10 +325,11 @@ class InvoiceController extends Controller
   public function show(Request $request, Invoice $invoice)
   {
     $invoice->load(['company', 'consignee']);
-    // Get memos directly from lorry_receipts using the invoice's customer_id
+    // Get memos directly from invoice table in invoice tabble their is lr_ids in arrays form fetch lr_ids and then use this lr_ids to fetch 'memo_id', 'lr_number', 'source_city as from_location', 'destination_city as to_location', 'fr_rate as rate', 'amount'
+    $lrIds = $invoice->lr_ids;
     $memos = DB::table('lorry_receipts')
       ->select('memo_id', 'lr_number', 'source_city as from_location', 'destination_city as to_location', 'fr_rate as rate', 'amount')
-      ->where('customer_id', $invoice->customer_id)
+      ->whereIn('id', $lrIds)
       ->whereNotNull('memo_id')
       ->get();
 
