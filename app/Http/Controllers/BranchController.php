@@ -49,7 +49,7 @@ class BranchController extends Controller
             'company_id' => 'required|exists:companies,id',
             'branch_name' => 'required|string|max:255',
             'branch_address' => 'nullable|string',
-            'branch_contact_number' => 'nullable|string|max:20',
+            'branch_contact_number' => 'nullable|unique:branches,branch_contact_number|string|max:20',
             'head_office' => 'required|boolean',
         ]);
 
@@ -71,7 +71,7 @@ class BranchController extends Controller
             'company_id' => 'required|exists:companies,id',
             'branch_name' => 'required|string|max:255',
             'branch_address' => 'nullable|string',
-            'branch_contact_number' => 'nullable|string|max:20',
+            'branch_contact_number' => 'nullable|unique:branches,branch_contact_number|string|max:20',
             'head_office' => 'required|boolean',
         ]);
 
