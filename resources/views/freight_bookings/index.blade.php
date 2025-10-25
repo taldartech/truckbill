@@ -178,6 +178,7 @@
                                     @else
                                         <input type="checkbox" class="row-checkbox" value="{{ $booking->id }}"
                                             data-lr="{{ $booking->lr ? $booking->lr->lr_number : '' }}"
+                                            data-amount="{{ $booking->lr ? $booking->lr->amount : '' }}"
                                             data-linked-lr-id="{{ $booking->lr ? $booking->lr->linked_lr_id : '' }}"
                                             data-memo-id="{{ $booking->lr ? $booking->lr->memo_id : '' }}"
                                             data-lr-id="{{ $booking->lr ? $booking->lr->id : '' }}"
@@ -1411,6 +1412,7 @@ function initializeAmountAllocation(totalBalance) {
                     const checkbox = $(this);
                     const lrNumber = checkbox.data('lr');
                     const truckNumber = checkbox.data('truck');
+                    const amount = parseFloat(checkbox.data('amount')) || 0;
                     const balance = parseFloat(checkbox.data('balance')) || 0;
                     const voucherNumber = checkbox.data('voucher_number');
                     const freightBookingId = checkbox.data('freight-booking-id');
@@ -1428,7 +1430,7 @@ function initializeAmountAllocation(totalBalance) {
                     <td>${lrNumber}</td>
                     <td>${truckNumber}</td>
                     <td>${voucherNumber}</td>
-                    <td class="text-end">₹${balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                    <td class="text-end">₹${amount}</td>
                     <input type="hidden" name="lr_ids[]" value="${lrId}">
                     <input type="hidden" name="freight_booking_ids[]" value="${freightBookingId}">
                 </tr>
@@ -1453,7 +1455,7 @@ function initializeAmountAllocation(totalBalance) {
                                         <th>LR Number</th>
                                         <th>Truck Number</th>
                                         <th>Voucher Number</th>
-                                        <th class="text-end">Balance Amount</th>
+                                        <th class="text-end">LR Amount</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1884,7 +1886,7 @@ function initializeAmountAllocation(totalBalance) {
                 paging: true,
                 info: true,
                 searching: false,
-                ordering: false,
+                ordering: true,
                 responsive: true,
                 lengthChange: false, // enable "Show X entries" dropdown
                 // pageLength: 10,       // default
