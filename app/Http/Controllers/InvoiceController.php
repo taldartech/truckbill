@@ -360,7 +360,7 @@ class InvoiceController extends Controller
     // Get all memos for this customer
     $memos = DB::table('lorry_receipts')
       ->select('memo_id')
-      ->where('customer_id', $invoice->customer_id)
+      ->whereIn('id', $invoice->lr_ids)
       ->whereNotNull('memo_id')
       ->distinct()
       ->get()
