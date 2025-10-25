@@ -643,7 +643,7 @@ class ReportController extends Controller
   {
     $companyId = Auth::user()->company_id;
     $endDate = $request->input('end_date') ?? date('Y-m-d');
-    $startDate = max($request->input('start_date') ?? date('Y-m-d', strtotime('-3 months')), date('Y-m-d', strtotime('-3 months', strtotime($endDate))));
+    $startDate = max($request->input('start_date') ?? date('Y-m-d', strtotime('-3 days')), date('Y-m-d', strtotime('-3 day', strtotime($endDate))));
 
     if ($request->input('end_date')) {
       $query = VoucherPayment::whereBetween('date', [$startDate, $endDate]);
