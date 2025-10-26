@@ -92,17 +92,10 @@
                             <i class="bi bi-credit-card"></i> Voucher Payment
                         </button>
                     @endif
-                    @if ($freightBooking->lr && $freightBooking->lr->invoice_generated == 1)
-                        <button type="button" class="btn btn-sm btn-secondary me-2" disabled
-                            title="Cannot edit booking as an invoice has been generated for its associated Lorry Receipt">
-                            <i class="bi bi-pencil"></i> Edit
-                        </button>
-                    @else
-                        <a href="{{ route('freight_bookings.edit', $freightBooking->id) }}"
-                            class="btn btn-sm btn-primary me-2">
-                            <i class="bi bi-pencil"></i> Edit
-                        </a>
-                    @endif
+                    <a href="{{ route('freight_bookings.edit', $freightBooking->id) }}"
+                        class="btn btn-sm btn-primary me-2">
+                        <i class="bi bi-pencil"></i> Edit
+                    </a>
                 @else
                     <button type="button" class="btn btn-sm btn-secondary me-2" disabled
                         title="Cannot perform actions on cancelled booking">
