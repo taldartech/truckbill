@@ -183,6 +183,9 @@ class ConsigneeController extends Controller
 
     public function store(Request $request)
     {
+        // dd($request->all());
+        \Log::info('Current user company_id: ' . auth()->user()->company_id);
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'nullable|string',
@@ -222,8 +225,8 @@ class ConsigneeController extends Controller
                
                 'digits:10',
                 Rule::unique('consignees', 'contact_number')
-                ->where(function ($query) use ($request) {
-                    return $query->where('company_id', $request->company_id);
+                ->where(function ($query) {
+                    return $query->where('company_id', auth()->user()->company_id);
                 })
                 
             ],
@@ -232,9 +235,11 @@ class ConsigneeController extends Controller
                 'string',
                 'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
                 Rule::unique('consignees', 'gst_number')
-                ->where(function ($query) use ($request) {
-                    return $query->where('company_id', $request->company_id);
+                ->where(function ($query) {
+                    return $query->where('company_id', auth()->user()->company_id);
                 })
+            
+                 
             ],
                         'pan_number' => [
                             'nullable',
@@ -242,16 +247,16 @@ class ConsigneeController extends Controller
                             'size:10',
                             'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
                             Rule::unique('consignees', 'pan_number')
-                            ->where(function ($query) use ($request) {
-                                return $query->where('company_id', $request->company_id);
+                            ->where(function ($query) {
+                                return $query->where('company_id', auth()->user()->company_id);
                             })
                         ],
                         'email' => [
                             'nullable',
                             'email',
                             Rule::unique('consignees', 'email')
-                            ->where(function ($query) use ($request) {
-                                return $query->where('company_id', $request->company_id);
+                            ->where(function ($query) {
+                                return $query->where('company_id', auth()->user()->company_id);
                             })
                         ],
         ]);
