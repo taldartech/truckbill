@@ -107,7 +107,8 @@ class FreightBookingController extends Controller
       )
       ->orderByDesc(DB::raw('COALESCE(fb_group.max_id, freight_bookings.id)')) // latest group OR latest row
       ->orderByDesc('freight_bookings.id') // inside group
-      ->paginate(10);
+      // ->paginate(10);
+      ->get();
 
 
 

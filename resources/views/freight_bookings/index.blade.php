@@ -2,9 +2,11 @@
 
 @push('styles')
     <!-- DataTables CSS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/searchpanes/2.2.0/css/searchPanes.bootstrap5.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css">
 @endpush
 
 @push('scripts')
@@ -121,14 +123,14 @@
                 </div>
 
                 <!-- Results Count -->
-                <div class="row mb-3">
+                {{-- <div class="row mb-3">
                     <div class="col-12 text-end">
                         <small class="text-muted">
                             Showing {{ $bookings->firstItem() ?? 0 }} to {{ $bookings->lastItem() ?? 0 }} of
                             {{ $bookings->total() }} results
                         </small>
                     </div>
-                </div>
+                </div> --}}
             </div>
 
             @if (request('search'))
@@ -198,7 +200,7 @@
                                     @endif
                                 </td>
                                 {{-- <td class="text-center">{{ $bookings->firstItem() + $index }}</td>
-                            <td><a href="{{ route('freight_bookings.show', $booking->id) }}" class="text-primary text-decoration-underline">{{ $booking->id ? $booking->id : '-' }}</a></td> --}}
+                                <td><a href="{{ route('freight_bookings.show', $booking->id) }}" class="text-primary text-decoration-underline">{{ $booking->id ? $booking->id : '-' }}</a></td> --}}
                                 <td class="text-center">
                                     {{ $booking->lr && $booking->lr->gr_date ? date('d-m-Y', strtotime($booking->lr->gr_date)) : '-' }}
                                 </td>
@@ -272,7 +274,7 @@
                                 </td>
                             </tr>
                         @empty
-                            <tr>
+                            {{-- <tr>
                                 <td colspan="12" class="text-center py-4">
                                     <div class="text-muted">
                                         <i class="bi bi-inbox display-4"></i>
@@ -282,13 +284,13 @@
                                         @endif
                                     </div>
                                 </td>
-                            </tr>
+                            </tr> --}}
                         @endforelse
                     </tbody>
                 </table>
             </div>
             <div class="d-flex justify-content-center mt-3">
-                {{ $bookings->appends(request()->query())->links('pagination::bootstrap-5') }}
+                {{-- {{ $bookings->appends(request()->query())->links('pagination::bootstrap-5') }} --}}
             </div>
 
             <!-- Pagination -->
@@ -1883,144 +1885,29 @@
 
             // DataTable initialization
             var table = $('#freightBookingsTable').DataTable({
-                paging: true,
-                info: true,
-                searching: false,
-                ordering: false,
-                responsive: true,
-                lengthChange: false, // enable "Show X entries" dropdown
-                // pageLength: 10,       // default
-                // lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
-                drawCallback: function() {
-                    updatePaymentButtonsVisibility();
-                },
-                // processing: true,
-                serverSide: true,
-                ajax: {
-                    url: '{{ route('freight_bookings.datatable') }}',
-                    type: 'GET',
-                    headers: {
-                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    error: function(xhr, error, thrown) {
-                        console.error('DataTables error:', error);
-                        console.error('Status:', xhr.status);
-                        console.error('Response:', xhr.responseText);
-                        alert('DataTables error: ' + error + '. Check console for details.');
-                    },
-                    success: function(data) {
-                        console.log('DataTables success:', data);
-                    }
-                },
-                columns: [{
-                        data: 'checkbox',
-                        name: 'checkbox',
-                        orderable: false,
-                        searchable: false,
-                        width: '5%',
-                        className: 'text-center'
-                    },
-                    {
-                        data: 'DT_RowIndex',
-                        name: 'DT_RowIndex',
-                        orderable: false,
-                        searchable: false,
-                        width: '50px',
-                        className: 'text-center align-middle'
-                    },
-                    {
-                        data: 'fr_number',
-                        name: 'fr_number',
-                        className: 'align-middle'
-                    },
-                    {
-                        data: 'lr_number',
-                        name: 'lr_number',
-                        className: 'align-middle'
-                    },
-                    {
-                        data: 'voucher_number',
-                        name: 'voucher_number',
-                        className: 'align-middle'
-                    },
-                    {
-                        data: 'source_city',
-                        name: 'source_city',
-                        className: 'align-middle'
-                    },
-                    {
-                        data: 'destination_city',
-                        name: 'destination_city',
-                        className: 'align-middle'
-                    },
-                    {
-                        data: 'truck_number',
-                        name: 'truck_number',
-                        className: 'align-middle'
-                    },
-                    {
-                        data: 'tr_rate_formatted',
-                        name: 'tr_rate_formatted',
-                        className: 'text-end align-middle',
-                        orderable: false
-                    },
-                    {
-                        data: 'tr_amount_formatted',
-                        name: 'tr_amount_formatted',
-                        className: 'text-end align-middle',
-                        orderable: false
-                    },
-                    {
-                        data: 'advance_formatted',
-                        name: 'advance_formatted',
-                        className: 'text-end align-middle',
-                        orderable: false
-                    },
-                    {
-                        data: 'balance_formatted',
-                        name: 'balance_formatted',
-                        className: 'text-end align-middle',
-                        orderable: false
-                    },
-                    {
-                        data: 'gr_date_formatted',
-                        name: 'gr_date_formatted',
-                        className: 'text-center align-middle',
-                        orderable: false
-                    },
-                    // {
-                    //     data: 'is_delivered_badge',
-                    //     name: 'is_delivered_badge',
-                    //     className: 'text-center align-middle',
-                    //     orderable: false
-                    // },
-                    // {
-                    //     data: 'is_cancelled_badge',
-                    //     name: 'is_cancelled_badge',
-                    //     className: 'text-center align-middle',
-                    //     orderable: false
-                    // },
-                    {
-                        data: 'actions',
-                        name: 'actions',
-                        orderable: false,
-                        searchable: false,
-                        width: '120px',
-                        className: 'text-center align-middle'
-                    }
-                ],
-                // order: [[1, 'desc']],
-                // pageLength: 25,
-                // lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100, "All"]],
-                // dom: 'Bfrtip',
-                // buttons: [
-                //     'excel'
-                // ],
-                // responsive: true,
-                // drawCallback: function() {
-                //     updatePaymentButtonsVisibility();
-                // }
-            });
+              paging: true,
+              info: true,
+              searching: false,
+              ordering: true,
+              theme: 'bootstrap-5',
+              responsive: true,
+              lengthChange: false,
+              // Default sort by GR Date (newest to oldest). GR Date is column index 1.
+              order: [[1, 'desc']],
+              // Disable sorting for checkbox (first) and actions (last) columns
+              columnDefs: [
+                  { orderable: false, targets: [0, -1] }
+              ],
+              language: {
+                emptyTable:   `<div class="text-muted">
+                                        <i class="bi bi-inbox display-4"></i>
+                                        <p class="mt-2">No freight bookings found</p>
+                                        @if (request('search'))
+                                            <p>Try adjusting your search criteria</p>
+                                        @endif
+                                    </div>`
+              }
+          });
 
             // Apply column search
             $('#filterrow th input.column-search').on('keyup change', function() {
