@@ -780,6 +780,12 @@
                           <p>Pending Memo</p>
                         </a>
                       </li>
+                      <li class="nav-item">
+                        <a href="{{ route('reports.pending-invoice') }} " class="nav-link{{ Request::is('reports/pending-invoice') ? ' active' : '' }}">
+                          <i class="fas fa-file-alt"></i>
+                          <p>Pending Invoice</p>
+                        </a>
+                      </li>
                     </ul>
                   </li>
 

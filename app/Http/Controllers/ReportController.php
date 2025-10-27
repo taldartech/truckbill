@@ -31,6 +31,7 @@ use App\Exports\UltratechBillExport;
 use App\Models\Transporter;
 use App\Models\VoucherLinked;
 use App\Exports\PendingMemoExport;
+use App\Exports\PendingInvoiceExport;
 
 use Carbon\Carbon;
 
@@ -711,6 +712,75 @@ public function pendingMemoExport(Request $request)
 
     return Excel::download(new PendingMemoExport($customerId), 'pending-memo.xlsx');
 }
+public function pending_invoice(Request $request)
+{
+    try {
+        // Get all customers for the dropdown
+        $customers = Consignee::where('company_id', Auth::user()->company_id)
+            ->orderBy('name')
+            ->get();
+
+        $customerId = $request->input('customer_id');
+
+        $lrs = collect();
+
+        if ($customerId) {
+            // Only pending memos for selected customer
+            $ids = LorryReceipt::where('customer_id', $customerId)
+                ->where('company_id', Auth::user()->company_id)
+                ->whereNotNull('memo_id')
+                ->where('invoice_generated', 0)
+                ->pluck('id')
+                ->unique()
+                ->values();
+
+            if ($ids->count() > 0) {
+                $lrs = LorryReceipt::with(['truck:id,truck_number','customer:id,name'])
+                    ->whereIn('id', $ids)
+                    ->where('delivery_status', 'Delivered')
+                    ->where('company_id', Auth::user()->company_id)
+                    ->orderBy('gr_date', 'desc')
+                    ->get();
+            }
+        } else {
+            // Show pending memos for **all customers**
+            $ids = LorryReceipt::where('company_id', Auth::user()->company_id)
+                ->whereNotNull('memo_id')
+                ->where('invoice_generated', 0)
+                ->pluck('id')
+                ->unique()
+                ->values();
+
+            if ($ids->count() > 0) {
+                $lrs = LorryReceipt::with(['truck:id,truck_number','customer:id,name'])
+                    ->whereIn('id', $ids)
+                    ->where('delivery_status', 'Delivered')
+                    ->where('company_id', Auth::user()->company_id)
+                    ->orderBy('gr_date', 'desc')
+                    ->get();
+            }
+        }
+
+        return view('reports.pending-invoice', [
+            'customers' => $customers,
+            'customerId' => $customerId,
+            'lrs' => $lrs
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Error in pending_invoice: ' . $e->getMessage());
+        return redirect()->back()->with('error', 'An error occurred while processing your request.');
+    }
+}
+
+public function pendingInvoiceExport(Request $request)
+{
+  
+    // Optionally get customer_id if you want to filter by customer as well
+    $customerId = $request->input('customer_id');
+
+    return Excel::download(new PendingInvoiceExport($customerId), 'pending-invoice.xlsx');
+}
+
   public function bank(Request $request)
   {
     $companyId = Auth::user()->company_id;

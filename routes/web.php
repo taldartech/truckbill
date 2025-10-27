@@ -387,5 +387,7 @@ Route::middleware(['auth'])->group(function () {
       Route::get('/voucher-receipt-export', [ReportController::class, 'voucher_receipt_export'])->name('reports.voucher-receipt-export');
       Route::get('/transporter-report', [ReportController::class, 'transporter_report'])->name('reports.transporter-report');
       Route::get('/transporter-report-export', [ReportController::class, 'transporter_report_export'])->name('reports.transporter-report-export');
+      Route::get('/pending-invoice', [ReportController::class, 'pending_invoice'])->name('reports.pending-invoice');
+      Route::get('/pending-invoice-export', [ReportController::class, 'pendingInvoiceExport'])->name('reports.pending-invoice-export');
   });
 });
