@@ -231,14 +231,29 @@ class ConsigneeController extends Controller
                 'nullable',
                 'string',
                 'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
+                Rule::unique('consignees', 'gst_number')
+                ->where(function ($query) use ($request) {
+                    return $query->where('company_id', $request->company_id);
+                })
             ],
                         'pan_number' => [
                             'nullable',
                             'string',
                             'size:10',
-                            'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/'
+                            'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
+                            Rule::unique('consignees', 'pan_number')
+                            ->where(function ($query) use ($request) {
+                                return $query->where('company_id', $request->company_id);
+                            })
                         ],
-                        'email' => 'nullable|email',
+                        'email' => [
+                            'nullable',
+                            'email',
+                            Rule::unique('consignees', 'email')
+                            ->where(function ($query) use ($request) {
+                                return $query->where('company_id', $request->company_id);
+                            })
+                        ],
         ]);
 
         if (!empty($validated['pan_number'])) {
@@ -327,16 +342,32 @@ class ConsigneeController extends Controller
                 'nullable',
                 'string',
                 'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
-                Rule::unique('consignees', 'gst_number')->ignore($consignee->id),
+                Rule::unique('consignees', 'gst_number')
+                ->where(function ($query) use ($request) {
+                    return $query->where('company_id', $request->company_id);
+                })
+                ->ignore($consignee->id),
             ],
             'pan_number' => [
                 'nullable',
                 'string',
                 'size:10',
                 'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
-                Rule::unique('consignees', 'pan_number')->ignore($consignee->id),
+                Rule::unique('consignees', 'pan_number')
+                ->where(function ($query) use ($request) {
+                    return $query->where('company_id', $request->company_id);
+                })
+                ->ignore($consignee->id),
             ],
-            'email' => 'nullable|email',
+            'email' => [
+                'nullable',
+                'email',
+                Rule::unique('consignees', 'email')
+                ->where(function ($query) use ($request) {
+                    return $query->where('company_id', $request->company_id);
+                })
+                ->ignore($consignee->id),
+            ],
         ]);
 
         if (!empty($validated['pan_number'])) {
