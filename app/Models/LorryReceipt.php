@@ -9,10 +9,11 @@ use App\Models\Transporter;
 use App\Models\Customer;
 use App\Models\Consignee;
 use App\Models\Company;
+use App\Models\Traits\TracksUser;
 
 class LorryReceipt extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, TracksUser;
     protected $fillable = [
         'truck_id',
         'transporter_id',

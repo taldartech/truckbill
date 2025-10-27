@@ -344,6 +344,10 @@ class InvoiceController extends Controller
         'company' => $invoice->company,
         'consignee' => $invoice->consignee,
         'memos' => $memos,
+        'created_by' => $invoice->created_by,
+        'updated_by' => $invoice->updated_by,
+        'creator' => $invoice->creator,
+        'updater' => $invoice->updater,
       ]);
     }
 
