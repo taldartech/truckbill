@@ -107,7 +107,8 @@ class FreightBookingController extends Controller
       )
       ->orderByDesc(DB::raw('COALESCE(fb_group.max_id, freight_bookings.id)')) // latest group OR latest row
       ->orderByDesc('freight_bookings.id') // inside group
-      ->paginate(10);
+      // ->paginate(10);
+      ->get();
 
 
 
@@ -912,10 +913,6 @@ class FreightBookingController extends Controller
       return redirect()->back()->withErrors(['general' => 'Cannot update a cancelled freight booking. Please contact administrator if changes are needed.']);
     }
 
-    if ($freightBooking->lr && $freightBooking->lr->invoice_generated == 1) {
-      return redirect()->route('freight_bookings.index')->with('error', 'Cannot update this freight booking as an invoice has already been generated for its associated Lorry Receipt.');
-    }
-
     // Add debug logging
     \Log::info('Freight booking update started', [
       'freight_booking_id' => $freightBooking->id,
@@ -1188,7 +1185,7 @@ class FreightBookingController extends Controller
               'booking_id' => $bookingId,
               'new_balance' => $newBalance
             ]);
-          } else {
+          }
             // normal payment flow (cash, bank, fuel, etc.)
             $newAdvanceAmount = $freightBooking->advance_amount + $amount;
             $newBalance = max(0, $freightBooking->balance_amount - $amount);
@@ -1204,7 +1201,6 @@ class FreightBookingController extends Controller
               'new_balance' => $newBalance,
               'new_advance_amount' => $newAdvanceAmount
             ]);
-          }
 
           $processedPayments[] = $voucherPayment->id;
         }

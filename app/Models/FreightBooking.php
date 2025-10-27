@@ -1,12 +1,13 @@
 <?php
 namespace App\Models;
 
+use App\Models\Traits\TracksUser;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class FreightBooking extends Model
 {
-    use HasFactory;
+    use HasFactory, TracksUser;
 
     protected $fillable = [
         'lr_id',

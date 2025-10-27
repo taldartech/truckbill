@@ -28,6 +28,7 @@ use App\Models\VoucherPayment;
 use App\Exports\BankExport;
 use App\Exports\TransporterReportExport;
 use App\Exports\UltratechBillExport;
+use App\Models\Company;
 use App\Models\Transporter;
 use App\Models\VoucherLinked;
 use App\Exports\PendingMemoExport;
@@ -614,20 +615,20 @@ class ReportController extends Controller
 
   //   return $export;
   // }
- 
+
   public function memo_copy_export(Request $request)
 {
     if (!$request->input('memo_id')) {
         return redirect()->back()->with('error', 'Please select a Memo to export.');
     }
-    
+
     $memo_id = $request->input('memo_id');
     $exportType = $request->input('type', 'excel'); // Default to excel for backward compatibility
 
     try {
         if ($exportType === 'pdf') {
             $lrs = LorryReceipt::where('memo_id', $memo_id)->get();
-            
+
             if ($lrs->isEmpty()) {
                 return redirect()->back()->with('error', 'No data found for the selected memo.');
             }
@@ -860,8 +861,13 @@ public function pendingInvoiceExport(Request $request)
       $lrs = collect([$lr]);
     }
 
+    $company = Company::find(Auth::user()->company_id);
+    if (!$company->template_name || !$company->template_address) {
+      return redirect()->back()->with('error', 'Please set the Voucher template before exporting the Voucher Receipt.');
+    }
+
     // Set the font configuration for the PDF
-    $html = view('reports.exports.voucher-receipt', compact('lrs'))->render();
+    $html = view('reports.exports.voucher-receipt', compact('lrs', 'company'))->render();
 
     // Render with mPDF for proper Devanagari shaping
     $defaultConfig = (new \Mpdf\Config\ConfigVariables())->getDefaults();
@@ -920,10 +926,10 @@ public function pendingInvoiceExport(Request $request)
       if (!$request->input('invoice_number')) {
           return redirect()->back()->with('error', 'Please select an Invoice to export.');
       }
-      
+
       $id = $request->input('invoice_number');
       $exportType = $request->input('type', 'excel');
-  
+
       try {
           if ($exportType === 'pdf') {
               // Load the invoice with necessary relationships
@@ -933,38 +939,38 @@ public function pendingInvoiceExport(Request $request)
                   'company.city',
                   'company.state'
               ])->findOrFail($id);
-  
+
               // Load LorryReceipts separately since there's no direct relationship
               $lrs = LorryReceipt::where('invoice_number', $invoice->invoice_number)
               ->with(['consignor', 'consignee'])
               ->get();
-          
-              
+
+
               if ($lrs->isEmpty()) {
                   return redirect()->back()->with('error', 'No Lorry Receipts found for this invoice.');
               }
-  
+
               // Calculate any additional data needed for the view
               $totalAmount = $lrs->sum('total_amount');
               $cgst = $totalAmount * 0.025; // 2.5% CGST
               $sgst = $totalAmount * 0.025; // 2.5% SGST
               $igst = $totalAmount * 0.05;  // 5% IGST (if applicable)
-  
+
               // Generate PDF
               $html = view('reports.exports.party-bill-pdf', compact(
-                  'invoice', 
-                  'lrs', 
+                  'invoice',
+                  'lrs',
                   'totalAmount',
                   'cgst',
                   'sgst',
                   'igst'
               ))->render();
-  
+
               $pdf = \PDF::loadHTML($html)
                   ->setPaper('a4', 'portrait')
                   ->setOption('isHtml5ParserEnabled', true)
                   ->setOption('isRemoteEnabled', true);
-  
+
               return $pdf->stream("party_bill_{$invoice->invoice_number}.pdf");
           } else {
               // Existing Excel export
@@ -977,7 +983,7 @@ public function pendingInvoiceExport(Request $request)
               'invoice_id' => $id,
               'type' => $exportType ?? 'unknown'
           ]);
-          
+
           return redirect()->back()
               ->with('error', 'Error generating export: ' . $e->getMessage());
       }

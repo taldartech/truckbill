@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>भाड़ा-चालान - विनोद गुड्स केरियर</title>
+    <title>भाड़ा-चालान - {{ $company->template_name }}</title>
     <style>
         body {
             font-family: 'NotoSansDevanagari', Arial, sans-serif;
@@ -125,18 +125,22 @@
         <table class="top-line-table">
             <tr>
                 <td style="width:26%; text-align:left;">
-                    सर्व विवादों का न्याय क्षेत्र उदयपुर ही रहेगा।<br>
+                  @if (!empty($company->template_jurisdictional_boundary))
+                    {{ $company->template_jurisdictional_boundary }}<br>
+                  @endif
                     <span style="font-size: 18px"><b>(भाड़ा-चालान)</b></span>
                 </td>
                 <td style="width:48%; text-align:center;">
-                    <b>॥ श्री महावीराय नमः ॥<br>
-                        <span style="font-size: 25px">विनोद गुड्स केरियर</span>
+                    @if (!empty($company->template_header))
+                    <b>{{ $company->template_header }}<br>
+                    @endif
+                        <span style="font-size: 27px">{{ $company->template_name }}</span>
                     </b><br>
-                    मन्दियाणा रेलवे क्रॉसिंग के पास, बिरला व्हाईट प्लान्ट, मन्दियाणा, राजसमंद
+                    {{ $company->template_address }}
                 </td>
                 <td style="width:26%; text-align:right;">
-                    <b>Tel.:</b> 91161 33293<br>
-                    91161 33295<br>
+                    <b>Tel.:</b> {{ $company->contact_number }}<br>
+                    <br>
                     <br>
                     चालान नं. ............................
                 </td>
@@ -177,7 +181,7 @@
             @else
                 ...........................
             @endif
-            संदर्भ द्वारा 
+            संदर्भ द्वारा
             @if (!empty(optional($firstLr->reference)->name))
             <span
                 class="dotted-underline">{{ $firstLr->reference->name }}</span>
@@ -296,14 +300,7 @@
                 <td class="summary-left" style="font-size: 12px;">
                     <p><b>R.C. PAN / TDS FORM:</b> जमा □ &nbsp;&nbsp;&nbsp; बाकी □</p>
                     <br>
-                    <p>माल E-WAY BILL में बताये समय में पहुँचना आवश्यक है अन्यथा जो भी जुर्माना होगा वह गाड़ी वाले की
-                        भुगतावत पड़ेगा। अगर गाड़ी रास्ते में खराब हो जाती है तो सबको सूचित करें।</p>
-                    <br>
-                    <p>उदयपुर में भाड़ा लेने का पता <b>‘श्री श्री रोड लाइन्स’</b> डी-57, ट्रांसपोर्ट नगर, प्रतापनगर,
-                        उदयपुर, मो.: 9799584222</p>
-                    <br>
-                    <p>मैंने उपर्युक्त बिल्टियों के अनुसार इस चालान का सारा माल सही व अच्छी हालत में सम्भाल लिया है व
-                        ऊपर लिखे स्थान पर माल पहुँचाने की मेरी व मेरे मालिक की पूरी जिम्मेदारी है।</p>
+                    {!! $company->template_note !!}
                 </td>
                 <td class="summary-right">
                     <table>

@@ -322,6 +322,12 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="{{ route('voucher_templates.index') }}" class="nav-link{{ Request::is('voucher_templates*') ? ' active' : '' }}">
+                        <i class="fas fa-file-invoice"></i>
+                        <p>Voucher Template</p>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link{{ (Request::is('truck_owner_bank_accounts*') || Request::is('transporter_bank_accounts*')) ? ' active' : '' }}" href="#bankAccountMenu">
                         <i class="fas fa-university"></i>
                         <p>
@@ -882,6 +888,15 @@
     <!-- AdminLTE JS -->
     <script src="/theme/dist/js/adminlte.min.js"></script>
     <script>
+      $(document).off('select2:open.autofocus').on('select2:open.autofocus', function() {
+            // Delay to let the search input render
+            setTimeout(function() {
+                const searchInput = document.querySelector('.select2-container--open .select2-search__field');
+                if (searchInput) {
+                    searchInput.focus();
+                }
+            }, 0);
+        });
         // Initialize AdminLTE
         $(document).ready(function () {
             // Check if AdminLTE is loaded
@@ -1130,6 +1145,45 @@ if (sparkline3Element) {
   sparkline3.render();
 }
 </script>
+<link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/43.1.1/ckeditor5.css" />
+    <script type="importmap">
+        {
+            "imports": {
+                "ckeditor5": "https://cdn.ckeditor.com/ckeditor5/43.1.1/ckeditor5.js",
+                "ckeditor5/": "https://cdn.ckeditor.com/ckeditor5/43.1.1/"
+            }
+        }
+    </script>
+    <script type="module">
+        import {
+            ClassicEditor,
+            Essentials,
+            Bold,
+            Italic,
+            Font,
+            Paragraph,
+            Heading,
+            Underline,
+            HorizontalLine
+        } from 'ckeditor5';
+
+        document.querySelectorAll('.texteditor').forEach((editorElement) => {
+            ClassicEditor
+                .create(editorElement, {
+                    plugins: [Essentials, Bold, Italic, Font, Paragraph, Heading, Underline, HorizontalLine],
+                    toolbar: [
+                        'undo', 'redo', '|', 'bold', 'italic', 'underline', '|',
+                        'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', 'Heading', 'HorizontalLine'
+                    ]
+                })
+                .then(editorElement => {
+                    $('.ck-body-wrapper').hide();
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+        });
+    </script>
 <!--end::Script-->
     @yield('scripts')
     @stack('scripts')

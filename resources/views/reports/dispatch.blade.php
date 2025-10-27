@@ -93,6 +93,7 @@
                             <th>Sr No</th>
                             <th>GR Date</th>
                             <th>LR No</th>
+                            <th>GR No</th>
                             <th>Truck No</th>
                             <th>Destination</th>
 
@@ -181,6 +182,7 @@
                                 <td style="white-space: nowrap;">{{ \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') }}
                                 </td>
                                 <td>{{ $lr->lr_number }}</td>
+                                <td>{{ $lr->gr_number }}</td>
                                 <td>{{ $lr->truck->truck_number ?? 'N/A' }}</td>
                                 <td>{{ $lr->destination_city }}</td>
 

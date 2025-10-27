@@ -82,7 +82,7 @@
             </div>
         </div>
     </div>
-   
+
 </div>
 
 
@@ -108,7 +108,7 @@
                         <th>Consignor</th>
                         <th>Consignee</th>
                         <th>Status</th>
-                      
+
                         <th>Truck Number</th>
                         <th>Weight</th>
                         <th>Amount</th>
@@ -386,7 +386,7 @@ $(document).ready(function() {
         const today = new Date();
         const oneWeekAgo = new Date();
         oneWeekAgo.setDate(today.getDate() - 7);
-        
+
         // Format dates as YYYY-MM-DD
         const formatDate = (date) => {
             const year = date.getFullYear();
@@ -473,7 +473,7 @@ $(document).ready(function() {
                 data: 'status_badge',
                 name: 'delivery_status'
             },
-           
+
             {
                 data: 'truck_number',
                 name: 'truck.truck_number'
@@ -527,7 +527,7 @@ $(document).ready(function() {
     $('#filterBtn').on('click', function() {
     $('#lorryReceiptsTable').DataTable().ajax.reload();
 
-    
+
 });
 
 $('#resetDateFilter').on('click', function() {
@@ -570,7 +570,7 @@ function showLRDetails(id) {
         .then(response => response.json())
         .then(lr => {
             let detailsHtml = `
-            
+
 
             ${lr.linked_lr_id === null ? `
                 <div class="row">
@@ -666,15 +666,38 @@ function showLRDetails(id) {
                             </div>
                         </div>
                     </div>
-     ` : ''}  
+                </div>
+     ` : ''}
      <div class="row mt-3">
         <div class="col-md-12">
             <div id="linkedLRSection"></div>
         </div>
-    </div>              
+    </div>
+    <div class="row mt-3">
+        <!-- Created By & Updated By Users -->
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0"><i class="bi bi-person-circle"></i> User Information</h6>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless table-sm">
+                        <tr>
+                            <td class="fw-bold">Created By:</td>
+                            <td>${lr.created_by ? lr.creator.name + ' (' + lr.creator.email + ')' : 'N/A'}</td>
+                        </tr>
+                        <tr>
+                            <td class="fw-bold">Last Updated By:</td>
+                            <td>${lr.updated_by ? lr.updater.name + ' (' + lr.updater.email + ')' : 'N/A'}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    `; 
-   
+    `;
+
 
 // After setting contentDiv.innerHTML, load the linked LRs if needed
 function formatGRDate(dateString) {

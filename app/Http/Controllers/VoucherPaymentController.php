@@ -780,7 +780,7 @@ class VoucherPaymentController extends Controller
         $queryParams['status'] = $validated['new_status'];
       }
       $newQuery = http_build_query($queryParams);
-      $newUrl = $parsedUrl['path'].'?'.$newQuery;
+      $newUrl = $parsedUrl['path'] . '?' . $newQuery;
       return redirect($newUrl)->with('success', $updatedCount . ' payments updated successfully.');
     } catch (\Exception $e) {
       \Log::error('Error in bulk update: ' . $e->getMessage(), [
@@ -846,16 +846,28 @@ class VoucherPaymentController extends Controller
     }
     try {
       // Get the freight booking and voucher number before deletion
-      $freightBooking = $voucher_payment->freight_booking;
-      $voucherNumber = $voucher_payment->voucher_number;
-
-      // Soft delete the voucher payment
-      $voucher_payment->delete();
-
-      // If this was accessed from the voucher detail page, redirect back there
-      if (url()->previous() === route('voucher_payments.show', $voucherNumber)) {
-        return redirect()->route('voucher_payments.show', $voucherNumber)
-          ->with('success', 'Payment deleted successfully.');
+      $linked_voucher_id = $voucher_payment->linked_voucher_id;
+      if ($linked_voucher_id) {
+        $vouchers = VoucherPayment::where('linked_voucher_id', $linked_voucher_id)->get();
+        foreach ($vouchers as $voucher) {
+          $freightBooking = \App\Models\FreightBooking::findOrFail($voucher->freight_booking_id);
+          // Update advance_amount
+          $freightBooking->advance_amount -= $voucher->amount;
+          $freightBooking->balance_amount += $voucher->amount;
+          $freightBooking->save();
+          $voucher->delete();
+        }
+        $linked_voucher = VoucherLinked::find($linked_voucher_id);
+        $linked_voucher->delete();
+      } else {
+        $freightBooking = \App\Models\FreightBooking::findOrFail($voucher_payment->freight_booking_id);
+        // Update advance_amount
+        $freightBooking->advance_amount -= $voucher_payment->amount;
+        $freightBooking->balance_amount += $voucher_payment->amount;
+        $freightBooking->save();
+        $voucherNumber = $voucher_payment->voucher_number;
+        // Delete the voucher payment
+        $voucher_payment->delete();
       }
 
       // Otherwise redirect to the index page

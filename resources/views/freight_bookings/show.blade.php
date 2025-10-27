@@ -92,17 +92,10 @@
                             <i class="bi bi-credit-card"></i> Voucher Payment
                         </button>
                     @endif
-                    @if ($freightBooking->lr && $freightBooking->lr->invoice_generated == 1)
-                        <button type="button" class="btn btn-sm btn-secondary me-2" disabled
-                            title="Cannot edit booking as an invoice has been generated for its associated Lorry Receipt">
-                            <i class="bi bi-pencil"></i> Edit
-                        </button>
-                    @else
-                        <a href="{{ route('freight_bookings.edit', $freightBooking->id) }}"
-                            class="btn btn-sm btn-primary me-2">
-                            <i class="bi bi-pencil"></i> Edit
-                        </a>
-                    @endif
+                    <a href="{{ route('freight_bookings.edit', $freightBooking->id) }}"
+                        class="btn btn-sm btn-primary me-2">
+                        <i class="bi bi-pencil"></i> Edit
+                    </a>
                 @else
                     <button type="button" class="btn btn-sm btn-secondary me-2" disabled
                         title="Cannot perform actions on cancelled booking">
@@ -931,6 +924,47 @@
                     No payment history found.
                 </div>
             @endif
+        </div>
+    </div>
+
+    <!-- User Information of Creator & Updater -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5>User Information</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="info-card card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Created By</h5>
+                        </div>
+                        <div class="card-body">
+                            @if ($freightBooking->creator)
+                                <p><strong>Name:</strong> {{ $freightBooking->creator->name }}</p>
+                                <p><strong>Email:</strong> {{ $freightBooking->creator->email }}</p>
+                            @else
+                                <p class="text-muted">Creator information not available.</p>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-card card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Last Updated By</h5>
+                        </div>
+                        <div class="card-body">
+                            @if ($freightBooking->updater)
+                                <p><strong>Name:</strong> {{ $freightBooking->updater->name }}</p>
+                                <p><strong>Email:</strong> {{ $freightBooking->updater->email }}</p>
+                            @else
+                                <p class="text-muted">Updater information not available.</p>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

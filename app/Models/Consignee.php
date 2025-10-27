@@ -52,4 +52,9 @@ class Consignee extends Model
     {
         return $this->belongsTo(Country::class);
     }
+
+    public function lorryReceipts()
+    {
+        return $this->hasMany(LorryReceipt::class, 'customer_id');
+    }
 }

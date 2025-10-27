@@ -76,19 +76,38 @@
                         </div>
                     </div>
                 </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4>User Information</h4>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <tr>
+                                    <th>Created By:</th>
+                                    <td>{{ $invoice->created_by ? $invoice->creator->name . ' (' . $invoice->creator->email . ')' : 'N/A' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Updated By:</th>
+                                    <td>{{ $invoice->updated_by ? $invoice->updater->name . ' (' . $invoice->updater->email . ')' : 'N/A' }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
             </div>
             <div class="card-footer text-end">
-              @if ($invoice->payment_status != 'paid')
-                <a href="{{ route('invoices.edit', $invoice->id) }}" class="btn btn-warning me-2">Edit</a>
-              @endif
-              @if ($invoice->payment_status == 'pending')
-                <form action="{{ route('invoices.destroy', $invoice->id) }}" method="POST" style="display:inline-block;">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-danger"
-                        onclick="return confirm('Delete this invoice?')">Delete</button>
-                </form>
-              @endif
+                @if ($invoice->payment_status != 'paid')
+                    <a href="{{ route('invoices.edit', $invoice->id) }}" class="btn btn-warning me-2">Edit</a>
+                @endif
+                @if ($invoice->payment_status == 'pending')
+                    <form action="{{ route('invoices.destroy', $invoice->id) }}" method="POST"
+                        style="display:inline-block;">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-danger"
+                            onclick="return confirm('Delete this invoice?')">Delete</button>
+                    </form>
+                @endif
                 <a href="{{ route('invoices.index') }}" class="btn btn-secondary">Back to List</a>
             </div>
         </div>
