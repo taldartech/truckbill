@@ -654,26 +654,26 @@ public function pending_memo(Request $request)
             ->get();
 
         $customerId = $request->input('customer_id');
-        $memoId = $request->input('memo_id');
+        // $memoId = $request->input('memo_id');
 
         $memoIds = [];
         $lrs = collect();
 
         if ($customerId) {
             // Get unique memo_ids for the selected customer
-            $memoIds = LorryReceipt::where('customer_id', $customerId)
+            $lrs = LorryReceipt::where('customer_id', $customerId)
              
                 ->where('company_id', Auth::user()->company_id)
                 
-                ->whereNotNull('memo_id')
-                ->where('memo_id', '!=', '')
+                ->whereNull('memo_id')
                 
-                ->pluck('memo_id')
+                
+                ->pluck('id')
                 ->unique()
                 ->values();
 
             // If a specific memo_id is selected, get the LRs
-            if ($memoId) {
+            if ($lrs) {
                 $lrs = LorryReceipt::with([
                     'truck' => function($query) {
                         $query->select('id', 'truck_number');
@@ -682,7 +682,8 @@ public function pending_memo(Request $request)
                         $query->select('id', 'name');
                     }
                 ])
-                ->where('memo_id', $memoId)
+                ->whereIn('id', $lrs)
+                ->where('delivery_status', 'Delivered')
                 ->where('company_id', Auth::user()->company_id)
                 ->orderBy('gr_date', 'desc')
                 ->get();
@@ -692,8 +693,6 @@ public function pending_memo(Request $request)
         return view('reports.pending-memo', [
             'customers' => $customers,
             'customerId' => $customerId,
-            'memo_id' => $memoId,
-            'memo_ids' => $memoIds,
             'lrs' => $lrs
         ]);
 

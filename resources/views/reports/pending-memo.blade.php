@@ -60,7 +60,7 @@
                 <div class="row mb-2">
                     <div class="col-md-3">
                         <label class="form-label">Customer <span class="text-danger">*</span></label>
-                        <select name="customer_id" class="form-select select2" required onchange="fetchMemoID(this.value)">
+                        <select name="customer_id" class="form-select select2">
                             <option value="">Select Customer</option>
                             @foreach ($customers as $customer)
                                 <option @if ($customerId == $customer->id) selected @endif value="{{ $customer->id }}">
@@ -68,16 +68,7 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Memo ID <span class="text-danger">*</span></label>
-                        <select name="memo_id" class="form-select select2" required>
-                            <option value="">Select Memo ID</option>
-                            @foreach ($memo_ids as $id)
-                                <option @if ($memo_id == $id) selected @endif value="{{ $id }}">
-                                    {{ $id }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+                
                     <div class="col-md-3 text-end d-flex align-items-end justify-content-end gap-2">
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-search"></i> Search
@@ -92,11 +83,7 @@
         </div>
     </div>
 
-    @if (!$customerId && !$memo_id)
-        <div class="alert alert-warning">
-            Please select the Customer to generate the report.
-        </div>
-    @else
+   
         <div class="card mb-4">
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center">
@@ -105,7 +92,7 @@
                     </div>
                     <div class="d-flex">
                         <a class="btn btn-warning ms-2" target="_blank"
-                            href="{{ route('reports.pending-memo-export', ['memo_id' => $memo_id]) }}">
+                            href="{{ route('reports.pending-memo-export') }}">
                             <i class="bi bi-file-earmark-spreadsheet"></i> Export
                         </a>
                       
@@ -194,7 +181,7 @@
                 @endif
             </div>
         </div>
-    @endif
+   
 @endsection
 
 @push('scripts')

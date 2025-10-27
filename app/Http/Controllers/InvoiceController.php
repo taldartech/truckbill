@@ -240,16 +240,16 @@ class InvoiceController extends Controller
       ->pluck('memo_id');
     return response()->json($memos);
   }
-public function getPendingMemo($customerId)
-{
-  $memos = LorryReceipt::where('company_id', auth()->user()->company_id)
-  ->where('customer_id', $customerId)
-  ->where('invoice_generated', 0)
-  ->whereNotNull('memo_id')
-  ->distinct()
-  ->pluck('memo_id');
-return response()->json($memos);
-}
+// public function getPendingMemo($customerId)
+// {
+//   $memos = LorryReceipt::where('company_id', auth()->user()->company_id)
+//   ->where('customer_id', $customerId)
+
+//   ->whereNotNull('memo_id')
+//   ->distinct()
+//   ->pluck('memo_id');
+// return response()->json($memos);
+// }
 
   public function store(Request $request)
   {
