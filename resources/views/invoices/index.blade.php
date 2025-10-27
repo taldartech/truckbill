@@ -80,6 +80,11 @@
                             onchange="toggleField(this)">
                         <label class="form-check-label" for="filter_status">Status</label>
                     </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" value="generated_date" id="filter_date"
+                            onchange="toggleField(this)">
+                        <label class="form-check-label" for="filter_date">Date</label>
+                    </div>
                 </div>
             </div>
 
@@ -108,6 +113,10 @@
                         </option>
                         <option value="paid" {{ request('payment_status') == 'paid' ? 'selected' : '' }}>Paid</option>
                     </select>
+                </div>
+                <div class="col-md-3 d-none" id="field_generated_date">
+                    <label class="form-label">Date</label>
+                    <input type="date" name="generated_date" class="form-control" value="{{ request('generated_date') }}">
                 </div>
             </div>
 

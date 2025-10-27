@@ -25,9 +25,36 @@ class InvoiceController extends Controller
 
     $invoices = Invoice::with(['company', 'consignee'])->orderByDesc('id');
 
+    // Apply filters
+    if ($request->has('generated_date') && !empty($request->generated_date)) {
+      $invoices->whereDate('generated_date', $request->generated_date);
+    }
+    
+    // Add other existing filters here if needed
+    if ($request->has('manual_invoice_number') && !empty($request->manual_invoice_number)) {
+      $invoices->where('manual_invoice_number', 'like', '%' . $request->manual_invoice_number . '%');
+    }
+    
+    if ($request->has('customer') && !empty($request->customer)) {
+      $invoices->whereHas('consignee', function($q) use ($request) {
+        $q->where('name', 'like', '%' . $request->customer . '%');
+      });
+    }
+    
+    if ($request->has('company') && !empty($request->company)) {
+      $invoices->whereHas('company', function($q) use ($request) {
+        $q->where('name', 'like', '%' . $request->company . '%');
+      });
+    }
+    
+    if ($request->has('payment_status') && !empty($request->payment_status)) {
+      $invoices->where('payment_status', $request->payment_status);
+    }
+
     if (auth()->user()->userRole->name !== 'super_admin') {
       $invoices = $invoices->where('company_id', auth()->user()->company_id);
     }
+    
     $invoices = $invoices->paginate(20);
     return view('invoices.index', compact('invoices'));
   }
@@ -187,7 +214,7 @@ class InvoiceController extends Controller
       ->select('memo_id')
       ->where('company_id', auth()->user()->company_id)
       ->where('customer_id', $customerId)
-      ->where('invoice_generated', 0) // ✅ Only those not yet invoiced
+      ->where('invoice_generated', 0) // Only those not yet invoiced
       ->whereNotNull('memo_id')
       ->distinct()
       ->get()
@@ -235,14 +262,14 @@ class InvoiceController extends Controller
     $data['payment_status'] = 'pending';
     $data['company_id'] = auth()->user()->company_id;
 
-    // // 🔹 Fetch customer state
+    // // Fetch customer state
     // $customer = \App\Models\Consignee::findOrFail($data['customer_id']);
     // $state = strtolower($customer->state);
 
     // $grandTotal = $data['total_amount'];   // this is the form’s base total
     // $invoiceType = strtolower($data['invoice_type']);
 
-    // // 🔹 Recalculate expected tax values
+    // // Recalculate expected tax values
     // $expected = [
     //     'sgst' => 0,
     //     'cgst' => 0,
@@ -276,7 +303,7 @@ class InvoiceController extends Controller
     //     }
     // }
 
-    // // 🔹 Compare request values with expected (including total_amount)
+    // // Compare request values with expected (including total_amount)
     // if (
     //     round($data['sgst'], 2) !== round($expected['sgst'], 2) ||
     //     round($data['cgst'], 2) !== round($expected['cgst'], 2) ||
@@ -293,7 +320,7 @@ class InvoiceController extends Controller
     $memoIds = $request->input('memo_ids', []);
     // unset($data['memo_ids']);
 
-    // ✅ Update lorry_receipts before invoice creation
+    // Update lorry_receipts before invoice creation
     if (!empty($memoIds)) {
       \App\Models\LorryReceipt::whereIn('memo_id', $memoIds)
         ->update(['invoice_generated' => 1]);
