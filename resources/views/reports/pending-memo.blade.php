@@ -216,7 +216,7 @@
               return;
           }
           $.ajax({
-              url: '/invoices/all-memos/' + customerId,
+              url: '/invoices/pending-memo/' + customerId,
               method: 'GET',
               success: function(data) {
                   let options = '<option value="">Select Memo ID</option>';

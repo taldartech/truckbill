@@ -30,6 +30,7 @@ use App\Exports\TransporterReportExport;
 use App\Exports\UltratechBillExport;
 use App\Models\Transporter;
 use App\Models\VoucherLinked;
+use App\Exports\PendingMemoExport;
 
 use Carbon\Carbon;
 
@@ -701,37 +702,14 @@ public function pending_memo(Request $request)
         return redirect()->back()->with('error', 'An error occurred while processing your request.');
     }
 }
-  public function pending_memo_export(Request $request)
-  {
-    if (!$request->input('memo_id')) {
-      return redirect()->back()->with('error', 'Please select a Memo to export.');
-  }
-  
-  $memo_id = $request->input('memo_id');
-  $exportType = $request->input('type', 'excel'); // Default to excel for backward compatibility
+public function pendingMemoExport(Request $request)
+{
+    $memoId = $request->input('memo_id');
+    // Optionally get customer_id if you want to filter by customer as well
+    $customerId = $request->input('customer_id');
 
-  try {
-      if ($exportType === 'pdf') {
-          $lrs = LorryReceipt::where('memo_id', $memo_id)->get();
-          
-          if ($lrs->isEmpty()) {
-              return redirect()->back()->with('error', 'No data found for the selected memo.');
-          }
-
-          // Generate PDF
-          $html = view('reports.exports.memo-copy-pdf', compact('lrs', 'memo_id'))->render();
-          $pdf = PDF::loadHTML($html)->setPaper('a4', 'portrait');
-          return $pdf->stream("memo_copy_{$memo_id}.pdf");
-      } else {
-          // Existing Excel export
-          return Excel::download(new PendingMemoExport($memo_id), 'pending_memo.xlsx');
-      }
-  } catch (\Exception $e) {
-      \Log::error('Error exporting memo copy: ' . $e->getMessage());
-      return redirect()->back()->with('error', 'Error generating export: ' . $e->getMessage());
-  }
-    
-  }
+    return Excel::download(new PendingMemoExport($memoId, $customerId), 'pending-memo.xlsx');
+}
   public function bank(Request $request)
   {
     $companyId = Auth::user()->company_id;

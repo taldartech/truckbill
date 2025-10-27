@@ -192,6 +192,8 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->name('invoices.lrs');
   Route::get('/invoices/memos/{customerId}', [InvoiceController::class, 'getCustomerMemos']);
   Route::get('/invoices/all-memos/{customerId}', [InvoiceController::class, 'getAllCustomerMemos']);
+  Route::get('/invoices/pending-memo/{customerId}', [InvoiceController::class, 'getPendingMemo']);
+
   Route::get('invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
 
   // Customers
@@ -379,7 +381,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/memo-copy', [ReportController::class, 'memo_copy'])->name('reports.memo-copy');
     Route::get('/memo-copy-export', [ReportController::class, 'memo_copy_export'])->name('reports.memo-copy-export');
     Route::get('/pending-memo', [ReportController::class, 'pending_memo'])->name('reports.pending-memo');
-    Route::get('/pending-memo-export', [ReportController::class, 'pending_memo_export'])->name('reports.pending-memo-export');
+    Route::get('/pending-memo-export', [ReportController::class, 'pendingMemoExport'])->name('reports.pending-memo-export');
       Route::get('/bank', [ReportController::class, 'bank'])->name('reports.bank');
       Route::get('/bank-export', [ReportController::class, 'bank_export'])->name('reports.bank-export');
       Route::get('/voucher-receipt-export', [ReportController::class, 'voucher_receipt_export'])->name('reports.voucher-receipt-export');
