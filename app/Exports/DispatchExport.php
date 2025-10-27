@@ -155,7 +155,7 @@ class DispatchExport implements FromCollection, WithHeadings, ShouldAutoSize
         "Deviation" => (float)($freightBooking->deviation ?? 0),
         "Misc." => (float)($freightBooking->misc ?? 0),
         "Balance" => (float)($freightBooking->balance_amount ?? 0),
-        "Diff" => (float)($lr->amount - ($freightBooking->balance_amount ?? 0)),
+        "Diff" => (float)($lr->fr_rate - ($freightBooking->tr_fr_rate ?? 0)),
         "Memo No." => $lr->memo_id ?? 'N/A',
         "Bill No." => $invoice->manual_invoice_number ?? 'N/A',
         "Driver No." => $truck->driver->mobile ?? 'N/A',

@@ -219,7 +219,7 @@
                                 <td>{{ $freightBooking->deviation ?? '0' }}</td>
                                 <td>{{ $freightBooking->misc ?? '0' }}</td>
                                 <td>{{ $freightBooking->balance_amount ?? '0' }}</td>
-                                <td>{{ $lr->amount - ($freightBooking->balance_amount ?? 0) }}</td>
+                                <td>{{ $lr->fr_rate - ($freightBooking->tr_fr_rate ?? 0) }}</td>
 
                                 <td>{{ $lr->memo_id ?? 'N/A' }}</td>
                                 {{-- use this memo_id to get invoice number from invoice table --}}
