@@ -121,8 +121,7 @@
                                     <th>Damage</th>
                                     <th>Shortage</th>
                                     <th>Amt.</th>
-                                    <th>S.Tax</th>
-                                    <th>S.B.Cess</th>
+                                    
                                 </tr>
                             </thead>
                             <tbody>
@@ -145,8 +144,7 @@
                                         <td style="text-align: right">{{ number_format($lr->damage_amount, 2) }}</td>
                                         <td style="text-align: right">{{ number_format($lr->shortage_amount, 2) }}</td>
                                         <td style="text-align: right">{{ number_format($amount, 2) }}</td>
-                                        <td style="text-align: right">0.00</td>
-                                        <td style="text-align: right">0.00</td>
+                                        
                                     </tr>
                                 @endforeach
                                

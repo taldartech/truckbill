@@ -46,8 +46,6 @@ class PendingInvoiceExport implements FromCollection, WithHeadings
                 'Damage' => number_format($lr->damage_amount, 2),
                 'Shortage' => number_format($lr->shortage_amount, 2),
                 'Amt.' => number_format($amount, 2),
-                'S.Tax' => '0.00',
-                'S.B.Cess' => '0.00',
             ];
         });
     }
@@ -66,8 +64,7 @@ class PendingInvoiceExport implements FromCollection, WithHeadings
             'Damage',
             'Shortage',
             'Amt.',
-            'S.Tax',
-            'S.B.Cess'
+           
         ];
     }
 }
