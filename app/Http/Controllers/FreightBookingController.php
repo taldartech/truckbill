@@ -1184,7 +1184,7 @@ class FreightBookingController extends Controller
               'booking_id' => $bookingId,
               'new_balance' => $newBalance
             ]);
-          } else {
+          }
             // normal payment flow (cash, bank, fuel, etc.)
             $newAdvanceAmount = $freightBooking->advance_amount + $amount;
             $newBalance = max(0, $freightBooking->balance_amount - $amount);
@@ -1200,7 +1200,6 @@ class FreightBookingController extends Controller
               'new_balance' => $newBalance,
               'new_advance_amount' => $newAdvanceAmount
             ]);
-          }
 
           $processedPayments[] = $voucherPayment->id;
         }
