@@ -92,7 +92,7 @@
                     </div>
                     <div class="d-flex">
                         <a class="btn btn-warning ms-2" target="_blank"
-                            href="{{ route('reports.pending-memo-export') }}">
+                            href="{{ route('reports.pending-memo-export', ['customer_id' => $customerId]) }}">
                             <i class="bi bi-file-earmark-spreadsheet"></i> Export
                         </a>
                       
@@ -149,30 +149,7 @@
                                         <td style="text-align: right">0.00</td>
                                     </tr>
                                 @endforeach
-                                <tr>
-                                    <td colspan="6"></td>
-                                    <td colspan="4" style="text-align: right; font-weight: bold;">Total Amount:</td>
-                                    <td style="text-align: right; font-weight: bold;">{{ number_format($totalAmount, 2) }}</td>
-                                    <td colspan="2"></td>
-                                </tr>
-                                <tr>
-                                    <td colspan="6"></td>
-                                    <td colspan="4" style="text-align: right; font-weight: bold;">Less :Shortage</td>
-                                    <td style="text-align: right; font-weight: bold;">{{ number_format($shortageAmount, 2) }}</td>
-                                    <td colspan="2"></td>
-                                </tr>
-                                <tr>
-                                    <td colspan="6"></td>
-                                    <td colspan="4" style="text-align: right; font-weight: bold;">Less: Damage</td>
-                                    <td style="text-align: right; font-weight: bold;">{{ number_format($damageAmount, 2) }}</td>
-                                    <td colspan="2"></td>
-                                </tr>
-                                <tr>
-                                    <td colspan="6"></td>
-                                    <td colspan="4" style="text-align: right; font-weight: bold;">Net Amount</td>
-                                    <td style="text-align: right; font-weight: bold;">{{ number_format($totalAmount - $shortageAmount - $damageAmount, 2) }}</td>
-                                    <td colspan="2"></td>
-                                </tr>
+                               
                             </tbody>
                         </table>
                     </div>

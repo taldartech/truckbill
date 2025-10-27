@@ -3,29 +3,30 @@
 namespace App\Exports;
 
 use App\Models\LorryReceipt;
+use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
-use Illuminate\Support\Collection;
 
 class PendingMemoExport implements FromCollection, WithHeadings
 {
-    protected $memoId;
     protected $customerId;
 
-    public function __construct($memoId, $customerId = null)
+    public function __construct($customerId = null)
     {
-        $this->memoId = $memoId;
         $this->customerId = $customerId;
     }
 
     public function collection()
     {
         $query = LorryReceipt::with([
-            'truck' => function($query) { $query->select('id', 'truck_number'); },
-            'customer' => function($query) { $query->select('id', 'name'); }
+            'truck:id,truck_number',
+            'customer:id,name'
         ])
-        ->where('memo_id', $this->memoId);
-
+        ->where('company_id', Auth::user()->company_id)
+        ->whereNull('memo_id')
+        ->where('delivery_status', 'Delivered');
+        
+        // optionally filter by customer
         if ($this->customerId) {
             $query = $query->where('customer_id', $this->customerId);
         }

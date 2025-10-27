@@ -654,39 +654,41 @@ public function pending_memo(Request $request)
             ->get();
 
         $customerId = $request->input('customer_id');
-        // $memoId = $request->input('memo_id');
 
-        $memoIds = [];
         $lrs = collect();
 
         if ($customerId) {
-            // Get unique memo_ids for the selected customer
-            $lrs = LorryReceipt::where('customer_id', $customerId)
-             
+            // Only pending memos for selected customer
+            $ids = LorryReceipt::where('customer_id', $customerId)
                 ->where('company_id', Auth::user()->company_id)
-                
                 ->whereNull('memo_id')
-                
-                
                 ->pluck('id')
                 ->unique()
                 ->values();
 
-            // If a specific memo_id is selected, get the LRs
-            if ($lrs) {
-                $lrs = LorryReceipt::with([
-                    'truck' => function($query) {
-                        $query->select('id', 'truck_number');
-                    },
-                    'customer' => function($query) {
-                        $query->select('id', 'name');
-                    }
-                ])
-                ->whereIn('id', $lrs)
-                ->where('delivery_status', 'Delivered')
-                ->where('company_id', Auth::user()->company_id)
-                ->orderBy('gr_date', 'desc')
-                ->get();
+            if ($ids->count() > 0) {
+                $lrs = LorryReceipt::with(['truck:id,truck_number','customer:id,name'])
+                    ->whereIn('id', $ids)
+                    ->where('delivery_status', 'Delivered')
+                    ->where('company_id', Auth::user()->company_id)
+                    ->orderBy('gr_date', 'desc')
+                    ->get();
+            }
+        } else {
+            // Show pending memos for **all customers**
+            $ids = LorryReceipt::where('company_id', Auth::user()->company_id)
+                ->whereNull('memo_id')
+                ->pluck('id')
+                ->unique()
+                ->values();
+
+            if ($ids->count() > 0) {
+                $lrs = LorryReceipt::with(['truck:id,truck_number','customer:id,name'])
+                    ->whereIn('id', $ids)
+                    ->where('delivery_status', 'Delivered')
+                    ->where('company_id', Auth::user()->company_id)
+                    ->orderBy('gr_date', 'desc')
+                    ->get();
             }
         }
 
@@ -695,19 +697,19 @@ public function pending_memo(Request $request)
             'customerId' => $customerId,
             'lrs' => $lrs
         ]);
-
     } catch (\Exception $e) {
         Log::error('Error in pending_memo: ' . $e->getMessage());
         return redirect()->back()->with('error', 'An error occurred while processing your request.');
     }
 }
+
 public function pendingMemoExport(Request $request)
 {
-    $memoId = $request->input('memo_id');
+  
     // Optionally get customer_id if you want to filter by customer as well
     $customerId = $request->input('customer_id');
 
-    return Excel::download(new PendingMemoExport($memoId, $customerId), 'pending-memo.xlsx');
+    return Excel::download(new PendingMemoExport($customerId), 'pending-memo.xlsx');
 }
   public function bank(Request $request)
   {
