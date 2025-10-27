@@ -7,8 +7,10 @@ use App\Exports\TDSExport;
 use App\Models\Consignee;
 use App\Models\FreightBooking;
 use App\Models\LorryReceipt;
+use App\Models\Truck;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\DispatchExport;
 use App\Exports\PartyLedgerExport;
@@ -27,8 +29,8 @@ use App\Exports\BankExport;
 use App\Exports\TransporterReportExport;
 use App\Exports\UltratechBillExport;
 use App\Models\Transporter;
-use App\Models\Truck;
 use App\Models\VoucherLinked;
+
 use Carbon\Carbon;
 
 class ReportController extends Controller
@@ -592,6 +594,8 @@ class ReportController extends Controller
     }
     return view('reports.memo-copy', compact('customers', 'customerId', 'memo_id', 'memo_ids', 'lrs'));
   }
+  
+  
 
   // public function memo_copy_export(Request $request)
   // {
@@ -639,6 +643,95 @@ class ReportController extends Controller
         return redirect()->back()->with('error', 'Error generating export: ' . $e->getMessage());
     }
 }
+
+public function pending_memo(Request $request)
+{
+    try {
+        // Get all customers for the dropdown
+        $customers = Consignee::where('company_id', Auth::user()->company_id)
+            ->orderBy('name')
+            ->get();
+
+        $customerId = $request->input('customer_id');
+        $memoId = $request->input('memo_id');
+
+        $memoIds = [];
+        $lrs = collect();
+
+        if ($customerId) {
+            // Get unique memo_ids for the selected customer
+            $memoIds = LorryReceipt::where('customer_id', $customerId)
+             
+                ->where('company_id', Auth::user()->company_id)
+                
+                ->whereNotNull('memo_id')
+                ->where('memo_id', '!=', '')
+                
+                ->pluck('memo_id')
+                ->unique()
+                ->values();
+
+            // If a specific memo_id is selected, get the LRs
+            if ($memoId) {
+                $lrs = LorryReceipt::with([
+                    'truck' => function($query) {
+                        $query->select('id', 'truck_number');
+                    },
+                    'customer' => function($query) {
+                        $query->select('id', 'name');
+                    }
+                ])
+                ->where('memo_id', $memoId)
+                ->where('company_id', Auth::user()->company_id)
+                ->orderBy('gr_date', 'desc')
+                ->get();
+            }
+        }
+
+        return view('reports.pending-memo', [
+            'customers' => $customers,
+            'customerId' => $customerId,
+            'memo_id' => $memoId,
+            'memo_ids' => $memoIds,
+            'lrs' => $lrs
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error('Error in pending_memo: ' . $e->getMessage());
+        return redirect()->back()->with('error', 'An error occurred while processing your request.');
+    }
+}
+  public function pending_memo_export(Request $request)
+  {
+    if (!$request->input('memo_id')) {
+      return redirect()->back()->with('error', 'Please select a Memo to export.');
+  }
+  
+  $memo_id = $request->input('memo_id');
+  $exportType = $request->input('type', 'excel'); // Default to excel for backward compatibility
+
+  try {
+      if ($exportType === 'pdf') {
+          $lrs = LorryReceipt::where('memo_id', $memo_id)->get();
+          
+          if ($lrs->isEmpty()) {
+              return redirect()->back()->with('error', 'No data found for the selected memo.');
+          }
+
+          // Generate PDF
+          $html = view('reports.exports.memo-copy-pdf', compact('lrs', 'memo_id'))->render();
+          $pdf = PDF::loadHTML($html)->setPaper('a4', 'portrait');
+          return $pdf->stream("memo_copy_{$memo_id}.pdf");
+      } else {
+          // Existing Excel export
+          return Excel::download(new PendingMemoExport($memo_id), 'pending_memo.xlsx');
+      }
+  } catch (\Exception $e) {
+      \Log::error('Error exporting memo copy: ' . $e->getMessage());
+      return redirect()->back()->with('error', 'Error generating export: ' . $e->getMessage());
+  }
+    
+  }
   public function bank(Request $request)
   {
     $companyId = Auth::user()->company_id;
@@ -916,4 +1009,5 @@ class ReportController extends Controller
     $export = Excel::download(new TransporterReportExport($startDate, $endDate, $transporterId, $truckId, $referenceId), 'transporter_report.xlsx');
     return $export;
   }
+
 }
