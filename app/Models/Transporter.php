@@ -42,7 +42,10 @@ class Transporter extends Model
         return $this->belongsTo(Company::class);
     }
 
-
+    public function lorryReceipts()
+    {
+        return $this->hasMany(LorryReceipt::class, 'transporter_id');
+    }
 
     public function city()
     {

@@ -194,37 +194,14 @@
         <form action="{{ route('freight_bookings.update', $freightBooking->id) }}" method="POST"
             {{ $freightBooking->is_cancelled ? 'onsubmit="return false;"' : '' }}>
             @csrf
-            @method('PUT')
             @php
-                $canEditCompany = auth()->check() && auth()->user()->userRole->name === 'super_admin';
-                $userCompanyId = auth()->user()->company_id ?? null;
+              $is_voucher_created = \App\Models\VoucherPayment::where('freight_booking_id', $freightBooking->id)->exists();
+              $is_delivered = $freightBooking->is_delivered;
+              $is_invoice_generated = $freightBooking->lr && $freightBooking->lr->invoice_generated;
+              // dd($is_voucher_created, $is_delivered, $is_invoice_generated);
             @endphp
-
+            @method('PUT')
             <div class="card-body">
-                {{-- Company field hidden as requested --}}
-                @if ($canEditCompany)
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label for="company_id" class="form-label">Company *</label>
-                            <select class="form-select @error('company_id') is-invalid @enderror" id="company_id"
-                                name="company_id" required {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
-                                <option value="">Select Company</option>
-                                @foreach ($companies as $company)
-                                    <option value="{{ $company->id }}"
-                                        {{ old('company_id', $freightBooking->company_id) == $company->id ? 'selected' : '' }}>
-                                        {{ $company->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            @error('company_id')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
-                @else
-                    <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
-                @endif
-
                 <!-- Financial Information Section -->
                 <div class="row mb-3">
                     <div class="col-md-4">
@@ -233,7 +210,7 @@
                             class="form-control @error('tr_fr_rate') is-invalid @enderror" name="tr_fr_rate" id="tr_fr_rate"
                             value="{{ old('tr_fr_rate', $freightBooking->tr_fr_rate) }}"
                             placeholder="Enter freight rate (₹1 - ₹20,000 per ton)" required
-                            {{ $freightBooking->is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
+                            {{ $is_voucher_created ? 'readonly style=background-color:#e9ecef;' : '' }}
                             {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
                         <small class="form-text text-muted">
                             <i class="fas fa-info-circle"></i> Rate must be between ₹1 and ₹20,000 per ton
@@ -248,7 +225,7 @@
                             class="form-control @error('tr_amount') is-invalid @enderror" name="tr_amount" id="tr_amount"
                             value="{{ old('tr_amount', $freightBooking->tr_amount) }}"
                             placeholder="Auto-calculated (editable)" required
-                            {{ $freightBooking->is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
+                            {{ $is_voucher_created ? 'readonly style=background-color:#e9ecef;' : '' }}
                             {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
                         <small class="form-text text-muted">
                             <i class="fas fa-info-circle"></i> Auto-calculated: TR Freight Rate × Weight. Must be greater
@@ -260,9 +237,9 @@
                     </div>
                     <div class="col-md-4">
                         <label for="tds_amount" class="form-label">TDS Amount *</label>
-                        <input type="number" step="0.01"
-                            class="form-control @error('tds_amount') is-invalid @enderror" name="tds_amount"
-                            id="tds_amount" value="{{ old('tds_amount', $freightBooking->tds_amount) }}" readonly
+                        <input type="number" step="0.01" class="form-control @error('tds_amount') is-invalid @enderror"
+                            name="tds_amount" id="tds_amount"
+                            value="{{ old('tds_amount', $freightBooking->tds_amount) }}" readonly
                             style="background-color: #f8f9fa;" {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
                         <small class="form-text text-muted">
                             <i class="fas fa-percentage"></i> Auto-calculated based on transporter TDS percentage
@@ -286,7 +263,7 @@
                                 name="eway_bill_number" id="eway_bill_number"
                                 value="{{ old('eway_bill_number', $freightBooking->eway_bill_number) }}"
                                 placeholder="Enter E-way bill number"
-                                {{ $freightBooking->is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
+                                {{ $is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
                                 {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
                             <a href="https://ewaybillgst.gov.in/Login.aspx" target="_blank" class="btn btn-outline-info"
                                 title="Check E-way Bill Status">
@@ -299,7 +276,7 @@
                         <input type="date" class="form-control @error('eway_bill_expiry') is-invalid @enderror"
                             name="eway_bill_expiry" id="eway_bill_expiry"
                             value="{{ old('eway_bill_expiry', $freightBooking->eway_bill_expiry ? $freightBooking->eway_bill_expiry : '') }}"
-                            {{ $freightBooking->is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
+                            {{ $is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
                             {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
                         @error('eway_bill_expiry')
                             <div class="text-danger">{{ $message }}</div>
@@ -439,7 +416,8 @@
                                     name="damage_amount" id="damage_amount"
                                     value="{{ old('damage_amount', $freightBooking->damage_amount) }}"
                                     placeholder="Enter damage amount"
-                                    {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
+                                    {{ $freightBooking->is_cancelled ? 'disabled' : '' }}
+                                    {{ $is_invoice_generated ? 'readonly style=background-color:#e9ecef;' : '' }}>
                                 {{-- <small class="form-text text-muted">
                             <i class="fas fa-info-circle"></i> Must be ≥ 0 and < TR Amount
                         </small> --}}
@@ -454,7 +432,8 @@
                                     name="shortage_amount" id="shortage_amount"
                                     value="{{ old('shortage_amount', $freightBooking->shortage_amount) }}"
                                     placeholder="Enter shortage amount"
-                                    {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
+                                    {{ $freightBooking->is_cancelled ? 'disabled' : '' }}
+                                    {{ $is_invoice_generated ? 'readonly style=background-color:#e9ecef;' : '' }}>
                                 {{-- <small class="form-text text-muted">
                             <i class="fas fa-info-circle"></i> Must be ≥ 0 and < TR Amount
                         </small> --}}

@@ -27,6 +27,7 @@ use App\Http\Controllers\StateController;
 use App\Http\Controllers\CountryController;
 use App\Http\Controllers\PumpController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\VoucherTemplateController;
 use App\Http\Controllers\BranchController;
 
 
@@ -90,6 +91,9 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/company/{company}/edit', [CompanyController::class, 'edit'])->name('company.edit');
   Route::put('/company/{company}', [CompanyController::class, 'update'])->name('company.update');
   Route::delete('/company/{company}', [CompanyController::class, 'destroy'])->name('company.destroy');
+
+  // Voucher Template Routes
+  Route::resource('voucher_templates', VoucherTemplateController::class);
 
   // Consignee Management
   Route::get('/consignees/details/{id}', [ConsigneeController::class, 'getDetails'])->name('consignees.details');

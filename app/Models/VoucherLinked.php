@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Traits\TracksUser;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class VoucherLinked extends Model
 {
-  use SoftDeletes;
+  use SoftDeletes, TracksUser;
   protected $fillable = [
     'date',
     'voucher_ids',

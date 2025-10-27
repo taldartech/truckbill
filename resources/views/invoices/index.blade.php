@@ -359,6 +359,28 @@
                         </div>
                     </div>
                 </div>
+                <div class="row mt-3">
+                    <!-- Created By & Updated By Users -->
+                    <div class="col-md-12">
+                        <div class="card h-100">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0"><i class="bi bi-people"></i> User Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-borderless table-sm">
+                                    <tr>
+                                        <td class="fw-bold">Created By:</td>
+                                        <td>${data.created_by ? data.creator.name + ' (' + data.creator.email + ')' : 'N/A'}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-bold">Updated By:</td>
+                                        <td>${data.updated_by ? data.updater.name + ' (' + data.updater.email + ')' : 'N/A'}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             `;
 
                     $('#invoiceDetailsContent').html(detailsHtml);
