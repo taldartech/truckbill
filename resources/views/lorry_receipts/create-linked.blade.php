@@ -1268,8 +1268,9 @@ lrItemsContainer.addEventListener('blur', function(e) {
                     event.stopPropagation();
 
                     if (document.querySelectorAll('#lr-items-container .lr-item').length ===
-                        0) {
-                        Swal.fire('No LR Items', 'Please add at least one LR item.', 'warning');
+                        0 || document.querySelectorAll('#lr-items-container .lr-item').length ===
+                        1) {
+                        Swal.fire('No LR Items', 'Please add at least two LR items.', 'warning');
                         return;
                     }
 
