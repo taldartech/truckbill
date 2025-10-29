@@ -116,6 +116,7 @@
                                     }
                                 }
                             @endphp
+                            @if ($freightBooking->shortage_amount > 0 || $freightBooking->damage_amount > 0)
                             <tr>
                                 <td>{{ $index + 1 }}</td>
                                 <td>{{ $lr->lr_number }}</td>
@@ -128,12 +129,10 @@
                                 <td>{{ $lr->consignor->name ?? 'N/A' }}</td>
                                 <td>{{ $lr->consignee->name ?? 'N/A' }}</td>
                                 <td>{{ $lr->destination_city }}</td>
-                                <td>{{ $freightBooking->shortage_amount ?? '0' }}</td>
-                                <td>{{ $freightBooking->damage_amount ?? '0' }}</td>
-                               
-                               
-                             
+                                <td>{{ $freightBooking->shortage_amount }}</td>
+                                <td>{{ $freightBooking->damage_amount }}</td> 
                             </tr>
+                            @endif
                         @endforeach
                     </tbody>
                 </table>

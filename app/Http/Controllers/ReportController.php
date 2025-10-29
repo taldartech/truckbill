@@ -328,6 +328,7 @@ class ReportController extends Controller
       $generated = false;
     }
 
+    // dd($lrs);
 
     return view('reports.shortage-damage', compact('lrs', 'startDate', 'endDate', 'generated'));
   }
