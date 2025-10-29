@@ -18,8 +18,7 @@ use Illuminate\Validation\ValidationException;
 
 class FreightBookingController extends Controller
 {
-  public function index(Request $request)
-  {
+  public function index(Request $request){
 
     $pumps = Pump::all();
     // Handle DataTables AJAX request
@@ -136,8 +135,7 @@ class FreightBookingController extends Controller
     ));
   }
 
-  public function getFreightBookingsData(Request $request)
-  {
+  public function getFreightBookingsData(Request $request){
     try {
       \Log::info('FreightBookings DataTables request started');
 
@@ -474,7 +472,7 @@ class FreightBookingController extends Controller
     // Validate the form data
     $validator = Validator::make($request->all(), [
       'lr_id' => 'required|exists:lorry_receipts,id',
-      'tr_fr_rate' => 'required|numeric',
+      'tr_fr_rate' => 'required|numeric|min:1|max:20000',
       'tr_amount' => 'required|numeric',
       'advance_amount' => 'nullable|numeric',
       'balance_amount' => 'required|numeric',
@@ -922,7 +920,7 @@ class FreightBookingController extends Controller
 
     $data = $request->validate([
       'lr_id' => 'required|exists:lorry_receipts,id',
-      'tr_fr_rate' => 'required|numeric',
+      'tr_fr_rate' => 'required|numeric|min:0|max:20000',
       'tr_amount' => 'required|numeric',
       'advance_amount' => 'required|numeric',
       'balance_amount' => 'required|numeric',

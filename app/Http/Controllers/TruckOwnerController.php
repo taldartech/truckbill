@@ -217,7 +217,7 @@ class TruckOwnerController extends Controller
                 'unique:transporters,pan_number'
             ],
             'declaration_given' => 'required|boolean',
-            'total_trucks' => 'required|integer|min:0',
+            'total_trucks' => 'required|integer|min:0|max:10000',
             'advance_amount' => 'nullable|numeric',
             'pan_active' => 'required|boolean',
             'address' => 'nullable|string|max:255',
@@ -445,7 +445,7 @@ class TruckOwnerController extends Controller
                 Rule::unique('transporters', 'pan_number')->ignore($transporter->id)
             ],
             'declaration_given' => 'required|boolean',
-            'total_trucks' => 'required|integer|min:0',
+            'total_trucks' => 'required|integer|min:0|max:10000',
             'advance_amount' => 'nullable|numeric',
             'pan_active' => 'required|boolean',
             'address' => 'nullable|string|max:255',
