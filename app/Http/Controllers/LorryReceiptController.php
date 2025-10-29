@@ -165,21 +165,7 @@ class LorryReceiptController extends Controller
   public function getByLinkedId($linkedId)
   {
     try {
-      // $lrs = \App\Models\LorryReceipt::with(['truck', 'freightBookings'])
-      //     ->where('linked_lr_id', $linkedId)
-      //     ->get()
-      //     ->map(function ($lr) {
-      //         if (!$lr) return null;
-
-      //         return [
-      //             'id' => $lr->id,
-      //             'lr_number' => $lr->lr_number,
-      //             'truck_number' => $lr->truck ? $lr->truck->truck_number : '',
-      //             'freight_booking_id' => $lr->freightBooking ? $lr->freightBooking->id : null,
-      //             'balance_amount' => $lr->freightBooking ? (float)$lr->freightBooking->balance_amount : 0,
-      //         ];
-      // ->filter() ;// Remove any null entries from the collection
-      //     })
+      
       $lrs = \App\Models\LorryReceipt::with(['truck', 'freightBookings'])
         ->where('linked_lr_id', $linkedId)
         ->get()
@@ -205,31 +191,7 @@ class LorryReceiptController extends Controller
       ], 500);
     }
   }
-  //   public function getLinkedLRs($linkedLrId)
-  // {
-  //     try {
-  //         $linkedLRs = LorryReceipt::with(['consignor', 'consignee'])
-  //             ->where('linked_lr_id', $linkedLrId)
-  //             ->orWhere('id', $linkedLrId) // Include the parent LR as well
-  //             ->get()
-  //             ->map(function ($lr) {
-  //                 return [
-  //                     'id' => $lr->id,
-  //                     'lr_number' => $lr->lr_number,
-  //                     'gr_date' => $lr->gr_date,
-  //                     'consignor' => $lr->consignor,
-  //                     'consignee' => $lr->consignee,
-  //                     'status' => $lr->status,
-  //                     // Add any other fields you need
-  //                 ];
-  //             });
 
-  //         return response()->json($linkedLRs);
-  //     } catch (\Exception $e) {
-  //         \Log::error('Error fetching linked LRs: ' . $e->getMessage());
-  //         return response()->json(['error' => 'Failed to fetch linked LRs'], 500);
-  //     }
-  // }
   public function getLinkedLRs($linkedLrId)
   {
     try {
@@ -270,6 +232,8 @@ class LorryReceiptController extends Controller
           'good_type' => $lr->good_type,
           'weight' => $lr->weight,
           'amount' => $lr->amount,
+          'freight_booking_id' => $lr->freight_booking_id, // ✅ ADD THIS
+          'linked_lr_id' => $lr->linked_lr_id, // ✅ ADD THIS
         ];
       });
 

@@ -1040,20 +1040,38 @@
                 // If there's a linked LR ID, fetch all related LRs
                 if (linkedLrId) {
                     $.get(`/lorryreceipts/by-linked/${linkedLrId}`, function(response) {
-                        if (response && response.length > 0) {
-                              // ✅ CHECK: Verify all linked LRs have freight_booking_id
-                const allHaveFreightBooking = response.every(lr => 
-                    lr.freight_booking_id !== null && 
-                    lr.freight_booking_id !== undefined && 
-                    lr.freight_booking_id !== ''
+                        console.log('📦 Full response:', response);
+                        const lrsArray = response.lrs || response;
+        
+        if (lrsArray && lrsArray.length > 0) {
+            // ✅ CHECK: Verify all linked LRs have freight_booking_id
+            const allHaveFreightBooking = lrsArray.every(lr => 
+                lr.freight_booking_id !== null && 
+                lr.freight_booking_id !== undefined && 
+                lr.freight_booking_id !== ''
+            );
+
+            console.log('✅ All have freight booking?', allHaveFreightBooking);
+            console.log('Freight booking IDs:', lrsArray.map(lr => ({ lr_number: lr.lr_number, freight_booking_id: lr.freight_booking_id })));
+
+            if (!allHaveFreightBooking) {
+                // Find which LRs are missing freight bookings
+                const missingLRs = lrsArray.filter(lr => 
+                    lr.freight_booking_id === null || 
+                    lr.freight_booking_id === undefined || 
+                    lr.freight_booking_id === ''
                 );
 
-                if (!allHaveFreightBooking) {
-                    alert('⚠️ Error: Some linked LRs do not have Freight Bookings. Please create FRs for all linked LRs before proceeding with combined payment.');
-                    return;
-                }
-                            buildCombinedModal(response);
-                        } else {
+                const lrNumbers = missingLRs.map(lr => lr.lr_number).join(', ');
+                
+                alert(`⚠️ Error: The following linked LRs do not have Freight Bookings:\n\n${lrNumbers}\n\nPlease create FRs for all linked LRs before proceeding with combined payment.`);
+                console.log('❌ Missing FRs for:', missingLRs);
+                return;
+            }
+
+            // All checks passed, proceed with modal
+            buildCombinedModal(lrsArray);
+        } else {
                             // Fallback to just the selected LRs if no linked ones found
                             const lrData = Array.from(checkedBoxes).map(cb => {
                                 const $cb = $(cb);
