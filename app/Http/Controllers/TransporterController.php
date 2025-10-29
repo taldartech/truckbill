@@ -284,7 +284,8 @@ class TransporterController extends Controller
                 'nullable',
                 'string',
                 'max:15',
-                'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/'
+                'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
+                'unique:transporters,gst_number'
             ],
             'pan_number' => [
                 'required',
@@ -338,6 +339,7 @@ class TransporterController extends Controller
             'contact_person_name' => 'nullable|string|max:255',
         ], [
             'pan_number.unique' => 'This PAN number is already associated with another transporter and cannot be used.',
+            'gst_number.unique' => 'This GST number is already associated with another transporter and cannot be used.',
             'mobile_number.unique' => 'This mobile number is already associated with another transporter.',
             'short_name.unique' => 'This short name is already associated with another transporter and cannot be used.',
         ]);
