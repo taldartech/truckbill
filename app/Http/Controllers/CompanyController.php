@@ -259,21 +259,37 @@ $endOfYear = $startOfYear->copy()->addYear()->subDay()->endOfDay();
                 'nullable',
                 'string',
                 'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
+                function ($attribute, $value, $fail) {
+                    if ($value && \App\Models\Company::where('gst_number', $value)->exists()) {
+                        $fail('The GST number has already been taken.');
+                    }
+                },
             ],
+    
             'pan_number' => [
                 'nullable',
                 'string',
                 'size:10',
-                'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/'
+                'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
+                function ($attribute, $value, $fail) {
+                    if ($value && \App\Models\Company::where('pan_number', $value)->exists()) {
+                        $fail('The PAN number has already been taken.');
+                    }
+                },
             ],
             'gst_scheme' => 'nullable|in:reverse charge,forward charge',
             'gst_type' => 'nullable|in:composition,regular',
             'address' => 'nullable|string',
             'contact_person' => 'nullable|string|max:255',
             'contact_number' => [
-    'nullable',
-    'digits:10',
-],
+                'nullable',
+                'digits:10',
+                function ($attribute, $value, $fail) {
+                    if ($value && \App\Models\Company::where('contact_number', $value)->exists()) {
+                        $fail('The contact number has already been taken.');
+                    }
+                },
+            ],
             'country_id' => 'nullable|exists:countries,id',
             'state_id' => 'nullable|exists:states,id',
             'city_id' => 'nullable|exists:cities,id',
