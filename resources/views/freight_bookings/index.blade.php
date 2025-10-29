@@ -1041,6 +1041,17 @@
                 if (linkedLrId) {
                     $.get(`/lorryreceipts/by-linked/${linkedLrId}`, function(response) {
                         if (response && response.length > 0) {
+                              // ✅ CHECK: Verify all linked LRs have freight_booking_id
+                const allHaveFreightBooking = response.every(lr => 
+                    lr.freight_booking_id !== null && 
+                    lr.freight_booking_id !== undefined && 
+                    lr.freight_booking_id !== ''
+                );
+
+                if (!allHaveFreightBooking) {
+                    alert('⚠️ Error: Some linked LRs do not have Freight Bookings. Please create FRs for all linked LRs before proceeding with combined payment.');
+                    return;
+                }
                             buildCombinedModal(response);
                         } else {
                             // Fallback to just the selected LRs if no linked ones found
