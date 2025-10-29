@@ -408,25 +408,33 @@ class InvoiceController extends Controller
   }
 
   public function checkManualInvoiceNumberUniqueness(Request $request)
-{
-    $manualNumber = $request->input('manual_invoice_number');
-    $companyId = auth()->user()->company_id;
-
-    $exists = \App\Models\Invoice::where('manual_invoice_number', $manualNumber)
-        ->where('company_id', $companyId)
-        ->exists();
-
-    if ($exists) {
-        return response()->json([
-            'valid' => false,
-            'message' => 'This invoice number is already used in your company.'
-        ]);
-    } else {
-        return response()->json([
-            'valid' => true,
-            'message' => 'Available!'
-        ]);
-    }
-}
+  {
+      $manualNumber = $request->input('manual_invoice_number');
+      $invoiceId = $request->input('invoice_id'); // Get invoice ID if editing
+      $companyId = auth()->user()->company_id;
+  
+      $query = \App\Models\Invoice::where('manual_invoice_number', $manualNumber)
+          ->where('company_id', $companyId);
+  
+      // Ignore current invoice if editing
+      if ($invoiceId) {
+          $query->where('id', '!=', $invoiceId);
+      }
+  
+      $exists = $query->exists();
+  
+      if ($exists) {
+          return response()->json([
+              'valid' => false,
+              'message' => 'This invoice number is already used in your company.'
+          ]);
+      } else {
+          return response()->json([
+              'valid' => true,
+              'message' => 'Available!'
+          ]);
+      }
+  }
+  
 
 }
