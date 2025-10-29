@@ -83,7 +83,13 @@
                    
                     <div class="col-md-4">
                         <label class="form-label">Manual Invoice #</label>
-                        <input type="text" placeholder="Invoice Number" name="manual_invoice_number" class="form-control" value="{{ old('manual_invoice_number') }}">
+                        <input type="text" placeholder="Invoice Number" id="manual_invoice_number" name="manual_invoice_number"
+                            class="form-control @error('manual_invoice_number') is-invalid @enderror"
+                            value="{{ old('manual_invoice_number') }}" required>
+                        
+                        {{-- Add this feedback div --}}
+                        <div id="manual-invoice-number-feedback"></div>
+                        
                         @error('manual_invoice_number') 
                             <div class="text-danger">{{ $message }}</div> 
                         @enderror
@@ -286,6 +292,72 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 <script>
+    // Manual Invoice Number uniqueness validation
+const manualInvoiceInput = document.getElementById('manual_invoice_number');
+const manualInvoiceFeedback = document.getElementById('manual-invoice-number-feedback');
+let manualInvoiceTimeout;
+
+function checkManualInvoiceUniqueness(manualNumber) {
+    // if (!manualNumber || manualNumber.length < 2) {
+    //     manualInvoiceFeedback.innerHTML = '';
+    //     manualInvoiceInput.classList.remove('is-valid', 'is-invalid');
+    //     manualInvoiceInput.setCustomValidity('');
+    //     return;
+    // }
+
+    manualInvoiceFeedback.innerHTML = '<small class="text-info">🔍 Checking availability...</small>';
+    manualInvoiceInput.classList.remove('is-valid', 'is-invalid');
+
+    fetch('/api/check-manual-invoice-number-uniqueness', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({
+            manual_invoice_number: manualNumber
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.valid) {
+            manualInvoiceFeedback.innerHTML = '<small class="text-success">✅ ' + data.message + '</small>';
+            manualInvoiceInput.classList.remove('is-invalid');
+            manualInvoiceInput.classList.add('is-valid');
+            manualInvoiceInput.setCustomValidity('');
+        } else {
+            manualInvoiceFeedback.innerHTML = '<small class="text-danger">❌ ' + data.message + '</small>';
+            manualInvoiceInput.classList.remove('is-valid');
+            manualInvoiceInput.classList.add('is-invalid');
+            manualInvoiceInput.setCustomValidity(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error checking Manual Invoice Number uniqueness:', error);
+        manualInvoiceFeedback.innerHTML = '<small class="text-warning">⚠️ Unable to check availability</small>';
+        manualInvoiceInput.classList.remove('is-valid', 'is-invalid');
+        manualInvoiceInput.setCustomValidity('');
+    });
+}
+
+// Add debounced input listener for Manual Invoice Number
+manualInvoiceInput.addEventListener('input', function() {
+    const manualNumber = this.value.trim();
+    clearTimeout(manualInvoiceTimeout);
+    manualInvoiceTimeout = setTimeout(() => {
+        checkManualInvoiceUniqueness(manualNumber);
+    }, 500); // 500ms delay
+});
+
+// Check on blur as well
+manualInvoiceInput.addEventListener('blur', function() {
+    const manualNumber = this.value.trim();
+    if (manualNumber) {
+        clearTimeout(manualInvoiceTimeout);
+        checkManualInvoiceUniqueness(manualNumber);
+    }
+});
+
     document.addEventListener('DOMContentLoaded', function () {
         const showInvoiceFormBtn = document.getElementById('showInvoiceFormBtn');
         const mainFormContainer = document.getElementById('mainInvoiceForm');

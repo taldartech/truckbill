@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Validation\Rule;
 
 class InvoiceController extends Controller
 {
@@ -160,28 +161,7 @@ class InvoiceController extends Controller
     return $actions;
   }
 
-  // public function create()
-  // {
-  //     $companies = Company::all();
-  //     $customers = Customer::all();
-
-  //     // Get memo_ids directly from database
-  //     $memoIds = DB::table('lorry_receipts')
-  //         ->select('memo_id')
-  //         ->distinct()
-  //         ->pluck('memo_id')
-  //         ->toArray();
-
-  //     // Format as array for view
-  //     $memos = array_map(function($id) {
-  //         return [
-  //             'id' => $id,
-  //             'memo_number' => 'Memo #' . $id  // You might want to adjust this based on your actual memo_number format
-  //         ];
-  //     }, $memoIds);
-
-  //     return view('invoices.create', compact('companies', 'customers', 'memos'));
-  // }
+ 
   public function create()
   {
     $user = auth()->user();
@@ -200,16 +180,7 @@ class InvoiceController extends Controller
 
   public function getCustomerMemos($customerId)
   {
-    // Log the incoming request
-    // Log::info('Fetching memos for customer:', ['customer_id' => $customerId]);
-
-    // // Validate the customer ID
-    // if (!is_numeric($customerId)) {
-    //     Log::warning('Invalid customer ID:', ['customer_id' => $customerId]);
-    //     return response()->json(['error' => 'Invalid customer ID'], 400);
-    // }
-
-    // Get memos from lorry_receipts
+    
     $memos = DB::table('lorry_receipts')
       ->select('memo_id')
       ->where('company_id', auth()->user()->company_id)
@@ -240,22 +211,19 @@ class InvoiceController extends Controller
       ->pluck('memo_id');
     return response()->json($memos);
   }
-// public function getPendingMemo($customerId)
-// {
-//   $memos = LorryReceipt::where('company_id', auth()->user()->company_id)
-//   ->where('customer_id', $customerId)
 
-//   ->whereNotNull('memo_id')
-//   ->distinct()
-//   ->pluck('memo_id');
-// return response()->json($memos);
-// }
 
   public function store(Request $request)
   {
-    //   dd($request->all());
+      // dd($request->all());
     $data = $request->validate([
-      'manual_invoice_number' => 'nullable|string',
+      'manual_invoice_number' => [
+        'required',
+        'string',
+        Rule::unique('invoices')->where(fn ($query) =>
+            $query->where('company_id', auth()->user()->company_id)
+        ),
+    ],
       'invoice_type' => 'required|in:Reverse,Forward',
       'generated_date' => 'required|date',
       'customer_id' => 'required|exists:consignees,id',
@@ -270,60 +238,9 @@ class InvoiceController extends Controller
     ]);
     $data['payment_status'] = 'pending';
     $data['company_id'] = auth()->user()->company_id;
+    
 
-    // // Fetch customer state
-    // $customer = \App\Models\Consignee::findOrFail($data['customer_id']);
-    // $state = strtolower($customer->state);
-
-    // $grandTotal = $data['total_amount'];   // this is the form’s base total
-    // $invoiceType = strtolower($data['invoice_type']);
-
-    // // Recalculate expected tax values
-    // $expected = [
-    //     'sgst' => 0,
-    //     'cgst' => 0,
-    //     'igst' => 0,
-    //     'net_amount' => $grandTotal,
-    //     'total_amount' => $grandTotal, // also track base amount
-    // ];
-
-    // if ($state === 'rajasthan') {
-    //     if ($invoiceType === 'forward') {
-    //         $expected['sgst'] = $grandTotal * 0.025;
-    //         $expected['cgst'] = $grandTotal * 0.025;
-    //         $expected['net_amount'] = $grandTotal + $expected['sgst'] + $expected['cgst'];
-    //         $expected['total_amount'] = $expected['net_amount']; // frontend sets total_amount=net in this case
-    //     } else { // Reverse
-    //         $expected['sgst'] = $grandTotal * 0.025;
-    //         $expected['cgst'] = $grandTotal * 0.025;
-    //         $gst = $grandTotal * 0.05;
-    //         $expected['net_amount'] = $grandTotal + $gst;
-    //         $expected['total_amount'] = $grandTotal; // frontend keeps base amount for reverse
-    //     }
-    // } else {
-    //     if ($invoiceType === 'forward') {
-    //         $expected['igst'] = $grandTotal * 0.05;
-    //         $expected['net_amount'] = $grandTotal + $expected['igst'];
-    //         $expected['total_amount'] = $expected['net_amount'];
-    //     } else { // Reverse
-    //         $expected['igst'] = $grandTotal * 0.05;
-    //         $expected['net_amount'] = $grandTotal + $expected['igst'];
-    //         $expected['total_amount'] = $grandTotal;
-    //     }
-    // }
-
-    // // Compare request values with expected (including total_amount)
-    // if (
-    //     round($data['sgst'], 2) !== round($expected['sgst'], 2) ||
-    //     round($data['cgst'], 2) !== round($expected['cgst'], 2) ||
-    //     round($data['igst'], 2) !== round($expected['igst'], 2) ||
-    //     round($data['net_amount'], 2) !== round($expected['net_amount'], 2) ||
-    //     round($data['total_amount'], 2) !== round($expected['total_amount'], 2)
-    // ) {
-    //     return back()->with('warning', '⚠️ Invoice mismatch detected (Amount/Tax). Please re-check and try again.');
-    // }
-
-
+   
 
     // Separate memo_ids from the rest of invoice data
     $memoIds = $request->input('memo_ids', []);
@@ -337,23 +254,7 @@ class InvoiceController extends Controller
     }
 
     $invoice = Invoice::create($data);
-    // if (!empty($data['memo_ids'])) {
-    //     foreach ($data['memo_ids'] as $memoId) {
-    //         InvoiceMemoMap::create([
-    //             'invoice_id' => $invoice->id,
-    //             'memo_id' => $memoId
-    //         ]);
-    //     }
-    // }
-
-    // if (!empty($memoIds)) {
-    //     foreach ($memoIds as $memoId) {
-    //         InvoiceMemoMap::create([
-    //             'invoice_id' => $invoice->id,
-    //             'memo_id' => $memoId
-    //         ]);
-    //     }
-    // }
+   
 
     return redirect()->route('invoices.index')->with('success', 'Invoice created successfully.');
   }
@@ -433,7 +334,13 @@ class InvoiceController extends Controller
       return redirect()->route('invoices.index')->with('success', 'Invoice updated successfully.');
     }
     $data = $request->validate([
-      'manual_invoice_number' => 'nullable|string',
+      'manual_invoice_number' => [
+    'required',
+    'string',
+    Rule::unique('invoices')->where(fn ($query) =>
+        $query->where('company_id', auth()->user()->company_id)
+    )->ignore($invoice->id), 
+],
       'generated_date' => 'required|date',
       'payment_status' => 'required|in:pending,partial,paid',
     ]);
@@ -499,4 +406,27 @@ class InvoiceController extends Controller
 
     return response()->json($invoices);
   }
+
+  public function checkManualInvoiceNumberUniqueness(Request $request)
+{
+    $manualNumber = $request->input('manual_invoice_number');
+    $companyId = auth()->user()->company_id;
+
+    $exists = \App\Models\Invoice::where('manual_invoice_number', $manualNumber)
+        ->where('company_id', $companyId)
+        ->exists();
+
+    if ($exists) {
+        return response()->json([
+            'valid' => false,
+            'message' => 'This invoice number is already used in your company.'
+        ]);
+    } else {
+        return response()->json([
+            'valid' => true,
+            'message' => 'Available!'
+        ]);
+    }
+}
+
 }
