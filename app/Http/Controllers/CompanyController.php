@@ -210,17 +210,32 @@ $endOfYear = $startOfYear->copy()->addYear()->subDay()->endOfDay();
     {
         $company = \App\Models\Company::findOrFail($id);
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                'regex:/[A-Za-z]/', // ✅ ensures at least one alphabet is present
+            ],
             'gst_number' => [
     'nullable',
     'string',
     'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
+    function ($attribute, $value, $fail)use ($id) {
+        if ($value && \App\Models\Company::where('gst_number', $value)  ->where('id', '!=', $id)->exists()) {
+            $fail('The GST number has already been taken.');
+        }
+    },
 ],
             'pan_number' => [
                 'nullable',
                 'string',
                 'size:10',
-                'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/'
+                'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
+                function ($attribute, $value, $fail)use ($id) {
+                    if ($value && \App\Models\Company::where('pan_number', $value)->where('id', '!=', $id)->exists()) {
+                        $fail('The PAN number has already been taken.');
+                    }
+                },  
             ],
             'gst_scheme' => 'nullable|in:reverse charge,forward charge',
             'gst_type' => 'nullable|in:composition,regular',
@@ -229,11 +244,18 @@ $endOfYear = $startOfYear->copy()->addYear()->subDay()->endOfDay();
             'contact_number' => [
     'nullable',
     'digits:10',
+    function ($attribute, $value, $fail)use ($id) {
+        if ($value && \App\Models\Company::where('contact_number', $value)->where('id', '!=', $id)->exists()) {
+            $fail('The contact number has already been taken.');
+        }
+    },
 ],
             'country_id' => 'nullable|exists:countries,id',
             'state_id' => 'nullable|exists:states,id',
             'city_id' => 'nullable|exists:cities,id',
             'pin_code' => 'nullable|string|max:10',
+        ], [
+            'name.regex' => 'The name must contain at least one alphabetic character.', 
         ]);
         // dd($validated);
         $company->update($validated);
@@ -254,7 +276,14 @@ $endOfYear = $startOfYear->copy()->addYear()->subDay()->endOfDay();
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+          'name' => [
+            'required',
+            'string',
+            'max:255',
+            'regex:/[A-Za-z]/', // ✅ ensures at least one alphabet is present
+        ],
+        
+   
             'gst_number' => [
                 'nullable',
                 'string',
@@ -294,6 +323,8 @@ $endOfYear = $startOfYear->copy()->addYear()->subDay()->endOfDay();
             'state_id' => 'nullable|exists:states,id',
             'city_id' => 'nullable|exists:cities,id',
             'pin_code' => 'nullable|string|max:10',
+        ], [
+            'name.regex' => 'The name must contain at least one alphabetic character.', 
         ]);
 
         // Set default GST type to regular if not provided
