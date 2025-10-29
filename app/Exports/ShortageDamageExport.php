@@ -41,15 +41,29 @@ class ShortageDamageExport implements FromCollection, WithHeadings, ShouldAutoSi
     $user = Auth::user()->company_id;
     if ($this->startDate || $this->endDate) {
       // First, get the LorryReceipts with their freight bookings and voucher payments
-      $query = LorryReceipt::with([
-          'freightBookings' => function($q) {
-              $q->with(['voucherPayments']);
-          },
-          'consignor',
-          'consignee',
-          'customer',
-          'truck'
-      ])->whereBetween('gr_date', [$this->startDate, $this->endDate]);
+
+   $query = LorryReceipt::with([
+        'freightBookings' => function ($q) {
+            // Sirf wahi freight bookings load karo jinke shortage/damage amount > 0
+            $q->with(['voucherPayments'])
+              ->where(function ($sub) {
+                  $sub->where('shortage_amount', '>', 0)
+                      ->orWhere('damage_amount', '>', 0);
+              });
+        },
+        'consignor',
+        'consignee',
+        'customer',
+        'truck'
+    ])
+    ->whereBetween('gr_date', [$this->startDate, $this->endDate])
+    // Sirf wahi LRs jinke freightBookings me shortage/damage amount > 0
+    ->whereHas('freightBookings', function ($q) {
+        $q->where(function ($sub) {
+            $sub->where('shortage_amount', '>', 0)
+                ->orWhere('damage_amount', '>', 0);
+        });
+    });
 
       if ($user) {
           $query->where('company_id', $user);

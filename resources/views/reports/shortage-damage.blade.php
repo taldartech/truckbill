@@ -131,6 +131,7 @@
                                 <td>{{ $freightBooking->shortage_amount ?? '0' }}</td>
                                 <td>{{ $freightBooking->damage_amount ?? '0' }}</td>
                                
+                               
                              
                             </tr>
                         @endforeach
