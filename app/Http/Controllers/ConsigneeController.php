@@ -224,20 +224,14 @@ class ConsigneeController extends Controller
                 'nullable',
                
                 'digits:10',
-                Rule::unique('consignees', 'contact_number')
-                ->where(function ($query) {
-                    return $query->where('company_id', auth()->user()->company_id);
-                })
+               
                 
             ],
             'gst_number' => [
                 'nullable',
                 'string',
                 'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
-                Rule::unique('consignees', 'gst_number')
-                ->where(function ($query) {
-                    return $query->where('company_id', auth()->user()->company_id);
-                })
+               
             
                  
             ],
@@ -246,20 +240,17 @@ class ConsigneeController extends Controller
                             'string',
                             'size:10',
                             'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
-                            Rule::unique('consignees', 'pan_number')
-                            ->where(function ($query) {
-                                return $query->where('company_id', auth()->user()->company_id);
-                            })
+                            
                         ],
                         'email' => [
                             'nullable',
                             'email',
-                            Rule::unique('consignees', 'email')
-                            ->where(function ($query) {
-                                return $query->where('company_id', auth()->user()->company_id);
-                            })
+                           
                         ],
+                        
         ]);
+        $this->validateConsigneeUniquenessCreate($validated, $companyId);
+       
 
         if (!empty($validated['pan_number'])) {
             $validated['pan_number'] = strtoupper($validated['pan_number']);
@@ -274,6 +265,47 @@ class ConsigneeController extends Controller
         return redirect()->route('consignees.index')
             ->with('success', 'Consignee created successfully!');
     }
+    private function validateConsigneeUniquenessCreate($data, $companyId)
+{
+    $errors = [];
+    
+    // Query: non-deleted records from this company only
+    $query = Consignee::where('company_id', $companyId)
+        ->whereNull('deleted_at');
+
+    // Check contact_number
+    if (!empty($data['contact_number'])) {
+        if ($query->clone()->where('contact_number', $data['contact_number'])->exists()) {
+            $errors['contact_number'] = 'This contact number is already used by another consignee in your company.';
+        }
+    }
+
+    // Check email
+    if (!empty($data['email'])) {
+        if ($query->clone()->where('email', $data['email'])->exists()) {
+            $errors['email'] = 'This email is already used by another consignee in your company.';
+        }
+    }
+
+    // Check GST number
+    if (!empty($data['gst_number'])) {
+        if ($query->clone()->where('gst_number', $data['gst_number'])->exists()) {
+            $errors['gst_number'] = 'This GST number is already used by another consignee in your company.';
+        }
+    }
+
+    // Check PAN number
+    if (!empty($data['pan_number'])) {
+        if ($query->clone()->where('pan_number', $data['pan_number'])->exists()) {
+            $errors['pan_number'] = 'This PAN number is already used by another consignee in your company.';
+        }
+    }
+
+    if (!empty($errors)) {
+        throw \Illuminate\Validation\ValidationException::withMessages($errors);
+    }
+}
+
     public function getConsigneeDetails($id)
 {
     $consignee = \App\Models\Consignee::with('state') // assuming relation
@@ -337,43 +369,28 @@ class ConsigneeController extends Controller
                 'nullable',
                
                 'digits:10',
-                Rule::unique('consignees', 'contact_number')
-                ->where(function ($query) use ($request) {
-                    return $query->where('company_id', $request->company_id);
-                })
-                ->ignore($consignee->id),
+            
             ],
             'gst_number' => [
                 'nullable',
                 'string',
                 'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
-                Rule::unique('consignees', 'gst_number')
-                ->where(function ($query) use ($request) {
-                    return $query->where('company_id', $request->company_id);
-                })
-                ->ignore($consignee->id),
+             
             ],
             'pan_number' => [
                 'nullable',
                 'string',
                 'size:10',
                 'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
-                Rule::unique('consignees', 'pan_number')
-                ->where(function ($query) use ($request) {
-                    return $query->where('company_id', $request->company_id);
-                })
-                ->ignore($consignee->id),
+               
             ],
             'email' => [
                 'nullable',
                 'email',
-                Rule::unique('consignees', 'email')
-                ->where(function ($query) use ($request) {
-                    return $query->where('company_id', $request->company_id);
-                })
-                ->ignore($consignee->id),
+               
             ],
         ]);
+        $this->validateConsigneeUniquenessUpdate($validated, $consignee->company_id, $consignee->id);
 
         if (!empty($validated['pan_number'])) {
             $validated['pan_number'] = strtoupper($validated['pan_number']);
@@ -386,6 +403,48 @@ class ConsigneeController extends Controller
         return redirect()->route('consignees.index')
             ->with('success', 'Consignee updated successfully!');
     }
+    private function validateConsigneeUniquenessUpdate($data, $companyId, $excludeId)
+{
+    $errors = [];
+    
+    // Query: non-deleted records from this company, excluding current record
+    $query = Consignee::where('company_id', $companyId)
+        ->whereNull('deleted_at')
+        ->where('id', '!=', $excludeId);  // ✅ KEY: Exclude self
+
+    // Check contact_number
+    if (!empty($data['contact_number'])) {
+        if ($query->clone()->where('contact_number', $data['contact_number'])->exists()) {
+            $errors['contact_number'] = 'This contact number is already used by another consignee in your company.';
+        }
+    }
+
+    // Check email
+    if (!empty($data['email'])) {
+        if ($query->clone()->where('email', $data['email'])->exists()) {
+            $errors['email'] = 'This email is already used by another consignee in your company.';
+        }
+    }
+
+    // Check GST number
+    if (!empty($data['gst_number'])) {
+        if ($query->clone()->where('gst_number', $data['gst_number'])->exists()) {
+            $errors['gst_number'] = 'This GST number is already used by another consignee in your company.';
+        }
+    }
+
+    // Check PAN number
+    if (!empty($data['pan_number'])) {
+        if ($query->clone()->where('pan_number', $data['pan_number'])->exists()) {
+            $errors['pan_number'] = 'This PAN number is already used by another consignee in your company.';
+        }
+    }
+
+    if (!empty($errors)) {
+        throw \Illuminate\Validation\ValidationException::withMessages($errors);
+    }
+}
+
 
     public function destroy(Consignee $consignee)
     {
