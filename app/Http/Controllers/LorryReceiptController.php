@@ -175,8 +175,9 @@ class LorryReceiptController extends Controller
             'id' => $lr->id,
             'lr_number' => $lr->lr_number,
             'truck_number' => $lr->truck ? $lr->truck->truck_number : '',
-            'freight_booking_id' => $firstFreight ? $firstFreight->id : null,
+            'freight_booking_id' =>$lr->freight_booking_id,
             'balance_amount' => $firstFreight ? (float)$firstFreight->balance_amount : 0,
+            'linked_lr_id' => $lr->linked_lr_id,
           ];
         })->sortBy('balance_amount') // 🔹 Sort ascending by balance
         ->values();
@@ -236,6 +237,7 @@ class LorryReceiptController extends Controller
           'linked_lr_id' => $lr->linked_lr_id, // ✅ ADD THIS
         ];
       });
+      \Log::info('Details: ', $details);
 
       return response()->json([
         'common' => $common,

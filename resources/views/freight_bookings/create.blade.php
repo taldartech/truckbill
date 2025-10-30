@@ -466,7 +466,7 @@
                         <p><strong>Advance Amount:</strong> ₹{{ number_format($cancelledBookings->advance_amount, 2) }}</p>
                         <p><strong>E-Way Bill Number:</strong> {{ $cancelledBookings->eway_bill_number ?? 'N/A' }}</p>
                         <p><strong>E-Way Bill Expiry Date:</strong>
-                            {{ $cancelledBookings->eway_bill_expiry ? $cancelledBookings->eway_bill_expiry->format('d M Y') : 'N/A' }}
+                            {{ $cancelledBookings->eway_bill_expiry ? \Carbon\Carbon::parse($cancelledBookings->eway_bill_expiry)->format('d M Y') : 'N/A' }}
                         </p>
                         <p><strong>Remark:</strong> {{ $cancelledBookings->remark ?? 'N/A' }}</p>
                         <p><strong>Cancelled On:</strong> {{ $cancelledBookings->updated_at->format('d M Y, h:i A') }}</p>
@@ -673,7 +673,7 @@
 
             // Function to update trucks based on selected transporter
             function updateTrucks() {
-                const selectedTransporter = transporterSelect ? transporterSelect.value : '';
+                const selectedTransporter = transporterSelect.value;
                 if (!selectedTransporter || !truckSelect) {
                     if (truckSelect) {
                         truckSelect.innerHTML = '<option value="">Select Truck</option>';
