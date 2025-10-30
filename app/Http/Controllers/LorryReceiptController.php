@@ -476,7 +476,7 @@ class LorryReceiptController extends Controller
     try {
       // Validate input
       $validated = $request->validate([
-        'memo_id' => 'required|integer',
+        'memo_id' => 'required|string',
         'lr_ids' => 'required|array',
         'lr_ids.*' => 'integer|exists:lorry_receipts,id'
       ]);
