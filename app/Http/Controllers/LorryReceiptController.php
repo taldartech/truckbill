@@ -590,9 +590,24 @@ class LorryReceiptController extends Controller
 
       $perItemRules = [
         'lrs' => 'nullable|array|min:1',
-        'lrs.*.lr_number' => 'nullable|string|max:100|distinct|unique:lorry_receipts,lr_number',
-        'lrs.*.gr_number' => 'nullable|string|max:100|distinct|unique:lorry_receipts,gr_number',
-        'lrs.*.invoice_number' => 'nullable|string|max:256|distinct|unique:lorry_receipts,invoice_number',
+       'lrs.*.lr_number' => [
+    'nullable',
+    'string',
+    'max:100',
+    'distinct',  // ✅ Only checks within request array
+],
+'lrs.*.gr_number' => [
+    'nullable',
+    'string',
+    'max:100',
+    'distinct',  // ✅ Only checks within request array
+],
+'lrs.*.invoice_number' => [
+    'nullable',
+    'string',
+    'max:256',
+    'distinct',  // ✅ Only checks within request array
+],
         'lrs.*.customer_id' => 'nullable|exists:consignees,id',
         'lrs.*.consignor_id' => 'nullable|exists:consignees,id',
         'lrs.*.consignor_contact_number' => 'nullable|string|max:20',
@@ -612,6 +627,7 @@ class LorryReceiptController extends Controller
         'lrs.*.damage_amount' => 'nullable|numeric',
         'lrs.*.shortage_amount' => 'nullable|numeric',
       ];
+      $this->validateLorryReceiptsUniqueness($validated['lrs'], auth()->user()->company_id);
 
       $validated = $request->validate(array_merge($sharedRules, $perItemRules));
 
@@ -758,6 +774,78 @@ class LorryReceiptController extends Controller
     }
     return redirect()->route('lorry_receipts.index')->with('success', 'Lorry Receipt created successfully!');
   }
+  /**
+ * ✅ VALIDATE LORRY RECEIPTS COMPANY-WISE UNIQUENESS
+ */
+private function validateLorryReceiptsUniqueness($lrs, $companyId)
+{
+    $errors = [];
+
+    // Extract all numbers from request
+    $lrNumbers = array_filter(array_column($lrs, 'lr_number'));
+    $grNumbers = array_filter(array_column($lrs, 'gr_number'));
+    $invoiceNumbers = array_filter(array_column($lrs, 'invoice_number'));
+
+    // ✅ CHECK 1: LR_NUMBER (Company-wise)
+    if (!empty($lrNumbers)) {
+        $duplicateLrs = \App\Models\LorryReceipt::where('company_id', $companyId)
+            ->whereNull('deleted_at')  // ✅ Soft delete aware
+            ->whereIn('lr_number', $lrNumbers)
+            ->pluck('lr_number')
+            ->toArray();
+
+        if (!empty($duplicateLrs)) {
+            foreach ($lrs as $index => $lr) {
+                if (!empty($lr['lr_number']) && in_array($lr['lr_number'], $duplicateLrs)) {
+                    $errors["lrs.{$index}.lr_number"] = 
+                        "LR Number '{$lr['lr_number']}' already exists in your company.";
+                }
+            }
+        }
+    }
+
+    // ✅ CHECK 2: GR_NUMBER (Company-wise)
+    if (!empty($grNumbers)) {
+        $duplicateGrs = \App\Models\LorryReceipt::where('company_id', $companyId)
+            ->whereNull('deleted_at')
+            ->whereIn('gr_number', $grNumbers)
+            ->pluck('gr_number')
+            ->toArray();
+
+        if (!empty($duplicateGrs)) {
+            foreach ($lrs as $index => $lr) {
+                if (!empty($lr['gr_number']) && in_array($lr['gr_number'], $duplicateGrs)) {
+                    $errors["lrs.{$index}.gr_number"] = 
+                        "GR Number '{$lr['gr_number']}' already exists in your company.";
+                }
+            }
+        }
+    }
+
+    // ✅ CHECK 3: INVOICE_NUMBER (Company-wise)
+    if (!empty($invoiceNumbers)) {
+        $duplicateInvoices = \App\Models\LorryReceipt::where('company_id', $companyId)
+            ->whereNull('deleted_at')
+            ->whereIn('invoice_number', $invoiceNumbers)
+            ->pluck('invoice_number')
+            ->toArray();
+
+        if (!empty($duplicateInvoices)) {
+            foreach ($lrs as $index => $lr) {
+                if (!empty($lr['invoice_number']) && in_array($lr['invoice_number'], $duplicateInvoices)) {
+                    $errors["lrs.{$index}.invoice_number"] = 
+                        "Invoice Number '{$lr['invoice_number']}' already exists in your company.";
+                }
+            }
+        }
+    }
+
+    // Throw validation exception if errors exist
+    if (!empty($errors)) {
+        throw \Illuminate\Validation\ValidationException::withMessages($errors);
+    }
+}
+
 
   public function checkLrNumberUniqueness(Request $request)
   {
@@ -769,6 +857,7 @@ class LorryReceiptController extends Controller
     }
 
     $exists = \App\Models\LorryReceipt::where('lr_number', $lrNumber)
+      ->where('company_id', auth()->user()->company_id)
       ->where('id', '!=', $excludeId)
       ->exists();
 
@@ -795,6 +884,7 @@ class LorryReceiptController extends Controller
     }
 
     $exists = \App\Models\LorryReceipt::where('invoice_number', $invoiceNumber)
+      ->where('company_id', auth()->user()->company_id)
       ->where('id', '!=', $excludeId)
       ->exists();
 
@@ -927,9 +1017,9 @@ class LorryReceiptController extends Controller
 
     $validated = $request->validate([
       'customer_id' => 'required|exists:consignees,id',
-      'lr_number' => 'required|string|max:100|unique:lorry_receipts,lr_number,' . $lorry_receipt->id . ',id',
-      'gr_number' => 'nullable|string|max:100|unique:lorry_receipts,gr_number,' . $lorry_receipt->id . ',id',
-      'invoice_number' => 'nullable|string|max:256|unique:lorry_receipts,invoice_number,' . $lorry_receipt->id . ',id',
+     'lr_number' => ['required', 'string', 'max:100'],
+'gr_number' => ['nullable', 'string', 'max:100'],
+'invoice_number' => ['nullable', 'string', 'max:256'],
 
       'memo_id' => [
         'nullable',
@@ -973,6 +1063,7 @@ class LorryReceiptController extends Controller
       'transporter_type' => 'nullable|in:owner,agency',
 
     ]);
+    $this->validateLorryReceiptUniquenessUpdate($validated, $lorry_receipt->id, auth()->user()->company_id);
     //if mamo_id is null and freight booking id exist for that lr than delivery status to be in-progress
 
 
@@ -1029,6 +1120,68 @@ class LorryReceiptController extends Controller
     $lorry_receipt->update($validated);
     return redirect()->route('lorry_receipts.index')->with('success', 'Lorry Receipt updated successfully!');
   }
+
+  private function validateLorryReceiptUniquenessUpdate($data, $excludeId, $companyId)
+{
+    $errors = [];
+
+    // ✅ CHECK 1: LR_NUMBER
+    if (!empty($data['lr_number'])) {
+        $exists = \App\Models\LorryReceipt::where('company_id', $companyId)
+            ->where('lr_number', $data['lr_number'])
+            ->where('id', '!=', $excludeId)
+            ->whereNull('deleted_at')
+            ->exists();
+
+        if ($exists) {
+            $errors['lr_number'] = "LR Number '{$data['lr_number']}' already exists in your company.";
+        }
+    }
+
+    // ✅ CHECK 2: GR_NUMBER
+    if (!empty($data['gr_number'])) {
+        $exists = \App\Models\LorryReceipt::where('company_id', $companyId)
+            ->where('gr_number', $data['gr_number'])
+            ->where('id', '!=', $excludeId)
+            ->whereNull('deleted_at')
+            ->exists();
+
+        if ($exists) {
+            $errors['gr_number'] = "GR Number '{$data['gr_number']}' already exists in your company.";
+        }
+    }
+
+    // ✅ CHECK 3: INVOICE_NUMBER
+    if (!empty($data['invoice_number'])) {
+        $exists = \App\Models\LorryReceipt::where('company_id', $companyId)
+            ->where('invoice_number', $data['invoice_number'])
+            ->where('id', '!=', $excludeId)
+            ->whereNull('deleted_at')
+            ->exists();
+
+        if ($exists) {
+            $errors['invoice_number'] = "Invoice Number '{$data['invoice_number']}' already exists in your company.";
+        }
+    }
+
+    // ✅ CHECK 4: MEMO_ID
+    if (!empty($data['memo_id'])) {
+        $exists = \App\Models\LorryReceipt::where('company_id', $companyId)
+            ->where('memo_id', $data['memo_id'])
+            ->where('id', '!=', $excludeId)
+            ->whereNull('deleted_at')
+            ->exists();
+
+        if ($exists) {
+            $errors['memo_id'] = "Memo ID '{$data['memo_id']}' already exists in your company.";
+        }
+    }
+
+    if (!empty($errors)) {
+        throw \Illuminate\Validation\ValidationException::withMessages($errors);
+    }
+}
+
 
   public function destroy(\App\Models\LorryReceipt $lorry_receipt)
   {

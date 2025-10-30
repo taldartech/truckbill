@@ -249,7 +249,7 @@ class ConsigneeController extends Controller
                         ],
                         
         ]);
-        $this->validateConsigneeUniquenessCreate($validated, $companyId);
+        $this->validateConsigneeUniquenessCreate($validated, auth()->user()->company_id);
        
 
         if (!empty($validated['pan_number'])) {
