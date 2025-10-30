@@ -189,7 +189,7 @@
                                             data-transporter-id="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->id : '' }}"
                                             data-balance="{{ $booking->balance_amount ?? 0 }}"
                                             data-voucher_number="{{ $booking->voucher_number ?? '' }}"
-                                            data-freight-booking-id="{{ $booking->id }}"
+                                            data-freight-booking-id="{{ $booking->lr->freight_booking_id }}"
                                             data-is-cancelled="{{ $booking->is_cancelled ? '1' : '0' }}"
                                             data-is-delivered="{{ $booking->is_delivered ? '1' : '0' }}"
                                             data-transporter="{{ $booking->transporter ? $booking->transporter->name : '' }}"
