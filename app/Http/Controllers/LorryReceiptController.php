@@ -170,14 +170,13 @@ class LorryReceiptController extends Controller
         ->where('linked_lr_id', $linkedId)
         ->get()
         ->map(function ($lr) {
-          $firstFreight = $lr->freightBookings->first();
+          $firstFreight = $lr->freightBookings->last();
           return [
             'id' => $lr->id,
             'lr_number' => $lr->lr_number,
             'truck_number' => $lr->truck ? $lr->truck->truck_number : '',
-            'freight_booking_id' =>$lr->freight_booking_id,
-            'balance_amount' => $lr->freightBookings->first() ? (float)$lr->freightBookings->first()->balance_amount : 0,
-            'linked_lr_id' => $lr->linked_lr_id,
+            'freight_booking_id' => $firstFreight ? $firstFreight->id : null,
+            'balance_amount' => $firstFreight ? (float)$firstFreight->balance_amount : 0,
           ];
         })->sortBy('balance_amount') // 🔹 Sort ascending by balance
         ->values();
