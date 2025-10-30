@@ -175,7 +175,7 @@ class LorryReceiptController extends Controller
             'id' => $lr->id,
             'lr_number' => $lr->lr_number,
             'truck_number' => $lr->truck ? $lr->truck->truck_number : '',
-            'freight_booking_id' => $firstFreight ? $firstFreight->id : null,
+            'freight_booking_id' => $lr->freight_booking_id,
             'balance_amount' => $firstFreight ? (float)$firstFreight->balance_amount : 0,
           ];
         })->sortBy('balance_amount') // 🔹 Sort ascending by balance
@@ -452,6 +452,9 @@ class LorryReceiptController extends Controller
         ->pluck('lr_number')
         ->toArray();
 
+    
+        
+
       if (!empty($existingMemoIds)) {
         return response()->json([
           'success' => false,
@@ -490,6 +493,7 @@ class LorryReceiptController extends Controller
       $memoUsedByOtherCustomer = LorryReceipt::where('memo_id', $validated['memo_id'])
         ->where('customer_id', '!=', $customerId)
         ->exists();
+      
 
       if ($memoUsedByOtherCustomer) {
         return response()->json([

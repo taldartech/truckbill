@@ -1408,6 +1408,17 @@ class FreightBookingController extends Controller
           ->with('warning', 'This Memo ID is already used by another customer.')
           ->withInput();
       }
+      // ✅ Check if this memo_id is already linked to a different customer
+      $conflictInvoiceGenerated = \App\Models\LorryReceipt::where('memo_id', $validated['memo_id'])
+      ->where('customer_id', $customerId)
+      ->where('invoice_generated', 1)
+      ->exists();
+
+      if ($conflictInvoiceGenerated) {
+        return redirect()->back()
+          ->with('warning', 'The invoice is generated on this memo id. Please choose a unique one.')
+          ->withInput();
+      }
 
 
       \DB::transaction(function () use ($validated) {
