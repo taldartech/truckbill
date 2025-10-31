@@ -58,7 +58,7 @@ class LorryReceipt extends Model
 
     public function truck()
     {
-        return $this->belongsTo(Truck::class);
+        return $this->belongsTo(Truck::class)->withTrashed();
     }
 
     public function syncStatusWithFreightBooking()
@@ -82,8 +82,8 @@ class LorryReceipt extends Model
     }
 
     public function transporter() { return $this->belongsTo(Transporter::class)->withTrashed(); }
-    public function consignor() { return $this->belongsTo(Consignee::class, 'consignor_id'); }
-    public function consignee() { return $this->belongsTo(Consignee::class); }
+    public function consignor() { return $this->belongsTo(Consignee::class, 'consignor_id')->withTrashed(); }
+    public function consignee() { return $this->belongsTo(Consignee::class)->withTrashed(); }
 
 
     public function freightBookings()
@@ -105,6 +105,6 @@ class LorryReceipt extends Model
             });
         });
     }
-    public function customer() { return $this->belongsTo(Consignee::class, 'customer_id'); }
-    public function reference() { return $this->belongsTo(Transporter::class, 'reference_by'); }
+    public function customer() { return $this->belongsTo(Consignee::class, 'customer_id')->withTrashed(); }
+    public function reference() { return $this->belongsTo(Transporter::class, 'reference_by')->withTrashed(); }
 }
