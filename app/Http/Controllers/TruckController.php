@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class TruckController extends Controller
 {
@@ -325,7 +326,9 @@ class TruckController extends Controller
     }
     public function checkTruckNumber(Request $request)
 {
-    $exists = \App\Models\Truck::where('truck_number', $request->truck_number)->exists();
+    $exists = \App\Models\Truck::where('truck_number', $request->truck_number)
+    ->where('company_id', auth()->user()->company_id)
+    ->exists();
     return response()->json(['exists' => $exists]);
 }
 
@@ -345,7 +348,11 @@ class TruckController extends Controller
                 'string',
                 'min:6',
                 'max:15',
-                'unique:trucks,truck_number,' . $truck->id,
+               Rule::unique('trucks')
+               ->where(fn($query) =>
+                   $query->where('company_id', auth()->user()->company_id)
+               )
+               ->ignore($truck->id),
             ],
             'truck_type' => 'required|string|max:50',
             'driver_id' => 'nullable|exists:drivers,id',

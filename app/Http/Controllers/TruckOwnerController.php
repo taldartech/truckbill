@@ -207,14 +207,20 @@ class TruckOwnerController extends Controller
                 'string',
                 'max:15',
                 'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
-                'unique:transporters,gst_number'
+                Rule::unique('transporters')
+                ->where(fn($query) =>
+                    $query->where('company_id', $request->company_id)
+                ),
             ],
             'pan_number' => [
                 'nullable',
                 'string',
                 'size:10',
                 'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
-                'unique:transporters,pan_number'
+                Rule::unique('transporters')
+                ->where(fn($query) =>
+                    $query->where('company_id', $request->company_id)
+                ),
             ],
             'declaration_given' => 'required|boolean',
             'total_trucks' => 'required|integer|min:0',
@@ -255,9 +261,17 @@ class TruckOwnerController extends Controller
             'mobile_number' => [
                 'required',
                 'digits:10',
-                'unique:transporters,mobile_number'
+                Rule::unique('transporters')
+                ->where(fn($query) =>
+                    $query->where('company_id', $request->company_id)
+                ),
             ],
-            'short_name' => ['nullable', 'string', 'max:255', 'unique:transporters,short_name'],
+            'short_name' => ['nullable', 'string', 'max:255',
+                Rule::unique('transporters')
+                ->where(fn($query) =>
+                    $query->where('company_id', $request->company_id)
+                ),
+            ],
             'contact_person_name' => 'nullable|string|max:255',
         ], [
             'pan_number.unique' => 'This PAN number is already registered with another truck owner or transporter.',
@@ -435,14 +449,22 @@ class TruckOwnerController extends Controller
                 'string',
                 'max:15',
                 'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
-                Rule::unique('transporters', 'gst_number')->ignore($transporter->id)
+                Rule::unique('transporters')
+                ->where(fn($query) =>
+                    $query->where('company_id', $request->company_id)
+                )
+                ->ignore($transporter->id),
             ],
             'pan_number' => [
                 'nullable',
                 'string',
                 'size:10',
                 'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
-                Rule::unique('transporters', 'pan_number')->ignore($transporter->id)
+                Rule::unique('transporters')
+                ->where(fn($query) =>
+                    $query->where('company_id', $request->company_id)
+                )
+                ->ignore($transporter->id),
             ],
             'declaration_given' => 'required|boolean',
             'total_trucks' => 'required|integer|min:0',
@@ -483,13 +505,21 @@ class TruckOwnerController extends Controller
             'mobile_number' => [
                 'required',
                 'digits:10',
-                Rule::unique('transporters', 'mobile_number')->ignore($transporter->id)
+                Rule::unique('transporters')
+                ->where(fn($query) =>
+                    $query->where('company_id', $request->company_id)
+                )
+                ->ignore($transporter->id),
             ],
             'short_name' => [
                 'nullable', 
                 'string', 
                 'max:255', 
-                Rule::unique('transporters', 'short_name')->ignore($transporter->id)
+                Rule::unique('transporters')
+                ->where(fn($query) =>
+                    $query->where('company_id', $request->company_id)
+                )
+                ->ignore($transporter->id),
             ],
             'contact_person_name' => 'nullable|string|max:255',
         ], [

@@ -1400,6 +1400,7 @@ class FreightBookingController extends Controller
 
       // ✅ Check globally if this memo_id is already linked to a different customer
       $conflict = \App\Models\LorryReceipt::where('memo_id', $validated['memo_id'])
+      ->where('company_id', auth()->user()->company_id)
         ->where('customer_id', '!=', $customerId)
         ->exists();
 
@@ -1410,6 +1411,7 @@ class FreightBookingController extends Controller
       }
       // ✅ Check if this memo_id is already linked to a different customer
       $conflictInvoiceGenerated = \App\Models\LorryReceipt::where('memo_id', $validated['memo_id'])
+      ->where('company_id', auth()->user()->company_id)
       ->where('customer_id', $customerId)
       ->where('invoice_generated', 1)
       ->exists();

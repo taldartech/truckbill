@@ -9,6 +9,7 @@ use App\Models\Truck;
 use App\Models\Country;
 use App\Models\State;
 use App\Models\City;
+use Illuminate\Validation\Rule;
 
 class TransporterController extends Controller
 {
@@ -284,14 +285,17 @@ class TransporterController extends Controller
                 'nullable',
                 'string',
                 'max:15',
-                'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/'
+                'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
+                Rule::unique('transporters')
+                ->where(fn($query) => $query->where('company_id', $request->company_id)),
             ],
             'pan_number' => [
                 'required',
                 'string',
                 'size:10',
                 'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
-                'unique:transporters,pan_number'
+                Rule::unique('transporters')
+                ->where(fn($query) => $query->where('company_id', $request->company_id)),
             ],
             'gst_type' => 'nullable|in:composition,regular',
             'is_owner' => 'nullable|boolean',
@@ -332,9 +336,16 @@ class TransporterController extends Controller
             'mobile_number' => [
                 'required',
                 'digits:10',
-                'unique:transporters,mobile_number'
+                Rule::unique('transporters')
+                ->where(fn($query) => $query->where('company_id', $request->company_id)),
             ],
-            'short_name' => 'nullable|string|max:255|unique:transporters',
+            'short_name' => [
+                'nullable', 
+                'string', 
+                'max:255', 
+                Rule::unique('transporters')
+                    ->where(fn($query) => $query->where('company_id', $request->company_id)),
+            ],
             'contact_person_name' => 'nullable|string|max:255',
         ], [
             'pan_number.unique' => 'This PAN number is already associated with another transporter and cannot be used.',
@@ -435,14 +446,23 @@ class TransporterController extends Controller
                 'nullable',
                 'string',
                 'max:15',
-                'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/'
+                'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
+                Rule::unique('transporters')
+                ->where(fn($query) =>
+                    $query->where('company_id', $request->company_id)
+                )
+                ->ignore($transporter->id),
             ],
             'pan_number' => [
                 'required',
                 'string',
                 'size:10',
                 'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
-                'unique:transporters,pan_number,' . $transporter->id
+                Rule::unique('transporters')
+                ->where(fn($query) =>
+                    $query->where('company_id', $request->company_id)
+                )
+                ->ignore($transporter->id),
             ],
             'gst_type' => 'nullable|in:composition,regular',
             'is_owner' => 'nullable|boolean',
@@ -483,9 +503,20 @@ class TransporterController extends Controller
             'mobile_number' => [
                 'required',
                 'digits:10',
-                \Illuminate\Validation\Rule::unique('transporters', 'mobile_number')->ignore($transporter->id)
+                Rule::unique('transporters')
+                ->where(fn($query) =>
+                    $query->where('company_id', $request->company_id)
+                )
+                ->ignore($transporter->id),
             ],
-            'short_name' => 'nullable|string|max:255|unique:transporters,short_name,' . $transporter->id,
+           'short_name' => [
+                'nullable', 
+                'string', 
+                'max:255', 
+                Rule::unique('transporters')
+                    ->where(fn($query) => $query->where('company_id', $request->company_id))
+                    ->ignore($transporter->id),
+            ],
             'contact_person_name' => 'nullable|string|max:255',
 
 

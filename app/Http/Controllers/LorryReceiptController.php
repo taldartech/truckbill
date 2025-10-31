@@ -448,6 +448,8 @@ class LorryReceiptController extends Controller
 
       // Get the lorry receipts that already have memo_id
       $existingMemoIds = LorryReceipt::whereIn('id', $validated['lr_ids'])
+      
+      ->where('company_id', auth()->user()->company_id)
         ->whereNotNull('memo_id')
         ->pluck('lr_number')
         ->toArray();
@@ -464,6 +466,7 @@ class LorryReceiptController extends Controller
 
       // Check freight_booking_id for selected lorry receipts
       $lorryReceipts = LorryReceipt::whereIn('id', $validated['lr_ids'])
+      ->where('company_id', auth()->user()->company_id)
         ->get();
 
       $noFreightBooking = $lorryReceipts->filter(function ($lr) {
@@ -491,6 +494,7 @@ class LorryReceiptController extends Controller
 
       // ✅ Step: Ensure memo_id is not used by another customer
       $memoUsedByOtherCustomer = LorryReceipt::where('memo_id', $validated['memo_id'])
+      ->where('company_id', auth()->user()->company_id)
         ->where('customer_id', '!=', $customerId)
         ->exists();
       
