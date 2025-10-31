@@ -686,7 +686,7 @@
                   @endif
 
                   {{-- Reports Section - Visible to all authenticated users --}}
-                  @auth
+                  @if(auth()->check() && in_array(auth()->user()->userRole->name, [ 'moderator','admin']))
                   <li class="nav-item">
                     <a class="nav-link{{ Request::is('reports*') ? ' active' : '' }}" href="#reportsMenu" data-lte-toggle="collapse">
                       <i class="fas fa-chart-pie"></i>
@@ -795,7 +795,7 @@
                     </ul>
                   </li>
 
-                  @endauth
+                  @endif
                 </ul>
                 <!--end::Sidebar Menu-->
               </nav>
