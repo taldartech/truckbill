@@ -36,7 +36,7 @@ Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 // Protected Routes
-Route::middleware(['auth','admin'])->group(function () {
+Route::middleware(['auth'])->group(function () {
   // API Routes
   Route::redirect('/', '/dashboard');
   Route::get('/api/transporters/{transporter}/trucks', [TruckController::class, 'getTrucksForTransporter']);
@@ -75,7 +75,26 @@ Route::middleware(['auth','admin'])->group(function () {
     return view('dashboard2');
   });
 
- 
+  Route::prefix('branches')->group(function () {
+    Route::get('/', [BranchController::class, 'index'])->name('branches.index');
+    Route::get('/create', [BranchController::class, 'create'])->name('branches.create');
+    Route::post('/store', [BranchController::class, 'store'])->name('branches.store');
+    Route::get('/{branch}/edit', [BranchController::class, 'edit'])->name('branches.edit');
+    Route::put('/{branch}', [BranchController::class, 'update'])->name('branches.update');
+    Route::delete('/{branch}', [BranchController::class, 'destroy'])->name('branches.destroy');
+});
+
+  // Company Registration
+  Route::get('/company/create', [CompanyController::class, 'create'])->name('company.create');
+  Route::post('/company', [CompanyController::class, 'store'])->name('company.store');
+  Route::get('/company', [CompanyController::class, 'index'])->name('company.index');
+  Route::get('/company/{company}/edit', [CompanyController::class, 'edit'])->name('company.edit');
+  Route::put('/company/{company}', [CompanyController::class, 'update'])->name('company.update');
+  Route::delete('/company/{company}', [CompanyController::class, 'destroy'])->name('company.destroy');
+
+  // Voucher Template Routes
+  Route::resource('voucher_templates', VoucherTemplateController::class);
+
   // Consignee Management
   Route::get('/consignees/details/{id}', [ConsigneeController::class, 'getDetails'])->name('consignees.details');
   Route::get('/consignees', [ConsigneeController::class, 'index'])->name('consignees.index');
@@ -85,6 +104,13 @@ Route::middleware(['auth','admin'])->group(function () {
   Route::put('/consignees/{consignee}', [ConsigneeController::class, 'update'])->name('consignees.update');
   Route::delete('/consignees/{consignee}', [ConsigneeController::class, 'destroy'])->name('consignees.destroy');
 
+  // User Management
+  Route::get('/users', [UserController::class, 'index'])->name('users.index');
+  Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
+  Route::post('/users', [UserController::class, 'store'])->name('users.store');
+  Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+  Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+  Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
 
   // Transporter Management
   Route::get('/transporters', [TransporterController::class, 'index'])->name('transporters.index');
@@ -370,100 +396,4 @@ Route::middleware(['auth','admin'])->group(function () {
   });
 
   Route::post('/api/check-manual-invoice-number-uniqueness', [InvoiceController::class, 'checkManualInvoiceNumberUniqueness']);
-});
-
-Route::middleware(['auth','super_admin'])->group(function () {
-
-  Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
-
-    Route::prefix('branches')->group(function () {
-      Route::get('/', [BranchController::class, 'index'])->name('branches.index');
-      Route::get('/create', [BranchController::class, 'create'])->name('branches.create');
-      Route::post('/store', [BranchController::class, 'store'])->name('branches.store');
-      Route::get('/{branch}/edit', [BranchController::class, 'edit'])->name('branches.edit');
-      Route::put('/{branch}', [BranchController::class, 'update'])->name('branches.update');
-      Route::delete('/{branch}', [BranchController::class, 'destroy'])->name('branches.destroy');
-  });
-  
-    // Company Registration
-    Route::get('/company/create', [CompanyController::class, 'create'])->name('company.create');
-    Route::post('/company', [CompanyController::class, 'store'])->name('company.store');
-    Route::get('/company', [CompanyController::class, 'index'])->name('company.index');
-    Route::get('/company/{company}/edit', [CompanyController::class, 'edit'])->name('company.edit');
-    Route::put('/company/{company}', [CompanyController::class, 'update'])->name('company.update');
-    Route::delete('/company/{company}', [CompanyController::class, 'destroy'])->name('company.destroy');
-  
-    // Voucher Template Routes
-    Route::resource('voucher_templates', VoucherTemplateController::class);
-    Route::prefix('master')->group(function () {
-      // Countries
-      Route::get('/countries', [\App\Http\Controllers\CountryController::class, 'index'])->name('master.countries.index');
-      Route::get('/countries/create', [\App\Http\Controllers\CountryController::class, 'create'])->name('master.countries.create');
-      Route::post('/countries', [\App\Http\Controllers\CountryController::class, 'store'])->name('master.countries.store');
-      Route::get('/countries/{country}/edit', [\App\Http\Controllers\CountryController::class, 'edit'])->name('master.countries.edit');
-      Route::put('/countries/{country}', [\App\Http\Controllers\CountryController::class, 'update'])->name('master.countries.update');
-      Route::delete('/countries/{country}', [\App\Http\Controllers\CountryController::class, 'destroy'])->name('master.countries.destroy');
-  
-      // States
-      Route::get('/states', [\App\Http\Controllers\StateController::class, 'index'])->name('master.states.index');
-      Route::get('/states/create', [\App\Http\Controllers\StateController::class, 'create'])->name('master.states.create');
-      Route::post('/states', [\App\Http\Controllers\StateController::class, 'store'])->name('master.states.store');
-      Route::get('/states/{state}/edit', [\App\Http\Controllers\StateController::class, 'edit'])->name('master.states.edit');
-      Route::put('/states/{state}', [\App\Http\Controllers\StateController::class, 'update'])->name('master.states.update');
-      Route::delete('/states/{state}', [\App\Http\Controllers\StateController::class, 'destroy'])->name('master.states.destroy');
-  
-      // Cities
-      Route::get('/cities', [\App\Http\Controllers\CityController::class, 'index'])->name('master.cities.index');
-      Route::get('/cities/create', [\App\Http\Controllers\CityController::class, 'create'])->name('master.cities.create');
-      Route::post('/cities', [\App\Http\Controllers\CityController::class, 'store'])->name('master.cities.store');
-      Route::get('/cities/{city}/edit', [\App\Http\Controllers\CityController::class, 'edit'])->name('master.cities.edit');
-      Route::put('/cities/{city}', [\App\Http\Controllers\CityController::class, 'update'])->name('master.cities.update');
-      Route::delete('/cities/{city}', [\App\Http\Controllers\CityController::class, 'destroy'])->name('master.cities.destroy');
-  
-      // Goods Types
-      Route::get('/goods-types', [\App\Http\Controllers\GoodsTypeController::class, 'index'])->name('master.goods-types.index');
-      Route::get('/goods-types/create', [\App\Http\Controllers\GoodsTypeController::class, 'create'])->name('master.goods-types.create');
-      Route::post('/goods-types', [\App\Http\Controllers\GoodsTypeController::class, 'store'])->name('master.goods-types.store');
-      Route::get('/goods-types/{goodsType}/edit', [\App\Http\Controllers\GoodsTypeController::class, 'edit'])->name('master.goods-types.edit');
-      Route::put('/goods-types/{goodsType}', [\App\Http\Controllers\GoodsTypeController::class, 'update'])->name('master.goods-types.update');
-      Route::delete('/goods-types/{goodsType}', [\App\Http\Controllers\GoodsTypeController::class, 'destroy'])->name('master.goods-types.destroy');
-  
-      //Pumps
-      // Route::resource('pumps', PumpController::class);
-      Route::get('/pumps', [PumpController::class, 'index'])->name('master.pump.index');
-      Route::get('/pumps/create', [PumpController::class, 'create'])->name('master.pump.create');
-      Route::post('/pumps', [PumpController::class, 'store'])->name('master.pump.store');
-      Route::get('/pumps/{pump}/edit', [PumpController::class, 'edit'])->name('master.pump.edit');
-      Route::put('/pumps/{pump}', [PumpController::class, 'update'])->name('master.pump.update');
-      Route::delete('/pumps/{pump}', [PumpController::class, 'destroy'])->name('master.pump.destroy');
-    });
-
-    Route::get('/branches/by-company/{companyId}', [BranchController::class, 'getByCompany'])->name('branches.by-company');
-  // User Management
-  Route::get('/users', [UserController::class, 'index'])->name('users.index');
-  Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
-  Route::post('/users', [UserController::class, 'store'])->name('users.store');
-  Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
-  Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
-  Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
-
-
-
-
-
-    // API routes for dynamic dropdowns
-    Route::get('/api/states/{countryId}', [\App\Http\Controllers\Api\DropdownController::class, 'states']);
-    Route::get('/api/cities/{stateId}', [\App\Http\Controllers\Api\DropdownController::class, 'cities']);
-    
-    Route::get('truck_owner_bank_accounts/{truck_owner_bank_account}/edit', [TruckOwnerBankAccountController::class, 'edit'])->name('truck_owner_bank_accounts.edit');
-    Route::put('truck_owner_bank_accounts/{truck_owner_bank_account}', [TruckOwnerBankAccountController::class, 'update'])->name('truck_owner_bank_accounts.update');
-    Route::delete('truck_owner_bank_accounts/{truck_owner_bank_account}', [TruckOwnerBankAccountController::class, 'destroy'])->name('truck_owner_bank_accounts.destroy');
-    Route::put('truck_owner_bank_accounts/{transporter_id}/beneficiary-id', [TruckOwnerBankAccountController::class, 'updateBeneficiaryId'])->name('truck_owner_bank_accounts.updateBeneficiaryId');
-  
-    // Transporter Bank Accounts
-    Route::get('transporter_bank_accounts/index', [TransporterBankAccountController::class, 'index'])->name('transporter_bank_accounts.index');
-    Route::put('transporter_bank_accounts/{transporter_id}/beneficiary-id', [TransporterBankAccountController::class, 'updateBeneficiaryId'])->name('transporter_bank_accounts.updateBeneficiaryId');
-  
 });
