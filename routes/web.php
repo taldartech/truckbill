@@ -29,7 +29,7 @@ use App\Http\Controllers\PumpController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\VoucherTemplateController;
 use App\Http\Controllers\BranchController;
-
+use App\Http\Middleware\SuperAdminMiddleware;
 
 // Authentication Routes
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -104,13 +104,15 @@ Route::middleware(['auth'])->group(function () {
   Route::put('/consignees/{consignee}', [ConsigneeController::class, 'update'])->name('consignees.update');
   Route::delete('/consignees/{consignee}', [ConsigneeController::class, 'destroy'])->name('consignees.destroy');
 
-  // User Management
-  Route::get('/users', [UserController::class, 'index'])->name('users.index');
-  Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
-  Route::post('/users', [UserController::class, 'store'])->name('users.store');
-  Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
-  Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
-  Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+  Route::middleware(['auth', SuperAdminMiddleware::class])->group(function () {
+    // User Management
+    Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
+    Route::post('/users', [UserController::class, 'store'])->name('users.store');
+    Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+    Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+  });
 
   // Transporter Management
   Route::get('/transporters', [TransporterController::class, 'index'])->name('transporters.index');
