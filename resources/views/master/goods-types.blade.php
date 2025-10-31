@@ -33,7 +33,7 @@
                     <tr>
                         <th>ID</th>
                         <th>Name</th>
-                        @if(auth()->user()->userRole->name === 'admin')
+                        @if(auth()->user()->userRole->name === 'super_admin' || auth()->user()->userRole->name === 'admin')
                         <th>Actions</th>
                         @endif
                     </tr>
@@ -79,7 +79,7 @@ $(document).ready(function() {
                 data: 'name',
                 name: 'name'
             },
-            @if(auth()->user()->userRole->name === 'admin')
+            @if(auth()->user()->userRole->name === 'super_admin' || auth()->user()->userRole->name === 'admin')
             {
                 data: 'actions',
                 name: 'actions',
