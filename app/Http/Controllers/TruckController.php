@@ -266,21 +266,42 @@ class TruckController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'transporter_id' => 'required|exists:transporters,id',
-           'truck_number' => [
-    'required',
-    'string',
-    'size:10',
-    'regex:/^[A-Z]{2}\d{2}[A-Z]{2}\d{4}$/',
-],
-            'truck_type' => 'required|string|max:50',
-            'driver_id' => 'nullable|exists:drivers,id',
-            'registration_date' => 'nullable|date',
-        ]);
+        // Fetch company_id for the given transporter_id
+    $companyId = \App\Models\Transporter::where('id', $request->transporter_id)->value('company_id');
 
-        // Driver relationship will be handled automatically via driver_id
+    // Perform manual uniqueness check scoped by company_id
+    $exists = \DB::table('trucks')
+        ->join('transporters', 'trucks.transporter_id', '=', 'transporters.id')
+        ->where('trucks.truck_number', $request->truck_number)
+        ->where('transporters.company_id', $companyId)
+        ->exists();
 
+    if ($exists) {
+        $errorMessage = 'The truck number must be unique within the company.';
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'message' => $errorMessage,
+                'errors' => ['truck_number' => [$errorMessage]]
+            ], 422);
+        }
+        return redirect()->back()->withErrors(['truck_number' => $errorMessage])->withInput();
+    }
+
+    // Proceed with validation of other fields except unique rule on truck_number
+    $validated = $request->validate([
+        'transporter_id' => 'required|exists:transporters,id',
+        'truck_number' => [
+            'required',
+            'string',
+            'size:10',
+            'regex:/^[A-Z]{2}\d{2}[A-Z]{2}\d{4}$/',
+            // No unique rule here since handled above
+        ],
+        'truck_type' => 'required|string|max:50',
+        'driver_id' => 'nullable|exists:drivers,id',
+        'registration_date' => 'nullable|date',
+    ]);
         try {
             $truck = \App\Models\Truck::create($validated);
 
@@ -326,8 +347,13 @@ class TruckController extends Controller
     }
     public function checkTruckNumber(Request $request)
 {
+    
+    $company_id = auth()->user()->company_id;
     $exists = \App\Models\Truck::where('truck_number', $request->truck_number)
-    ->where('company_id', auth()->user()->company_id)
+    ->whereHas('transporter', function ($query) use ($company_id) {
+        $query->where('company_id', $company_id);
+    })
+
     ->exists();
     return response()->json(['exists' => $exists]);
 }
@@ -341,25 +367,43 @@ class TruckController extends Controller
 
     public function update(Request $request, \App\Models\Truck $truck)
     {
-        $validated = $request->validate([
-            'transporter_id' => 'required|exists:transporters,id',
-            'truck_number' => [
-                'required',
-                'string',
-                'min:6',
-                'max:15',
-               Rule::unique('trucks')
-               ->where(fn($query) =>
-                   $query->where('company_id', auth()->user()->company_id)
-               )
-               ->ignore($truck->id),
-            ],
-            'truck_type' => 'required|string|max:50',
-            'driver_id' => 'nullable|exists:drivers,id',
-            'registration_date' => 'nullable|date',
-        ]);
+         // Get company_id from transporter_id in request
+    $companyId = \App\Models\Transporter::where('id', $request->transporter_id)->value('company_id');
 
-        // Driver relationship will be handled automatically via driver_id
+    // Manual uniqueness check ignoring the current truck ID
+    $exists = \DB::table('trucks')
+        ->join('transporters', 'trucks.transporter_id', '=', 'transporters.id')
+        ->where('trucks.truck_number', $request->truck_number)
+        ->where('transporters.company_id', $companyId)
+        ->where('trucks.id', '<>', $truck->id) // exclude current truck id
+        ->exists();
+
+    if ($exists) {
+        $errorMessage = 'The truck number must be unique within the company.';
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'message' => $errorMessage,
+                'errors' => ['truck_number' => [$errorMessage]]
+            ], 422);
+        }
+        return redirect()->back()->withErrors(['truck_number' => $errorMessage])->withInput();
+    }
+
+    // Validation excluding unique rule on truck_number because handled manually
+    $validated = $request->validate([
+        'transporter_id' => 'required|exists:transporters,id',
+        'truck_number' => [
+            'required',
+            'string',
+            'min:6',
+            'max:15',
+            // no unique rule here
+        ],
+        'truck_type' => 'required|string|max:50',
+        'driver_id' => 'nullable|exists:drivers,id',
+        'registration_date' => 'nullable|date',
+    ]);
 
         try {
             $truck->update($validated);

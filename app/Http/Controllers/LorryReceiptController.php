@@ -631,7 +631,7 @@ class LorryReceiptController extends Controller
         'lrs.*.damage_amount' => 'nullable|numeric',
         'lrs.*.shortage_amount' => 'nullable|numeric',
       ];
-      $this->validateLorryReceiptsUniqueness($validated['lrs'], auth()->user()->company_id);
+      $this->validateLorryReceiptsUniqueness($request->lrs, auth()->user()->company_id);
 
       $validated = $request->validate(array_merge($sharedRules, $perItemRules));
 
