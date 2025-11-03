@@ -169,6 +169,7 @@ class LorryReceiptController extends Controller
     try {
       
       $lrs = \App\Models\LorryReceipt::with(['truck', 'freightBookings'])
+      ->where('company_id', auth()->user()->company_id)
         ->where('linked_lr_id', $linkedId)
         ->get()
         ->map(function ($lr) {
@@ -198,6 +199,8 @@ class LorryReceiptController extends Controller
   {
     try {
       $linkedLRs = LorryReceipt::with(['consignor', 'consignee', 'customer', 'transporter', 'truck', 'reference'])
+       
+       ->where('company_id', auth()->user()->company_id)
         ->where('linked_lr_id', $linkedLrId)
 
         ->get();
