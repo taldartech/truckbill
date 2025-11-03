@@ -17,6 +17,7 @@ class DashboardController extends Controller
 {
   public function index()
   {
+    
     $now = Carbon::now();
     $startOfMonth = $now->copy()->startOfMonth();
     $endOfMonth = $now->copy()->endOfMonth();

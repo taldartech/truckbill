@@ -19,7 +19,7 @@ class AccountantMiddleware
   {
     $user = Auth::user();
     $accountantRoleId = DB::table('user_roles')->where('name', 'accountant')->value('id');
-    if (!$user || $user->user_role_id !== $accountantRoleId) {
+    if (!$user || $user->user_role_id === $accountantRoleId) {
       abort(403, 'Unauthorized action.');
     }
     return $next($request);
