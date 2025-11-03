@@ -12,6 +12,8 @@ use App\Models\FreightBooking;
 use App\Models\LorryReceipt;
 use Yajra\DataTables\Facades\DataTables;
 use App\Http\Controllers\AdvancePaymentController;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 
 class LorryReceiptController extends Controller
 {
@@ -702,9 +704,30 @@ class LorryReceiptController extends Controller
     // dd($request->all());
     $validated = $request->validate([
       'customer_id' => 'required|exists:consignees,id',
-      'lr_number' => 'required|string|max:100|unique:lorry_receipts,lr_number',
-      'gr_number' => 'nullable|string|max:100|unique:lorry_receipts,gr_number',
-      'invoice_number' => 'nullable|string|max:256|unique:lorry_receipts,invoice_number',
+      'lr_number' => [
+        'required',
+        'string',
+        'max:100',
+        Rule::unique('lorry_receipts', 'lr_number')->where(function ($query) {
+            return $query->where('company_id', auth()->user()->company_id);
+        }),
+    ],
+    'gr_number' => [
+        'nullable',
+        'string',
+        'max:100',
+        Rule::unique('lorry_receipts', 'gr_number')->where(function ($query) {
+            return $query->where('company_id', auth()->user()->company_id);
+        }),
+    ],
+    'invoice_number' => [
+        'nullable',
+        'string',
+        'max:256',
+        Rule::unique('lorry_receipts', 'invoice_number')->where(function ($query) {
+            return $query->where('company_id', auth()->user()->company_id);
+        }),
+    ],
       'memo_id' => 'nullable|integer',
       'truck_id' => 'nullable|exists:trucks,id',
       'transporter_id' => 'nullable|exists:transporters,id',
@@ -756,7 +779,9 @@ class LorryReceiptController extends Controller
       // Remove "LR" prefix, then trim leading zeros
       $validated['gr_number'] = ltrim(str_ireplace('LR', '', $validated['lr_number']), '0');
     }
-    if (\App\Models\LorryReceipt::where('lr_number', $validated['lr_number'])->exists()) {
+    if (\App\Models\LorryReceipt::where('lr_number', $validated['lr_number'])
+    ->where('company_id', auth()->user()->company_id)
+    ->exists()) {
       return redirect()->back()->withErrors(['lr_number' => 'LR Number already exists. Please use a unique LR Number.']);
     }
 
@@ -784,6 +809,7 @@ class LorryReceiptController extends Controller
 private function validateLorryReceiptsUniqueness($lrs, $companyId)
 {
     $errors = [];
+   
 
     // Extract all numbers from request
     $lrNumbers = array_filter(array_column($lrs, 'lr_number'));
@@ -934,6 +960,7 @@ private function validateLorryReceiptsUniqueness($lrs, $companyId)
   // }
   public function checkGRNumberUniqueness(Request $request)
   {
+ 
     $request->validate([
       'gr_number' => 'required|string'
     ]);
@@ -941,6 +968,8 @@ private function validateLorryReceiptsUniqueness($lrs, $companyId)
     $exists = LorryReceipt::where('gr_number', $request->gr_number)
       ->where('company_id', auth()->user()->company_id)
       ->exists();
+
+    
 
     return response()->json(['available' => !$exists]);
   }

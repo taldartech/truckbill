@@ -1873,7 +1873,7 @@ function checkGRNumberUniqueness(grNumber) {
         })
         .then(response => response.json())
         .then(data => {
-            if (data.valid) {
+            if (data.available) {
                 grNumberFeedback.innerHTML = '<small class="text-success">✅ ' + data.message + '</small>';
                 grNumberInput.classList.remove('is-invalid');
                 grNumberInput.classList.add('is-valid');
