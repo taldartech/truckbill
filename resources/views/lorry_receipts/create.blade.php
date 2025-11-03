@@ -1303,7 +1303,7 @@ grNumberInput.addEventListener('blur', function() {
             function validateNoOfUnits() {
                 const value = parseFloat(noOfUnitsInput.value);
 
-                if (noOfUnitsInput.value && (isNaN(value) || value < 1 || value > 100000)) {
+                if (noOfUnitsInput.value && (isNaN(value))) {
                     noOfUnitsInput.setCustomValidity('Please enter a valid number of units between 1 and 100,000.');
                     noOfUnitsInput.classList.add('is-invalid');
                     noOfUnitsInput.classList.remove('is-valid');
