@@ -641,7 +641,8 @@ class LorryReceiptController extends Controller
       \DB::beginTransaction();
       try {
         // Next linked_lr_id (increment previous)
-        $nextLinkedId = (\App\Models\LorryReceipt::max('linked_lr_id') ?? 0) + 1;
+        // $nextLinkedId = (\App\Models\LorryReceipt::max('linked_lr_id') ?? 0) + 1;
+        $nextLinkedId = \App\Models\LorryReceipt::where('company_id', auth()->user()->company_id)->max('linked_lr_id') ?? 0 + 1;
 
         $created = [];
         foreach ($validated['lrs'] as $item) {
