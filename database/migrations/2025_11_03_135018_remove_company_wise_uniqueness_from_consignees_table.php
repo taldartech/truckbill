@@ -11,22 +11,21 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Disable foreign key checks temporarily
+        // --- Disable FK checks globally for this session ---
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
-        Schema::table('consignees', function (Blueprint $table) {
-            // Drop unique constraint safely
-            try {
-                $table->dropUnique('consignees_company_pan_unique');
-            } catch (\Exception $e) {
-                // Ignore if already dropped or doesn't exist
-            }
+        try {
+            DB::statement('ALTER TABLE consignees DROP INDEX consignees_company_pan_unique');
+        } catch (\Throwable $e) {
+            // Ignore if the index doesn't exist or was already removed
+        }
 
-            // Ensure pan_number is a normal column
+        // --- Modify the column ---
+        Schema::table('consignees', function (Blueprint $table) {
             $table->string('pan_number')->nullable()->change();
         });
 
-        // Re-enable foreign key checks
+        // --- Re-enable FK checks ---
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
     }
 
