@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class DriverController extends Controller
 {
@@ -153,12 +154,12 @@ class DriverController extends Controller
             'mobile' => [
                 'required',
                 'digits:10',
-                'unique:drivers,mobile',
+                Rule::unique('drivers', 'mobile')->where('company_id', auth()->user()->company_id),
             ],
             'license_number' => [
                 'nullable',
                 'string',
-                'unique:drivers,license_number',
+                Rule::unique('drivers', 'license_number')->where('company_id', auth()->user()->company_id),
             ],
             'address' => 'nullable|string|max:255',
         ]);
@@ -191,12 +192,12 @@ class DriverController extends Controller
             'mobile' => [
                 'required',
                 'digits:10',
-                'unique:drivers,mobile,' . $driver->id,
+                Rule::unique('drivers', 'mobile')->where('company_id', auth()->user()->company_id)->ignore($driver->id),
             ],
             'license_number' => [
                 'nullable',
                 'string',
-                'unique:drivers,license_number,' . $driver->id,
+                Rule::unique('drivers', 'license_number')->where('company_id', auth()->user()->company_id)->ignore($driver->id),
             ],
             'address' => 'nullable|string|max:255',
         ]);
