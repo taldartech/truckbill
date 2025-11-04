@@ -59,7 +59,7 @@
         <td colspan="3">State Code: {{ $invoice->consignee->state->code }}</td>
         <td colspan="6"></td>
         <td style="font-weight: bold;">Reverse Charge:</td>
-        <td style="font-weight: bold;" colspan="2">{{ $company->gst_scheme == 'forward charge' ? 'No' : 'Yes' }}</td>
+        <td style="font-weight: bold;" colspan="2">{{ $invoice->invoice_type == 'Forward' ? 'No' : 'Yes' }}</td>
     </tr>
     <tr>
         <td colspan="9"></td>
@@ -142,7 +142,7 @@
         <td colspan="9"></td>
         <td style="font-weight: bold;" colspan="2">Total Amount</td>
         @php
-            $grandTotal = $company->gst_scheme == 'reverse charge' ? $totalAmount : $totalAmount + $totalgst;
+            $grandTotal = $invoice->invoice_type == 'Reverse' ? $totalAmount : $totalAmount + $totalgst;
         @endphp
         <td>{{ number_format($grandTotal, 2) }}</td>
     </tr>

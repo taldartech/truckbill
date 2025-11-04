@@ -86,7 +86,7 @@
                                 </td>
                                 <td>{{ $invoice->net_amount }}</td>
                                 <td>{{ $invoice->consignee->state->name }}</td>
-                                <td>{{ $invoice->company->gst_scheme == 'reverse charge' ? 'Yes' : 'No' }}</td>
+                                <td>{{ $invoice->invoice_type == 'Reverse' ? 'Yes' : 'No' }}</td>
                                 <td>{{ $invoice->applicable_tax_percentage }}%</td>
                                 <td>{{ "Regular B2B" }}</td>
                                 {{-- <td></td> --}}
