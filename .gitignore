@@ -45,3 +45,5 @@ ad.js
 /storage/framework/views/*
 
 .env
+
+/vendor
