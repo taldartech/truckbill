@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\VoucherPayment;
-// use App\Models\Voucher;
 use App\Models\PaymentType;
 use App\Models\PaymentMode;
 use App\Models\Pump;
@@ -14,7 +13,6 @@ use App\Models\Truck;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\VoucherPaymentsExport;
 use App\Models\VoucherLinked;
 use Barryvdh\DomPDF\Facade\Pdf;
 
@@ -140,7 +138,7 @@ class VoucherPaymentController extends Controller
   {
     // Start with base query
     $baseQuery = \App\Models\VoucherPayment::with([
-      'voucher',
+      // 'voucher',
       'company',
       'freight_booking.lr.customer',
       'freight_booking.lr.truck',
@@ -216,7 +214,7 @@ class VoucherPaymentController extends Controller
 
     // Get the latest payment for each voucher number to display representative data
     $payments = \App\Models\VoucherPayment::with([
-      'voucher',
+      // 'voucher',
       'company',
       'freight_booking.lr.customer',
       'freight_booking.lr.truck',

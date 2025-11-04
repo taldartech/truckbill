@@ -241,7 +241,7 @@ class LorryReceiptController extends Controller
           'linked_lr_id' => $lr->linked_lr_id, // ✅ ADD THIS
         ];
       });
-      \Log::info('Details: ', $details);
+      // \Log::info('Details: ', $details);
 
       return response()->json([
         'common' => $common,

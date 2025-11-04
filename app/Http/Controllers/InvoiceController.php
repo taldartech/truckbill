@@ -5,8 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Invoice;
 use App\Models\Company;
 use App\Models\Consignee;
-use App\Models\Memo;
-use App\Models\InvoiceMemoMap;
 use App\Models\LorryReceipt;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -30,24 +28,24 @@ class InvoiceController extends Controller
     if ($request->has('generated_date') && !empty($request->generated_date)) {
       $invoices->whereDate('generated_date', $request->generated_date);
     }
-    
+
     // Add other existing filters here if needed
     if ($request->has('manual_invoice_number') && !empty($request->manual_invoice_number)) {
       $invoices->where('manual_invoice_number', 'like', '%' . $request->manual_invoice_number . '%');
     }
-    
+
     if ($request->has('customer') && !empty($request->customer)) {
       $invoices->whereHas('consignee', function($q) use ($request) {
         $q->where('name', 'like', '%' . $request->customer . '%');
       });
     }
-    
+
     if ($request->has('company') && !empty($request->company)) {
       $invoices->whereHas('company', function($q) use ($request) {
         $q->where('name', 'like', '%' . $request->company . '%');
       });
     }
-    
+
     if ($request->has('payment_status') && !empty($request->payment_status)) {
       $invoices->where('payment_status', $request->payment_status);
     }
@@ -55,7 +53,7 @@ class InvoiceController extends Controller
     if (auth()->user()->userRole->name !== 'super_admin') {
       $invoices = $invoices->where('company_id', auth()->user()->company_id);
     }
-    
+
     $invoices = $invoices->paginate(20);
     return view('invoices.index', compact('invoices'));
   }
@@ -161,7 +159,7 @@ class InvoiceController extends Controller
     return $actions;
   }
 
- 
+
   public function create()
   {
     $user = auth()->user();
@@ -180,7 +178,7 @@ class InvoiceController extends Controller
 
   public function getCustomerMemos($customerId)
   {
-    
+
     $memos = DB::table('lorry_receipts')
       ->select('memo_id')
       ->where('company_id', auth()->user()->company_id)
@@ -238,9 +236,9 @@ class InvoiceController extends Controller
     ]);
     $data['payment_status'] = 'pending';
     $data['company_id'] = auth()->user()->company_id;
-    
 
-   
+
+
 
     // Separate memo_ids from the rest of invoice data
     $memoIds = $request->input('memo_ids', []);
@@ -254,7 +252,7 @@ class InvoiceController extends Controller
     }
 
     $invoice = Invoice::create($data);
-   
+
 
     return redirect()->route('invoices.index')->with('success', 'Invoice created successfully.');
   }
@@ -339,7 +337,7 @@ class InvoiceController extends Controller
     'string',
     Rule::unique('invoices')->where(fn ($query) =>
         $query->where('company_id', auth()->user()->company_id)
-    )->ignore($invoice->id), 
+    )->ignore($invoice->id),
 ],
       'generated_date' => 'required|date',
       'payment_status' => 'required|in:pending,partial,paid',
@@ -412,17 +410,17 @@ class InvoiceController extends Controller
       $manualNumber = $request->input('manual_invoice_number');
       $invoiceId = $request->input('invoice_id'); // Get invoice ID if editing
       $companyId = auth()->user()->company_id;
-  
+
       $query = \App\Models\Invoice::where('manual_invoice_number', $manualNumber)
           ->where('company_id', $companyId);
-  
+
       // Ignore current invoice if editing
       if ($invoiceId) {
           $query->where('id', '!=', $invoiceId);
       }
-  
+
       $exists = $query->exists();
-  
+
       if ($exists) {
           return response()->json([
               'valid' => false,
@@ -435,6 +433,6 @@ class InvoiceController extends Controller
           ]);
       }
   }
-  
+
 
 }

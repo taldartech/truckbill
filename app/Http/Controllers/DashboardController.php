@@ -4,12 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\FreightBooking as Booking;
 use App\Models\Transporter;
-use App\Models\Voucher;
 use App\Models\VoucherPayment;
 use App\Models\Truck;
-use App\Models\LorryReceipt;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\FreightBooking;
 
@@ -17,7 +14,7 @@ class DashboardController extends Controller
 {
   public function index()
   {
-    
+
     $now = Carbon::now();
     $startOfMonth = $now->copy()->startOfMonth();
     $endOfMonth = $now->copy()->endOfMonth();
@@ -58,14 +55,6 @@ class DashboardController extends Controller
       ->take(5)
       ->get();
 
-    // Pending approvals - Using lr relationship since vouchers are related to freight_bookings
-    $pendingApprovals = Voucher::where('status', 'pending_approval')
-      ->where('company_id', auth()->user()->company_id)
-      ->with(['freightBooking.lr.consignor', 'freightBooking.lr.consignee'])
-      ->latest()
-      ->take(5)
-      ->get();
-
     // Get top 5 trucks by number of lorry receipts
     $topTrucks = Truck::select('trucks.*', DB::raw('(SELECT COUNT(*) FROM lorry_receipts WHERE lorry_receipts.truck_id = trucks.id) as lr_count'))
       ->orderBy('lr_count', 'desc')
@@ -101,7 +90,6 @@ $expiredEwayBills = FreightBooking::with('lr')
       'revenueData',
       'bookingStatuses',
       'recentBookings',
-      'pendingApprovals',
       'topTrucks',
       'topTransporters',
       'topConsignees',

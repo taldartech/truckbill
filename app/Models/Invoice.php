@@ -38,9 +38,4 @@ class Invoice extends Model
     {
         return $this->belongsTo(Company::class);
     }
-
-    public function memoMaps()
-    {
-        return $this->hasMany(InvoiceMemoMap::class);
-    }
 }

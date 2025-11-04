@@ -14,10 +14,8 @@ use App\Http\Controllers\LorryReceiptController;
 use App\Http\Controllers\FreightBookingController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\CustomerController;
-use App\Http\Controllers\VoucherController;
 use App\Http\Controllers\VoucherPaymentController;
 use App\Http\Controllers\TransporterBankAccountController;
-use App\Http\Controllers\TransporterLedgerController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\TruckOwnerController;
 use App\Http\Controllers\TruckOwnerBankAccountController;
@@ -208,11 +206,6 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/customers/details/{id}', [CustomerController::class, 'getDetails'])->name('customers.details');
   Route::resource('customers', CustomerController::class);
 
-  // Vouchers
-  Route::resource('vouchers', VoucherController::class);
-  Route::get('vouchers/{voucher}', [VoucherController::class, 'show'])->name('vouchers.show');
-  Route::get('vouchers/{voucher}/payments-section', [VoucherController::class, 'paymentsSection']);
-
   // Voucher Payments
   Route::get('/voucher_payments/daily', [VoucherPaymentController::class, 'dailyPayments'])->name('voucher_payments.daily');
   Route::get('/voucher_payments/export/excel', [VoucherPaymentController::class, 'exportToExcel'])->name('voucher_payments.export.excel');
@@ -223,25 +216,8 @@ Route::middleware(['auth'])->group(function () {
   Route::get('daily-payments', [VoucherPaymentController::class, 'dailyPayments'])->name('voucher_payments.daily');
   Route::put('voucher_payments/update-status', [VoucherPaymentController::class, 'updateStatus'])->name('voucher_payments.update_status');
 
-
-
-
-  // Transporter Ledger
-  Route::get('/transporter_ledger', [TransporterLedgerController::class, 'index'])->name('transporter_ledger.index');
-  Route::get('transporter_ledger', [TransporterLedgerController::class, 'index'])->name('transporter_ledger.index');
-  Route::get('transporter_ledger/create', [TransporterLedgerController::class, 'create'])->name('transporter_ledger.create');
-  Route::post('transporter_ledger', [TransporterLedgerController::class, 'store'])->name('transporter_ledger.store');
-  Route::get('transporter_ledger/{ledger}/edit', [TransporterLedgerController::class, 'edit'])->name('transporter_ledger.edit');
-  Route::put('transporter_ledger/{ledger}', [TransporterLedgerController::class, 'update'])->name('transporter_ledger.update');
-  Route::delete('transporter_ledger/{ledger}', [TransporterLedgerController::class, 'destroy'])->name('transporter_ledger.destroy');
-  Route::get('transporter_ledger/balance/{transporter}', [TransporterLedgerController::class, 'transporterBalance'])->name('transporter_ledger.balance');
   // Truck_Owner Bank Accounts
   Route::get('truck_owner_bank_accounts/index', [TruckOwnerBankAccountController::class, 'index'])->name('truck_owner_bank_accounts.index');
-  Route::get('truck_owner_bank_accounts/create/{truck_owner_id}', [TruckOwnerBankAccountController::class, 'create'])->name('truck_owner_bank_accounts.create');
-  Route::post('truck_owner_bank_accounts', [TruckOwnerBankAccountController::class, 'store'])->name('truck_owner_bank_accounts.store');
-  Route::get('truck_owner_bank_accounts/{truck_owner_bank_account}/edit', [TruckOwnerBankAccountController::class, 'edit'])->name('truck_owner_bank_accounts.edit');
-  Route::put('truck_owner_bank_accounts/{truck_owner_bank_account}', [TruckOwnerBankAccountController::class, 'update'])->name('truck_owner_bank_accounts.update');
-  Route::delete('truck_owner_bank_accounts/{truck_owner_bank_account}', [TruckOwnerBankAccountController::class, 'destroy'])->name('truck_owner_bank_accounts.destroy');
   Route::put('truck_owner_bank_accounts/{transporter_id}/beneficiary-id', [TruckOwnerBankAccountController::class, 'updateBeneficiaryId'])->name('truck_owner_bank_accounts.updateBeneficiaryId');
 
   // Transporter Bank Accounts
