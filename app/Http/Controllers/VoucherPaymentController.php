@@ -138,7 +138,7 @@ class VoucherPaymentController extends Controller
   {
     // Start with base query
     $baseQuery = \App\Models\VoucherPayment::with([
-      'voucher',
+      // 'voucher',
       'company',
       'freight_booking.lr.customer',
       'freight_booking.lr.truck',
@@ -214,7 +214,7 @@ class VoucherPaymentController extends Controller
 
     // Get the latest payment for each voucher number to display representative data
     $payments = \App\Models\VoucherPayment::with([
-      'voucher',
+      // 'voucher',
       'company',
       'freight_booking.lr.customer',
       'freight_booking.lr.truck',
