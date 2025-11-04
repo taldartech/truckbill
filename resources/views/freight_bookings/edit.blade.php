@@ -637,7 +637,8 @@
                         <div class="mb-3">
                             <label for="deliveryMemoId" class="form-label">Memo ID *</label>
                             <input type="text" class="form-control" id="deliveryMemoId" name="memo_id" required
-                                placeholder="Enter memo ID">
+                                placeholder="Enter memo ID"     pattern="[A-Za-z0-9\-\/]+"
+                                >
                             <small class="form-text text-muted">This will be saved to the lorry receipt record.</small>
                         </div>
                     </form>

@@ -31,7 +31,7 @@ class Invoice extends Model
 
     public function consignee()
 {
-    return $this->belongsTo(Consignee::class, 'customer_id');
+    return $this->belongsTo(Consignee::class, 'customer_id')->withTrashed();
 }
 
     public function company()

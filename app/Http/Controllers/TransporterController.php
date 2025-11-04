@@ -340,15 +340,16 @@ class TransporterController extends Controller
                 ->where(fn($query) => $query->where('company_id', $request->company_id)),
             ],
             'short_name' => [
-                'nullable', 
-                'string', 
-                'max:255', 
+                'nullable',
+                'string',
+                'max:255',
                 Rule::unique('transporters')
                     ->where(fn($query) => $query->where('company_id', $request->company_id)),
             ],
             'contact_person_name' => 'nullable|string|max:255',
         ], [
             'pan_number.unique' => 'This PAN number is already associated with another transporter and cannot be used.',
+            'gst_number.unique' => 'This GST number is already associated with another transporter and cannot be used.',
             'mobile_number.unique' => 'This mobile number is already associated with another transporter.',
             'short_name.unique' => 'This short name is already associated with another transporter and cannot be used.',
         ]);
@@ -510,9 +511,9 @@ class TransporterController extends Controller
                 ->ignore($transporter->id),
             ],
            'short_name' => [
-                'nullable', 
-                'string', 
-                'max:255', 
+                'nullable',
+                'string',
+                'max:255',
                 Rule::unique('transporters')
                     ->where(fn($query) => $query->where('company_id', $request->company_id))
                     ->ignore($transporter->id),

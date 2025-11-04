@@ -3,10 +3,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 
 class Customer extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
     protected $fillable = [
         'company_id',
         'name',
@@ -19,10 +21,14 @@ class Customer extends Model
         'state_id',
         'city_id',
     ];
+
+    protected $dates = ['deleted_at'];
+    
     public function company()
     {
         return $this->belongsTo(Company::class);
     }
+
 
     public function city()
     {

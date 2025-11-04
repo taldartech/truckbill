@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
-@section('title', 'Shortage Damage Report')
+ @section('title', 'Shortage Damage Report')
 
-@section('content')
+ @section('content')
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" action="{{ route('reports.shortage-damage') }}" id="searchForm" onsubmit="validateForm(event)">

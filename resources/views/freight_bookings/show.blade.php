@@ -82,10 +82,12 @@
             <div class="card-toolbar">
                 @if (!$freightBooking->is_cancelled)
                     @if ($freightBooking->balance_amount > 0)
+                        @if( !$freightBooking->linked_lr_id)
                         <button type="button" class="btn btn-sm btn-success me-2"
                             onclick="openVoucherPaymentModal({{ $freightBooking->id }})">
                             <i class="bi bi-credit-card"></i> Voucher Payment
                         </button>
+                        @endif
                     @else
                         <button type="button" class="btn btn-sm btn-secondary me-2" disabled
                             title="No balance amount to pay">

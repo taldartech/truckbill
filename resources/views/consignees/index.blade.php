@@ -225,14 +225,6 @@ $(document).ready(function() {
                                             <td>${data.name}</td>
                                         </tr>
                                         <tr>
-                                            <td class="fw-bold">Short Name:</td>
-                                            <td>${data.short_name}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="fw-bold">Contact Person:</td>
-                                            <td>${data.contact_person_name}</td>
-                                        </tr>
-                                        <tr>
                                             <td class="fw-bold">Contact Number:</td>
                                             <td>${data.contact_number}</td>
                                         </tr>

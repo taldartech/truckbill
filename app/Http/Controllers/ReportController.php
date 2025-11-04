@@ -283,8 +283,8 @@ class ReportController extends Controller
     $export = Excel::download(new InvoiceExport($startDate, $endDate), 'GSTR1.xlsx');
     return $export;
   }
-  public function shortage_damage(Request $request)
-  {
+
+  public function shortage_damage(Request $request){
     $endDate = $request->input('end_date') ?? date('Y-m-d');
     $startDate = max($request->input('start_date') ?? date('Y-m-d', strtotime('-3 months')), date('Y-m-d', strtotime('-3 months', strtotime($endDate))));
 
@@ -294,15 +294,26 @@ class ReportController extends Controller
 
     if ($request->input('end_date') || $request->input('start_date')) {
       // First, get the LorryReceipts with their freight bookings and voucher payments
-      $query = LorryReceipt::with([
-        'freightBookings' => function ($q) {
-          $q->with(['voucherPayments']);
-        },
-        'consignor',
-        'consignee',
-        'customer',
-        'truck'
-      ])->whereBetween('gr_date', [$startDate, $endDate]);
+     $query = LorryReceipt::with([
+          'freightBookings' => function ($q) {
+              $q->with(['voucherPayments'])
+                ->where(function ($sub) {
+                    $sub->where('shortage_amount', '>', 0)
+                        ->orWhere('damage_amount', '>', 0);
+                });
+          },
+          'consignor',
+          'consignee',
+          'customer',
+          'truck'
+      ])
+      ->whereBetween('gr_date', [$startDate, $endDate])
+      ->whereHas('freightBookings', function ($q) {
+          $q->where(function ($sub) {
+              $sub->where('shortage_amount', '>', 0)
+                  ->orWhere('damage_amount', '>', 0);
+          });
+      });
 
       if ($user) {
         $query->where('company_id', $user);
@@ -328,9 +339,9 @@ class ReportController extends Controller
       $generated = false;
     }
 
-
     return view('reports.shortage-damage', compact('lrs', 'startDate', 'endDate', 'generated'));
   }
+
   public function shortage_damage_export(Request $request)
   {
     $startDate = $request->input('start_date');
@@ -339,6 +350,7 @@ class ReportController extends Controller
     $export = Excel::download(new ShortageDamageExport($startDate, $endDate), 'shortage_damage_report.xlsx');
     return $export;
   }
+
   public function eway_bill(Request $request)
   {
     $endDate = $request->input('end_date') ?? date('Y-m-d');
