@@ -597,8 +597,8 @@ class ReportController extends Controller
     }
     return view('reports.memo-copy', compact('customers', 'customerId', 'memo_id', 'memo_ids', 'lrs'));
   }
-  
-  
+
+
 
   // public function memo_copy_export(Request $request)
   // {
@@ -707,7 +707,7 @@ public function pending_memo(Request $request)
 
 public function pendingMemoExport(Request $request)
 {
-  
+
     // Optionally get customer_id if you want to filter by customer as well
     $customerId = $request->input('customer_id');
 
@@ -775,7 +775,7 @@ public function pending_invoice(Request $request)
 
 public function pendingInvoiceExport(Request $request)
 {
-  
+
     // Optionally get customer_id if you want to filter by customer as well
     $customerId = $request->input('customer_id');
 
@@ -856,7 +856,17 @@ public function pendingInvoiceExport(Request $request)
     }
     $lr = LorryReceipt::find($request->input('lr_id'));
     if ($lr->linked_lr_id) {
-      $lrs = LorryReceipt::where('linked_lr_id', $lr->linked_lr_id)->get();
+      $lrs = LorryReceipt::where('linked_lr_id', $lr->linked_lr_id)
+        ->where('company_id', Auth::user()->company_id)
+        ->get();
+        // check if any lr does not have null freight_booking_id
+        $allHaveFreightBooking = $lrs->every(function ($item) {
+          return !is_null($item->freight_booking_id);
+        });
+
+        if (!$allHaveFreightBooking) {
+          return redirect()->back()->with('error', 'Create all Freight Bookings for linked Lorry Receipts before exporting the Voucher Receipt.');
+        }
     } else {
       $lrs = collect([$lr]);
     }
