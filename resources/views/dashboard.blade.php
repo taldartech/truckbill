@@ -321,7 +321,8 @@
                                         <td>{{ $loop->iteration }}</td>
                                         <td>{{ $ewayBill->lr->lr_number }}</td>
                                         <td>{{ $ewayBill->lr->truck->truck_number }}</td>
-                                        <td>{{ $ewayBill->lr->truck->driver->mobile }}</td>
+                                        <td>{{ $ewayBill->lr?->truck?->driver?->mobile ?? '-' }}</td>
+
                                         <td>{{ $ewayBill->lr->destination_city }}</td>
                                         @php
 
