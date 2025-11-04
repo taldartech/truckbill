@@ -167,7 +167,7 @@ class LorryReceiptController extends Controller
   public function getByLinkedId($linkedId)
   {
     try {
-      
+
       $lrs = \App\Models\LorryReceipt::with(['truck', 'freightBookings'])
       ->where('company_id', auth()->user()->company_id)
         ->where('linked_lr_id', $linkedId)
@@ -199,7 +199,7 @@ class LorryReceiptController extends Controller
   {
     try {
       $linkedLRs = LorryReceipt::with(['consignor', 'consignee', 'customer', 'transporter', 'truck', 'reference'])
-       
+
        ->where('company_id', auth()->user()->company_id)
         ->where('linked_lr_id', $linkedLrId)
 
@@ -453,14 +453,14 @@ class LorryReceiptController extends Controller
 
       // Get the lorry receipts that already have memo_id
       $existingMemoIds = LorryReceipt::whereIn('id', $validated['lr_ids'])
-      
+
       ->where('company_id', auth()->user()->company_id)
         ->whereNotNull('memo_id')
         ->pluck('lr_number')
         ->toArray();
 
-    
-        
+
+
 
       if (!empty($existingMemoIds)) {
         return response()->json([
@@ -502,7 +502,7 @@ class LorryReceiptController extends Controller
       ->where('company_id', auth()->user()->company_id)
         ->where('customer_id', '!=', $customerId)
         ->exists();
-      
+
 
       if ($memoUsedByOtherCustomer) {
         return response()->json([
@@ -813,7 +813,7 @@ class LorryReceiptController extends Controller
 private function validateLorryReceiptsUniqueness($lrs, $companyId)
 {
     $errors = [];
-   
+
 
     // Extract all numbers from request
     $lrNumbers = array_filter(array_column($lrs, 'lr_number'));
@@ -831,7 +831,7 @@ private function validateLorryReceiptsUniqueness($lrs, $companyId)
         if (!empty($duplicateLrs)) {
             foreach ($lrs as $index => $lr) {
                 if (!empty($lr['lr_number']) && in_array($lr['lr_number'], $duplicateLrs)) {
-                    $errors["lrs.{$index}.lr_number"] = 
+                    $errors["lrs.{$index}.lr_number"] =
                         "LR Number '{$lr['lr_number']}' already exists in your company.";
                 }
             }
@@ -849,7 +849,7 @@ private function validateLorryReceiptsUniqueness($lrs, $companyId)
         if (!empty($duplicateGrs)) {
             foreach ($lrs as $index => $lr) {
                 if (!empty($lr['gr_number']) && in_array($lr['gr_number'], $duplicateGrs)) {
-                    $errors["lrs.{$index}.gr_number"] = 
+                    $errors["lrs.{$index}.gr_number"] =
                         "GR Number '{$lr['gr_number']}' already exists in your company.";
                 }
             }
@@ -867,7 +867,7 @@ private function validateLorryReceiptsUniqueness($lrs, $companyId)
         if (!empty($duplicateInvoices)) {
             foreach ($lrs as $index => $lr) {
                 if (!empty($lr['invoice_number']) && in_array($lr['invoice_number'], $duplicateInvoices)) {
-                    $errors["lrs.{$index}.invoice_number"] = 
+                    $errors["lrs.{$index}.invoice_number"] =
                         "Invoice Number '{$lr['invoice_number']}' already exists in your company.";
                 }
             }
@@ -964,7 +964,7 @@ private function validateLorryReceiptsUniqueness($lrs, $companyId)
   // }
   public function checkGRNumberUniqueness(Request $request)
   {
- 
+
     $request->validate([
       'gr_number' => 'required|string'
     ]);
@@ -973,7 +973,7 @@ private function validateLorryReceiptsUniqueness($lrs, $companyId)
       ->where('company_id', auth()->user()->company_id)
       ->exists();
 
-    
+
 
     return response()->json(['available' => !$exists]);
   }
@@ -994,7 +994,7 @@ private function validateLorryReceiptsUniqueness($lrs, $companyId)
     $transporters = Transporter::withTrashed()->where('company_id', auth()->user()->company_id)->get();
     $truckOwners = Transporter::withTrashed()->where('company_id', auth()->user()->company_id)->where('is_owner', 1)->get();
     $agencies = Transporter::withTrashed()->where('company_id', auth()->user()->company_id)->where('is_owner', 0)->get();
-    $customers = Customer::withTrashed()->where('company_id', auth()->user()->company_id)->orderBy('name')->get();
+    $customers = Customer::where('company_id', auth()->user()->company_id)->orderBy('name')->get();
     $consignees = Consignee::withTrashed()->where('company_id', auth()->user()->company_id)->orderBy('name')->get();
     $goodsTypes = GoodType::all();
     $statuses = ['Pending', 'Delivered', 'Cancelled', 'In-Progress'];
