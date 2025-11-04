@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\TruckOwner;
 use App\Models\Transporter;
 use App\Models\Company;
 use App\Models\Country;
@@ -22,11 +21,11 @@ class TruckOwnerController extends Controller
         if ($request->ajax()) {
             return $this->getTruckOwnersData($request);
         }
-        
+
         $companies = \App\Models\Company::all();
         return view('truck_owner.index', compact('companies'));
     }
-    
+
     private function getTruckOwnersData(Request $request)
     {
         try {
@@ -36,7 +35,7 @@ class TruckOwnerController extends Controller
             if (auth()->user()->userRole->name !== 'super_admin') {
                 $query->where('company_id', auth()->user()->company_id);
             }
-        
+
         // Handle search
         if ($request->has('search') && $request->search['value']) {
             $searchValue = $request->search['value'];
@@ -89,7 +88,7 @@ class TruckOwnerController extends Controller
         if ($request->has('order')) {
             $orderColumn = $request->order[0]['column'];
             $orderDir = $request->order[0]['dir'];
-            
+
             switch ($orderColumn) {
                 case 1: // Name
                     $query->orderBy('transporters.name', $orderDir);
@@ -123,10 +122,10 @@ class TruckOwnerController extends Controller
 
         $totalRecords = \App\Models\Transporter::where('is_owner', 1)->count();
         $filteredRecords = $query->count();
-        
+
         $start = $request->start ?? 0;
         $length = $request->length ?? 10;
-        
+
         $truckOwners = $query->skip($start)->take($length)->get();
 
         $data = [];
@@ -164,11 +163,11 @@ class TruckOwnerController extends Controller
     private function getActionButtons($truckOwner)
     {
         $buttons = '<div class="d-flex gap-1">';
-        
+
         // Add Truck Button (modal trigger for truck owners)
         $buttons .= '<button type="button" class="btn btn-sm btn-outline-primary add-truck-btn" aria-label="Add Truck" title="Add Truck" data-bs-placement="top" data-bs-toggle="tooltip" data-transporter-id="' . $truckOwner->id . '" data-transporter-name="' . htmlspecialchars($truckOwner->name) . '">';
         $buttons .= '<i class="bi bi-truck"></i></button>';
-        
+
         // Advance Payment Button (same as transporters)
         $buttons .= '<button type="button" class="btn btn-sm btn-outline-success advance-payment-btn" aria-label="Advance Payment" title="Advance Payment" data-bs-placement="top" data-bs-toggle="tooltip" data-transporter-id="' . $truckOwner->id . '" data-transporter-name="' . htmlspecialchars($truckOwner->name) . '">';
         $buttons .= '<i class="bi bi-currency-rupee"></i>';
@@ -178,11 +177,11 @@ class TruckOwnerController extends Controller
         $editUrl = route('truck_owners.edit', $truckOwner->id);
         $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit Truck Owner" aria-label="Edit Truck Owner" data-bs-placement="top" data-bs-toggle="tooltip">';
         $buttons .= '<i class="bi bi-pencil"></i></a>';
-        
+
         // Delete Button (AJAX-based)
         $buttons .= '<button type="button" class="btn btn-sm btn-danger delete-truck-owner-btn" aria-label="Delete Truck Owner" title="Delete Truck Owner" data-bs-placement="top" data-bs-toggle="tooltip" data-truck-owner-id="' . $truckOwner->id . '" data-truck-owner-name="' . htmlspecialchars($truckOwner->name) . '">';
         $buttons .= '<i class="bi bi-trash"></i></button>';
-        
+
         $buttons .= '</div>';
         return $buttons;
     }
@@ -193,7 +192,7 @@ class TruckOwnerController extends Controller
         $countries = Country::all();
         $states = State::all();
         $cities = City::all();
-        
+
         return view('truck_owner.create', compact('companies', 'countries', 'states', 'cities'));
     }
 
@@ -286,14 +285,14 @@ class TruckOwnerController extends Controller
     if (!empty($validated['gst_number'])) {
         $validated['gst_number'] = strtoupper($validated['gst_number']);
     }
-        
+
         // Always set truck owner specific fields (system controlled, not user input)
         // Handle advance_amount - use provided value or default to 0
         if (!isset($validated['advance_amount'])) {
             $validated['advance_amount'] = 0;
         }
         $validated['is_owner'] = 1; // Always true for truck owners (this differentiates from transporters)
-        
+
         // Convert pan_active to boolean
         $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
 
@@ -317,7 +316,7 @@ class TruckOwnerController extends Controller
                 }
             }
         }
-        
+
         \App\Models\Transporter::create($validated);
         return redirect()->route('truck_owners.index')->with('success', 'Truck Owner created successfully!');
     }
@@ -327,9 +326,9 @@ class TruckOwnerController extends Controller
         $panNumber = $request->input('pan_number');
         $panActive = $request->input('pan_active');
         $declarationGiven = $request->input('declaration_given');
-        
+
         $tdsPercentage = 0.00;
-        
+
         if ($declarationGiven == '1') {
             // Rule 1: Declaration given → TDS = 0%
             $tdsPercentage = 0.00;
@@ -350,7 +349,7 @@ class TruckOwnerController extends Controller
                 }
             }
         }
-        
+
         return response()->json([
             'tds_percentage' => number_format($tdsPercentage, 2)
         ]);
@@ -359,17 +358,17 @@ class TruckOwnerController extends Controller
     public function show($id)
     {
         $transporter = \App\Models\Transporter::with(['company', 'city.state.country'])->findOrFail($id);
-        
+
         // Check if user has permission to view this truck owner
         if (auth()->user()->userRole->name !== 'super_admin' && $transporter->company_id !== auth()->user()->company_id) {
             abort(403, 'Unauthorized access to this truck owner.');
         }
-        
+
         // Ensure this is actually a truck owner (is_owner = 1)
         if (!$transporter->is_owner) {
             abort(404, 'Truck owner not found.');
         }
-        
+
         // Get last 10 advance payments for this truck owner
         $advancePayments = \App\Models\AdvancePayment::where('transporter_id', $id)
             ->orderBy('created_at', 'desc')
@@ -384,7 +383,7 @@ class TruckOwnerController extends Controller
                     'created_at' => $payment->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i')
                 ];
             });
-        
+
         // Get registered trucks for this truck owner
         $trucks = \App\Models\Truck::where('transporter_id', $id)
             ->with('driver')
@@ -398,7 +397,7 @@ class TruckOwnerController extends Controller
                     'driver_mobile' => optional($truck->driver)->mobile ?: 'Not provided'
                 ];
             });
-        
+
         return response()->json([
             'id' => $transporter->id,
             'name' => $transporter->name,
@@ -429,13 +428,13 @@ class TruckOwnerController extends Controller
     {
         // Load the trucks relationship with driver information
         $transporter->load(['trucks.driver']);
-        
+
         $companies = Company::all();
         $trucks = Truck::where('transporter_id', $transporter->id)->get();
         $countries = Country::all();
         $states = State::all();
         $cities = City::all();
-        
+
         return view('truck_owner.edit', compact('transporter', 'companies', 'trucks', 'countries', 'states', 'cities'));
     }
 
@@ -512,9 +511,9 @@ class TruckOwnerController extends Controller
                 ->ignore($transporter->id),
             ],
             'short_name' => [
-                'nullable', 
-                'string', 
-                'max:255', 
+                'nullable',
+                'string',
+                'max:255',
                 Rule::unique('transporters')
                 ->where(fn($query) =>
                     $query->where('company_id', $request->company_id)
@@ -535,14 +534,14 @@ class TruckOwnerController extends Controller
     if (!empty($validated['gst_number'])) {
         $validated['gst_number'] = strtoupper($validated['gst_number']);
     }
-        
+
         // Always set truck owner specific fields (system controlled, not user input)
         // Handle advance_amount - use provided value or default to 0
         if (!isset($validated['advance_amount'])) {
             $validated['advance_amount'] = 0;
         }
         $validated['is_owner'] = 1; // Always true for truck owners (this differentiates from transporters)
-        
+
         // Convert pan_active to boolean
         $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
 
@@ -566,7 +565,7 @@ class TruckOwnerController extends Controller
                 }
             }
         }
-        
+
         $transporter->update($validated);
         return redirect()->route('truck_owners.index')->with('success', 'Truck Owner updated successfully!');
     }
@@ -575,7 +574,7 @@ class TruckOwnerController extends Controller
     {
         // Soft delete the truck owner
         $transporter->delete();
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Truck Owner deleted successfully!'

@@ -66,9 +66,4 @@ class Transporter extends Model
     {
         return $this->hasMany(Truck::class, 'transporter_id');
     }
-
-    public function bankAccounts()
-    {
-        return $this->hasMany(TransporterBankAccount::class, 'transporter_id');
-    }
 }

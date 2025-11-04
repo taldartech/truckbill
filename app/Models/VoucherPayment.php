@@ -28,11 +28,6 @@ class VoucherPayment extends Model
         'linked_voucher_id',
     ];
 
-    public function voucher()
-    {
-        return $this->belongsTo(Voucher::class);
-    }
-
     public function company()
     {
         return $this->belongsTo(Company::class);
