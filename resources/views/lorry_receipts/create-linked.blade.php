@@ -1117,7 +1117,7 @@
             let invoiceNumberTimeout;
 
             function checkInvoiceUniq(invoiceNumber, feedbackEl, inputEl) {
-                if (!invoiceNumber || invoiceNumber.length < 2) {
+                if (!invoiceNumber) {
                     feedbackEl.innerHTML = '';
                     inputEl.classList.remove('is-valid', 'is-invalid');
                     return;
