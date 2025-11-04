@@ -128,7 +128,7 @@
             <table class="table table-bordered">
                 <thead>
                     <tr>
-                      
+
                         <th>Voucher #</th>
                         <th>Lorry Receipt No</th>
                         <th>Customer</th>
@@ -136,8 +136,8 @@
                         <th>Transporter</th>
                         <th>Source</th>
                         <th>Destination</th>
-                       
-                       
+
+
                         @if(auth()->check() && auth()->user()->userRole->name === 'admin')
                         <th>Actions</th>
                         @endif
@@ -150,7 +150,7 @@
                             if (!$payment) continue;
                         @endphp
                         <tr class="align-middle">
-                            
+
                             <td>
                                 <a href="{{ route('voucher_payments.show', $payment->voucher_number) }}" class="fw-bold text-decoration-none">
                                     {{ $payment->voucher_number }}
@@ -203,13 +203,13 @@
                                     <span class="text-muted">-</span>
                                 @endif
                             </td>
-                            
-                            
+
+
                             @if(auth()->check() && auth()->user()->userRole->name === 'admin')
                             <td>
                                 <div class="d-flex gap-1">
-                                    <a href="{{ route('voucher_payments.show', $payment->voucher_number) }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip" 
-                            data-bs-placement="top" 
+                                    <a href="{{ route('voucher_payments.show', $payment->voucher_number) }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip"
+                            data-bs-placement="top"
                             title="View Details">
                                         <i class="bi bi-eye"></i>
                                     </a>
@@ -229,7 +229,8 @@
                     @endforelse
                 </tbody>
             </table>
-            {{ $voucherGroups->links() }}
+            {{-- Implement bootstrap 5 pagination --}}
+            {{ $voucherGroups->withQueryString()->links('pagination::bootstrap-5') }}
         </div>
     </div>
 </div>
@@ -252,7 +253,7 @@
     // Initialize filter fields based on URL parameters
     document.addEventListener('DOMContentLoaded', function() {
         const urlParams = new URLSearchParams(window.location.search);
-        
+
         // Check each filter checkbox if its parameter exists in URL
         document.querySelectorAll('#advanced-search-box input[type="checkbox"]').forEach(checkbox => {
             const paramName = checkbox.value;

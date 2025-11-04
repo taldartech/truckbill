@@ -33,11 +33,13 @@ use App\Http\Controllers\BranchController;
 
 
 // Authentication Routes
-Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [LoginController::class, 'login']);
-Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+Route::middleware(['guest'])->group(function () {
+  Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
+  Route::post('/login', [LoginController::class, 'login']);
+});
 // Protected Routes
 Route::middleware(['auth'])->group(function () {
+  Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
   Route::prefix('branches')->group(function () {
     Route::get('/', [BranchController::class, 'index'])->name('branches.index');
     Route::get('/create', [BranchController::class, 'create'])->name('branches.create');
@@ -178,7 +180,7 @@ Route::middleware(['auth'])->group(function () {
 
 
 
-   
+
   // Freight Bookings
   Route::post('/freight_bookings/store_combined_payment', [FreightBookingController::class, 'storeCombinedPayment'])->name('freight_bookings.store_combined_payment');
   Route::get('/freight_bookings/data', [FreightBookingController::class, 'getFreightBookingsData'])->name('freight_bookings.datatable');
@@ -222,7 +224,7 @@ Route::middleware(['auth'])->group(function () {
   Route::put('voucher_payments/update-status', [VoucherPaymentController::class, 'updateStatus'])->name('voucher_payments.update_status');
 
 
- 
+
 
   // Transporter Ledger
   Route::get('/transporter_ledger', [TransporterLedgerController::class, 'index'])->name('transporter_ledger.index');
