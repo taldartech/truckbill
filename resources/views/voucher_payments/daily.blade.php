@@ -330,6 +330,7 @@
                                 $linked_lr_id = $payment->freight_booking->linked_lr_id ?? null;
                                 $lrs = \App\Models\LorryReceipt::where('linked_lr_id', $linked_lr_id)
                                     ->where('linked_lr_id', '!=', null)
+                                    ->where('company_id', auth()->user()->company_id)
                                     ->get();
                             @endphp
                             <tr class="align-middle payment-row" data-status="{{ $payment->payment_status }}"
