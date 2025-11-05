@@ -207,44 +207,64 @@ Route::middleware(['auth'])->group(function () {
   // Master Routes
   Route::prefix('master')->group(function () {
     // Countries
-    Route::get('/countries', [\App\Http\Controllers\CountryController::class, 'index'])->name('master.countries.index');
-    Route::get('/countries/create', [\App\Http\Controllers\CountryController::class, 'create'])->name('master.countries.create');
-    Route::post('/countries', [\App\Http\Controllers\CountryController::class, 'store'])->name('master.countries.store');
-    Route::get('/countries/{country}/edit', [\App\Http\Controllers\CountryController::class, 'edit'])->name('master.countries.edit');
-    Route::put('/countries/{country}', [\App\Http\Controllers\CountryController::class, 'update'])->name('master.countries.update');
-    Route::delete('/countries/{country}', [\App\Http\Controllers\CountryController::class, 'destroy'])->name('master.countries.destroy');
+    Route::middleware(['moderator'])->group(function () {
+      Route::get('/countries', [\App\Http\Controllers\CountryController::class, 'index'])->name('master.countries.index');
+      Route::get('/countries/create', [\App\Http\Controllers\CountryController::class, 'create'])->name('master.countries.create');
+      Route::post('/countries', [\App\Http\Controllers\CountryController::class, 'store'])->name('master.countries.store');
+    });
+    Route::middleware(['admin'])->group(function () {
+      Route::get('/countries/{country}/edit', [\App\Http\Controllers\CountryController::class, 'edit'])->name('master.countries.edit');
+      Route::put('/countries/{country}', [\App\Http\Controllers\CountryController::class, 'update'])->name('master.countries.update');
+      Route::delete('/countries/{country}', [\App\Http\Controllers\CountryController::class, 'destroy'])->name('master.countries.destroy');
+    });
 
     // States
-    Route::get('/states', [\App\Http\Controllers\StateController::class, 'index'])->name('master.states.index');
-    Route::get('/states/create', [\App\Http\Controllers\StateController::class, 'create'])->name('master.states.create');
-    Route::post('/states', [\App\Http\Controllers\StateController::class, 'store'])->name('master.states.store');
-    Route::get('/states/{state}/edit', [\App\Http\Controllers\StateController::class, 'edit'])->name('master.states.edit');
-    Route::put('/states/{state}', [\App\Http\Controllers\StateController::class, 'update'])->name('master.states.update');
-    Route::delete('/states/{state}', [\App\Http\Controllers\StateController::class, 'destroy'])->name('master.states.destroy');
+    Route::middleware(['moderator'])->group(function () {
+      Route::get('/states', [\App\Http\Controllers\StateController::class, 'index'])->name('master.states.index');
+      Route::get('/states/create', [\App\Http\Controllers\StateController::class, 'create'])->name('master.states.create');
+      Route::post('/states', [\App\Http\Controllers\StateController::class, 'store'])->name('master.states.store');
+    });
+    Route::middleware(['admin'])->group(function () {
+      Route::get('/states/{state}/edit', [\App\Http\Controllers\StateController::class, 'edit'])->name('master.states.edit');
+      Route::put('/states/{state}', [\App\Http\Controllers\StateController::class, 'update'])->name('master.states.update');
+      Route::delete('/states/{state}', [\App\Http\Controllers\StateController::class, 'destroy'])->name('master.states.destroy');
+    });
 
     // Cities
-    Route::get('/cities', [\App\Http\Controllers\CityController::class, 'index'])->name('master.cities.index');
-    Route::get('/cities/create', [\App\Http\Controllers\CityController::class, 'create'])->name('master.cities.create');
-    Route::post('/cities', [\App\Http\Controllers\CityController::class, 'store'])->name('master.cities.store');
-    Route::get('/cities/{city}/edit', [\App\Http\Controllers\CityController::class, 'edit'])->name('master.cities.edit');
-    Route::put('/cities/{city}', [\App\Http\Controllers\CityController::class, 'update'])->name('master.cities.update');
-    Route::delete('/cities/{city}', [\App\Http\Controllers\CityController::class, 'destroy'])->name('master.cities.destroy');
+    Route::middleware(['moderator'])->group(function () {
+      Route::get('/cities', [\App\Http\Controllers\CityController::class, 'index'])->name('master.cities.index');
+      Route::get('/cities/create', [\App\Http\Controllers\CityController::class, 'create'])->name('master.cities.create');
+      Route::post('/cities', [\App\Http\Controllers\CityController::class, 'store'])->name('master.cities.store');
+    });
+    Route::middleware(['admin'])->group(function () {
+      Route::get('/cities/{city}/edit', [\App\Http\Controllers\CityController::class, 'edit'])->name('master.cities.edit');
+      Route::put('/cities/{city}', [\App\Http\Controllers\CityController::class, 'update'])->name('master.cities.update');
+      Route::delete('/cities/{city}', [\App\Http\Controllers\CityController::class, 'destroy'])->name('master.cities.destroy');
+    });
 
     // Goods Types
-    Route::get('/goods-types', [\App\Http\Controllers\GoodsTypeController::class, 'index'])->name('master.goods-types.index');
-    Route::get('/goods-types/create', [\App\Http\Controllers\GoodsTypeController::class, 'create'])->name('master.goods-types.create');
-    Route::post('/goods-types', [\App\Http\Controllers\GoodsTypeController::class, 'store'])->name('master.goods-types.store');
-    Route::get('/goods-types/{goodsType}/edit', [\App\Http\Controllers\GoodsTypeController::class, 'edit'])->name('master.goods-types.edit');
-    Route::put('/goods-types/{goodsType}', [\App\Http\Controllers\GoodsTypeController::class, 'update'])->name('master.goods-types.update');
-    Route::delete('/goods-types/{goodsType}', [\App\Http\Controllers\GoodsTypeController::class, 'destroy'])->name('master.goods-types.destroy');
+    Route::middleware(['moderator'])->group(function () {
+      Route::get('/goods-types', [\App\Http\Controllers\GoodsTypeController::class, 'index'])->name('master.goods-types.index');
+      Route::get('/goods-types/create', [\App\Http\Controllers\GoodsTypeController::class, 'create'])->name('master.goods-types.create');
+      Route::post('/goods-types', [\App\Http\Controllers\GoodsTypeController::class, 'store'])->name('master.goods-types.store');
+    });
+    Route::middleware(['admin'])->group(function () {
+      Route::get('/goods-types/{goodsType}/edit', [\App\Http\Controllers\GoodsTypeController::class, 'edit'])->name('master.goods-types.edit');
+      Route::put('/goods-types/{goodsType}', [\App\Http\Controllers\GoodsTypeController::class, 'update'])->name('master.goods-types.update');
+      Route::delete('/goods-types/{goodsType}', [\App\Http\Controllers\GoodsTypeController::class, 'destroy'])->name('master.goods-types.destroy');
+    });
 
     //Pumps
-    Route::get('/pumps', [PumpController::class, 'index'])->name('master.pump.index');
-    Route::get('/pumps/create', [PumpController::class, 'create'])->name('master.pump.create');
-    Route::post('/pumps', [PumpController::class, 'store'])->name('master.pump.store');
-    Route::get('/pumps/{pump}/edit', [PumpController::class, 'edit'])->name('master.pump.edit');
-    Route::put('/pumps/{pump}', [PumpController::class, 'update'])->name('master.pump.update');
-    Route::delete('/pumps/{pump}', [PumpController::class, 'destroy'])->name('master.pump.destroy');
+    Route::middleware(['moderator'])->group(function () {
+      Route::get('/pumps', [PumpController::class, 'index'])->name('master.pump.index');
+      Route::get('/pumps/create', [PumpController::class, 'create'])->name('master.pump.create');
+      Route::post('/pumps', [PumpController::class, 'store'])->name('master.pump.store');
+    });
+    Route::middleware(['admin'])->group(function () {
+      Route::get('/pumps/{pump}/edit', [PumpController::class, 'edit'])->name('master.pump.edit');
+      Route::put('/pumps/{pump}', [PumpController::class, 'update'])->name('master.pump.update');
+      Route::delete('/pumps/{pump}', [PumpController::class, 'destroy'])->name('master.pump.destroy');
+    });
   });
 
   Route::group(['prefix' => 'reports', 'middleware' => 'accountant'], function () {

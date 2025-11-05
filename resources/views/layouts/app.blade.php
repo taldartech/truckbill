@@ -380,48 +380,6 @@
                                     </li>
                                 </ul>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link " href="#masterMenu">
-                                    <i class="fas fa-money-check-alt"></i>
-                                    <p>
-                                        Master
-                                        <i class="nav-arrow bi bi-chevron-right"></i>
-                                    </p>
-                                </a>
-                                <ul class="nav nav-treeview">
-                                    <li class="nav-item">
-                                        <a href="/master/countries" class="nav-link">
-                                            <i class="fas fa-list"></i>
-                                            <p>Countries</p>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="/master/states" class="nav-link">
-                                            <i class="fas fa-plus"></i>
-                                            <p>States</p>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="/master/cities" class="nav-link">
-                                            <i class="fas fa-plus"></i>
-                                            <p>Cities</p>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="/master/goods-types" class="nav-link">
-                                            <i class="fas fa-plus"></i>
-                                            <p>Goods Types</p>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="/master/pumps" class="nav-link">
-                                            <i class="fas fa-plus"></i>
-                                            <p>Pumps</p>
-                                        </a>
-                                    </li>
-                                </ul>
-                            </li>
-
                             {{-- end master --}}
                         @endif
 

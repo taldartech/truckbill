@@ -34,7 +34,7 @@
                         <th>ID</th>
                         <th>Name</th>
                         <th>Country</th>
-                        @if(auth()->user()->userRole->name === 'super_admin')
+                        @if(auth()->user()->userRole->name === 'admin')
                         <th>Actions</th>
                         @endif
                     </tr>
@@ -84,7 +84,7 @@ $(document).ready(function() {
                 data: 'country',
                 name: 'country'
             },
-            @if(auth()->user()->userRole->name === 'super_admin')
+            @if(auth()->user()->userRole->name === 'admin')
             {
                 data: 'actions',
                 name: 'actions',
@@ -133,7 +133,7 @@ $(document).ready(function() {
             this.api().columns([1, 2]).every(function() {
                 var column = this;
                 var title = column.header().textContent;
-                
+
                 // Create input element
                 var input = $('<input type="text" class="form-control form-control-sm" placeholder="Search ' + title + '" />')
                     .appendTo($(column.header()))
@@ -145,7 +145,7 @@ $(document).ready(function() {
             });
         }
     });
-    
+
     // Handle delete confirmation
     $(document).on('submit', 'form[action*="destroy"]', function(e) {
         if (!confirm('Are you sure you want to delete this state?')) {

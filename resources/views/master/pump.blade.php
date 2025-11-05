@@ -11,7 +11,7 @@
 @section('content')
 <div class="container mt-4">
     <div class="col-sm-6"><h3 class="mb-0">Pump Management</h3></div>
-    
+
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
@@ -36,7 +36,7 @@
                         <th>Pump Name</th>
                         <th>Contact Name</th>
                         <th>Contact Number</th>
-                        @if(auth()->user()->userRole->name === 'super_admin' || auth()->user()->userRole->name === 'admin')
+                        @if(auth()->user()->userRole->name === 'admin')
                         <th>Actions</th>
                         @endif
                     </tr>
@@ -76,7 +76,7 @@ $(document).ready(function() {
             { data: 'pump_name', name: 'pump_name' },
             { data: 'contact_name', name: 'contact_name' },
             { data: 'contact_number', name: 'contact_number' },
-            @if(auth()->user()->userRole->name === 'super_admin' || auth()->user()->userRole->name === 'admin')
+            @if(auth()->user()->userRole->name === 'admin')
             {
                 data: 'actions',
                 name: 'actions',
@@ -125,7 +125,7 @@ $(document).ready(function() {
             this.api().columns([1, 2, 3]).every(function() {
                 var column = this;
                 var title = column.header().textContent;
-                
+
                 var input = $('<input type="text" class="form-control form-control-sm" placeholder="Search ' + title + '" />')
                     .appendTo($(column.header()))
                     .on('keyup change clear', function() {
