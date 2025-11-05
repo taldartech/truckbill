@@ -64,9 +64,11 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="bi bi-x-circle"></i> Close
                 </button>
-                <a href="#" id="editConsigneeBtn" class="btn btn-primary" style="display: none;">
-                    <i class="bi bi-pencil-square"></i> Edit Consignee
-                </a>
+                @if (Auth::user()->userRole->name === 'admin')
+                  <a href="#" id="editConsigneeBtn" class="btn btn-primary" style="display: none;">
+                      <i class="bi bi-pencil-square"></i> Edit Consignee
+                  </a>
+                @endif
             </div>
         </div>
     </div>
@@ -176,7 +178,7 @@ $(document).ready(function() {
             this.api().columns([1, 2, 3, 4, 5]).every(function() {
                 var column = this;
                 var title = column.header().textContent;
-                
+
                 // Create input element
                 var input = $('<input type="text" class="form-control form-control-sm" placeholder="Search ' + title + '" />')
                     .appendTo($(column.header()))
@@ -188,12 +190,12 @@ $(document).ready(function() {
             });
         }
     });
-    
+
     // Handle consignee name click to show details
     $(document).on('click', '.consignee-name-link', function(e) {
         e.preventDefault();
         var consigneeId = $(this).data('id');
-        
+
         // Show modal with loading state
         $('#consigneeDetailsModal').modal('show');
         $('#consigneeDetailsContent').html(`
@@ -205,7 +207,7 @@ $(document).ready(function() {
             </div>
         `);
         $('#editConsigneeBtn').hide();
-        
+
         // Fetch consignee details
         $.ajax({
             url: '/consignees/details/' + consigneeId,
@@ -247,7 +249,7 @@ $(document).ready(function() {
                                             <td class="fw-bold">PAN Number:</td>
                                             <td>${data.pan_number}</td>
                                         </tr>
-                                       
+
                                     </table>
                                 </div>
                             </div>
@@ -317,7 +319,7 @@ $(document).ready(function() {
             }
         });
     });
-    
+
     // Handle delete confirmation
     $(document).on('submit', 'form[action*="destroy"]', function(e) {
         if (!confirm('Are you sure you want to delete this consignee?')) {
