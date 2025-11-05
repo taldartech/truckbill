@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class TruckController extends Controller
@@ -11,7 +14,7 @@ class TruckController extends Controller
     {
         $trucks = \App\Models\Truck::where('transporter_id', $transporterId)
             ->whereHas('transporter', function($q) {
-                $q->where('company_id', auth()->user()->company_id);
+                $q->where('company_id', Auth::user()->company_id);
             })
             ->get();
 
@@ -25,10 +28,10 @@ class TruckController extends Controller
         }
            // Get only transporters who are owners
     $owners = \App\Models\Transporter::where('is_owner', 1)
-    ->where('company_id', auth()->user()->company_id)
+    ->where('company_id', Auth::user()->company_id)
     ->get();
 
-        $transporters = \App\Models\Transporter::where('company_id', auth()->user()->company_id)->get();
+        $transporters = \App\Models\Transporter::where('company_id', Auth::user()->company_id)->get();
         $drivers = \App\Models\Driver::all();
         return view('trucks.index', compact('transporters', 'drivers', 'owners'));
     }
@@ -36,13 +39,13 @@ class TruckController extends Controller
     private function getTrucksData(Request $request)
     {
         // $query = \App\Models\Truck::with(['transporter', 'driver'])->whereHas('transporter', function($q) {
-        //     $q->where('company_id', auth()->user()->company_id);
+        //     $q->where('company_id', Auth::user()->company_id);
 
         // });
         $query = \App\Models\Truck::with(['transporter', 'driver'])
     ->where(function ($q) {
         $q->whereHas('transporter', function ($subQuery) {
-            $subQuery->where('company_id', auth()->user()->company_id);
+            $subQuery->where('company_id', Auth::user()->company_id);
         })
         ->orWhereNull('transporter_id');  // Include trucks with no transporter
     });
@@ -130,11 +133,11 @@ class TruckController extends Controller
 
         // Get total count before pagination
         // $totalQuery = \App\Models\Truck::whereHas('transporter', function($q) {
-        //     $q->where('company_id', auth()->user()->company_id);
+        //     $q->where('company_id', Auth::user()->company_id);
         // });
         $totalQuery = \App\Models\Truck::where(function ($q) {
             $q->whereHas('transporter', function ($subQuery) {
-                $subQuery->where('company_id', auth()->user()->company_id);
+                $subQuery->where('company_id', Auth::user()->company_id);
             })
             ->orWhereNull('transporter_id');
         });
@@ -156,7 +159,7 @@ class TruckController extends Controller
                 'transporter' => $truck->transporter ? $truck->transporter->name : '-',
                 'driver' => $truck->driver ? $truck->driver->name : '-',
                 // 'actions' => $this->getActionButtons($truck)
-                'actions' => auth()->user()->userRole->name === 'admin'
+                'actions' => Auth::user()->userRole->name === 'admin'
                         ? $this->getActionButtons($truck)
                         : ''  // empty string for non-admins
             ];
@@ -214,7 +217,7 @@ class TruckController extends Controller
         $truck = \App\Models\Truck::with('transporter')
             ->where('id', $truckId)
             ->whereHas('transporter', function($q) {
-                $q->where('company_id', auth()->user()->company_id);
+                $q->where('company_id', Auth::user()->company_id);
             })
             ->first();
 
@@ -223,7 +226,7 @@ class TruckController extends Controller
         }
 
         // Get all transporters that are owners
-        $ownerTransporters = \App\Models\Transporter::where('company_id', auth()->user()->company_id)
+        $ownerTransporters = \App\Models\Transporter::where('company_id', Auth::user()->company_id)
             ->where('is_owner', 1)
             ->get();
 
@@ -235,7 +238,7 @@ class TruckController extends Controller
         $truck = \App\Models\Truck::with('transporter')
             ->where('id', $truckId)
             ->whereHas('transporter', function($q) {
-                $q->where('company_id', auth()->user()->company_id);
+                $q->where('company_id', Auth::user()->company_id);
             })
             ->first();
 
@@ -244,7 +247,7 @@ class TruckController extends Controller
         }
 
         // Get all transporters that are agencies
-        $agencyTransporters = \App\Models\Transporter::where('company_id', auth()->user()->company_id)
+        $agencyTransporters = \App\Models\Transporter::where('company_id', Auth::user()->company_id)
             ->where('is_owner', 0)
             ->get();
 
@@ -256,7 +259,7 @@ class TruckController extends Controller
     public function create($transporter_id)
     {
         // Fetch only the specific transporter
-        $transporter = \App\Models\Transporter::where('company_id', auth()->user()->company_id)
+        $transporter = \App\Models\Transporter::where('company_id', Auth::user()->company_id)
             ->where('id', $transporter_id)
             ->firstOrFail();
 
@@ -270,7 +273,7 @@ class TruckController extends Controller
     $companyId = \App\Models\Transporter::where('id', $request->transporter_id)->value('company_id');
 
     // Perform manual uniqueness check scoped by company_id
-    $exists = \DB::table('trucks')
+    $exists = DB::table('trucks')
         ->join('transporters', 'trucks.transporter_id', '=', 'transporters.id')
         ->where('trucks.truck_number', $request->truck_number)
         ->where('transporters.company_id', $companyId)
@@ -348,7 +351,7 @@ class TruckController extends Controller
     public function checkTruckNumber(Request $request)
 {
 
-    $company_id = auth()->user()->company_id;
+    $company_id = Auth::user()->company_id;
     $exists = \App\Models\Truck::where('truck_number', $request->truck_number)
     ->whereHas('transporter', function ($query) use ($company_id) {
         $query->where('company_id', $company_id);
@@ -360,7 +363,7 @@ class TruckController extends Controller
 
     public function edit(\App\Models\Truck $truck)
     {
-        $transporters = \App\Models\Transporter::where('company_id', auth()->user()->company_id)->get();
+        $transporters = \App\Models\Transporter::where('company_id', Auth::user()->company_id)->get();
         $drivers = \App\Models\Driver::all();
         return view('trucks.edit', compact('truck', 'transporters', 'drivers'));
     }
@@ -371,7 +374,7 @@ class TruckController extends Controller
     $companyId = \App\Models\Transporter::where('id', $request->transporter_id)->value('company_id');
 
     // Manual uniqueness check ignoring the current truck ID
-    $exists = \DB::table('trucks')
+    $exists = DB::table('trucks')
         ->join('transporters', 'trucks.transporter_id', '=', 'transporters.id')
         ->where('trucks.truck_number', $request->truck_number)
         ->where('transporters.company_id', $companyId)
@@ -538,7 +541,7 @@ public function removeTransporter(\App\Models\Truck $truck)
         $truck->load(['transporter', 'driver']);
 
         // Check if user has access to this truck (same company)
-        if ($truck->transporter->company_id !== auth()->user()->company_id) {
+        if ($truck->transporter->company_id !== Auth::user()->company_id) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -577,7 +580,7 @@ public function removeTransporter(\App\Models\Truck $truck)
         ]);
 
         // Check if user has access to this truck (same company)
-        if ($truck->transporter->company_id !== auth()->user()->company_id) {
+        if ($truck->transporter->company_id !== Auth::user()->company_id) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -623,7 +626,7 @@ public function removeTransporter(\App\Models\Truck $truck)
     {
         $request->validate([
             'truck_id' => 'required|exists:trucks,id',
-            'transporter_id' => 'required|exists:transporters,id,is_owner,1,company_id,' . auth()->user()->company_id,
+            'transporter_id' => 'required|exists:transporters,id,is_owner,1,company_id,' . Auth::user()->company_id,
         ]);
 
         try {
@@ -646,7 +649,7 @@ public function removeTransporter(\App\Models\Truck $truck)
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Error assigning truck owner: ' . $e->getMessage());
+            Log::error('Error assigning truck owner: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to assign truck owner. Please try again.'
