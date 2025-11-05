@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\Response;
-    
+
 class AccountantMiddleware
 {
   /**
@@ -19,9 +19,10 @@ class AccountantMiddleware
   {
     $user = Auth::user();
     $accountantRoleId = DB::table('user_roles')->where('name', 'accountant')->value('id');
-    if (!$user || $user->user_role_id === $accountantRoleId) {
-      abort(403, 'Unauthorized action.');
+    $adminRoleId = DB::table('user_roles')->where('name', 'admin')->value('id');
+    if ($user && in_array($user->role_id, [$accountantRoleId, $adminRoleId])) {
+      return $next($request);
     }
-    return $next($request);
+    abort(403, 'Unauthorized action.');
   }
 }
