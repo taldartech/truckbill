@@ -686,7 +686,7 @@
                             <p><strong>Advance Amount:</strong> ₹{{ number_format($cancelledfr->advance_amount, 2) }}</p>
                             <p><strong>E-Way Bill Number:</strong> {{ $cancelledfr->eway_bill_number ?? 'N/A' }}</p>
                             <p><strong>E-Way Bill Expiry Date:</strong>
-                                {{ $cancelledfr->eway_bill_expiry ? $cancelledfr->eway_bill_expiry->format('d M Y') : 'N/A' }}
+                              {{ $cancelledfr->eway_bill_expiry ? \Carbon\Carbon::parse($cancelledfr->eway_bill_expiry)->format('d M Y') : 'N/A' }}
                             </p>
                             <p><strong>Remark:</strong> {{ $cancelledfr->remark ?? 'N/A' }}</p>
                             <p><strong>Cancelled On:</strong> {{ $cancelledfr->updated_at->format('d M Y, h:i A') }}</p>
