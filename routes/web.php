@@ -126,12 +126,7 @@ Route::middleware(['auth'])->group(function () {
   Route::delete('/truck_owners/{transporter}', [TruckOwnerController::class, 'destroy'])->name('truck_owners.destroy');
 
   // Advance Payment Management
-  Route::get('/advance-payments', [AdvancePaymentController::class, 'index'])->name('advance-payments.index');
-  Route::get('/advance-payments/create', [AdvancePaymentController::class, 'create'])->name('advance-payments.create');
   Route::post('/advance-payments', [AdvancePaymentController::class, 'store'])->name('advance-payments.store');
-  Route::get('/advance-payments/{advancePayment}/edit', [AdvancePaymentController::class, 'edit'])->name('advance-payments.edit');
-  Route::put('/advance-payments/{advancePayment}', [AdvancePaymentController::class, 'update'])->name('advance-payments.update');
-  Route::delete('/advance-payments/{advancePayment}', [AdvancePaymentController::class, 'destroy'])->name('advance-payments.destroy');
 
   // Truck Management
   Route::get('/trucks', [TruckController::class, 'index'])->name('trucks.index');
@@ -276,20 +271,6 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/transporters/{transporter}/edit', [TransporterController::class, 'edit'])->name('transporters.edit');
   Route::put('/transporters/{transporter}', [TransporterController::class, 'update'])->name('transporters.update');
   Route::delete('/transporters/{transporter}', [TransporterController::class, 'destroy'])->name('transporters.destroy');
-
-  //Advance_payments
-  Route::get('advance-payments', [AdvancePaymentController::class, 'index'])
-    ->name('advance-payments.index');
-  Route::get('advance-payments/create/{transporter_id}', [AdvancePaymentController::class, 'create'])
-    ->name('advance-payments.create');
-  Route::post('advance-payments', [AdvancePaymentController::class, 'store'])
-    ->name('advance-payments.store');
-  Route::get('advance-payments/{advancePayment}/edit', [AdvancePaymentController::class, 'edit'])
-    ->name('advance-payments.edit');
-  Route::put('advance-payments/{advancePayment}', [AdvancePaymentController::class, 'update'])
-    ->name('advance-payments.update');
-  Route::delete('advance-payments/{advancePayment}', [AdvancePaymentController::class, 'destroy'])
-    ->name('advance-payments.destroy');
 
   Route::get('/consignees/{id}', [ConsigneeController::class, 'getConsigneeDetails']);
 
