@@ -10,7 +10,6 @@ use App\Http\Controllers\TruckController;
 use App\Http\Controllers\LorryReceiptController;
 use App\Http\Controllers\FreightBookingController;
 use App\Http\Controllers\InvoiceController;
-use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\VoucherPaymentController;
 use App\Http\Controllers\TransporterBankAccountController;
 use App\Http\Controllers\DriverController;
@@ -194,10 +193,6 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/invoices/pending-memo/{customerId}', [InvoiceController::class, 'getPendingMemo']);
 
   Route::get('invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
-
-  // Customers
-  Route::get('/customers/details/{id}', [CustomerController::class, 'getDetails'])->name('customers.details');
-  Route::resource('customers', CustomerController::class);
 
   // Voucher Payments
   Route::get('/voucher_payments/daily', [VoucherPaymentController::class, 'dailyPayments'])->name('voucher_payments.daily');
