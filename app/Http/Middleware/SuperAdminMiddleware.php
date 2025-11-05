@@ -19,7 +19,7 @@ class SuperAdminMiddleware
   {
     $user = Auth::user();
     $superAdminRoleId = DB::table('user_roles')->where('name', 'super_admin')->value('id');
-    if ($user && $user->role_id === $superAdminRoleId) {
+    if ($user && $user->user_role_id === $superAdminRoleId) {
       return $next($request);
     }
     abort(403, 'Unauthorized action.');

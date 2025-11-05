@@ -19,7 +19,7 @@ class AdminMiddleware
   {
     $user = Auth::user();
     $adminRoleId = DB::table('user_roles')->where('name', 'admin')->value('id');
-    if ($user && $user->role_id === $adminRoleId) {
+    if ($user && $user->user_role_id === $adminRoleId) {
       return $next($request);
     }
     abort(403, 'Unauthorized action.');

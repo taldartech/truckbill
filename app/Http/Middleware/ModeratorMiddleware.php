@@ -20,7 +20,7 @@ class ModeratorMiddleware
     $user = Auth::user();
     $moderatorRoleId = DB::table('user_roles')->where('name', 'moderator')->value('id');
     $adminRoleId = DB::table('user_roles')->where('name', 'admin')->value('id');
-    if ($user && in_array($user->role_id, [$moderatorRoleId, $adminRoleId])) {
+    if ($user && in_array($user->user_role_id, [$moderatorRoleId, $adminRoleId])) {
       return $next($request);
     }
     abort(403, 'Unauthorized action.');
