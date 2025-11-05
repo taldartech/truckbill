@@ -31,7 +31,7 @@
                 <table id="truckOwnersTable" class="table table-bordered table-striped">
                     <thead>
                         <tr>
-                            
+
                             <th>Name</th>
                             <th>Short Name</th>
                             {{-- <th>GST Number</th> --}}
@@ -43,9 +43,9 @@
                             {{-- <th>Total Trucks</th> --}}
                             <th>Advance Amount</th>
                             {{-- <th>Company</th> --}}
-                            @if (auth()->check() && auth()->user()->userRole->name === 'admin')
-                                <th style="width: 120px;">Actions</th>
-                            @endif
+                            {{-- @if (auth()->check() && auth()->user()->userRole->name === 'admin') --}}
+                            <th style="width: 120px;">Actions</th>
+                            {{-- @endif --}}
                         </tr>
                     </thead>
                 </table>
@@ -75,9 +75,11 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary" id="editTruckOwnerBtn" style="display: none;">
-                        <i class="bi bi-pencil"></i> Edit Truck Owner
-                    </button>
+                    @if (Auth::check() && Auth::user()->userRole->name === 'admin')
+                        <button type="button" class="btn btn-primary" id="editTruckOwnerBtn" style="display: none;">
+                            <i class="bi bi-pencil"></i> Edit Truck Owner
+                        </button>
+                    @endif
                 </div>
             </div>
         </div>
@@ -299,8 +301,7 @@
                         'X-Requested-With': 'XMLHttpRequest'
                     }
                 },
-                columns: [
-                    {
+                columns: [{
                         data: 'name',
                         name: 'name',
                         render: function(data, type, row) {
@@ -342,17 +343,14 @@
                         name: 'advance_amount',
                         width: '120px',
                         className: 'text-end'
+                    }, {
+                        data: 'actions',
+                        name: 'actions',
+                        orderable: false,
+                        searchable: false,
+                        width: '120px',
+                        className: 'text-center'
                     }
-                    @if (auth()->check() && auth()->user()->userRole->name === 'admin')
-                        , {
-                            data: 'actions',
-                            name: 'actions',
-                            orderable: false,
-                            searchable: false,
-                            width: '120px',
-                            className: 'text-center'
-                        }
-                    @endif
                 ],
                 order: [
                     [0, 'desc']
@@ -415,7 +413,7 @@
                 e.preventDefault();
 
                 if (!confirm(
-                    'Are you sure you want to delete this truck owner? This action can be undone.')) {
+                        'Are you sure you want to delete this truck owner? This action can be undone.')) {
                     return false;
                 }
 
@@ -602,18 +600,18 @@
                                 <div class="card-body" style="max-height: 300px; overflow-y: auto;">
                                     ${data.trucks && data.trucks.length > 0 ?
                                         `<div class="table-responsive">
-                                                <table class="table table-sm table-striped">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Truck No.</th>
-                                                            <th>Type</th>
-                                                            <th>Driver</th>
-                                                            <th>Mobile</th>
+                                                    <table class="table table-sm table-striped">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Truck No.</th>
+                                                                <th>Type</th>
+                                                                <th>Driver</th>
+                                                                <th>Mobile</th>
 
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        ${data.trucks.map(truck => `
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            ${data.trucks.map(truck => `
                                                         <tr>
                                                             <td class="fw-bold">${truck.truck_number}</td>
                                                             <td>${truck.truck_type}</td>
@@ -622,9 +620,9 @@
 
                                                         </tr>
                                                     `).join('')}
-                                                    </tbody>
-                                                </table>
-                                            </div>`
+                                                        </tbody>
+                                                    </table>
+                                                </div>`
                                         : '<p class="text-muted text-center">No trucks registered</p>'
                                     }
                                 </div>
@@ -632,25 +630,25 @@
                         </div>
                     </div>
                     ${data.advance_payments && data.advance_payments.length > 0 ? `
-                            <div class="row mt-3">
-                                <div class="col-12">
-                                    <div class="card">
-                                        <div class="card-header bg-light">
-                                            <h6 class="mb-0"><i class="bi bi-currency-rupee"></i> Recent Advance Payments</h6>
-                                        </div>
-                                        <div class="card-body" style="max-height: 250px; overflow-y: auto;">
-                                            <div class="table-responsive">
-                                                <table class="table table-sm table-striped">
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Amount</th>
-                                                            <th>Payment Date</th>
-                                                            <th>Remark</th>
-                                                            <th>Added On</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        ${data.advance_payments.map(payment => `
+                                <div class="row mt-3">
+                                    <div class="col-12">
+                                        <div class="card">
+                                            <div class="card-header bg-light">
+                                                <h6 class="mb-0"><i class="bi bi-currency-rupee"></i> Recent Advance Payments</h6>
+                                            </div>
+                                            <div class="card-body" style="max-height: 250px; overflow-y: auto;">
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm table-striped">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Amount</th>
+                                                                <th>Payment Date</th>
+                                                                <th>Remark</th>
+                                                                <th>Added On</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            ${data.advance_payments.map(payment => `
                                                         <tr>
                                                             <td class="fw-bold text-success">${payment.amount}</td>
                                                             <td>${payment.payment_date}</td>
@@ -658,14 +656,14 @@
                                                             <td class="text-muted">${payment.created_at}</td>
                                                         </tr>
                                                     `).join('')}
-                                                    </tbody>
-                                                </table>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        ` : ''}
+                            ` : ''}
                     <div class="row mt-3">
                         <div class="col-12">
                             <div class="card">
@@ -744,7 +742,7 @@
 
                 // Show loading state
                 submitBtn.prop('disabled', true).html(
-                '<i class="bi bi-hourglass-split"></i> Processing...');
+                    '<i class="bi bi-hourglass-split"></i> Processing...');
 
                 // Clear previous validation states
                 form.find('.form-control').removeClass('is-invalid is-valid');
@@ -873,7 +871,8 @@
                                 const input = $(`#modal_${field}`);
                                 input.addClass('is-invalid');
                                 input.siblings('.invalid-feedback').text(errors[field][
-                                    0]).show();
+                                    0
+                                ]).show();
                             });
                         } else {
                             // Show general error message
@@ -1027,7 +1026,7 @@
 
                 if (confirm(
                         `Are you sure you want to delete truck owner "${truckOwnerName}"? This action cannot be undone.`
-                        )) {
+                    )) {
                     $.ajax({
                         url: '/truck_owners/' + truckOwnerId,
                         type: 'POST',
@@ -1085,7 +1084,7 @@
                     drivers.forEach(function(driver) {
                         driverSelect.append(
                             `<option value="${driver.id}">${driver.name} (${driver.mobile})</option>`
-                            );
+                        );
                     });
                 },
                 error: function() {
