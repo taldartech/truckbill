@@ -96,10 +96,10 @@
                 </div>
             </div>
             <div class="card-footer text-end">
-                @if ($invoice->payment_status != 'paid')
+                @if ($invoice->payment_status != 'paid' && Auth::user()->userRole->name == 'admin')
                     <a href="{{ route('invoices.edit', $invoice->id) }}" class="btn btn-warning me-2">Edit</a>
                 @endif
-                @if ($invoice->payment_status == 'pending')
+                @if ($invoice->payment_status == 'pending' && Auth::user()->userRole->name == 'admin')
                     <form action="{{ route('invoices.destroy', $invoice->id) }}" method="POST"
                         style="display:inline-block;">
                         @csrf
