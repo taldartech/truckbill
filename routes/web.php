@@ -2,9 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\Auth\ForgotPasswordController;
-use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\ConsigneeController;
 use App\Http\Controllers\UserController;
@@ -20,15 +17,10 @@ use App\Http\Controllers\DriverController;
 use App\Http\Controllers\TruckOwnerController;
 use App\Http\Controllers\TruckOwnerBankAccountController;
 use App\Http\Controllers\AdvancePaymentController;
-use App\Http\Controllers\CityController;
-use App\Http\Controllers\StateController;
-use App\Http\Controllers\CountryController;
 use App\Http\Controllers\PumpController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\VoucherTemplateController;
 use App\Http\Controllers\BranchController;
-
-
 
 // Authentication Routes
 Route::middleware(['guest'])->group(function () {
@@ -38,6 +30,7 @@ Route::middleware(['guest'])->group(function () {
 // Protected Routes
 Route::middleware(['auth'])->group(function () {
   Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+
   Route::prefix('branches')->group(function () {
     Route::get('/', [BranchController::class, 'index'])->name('branches.index');
     Route::get('/create', [BranchController::class, 'create'])->name('branches.create');
@@ -45,7 +38,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/{branch}/edit', [BranchController::class, 'edit'])->name('branches.edit');
     Route::put('/{branch}', [BranchController::class, 'update'])->name('branches.update');
     Route::delete('/{branch}', [BranchController::class, 'destroy'])->name('branches.destroy');
-});
+  });
 
   // Company Registration
   Route::get('/company/create', [CompanyController::class, 'create'])->name('company.create');
@@ -58,13 +51,13 @@ Route::middleware(['auth'])->group(function () {
   // Voucher Template Routes
   Route::resource('voucher_templates', VoucherTemplateController::class);
 
-    // User Management
-    Route::get('/users', [UserController::class, 'index'])->name('users.index');
-    Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
-    Route::post('/users', [UserController::class, 'store'])->name('users.store');
-    Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
-    Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
-    Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+  // User Management
+  Route::get('/users', [UserController::class, 'index'])->name('users.index');
+  Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
+  Route::post('/users', [UserController::class, 'store'])->name('users.store');
+  Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+  Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+  Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
   // API Routes
   Route::redirect('/', '/dashboard');
   Route::get('/api/transporters/{transporter}/trucks', [TruckController::class, 'getTrucksForTransporter']);
@@ -72,7 +65,7 @@ Route::middleware(['auth'])->group(function () {
   Route::get('/api/trucks/{truck}/agency-transporters', [TruckController::class, 'getAgencyTransporters']);
   Route::get('/api/trucks/{transporter}/lrs', [TruckController::class, 'getTrucksFromLrs']);
   Route::patch('/trucks/{truck}/remove-transporter', [TruckController::class, 'removeTransporter'])
-  ->name('trucks.remove-transporter');
+    ->name('trucks.remove-transporter');
   Route::get('/api/drivers', [DriverController::class, 'getDriversApi']);
   Route::get('/api/lorry_receipts/{id}', [FreightBookingController::class, 'getLorryReceipt']);
   Route::get('/api/transporters/{id}', [FreightBookingController::class, 'getTransporter']);
@@ -269,7 +262,6 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/goods-types/{goodsType}', [\App\Http\Controllers\GoodsTypeController::class, 'destroy'])->name('master.goods-types.destroy');
 
     //Pumps
-    // Route::resource('pumps', PumpController::class);
     Route::get('/pumps', [PumpController::class, 'index'])->name('master.pump.index');
     Route::get('/pumps/create', [PumpController::class, 'create'])->name('master.pump.create');
     Route::post('/pumps', [PumpController::class, 'store'])->name('master.pump.store');
@@ -291,15 +283,6 @@ Route::middleware(['auth'])->group(function () {
   Route::delete('/transporters/{transporter}', [TransporterController::class, 'destroy'])->name('transporters.destroy');
 
   //Advance_payments
-  // // Route::resource('advance-payments', \App\Http\Controllers\AdvancePaymentController::class);
-  // Route::resource('advance-payments', \App\Http\Controllers\AdvancePaymentController::class)->names([
-  //     'index' => 'advance-payments.index',
-  //     'create' => 'advance-payments.create',
-  //     'store' => 'advance-payments.store',
-  //     'edit' => 'advance-payments.edit',
-  //     'update' => 'advance-payments.update',
-  //     'destroy' => 'advance-payments.destroy',
-  // ]);
   Route::get('advance-payments', [AdvancePaymentController::class, 'index'])
     ->name('advance-payments.index');
   Route::get('advance-payments/create/{transporter_id}', [AdvancePaymentController::class, 'create'])
@@ -312,8 +295,6 @@ Route::middleware(['auth'])->group(function () {
     ->name('advance-payments.update');
   Route::delete('advance-payments/{advancePayment}', [AdvancePaymentController::class, 'destroy'])
     ->name('advance-payments.destroy');
-
-  // Route::resource('advance-payments', AdvancePaymentController::class)->except(['create']);
 
   Route::get('/consignees/{id}', [ConsigneeController::class, 'getConsigneeDetails']);
 
@@ -368,19 +349,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/memo-copy-export', [ReportController::class, 'memo_copy_export'])->name('reports.memo-copy-export');
     Route::get('/pending-memo', [ReportController::class, 'pending_memo'])->name('reports.pending-memo');
     Route::get('/pending-memo-export', [ReportController::class, 'pendingMemoExport'])->name('reports.pending-memo-export');
-      Route::get('/bank', [ReportController::class, 'bank'])->name('reports.bank');
-      Route::get('/bank-export', [ReportController::class, 'bank_export'])->name('reports.bank-export');
-      Route::get('/voucher-receipt-export', [ReportController::class, 'voucher_receipt_export'])->name('reports.voucher-receipt-export');
-      Route::get('/transporter-report', [ReportController::class, 'transporter_report'])->name('reports.transporter-report');
-      Route::get('/transporter-report-export', [ReportController::class, 'transporter_report_export'])->name('reports.transporter-report-export');
-      Route::get('/pending-invoice', [ReportController::class, 'pending_invoice'])->name('reports.pending-invoice');
-      Route::get('/pending-invoice-export', [ReportController::class, 'pendingInvoiceExport'])->name('reports.pending-invoice-export');
+    Route::get('/bank', [ReportController::class, 'bank'])->name('reports.bank');
+    Route::get('/bank-export', [ReportController::class, 'bank_export'])->name('reports.bank-export');
+    Route::get('/voucher-receipt-export', [ReportController::class, 'voucher_receipt_export'])->name('reports.voucher-receipt-export');
+    Route::get('/transporter-report', [ReportController::class, 'transporter_report'])->name('reports.transporter-report');
+    Route::get('/transporter-report-export', [ReportController::class, 'transporter_report_export'])->name('reports.transporter-report-export');
+    Route::get('/pending-invoice', [ReportController::class, 'pending_invoice'])->name('reports.pending-invoice');
+    Route::get('/pending-invoice-export', [ReportController::class, 'pendingInvoiceExport'])->name('reports.pending-invoice-export');
   });
 
   Route::post('/api/check-manual-invoice-number-uniqueness', [InvoiceController::class, 'checkManualInvoiceNumberUniqueness']);
 });
-
-
-
-
-

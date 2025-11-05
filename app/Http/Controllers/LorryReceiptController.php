@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Truck;
 use App\Models\Transporter;
-use App\Models\Customer;
 use App\Models\Consignee;
 use App\Models\GoodType;
 use App\Models\FreightBooking;
@@ -390,7 +389,6 @@ class LorryReceiptController extends Controller
     $transporters = Transporter::all();
     $truckOwners = Transporter::where('is_owner', 1)->get();
     $agencies = Transporter::where('is_owner', 0)->where('company_id', auth()->user()->company_id)->get();
-    $customers = Customer::where('company_id', auth()->user()->company_id)->orderBy('name')->get();
     $consignees = Consignee::where('company_id', auth()->user()->company_id)->orderBy('name')->get();
     $goodsTypes = GoodType::all();
     $statuses = ['Pending', 'Delivered', 'Cancelled', 'In-Progress'];
@@ -401,7 +399,7 @@ class LorryReceiptController extends Controller
     ];
 
 
-    return view('lorry_receipts.create', compact('companies', 'customers', 'trucks', 'transporters', 'consignees', 'goodsTypes', 'statuses', 'truckOwners', 'agencies', 'tdsPercentages'));
+    return view('lorry_receipts.create', compact('companies', 'trucks', 'transporters', 'consignees', 'goodsTypes', 'statuses', 'truckOwners', 'agencies', 'tdsPercentages'));
   }
 
   public function createLinked()
@@ -417,7 +415,6 @@ class LorryReceiptController extends Controller
     $transporters = Transporter::all();
     $truckOwners = Transporter::where('is_owner', 1)->get();
     $agencies = Transporter::where('is_owner', 0)->where('company_id', auth()->user()->company_id)->get();
-    $customers = Customer::where('company_id', auth()->user()->company_id)->orderBy('name')->get();
     $consignees = Consignee::where('company_id', auth()->user()->company_id)->orderBy('name')->get();
     $goodsTypes = GoodType::all();
     $statuses = ['Pending', 'Delivered', 'Cancelled', 'In-Progress'];
@@ -427,7 +424,7 @@ class LorryReceiptController extends Controller
       'owner' => env('TDS_PERCENTAGE_OWNER', 1)
     ];
 
-    return view('lorry_receipts.create-linked', compact('companies', 'customers', 'trucks', 'transporters', 'consignees', 'goodsTypes', 'statuses', 'truckOwners', 'agencies', 'tdsPercentages'));
+    return view('lorry_receipts.create-linked', compact('companies', 'trucks', 'transporters', 'consignees', 'goodsTypes', 'statuses', 'truckOwners', 'agencies', 'tdsPercentages'));
   }
   public function getTdsInfo($id)
   {
@@ -994,7 +991,6 @@ private function validateLorryReceiptsUniqueness($lrs, $companyId)
     $transporters = Transporter::withTrashed()->where('company_id', auth()->user()->company_id)->get();
     $truckOwners = Transporter::withTrashed()->where('company_id', auth()->user()->company_id)->where('is_owner', 1)->get();
     $agencies = Transporter::withTrashed()->where('company_id', auth()->user()->company_id)->where('is_owner', 0)->get();
-    $customers = Customer::where('company_id', auth()->user()->company_id)->orderBy('name')->get();
     $consignees = Consignee::withTrashed()->where('company_id', auth()->user()->company_id)->orderBy('name')->get();
     $goodsTypes = GoodType::all();
     $statuses = ['Pending', 'Delivered', 'Cancelled', 'In-Progress'];
@@ -1010,7 +1006,7 @@ private function validateLorryReceiptsUniqueness($lrs, $companyId)
       'trucks' => $trucks,
       'transporters' => $transporters,
       'statuses' => $statuses,
-      'customers' => $customers,
+      'customers' => $consignees,
       'consignors' => $consignees, // Using consignees data for consignors dropdown
       'consignees' => $consignees,
       'goodsTypes' => $goodsTypes,

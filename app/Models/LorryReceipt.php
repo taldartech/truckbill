@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Truck;
 use App\Models\Transporter;
-use App\Models\Customer;
 use App\Models\Consignee;
 use App\Models\Company;
 use App\Models\Traits\TracksUser;
