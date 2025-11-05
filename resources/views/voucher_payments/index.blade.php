@@ -115,12 +115,6 @@
         <a href="{{ route('voucher_payments.daily') }}" class="btn btn-outline-secondary">
             <i class="bi bi-calendar-day"></i> Daily Report
         </a>
-        <!-- <a href="{{ route('voucher_payments.export.excel') }}" class="btn btn-success">
-            <i class="bi bi-file-earmark-excel"></i> Export to Excel
-        </a>
-        <a href="{{ route('voucher_payments.export.pdf') }}" class="btn btn-danger">
-            <i class="bi bi-file-pdf"></i> Export to PDF
-        </a> -->
     </div>
     <div class="card mb-4">
         <div class="card-header"><h3 class="card-title">Voucher Payments List</h3></div>
