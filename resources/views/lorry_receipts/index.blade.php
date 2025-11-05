@@ -145,9 +145,11 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="bi bi-x-lg me-1"></i> Close
                 </button>
+                @if (Auth::user()->userRole->name === 'admin')
                 <a href="#" class="btn btn-primary" id="editLorryReceiptBtn">
                     <i class="bi bi-pencil me-1"></i> Edit
                 </a>
+                @endif
             </div>
         </div>
     </div>

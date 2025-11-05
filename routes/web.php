@@ -30,62 +30,46 @@ Route::middleware(['guest'])->group(function () {
 Route::middleware(['auth'])->group(function () {
   Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-  Route::prefix('branches')->group(function () {
-    Route::get('/', [BranchController::class, 'index'])->name('branches.index');
-    Route::get('/create', [BranchController::class, 'create'])->name('branches.create');
-    Route::post('/store', [BranchController::class, 'store'])->name('branches.store');
-    Route::get('/{branch}/edit', [BranchController::class, 'edit'])->name('branches.edit');
-    Route::put('/{branch}', [BranchController::class, 'update'])->name('branches.update');
-    Route::delete('/{branch}', [BranchController::class, 'destroy'])->name('branches.destroy');
+  Route::middleware(['superadmin'])->group(function () {
+    // Branch Management
+    Route::prefix('branches')->group(function () {
+      Route::get('/', [BranchController::class, 'index'])->name('branches.index');
+      Route::get('/create', [BranchController::class, 'create'])->name('branches.create');
+      Route::post('/store', [BranchController::class, 'store'])->name('branches.store');
+      Route::get('/{branch}/edit', [BranchController::class, 'edit'])->name('branches.edit');
+      Route::put('/{branch}', [BranchController::class, 'update'])->name('branches.update');
+      Route::delete('/{branch}', [BranchController::class, 'destroy'])->name('branches.destroy');
+    });
+
+    // Company Registration
+    Route::get('/company/create', [CompanyController::class, 'create'])->name('company.create');
+    Route::post('/company', [CompanyController::class, 'store'])->name('company.store');
+    Route::get('/company', [CompanyController::class, 'index'])->name('company.index');
+    Route::get('/company/{company}/edit', [CompanyController::class, 'edit'])->name('company.edit');
+    Route::put('/company/{company}', [CompanyController::class, 'update'])->name('company.update');
+    Route::delete('/company/{company}', [CompanyController::class, 'destroy'])->name('company.destroy');
+
+    // Voucher Template Routes
+    Route::resource('voucher_templates', VoucherTemplateController::class);
+
+    // User Management
+    Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
+    Route::post('/users', [UserController::class, 'store'])->name('users.store');
+    Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+    Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+
+    // Truck_Owner Bank Accounts
+    Route::get('truck_owner_bank_accounts/index', [TruckOwnerBankAccountController::class, 'index'])->name('truck_owner_bank_accounts.index');
+    Route::put('truck_owner_bank_accounts/{transporter_id}/beneficiary-id', [TruckOwnerBankAccountController::class, 'updateBeneficiaryId'])->name('truck_owner_bank_accounts.updateBeneficiaryId');
+
+    // Transporter Bank Accounts
+    Route::get('transporter_bank_accounts/index', [TransporterBankAccountController::class, 'index'])->name('transporter_bank_accounts.index');
+    Route::put('transporter_bank_accounts/{transporter_id}/beneficiary-id', [TransporterBankAccountController::class, 'updateBeneficiaryId'])->name('transporter_bank_accounts.updateBeneficiaryId');
   });
 
-  // Company Registration
-  Route::get('/company/create', [CompanyController::class, 'create'])->name('company.create');
-  Route::post('/company', [CompanyController::class, 'store'])->name('company.store');
-  Route::get('/company', [CompanyController::class, 'index'])->name('company.index');
-  Route::get('/company/{company}/edit', [CompanyController::class, 'edit'])->name('company.edit');
-  Route::put('/company/{company}', [CompanyController::class, 'update'])->name('company.update');
-  Route::delete('/company/{company}', [CompanyController::class, 'destroy'])->name('company.destroy');
-
-  // Voucher Template Routes
-  Route::resource('voucher_templates', VoucherTemplateController::class);
-
-  // User Management
-  Route::get('/users', [UserController::class, 'index'])->name('users.index');
-  Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
-  Route::post('/users', [UserController::class, 'store'])->name('users.store');
-  Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
-  Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
-  Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
-  // API Routes
   Route::redirect('/', '/dashboard');
-  Route::get('/api/transporters/{transporter}/trucks', [TruckController::class, 'getTrucksForTransporter']);
-  Route::get('/api/trucks/{truck}/owner-transporters', [TruckController::class, 'getOwnerTransporters']);
-  Route::get('/api/trucks/{truck}/agency-transporters', [TruckController::class, 'getAgencyTransporters']);
-  Route::get('/api/trucks/{transporter}/lrs', [TruckController::class, 'getTrucksFromLrs']);
-  Route::patch('/trucks/{truck}/remove-transporter', [TruckController::class, 'removeTransporter'])
-    ->name('trucks.remove-transporter');
-  Route::get('/api/drivers', [DriverController::class, 'getDriversApi']);
-  Route::get('/api/lorry_receipts/{id}', [FreightBookingController::class, 'getLorryReceipt']);
-  Route::get('/api/transporters/{id}', [FreightBookingController::class, 'getTransporter']);
-  Route::get('/api/trucks/{id}', [FreightBookingController::class, 'getTruck']);
-  Route::get('/api/truck-owners', [TransporterController::class, 'getTruckOwnersApi']);
-  Route::get('/api/agencies', [TransporterController::class, 'getAgenciesApi']);
-  Route::get('/api/consignees/{id}', [ConsigneeController::class, 'getConsigneeApi']);
-  Route::post('/api/calculate-tds-percentage', [TransporterController::class, 'calculateTdsPercentage']);
-  Route::post('/api/calculate-truck-owner-tds-percentage', [TruckOwnerController::class, 'calculateTruckOwnerTdsPercentage']);
-  Route::post('/api/check-lr-number-uniqueness', [LorryReceiptController::class, 'checkLrNumberUniqueness']);
-  Route::post('/api/check-invoice-number-uniqueness', [LorryReceiptController::class, 'checkInvoiceNumberUniqueness']);
-  Route::post('/api/check-gr-number-uniqueness', [LorryReceiptController::class, 'checkGRNumberUniqueness']);
-  Route::get('/api/dropdown/states/{countryId}', [\App\Http\Controllers\Api\DropdownController::class, 'states']);
-  Route::get('/api/dropdown/cities/{stateId}', [\App\Http\Controllers\Api\DropdownController::class, 'cities']);
-  Route::get('/api/lorry-receipts/{customerId}', [LorryReceiptController::class, 'getLorryReceiptsForCustomer']);
-  Route::get('/api/invoice-numbers/{customerId}', [InvoiceController::class, 'getInvoiceNumbersForCustomer']);
-  Route::get('/api/references/{transporterId}/{truckId}/lrs', [LorryReceiptController::class, 'getReferencesForTransporterTruck']);
-
-  // City and State routes
-  Route::get('/cities/{id}', [\App\Http\Controllers\CityController::class, 'show'])->name('cities.show');
-  Route::get('/states/{id}', [\App\Http\Controllers\StateController::class, 'show'])->name('states.show');
 
   Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])
     ->middleware(['auth', 'verified'])
@@ -96,117 +80,120 @@ Route::middleware(['auth'])->group(function () {
   });
 
   // Consignee Management
-  Route::get('/consignees/details/{id}', [ConsigneeController::class, 'getDetails'])->name('consignees.details');
-  Route::get('/consignees', [ConsigneeController::class, 'index'])->name('consignees.index');
-  Route::get('/consignees/create', [ConsigneeController::class, 'create'])->name('consignees.create');
-  Route::post('/consignees', [ConsigneeController::class, 'store'])->name('consignees.store');
-  Route::get('/consignees/{consignee}/edit', [ConsigneeController::class, 'edit'])->name('consignees.edit');
-  Route::put('/consignees/{consignee}', [ConsigneeController::class, 'update'])->name('consignees.update');
-  Route::delete('/consignees/{consignee}', [ConsigneeController::class, 'destroy'])->name('consignees.destroy');
+  Route::middleware(['moderator'])->group(function () {
+    Route::get('/consignees/details/{id}', [ConsigneeController::class, 'getDetails'])->name('consignees.details');
+    Route::get('/consignees', [ConsigneeController::class, 'index'])->name('consignees.index');
+    Route::get('/consignees/create', [ConsigneeController::class, 'create'])->name('consignees.create');
+    Route::post('/consignees', [ConsigneeController::class, 'store'])->name('consignees.store');
+    Route::get('/consignees/{id}', [ConsigneeController::class, 'getConsigneeDetails']);
+  });
+  Route::middleware(['admin'])->group(function () {
+    Route::get('/consignees/{consignee}/edit', [ConsigneeController::class, 'edit'])->name('consignees.edit');
+    Route::put('/consignees/{consignee}', [ConsigneeController::class, 'update'])->name('consignees.update');
+    Route::delete('/consignees/{consignee}', [ConsigneeController::class, 'destroy'])->name('consignees.destroy');
+  });
 
-
-
-  // Transporter Management
-  Route::get('/transporters', [TransporterController::class, 'index'])->name('transporters.index');
-  Route::get('/transporters/create', [TransporterController::class, 'create'])->name('transporters.create');
-  Route::post('/transporters', [TransporterController::class, 'store'])->name('transporters.store');
-  Route::get('/transporters/{transporter}/edit', [TransporterController::class, 'edit'])->name('transporters.edit');
-  Route::put('/transporters/{transporter}', [TransporterController::class, 'update'])->name('transporters.update');
-  Route::delete('/transporters/{transporter}', [TransporterController::class, 'destroy'])->name('transporters.destroy');
+  // Transporters CRUD
+  Route::middleware(['moderator'])->group(function () {
+    Route::get('/transporters', [TransporterController::class, 'index'])->name('transporters.index');
+    Route::get('/transporters/create', [TransporterController::class, 'create'])->name('transporters.create');
+    Route::post('/transporters', [TransporterController::class, 'store'])->name('transporters.store');
+    Route::get('/transporters/{transporter}', [TransporterController::class, 'show'])->name('transporters.show');
+  });
+  Route::middleware(['admin'])->group(function () {
+    Route::get('/transporters/{transporter}/edit', [TransporterController::class, 'edit'])->name('transporters.edit');
+    Route::put('/transporters/{transporter}', [TransporterController::class, 'update'])->name('transporters.update');
+    Route::delete('/transporters/{transporter}', [TransporterController::class, 'destroy'])->name('transporters.destroy');
+  });
   Route::get('/transporter/{id}/tds-info', [LorryReceiptController::class, 'getTdsInfo']);
 
 
   //Truck Owner Management
-  Route::get('/truck_owners', [TruckOwnerController::class, 'index'])->name('truck_owners.index');
-  Route::get('/truck_owners/create', [TruckOwnerController::class, 'create'])->name('truck_owners.create');
-  Route::post('/truck_owners', [TruckOwnerController::class, 'store'])->name('truck_owners.store');
-  Route::get('/truck_owners/{id}', [TruckOwnerController::class, 'show'])->name('truck_owners.show');
-  Route::get('/truck_owners/{transporter}/edit', [TruckOwnerController::class, 'edit'])->name('truck_owners.edit');
-  Route::put('/truck_owners/{transporter}', [TruckOwnerController::class, 'update'])->name('truck_owners.update');
-  Route::delete('/truck_owners/{transporter}', [TruckOwnerController::class, 'destroy'])->name('truck_owners.destroy');
-
-  // Advance Payment Management
-  Route::post('/advance-payments', [AdvancePaymentController::class, 'store'])->name('advance-payments.store');
-
-  // Truck Management
-  Route::get('/trucks', [TruckController::class, 'index'])->name('trucks.index');
-  Route::get('/trucks/create/{transporter_id}', [TruckController::class, 'create'])->name('trucks.create');
-  Route::post('/trucks', [TruckController::class, 'store'])->name('trucks.store');
-  Route::get('/trucks/{truck}', [TruckController::class, 'show'])->name('trucks.show');
-  Route::get('/trucks/{truck}/edit', [TruckController::class, 'edit'])->name('trucks.edit');
-  Route::put('/trucks/{truck}', [TruckController::class, 'update'])->name('trucks.update');
-  Route::put('/trucks/{truck}/assign-driver', [TruckController::class, 'assignDriver'])->name('trucks.assign-driver');
-  Route::delete('/trucks/{truck}', [TruckController::class, 'destroy'])->name('trucks.destroy');
-  Route::post('/assign-owner', [TruckController::class, 'assignOwner'])->name('trucks.assign-owner');
-  // Route::patch('/{truck}/remove-transporter', [TruckController::class, 'removeTransporter'])->name('trucks.remove-transporter');
-  // Route::get('/check-truck-number', [TruckController::class, 'checkTruckNumber'])->name('check.truck.number');
-  Route::get('/check-truck-number', function (Illuminate\Http\Request $request) {
-    $exists = \App\Models\Truck::where('truck_number', $request->truck_number)->exists();
-    return response()->json(['exists' => $exists]);
+  Route::middleware(['moderator'])->group(function () {
+    Route::get('/truck_owners', [TruckOwnerController::class, 'index'])->name('truck_owners.index');
+    Route::get('/truck_owners/create', [TruckOwnerController::class, 'create'])->name('truck_owners.create');
+    Route::post('/truck_owners', [TruckOwnerController::class, 'store'])->name('truck_owners.store');
+    Route::get('/truck_owners/{id}', [TruckOwnerController::class, 'show'])->name('truck_owners.show');
+  });
+  Route::middleware(['admin'])->group(function () {
+    Route::get('/truck_owners/{transporter}/edit', [TruckOwnerController::class, 'edit'])->name('truck_owners.edit');
+    Route::put('/truck_owners/{transporter}', [TruckOwnerController::class, 'update'])->name('truck_owners.update');
+    Route::delete('/truck_owners/{transporter}', [TruckOwnerController::class, 'destroy'])->name('truck_owners.destroy');
   });
 
-  // Truck Reporting
-  Route::get('/trucks/report', [TruckController::class, 'report'])->name('trucks.report');
+  // Advance Payment Management
+  Route::post('/advance-payments', [AdvancePaymentController::class, 'store'])->name('advance-payments.store')
+    ->middleware(['admin']);
+
+  // Truck Management
+  Route::middleware(['moderator'])->group(function () {
+    Route::get('/trucks', [TruckController::class, 'index'])->name('trucks.index');
+    Route::get('/trucks/create/{transporter_id}', [TruckController::class, 'create'])->name('trucks.create');
+    Route::post('/trucks', [TruckController::class, 'store'])->name('trucks.store');
+    Route::get('/trucks/{truck}', [TruckController::class, 'show'])->name('trucks.show');
+  });
+  Route::middleware(['admin'])->group(function () {
+    Route::get('/trucks/{truck}/edit', [TruckController::class, 'edit'])->name('trucks.edit');
+    Route::put('/trucks/{truck}', [TruckController::class, 'update'])->name('trucks.update');
+    Route::put('/trucks/{truck}/assign-driver', [TruckController::class, 'assignDriver'])->name('trucks.assign-driver');
+    Route::delete('/trucks/{truck}', [TruckController::class, 'destroy'])->name('trucks.destroy');
+    Route::post('/assign-owner', [TruckController::class, 'assignOwner'])->name('trucks.assign-owner');
+    Route::patch('/trucks/{truck}/remove-transporter', [TruckController::class, 'removeTransporter'])
+      ->name('trucks.remove-transporter');
+  });
 
   // Lorry Receipt CRUD
-  Route::get('/lorry_receipts/data', [LorryReceiptController::class, 'getLorryReceiptsData'])->name('lorry_receipts.data');
-
-  // Reports
-  Route::get('lorry_receipts/create-linked', [LorryReceiptController::class, 'createLinked'])->name('lorry_receipts.createLinked');
-  Route::resource('lorry_receipts', LorryReceiptController::class);
-  Route::post('lorry_receipts/bulk-payment', [LorryReceiptController::class, 'bulkPayment'])->name('lorry_receipts.bulkPayment');
-  Route::post('lorry_receipts/bulk-voucher-payment', [LorryReceiptController::class, 'bulkVoucherPayment'])->name('lorry_receipts.bulkVoucherPayment');
-  Route::get('lorry_receipts/lrs-by-memo/{memo_id}', [LorryReceiptController::class, 'getLRsByMemo'])->name('lorry_receipts.lrsByMemo');
-  Route::get('/api/lorry-receipts/{id}/details', [LorryReceiptController::class, 'details'])->name('lorry_receipts.details');
-  Route::post('/lorry_receipts/update-status', [LorryReceiptController::class, 'updateDeliveryStatus'])->name('lorry_receipts.update-status');
-  Route::get('/api/lorry-receipts/linked/{linkedLrId}', [LorryReceiptController::class, 'getLinkedLRs']);
-  Route::get('/lorryreceipts/by-linked/{linkedId}', [App\Http\Controllers\LorryReceiptController::class, 'getByLinkedId'])
-    ->name('lorryreceipts.by_linked');
-
-
-
+  Route::middleware(['moderator'])->group(function () {
+    Route::get('/lorry_receipts/data', [LorryReceiptController::class, 'getLorryReceiptsData'])->name('lorry_receipts.data');
+    Route::get('lorry_receipts/create-linked', [LorryReceiptController::class, 'createLinked'])->name('lorry_receipts.createLinked');
+    Route::resource('lorry_receipts', LorryReceiptController::class)
+      ->except(['edit', 'update', 'destroy']);
+    Route::post('lorry_receipts/bulk-payment', [LorryReceiptController::class, 'bulkPayment'])->name('lorry_receipts.bulkPayment');
+    Route::post('lorry_receipts/bulk-voucher-payment', [LorryReceiptController::class, 'bulkVoucherPayment'])->name('lorry_receipts.bulkVoucherPayment');
+    Route::get('/lorryreceipts/by-linked/{linkedId}', [App\Http\Controllers\LorryReceiptController::class, 'getByLinkedId'])
+      ->name('lorryreceipts.by_linked');
+  });
+  Route::middleware(['admin'])->group(function () {
+    Route::get('/lorry_receipts/{lorry_receipt}/edit', [LorryReceiptController::class, 'edit'])->name('lorry_receipts.edit');
+    Route::put('/lorry_receipts/{lorry_receipt}', [LorryReceiptController::class, 'update'])->name('lorry_receipts.update');
+    Route::delete('/lorry_receipts/{lorry_receipt}', [LorryReceiptController::class, 'destroy'])->name('lorry_receipts.destroy');
+  });
 
   // Freight Bookings
-  Route::post('/freight_bookings/store_combined_payment', [FreightBookingController::class, 'storeCombinedPayment'])->name('freight_bookings.store_combined_payment');
-  Route::get('/freight_bookings/data', [FreightBookingController::class, 'getFreightBookingsData'])->name('freight_bookings.datatable');
-  Route::post('/freight_bookings/confirm', [FreightBookingController::class, 'confirm'])->name('freight_bookings.confirm');
-  Route::resource('freight_bookings', FreightBookingController::class);
-  Route::get('/api/freight-bookings/{id}/details', [FreightBookingController::class, 'getFreightBookingDetails'])->name('api.freight_bookings.details');
-  Route::post('/freight_bookings/bulk-action', [FreightBookingController::class, 'bulkAction'])->name('freight_bookings.bulkAction');
-  Route::post('/freight_bookings/voucher-payment', [FreightBookingController::class, 'voucherPayment'])->name('freight_bookings.voucher_payment');
-  Route::post('/freight_bookings/bulk-payment', [FreightBookingController::class, 'bulkPayment'])->name('freight_bookings.bulk_payment');
-  Route::post('/freight_bookings/bulk-memo-id', [FreightBookingController::class, 'bulkMemoId'])->name('freight_bookings.bulk_memo_id');
-  Route::post('/freight_bookings/payment-history', [FreightBookingController::class, 'getPaymentHistory'])->name('freight_bookings.payment_history');
-
-
+  Route::middleware(['moderator'])->group(function () {
+    Route::post('/freight_bookings/store_combined_payment', [FreightBookingController::class, 'storeCombinedPayment'])->name('freight_bookings.store_combined_payment');
+    Route::get('/freight_bookings/data', [FreightBookingController::class, 'getFreightBookingsData'])->name('freight_bookings.datatable');
+    Route::post('/freight_bookings/confirm', [FreightBookingController::class, 'confirm'])->name('freight_bookings.confirm');
+    Route::resource('freight_bookings', FreightBookingController::class);
+    Route::post('/freight_bookings/voucher-payment', [FreightBookingController::class, 'voucherPayment'])->name('freight_bookings.voucher_payment');
+    Route::post('/freight_bookings/bulk-payment', [FreightBookingController::class, 'bulkPayment'])->name('freight_bookings.bulk_payment');
+    Route::post('/freight_bookings/bulk-memo-id', [FreightBookingController::class, 'bulkMemoId'])->name('freight_bookings.bulk_memo_id');
+    Route::post('/freight_bookings/payment-history', [FreightBookingController::class, 'getPaymentHistory'])->name('freight_bookings.payment_history');
+  });
 
   // Invoices
-  Route::resource('invoices', InvoiceController::class);
-  Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->name('invoices.lrs');
-  Route::get('/invoices/memos/{customerId}', [InvoiceController::class, 'getCustomerMemos']);
-  Route::get('/invoices/all-memos/{customerId}', [InvoiceController::class, 'getAllCustomerMemos']);
-  Route::get('/invoices/pending-memo/{customerId}', [InvoiceController::class, 'getPendingMemo']);
-
-  Route::get('invoices/{invoice}', [InvoiceController::class, 'show'])->name('invoices.show');
+  Route::middleware(['moderator'])->group(function () {
+    Route::resource('invoices', InvoiceController::class)
+      ->except(['edit', 'update', 'destroy']);
+    Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->name('invoices.lrs');
+    Route::get('/invoices/memos/{customerId}', [InvoiceController::class, 'getCustomerMemos']);
+    Route::get('/invoices/all-memos/{customerId}', [InvoiceController::class, 'getAllCustomerMemos']);
+    Route::get('/invoices/pending-memo/{customerId}', [InvoiceController::class, 'getPendingMemo']);
+  });
+  Route::middleware(['admin'])->group(function () {
+    Route::get('/invoices/{invoice}/edit', [InvoiceController::class, 'edit'])->name('invoices.edit');
+    Route::put('/invoices/{invoice}', [InvoiceController::class, 'update'])->name('invoices.update');
+    Route::delete('/invoices/{invoice}', [InvoiceController::class, 'destroy'])->name('invoices.destroy');
+  });
 
   // Voucher Payments
-  Route::get('/voucher_payments/daily', [VoucherPaymentController::class, 'dailyPayments'])->name('voucher_payments.daily');
-  Route::get('/voucher_payments/export/excel', [VoucherPaymentController::class, 'exportToExcel'])->name('voucher_payments.export.excel');
-  Route::get('/voucher_payments/export/pdf', [VoucherPaymentController::class, 'exportToPdf'])->name('voucher_payments.export.pdf');
-  Route::resource('voucher_payments', VoucherPaymentController::class);
-  Route::post('voucher_payments/bulk-update', [VoucherPaymentController::class, 'bulkUpdateStatus'])->name('voucher_payments.bulkUpdateStatus');
-  Route::post('voucher_payments/bulk-payment', [VoucherPaymentController::class, 'bulkPayment'])->name('voucher_payments.bulkPayment');
-  Route::get('daily-payments', [VoucherPaymentController::class, 'dailyPayments'])->name('voucher_payments.daily');
-  Route::put('voucher_payments/update-status', [VoucherPaymentController::class, 'updateStatus'])->name('voucher_payments.update_status');
-
-  // Truck_Owner Bank Accounts
-  Route::get('truck_owner_bank_accounts/index', [TruckOwnerBankAccountController::class, 'index'])->name('truck_owner_bank_accounts.index');
-  Route::put('truck_owner_bank_accounts/{transporter_id}/beneficiary-id', [TruckOwnerBankAccountController::class, 'updateBeneficiaryId'])->name('truck_owner_bank_accounts.updateBeneficiaryId');
-
-  // Transporter Bank Accounts
-  Route::get('transporter_bank_accounts/index', [TransporterBankAccountController::class, 'index'])->name('transporter_bank_accounts.index');
-  Route::put('transporter_bank_accounts/{transporter_id}/beneficiary-id', [TransporterBankAccountController::class, 'updateBeneficiaryId'])->name('transporter_bank_accounts.updateBeneficiaryId');
-
+  Route::middleware(['admin'])->group(function () {
+    Route::resource('voucher_payments', VoucherPaymentController::class);
+    Route::post('voucher_payments/bulk-update', [VoucherPaymentController::class, 'bulkUpdateStatus'])->name('voucher_payments.bulkUpdateStatus');
+    Route::post('voucher_payments/bulk-payment', [VoucherPaymentController::class, 'bulkPayment'])->name('voucher_payments.bulkPayment');
+    Route::get('daily-payments', [VoucherPaymentController::class, 'dailyPayments'])->name('voucher_payments.daily');
+    Route::put('voucher_payments/update-status', [VoucherPaymentController::class, 'updateStatus'])->name('voucher_payments.update_status');
+  });
 
   // Driver CRUD
   Route::get('/drivers', [DriverController::class, 'index'])->name('drivers.index');
@@ -260,44 +247,7 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/pumps/{pump}', [PumpController::class, 'destroy'])->name('master.pump.destroy');
   });
 
-
-
-
-  // Transporters CRUD
-  Route::get('/transporters', [TransporterController::class, 'index'])->name('transporters.index');
-  Route::get('/transporters/create', [TransporterController::class, 'create'])->name('transporters.create');
-  Route::post('/transporters', [TransporterController::class, 'store'])->name('transporters.store');
-  Route::get('/transporters/{transporter}', [TransporterController::class, 'show'])->name('transporters.show');
-  Route::get('/transporters/{transporter}/edit', [TransporterController::class, 'edit'])->name('transporters.edit');
-  Route::put('/transporters/{transporter}', [TransporterController::class, 'update'])->name('transporters.update');
-  Route::delete('/transporters/{transporter}', [TransporterController::class, 'destroy'])->name('transporters.destroy');
-
-  Route::get('/consignees/{id}', [ConsigneeController::class, 'getConsigneeDetails']);
-
-  Route::get('/branches/by-company/{companyId}', [BranchController::class, 'getByCompany'])->name('branches.by-company');
-
-
-
-
-
-  // API routes for dynamic dropdowns
-  Route::get('/api/states/{countryId}', [\App\Http\Controllers\Api\DropdownController::class, 'states']);
-  Route::get('/api/cities/{stateId}', [\App\Http\Controllers\Api\DropdownController::class, 'cities']);
-
-  // Validation routes
-  Route::post('/api/validate/gst-number', [\App\Http\Controllers\ValidationController::class, 'checkGstNumber']);
-  Route::post('/api/validate/pan-number', [\App\Http\Controllers\ValidationController::class, 'checkPanNumber']);
-  Route::get('/get-transporter-name/{truck}', function ($truckId) {
-    $truck = \App\Models\Truck::with('transporter')->find($truckId);
-
-    if ($truck && $truck->transporter) {
-      return response()->json(['transporter_name' => $truck->transporter->name]);
-    }
-
-    return response()->json(['transporter_name' => null]);
-  });
-
-  Route::group(['prefix' => 'reports'], function () {
+  Route::group(['prefix' => 'reports', 'middleware' => 'accountant'], function () {
     Route::get('/consignor-consignee', [ReportController::class, 'consignor_consignee'])->name('reports.consignor-consignee');
     Route::get('/consignor-consignee-export', [ReportController::class, 'consignor_consignee_export'])->name('reports.consignor-consignee-export');
     Route::get('/tds', [ReportController::class, 'tds'])->name('reports.tds');
@@ -327,12 +277,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/pending-memo-export', [ReportController::class, 'pendingMemoExport'])->name('reports.pending-memo-export');
     Route::get('/bank', [ReportController::class, 'bank'])->name('reports.bank');
     Route::get('/bank-export', [ReportController::class, 'bank_export'])->name('reports.bank-export');
-    Route::get('/voucher-receipt-export', [ReportController::class, 'voucher_receipt_export'])->name('reports.voucher-receipt-export');
     Route::get('/transporter-report', [ReportController::class, 'transporter_report'])->name('reports.transporter-report');
     Route::get('/transporter-report-export', [ReportController::class, 'transporter_report_export'])->name('reports.transporter-report-export');
     Route::get('/pending-invoice', [ReportController::class, 'pending_invoice'])->name('reports.pending-invoice');
     Route::get('/pending-invoice-export', [ReportController::class, 'pendingInvoiceExport'])->name('reports.pending-invoice-export');
   });
-
-  Route::post('/api/check-manual-invoice-number-uniqueness', [InvoiceController::class, 'checkManualInvoiceNumberUniqueness']);
+  Route::get('/voucher-receipt-export', [ReportController::class, 'voucher_receipt_export'])->name('reports.voucher-receipt-export');
 });
+
+require __DIR__ . '/api-routes.php';

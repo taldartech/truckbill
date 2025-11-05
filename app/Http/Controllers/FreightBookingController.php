@@ -14,11 +14,13 @@ use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Pump;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
 class FreightBookingController extends Controller
 {
-  public function index(Request $request){
+  public function index(Request $request)
+  {
 
     $pumps = Pump::all();
     // Handle DataTables AJAX request
@@ -135,7 +137,8 @@ class FreightBookingController extends Controller
     ));
   }
 
-  public function getFreightBookingsData(Request $request){
+  public function getFreightBookingsData(Request $request)
+  {
     try {
       \Log::info('FreightBookings DataTables request started');
 
@@ -338,7 +341,7 @@ class FreightBookingController extends Controller
       'consignee:id,name',
       'reference:id,name'
     ])
-      ->select('id', 'lr_number', 'transporter_id', 'truck_id', 'reference_by', 'customer_id', 'consignor_id', 'consignee_id', 'good_type', 'source_city', 'destination_city', 'source_state', 'destination_state', 'weight', 'no_of_units', 'amount','fr_rate')
+      ->select('id', 'lr_number', 'transporter_id', 'truck_id', 'reference_by', 'customer_id', 'consignor_id', 'consignee_id', 'good_type', 'source_city', 'destination_city', 'source_state', 'destination_state', 'weight', 'no_of_units', 'amount', 'fr_rate')
       ->when($lorry_receipt_id, function ($query) use ($lorry_receipt_id) {
         $query->where('id', $lorry_receipt_id);
       })
@@ -441,23 +444,6 @@ class FreightBookingController extends Controller
       'tdsPercentages' => $tdsPercentages,
       'preFilled' => []
     ]);
-  }
-
-
-  public function bulkAction(Request $request)
-  {
-    $selectedIds = $request->input('selected_ids');
-
-    if (empty($selectedIds) || !is_array($selectedIds)) {
-      return redirect()->back()->with('error', 'Please select at least one freight booking.');
-    }
-
-    // Now $selectedIds contains all selected row IDs
-    FreightBooking::whereIn('id', $selectedIds)->update([
-      // your update logic
-    ]);
-
-    return redirect()->back()->with('success', 'Selected freight bookings updated successfully.');
   }
 
 
@@ -726,6 +712,7 @@ class FreightBookingController extends Controller
     try {
       $freightBooking = FreightBooking::findOrFail($id);
 
+      $is_admin = Auth::user()->userRole->name === 'admin';
       // Check if user has access to this freight booking (company-based filtering)
       if (
         auth()->user()->userRole->name !== 'super_admin' &&
@@ -842,9 +829,8 @@ class FreightBookingController extends Controller
               'is_owner' => $transporter ? $transporter->is_owner : 0,
               'goods_type' => $lr->good_type,
               'memo_id' => $lr->memo_id
-
-
-            ]
+            ],
+            'is_admin' => $is_admin
           ]);
         }
       }
@@ -865,7 +851,8 @@ class FreightBookingController extends Controller
           'truck_number' => $truck ? $truck->truck_number : '',
           'pan_verified' => $transporter ? $transporter->pan_active : 0,
           'is_owner' => $transporter ? $transporter->is_owner : 0,
-        ]
+        ],
+        'is_admin' => $is_admin
       ]);
     } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
       return redirect()->route('freight_bookings.index')
@@ -1184,21 +1171,21 @@ class FreightBookingController extends Controller
               'new_balance' => $newBalance
             ]);
           }
-            // normal payment flow (cash, bank, fuel, etc.)
-            $newAdvanceAmount = $freightBooking->advance_amount + $amount;
-            $newBalance = max(0, $freightBooking->balance_amount - $amount);
+          // normal payment flow (cash, bank, fuel, etc.)
+          $newAdvanceAmount = $freightBooking->advance_amount + $amount;
+          $newBalance = max(0, $freightBooking->balance_amount - $amount);
 
-            $freightBooking->update([
-              'balance_amount' => $newBalance,
-              'advance_amount' => $newAdvanceAmount
-            ]);
+          $freightBooking->update([
+            'balance_amount' => $newBalance,
+            'advance_amount' => $newAdvanceAmount
+          ]);
 
-            \Log::info('Processed normal payment for booking', [
-              'booking_id' => $bookingId,
-              'amount' => $amount,
-              'new_balance' => $newBalance,
-              'new_advance_amount' => $newAdvanceAmount
-            ]);
+          \Log::info('Processed normal payment for booking', [
+            'booking_id' => $bookingId,
+            'amount' => $amount,
+            'new_balance' => $newBalance,
+            'new_advance_amount' => $newAdvanceAmount
+          ]);
 
           $processedPayments[] = $voucherPayment->id;
         }
@@ -1398,7 +1385,7 @@ class FreightBookingController extends Controller
 
       // ✅ Check globally if this memo_id is already linked to a different customer
       $conflict = \App\Models\LorryReceipt::where('memo_id', $validated['memo_id'])
-      ->where('company_id', auth()->user()->company_id)
+        ->where('company_id', auth()->user()->company_id)
         ->where('customer_id', '!=', $customerId)
         ->exists();
 
@@ -1409,10 +1396,10 @@ class FreightBookingController extends Controller
       }
       // ✅ Check if this memo_id is already linked to a different customer
       $conflictInvoiceGenerated = \App\Models\LorryReceipt::where('memo_id', $validated['memo_id'])
-      ->where('company_id', auth()->user()->company_id)
-      ->where('customer_id', $customerId)
-      ->where('invoice_generated', 1)
-      ->exists();
+        ->where('company_id', auth()->user()->company_id)
+        ->where('customer_id', $customerId)
+        ->where('invoice_generated', 1)
+        ->exists();
 
       if ($conflictInvoiceGenerated) {
         return redirect()->back()

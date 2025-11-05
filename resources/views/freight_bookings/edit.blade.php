@@ -195,10 +195,13 @@
             {{ $freightBooking->is_cancelled ? 'onsubmit="return false;"' : '' }}>
             @csrf
             @php
-              $is_voucher_created = \App\Models\VoucherPayment::where('freight_booking_id', $freightBooking->id)->exists();
-              $is_delivered = $freightBooking->is_delivered;
-              $is_invoice_generated = $freightBooking->lr && $freightBooking->lr->invoice_generated;
-              // dd($is_voucher_created, $is_delivered, $is_invoice_generated);
+                $is_voucher_created = \App\Models\VoucherPayment::where(
+                    'freight_booking_id',
+                    $freightBooking->id,
+                )->exists();
+                $is_delivered = $freightBooking->is_delivered;
+                $is_invoice_generated = $freightBooking->lr && $freightBooking->lr->invoice_generated;
+                // dd($is_voucher_created, $is_delivered, $is_invoice_generated);
             @endphp
             @method('PUT')
             <div class="card-body">
@@ -210,7 +213,7 @@
                             class="form-control @error('tr_fr_rate') is-invalid @enderror" name="tr_fr_rate" id="tr_fr_rate"
                             value="{{ old('tr_fr_rate', $freightBooking->tr_fr_rate) }}"
                             placeholder="Enter freight rate (₹1 - ₹20,000 per ton)" required
-                            {{ $is_voucher_created ? 'readonly style=background-color:#e9ecef;' : '' }}
+                            {{ $is_voucher_created || !$is_admin ? 'readonly style=background-color:#e9ecef;' : '' }}
                             {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
                         <small class="form-text text-muted">
                             <i class="fas fa-info-circle"></i> Rate must be between ₹1 and ₹20,000 per ton
@@ -225,7 +228,7 @@
                             class="form-control @error('tr_amount') is-invalid @enderror" name="tr_amount" id="tr_amount"
                             value="{{ old('tr_amount', $freightBooking->tr_amount) }}"
                             placeholder="Auto-calculated (editable)" required
-                            {{ $is_voucher_created ? 'readonly style=background-color:#e9ecef;' : '' }}
+                            {{ $is_voucher_created || !$is_admin ? 'readonly style=background-color:#e9ecef;' : '' }}
                             {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
                         <small class="form-text text-muted">
                             <i class="fas fa-info-circle"></i> Auto-calculated: TR Freight Rate × Weight. Must be greater
@@ -237,9 +240,9 @@
                     </div>
                     <div class="col-md-4">
                         <label for="tds_amount" class="form-label">TDS Amount *</label>
-                        <input type="number" step="0.01" class="form-control @error('tds_amount') is-invalid @enderror"
-                            name="tds_amount" id="tds_amount"
-                            value="{{ old('tds_amount', $freightBooking->tds_amount) }}" readonly
+                        <input type="number" step="0.01"
+                            class="form-control @error('tds_amount') is-invalid @enderror" name="tds_amount"
+                            id="tds_amount" value="{{ old('tds_amount', $freightBooking->tds_amount) }}" readonly
                             style="background-color: #f8f9fa;" {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
                         <small class="form-text text-muted">
                             <i class="fas fa-percentage"></i> Auto-calculated based on transporter TDS percentage
@@ -637,8 +640,7 @@
                         <div class="mb-3">
                             <label for="deliveryMemoId" class="form-label">Memo ID *</label>
                             <input type="text" class="form-control" id="deliveryMemoId" name="memo_id" required
-                                placeholder="Enter memo ID"     pattern="[A-Za-z0-9\-\/]+"
-                                >
+                                placeholder="Enter memo ID" pattern="[A-Za-z0-9\-\/]+">
                             <small class="form-text text-muted">This will be saved to the lorry receipt record.</small>
                         </div>
                     </form>

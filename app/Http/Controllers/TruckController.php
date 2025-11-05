@@ -37,7 +37,7 @@ class TruckController extends Controller
     {
         // $query = \App\Models\Truck::with(['transporter', 'driver'])->whereHas('transporter', function($q) {
         //     $q->where('company_id', auth()->user()->company_id);
-           
+
         // });
         $query = \App\Models\Truck::with(['transporter', 'driver'])
     ->where(function ($q) {
@@ -347,7 +347,7 @@ class TruckController extends Controller
     }
     public function checkTruckNumber(Request $request)
 {
-    
+
     $company_id = auth()->user()->company_id;
     $exists = \App\Models\Truck::where('truck_number', $request->truck_number)
     ->whereHas('transporter', function ($query) use ($company_id) {
@@ -452,7 +452,7 @@ class TruckController extends Controller
 // {
 
 //     $truck->update(['transporter_id' => null]);
-    
+
 //     return response()->json([
 //         'message' => 'Truck has been removed from the transporter successfully'
 //     ]);
@@ -606,35 +606,6 @@ public function removeTransporter(\App\Models\Truck $truck)
         return redirect()->back()->with('success', $message);
     }
 
-    public function report(Request $request)
-    {
-        $query = \App\Models\Truck::with(['transporter', 'driver']);
-
-        if ($request->filled('truck_type')) {
-            $query->where('truck_type', $request->truck_type);
-        }
-        if ($request->filled('transporter_id')) {
-            $query->where('transporter_id', $request->transporter_id);
-        }
-        if ($request->filled('driver_id')) {
-            $query->where('driver_id', $request->driver_id);
-        }
-        if ($request->filled('registration_date_from')) {
-            $query->whereDate('registration_date', '>=', $request->registration_date_from);
-        }
-        if ($request->filled('registration_date_to')) {
-            $query->whereDate('registration_date', '<=', $request->registration_date_to);
-        }
-        $trucks = $query->orderByDesc('created_at')->get();
-        $total = $trucks->count();
-        $transporters = \App\Models\Transporter::where('company_id', auth()->user()->company_id)->get();
-        $drivers = \App\Models\Driver::all();
-        $truckTypes = [
-            'Open', 'Closed', 'Container', 'Trailer', 'Tanker', 'Refrigerated', 'Flatbed', 'Tipper', 'Other'
-        ];
-        return view('trucks.report', compact('trucks', 'total', 'transporters', 'drivers', 'truckTypes'));
-    }
-
     public function getTrucksFromLrs($transporterId)
     {
         $lrs = \App\Models\LorryReceipt::where('transporter_id', $transporterId)->get(['truck_id']);
@@ -657,7 +628,7 @@ public function removeTransporter(\App\Models\Truck $truck)
 
         try {
             $truck = \App\Models\Truck::findOrFail($request->truck_id);
-            
+
             // Check if the truck already has this owner
             if ($truck->transporter_id == $request->transporter_id) {
                 return response()->json([

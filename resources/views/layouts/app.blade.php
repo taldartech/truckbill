@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,895 +11,901 @@
     <!-- FontAwesome for AdminLTE Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <!-- OverlayScrollbars CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.10.1/styles/overlayscrollbars.min.css">
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.10.1/styles/overlayscrollbars.min.css">
     <!-- AdminLTE Theme CSS -->
     <link href="/theme/dist/css/adminlte.min.css" rel="stylesheet">
-<link rel="stylesheet" href="/css/buttons.css">
+    <link rel="stylesheet" href="/css/buttons.css">
 
-<!-- Include Select2 CSS -->
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <!-- Include Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
-<!-- Include jQuery (required for Select2) -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
-<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <!-- Include jQuery (required for Select2) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 
 
-<!-- Include Select2 JS -->
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <!-- Include Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <!-- You can add more theme CSS here if needed -->
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css"
-      integrity="sha256-tXJfXfp6Ewt1ilPzLDtQnJV4hclT9XuaZUKyUvmyr+Q="
-      crossorigin="anonymous"
-    />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/source-sans-3@5.0.12/index.css"
+        integrity="sha256-tXJfXfp6Ewt1ilPzLDtQnJV4hclT9XuaZUKyUvmyr+Q=" crossorigin="anonymous" />
     <!--end::Fonts-->
     <!--begin::Third Party Plugin(OverlayScrollbars)-->
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.10.1/styles/overlayscrollbars.min.css"
-      integrity="sha256-tZHrRjVqNSRyWg2wbppGnT833E/Ys0DHWGwT04GiqQg="
-      crossorigin="anonymous"
-    />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.10.1/styles/overlayscrollbars.min.css"
+        integrity="sha256-tZHrRjVqNSRyWg2wbppGnT833E/Ys0DHWGwT04GiqQg=" crossorigin="anonymous" />
     <!--end::Third Party Plugin(OverlayScrollbars)-->
     <!--begin::Third Party Plugin(Bootstrap Icons)-->
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
-      integrity="sha256-9kPW/n5nn53j4WMRYAxe9c1rCY96Oogo/MKSVdKzPmI="
-      crossorigin="anonymous"
-    />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+        integrity="sha256-9kPW/n5nn53j4WMRYAxe9c1rCY96Oogo/MKSVdKzPmI=" crossorigin="anonymous" />
     <!--end::Third Party Plugin(Bootstrap Icons)-->
     <!--begin::Required Plugin(AdminLTE)-->
     <link rel="stylesheet" href="/theme/dist/css/adminlte.min.css" />
     <!--end::Required Plugin(AdminLTE)-->
     <!-- apexcharts -->
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/apexcharts@3.37.1/dist/apexcharts.css"
-      integrity="sha256-4MX+61mt9NVvvuPjUWdUdyfZfxSB1/Rf9WtqRHgG5S0="
-      crossorigin="anonymous"
-    />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/apexcharts@3.37.1/dist/apexcharts.css"
+        integrity="sha256-4MX+61mt9NVvvuPjUWdUdyfZfxSB1/Rf9WtqRHgG5S0=" crossorigin="anonymous" />
     <!-- jsvectormap -->
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/css/jsvectormap.min.css"
-      integrity="sha256-+uGLJmmTKOqBr+2E6KDYs/NRsHxSkONXFHUL0fy2O/4="
-      crossorigin="anonymous"
-    />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/css/jsvectormap.min.css"
+        integrity="sha256-+uGLJmmTKOqBr+2E6KDYs/NRsHxSkONXFHUL0fy2O/4=" crossorigin="anonymous" />
     <style>
-      html, body {
-        font-size: 15px !important;
-      }
-      h1 { font-size: 1.8rem !important; }
-      h2 { font-size: 1.5rem !important; }
-      h3 { font-size: 1.2rem !important; }
-      h4, h5, h6 { font-size: 1rem !important; }
-      table, th, td {
-        font-size: 1em !important;
-      }
-      .app-sidebar, .main-sidebar {
-        width: 220px !important;
-        min-width: 220px !important;
-        max-width:  220px !important;
-      }
-      .sidebar-wrapper {
+        html,
+        body {
+            font-size: 15px !important;
+        }
+
+        h1 {
+            font-size: 1.8rem !important;
+        }
+
+        h2 {
+            font-size: 1.5rem !important;
+        }
+
+        h3 {
+            font-size: 1.2rem !important;
+        }
+
+        h4,
+        h5,
+        h6 {
+            font-size: 1rem !important;
+        }
+
+        table,
+        th,
+        td {
+            font-size: 1em !important;
+        }
+
+        .app-sidebar,
+        .main-sidebar {
+            width: 220px !important;
+            min-width: 220px !important;
+            max-width: 220px !important;
+        }
+
+        .sidebar-wrapper {
+            width: 220px !important;
+            min-width: 220px !important;
+            max-width: 220px !important;
+        }
+
+        .nav-link.active,
+        .nav-link.router-link-exact-active {
+            background: #e8f0fe !important;
+            color: #003366 !important;
+            border-right: 4px solid #1a73e8 !important;
+            font-weight: 600 !important;
+        }
+
+        .nav-link.active i,
+        .nav-link.router-link-exact-active i {
+            color: #1a73e8 !important;
+        }
+
+        /* User dropdown styling */
+        .user-menu .dropdown-menu {
+            border: none;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .user-header {
+            background: #003366 !important;
+            position: relative;
+        }
+
+        .user-header i {
+            margin-bottom: 10px;
+        }
+
+        .user-footer {
+            background: #f8f9fa;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .user-footer .btn {
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border: none;
+        }
+
+        .user-footer .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
         width: 220px !important;
         min-width: 220px !important;
         max-width: 220px !important;
-      }
-      .nav-link.active, .nav-link.router-link-exact-active {
-        background: #e8f0fe !important;
-        color: #003366 !important;
-        border-right: 4px solid #1a73e8 !important;
-        font-weight: 600 !important;
-      }
-      .nav-link.active i, .nav-link.router-link-exact-active i {
-        color: #1a73e8 !important;
-      }
-      /* User dropdown styling */
-      .user-menu .dropdown-menu {
-        border: none;
-        border-radius: 8px;
-        overflow: hidden;
-      }
-      .user-header {
-        background: #003366 !important;
-        position: relative;
-      }
-      .user-header i {
-        margin-bottom: 10px;
-      }
-      .user-footer {
-        background: #f8f9fa;
-        border-top: 1px solid rgba(0,0,0,0.05);
-      }
-      .user-footer .btn {
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        border: none;
-      }
-      .user-footer .btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-      }
+        }
 
-        width: 220px !important;
-        min-width: 220px !important;
-        max-width:  220px !important;
-      }
-      .sidebar-wrapper {
-        width: 220px !important;
-        min-width: 220px !important;
-        max-width: 220px !important;
-      }
-      .app-sidebar {
-          background-color: #003366 !important;
-          --lte-sidebar-hover-bg: rgba(255, 255, 255, 0.1);
-    --lte-sidebar-color: #e6eaf1;
-    --lte-sidebar-hover-color: #fff;
-    --lte-sidebar-active-color: #fff;
-    --lte-sidebar-menu-active-bg: rgba(255, 255, 255, 0.1);
-    --lte-sidebar-menu-active-color: #fff;
-    --lte-sidebar-submenu-bg: transparent;
-    --lte-sidebar-submenu-color: #c2c7d0;
-    --lte-sidebar-submenu-hover-color: #fff;
-    --lte-sidebar-submenu-hover-bg: rgba(255, 255, 255, 0.1);
-    --lte-sidebar-submenu-active-color: #fff;
-    --lte-sidebar-submenu-active-bg: rgba(255, 255, 255, 0.1);
-    --lte-sidebar-header-color: #c5cad2;
+        .sidebar-wrapper {
+            width: 220px !important;
+            min-width: 220px !important;
+            max-width: 220px !important;
+        }
 
-      }
-      .sidebar-brand .brand-text  {
-        color: #fff;
-      font-weight: 700;
-      }
-      .sidebar-brand .brand-text:hover {
-        color: #fff;
-      font-weight: 700;
-      }
+        .app-sidebar {
+            background-color: #003366 !important;
+            --lte-sidebar-hover-bg: rgba(255, 255, 255, 0.1);
+            --lte-sidebar-color: #e6eaf1;
+            --lte-sidebar-hover-color: #fff;
+            --lte-sidebar-active-color: #fff;
+            --lte-sidebar-menu-active-bg: rgba(255, 255, 255, 0.1);
+            --lte-sidebar-menu-active-color: #fff;
+            --lte-sidebar-submenu-bg: transparent;
+            --lte-sidebar-submenu-color: #c2c7d0;
+            --lte-sidebar-submenu-hover-color: #fff;
+            --lte-sidebar-submenu-hover-bg: rgba(255, 255, 255, 0.1);
+            --lte-sidebar-submenu-active-color: #fff;
+            --lte-sidebar-submenu-active-bg: rgba(255, 255, 255, 0.1);
+            --lte-sidebar-header-color: #c5cad2;
+
+        }
+
+        .sidebar-brand .brand-text {
+            color: #fff;
+            font-weight: 700;
+        }
+
+        .sidebar-brand .brand-text:hover {
+            color: #fff;
+            font-weight: 700;
+        }
 
 
-      /* .nav-link {
+        /* .nav-link {
         color: #003366 !important;
       } */
-
-  </style>
-  @stack('styles')
+    </style>
+    @stack('styles')
 </head>
 
-    <body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
-        <!--begin::App Wrapper-->
-        <div class="app-wrapper">
-          <!--begin::Header-->
-          <nav class="app-header navbar navbar-expand bg-body">
+<body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
+    <!--begin::App Wrapper-->
+    <div class="app-wrapper">
+        <!--begin::Header-->
+        <nav class="app-header navbar navbar-expand bg-body">
             <!--begin::Container-->
             <div class="container-fluid">
-              <!--begin::Start Navbar Links-->
-              <ul class="navbar-nav">
-                <li class="nav-item">
-                  <a class="nav-link"  data-lte-toggle="sidebar" href="#" role="button">
-                    <i class="fa-solid fa-bars"></i>
-                  </a>
-                </li>
-                <li class="nav-item d-none d-md-block"  ><a href="#" class="nav-link" >
-                     @auth
-                    <span class="align-middle ms-3 me-2 border-start ps-3 small text-muted"  style="font-size: 1em;">
-                        <i class="fas fa-building me-1"></i>{{ Auth::user()->company ? Auth::user()->company->name : '' }}
-                    </span>
-                @endauth</a>
-            </li>
+                <!--begin::Start Navbar Links-->
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" data-lte-toggle="sidebar" href="#" role="button">
+                            <i class="fa-solid fa-bars"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item d-none d-md-block"><a href="#" class="nav-link">
+                            @auth
+                                <span class="align-middle ms-3 me-2 border-start ps-3 small text-muted"
+                                    style="font-size: 1em;">
+                                    <i
+                                        class="fas fa-building me-1"></i>{{ Auth::user()->company ? Auth::user()->company->name : '' }}
+                                </span>
+                            @endauth
+                        </a>
+                    </li>
 
-              </ul>
-              <!--end::Start Navbar Links-->
-              <!--begin::End Navbar Links-->
-              <ul class="navbar-nav ms-auto">
+                </ul>
+                <!--end::Start Navbar Links-->
+                <!--begin::End Navbar Links-->
+                <ul class="navbar-nav ms-auto">
 
 
 
 
 
-                <!--begin::User Menu Dropdown-->
-                <!--begin::User Menu Dropdown-->
-                <li class="nav-item dropdown user-menu">
-                  <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-                    <i class="fas fa-user-circle fa-lg"></i>
-                    @auth
-                        <span class="d-none d-md-inline">{{ Auth::user()->name ?? Auth::user()->email }}</span>
-                    @endauth
-                  </a>
-                  <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end shadow">
-                    <!--begin::User Image-->
-                    <div class="user-header bg-primary text-center py-4">
-                      <i class="fas fa-user-circle fa-3x text-white mb-2"></i>
-                      <p class="text-white mb-0">
-                        @auth
-                          {{ Auth::user()->name ?? Auth::user()->email }}
-                          <small class="d-block mt-1">Member since {{ Auth::user()->created_at->format('M. Y') }}</small>
-                        @endauth
-                      </p>
-                    </div>
-                    <!--end::User Image-->
-                    <!--begin::Menu Footer-->
-                    <div class="user-footer d-flex justify-content-center p-3">
-                      <a href="#" class="btn btn-danger text-white px-5 py-2 rounded-3" id="logout-link">Sign out</a>
-                      <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                        @csrf
-                      </form>
-                    </div>
-                    <!--end::Menu Footer-->
-                  </div>
-                </li>
-                <!--end::User Menu Dropdown-->
-              </ul>
-              <!--end::End Navbar Links-->
+                    <!--begin::User Menu Dropdown-->
+                    <!--begin::User Menu Dropdown-->
+                    <li class="nav-item dropdown user-menu">
+                        <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle fa-lg"></i>
+                            @auth
+                                <span class="d-none d-md-inline">{{ Auth::user()->name ?? Auth::user()->email }}</span>
+                            @endauth
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end shadow">
+                            <!--begin::User Image-->
+                            <div class="user-header bg-primary text-center py-4">
+                                <i class="fas fa-user-circle fa-3x text-white mb-2"></i>
+                                <p class="text-white mb-0">
+                                    @auth
+                                        {{ Auth::user()->name ?? Auth::user()->email }}
+                                        <small class="d-block mt-1">Member since
+                                            {{ Auth::user()->created_at->format('M. Y') }}</small>
+                                    @endauth
+                                </p>
+                            </div>
+                            <!--end::User Image-->
+                            <!--begin::Menu Footer-->
+                            <div class="user-footer d-flex justify-content-center p-3">
+                                <a href="#" class="btn btn-danger text-white px-5 py-2 rounded-3"
+                                    id="logout-link">Sign out</a>
+                                <form id="logout-form" action="{{ route('logout') }}" method="POST"
+                                    style="display: none;">
+                                    @csrf
+                                </form>
+                            </div>
+                            <!--end::Menu Footer-->
+                        </div>
+                    </li>
+                    <!--end::User Menu Dropdown-->
+                </ul>
+                <!--end::End Navbar Links-->
             </div>
             <!--end::Container-->
-          </nav>
-          <aside class="app-sidebar  shadow" >
+        </nav>
+        <aside class="app-sidebar  shadow">
             <!--begin::Sidebar Brand-->
             <div class="sidebar-brand">
-              <!--begin::Brand Link-->
-              <a href="#" class="brand-link">
+                <!--begin::Brand Link-->
+                <a href="#" class="brand-link">
 
-                <!--begin::Brand Text-->
-                <span class="brand-text " style="font-size: 1.2em;"> <strong>TruckBill-TMS</strong></span>
-                <!--end::Brand Text-->
-              </a>
-              <!--end::Brand Link-->
+                    <!--begin::Brand Text-->
+                    <span class="brand-text " style="font-size: 1.2em;"> <strong>TruckBill-TMS</strong></span>
+                    <!--end::Brand Text-->
+                </a>
+                <!--end::Brand Link-->
             </div>
             <!--end::Sidebar Brand-->
             <!--begin::Sidebar Wrapper-->
             <div class="sidebar-wrapper">
-              <nav class="mt-2">
-                <!--begin::Sidebar Menu-->
-                <ul
-                  class="nav sidebar-menu flex-column"
-                  data-lte-toggle="treeview"
-                  role="menu"
-                  data-accordion="false"
-                >
-                  <li class="nav-item ">
-                    <a href="/dashboard" class="nav-link{{ Request::is('dashboard') ? ' active' : '' }}">
-                      <i class="nav-icon bi bi-speedometer"></i>
-                      <p>
-                        Dashboard
+                <nav class="mt-2">
+                    <!--begin::Sidebar Menu-->
+                    <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu"
+                        data-accordion="false">
+                        <li class="nav-item ">
+                            <a href="/dashboard" class="nav-link{{ Request::is('dashboard') ? ' active' : '' }}">
+                                <i class="nav-icon bi bi-speedometer"></i>
+                                <p>
+                                    Dashboard
 
-                      </p>
-                    </a>
+                                </p>
+                            </a>
 
-                  </li>
-                  @if(auth()->check() && auth()->user()->userRole->name === 'super_admin')
-                  <li class="nav-item">
-                    <a class="nav-link{{ (Request::is('company') || Request::is('company/create')) ? ' active' : '' }}"  href="#companyMenu"  >
-                        <i class="fas fa-money-check-alt"></i>  <p>
-                            Company
-                            <i class="nav-arrow bi bi-chevron-right"></i>
-                          </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="/company" class="nav-link{{ Request::is('company') ? ' active' : '' }}">
-                                <i class="fas fa-list"></i>
-                              <p>Company List</p>
-                            </a>
-                          </li>
-                          <li class="nav-item">
-                            <a href="/company/create" class="nav-link{{ Request::is('company/create') ? ' active' : '' }}">
-                              <i class="fas fa-plus"></i>
-                            <p>Register Company</p>
-                            </a>
-                          </li>
-                    </ul>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link{{ (Request::is('branches*') || Request::is('branches/create')) ? ' active' : '' }}"  href="#branchesMenu"  >
-                        <i class="fas fa-money-check-alt"></i>  <p>
-                            Branch
-                            <i class="nav-arrow bi bi-chevron-right"></i>
-                          </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="/branches" class="nav-link{{ Request::is('branches') ? ' active' : '' }}">
-                                <i class="fas fa-list"></i>
-                              <p>Branch List</p>
-                            </a>
-                          </li>
-                          <li class="nav-item">
-                            <a href="/branches/create" class="nav-link{{ Request::is('branches/create') ? ' active' : '' }}">
-                              <i class="fas fa-plus"></i>
-                            <p>Register Branch</p>
-                            </a>
-                          </li>
-                    </ul>
-                  </li>
-                  <li class="nav-item">
-                    <a href="/users" class="nav-link{{ Request::is('users*') ? ' active' : '' }}">
-                        <i class="fas fa-users"></i>
-                        <p>Users</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ route('voucher_templates.index') }}" class="nav-link{{ Request::is('voucher_templates*') ? ' active' : '' }}">
-                        <i class="fas fa-file-invoice"></i>
-                        <p>Voucher Template</p>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link{{ (Request::is('truck_owner_bank_accounts*') || Request::is('transporter_bank_accounts*')) ? ' active' : '' }}" href="#bankAccountMenu">
-                        <i class="fas fa-university"></i>
-                        <p>
-                            Bank Account Setup
-                            <i class="nav-arrow bi bi-chevron-right"></i>
-                        </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="/truck_owner_bank_accounts/index" class="nav-link{{ Request::is('truck_owner_bank_accounts/index') ? ' active' : '' }}">
-                                <i class="fas fa-truck"></i>
-                                <p>Truck Owners</p>
-                            </a>
                         </li>
-                        <li class="nav-item">
-                            <a href="/transporter_bank_accounts/index" class="nav-link{{ Request::is('transporter_bank_accounts/index') ? ' active' : '' }}">
-                                <i class="fas fa-shipping-fast"></i>
-                                <p>Transporters</p>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-                <li class="nav-item" >
-                    <a class="nav-link "  href="#masterMenu" >
-                        <i class="fas fa-money-check-alt"></i>  <p>
-                            Master
-                            <i class="nav-arrow bi bi-chevron-right"></i>
-                          </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="/master/countries" class="nav-link">
-                                <i class="fas fa-list"></i>
-                              <p>Countries</p>
-                            </a>
-                          </li>
-                          <li class="nav-item">
-                            <a href="/master/states" class="nav-link">
-                              <i class="fas fa-plus"></i>
-                            <p>States</p>
-                            </a>
-                          </li>
-                          <li class="nav-item">
-                            <a href="/master/cities" class="nav-link">
-                              <i class="fas fa-plus"></i>
-                            <p>Cities</p>
-                            </a>
-                          </li>
-                          <li class="nav-item">
-                            <a href="/master/goods-types" class="nav-link">
-                              <i class="fas fa-plus"></i>
-                            <p>Goods Types</p>
-                            </a>
-                          </li>
-                          <li class="nav-item">
-                            <a href="/master/pumps" class="nav-link">
-                              <i class="fas fa-plus"></i>
-                            <p>Pumps</p>
-                            </a>
-                          </li>
-                    </ul>
-                </li>
+                        @if (auth()->check() && auth()->user()->userRole->name === 'super_admin')
+                            <li class="nav-item">
+                                <a class="nav-link{{ Request::is('company') || Request::is('company/create') ? ' active' : '' }}"
+                                    href="#companyMenu">
+                                    <i class="fas fa-money-check-alt"></i>
+                                    <p>
+                                        Company
+                                        <i class="nav-arrow bi bi-chevron-right"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="/company"
+                                            class="nav-link{{ Request::is('company') ? ' active' : '' }}">
+                                            <i class="fas fa-list"></i>
+                                            <p>Company List</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="/company/create"
+                                            class="nav-link{{ Request::is('company/create') ? ' active' : '' }}">
+                                            <i class="fas fa-plus"></i>
+                                            <p>Register Company</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link{{ Request::is('branches*') || Request::is('branches/create') ? ' active' : '' }}"
+                                    href="#branchesMenu">
+                                    <i class="fas fa-money-check-alt"></i>
+                                    <p>
+                                        Branch
+                                        <i class="nav-arrow bi bi-chevron-right"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="/branches"
+                                            class="nav-link{{ Request::is('branches') ? ' active' : '' }}">
+                                            <i class="fas fa-list"></i>
+                                            <p>Branch List</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="/branches/create"
+                                            class="nav-link{{ Request::is('branches/create') ? ' active' : '' }}">
+                                            <i class="fas fa-plus"></i>
+                                            <p>Register Branch</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li class="nav-item">
+                                <a href="/users" class="nav-link{{ Request::is('users*') ? ' active' : '' }}">
+                                    <i class="fas fa-users"></i>
+                                    <p>Users</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('voucher_templates.index') }}"
+                                    class="nav-link{{ Request::is('voucher_templates*') ? ' active' : '' }}">
+                                    <i class="fas fa-file-invoice"></i>
+                                    <p>Voucher Template</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link{{ Request::is('truck_owner_bank_accounts*') || Request::is('transporter_bank_accounts*') ? ' active' : '' }}"
+                                    href="#bankAccountMenu">
+                                    <i class="fas fa-university"></i>
+                                    <p>
+                                        Bank Account Setup
+                                        <i class="nav-arrow bi bi-chevron-right"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="/truck_owner_bank_accounts/index"
+                                            class="nav-link{{ Request::is('truck_owner_bank_accounts/index') ? ' active' : '' }}">
+                                            <i class="fas fa-truck"></i>
+                                            <p>Truck Owners</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="/transporter_bank_accounts/index"
+                                            class="nav-link{{ Request::is('transporter_bank_accounts/index') ? ' active' : '' }}">
+                                            <i class="fas fa-shipping-fast"></i>
+                                            <p>Transporters</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link " href="#masterMenu">
+                                    <i class="fas fa-money-check-alt"></i>
+                                    <p>
+                                        Master
+                                        <i class="nav-arrow bi bi-chevron-right"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="/master/countries" class="nav-link">
+                                            <i class="fas fa-list"></i>
+                                            <p>Countries</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="/master/states" class="nav-link">
+                                            <i class="fas fa-plus"></i>
+                                            <p>States</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="/master/cities" class="nav-link">
+                                            <i class="fas fa-plus"></i>
+                                            <p>Cities</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="/master/goods-types" class="nav-link">
+                                            <i class="fas fa-plus"></i>
+                                            <p>Goods Types</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="/master/pumps" class="nav-link">
+                                            <i class="fas fa-plus"></i>
+                                            <p>Pumps</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
 
-                  {{-- end master --}}
+                            {{-- end master --}}
+                        @endif
 
+                        {{-- Master data menus hidden from moderator/accountant/operator users --}}
+                        @if (auth()->check() && !in_array(auth()->user()->userRole->name, ['accountant', 'super_admin']))
+                            <li class="nav-item">
+                                <a class="nav-link{{ Request::is('transporters*') || Request::is('transporters/create') ? ' active' : '' }}"
+                                    href="#transporterMenu">
+                                    <i class="fas fa-truck"></i>
+                                    <p> Transporter </p>
+                                    <i class="nav-arrow bi bi-chevron-right"></i>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="/transporters"
+                                            class="nav-link{{ Request::is('transporters*') ? ' active' : '' }}">
+                                            <i class="fas fa-list"></i>
+                                            <p>Transporter List</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="/transporters/create"
+                                            class="nav-link{{ Request::is('transporters/create') ? ' active' : '' }}">
+                                            <i class="fas fa-plus"></i>
+                                            <p>Register</p>
+                                        </a>
+                                    </li>
 
-                  @endif
+                                </ul>
+                            </li>
 
-                  {{-- Master data menus hidden from moderator/accountant/operator users --}}
-                  @if(auth()->check() && !in_array(auth()->user()->userRole->name, [ 'accountant','super_admin']))
-                  <li class="nav-item">
-                    <a class="nav-link{{ (Request::is('transporters*') || Request::is('transporters/create')) ? ' active' : '' }}" href="#transporterMenu">
-                        <i class="fas fa-truck"></i>
-                        <p> Transporter </p>
-                        <i class="nav-arrow bi bi-chevron-right"></i>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="/transporters" class="nav-link{{ Request::is('transporters*') ? ' active' : '' }}">
-                                <i class="fas fa-list"></i>
-                              <p>Transporter List</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a href="/transporters/create" class="nav-link{{ Request::is('transporters/create') ? ' active' : '' }}">
-                              <i class="fas fa-plus"></i>
-                            <p>Register</p>
-                            </a>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link{{ Request::is('truck_owners*') || Request::is('truck_owners/create') || Request::is('truck_owner_bank_accounts/create') ? ' active' : '' }}"
+                                    href="#truckOwnerMenu">
+                                    <i class="fas fa-truck"></i>
+                                    <p> Truck Owner </p>
+                                    <i class="nav-arrow bi bi-chevron-right"></i>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="/truck_owners"
+                                            class="nav-link{{ Request::is('truck_owners*') ? ' active' : '' }}">
+                                            <i class="fas fa-list"></i>
+                                            <p>Truck Owner List</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="/truck_owners/create"
+                                            class="nav-link{{ Request::is('truck_owners/create') ? ' active' : '' }}">
+                                            <i class="fas fa-plus"></i>
+                                            <p>Register</p>
+                                        </a>
+                                    </li>
 
-                    </ul>
-                  </li>
+                                </ul>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link{{ Request::is('trucks*') || Request::is('trucks/create') || Request::is('drivers/create') ? ' active' : '' }}"
+                                    href="#truckMenu">
+                                    <i class="fas fa-truck-moving"></i>
+                                    <p>
+                                        Truck
+                                        <i class="nav-arrow bi bi-chevron-right"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="/trucks"
+                                            class="nav-link{{ Request::is('trucks*') ? ' active' : '' }}">
+                                            <i class="fas fa-list"></i>
+                                            <p>Truck List</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="/drivers"
+                                            class="nav-link{{ Request::is('drivers*') ? ' active' : '' }}">
+                                            <i class="fas fa-user-tie"></i>
+                                            <p>Driver List</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        @endif
+                        @if (auth()->check() && !in_array(auth()->user()->userRole->name, ['accountant', 'super_admin']))
+                            <li class="nav-item">
+                                <a class="nav-link{{ Request::is('consignees*') || Request::is('consignees/create') ? ' active' : '' }}"
+                                    href="#consigneeMenu">
+                                    <i class="fas fa-people-carry"></i>
+                                    <p>
+                                        Consignee/Customer
+                                        <i class="nav-arrow bi bi-chevron-right"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="/consignees"
+                                            class="nav-link{{ Request::is('consignees*') ? ' active' : '' }}">
+                                            <i class="fas fa-list"></i>
+                                            <p>Consignee/Customer List</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="/consignees/create"
+                                            class="nav-link{{ Request::is('consignees/create') ? ' active' : '' }}">
+                                            <i class="fas fa-plus"></i>
+                                            <p>Register</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        @endif
 
-                  <li class="nav-item">
-                    <a class="nav-link{{ (Request::is('truck_owners*') || Request::is('truck_owners/create') || Request::is('truck_owner_bank_accounts/create')) ? ' active' : '' }}" href="#truckOwnerMenu">
-                        <i class="fas fa-truck"></i>
-                        <p> Truck Owner </p>
-                        <i class="nav-arrow bi bi-chevron-right"></i>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="/truck_owners" class="nav-link{{ Request::is('truck_owners*') ? ' active' : '' }}">
-                                <i class="fas fa-list"></i>
-                              <p>Truck Owner List</p>
-                            </a>
-                          </li>
-                          <li class="nav-item">
-                            <a href="/truck_owners/create" class="nav-link{{ Request::is('truck_owners/create') ? ' active' : '' }}">
-                              <i class="fas fa-plus"></i>
-                            <p>Register</p>
-                            </a>
-                          </li>
+                        {{-- Operational menus visible to all authenticated users including moderators --}}
+                        @if (auth()->check() && !in_array(auth()->user()->userRole->name, ['super_admin', 'accountant']))
+                            <li class="nav-item">
+                                <a class="nav-link{{ Request::is('lorry_receipts*') || Request::is('lorry_receipts/create') ? ' active' : '' }}"
+                                    href="#lorryReceiptMenu">
+                                    <i class="fas fa-file-alt"></i>
+                                    <p>
+                                        Lorry Receipts
+                                        <i class="nav-arrow bi bi-chevron-right"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="/lorry_receipts"
+                                            class="nav-link{{ Request::is('lorry_receipts*') ? ' active' : '' }}">
+                                            <i class="fas fa-list"></i>
+                                            <p> Listing</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="/lorry_receipts/create"
+                                            class="nav-link{{ Request::is('lorry_receipts/create') ? ' active' : '' }}">
+                                            <i class="fas fa-plus"></i>
+                                            <p>Register</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link{{ Request::is('freight_bookings*') || Request::is('freight_bookings/create') ? ' active' : '' }}"
+                                    href="#freightBookingMenu">
+                                    <i class="fas fa-shipping-fast"></i>
+                                    <p>
+                                        Freight Bookings
+                                        <i class="nav-arrow bi bi-chevron-right"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="/freight_bookings"
+                                            class="nav-link{{ Request::is('freight_bookings*') ? ' active' : '' }}">
+                                            <i class="fas fa-list"></i>
+                                            <p> Listing</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                            @if (in_array(auth()->user()->userRole->name, ['admin']))
+                                <li class="nav-item">
+                                    <a class="nav-link{{ Request::is('voucher_payments*') || Request::is('voucher_payments/create') ? ' active' : '' }}"
+                                        href="#voucherPaymentMenu">
+                                        <i class="fas fa-money-bill-wave"></i>
+                                        <p>
+                                            Voucher Payments
+                                            <i class="nav-arrow bi bi-chevron-right"></i>
+                                        </p>
+                                    </a>
+                                    <ul class="nav nav-treeview">
+                                        <li class="nav-item">
+                                            <a href="/voucher_payments"
+                                                class="nav-link{{ Request::is('voucher_payments*') && !Request::is('daily-payments') ? ' active' : '' }}">
+                                                <i class="fas fa-list"></i>
+                                                <p> Listing</p>
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a href="{{ route('voucher_payments.daily') }}"
+                                                class="nav-link{{ Request::is('daily-payments') ? ' active' : '' }}">
+                                                <i class="fas fa-calendar-day"></i>
+                                                <p>Daily Payments</p>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+                            @endif
+                            <li class="nav-item">
+                                <a class="nav-link{{ Request::is('invoices*') || Request::is('invoices/create') ? ' active' : '' }}"
+                                    href="#invoiceMenu">
+                                    <i class="fas fa-file-invoice-dollar"></i>
+                                    <p>
+                                        Invoices
+                                        <i class="nav-arrow bi bi-chevron-right"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="/invoices"
+                                            class="nav-link{{ Request::is('invoices*') ? ' active' : '' }}">
+                                            <i class="fas fa-list"></i>
+                                            <p> Listing</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="/invoices/create"
+                                            class="nav-link{{ Request::is('invoices/create') ? ' active' : '' }}">
+                                            <i class="fas fa-plus"></i>
+                                            <p>Register</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                            @if (auth()->check() && in_array(auth()->user()->userRole->name, ['super_admin', 'moderator', 'admin']))
+                                <li class="nav-item">
+                                    <a class="nav-link " href="#masterMenu">
+                                        <i class="fas fa-money-check-alt"></i>
+                                        <p>
+                                            Master
+                                            <i class="nav-arrow bi bi-chevron-right"></i>
+                                        </p>
+                                    </a>
+                                    <ul class="nav nav-treeview">
+                                        <li class="nav-item">
+                                            <a href="/master/countries" class="nav-link">
+                                                <i class="fas fa-list"></i>
+                                                <p>Countries</p>
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a href="/master/states" class="nav-link">
+                                                <i class="fas fa-plus"></i>
+                                                <p>States</p>
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a href="/master/cities" class="nav-link">
+                                                <i class="fas fa-plus"></i>
+                                                <p>Cities</p>
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a href="/master/goods-types" class="nav-link">
+                                                <i class="fas fa-plus"></i>
+                                                <p>Goods Types</p>
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a href="/master/pumps" class="nav-link">
+                                                <i class="fas fa-plus"></i>
+                                                <p>Pumps</p>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+                            @endif
 
-                    </ul>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link{{ (Request::is('trucks*') || Request::is('trucks/create') || Request::is('drivers/create')) ? ' active' : '' }}"  href="#truckMenu"  >
-                        <i class="fas fa-truck-moving"></i> <p>
-                            Truck
-                            <i class="nav-arrow bi bi-chevron-right"></i>
-                          </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="/trucks" class="nav-link{{ Request::is('trucks*') ? ' active' : '' }}">
-                                <i class="fas fa-list"></i>
-                              <p>Truck List</p>
-                            </a>
-                          </li>
-                          {{-- <li class="nav-item">
-                            <a href="/trucks/create" class="nav-link{{ Request::is('trucks/create') ? ' active' : '' }}">
-                              <i class="fas fa-plus"></i>
-                            <p>Register Truck</p>
-                            </a>
-                          </li> --}}
-                          <li class="nav-item">
-                            <a href="/drivers" class="nav-link{{ Request::is('drivers*') ? ' active' : '' }}">
-                                <i class="fas fa-user-tie"></i>
-                            <p>Driver List</p>
-                            </a>
-                          </li>
-                    </ul>
-                  </li>
-                  {{-- <li class="nav-item">
-                    <a class="nav-link{{ (Request::is('customers*') || Request::is('customers/create')) ? ' active' : '' }}"  href="#customerMenu"  >
-                        <i class="fas fa-users"></i><p>
-                            Customer
-                            <i class="nav-arrow bi bi-chevron-right"></i>
-                          </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="/customers" class="nav-link{{ Request::is('customers*') ? ' active' : '' }}">
-                                <i class="fas fa-list"></i>
-                              <p>Customer List</p>
-                            </a>
-                          </li>
-                          <li class="nav-item">
-                            <a href="/customers/create" class="nav-link{{ Request::is('customers/create') ? ' active' : '' }}">
-                              <i class="fas fa-plus"></i>
-                            <p>Register</p>
-                            </a>
-                          </li>
-                    </ul>
-                  </li> --}}
-                  @endif
-                  @if(auth()->check() && !in_array(auth()->user()->userRole->name, [ 'accountant', 'super_admin']))
-                  <li class="nav-item">
-                    <a class="nav-link{{ (Request::is('consignees*') || Request::is('consignees/create')) ? ' active' : '' }}"  href="#consigneeMenu"  >
-                        <i class="fas fa-people-carry"></i><p>
-                            Consignee/Customer
-                            <i class="nav-arrow bi bi-chevron-right"></i>
-                          </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="/consignees" class="nav-link{{ Request::is('consignees*') ? ' active' : '' }}">
-                                <i class="fas fa-list"></i>
-                              <p>Consignee/Customer List</p>
-                            </a>
-                          </li>
-                          <li class="nav-item">
-                            <a href="/consignees/create" class="nav-link{{ Request::is('consignees/create') ? ' active' : '' }}">
-                              <i class="fas fa-plus"></i>
-                            <p>Register</p>
-                            </a>
-                          </li>
-                    </ul>
-                  </li>
-                  @endif
+                        @endif
 
-                  {{-- Operational menus visible to all authenticated users including moderators --}}
-                  @if(auth()->check() && !in_array(auth()->user()->userRole->name, [ 'super_admin']))
-                  <li class="nav-item">
-                    <a class="nav-link{{ (Request::is('lorry_receipts*') || Request::is('lorry_receipts/create')) ? ' active' : '' }}"  href="#lorryReceiptMenu"  >
-                        <i class="fas fa-file-alt"></i><p>
-                            Lorry Receipts
-                            <i class="nav-arrow bi bi-chevron-right"></i>
-                          </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="/lorry_receipts" class="nav-link{{ Request::is('lorry_receipts*') ? ' active' : '' }}">
-                                <i class="fas fa-list"></i>
-                              <p> Listing</p>
-                            </a>
-                          </li>
-                          <li class="nav-item">
-                            <a href="/lorry_receipts/create" class="nav-link{{ Request::is('lorry_receipts/create') ? ' active' : '' }}">
-                              <i class="fas fa-plus"></i>
-                            <p>Register</p>
-                            </a>
-                          </li>
+                        {{-- Reports Section - Visible to all authenticated users --}}
+                        @if (auth()->check() && in_array(auth()->user()->userRole->name, ['accountant', 'admin']))
+                            <li class="nav-item">
+                                <a class="nav-link{{ Request::is('reports*') ? ' active' : '' }}" href="#reportsMenu"
+                                    data-lte-toggle="collapse">
+                                    <i class="fas fa-chart-pie"></i>
+                                    <p>
+                                        Reports
+                                        <i class="nav-arrow bi bi-chevron-right"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview collapse {{ Request::is('reports*') ? ' show' : '' }}"
+                                    id="reportsMenu">
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.tds') }}"
+                                            class="nav-link{{ Request::is('reports/tds') ? ' active' : '' }}">
+                                            <i class="fas fa-file-alt"></i>
+                                            <p>TDS</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.consignor-consignee') }}"
+                                            class="nav-link{{ Request::is('reports/consignor-consignee') ? ' active' : '' }}">
+                                            <i class="fas fa-file-alt"></i>
+                                            <p>Consignor Consignee</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.dispatch') }}"
+                                            class="nav-link{{ Request::is('reports/dispatch') ? ' active' : '' }}">
+                                            <i class="fas fa-file-alt"></i>
+                                            <p>Dispatch</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.party-ledger') }}"
+                                            class="nav-link{{ Request::is('reports/party-ledger') ? ' active' : '' }}">
+                                            <i class="fas fa-file-alt"></i>
+                                            <p>Party Ledger</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.lr-copy') }}"
+                                            class="nav-link{{ Request::is('reports/lr-copy') ? ' active' : '' }}">
+                                            <i class="fas fa-file-alt"></i>
+                                            <p>LR Copy</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.invoice') }}"
+                                            class="nav-link{{ Request::is('reports/invoice') ? ' active' : '' }}">
+                                            <i class="fas fa-file-alt"></i>
+                                            <p>GSTR1</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.shortage-damage') }}"
+                                            class="nav-link{{ Request::is('reports/shortage-damage') ? ' active' : '' }}">
+                                            <i class="fas fa-file-alt"></i>
+                                            <p>Shortage Damage</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.eway-bill') }}"
+                                            class="nav-link{{ Request::is('reports/eway-bill') ? ' active' : '' }}">
+                                            <i class="fas fa-file-alt"></i>
+                                            <p>Eway Bill</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.pump') }}"
+                                            class="nav-link{{ Request::is('reports/pump') ? ' active' : '' }}">
+                                            <i class="fas fa-file-alt"></i>
+                                            <p>Pump</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.bank') }}"
+                                            class="nav-link{{ Request::is('reports/bank') ? ' active' : '' }}">
+                                            <i class="fas fa-file-alt"></i>
+                                            <p>Bank</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.party-bill') }}"
+                                            class="nav-link{{ Request::is('reports/party-bill') ? ' active' : '' }}">
+                                            <i class="fas fa-file-alt"></i>
+                                            <p>Party Bill</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.ultratech-bill') }}"
+                                            class="nav-link{{ Request::is('reports/ultratech-bill') ? ' active' : '' }}">
+                                            <i class="fas fa-file-alt"></i>
+                                            <p>Ultratech Bill</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.memo-copy') }}"
+                                            class="nav-link{{ Request::is('reports/memo-copy') ? ' active' : '' }}">
+                                            <i class="fas fa-file-alt"></i>
+                                            <p>Memo Copy</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.transporter-report') }} "
+                                            class="nav-link{{ Request::is('reports/transporter-report') ? ' active' : '' }}">
+                                            <i class="fas fa-file-alt"></i>
+                                            <p>Transporter Report</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.pending-memo') }} "
+                                            class="nav-link{{ Request::is('reports/pending-memo') ? ' active' : '' }}">
+                                            <i class="fas fa-file-alt"></i>
+                                            <p>Pending Memo</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.pending-invoice') }} "
+                                            class="nav-link{{ Request::is('reports/pending-invoice') ? ' active' : '' }}">
+                                            <i class="fas fa-file-alt"></i>
+                                            <p>Pending Invoice</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        @endif
                     </ul>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link{{ (Request::is('freight_bookings*') || Request::is('freight_bookings/create')) ? ' active' : '' }}"  href="#freightBookingMenu"  >
-                        <i class="fas fa-shipping-fast"></i><p>
-                            Freight Bookings
-                            <i class="nav-arrow bi bi-chevron-right"></i>
-                          </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="/freight_bookings" class="nav-link{{ Request::is('freight_bookings*') ? ' active' : '' }}">
-                                <i class="fas fa-list"></i>
-                              <p> Listing</p>
-                            </a>
-                          </li>
-                          {{-- <li class="nav-item">
-                            <a href="/freight_bookings/create" class="nav-link{{ Request::is('freight_bookings/create') ? ' active' : '' }}">
-                              <i class="fas fa-plus"></i>
-                            <p>Register</p>
-                            </a>
-                          </li> --}}
-                    </ul>
-                  </li>
-                  {{-- <li class="nav-item">
-                    <a class="nav-link{{ (Request::is('vouchers*') || Request::is('vouchers/create')) ? ' active' : '' }}"  href="#voucherMenu"  >
-                        <i class="fas fa-file-invoice"></i><p>
-                            Vouchers
-                            <i class="nav-arrow bi bi-chevron-right"></i>
-                          </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="/vouchers" class="nav-link{{ Request::is('vouchers*') ? ' active' : '' }}">
-                                <i class="fas fa-list"></i>
-                              <p> Listing</p>
-                            </a>
-                          </li>
-                          <li class="nav-item">
-                            <a href="/vouchers/create" class="nav-link{{ Request::is('vouchers/create') ? ' active' : '' }}">
-                              <i class="fas fa-plus"></i>
-                            <p>Register</p>
-                            </a>
-                          </li>
-                    </ul>
-                  </li> --}}
-
-                  <li class="nav-item">
-                    <a class="nav-link{{ (Request::is('voucher_payments*') || Request::is('voucher_payments/create')) ? ' active' : '' }}"  href="#voucherPaymentMenu"  >
-                        <i class="fas fa-money-bill-wave"></i><p>
-                            Voucher Payments
-                            <i class="nav-arrow bi bi-chevron-right"></i>
-                          </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="/voucher_payments" class="nav-link{{ Request::is('voucher_payments*') && !Request::is('daily-payments') ? ' active' : '' }}">
-                                <i class="fas fa-list"></i>
-                              <p> Listing</p>
-                            </a>
-                          </li>
-                          @if(in_array(auth()->user()->userRole->name, ['admin', 'moderator']))
-                          <li class="nav-item">
-                            <a href="{{ route('voucher_payments.daily') }}" class="nav-link{{ Request::is('daily-payments') ? ' active' : '' }}">
-                              <i class="fas fa-calendar-day"></i>
-                            <p>Daily Payments</p>
-                            </a>
-                          </li>
-                          @endif
-                          {{-- <li class="nav-item">
-                            <a href="/voucher_payments/create" class="nav-link{{ Request::is('voucher_payments/create') ? ' active' : '' }}">
-                              <i class="fas fa-plus"></i>
-                            <p>Register</p>
-                            </a>
-                          </li> --}}
-                    </ul>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link{{ (Request::is('invoices*') || Request::is('invoices/create')) ? ' active' : '' }}"  href="#invoiceMenu"  >
-                        <i class="fas fa-file-invoice-dollar"></i><p>
-                            Invoices
-                            <i class="nav-arrow bi bi-chevron-right"></i>
-                          </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="/invoices" class="nav-link{{ Request::is('invoices*') ? ' active' : '' }}">
-                                <i class="fas fa-list"></i>
-                              <p> Listing</p>
-                            </a>
-                          </li>
-                          <li class="nav-item">
-                            <a href="/invoices/create" class="nav-link{{ Request::is('invoices/create') ? ' active' : '' }}">
-                              <i class="fas fa-plus"></i>
-                            <p>Register</p>
-                            </a>
-                          </li>
-                    </ul>
-                  </li>
-                  @if(auth()->check() && in_array(auth()->user()->userRole->name, ['super_admin', 'moderator','admin']))
-                  <li class="nav-item" >
-                    <a class="nav-link "  href="#masterMenu" >
-                        <i class="fas fa-money-check-alt"></i>  <p>
-                            Master
-                            <i class="nav-arrow bi bi-chevron-right"></i>
-                          </p>
-                    </a>
-                    <ul class="nav nav-treeview">
-                        <li class="nav-item">
-                            <a href="/master/countries" class="nav-link">
-                                <i class="fas fa-list"></i>
-                              <p>Countries</p>
-                            </a>
-                          </li>
-                          <li class="nav-item">
-                            <a href="/master/states" class="nav-link">
-                              <i class="fas fa-plus"></i>
-                            <p>States</p>
-                            </a>
-                          </li>
-                          <li class="nav-item">
-                            <a href="/master/cities" class="nav-link">
-                              <i class="fas fa-plus"></i>
-                            <p>Cities</p>
-                            </a>
-                          </li>
-                          <li class="nav-item">
-                            <a href="/master/goods-types" class="nav-link">
-                              <i class="fas fa-plus"></i>
-                            <p>Goods Types</p>
-                            </a>
-                          </li>
-                          <li class="nav-item">
-                            <a href="/master/pumps" class="nav-link">
-                              <i class="fas fa-plus"></i>
-                            <p>Pumps</p>
-                            </a>
-                          </li>
-                    </ul>
-                  </li>
-                  @endif
-
-                  @endif
-
-                  {{-- Reports Section - Visible to all authenticated users --}}
-                  @if(auth()->check() && in_array(auth()->user()->userRole->name, [ 'moderator','admin']))
-                  <li class="nav-item">
-                    <a class="nav-link{{ Request::is('reports*') ? ' active' : '' }}" href="#reportsMenu" data-lte-toggle="collapse">
-                      <i class="fas fa-chart-pie"></i>
-                      <p>
-                        Reports
-                        <i class="nav-arrow bi bi-chevron-right"></i>
-                      </p>
-                    </a>
-                    <ul class="nav nav-treeview collapse {{ Request::is('reports*') ? ' show' : '' }}" id="reportsMenu">
-                      <li class="nav-item">
-                        <a href="{{ route('reports.tds') }}" class="nav-link{{ Request::is('reports/tds') ? ' active' : '' }}">
-                          <i class="fas fa-file-alt"></i>
-                          <p>TDS</p>
-                        </a>
-                      </li>
-                      <li class="nav-item">
-                        <a href="{{ route('reports.consignor-consignee') }}" class="nav-link{{ Request::is('reports/consignor-consignee') ? ' active' : '' }}">
-                          <i class="fas fa-file-alt"></i>
-                          <p>Consignor Consignee</p>
-                        </a>
-                      </li>
-                      <li class="nav-item">
-                        <a href="{{ route('reports.dispatch') }}" class="nav-link{{ Request::is('reports/dispatch') ? ' active' : '' }}">
-                          <i class="fas fa-file-alt"></i>
-                          <p>Dispatch</p>
-                        </a>
-                      </li>
-                      <li class="nav-item">
-                        <a href="{{ route('reports.party-ledger') }}" class="nav-link{{ Request::is('reports/party-ledger') ? ' active' : '' }}">
-                          <i class="fas fa-file-alt"></i>
-                          <p>Party Ledger</p>
-                        </a>
-                      </li>
-                      <li class="nav-item">
-                        <a href="{{ route('reports.lr-copy') }}" class="nav-link{{ Request::is('reports/lr-copy') ? ' active' : '' }}">
-                          <i class="fas fa-file-alt"></i>
-                          <p>LR Copy</p>
-                        </a>
-                      </li>
-                      <li class="nav-item">
-                        <a href="{{ route('reports.invoice') }}" class="nav-link{{ Request::is('reports/invoice') ? ' active' : '' }}">
-                          <i class="fas fa-file-alt"></i>
-                          <p>GSTR1</p>
-                        </a>
-                      </li>
-                      <li class="nav-item">
-                        <a href="{{ route('reports.shortage-damage') }}" class="nav-link{{ Request::is('reports/shortage-damage') ? ' active' : '' }}">
-                          <i class="fas fa-file-alt"></i>
-                          <p>Shortage Damage</p>
-                        </a>
-                      </li>
-                      <li class="nav-item">
-                        <a href="{{ route('reports.eway-bill') }}" class="nav-link{{ Request::is('reports/eway-bill') ? ' active' : '' }}">
-                          <i class="fas fa-file-alt"></i>
-                          <p>Eway Bill</p>
-                        </a>
-                      </li>
-                      <li class="nav-item">
-                        <a href="{{ route('reports.pump') }}" class="nav-link{{ Request::is('reports/pump') ? ' active' : '' }}">
-                          <i class="fas fa-file-alt"></i>
-                          <p>Pump</p>
-                        </a>
-                      </li>
-                      <li class="nav-item">
-                        <a href="{{ route('reports.bank') }}" class="nav-link{{ Request::is('reports/bank') ? ' active' : '' }}">
-                          <i class="fas fa-file-alt"></i>
-                          <p>Bank</p>
-                        </a>
-                      </li>
-                      <li class="nav-item">
-                        <a href="{{ route('reports.party-bill') }}" class="nav-link{{ Request::is('reports/party-bill') ? ' active' : '' }}">
-                          <i class="fas fa-file-alt"></i>
-                          <p>Party Bill</p>
-                        </a>
-                      </li>
-                      <li class="nav-item">
-                        <a href="{{ route('reports.ultratech-bill') }}" class="nav-link{{ Request::is('reports/ultratech-bill') ? ' active' : '' }}">
-                          <i class="fas fa-file-alt"></i>
-                          <p>Ultratech Bill</p>
-                        </a>
-                      </li>
-                      <li class="nav-item">
-                        <a href="{{ route('reports.memo-copy') }}" class="nav-link{{ Request::is('reports/memo-copy') ? ' active' : '' }}">
-                          <i class="fas fa-file-alt"></i>
-                          <p>Memo Copy</p>
-                        </a>
-                      </li>
-                      <li class="nav-item">
-                        <a href="{{ route('reports.transporter-report') }} " class="nav-link{{ Request::is('reports/transporter-report') ? ' active' : '' }}">
-                          <i class="fas fa-file-alt"></i>
-                          <p>Transporter Report</p>
-                        </a>
-                      </li>
-                      <li class="nav-item">
-                        <a href="{{ route('reports.pending-memo') }} " class="nav-link{{ Request::is('reports/pending-memo') ? ' active' : '' }}">
-                          <i class="fas fa-file-alt"></i>
-                          <p>Pending Memo</p>
-                        </a>
-                      </li>
-                      <li class="nav-item">
-                        <a href="{{ route('reports.pending-invoice') }} " class="nav-link{{ Request::is('reports/pending-invoice') ? ' active' : '' }}">
-                          <i class="fas fa-file-alt"></i>
-                          <p>Pending Invoice</p>
-                        </a>
-                      </li>
-                    </ul>
-                  </li>
-
-                  @endif
-                </ul>
-                <!--end::Sidebar Menu-->
-              </nav>
+                    <!--end::Sidebar Menu-->
+                </nav>
             </div>
 
             <!--end::Sidebar Wrapper-->
-          </aside>
-          <main class="app-main">
+        </aside>
+        <main class="app-main">
             <!--begin::App Content Header-->
             <div class="app-content-header">
-              <!--begin::Container-->
-              <div class="container-fluid">
-                <!--begin::Row-->
-                @yield('content')
+                <!--begin::Container-->
+                <div class="container-fluid">
+                    <!--begin::Row-->
+                    @yield('content')
 
-                <!-- /.row (main row) -->
-              </div>
-              <!--end::Container-->
+                    <!-- /.row (main row) -->
+                </div>
+                <!--end::Container-->
             </div>
             <!--end::App Content-->
-          </main>
+        </main>
 
-           <!--begin::Footer-->
-      <footer class="app-footer">
-        <!--begin::To the end-->
-        <div class="float-end d-none d-sm-inline">
-  <a href="https://www.taldartechconsultancy.com/" target="_blank" rel="noopener">
-    Developed &amp; Consulted by Taldar Tech Consultancy.
-  </a>
-</div>
-        <!--end::To the end-->
-        <!--begin::Copyright-->
-        <strong>
-        Copyright All Rights Reserved © 2025
+        <!--begin::Footer-->
+        <footer class="app-footer">
+            <!--begin::To the end-->
+            <div class="float-end d-none d-sm-inline">
+                <a href="https://www.taldartechconsultancy.com/" target="_blank" rel="noopener">
+                    Developed &amp; Consulted by Taldar Tech Consultancy.
+                </a>
+            </div>
+            <!--end::To the end-->
+            <!--begin::Copyright-->
+            <strong>
+                Copyright All Rights Reserved © 2025
 
-        </strong>
+            </strong>
 
-        <!--end::Copyright-->
-      </footer>
-      <!--end::Footer-->
+            <!--end::Copyright-->
+        </footer>
+        <!--end::Footer-->
 
-        </div>
-
-
-
-
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    </div>
 
 
 
-      <script
-      src="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.10.1/browser/overlayscrollbars.browser.es6.min.js"
-      integrity="sha256-dghWARbRe2eLlIJ56wNB+b760ywulqK3DzZYEpsg2fQ="
-      crossorigin="anonymous"
-    ></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+
+
+    <script src="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.10.1/browser/overlayscrollbars.browser.es6.min.js"
+        integrity="sha256-dghWARbRe2eLlIJ56wNB+b760ywulqK3DzZYEpsg2fQ=" crossorigin="anonymous"></script>
     <!--end::Third Party Plugin(OverlayScrollbars)--><!--begin::Required Plugin(popperjs for Bootstrap 5)-->
-    <script
-      src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
-      integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r"
-      crossorigin="anonymous"
-    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"
+        integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous">
+    </script>
     <!--end::Required Plugin(popperjs for Bootstrap 5)--><!--begin::Required Plugin(Bootstrap 5)-->
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"
-      integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy"
-      crossorigin="anonymous"
-    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"
+        integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous">
+    </script>
     <script>
-      const SELECTOR_SIDEBAR_WRAPPER = '.sidebar-wrapper';
-      const Default = {
-        scrollbarTheme: 'os-theme-light',
-        scrollbarAutoHide: 'leave',
-        scrollbarClickScroll: true,
-      };
-      document.addEventListener('DOMContentLoaded', function () {
-        const sidebarWrapper = document.querySelector(SELECTOR_SIDEBAR_WRAPPER);
-        if (sidebarWrapper && typeof OverlayScrollbarsGlobal?.OverlayScrollbars !== 'undefined') {
-          OverlayScrollbarsGlobal.OverlayScrollbars(sidebarWrapper, {
-            scrollbars: {
-              theme: Default.scrollbarTheme,
-              autoHide: Default.scrollbarAutoHide,
-              clickScroll: Default.scrollbarClickScroll,
-            },
-          });
-        }
-      });
+        const SELECTOR_SIDEBAR_WRAPPER = '.sidebar-wrapper';
+        const Default = {
+            scrollbarTheme: 'os-theme-light',
+            scrollbarAutoHide: 'leave',
+            scrollbarClickScroll: true,
+        };
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarWrapper = document.querySelector(SELECTOR_SIDEBAR_WRAPPER);
+            if (sidebarWrapper && typeof OverlayScrollbarsGlobal?.OverlayScrollbars !== 'undefined') {
+                OverlayScrollbarsGlobal.OverlayScrollbars(sidebarWrapper, {
+                    scrollbars: {
+                        theme: Default.scrollbarTheme,
+                        autoHide: Default.scrollbarAutoHide,
+                        clickScroll: Default.scrollbarClickScroll,
+                    },
+                });
+            }
+        });
     </script>
     <!-- jQuery (required for AdminLTE) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- AdminLTE JS -->
     <script src="/theme/dist/js/adminlte.min.js"></script>
     <script>
-      $(document).off('select2:open.autofocus').on('select2:open.autofocus', function() {
+        $(document).off('select2:open.autofocus').on('select2:open.autofocus', function() {
             // Delay to let the search input render
             setTimeout(function() {
-                const searchInput = document.querySelector('.select2-container--open .select2-search__field');
+                const searchInput = document.querySelector(
+                    '.select2-container--open .select2-search__field');
                 if (searchInput) {
                     searchInput.focus();
                 }
             }, 0);
         });
         // Initialize AdminLTE
-        $(document).ready(function () {
+        $(document).ready(function() {
             // Check if AdminLTE is loaded
             if (typeof $.AdminLTE !== 'undefined') {
                 // Initialize layout fix
@@ -924,228 +931,212 @@
 
             // Initialize tooltips and popovers
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
                 return new bootstrap.Tooltip(tooltipTriggerEl);
             });
 
             var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
-            var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+            var popoverList = popoverTriggerList.map(function(popoverTriggerEl) {
                 return new bootstrap.Popover(popoverTriggerEl);
             });
         });
     </script>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        var logoutLink = document.getElementById('logout-link');
-        if (logoutLink) {
-            logoutLink.addEventListener('click', function (e) {
-                e.preventDefault();
-                document.getElementById('logout-form').submit();
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var logoutLink = document.getElementById('logout-link');
+            if (logoutLink) {
+                logoutLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    document.getElementById('logout-form').submit();
+                });
+            }
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.37.1/dist/apexcharts.min.js"
+        integrity="sha256-+vh8GkaU7C9/wbSLIcwq82tQ2wTf44aOHA8HlBMwRI8=" crossorigin="anonymous"></script>
+    <!-- ChartJS -->
+    <script>
+        // NOTICE!! DO NOT USE ANY OF THIS JAVASCRIPT
+        // IT'S ALL JUST JUNK FOR DEMO
+        // ++++++++++++++++++++++++++++++++++++++++++
+
+        const sales_chart_options = {
+            series: [{
+                    name: 'Digital Goods',
+                    data: [28, 48, 40, 19, 86, 27, 90],
+                },
+                {
+                    name: 'Electronics',
+                    data: [65, 59, 80, 81, 56, 55, 40],
+                },
+            ],
+            chart: {
+                height: 300,
+                type: 'area',
+                toolbar: {
+                    show: false,
+                },
+            },
+            legend: {
+                show: false,
+            },
+            colors: ['#0d6efd', '#20c997'],
+            dataLabels: {
+                enabled: false,
+            },
+            stroke: {
+                curve: 'smooth',
+            },
+            xaxis: {
+                type: 'datetime',
+                categories: [
+                    '2023-01-01',
+                    '2023-02-01',
+                    '2023-03-01',
+                    '2023-04-01',
+                    '2023-05-01',
+                    '2023-06-01',
+                    '2023-07-01',
+                ],
+            },
+            tooltip: {
+                x: {
+                    format: 'MMMM yyyy',
+                },
+            },
+        };
+
+        // Only render chart if element exists
+        const revenueChartElement = document.querySelector('#revenue-chart');
+        if (revenueChartElement) {
+            const sales_chart = new ApexCharts(revenueChartElement, sales_chart_options);
+            sales_chart.render();
+        }
+    </script>
+
+    <!-- jsvectormap -->
+    <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/js/jsvectormap.min.js"
+        integrity="sha256-/t1nN2956BT869E6H4V1dnt0X5pAQHPytli+1nTZm2Y=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/world.js"
+        integrity="sha256-XPpPaZlU8S/HWf7FZLAncLg2SAkP8ScUTII89x9D3lY=" crossorigin="anonymous"></script>
+    <!-- jsvectormap -->
+    <script>
+        const visitorsData = {
+            US: 398, // USA
+            SA: 400, // Saudi Arabia
+            CA: 1000, // Canada
+            DE: 500, // Germany
+            FR: 760, // France
+            CN: 300, // China
+            AU: 700, // Australia
+            BR: 600, // Brazil
+            IN: 800, // India
+            GB: 320, // Great Britain
+            RU: 3000, // Russia
+        };
+
+        // World map by jsVectorMap - only render if element exists
+        const worldMapElement = document.querySelector('#world-map');
+        if (worldMapElement) {
+            const map = new jsVectorMap({
+                selector: '#world-map',
+                map: 'world',
             });
         }
-    });
-</script>
 
-<script
-src="https://cdn.jsdelivr.net/npm/apexcharts@3.37.1/dist/apexcharts.min.js"
-integrity="sha256-+vh8GkaU7C9/wbSLIcwq82tQ2wTf44aOHA8HlBMwRI8="
-crossorigin="anonymous"
-></script>
-<!-- ChartJS -->
-<script>
-// NOTICE!! DO NOT USE ANY OF THIS JAVASCRIPT
-// IT'S ALL JUST JUNK FOR DEMO
-// ++++++++++++++++++++++++++++++++++++++++++
+        // Sparkline charts
+        const option_sparkline1 = {
+            series: [{
+                data: [1000, 1200, 920, 927, 931, 1027, 819, 930, 1021],
+            }, ],
+            chart: {
+                type: 'area',
+                height: 50,
+                sparkline: {
+                    enabled: true,
+                },
+            },
+            stroke: {
+                curve: 'straight',
+            },
+            fill: {
+                opacity: 0.3,
+            },
+            yaxis: {
+                min: 0,
+            },
+            colors: ['#DCE6EC'],
+        };
 
-const sales_chart_options = {
-  series: [
-    {
-      name: 'Digital Goods',
-      data: [28, 48, 40, 19, 86, 27, 90],
-    },
-    {
-      name: 'Electronics',
-      data: [65, 59, 80, 81, 56, 55, 40],
-    },
-  ],
-  chart: {
-    height: 300,
-    type: 'area',
-    toolbar: {
-      show: false,
-    },
-  },
-  legend: {
-    show: false,
-  },
-  colors: ['#0d6efd', '#20c997'],
-  dataLabels: {
-    enabled: false,
-  },
-  stroke: {
-    curve: 'smooth',
-  },
-  xaxis: {
-    type: 'datetime',
-    categories: [
-      '2023-01-01',
-      '2023-02-01',
-      '2023-03-01',
-      '2023-04-01',
-      '2023-05-01',
-      '2023-06-01',
-      '2023-07-01',
-    ],
-  },
-  tooltip: {
-    x: {
-      format: 'MMMM yyyy',
-    },
-  },
-};
+        // Sparkline 1 - only render if element exists
+        const sparkline1Element = document.querySelector('#sparkline-1');
+        if (sparkline1Element) {
+            const sparkline1 = new ApexCharts(sparkline1Element, option_sparkline1);
+            sparkline1.render();
+        }
 
-// Only render chart if element exists
-const revenueChartElement = document.querySelector('#revenue-chart');
-if (revenueChartElement) {
-  const sales_chart = new ApexCharts(revenueChartElement, sales_chart_options);
-  sales_chart.render();
-}
-</script>
+        const option_sparkline2 = {
+            series: [{
+                data: [515, 519, 520, 522, 652, 810, 370, 627, 319, 630, 921],
+            }, ],
+            chart: {
+                type: 'area',
+                height: 50,
+                sparkline: {
+                    enabled: true,
+                },
+            },
+            stroke: {
+                curve: 'straight',
+            },
+            fill: {
+                opacity: 0.3,
+            },
+            yaxis: {
+                min: 0,
+            },
+            colors: ['#DCE6EC'],
+        };
 
-<!-- jsvectormap -->
-<script
-src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/js/jsvectormap.min.js"
-integrity="sha256-/t1nN2956BT869E6H4V1dnt0X5pAQHPytli+1nTZm2Y="
-crossorigin="anonymous"
-></script>
-<script
-src="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/world.js"
-integrity="sha256-XPpPaZlU8S/HWf7FZLAncLg2SAkP8ScUTII89x9D3lY="
-crossorigin="anonymous"
-></script>
-<!-- jsvectormap -->
-<script>
-const visitorsData = {
-  US: 398, // USA
-  SA: 400, // Saudi Arabia
-  CA: 1000, // Canada
-  DE: 500, // Germany
-  FR: 760, // France
-  CN: 300, // China
-  AU: 700, // Australia
-  BR: 600, // Brazil
-  IN: 800, // India
-  GB: 320, // Great Britain
-  RU: 3000, // Russia
-};
+        // Sparkline 2 - only render if element exists
+        const sparkline2Element = document.querySelector('#sparkline-2');
+        if (sparkline2Element) {
+            const sparkline2 = new ApexCharts(sparkline2Element, option_sparkline2);
+            sparkline2.render();
+        }
 
-// World map by jsVectorMap - only render if element exists
-const worldMapElement = document.querySelector('#world-map');
-if (worldMapElement) {
-  const map = new jsVectorMap({
-    selector: '#world-map',
-    map: 'world',
-  });
-}
+        const option_sparkline3 = {
+            series: [{
+                data: [15, 19, 20, 22, 33, 27, 31, 27, 19, 30, 21],
+            }, ],
+            chart: {
+                type: 'area',
+                height: 50,
+                sparkline: {
+                    enabled: true,
+                },
+            },
+            stroke: {
+                curve: 'straight',
+            },
+            fill: {
+                opacity: 0.3,
+            },
+            yaxis: {
+                min: 0,
+            },
+            colors: ['#DCE6EC'],
+        };
 
-// Sparkline charts
-const option_sparkline1 = {
-  series: [
-    {
-      data: [1000, 1200, 920, 927, 931, 1027, 819, 930, 1021],
-    },
-  ],
-  chart: {
-    type: 'area',
-    height: 50,
-    sparkline: {
-      enabled: true,
-    },
-  },
-  stroke: {
-    curve: 'straight',
-  },
-  fill: {
-    opacity: 0.3,
-  },
-  yaxis: {
-    min: 0,
-  },
-  colors: ['#DCE6EC'],
-};
-
-// Sparkline 1 - only render if element exists
-const sparkline1Element = document.querySelector('#sparkline-1');
-if (sparkline1Element) {
-  const sparkline1 = new ApexCharts(sparkline1Element, option_sparkline1);
-  sparkline1.render();
-}
-
-const option_sparkline2 = {
-  series: [
-    {
-      data: [515, 519, 520, 522, 652, 810, 370, 627, 319, 630, 921],
-    },
-  ],
-  chart: {
-    type: 'area',
-    height: 50,
-    sparkline: {
-      enabled: true,
-    },
-  },
-  stroke: {
-    curve: 'straight',
-  },
-  fill: {
-    opacity: 0.3,
-  },
-  yaxis: {
-    min: 0,
-  },
-  colors: ['#DCE6EC'],
-};
-
-// Sparkline 2 - only render if element exists
-const sparkline2Element = document.querySelector('#sparkline-2');
-if (sparkline2Element) {
-  const sparkline2 = new ApexCharts(sparkline2Element, option_sparkline2);
-  sparkline2.render();
-}
-
-const option_sparkline3 = {
-  series: [
-    {
-      data: [15, 19, 20, 22, 33, 27, 31, 27, 19, 30, 21],
-    },
-  ],
-  chart: {
-    type: 'area',
-    height: 50,
-    sparkline: {
-      enabled: true,
-    },
-  },
-  stroke: {
-    curve: 'straight',
-  },
-  fill: {
-    opacity: 0.3,
-  },
-  yaxis: {
-    min: 0,
-  },
-  colors: ['#DCE6EC'],
-};
-
-// Sparkline 3 - only render if element exists
-const sparkline3Element = document.querySelector('#sparkline-3');
-if (sparkline3Element) {
-  const sparkline3 = new ApexCharts(sparkline3Element, option_sparkline3);
-  sparkline3.render();
-}
-</script>
-<link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/43.1.1/ckeditor5.css" />
+        // Sparkline 3 - only render if element exists
+        const sparkline3Element = document.querySelector('#sparkline-3');
+        if (sparkline3Element) {
+            const sparkline3 = new ApexCharts(sparkline3Element, option_sparkline3);
+            sparkline3.render();
+        }
+    </script>
+    <link rel="stylesheet" href="https://cdn.ckeditor.com/ckeditor5/43.1.1/ckeditor5.css" />
     <script type="importmap">
         {
             "imports": {
@@ -1173,7 +1164,8 @@ if (sparkline3Element) {
                     plugins: [Essentials, Bold, Italic, Font, Paragraph, Heading, Underline, HorizontalLine],
                     toolbar: [
                         'undo', 'redo', '|', 'bold', 'italic', 'underline', '|',
-                        'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', 'Heading', 'HorizontalLine'
+                        'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', 'Heading',
+                        'HorizontalLine'
                     ]
                 })
                 .then(editorElement => {
@@ -1184,8 +1176,9 @@ if (sparkline3Element) {
                 });
         });
     </script>
-<!--end::Script-->
+    <!--end::Script-->
     @yield('scripts')
     @stack('scripts')
 </body>
+
 </html>

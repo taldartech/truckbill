@@ -11,6 +11,7 @@ use App\Models\FreightBooking;
 use App\Models\LorryReceipt;
 use Yajra\DataTables\Facades\DataTables;
 use App\Http\Controllers\AdvancePaymentController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
@@ -350,7 +351,7 @@ class LorryReceiptController extends Controller
 
     // Edit button - check if freight booking exists and add confirmation
     $editUrl = route('lorry_receipts.edit', $lorryReceipt->id);
-    if ($lorryReceipt->invoice_generated == 0) {
+    if ($lorryReceipt->invoice_generated == 0 && Auth::user()->userRole->name === 'admin') {
       if ($freightBooking) {
         // If freight booking exists, add confirmation dialog
         $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit" data-bs-toggle="tooltip" onclick="return confirm(\'A freight booking already exists for this Lorry Receipt. Do you still want to continue and edit it?\')">';
@@ -362,7 +363,7 @@ class LorryReceiptController extends Controller
       }
     }
 
-    if ($lorryReceipt->delivery_status != 'Delivered') {
+    if ($lorryReceipt->delivery_status != 'Delivered' && Auth::user()->userRole->name === 'admin') {
       // Delete button
       $deleteUrl = route('lorry_receipts.destroy', $lorryReceipt->id);
       $buttons .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this lorry receipt?\')">';

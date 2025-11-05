@@ -95,8 +95,8 @@
                         <select class="form-select" id="branch_id" name="branch_id" required>
                             <option value="">Select Branch</option>
                             @foreach($branches as $branch)
-                                <option 
-                                    value="{{ $branch->id }}" 
+                                <option
+                                    value="{{ $branch->id }}"
                                     data-company="{{ $branch->company_id }}"
                                     {{ old('branch_id', $user->branch_id) == $branch->id ? 'selected' : '' }}
                                     style="display: none;"
@@ -129,53 +129,14 @@
 
     <!-- JavaScript (same functionality as before, unchanged) -->
     <script>
-        function loadBranches(companyId) {
-            const branchSelect = document.getElementById('branch_id');
-            branchSelect.innerHTML = '<option value="">Loading branches...</option>';
-            
-            if (!companyId) {
-                branchSelect.innerHTML = '<option value="">Select Branch</option>';
-                return;
-            }
-        
-            fetch(`/branches/by-company/${companyId}`, {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json'
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(branches => {
-                let options = '<option value="">Select Branch</option>';
-                branches.forEach(branch => {
-                    options += `<option value="${branch.id}">${branch.branch_name}</option>`;
-                });
-                branchSelect.innerHTML = options;
-                
-                const oldBranchId = "{{ old('branch_id') }}";
-                if (oldBranchId) {
-                    branchSelect.value = oldBranchId;
-                }
-            })
-            .catch(error => {
-                console.error('Error loading branches:', error);
-                branchSelect.innerHTML = '<option value="">Error loading branches</option>';
-            });
-        }
-
         document.addEventListener('DOMContentLoaded', function() {
             const companySelect = document.getElementById('company_id');
             const branchSelect = document.getElementById('branch_id');
-            
+
             function filterBranches(companyId) {
                 const options = branchSelect.querySelectorAll('option');
                 let hasVisibleOptions = false;
-                
+
                 options.forEach(option => {
                     if (option.value === '') return;
                     const branchCompanyId = option.getAttribute('data-company');
@@ -189,7 +150,7 @@
                         }
                     }
                 });
-                
+
                 const noBranchOption = document.getElementById('no-branch-option');
                 if (!hasVisibleOptions) {
                     if (!noBranchOption) {
@@ -208,7 +169,7 @@
             companySelect.addEventListener('change', function() {
                 filterBranches(this.value);
             });
-            
+
             if (companySelect.value) {
                 filterBranches(companySelect.value);
                 branchSelect.value = "{{ old('branch_id', $user->branch_id) }}";
