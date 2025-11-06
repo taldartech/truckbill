@@ -55,41 +55,49 @@
                     </div>
                     <!--end::Col-->
                     @php
-                        $canEdit =
-                            auth()->check() &&
-                            (auth()->user()->userRole->name === 'super_admin' ||
-                                auth()->user()->userRole->name === 'admin');
-                    @endphp
-                    <!--begin::Col-->
-                    <div class="col-md-6">
-                        <label for="role" class="form-label">Role *</label>
-                        @if ($canEdit)
-                            <select class="form-select" id="role" name="role" required>
-                                <option value="">Select</option>
-                                @foreach ($roles as $role)
-                                    <option value="{{ $role }}" {{ old('role') == $role ? 'selected' : '' }}>
-                                        {{ ucfirst($role) }}</option>
-                                @endforeach
-                            </select>
-                        @else
-                            <input type="hidden" name="role" value="{{ auth()->user()->userRole->name ?? '' }}">
-                            <div class="form-control-plaintext">{{ ucfirst(auth()->user()->userRole->name ?? '') }}</div>
-                        @endif
-                        @error('role')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                        <div class="valid-feedback">Looks good!</div>
-                    </div>
-                    <!--end::Col-->
-                    <!--begin::Col-->
+                    $canEdit =
+                        auth()->check() &&
+                        (auth()->user()->userRole->name === 'super_admin' ||
+                            auth()->user()->userRole->name === 'admin' ||
+                            auth()->user()->userRole->name === 'master_admin');
+                
+                    $isMasterAdmin = auth()->check() && auth()->user()->userRole->name === 'master_admin';
+                @endphp
+                
+                <!-- Role Input -->
+                <div class="col-md-6">
+                    <label for="role" class="form-label">Role *</label>
+                    @if ($isMasterAdmin)
+                        <!-- Show only super_admin as role, no dropdown -->
+                        <input type="hidden" name="role" value="super_admin">
+                        <div class="form-control-plaintext">Super Admin</div>
+                    @elseif ($canEdit)
+                        <select class="form-select" id="role" name="role" required>
+                            <option value="">Select</option>
+                            @foreach ($roles as $role)
+                                <option value="{{ $role }}" {{ old('role') == $role ? 'selected' : '' }}>
+                                    {{ ucfirst($role) }}</option>
+                            @endforeach
+                        </select>
+                    @else
+                        <input type="hidden" name="role" value="{{ auth()->user()->userRole->name ?? '' }}">
+                        <div class="form-control-plaintext">{{ ucfirst(auth()->user()->userRole->name ?? '') }}</div>
+                    @endif
+                    @error('role')
+                        <div class="text-danger">{{ $message }}</div>
+                    @enderror
+                </div>
+                
+                <!-- Company and Branch Inputs -->
+                @if (! $isMasterAdmin)
                     <div class="col-md-6">
                         <label for="company_id" class="form-label">Company *</label>
                         @if ($canEdit)
                             <select class="form-select" id="company_id" name="company_id">
                                 <option value="">Select</option>
                                 @foreach ($companies as $company)
-                                    <option value="{{ $company->id }}"
-                                        {{ old('company_id') == $company->id ? 'selected' : '' }}>{{ $company->name }}
+                                    <option value="{{ $company->id }}" {{ old('company_id') == $company->id ? 'selected' : '' }}>
+                                        {{ $company->name }}
                                     </option>
                                 @endforeach
                             </select>
@@ -100,23 +108,11 @@
                         @error('company_id')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
-                        <div class="valid-feedback">Looks good!</div>
                     </div>
-                    <!--end::Col-->
-                </div>
-                <!--end::Row-->
-                <!--begin::Row-->
-                <div class="row g-3">
-                    <!--begin::Col-->
+                
                     <div class="col-md-6">
                         <label for="branch_id" class="form-label">Branch *</label>
                         @if ($canEdit)
-                            {{-- <select class="form-select" id="branch_id" name="branch_id" required>
-                            <option value="">Select</option>
-                            @foreach ($branches as $branch)
-                                <option value="{{ $branch->id }}" {{ old('branch_id') == $branch->id ? 'selected' : '' }}>{{ $branch->branch_name }}({{ $branch->head_office == 1 ? 'Head Office' : 'Branch' }})</option>
-                            @endforeach
-                        </select> --}}
                             <select class="form-select" id="branch_id" name="branch_id" required>
                                 <option value="">Select Branch</option>
                                 @foreach ($branches as $branch)
@@ -133,7 +129,9 @@
                         @error('branch_id')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
-                        <div class="valid-feedback">Looks good!</div>
+                    </div>
+                @endif
+                
                     </div>
                     <!--end::Col-->
                 </div>

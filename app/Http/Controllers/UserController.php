@@ -11,17 +11,41 @@ class UserController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
-    {
-        // Handle DataTables AJAX request
-        if ($request->ajax()) {
-            return $this->getUsersData($request);
-        }
+    // public function index(Request $request)
+    // {
+    //     // Handle DataTables AJAX request
+    //     if ($request->ajax()) {
+    //         return $this->getUsersData($request);
+    //     }
         
-        $roles = ['super_admin', 'admin', 'moderator', 'accountant'];
-        $companies = \App\Models\Company::all();
-        return view('users.index', compact('roles', 'companies'));
+    //     $roles = ['super_admin', 'admin', 'moderator', 'accountant'];
+    //     $companies = \App\Models\Company::all();
+    //     return view('users.index', compact('roles', 'companies'));
+    // }
+    public function index(Request $request)
+{
+    if ($request->ajax()) {
+        return $this->getUsersData($request);
     }
+
+    $userRoleName = auth()->check() ? auth()->user()->userRole->name : null;
+
+    if ($userRoleName === 'master_admin') {
+        // Show only "super_admin" and "master_admin" roles
+        $roles = ['super_admin', 'master_admin'];
+    } elseif ($userRoleName === 'super_admin') {
+        // Show all roles except "super_admin" itself (remove "super_admin")
+        $roles = ['admin', 'moderator', 'accountant'];
+    } else {
+        // Default to all roles
+        $roles = ['admin', 'moderator', 'accountant'];
+    }
+
+    $companies = \App\Models\Company::all();
+
+    return view('users.index', compact('roles', 'companies'));
+}
+
     
     private function getUsersData(Request $request)
     {
@@ -135,14 +159,14 @@ class UserController extends Controller
         $buttons = '<div class="d-flex gap-1">';
         
         // Check if user is super_admin - if so, disable edit and delete actions
-        $isSuperAdmin = $user->userRole && $user->userRole->name === 'super_admin';
+        $isMasterAdmin = $user->userRole && $user->userRole->name === 'master_admin';
         
-        if ($isSuperAdmin) {
+        if ($isMasterAdmin) {
             // Disabled buttons for super_admin users
-            $buttons .= '<span class="btn btn-sm btn-secondary disabled" title="Super Admin cannot be edited">';
+            $buttons .= '<span class="btn btn-sm btn-secondary disabled" title="Master Admin cannot be edited">';
             $buttons .= '<i class="bi bi-pencil"></i></span>';
             
-            $buttons .= '<span class="btn btn-sm btn-secondary disabled" title="Super Admin cannot be deleted">';
+            $buttons .= '<span class="btn btn-sm btn-secondary disabled" title="Master Admin cannot be deleted">';
             $buttons .= '<i class="bi bi-trash"></i></span>';
         } else {
             // Edit button
@@ -169,34 +193,75 @@ class UserController extends Controller
     {
         $companies = \App\Models\Company::all();
         $roles = ['admin', 'moderator', 'accountant'];
+        $superAdmin = 'super_admin';
         $branches = \App\Models\Branch::all();
-        return view('users.create', compact('companies', 'roles', 'branches'));
+        return view('users.create', compact('companies', 'roles', 'superAdmin', 'branches'));
     }
 
     /**
      * Store a newly created resource in storage.
      */
+    // public function store(Request $request)
+    // {
+    //     $validated = $request->validate([
+    //         'name' => 'required|string|max:255',
+    //         'email' => 'required|email|unique:users,email',
+    //         'password' => 'required|string|min:6|confirmed',
+    //         'role' => 'required|in:super_admin,admin,moderator,accountant',
+    //         'company_id' => 'required|exists:companies,id',
+    //         'branch_id' => 'required|exists:branches,id',
+    //     ]);
+    //     $validated['password'] = bcrypt($validated['password']);
+    //     $userRole = UserRole::where('name', $validated['role'])->first();
+    //     if (!$userRole) {
+    //         // Create the role if it doesn't exist
+    //         $userRole = UserRole::create(['name' => $validated['role']]);
+    //     }
+    //     $validated['user_role_id'] = $userRole->id;
+    //     unset($validated['role']);
+    //     \App\Models\User::create($validated);
+    //     return redirect()->route('users.index')->with('success', 'User created successfully!');
+    // }
     public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:6|confirmed',
-            'role' => 'required|in:super_admin,admin,moderator,accountant',
-            'company_id' => 'required|exists:companies,id',
-            'branch_id' => 'required|exists:branches,id',
-        ]);
-        $validated['password'] = bcrypt($validated['password']);
-        $userRole = UserRole::where('name', $validated['role'])->first();
-        if (!$userRole) {
-            // Create the role if it doesn't exist
-            $userRole = UserRole::create(['name' => $validated['role']]);
-        }
-        $validated['user_role_id'] = $userRole->id;
-        unset($validated['role']);
-        \App\Models\User::create($validated);
-        return redirect()->route('users.index')->with('success', 'User created successfully!');
+{
+    // Define allowed roles centrally for reuse
+    $allowedRoles = ['super_admin', 'admin', 'moderator', 'accountant'];
+
+    // Conditional validation rules for company_id and branch_id based on role
+    $rules = [
+        'name' => 'required|string|max:255',
+        'email' => 'required|email|unique:users,email',
+        'password' => 'required|string|min:6|confirmed',
+        'role' => 'required|in:' . implode(',', $allowedRoles),
+    ];
+
+    // Only require company_id and branch_id if role is not super_admin
+    if ($request->input('role') !== 'super_admin') {
+        $rules['company_id'] = 'required|exists:companies,id';
+        $rules['branch_id'] = 'required|exists:branches,id';
+    } else {
+        // For super_admin, nullify company_id and branch_id
+        $request->merge(['company_id' => null, 'branch_id' => null]);
     }
+
+    $validated = $request->validate($rules);
+
+    $validated['password'] = bcrypt($validated['password']);
+
+    // Use firstOrCreate to simplify role retrieval or creation
+    $userRole = UserRole::firstOrCreate(['name' => $validated['role']]);
+
+    $validated['user_role_id'] = $userRole->id;
+    unset($validated['role']);
+
+    // Use a DB transaction to ensure data consistency
+    \DB::transaction(function () use ($validated) {
+        \App\Models\User::create($validated);
+    });
+
+    return redirect()->route('users.index')->with('success', 'User created successfully!');
+}
+
 
     /**
      * Display the specified resource.

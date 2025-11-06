@@ -29,6 +29,14 @@ Route::middleware(['guest'])->group(function () {
 // Protected Routes
 Route::middleware(['auth'])->group(function () {
   Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+   // User Management
+   Route::get('/users', [UserController::class, 'index'])->name('users.index');
+   Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
+   Route::post('/users', [UserController::class, 'store'])->name('users.store');
+   Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+   Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+   Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+  
 
   Route::middleware(['superadmin'])->group(function () {
     // Branch Management
@@ -52,13 +60,7 @@ Route::middleware(['auth'])->group(function () {
     // Voucher Template Routes
     Route::resource('voucher_templates', VoucherTemplateController::class);
 
-    // User Management
-    Route::get('/users', [UserController::class, 'index'])->name('users.index');
-    Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
-    Route::post('/users', [UserController::class, 'store'])->name('users.store');
-    Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
-    Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
-    Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+   
 
     // Truck_Owner Bank Accounts
     Route::get('truck_owner_bank_accounts/index', [TruckOwnerBankAccountController::class, 'index'])->name('truck_owner_bank_accounts.index');
