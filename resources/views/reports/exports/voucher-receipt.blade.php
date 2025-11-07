@@ -202,8 +202,8 @@
                 ...........................
             @endif
             ट्रक मालिक का नाम
-            @if (!empty(optional($firstLr->truck->transporter)->name))
-                <span class="dotted-underline">{{ $firstLr->truck->transporter->name }}</span>
+            @if (!empty(optional($firstLr->transporter)->name))
+                <span class="dotted-underline">{{ $firstLr->transporter->name }}</span>
             @else
                 ...........................
             @endif
