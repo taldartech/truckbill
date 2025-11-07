@@ -25,8 +25,12 @@ class InvoiceController extends Controller
     $invoices = Invoice::with(['company', 'consignee'])->orderByDesc('id');
 
     // Apply filters
-    if ($request->has('generated_date') && !empty($request->generated_date)) {
-      $invoices->whereDate('generated_date', $request->generated_date);
+    // if ($request->has('generated_date') && !empty($request->generated_date)) {
+    //   $invoices->whereDate('generated_date', $request->generated_date);
+    // }
+
+    if ($request->has('generated_date_from') && !empty($request->generated_date_from) && $request->has('generated_date_to') && !empty($request->generated_date_to)) {
+      $invoices->whereBetween('generated_date', [$request->generated_date_from, $request->generated_date_to]);
     }
 
     // Add other existing filters here if needed
