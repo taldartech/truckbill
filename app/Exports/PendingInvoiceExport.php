@@ -36,6 +36,7 @@ class PendingInvoiceExport implements FromCollection, WithHeadings
             $amount = $lr->weight * $lr->fr_rate;
             return [
                 'Truck No' => $lr->truck->truck_number ?? 'N/A',
+                'Customer' => $lr->customer->name ?? 'N/A',
                 'From Place' => $lr->source_city,
                 'To Place' => $lr->destination_city,
                 'Consignment No' => $lr->lr_number,
@@ -54,6 +55,7 @@ class PendingInvoiceExport implements FromCollection, WithHeadings
     {
         return [
             'Truck No',
+            'Customer',
             'From Place',
             'To Place',
             'Consignment No',
