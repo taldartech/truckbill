@@ -23,30 +23,7 @@ class UserController extends Controller
         return view('users.index', compact('roles', 'companies'));
     }
 
-    // public function index(Request $request)
-    // {
-    //     if ($request->ajax()) {
-    //         return $this->getUsersData($request);
-    //     }
-    
-    //     // $userRoleName = auth()->check() ? auth()->user()->userRole->name : null;
-    
-    //     // if ($userRoleName === 'super_admin') {
-    //     //     // Super Admin can see all except itself
-    //     //     $roles = [ 'admin', 'moderator', 'accountant'];
-    //     // } elseif ($userRoleName === 'master_admin') {
-    //     //     // Master Admin can see itself and super_admin
-    //     //     $roles = ['super_admin', 'master_admin'];
-    //     // } else {
-    //     //     // Other users (default)
-    //     //     $roles = ['admin', 'moderator', 'accountant'];
-    //     // }
-    
-    //     $companies = \App\Models\Company::where('user_id', auth()->user()->id)->get();
-    
-    //     return view('users.index', compact('roles', 'companies'));
-    // }
-    
+   
     
     private function getUsersData(Request $request)
 {
