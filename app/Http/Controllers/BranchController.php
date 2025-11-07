@@ -14,7 +14,12 @@ class BranchController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $branches = Branch::with('company');
+            //fetch company according to user->id 
+            $branches = \App\Models\Branch::with('company')
+        ->whereHas('company', function ($q) {
+            $q->where('user_id', auth()->user()->id);
+        })
+        ->get();
             
             return DataTables::of($branches)
                 ->addIndexColumn()
@@ -39,7 +44,8 @@ class BranchController extends Controller
     // Show create form
     public function create()
     {
-        $companies = Company::all(); // select company for branch
+        $companies = Company::all()->where('user_id', auth()->user()->id); // select company for branch
+        
         return view('branches.create', compact('companies'));
     }
 
@@ -61,7 +67,7 @@ class BranchController extends Controller
     // Show edit form
     public function edit(Branch $branch)
     {
-        $companies = Company::all();
+        $companies = Company::all()->where('user_id', auth()->user()->id);
         return view('branches.edit', compact('branch', 'companies'));
     }
 

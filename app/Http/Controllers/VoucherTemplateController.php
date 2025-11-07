@@ -12,7 +12,7 @@ class VoucherTemplateController extends Controller
      */
     public function index()
     {
-        $company = Company::all();
+        $company = Company::all()->where('user_id', auth()->user()->id);
         return view('voucher_templates.index', compact('company'));
     }
 

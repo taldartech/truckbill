@@ -11,61 +11,73 @@ class UserController extends Controller
     /**
      * Display a listing of the resource.
      */
+    public function index(Request $request)
+    {
+        // Handle DataTables AJAX request
+        if ($request->ajax()) {
+            return $this->getUsersData($request);
+        }
+        
+        $roles = ['super_admin', 'admin', 'moderator', 'accountant'];
+        $companies = \App\Models\Company::all()->where('user_id', auth()->user()->id);
+        return view('users.index', compact('roles', 'companies'));
+    }
+
     // public function index(Request $request)
     // {
-    //     // Handle DataTables AJAX request
     //     if ($request->ajax()) {
     //         return $this->getUsersData($request);
     //     }
-        
-    //     $roles = ['super_admin', 'admin', 'moderator', 'accountant'];
-    //     $companies = \App\Models\Company::all();
+    
+    //     // $userRoleName = auth()->check() ? auth()->user()->userRole->name : null;
+    
+    //     // if ($userRoleName === 'super_admin') {
+    //     //     // Super Admin can see all except itself
+    //     //     $roles = [ 'admin', 'moderator', 'accountant'];
+    //     // } elseif ($userRoleName === 'master_admin') {
+    //     //     // Master Admin can see itself and super_admin
+    //     //     $roles = ['super_admin', 'master_admin'];
+    //     // } else {
+    //     //     // Other users (default)
+    //     //     $roles = ['admin', 'moderator', 'accountant'];
+    //     // }
+    
+    //     $companies = \App\Models\Company::where('user_id', auth()->user()->id)->get();
+    
     //     return view('users.index', compact('roles', 'companies'));
     // }
-    public function index(Request $request)
-{
-    if ($request->ajax()) {
-        return $this->getUsersData($request);
-    }
-
-    $userRoleName = auth()->check() ? auth()->user()->userRole->name : null;
-
-    if ($userRoleName === 'master_admin') {
-        // Show only "super_admin" and "master_admin" roles
-        $roles = ['super_admin', 'master_admin'];
-    } elseif ($userRoleName === 'super_admin') {
-        // Show all roles except "super_admin" itself (remove "super_admin")
-        $roles = ['admin', 'moderator', 'accountant'];
-    } else {
-        // Default to all roles
-        $roles = ['admin', 'moderator', 'accountant'];
-    }
-
-    $companies = \App\Models\Company::all();
-
-    return view('users.index', compact('roles', 'companies'));
-}
-
+    
     
     private function getUsersData(Request $request)
-    {
-        $query = \App\Models\User::with(['company', 'userRole']);
-        
-        // Handle search
-        if ($request->has('search') && $request->search['value']) {
-            $searchValue = $request->search['value'];
-            $query->where(function($q) use ($searchValue) {
-                $q->where('name', 'like', "%{$searchValue}%")
-                  ->orWhere('email', 'like', "%{$searchValue}%")
-                  ->orWhereHas('userRole', function($roleQuery) use ($searchValue) {
-                      $roleQuery->where('name', 'like', "%{$searchValue}%");
-                  })
-                  ->orWhereHas('company', function($companyQuery) use ($searchValue) {
-                      $companyQuery->where('name', 'like', "%{$searchValue}%");
-                  });
-            });
-        }
-        
+{
+    $user = auth()->user();
+
+    // Start query with eager loading
+    $query = \App\Models\User::with(['company', 'userRole']);
+
+    if ($user->userRole->name !== 'master_admin') {
+        // For regular users: filter by companies owned by the user
+        $companyIds = \App\Models\Company::where('user_id', $user->id)->pluck('id')->toArray();
+        $query->whereIn('company_id', $companyIds);
+    } else {
+        // For master_admin: filter users having user_role_id 1 or 2
+        $query->whereIn('user_role_id', [1, 2]);
+    }
+
+    // Handle search
+    if ($request->has('search') && $request->search['value']) {
+        $searchValue = $request->search['value'];
+        $query->where(function ($q) use ($searchValue) {
+            $q->where('name', 'like', "%{$searchValue}%")
+              ->orWhere('email', 'like', "%{$searchValue}%")
+              ->orWhereHas('userRole', function ($roleQuery) use ($searchValue) {
+                  $roleQuery->where('name', 'like', "%{$searchValue}%");
+              })
+              ->orWhereHas('company', function ($companyQuery) use ($searchValue) {
+                  $companyQuery->where('name', 'like', "%{$searchValue}%");
+              });
+        });
+    } 
         // Handle column-specific search
         if ($request->has('columns')) {
             foreach ($request->columns as $index => $column) {
@@ -191,7 +203,7 @@ class UserController extends Controller
      */
     public function create()
     {
-        $companies = \App\Models\Company::all();
+        $companies = \App\Models\Company::all()->where('user_id', auth()->user()->id);
         $roles = ['admin', 'moderator', 'accountant'];
         $superAdmin = 'super_admin';
         $branches = \App\Models\Branch::all();

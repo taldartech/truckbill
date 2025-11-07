@@ -20,7 +20,7 @@ class CompanyController extends Controller
 
     private function getCompaniesData(Request $request)
     {
-        $query = \App\Models\Company::query();
+        $query = \App\Models\Company::query()->where('user_id', auth()->user()->id);
 
         // Handle search
         if ($request->has('search') && $request->search['value']) {
@@ -258,6 +258,7 @@ $endOfYear = $startOfYear->copy()->addYear()->subDay()->endOfDay();
             'name.regex' => 'The name must contain at least one alphabetic character.', 
         ]);
         // dd($validated);
+        $validated['user_id'] = auth()->user()->id;
         $company->update($validated);
         return redirect()->route('company.index')->with('success', 'Company updated successfully!');
     }
@@ -275,7 +276,11 @@ $endOfYear = $startOfYear->copy()->addYear()->subDay()->endOfDay();
 
     public function store(Request $request)
     {
+        
+      
         $validated = $request->validate([
+            
+            
           'name' => [
             'required',
             'string',
@@ -323,11 +328,13 @@ $endOfYear = $startOfYear->copy()->addYear()->subDay()->endOfDay();
             'state_id' => 'nullable|exists:states,id',
             'city_id' => 'nullable|exists:cities,id',
             'pin_code' => 'nullable|string|max:10',
+            
         ], [
             'name.regex' => 'The name must contain at least one alphabetic character.', 
         ]);
 
         // Set default GST type to regular if not provided
+        $validated['user_id'] = auth()->user()->id;
         if (!$request->filled('gst_type')) {
             $validated['gst_type'] = 'regular';
         }

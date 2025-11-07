@@ -26,6 +26,7 @@ class Company extends Model
     'template_name',
     'template_address',
     'template_note',
+    'user_id',
   ];
 
   protected $dates = ['deleted_at'];
@@ -47,5 +48,9 @@ class Company extends Model
     public function branches()
 {
     return $this->hasMany(Branch::class, 'company_id');
+}
+public function user()
+{
+    return $this->belongsTo(User::class);
 }
 }

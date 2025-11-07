@@ -22,7 +22,7 @@
                     <label for="company_id" class="form-label">Company *</label>
                     <select class="form-select" id="company_id" name="company_id" required>
                         <option value="">Select Company</option>
-                        @foreach(\App\Models\Company::all() as $company)
+                        @foreach($companies as $company)
                             <option value="{{ $company->id }}" {{ old('company_id') == $company->id ? 'selected' : '' }}>
                                 {{ $company->name }}
                             </option>
