@@ -288,7 +288,7 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        $companies = \App\Models\Company::all();
+        $companies = \App\Models\Company::all()->where('user_id', auth()->user()->id);
         $roles = ['admin', 'moderator', 'accountant'];
         $branches = \App\Models\Branch::all();
         return view('users.edit', compact('user', 'companies', 'roles', 'branches'));
