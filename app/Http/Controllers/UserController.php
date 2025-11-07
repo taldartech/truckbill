@@ -18,9 +18,9 @@ class UserController extends Controller
             return $this->getUsersData($request);
         }
         
-        $roles = ['super_admin', 'admin', 'moderator', 'accountant'];
-        $companies = \App\Models\Company::all()->where('user_id', auth()->user()->id);
-        return view('users.index', compact('roles', 'companies'));
+        // $roles = ['super_admin', 'admin', 'moderator', 'accountant'];
+        // $companies = \App\Models\Company::all()->where('user_id', auth()->user()->id);
+        return view('users.index');
     }
 
    
