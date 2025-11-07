@@ -180,6 +180,8 @@
                                 <td>
                                     @if ($payment->created_by)
                                         {{ $payment->creator->name }}
+                                        <br>
+                                        ({{ $payment->creator->branch->branch_name ?? '' }})
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
@@ -187,6 +189,8 @@
                                 <td>
                                     @if ($payment->updated_by)
                                         {{ $payment->updater->name }}
+                                        <br>
+                                        ({{ $payment->updater->branch->branch_name ?? '' }})
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
