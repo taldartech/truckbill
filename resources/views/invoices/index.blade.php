@@ -85,6 +85,14 @@
                             onchange="toggleField(this)">
                         <label class="form-check-label" for="filter_date">Date</label>
                     </div>
+                    <div class="col-md-3 d-none" id="field_generated_date_from">
+                        <label class="form-label">From Date</label>
+                        <input type="date" name="generated_date_from" class="form-control" value="{{ request('generated_date_from') }}">
+                    </div>
+                    <div class="col-md-3 d-none" id="field_generated_date_to">
+                        <label class="form-label">To Date</label>
+                        <input type="date" name="generated_date_to" class="form-control" value="{{ request('generated_date_to') }}">
+                    </div>
                 </div>
             </div>
 
@@ -405,35 +413,80 @@
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
 
+        // function toggleField(checkbox) {
+        //     const fieldId = 'field_' + checkbox.value;
+        //     const field = document.getElementById(fieldId);
+        //     if (checkbox.checked) {
+        //         field.classList.remove('d-none');
+        //     } else {
+        //         field.classList.add('d-none');
+        //         const input = field.querySelector('input, select');
+        //         if (input) input.value = '';
+        //     }
+        // }
         function toggleField(checkbox) {
-            const fieldId = 'field_' + checkbox.value;
-            const field = document.getElementById(fieldId);
-            if (checkbox.checked) {
+    if(checkbox.value === 'generated_date') {
+        // Toggle both from and to date fields
+        ['field_generated_date_from', 'field_generated_date_to'].forEach(id => {
+            const field = document.getElementById(id);
+            if(checkbox.checked) {
                 field.classList.remove('d-none');
             } else {
                 field.classList.add('d-none');
-                const input = field.querySelector('input, select');
-                if (input) input.value = '';
+                const input = field.querySelector('input');
+                if(input) input.value = '';
             }
+        });
+    } else {
+        const fieldId = 'field_' + checkbox.value;
+        const field = document.getElementById(fieldId);
+        if (checkbox.checked) {
+            field.classList.remove('d-none');
+        } else {
+            field.classList.add('d-none');
+            const input = field.querySelector('input, select');
+            if (input) input.value = '';
         }
+    }
+}
+
 
         // Initialize filter fields based on URL parameters
+        // document.addEventListener('DOMContentLoaded', function() {
+        //     // Get all filter checkboxes
+        //     const checkboxes = document.querySelectorAll('.form-check-input');
+
+        //     // Check each checkbox based on URL parameters
+        //     checkboxes.forEach(checkbox => {
+        //         const value = checkbox.value;
+        //         const fieldId = 'field_' + value;
+        //         const field = document.getElementById(fieldId);
+        //         const urlValue = new URLSearchParams(window.location.search).get(value);
+
+        //         if (urlValue) {
+        //             checkbox.checked = true;
+        //             field.classList.remove('d-none');
+        //         }
+        //     });
+        // });
         document.addEventListener('DOMContentLoaded', function() {
-            // Get all filter checkboxes
-            const checkboxes = document.querySelectorAll('.form-check-input');
+    const checkboxes = document.querySelectorAll('.form-check-input');
+    checkboxes.forEach(checkbox => {
+        const value = checkbox.value;
+        const urlValue = new URLSearchParams(window.location.search).get(value);
 
-            // Check each checkbox based on URL parameters
-            checkboxes.forEach(checkbox => {
-                const value = checkbox.value;
-                const fieldId = 'field_' + value;
-                const field = document.getElementById(fieldId);
-                const urlValue = new URLSearchParams(window.location.search).get(value);
+        if (urlValue) {
+            checkbox.checked = true;
+            if(value === 'generated_date') {
+                ['field_generated_date_from', 'field_generated_date_to'].forEach(id => {
+                    document.getElementById(id).classList.remove('d-none');
+                });
+            } else {
+                document.getElementById('field_' + value).classList.remove('d-none');
+            }
+        }
+    });
+});
 
-                if (urlValue) {
-                    checkbox.checked = true;
-                    field.classList.remove('d-none');
-                }
-            });
-        });
     </script>
 @endsection
