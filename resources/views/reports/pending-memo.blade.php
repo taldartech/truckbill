@@ -111,6 +111,7 @@
                             <thead>
                                 <tr>
                                     <th>Truck No</th>
+                                    <th>Customer</th>
                                     <th>From Place</th>
                                     <th>To Place</th>
                                     <th>Consignment No</th>
@@ -134,6 +135,7 @@
                                     @endphp
                                     <tr>
                                         <td>{{ $lr->truck->truck_number ?? 'N/A' }}</td>
+                                        <td>{{ $lr->customer->name ?? 'N/A' }}</td>
                                         <td>{{ $lr->source_city }}</td>
                                         <td>{{ $lr->destination_city }}</td>
                                         <td>{{ $lr->lr_number }}</td>
