@@ -263,13 +263,30 @@ class UserController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
+    // public function edit(User $user)
+    // {
+    //     $companies = \App\Models\Company::all()->where('user_id', auth()->user()->id);
+    //     $roles = ['admin', 'moderator', 'accountant'];
+    //     $branches = \App\Models\Branch::all();
+    //     return view('users.edit', compact('user', 'companies', 'roles', 'branches'));
+    // }
     public function edit(User $user)
-    {
-        $companies = \App\Models\Company::all()->where('user_id', auth()->user()->id);
-        $roles = ['admin', 'moderator', 'accountant'];
-        $branches = \App\Models\Branch::all();
-        return view('users.edit', compact('user', 'companies', 'roles', 'branches'));
+{
+    // Get logged-in user's company IDs
+    $companyIds = \App\Models\Company::where('user_id', auth()->user()->id)->pluck('id');
+
+    // Check if this user belongs to one of those companies
+    if (!in_array($user->company_id, $companyIds->toArray())) {
+        abort(403, 'Unauthorized access.'); // stop if not allowed
     }
+
+    $companies = \App\Models\Company::where('user_id', auth()->user()->id)->get();
+    $roles = ['admin', 'moderator', 'accountant'];
+    $branches = \App\Models\Branch::whereIn('company_id', $companyIds)->get();
+
+    return view('users.edit', compact('user', 'companies', 'roles', 'branches'));
+}
+
 
     /**
      * Update the specified resource in storage.
@@ -302,9 +319,25 @@ class UserController extends Controller
     /**
      * Remove the specified resource from storage.
      */
+    // public function destroy(User $user)
+    // {
+    //     $user->delete();
+    //     return redirect()->route('users.index')->with('success', 'User deleted successfully!');
+    // }
     public function destroy(User $user)
-    {
-        $user->delete();
-        return redirect()->route('users.index')->with('success', 'User deleted successfully!');
+{
+    // Get all company IDs belonging to the logged-in user
+    $companyIds = \App\Models\Company::where('user_id', auth()->user()->id)->pluck('id');
+
+    // Check if the user to be deleted belongs to one of these companies
+    if (!in_array($user->company_id, $companyIds->toArray())) {
+        abort(403, 'Unauthorized action.');
     }
+
+    // If authorized, proceed with delete
+    $user->delete();
+
+    return redirect()->route('users.index')->with('success', 'User deleted successfully!');
+}
+
 }
