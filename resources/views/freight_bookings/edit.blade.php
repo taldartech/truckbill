@@ -195,13 +195,8 @@
             {{ $freightBooking->is_cancelled ? 'onsubmit="return false;"' : '' }}>
             @csrf
             @php
-                $is_voucher_created = \App\Models\VoucherPayment::where(
-                    'freight_booking_id',
-                    $freightBooking->id,
-                )->exists();
                 $is_delivered = $freightBooking->is_delivered;
                 $is_invoice_generated = $freightBooking->lr && $freightBooking->lr->invoice_generated;
-                // dd($is_voucher_created, $is_delivered, $is_invoice_generated);
             @endphp
             @method('PUT')
             <div class="card-body">
@@ -213,7 +208,7 @@
                             class="form-control @error('tr_fr_rate') is-invalid @enderror" name="tr_fr_rate" id="tr_fr_rate"
                             value="{{ old('tr_fr_rate', $freightBooking->tr_fr_rate) }}"
                             placeholder="Enter freight rate (₹1 - ₹20,000 per ton)" required
-                            {{ $is_voucher_created || !$is_admin ? 'readonly style=background-color:#e9ecef;' : '' }}
+                            {{ !$is_admin ? 'readonly style=background-color:#e9ecef;' : '' }}
                             {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
                         <small class="form-text text-muted">
                             <i class="fas fa-info-circle"></i> Rate must be between ₹1 and ₹20,000 per ton
@@ -228,7 +223,7 @@
                             class="form-control @error('tr_amount') is-invalid @enderror" name="tr_amount" id="tr_amount"
                             value="{{ old('tr_amount', $freightBooking->tr_amount) }}"
                             placeholder="Auto-calculated (editable)" required
-                            {{ $is_voucher_created || !$is_admin ? 'readonly style=background-color:#e9ecef;' : '' }}
+                            {{ !$is_admin ? 'readonly style=background-color:#e9ecef;' : '' }}
                             {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
                         <small class="form-text text-muted">
                             <i class="fas fa-info-circle"></i> Auto-calculated: TR Freight Rate × Weight. Must be greater
