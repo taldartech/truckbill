@@ -150,7 +150,7 @@
                         <tr>
                             <th style="width: 10px">ID</th>
                             <th>Manual Invoice #</th>
-                            <th>Company</th>
+                           
                             <th>Type</th>
                             <th>Generated Date</th>
                             <th>Customer</th>
@@ -171,7 +171,7 @@
                                         {{ $invoice->manual_invoice_number }}
                                     </a>
                                 </td>
-                                <td>{{ $invoice->company ? $invoice->company->name : '-' }}</td>
+                               
                                 <td>{{ $invoice->invoice_type }}</td>
                                 <td>{{ $invoice->generated_date }}</td>
                                 <td>{{ $invoice->consignee ? $invoice->consignee->name : '-' }}</td>
