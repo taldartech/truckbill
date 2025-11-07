@@ -270,22 +270,7 @@ class UserController extends Controller
     //     $branches = \App\Models\Branch::all();
     //     return view('users.edit', compact('user', 'companies', 'roles', 'branches'));
     // }
-//     public function edit(User $user)
-// {
-//     // Get logged-in user's company IDs
-//     $companyIds = \App\Models\Company::where('user_id', auth()->user()->id)->pluck('id');
 
-//     // Check if this user belongs to one of those companies
-//     if (!in_array($user->company_id, $companyIds->toArray())) {
-//         abort(403, 'Unauthorized access.'); // stop if not allowed
-//     }
-
-//     $companies = \App\Models\Company::where('user_id', auth()->user()->id)->get();
-//     $roles = ['admin', 'moderator', 'accountant'];
-//     $branches = \App\Models\Branch::whereIn('company_id', $companyIds)->get();
-
-//     return view('users.edit', compact('user', 'companies', 'roles', 'branches'));
-// }
 public function edit(User $user)
 {
     $authUser = auth()->user();
