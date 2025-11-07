@@ -306,30 +306,77 @@ public function edit(User $user)
     /**
      * Update the specified resource in storage.
      */
+    // public function update(Request $request, User $user)
+    // {
+    //     $validated = $request->validate([
+    //         'name' => 'required|string|max:255',
+    //         'email' => 'required|email|unique:users,email,' . $user->id,
+    //         'password' => 'nullable|string|min:6|confirmed',
+    //         'role' => 'required|in:super_admin,admin,moderator,accountant',
+    //         'company_id' => 'required|exists:companies,id',
+    //         'branch_id' => 'required|exists:branches,id',
+    //     ]);
+    //     if ($validated['password']) {
+    //         $validated['password'] = bcrypt($validated['password']);
+    //     } else {
+    //         unset($validated['password']);
+    //     }
+    //     $userRole = UserRole::where('name', $validated['role'])->first();
+    //     if (!$userRole) {
+    //         return back()->withErrors(['role' => 'Invalid role selected.']);
+    //     }
+    //     $validated['user_role_id'] = $userRole->id;
+    //     unset($validated['role']);
+    //     $user->update($validated);
+    //     return redirect()->route('users.index')->with('success', 'User updated successfully!');
+    // }
     public function update(Request $request, User $user)
     {
-        $validated = $request->validate([
+        // Define allowed roles centrally for reuse
+        $allowedRoles = ['super_admin', 'admin', 'moderator', 'accountant'];
+    
+        // Conditional validation rules for company_id and branch_id based on role
+        $rules = [
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:6|confirmed',
-            'role' => 'required|in:super_admin,admin,moderator,accountant',
-            'company_id' => 'required|exists:companies,id',
-            'branch_id' => 'required|exists:branches,id',
-        ]);
+            'role' => 'required|in:' . implode(',', $allowedRoles),
+        ];
+    
+        // Only require company_id and branch_id if role is not super_admin
+        if ($request->input('role') !== 'super_admin') {
+            $rules['company_id'] = 'required|exists:companies,id';
+            $rules['branch_id'] = 'required|exists:branches,id';
+        } else {
+            // For super_admin, nullify company_id and branch_id in input
+            $request->merge(['company_id' => null, 'branch_id' => null]);
+        }
+    
+        $validated = $request->validate($rules);
+    
+        // Handle password: hash if provided, remove if empty
         if ($validated['password']) {
             $validated['password'] = bcrypt($validated['password']);
         } else {
             unset($validated['password']);
         }
-        $userRole = UserRole::where('name', $validated['role'])->first();
-        if (!$userRole) {
-            return back()->withErrors(['role' => 'Invalid role selected.']);
-        }
+    
+        // Use firstOrCreate to fetch or create the role
+        $userRole = UserRole::firstOrCreate(['name' => $validated['role']]);
+    
         $validated['user_role_id'] = $userRole->id;
         unset($validated['role']);
-        $user->update($validated);
+    
+        // Use a DB transaction to ensure data consistency while updating
+        \DB::transaction(function () use ($validated, $user) {
+            $user->update($validated);
+        });
+    
         return redirect()->route('users.index')->with('success', 'User updated successfully!');
     }
+    
+
+    
 
     /**
      * Remove the specified resource from storage.
