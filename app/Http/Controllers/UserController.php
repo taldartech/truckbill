@@ -270,22 +270,52 @@ class UserController extends Controller
     //     $branches = \App\Models\Branch::all();
     //     return view('users.edit', compact('user', 'companies', 'roles', 'branches'));
     // }
-    public function edit(User $user)
-{
-    // Get logged-in user's company IDs
-    $companyIds = \App\Models\Company::where('user_id', auth()->user()->id)->pluck('id');
+//     public function edit(User $user)
+// {
+//     // Get logged-in user's company IDs
+//     $companyIds = \App\Models\Company::where('user_id', auth()->user()->id)->pluck('id');
 
-    // Check if this user belongs to one of those companies
-    if (!in_array($user->company_id, $companyIds->toArray())) {
-        abort(403, 'Unauthorized access.'); // stop if not allowed
+//     // Check if this user belongs to one of those companies
+//     if (!in_array($user->company_id, $companyIds->toArray())) {
+//         abort(403, 'Unauthorized access.'); // stop if not allowed
+//     }
+
+//     $companies = \App\Models\Company::where('user_id', auth()->user()->id)->get();
+//     $roles = ['admin', 'moderator', 'accountant'];
+//     $branches = \App\Models\Branch::whereIn('company_id', $companyIds)->get();
+
+//     return view('users.edit', compact('user', 'companies', 'roles', 'branches'));
+// }
+public function edit(User $user)
+{
+    $authUser = auth()->user();
+
+    // Super Admin (user_role_id = 1) can access anyone
+    if ($authUser->user_role_id != 1) {
+        // Get logged-in user's company IDs
+        $companyIds = \App\Models\Company::where('user_id', $authUser->id)->pluck('id');
+
+        // Check if this user belongs to one of those companies
+        if (!in_array($user->company_id, $companyIds->toArray())) {
+            abort(403, 'Unauthorized access.');
+        }
     }
 
-    $companies = \App\Models\Company::where('user_id', auth()->user()->id)->get();
+    // Companies visible only for current user (or all for super admin)
+    $companies = ($authUser->user_role_id == 1)
+        ? \App\Models\Company::all()
+        : \App\Models\Company::where('user_id', $authUser->id)->get();
+
     $roles = ['admin', 'moderator', 'accountant'];
-    $branches = \App\Models\Branch::whereIn('company_id', $companyIds)->get();
+
+    // Branches filtered for company (or all for super admin)
+    $branches = ($authUser->user_role_id == 1)
+        ? \App\Models\Branch::all()
+        : \App\Models\Branch::whereIn('company_id', $companies->pluck('id'))->get();
 
     return view('users.edit', compact('user', 'companies', 'roles', 'branches'));
 }
+
 
 
     /**
