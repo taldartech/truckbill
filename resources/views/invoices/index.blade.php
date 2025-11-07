@@ -150,7 +150,7 @@
                         <tr>
                             <th style="width: 10px">ID</th>
                             <th>Manual Invoice #</th>
-                           
+                            <th>Memo No.</th>
                             <th>Type</th>
                             <th>Generated Date</th>
                             <th>Customer</th>
@@ -171,7 +171,7 @@
                                         {{ $invoice->manual_invoice_number }}
                                     </a>
                                 </td>
-                               
+                                <td>{{ is_array($invoice->memo_ids) ? implode(', ', $invoice->memo_ids) : $invoice->memo_ids }}</td>
                                 <td>{{ $invoice->invoice_type }}</td>
                                 <td>{{ $invoice->generated_date }}</td>
                                 <td>{{ $invoice->consignee ? $invoice->consignee->name : '-' }}</td>
