@@ -28,7 +28,7 @@
                 <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="gst_number" class="form-label">GST Number</label>
-                    <input type="text" class="form-control" id="gst_number" name="gst_number" value="{{ old('gst_number', $company->gst_number) }}">
+                    <input type="text" class="form-control" id="gst_number" name="gst_number"  value="{{ old('gst_number', $company->gst_number) }}">
                     @error('gst_number') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="valid-feedback">Looks good!</div>
                 </div>
@@ -36,7 +36,7 @@
                 <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="pan_number" class="form-label">PAN Number</label>
-                    <input type="text" class="form-control" id="pan_number" name="pan_number" value="{{ old('pan_number', $company->pan_number) }}">
+                    <input type="text" class="form-control" id="pan_number" name="pan_number" required value="{{ old('pan_number', $company->pan_number) }}">
                     @error('pan_number') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="valid-feedback">Looks good!</div>
                 </div>
@@ -44,8 +44,8 @@
                 <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="gst_scheme" class="form-label">GST Scheme</label>
-                    <select class="form-select" id="gst_scheme" name="gst_scheme" value="{{ old('gst_scheme', $company->gst_scheme) }}">
-                        <option value="">Select</option>
+                    <select class="form-select" id="gst_scheme" name="gst_scheme" required value="{{ old('gst_scheme', $company->gst_scheme) }}">
+                       
                         <option value="reverse charge" {{ old('gst_scheme', $company->gst_scheme) == 'reverse charge' ? 'selected' : '' }}>Reverse Charge</option>
                         <option value="forward charge" {{ old('gst_scheme', $company->gst_scheme) == 'forward charge' ? 'selected' : '' }}>Forward Charge</option>
                     </select>
@@ -56,14 +56,14 @@
                 <!--begin::Col-->
                  <div class="col-md-6">
                     <label for="gst_type" class="form-label">GST Type *</label>
-                    <input type="text" class="form-control" id="gst_type" name="gst_type"  value="Regular" disabled>
+                    <input type="text" class="form-control" id="gst_type" name="gst_type" required value="Regular" disabled>
                     @error('gst_type') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
                 <!--end::Col-->
                 <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="address" class="form-label">Address</label>
-                    <textarea class="form-control" id="address" name="address">{{ old('address', $company->address) }}</textarea>
+                    <textarea class="form-control" id="address" name="address" required>{{ old('address', $company->address) }}</textarea>
                     @error('address') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="valid-feedback">Looks good!</div>
                 </div>
@@ -71,7 +71,7 @@
                 <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="country_id" class="form-label">Country</label>
-                    <select class="form-select" id="country_id" name="country_id" onchange="fetchStates(this.value)">
+                    <select class="form-select" id="country_id" name="country_id" required onchange="fetchStates(this.value)">
                         <option value="">Select Country</option>
                         @foreach($countries as $country)
                             <option {{ old('country_id', $company->country_id) == $country->id ? 'selected' : '' }} value="{{ $country->id }}">{{ $country->name }}</option>
@@ -84,7 +84,7 @@
                 <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="state_id" class="form-label">State</label>
-                    <select class="form-select" id="state_id" name="state_id" onchange="fetchCities(this.value)">
+                    <select class="form-select" id="state_id" name="state_id" required onchange="fetchCities(this.value)">
                         <option value="">Select State</option>
                         @foreach($states as $state)
                             <option {{ old('state_id', $company->state_id) == $state->id ? 'selected' : '' }} value="{{ $state->id }}">{{ $state->name }}</option>
@@ -97,7 +97,7 @@
                 <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="city_id" class="form-label">City</label>
-                    <select class="form-select" id="city_id" name="city_id">
+                    <select class="form-select" id="city_id" name="city_id" required>
                         <option value="">Select City</option>
                         @foreach($cities as $city)
                             <option {{ old('city_id', $company->city_id) == $city->id ? 'selected' : '' }} value="{{ $city->id }}">{{ $city->name }}</option>
@@ -109,7 +109,7 @@
                 <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="pin_code" class="form-label">Pin Code</label>
-                    <input type="text" class="form-control" id="pin_code" name="pin_code" value="{{ old('pin_code', $company->pin_code) }}">
+                    <input type="text" class="form-control" id="pin_code" name="pin_code" required value="{{ old('pin_code', $company->pin_code) }}">
                     @error('pin_code') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="valid-feedback">Looks good!</div>
                 </div>
@@ -117,7 +117,7 @@
                 <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="contact_person" class="form-label">Contact Person</label>
-                    <input type="text" class="form-control" id="contact_person" name="contact_person" value="{{ old('contact_person', $company->contact_person) }}">
+                    <input type="text" class="form-control" id="contact_person" name="contact_person" required value="{{ old('contact_person', $company->contact_person) }}">
                     @error('contact_person') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="valid-feedback">Looks good!</div>
                 </div>
@@ -125,8 +125,25 @@
                 <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="contact_number" class="form-label">Contact Number</label>
-                    <input type="text" class="form-control" id="contact_number" name="contact_number" value="{{ old('contact_number', $company->contact_number) }}">
+                    <input type="text" class="form-control" id="contact_number" name="contact_number" required value="{{ old('contact_number', $company->contact_number) }}">
                     @error('contact_number') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="valid-feedback">Looks good!</div>
+                </div>
+                <!--end::Col-->
+            </div>
+            <!--end::Row-->
+            <!--begin::Row-->
+            <div class="row g-3">
+                <!--begin::Col-->
+                <div class="col-md-6">
+                    <label for="company_type" class="form-label">Company Type</label>
+                    <select class="form-select" id="company_type" name="company_type" required>
+                        <option value="">Select Company Type</option>
+                        <option value="Broker" {{ old('company_type', $company->company_type) == 'Broker' ? 'selected' : '' }}>Broker</option>
+                        <option value="Agency" {{ old('company_type', $company->company_type) == 'Agency' ? 'selected' : '' }}>Agency</option>
+                        <option value="Both" {{ old('company_type', $company->company_type) == 'Both' ? 'selected' : '' }}>Both</option>
+                    </select>
+                    @error('company_type') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="valid-feedback">Looks good!</div>
                 </div>
                 <!--end::Col-->

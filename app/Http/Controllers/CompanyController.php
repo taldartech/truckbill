@@ -268,6 +268,7 @@ public function unblock($id)
                     }
                 },  
             ],
+            'company_type' => 'nullable|in:Broker,Agency,Both',
             'gst_scheme' => 'nullable|in:reverse charge,forward charge',
             'gst_type' => 'nullable|in:composition,regular',
             'address' => 'nullable|string',
@@ -355,6 +356,7 @@ public function unblock($id)
                     }
                 },
             ],
+            'company_type' => 'nullable|in:Broker,Agency,Both',
             'country_id' => 'nullable|exists:countries,id',
             'state_id' => 'nullable|exists:states,id',
             'city_id' => 'nullable|exists:cities,id',
@@ -371,6 +373,6 @@ public function unblock($id)
         }
 
         \App\Models\Company::create($validated);
-        return redirect()->route('company.create')->with('success', 'Company registered successfully!');
+        return redirect()->route('company.index')->with('success', 'Company registered successfully!');
     }
 }

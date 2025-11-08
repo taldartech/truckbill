@@ -28,6 +28,7 @@ class Company extends Model
     'template_note',
     'user_id',
     'is_blocked',
+    'company_type',
   ];
 
   protected $dates = ['deleted_at'];
