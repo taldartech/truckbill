@@ -202,18 +202,18 @@
                 ...........................
             @endif
             ट्रक मालिक का नाम
-            @if (!empty(optional($firstLr->truck->transporter)->name))
-                <span class="dotted-underline">{{ $firstLr->truck->transporter->name }}</span>
+            @if (!empty(optional($firstLr->transporter)->name))
+                <span class="dotted-underline">{{ $firstLr->transporter->name }}</span>
             @else
                 ...........................
             @endif
             पता
             @if (
-                !empty(optional($firstLr->truck->transporter)->address) ||
-                    !empty(optional($firstLr->truck->transporter->city)->name))
+                !empty(optional($firstLr->transporter)->address) ||
+                    !empty(optional($firstLr->transporter->city)->name))
                 <span class="dotted-underline">
-                    {{ $firstLr->truck->transporter->address ?? '' }},
-                    {{ optional($firstLr->truck->transporter->city)->name ?? '' }}
+                    {{ $firstLr->transporter->address ?? '' }},
+                    {{ optional($firstLr->transporter->city)->name ?? '' }}
                 </span>
             @else
                 ...........................

@@ -202,7 +202,10 @@
                                 </td>
                                 {{-- <td class="text-center">{{ $bookings->firstItem() + $index }}</td>
                                 <td><a href="{{ route('freight_bookings.show', $booking->id) }}" class="text-primary text-decoration-underline">{{ $booking->id ? $booking->id : '-' }}</a></td> --}}
-                                <td class="text-center">
+                                {{-- <td class="text-center">
+                                    {{ $booking->lr && $booking->lr->gr_date ? date('d-m-Y', strtotime($booking->lr->gr_date)) : '-' }}
+                                </td> --}}
+                                <td class="text-center" data-order="{{ $booking->lr && $booking->lr->gr_date ? date('Y-m-d', strtotime($booking->lr->gr_date)) : '' }}">
                                     {{ $booking->lr && $booking->lr->gr_date ? date('d-m-Y', strtotime($booking->lr->gr_date)) : '-' }}
                                 </td>
                                 <td>
