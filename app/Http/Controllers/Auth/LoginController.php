@@ -23,8 +23,21 @@ class LoginController extends Controller
         ]);
 
         if (Auth::attempt($credentials)) {
+            //fetch the user_id from the user table , from users table fetch company id and check if is_blocked is 1 than do not allow to loin show msg
+               //from users table fetdch company id
+            $company_id = Auth::user()->company_id;
+            $company = \App\Models\Company::where('id', $company_id)->first();
+            //if is_blocked is null than allow to loin
+            if ($company->is_blocked != null) {
+                Auth::logout();
+                return back()->withErrors([
+                    'email' => 'Your account is blocked',
+                ]);
+            }
+            else{
             $request->session()->regenerate();
             return redirect()->intended('/dashboard');
+            }
         }
 
         return back()->withErrors([
