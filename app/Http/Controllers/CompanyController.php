@@ -20,7 +20,12 @@ class CompanyController extends Controller
 
     private function getCompaniesData(Request $request)
     {
-        $query = \App\Models\Company::query()->where('user_id', auth()->user()->id);
+        //if user is master admin than show all companies
+        if (auth()->user()->userRole->name === 'master_admin') {
+            $query = \App\Models\Company::query();
+        } else {
+            $query = \App\Models\Company::query()->where('user_id', auth()->user()->id);
+        }
 
         // Handle search
         if ($request->has('search') && $request->search['value']) {
@@ -166,6 +171,8 @@ $endOfYear = $startOfYear->copy()->addYear()->subDay()->endOfDay();
        $invoiceCount = \App\Models\Invoice::where('company_id', $company->id)
        ->whereBetween('created_at', [$startOfYear, $endOfYear])
        ->count();
+   if (auth()->user()->userRole->name !== 'master_admin') {
+       
    
    if ($invoiceCount == 0) {
        $editUrl = route('company.edit', $company->id);
@@ -176,15 +183,7 @@ $endOfYear = $startOfYear->copy()->addYear()->subDay()->endOfDay();
                        <i class="bi bi-pencil"></i></a>';
    }
 
-        // if ($invoiceCount == 0) {
-        //     $editUrl = route('company.edit', $company->id);
-        //     $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit Company">';
-        //     $buttons .= '<i class="bi bi-pencil"></i></a>';
-        // }
-        // else{
-        //     $buttons .= '<a href="javascript:void(0)" class="btn btn-sm btn-info" title="Edit Company">';
-        //     $buttons .= '<i class="bi bi-pencil"></i></a>';
-        // }
+       
 
         // Delete button
         $deleteUrl = route('company.destroy', $company->id);
@@ -196,6 +195,38 @@ $endOfYear = $startOfYear->copy()->addYear()->subDay()->endOfDay();
         $buttons .= '</div>';
         return $buttons;
     }
+    else{
+        if ($company->is_blocked) {
+            $unblockUrl = route('company.unblock', $company->id);
+            $buttons .= '<a href="' . $unblockUrl . '" class="btn btn-sm btn-danger" title="Unblock User"
+                          onclick="return confirm(\'Are you sure you want to unblock this company?\');">
+                          <i class="bi bi-unlock"></i></a>';
+        } else {
+            $blockUrl = route('company.block', $company->id);
+            $buttons .= '<a href="' . $blockUrl . '" class="btn btn-sm btn-info" title="Block User"
+                          onclick="return confirm(\'Are you sure you want to block this company?\');">
+                          <i class="bi bi-lock"></i></a>';
+        }
+        $buttons .= '</div>';
+        return $buttons;
+    }
+}
+public function block($id)
+{
+    $company = \App\Models\Company::findOrFail($id);
+    $company->is_blocked = true;
+    $company->save();
+    return redirect()->back()->with('success', 'Company blocked successfully');
+}
+public function unblock($id)
+{
+    $company = \App\Models\Company::findOrFail($id);
+    $company->is_blocked = false;
+    $company->save();
+    return redirect()->back()->with('success', 'Company unblocked successfully');
+}
+
+
 
     public function edit($id)
     {

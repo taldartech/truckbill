@@ -37,6 +37,16 @@ Route::middleware(['auth'])->group(function () {
    Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
    Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
    Route::get('/users/{user}/delete', [UserController::class, 'destroy'])->name('users.destroy');
+
+     // Company Registration
+     Route::get('/company/create', [CompanyController::class, 'create'])->name('company.create');
+     Route::post('/company', [CompanyController::class, 'store'])->name('company.store');
+     Route::get('/company', [CompanyController::class, 'index'])->name('company.index');
+     Route::get('/company/{company}/edit', [CompanyController::class, 'edit'])->name('company.edit');
+     Route::put('/company/{company}', [CompanyController::class, 'update'])->name('company.update');
+     Route::delete('/company/{company}', [CompanyController::class, 'destroy'])->name('company.destroy');
+     Route::get('/company/{company}/block', [CompanyController::class, 'block'])->name('company.block');
+     Route::get('/company/{company}/unblock', [CompanyController::class, 'unblock'])->name('company.unblock');
   
 
   Route::middleware(['superadmin'])->group(function () {
@@ -50,13 +60,7 @@ Route::middleware(['auth'])->group(function () {
       Route::delete('/{branch}', [BranchController::class, 'destroy'])->name('branches.destroy');
     });
 
-    // Company Registration
-    Route::get('/company/create', [CompanyController::class, 'create'])->name('company.create');
-    Route::post('/company', [CompanyController::class, 'store'])->name('company.store');
-    Route::get('/company', [CompanyController::class, 'index'])->name('company.index');
-    Route::get('/company/{company}/edit', [CompanyController::class, 'edit'])->name('company.edit');
-    Route::put('/company/{company}', [CompanyController::class, 'update'])->name('company.update');
-    Route::delete('/company/{company}', [CompanyController::class, 'destroy'])->name('company.destroy');
+  
 
     // Voucher Template Routes
     Route::resource('voucher_templates', VoucherTemplateController::class);

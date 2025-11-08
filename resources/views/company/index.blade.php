@@ -14,12 +14,13 @@
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
-
+    @if (auth()->user()->userRole->name !== 'master_admin')
     <div class="d-flex justify-content-end gap-2 mb-3">
         <a href="{{ route('company.create') }}" class="btn btn-info">
             <i class="bi bi-plus"></i> Create
         </a>
     </div>
+    @endif
 
     <div class="card mb-4">
         <div class="card-header">

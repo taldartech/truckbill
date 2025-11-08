@@ -295,6 +295,26 @@
                                 <p>Users</p>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link{{ Request::is('company') || Request::is('company/create') ? ' active' : '' }}"
+                                href="#companyMenu">
+                                <i class="fas fa-money-check-alt"></i>
+                                <p>
+                                    Company
+                                    <i class="nav-arrow bi bi-chevron-right"></i>
+                                </p>
+                            </a>
+                            <ul class="nav nav-treeview">
+                                <li class="nav-item">
+                                    <a href="/company"
+                                        class="nav-link{{ Request::is('company') ? ' active' : '' }}">
+                                        <i class="fas fa-list"></i>
+                                        <p>Company List</p>
+                                    </a>
+                                </li>
+                               
+                            </ul>
+                        </li>
 
                         @endif
                     
