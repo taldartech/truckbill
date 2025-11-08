@@ -27,7 +27,7 @@ Route::middleware(['guest'])->group(function () {
   Route::post('/login', [LoginController::class, 'login']);
 });
 // Protected Routes
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth','checkblock'])->group(function () {
   Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
    // User Management
    Route::get('/users', [UserController::class, 'index'])->name('users.index');
