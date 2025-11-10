@@ -47,3 +47,5 @@ ad.js
 .env
 
 /vendor
+
+public/storage
