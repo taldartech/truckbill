@@ -150,6 +150,13 @@
                     <div class="valid-feedback">Looks good!</div>
                 </div>
                 <!--end::Col-->
+                <div class="col-md-6">
+                    <label for="company_logo" class="form-label">Company Logo</label>
+                    <input type="file" class="form-control" id="company_logo" name="company_logo" required>
+                    @error('company_logo') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="valid-feedback">Looks good!</div>
+                </div>
+                <!--end::Col-->
             </div>
             
         </div>

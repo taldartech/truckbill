@@ -94,7 +94,7 @@ class LoginController extends Controller
         $user->password = Hash::make($request->new_password);
         $user->save();
     
-        return redirect()->route('login')->with('status', 'Password changed successfully.');
+        return redirect()->route('dashboard')->with('success', 'Password changed successfully.');
     }
     
 }

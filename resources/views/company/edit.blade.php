@@ -145,6 +145,16 @@
                     </select>
                     @error('company_type') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="valid-feedback">Looks good!</div>
+
+                </div>
+                <!--end::Col-->
+                <!--begin::Col-->
+                <div class="col-md-6">
+                    <label for="company_logo" class="form-label">Company Logo</label>
+                    <input type="file" class="form-control" id="company_logo" name="company_logo">
+                    <img src="{{ asset('storage/' . $company->company_logo) }}" alt="Company Logo" style="width: 100px; height: 100px;">
+                    @error('company_logo') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="valid-feedback">Looks good!</div>
                 </div>
                 <!--end::Col-->
             </div>

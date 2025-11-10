@@ -269,6 +269,7 @@ public function unblock($id)
                 },  
             ],
             'company_type' => 'nullable|in:Broker,Agency,Both',
+            'company_logo' => 'nullable|image|mimes:jpeg,png,jpg|max:200',
             'gst_scheme' => 'nullable|in:reverse charge,forward charge',
             'gst_type' => 'nullable|in:composition,regular',
             'address' => 'nullable|string',
@@ -290,6 +291,12 @@ public function unblock($id)
             'name.regex' => 'The name must contain at least one alphabetic character.', 
         ]);
         // dd($validated);
+        if ($request->hasFile('company_logo')) {
+            // Store the file in the 'public/company_logos' directory
+            $path = $request->file('company_logo')->store('company_logos', 'public');
+    
+           $validated['company_logo'] = $path;
+        }
         $validated['user_id'] = auth()->user()->id;
         $company->update($validated);
         return redirect()->route('company.index')->with('success', 'Company updated successfully!');
@@ -357,6 +364,7 @@ public function unblock($id)
                 },
             ],
             'company_type' => 'nullable|in:Broker,Agency,Both',
+            'company_logo' => 'nullable|image|mimes:jpeg,png,jpg|max:200',
             'country_id' => 'nullable|exists:countries,id',
             'state_id' => 'nullable|exists:states,id',
             'city_id' => 'nullable|exists:cities,id',
@@ -367,6 +375,13 @@ public function unblock($id)
         ]);
 
         // Set default GST type to regular if not provided
+        if ($request->hasFile('company_logo')) {
+            // Store the file in the 'public/company_logos' directory
+            $path = $request->file('company_logo')->store('company_logos', 'public');
+            $validated['company_logo'] = $path;
+    
+           
+        }
         $validated['user_id'] = auth()->user()->id;
         if (!$request->filled('gst_type')) {
             $validated['gst_type'] = 'regular';
