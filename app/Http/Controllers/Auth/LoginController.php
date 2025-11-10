@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Hash;
 
 class LoginController extends Controller
 {
@@ -68,4 +69,32 @@ class LoginController extends Controller
         $request->session()->regenerateToken();
         return redirect()->route('login');
     }
+    public function showChangePasswordForm()
+    {
+        return view('auth.changepassword');
+    }
+    public function changePassword(Request $request)
+    {
+        
+        $request->validate([
+            'old_password' => 'required',
+            'new_password' => 'required',
+            'new_password_confirmation' => 'required|same:new_password',
+        ]);
+    
+        $user = Auth::user();
+       
+    
+        if (!Hash::check($request->old_password, $user->password)) {
+            return back()->withErrors([
+                'old_password' => 'Old password does not match',
+            ]);
+        }
+    
+        $user->password = Hash::make($request->new_password);
+        $user->save();
+    
+        return redirect()->route('login')->with('status', 'Password changed successfully.');
+    }
+    
 }

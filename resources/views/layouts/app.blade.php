@@ -249,6 +249,9 @@
                                     style="display: none;">
                                     @csrf
                                 </form>
+                                <a href="{{ route('password.change') }}" class="btn btn-primary text-white px-5 py-2 rounded-3"
+                                    >Change Password</a
+                                >
                             </div>
                             <!--end::Menu Footer-->
                         </div>

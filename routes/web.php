@@ -25,10 +25,15 @@ use App\Http\Controllers\BranchController;
 Route::middleware(['guest'])->group(function () {
   Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
   Route::post('/login', [LoginController::class, 'login']);
+ 
+
+
 });
 // Protected Routes
 Route::middleware(['auth','checkblock'])->group(function () {
   Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
+  Route::get('/password/change', [LoginController::class, 'showChangePasswordForm'])->name('password.change');
+  Route::post('/password/change', [LoginController::class, 'changePassword'])->name('password.change');
    // User Management
    Route::get('/users', [UserController::class, 'index'])->name('users.index');
    Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
