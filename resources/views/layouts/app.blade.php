@@ -243,13 +243,13 @@
                             <!--end::User Image-->
                             <!--begin::Menu Footer-->
                             <div class="user-footer d-flex justify-content-center p-3">
-                                <a href="#" class="btn btn-danger text-white px-5 py-2 rounded-3"
+                                <a href="#" class="btn btn-danger text-white  btn-sm rounded-3 me-2"
                                     id="logout-link">Sign out</a>
                                 <form id="logout-form" action="{{ route('logout') }}" method="POST"
                                     style="display: none;">
                                     @csrf
                                 </form>
-                                <a href="{{ route('password.change') }}" class="btn btn-primary text-white px-5 py-2 rounded-3"
+                                <a href="{{ route('password.change') }}" class="btn btn-primary text-white  btn-sm rounded-3"
                                     >Change Password</a
                                 >
                             </div>
