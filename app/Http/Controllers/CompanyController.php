@@ -120,7 +120,7 @@ class CompanyController extends Controller
         }
 
         // Get total count before pagination
-        $totalRecords = \App\Models\Company::count();
+        $totalRecords = \App\Models\Company::where('user_id', auth()->user()->id)->count();
         $filteredRecords = $query->count();
 
         // Handle pagination

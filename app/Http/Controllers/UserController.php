@@ -115,8 +115,17 @@ class UserController extends Controller
         }
         
         // Get total count before pagination
-        $totalRecords = \App\Models\User::count();
-        $filteredRecords = $query->count();
+        // $totalRecords = \App\Models\User::count();
+        // $filteredRecords = $query->count();
+        $targetUserId = auth()->id(); // or any user id you want to filter by
+
+$totalRecords = \App\Models\User::whereHas('company', function ($query) use ($targetUserId) {
+    $query->where('user_id', $targetUserId);
+})->count();
+
+$filteredRecords = $query->whereHas('company', function ($query) use ($targetUserId) {
+    $query->where('user_id', $targetUserId);
+})->count();
         
         // Handle pagination
         $start = $request->start ?? 0;
