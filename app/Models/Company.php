@@ -30,6 +30,7 @@ class Company extends Model
     'is_blocked',
     'company_type',
     'company_logo',
+    'company_slab',
   ];
 
   protected $dates = ['deleted_at'];

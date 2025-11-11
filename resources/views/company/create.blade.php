@@ -158,6 +158,29 @@
                 </div>
                 <!--end::Col-->
             </div>
+            <!--end::Row-->
+            <!--begin::Row-->
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="company_slab" class="form-label">Company Slab</label>
+                    <select class="form-select" id="company_slab" name="company_slab" required>
+                        <option value="">Select Company Slab</option>
+                        @foreach($companySlabs as $slab)
+                            <option value="{{ trim($slab) }}" {{ old('company_slab') == trim($slab) ? 'selected' : '' }}>
+                                {{ trim($slab) }}%
+                            </option>
+                        @endforeach
+                    </select>
+                
+                    @error('company_slab')
+                        <div class="text-danger">{{ $message }}</div>
+                    @enderror
+                    <div class="valid-feedback">Looks good!</div>
+                </div>
+                <!--end::Col-->
+            </div>
+            <!--end::Row-->
+            
             
         </div>
         <!--end::Body-->

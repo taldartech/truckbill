@@ -1,7 +1,9 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use Carbon\Carbon;
+use Illuminate\Validation\Rule;
 
 
 use Illuminate\Http\Request;
@@ -236,7 +238,8 @@ public function unblock($id)
         $countries = \App\Models\Country::all();
         $states = \App\Models\State::where('country_id', $company->country_id)->get();
         $cities = \App\Models\City::where('state_id', $company->state_id)->get();
-        return view('company.edit', compact('company', 'countries', 'states', 'cities'));
+        $companySlabs = explode(',', env('COMPANY_SLABS'));
+        return view('company.edit', compact('company', 'countries', 'states', 'cities','companySlabs'));
     }
 
     public function update(Request $request, $id)
@@ -290,6 +293,10 @@ public function unblock($id)
             'city_id' => 'nullable|exists:cities,id',
             // 'pin_code' => 'nullable|string|max:10',
             'pin_code' => 'nullable|digits_between:1,10',
+            'company_slab' => [
+                'required',
+                Rule::in(explode(',', env('COMPANY_SLABS'))),
+            ],
 
         ], [
             'name.regex' => 'The name must contain at least one alphabetic character.', 
@@ -315,7 +322,10 @@ public function unblock($id)
     }
     public function create()
     {
-        return view('company.create');
+        
+        $companySlabs = explode(',', env('COMPANY_SLABS'));
+    
+        return view('company.create', compact('companySlabs'));
     }
 
     public function store(Request $request)
@@ -375,6 +385,10 @@ public function unblock($id)
             'city_id' => 'nullable|exists:cities,id',
             // 'pin_code' => 'nullable|string|max:10',
             'pin_code' => 'nullable|digits_between:1,10',
+           'company_slab' => [
+    'required',
+    Rule::in(explode(',', env('COMPANY_SLABS'))),
+],
 
             
         ], [
