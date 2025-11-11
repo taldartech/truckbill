@@ -25,7 +25,7 @@ class BranchController extends Controller
                 ->addIndexColumn()
                 ->addColumn('action', function($row) {
                     $btn = '<div class="btn-group" role="group">';
-                    $btn .= '<a href="'.route('branches.edit', $row->id).'" class="btn btn-sm btn-primary"><i class="bi bi-pencil"></i></a>';
+                    $btn .= '<a href="'.route('branches.edit', $row->id).'" class="btn btn-sm btn-info"><i class="bi bi-pencil"></i></a>';
                     $btn .= '<form action="'.route('branches.destroy', $row->id).'" method="POST" class="d-inline">';
                     $btn .= csrf_field();
                     $btn .= method_field('DELETE');
