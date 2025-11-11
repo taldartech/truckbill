@@ -135,7 +135,7 @@ $filteredRecords = $query->whereHas('company', function ($query) use ($targetUse
         // Format data for DataTables
         $data = $users->map(function($user, $index) use ($start) {
             return [
-                'id' => $user->id,
+                'id' => $index + $start + 1,
                 'name' => $user->name,
                 'email' => $user->email,
                 'role' => $user->userRole ? ucfirst($user->userRole->name) : '-',

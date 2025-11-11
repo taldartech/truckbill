@@ -1,4 +1,3 @@
-
 @extends('layouts.app')
 
 @push('styles')
@@ -65,8 +64,9 @@ $(document).ready(function() {
         ajax: '{{ route("branches.index") }}',
         columns: [
             {
-                data: 'id',
-                name: 'id',
+                data: null, render: function (data, type, row, meta) {
+                    return meta.row + 1; // This will show the index + 1 as the SR number
+                },
                 width: '80px',
                 className: 'text-center'
             },
