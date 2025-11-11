@@ -1,7 +1,10 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-10 col-xl-8">
+<div class="card card-info card-outline mb-4">
     <div class="card-header">
         <h3 class="card-title">{{ $goodsType ? 'Edit Goods Type' : 'Create Goods Type' }}</h3>
     </div>
@@ -29,6 +32,8 @@
             <button type="submit" class="btn btn-info">Submit form</button>
         </div>
     </form>
+        </div>
+    </div>
 </div>
 
 <script>

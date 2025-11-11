@@ -1,52 +1,20 @@
 @extends('layouts.app')
 
-@push('styles')
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/searchpanes/2.2.0/css/searchPanes.bootstrap5.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css">
-@endpush
-
-@push('scripts')
-    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-    @if (session('warning'))
-        <script>
-            Swal.fire({
-                icon: 'warning',
-                title: 'Warning',
-                text: "{{ session('warning') }}",
-                confirmButtonColor: '#f39c12'
-            });
-        </script>
-    @endif
-@endpush
-
 @section('content')
-<div class="container px-0 mt-4">
-    
+<div class="container mt-4">
+    <div class="col-sm-6"><h3 class="mb-0">Voucher Payments Management</h3></div>
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
     {{-- Always visible container --}}
-    <div class="d-flex flex-column flex-sm-row justify-content-sm-between align-items-sm-center gap-2 mb-3">
-        
-        <h3 class="mb-2 mb-sm-0">Voucher Payments Management</h3>
-        
-        <div>
-            <button type="button" class="btn btn-info" onclick="document.getElementById('advanced-search-box').classList.toggle('d-none')">
-                <i class="bi bi-funnel"></i> Search filter
-            </button>
-            {{-- <a href="{{ route('voucher_payments.create') }}" class="btn btn-info">
-                <i class="bi bi-plus"></i> Create
-            </a> --}}
-        </div>
+    <div class="d-flex justify-content-end gap-2 mb-3">
+        <button type="button" class="btn btn-info" onclick="document.getElementById('advanced-search-box').classList.toggle('d-none')">
+            <i class="bi bi-funnel"></i> Search filter
+        </button>
+        {{-- <a href="{{ route('voucher_payments.create') }}" class="btn btn-info">
+            <i class="bi bi-plus"></i> Create
+        </a> --}}
     </div>
 
     {{-- Hidden filter form --}}
@@ -150,113 +118,112 @@
     </div>
     <div class="card mb-4">
         <div class="card-header"><h3 class="card-title">Voucher Payments List</h3></div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered">
-                    <thead>
-                        <tr>
+        <div class="card-body" style="overflow-x: auto;">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
 
-                            <th>Voucher #</th>
-                            <th>Lorry Receipt No</th>
-                            <th>Customer</th>
-                            <th>Truck No</th>
-                            <th>Transporter</th>
-                            <th>Source</th>
-                            <th>Destination</th>
+                        <th>Voucher #</th>
+                        <th>Lorry Receipt No</th>
+                        <th>Customer</th>
+                        <th>Truck No</th>
+                        <th>Transporter</th>
+                        <th>Source</th>
+                        <th>Destination</th>
+
+
+                        @if(auth()->check() && auth()->user()->userRole->name === 'admin')
+                        <th>Actions</th>
+                        @endif
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($voucherGroups as $group)
+                        @php
+                            $payment = $payments[$group->voucher_number] ?? null;
+                            if (!$payment) continue;
+                        @endphp
+                        <tr class="align-middle">
+
+                            <td>
+                                <a href="{{ route('voucher_payments.show', $payment->voucher_number) }}" class="fw-bold text-decoration-none">
+                                    {{ $payment->voucher_number }}
+                                    <i class="bi bi-box-arrow-up-right ms-1 small"></i>
+                                </a>
+                            </td>
+                            <td>
+                                @if($payment->freight_booking && $payment->freight_booking->lr)
+                                    <span class="badge text-dark">{{ $payment->freight_booking->lr->lr_number }}</span>
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($payment->freight_booking && $payment->freight_booking->lr && $payment->freight_booking->lr->customer)
+                                    <span class="badge text-dark">{{ $payment->freight_booking->lr->customer->name }}</span>
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($payment->freight_booking && $payment->freight_booking->lr && $payment->freight_booking->lr->truck)
+                                    <span class="badge text-dark">{{ $payment->freight_booking->lr->truck->truck_number }}</span>
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($payment->freight_booking && $payment->freight_booking->transporter)
+                                    @if($payment->freight_booking->transporter->is_owner)
+                                        <span class="badge bg-light text-dark"><i class="bi bi-truck"></i> {{ $payment->freight_booking->transporter->name }}</span>
+                                    @else
+                                        <span class="badge bg-primary"><i class="bi bi-building"></i> {{ $payment->freight_booking->transporter->name }}</span>
+                                    @endif
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($payment->freight_booking && $payment->freight_booking->lr && $payment->freight_booking->lr->consignor && $payment->freight_booking->lr->consignor->city)
+                                    <span class="badge text-dark">{{ $payment->freight_booking->lr->consignor->city->name }}</span>
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($payment->freight_booking && $payment->freight_booking->lr && $payment->freight_booking->lr->consignee && $payment->freight_booking->lr->consignee->city)
+                                    <span class="badge text-dark">{{ $payment->freight_booking->lr->consignee->city->name }}</span>
+                                @else
+                                    <span class="text-muted">-</span>
+                                @endif
+                            </td>
 
 
                             @if(auth()->check() && auth()->user()->userRole->name === 'admin')
-                            <th>Actions</th>
+                            <td>
+                                <div class="d-flex gap-1">
+                                    <a href="{{ route('voucher_payments.show', $payment->voucher_number) }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip"
+                            data-bs-placement="top"
+                            title="View Details">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </div>
+                            </td>
                             @endif
                         </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($voucherGroups as $group)
-                            @php
-                                $payment = $payments[$group->voucher_number] ?? null;
-                                if (!$payment) continue;
-                            @endphp
-                            <tr class="align-middle">
-
-                                <td>
-                                    <a href="{{ route('voucher_payments.show', $payment->voucher_number) }}" class="fw-bold text-decoration-none">
-                                        {{ $payment->voucher_number }}
-                                        <i class="bi bi-box-arrow-up-right ms-1 small"></i>
-                                    </a>
-                                </td>
-                                <td>
-                                    @if($payment->freight_booking && $payment->freight_booking->lr)
-                                        <span class="badge text-dark">{{ $payment->freight_booking->lr->lr_number }}</span>
-                                    @else
-                                        <span class="text-muted">-</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    @if($payment->freight_booking && $payment->freight_booking->lr && $payment->freight_booking->lr->customer)
-                                        <span class="badge text-dark">{{ $payment->freight_booking->lr->customer->name }}</span>
-                                    @else
-                                        <span class="text-muted">-</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    @if($payment->freight_booking && $payment->freight_booking->lr && $payment->freight_booking->lr->truck)
-                                        <span class="badge text-dark">{{ $payment->freight_booking->lr->truck->truck_number }}</span>
-                                    @else
-                                        <span class="text-muted">-</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    @if($payment->freight_booking && $payment->freight_booking->transporter)
-                                        @if($payment->freight_booking->transporter->is_owner)
-                                            <span class="badge bg-light text-dark"><i class="bi bi-truck"></i> {{ $payment->freight_booking->transporter->name }}</span>
-                                        @else
-                                            <span class="badge bg-primary"><i class="bi bi-building"></i> {{ $payment->freight_booking->transporter->name }}</span>
-                                        @endif
-                                    @else
-                                        <span class="text-muted">-</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    @if($payment->freight_booking && $payment->freight_booking->lr && $payment->freight_booking->lr->consignor && $payment->freight_booking->lr->consignor->city)
-                                        <span class="badge text-dark">{{ $payment->freight_booking->lr->consignor->city->name }}</span>
-                                    @else
-                                        <span class="text-muted">-</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    @if($payment->freight_booking && $payment->freight_booking->lr && $payment->freight_booking->lr->consignee && $payment->freight_booking->lr->consignee->city)
-                                        <span class="badge text-dark">{{ $payment->freight_booking->lr->consignee->city->name }}</span>
-                                    @else
-                                        <span class="text-muted">-</span>
-                                    @endif
-                                </td>
-
-
-                                @if(auth()->check() && auth()->user()->userRole->name === 'admin')
-                                <td>
-                                    <div class="d-flex gap-1">
-                                        <a href="{{ route('voucher_payments.show', $payment->voucher_number) }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip"
-                                    data-bs-placement="top"
-                                    title="View Details">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                    </div>
-                                </td>
-                                @endif
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="10" class="text-center">
-                                    <div class="empty-state">
-                                        <i class="bi bi-box"></i>
-                                        <p class="mt-2">No payments found.</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div> {{-- Implement bootstrap 5 pagination --}}
+                    @empty
+                        <tr>
+                            <td colspan="10" class="text-center">
+                                <div class="empty-state">
+                                    <i class="bi bi-box"></i>
+                                    <p class="mt-2">No payments found.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+            {{-- Implement bootstrap 5 pagination --}}
             {{ $voucherGroups->withQueryString()->links('pagination::bootstrap-5') }}
         </div>
     </div>
@@ -280,7 +247,6 @@
     // Initialize filter fields based on URL parameters
     document.addEventListener('DOMContentLoaded', function() {
         const urlParams = new URLSearchParams(window.location.search);
-        let hasFilter = false; // Flag to check if any filter is active
 
         // Check each filter checkbox if its parameter exists in URL
         document.querySelectorAll('#advanced-search-box input[type="checkbox"]').forEach(checkbox => {
@@ -288,22 +254,14 @@
             if (urlParams.has(paramName) && urlParams.get(paramName)) {
                 checkbox.checked = true;
                 toggleField(checkbox);
-                hasFilter = true; // A filter is active
             }
         });
 
         // Show the filter box if any filter is applied
-        // FIX: Modified this logic to correctly check for *any* URL parameter
-        if (urlParams.toString().length > 0) {
-             // If there are *any* query parameters, show the box.
-             // This is safer and accounts for pagination (e.g., ?page=2)
-             // A better check is to see if any of our *specific* filter keys are present.
-             const filterKeys = ['truck_no', 'transporter', 'source', 'destination', 'lr_no', 'freight_booking_no'];
-             const hasKnownFilter = filterKeys.some(key => urlParams.has(key) && urlParams.get(key));
-
-             if (hasKnownFilter) {
-                 document.getElementById('advanced-search-box').classList.remove('d-none');
-             }
+        if (Array.from(urlParams.keys()).some(key => [
+            'voucher_number', 'payment_type', 'payment_mode', 'transaction_id', 'status'
+        ].includes(key))) {
+            document.getElementById('advanced-search-box').classList.remove('d-none');
         }
     });
 </script>

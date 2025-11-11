@@ -1,9 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container px-0 mt-4">
-        <div class="d-flex flex-column flex-sm-row justify-content-sm-between align-items-start align-items-sm-center mb-4">
-            <h3 class="mb-2 mb-sm-0">Voucher Details: {{ $voucherNumber }}</h3>
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3>Voucher Details: {{ $voucherNumber }}</h3>
             <a href="{{ route('voucher_payments.index') }}" class="btn btn-secondary">
                 <i class="bi bi-arrow-left"></i> Back to List
             </a>
@@ -17,12 +17,14 @@
             <div class="alert alert-danger">{{ session('error') }}</div>
         @endif
 
+        <!-- Voucher Summary Card -->
         <div class="card mb-4">
             <div class="card-header bg-primary text-white">
                 <h5 class="card-title mb-0">Voucher Summary</h5>
             </div>
             <div class="card-body">
                 <div class="row">
+                    <!-- Basic Information Section -->
                     <div class="col-md-6">
                         <h6 class="border-bottom pb-2">Basic Information</h6>
                         <table class="table table-borderless table-sm">
@@ -51,6 +53,7 @@
                         </table>
                     </div>
 
+                    <!-- Shipment & Financial Information -->
                     <div class="col-md-6">
                         <h6 class="border-bottom pb-2">Shipment & Financial Details</h6>
                         <table class="table table-borderless table-sm">
@@ -103,6 +106,7 @@
                     </div>
                 </div>
 
+                <!-- Financial Information Section -->
                 <div class="mt-3">
                     <h6 class="border-bottom pb-2">Financial Breakdown</h6>
                     <div class="row">
@@ -140,92 +144,92 @@
             </div>
         </div>
 
+        <!-- Payments List Card -->
         <div class="card">
             <div class="card-header bg-info text-white">
                 <h5 class="card-title mb-0">Payment History</h5>
             </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped table-bordered">
-                        <thead>
-                            <tr>
-                                <th style="width: 80px">ID</th>
-                                <th>Date</th>
-                                <th>Payment Type</th>
-                                <th>Payment Mode</th>
-                                <th>Amount</th>
-                                <th>Status</th>
-                                <th>Remark</th>
-                                <th>Created By</th>
-                                <th>Last Updated By</th>
-                                @if (auth()->check() && auth()->user()->userRole->name === 'admin')
-                                    <th>Actions</th>
-                                @endif
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($payments as $payment)
-                                <tr class="align-middle">
-                                    <td>{{ $payment->id }}</td>
-                                    <td>{{ $payment->date }}</td>
-                                    <td>{{ ucfirst($payment->payment_type) }}</td>
-                                    <td>{{ ucfirst(str_replace('_', ' ', $payment->payment_mode)) }}</td>
-                                    <td class="text-success fw-bold">₹{{ number_format($payment->amount, 2) }}</td>
-                                    <td>{!! $payment->getPaymentStatusBadge() !!}</td>
-                                    <td>{!! $payment->remark ?? '-' !!}</td>
-                                    <td>
-                                        @if ($payment->created_by)
-                                            {{ $payment->creator->name }}
-                                            <br>
+            <div class="card-body" style="overflow-x: auto;">
+                <table class="table table-striped table-bordered">
+                    <thead>
+                        <tr>
+                            <th style="width: 80px">ID</th>
+                            <th>Date</th>
+                            <th>Payment Type</th>
+                            <th>Payment Mode</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Remark</th>
+                            <th>Created By</th>
+                            <th>Last Updated By</th>
+                            @if (auth()->check() && auth()->user()->userRole->name === 'admin')
+                                <th>Actions</th>
+                            @endif
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($payments as $payment)
+                            <tr class="align-middle">
+                                <td>{{ $payment->id }}</td>
+                                <td>{{ $payment->date }}</td>
+                                <td>{{ ucfirst($payment->payment_type) }}</td>
+                                <td>{{ ucfirst(str_replace('_', ' ', $payment->payment_mode)) }}</td>
+                                <td class="text-success fw-bold">₹{{ number_format($payment->amount, 2) }}</td>
+                                <td>{!! $payment->getPaymentStatusBadge() !!}</td>
+                                <td>{!! $payment->remark ?? '-' !!}</td>
+                                <td>
+                                    @if ($payment->created_by)
+                                        {{ $payment->creator->name }}
+                                        <br>
                                         ({{ $payment->creator->branch->branch_name ?? '' }})
                                     @else
-                                            <span class="text-muted">-</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @if ($payment->updated_by)
-                                            {{ $payment->updater->name }}
-                                            <br>
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if ($payment->updated_by)
+                                        {{ $payment->updater->name }}
+                                        <br>
                                         ({{ $payment->updater->branch->branch_name ?? '' }})
                                     @else
-                                            <span class="text-muted">-</span>
-                                        @endif
-                                    </td>
-                                    @if (auth()->check() && auth()->user()->userRole->name === 'admin')
-                                        <td>
-                                            <div class="d-flex gap-1">
-                                                <a href="{{ route('voucher_payments.edit', $payment) }}?lorry_receipt_id={{ $payment->freight_booking ? $payment->freight_booking->lr_id : '' }}&freight_booking_id={{ $payment->freight_booking_id }}"
-                                                    class="btn btn-sm btn-info" data-bs-toggle="tooltip" data-bs-placement="top"
-                                                    title="Edit Payment">
-                                                    <i class="bi bi-pencil"></i>
-                                                </a>
-                                                <form action="{{ route('voucher_payments.destroy', $payment) }}" method="POST"
-                                                    style="display:inline-block;">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger"
-                                                        data-bs-toggle="tooltip" data-bs-placement="top" title="Delete Payment"
-                                                        onclick="return confirm('Are you sure you want to delete this payment?')">
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </td>
+                                        <span class="text-muted">-</span>
                                     @endif
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="{{ auth()->check() && auth()->user()->userRole->name === 'admin' ? '10' : '9' }}" class="text-center">
-                                        <div class="empty-state">
-                                            <i class="bi bi-box"></i>
-                                            <p class="mt-2">No payment records found.</p>
+                                </td>
+                                @if (auth()->check() && auth()->user()->userRole->name === 'admin')
+                                    <td>
+                                        <div class="d-flex gap-1">
+                                            <a href="{{ route('voucher_payments.edit', $payment) }}?lorry_receipt_id={{ $payment->freight_booking ? $payment->freight_booking->lr_id : '' }}&freight_booking_id={{ $payment->freight_booking_id }}"
+                                                class="btn btn-sm btn-info" data-bs-toggle="tooltip" data-bs-placement="top"
+                                                title="Edit Payment">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <form action="{{ route('voucher_payments.destroy', $payment) }}" method="POST"
+                                                style="display:inline-block;">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-danger"
+                                                    data-bs-toggle="tooltip" data-bs-placement="top" title="Delete Payment"
+                                                    onclick="return confirm('Are you sure you want to delete this payment?')">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
                                         </div>
                                     </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div> </div>
+                                @endif
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="8" class="text-center">
+                                    <div class="empty-state">
+                                        <i class="bi bi-box"></i>
+                                        <p class="mt-2">No payment records found.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 @endsection

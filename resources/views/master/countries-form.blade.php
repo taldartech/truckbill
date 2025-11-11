@@ -1,7 +1,10 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-10 col-xl-8">
+<div class="card card-info card-outline mb-4">
     <div class="card-header">
         <h3 class="card-title">{{ isset($country) ? 'Edit Country' : 'Add New Country' }}</h3>
     </div>
@@ -40,6 +43,8 @@
             <a href="{{ route('master.countries.index') }}" class="btn btn-info">Back to List</a>
         </div>
     </form>
+        </div>
+    </div>
 </div>
 
 <script>

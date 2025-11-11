@@ -1,7 +1,10 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-10 col-xl-8">
+<div class="card card-info card-outline mb-4">
     <div class="card-header">
         <h3 class="card-title">{{ isset($pump) ? 'Edit Pump' : 'Add New Pump' }}</h3>
     </div>
@@ -35,7 +38,7 @@
 
                 <div class="col-md-6">
                     <label for="contact_number" class="form-label">Contact Number *</label>
-                    <input type="text" class="form-control" maxlength="10" id="contact_number" name="contact_number" required 
+                    <input type="text" class="form-control" id="contact_number" name="contact_number" required 
                            value="{{ old('contact_number', isset($pump) ? $pump->contact_number : '') }}">
                     @error('contact_number')
                         <div class="text-danger">{{ $message }}</div>
@@ -58,6 +61,8 @@
             <a href="{{ route('master.pump.index') }}" class="btn btn-info">Back to List</a>
         </div>
     </form>
+        </div>
+    </div>
 </div>
 
 <script>

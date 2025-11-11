@@ -1,9 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container px-0 mt-4">
+    <div class="container mt-4">
         <div class="col-sm-6">
-            <h3 class="mb-3">Voucher Template</h3>
+            <h3 class="mb-0">Voucher Template</h3>
         </div>
         @if (session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>
@@ -13,7 +13,7 @@
             <div class="card-header">
                 <h3 class="card-title">Voucher Templates List</h3>
             </div>
-            <div class="card-body table-responsive">
+            <div class="card-body">
                 <table id="voucherTemplatesTable" class="table table-bordered table-striped">
                     <thead>
                         <tr>

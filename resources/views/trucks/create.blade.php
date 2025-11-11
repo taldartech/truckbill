@@ -1,7 +1,10 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="card card-info card-outline mb-4" style="width: 70%;align-items: center;margin: auto;">
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-10 col-xl-8">
+<div class="card card-info card-outline mb-4">
     <!--begin::Header-->
     <div class="card-header"><div class="card-title">Add New Truck</div></div>
     <!--end::Header-->
@@ -158,5 +161,7 @@
         
         
     
+        </div>
+    </div>
 </div>
 @endsection

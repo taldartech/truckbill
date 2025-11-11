@@ -1,43 +1,22 @@
 @extends('layouts.app')
 
 @push('styles')
+<!-- DataTables CSS -->
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/searchpanes/2.2.0/css/searchPanes.bootstrap5.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css">
-
-<style>
-    /* Style for the new filter row */
-    thead .filters th {
-        padding: 8px;
-    }
-    thead .filters input {
-        width: 100%;
-        box-sizing: border-box;
-    }
-
-    /* Ensure DataTables scrollbar is styled nicely with Bootstrap */
-    div.dataTables_wrapper div.dataTables_scrollBody {
-        border-bottom: 1px solid #ddd;
-    }
-
-    /* FIX: Prevents headers and cells from wrapping on mobile */
-    #driversTable th, #driversTable td {
-        white-space: nowrap;
-    }
-</style>
 @endpush
 
 @section('content')
-<div class="container-fluid px-0 mt-4">
-   
+<div class="container mt-4">
+    <div class="col-sm-6"><h3 class="mb-0">Drivers Management</h3></div>
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
-    <div class="d-flex justify-content-between gap-2 mb-3">
-        <div class="col-sm-6"><h3 class="mb-0">Drivers Management</h3></div>
-        <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-backdrop="false" data-bs-target="#addDriverModal">
+    <div class="d-flex justify-content-end gap-2 mb-3">
+        <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-backdrop="false"  data-bs-target="#addDriverModal">
             <i class="bi bi-plus"></i> Create
         </button>
     </div>
@@ -47,7 +26,7 @@
             <h3 class="card-title">Drivers List</h3>
         </div>
         <div class="card-body">
-            <table id="driversTable" class="table table-bordered table-striped" style="width:100%">
+            <table id="driversTable" class="table table-bordered table-striped">
                 <thead>
                     <tr>
                         <th style="width: 80px;">Sr. No</th>
@@ -55,16 +34,17 @@
                         <th>Mobile</th>
                         <th>License Number</th>
                         <th>Address</th>
+                       
                         <th style="width: 120px;">Actions</th>
+                       
                     </tr>
-                    <tr class="filters">
-                        <th></th> <th></th> <th></th> <th></th> <th></th> <th></th> </tr>
                 </thead>
             </table>
         </div>
     </div>
 </div>
 
+<!-- Add Driver Modal -->
 <div class="modal fade" id="addDriverModal" tabindex="-1" aria-labelledby="addDriverModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -114,6 +94,7 @@
     </div>
 </div>
 
+<!-- Edit Driver Modal -->
 <div class="modal fade" id="editDriverModal" tabindex="-1" aria-labelledby="editDriverModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -167,6 +148,7 @@
 @endsection
 
 @push('scripts')
+<!-- DataTables JS -->
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
@@ -192,12 +174,15 @@ $(document).ready(function() {
             { data: 'mobile', name: 'mobile', orderable: true, searchable: true },
             { data: 'license_number', name: 'license_number', orderable: true, searchable: true },
             { data: 'address', name: 'address', orderable: true, searchable: true },
+        
             { data: 'actions', name: 'actions', orderable: false, searchable: false }
+         
         ],
         order: [[1, 'asc']],
         pageLength: 10,
         lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
         dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+             '<"row"<"col-sm-12 col-md-2"B><"col-sm-12 col-md-10"p>>' +
              '<"row"<"col-sm-12"tr>>' +
              '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
         buttons: [
@@ -207,8 +192,19 @@ $(document).ready(function() {
                 text: '<i class="bi bi-file-earmark-excel"></i> Excel'
             }
         ],
+        // responsive: true,
+        // stateSave: true,
+        // language: {
+        //     processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>',
+        //     emptyTable: "No drivers found",
+        //     zeroRecords: "No matching drivers found"
+        // },
+        // drawCallback: function(settings) {
+        //     // Initialize tooltips
+        //     $('[data-bs-toggle="tooltip"]').tooltip();
+        // }
         language: {
-            search: "Search:", // Changed label
+            search: "Search:",
             lengthMenu: "Show _MENU_ entries",
             info: "Showing _START_ to _END_ of _TOTAL_ entries",
             infoEmpty: "Showing 0 to 0 of 0 entries",
@@ -222,47 +218,42 @@ $(document).ready(function() {
                 previous: "Previous"
             }
         },
-        
-        // FIXED: Changed responsive to false and added scrollX
-        responsive: false,
-        scrollX: true, 
-
+        responsive: true,
         autoWidth: false,
         stateSave: true,
         searchDelay: 500,
-
-        // FIXED: Updated initComplete to target the new filter row
         initComplete: function() {
-            var api = this.api();
-            
-            // Find the filter row
-            var filterRow = $(api.table().header()).closest('thead').find('tr.filters');
-
             // Add individual column search
-            api.columns([1, 2, 3, 4]).every(function() { // Target columns 1, 2, 3, 4
+            this.api().columns([1, 2,3,4]).every(function() {
                 var column = this;
-                var title = $(column.header()).text(); // Get title from original header
-                
-                // Find the corresponding cell in the '.filters' row
-                var cell = filterRow.find('th').eq(column.index()); 
+                var title = column.header().textContent;
                 
                 // Create input element
                 var input = $('<input type="text" class="form-control form-control-sm" placeholder="Search ' + title + '" />')
-                    .appendTo(cell) // Append to the new cell
+                    .appendTo($(column.header()))
                     .on('keyup change clear', function() {
                         if (column.search() !== this.value) {
                             column.search(this.value).draw();
                         }
-                    })
-                    .on('click', function(e) {
-                         e.stopPropagation(); // Stop click from sorting the column
                     });
             });
         }
     });
     
-    // FIXED: Removed the conflicting/duplicate filter block
     
+
+    // Individual column searching
+    $('#driversTable thead tr:eq(1) th').each(function(i) {
+        if (i === 0 || i === {{ auth()->check() && auth()->user()->userRole->name === 'admin' ? '5' : '4' }}) {
+            return; // Skip ID and Actions columns
+        }
+        
+        $('input', this).on('keyup change', function() {
+            if (table.column(i).search() !== this.value) {
+                table.column(i).search(this.value).draw();
+            }
+        });
+    });
 
     // Handle form submissions with AJAX to prevent page reload
     $(document).on('submit', 'form[action*="drivers"][action*="destroy"]', function(e) {
@@ -493,8 +484,8 @@ $(document).ready(function() {
     });
 
     $('#addDriverModal, #editDriverModal').on('shown.bs.modal', function () {
-        $('.modal-backdrop').remove();
-    });
+    $('.modal-backdrop').remove();
+});
 
 });
 </script>
