@@ -288,6 +288,11 @@ public function unblock($id)
         }
     },
 ],
+
+       
+        'plan_end_date' => 'nullable|date',
+        'lr_credits' => 'nullable|integer|min:0',
+        'truck_credits' => 'nullable|integer|min:0',
             'country_id' => 'nullable|exists:countries,id',
             'state_id' => 'nullable|exists:states,id',
             'city_id' => 'nullable|exists:cities,id',
@@ -310,6 +315,18 @@ public function unblock($id)
            $validated['company_logo'] = $path;
         }
         $validated['user_id'] = auth()->user()->id;
+        if (!$request->filled('plan_end_date')) {
+            // You can decide the logic:
+            // Option 1: keep existing plan_end_date
+            $validated['plan_end_date'] = $company->plan_end_date;
+    
+            
+        }
+    
+        // ✅ Default values if not set
+        $validated['lr_credits'] = $request->input('lr_credits', $company->lr_credits ?? 0);
+        $validated['truck_credits'] = $request->input('truck_credits', $company->truck_credits ?? 0);
+    
         $company->update($validated);
         return redirect()->route('company.index')->with('success', 'Company updated successfully!');
     }
@@ -409,7 +426,15 @@ public function unblock($id)
             $validated['gst_type'] = 'regular';
         }
 
+            // ✅ Automatically set plan_end_date = created_at + 45 days
+    $validated['plan_end_date'] = Carbon::now()->addDays(45)->toDateString();
+
+    // ✅ Optional: Set default credits
+    $validated['lr_credits'] = 0;
+    $validated['truck_credits'] = 0;
+
+
         \App\Models\Company::create($validated);
-        return redirect()->route('company.index')->with('success', 'Company registered successfully!');
+        return redirect()->route('company.index')->with('success', 'Company registered successfully!,You are eligible for 45 days free plan');
     }
 }

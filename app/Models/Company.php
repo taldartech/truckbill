@@ -31,6 +31,9 @@ class Company extends Model
     'company_type',
     'company_logo',
     'company_slab',
+    'plan_end_date',
+    'lr_credits',
+    'truck_credits',
   ];
 
   protected $dates = ['deleted_at'];
