@@ -1,9 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-
+    <!-- Select2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <!-- SweetAlert2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet" />
     <style>
         /* Prevent form expansion on validation errors */
@@ -17,6 +17,12 @@
             font-size: 0.875rem;
             margin-top: 0.25rem;
             word-wrap: break-word;
+        }
+
+        /* Ensure consistent column widths */
+        .row .col-md-4 {
+            flex: 0 0 33.333333%;
+            max-width: 33.333333%;
         }
 
         /* Prevent card from expanding */
@@ -74,38 +80,26 @@
             background-color: var(--bs-primary);
             color: white;
         }
-
-        /* === ADDED: CSS for the scrollable confirmation modal === */
-        .confirmation-scroll-area {
-            max-height: 50vh; /* Set a max height relative to the viewport */
-            overflow-y: auto; /* Add vertical scrolling when content overflows */
-            overflow-x: hidden;
-            padding: 10px;
-            border: 1px solid #dee2e6;
-            border-radius: 0.375rem;
-            background: #fdfdfd; /* Light background for the scroll area */
-        }
     </style>
-
-    <div class="card card-info card-outline mb-4 w-100 mx-auto" style="max-width: 1000px;">
+    <div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
+        <!--begin::Header-->
         <div class="card-header">
-            <div class="d-flex w-100 flex-column flex-md-row align-items-md-center">
-                
+            <div class="d-flex w-100">
                 <div class="card-title h4">Add New Lorry Receipt</div>
-
-                <div class="ms-md-auto mt-2 mt-md-0">
-                    <a href="{{ route('consignees.create') }}" class="btn btn-info w-100 w-md-auto">
-                        <i class="bi bi-plus"></i> Create Consignee/Consignor/Customer
-                    </a>
+                <div class="ms-auto">
+                    <a href="{{ route('consignees.create') }}" class="btn btn-info">
+                        <i class="bi bi-plus"></i> Create Consignee/Consignor/Customer</a>
                 </div>
             </div>
         </div>
-        
+        <!--end::Header-->
+        <!--begin::Form-->
         <form method="POST" action="{{ route('lorry_receipts.store') }}" id="lorryReceiptForm" class="needs-validation"
             novalidate="">
             @csrf
             <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
             <div class="card-body">
+                <!-- General Details -->
                 <div class="card mb-4 p-3 bg-light">
                     <div class="row">
                         <div class="col">
@@ -113,7 +107,7 @@
                         </div>
                     </div>
                     <div class="row mb-3">
-                        <div class="col-12 col-md-4">
+                        <div class="col-md-4">
                             <label for="lr_number" class="form-label">LR Number * <small class="text-muted">(Must be
                                     unique)</small></label>
                             <input type="text" class="form-control" id="lr_number" name="lr_number"
@@ -124,7 +118,7 @@
                             <div class="invalid-feedback">Please enter a unique LR number.</div>
                             <div id="lr-number-feedback" class="mt-1"></div>
                         </div>
-                        <div class="col-12 col-md-4">
+                        <div class="col-md-4">
                             <label for="gr_date" class="form-label">GR Date *</label>
                             <input type="date" class="form-control" id="gr_date" name="gr_date" required
                                 value="{{ old('gr_date') }}">
@@ -133,7 +127,7 @@
                             @enderror
                             <div class="invalid-feedback">Please select a GR date.</div>
                         </div>
-                        <div class="col-12 col-md-4">
+                        <div class="col-md-4">
                             <label for="customer_id" class="form-label">Customer *</label>
                             <select class="form-select" id="customer_id" name="customer_id" required
                                 data-placeholder="Search and select customer...">
@@ -151,8 +145,9 @@
                             <div class="invalid-feedback">Please select a customer.</div>
                         </div>
                     </div>
+                    <!-- Memo ID field removed from creation form as it cannot be present at creation time -->
                     <div class="row mb-3">
-                        <div class="col-12 col-md-4">
+                        <div class="col-md-4">
                             <label for="truck_id" class="form-label">Truck *</label>
                             <select class="form-select" id="truck_id" name="truck_id" required
                                 data-placeholder="Search and select truck...">
@@ -173,7 +168,7 @@
                             @enderror
                             <div class="invalid-feedback">Please select a truck.</div>
                         </div>
-                        <div class="col-12 col-md-4">
+                        <div class="col-md-4">
                             <label for="transporter_type" class="form-label" id="transporterTypeLabel">Select Payment Type
                                 *</label>
                             <select class="form-select" id="transporter_type" name="transporter_type" required>
@@ -183,7 +178,7 @@
                             </select>
                             <div class="invalid-feedback">Please select transporter type.</div>
                         </div>
-                        <div class="col-12 col-md-4">
+                        <div class="col-md-4">
                             <label for="transporter_id" id="transporterLabel" class="form-label">Transporter *</label>
                             <select class="form-select" id="transporter_id" name="transporter_id" required
                                 onchange="showTdsPercentage(this.value)">
@@ -202,7 +197,7 @@
                         </div>
                     </div>
                     <div class="row mb-3">
-                        <div class="col-12 col-md-4">
+                        <div class="col-md-4">
                             <label for="reference_by" class="form-label">Reference By</label>
                             <select class="form-select" id="reference_by" name="reference_by">
                                 <option value="">Select Reference</option>
@@ -218,7 +213,7 @@
                             @enderror
                             <div class="invalid-feedback">Please select a reference.</div>
                         </div>
-                        <div class="col-12 col-md-4">
+                        <div class="col-md-4">
                             <label for="invoice_number" class="form-label">Invoice Number <small
                                     class="text-muted">(Optional)</small></label>
                             <input type="text" class="form-control" id="invoice_number" name="invoice_number"
@@ -229,7 +224,7 @@
                             <div class="invalid-feedback">Please enter a valid invoice number.</div>
                             <div id="invoice-number-feedback" class="mt-1"></div>
                         </div>
-                        <div class="col-12 col-md-4">
+                        <div class="col-md-4">
                             <label for="gr_number" class="form-label">GR Number <small
                                     class="text-muted">(Optional)</small></label>
                             <input type="text" class="form-control" id="gr_number" name="gr_number"
@@ -243,6 +238,7 @@
                     </div>
                 </div>
 
+                <!-- Consignor & Consignee Details -->
                 <div class="card mb-4 p-3 bg-light">
                     <div class="row">
                         <div class="col">
@@ -250,7 +246,7 @@
                         </div>
                     </div>
                     <div class="row mb-3">
-                        <div class="col-12 col-md-4">
+                        <div class="col-md-4">
                             <label for="consignor_id" class="form-label">Consignor *</label>
                             <select class="form-select" id="consignor_id" name="consignor_id" required
                                 data-placeholder="Search and select consignor...">
@@ -267,7 +263,7 @@
                             @enderror
                             <div class="invalid-feedback">Please select a consignor.</div>
                         </div>
-                        <div class="col-12 col-md-4">
+                        <div class="col-md-4">
                             <label for="consignor_contact_number" class="form-label">Consignor Contact Number</label>
                             <input type="text" class="form-control" id="consignor_contact_number"
                                 name="consignor_contact_number" readonly>
@@ -275,7 +271,7 @@
 
                     </div>
                     <div class="row mb-3">
-                        <div class="col-12 col-md-4">
+                        <div class="col-md-4">
                             <label for="consignee_id" class="form-label">Consignee *</label>
                             <select class="form-select" id="consignee_id" name="consignee_id" required
                                 data-placeholder="Search and select consignee...">
@@ -292,13 +288,14 @@
                             @enderror
                             <div class="invalid-feedback">Please select a consignee.</div>
                         </div>
-                        <div class="col-12 col-md-4">
+                        <div class="col-md-4">
                             <label for="consignee_contact_number" class="form-label">Consignee Contact Number</label>
                             <input type="text" class="form-control" id="consignee_contact_number"
                                 name="consignee_contact_number" readonly>
                         </div>
                     </div>
                 </div>
+                <!-- Route Section -->
                 <div class="card mb-4 p-3 bg-light">
                     <div class="row">
                         <div class="col">
@@ -306,35 +303,36 @@
                         </div>
                     </div>
                     <div class="row mb-3">
-                        <div class="col-12 col-md-6">
+                        <div class="col-md-6">
                             <label for="source_city" class="form-label">Source City *</label>
                             <input type="text" class="form-control" id="source_city" name="source_city" required
                                 value="{{ old('source_city') }}" readonly>
                         </div>
-                        <div class="col-12 col-md-6">
+                        <div class="col-md-6">
                             <label for="source_state" class="form-label">Source State *</label>
                             <input type="text" class="form-control" id="source_state" name="source_state" required
                                 value="{{ old('source_state') }}" readonly>
                         </div>
                     </div>
                     <div class="row mb-3">
-                        <div class="col-12 col-md-4">
+                        <div class="col-md-4">
                             <label for="destination_city" class="form-label">Destination City *</label>
                             <input type="text" class="form-control" id="destination_city" name="destination_city"
                                 required value="{{ old('destination_city') }}" readonly>
                         </div>
-                        <div class="col-12 col-md-4">
+                        <div class="col-md-4">
                             <label for="destination_state" class="form-label">Destination State *</label>
                             <input type="text" class="form-control" id="destination_state" name="destination_state"
                                 required value="{{ old('destination_state') }}" readonly>
                         </div>
-                        <div class="col-12 col-md-4">
+                        <div class="col-md-4">
                             <label for="unloading_station" class="form-label">Unloading Station</label>
                             <input type="text" class="form-control" id="unloading_station" name="unloading_station"
-                                   value="{{ old('unloading_station') }}">
+                                 value="{{ old('unloading_station') }}">
                         </div>
                     </div>
                 </div>
+                <!-- Goods & Charges Section -->
                 <div class="card mb-4 p-3 bg-light">
                     <div class="row">
                         <div class="col">
@@ -343,7 +341,7 @@
                     </div>
                     <div class="row mb-3">
                         <input type="hidden" id="lane" name="lane" value="Road">
-                        <div class="col-12 col-md-4">
+                        <div class="col-md-4">
                             <label for="good_type" class="form-label">Goods Type *</label>
                             <div class="input-group flex-nowrap">
                                 <select class="form-select" id="good_type" name="good_type" required>
@@ -365,8 +363,8 @@
                             @enderror
                             <div class="invalid-feedback">Please select a goods type.</div>
                         </div>
-                        
-                        <div class="col-12 col-md-4">
+
+                        <div class="col-md-4">
                             <label for="no_of_units" class="form-label">No. of Units <small
                                     class="text-muted">(Optional)</small></label>
                             <input type="number" class="form-control" id="no_of_units" name="no_of_units"
@@ -381,7 +379,7 @@
 
                     </div>
                     <div class="row mb-3">
-                        <div class="col-12 col-md-4">
+                        <div class="col-md-4">
                             <label for="weight" class="form-label">Weight * <small class="text-muted">(in
                                     Tons)</small></label>
                             <input type="number" step="0.01" class="form-control" id="weight" name="weight"
@@ -393,7 +391,7 @@
                             <div class="invalid-feedback">Please enter a weight between 0.1 and 100 tons.</div>
                             <small class="text-muted">📏 Range: 0.1 - 100 tons</small>
                         </div>
-                        <div class="col-12 col-md-4">
+                        <div class="col-md-4">
                             <label for="fr_rate" class="form-label">Freight Rate * <small class="text-muted">(₹ per
                                     ton)</small></label>
                             <input type="number" step="0.01" class="form-control" id="fr_rate" name="fr_rate"
@@ -405,7 +403,7 @@
                             <div class="invalid-feedback">Please enter a freight rate between ₹1 and ₹20,000.</div>
                             <small class="text-muted">💰 Range: ₹1 - ₹20,000 per ton</small>
                         </div>
-                        <div class="col-12 col-md-4">
+                        <div class="col-md-4">
                             <label for="amount" class="form-label">Amount * <small
                                     class="text-muted">(Auto-calculated)</small></label>
                             <input type="number" step="0.01" class="form-control" id="amount" name="amount"
@@ -419,6 +417,7 @@
                         </div>
                     </div>
                 </div>
+                <!-- Submit Actions -->
                 <div class="card mb-4 p-3 bg-light">
                     <div class="row">
                         <div class="col">
@@ -426,11 +425,11 @@
                         </div>
                     </div>
                     <div class="row g-2">
-                        <div class="col-12 col-md-4 offset-md-2">
+                        <div class="col-md-4 offset-md-4">
                             <button class="btn btn-success w-100" type="submit">💾 Submit Form</button>
                         </div>
 
-                        <div class="col-12 col-md-4">
+                        <div class="col-md-4">
                             <a href="{{ route('lorry_receipts.index') }}" class="btn btn-outline-dark w-100">📄 Back to
                                 List</a>
                         </div>
@@ -439,6 +438,7 @@
             </div>
         </form>
     </div>
+    <!-- Add Goods Type Modal -->
     <div class="modal fade" id="addGoodsTypeModal" tabindex="-1" aria-labelledby="addGoodsTypeModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-md">
@@ -473,7 +473,9 @@
     </div>
 
 
+    <!-- Load Select2 from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <!-- Load SweetAlert2 from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
@@ -1388,64 +1390,63 @@ grNumberInput.addEventListener('blur', function() {
                 const formattedGrDate = formatDate(formData.get('gr_date'));
                 const currentDateTime = getCurrentDateTime();
 
-                // === UPDATED: Build confirmation message with scroll area and responsive cols ===
+                // Build confirmation message
                 const confirmationHTML = `
-                <div class="confirmation-details">
-                    <h5 class="text-primary mb-3">📋 Please verify the following details:</h5>
+            <div class="confirmation-details">
+                <h5 class="text-primary mb-3">📋 Please verify the following details:</h5>
 
-                    <div class="confirmation-scroll-area">
-                        <div class="row">
-                            <div class="col-12 col-md-6">
-                                <div class="card mb-3">
-                                    <div class="card-header bg-light"><strong>📄 Basic Information</strong></div>
-                                    <div class="card-body">
-                                        <p><strong>LR Number:</strong> ${formData.get('lr_number') || 'Not entered'}</p>
-                                        <p><strong>GR Date:</strong> ${formattedGrDate}</p>
-                                        <p><strong>Creation Date & Time:</strong> ${currentDateTime}</p>
-                                        <p><strong>Customer:</strong> ${customerName}</p>
-                                        <p><strong>Invoice Number:</strong> ${formData.get('invoice_number') || 'Not entered'}</p>
-                                    </div>
-                                </div>
-
-                                <div class="card mb-3">
-                                    <div class="card-header bg-light"><strong>🚛 Transport Details</strong></div>
-                                    <div class="card-body">
-                                        <p><strong>Truck:</strong> ${truckNumber}</p>
-                                        <p><strong>Transporter:</strong> ${transporterName}</p>
-                                        <p><strong>Reference By:</strong> ${referenceBy}</p>
-                                    </div>
-                                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header bg-light"><strong>📄 Basic Information</strong></div>
+                            <div class="card-body">
+                                <p><strong>LR Number:</strong> ${formData.get('lr_number') || 'Not entered'}</p>
+                                <p><strong>GR Date:</strong> ${formattedGrDate}</p>
+                                <p><strong>Creation Date & Time:</strong> ${currentDateTime}</p>
+                                <p><strong>Customer:</strong> ${customerName}</p>
+                                <p><strong>Invoice Number:</strong> ${formData.get('invoice_number') || 'Not entered'}</p>
                             </div>
+                        </div>
 
-                            <div class="col-12 col-md-6">
-                                <div class="card mb-3">
-                                    <div class="card-header bg-light"><strong>👥 Consignor & Consignee</strong></div>
-                                    <div class="card-body">
-                                        <p><strong>Consignor:</strong> ${consignorName}</p>
-                                        <p><strong>Consignee:</strong> ${consigneeName}</p>
-                                        <p><strong>Source:</strong> ${formData.get('source_city') || 'Not entered'}, ${formData.get('source_state') || 'Not entered'}</p>
-                                        <p><strong>Destination:</strong> ${formData.get('destination_city') || 'Not entered'}, ${formData.get('destination_state') || 'Not entered'}</p>
-                                    </div>
-                                </div>
-
-                                <div class="card mb-3">
-                                    <div class="card-header bg-light"><strong>📦 Goods & Charges</strong></div>
-                                    <div class="card-body">
-                                        <p><strong>Goods Type:</strong> ${formData.get('good_type') || 'Not selected'}</p>
-                                        <p><strong>Weight:</strong> ${formData.get('weight') || 'Not entered'} tons</p>
-                                        <p><strong>No. of Units:</strong> ${formData.get('no_of_units') || 'Not entered'}</p>
-                                        <p><strong>Freight Rate:</strong> ₹${formData.get('fr_rate') || 'Not entered'}</p>
-                                        <p><strong>Amount:</strong> ₹${formData.get('amount') || 'Not entered'}</p>
-                                    </div>
-                                </div>
+                        <div class="card mb-3">
+                            <div class="card-header bg-light"><strong>🚛 Transport Details</strong></div>
+                            <div class="card-body">
+                                <p><strong>Truck:</strong> ${truckNumber}</p>
+                                <p><strong>Transporter:</strong> ${transporterName}</p>
+                                <p><strong>Reference By:</strong> ${referenceBy}</p>
                             </div>
                         </div>
                     </div>
-                    <div class="alert alert-info mt-3">
-                        <i class="fas fa-info-circle"></i> Please review all details carefully before confirming submission.
+
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header bg-light"><strong>👥 Consignor & Consignee</strong></div>
+                            <div class="card-body">
+                                <p><strong>Consignor:</strong> ${consignorName}</p>
+                                <p><strong>Consignee:</strong> ${consigneeName}</p>
+                                <p><strong>Source:</strong> ${formData.get('source_city') || 'Not entered'}, ${formData.get('source_state') || 'Not entered'}</p>
+                                <p><strong>Destination:</strong> ${formData.get('destination_city') || 'Not entered'}, ${formData.get('destination_state') || 'Not entered'}</p>
+                            </div>
+                        </div>
+
+                        <div class="card mb-3">
+                            <div class="card-header bg-light"><strong>📦 Goods & Charges</strong></div>
+                            <div class="card-body">
+                                <p><strong>Goods Type:</strong> ${formData.get('good_type') || 'Not selected'}</p>
+                                <p><strong>Weight:</strong> ${formData.get('weight') || 'Not entered'} tons</p>
+                                <p><strong>No. of Units:</strong> ${formData.get('no_of_units') || 'Not entered'}</p>
+                                <p><strong>Freight Rate:</strong> ₹${formData.get('fr_rate') || 'Not entered'}</p>
+                                <p><strong>Amount:</strong> ₹${formData.get('amount') || 'Not entered'}</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            `;
+
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle"></i> Please review all details carefully before confirming submission.
+                </div>
+            </div>
+        `;
 
                 // Show confirmation dialog using SweetAlert2 or Bootstrap modal
                 if (typeof Swal !== 'undefined') {
@@ -1461,11 +1462,9 @@ grNumberInput.addEventListener('blur', function() {
                         denyButtonText: '💾 Save & Create FR',
                         confirmButtonText: '✅ Yes, Submit',
                         cancelButtonText: '❌ Cancel',
-                        // === CHANGED: Better responsive width ===
-                        width: '90vw',
-                        maxWidth: '1000px',
+                        width: '90%',
                         customClass: {
-                            popup: 'swal-wide' // You can keep this or remove it
+                            popup: 'swal-wide'
                         }
                     }).then((result) => {
                         if (result.isConfirmed) {
@@ -1526,7 +1525,6 @@ grNumberInput.addEventListener('blur', function() {
             fetch("{{ route('master.goods-types.store') }}", {
                     method: "POST",
                     headers: {
-                        // === FIXED: This now reads the meta tag ===
                         "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
                         "Accept": "application/json",
                         "Content-Type": "application/json"
@@ -1587,12 +1585,7 @@ grNumberInput.addEventListener('blur', function() {
                         form.reset();
                     } else {
                         errorBox.classList.remove('d-none');
-                        // Show validation errors if available
-                        if (data.errors && data.errors.name) {
-                            errorBox.innerHTML = data.errors.name.join('<br>');
-                        } else {
-                            errorBox.innerHTML = data.message || 'Failed to add goods type';
-                        }
+                        errorBox.innerHTML = 'Failed to add goods type';
                     }
                 })
                 .catch(error => {

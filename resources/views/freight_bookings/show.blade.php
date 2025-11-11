@@ -48,40 +48,14 @@
             font-size: 0.875rem;
             padding: 0.375rem 0.75rem;
         }
-
-        /* Responsive stacking for info rows on small screens */
-        @media (max-width: 767.98px) {
-            .info-row {
-                flex-direction: column;
-                align-items: flex-start;
-                padding: 0.5rem 0;
-            }
-
-            .info-label {
-                min-width: unset;
-                font-weight: 600;
-                margin-bottom: 0.25rem;
-                color: #495057;
-            }
-
-            .info-value {
-                text-align: left;
-                flex: unset;
-                padding-left: 0.5rem;
-                /* Indent the value slightly */
-            }
-        }
     </style>
 
     @if ($freightBooking->is_cancelled)
         <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert"
             style="max-width: 1200px; margin: 0 auto;">
-            {{-- FIX: Added flex-column, flex-md-row, and text-center classes for responsiveness --}}
-            <div class="d-flex flex-column flex-md-row align-items-center">
-                {{-- FIX: Added margin classes for mobile stacking --}}
-                <i class="fas fa-times-circle fa-2x me-md-3 mb-2 mb-md-0"></i>
-                {{-- FIX: Added text-center for mobile stacking --}}
-                <div class="text-center text-md-start">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-times-circle fa-2x me-3"></i>
+                <div>
                     <h5 class="alert-heading mb-1">
                         <i class="fas fa-exclamation-triangle"></i> CANCELLED FREIGHT BOOKING
                     </h5>
@@ -94,53 +68,54 @@
 
     <div class="card {{ $freightBooking->is_cancelled ? 'border-danger' : 'card-info' }} card-outline mb-4"
         style="max-width: 1200px; margin: 0 auto; {{ $freightBooking->is_cancelled ? 'opacity: 0.8;' : '' }}">
-        {{-- FIX: Added responsive flex classes (flex-column, flex-md-row, etc.) --}}
-     <div
-    class="card-header d-flex flex-column flex-md-row justify-content-md-between align-items-start align-items-md-center {{ $freightBooking->is_cancelled ? 'bg-danger-subtle' : '' }}">
-    
-    <div class="card-title h4 mb-2 mb-md-0">
-        Freight Booking Details - #{{ $freightBooking->id }}
-        @if ($freightBooking->is_cancelled)
-            <span class="badge bg-danger ms-2">
-                <i class="fas fa-times-circle"></i> CANCELLED
-            </span>
-        @endif
-    </div>
-
-    <div class="card-toolbar d-flex flex-wrap gap-2">
-        @if (!$freightBooking->is_cancelled)
-            @if ($freightBooking->balance_amount > 0)
-                @if (!$freightBooking->linked_lr_id)
-                    <button type="button" class="btn btn-sm btn-success"
-                        onclick="openVoucherPaymentModal({{ $freightBooking->id }})">
+        <!--begin::Header-->
+        <div
+            class="card-header d-flex justify-content-between align-items-center {{ $freightBooking->is_cancelled ? 'bg-danger-subtle' : '' }}">
+            <div class="card-title h4">
+                Freight Booking Details - #{{ $freightBooking->id }}
+                @if ($freightBooking->is_cancelled)
+                    <span class="badge bg-danger ms-2">
+                        <i class="fas fa-times-circle"></i> CANCELLED
+                    </span>
+                @endif
+            </div>
+            <div class="card-toolbar">
+                @if (!$freightBooking->is_cancelled)
+                    @if ($freightBooking->balance_amount > 0)
+                        @if( !$freightBooking->linked_lr_id)
+                        <button type="button" class="btn btn-sm btn-success me-2"
+                            onclick="openVoucherPaymentModal({{ $freightBooking->id }})">
+                            <i class="bi bi-credit-card"></i> Voucher Payment
+                        </button>
+                        @endif
+                    @else
+                        <button type="button" class="btn btn-sm btn-secondary me-2" disabled
+                            title="No balance amount to pay">
+                            <i class="bi bi-credit-card"></i> Voucher Payment
+                        </button>
+                    @endif
+                    <a href="{{ route('freight_bookings.edit', $freightBooking->id) }}"
+                        class="btn btn-sm btn-primary me-2">
+                        <i class="bi bi-pencil"></i> Edit
+                    </a>
+                @else
+                    <button type="button" class="btn btn-sm btn-secondary me-2" disabled
+                        title="Cannot perform actions on cancelled booking">
                         <i class="bi bi-credit-card"></i> Voucher Payment
                     </button>
+                    <button type="button" class="btn btn-sm btn-secondary me-2" disabled
+                        title="Cannot edit cancelled booking">
+                        <i class="bi bi-pencil"></i> Edit
+                    </button>
                 @endif
-            @else
-                <button type="button" class="btn btn-sm btn-secondary" disabled
-                    title="No balance amount to pay">
-                    <i class="bi bi-credit-card"></i> Voucher Payment
-                </button>
-            @endif
-            <a href="{{ route('freight_bookings.edit', $freightBooking->id) }}"
-                class="btn btn-sm btn-primary">
-                <i class="bi bi-pencil"></i> Edit
-            </a>
-        @else
-            <button type="button" class="btn btn-sm btn-secondary" disabled
-                title="Cannot perform actions on cancelled booking">
-                <i class="bi bi-credit-card"></i> Voucher Payment
-            </button>
-            <button type="button" class="btn btn-sm btn-secondary" disabled
-                title="Cannot edit cancelled booking">
-                <i class="bi bi-pencil"></i> Edit
-            </button>
-        @endif
-        <a href="{{ route('freight_bookings.index') }}" class="btn btn-sm btn-outline-dark">
-            <i class="bi bi-arrow-left"></i> Back to List
-        </a>
-    </div>
-</div>
+                <a href="{{ route('freight_bookings.index') }}" class="btn btn-sm btn-outline-dark">
+                    <i class="bi bi-arrow-left"></i> Back to List
+                </a>
+            </div>
+        </div>
+        <!--end::Header-->
+
+        <!--begin::Body-->
         <div class="card-body">
             @if ($freightBooking->lr)
                 <div class="row">
@@ -150,7 +125,6 @@
                                 <h5 class="mb-0">Related Lorry Receipt Information</h5>
                             </div>
                             <div class="card-body">
-                                {{-- NOTE: This col-md-4 structure is already responsive --}}
                                 <div class="row">
                                     <div class="col-md-4">
                                         <div class="info-row">
@@ -223,8 +197,8 @@
                     </div>
                 </div>
             @endif
-            {{-- NOTE: This col-md-6 structure is already responsive --}}
             <div class="row">
+                <!-- Basic Information -->
                 <div class="col-md-6">
                     <div class="info-card card">
                         <div class="card-header">
@@ -260,6 +234,7 @@
                     </div>
                 </div>
 
+                <!-- Financial Information -->
                 <div class="col-md-6">
                     <div class="info-card card">
                         <div class="card-header">
@@ -287,7 +262,7 @@
                                 <span class="info-label">Balance:</span>
                                 <span class="info-value">
                                     @php
-                                        
+
                                         $badgeClass = 'bg-success';
                                     @endphp
                                     <span
@@ -301,6 +276,7 @@
             </div>
 
             <div class="row">
+                <!-- Status Information -->
                 <div class="col-md-6">
                     <div class="info-card card">
                         <div class="card-header">
@@ -341,6 +317,7 @@
                     </div>
                 </div>
 
+                <!-- Additional Information -->
                 <div class="col-md-6">
                     <div class="info-card card">
                         <div class="card-header">
@@ -367,6 +344,7 @@
                 </div>
             </div>
 
+            <!-- Additional Charges Section -->
             @if ($freightBooking->is_delivered)
                 <div class="row">
                     <div class="col-12">
@@ -377,7 +355,6 @@
                             <div class="card-body">
                                 <div class="row">
                                     <div class="col-md-12">
-                                        {{-- NOTE: d-flex flex-wrap is already responsive --}}
                                         <div class="d-flex flex-wrap">
                                             <div class="me-4 mb-2">
                                                 <span class="info-label">Detention: </span>
@@ -415,8 +392,10 @@
 
 
         </div>
-        </div>
+        <!--end::Body-->
+    </div>
 
+    <!-- Voucher Payment Modal -->
     <div class="modal fade" id="voucherPaymentModal" tabindex="-1" aria-labelledby="voucherPaymentModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-xl">
@@ -427,6 +406,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
+                    <!-- Previous Payments Section -->
                     <div class="alert alert-info">
                         <h6><i class="fas fa-history"></i> Previous Payments</h6>
                         <div id="previousPaymentsTable">
@@ -439,9 +419,9 @@
                         </div>
                     </div>
 
+                    <!-- Transporter Details Section -->
                     <div class="alert alert-secondary">
                         <h6><i class="fas fa-truck"></i> Transporter Details</h6>
-                        {{-- NOTE: This col-md-3 structure is already responsive --}}
                         <div class="row">
                             <div class="col-md-3">
                                 <strong>FB Transporter:</strong><br>
@@ -466,9 +446,9 @@
                         </div>
                     </div>
 
+                    <!-- Payment Allocation Section -->
                     <div class="alert alert-warning">
                         <h6><i class="fas fa-money-bill-wave"></i> Payment Allocation</h6>
-                        {{-- NOTE: This table-responsive is already responsive --}}
                         <div class="table-responsive">
                             <table class="table table-sm table-bordered">
                                 <thead class="table-light">
@@ -499,8 +479,9 @@
                         </div>
                     </div>
 
-                    {{-- NOTE: This col-md-4 structure is already responsive --}}
+                    <!-- Payment Details Section -->
                     <div class="row">
+                        <!-- Payment Type -->
                         <div class="col-md-4">
                             <div class="mb-3">
                                 <label for="paymentType" class="form-label">Payment Type *</label>
@@ -516,6 +497,7 @@
                             </div>
                         </div>
 
+                        <!-- Payment Mode -->
                         <div class="col-md-4">
                             <div class="mb-3">
                                 <label for="paymentMode" class="form-label">Payment Mode *</label>
@@ -531,6 +513,7 @@
                             </div>
                         </div>
 
+                        <!-- Pump Name (hidden by default) -->
                         <div class="col-md-4" id="pumpNameContainer" style="display: none;">
                             <div class="mb-3">
                                 <label for="pumpName" class="form-label">Pump Name *</label>
@@ -637,7 +620,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                `;
+            `;
 
                         data.payments.forEach(payment => {
                             const statusBadge = payment.payment_status === 'paid' ? 'bg-success' :
@@ -645,24 +628,24 @@
                                 payment.payment_status === 'in progress' ? 'bg-info' : 'bg-secondary';
 
                             tableHtml += `
-                        <tr>
-                            <td>#${payment.id}</td>
-                            <td>#${payment.freight_booking_id}</td>
-                            <td>${payment.voucher_number || 'N/A'}</td>
-                            <td>₹${parseFloat(payment.amount || 0).toFixed(2)}</td>
-                            <td>${payment.payment_type || 'N/A'}</td>
-                            <td>${payment.payment_mode || 'N/A'}</td>
-                            <td>${new Date(payment.date).toLocaleDateString('en-IN')}</td>
-                            <td><span class="badge ${statusBadge}">${payment.payment_status || 'N/A'}</span></td>
-                        </tr>
-                    `;
+                    <tr>
+                        <td>#${payment.id}</td>
+                        <td>#${payment.freight_booking_id}</td>
+                        <td>${payment.voucher_number || 'N/A'}</td>
+                        <td>₹${parseFloat(payment.amount || 0).toFixed(2)}</td>
+                        <td>${payment.payment_type || 'N/A'}</td>
+                        <td>${payment.payment_mode || 'N/A'}</td>
+                        <td>${new Date(payment.date).toLocaleDateString('en-IN')}</td>
+                        <td><span class="badge ${statusBadge}">${payment.payment_status || 'N/A'}</span></td>
+                    </tr>
+                `;
                         });
 
                         tableHtml += `
                         </tbody>
                     </table>
                 </div>
-                `;
+            `;
 
                         tableContainer.innerHTML = tableHtml;
                     } else {
@@ -896,50 +879,48 @@
     </script>
 
 
+    <!-- Payment History Section -->
     <div class="card mt-4">
         <div class="card-header">
             <h5>Payment History</h5>
         </div>
         <div class="card-body">
             @if ($payments->count() > 0)
-                {{-- FIX: Added table-responsive wrapper --}}
-                <div class="table-responsive">
-                    <table class="table table-bordered">
-                        <thead>
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Voucher</th>
+                            <th>Amount</th>
+                            <th>Payment Type</th>
+                            <th>Payment Mode</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($payments as $payment)
                             <tr>
-                                <th>Voucher</th>
-                                <th>Amount</th>
-                                <th>Payment Type</th>
-                                <th>Payment Mode</th>
-                                <th>Date</th>
-                                <th>Status</th>
+                                <td>{{ $payment->voucher_number ?? 'N/A' }}</td>
+                                <td>₹{{ number_format($payment->amount, 2) }}</td>
+                                <td>{{ $payment->payment_type ?? 'N/A' }}</td>
+                                <td>{{ $payment->payment_mode ?? 'N/A' }}</td>
+                                <td>{{ $payment->date ? \Carbon\Carbon::parse($payment->date)->format('d-m-Y') : 'N/A' }}
+                                </td>
+                                <td>
+                                    @if ($payment->payment_status === 'paid')
+                                        <span class="badge bg-success">Paid</span>
+                                    @elseif($payment->payment_status === 'pending')
+                                        <span class="badge bg-warning">Pending</span>
+                                    @elseif($payment->payment_status === 'in-progress')
+                                        <span class="badge bg-info">In Progress</span>
+                                    @else
+                                        <span class="badge bg-secondary">Unknown</span>
+                                    @endif
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($payments as $payment)
-                                <tr>
-                                    <td>{{ $payment->voucher_number ?? 'N/A' }}</td>
-                                    <td>₹{{ number_format($payment->amount, 2) }}</td>
-                                    <td>{{ $payment->payment_type ?? 'N/A' }}</td>
-                                    <td>{{ $payment->payment_mode ?? 'N/A' }}</td>
-                                    <td>{{ $payment->date ? \Carbon\Carbon::parse($payment->date)->format('d-m-Y') : 'N/A' }}
-                                    </td>
-                                    <td>
-                                        @if ($payment->payment_status === 'paid')
-                                            <span class="badge bg-success">Paid</span>
-                                        @elseif($payment->payment_status === 'pending')
-                                            <span class="badge bg-warning">Pending</span>
-                                        @elseif($payment->payment_status === 'in-progress')
-                                            <span class="badge bg-info">In Progress</span>
-                                        @else
-                                            <span class="badge bg-secondary">Unknown</span>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                        @endforeach
+                    </tbody>
+                </table>
             @else
                 <div class="alert alert-info">
                     No payment history found.
@@ -948,12 +929,12 @@
         </div>
     </div>
 
+    <!-- User Information of Creator & Updater -->
     <div class="card mt-4">
         <div class="card-header">
             <h5>User Information</h5>
         </div>
         <div class="card-body">
-            {{-- NOTE: This col-md-6 structure is already responsive --}}
             <div class="row">
                 <div class="col-md-6">
                     <div class="info-card card">

@@ -1,42 +1,22 @@
 @extends('layouts.app')
 
 @push('styles')
+<!-- DataTables CSS -->
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/searchpanes/2.2.0/css/searchPanes.bootstrap5.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css">
-
-<style>
-    /* Style for the new filter row */
-    thead .filters th {
-        padding: 8px;
-    }
-    thead .filters input {
-        width: 100%;
-        box-sizing: border-box;
-    }
-
-    /* Ensure DataTables scrollbar is styled nicely with Bootstrap */
-    div.dataTables_wrapper div.dataTables_scrollBody {
-        border-bottom: 1px solid #ddd;
-    }
-
-    /* FIX: Prevents headers and cells from wrapping on mobile */
-    #consigneesTable th, #consigneesTable td {
-        white-space: nowrap;
-    }
-</style>
 @endpush
 
 @section('content')
-<div class="container-fluid px-0 mt-4">
+<div class="container mt-4">
+    <div class="col-sm-6"><h3 class="mb-0">Consignees/Consignors/Customer</h3></div>
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
-    <div class="d-flex justify-content-between gap-2 mb-3">
-        <div class="col-sm-6"><h3 class="mb-0 d-flex align-items-center">Consignees/Consignors/Customer</h3></div>
-        <a href="{{ route('consignees.create') }}" class="btn btn-info d-flex">
+    <div class="d-flex justify-content-end gap-2 mb-3">
+        <a href="{{ route('consignees.create') }}" class="btn btn-info">
             <i class="bi bi-plus"></i> Create
         </a>
     </div>
@@ -46,7 +26,7 @@
             <h3 class="card-title">Consignees/Consignors/Customer List</h3>
         </div>
         <div class="card-body">
-            <table id="consigneesTable" class="table table-bordered table-striped" style="width:100%">
+            <table id="consigneesTable" class="table table-bordered table-striped">
                 <thead>
                     <tr>
                         <th style="width: 80px;">Sr. No</th>
@@ -59,18 +39,15 @@
                         <th style="width: 120px;">Actions</th>
                         @endif
                     </tr>
-                    <tr class="filters">
-                        <th></th> <th></th> <th></th> <th></th> <th></th> <th></th> @if(auth()->check() && auth()->user()->userRole->name === 'admin')
-                        <th></th> @endif
-                    </tr>
                 </thead>
             </table>
         </div>
     </div>
 </div>
 
+<!-- Consignee Details Modal -->
 <div class="modal fade" id="consigneeDetailsModal" tabindex="-1" aria-labelledby="consigneeDetailsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="consigneeDetailsModalLabel">
@@ -80,16 +57,17 @@
             </div>
             <div class="modal-body">
                 <div id="consigneeDetailsContent">
-                    </div>
+                    <!-- Content will be loaded here -->
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="bi bi-x-circle"></i> Close
                 </button>
                 @if (Auth::user()->userRole->name === 'admin')
-                    <a href="#" id="editConsigneeBtn" class="btn btn-primary" style="display: none;">
-                        <i class="bi bi-pencil-square"></i> Edit Consignee
-                    </a>
+                  <a href="#" id="editConsigneeBtn" class="btn btn-primary" style="display: none;">
+                      <i class="bi bi-pencil-square"></i> Edit Consignee
+                  </a>
                 @endif
             </div>
         </div>
@@ -98,6 +76,7 @@
 @endsection
 
 @push('scripts')
+<!-- DataTables JS -->
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
@@ -165,6 +144,7 @@ $(document).ready(function() {
         pageLength: 10,
         lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
         dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+             '<"row"<"col-sm-12 col-md-2"B><"col-sm-12 col-md-10"p>>' +
              '<"row"<"col-sm-12"tr>>' +
              '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
         buttons: [
@@ -175,7 +155,7 @@ $(document).ready(function() {
             }
         ],
         language: {
-            search: "Search:", // Changed label
+            search: "Search:",
             lengthMenu: "Show _MENU_ entries",
             info: "Showing _START_ to _END_ of _TOTAL_ entries",
             infoEmpty: "Showing 0 to 0 of 0 entries",
@@ -189,40 +169,23 @@ $(document).ready(function() {
                 previous: "Previous"
             }
         },
-        
-        // FIXED: Changed responsive to false and added scrollX
-        responsive: false,
-        scrollX: true,
-
+        responsive: true,
         autoWidth: false,
         stateSave: true,
         searchDelay: 500,
-
-        // FIXED: Updated initComplete to target the new filter row
         initComplete: function() {
-            var api = this.api();
-
-            // Find the filter row
-            var filterRow = $(api.table().header()).closest('thead').find('tr.filters');
-
             // Add individual column search
-            this.api().columns([1, 2, 3, 4, 5]).every(function() { // Target relevant columns
+            this.api().columns([1, 2, 3, 4, 5]).every(function() {
                 var column = this;
-                var title = $(column.header()).text(); // Get title from original header
-
-                // Find the corresponding cell in the '.filters' row
-                var cell = filterRow.find('th').eq(column.index());
+                var title = column.header().textContent;
 
                 // Create input element
                 var input = $('<input type="text" class="form-control form-control-sm" placeholder="Search ' + title + '" />')
-                    .appendTo(cell) // Append to the new cell
+                    .appendTo($(column.header()))
                     .on('keyup change clear', function() {
                         if (column.search() !== this.value) {
                             column.search(this.value).draw();
                         }
-                    })
-                    .on('click', function(e) {
-                         e.stopPropagation(); // Stop click from sorting the column
                     });
             });
         }
@@ -252,7 +215,7 @@ $(document).ready(function() {
             success: function(data) {
                 var detailsHtml = `
                     <div class="row">
-                        <div class="col-md-6 mb-3 mb-md-0">
+                        <div class="col-md-6">
                             <div class="card h-100">
                                 <div class="card-header bg-light">
                                     <h6 class="mb-0"><i class="bi bi-person-circle"></i> Basic Information</h6>
@@ -286,14 +249,15 @@ $(document).ready(function() {
                                             <td class="fw-bold">PAN Number:</td>
                                             <td>${data.pan_number}</td>
                                         </tr>
+
                                     </table>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="row mt-3">
-                        <div class="col-md-6 mb-3 mb-md-0">
-                            <div class="card h-100">
+                        <div class="col-md-6">
+                            <div class="card">
                                 <div class="card-header bg-light">
                                     <h6 class="mb-0"><i class="bi bi-geo-alt"></i> Location Details</h6>
                                 </div>
@@ -320,7 +284,7 @@ $(document).ready(function() {
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <div class="card h-100">
+                            <div class="card">
                                 <div class="card-header bg-light">
                                     <h6 class="mb-0"><i class="bi bi-info-circle"></i> Additional Information</h6>
                                 </div>

@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container px-0 mt-4">
-        <h2 class='mb-3'>Invoice Details</h2>
+    <div class="container mt-4">
+        <h2>Invoice Details</h2>
         <div class="card">
             <div class="card-body">
                 <div class="row">

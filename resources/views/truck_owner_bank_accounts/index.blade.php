@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container px-0 mt-4">
-    <div class="col-sm-6"><h3 class="mb-3">Truck Owner Bank Account Setup</h3></div>
+<div class="container mt-4">
+    <div class="col-sm-6"><h3 class="mb-0">Truck Owner Bank Account Setup</h3></div>
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
