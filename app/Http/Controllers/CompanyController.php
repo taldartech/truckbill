@@ -10,6 +10,7 @@ class CompanyController extends Controller
 {
     public function index(Request $request)
     {
+        
         // Handle DataTables AJAX request
         if ($request->ajax()) {
             return $this->getCompaniesData($request);
@@ -20,13 +21,14 @@ class CompanyController extends Controller
 
     private function getCompaniesData(Request $request)
     {
+        
         //if user is master admin than show all companies
         if (auth()->user()->userRole->name === 'master_admin') {
             $query = \App\Models\Company::query();
         } else {
             $query = \App\Models\Company::query()->where('user_id', auth()->user()->id);
         }
-
+        
         // Handle search
         if ($request->has('search') && $request->search['value']) {
             $searchValue = $request->search['value'];
@@ -286,9 +288,12 @@ public function unblock($id)
             'country_id' => 'nullable|exists:countries,id',
             'state_id' => 'nullable|exists:states,id',
             'city_id' => 'nullable|exists:cities,id',
-            'pin_code' => 'nullable|string|max:10',
+            // 'pin_code' => 'nullable|string|max:10',
+            'pin_code' => 'nullable|digits_between:1,10',
+
         ], [
             'name.regex' => 'The name must contain at least one alphabetic character.', 
+            'pin_code.max' => 'The pin code must be a maximum of 10 characters.',
         ]);
         // dd($validated);
         if ($request->hasFile('company_logo')) {
@@ -368,10 +373,13 @@ public function unblock($id)
             'country_id' => 'nullable|exists:countries,id',
             'state_id' => 'nullable|exists:states,id',
             'city_id' => 'nullable|exists:cities,id',
-            'pin_code' => 'nullable|string|max:10',
+            // 'pin_code' => 'nullable|string|max:10',
+            'pin_code' => 'nullable|digits_between:1,10',
+
             
         ], [
             'name.regex' => 'The name must contain at least one alphabetic character.', 
+            'pin_code.max' => 'The pin code must be a maximum of 10 characters.',
         ]);
 
         // Set default GST type to regular if not provided
