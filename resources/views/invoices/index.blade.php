@@ -1,10 +1,8 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container mt-4">
-        <div class="col-sm-6">
-            <h3 class="mb-0">Invoice Management</h3>
-        </div>
+    <div class="container px-0 mt-4">
+       
         @if (session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>
         @endif
@@ -13,15 +11,20 @@
         @endif
 
         {{-- Always visible container --}}
-        <div class="d-flex justify-content-end gap-2 mb-3">
-            <button type="button" class="btn btn-info"
-                onclick="document.getElementById('advanced-search-box').classList.toggle('d-none')">
-                <i class="bi bi-funnel"></i> Search filter
-            </button>
-            <a href="{{ route('invoices.create') }}" class="btn btn-info">
-                <i class="bi bi-plus"></i> Create
-            </a>
-        </div>
+     <div class="d-flex flex-column flex-sm-row justify-content-sm-between align-items-start align-items-sm-center gap-2 mb-3">
+    
+    <h3 class="mb-2 mb-sm-0">Invoice Management</h3>
+    
+    <div class="d-flex flex-column flex-sm-row gap-2">
+        <button type="button" class="btn btn-info"
+            onclick="document.getElementById('advanced-search-box').classList.toggle('d-none')">
+            <i class="bi bi-funnel"></i> Search filter
+        </button>
+        <a href="{{ route('invoices.create') }}" class="btn btn-info">
+            <i class="bi bi-plus"></i> Create
+        </a>
+    </div>
+</div>
 
         {{-- Quick Stats --}}
         @php
@@ -230,7 +233,7 @@
     <!-- Invoice Details Modal -->
     <div class="modal fade" id="invoiceDetailsModal" tabindex="-1" aria-labelledby="invoiceDetailsModalLabel"
         aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title" id="invoiceDetailsModalLabel">

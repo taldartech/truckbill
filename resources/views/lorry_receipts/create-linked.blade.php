@@ -1,9 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
-    <!-- Select2 CSS -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <!-- SweetAlert2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet" />
     <style>
         /* Prevent form expansion on validation errors */
@@ -19,11 +19,13 @@
             word-wrap: break-word;
         }
 
-        /* Ensure consistent column widths */
+        /* FIXED: This rule was breaking Bootstrap's responsive grid on mobile. */
+        /*
         .row .col-md-4 {
             flex: 0 0 33.333333%;
             max-width: 33.333333%;
         }
+        */
 
         /* Prevent card from expanding */
         .card {
@@ -80,26 +82,37 @@
             background-color: var(--bs-primary);
             color: white;
         }
+
+        /* ADDED: CSS for the scrollable confirmation modal */
+        .confirmation-scroll-area {
+            max-height: 50vh;
+            /* Set a max height relative to the viewport */
+            overflow-y: auto;
+            /* Add vertical scrolling when content overflows */
+            overflow-x: hidden;
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            background: #fdfdfd;
+            /* Light background for the scroll area */
+        }
     </style>
-    <div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
-        <!--begin::Header-->
+    
+    <div class="card card-info card-outline mb-4 w-100 mx-auto" style="max-width: 1000px;">
         <div class="card-header">
-            <div class="d-flex w-100">
+            <div class="d-flex w-100 flex-column flex-md-row align-items-md-center">
                 <div class="card-title h4">Add Linked Lorry Receipts</div>
-                <div class="ms-auto">
-                    <a href="{{ route('consignees.create') }}" class="btn btn-info">
+                <div class="ms-md-auto mt-2 mt-md-0">
+                    <a href="{{ route('consignees.create') }}" class="btn btn-info w-100 w-md-auto">
                         <i class="bi bi-plus"></i> Create Consignee/Consignor/Customer</a>
                 </div>
             </div>
         </div>
-        <!--end::Header-->
-        <!--begin::Form-->
         <form method="POST" action="{{ route('lorry_receipts.store') }}" id="lorryReceiptForm" class="needs-validation"
             novalidate="">
             @csrf
             <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
             <div class="card-body">
-                <!-- Shared Details for all LRs -->
                 <div class="card mb-4 p-3 bg-light">
                     <div class="row">
                         <div class="col">
@@ -107,7 +120,7 @@
                         </div>
                     </div>
                     <div class="row mb-3">
-                        <div class="col-md-4">
+                        <div class="col-12 col-md-4">
                             <label for="gr_date" class="form-label">GR Date *</label>
                             <input type="date" class="form-control" id="gr_date" name="gr_date" required
                                 value="{{ old('gr_date') }}">
@@ -116,7 +129,7 @@
                             @enderror
                             <div class="invalid-feedback">Please select a GR date.</div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-12 col-md-4">
                             <label for="truck_id" class="form-label">Truck *</label>
                             <select class="form-select" id="truck_id" name="truck_id" required>
                                 <option value="">Select Trucks</option>
@@ -136,7 +149,7 @@
                             @enderror
                             <div class="invalid-feedback">Please select a truck.</div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-12 col-md-4">
                             <label for="transporter_type" class="form-label" id="transporterTypeLabel">Select Payment Type
                                 *</label>
                             <select class="form-select" id="transporter_type" name="transporter_type" required>
@@ -147,10 +160,8 @@
                             <div class="invalid-feedback">Please select transporter type.</div>
                         </div>
                     </div>
-                    <!-- Memo ID field removed from creation form as it cannot be present at creation time -->
                     <div class="row mb-3">
-
-                        <div class="col-md-4">
+                        <div class="col-12 col-md-4">
                             <label for="transporter_id" id="transporterLabel" class="form-label">Transporter *</label>
                             <select class="form-select" id="transporter_id" name="transporter_id" required
                                 onchange="showTdsPercentage(this.value)">
@@ -167,7 +178,7 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-12 col-md-4">
                             <label for="reference_by" class="form-label">Reference By</label>
                             <select class="form-select" id="reference_by" name="reference_by">
                                 <option value="">Select Reference</option>
@@ -185,12 +196,12 @@
                         </div>
                     </div>
                 </div>
-                <!-- LR Items Repeater -->
                 <div class="card mb-4 p-3 bg-light">
                     <div class="d-flex align-items-center mb-3">
                         <h5 class="mb-0">LR Items</h5>
                     </div>
                     <div id="lr-items-container"></div>
+
                     <template id="lr-item-template">
                         <div class="lr-item card mb-3 p-3">
                             <div class="d-flex align-items-center mb-2">
@@ -201,21 +212,21 @@
                             <input type="hidden" class="lane-input" value="Road">
                             <div class="card mb-4 p-3 bg-light">
                                 <div class="row mb-3">
-                                    <div class="col-md-3">
+                                    <div class="col-12 col-md-3">
                                         <label class="form-label">LR Number *</label>
                                         <input type="text" class="form-control lr-number-input" required
                                             placeholder="Unique LR Number">
                                         <div class="invalid-feedback">Please enter a unique LR number.</div>
                                         <div class="lr-number-feedback mt-1"></div>
                                     </div>
-                                    <div class="col-md-3">
+                                    <div class="col-12 col-md-3">
                                         <label class="form-label">Invoice Number</label>
                                         <input type="text" class="form-control invoice-number-input"
                                             placeholder="Unique Invoice Number">
                                         <div class="invalid-feedback">Please enter a unique Invoice number.</div>
                                         <div class="invoice-number-feedback mt-1"></div>
                                     </div>
-                                    <div class="col-md-3">
+                                    <div class="col-12 col-md-3">
                                         <label class="form-label">Customer *</label>
                                         <select class="form-select select2 customer-select" required>
                                             <option value="">Select Customer</option>
@@ -225,20 +236,22 @@
                                         </select>
                                         <div class="invalid-feedback">Please select a customer.</div>
                                     </div>
-                                    <div class="col-md-3">
-                                        <label for="gr_number" class="form-label">GR Number <small class="text-muted">(Optional)</small></label>
-                                        <input type="text" class="form-control gr-number-input" id="gr_number" name="gr_number"
-                                               value="{{ old('gr_number') }}" placeholder="Enter GR Number">
+                                    <div class="col-12 col-md-3">
+                                        <label for="gr_number" class="form-label">GR Number <small
+                                                class="text-muted">(Optional)</small></label>
+                                        <input type="text" class="form-control gr-number-input" id="gr_number"
+                                            name="gr_number" value="{{ old('gr_number') }}"
+                                            placeholder="Enter GR Number">
                                         <div class="gr-number-feedback mt-1"></div>
                                         @error('gr_number')
                                             <div class="text-danger">{{ $message }}</div>
                                         @enderror
                                     </div>
-                                   
+
                                 </div>
                                 <div class="row">
-                                    
-                                    <div class="col-md-4">
+
+                                    <div class="col-12 col-md-4">
                                         <label class="form-label">Consignor *</label>
                                         <select class="form-select select2 consignor-select" required>
                                             <option value="">Select Consignor</option>
@@ -255,7 +268,7 @@
                                         <label class="form-label">Consignor Contact</label>
                                         <input type="text" class="form-control consignor-contact" readonly>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-12 col-md-4">
                                         <label class="form-label">Consignee *</label>
                                         <select class="form-select select2 consignee-select" required>
                                             <option value="">Select Consignee</option>
@@ -272,10 +285,10 @@
                                         <label class="form-label">Consignee Contact</label>
                                         <input type="text" class="form-control consignee-contact" readonly>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-12 col-md-4">
                                         <label for="unloading_station" class="form-label">Unloading Station </label>
-                                        <input type="text" class="form-control" id="unloading_station" name="unloading_station"
-                                            value="{{ old('unloading_station') }}">
+                                        <input type="text" class="form-control" id="unloading_station"
+                                            name="unloading_station" value="{{ old('unloading_station') }}">
                                     </div>
                                 </div>
                                 <div class="row mb-3">
@@ -292,7 +305,7 @@
                             </div>
                             <div class="card mb-4 p-3 bg-light">
                                 <div class="row mb-3">
-                                    <div class="col-md-2 ">
+                                    <div class="col-12 col-md-3">
                                         <label class="form-label">Goods Type *</label>
                                         <div class="input-group flex-nowrap">
                                             <select class="form-select select2 goods-type" required>
@@ -308,24 +321,24 @@
                                             </button>
                                         </div>
                                     </div>
-                                    <div class="col-md-2 ms-4">
+                                    <div class="col-12 col-md-2">
                                         <label class="form-label">No. of Units</label>
                                         <input type="number" class="form-control units" min="1" max="100000">
                                         <small class="text-muted">📦 Max: 100,000 units</small>
                                     </div>
-                                    <div class="col-md-2">
+                                    <div class="col-12 col-md-2">
                                         <label class="form-label">Weight (Tons) *</label>
                                         <input type="number" step="0.01" class="form-control weight" min="0.1"
                                             max="100" required>
                                         <small class="text-muted">📏 Range: 0.1 - 100 tons</small>
                                     </div>
-                                    <div class="col-md-2">
+                                    <div class="col-12 col-md-2">
                                         <label class="form-label">Fr Rate (₹/ton) *</label>
                                         <input type="number" step="0.01" class="form-control fr-rate" min="1"
                                             max="20000" required>
                                         <small class="text-muted">💰 Range: ₹1 - ₹20,000 per ton</small>
                                     </div>
-                                    <div class="col-md-3">
+                                    <div class="col-12 col-md-3">
                                         <label class="form-label">Amount *</label>
                                         <input type="number" step="0.01" class="form-control amount" required>
                                         <small class="text-muted">Auto: Weight × FR Rate</small>
@@ -333,8 +346,6 @@
                                 </div>
 
                                 <div class="row mb-3">
-
-
                                     <input type="hidden" class="form-control lane" value="Road" readonly>
                                 </div>
                             </div>
@@ -343,7 +354,6 @@
                     <button type="button" class="btn btn-sm btn-primary ms-auto" id="add-lr-item"><i
                             class="bi bi-plus"></i> Add LR</button>
                 </div>
-                <!-- Submit Actions -->
                 <div class="card mb-4 p-3 bg-light">
                     <div class="row">
                         <div class="col">
@@ -351,11 +361,11 @@
                         </div>
                     </div>
                     <div class="row g-2">
-                        <div class="col-md-4 offset-md-4">
+                        <div class="col-12 col-md-4 offset-md-2">
                             <button class="btn btn-success w-100" type="submit">💾 Submit Form</button>
                         </div>
 
-                        <div class="col-md-4">
+                        <div class="col-12 col-md-4">
                             <a href="{{ route('lorry_receipts.index') }}" class="btn btn-outline-dark w-100">📄 Back to
                                 List</a>
                         </div>
@@ -364,7 +374,6 @@
             </div>
         </form>
     </div>
-    <!-- Add Goods Type Modal -->
     <div class="modal fade" id="addGoodsTypeModal" tabindex="-1" aria-labelledby="addGoodsTypeModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-md">
@@ -400,9 +409,7 @@
     </div>
 
 
-    <!-- Load Select2 from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <!-- Load SweetAlert2 from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
@@ -467,7 +474,7 @@
     </script>
 
     <script>
-        console.log('🚀 Linked  Receipts Form initialized');
+        console.log('🚀 Linked  Receipts Form initialized');
         // For consignor
 
         $(document).on('change', '.consignor-select', function() {
@@ -728,7 +735,8 @@
             const lrItemsContainer = document.getElementById('lr-items-container');
             const addBtn = document.getElementById('add-lr-item');
 
-            function addLrItem(prefill = {}) {
+            // Made global to be accessible
+            window.addLrItem = function(prefill = {}) {
                 const tpl = document.getElementById('lr-item-template');
                 const node = tpl.content.cloneNode(true);
                 lrItemsContainer.appendChild(node);
@@ -747,7 +755,7 @@
                 $(scope).find('.select2').select2({
                     theme: 'bootstrap-5',
                     width: '100%',
-                    minimumResultsForSearch: 0
+                    // minimumResultsForSearch: 0 // Allow search in repeater
                 });
             }
 
@@ -763,7 +771,7 @@
             });
 
             // Fetch consignor details
-            function handleConsignorSelection(consignorId, scope) {
+            window.handleConsignorSelection = function(consignorId, scope) {
                 console.log('👤 Consignor selected:', consignorId);
 
                 const consigneeId = scope.querySelector('.consignee-select')?.value;
@@ -795,15 +803,15 @@
                             // Update contact number
                             scope.querySelector('.consignor-contact').value = data.contact_number || '';
                             scope.querySelector('.consignor-contact-text').textContent = "Contact Number: " +
-                                data.contact_number || '';
+                                (data.contact_number || 'N/A');
 
                             // Handle both nested and flat city/state structures
                             const cityValue = data.city?.name || data.city || '';
                             const stateValue = data.state?.name || data.state || '';
                             scope.querySelector('.consignor-city-text').textContent = "Source City: " +
-                                cityValue || '';
+                                (cityValue || 'N/A');
                             scope.querySelector('.consignor-state-text').textContent = "Source State: " +
-                                stateValue || '';
+                                (stateValue || 'N/A');
 
                             scope.querySelector('.source-city').value = cityValue;
                             scope.querySelector('.source-state').value = stateValue;
@@ -836,7 +844,7 @@
             }
 
             // Fetch consignee details
-            function handleConsigneeSelection(consigneeId, scope) {
+            window.handleConsigneeSelection = function(consigneeId, scope) {
                 console.log('🏢 Consignee selected:', consigneeId);
 
                 const consignorId = scope.querySelector('.consignor-select')?.value;
@@ -868,15 +876,15 @@
                             // Update contact number
                             scope.querySelector('.consignee-contact').value = data.contact_number || '';
                             scope.querySelector('.consignee-contact-text').textContent = "Contact Number: " +
-                                data.contact_number || '';
+                                (data.contact_number || 'N/A');
 
                             // Handle both nested and flat city/state structures
                             const cityValue = data.city?.name || data.city || '';
                             const stateValue = data.state?.name || data.state || '';
                             scope.querySelector('.consignee-city-text').textContent = "Destination City: " +
-                                cityValue || '';
+                                (cityValue || 'N/A');
                             scope.querySelector('.consignee-state-text').textContent = "Destination State: " +
-                                stateValue || '';
+                                (stateValue || 'N/A');
 
                             scope.querySelector('.destination-city').value = cityValue;
                             scope.querySelector('.destination-state').value = stateValue;
@@ -1091,7 +1099,8 @@
             lrItemsContainer.addEventListener('input', function(e) {
                 if (e.target.classList.contains('lr-number-input')) {
                     const inputEl = e.target;
-                    const feedbackEl = e.target.closest('.col-md-3').querySelector(
+                    // FIXED: Changed selector to be more robust
+                    const feedbackEl = e.target.closest('.col-12').querySelector(
                         '.lr-number-feedback');
                     const lrNumber = inputEl.value.trim();
                     clearTimeout(lrNumberTimeout);
@@ -1102,7 +1111,8 @@
             lrItemsContainer.addEventListener('blur', function(e) {
                 if (e.target.classList.contains('lr-number-input')) {
                     const inputEl = e.target;
-                    const feedbackEl = e.target.closest('.col-md-3').querySelector(
+                    // FIXED: Changed selector to be more robust
+                    const feedbackEl = e.target.closest('.col-12').querySelector(
                         '.lr-number-feedback');
                     const lrNumber = inputEl.value.trim();
                     if (lrNumber) {
@@ -1123,7 +1133,7 @@
                     return;
                 }
                 let allInvoiceNumbers = Array.from(document.querySelectorAll(
-                    '.invoice-number-input')).map(el => el.value.trim().toLowerCase());
+                    '.invoice-number-input')).map(el => el.value.trim().toLowerCase()).filter(el => el);
                 let duplicateCount = allInvoiceNumbers.filter(num => num === invoiceNumber.toLowerCase())
                     .length;
                 if (duplicateCount > 1) {
@@ -1174,7 +1184,8 @@
             lrItemsContainer.addEventListener('input', function(e) {
                 if (e.target.classList.contains('invoice-number-input')) {
                     const inputEl = e.target;
-                    const feedbackEl = e.target.closest('.col-md-3').querySelector(
+                    // FIXED: Changed selector to be more robust
+                    const feedbackEl = e.target.closest('.col-12').querySelector(
                         '.invoice-number-feedback');
                     const invoiceNumber = inputEl.value.trim();
                     clearTimeout(invoiceNumberTimeout);
@@ -1186,7 +1197,8 @@
             lrItemsContainer.addEventListener('blur', function(e) {
                 if (e.target.classList.contains('invoice-number-input')) {
                     const inputEl = e.target;
-                    const feedbackEl = e.target.closest('.col-md-3').querySelector(
+                    // FIXED: Changed selector to be more robust
+                    const feedbackEl = e.target.closest('.col-12').querySelector(
                         '.invoice-number-feedback');
                     const invoiceNumber = inputEl.value.trim();
                     if (invoiceNumber) {
@@ -1198,68 +1210,90 @@
 
 
             // Add GR number timeout variable
-let grNumberTimeout;
+            let grNumberTimeout;
 
-// Add GR number check function
-function checkGrUniq(grNumber, feedbackEl, inputEl) {
-    if (!grNumber) {
-        feedbackEl.innerHTML = '';
-        inputEl.classList.remove('is-valid', 'is-invalid');
-        return;
-    }
+            // Add GR number check function
+            function checkGrUniq(grNumber, feedbackEl, inputEl) {
+                if (!grNumber) {
+                    feedbackEl.innerHTML = '';
+                    inputEl.classList.remove('is-valid', 'is-invalid');
+                    return;
+                }
 
-    fetch('/api/check-gr-number-uniqueness', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-                gr_number: grNumber
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.available) {
-                feedbackEl.innerHTML = '<small class="text-success">✓ Available</small>';
-                inputEl.classList.remove('is-invalid');
-                inputEl.classList.add('is-valid');
-            } else {
-                feedbackEl.innerHTML = '<small class="text-danger">✗ Already in use</small>';
-                inputEl.classList.remove('is-valid');
-                inputEl.classList.add('is-invalid');
+                // Check for duplicates in the form first
+                let allGrNumbers = Array.from(document.querySelectorAll(
+                    '.gr-number-input')).map(el => el.value.trim().toLowerCase()).filter(el => el);
+                let duplicateCount = allGrNumbers.filter(num => num === grNumber.toLowerCase())
+                    .length;
+                if (duplicateCount > 1) {
+                    feedbackEl.innerHTML =
+                        '<small class="text-danger">❌ This GR number is duplicated in the form.</small>';
+                    inputEl.classList.remove('is-valid');
+                    inputEl.classList.add('is-invalid');
+                    inputEl.setCustomValidity('This GR number is duplicated in the form.');
+                    return;
+                }
+                
+                feedbackEl.innerHTML = '<small class="text-info">🔍 Checking availability...</small>';
+                inputEl.classList.remove('is-valid', 'is-invalid');
+
+                fetch('/api/check-gr-number-uniqueness', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            // FIXED: Use the meta tag for consistency
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            gr_number: grNumber
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.available) {
+                            feedbackEl.innerHTML = '<small class="text-success">✓ Available</small>';
+                            inputEl.classList.remove('is-invalid');
+                            inputEl.classList.add('is-valid');
+                            inputEl.setCustomValidity('');
+                        } else {
+                            feedbackEl.innerHTML = '<small class="text-danger">✗ Already in use</small>';
+                            inputEl.classList.remove('is-valid');
+                            inputEl.classList.add('is-invalid');
+                            inputEl.setCustomValidity('This GR number is already in use.');
+                        }
+                    })
+                    .catch(err => {
+                        console.error('GR number check error', err);
+                        feedbackEl.innerHTML = '<small class="text-warning">⚠️ Unable to check availability</small>';
+                        inputEl.classList.remove('is-valid', 'is-invalid');
+                    });
             }
-        })
-        .catch(err => {
-            console.error('GR number check error', err);
-            feedbackEl.innerHTML = '<small class="text-warning">⚠️ Unable to check availability</small>';
-            inputEl.classList.remove('is-valid', 'is-invalid');
-        });
-}
 
-// Add GR number input event listeners
-lrItemsContainer.addEventListener('input', function(e) {
-    if (e.target.classList.contains('gr-number-input')) {
-        const inputEl = e.target;
-        const feedbackEl = inputEl.nextElementSibling;
-        const grNumber = inputEl.value.trim();
-        clearTimeout(grNumberTimeout);
-        grNumberTimeout = setTimeout(() => checkGrUniq(grNumber, feedbackEl, inputEl), 500);
-    }
-});
+            // Add GR number input event listeners
+            lrItemsContainer.addEventListener('input', function(e) {
+                if (e.target.classList.contains('gr-number-input')) {
+                    const inputEl = e.target;
+                    // FIXED: Changed selector to be more robust
+                    const feedbackEl = inputEl.closest('.col-12').querySelector('.gr-number-feedback');
+                    const grNumber = inputEl.value.trim();
+                    clearTimeout(grNumberTimeout);
+                    grNumberTimeout = setTimeout(() => checkGrUniq(grNumber, feedbackEl, inputEl), 500);
+                }
+            });
 
-lrItemsContainer.addEventListener('blur', function(e) {
-    if (e.target.classList.contains('gr-number-input')) {
-        const inputEl = e.target;
-        const feedbackEl = inputEl.nextElementSibling;
-        const grNumber = inputEl.value.trim();
-        if (grNumber) {
-            clearTimeout(grNumberTimeout);
-            checkGrUniq(grNumber, feedbackEl, inputEl);
-        }
-    }
-});
+            lrItemsContainer.addEventListener('blur', function(e) {
+                if (e.target.classList.contains('gr-number-input')) {
+                    const inputEl = e.target;
+                    // FIXED: Changed selector to be more robust
+                    const feedbackEl = inputEl.closest('.col-12').querySelector('.gr-number-feedback');
+                    const grNumber = inputEl.value.trim();
+                    if (grNumber) {
+                        clearTimeout(grNumberTimeout);
+                        checkGrUniq(grNumber, feedbackEl, inputEl);
+                    }
+                }
+            });
             // Bootstrap validation and SweetAlert confirmation similar to single create
             (function() {
                 const form = document.getElementById('lorryReceiptForm');
@@ -1267,12 +1301,14 @@ lrItemsContainer.addEventListener('blur', function(e) {
                     event.preventDefault();
                     event.stopPropagation();
 
+                    // === YOUR ORIGINAL VALIDATION IS PRESERVED ===
                     if (document.querySelectorAll('#lr-items-container .lr-item').length ===
                         0 || document.querySelectorAll('#lr-items-container .lr-item').length ===
                         1) {
-                        Swal.fire('No LR Items', 'Please add at least two LR items.', 'warning');
+                        Swal.fire('Not Enough LR Items', 'Please add at least two LR items to link them.', 'warning');
                         return;
                     }
+                    // =============================================
 
                     if (!form.checkValidity()) {
                         form.classList.add('was-validated');
@@ -1309,40 +1345,44 @@ lrItemsContainer.addEventListener('blur', function(e) {
                     const referenceBy = document.querySelector('#reference_by option:checked')
                         ?.textContent || 'Not selected';
 
+                    // FIXED: Added scroll wrapper and responsive columns
                     const confirmationHTML = `
-                                  <div class="confirmation-details">
-                                      <h5 class="text-primary mb-3">📋 Verify details</h5>
-                                      <div class="row">
-                                        <div class="col-md-3"></div>
-                                          <div class="col-md-6">
-                                            <div class="card mb-3"><div class="card-header bg-light"><strong>Shared</strong></div>
+                        <div class="confirmation-details">
+                            <h5 class="text-primary mb-3">📋 Please verify the following details:</h5>
+                            <div class="confirmation-scroll-area">
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="card mb-3">
+                                            <div class="card-header bg-light"><strong>Shared Details</strong></div>
                                             <div class="card-body">
-                                              <p><strong>GR Date:</strong> ${formatDate(grDate)}</p>
-                                              <p><strong>Truck:</strong> ${truckNumber}</p>
-                                              <p><strong>Transporter:</strong> ${transporterName}</p>
-                                              <p><strong>Reference By:</strong> ${referenceBy}</p>
-                                            </div></div>
-                                          </div>
-                                          <div class="col-md-3"></div>
-
-                                              ${items.map((it, i) => `
-                                                                <div class="col-md-6">
-                                                            <div class="card mb-3"><div class="card-header bg-light"><strong> ${i+1}. LR:</strong> ${it.lr_number}</strong></div>
-                                                            <div class="card-body">
-                                                              <div class='mb-2'>
-                                                                <strong>Invoice Number:</strong> ${it.invoice_number} | <strong>Customer:</strong> ${it.customer}<br/>
-                                                                <strong>Consignor:</strong> ${it.consignor} | <strong>Consignee:</strong> ${it.consignee}<br/>
-                                                                <strong>Route:</strong> ${it.source} → ${it.destination}<br/>
-                                                                <strong>Goods:</strong> ${it.good_type} | <strong>No. of Units:</strong> ${it.no_of_units} <br/>
-                                                                <strong>Weight:</strong> ${it.weight} | <strong>FR:</strong> ₹${it.fr_rate} | <strong>Amount:</strong> ₹${it.amount}
-                                                              </div>
-                                                                </div></div>
-                                                                </div>
-                                                            `).join('')}
-
-
-                                      </div>
-                                  </div>`;
+                                                <p><strong>GR Date:</strong> ${formatDate(grDate)}</p>
+                                                <p><strong>Truck:</strong> ${truckNumber.trim()}</p>
+                                                <p><strong>Transporter:</strong> ${transporterName}</p>
+                                                <p><strong>Reference By:</strong> ${referenceBy}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    ${items.map((it, i) => `
+                                        <div class="col-12 col-md-6">
+                                            <div class="card mb-3">
+                                                <div class="card-header bg-light"><strong> ${i+1}. LR: ${it.lr_number}</strong></div>
+                                                <div class="card-body" style="font-size: 0.9rem;">
+                                                    <p class="mb-1"><strong>Invoice:</strong> ${it.invoice_number || 'N/A'}</p>
+                                                    <p class="mb-1"><strong>Customer:</strong> ${it.customer}</p>
+                                                    <p class="mb-1"><strong>Consignor:</strong> ${it.consignor}</p>
+                                                    <p class="mb-1"><strong>Consignee:</strong> ${it.consignee}</p>
+                                                    <p class="mb-1"><strong>Route:</strong> ${it.source || 'N/A'} → ${it.destination || 'N/A'}</p>
+                                                    <hr class="my-2">
+                                                    <p class="mb-1"><strong>Goods:</strong> ${it.good_type} | <strong>Units:</strong> ${it.no_of_units || 'N/A'}</p>
+                                                    <p class="mb-0"><strong>Weight:</strong> ${it.weight} | <strong>FR:</strong> ₹${it.fr_rate} | <strong>Amount:</strong> ₹${it.amount}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>`;
 
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({
@@ -1353,7 +1393,9 @@ lrItemsContainer.addEventListener('blur', function(e) {
                             confirmButtonColor: '#28a745',
                             confirmButtonText: '✅ Submit',
                             cancelButtonText: '❌ Cancel',
-                            width: '90%'
+                            // FIXED: Responsive width
+                            width: '90vw',
+                            maxWidth: '1000px'
                         }).then((result) => {
                             if (result.isConfirmed) {
                                 compileAndSubmit(form);
@@ -1387,7 +1429,7 @@ lrItemsContainer.addEventListener('blur', function(e) {
                         lr_number: item.querySelector('.lr-number-input').value,
                         invoice_number: item.querySelector('.invoice-number-input').value,
                         customer_id: item.querySelector('.customer-select').value,
-                        gr_number: item.querySelector('#gr_number').value,
+                        gr_number: item.querySelector('.gr-number-input').value,
                         consignor_id: item.querySelector('.consignor-select').value,
                         consignor_contact_number: item.querySelector('.consignor-contact')
                             .value,
@@ -1496,8 +1538,11 @@ lrItemsContainer.addEventListener('blur', function(e) {
                         // Select the newly added option in the relevant dropdown
                         const goodTypeField = document.getElementById('good_type_field');
                         if (goodTypeField && goodTypeField.value) {
-                            document.querySelector(`[data-select2-id="${goodTypeField.value}"]`).value = data
-                                .goodsType.name;
+                             // Find the select2 instance by its data-id and set its value
+                            let targetSelect = $(`[data-select2-id="${goodTypeField.value}"]`);
+                            if (targetSelect.length) {
+                                targetSelect.val(data.goodsType.name).trigger('change');
+                            }
                         }
 
                         // Close modal properly using Bootstrap's API
@@ -1539,7 +1584,12 @@ lrItemsContainer.addEventListener('blur', function(e) {
                         form.reset();
                     } else {
                         errorBox.classList.remove('d-none');
-                        errorBox.innerHTML = 'Failed to add goods type';
+                         // Show validation errors if available
+                         if (data.errors && data.errors.name) {
+                            errorBox.innerHTML = data.errors.name.join('<br>');
+                        } else {
+                            errorBox.innerHTML = data.message || 'Failed to add goods type';
+                        }
                     }
                 })
                 .catch(error => {
@@ -1552,6 +1602,7 @@ lrItemsContainer.addEventListener('blur', function(e) {
     </script>
 
     <script>
+        // These functions are duplicated but are safe to leave.
         // Fetch consignor details
         function handleConsignorSelection(consignorId, scope) {
             console.log('👤 Consignor selected:', consignorId);
