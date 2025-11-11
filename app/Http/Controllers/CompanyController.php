@@ -430,8 +430,8 @@ public function unblock($id)
     $validated['plan_end_date'] = Carbon::now()->addDays(45)->toDateString();
 
     // ✅ Optional: Set default credits
-    $validated['lr_credits'] = 0;
-    $validated['truck_credits'] = 0;
+    $validated['lr_credits'] = 250;
+    $validated['truck_credits'] = null;
 
 
         \App\Models\Company::create($validated);
