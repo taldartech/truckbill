@@ -5,7 +5,7 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/searchpanes/2.2.0/css/searchPanes.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css">
-    <div class="container mt-4">
+    <div class="container px-0 mt-4">
         <div class="row">
             <div class="col-sm-8">
                 <h3 class="mb-0">Daily Payments</h3>

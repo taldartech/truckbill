@@ -1,16 +1,48 @@
 @extends('layouts.app')
 
 @push('styles')
-<!-- DataTables CSS -->
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/searchpanes/2.2.0/css/searchPanes.bootstrap5.min.css">
 <link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css">
+
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    .select2-container--default .select2-selection--single {
+        height: 38px;
+        padding: 5px;
+        border: 1px solid #ced4da;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px;
+    }
+
+    /* Style for the new filter row */
+    thead .filters th {
+        padding: 8px;
+    }
+    thead .filters input {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Ensure DataTables scrollbar is styled nicely with Bootstrap */
+    div.dataTables_wrapper div.dataTables_scrollBody {
+        border-bottom: 1px solid #ddd;
+    }
+
+    /* FIX: This rule prevents headers and cells from wrapping on mobile,
+      forcing them to a single line and letting scrollX handle it.
+    */
+    #trucksTable th, #trucksTable td {
+        white-space: nowrap;
+    }
+</style>
 @endpush
 
 @section('content')
-<div class="container mt-4">
-    <div class="col-sm-6"><h3 class="mb-0">Truck Management</h3></div>
+<div class="container-fluid px-0 mt-4"> 
+    <div class="col-sm-6"><h3 class="mb-3">Truck Management</h3></div>
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
@@ -20,7 +52,7 @@
             <h3 class="card-title">Trucks List</h3>
         </div>
         <div class="card-body">
-            <table id="trucksTable" class="table table-bordered table-striped">
+            <table id="trucksTable" class="table table-bordered table-striped" style="width:100%">
                 <thead>
                     <tr>
                         <th style="width: 80px;">Sr. No</th>
@@ -33,15 +65,25 @@
                         <th style="width: 120px;">Actions</th>
                         @endif
                     </tr>
+                    <tr class="filters">
+                        <th></th> 
+                        <th></th> 
+                        <th></th> 
+                        <th></th> 
+                        <th></th> 
+                        <th></th> 
+                        @if(auth()->check() && auth()->user()->userRole->name === 'admin')
+                        <th></th> 
+                        @endif
+                    </tr>
                 </thead>
             </table>
         </div>
     </div>
 </div>
 
-<!-- Truck Details Modal -->
 <div class="modal fade" id="truckDetailsModal" tabindex="-1" aria-labelledby="truckDetailsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable"> 
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="truckDetailsModalLabel">
@@ -59,13 +101,11 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                
             </div>
         </div>
     </div>
 </div>
 
-<!-- Assign Driver Modal -->
 <div class="modal fade" id="assignDriverModal" tabindex="-1" aria-labelledby="assignDriverModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -78,7 +118,6 @@
             <div class="modal-body">
                 <input type="hidden" id="assign_truck_id" name="truck_id">
                 
-                <!-- Truck Information Display -->
                 <div class="card mb-3">
                     <div class="card-header bg-light">
                         <h6 class="mb-0"><i class="bi bi-truck"></i> Truck Information</h6>
@@ -97,7 +136,6 @@
                     </div>
                 </div>
                 
-                <!-- Driver Selection Form -->
                 <form id="assignDriverForm">
                     @csrf
                     @method('PUT')
@@ -120,7 +158,6 @@
                     </div>
                 </form>
                 
-                <!-- Add New Driver Form (Initially Hidden) -->
                 <div id="addDriverForm" style="display: none;">
                     <div class="card border-primary">
                         <div class="card-header bg-primary text-white">
@@ -179,7 +216,6 @@
     </div>
 </div>
 
-<!-- Assign Owner Modal -->
 <div class="modal fade" id="assignOwnerModal" tabindex="-1" aria-labelledby="assignOwnerModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -197,7 +233,7 @@
                             <option value="">-- Select Owner --</option>
                             @foreach($owners as $owner)
                             <option value="{{ $owner->id }}">{{ $owner->name }} ({{ $owner->pan_number ?? 'No PAN' }})</option>
-                        @endforeach
+                            @endforeach
                         </select>
                     </div>
                 </div>
@@ -209,24 +245,10 @@
         </div>
     </div>
 </div>
+@endsection
 
-@push('styles')
-<!-- Select2 CSS -->
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<style>
-    .select2-container--default .select2-selection--single {
-        height: 38px;
-        padding: 5px;
-        border: 1px solid #ced4da;
-    }
-    .select2-container--default .select2-selection--single .select2-selection__arrow {
-        height: 36px;
-    }
-</style>
-@endpush
 
 @push('scripts')
-<!-- DataTables JS -->
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
@@ -237,9 +259,12 @@
 <script src="https://cdn.datatables.net/searchpanes/2.2.0/js/searchPanes.bootstrap5.min.js"></script>
 <script src="https://cdn.datatables.net/select/1.7.0/js/dataTables.select.min.js"></script>
 
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 <script>
 $(document).ready(function() {
-    $('#trucksTable').DataTable({
+    // Setup DataTables
+    var table = $('#trucksTable').DataTable({
         processing: true,
         serverSide: true,
         ajax: {
@@ -296,10 +321,12 @@ $(document).ready(function() {
         order: [[1, 'asc']],
         pageLength: 10,
         lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+        
+        // FIXED: Restored the 'B' (Buttons) and 'p' (top pagination)
         dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
-             '<"row"<"col-sm-12 col-md-2"B><"col-sm-12 col-md-10"p>>' +
              '<"row"<"col-sm-12"tr>>' +
              '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+        
         buttons: [
             {
                 extend: 'excel',
@@ -322,23 +349,34 @@ $(document).ready(function() {
                 previous: "Previous"
             }
         },
-        responsive: true,
+        
+        responsive: false,
+        scrollX: true, 
+        
         autoWidth: false,
         stateSave: true,
         searchDelay: 500,
+        
         initComplete: function() {
-            // Add individual column search
-            this.api().columns([1, 2, 3, 4, 5]).every(function() {
+            var api = this.api();
+            
+            var filterRow = $(api.table().header()).closest('thead').find('tr.filters');
+
+            api.columns([1, 2, 3, 4, 5]).every(function() {
                 var column = this;
-                var title = column.header().textContent;
+                var title = $(column.header()).text(); 
                 
-                // Create input element
+                var cell = filterRow.find('th').eq(column.index()); 
+                
                 var input = $('<input type="text" class="form-control form-control-sm" placeholder="Search ' + title + '" />')
-                    .appendTo($(column.header()))
+                    .appendTo(cell) 
                     .on('keyup change clear', function() {
                         if (column.search() !== this.value) {
                             column.search(this.value).draw();
                         }
+                    })
+                    .on('click', function(e) {
+                         e.stopPropagation();
                     });
             });
         }
@@ -357,7 +395,6 @@ $(document).ready(function() {
         e.preventDefault();
         var truckId = $(this).data('id');
         
-        // Show modal with loading state
         $('#truckDetailsModal').modal('show');
         $('#truckDetailsContent').html(`
             <div class="text-center">
@@ -369,14 +406,13 @@ $(document).ready(function() {
         `);
         $('#editTruckBtn').hide();
         
-        // Fetch truck details
         $.ajax({
             url: '/trucks/' + truckId,
             type: 'GET',
             success: function(data) {
                 var detailsHtml = `
                     <div class="row">
-                        <div class="col-md-6">
+                        <div class="col-md-6 mb-3 mb-md-0">
                             <div class="card h-100">
                                 <div class="card-header bg-light">
                                     <h6 class="mb-0"><i class="bi bi-truck"></i> Truck Information</h6>
@@ -404,7 +440,7 @@ $(document).ready(function() {
                         </div>
                     </div>
                     <div class="row mt-3">
-                        <div class="col-md-6">
+                        <div class="col-md-6 mb-3 mb-md-0">
                             <div class="card h-100">
                                 <div class="card-header bg-light">
                                     <h6 class="mb-0"><i class="bi bi-person-circle"></i> Driver Information</h6>
@@ -451,11 +487,6 @@ $(document).ready(function() {
                 `;
                 
                 $('#truckDetailsContent').html(detailsHtml);
-                
-                // Show edit button and set up click handler
-                $('#editTruckBtn').show().off('click').on('click', function() {
-                    window.location.href = '/trucks/' + data.id + '/edit';
-                });
             },
             error: function(xhr) {
                 $('#truckDetailsContent').html(`
@@ -479,17 +510,14 @@ $(document).ready(function() {
         var currentDriverId = $(this).data('current-driver-id');
         var currentDriverName = $(this).data('current-driver-name');
         
-        // Populate truck information
         $('#assign_truck_id').val(truckId);
         $('#display_truck_number').text(truckNumber);
         $('#display_truck_type').text(truckType);
         $('#display_transporter_name').text(transporterName);
         $('#display_current_driver').text(currentDriverName || 'Not assigned');
         
-        // Load drivers and set current selection
         loadDriversForAssignment(currentDriverId);
         
-        // Show modal
         $('#assignDriverModal').modal('show');
     });
     
@@ -531,7 +559,6 @@ $(document).ready(function() {
     $('#newDriverForm').on('submit', function(e) {
         e.preventDefault();
         
-        // Validate form
         if (!this.checkValidity()) {
             e.stopPropagation();
             $(this).addClass('was-validated');
@@ -552,7 +579,6 @@ $(document).ready(function() {
             data: formData,
             success: function(response) {
                 if (response.success) {
-                    // Show success message
                     $('body').prepend(`
                         <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
                             <i class="bi bi-check-circle"></i>
@@ -561,16 +587,13 @@ $(document).ready(function() {
                         </div>
                     `);
                     
-                    // Reset form and hide it
                     $('#newDriverForm')[0].reset();
                     $('#newDriverForm').removeClass('was-validated');
                     $('#addDriverForm').slideUp();
                     $('#showAddDriverForm').show();
                     
-                    // Reload drivers and auto-select the new one
                     loadDriversForAssignment(response.driver.id);
                     
-                    // Auto-hide success message
                     setTimeout(function() {
                         $('.alert-success').fadeOut();
                     }, 5000);
@@ -580,10 +603,8 @@ $(document).ready(function() {
                 var errors = xhr.responseJSON?.errors || {};
                 var errorMessage = 'Unable to add driver. Please check the form and try again.';
                 
-                // Clear previous error states
                 $('.is-invalid').removeClass('is-invalid');
                 
-                // Show field-specific errors
                 Object.keys(errors).forEach(function(field) {
                     var input = $('#new_driver_' + field);
                     if (input.length) {
@@ -592,7 +613,6 @@ $(document).ready(function() {
                     }
                 });
                 
-                // Show general error message
                 if (xhr.responseJSON?.message) {
                     errorMessage = xhr.responseJSON.message;
                 }
@@ -628,7 +648,6 @@ $(document).ready(function() {
             },
             success: function(response) {
                 if (response.success) {
-                    // Show success message
                     $('body').prepend(`
                         <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
                             <i class="bi bi-check-circle"></i>
@@ -637,13 +656,9 @@ $(document).ready(function() {
                         </div>
                     `);
                     
-                    // Hide modal
                     $('#assignDriverModal').modal('hide');
-                    
-                    // Refresh DataTable
                     $('#trucksTable').DataTable().ajax.reload();
                     
-                    // Auto-hide success message
                     setTimeout(function() {
                         $('.alert-success').fadeOut();
                     }, 5000);
@@ -655,7 +670,6 @@ $(document).ready(function() {
                     errorMessage = xhr.responseJSON.message;
                 }
                 
-                // Show error message
                 $('body').prepend(`
                     <div class="alert alert-danger alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
                         <i class="bi bi-exclamation-triangle"></i>
@@ -700,10 +714,19 @@ $(document).ready(function() {
             success: function(response) {
                 if (response.success) {
                     $('#assignOwnerModal').modal('hide');
-                    // Show success message
-                    alert('Truck owner assigned successfully!');
-                    // Reload the page to reflect changes
-                    location.reload();
+                    $('body').prepend(`
+                        <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                            <i class="bi bi-check-circle"></i>
+                            <strong>Success!</strong> Truck owner assigned successfully!
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    `);
+                    $('#trucksTable').DataTable().ajax.reload();
+                    
+                    setTimeout(function() {
+                        $('.alert-success').fadeOut();
+                    }, 5000);
+
                 } else {
                     alert('Error: ' + (response.message || 'Failed to assign owner'));
                 }
@@ -720,10 +743,3 @@ $(document).ready(function() {
 });
 </script>
 @endpush
-
-@push('scripts')
-<!-- Select2 JS -->
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-@endpush
-
-@endsection

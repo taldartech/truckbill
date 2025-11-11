@@ -85,7 +85,7 @@
 
 @section('content')
     <div class="content">
-        <div class="container-fluid">
+        <div class="container-fluid px-0">
             <!-- Info boxes -->
             <div class="row">
                 <div class="col-12 col-sm-6 col-md-3">

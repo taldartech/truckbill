@@ -1,100 +1,142 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container mt-4">
-        <h2>Edit Invoice</h2>
+{{-- Yeh styling block aapke Consignee code se liya gaya hai --}}
+<style>
+/* Prevent form expansion on validation errors */
+.form-control, .form-select {
+    min-height: 38px;
+    box-sizing: border-box;
+}
+
+.text-danger {
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    word-wrap: break-word;
+}
+
+/* Prevent card from expanding */
+.card {
+    overflow: hidden;
+}
+
+/* Consistent spacing for form groups */
+.mb-3 {
+    margin-bottom: 1rem !important;
+}
+</style>
+
+{{-- Yeh layout (card) aapke Consignee code se liya gaya hai --}}
+<div class="container-fluid px-0">
+    <div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
+        <div class="card-header">
+            {{-- Title aapke Invoice code se --}}
+            <div class="card-title h4">Edit Invoice</div>
+        </div>
+        
+        {{-- Form aapke Invoice code se --}}
         <form method="POST" action="{{ route('invoices.update', $invoice->id) }}">
             @csrf
             @method('PUT')
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <label for="company" class="form-label">Company *</label>
-                    <input type="text" class="form-control" disabled id="company"
-                        value="{{ $invoice->company ? $invoice->company->name : 'N/A' }}">
+            
+            {{-- Card-body wrapper --}}
+            <div class="card-body">
+                
+                {{-- ALIGNMENT FIX: Sabhi columns mein col-12 add kiya gaya hai --}}
+                <div class="row">
+                    <div class="col-12 col-md-4 mb-3">
+                        <label for="company" class="form-label">Company *</label>
+                        <input type="text" class="form-control" disabled id="company"
+                            value="{{ $invoice->company ? $invoice->company->name : 'N/A' }}">
+                    </div>
+                    <div class="col-12 col-md-4 mb-3">
+                        <label for="invoice_type" class="form-label">Invoice Type *</label>
+                        <input type="text" class="form-control" disabled id="invoice_type"
+                            value="{{ ucfirst($invoice->invoice_type) }}">
+                    </div>
+                    <div class="col-12 col-md-4 mb-3">
+                        {{-- ID FIX: Duplicate ID "generated_date" ko change kiya hai --}}
+                        <label for="generated_date_display" class="form-label">Generated Date *</label>
+                        <input type="date" id="generated_date_display" class="form-control" disabled
+                            value="{{ old('generated_date', $invoice->generated_date) }}">
+                    </div>
                 </div>
-                <div class="col-md-4 mb-3">
-                    <label for="invoice_type" class="form-label">Invoice Type *</label>
-                    <input type="text" class="form-control" disabled id="invoice_type"
-                        value="{{ ucfirst($invoice->invoice_type) }}">
+                <div class="row">
+                    <div class="col-12 col-md-4 mb-3">
+                        <label for="customer" class="form-label">Customer *</label>
+                        <input type="text" class="form-control" disabled id="customer"
+                            value="{{ $invoice->customer_id ? $invoice->consignee->name : 'N/A' }}">
+                    </div>
+                    <div class="col-12 col-md-4 mb-3">
+                        <label for="total_amount" class="form-label">Total Amount *</label>
+                        <input type="number" id="total_amount" class="form-control" disabled
+                            value="{{ $invoice->total_amount }}">
+                    </div>
+                    <div class="col-12 col-md-4 mb-3">
+                        <label for="memos" class="form-label">Memos</label>
+                        <input type="text" id="memos" class="form-control" disabled
+                            value="{{ implode(',', $invoice->memo_ids) }}">
+                    </div>
                 </div>
-                <div class="col-md-4 mb-3">
-                    <label for="generated_date" class="form-label">Generated Date *</label>
-                    <input type="date" id="generated_date" class="form-control" disabled
-                        value="{{ old('generated_date', $invoice->generated_date) }}">
+                <div class="row">
+                    <div class="col-12 col-md-4 mb-3">
+                        <label class="form-label">Manual Invoice #</label>
+                        <input type="text" placeholder="Invoice Number" id="manual_invoice_number" name="manual_invoice_number"
+                            class="form-control @error('manual_invoice_number') is-invalid @enderror"
+                            value="{{ old('manual_invoice_number', $invoice->manual_invoice_number) }}" required>
+                        
+                        <div id="manual-invoice-number-feedback"></div>
+                        
+                        @error('manual_invoice_number') 
+                            <div class="text-danger">{{ $message }}</div> 
+                        @enderror
+                        <div class="valid-feedback">Looks good!</div>
+                    </div>
+                    <div class="col-12 col-md-4 mb-3">
+                        <label for="generated_date" class="form-label">Generated Date *</label>
+                        <input type="date" name="generated_date" class="form-control" required id="generated_date"
+                            @if ($invoice->payment_status != 'pending') disabled @endif
+                            value="{{ old('generated_date', $invoice->generated_date) }}">
+                    </div>
+                    <div class="col-12 col-md-4 mb-3">
+                        <label for="payment_status" class="form-label">Payment Status *</label>
+                        <select name="payment_status" class="form-select" required id="payment_status">
+                            @if ($invoice->payment_status == 'pending')
+                                <option value="pending"
+                                    {{ old('payment_status', $invoice->payment_status) == 'pending' ? 'selected' : '' }}>Pending
+                                </option>
+                            @endif
+                            @if ($invoice->payment_status != 'paid')
+                                <option value="partial"
+                                    {{ old('payment_status', $invoice->payment_status) == 'partial' ? 'selected' : '' }}>
+                                    Partial
+                                </option>
+                            @endif
+                            <option value="paid"
+                                {{ old('payment_status', $invoice->payment_status) == 'paid' ? 'selected' : '' }}>Paid</option>
+                        </select>
+                    </div>
                 </div>
+                
             </div>
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <label for="customer" class="form-label">Customer *</label>
-                    <input type="text" class="form-control" disabled id="customer"
-                        value="{{ $invoice->customer_id ? $invoice->consignee->name : 'N/A' }}">
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label for="total_amount" class="form-label">Total Amount *</label>
-                    <input type="number" id="total_amount" class="form-control" disabled
-                        value="{{ $invoice->total_amount }}">
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label for="memos" class="form-label">Memos</label>
-                    <input type="text" id="memos" class="form-control" disabled
-                        value="{{ implode(',', $invoice->memo_ids) }}">
-                </div>
+            
+            {{-- Card footer Consignee file jaisa --}}
+            <div class="card-footer">
+                {{-- Buttons aapke Invoice file se (icons add kar diye hain) --}}
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-check-circle"></i> Update
+                </button>
+                <a href="{{ route('invoices.index') }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to List
+                </a>
             </div>
-            <div class="row">
-                {{-- <div class="col-md-4 mb-3">
-                    <label for="manual_invoice_number" class="form-label">Manual Invoice #</label>
-                    <input type="text" name="manual_invoice_number" class="form-control" id="manual_invoice_number"
-                        @if ($invoice->payment_status != 'pending') disabled @endif
-                        value="{{ old('manual_invoice_number', $invoice->manual_invoice_number) }}">
-                </div> --}}
-                <div class="col-md-4 mb-3">
-                    <label class="form-label">Manual Invoice #</label>
-                    <input type="text" placeholder="Invoice Number" id="manual_invoice_number" name="manual_invoice_number"
-                        class="form-control @error('manual_invoice_number') is-invalid @enderror"
-                        value="{{ old('manual_invoice_number', $invoice->manual_invoice_number) }}" required>
-                    
-                    {{-- Add this feedback div --}}
-                    <div id="manual-invoice-number-feedback"></div>
-                    
-                    @error('manual_invoice_number') 
-                        <div class="text-danger">{{ $message }}</div> 
-                    @enderror
-                    <div class="valid-feedback">Looks good!</div>
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label for="generated_date" class="form-label">Generated Date *</label>
-                    <input type="date" name="generated_date" class="form-control" required id="generated_date"
-                        @if ($invoice->payment_status != 'pending') disabled @endif
-                        value="{{ old('generated_date', $invoice->generated_date) }}">
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label for="payment_status" class="form-label">Payment Status *</label>
-                    <select name="payment_status" class="form-select" required id="payment_status">
-                        @if ($invoice->payment_status == 'pending')
-                            <option value="pending"
-                                {{ old('payment_status', $invoice->payment_status) == 'pending' ? 'selected' : '' }}>Pending
-                            </option>
-                        @endif
-                        @if ($invoice->payment_status != 'paid')
-                            <option value="partial"
-                                {{ old('payment_status', $invoice->payment_status) == 'partial' ? 'selected' : '' }}>
-                                Partial
-                            </option>
-                        @endif
-                        <option value="paid"
-                            {{ old('payment_status', $invoice->payment_status) == 'paid' ? 'selected' : '' }}>Paid</option>
-                    </select>
-                </div>
-            </div>
-            <button type="submit" class="btn btn-success">Update</button>
-            <a href="{{ route('invoices.index') }}" class="btn btn-secondary ms-2">Back to List</a>
         </form>
     </div>
+</div>
 @endsection
 
 @section('scripts')
-    <script>
-@section('scripts')
+{{-- SCRIPT SYNTAX FIX: Nested @section aur extra <script> tag hata diya hai --}}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Manual Invoice Number uniqueness validation
@@ -109,13 +151,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function checkManualInvoiceUniqueness(manualNumber, invoiceId) {
-        // if (!manualNumber || manualNumber.length < 2) {
-        //     manualInvoiceFeedback.innerHTML = '';
-        //     manualInvoiceInput.classList.remove('is-valid', 'is-invalid');
-        //     manualInvoiceInput.setCustomValidity('');
-        //     return;
-        // }
-
         manualInvoiceFeedback.innerHTML = '<small class="text-info">🔍 Checking availability...</small>';
         manualInvoiceInput.classList.remove('is-valid', 'is-invalid');
 
@@ -175,6 +210,3 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endsection
-
-
-</script>

@@ -811,7 +811,7 @@
             <!--begin::App Content Header-->
             <div class="app-content-header">
                 <!--begin::Container-->
-                <div class="container-fluid">
+                <div class="container-fluid ">
                     <!--begin::Row-->
                     @yield('content')
 

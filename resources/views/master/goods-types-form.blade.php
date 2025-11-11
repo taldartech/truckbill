@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="card card-info card-outline mb-4" style="width: 70%;align-items: center;margin: auto;">
+<div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
     <div class="card-header">
         <h3 class="card-title">{{ $goodsType ? 'Edit Goods Type' : 'Create Goods Type' }}</h3>
     </div>

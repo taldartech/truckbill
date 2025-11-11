@@ -15,11 +15,14 @@
             word-wrap: break-word;
         }
 
-        /* Ensure consistent column widths */
-        .row .col-md-4 {
+        /* * FIX: Yeh custom rule Bootstrap ke responsive grid ko tod raha tha.
+         * Isse comment out kar diya gaya hai.
+        */
+        /* .row .col-md-4 {
             flex: 0 0 33.333333%;
             max-width: 33.333333%;
         }
+        */
 
         /* Prevent card from expanding */
         .card {
@@ -32,26 +35,25 @@
         }
     </style>
 
-    <!-- LR Information Card -->
-    <div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
+    <div class="card card-info card-outline mb-4 mx-auto" style="max-width: 1000px;">
         <div class="card-header">
             <div class="card-title h5">Lorry Receipt Information</div>
         </div>
         <div class="card-body">
             <div class="row">
-                <div class="col-md-2">
+                <div class="col-12 col-sm-6 col-md-2">
                     <div class="mb-2">
                         <strong>LR Number:</strong><br>
                         <span class="text-primary">{{ $freightBooking->lr ? $freightBooking->lr->lr_number : 'N/A' }}</span>
                     </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-12 col-sm-6 col-md-2">
                     <div class="mb-2">
                         <strong>Transporter:</strong><br>
                         <span>{{ $freightBooking->transporter_name ?? 'N/A' }}</span>
                     </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-12 col-sm-6 col-md-2">
                     <div class="mb-2">
                         <strong>Transporter Type:</strong><br>
                         @if ($freightBooking->lr && $freightBooking->lr->transporter)
@@ -65,14 +67,14 @@
                         @endif
                     </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-12 col-sm-6 col-md-2">
                     <div class="mb-2">
                         <strong>TDS Percentage:</strong><br>
                         <span
                             class="badge bg-warning text-dark fs-6">{{ number_format($freightBooking->transporter_tds_percentage ?? 0, 2) }}%</span>
                     </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-12 col-sm-6 col-md-2">
                     <div class="mb-2">
                         <strong>Truck:</strong><br>
                         <span>{{ $freightBooking->lr && $freightBooking->lr->truck ? $freightBooking->lr->truck->truck_number : 'N/A' }}</span>
@@ -100,16 +102,15 @@
                 </div>
             </div>
 
-            <!-- Goods Type Details Section -->
             <div class="row">
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <div class="mb-2">
                         <strong>Goods Type:</strong><br>
                         <span
                             class="badge bg-secondary text-white fs-6">{{ $freightBooking->lr ? $freightBooking->lr->good_type : 'N/A' }}</span>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <div class="mb-2">
                         <strong>Weight:</strong><br>
                         <span
@@ -117,14 +118,14 @@
                             MT</span>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <div class="mb-2">
                         <strong>LR Amount:</strong><br>
                         <span
                             class="badge bg-success text-white fs-6">₹{{ $freightBooking->lr ? number_format($freightBooking->lr->amount ?? 0, 2) : '0.00' }}</span>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-6 col-md-3">
                     <div class="mb-2">
                         <strong>Rate:</strong><br>
                         <span
@@ -133,9 +134,8 @@
                 </div>
             </div>
 
-            <!-- Route Details Section -->
             <div class="row">
-                <div class="col-md-6">
+                <div class="col-12">
                     <div class="mb-2">
                         <strong>Route:</strong><br>
                         <span class="text-muted">
@@ -152,8 +152,8 @@
     </div>
 
     @if ($freightBooking->is_cancelled)
-        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert"
-            style="max-width: 1000px; margin: 0 auto;">
+        <div class="alert alert-danger alert-dismissible fade show mb-4 mx-auto" role="alert"
+            style="max-width: 1000px;">
             <div class="d-flex align-items-center">
                 <i class="fas fa-times-circle fa-2x me-3"></i>
                 <div>
@@ -167,9 +167,8 @@
         </div>
     @endif
 
-    <div class="card {{ $freightBooking->is_cancelled ? 'border-danger' : 'card-info' }} card-outline mb-4"
-        style="max-width: 1000px; margin: 0 auto; {{ $freightBooking->is_cancelled ? 'opacity: 0.8;' : '' }}">
-        <!--begin::Header-->
+    <div class="card {{ $freightBooking->is_cancelled ? 'border-danger' : 'card-info' }} card-outline mb-4 mx-auto"
+        style="max-width: 1000px; {{ $freightBooking->is_cancelled ? 'opacity: 0.8;' : '' }}">
         <div class="card-header {{ $freightBooking->is_cancelled ? 'bg-danger-subtle' : '' }}">
             <div class="card-title h4 d-flex justify-content-between align-items-center w-100">
                 <div>
@@ -189,8 +188,6 @@
                 @endif
             </div>
         </div>
-        <!--end::Header-->
-        <!--begin::Form-->
         <form action="{{ route('freight_bookings.update', $freightBooking->id) }}" method="POST"
             {{ $freightBooking->is_cancelled ? 'onsubmit="return false;"' : '' }}>
             @csrf
@@ -204,9 +201,8 @@
             @endphp
             @method('PUT')
             <div class="card-body">
-                <!-- Financial Information Section -->
                 <div class="row mb-3">
-                    <div class="col-md-4">
+                    <div class="col-md-4 mb-3 mb-md-0">
                         <label for="tr_fr_rate" class="form-label">TR Freight Rate *</label>
                         <input type="number" step="0.01" min="1" max="20000"
                             class="form-control @error('tr_fr_rate') is-invalid @enderror" name="tr_fr_rate" id="tr_fr_rate"
@@ -221,7 +217,7 @@
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-4 mb-3 mb-md-0">
                         <label for="tr_amount" class="form-label">TR Amount *</label>
                         <input type="number" step="0.01" min="0.01"
                             class="form-control @error('tr_amount') is-invalid @enderror" name="tr_amount" id="tr_amount"
@@ -250,15 +246,13 @@
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
                     </div>
-                    <!-- Hidden advance amount field with default value 0 -->
                     <input type="hidden" name="advance_amount" id="advance_amount" value="0">
-                    <!-- Hidden memo_id field -->
                     <input type="hidden" name="memo_id" id="memo_id"
                         value="{{ $freightBooking->lr && $freightBooking->lr->memo_id ? $freightBooking->lr->memo_id : '' }}">
                 </div>
 
                 <div class="row mb-3">
-                    <div class="col-md-4">
+                    <div class="col-md-4 mb-3 mb-md-0">
                         <label for="eway_bill_number" class="form-label">E-Way Bill Number</label>
                         <div class="input-group">
                             <input type="text" class="form-control @error('eway_bill_number') is-invalid @enderror"
@@ -273,7 +267,7 @@
                             </a>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-4 mb-3 mb-md-0">
                         <label for="eway_bill_expiry" class="form-label">E-Way Bill Expiry Date</label>
                         <input type="date" class="form-control @error('eway_bill_expiry') is-invalid @enderror"
                             name="eway_bill_expiry" id="eway_bill_expiry"
@@ -284,221 +278,214 @@
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
                     </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label for="advance_amount_main" class="form-label">Advance Amount</label>
-                            <input type="number" step="0.01" class="form-control" id="advance_amount_main"
-                                name="advance_amount"
-                                value="{{ old('advance_amount', $freightBooking->advance_amount) }}" readonly
-                                style="background-color: #f8f9fa;">
-                            <small class="form-text text-muted">
-                                <i class="fas fa-info-circle"></i> Read-only field
-                            </small>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="balance_amount" class="form-label">Balance Amount *</label>
-                            <input type="number" step="0.01"
-                                class="form-control @error('balance_amount') is-invalid @enderror" name="balance_amount"
-                                id="balance_amount" value="{{ old('balance_amount', $freightBooking->balance_amount) }}"
-                                required readonly style="background-color: #f8f9fa;"
-                                {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
-                            <small class="form-text text-muted">
-                                <i class="fas fa-calculator"></i> Auto-calculated: TR Amount - TDS Amount
-                            </small>
-                            @error('balance_amount')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
-
-                    <!-- Additional Charges & Status Section -->
-                    <div class="row">
-                        <div class="col-12">
-                            <h5 class="text-primary border-bottom pb-2 mb-3">
-                                <i class="fas fa-plus-circle"></i> Additional Charges & Status
-                            </h5>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Delivery Status</label>
-                            <div class="d-flex gap-4">
-                                <div class="form-check form-switch">
-                                    <input type="hidden" name="is_delivered"
-                                        value="{{ $freightBooking->is_delivered }}">
-                                    <input class="form-check-input" type="checkbox" id="is_delivered"
-                                        name="is_delivered" value="1"
-                                        {{ old('is_delivered', $freightBooking->is_delivered) ? 'checked' : '' }}
-                                        {{ ($freightBooking->is_delivered && $freightBooking->lr) || $freightBooking->lr->memo_id || $freightBooking->is_cancelled ? 'disabled' : '' }}>
-                                    <label class="form-check-label" for="is_delivered">
-                                        <i class="fas fa-truck"></i> Delivered
-                                        @if (($freightBooking->is_delivered && $freightBooking->lr) || $freightBooking->lr->memo_id)
-                                            <small class="text-muted ms-2">
-                                                <i class="fas fa-lock"></i> Locked (Memo ID:
-                                                {{ $freightBooking->lr->memo_id ?? 'N/A' }})
-                                            </small>
-                                        @endif
-                                    </label>
-                                </div>
-                                <div class="form-check form-switch">
-                                    <input type="hidden" name="is_cancelled"
-                                        value="{{ $freightBooking->is_cancelled }}">
-                                    <input class="form-check-input" type="checkbox" id="is_cancelled"
-                                        name="is_cancelled" value="1"
-                                        {{ old('is_cancelled', $freightBooking->is_cancelled) ? 'checked' : '' }}
-                                        {{ $freightBooking->is_delivered || $freightBooking->is_cancelled ? 'disabled' : '' }}>
-                                    <label class="form-check-label" for="is_cancelled">
-                                        <i class="fas fa-times-circle"></i> Cancelled
-                                        @if ($freightBooking->is_delivered)
-                                            <small class="text-muted ms-2">
-                                                <i class="fas fa-lock"></i> Cannot cancel after delivery
-                                            </small>
-                                        @else
-                                            <small class="text-muted ms-2">
-                                                <i class="fas fa-exclamation-triangle"></i> Will move LR to Pending status
-                                            </small>
-                                        @endif
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="additional-charges-section"
-                        style="display: {{ $freightBooking->is_delivered ? 'block' : 'none' }};">
-                        <div class="row mb-2">
-                            <div class="col-md-2">
-                                <label for="detention" class="form-label">Detention</label>
-                                <input type="number" step="0.01" min="0"
-                                    class="form-control form-control-sm @error('detention') is-invalid @enderror"
-                                    name="detention" id="detention"
-                                    value="{{ old('detention', $freightBooking->detention) }}"
-                                    placeholder="Enter detention amount"
-                                    {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
-                                <small class="form-text text-muted">
-                                    <i class="fas fa-info-circle"></i> ≥ 0 and < TR Amount </small>
-                                        @error('detention')
-                                            <div class="text-danger">{{ $message }}</div>
-                                        @enderror
-                            </div>
-                            <div class="col-md-2">
-                                <label for="deviation" class="form-label">Deviation</label>
-                                <input type="number" step="0.01" min="0"
-                                    class="form-control form-control-sm @error('deviation') is-invalid @enderror"
-                                    name="deviation" id="deviation"
-                                    value="{{ old('deviation', $freightBooking->deviation) }}"
-                                    placeholder="Enter deviation amount"
-                                    {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
-                                <small class="form-text text-muted">
-                                    <i class="fas fa-info-circle"></i> ≥ 0 and < TR Amount </small>
-                                        @error('deviation')
-                                            <div class="text-danger">{{ $message }}</div>
-                                        @enderror
-                            </div>
-                            <div class="col-md-2">
-                                <label for="misc_expense" class="form-label">Misc. Expense</label>
-                                <input type="number" step="0.01" min="0"
-                                    class="form-control form-control-sm @error('misc_expense') is-invalid @enderror"
-                                    name="misc_expense" id="misc_expense"
-                                    value="{{ old('misc_expense', $freightBooking->misc_expense) }}"
-                                    placeholder="Enter misc expense"
-                                    {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
-                                <small class="form-text text-muted">
-                                    <i class="fas fa-info-circle"></i> ≥ 0 and < TR Amount </small>
-                                        @error('misc_expense')
-                                            <div class="text-danger">{{ $message }}</div>
-                                        @enderror
-                            </div>
-                            <div class="col-md-3">
-                                <label for="damage_amount" class="form-label">Damage Amount</label>
-                                <input type="number" step="0.01" min="0"
-                                    class="form-control form-control-sm @error('damage_amount') is-invalid @enderror"
-                                    name="damage_amount" id="damage_amount"
-                                    value="{{ old('damage_amount', $freightBooking->damage_amount) }}"
-                                    placeholder="Enter damage amount"
-                                    {{ $freightBooking->is_cancelled ? 'disabled' : '' }}
-                                    {{ $is_invoice_generated ? 'readonly style=background-color:#e9ecef;' : '' }}>
-                                {{-- <small class="form-text text-muted">
-                            <i class="fas fa-info-circle"></i> Must be ≥ 0 and < TR Amount
-                        </small> --}}
-                                @error('damage_amount')
-                                    <div class="text-danger">{{ $message }}</div>
-                                @enderror
-                            </div>
-                            <div class="col-md-3">
-                                <label for="shortage_amount" class="form-label">Shortage Amount</label>
-                                <input type="number" step="0.01" min="0"
-                                    class="form-control form-control-sm @error('shortage_amount') is-invalid @enderror"
-                                    name="shortage_amount" id="shortage_amount"
-                                    value="{{ old('shortage_amount', $freightBooking->shortage_amount) }}"
-                                    placeholder="Enter shortage amount"
-                                    {{ $freightBooking->is_cancelled ? 'disabled' : '' }}
-                                    {{ $is_invoice_generated ? 'readonly style=background-color:#e9ecef;' : '' }}>
-                                {{-- <small class="form-text text-muted">
-                            <i class="fas fa-info-circle"></i> Must be ≥ 0 and < TR Amount
-                        </small> --}}
-                                @error('shortage_amount')
-                                    <div class="text-danger">{{ $message }}</div>
-                                @enderror
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Hidden weight input and transporter TDS percentage -->
-                    <input type="hidden" id="weight"
-                        value="{{ $freightBooking->lr ? $freightBooking->lr->weight : 0 }}">
-                    <input type="hidden" id="transporter_tds_percentage" name="transporter_tds_percentage"
-                        value="{{ old('transporter_tds_percentage', $freightBooking->transporter_tds_percentage) }}">
-                    <input type="hidden" id="pan_verified" name="pan_verified"
-                        value="{{ old('pan_verified', $freightBooking->pan_verified) }}">
-                    <input type="hidden" id="good_type" name="good_type"
-                        value="{{ old('good_type', $freightBooking->good_type) }}">
-                    <input type="hidden" name="lr_id" value="{{ $freightBooking->lr_id }}">
-
-
-
-
-
-                    <div class="row mb-3">
-                        <div class="col-md-12">
-                            <label for="remark" class="form-label">Remark</label>
-                            <textarea name="remark" id="remark" class="form-control @error('remark') is-invalid @enderror" rows="3"
-                                placeholder="Enter any additional remarks or notes" {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>{{ old('remark', $freightBooking->remark) }}</textarea>
-                            @error('remark')
-                                <div class="text-danger">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
-
                 </div>
 
-                <!--end::Footer-->
-                <div class="card-footer">
-                    <div>
-                        @if ($freightBooking->is_cancelled)
-                            <button class="btn btn-secondary me-2" type="button" disabled>
-                                <i class="bi bi-x-circle"></i> Cannot Update - Cancelled
-                            </button>
-                        @else
-                            <button class="btn btn-success me-2" type="button" id="showConfirmationBtn">
-                                <i class="bi bi-check-circle"></i> Update Freight Booking
-                            </button>
-                        @endif
-                        <a href="{{ route('freight_bookings.index') }}" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left"></i> Back to List
-                        </a>
+                <div class="row mb-3">
+                    <div class="col-md-4 mb-3 mb-md-0">
+                        <label for="advance_amount_main" class="form-label">Advance Amount</label>
+                        <input type="number" step="0.01" class="form-control" id="advance_amount_main"
+                            name="advance_amount"
+                            value="{{ old('advance_amount', $freightBooking->advance_amount) }}" readonly
+                            style="background-color: #f8f9fa;">
+                        <small class="form-text text-muted">
+                            <i class="fas fa-info-circle"></i> Read-only field
+                        </small>
                     </div>
+                    <div class="col-md-4">
+                        <label for="balance_amount" class="form-label">Balance Amount *</label>
+                        <input type="number" step="0.01"
+                            class="form-control @error('balance_amount') is-invalid @enderror" name="balance_amount"
+                            id="balance_amount" value="{{ old('balance_amount', $freightBooking->balance_amount) }}"
+                            required readonly style="background-color: #f8f9fa;"
+                            {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
+                        <small class="form-text text-muted">
+                            <i class="fas fa-calculator"></i> Auto-calculated: TR Amount - TDS Amount
+                        </small>
+                        @error('balance_amount')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <h5 class="text-primary border-bottom pb-2 mb-3">
+                            <i class="fas fa-plus-circle"></i> Additional Charges & Status
+                        </h5>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Delivery Status</label>
+                        <div class="d-flex flex-column flex-sm-row gap-4">
+                            <div class="form-check form-switch">
+                                <input type="hidden" name="is_delivered"
+                                    value="{{ $freightBooking->is_delivered }}">
+                                <input class="form-check-input" type="checkbox" id="is_delivered"
+                                    name="is_delivered" value="1"
+                                    {{ old('is_delivered', $freightBooking->is_delivered) ? 'checked' : '' }}
+                                    {{ ($freightBooking->is_delivered && $freightBooking->lr) || $freightBooking->lr->memo_id || $freightBooking->is_cancelled ? 'disabled' : '' }}>
+                                <label class="form-check-label" for="is_delivered">
+                                    <i class="fas fa-truck"></i> Delivered
+                                    @if (($freightBooking->is_delivered && $freightBooking->lr) || $freightBooking->lr->memo_id)
+                                        <small class="text-muted ms-2">
+                                            <i class="fas fa-lock"></i> Locked (Memo ID:
+                                            {{ $freightBooking->lr->memo_id ?? 'N/A' }})
+                                        </small>
+                                    @endif
+                                </label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input type="hidden" name="is_cancelled"
+                                    value="{{ $freightBooking->is_cancelled }}">
+                                <input class="form-check-input" type="checkbox" id="is_cancelled"
+                                    name="is_cancelled" value="1"
+                                    {{ old('is_cancelled', $freightBooking->is_cancelled) ? 'checked' : '' }}
+                                    {{ $freightBooking->is_delivered || $freightBooking->is_cancelled ? 'disabled' : '' }}>
+                                <label class="form-check-label" for="is_cancelled">
+                                    <i class="fas fa-times-circle"></i> Cancelled
+                                    @if ($freightBooking->is_delivered)
+                                        <small class="text-muted ms-2">
+                                            <i class="fas fa-lock"></i> Cannot cancel after delivery
+                                        </small>
+                                    @else
+                                        <small class="text-muted ms-2">
+                                            <i class="fas fa-exclamation-triangle"></i> Will move LR to Pending status
+                                        </small>
+                                    @endif
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="additional-charges-section"
+                    style="display: {{ $freightBooking->is_delivered ? 'block' : 'none' }};">
+                    <div class="row mb-2">
+                        <div class="col-6 col-md-2 mb-3 mb-md-0">
+                            <label for="detention" class="form-label">Detention</label>
+                            <input type="number" step="0.01" min="0"
+                                class="form-control form-control-sm @error('detention') is-invalid @enderror"
+                                name="detention" id="detention"
+                                value="{{ old('detention', $freightBooking->detention) }}"
+                                placeholder="Enter detention amount"
+                                {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
+                            <small class="form-text text-muted">
+                                <i class="fas fa-info-circle"></i> ≥ 0 and < TR Amount </small>
+                                @error('detention')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                        </div>
+                        <div class="col-6 col-md-2 mb-3 mb-md-0">
+                            <label for="deviation" class="form-label">Deviation</label>
+                            <input type="number" step="0.01" min="0"
+                                class="form-control form-control-sm @error('deviation') is-invalid @enderror"
+                                name="deviation" id="deviation"
+                                value="{{ old('deviation', $freightBooking->deviation) }}"
+                                placeholder="Enter deviation amount"
+                                {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
+                            <small class="form-text text-muted">
+                                <i class="fas fa-info-circle"></i> ≥ 0 and < TR Amount </small>
+                                @error('deviation')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                        </div>
+                        <div class="col-6 col-md-2 mb-3 mb-md-0">
+                            <label for="misc_expense" class="form-label">Misc. Expense</label>
+                            <input type="number" step="0.01" min="0"
+                                class="form-control form-control-sm @error('misc_expense') is-invalid @enderror"
+                                name="misc_expense" id="misc_expense"
+                                value="{{ old('misc_expense', $freightBooking->misc_expense) }}"
+                                placeholder="Enter misc expense"
+                                {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
+                            <small class="form-text text-muted">
+                                <i class="fas fa-info-circle"></i> ≥ 0 and < TR Amount </small>
+                                @error('misc_expense')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                        </div>
+                        <div class="col-6 col-md-3 mb-3 mb-md-0">
+                            <label for="damage_amount" class="form-label">Damage Amount</label>
+                            <input type="number" step="0.01" min="0"
+                                class="form-control form-control-sm @error('damage_amount') is-invalid @enderror"
+                                name="damage_amount" id="damage_amount"
+                                value="{{ old('damage_amount', $freightBooking->damage_amount) }}"
+                                placeholder="Enter damage amount"
+                                {{ $freightBooking->is_cancelled ? 'disabled' : '' }}
+                                {{ $is_invoice_generated ? 'readonly style=background-color:#e9ecef;' : '' }}>
+                            {{-- <small class="form-text text-muted">
+                                <i class="fas fa-info-circle"></i> Must be ≥ 0 and < TR Amount
+                            </small> --}}
+                            @error('damage_amount')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-6 col-md-3 mb-3 mb-md-0">
+                            <label for="shortage_amount" class="form-label">Shortage Amount</label>
+                            <input type="number" step="0.01" min="0"
+                                class="form-control form-control-sm @error('shortage_amount') is-invalid @enderror"
+                                name="shortage_amount" id="shortage_amount"
+                                value="{{ old('shortage_amount', $freightBooking->shortage_amount) }}"
+                                placeholder="Enter shortage amount"
+                                {{ $freightBooking->is_cancelled ? 'disabled' : '' }}
+                                {{ $is_invoice_generated ? 'readonly style=background-color:#e9ecef;' : '' }}>
+                            {{-- <small class="form-text text-muted">
+                                <i class="fas fa-info-circle"></i> Must be ≥ 0 and < TR Amount
+                            </small> --}}
+                            @error('shortage_amount')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+                </div>
+
+                <input type="hidden" id="weight"
+                    value="{{ $freightBooking->lr ? $freightBooking->lr->weight : 0 }}">
+                <input type="hidden" id="transporter_tds_percentage" name="transporter_tds_percentage"
+                    value="{{ old('transporter_tds_percentage', $freightBooking->transporter_tds_percentage) }}">
+                <input type="hidden" id="pan_verified" name="pan_verified"
+                    value="{{ old('pan_verified', $freightBooking->pan_verified) }}">
+                <input type="hidden" id="good_type" name="good_type"
+                    value="{{ old('good_type', $freightBooking->good_type) }}">
+                <input type="hidden" name="lr_id" value="{{ $freightBooking->lr_id }}">
+
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="remark" class="form-label">Remark</label>
+                        <textarea name="remark" id="remark" class="form-control @error('remark') is-invalid @enderror" rows="3"
+                            placeholder="Enter any additional remarks or notes" {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>{{ old('remark', $freightBooking->remark) }}</textarea>
+                        @error('remark')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="card-footer">
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center">
+                    <a href="{{ route('freight_bookings.index') }}" class="btn btn-outline-secondary mb-2 mb-sm-0">
+                        <i class="bi bi-arrow-left"></i> Back to List
+                    </a>
+
+                    @if ($freightBooking->is_cancelled)
+                        <button class="btn btn-secondary" type="button" disabled>
+                            <i class="bi bi-x-circle"></i> Cannot Update - Cancelled
+                        </button>
+                    @else
+                        <button class="btn btn-success" type="button" id="showConfirmationBtn">
+                            <i class="bi bi-check-circle"></i> Update Freight Booking
+                        </button>
+                    @endif
                 </div>
             </div>
         </form>
     </div>
 
-    <!-- Confirmation Modal for Freight Booking Update -->
     <div class="modal fade" id="updateConfirmationModal" tabindex="-1" aria-labelledby="updateConfirmationModalLabel"
         aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header bg-info text-white">
                     <h5 class="modal-title" id="updateConfirmationModalLabel">
@@ -517,10 +504,10 @@
                             <h6 class="border-bottom pb-2"><i class="fas fa-truck me-2"></i> Lorry Receipt Information
                             </h6>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-4 mb-2 mb-md-0">
                             <p class="mb-1"><strong>LR Number:</strong> <span id="confirm-lr-number"></span></p>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-4 mb-2 mb-md-0">
                             <p class="mb-1"><strong>Transporter:</strong> <span id="confirm-transporter"></span></p>
                         </div>
                         <div class="col-md-4">
@@ -533,16 +520,16 @@
                             <h6 class="border-bottom pb-2"><i class="fas fa-money-bill-wave me-2"></i> Financial Details
                             </h6>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-3 col-6 mb-2 mb-md-0">
                             <p class="mb-1"><strong>TR Freight Rate:</strong> <span id="confirm-tr-rate"></span></p>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-3 col-6 mb-2 mb-md-0">
                             <p class="mb-1"><strong>TR Amount:</strong> <span id="confirm-tr-amount"></span></p>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-3 col-6 mb-2 mb-md-0">
                             <p class="mb-1"><strong>TDS Amount:</strong> <span id="confirm-tds-amount"></span></p>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-3 col-6">
                             <p class="mb-1"><strong>Balance Amount:</strong> <span id="confirm-balance-amount"></span>
                             </p>
                         </div>
@@ -552,7 +539,7 @@
                         <div class="col-12">
                             <h6 class="border-bottom pb-2"><i class="fas fa-clipboard-check me-2"></i> Status</h6>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-6 mb-2 mb-md-0">
                             <p class="mb-1"><strong>Delivery Status:</strong> <span id="confirm-delivery-status"></span>
                             </p>
                         </div>
@@ -566,19 +553,19 @@
                         <div class="col-12">
                             <h6 class="border-bottom pb-2"><i class="fas fa-plus-circle me-2"></i> Additional Charges</h6>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-4 col-6 mb-2 mb-md-0">
                             <p class="mb-1"><strong>Detention:</strong> <span id="confirm-detention"></span></p>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-4 col-6 mb-2 mb-md-0">
                             <p class="mb-1"><strong>Deviation:</strong> <span id="confirm-deviation"></span></p>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-4 col-6 mb-2 mb-md-0">
                             <p class="mb-1"><strong>Misc Expense:</strong> <span id="confirm-misc-expense"></span></p>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-6 col-6 mb-2 mb-md-0">
                             <p class="mb-1"><strong>Damage Amount:</strong> <span id="confirm-damage-amount"></span></p>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-6 col-6">
                             <p class="mb-1"><strong>Shortage Amount:</strong> <span id="confirm-shortage-amount"></span>
                             </p>
                         </div>
@@ -602,7 +589,6 @@
             </div>
         </div>
     </div>
-    <!-- Step 1: Confirmation Modal -->
     <div class="modal fade" id="askMemoModal" tabindex="-1" aria-labelledby="askMemoModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -622,7 +608,6 @@
         </div>
     </div>
 
-    <!-- Modal for Memo ID Entry -->
     <div class="modal fade" id="memoIdModal" tabindex="-1" aria-labelledby="memoIdModalLabel" aria-hidden="true"
         data-bs-backdrop="false">
         <div class="modal-dialog">
@@ -672,10 +657,7 @@
                 <div class="modal-body">
                     <div id="cancelledDetailsContent">
                         @php
-                            $cancelledfr = App\Models\FreightBooking::where(
-                                'id',
-                                $freightBooking->linked_freight_booking_id,
-                            )->first();
+                            $cancelledfr = App\Models\FreightBooking::where('id', $freightBooking->linked_freight_booking_id)->first();
                         @endphp
                         @if ($cancelledfr)
                             <p><strong>TR Freight Rate:</strong> ₹{{ number_format($cancelledfr->tr_fr_rate, 2) }}</p>
@@ -685,7 +667,7 @@
                             <p><strong>Advance Amount:</strong> ₹{{ number_format($cancelledfr->advance_amount, 2) }}</p>
                             <p><strong>E-Way Bill Number:</strong> {{ $cancelledfr->eway_bill_number ?? 'N/A' }}</p>
                             <p><strong>E-Way Bill Expiry Date:</strong>
-                              {{ $cancelledfr->eway_bill_expiry ? \Carbon\Carbon::parse($cancelledfr->eway_bill_expiry)->format('d M Y') : 'N/A' }}
+                                {{ $cancelledfr->eway_bill_expiry ? \Carbon\Carbon::parse($cancelledfr->eway_bill_expiry)->format('d M Y') : 'N/A' }}
                             </p>
                             <p><strong>Remark:</strong> {{ $cancelledfr->remark ?? 'N/A' }}</p>
                             <p><strong>Cancelled On:</strong> {{ $cancelledfr->updated_at->format('d M Y, h:i A') }}</p>
@@ -707,15 +689,18 @@
         document.addEventListener("DOMContentLoaded", function() {
             let deliveredSwitch = document.getElementById("is_delivered");
 
-            deliveredSwitch.addEventListener("change", function() {
-                if (this.checked) {
-                    // Reset it temporarily
-                    this.checked = false;
+            // Check if the switch exists and is not disabled from the start
+            if (deliveredSwitch && !deliveredSwitch.disabled) {
+                deliveredSwitch.addEventListener("change", function() {
+                    if (this.checked) {
+                        // Reset it temporarily
+                        this.checked = false;
 
-                    // Show confirmation modal instead
-                    new bootstrap.Modal(document.getElementById('askMemoModal')).show();
-                }
-            });
+                        // Show confirmation modal instead
+                        new bootstrap.Modal(document.getElementById('askMemoModal')).show();
+                    }
+                });
+            }
 
             // If YES → Show Memo modal
             document.getElementById("yesMemoBtn").addEventListener("click", function() {
@@ -1049,82 +1034,8 @@
                     document.getElementById('additional-charges-section').style.display = 'block';
                 }
 
-                isDeliveredToggle.addEventListener('change', function() {
-                    const isCancelledToggle = document.getElementById('is_cancelled');
-
-                    // Prevent unchecking if memo_id exists
-                    if (!this.checked && currentMemoId) {
-                        this.checked = true;
-                        alert(
-                            'Cannot unmark as delivered - Memo ID has been set. Contact administrator if changes are needed.'
-                        );
-                        return;
-                    }
-
-                    if (this.checked) {
-                        // Disable cancelled toggle when delivered is checked
-                        if (isCancelledToggle) {
-                            isCancelledToggle.disabled = true;
-                            isCancelledToggle.checked = false; // Uncheck cancelled if it was checked
-
-                            // Update label to show it's disabled
-                            const cancelledLabel = isCancelledToggle.parentNode.querySelector('label');
-                            if (cancelledLabel && !cancelledLabel.querySelector('.text-muted')) {
-                                cancelledLabel.innerHTML +=
-                                    '<small class="text-muted ms-2"><i class="fas fa-lock"></i> Cannot cancel after delivery</small>';
-                            }
-                        }
-
-                        // Show additional charges immediately when delivered is checked
-                        document.getElementById('additional-charges-section').style.display = 'block';
-
-                        // Check if memo_id already exists
-                        if (!currentMemoId) {
-                            // Show memo ID modal
-                            const modal = new bootstrap.Modal(document.getElementById('memoIdModal'));
-                            modal.show();
-
-                            // Reset toggle if user cancels
-                            document.getElementById('memoIdModal').addEventListener('hidden.bs.modal',
-                                function() {
-                                    if (!document.getElementById('deliveryMemoId').value) {
-                                        isDeliveredToggle.checked = false;
-                                        document.getElementById('additional-charges-section').style
-                                            .display = 'none';
-
-                                        // Re-enable cancelled toggle
-                                        if (isCancelledToggle) {
-                                            isCancelledToggle.disabled = false;
-
-                                            // Remove disabled message
-                                            const cancelledLabel = isCancelledToggle.parentNode
-                                                .querySelector('label');
-                                            const disabledMsg = cancelledLabel.querySelector(
-                                                '.text-muted');
-                                            if (disabledMsg) {
-                                                disabledMsg.remove();
-                                            }
-                                        }
-                                    }
-                                });
-                        }
-                    } else {
-                        // Re-enable cancelled toggle when delivered is unchecked
-                        if (isCancelledToggle) {
-                            isCancelledToggle.disabled = false;
-
-                            // Remove disabled message
-                            const cancelledLabel = isCancelledToggle.parentNode.querySelector('label');
-                            const disabledMsg = cancelledLabel.querySelector('.text-muted');
-                            if (disabledMsg) {
-                                disabledMsg.remove();
-                            }
-                        }
-
-                        // Hide additional charges when not delivered
-                        document.getElementById('additional-charges-section').style.display = 'none';
-                    }
-                });
+                // This event listener is now handled by the separate script block above
+                // for the 'askMemoModal' logic.
             }
 
             // Handle is_cancelled toggle with confirmation
