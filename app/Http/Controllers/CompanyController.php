@@ -131,7 +131,7 @@ class CompanyController extends Controller
         // Format data for DataTables
         $data = $companies->map(function($company, $index) use ($start) {
             return [
-                'id' => $company->id,
+                'id' => $index + $start + 1,
                 'name' => $company->name,
                 'gst_number' => $company->gst_number ?: '-',
                 'pan_number' => $company->pan_number ?: '-',

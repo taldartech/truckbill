@@ -30,7 +30,7 @@
             <table id="branchesTable" class="table table-bordered table-striped">
                 <thead>
                     <tr>
-                        <th style="width: 80px;">ID</th>
+                        <th style="width: 80px;">SR No.</th>
                         <th>Branch Name</th>
                         <th>Company</th>
                         <th>Contact Number</th>
