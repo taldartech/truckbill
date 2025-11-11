@@ -9,14 +9,15 @@
 @endpush
 
 @section('content')
-<div class="container mt-4">
-    <div class="col-sm-6"><h3 class="mb-0">State Management</h3></div>
+<div class="container px-0 mt-4">
+    
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
 
     {{-- Always visible container --}}
-    <div class="d-flex justify-content-end gap-2 mb-3">
+    <div class="d-flex justify-content-between gap-2 mb-3">
+        <div class="col-sm-6"><h3 class="mb-0">State Management</h3></div>
         <a href="{{ route('master.states.create') }}" class="btn btn-info">
             <i class="bi bi-plus"></i> Create
         </a>
@@ -99,7 +100,6 @@ $(document).ready(function() {
         pageLength: 10,
         lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
         dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
-             '<"row"<"col-sm-12 col-md-2"B><"col-sm-12 col-md-10"p>>' +
              '<"row"<"col-sm-12"tr>>' +
              '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
         buttons: [

@@ -20,7 +20,7 @@
 }
 </style>
 
-<div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
+<div class="card card-info card-outline mb-4 mx-auto" style="max-width: 1000px;">
     <div class="card-header">
         <div class="card-title h4">Confirm Freight Booking</div>
     </div>
@@ -29,7 +29,6 @@
             <i class="fas fa-info-circle me-2"></i> Please review the freight booking details below before final submission.
         </div>
 
-        <!-- LR Information Section -->
         <div class="confirmation-section">
             <h5 class="mb-3">Lorry Receipt Information</h5>
             <div class="row">
@@ -73,8 +72,8 @@
                     <div class="confirmation-label">Consignee</div>
                     <div class="confirmation-value">{{ $lorry_receipt->consignee ? $lorry_receipt->consignee->name : 'N/A' }}</div>
                 </div>
-              </div>
-              <div class="row">
+            </div>
+            <div class="row">
                 <div class="col-md-3 mb-3">
                     <div class="confirmation-label">Weight</div>
                     <div class="confirmation-value">{{ number_format($lorry_receipt->weight, 2) }} MT</div>
@@ -100,7 +99,6 @@
             </div>
         </div>
 
-        <!-- Freight Booking Details Section -->
         <div class="confirmation-section">
             <h5 class="mb-3">Freight Booking Details</h5>
             <div class="row">
@@ -151,18 +149,17 @@
             @endif
         </div>
 
-        <!-- Financial Summary Section -->
         <div class="card bg-light mb-4">
             <div class="card-body">
                 <h5 class="card-title">Financial Summary</h5>
                 <div class="row">
-                    <div class="col-md-4">
+                    <div class="col-md-4 mb-3 mb-md-0">
                         <div class="d-flex justify-content-between">
                             <span>TR Amount:</span>
                             <span class="fw-bold">₹{{ number_format($formData['tr_amount'], 2) }}</span>
                         </div>
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-md-4 mb-3 mb-md-0">
                         <div class="d-flex justify-content-between">
                             <span>TDS Amount:</span>
                             <span class="fw-bold text-danger">- ₹{{ number_format($formData['tds_amount'], 2) }}</span>
@@ -178,27 +175,25 @@
             </div>
         </div>
 
-        <!-- Form for submission -->
         <form method="POST" action="{{ route('freight_bookings.store') }}">
             @csrf
-            <!-- Hidden fields to pass all form data -->
             @foreach($formData as $key => $value)
                 <input type="hidden" name="{{ $key }}" value="{{ $value }}">
             @endforeach
             <input type="hidden" name="confirmed" value="1">
 
-            <div class="d-flex justify-content-between mt-4">
-                <a href="javascript:history.back()" class="btn btn-outline-secondary">
+            <div class_name="d-flex flex-column flex-md-row justify-content-md-between align-items-md-center mt-4">
+                <a href="javascript:history.back()" class="btn btn-outline-secondary mb-2 mb-md-0">
                     <i class="fas fa-arrow-left me-1"></i> Back to Edit
                 </a>
-                <div>
-                    <button type="submit" name="action" value="save" class="btn btn-success me-2">
+                
+                <div class="d-flex flex-column flex-sm-row">
+                    <button type_name="submit" name="action" value="save" class="btn btn-success mb-2 mb-sm-0 me-sm-2">
                         <i class="fas fa-check-circle me-1"></i> Confirm & Submit
                     </button>
-                    <button type="submit" name="action" value="save_and_view" class="btn btn-primary">
+                    <button type_name="submit" name="action" value="save_and_view" class="btn btn-primary">
                         <i class="bi bi-eye me-1"></i> Save & do payment
                     </button>
-
                 </div>
             </div>
         </form>

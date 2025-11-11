@@ -15,11 +15,13 @@
             word-wrap: break-word;
         }
 
-        /* Ensure consistent column widths */
+        /* FIX: This override is redundant and can cause issues. Removed. */
+        /*
         .row .col-md-4 {
             flex: 0 0 33.333333%;
             max-width: 33.333333%;
         }
+        */
 
         /* Prevent card from expanding */
         .card {
@@ -38,13 +40,11 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
-    <!-- LR and Freight Booking Information Card -->
     <div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
         <div class="card-header">
             <div class="card-title h5">Lorry Receipt & Freight Booking Information</div>
         </div>
         <div class="card-body">
-            <!-- LR Information Section -->
             <h6 class="border-bottom pb-2 mb-3">Lorry Receipt Details</h6>
             <div class="row">
                 <div class="col-md-3">
@@ -87,7 +87,6 @@
                 </div>
             </div>
 
-            <!-- Freight Booking Information Section -->
             @if ($freightBooking)
                 <h6 class="border-bottom pb-2 mb-3 mt-4">Freight Booking Details</h6>
                 <div class="row">
@@ -157,12 +156,9 @@
         </div>
     </div>
     <div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
-        <!--begin::Header-->
         <div class="card-header">
             <div class="card-title h4">Edit Voucher Payment</div>
         </div>
-        <!--end::Header-->
-        <!--begin::Form-->
         <form method="POST" action="{{ route('voucher_payments.update', $voucher_payment->id) }}" class="needs-validation"
             novalidate>
             @csrf
@@ -172,12 +168,9 @@
             @if (isset($freight_booking_id))
                 <input type="hidden" name="freight_booking_id" value="{{ $freight_booking_id }}">
             @endif
-            <!--begin::Body-->
             <div class="card-body">
-                <!--begin::Row-->
-                <div class="row mb-3">
-                    <!--begin::Col-->
-                    <div class="col-md-4 mb-3">
+                <div class="row g-3">
+                    <div class="col-md-4">
                         <label for="voucher_number" class="form-label">Voucher *</label>
                         <input type="text" name="voucher_number" id="voucher_number" class="form-control"
                             value="{{ $voucher_payment->voucher_number }}" readonly required>
@@ -186,10 +179,8 @@
                         @enderror
                         <div class="invalid-feedback">Please enter a voucher number.</div>
                     </div>
-                    <!--end::Col-->
 
-                    <!--begin::Col-->
-                    <div class="col-md-4 mb-3">
+                    <div class="col-md-4">
                         <label for="payment_type_id" class="form-label">Payment Type *</label>
                         @if ($voucher_payment->linked_voucher_id == null)
                             <select name="payment_type_id" id="payment_type_id" class="form-select" required>
@@ -214,9 +205,8 @@
                         @enderror
                         <div class="invalid-feedback">Please select a payment type.</div>
                     </div>
-                    <!--end::Col-->
-                    <!--begin::Col-->
-                    <div class="col-md-4 mb-3">
+
+                    <div class="col-md-4">
                         <label for="payment_mode_id" class="form-label">Payment Mode *</label>
                         @if ($voucher_payment->linked_voucher_id == null)
                             <select name="payment_mode_id" id="payment_mode_id" class="form-select" required>
@@ -243,47 +233,36 @@
                         @enderror
                         <div class="invalid-feedback">Please select a payment mode.</div>
                     </div>
-                    <!--end::Col-->
-                    <div class="col-md-4 mb-3" id="pumpDropdownContainer" style="display: none;">
-                        <label for="pump_id" class="form-label">Select Pump</label>
-                        <select name="pump_id" id="pump_id" class="form-select">
-                            <option value="">Select Pump</option>
-                            @foreach ($pumps as $pump)
-                                <option value="{{ $pump->id }}"
-                                    {{ old('pump_id', $voucher_payment->pump_id) == $pump->id ? 'selected' : '' }}>
-                                    {{ $pump->pump_name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('pump_id')
+                </div>
+                <div class="row g-3 mt-1">
+                    <div class="col-md-4">
+                        <label for="amount" class="form-label">Amount *</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            <input type="number" step="0.01" name="amount" id="amount" class="form-control"
+                                value="{{ old('amount', $voucher_payment->amount) }}" required>
+                        </div>
+                        @error('amount')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
+                        <div class="invalid-feedback">Please enter an amount.</div>
                     </div>
-                    <!--begin::Col-->
-                    {{-- <div class="col-md-6">
-                    <label for="transaction_id" class="form-label">Transaction ID *</label>
-                    <input type="text" name="transaction_id" id="transaction_id" class="form-control" value="{{ old('transaction_id', $voucher_payment->transaction_id) }}" required>
-                    @error('transaction_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please enter a transaction ID.</div>
-                </div> --}}
-                    <!--end::Col-->
-                    <!--begin::Col-->
-                    <div class="col-md-6 mb-3">
-                        <label for="remark" class="form-label">Remark</label>
-                        <textarea {{ $voucher_payment->linked_voucher_id != null ? 'readonly' : '' }} name="remark" id="remark"
-                            class="form-control" rows="3">{{ old('remark', str_replace('<br>', "\n", $voucher_payment->remark)) }}</textarea>
-                        @error('remark')
+
+                    <div class="col-md-4">
+                        <label for="date" class="form-label">Date *</label>
+                        <input type="date" name="date" id="date" class="form-control"
+                            value="{{ old('date', $voucher_payment->date) }}" required
+                            {{ $voucher_payment->linked_voucher_id != null ? 'readonly' : '' }}>
+                        @error('date')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
+                        <div class="invalid-feedback">Please select a date.</div>
                     </div>
-                    <!--end::Col-->
-                    <!--begin::Col-->
-                    <!-- Hidden payment_status for operators -->
 
                     @php
                         $isAdmin = auth()->user()->userRole && auth()->user()->userRole->name === 'admin';
                     @endphp
-                    <div class="col-md-4 mb-3" @if (!$isAdmin) style="display: none;" @endif>
+                    <div class="col-md-4" @if (!$isAdmin) style="display: none;" @endif>
                         <label for="payment_status" class="form-label">Payment Status *</label>
                         @if ($voucher_payment->linked_voucher_id == null)
                         <select name="payment_status" id="payment_status" class="form-select" required>
@@ -307,41 +286,25 @@
                         @enderror
                         <div class="invalid-feedback">Please select a payment status.</div>
                     </div>
-                    <!--end::Col-->
-                    {{-- <!--begin::Col-->
-                <div class="col-md-6">
-                    <label for="transaction_id" class="form-label">Transaction ID *</label>
-                    <input type="text" name="transaction_id" id="transaction_id" class="form-control" value="{{ old('transaction_id', $voucher_payment->transaction_id) }}" required>
-                    @error('transaction_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please enter a transaction ID.</div>
-                </div> --}}
-                    <!--end::Col-->
-                    <!--begin::Col-->
-                    <div class="col-md-4 mb-3">
-                        <label for="amount" class="form-label">Amount *</label>
-                        <div class="input-group">
-                            <span class="input-group-text">₹</span>
-                            <input type="number" step="0.01" name="amount" id="amount" class="form-control"
-                                value="{{ old('amount', $voucher_payment->amount) }}" required>
-                        </div>
-                        @error('amount')
+                </div>
+                <div class="row g-3 mt-1">
+                    <div class="col-md-4" id="pumpDropdownContainer" style="display: none;">
+                        <label for="pump_id" class="form-label">Select Pump</label>
+                        <select name="pump_id" id="pump_id" class="form-select">
+                            <option value="">Select Pump</option>
+                            @foreach ($pumps as $pump)
+                                <option value="{{ $pump->id }}"
+                                    {{ old('pump_id', $voucher_payment->pump_id) == $pump->id ? 'selected' : '' }}>
+                                    {{ $pump->pump_name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('pump_id')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
-                        <div class="invalid-feedback">Please enter an amount.</div>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label for="date" class="form-label">Date *</label>
-                        <input type="date" name="date" id="date" class="form-control"
-                            value="{{ old('date', $voucher_payment->date) }}" required
-                            {{ $voucher_payment->linked_voucher_id != null ? 'readonly' : '' }}>
-                        @error('date')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                        <div class="invalid-feedback">Please select a date.</div>
                     </div>
 
-                    <!--end::Col-->
-                    <div class="col-md-4 mb-3" id="reference_transaction_box" style="display: none;">
+                    <div class="col-md-4" id="reference_transaction_box" style="display: none;">
                         <label for="reference_transaction_id" class="form-label">Reference Transaction ID *</label>
                         <input type="text" class="form-control" id="reference_transaction_id"
                             name="reference_transaction_id"
@@ -351,21 +314,25 @@
                         @enderror
                     </div>
                 </div>
-                <!--end::Row-->
-            </div>
-
-            <!--begin::Footer-->
-            <div class="card-footer d-flex justify-content-between">
-                <div>
-                    <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i> Update</button>
-                    <a href="{{ route('voucher_payments.index') }}" class="btn btn-secondary ms-2"><i
-                            class="bi bi-arrow-left me-1"></i> Back to List</a>
+                <div class="row g-3 mt-1">
+                    <div class="col-12">
+                        <label for="remark" class="form-label">Remark</label>
+                        <textarea {{ $voucher_payment->linked_voucher_id != null ? 'readonly' : '' }} name="remark" id="remark"
+                            class="form-control" rows="3">{{ old('remark', str_replace('<br>', "\n", $voucher_payment->remark)) }}</textarea>
+                        @error('remark')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
+                    </div>
                 </div>
+                </div>
+
+            <div class="card-footer d-flex flex-wrap gap-2">
+                <button class="btn btn-primary" type="submit"><i class="bi bi-save me-1"></i> Update</button>
+                <a href="{{ route('voucher_payments.index') }}" class="btn btn-secondary"><i
+                        class="bi bi-arrow-left me-1"></i> Back to List</a>
             </div>
         </form>
     </div>
-
-
 
 @endsection
 @section('scripts')
@@ -383,35 +350,49 @@
             const pumpDropdownContainer = document.getElementById('pumpDropdownContainer');
             const pumpSelect = document.getElementById('pump_id');
 
-            // Update hidden input with text value when select changes
-            paymentModeIdSelect.addEventListener('change', function() {
-                const selectedOption = this.options[this.selectedIndex];
-                paymentModeInput.value = selectedOption.text;
-                togglePumpDropdown();
-            });
+            // This logic is only for the editable dropdowns
+            if (paymentModeIdSelect) {
+                paymentModeIdSelect.addEventListener('change', function() {
+                    const selectedOption = this.options[this.selectedIndex];
+                    paymentModeInput.value = selectedOption.text;
+                    togglePumpDropdown();
+                });
+            }
 
-            paymentTypeIdSelect.addEventListener('change', function() {
-                const selectedOption = this.options[this.selectedIndex];
-                paymentTypeInput.value = selectedOption.text;
-            });
+            if (paymentTypeIdSelect) {
+                paymentTypeIdSelect.addEventListener('change', function() {
+                    const selectedOption = this.options[this.selectedIndex];
+                    paymentTypeInput.value = selectedOption.text;
+                });
+            }
 
-            // Set initial values
-            if (paymentModeIdSelect.selectedIndex > 0) {
+            // Set initial values if dropdowns exist and are selected
+            if (paymentModeIdSelect && paymentModeIdSelect.selectedIndex > 0) {
                 paymentModeInput.value = paymentModeIdSelect.options[paymentModeIdSelect.selectedIndex].text;
             }
 
-            if (paymentTypeIdSelect.selectedIndex > 0) {
+            if (paymentTypeIdSelect && paymentTypeIdSelect.selectedIndex > 0) {
                 paymentTypeInput.value = paymentTypeIdSelect.options[paymentTypeIdSelect.selectedIndex].text;
             }
 
             function togglePumpDropdown() {
-                const selectedText = paymentModeIdSelect.options[paymentModeIdSelect.selectedIndex]?.text
+                let selectedText = '';
+                if(paymentModeIdSelect) {
+                     selectedText = paymentModeIdSelect.options[paymentModeIdSelect.selectedIndex]?.text
                     .toLowerCase() || '';
+                } else {
+                    // Fallback for readonly field
+                    const readonlyMode = document.querySelector('input[name="payment_mode"]');
+                    if (readonlyMode) {
+                        selectedText = readonlyMode.value.toLowerCase();
+                    }
+                }
+                
                 if (selectedText === 'fuel') {
                     pumpDropdownContainer.style.display = 'block';
                 } else {
                     pumpDropdownContainer.style.display = 'none';
-                    pumpSelect.value = ''; // Reset pump selection
+                    if (pumpSelect) pumpSelect.value = ''; // Reset pump selection
                 }
             }
 
@@ -433,9 +414,28 @@
             const dbStatus = @json($currentStatus); // ← value from DB like 'in-progress'
 
             function updateStatusOptionsAndReferenceBox() {
-                const selectedOption = paymentModeIdSelect.options[paymentModeIdSelect.selectedIndex];
-                const selectedMode = selectedOption ? selectedOption.text.toLowerCase() : '';
-                const selectedStatus = paymentStatusSelect.value.toLowerCase();
+                
+                let selectedMode = '';
+                if(paymentModeIdSelect) {
+                    const selectedOption = paymentModeIdSelect.options[paymentModeIdSelect.selectedIndex];
+                    selectedMode = selectedOption ? selectedOption.text.toLowerCase() : '';
+                } else {
+                    const readonlyMode = document.querySelector('input[name="payment_mode"]');
+                    if (readonlyMode) {
+                        selectedMode = readonlyMode.value.toLowerCase();
+                    }
+                }
+
+                let selectedStatus = '';
+                if(paymentStatusSelect) {
+                    selectedStatus = paymentStatusSelect.value.toLowerCase();
+                } else {
+                    const readonlyStatus = document.querySelector('input[name="payment_status"]');
+                    if(readonlyStatus) {
+                        selectedStatus = readonlyStatus.value.toLowerCase();
+                    }
+                }
+
 
                 console.log("Selected Payment Mode:", selectedMode);
                 console.log("Selected Payment Status:", selectedStatus);
@@ -449,13 +449,13 @@
                         if (paidOption) paidOption.style.display = 'none';
 
                         // If currently selected is "paid", but it's hidden, reset
-                        if (paymentStatusSelect.value === 'paid') {
+                        if (paymentStatusSelect && paymentStatusSelect.value === 'paid') {
                             paymentStatusSelect.value = 'pending';
                         }
                     }
 
                     // Reference box for in-progress only
-                    if (isAdmin && selectedStatus === 'in-progress' || selectedStatus === 'paid') {
+                    if (isAdmin && (selectedStatus === 'in-progress' || selectedStatus === 'paid')) {
                         referenceBox.style.display = 'block';
                     } else {
                         referenceBox.style.display = 'none';
@@ -468,9 +468,15 @@
                     if (referenceInput) referenceInput.value = '';
                 }
             }
-
-            paymentModeIdSelect.addEventListener('change', updateStatusOptionsAndReferenceBox);
-            paymentStatusSelect.addEventListener('change', updateStatusOptionsAndReferenceBox);
+            
+            if(paymentModeIdSelect) {
+                paymentModeIdSelect.addEventListener('change', updateStatusOptionsAndReferenceBox);
+            }
+            if(paymentStatusSelect) {
+                paymentStatusSelect.addEventListener('change', updateStatusOptionsAndReferenceBox);
+            }
             updateStatusOptionsAndReferenceBox(); // run once on page load
         });
     </script>
+
+@endsection
