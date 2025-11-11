@@ -7,7 +7,7 @@
     <div class="card-header"><div class="card-title">Register Company</div></div>
     <!--end::Header-->
     <!--begin::Form-->
-    <form action="{{ route('company.update', $company->id) }}" method="POST" class="needs-validation" novalidate="">
+    <form action="{{ route('company.update', $company->id) }}" method="POST" enctype="multipart/form-data" class="needs-validation" novalidate="">
         @csrf
         @method('PUT')
         @if(session('success'))

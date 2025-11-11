@@ -6,7 +6,7 @@
     <div class="card-header"><div class="card-title">Register Company</div></div>
     <!--end::Header-->
     <!--begin::Form-->
-    <form action="{{ route('company.store') }}" method="POST" class="needs-validation" novalidate="">
+    <form action="{{ route('company.store') }}" method="POST" enctype="multipart/form-data" class="needs-validation" novalidate="">
         @csrf
         @if(session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>
