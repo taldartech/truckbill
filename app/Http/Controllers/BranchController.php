@@ -24,12 +24,12 @@ class BranchController extends Controller
             return DataTables::of($branches)
                 ->addIndexColumn()
                 ->addColumn('action', function($row) {
-                    $btn = '<div class="btn-group" role="group">';
-                    $btn .= '<a href="'.route('branches.edit', $row->id).'" class="btn btn-sm btn-info"><i class="bi bi-pencil"></i></a>';
+                    $btn = '<div role="group">';
+                    $btn .= '<a href="'.route('branches.edit', $row->id).'" class="btn btn-sm btn-info me-1"><i class="bi bi-pencil"></i></a>';
                     $btn .= '<form action="'.route('branches.destroy', $row->id).'" method="POST" class="d-inline">';
                     $btn .= csrf_field();
                     $btn .= method_field('DELETE');
-                    $btn .= '<button type="submit" class="btn btn-sm btn-danger" onclick="return confirm(\'Are you sure you want to delete this branch?\')"><i class="bi bi-trash"></i></button>';
+                    $btn .= '<button type="submit" class="btn btn-sm btn-danger" style="display:inline-block;" onclick="return confirm(\'Are you sure you want to delete this branch?\')"><i class="bi bi-trash"></i></button>';
                     $btn .= '</form>';
                     $btn .= '</div>';
                     return $btn;
