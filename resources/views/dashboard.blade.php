@@ -301,15 +301,14 @@
                 </div>
             </div>
             {{-- show companies whose plan_end_date is todays or got expired--}}
+            @if(auth()->user()->user_role_id==1 || auth()->user()->user_role_id==2)
             <div class="row mt-4">
                 <div class="col-md-12 col-lg-12">
                     <div class="card">
                         <div class="card-header">
                             <h3 class="card-title">Companies whose plan_end_date is todays or got expired</h3>
                             <div class="card-tools">
-                                {{-- <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                                    <i class="fas fa-minus"></i>
-                                </button> --}}
+                                
                             </div>
                         </div>
                         <div class="card-body p-0">
@@ -339,6 +338,7 @@
                     </div>
                 </div>
             </div>
+            @endif
         {{-- Expired Eway bills --}}
         <div class="row mt-4">
             <div class="col-md-12 col-lg-12">
