@@ -303,6 +303,13 @@ if ($company->plan_end_date && $today->gt($planEndDate)) {
 
   public function edit(Invoice $invoice)
   {
+    $company = auth()->user()->company;
+    $today = now()->startOfDay();
+$planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
+if ($company->plan_end_date && $today->gt($planEndDate)) {
+  return redirect()->route('invoices.index')
+      ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+}
     $companies = Company::all();
     $consignees = Consignee::all();
 
@@ -332,6 +339,13 @@ if ($company->plan_end_date && $today->gt($planEndDate)) {
 
   public function update(Request $request, Invoice $invoice)
   {
+    $company = auth()->user()->company;
+    $today = now()->startOfDay();
+$planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
+if ($company->plan_end_date && $today->gt($planEndDate)) {
+  return redirect()->route('invoices.index')
+      ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+}
     if ($invoice->payment_status === 'paid') {
       return redirect()->back()->with('error', 'Cannot edit a paid invoice.');
     }
@@ -361,6 +375,13 @@ if ($company->plan_end_date && $today->gt($planEndDate)) {
 
   public function destroy(Invoice $invoice)
   {
+    $company = auth()->user()->company;
+    $today = now()->startOfDay();
+$planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
+if ($company->plan_end_date && $today->gt($planEndDate)) {
+  return redirect()->route('invoices.index')
+      ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+}
     if ($invoice->payment_status !== 'pending') {
       return redirect()->back()->with('error', 'Cannot delete invoice.');
     }

@@ -1009,6 +1009,13 @@ private function validateLorryReceiptsUniqueness($lrs, $companyId)
 
   public function edit(\App\Models\LorryReceipt $lorry_receipt)
   {
+    $company = auth()->user()->company;
+    $today = now()->startOfDay();
+$planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
+if ($company->plan_end_date && $today->gt($planEndDate)) {
+  return redirect()->route('lorry_receipts.index')
+      ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+}
     // Eager load all necessary relationships
     $lorry_receipt = $lorry_receipt->load(['truck.transporter', 'truck.driver', 'customer', 'transporter', 'consignor', 'consignee']);
 
@@ -1052,6 +1059,13 @@ private function validateLorryReceiptsUniqueness($lrs, $companyId)
   public function update(Request $request, \App\Models\LorryReceipt $lorry_receipt)
   {
     // dd($request->all());
+    $company = auth()->user()->company;
+    $today = now()->startOfDay();
+$planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
+if ($company->plan_end_date && $today->gt($planEndDate)) {
+  return redirect()->route('lorry_receipts.index')
+      ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+}
 
     if ($lorry_receipt->invoice_generated == 1) {
       return redirect()->route('lorry_receipts.index')->with('error', 'Cannot edit Lorry Receipt as invoice has already been generated.');
@@ -1250,6 +1264,13 @@ private function validateLorryReceiptsUniqueness($lrs, $companyId)
 
   public function destroy(\App\Models\LorryReceipt $lorry_receipt)
   {
+    $company = auth()->user()->company;
+    $today = now()->startOfDay();
+$planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
+if ($company->plan_end_date && $today->gt($planEndDate)) {
+  return redirect()->route('lorry_receipts.index')
+      ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+}
     // Use transaction to ensure data consistency
     \DB::beginTransaction();
 

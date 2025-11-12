@@ -373,6 +373,13 @@ if ($company->plan_end_date && $today->gt($planEndDate)) {
 
   public function edit(Request $request, VoucherPayment $voucher_payment)
   {
+    $company = auth()->user()->company;
+    $today = now()->startOfDay();
+$planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
+if ($company->plan_end_date && $today->gt($planEndDate)) {
+  return redirect()->route('voucher_payments.index')
+      ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+}
     $vouchers = \App\Models\FreightBooking::select('id', 'voucher_number')->get();
     $paymentTypes = PaymentType::all();
     $paymentModes = PaymentMode::all();
@@ -404,6 +411,13 @@ if ($company->plan_end_date && $today->gt($planEndDate)) {
 
   public function update(Request $request, VoucherPayment $voucher_payment)
   {
+    $company = auth()->user()->company;
+    $today = now()->startOfDay();
+$planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
+if ($company->plan_end_date && $today->gt($planEndDate)) {
+  return redirect()->route('voucher_payments.index')
+      ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+}
     if ($voucher_payment->payment_status === 'paid') {
       return redirect()->back()
         ->with('error', 'Paid payments cannot be edited.');
@@ -845,6 +859,13 @@ if ($company->plan_end_date && $today->gt($planEndDate)) {
    */
   public function destroy(VoucherPayment $voucher_payment)
   {
+    $company = auth()->user()->company;
+    $today = now()->startOfDay();
+$planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
+if ($company->plan_end_date && $today->gt($planEndDate)) {
+  return redirect()->route('voucher_payments.index')
+      ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+}
     if ($voucher_payment->payment_status === 'paid') {
       return redirect()->back()
         ->with('error', 'Paid payments cannot be deleted.');

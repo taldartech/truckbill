@@ -726,6 +726,13 @@ if ($company->lr_credits <= 0) {
 
   public function edit($id)
   {
+    $company = auth()->user()->company;
+    $today = now()->startOfDay();
+$planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
+if ($company->plan_end_date && $today->gt($planEndDate)) {
+  return redirect()->route('freight_bookings.index')
+      ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+}
     try {
       $freightBooking = FreightBooking::findOrFail($id);
 
@@ -909,6 +916,13 @@ if ($company->lr_credits <= 0) {
 
   public function update(Request $request, FreightBooking $freightBooking)
   {
+    $company = auth()->user()->company;
+    $today = now()->startOfDay();
+$planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
+if ($company->plan_end_date && $today->gt($planEndDate)) {
+  return redirect()->route('freight_bookings.index')
+      ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+}
 
     // Prevent updates to cancelled freight bookings
     if ($freightBooking->is_cancelled) {
@@ -1028,6 +1042,13 @@ if ($company->lr_credits <= 0) {
 
   public function destroy(FreightBooking $freight_booking)
   {
+    $company = auth()->user()->company;
+    $today = now()->startOfDay();
+$planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
+if ($company->plan_end_date && $today->gt($planEndDate)) {
+  return redirect()->route('freight_bookings.index')
+      ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+}
     $freight_booking->delete();
     return redirect()->route('freight_bookings.index')->with('success', 'Freight Booking deleted.');
   }

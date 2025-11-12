@@ -583,15 +583,25 @@
                     $('#combined-payment-btn').show();
                 }
             }
+            const planEndDateStr = @json(Auth::user()->company->plan_end_date ?? null);
+            const today = new Date();
 
             // Voucher Payment Modal
             $('#voucher-payment-btn').on('click', function() {
+              
                 const checkedBoxes = $('.row-checkbox:checked');
 
                 if (checkedBoxes.length === 0) {
                     alert('Please select at least one freight booking.');
                     return;
                 }
+                if (planEndDateStr) {
+            const planEndDate = new Date(planEndDateStr);
+            if (today > planEndDate) {
+                alert('Your subscription plan has expired. Please renew your subscription to continue using the service.');
+                return false;
+            }
+        }
 
 
 
