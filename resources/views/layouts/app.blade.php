@@ -214,8 +214,18 @@
                 <!--end::Start Navbar Links-->
                 <!--begin::End Navbar Links-->
                 <ul class="navbar-nav ms-auto">
-
-
+                    @auth 
+                    @if(in_array(Auth::user()->user_role_id, [3,4,5]))
+                        <p class="mt-2 text-gray">
+                            <small>
+                                Expiry Date: {{ Auth::user()->company ? \Carbon\Carbon::parse(Auth::user()->company->plan_end_date)->format('d M, Y') : 'N/A' }} 
+                                | LR Credits: {{ Auth::user()->company ? Auth::user()->company->lr_credits : 'N/A' }}
+                            </small>
+                        </p>
+                    @endif
+                @endauth
+                
+                  
 
 
 
@@ -223,6 +233,7 @@
                     <!--begin::User Menu Dropdown-->
                     <li class="nav-item dropdown user-menu">
                         <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
+                            
                             <i class="fas fa-user-circle fa-lg"></i>
                             @auth
                                 <span class="d-none d-md-inline">{{ Auth::user()->name ?? Auth::user()->email }}</span>
@@ -231,6 +242,7 @@
                         <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end shadow">
                             <!--begin::User Image-->
                             <div class="user-header bg-primary text-center py-4">
+                                
                                 <i class="fas fa-user-circle fa-3x text-white mb-2"></i>
                                 <p class="text-white mb-0">
                                     @auth
@@ -239,23 +251,7 @@
                                             {{ Auth::user()->created_at->format('M. Y') }}</small>
                                     @endauth
                                 </p>
-                                <p  class="text-white mb-0">
-                                @auth
-                                @if(Auth::user()->user_role_id==3 || Auth::user()->user_role_id==4 || Auth::user()->user_role_id==5)
-                                <small class="d-block mt-1">Subscription End Date-
-                                    {{ Auth::user()->company ? Auth::user()->company->plan_end_date : '' }}</small>
-                                @endif
-                                @endauth
-                                </p>
-                                {{-- show lr credits --}}
-                                <p  class="text-white mb-0">
-                                @auth
-                                @if(Auth::user()->user_role_id==3 || Auth::user()->user_role_id==4 || Auth::user()->user_role_id==5)
-                                <small class="d-block mt-1">LR Credits-
-                                    {{ Auth::user()->company ? Auth::user()->company->lr_credits : '' }}</small>
-                                @endif
-                                @endauth
-                                </p>
+                             
                             </div>
                             <!--end::User Image-->
                             <!--begin::Menu Footer-->
