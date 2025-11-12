@@ -337,7 +337,8 @@ class LorryReceiptController extends Controller
     $freight_booking_id = $lorryReceipt->freight_booking_id;
     $freightBooking = FreightBooking::find($freight_booking_id);
     $company = auth()->user()->company;
-
+    $today = now()->startOfDay();
+    $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
     if ($freight_booking_id) {
       // If freight booking exists, redirect to edit form
       $buttons .= '<a href="' . route('freight_bookings.edit', $freight_booking_id) . '" class="btn btn-sm btn-warning" title="Edit Freight Booking" data-bs-toggle="tooltip">';
@@ -349,7 +350,14 @@ class LorryReceiptController extends Controller
         $buttons .= '<a class="btn btn-sm btn-success" title="Cannot create Freight Booking due to insufficient credits" data-bs-toggle="tooltip" onclick="alert(\'You do not have enough credits to create a Freight Booking.\')">';
         $buttons .= '<i class="bi bi-truck"></i>';
         $buttons .= '</a>';
-      } else {
+      } 
+      else if($company->plan_end_date && $today->gt($planEndDate)){
+        $buttons .= '<a class="btn btn-sm btn-success" title="Cannot create Freight Booking due to subscription plan expired" data-bs-toggle="tooltip" onclick="alert(\'Your subscription plan has expired. Please renew your subscription to continue using the service.\')">';
+        $buttons .= '<i class="bi bi-truck"></i>';
+        $buttons .= '</a>';
+      }
+      
+      else {
         $buttons .= '<a href="' . route('freight_bookings.create') . '?lorry_receipt_id=' . $lorryReceipt->id . '" class="btn btn-sm btn-success" title="Create Freight Booking" data-bs-toggle="tooltip">';
         $buttons .= '<i class="bi bi-truck"></i>';
         $buttons .= '</a>';
