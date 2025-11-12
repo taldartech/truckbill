@@ -115,8 +115,25 @@ class UserController extends Controller
         }
         
         // Get total count before pagination
-        $totalRecords = \App\Models\User::count();
-        $filteredRecords = $query->count();
+        $user = auth()->user();
+        if($user->userRole->name !== 'master_admin') {
+            $targetUserId = auth()->id(); // or any user id you want to filter by
+
+$totalRecords = \App\Models\User::whereHas('company', function ($query) use ($targetUserId) {
+    $query->where('user_id', $targetUserId);
+})->count();
+
+$filteredRecords = $query->whereHas('company', function ($query) use ($targetUserId) {
+    $query->where('user_id', $targetUserId);
+})->count();
+        }
+        else {
+        // $totalRecords = \App\Models\User::count();
+        $totalRecords = \App\Models\User::whereNull('company_id')->count();
+        //filterwho have company id null in user table
+        // $filteredRecords = $query->count();
+        $filteredRecords = $query->whereNull('company_id')->count();
+        }
 //         $targetUserId = auth()->id(); // or any user id you want to filter by
 
 // $totalRecords = \App\Models\User::whereHas('company', function ($query) use ($targetUserId) {
