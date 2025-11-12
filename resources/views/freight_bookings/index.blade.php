@@ -583,8 +583,7 @@
                     $('#combined-payment-btn').show();
                 }
             }
-            const planEndDateStr = @json(Auth::user()->company->plan_end_date ?? null);
-            const today = new Date();
+         
 
             // Voucher Payment Modal
             $('#voucher-payment-btn').on('click', function() {
@@ -595,13 +594,7 @@
                     alert('Please select at least one freight booking.');
                     return;
                 }
-                if (planEndDateStr) {
-            const planEndDate = new Date(planEndDateStr);
-            if (today > planEndDate) {
-                alert('Your subscription plan has expired. Please renew your subscription to continue using the service.');
-                return false;
-            }
-        }
+            
 
 
 
@@ -2067,6 +2060,8 @@
         });
     </script>
     <script>
+        const planEndDateStr = @json(Auth::user()->company->plan_end_date ?? null);
+        const today = new Date();
         function handleVoucherPayment() {
             const checkboxes = document.querySelectorAll('.row-checkbox:checked');
             const modalBody = document.getElementById('voucherPaymentBody');
@@ -2077,6 +2072,15 @@
                 alert("Please select at least one Freight Booking.");
                 return;
             }
+            if (planEndDateStr) {
+        const planEndDate = new Date(planEndDateStr);
+        if (today > planEndDate) {
+            alert('Your subscription plan has expired. Please renew your subscription to continue using the service.');
+            // Stop further execution so modal doesn't open
+            return false;  // or just return
+        }
+    }
+
 
             // Check if any LR has no voucher number
             const hasNoVoucher = Array.from(checkboxes).some(cb => cb.getAttribute('data-voucher_number') === '0');
