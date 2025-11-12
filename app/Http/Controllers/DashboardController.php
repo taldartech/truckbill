@@ -85,6 +85,12 @@ $expiredEwayBills = FreightBooking::with('lr')
     ->orderBy('eway_bill_expiry', 'asc')
     ->get();
 
+    if (auth()->user()->userRole->name === 'master_admin') {
+    $companies = \App\Models\Company::where('plan_end_date', '<=', now()->endOfDay())->get();
+    }else{
+      $companies = \App\Models\Company::where('plan_end_date', '<=', now()->endOfDay())->where('user_id', auth()->user()->id)->get();
+    }
+
     return view('dashboard', compact(
       'monthlyStats',
       'revenueData',
@@ -93,7 +99,8 @@ $expiredEwayBills = FreightBooking::with('lr')
       'topTrucks',
       'topTransporters',
       'topConsignees',
-      'expiredEwayBills'
+      'expiredEwayBills',
+      'companies'
     ));
   }
 }

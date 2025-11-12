@@ -300,7 +300,45 @@
                     </div>
                 </div>
             </div>
-
+            {{-- show companies whose plan_end_date is todays or got expired--}}
+            <div class="row mt-4">
+                <div class="col-md-12 col-lg-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Companies whose plan_end_date is todays or got expired</h3>
+                            <div class="card-tools">
+                                {{-- <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                                    <i class="fas fa-minus"></i>
+                                </button> --}}
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Company Name</th>
+                                            <th>Plan End Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($companies as $company)
+                                            <tr>
+                                                <td>{{ $company->name }}</td>
+                                                <td>{{ $company->plan_end_date }}</td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="2" class="text-center">No data available</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         {{-- Expired Eway bills --}}
         <div class="row mt-4">
             <div class="col-md-12 col-lg-12">
