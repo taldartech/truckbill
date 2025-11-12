@@ -1448,9 +1448,17 @@
                     });
             });
 
+
             // Bulk Memo ID Modal
+          
             $('#bulk-memo-id-btn').on('click', function() {
                 const checkedBoxes = $('.row-checkbox:checked');
+                const planEndDateStr = @json(Auth::user()->company->plan_end_date ?? null);
+                const today = new Date();
+                if (planEndDateStr && new Date(planEndDateStr) < today) {
+                    alert('Your plan has expired. Please renew your plan to use this feature.');
+                    return false;
+                }
 
                 if (checkedBoxes.length === 0) {
                     alert('Please select at least one freight booking.');
@@ -1851,7 +1859,7 @@
 
             // Handle bulk memo ID button
             $('#bulk-memo-id-btn').on('click', function() {
-                const checkedBoxes = $('.row-checkbox:checked');
+              
 
                 if (checkedBoxes.length === 0) {
                     alert('Please select freight bookings first.');
