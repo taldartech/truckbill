@@ -30,9 +30,6 @@ Route::middleware(['guest'])->group(function () {
 
 
 });
-Route::get('/subscription/alert', function () {
-    return view('subscription.alert');
-})->name('subscription.alert');
 // Protected Routes
 Route::middleware(['auth','checkblock'])->group(function () {
   Route::post('/logout', [LoginController::class, 'logout'])->name('logout');

@@ -336,6 +336,7 @@ class LorryReceiptController extends Controller
     // Freight booking button - check if freight booking already exists
     $freight_booking_id = $lorryReceipt->freight_booking_id;
     $freightBooking = FreightBooking::find($freight_booking_id);
+    $company = auth()->user()->company;
 
     if ($freight_booking_id) {
       // If freight booking exists, redirect to edit form
@@ -344,9 +345,15 @@ class LorryReceiptController extends Controller
       $buttons .= '</a>';
     } else {
       // If no freight booking exists, redirect to create form
-      $buttons .= '<a href="' . route('freight_bookings.create') . '?lorry_receipt_id=' . $lorryReceipt->id . '" class="btn btn-sm btn-success" title="Create Freight Booking" data-bs-toggle="tooltip">';
-      $buttons .= '<i class="bi bi-truck"></i>';
-      $buttons .= '</a>';
+      if ($company->lr_credits <= 0) {
+        $buttons .= '<a class="btn btn-sm btn-success" title="Cannot create Freight Booking due to insufficient credits" data-bs-toggle="tooltip" onclick="alert(\'You do not have enough credits to create a Freight Booking.\')">';
+        $buttons .= '<i class="bi bi-truck"></i>';
+        $buttons .= '</a>';
+      } else {
+        $buttons .= '<a href="' . route('freight_bookings.create') . '?lorry_receipt_id=' . $lorryReceipt->id . '" class="btn btn-sm btn-success" title="Create Freight Booking" data-bs-toggle="tooltip">';
+        $buttons .= '<i class="bi bi-truck"></i>';
+        $buttons .= '</a>';
+      }
     }
 
     // Edit button - check if freight booking exists and add confirmation
@@ -379,13 +386,7 @@ class LorryReceiptController extends Controller
 
   public function create()
   {
-    //here check if plan_end_date of company hase reached than redirect to alert msg page which shows please renew your subscription
-    $company = auth()->user()->company;
-    $today = now()->startOfDay();
-$planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
-if ($company->plan_end_date && $today->gt($planEndDate)) {
-  return redirect()->route('subscription.alert');
-}
+  
     $companies = \App\Models\Company::all();
     // $trucks = Truck::all();
     $trucks = Truck::with(['transporter', 'driver'])
@@ -412,6 +413,7 @@ if ($company->plan_end_date && $today->gt($planEndDate)) {
 
   public function createLinked()
   {
+   
     $companies = \App\Models\Company::all();
     // $trucks = Truck::all();
     $trucks = Truck::with(['transporter', 'driver'])

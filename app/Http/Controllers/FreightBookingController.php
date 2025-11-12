@@ -321,6 +321,18 @@ class FreightBookingController extends Controller
 
   public function create(Request $request)
   {
+     $company = auth()->user()->company;
+    $today = now()->startOfDay();
+$planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
+if ($company->plan_end_date && $today->gt($planEndDate)) {
+  return redirect()->route('freight_bookings.index')
+      ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+}
+//check for lr credits
+if ($company->lr_credits <= 0) {
+  return redirect()->route('freight_bookings.index')
+      ->with('error', 'You do not have enough credits to create a Freight Booking.');
+}
     $companies = \App\Models\Company::all();
     $lrs = LorryReceipt::all();
     $linkedBookings = FreightBooking::all();
