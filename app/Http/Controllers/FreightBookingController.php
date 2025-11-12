@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\Pump;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use App\Models\Company;
 
 class FreightBookingController extends Controller
 {
@@ -584,6 +585,10 @@ class FreightBookingController extends Controller
       return redirect()->route('freight_bookings.show', $freightBooking->id)
         ->with('success', 'Freight Booking created successfully. Ready to make payment.');
     }
+    //decrease lr credits by one in company table
+    $company = Company::find($data['company_id']);
+    $company->lr_credits = $company->lr_credits - 1;
+    $company->save();
 
     return redirect()->route('freight_bookings.index')->with('success', 'Freight Booking created successfully.');
   }
