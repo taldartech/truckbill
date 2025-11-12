@@ -239,6 +239,23 @@
                                             {{ Auth::user()->created_at->format('M. Y') }}</small>
                                     @endauth
                                 </p>
+                                <p  class="text-white mb-0">
+                                @auth
+                                @if(Auth::user()->user_role_id==3 || Auth::user()->user_role_id==4 || Auth::user()->user_role_id==5)
+                                <small class="d-block mt-1">Subscription End Date-
+                                    {{ Auth::user()->company ? Auth::user()->company->plan_end_date : '' }}</small>
+                                @endif
+                                @endauth
+                                </p>
+                                {{-- show lr credits --}}
+                                <p  class="text-white mb-0">
+                                @auth
+                                @if(Auth::user()->user_role_id==3 || Auth::user()->user_role_id==4 || Auth::user()->user_role_id==5)
+                                <small class="d-block mt-1">LR Credits-
+                                    {{ Auth::user()->company ? Auth::user()->company->lr_credits : '' }}</small>
+                                @endif
+                                @endauth
+                                </p>
                             </div>
                             <!--end::User Image-->
                             <!--begin::Menu Footer-->
@@ -252,6 +269,7 @@
                                 <a href="{{ route('password.change') }}" class="btn btn-primary text-white  btn-sm rounded-3"
                                     >Change Password</a
                                 >
+                                
                             </div>
                             <!--end::Menu Footer-->
                         </div>
