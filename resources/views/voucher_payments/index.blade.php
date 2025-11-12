@@ -1,10 +1,14 @@
 @extends('layouts.app')
 
 @section('content')
+
 <div class="container mt-4">
     <div class="col-sm-6"><h3 class="mb-0">Voucher Payments Management</h3></div>
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+    @if(session('error'))
+        <div class="alert alert-danger">{{ session('error') }}</div>
     @endif
 
     {{-- Always visible container --}}
