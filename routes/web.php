@@ -25,10 +25,14 @@ use App\Http\Controllers\BranchController;
 Route::middleware(['guest'])->group(function () {
   Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
   Route::post('/login', [LoginController::class, 'login']);
+
  
 
 
 });
+Route::get('/subscription/alert', function () {
+    return view('subscription.alert');
+})->name('subscription.alert');
 // Protected Routes
 Route::middleware(['auth','checkblock'])->group(function () {
   Route::post('/logout', [LoginController::class, 'logout'])->name('logout');

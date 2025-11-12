@@ -379,6 +379,13 @@ class LorryReceiptController extends Controller
 
   public function create()
   {
+    //here check if plan_end_date of company hase reached than redirect to alert msg page which shows please renew your subscription
+    $company = auth()->user()->company;
+    $today = now()->startOfDay();
+$planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
+if ($company->plan_end_date && $today->gt($planEndDate)) {
+  return redirect()->route('subscription.alert');
+}
     $companies = \App\Models\Company::all();
     // $trucks = Truck::all();
     $trucks = Truck::with(['transporter', 'driver'])
