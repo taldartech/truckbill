@@ -235,6 +235,13 @@ class VoucherPaymentController extends Controller
 
   public function create(Request $request)
   {
+    $company = auth()->user()->company;
+    $today = now()->startOfDay();
+$planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
+if ($company->plan_end_date && $today->gt($planEndDate)) {
+  return redirect()->route('freight_bookings.index')
+      ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+}
     $companies = \App\Models\Company::all();
     $freight_booking_id = $request->freight_booking_id;
     $lorry_receipt_id = $request->lorry_receipt_id;

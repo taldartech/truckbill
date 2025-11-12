@@ -394,6 +394,13 @@ class LorryReceiptController extends Controller
 
   public function create()
   {
+    $company = auth()->user()->company;
+    $today = now()->startOfDay();
+$planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
+if ($company->plan_end_date && $today->gt($planEndDate)) {
+  return redirect()->route('lorry_receipts.index')
+      ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+}
   
     $companies = \App\Models\Company::all();
     // $trucks = Truck::all();
@@ -421,6 +428,13 @@ class LorryReceiptController extends Controller
 
   public function createLinked()
   {
+    $company = auth()->user()->company;
+    $today = now()->startOfDay();
+$planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
+if ($company->plan_end_date && $today->gt($planEndDate)) {
+  return redirect()->route('lorry_receipts.index')
+      ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+}
    
     $companies = \App\Models\Company::all();
     // $trucks = Truck::all();

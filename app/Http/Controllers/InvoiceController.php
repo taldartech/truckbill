@@ -166,6 +166,13 @@ class InvoiceController extends Controller
 
   public function create()
   {
+    $company = auth()->user()->company;
+    $today = now()->startOfDay();
+$planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
+if ($company->plan_end_date && $today->gt($planEndDate)) {
+  return redirect()->route('invoices.index')
+      ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+}
     $user = auth()->user();
     $company = null;
 
