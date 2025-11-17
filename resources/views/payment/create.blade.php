@@ -86,8 +86,7 @@
                         </div>
 
                         <!-- Flowchart Logic -->
-                        <form id="paymentForm" action="{{ route('payment.store') }}" method="POST"
-                            onsubmit="return validateForm()">
+                        <form id="paymentForm" method="POST" onsubmit="return processPayment(event)">
                             @csrf
                             <input type="hidden" name="company_id" value="{{ $company->id }}">
                             @if (!$isExpired)
@@ -352,6 +351,7 @@
 @endsection
 
 @push('scripts')
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script>
         let promoCodeApplied = false;
         let discountType = null;
@@ -637,6 +637,147 @@
                     paymentDetailsUpdate();
                 }
             });
+        }
+
+        function validateForm() {
+            const isRenewal = document.getElementById('want_to_renew_yes')?.checked ||
+                Boolean({{ $isExpired ? 'true' : 'false' }});
+
+            if (!isRenewal && !document.getElementById('want_to_renew_no')?.checked) {
+                alert('Please select whether you want to renew or add features.');
+                return false;
+            }
+
+            if (isRenewal) {
+                @if ($company->company_type != 'Broker')
+                    const truckCount = document.getElementById('truck_count')?.value;
+                    if (!truckCount || truckCount < 1) {
+                        alert('Please enter a valid truck count.');
+                        return false;
+                    }
+                @endif
+
+                @if ($company->company_type != 'Agency')
+                    const lrCredits = document.querySelector('input[name="lr_credits"]:checked')?.value;
+                    if (!lrCredits) {
+                        alert('Please select LR credits.');
+                        return false;
+                    }
+                @endif
+            }
+
+            return true;
+        }
+
+        function processPayment(event) {
+            event.preventDefault();
+
+            if (!validateForm()) {
+                return false;
+            }
+
+            // Disable submit button
+            const submitBtn = event.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+            // Get form data
+            const formData = new FormData(event.target);
+
+            // Submit form via AJAX to create Razorpay order
+            fetch('{{ route('payment.store') }}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Initialize Razorpay checkout
+                    const options = {
+                        key: data.key,
+                        amount: data.amount,
+                        currency: 'INR',
+                        name: data.name,
+                        description: data.description,
+                        order_id: data.order_id,
+                        prefill: data.prefill,
+                        theme: data.theme,
+                        handler: function(response) {
+                            // Payment successful
+                            handlePaymentSuccess(response);
+                        },
+                        modal: {
+                            ondismiss: function() {
+                                // Payment cancelled
+                                submitBtn.disabled = false;
+                                submitBtn.innerHTML = originalText;
+                            }
+                        }
+                    };
+
+                    const razorpay = new Razorpay(options);
+                    razorpay.open();
+                } else {
+                    console.log('Error creating payment order:', data);
+                    if (data.error) {
+                        alert(data.error);
+                    } else {
+                        alert('Failed to create payment order. Please try again.');
+                    }
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalText;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            });
+
+            return false;
+        }
+
+        function handlePaymentSuccess(response) {
+            // Create a form to submit payment details to callback
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{{ route('payment.callback') }}';
+
+            // Add CSRF token
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_token';
+            csrfInput.value = '{{ csrf_token() }}';
+            form.appendChild(csrfInput);
+
+            // Add Razorpay response data
+            const orderIdInput = document.createElement('input');
+            orderIdInput.type = 'hidden';
+            orderIdInput.name = 'razorpay_order_id';
+            orderIdInput.value = response.razorpay_order_id;
+            form.appendChild(orderIdInput);
+
+            const paymentIdInput = document.createElement('input');
+            paymentIdInput.type = 'hidden';
+            paymentIdInput.name = 'razorpay_payment_id';
+            paymentIdInput.value = response.razorpay_payment_id;
+            form.appendChild(paymentIdInput);
+
+            const signatureInput = document.createElement('input');
+            signatureInput.type = 'hidden';
+            signatureInput.name = 'razorpay_signature';
+            signatureInput.value = response.razorpay_signature;
+            form.appendChild(signatureInput);
+
+            // Submit form
+            document.body.appendChild(form);
+            form.submit();
         }
     </script>
 @endpush

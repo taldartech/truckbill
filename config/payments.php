@@ -25,4 +25,8 @@ return [
     'discount' => (int) env('DISCOUNT', 10),
 
     'service_gst_percentage' => (int) env('SERVICE_GST_PERCENTAGE', 18),
+
+    // Razorpay Configuration
+    'razorpay_key' => env('RAZORPAY_KEY', ''),
+    'razorpay_secret' => env('RAZORPAY_SECRET', ''),
 ];

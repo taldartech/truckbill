@@ -29,7 +29,8 @@
     "yajra/laravel-datatables-oracle": "^12.4",
     "barryvdh/laravel-dompdf": "^3.1",
     "maatwebsite/excel": "^3.1",
-    "mpdf/mpdf": "^8.2"
+    "mpdf/mpdf": "^8.2",
+    "razorpay/razorpay": "^2.9"
   },
   "require-dev": {
     "laravel/pail": "^1.2",

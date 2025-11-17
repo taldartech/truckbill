@@ -80,6 +80,7 @@ Route::middleware(['auth', 'checkblock'])->group(function () {
         Route::get('payment', [PaymentController::class, 'index'])->name('payment.index');
         Route::get('payment/create', [PaymentController::class, 'create'])->name('payment.create');
         Route::post('payment', [PaymentController::class, 'store'])->name('payment.store');
+        Route::post('payment/callback', [PaymentController::class, 'paymentCallback'])->name('payment.callback');
     });
 
     Route::redirect('/', '/dashboard');

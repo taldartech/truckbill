@@ -52,11 +52,18 @@
                                                 today(),
                                             );
                                         }
+                                        $upcomingPlan = \App\Models\UpcomingPlan::where('company_id', $company->id)
+                                            ->where('status', 'pending')
+                                            ->orderBy('plan_end_date', 'desc')
+                                            ->first();
+                                        $planEndDate = $upcomingPlan
+                                            ? $upcomingPlan->plan_end_date
+                                            : $company->plan_end_date;
                                     @endphp
                                     <th>{{ $loop->iteration }}</th>
                                     <td>{{ $company->name }}</td>
-                                    <td data-order="{{ $company->plan_end_date }}">
-                                        {{ \Carbon\Carbon::parse($company->plan_end_date)->format('d-m-Y') }}</td>
+                                    <td data-order="{{ $planEndDate }}">
+                                        {{ \Carbon\Carbon::parse($planEndDate)->format('d-m-Y') }}</td>
                                     <td class="text-center">{{ $company->lr_credits ?? 0 }}</td>
                                     <td class="text-center">{{ $company->truck_credits ?? 0 }}</td>
                                     <td class="text-center">
@@ -95,7 +102,7 @@
                 paging: false,
 
                 "order": [
-                    [0, "asc"]
+                    [2, 'desc']
                 ]
             });
         });
