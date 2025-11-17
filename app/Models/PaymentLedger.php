@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class PaymentTransaction extends Model
+class PaymentLedger extends Model
 {
     protected $fillable = [
         'company_id',

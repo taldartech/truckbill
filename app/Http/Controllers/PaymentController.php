@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Company;
-use App\Models\PaymentTransaction;
+use App\Models\PaymentLedger;
 use App\Models\PromoCode;
 use App\Models\UpcomingPlan;
 use Carbon\Carbon;
@@ -192,7 +192,7 @@ class PaymentController extends Controller
             $razorpayOrder = $api->order->create($orderData);
 
             // Store transaction in database
-            $transaction = PaymentTransaction::create([
+            $transaction = PaymentLedger::create([
                 'company_id' => $company->id,
                 'razorpay_order_id' => $razorpayOrder['id'],
                 'payment_type' => $paymentType,
@@ -393,7 +393,7 @@ class PaymentController extends Controller
             $api->utility->verifyPaymentSignature($attributes);
 
             // Find transaction
-            $transaction = PaymentTransaction::where('razorpay_order_id', $input['razorpay_order_id'])->first();
+            $transaction = PaymentLedger::where('razorpay_order_id', $input['razorpay_order_id'])->first();
 
             if (!$transaction) {
                 Log::error('Payment transaction not found: ' . $input['razorpay_order_id']);
@@ -445,7 +445,7 @@ class PaymentController extends Controller
                         // Store in upcoming_plan table if company has existing plan
                         UpcomingPlan::create([
                             'company_id' => $company->id,
-                            'payment_transaction_id' => $transaction->id,
+                            'payment_ledger_id' => $transaction->id,
                             'plan_start_date' => $startDate->toDateString(),
                             'plan_end_date' => $endDate->toDateString(),
                             'truck_count' => $transaction->truck_count,
@@ -486,7 +486,7 @@ class PaymentController extends Controller
 
             // Update transaction status to failed
             if (isset($input['razorpay_order_id'])) {
-                $transaction = PaymentTransaction::where('razorpay_order_id', $input['razorpay_order_id'])->first();
+                $transaction = PaymentLedger::where('razorpay_order_id', $input['razorpay_order_id'])->first();
                 if ($transaction) {
                     $transaction->status = 'failed';
                     $transaction->save();

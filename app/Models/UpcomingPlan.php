@@ -9,7 +9,7 @@ class UpcomingPlan extends Model
 {
     protected $fillable = [
         'company_id',
-        'payment_transaction_id',
+        'payment_ledger_id',
         'plan_start_date',
         'plan_end_date',
         'truck_count',
@@ -27,8 +27,8 @@ class UpcomingPlan extends Model
         return $this->belongsTo(Company::class);
     }
 
-    public function paymentTransaction(): BelongsTo
+    public function PaymentLedger(): BelongsTo
     {
-        return $this->belongsTo(PaymentTransaction::class);
+        return $this->belongsTo(PaymentLedger::class);
     }
 }

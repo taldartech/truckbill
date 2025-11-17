@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('upcoming_plans', function (Blueprint $table) {
             $table->id();
             $table->foreignId('company_id')->constrained('companies')->onDelete('cascade');
-            $table->foreignId('payment_transaction_id')->constrained('payment_transactions')->onDelete('cascade');
+            $table->foreignId('payment_ledger_id')->constrained('payment_ledgers')->onDelete('cascade');
             $table->date('plan_start_date');
             $table->date('plan_end_date');
             $table->integer('truck_count')->nullable();
