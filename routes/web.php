@@ -21,6 +21,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\VoucherTemplateController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\PromoCodeController;
 
 // Authentication Routes
 Route::middleware(['guest'])->group(function () {
@@ -33,6 +34,7 @@ Route::middleware(['auth', 'checkblock'])->group(function () {
     Route::get('/password/change', [LoginController::class, 'showChangePasswordForm'])->name('password.change');
     Route::post('/password/change', [LoginController::class, 'changePassword'])->name('password.change');
     // User Management
+    Route::resource('promo_codes', PromoCodeController::class);
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
     Route::post('/users', [UserController::class, 'store'])->name('users.store');

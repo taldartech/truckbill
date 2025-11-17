@@ -214,18 +214,18 @@
                 <!--end::Start Navbar Links-->
                 <!--begin::End Navbar Links-->
                 <ul class="navbar-nav ms-auto">
-                    @auth 
+                    @auth
                     @if(in_array(Auth::user()->user_role_id, [3,4,5]))
                         <p class="mt-2 text-gray">
                             <small>
-                                Expiry Date: {{ Auth::user()->company ? \Carbon\Carbon::parse(Auth::user()->company->plan_end_date)->format('d M, Y') : 'N/A' }} 
+                                Expiry Date: {{ Auth::user()->company ? \Carbon\Carbon::parse(Auth::user()->company->plan_end_date)->format('d M, Y') : 'N/A' }}
                                 | LR Credits: {{ Auth::user()->company ? Auth::user()->company->lr_credits : 'N/A' }}
                             </small>
                         </p>
                     @endif
                 @endauth
-                
-                  
+
+
 
 
 
@@ -233,7 +233,7 @@
                     <!--begin::User Menu Dropdown-->
                     <li class="nav-item dropdown user-menu">
                         <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown">
-                            
+
                             <i class="fas fa-user-circle fa-lg"></i>
                             @auth
                                 <span class="d-none d-md-inline">{{ Auth::user()->name ?? Auth::user()->email }}</span>
@@ -242,7 +242,7 @@
                         <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end shadow">
                             <!--begin::User Image-->
                             <div class="user-header bg-primary text-center py-4">
-                                
+
                                 <i class="fas fa-user-circle fa-3x text-white mb-2"></i>
                                 <p class="text-white mb-0">
                                     @auth
@@ -251,7 +251,7 @@
                                             {{ Auth::user()->created_at->format('M. Y') }}</small>
                                     @endauth
                                 </p>
-                             
+
                             </div>
                             <!--end::User Image-->
                             <!--begin::Menu Footer-->
@@ -265,7 +265,7 @@
                                 <a href="{{ route('password.change') }}" class="btn btn-primary text-white  btn-sm rounded-3"
                                     >Change Password</a
                                 >
-                                
+
                             </div>
                             <!--end::Menu Footer-->
                         </div>
@@ -329,12 +329,18 @@
                                         <p>Company List</p>
                                     </a>
                                 </li>
-                               
+
                             </ul>
                         </li>
-
+                        <li class="nav-item">
+                            <a href="{{ route('promo_codes.index') }}"
+                                class="nav-link{{ Request::is('promo_codes*') ? ' active' : '' }}">
+                                <i class="fas fa-tag"></i>
+                                <p>Promo Codes</p>
+                            </a>
+                        </li>
                         @endif
-                    
+
                         @if (auth()->check() && auth()->user()->userRole->name === 'super_admin')
                             <li class="nav-item">
                                 <a class="nav-link{{ Request::is('company') || Request::is('company/create') ? ' active' : '' }}"
