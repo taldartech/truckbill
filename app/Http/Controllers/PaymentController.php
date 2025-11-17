@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Company;
+use App\Models\PromoCode;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -84,19 +85,35 @@ class PaymentController extends Controller
      */
     public function store(Request $request)
     {
-        // Only superadmin can access
-        if (Auth::user()->userRole->name !== 'super_admin') {
-            abort(403, 'Unauthorized access.');
-        }
+        // Implementation for storing payment/plan update goes here
+    }
 
-        // Validate request
-        $validated = $request->validate([
-            'company_id' => 'required|exists:companies,id',
+
+    /**
+     * Apply promo code and get discount details.
+     */
+    public function applyPromoCode(Request $request)
+    {
+        $request->validate([
+            'code' => 'required|string',
         ]);
 
-        $company = Company::findOrFail($validated['company_id']);
-        if ($company->user_id != Auth::id()) {
-            abort(403, 'Unauthorized access to this company.');
+        $promoCode = PromoCode::where('code', $request->code)
+            ->where('is_active', true)
+            ->where('start_date', '<=', now())
+            ->where(function ($query) {
+                $query->whereNull('end_date')
+                    ->orWhere('end_date', '>=', now());
+            })
+            ->first();
+        if (!$promoCode) {
+            return response()->json(['error' => 'Invalid or expired promo code.'], 404);
         }
+
+        return response()->json([
+            'code' => $promoCode->code,
+            'discount_type' => $promoCode->discount_type,
+            'discount_value' => $promoCode->discount_value,
+        ]);
     }
 }

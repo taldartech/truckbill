@@ -102,7 +102,8 @@
                                             <div class="form-check form-check-inline">
                                                 <input class="form-check-input" type="radio" name="want_to_renew"
                                                     id="want_to_renew_yes" value="yes"
-                                                    onchange="toggleRenewalOptions(true)">
+                                                    {{ old('want_to_renew') == 'yes' ? 'checked' : '' }}
+                                                    onchange="toggleRenewalOptions()">
                                                 <label class="form-check-label" for="want_to_renew_yes">
                                                     <strong>Yes, I want to renew the plan</strong>
                                                 </label>
@@ -112,7 +113,8 @@
                                             <div class="form-check form-check-inline">
                                                 <input class="form-check-input" type="radio" name="want_to_renew"
                                                     id="want_to_renew_no" value="no"
-                                                    onchange="toggleRenewalOptions(false)">
+                                                    {{ old('want_to_renew') == 'no' ? 'checked' : '' }}
+                                                    onchange="toggleRenewalOptions()">
                                                 <label class="form-check-label" for="want_to_renew_no">
                                                     <strong>No, I want to add features to current plan</strong>
                                                 </label>
@@ -168,6 +170,7 @@
                                                     <div class="form-check form-check-inline">
                                                         <input class="form-check-input" type="radio" name="lr_credits"
                                                             id="lr_credits_{{ $credits }}"
+                                                            {{ old('lr_credits') == $credits ? 'checked' : '' }}
                                                             value="{{ $credits }}" onchange="paymentDetailsUpdate()">
                                                         <label class="form-check-label"
                                                             for="lr_credits_{{ $credits }}">
@@ -178,7 +181,9 @@
                                                 @endforeach
                                                 <div class="form-check form-check-inline">
                                                     <input class="form-check-input" type="radio" name="lr_credits"
-                                                        id="lr_credits_0" value="0" onchange="paymentDetailsUpdate()">
+                                                        id="lr_credits_0" value="0"
+                                                        {{ old('lr_credits') == 0 ? 'checked' : '' }}
+                                                        onchange="paymentDetailsUpdate()">
                                                     <label class="form-check-label" for="lr_credits_0">
                                                         None
                                                     </label>
@@ -274,6 +279,7 @@
                                                         <div class="form-check form-check-inline">
                                                             <input class="form-check-input" type="radio"
                                                                 name="addon_lr_credits"
+                                                                {{ old('addon_lr_credits') == $credits ? 'checked' : '' }}
                                                                 id="addon_lr_credits_{{ $credits }}"
                                                                 value="{{ $credits }}"
                                                                 onchange="paymentDetailsUpdate()">
@@ -287,6 +293,7 @@
                                                     <div class="form-check form-check-inline">
                                                         <input class="form-check-input" type="radio"
                                                             name="addon_lr_credits" id="addon_lr_credits_0"
+                                                            {{ old('addon_lr_credits') == 0 ? 'checked' : '' }}
                                                             value="0" onchange="paymentDetailsUpdate()">
                                                         <label class="form-check-label" for="addon_lr_credits_0">
                                                             None
@@ -298,6 +305,25 @@
                                     </div>
                                 </div>
                             @endif
+
+                            <!-- Promo Code Section with validation -->
+                            <div class="row mt-4">
+                                <div class="col-md-6 mb-3">
+                                    <label for="promo_code" class="form-label">
+                                        <strong>Promo Code</strong>
+                                    </label>
+                                    <input type="text" class="form-control" id="promo_code" name="promo_code" onchange="applyPromoCode()"
+                                        value="{{ old('promo_code', '') }}" placeholder="Enter promo code if any">
+                                </div>
+                                <div class="col-md-6 mb-3 d-flex align-items-end">
+                                    <button type="button" class="btn btn-info" onclick="applyPromoCode()">
+                                        <i class="fas fa-tag"></i> Apply Promo Code
+                                    </button>
+                                </div>
+                                <div class="col-12" id="promo-code-message">
+                                    <!-- Promo code validation message will appear here -->
+                                </div>
+                            </div>
 
                             <!-- Payment Summary -->
                             <div class="row mt-4">
@@ -327,14 +353,28 @@
 
 @push('scripts')
     <script>
-        function toggleRenewalOptions(isRenewal) {
+        let promoCodeApplied = false;
+        let discountType = null;
+        let discountValue = 0;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initial payment details update
+            toggleRenewalOptions();
+                applyPromoCode();
+        });
+
+        function toggleRenewalOptions() {
+            const renewal = document.getElementById('want_to_renew_yes')?.checked;
+            const addon = document.getElementById('want_to_renew_no')?.checked;
+
             const renewalSection = document.getElementById('renewalSection');
             const addonSection = document.getElementById('addonSection');
 
-            if (isRenewal) {
+            if (renewal) {
                 renewalSection.classList.add('active');
                 addonSection.classList.remove('active');
-            } else {
+            }
+            if (addon) {
                 renewalSection.classList.remove('active');
                 addonSection.classList.add('active');
             }
@@ -506,6 +546,32 @@
                             <td class="text-end">Rs. ${totalAmount.toFixed(2)}</td>
                         </tr>
                 `;
+
+                // Apply Promo Code Discount
+                if (promoCodeApplied) {
+                    let discountAmount = 0;
+                    if (discountType === 'percentage') {
+                        discountAmount = (totalAmount * discountValue) / 100;
+                    } else {
+                        discountAmount = discountValue;
+                    }
+                    totalAmount -= discountAmount;
+                    breakdownHtml += `
+                        <tr>
+                            <td><strong>Promo Code Discount</strong></td>
+                            <td class="text-end">- Rs. ${discountAmount.toFixed(2)}</td>
+                        </tr>
+                    `;
+
+                    // Subtotal after Discount
+                    breakdownHtml += `
+                            <tr class="table-secondary">
+                                <td><strong>Subtotal after Discount</strong></td>
+                                <td class="text-end">Rs. ${totalAmount.toFixed(2)}</td>
+                            </tr>
+                    `;
+                }
+
                 // GST Calculation
                 const gstAmount = (totalAmount * serviceGstPercentage) / 100;
                 totalAmount += gstAmount;
@@ -532,6 +598,45 @@
                 breakdownHtml = '<p class="text-muted"><em>No payment required based on the selected options.</em></p>';
             }
             document.getElementById('payment-breakup').innerHTML = breakdownHtml;
+        }
+
+        function applyPromoCode() {
+            const promoCode = document.getElementById('promo_code').value.trim();
+            const messageDiv = document.getElementById('promo-code-message');
+
+            if (promoCode === '') {
+                promoCodeApplied = false;
+                return;
+            }
+
+            $.ajax({
+                url: '{{ route('promo_codes.validate') }}',
+                method: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    code: promoCode,
+                },
+                success: function(response) {
+                    discountType = response.discount_type;
+                    discountValue = response.discount_value;
+                    promoCodeApplied = true;
+                    messageDiv.innerHTML = `
+                        <div class="text-success">
+                            Promo code <strong>${response.code}</strong> applied successfully!.
+                        </div>
+                    `;
+                    paymentDetailsUpdate();
+                },
+                error: function(xhr, status, error) {
+                    promoCodeApplied = false;
+                    let errorMessage = 'An error occurred while applying the promo code.';
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        errorMessage = xhr.responseJSON.error;
+                    }
+                    messageDiv.innerHTML = `<div class="text-danger">${errorMessage}</div>`;
+                    paymentDetailsUpdate();
+                }
+            });
         }
     </script>
 @endpush

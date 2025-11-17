@@ -34,6 +34,7 @@ Route::middleware(['auth', 'checkblock'])->group(function () {
     Route::get('/password/change', [LoginController::class, 'showChangePasswordForm'])->name('password.change');
     Route::post('/password/change', [LoginController::class, 'changePassword'])->name('password.change');
     // User Management
+    Route::post('promo_codes/validate', [PaymentController::class, 'applyPromoCode'])->name('promo_codes.validate');
     Route::resource('promo_codes', PromoCodeController::class);
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
