@@ -427,6 +427,13 @@
                                     </li>
                                 </ul>
                             </li>
+                            <li class="nav-item">
+                                <a href="{{ route('payment.index') }}"
+                                    class="nav-link{{ Request::is('payment*') ? ' active' : '' }}">
+                                    <i class="fas fa-credit-card"></i>
+                                    <p>Payment Management</p>
+                                </a>
+                            </li>
                             {{-- end master --}}
                         @endif
 

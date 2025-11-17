@@ -18,14 +18,12 @@ class CheckBlockMiddleware
     {
         $company_id = Auth::user()->company_id;
         $company = \App\Models\Company::find($company_id);
-        
+
         // If is_blocked is true (1), block login
         if ($company && $company->is_blocked) {
-           Auth::logout();
-           abort(403, 'Unauthorized action.');
+            abort(403, 'Unauthorized action.');
         }
-       
-       
+
         return $next($request);
     }
 }

@@ -12,7 +12,7 @@ class CompanyController extends Controller
 {
     public function index(Request $request)
     {
-        
+
         // Handle DataTables AJAX request
         if ($request->ajax()) {
             return $this->getCompaniesData($request);
@@ -23,14 +23,14 @@ class CompanyController extends Controller
 
     private function getCompaniesData(Request $request)
     {
-        
+
         //if user is master admin than show all companies
         if (auth()->user()->userRole->name === 'master_admin') {
             $query = \App\Models\Company::query();
         } else {
             $query = \App\Models\Company::query()->where('user_id', auth()->user()->id);
         }
-        
+
         // Handle search
         if ($request->has('search') && $request->search['value']) {
             $searchValue = $request->search['value'];
@@ -176,8 +176,8 @@ $endOfYear = $startOfYear->copy()->addYear()->subDay()->endOfDay();
        ->whereBetween('created_at', [$startOfYear, $endOfYear])
        ->count();
    if (auth()->user()->userRole->name !== 'master_admin') {
-       
-   
+
+
    if ($invoiceCount == 0) {
        $editUrl = route('company.edit', $company->id);
        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit Company">
@@ -187,7 +187,7 @@ $endOfYear = $startOfYear->copy()->addYear()->subDay()->endOfDay();
                        <i class="bi bi-pencil"></i></a>';
    }
 
-       
+
 
         // Delete button
         $deleteUrl = route('company.destroy', $company->id);
@@ -238,7 +238,7 @@ public function unblock($id)
         $countries = \App\Models\Country::all();
         $states = \App\Models\State::where('country_id', $company->country_id)->get();
         $cities = \App\Models\City::where('state_id', $company->state_id)->get();
-        $companySlabs = explode(',', env('COMPANY_SLABS'));
+        $companySlabs = config('payments.gst_slabs');
         return view('company.edit', compact('company', 'countries', 'states', 'cities','companySlabs'));
     }
 
@@ -271,7 +271,7 @@ public function unblock($id)
                     if ($value && \App\Models\Company::where('pan_number', $value)->where('id', '!=', $id)->exists()) {
                         $fail('The PAN number has already been taken.');
                     }
-                },  
+                },
             ],
             'company_type' => 'nullable|in:Broker,Agency,Both',
             'company_logo' => 'nullable|image|mimes:jpeg,png,jpg|max:250',
@@ -289,7 +289,7 @@ public function unblock($id)
     },
 ],
 
-       
+
         'plan_end_date' => 'nullable|date',
         'lr_credits' => 'nullable|integer|min:0',
         'truck_credits' => 'nullable|integer|min:0',
@@ -300,18 +300,18 @@ public function unblock($id)
             'pin_code' => 'nullable|digits_between:1,10',
             'company_slab' => [
                 'required',
-                Rule::in(explode(',', env('COMPANY_SLABS'))),
+                Rule::in(config('payments.gst_slabs')),
             ],
 
         ], [
-            'name.regex' => 'The name must contain at least one alphabetic character.', 
+            'name.regex' => 'The name must contain at least one alphabetic character.',
             'pin_code.max' => 'The pin code must be a maximum of 10 characters.',
         ]);
         // dd($validated);
         if ($request->hasFile('company_logo')) {
             // Store the file in the 'public/company_logos' directory
             $path = $request->file('company_logo')->store('company_logos', 'public');
-    
+
            $validated['company_logo'] = $path;
         }
         $validated['user_id'] = auth()->user()->id;
@@ -319,14 +319,14 @@ public function unblock($id)
             // You can decide the logic:
             // Option 1: keep existing plan_end_date
             $validated['plan_end_date'] = $company->plan_end_date;
-    
-            
+
+
         }
-    
+
         // ✅ Default values if not set
         $validated['lr_credits'] = $request->input('lr_credits', $company->lr_credits ?? 0);
         $validated['truck_credits'] = $request->input('truck_credits', $company->truck_credits ?? 0);
-    
+
         $company->update($validated);
         return redirect()->route('company.index')->with('success', 'Company updated successfully!');
     }
@@ -339,27 +339,27 @@ public function unblock($id)
     }
     public function create()
     {
-        
-        $companySlabs = explode(',', env('COMPANY_SLABS'));
-    
+
+        $companySlabs = config('payments.gst_slabs');
+
         return view('company.create', compact('companySlabs'));
     }
 
     public function store(Request $request)
     {
-        
-      
+
+
         $validated = $request->validate([
-            
-            
+
+
           'name' => [
             'required',
             'string',
             'max:255',
             'regex:/[A-Za-z]/', // ✅ ensures at least one alphabet is present
         ],
-        
-   
+
+
             'gst_number' => [
                 'nullable',
                 'string',
@@ -370,7 +370,7 @@ public function unblock($id)
                     }
                 },
             ],
-    
+
             'pan_number' => [
                 'nullable',
                 'string',
@@ -404,12 +404,12 @@ public function unblock($id)
             'pin_code' => 'nullable|digits_between:1,10',
            'company_slab' => [
     'required',
-    Rule::in(explode(',', env('COMPANY_SLABS'))),
+    Rule::in(config('payments.gst_slabs')),
 ],
 
-            
+
         ], [
-            'name.regex' => 'The name must contain at least one alphabetic character.', 
+            'name.regex' => 'The name must contain at least one alphabetic character.',
             'pin_code.max' => 'The pin code must be a maximum of 10 characters.',
         ]);
 
@@ -418,8 +418,8 @@ public function unblock($id)
             // Store the file in the 'public/company_logos' directory
             $path = $request->file('company_logo')->store('company_logos', 'public');
             $validated['company_logo'] = $path;
-    
-           
+
+
         }
         $validated['user_id'] = auth()->user()->id;
         if (!$request->filled('gst_type')) {
