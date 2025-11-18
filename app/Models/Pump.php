@@ -10,10 +10,10 @@ class Pump extends Model
     use HasFactory;
 
     protected $fillable = [
+        'user_id',
         'pump_name',
         'contact_name',
         'contact_number',
         'remark',
     ];
 }
-

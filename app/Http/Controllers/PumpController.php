@@ -6,6 +6,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Pump;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class PumpController extends Controller
 {
@@ -21,15 +23,15 @@ class PumpController extends Controller
 
     private function getPumpsData(Request $request)
     {
-        $query = Pump::query();
+        $query = Pump::where('user_id', Auth::user()->company->user_id);
 
         // Handle search
         if ($request->has('search') && $request->search['value']) {
             $searchValue = $request->search['value'];
-            $query->where(function($q) use ($searchValue) {
+            $query->where(function ($q) use ($searchValue) {
                 $q->where('pump_name', 'like', "%{$searchValue}%")
-                  ->orWhere('contact_name', 'like', "%{$searchValue}%")
-                  ->orWhere('contact_number', 'like', "%{$searchValue}%");
+                    ->orWhere('contact_name', 'like', "%{$searchValue}%")
+                    ->orWhere('contact_number', 'like', "%{$searchValue}%");
             });
         }
 
@@ -59,18 +61,27 @@ class PumpController extends Controller
             $orderDirection = $request->order[0]['dir'];
 
             switch ($orderColumn) {
-                case 0: $query->orderBy('id', $orderDirection); break;
-                case 1: $query->orderBy('pump_name', $orderDirection); break;
-                case 2: $query->orderBy('contact_name', $orderDirection); break;
-                case 3: $query->orderBy('contact_number', $orderDirection); break;
-                default: $query->orderBy('id', 'asc');
+                case 0:
+                    $query->orderBy('id', $orderDirection);
+                    break;
+                case 1:
+                    $query->orderBy('pump_name', $orderDirection);
+                    break;
+                case 2:
+                    $query->orderBy('contact_name', $orderDirection);
+                    break;
+                case 3:
+                    $query->orderBy('contact_number', $orderDirection);
+                    break;
+                default:
+                    $query->orderBy('id', 'asc');
             }
         } else {
             $query->orderBy('id', 'asc');
         }
 
         // Count records
-        $totalRecords = Pump::count();
+        $totalRecords = Pump::where('user_id', Auth::user()->company->user_id)->count();
         $filteredRecords = $query->count();
 
         // Pagination
@@ -79,7 +90,7 @@ class PumpController extends Controller
         $pumps = $query->skip($start)->take($length)->get();
 
         // Format data
-        $data = $pumps->map(function($pump) {
+        $data = $pumps->map(function ($pump) {
             return [
                 'id' => $pump->id,
                 'pump_name' => $pump->pump_name,
@@ -128,10 +139,17 @@ class PumpController extends Controller
         $validated = $request->validate([
             'pump_name' => 'required|string|max:255',
             'contact_name' => 'required|string|max:255',
-            'contact_number' => 'required|string|max:20|unique:pumps',
+            'contact_number' => [
+                'required',
+                'string',
+                'max:20',
+                Rule::unique('pumps', 'contact_number')
+                    ->where('user_id', Auth::user()->company->user_id),
+            ],
             'remark' => 'nullable|string',
         ]);
 
+        $validated['user_id'] = Auth::user()->company->user_id;
         Pump::create($validated);
 
         return redirect()->route('master.pump.index')->with('success', 'Pump created successfully');
