@@ -297,7 +297,7 @@ class CompanyController extends Controller
             'city_id' => 'nullable|exists:cities,id',
             // 'pin_code' => 'nullable|string|max:10',
             'pin_code' => 'nullable|digits_between:1,10',
-            'company_slab' => [
+            'gst_slab' => [
                 'required',
                 Rule::in(config('payments.gst_slabs')),
             ],
@@ -399,7 +399,7 @@ class CompanyController extends Controller
             'city_id' => 'nullable|exists:cities,id',
             // 'pin_code' => 'nullable|string|max:10',
             'pin_code' => 'nullable|digits_between:1,10',
-            'company_slab' => [
+            'gst_slab' => [
                 'required',
                 Rule::in(config('payments.gst_slabs')),
             ],

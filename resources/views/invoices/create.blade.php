@@ -294,7 +294,7 @@
 
     <script>
         // Manual Invoice Number uniqueness validation
-        const company_slab = @json($company->company_slab);
+        const gst_slab = @json($company->gst_slab);
         const manualInvoiceInput = document.getElementById('manual_invoice_number');
         const manualInvoiceFeedback = document.getElementById('manual-invoice-number-feedback');
         let manualInvoiceTimeout;
@@ -583,9 +583,9 @@
                                             if (state === "rajasthan") {
 
                                                 if (invoiceType === "forward") {
-                                                    const sgst = grandTotalAmount * (company_slab /
+                                                    const sgst = grandTotalAmount * (gst_slab /
                                                         100) / 2;
-                                                    const cgst = grandTotalAmount * (company_slab /
+                                                    const cgst = grandTotalAmount * (gst_slab /
                                                         100) / 2;
                                                     const netTotal = grandTotalAmount + sgst + cgst;
 
@@ -600,8 +600,8 @@
                                                     tableHtml += `
                                                         <div class="card border-dark">
                                                             <div class="card-body text-end">
-                                                                <p class="mb-1" name="sgst">SGST (${company_slab / 2}%): ₹${sgst.toFixed(2)}</p>
-                                                                <p class="mb-1" name="cgst">CGST (${company_slab / 2}%): ₹${cgst.toFixed(2)}</p>
+                                                                <p class="mb-1" name="sgst">SGST (${gst_slab / 2}%): ₹${sgst.toFixed(2)}</p>
+                                                                <p class="mb-1" name="cgst">CGST (${gst_slab / 2}%): ₹${cgst.toFixed(2)}</p>
                                                                 <h5 class="mb-0 fw-bold" name="net_amount">Net Total: ₹${netTotal.toFixed(2)}</h5>
                                                             </div>
                                                         </div>
@@ -610,9 +610,9 @@
                                                             'input[name="total_amount"]').value =
                                                         netTotal.toFixed(2);
                                                 } else {
-                                                    const sgst = grandTotalAmount * company_slab / 200;
-                                                    const cgst = grandTotalAmount * company_slab / 200;
-                                                    const gst = grandTotalAmount * company_slab / 100; // if IGST applies under RCM
+                                                    const sgst = grandTotalAmount * gst_slab / 200;
+                                                    const cgst = grandTotalAmount * gst_slab / 200;
+                                                    const gst = grandTotalAmount * gst_slab / 100; // if IGST applies under RCM
                                                     const netTotal = grandTotalAmount + gst;
 
                                                     document.getElementById('sgstInput').value =
@@ -626,8 +626,8 @@
                                                     tableHtml += `
                                                         <div class="card border-dark">
                                                             <div class="card-body text-end">
-                                                                <p class="mb-1" name="sgst">SGST (${company_slab/2}%): ₹${sgst.toFixed(2)}</p>
-                                                                        <p class="mb-1" name="cgst">CGST (${company_slab/2}%): ₹${cgst.toFixed(2)}</p>
+                                                                <p class="mb-1" name="sgst">SGST (${gst_slab/2}%): ₹${sgst.toFixed(2)}</p>
+                                                                        <p class="mb-1" name="cgst">CGST (${gst_slab/2}%): ₹${cgst.toFixed(2)}</p>
                                                                 <h5 class="mb-0 fw-bold" name="net_amount"> Total: ₹${netTotal.toFixed(2)}</h5>
 
                                                                 <p class="mb-1" name="gst">Tax under RCM: ₹${gst.toFixed(2)}</p>
@@ -646,7 +646,7 @@
                                                 }
                                             } else {
                                                 if (invoiceType === "forward") {
-                                                    const igst = grandTotalAmount * company_slab / 100;
+                                                    const igst = grandTotalAmount * gst_slab / 100;
                                                     const netTotal = grandTotalAmount + igst;
 
                                                     document.getElementById('sgstInput').value = 0;
@@ -659,7 +659,7 @@
                                                     tableHtml += `
                                                         <div class="card border-dark">
                                                             <div class="card-body text-end">
-                                                                <p class="mb-1" name="igst">IGST (${company_slab}%): ₹${igst.toFixed(2)}</p>
+                                                                <p class="mb-1" name="igst">IGST (${gst_slab}%): ₹${igst.toFixed(2)}</p>
                                                                 <h5 class="mb-0 fw-bold" name="net_amount">Net Total: ₹${netTotal.toFixed(2)}</h5>
                                                             </div>
                                                         </div>
@@ -668,7 +668,7 @@
                                                             'input[name="total_amount"]').value =
                                                         netTotal.toFixed(2);
                                                 } else {
-                                                    const igst = grandTotalAmount * company_slab / 100; // RCM
+                                                    const igst = grandTotalAmount * gst_slab / 100; // RCM
                                                     const netTotal = grandTotalAmount + igst;
 
                                                     document.getElementById('sgstInput').value = 0;
@@ -681,7 +681,7 @@
                                                     tableHtml += `
                                                         <div class="card border-dark">
                                                             <div class="card-body text-end">
-                                                                <p class="mb-1" name="igst">IGST (${company_slab}%): ₹${igst.toFixed(2)}</p>
+                                                                <p class="mb-1" name="igst">IGST (${gst_slab}%): ₹${igst.toFixed(2)}</p>
                                                                 <h5 class="mb-0 fw-bold" name="net_amount"> Total: ₹${netTotal.toFixed(2)}</h5>
                                                                 <p class="mb-1" name="gst">Tax under RCM: ₹${igst.toFixed(2)}</p>
                                                                 <h5 class="mb-0 fw-bold">Net Total: ₹${grandTotalAmount.toFixed(2)}</h5>

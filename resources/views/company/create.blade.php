@@ -46,7 +46,7 @@
                 <div class="col-md-6">
                     <label for="gst_scheme" class="form-label">GST Scheme</label>
                     <select class="form-select" id="gst_scheme" name="gst_scheme" required>
-                        
+
                         <option value="reverse charge" {{ old('gst_scheme') == 'reverse charge' ? 'selected' : '' }}>Reverse Charge</option>
                         <option value="forward charge" selected {{ old('gst_scheme') == 'forward charge' ? 'selected' : '' }}>Forward Charge</option>
                     </select>
@@ -135,8 +135,8 @@
                     <div class="valid-feedback">Looks good!</div>
                 </div>
                 <!--end::Col-->
-               
-                
+
+
             </div>
             <!--end::Row-->
             <!--begin::Row-->
@@ -165,17 +165,17 @@
             <!--begin::Row-->
             <div class="row g-3">
                 <div class="col-md-6">
-                    <label for="company_slab" class="form-label">Company Slab</label>
-                    <select class="form-select" id="company_slab" name="company_slab" required>
+                    <label for="gst_slab" class="form-label">Company Slab</label>
+                    <select class="form-select" id="gst_slab" name="gst_slab" required>
                         <option value="">Select Company Slab</option>
                         @foreach($companySlabs as $slab)
-                            <option value="{{ trim($slab) }}" {{ old('company_slab') == trim($slab) ? 'selected' : '' }}>
+                            <option value="{{ trim($slab) }}" {{ old('gst_slab') == trim($slab) ? 'selected' : '' }}>
                                 {{ trim($slab) }}%
                             </option>
                         @endforeach
                     </select>
-                
-                    @error('company_slab')
+
+                    @error('gst_slab')
                         <div class="text-danger">{{ $message }}</div>
                     @enderror
                     <div class="valid-feedback">Looks good!</div>
@@ -183,8 +183,8 @@
                 <!--end::Col-->
             </div>
             <!--end::Row-->
-            
-            
+
+
         </div>
         <!--end::Body-->
         <!--begin::Footer-->
@@ -196,7 +196,7 @@
     </form>
     <!--end::Form-->
     <!--begin::JavaScript-->
-    
+
     <script>
         // Example starter JavaScript for disabling form submissions if there are invalid fields
         (() => {

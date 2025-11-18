@@ -30,7 +30,7 @@ class Company extends Model
     'is_blocked',
     'company_type',
     'company_logo',
-    'company_slab',
+    'gst_slab',
     'plan_end_date',
     'lr_credits',
     'truck_credits',
