@@ -205,7 +205,7 @@ class PaymentController extends Controller
                 'lr_credits_cost' => $calculationResult['lr_credits_cost'],
                 'annual_maintenance_cost' => $calculationResult['annual_maintenance_cost'],
                 'subtotal' => $calculationResult['subtotal'],
-                'promo_code' => $promoCode,
+                'promo_code_id' => $promoCode ? PromoCode::where('code', $promoCode)->first()->id : null,
                 'promo_discount' => $promoDiscount,
                 'gst_amount' => $gstAmount,
                 'total_amount' => $totalAmount,
@@ -325,8 +325,8 @@ class PaymentController extends Controller
             if ($company->company_type != 'Broker' && $request->addon_truck_count) {
                 $addonTruckCount = (int) $request->addon_truck_count;
                 $currentTruckCount = $company->truck_credits ?? 0;
-                $planEndDate = Carbon::parse($company->plan_end_date);
-                $today = Carbon::today();
+                $planEndDate = Carbon::parse($company->plan_end_date)->endOfDay();
+                $today = Carbon::today()->startOfDay();
                 $remainingDays = max(0, $today->diffInDays($planEndDate));
                 $tenureYears = $remainingDays / 365;
 

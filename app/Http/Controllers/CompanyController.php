@@ -34,15 +34,15 @@ class CompanyController extends Controller
         // Handle search
         if ($request->has('search') && $request->search['value']) {
             $searchValue = $request->search['value'];
-            $query->where(function($q) use ($searchValue) {
+            $query->where(function ($q) use ($searchValue) {
                 $q->where('name', 'like', "%{$searchValue}%")
-                  ->orWhere('gst_number', 'like', "%{$searchValue}%")
-                  ->orWhere('pan_number', 'like', "%{$searchValue}%")
-                  ->orWhere('gst_scheme', 'like', "%{$searchValue}%")
-                  ->orWhere('gst_type', 'like', "%{$searchValue}%")
-                  ->orWhere('address', 'like', "%{$searchValue}%")
-                  ->orWhere('contact_person', 'like', "%{$searchValue}%")
-                  ->orWhere('contact_number', 'like', "%{$searchValue}%");
+                    ->orWhere('gst_number', 'like', "%{$searchValue}%")
+                    ->orWhere('pan_number', 'like', "%{$searchValue}%")
+                    ->orWhere('gst_scheme', 'like', "%{$searchValue}%")
+                    ->orWhere('gst_type', 'like', "%{$searchValue}%")
+                    ->orWhere('address', 'like', "%{$searchValue}%")
+                    ->orWhere('contact_person', 'like', "%{$searchValue}%")
+                    ->orWhere('contact_number', 'like', "%{$searchValue}%");
             });
         }
 
@@ -131,7 +131,7 @@ class CompanyController extends Controller
         $companies = $query->skip($start)->take($length)->get();
 
         // Format data for DataTables
-        $data = $companies->map(function($company, $index) use ($start) {
+        $data = $companies->map(function ($company, $index) use ($start) {
             return [
                 'id' => $index + $start + 1,
                 'name' => $company->name,
@@ -162,73 +162,72 @@ class CompanyController extends Controller
         //this edit button should only visible when their in no invoice created  for that financial year
         //take invoice value from 1 st april of that year to 21 march of next year
         //take latest year
-       // Determine start and end of financial year
-$startOfYear = Carbon::now()->month >= 4
-? Carbon::create(Carbon::now()->year, 4, 1)->startOfDay()
-: Carbon::create(Carbon::now()->year - 1, 4, 1)->startOfDay();
+        // Determine start and end of financial year
+        $startOfYear = Carbon::now()->month >= 4
+            ? Carbon::create(Carbon::now()->year, 4, 1)->startOfDay()
+            : Carbon::create(Carbon::now()->year - 1, 4, 1)->startOfDay();
 
-$endOfYear = $startOfYear->copy()->addYear()->subDay()->endOfDay();
+        $endOfYear = $startOfYear->copy()->addYear()->subDay()->endOfDay();
 
-// Count invoices for the company in financial year
-    //take latest year
-       // Determine start and end of financial year
-       $invoiceCount = \App\Models\Invoice::where('company_id', $company->id)
-       ->whereBetween('created_at', [$startOfYear, $endOfYear])
-       ->count();
-   if (auth()->user()->userRole->name !== 'master_admin') {
+        // Count invoices for the company in financial year
+        //take latest year
+        // Determine start and end of financial year
+        $invoiceCount = \App\Models\Invoice::where('company_id', $company->id)
+            ->whereBetween('created_at', [$startOfYear, $endOfYear])
+            ->count();
+        if (auth()->user()->userRole->name !== 'master_admin') {
 
 
-   if ($invoiceCount == 0) {
-       $editUrl = route('company.edit', $company->id);
-       $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit Company">
+            if ($invoiceCount == 0) {
+                $editUrl = route('company.edit', $company->id);
+                $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit Company">
                        <i class="bi bi-pencil"></i></a>';
-   } else {
-       $buttons .= '<a href="javascript:void(0)" class="btn btn-sm btn-info disabled" title="Edit Disabled">
+            } else {
+                $buttons .= '<a href="javascript:void(0)" class="btn btn-sm btn-info disabled" title="Edit Disabled">
                        <i class="bi bi-pencil"></i></a>';
-   }
+            }
 
 
 
-        // Delete button
-        $deleteUrl = route('company.destroy', $company->id);
-        $buttons .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this company?\')">';
-        $buttons .= csrf_field() . method_field('DELETE');
-        $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete Company">';
-        $buttons .= '<i class="bi bi-trash"></i></button></form>';
+            // Delete button
+            $deleteUrl = route('company.destroy', $company->id);
+            $buttons .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this company?\')">';
+            $buttons .= csrf_field() . method_field('DELETE');
+            $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete Company">';
+            $buttons .= '<i class="bi bi-trash"></i></button></form>';
 
-        $buttons .= '</div>';
-        return $buttons;
-    }
-    else{
-        if ($company->is_blocked) {
-            $unblockUrl = route('company.unblock', $company->id);
-            $buttons .= '<a href="' . $unblockUrl . '" class="btn btn-sm btn-danger" title="Unblock User"
+            $buttons .= '</div>';
+            return $buttons;
+        } else {
+            if ($company->is_blocked) {
+                $unblockUrl = route('company.unblock', $company->id);
+                $buttons .= '<a href="' . $unblockUrl . '" class="btn btn-sm btn-danger" title="Unblock User"
                           onclick="return confirm(\'Are you sure you want to unblock this company?\');">
                           <i class="bi bi-unlock"></i></a>';
-        } else {
-            $blockUrl = route('company.block', $company->id);
-            $buttons .= '<a href="' . $blockUrl . '" class="btn btn-sm btn-info" title="Block User"
+            } else {
+                $blockUrl = route('company.block', $company->id);
+                $buttons .= '<a href="' . $blockUrl . '" class="btn btn-sm btn-info" title="Block User"
                           onclick="return confirm(\'Are you sure you want to block this company?\');">
                           <i class="bi bi-lock"></i></a>';
+            }
+            $buttons .= '</div>';
+            return $buttons;
         }
-        $buttons .= '</div>';
-        return $buttons;
     }
-}
-public function block($id)
-{
-    $company = \App\Models\Company::findOrFail($id);
-    $company->is_blocked = true;
-    $company->save();
-    return redirect()->back()->with('success', 'Company blocked successfully');
-}
-public function unblock($id)
-{
-    $company = \App\Models\Company::findOrFail($id);
-    $company->is_blocked = false;
-    $company->save();
-    return redirect()->back()->with('success', 'Company unblocked successfully');
-}
+    public function block($id)
+    {
+        $company = \App\Models\Company::findOrFail($id);
+        $company->is_blocked = true;
+        $company->save();
+        return redirect()->back()->with('success', 'Company blocked successfully');
+    }
+    public function unblock($id)
+    {
+        $company = \App\Models\Company::findOrFail($id);
+        $company->is_blocked = false;
+        $company->save();
+        return redirect()->back()->with('success', 'Company unblocked successfully');
+    }
 
 
 
@@ -239,7 +238,7 @@ public function unblock($id)
         $states = \App\Models\State::where('country_id', $company->country_id)->get();
         $cities = \App\Models\City::where('state_id', $company->state_id)->get();
         $companySlabs = config('payments.gst_slabs');
-        return view('company.edit', compact('company', 'countries', 'states', 'cities','companySlabs'));
+        return view('company.edit', compact('company', 'countries', 'states', 'cities', 'companySlabs'));
     }
 
     public function update(Request $request, $id)
@@ -253,21 +252,21 @@ public function unblock($id)
                 'regex:/[A-Za-z]/', // ✅ ensures at least one alphabet is present
             ],
             'gst_number' => [
-    'nullable',
-    'string',
-    'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
-    function ($attribute, $value, $fail)use ($id) {
-        if ($value && \App\Models\Company::where('gst_number', $value)  ->where('id', '!=', $id)->exists()) {
-            $fail('The GST number has already been taken.');
-        }
-    },
-],
+                'nullable',
+                'string',
+                'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
+                function ($attribute, $value, $fail) use ($id) {
+                    if ($value && \App\Models\Company::where('gst_number', $value)->where('id', '!=', $id)->exists()) {
+                        $fail('The GST number has already been taken.');
+                    }
+                },
+            ],
             'pan_number' => [
                 'nullable',
                 'string',
                 'size:10',
                 'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
-                function ($attribute, $value, $fail)use ($id) {
+                function ($attribute, $value, $fail) use ($id) {
                     if ($value && \App\Models\Company::where('pan_number', $value)->where('id', '!=', $id)->exists()) {
                         $fail('The PAN number has already been taken.');
                     }
@@ -280,19 +279,19 @@ public function unblock($id)
             'address' => 'nullable|string',
             'contact_person' => 'nullable|string|max:255',
             'contact_number' => [
-    'nullable',
-    'digits:10',
-    function ($attribute, $value, $fail)use ($id) {
-        if ($value && \App\Models\Company::where('contact_number', $value)->where('id', '!=', $id)->exists()) {
-            $fail('The contact number has already been taken.');
-        }
-    },
-],
+                'nullable',
+                'digits:10',
+                function ($attribute, $value, $fail) use ($id) {
+                    if ($value && \App\Models\Company::where('contact_number', $value)->where('id', '!=', $id)->exists()) {
+                        $fail('The contact number has already been taken.');
+                    }
+                },
+            ],
 
 
-        'plan_end_date' => 'nullable|date',
-        'lr_credits' => 'nullable|integer|min:0',
-        'truck_credits' => 'nullable|integer|min:0',
+            'plan_end_date' => 'nullable|date',
+            'lr_credits' => 'nullable|integer|min:0',
+            'truck_credits' => 'nullable|integer|min:0',
             'country_id' => 'nullable|exists:countries,id',
             'state_id' => 'nullable|exists:states,id',
             'city_id' => 'nullable|exists:cities,id',
@@ -312,15 +311,13 @@ public function unblock($id)
             // Store the file in the 'public/company_logos' directory
             $path = $request->file('company_logo')->store('company_logos', 'public');
 
-           $validated['company_logo'] = $path;
+            $validated['company_logo'] = $path;
         }
         $validated['user_id'] = auth()->user()->id;
         if (!$request->filled('plan_end_date')) {
             // You can decide the logic:
             // Option 1: keep existing plan_end_date
             $validated['plan_end_date'] = $company->plan_end_date;
-
-
         }
 
         // ✅ Default values if not set
@@ -352,12 +349,12 @@ public function unblock($id)
         $validated = $request->validate([
 
 
-          'name' => [
-            'required',
-            'string',
-            'max:255',
-            'regex:/[A-Za-z]/', // ✅ ensures at least one alphabet is present
-        ],
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                'regex:/[A-Za-z]/', // ✅ ensures at least one alphabet is present
+            ],
 
 
             'gst_number' => [
@@ -402,10 +399,10 @@ public function unblock($id)
             'city_id' => 'nullable|exists:cities,id',
             // 'pin_code' => 'nullable|string|max:10',
             'pin_code' => 'nullable|digits_between:1,10',
-           'company_slab' => [
-    'required',
-    Rule::in(config('payments.gst_slabs')),
-],
+            'company_slab' => [
+                'required',
+                Rule::in(config('payments.gst_slabs')),
+            ],
 
 
         ], [
@@ -418,20 +415,18 @@ public function unblock($id)
             // Store the file in the 'public/company_logos' directory
             $path = $request->file('company_logo')->store('company_logos', 'public');
             $validated['company_logo'] = $path;
-
-
         }
         $validated['user_id'] = auth()->user()->id;
         if (!$request->filled('gst_type')) {
             $validated['gst_type'] = 'regular';
         }
 
-            // ✅ Automatically set plan_end_date = created_at + 45 days
-    $validated['plan_end_date'] = Carbon::now()->addDays(45)->toDateString();
+        // ✅ Automatically set plan_end_date = created_at + 45 days
+        $validated['plan_end_date'] = Carbon::now()->addDays(44)->toDateString();
 
-    // ✅ Optional: Set default credits
-    $validated['lr_credits'] = 250;
-    $validated['truck_credits'] = null;
+        // ✅ Optional: Set default credits
+        $validated['lr_credits'] = 250;
+        $validated['truck_credits'] = null;
 
 
         \App\Models\Company::create($validated);
