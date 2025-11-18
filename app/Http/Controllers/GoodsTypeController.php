@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\GoodType;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class GoodsTypeController extends Controller
 {
@@ -19,7 +21,7 @@ class GoodsTypeController extends Controller
 
     private function getGoodsTypesData(Request $request)
     {
-        $query = GoodType::query();
+        $query = GoodType::where('user_id', Auth::user()->company->user_id);
 
         // Handle search
         if ($request->has('search') && $request->search['value']) {
@@ -61,7 +63,7 @@ class GoodsTypeController extends Controller
         }
 
         // Get total count before pagination
-        $totalRecords = GoodType::count();
+        $totalRecords = GoodType::where('user_id', Auth::user()->company->user_id)->count();
         $filteredRecords = $query->count();
 
         // Handle pagination
@@ -70,7 +72,7 @@ class GoodsTypeController extends Controller
         $goodsTypes = $query->skip($start)->take($length)->get();
 
         // Format data for DataTables
-        $data = $goodsTypes->map(function($goodsType) {
+        $data = $goodsTypes->map(function ($goodsType) {
             return [
                 'id' => $goodsType->id,
                 'name' => $goodsType->name,
@@ -114,11 +116,17 @@ class GoodsTypeController extends Controller
 
     public function store(Request $request)
     {
-
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('good_types', 'name')
+                    ->where('user_id', Auth::user()->company->user_id),
+            ],
         ]);
 
+        $validated['user_id'] = Auth::user()->company->user_id;
         $goodsType = GoodType::create($validated);
         if ($request->ajax() || $request->has('from_modal')) {
             return response()->json([

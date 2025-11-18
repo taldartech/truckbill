@@ -336,7 +336,7 @@ class FreightBookingController extends Controller
         $companies = \App\Models\Company::all();
         $lrs = LorryReceipt::all();
         $linkedBookings = FreightBooking::all();
-        $goodsTypes = \App\Models\GoodType::all();
+        $goodsTypes = \App\Models\GoodType::where('user_id', Auth::user()->company->user_id)->get();
         $lorry_receipt_id = $request->lorry_receipt_id;
 
         // Get TDS percentages from config
@@ -764,7 +764,7 @@ class FreightBookingController extends Controller
             $lrs = LorryReceipt::all();
 
             // Get goods types
-            $goodsTypes = \App\Models\GoodType::all();
+            $goodsTypes = \App\Models\GoodType::where('user_id', Auth::user()->company->user_id)->get();
             $lorry_receipt = \App\Models\LorryReceipt::with(['transporter:id,name', 'truck:id,truck_number'])
                 ->select('id', 'lr_number', 'transporter_id', 'truck_id', 'customer_id', 'consignor_id', 'consignee_id', 'good_type', 'reference_by')
                 ->when($lorryReceipt, function ($query) use ($lorryReceipt) {

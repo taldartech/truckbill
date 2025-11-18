@@ -13,13 +13,6 @@ return new class extends Migration
             $table->string('name')->unique();
             $table->timestamps();
         });
-
-        // Insert initial good types
-        \DB::table('good_types')->insert([
-            ['name' => 'cement'],
-            ['name' => 'sand'],
-            ['name' => 'aggregates'],
-        ]);
     }
 
     public function down(): void

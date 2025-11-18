@@ -350,13 +350,13 @@ class LorryReceiptController extends Controller
         $buttons .= '<a class="btn btn-sm btn-success" title="Cannot create Freight Booking due to insufficient credits" data-bs-toggle="tooltip" onclick="alert(\'You do not have enough credits to create a Freight Booking.\')">';
         $buttons .= '<i class="bi bi-truck"></i>';
         $buttons .= '</a>';
-      } 
+      }
       else if($company->plan_end_date && $today->gt($planEndDate)){
         $buttons .= '<a class="btn btn-sm btn-success" title="Cannot create Freight Booking due to subscription plan expired" data-bs-toggle="tooltip" onclick="alert(\'Your subscription plan has expired. Please renew your subscription to continue using the service.\')">';
         $buttons .= '<i class="bi bi-truck"></i>';
         $buttons .= '</a>';
       }
-      
+
       else {
         $buttons .= '<a href="' . route('freight_bookings.create') . '?lorry_receipt_id=' . $lorryReceipt->id . '" class="btn btn-sm btn-success" title="Create Freight Booking" data-bs-toggle="tooltip">';
         $buttons .= '<i class="bi bi-truck"></i>';
@@ -401,7 +401,7 @@ if ($company->plan_end_date && $today->gt($planEndDate)) {
   return redirect()->route('lorry_receipts.index')
       ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
 }
-  
+
     $companies = \App\Models\Company::all();
     // $trucks = Truck::all();
     $trucks = Truck::with(['transporter', 'driver'])
@@ -414,7 +414,7 @@ if ($company->plan_end_date && $today->gt($planEndDate)) {
     $truckOwners = Transporter::where('is_owner', 1)->get();
     $agencies = Transporter::where('is_owner', 0)->where('company_id', auth()->user()->company_id)->get();
     $consignees = Consignee::where('company_id', auth()->user()->company_id)->orderBy('name')->get();
-    $goodsTypes = GoodType::all();
+    $goodsTypes = GoodType::where('user_id', Auth::user()->company->user_id)->get();
     $statuses = ['Pending', 'Delivered', 'Cancelled', 'In-Progress'];
     $tdsPercentages = [
       'default' => env('TDS_PERCENTAGE_DEFAULT', 20),
@@ -435,7 +435,7 @@ if ($company->plan_end_date && $today->gt($planEndDate)) {
   return redirect()->route('lorry_receipts.index')
       ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
 }
-   
+
     $companies = \App\Models\Company::all();
     // $trucks = Truck::all();
     $trucks = Truck::with(['transporter', 'driver'])
@@ -448,7 +448,7 @@ if ($company->plan_end_date && $today->gt($planEndDate)) {
     $truckOwners = Transporter::where('is_owner', 1)->get();
     $agencies = Transporter::where('is_owner', 0)->where('company_id', auth()->user()->company_id)->get();
     $consignees = Consignee::where('company_id', auth()->user()->company_id)->orderBy('name')->get();
-    $goodsTypes = GoodType::all();
+    $goodsTypes = GoodType::where('user_id', Auth::user()->company->user_id)->get();
     $statuses = ['Pending', 'Delivered', 'Cancelled', 'In-Progress'];
     $tdsPercentages = [
       'default' => env('TDS_PERCENTAGE_DEFAULT', 20),
@@ -1031,7 +1031,7 @@ if ($company->plan_end_date && $today->gt($planEndDate)) {
     $truckOwners = Transporter::withTrashed()->where('company_id', auth()->user()->company_id)->where('is_owner', 1)->get();
     $agencies = Transporter::withTrashed()->where('company_id', auth()->user()->company_id)->where('is_owner', 0)->get();
     $consignees = Consignee::withTrashed()->where('company_id', auth()->user()->company_id)->orderBy('name')->get();
-    $goodsTypes = GoodType::all();
+    $goodsTypes = GoodType::where('user_id', Auth::user()->company->user_id)->get();
     $statuses = ['Pending', 'Delivered', 'Cancelled', 'In-Progress'];
     $tdsPercentages = [
       'default' => env('TDS_PERCENTAGE_DEFAULT', 20),
