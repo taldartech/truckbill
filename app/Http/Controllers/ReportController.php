@@ -974,19 +974,15 @@ class ReportController extends Controller
                 }
 
                 // Calculate any additional data needed for the view
-                $totalAmount = $lrs->sum('total_amount');
-                $cgst = $totalAmount * 0.025; // 2.5% CGST
-                $sgst = $totalAmount * 0.025; // 2.5% SGST
-                $igst = $totalAmount * 0.05;  // 5% IGST (if applicable)
+                // $totalAmount = $lrs->sum('total_amount');
+                // $cgst = $totalAmount * 0.025; // 2.5% CGST
+                // $sgst = $totalAmount * 0.025; // 2.5% SGST
+                // $igst = $totalAmount * 0.05;  // 5% IGST (if applicable)
 
                 // Generate PDF
                 $html = view('reports.exports.party-bill-pdf', compact(
                     'invoice',
-                    'lrs',
-                    'totalAmount',
-                    'cgst',
-                    'sgst',
-                    'igst'
+                    'lrs'
                 ))->render();
 
                 $pdf = \PDF::loadHTML($html)

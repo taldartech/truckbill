@@ -111,6 +111,10 @@
         $cgst = $invoice->cgst;
         $sgst = $invoice->sgst;
         $igst = $invoice->igst;
+        // calculate percentages
+        $cgstpercent = ($cgst * 100) / $totalAmount;
+        $sgstpercent = ($sgst * 100) / $totalAmount;
+        $igstpercent = ($igst * 100) / $totalAmount;
         $totalgst = $cgst + $sgst + $igst;
     @endphp
     <tr>
@@ -123,21 +127,21 @@
     @if ($cgst > 0)
         <tr>
             <td colspan="9"></td>
-            <td style="font-weight: bold;" colspan="2">CGST 2.5%</td>
+            <td style="font-weight: bold;" colspan="2">CGST {{ $cgstpercent }}%</td>
             <td>{{ number_format($cgst, 2) }}</td>
         </tr>
     @endif
     @if ($sgst > 0)
         <tr>
             <td colspan="9"></td>
-            <td style="font-weight: bold;" colspan="2">SGST 2.5%</td>
+            <td style="font-weight: bold;" colspan="2">SGST {{ $sgstpercent }}%</td>
             <td>{{ number_format($sgst, 2) }}</td>
         </tr>
     @endif
     @if ($igst > 0)
         <tr>
             <td colspan="9"></td>
-            <td style="font-weight: bold;" colspan="2">IGST 5%</td>
+            <td style="font-weight: bold;" colspan="2">IGST {{ $igstpercent }}%</td>
             <td>{{ number_format($igst, 2) }}</td>
         </tr>
     @endif
