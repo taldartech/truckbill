@@ -150,10 +150,13 @@ class PaymentController extends Controller
             if ($promoData->discount_type === 'percentage') {
                 $promoDiscount = ($calculationResult['subtotal'] * $promoData->discount_value) / 100;
             } else {
-                $promoDiscount = min($promoData->discount_value, $calculationResult['subtotal']);
+                $promoDiscount = $promoData->discount_value;
             }
         }
-
+        if ($promoDiscount > $calculationResult['subtotal']) {
+            $promoDiscount = 0;
+            $promoCode = null;
+        }
         $subtotalAfterDiscount = $calculationResult['subtotal'] - $promoDiscount;
         $gstAmount = ($subtotalAfterDiscount * config('payments.service_gst_percentage')) / 100;
         $totalAmount = $subtotalAfterDiscount + $gstAmount;

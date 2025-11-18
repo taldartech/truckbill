@@ -145,7 +145,7 @@
                                         <!-- Truck Rate Details -->
                                         <div class="col-md-6 mb-3">
                                             <div class="form-label">
-                                                <strong>Truck Rate Details</strong>
+                                                <strong>Truck Rate Details (Annually)</strong>
                                             </div>
                                             <ul>
                                                 @foreach ($truck_rate as $count => $rate)
@@ -254,7 +254,7 @@
                                             <!-- Truck Rate Details -->
                                             <div class="col-md-6 mb-3">
                                                 <div class="form-label">
-                                                    <strong>Truck Rate Details</strong>
+                                                    <strong>Truck Rate Details (Annually)</strong>
                                                 </div>
                                                 <ul>
                                                     @foreach ($truck_rate as $count => $rate)
@@ -311,8 +311,9 @@
                                     <label for="promo_code" class="form-label">
                                         <strong>Promo Code</strong>
                                     </label>
-                                    <input type="text" class="form-control" id="promo_code" name="promo_code" onchange="applyPromoCode()"
-                                        value="{{ old('promo_code', '') }}" placeholder="Enter promo code if any">
+                                    <input type="text" class="form-control" id="promo_code" name="promo_code"
+                                        onchange="applyPromoCode()" value="{{ old('promo_code', '') }}"
+                                        placeholder="Enter promo code if any">
                                 </div>
                                 <div class="col-md-6 mb-3 d-flex align-items-end">
                                     <button type="button" class="btn btn-info" onclick="applyPromoCode()">
@@ -360,7 +361,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Initial payment details update
             toggleRenewalOptions();
-                applyPromoCode();
+            applyPromoCode();
         });
 
         function toggleRenewalOptions() {
@@ -555,21 +556,23 @@
                     } else {
                         discountAmount = discountValue;
                     }
-                    totalAmount -= discountAmount;
-                    breakdownHtml += `
+                    if (discountAmount < totalAmount) {
+                        totalAmount -= discountAmount;
+                        breakdownHtml += `
                         <tr>
                             <td><strong>Promo Code Discount</strong></td>
                             <td class="text-end">- Rs. ${discountAmount.toFixed(2)}</td>
-                        </tr>
-                    `;
+                            </tr>
+                            `;
 
-                    // Subtotal after Discount
-                    breakdownHtml += `
+                        // Subtotal after Discount
+                        breakdownHtml += `
                             <tr class="table-secondary">
                                 <td><strong>Subtotal after Discount</strong></td>
                                 <td class="text-end">Rs. ${totalAmount.toFixed(2)}</td>
-                            </tr>
-                    `;
+                                </tr>
+                                `;
+                    }
                 }
 
                 // GST Calculation
@@ -618,11 +621,13 @@
                 },
                 success: function(response) {
                     discountType = response.discount_type;
-                    discountValue = response.discount_value;
+                    discountValue = parseFloat(response.discount_value);
                     promoCodeApplied = true;
                     messageDiv.innerHTML = `
                         <div class="text-success">
                             Promo code <strong>${response.code}</strong> applied successfully!.
+                            You get a
+                            ${discountType === 'percentage' ? discountValue + '%' : 'Rs. ' + discountValue} discount.
                         </div>
                     `;
                     paymentDetailsUpdate();
@@ -687,58 +692,58 @@
 
             // Submit form via AJAX to create Razorpay order
             fetch('{{ route('payment.store') }}', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Initialize Razorpay checkout
-                    const options = {
-                        key: data.key,
-                        amount: data.amount,
-                        currency: 'INR',
-                        name: data.name,
-                        description: data.description,
-                        order_id: data.order_id,
-                        prefill: data.prefill,
-                        theme: data.theme,
-                        handler: function(response) {
-                            // Payment successful
-                            handlePaymentSuccess(response);
-                        },
-                        modal: {
-                            ondismiss: function() {
-                                // Payment cancelled
-                                submitBtn.disabled = false;
-                                submitBtn.innerHTML = originalText;
-                            }
-                        }
-                    };
-
-                    const razorpay = new Razorpay(options);
-                    razorpay.open();
-                } else {
-                    console.log('Error creating payment order:', data);
-                    if (data.error) {
-                        alert(data.error);
-                    } else {
-                        alert('Failed to create payment order. Please try again.');
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Initialize Razorpay checkout
+                        const options = {
+                            key: data.key,
+                            amount: data.amount,
+                            currency: 'INR',
+                            name: data.name,
+                            description: data.description,
+                            order_id: data.order_id,
+                            prefill: data.prefill,
+                            theme: data.theme,
+                            handler: function(response) {
+                                // Payment successful
+                                handlePaymentSuccess(response);
+                            },
+                            modal: {
+                                ondismiss: function() {
+                                    // Payment cancelled
+                                    submitBtn.disabled = false;
+                                    submitBtn.innerHTML = originalText;
+                                }
+                            }
+                        };
+
+                        const razorpay = new Razorpay(options);
+                        razorpay.open();
+                    } else {
+                        console.log('Error creating payment order:', data);
+                        if (data.error) {
+                            alert(data.error);
+                        } else {
+                            alert('Failed to create payment order. Please try again.');
+                        }
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalText;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred. Please try again.');
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = originalText;
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred. Please try again.');
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
-            });
+                });
 
             return false;
         }
