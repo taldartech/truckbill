@@ -8,8 +8,15 @@
 
 @section('content')
     <div class="container mt-4">
-        <div class="col-sm-6">
-            <h3 class="mb-0">Payment Management</h3>
+        <div class="row mb-3">
+            <div class="col-sm-6">
+                <h3 class="mb-0">Payment Management</h3>
+            </div>
+            <div class="col-sm-6 text-end">
+                <a href="{{ route('payment.history') }}" class="btn btn-info">
+                    <i class="fas fa-history"></i> All Payment History
+                </a>
+            </div>
         </div>
         @if (session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -75,7 +82,11 @@
                                     </td>
                                     <td class="text-center">
                                         <a href="{{ route('payment.create', ['company_id' => $company->id]) }}"
-                                            class="btn btn-primary btn-sm">Make Payment</a>
+                                            class="btn btn-primary btn-sm mb-1"><i class="fas fa-plus"></i></a>
+                                        <a href="{{ route('payment.history', ['company_id' => $company->id]) }}"
+                                            class="btn btn-info btn-sm">
+                                            <i class="fas fa-history"></i>
+                                        </a>
                                     </td>
                                 </tr>
                             @endforeach

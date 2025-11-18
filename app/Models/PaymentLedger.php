@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class PaymentLedger extends Model
 {
@@ -22,7 +23,7 @@ class PaymentLedger extends Model
         'lr_credits_cost',
         'annual_maintenance_cost',
         'subtotal',
-        'promo_code',
+        'promo_code_id',
         'promo_discount',
         'gst_amount',
         'total_amount',
@@ -44,5 +45,15 @@ class PaymentLedger extends Model
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
+    }
+
+    public function promoCode(): BelongsTo
+    {
+        return $this->belongsTo(PromoCode::class, 'promo_code_id');
+    }
+
+    public function upcomingPlan(): HasOne
+    {
+        return $this->hasOne(UpcomingPlan::class, 'payment_ledger_id');
     }
 }

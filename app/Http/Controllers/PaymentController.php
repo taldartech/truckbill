@@ -6,6 +6,7 @@ use App\Models\Company;
 use App\Models\PaymentLedger;
 use App\Models\PromoCode;
 use App\Models\UpcomingPlan;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -527,5 +528,121 @@ class PaymentController extends Controller
             'discount_type' => $promoCode->discount_type,
             'discount_value' => $promoCode->discount_value,
         ]);
+    }
+
+    /**
+     * Display payment history
+     */
+    public function history(Request $request)
+    {
+        // Only superadmin can access
+        if (Auth::user()->userRole->name !== 'super_admin') {
+            abort(403, 'Unauthorized access.');
+        }
+
+        if ($request->ajax() || $request->wantsJson()) {
+            $companyId = $request->get('company_id') ?? null;
+            $query = PaymentLedger::with(['company', 'promoCode', 'upcomingPlan'])
+                ->whereHas('company', function ($q) {
+                    $q->where('user_id', Auth::id());
+                });
+
+            if ($companyId) {
+                $query->where('company_id', $companyId);
+            }
+
+            if ($request->has('order') && is_array($request->order)) {
+                foreach ($request->order as $order) {
+
+                    $columnIndex = $order['column'];
+                    $direction = $order['dir'];
+                    $columns = [
+                        1 => 'created_at',
+                        2 => 'total_amount',
+                    ];
+
+                    if (isset($columns[$columnIndex])) {
+                        $columnName = $columns[$columnIndex];
+                        if ($columnName === 'company.name') {
+                            $query->join('companies', 'payment_ledgers.company_id', '=', 'companies.id')
+                                ->orderBy('companies.name', $direction);
+                        } else {
+                            $query->orderBy($columnName, $direction);
+                        }
+                    }
+                }
+            } else {
+                $query->orderBy('created_at', 'desc');
+            }
+
+            $start = $request->start ?? 0;
+            $length = $request->length ?? 10;
+            $payments = $query->skip($start)->take($length)->get();
+            $totalRecords = PaymentLedger::whereHas('company', function ($q) {
+                $q->where('user_id', Auth::id());
+            })->count();
+            $filteredRecords = $query->count();
+
+            $count = $start;
+            $data = $payments->map(function ($payment) use (&$count) {
+                return [
+                    'sr_no' => ++$count,
+                    'company_name' => $payment->company->name,
+                    'payment_type' => ucfirst($payment->payment_type),
+                    'total_amount' => number_format($payment->total_amount, 2),
+                    'status' => ucfirst($payment->status),
+                    'created_at' => $payment->created_at->format('d-m-Y'),
+                    'actions' => '<a href="' . route('payment.invoice', $payment->id) . '" class="btn btn-sm btn-primary" target="_blank"><i class="fas fa-file-pdf"></i></a>',
+                ];
+            });
+            return response()->json([
+                'draw' => intval($request->draw),
+                'recordsTotal' => $totalRecords,
+                'recordsFiltered' => $filteredRecords,
+                'data' => $data
+            ]);
+        } else {
+            $companyId = $request->get('company_id') ?? null;
+            $company = null;
+            if ($companyId) {
+                $company = Company::where('id', $companyId)
+                    ->where('user_id', Auth::id())
+                    ->firstOrFail();
+            }
+            return view('payment.history', compact('company'));
+        }
+    }
+
+    /**
+     * Generate invoice PDF for payment
+     */
+    public function invoice($id)
+    {
+        // Only superadmin can access
+        if (Auth::user()->userRole->name !== 'super_admin') {
+            abort(403, 'Unauthorized access.');
+        }
+
+        $payment = PaymentLedger::with(['company', 'promoCode', 'upcomingPlan'])
+            ->whereHas('company', function ($q) {
+                $q->where('user_id', Auth::id());
+            })
+            ->findOrFail($id);
+
+        // Only generate invoice for completed payments
+        if ($payment->status !== 'completed') {
+            return redirect()->route('payment.history')
+                ->with('error', 'Invoice can only be generated for completed payments.');
+        }
+
+        $html = view('payment.invoice-pdf', compact('payment'))->render();
+
+        $pdf = Pdf::loadHTML($html)
+            ->setPaper('a4', 'portrait')
+            ->setOption('isHtml5ParserEnabled', true)
+            ->setOption('isRemoteEnabled', true);
+
+        $invoiceNumber = 'INV-' . str_pad($payment->id, 6, '0', STR_PAD_LEFT);
+        return $pdf->stream("invoice_{$invoiceNumber}.pdf");
     }
 }
