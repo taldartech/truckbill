@@ -56,29 +56,22 @@ class TruckOwnerController extends Controller
                     if (!empty($column['search']['value'])) {
                         $searchValue = $column['search']['value'];
                         switch ($index) {
-                            case 1: // Name
+                            case 0: // Name
                                 $query->where('transporters.name', 'like', "%{$searchValue}%");
                                 break;
-                            case 2: // Short Name
+                            case 1: // Short Name
                                 $query->where('transporters.short_name', 'like', "%{$searchValue}%");
                                 break;
-                            case 3: // PAN Number
+                            case 2: // PAN Number
                                 $query->where('transporters.pan_number', 'like', "%{$searchValue}%");
                                 break;
-                            case 4: // Location (City)
+                            case 3: // Location (City)
                                 $query->whereHas('city', function ($cityQuery) use ($searchValue) {
                                     $cityQuery->where('name', 'like', "%{$searchValue}%");
                                 });
                                 break;
-                            case 5: // Contact Number (Mobile)
+                            case 4: // Contact Number (Mobile)
                                 $query->where('transporters.mobile_number', 'like', "%{$searchValue}%");
-                                break;
-                            case 6: // Declaration Given
-                                if (strtolower($searchValue) === 'yes') {
-                                    $query->where('transporters.declaration_given', 1);
-                                } elseif (strtolower($searchValue) === 'no') {
-                                    $query->where('transporters.declaration_given', 0);
-                                }
                                 break;
                         }
                     }
@@ -91,27 +84,27 @@ class TruckOwnerController extends Controller
                 $orderDir = $request->order[0]['dir'];
 
                 switch ($orderColumn) {
-                    case 1: // Name
+                    case 0: // Name
                         $query->orderBy('transporters.name', $orderDir);
                         break;
-                    case 2: // Short Name
+                    case 1: // Short Name
                         $query->orderBy('transporters.short_name', $orderDir);
                         break;
-                    case 3: // PAN Number
+                    case 2: // PAN Number
                         $query->orderBy('transporters.pan_number', $orderDir);
                         break;
-                    case 4: // Location (City)
+                    case 3: // Location (City)
                         $query->join('cities', 'transporters.city_id', '=', 'cities.id')
                             ->orderBy('cities.name', $orderDir)
                             ->select('transporters.*');
                         break;
-                    case 5: // Contact Number (Mobile)
+                    case 4: // Contact Number (Mobile)
                         $query->orderBy('transporters.mobile_number', $orderDir);
                         break;
-                    case 6: // Declaration Given
+                    case 5: // Declaration Given
                         $query->orderBy('transporters.declaration_given', $orderDir);
                         break;
-                    case 7: // Advance Amount
+                    case 6: // Advance Amount
                         $query->orderBy('transporters.advance_amount', $orderDir);
                         break;
                     default:

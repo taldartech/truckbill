@@ -31,21 +31,14 @@
                 <table id="truckOwnersTable" class="table table-bordered table-striped">
                     <thead>
                         <tr>
-
                             <th>Name</th>
                             <th>Short Name</th>
-                            {{-- <th>GST Number</th> --}}
-                            {{-- <th>GST Type</th> --}}
                             <th>PAN Number</th>
                             <th>Location</th>
                             <th>Contact Number</th>
                             <th>Declaration Given</th>
-                            {{-- <th>Total Trucks</th> --}}
                             <th>Advance Amount</th>
-                            {{-- <th>Company</th> --}}
-                            {{-- @if (auth()->check() && auth()->user()->userRole->name === 'admin') --}}
-                            <th style="width: 120px;">Actions</th>
-                            {{-- @endif --}}
+                            <th>Actions</th>
                         </tr>
                     </thead>
                 </table>
@@ -318,37 +311,32 @@
                     {
                         data: 'pan_number',
                         name: 'pan_number',
-                        width: '120px'
                     },
 
                     {
                         data: 'location',
                         name: 'location',
-                        width: '150px'
                     },
                     {
                         data: 'contact_number',
                         name: 'contact_number',
-                        width: '140px'
                     },
                     {
                         data: 'declaration_given',
                         name: 'declaration_given',
-                        width: '120px',
                         className: 'text-center'
                     },
 
                     {
                         data: 'advance_amount',
                         name: 'advance_amount',
-                        width: '120px',
                         className: 'text-end'
-                    }, {
+                    },
+                    {
                         data: 'actions',
                         name: 'actions',
                         orderable: false,
                         searchable: false,
-                        width: '120px',
                         className: 'text-center'
                     }
                 ],
@@ -390,7 +378,7 @@
                 searchDelay: 500,
                 initComplete: function() {
                     // Add individual column search
-                    this.api().columns([1, 2, 3, 4]).every(function() {
+                    this.api().columns([0, 1, 2, 3, 4]).every(function() {
                         var column = this;
                         var title = column.header().textContent;
 
@@ -600,18 +588,18 @@
                                 <div class="card-body" style="max-height: 300px; overflow-y: auto;">
                                     ${data.trucks && data.trucks.length > 0 ?
                                         `<div class="table-responsive">
-                                                    <table class="table table-sm table-striped">
-                                                        <thead>
-                                                            <tr>
-                                                                <th>Truck No.</th>
-                                                                <th>Type</th>
-                                                                <th>Driver</th>
-                                                                <th>Mobile</th>
+                                                                <table class="table table-sm table-striped">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th>Truck No.</th>
+                                                                            <th>Type</th>
+                                                                            <th>Driver</th>
+                                                                            <th>Mobile</th>
 
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            ${data.trucks.map(truck => `
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        ${data.trucks.map(truck => `
                                                         <tr>
                                                             <td class="fw-bold">${truck.truck_number}</td>
                                                             <td>${truck.truck_type}</td>
@@ -620,9 +608,9 @@
 
                                                         </tr>
                                                     `).join('')}
-                                                        </tbody>
-                                                    </table>
-                                                </div>`
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>`
                                         : '<p class="text-muted text-center">No trucks registered</p>'
                                     }
                                 </div>
@@ -630,25 +618,25 @@
                         </div>
                     </div>
                     ${data.advance_payments && data.advance_payments.length > 0 ? `
-                                <div class="row mt-3">
-                                    <div class="col-12">
-                                        <div class="card">
-                                            <div class="card-header bg-light">
-                                                <h6 class="mb-0"><i class="bi bi-currency-rupee"></i> Recent Advance Payments</h6>
-                                            </div>
-                                            <div class="card-body" style="max-height: 250px; overflow-y: auto;">
-                                                <div class="table-responsive">
-                                                    <table class="table table-sm table-striped">
-                                                        <thead>
-                                                            <tr>
-                                                                <th>Amount</th>
-                                                                <th>Payment Date</th>
-                                                                <th>Remark</th>
-                                                                <th>Added On</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            ${data.advance_payments.map(payment => `
+                                            <div class="row mt-3">
+                                                <div class="col-12">
+                                                    <div class="card">
+                                                        <div class="card-header bg-light">
+                                                            <h6 class="mb-0"><i class="bi bi-currency-rupee"></i> Recent Advance Payments</h6>
+                                                        </div>
+                                                        <div class="card-body" style="max-height: 250px; overflow-y: auto;">
+                                                            <div class="table-responsive">
+                                                                <table class="table table-sm table-striped">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th>Amount</th>
+                                                                            <th>Payment Date</th>
+                                                                            <th>Remark</th>
+                                                                            <th>Added On</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        ${data.advance_payments.map(payment => `
                                                         <tr>
                                                             <td class="fw-bold text-success">${payment.amount}</td>
                                                             <td>${payment.payment_date}</td>
@@ -656,14 +644,14 @@
                                                             <td class="text-muted">${payment.created_at}</td>
                                                         </tr>
                                                     `).join('')}
-                                                        </tbody>
-                                                    </table>
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ` : ''}
+                                        ` : ''}
                     <div class="row mt-3">
                         <div class="col-12">
                             <div class="card">
