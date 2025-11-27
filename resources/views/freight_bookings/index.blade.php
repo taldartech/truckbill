@@ -8,10 +8,10 @@
     </div>
 @endif --}}
 
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/searchpanes/2.2.0/css/searchPanes.bootstrap5.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/searchpanes/2.2.0/css/searchPanes.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css">
 @endpush
 
 @push('scripts')
@@ -194,7 +194,7 @@
                                             data-transporter-id="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->id : '' }}"
                                             data-balance="{{ $booking->balance_amount ?? 0 }}"
                                             data-voucher_number="{{ $booking->voucher_number ?? '' }}"
-                                           data-freight-booking-id="{{ $booking->id }}"
+                                            data-freight-booking-id="{{ $booking->id }}"
                                             data-is-cancelled="{{ $booking->is_cancelled ? '1' : '0' }}"
                                             data-is-delivered="{{ $booking->is_delivered ? '1' : '0' }}"
                                             data-transporter="{{ $booking->transporter ? $booking->transporter->name : '' }}"
@@ -210,10 +210,11 @@
                                 {{-- <td class="text-center">
                                     {{ $booking->lr && $booking->lr->gr_date ? date('d-m-Y', strtotime($booking->lr->gr_date)) : '-' }}
                                 </td> --}}
-                                <td class="text-center" data-order="{{ $booking->lr && $booking->lr->gr_date ? date('Y-m-d', strtotime($booking->lr->gr_date)) : '' }}">
+                                <td class="text-center"
+                                    data-order="{{ $booking->lr && $booking->lr->gr_date ? date('Y-m-d', strtotime($booking->lr->gr_date)) : '' }}">
                                     {{ $booking->lr && $booking->lr->gr_date ? date('d-m-Y', strtotime($booking->lr->gr_date)) : '-' }}
                                 </td>
-                                <td>
+                                <td data-order="{{ $booking->lr->lr_number }}">
                                     @if ($booking->lr)
                                         {{ $booking->lr->lr_number }}
                                         @if ($booking->linked_lr_id)
@@ -224,7 +225,7 @@
                                     @endif
                                 </td>
                                 {{-- <td>{{ $booking->lr ? $booking->lr->customer->name : '-' }}</td> --}}
-                                <td>
+                                <td data-order="{{ $booking?->lr?->customer?->name }}">
                                     @if ($booking->lr)
                                         {{ $booking->lr->customer->name }}
                                         @if ($booking->lr->memo_id)
@@ -251,9 +252,12 @@
                                     @endphp
                                     {!! $transporterName . ' ' . $badge !!}
                                 </td>
-                                <td>@php
-                                    $shortName = $booking->transporter_name ? $booking->transporter->short_name : '-';
-                                @endphp
+                                <td data-order="{{ $booking?->transporter?->short_name }}">
+                                    @php
+                                        $shortName = $booking->transporter_name
+                                            ? $booking->transporter->short_name
+                                            : '-';
+                                    @endphp
                                     {!! $shortName !!}</td>
                                 <td>{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->truck_number : '-' }}
                                 </td>
@@ -264,7 +268,8 @@
                                 <td>{{ $booking->lr && $booking->tr_fr_rate ? $booking->tr_fr_rate : '-' }}</td>
                                 <td>{{ $booking->lr && $booking->tr_fr_rate ? $booking->tr_amount : '-' }}</td>
 
-                                <td class="text-end">₹{{ number_format($booking->balance_amount ?? 0, 2) }}</td>
+                                <td data-order="{{ $booking->balance_amount ?? 0 }}" class="text-end">
+                                    ₹{{ number_format($booking->balance_amount ?? 0, 2) }}</td>
                                 <td class="text-center">
                                     <div class="btn-group" role="group">
                                         <a href="{{ route('freight_bookings.show', $booking->id) }}"
@@ -583,18 +588,18 @@
                     $('#combined-payment-btn').show();
                 }
             }
-         
+
 
             // Voucher Payment Modal
             $('#voucher-payment-btn').on('click', function() {
-              
+
                 const checkedBoxes = $('.row-checkbox:checked');
 
                 if (checkedBoxes.length === 0) {
                     alert('Please select at least one freight booking.');
                     return;
                 }
-            
+
 
 
 
@@ -1046,13 +1051,14 @@
                     return;
                 }
                 if (planEndDateStr) {
-        const planEndDate = new Date(planEndDateStr);
-        if (today > planEndDate) {
-            alert('Your subscription plan has expired. Please renew your subscription to continue using the service.');
-            // Stop further execution so modal doesn't open
-            return false;  // or just return
-        }
-    }
+                    const planEndDate = new Date(planEndDateStr);
+                    if (today > planEndDate) {
+                        alert(
+                            'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+                        // Stop further execution so modal doesn't open
+                        return false; // or just return
+                    }
+                }
 
                 // Get first selected checkbox
                 const firstCb = checkedBoxes.first();
@@ -1063,36 +1069,40 @@
                     $.get(`/lorryreceipts/by-linked/${linkedLrId}`, function(response) {
                         console.log('📦 Full response:', response);
                         const lrsArray = response.lrs || response;
-        
-        if (lrsArray && lrsArray.length > 0) {
-            // ✅ CHECK: Verify all linked LRs have freight_booking_id
-            const allHaveFreightBooking = lrsArray.every(lr => 
-                lr.freight_booking_id !== null && 
-                lr.freight_booking_id !== undefined && 
-                lr.freight_booking_id !== ''
-            );
 
-            console.log('✅ All have freight booking?', allHaveFreightBooking);
-            console.log('Freight booking IDs:', lrsArray.map(lr => ({ lr_number: lr.lr_number, freight_booking_id: lr.freight_booking_id })));
+                        if (lrsArray && lrsArray.length > 0) {
+                            // ✅ CHECK: Verify all linked LRs have freight_booking_id
+                            const allHaveFreightBooking = lrsArray.every(lr =>
+                                lr.freight_booking_id !== null &&
+                                lr.freight_booking_id !== undefined &&
+                                lr.freight_booking_id !== ''
+                            );
 
-            if (!allHaveFreightBooking) {
-                // Find which LRs are missing freight bookings
-                const missingLRs = lrsArray.filter(lr => 
-                    lr.freight_booking_id === null || 
-                    lr.freight_booking_id === undefined || 
-                    lr.freight_booking_id === ''
-                );
+                            console.log('✅ All have freight booking?', allHaveFreightBooking);
+                            console.log('Freight booking IDs:', lrsArray.map(lr => ({
+                                lr_number: lr.lr_number,
+                                freight_booking_id: lr.freight_booking_id
+                            })));
 
-                const lrNumbers = missingLRs.map(lr => lr.lr_number).join(', ');
-                
-                alert(`⚠️ Error: The following linked LRs do not have Freight Bookings:\n\n${lrNumbers}\n\nPlease create FRs for all linked LRs before proceeding with combined payment.`);
-                console.log('❌ Missing FRs for:', missingLRs);
-                return;
-            }
+                            if (!allHaveFreightBooking) {
+                                // Find which LRs are missing freight bookings
+                                const missingLRs = lrsArray.filter(lr =>
+                                    lr.freight_booking_id === null ||
+                                    lr.freight_booking_id === undefined ||
+                                    lr.freight_booking_id === ''
+                                );
 
-            // All checks passed, proceed with modal
-            buildCombinedModal(lrsArray);
-        } else {
+                                const lrNumbers = missingLRs.map(lr => lr.lr_number).join(', ');
+
+                                alert(
+                                    `⚠️ Error: The following linked LRs do not have Freight Bookings:\n\n${lrNumbers}\n\nPlease create FRs for all linked LRs before proceeding with combined payment.`);
+                                console.log('❌ Missing FRs for:', missingLRs);
+                                return;
+                            }
+
+                            // All checks passed, proceed with modal
+                            buildCombinedModal(lrsArray);
+                        } else {
                             // Fallback to just the selected LRs if no linked ones found
                             const lrData = Array.from(checkedBoxes).map(cb => {
                                 const $cb = $(cb);
@@ -1450,7 +1460,7 @@
 
 
             // Bulk Memo ID Modal
-          
+
             $('#bulk-memo-id-btn').on('click', function() {
                 const checkedBoxes = $('.row-checkbox:checked');
                 const planEndDateStr = @json(Auth::user()->company->plan_end_date ?? null);
@@ -1859,7 +1869,7 @@
 
             // Handle bulk memo ID button
             $('#bulk-memo-id-btn').on('click', function() {
-              
+
 
                 if (checkedBoxes.length === 0) {
                     alert('Please select freight bookings first.');
@@ -1945,29 +1955,32 @@
 
             // DataTable initialization
             var table = $('#freightBookingsTable').DataTable({
-              paging: true,
-              info: true,
-              searching: false,
-              ordering: true,
-              theme: 'bootstrap-5',
-              responsive: true,
-              lengthChange: false,
-              // Default sort by GR Date (newest to oldest). GR Date is column index 1.
-              order: [[1, 'desc']],
-              // Disable sorting for checkbox (first) and actions (last) columns
-              columnDefs: [
-                  { orderable: false, targets: [0, -1] }
-              ],
-              language: {
-                emptyTable:   `<div class="text-muted">
+                paging: true,
+                info: true,
+                searching: false,
+                ordering: true,
+                theme: 'bootstrap-5',
+                responsive: true,
+                lengthChange: false,
+                // Default sort by GR Date (newest to oldest). GR Date is column index 1.
+                order: [
+                    [1, 'desc']
+                ],
+                // Disable sorting for checkbox (first) and actions (last) columns
+                columnDefs: [{
+                    orderable: false,
+                    targets: [0, -1]
+                }],
+                language: {
+                    emptyTable: `<div class="text-muted">
                                         <i class="bi bi-inbox display-4"></i>
                                         <p class="mt-2">No freight bookings found</p>
                                         @if (request('search'))
                                             <p>Try adjusting your search criteria</p>
                                         @endif
                                     </div>`
-              }
-          });
+                }
+            });
 
             // Apply column search
             $('#filterrow th input.column-search').on('keyup change', function() {
@@ -2078,8 +2091,6 @@
         });
     </script>
     <script>
-        const planEndDateStr = @json(Auth::user()->company->plan_end_date ?? null);
-        const today = new Date();
         function handleVoucherPayment() {
             const checkboxes = document.querySelectorAll('.row-checkbox:checked');
             const modalBody = document.getElementById('voucherPaymentBody');
@@ -2091,13 +2102,14 @@
                 return;
             }
             if (planEndDateStr) {
-        const planEndDate = new Date(planEndDateStr);
-        if (today > planEndDate) {
-            alert('Your subscription plan has expired. Please renew your subscription to continue using the service.');
-            // Stop further execution so modal doesn't open
-            return false;  // or just return
-        }
-    }
+                const planEndDate = new Date(planEndDateStr);
+                if (today > planEndDate) {
+                    alert(
+                        'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+                    // Stop further execution so modal doesn't open
+                    return false; // or just return
+                }
+            }
 
 
             // Check if any LR has no voucher number
