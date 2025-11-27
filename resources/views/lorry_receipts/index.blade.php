@@ -113,6 +113,7 @@
 
                     <th>Truck Number</th>
                     <th>Weight</th>
+                    <th>LR Rate</th>
                     <th>Amount</th>
                     <th style="width: 120px;">Actions</th>
                 </tr>
@@ -530,6 +531,11 @@
                         {
                             data: 'weight',
                             name: 'weight',
+                            className: 'text-end'
+                        },
+                        {
+                            data: 'fr_rate',
+                            name: 'fr_rate',
                             className: 'text-end'
                         },
                         {
