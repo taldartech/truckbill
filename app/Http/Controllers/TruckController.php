@@ -13,7 +13,7 @@ class TruckController extends Controller
     public function getTrucksForTransporter($transporterId)
     {
         $trucks = \App\Models\Truck::where('transporter_id', $transporterId)
-            ->whereHas('transporter', function($q) {
+            ->whereHas('transporter', function ($q) {
                 $q->where('company_id', Auth::user()->company_id);
             })
             ->get();
@@ -26,10 +26,10 @@ class TruckController extends Controller
         if ($request->ajax()) {
             return $this->getTrucksData($request);
         }
-           // Get only transporters who are owners
-    $owners = \App\Models\Transporter::where('is_owner', 1)
-    ->where('company_id', Auth::user()->company_id)
-    ->get();
+        // Get only transporters who are owners
+        $owners = \App\Models\Transporter::where('is_owner', 1)
+            ->where('company_id', Auth::user()->company_id)
+            ->get();
 
         $transporters = \App\Models\Transporter::where('company_id', Auth::user()->company_id)->get();
         $drivers = \App\Models\Driver::all();
@@ -43,26 +43,26 @@ class TruckController extends Controller
 
         // });
         $query = \App\Models\Truck::with(['transporter', 'driver'])
-    ->where(function ($q) {
-        $q->whereHas('transporter', function ($subQuery) {
-            $subQuery->where('company_id', Auth::user()->company_id);
-        })
-        ->orWhereNull('transporter_id');  // Include trucks with no transporter
-    });
+            ->where(function ($q) {
+                $q->whereHas('transporter', function ($subQuery) {
+                    $subQuery->where('company_id', Auth::user()->company_id);
+                })
+                    ->orWhereNull('transporter_id');  // Include trucks with no transporter
+            });
 
         // Handle search
         if ($request->has('search') && $request->search['value']) {
             $searchValue = $request->search['value'];
-            $query->where(function($q) use ($searchValue) {
+            $query->where(function ($q) use ($searchValue) {
                 $q->where('truck_number', 'like', "%{$searchValue}%")
-                  ->orWhere('truck_type', 'like', "%{$searchValue}%")
-                  ->orWhere('registration_date', 'like', "%{$searchValue}%")
-                  ->orWhereHas('transporter', function($transporterQuery) use ($searchValue) {
-                      $transporterQuery->where('name', 'like', "%{$searchValue}%");
-                  })
-                  ->orWhereHas('driver', function($driverQuery) use ($searchValue) {
-                      $driverQuery->where('name', 'like', "%{$searchValue}%");
-                  });
+                    ->orWhere('truck_type', 'like', "%{$searchValue}%")
+                    ->orWhere('registration_date', 'like', "%{$searchValue}%")
+                    ->orWhereHas('transporter', function ($transporterQuery) use ($searchValue) {
+                        $transporterQuery->where('name', 'like', "%{$searchValue}%");
+                    })
+                    ->orWhereHas('driver', function ($driverQuery) use ($searchValue) {
+                        $driverQuery->where('name', 'like', "%{$searchValue}%");
+                    });
             });
         }
 
@@ -82,12 +82,12 @@ class TruckController extends Controller
                             $query->where('registration_date', 'like', "%{$searchValue}%");
                             break;
                         case 4: // Transporter
-                            $query->whereHas('transporter', function($transporterQuery) use ($searchValue) {
+                            $query->whereHas('transporter', function ($transporterQuery) use ($searchValue) {
                                 $transporterQuery->where('name', 'like', "%{$searchValue}%");
                             });
                             break;
                         case 5: // Driver
-                            $query->whereHas('driver', function($driverQuery) use ($searchValue) {
+                            $query->whereHas('driver', function ($driverQuery) use ($searchValue) {
                                 $driverQuery->where('name', 'like', "%{$searchValue}%");
                             });
                             break;
@@ -116,13 +116,13 @@ class TruckController extends Controller
                     break;
                 case 4: // Transporter
                     $query->join('transporters', 'trucks.transporter_id', '=', 'transporters.id')
-                          ->orderBy('transporters.name', $orderDirection)
-                          ->select('trucks.*');
+                        ->orderBy('transporters.name', $orderDirection)
+                        ->select('trucks.*');
                     break;
                 case 5: // Driver
                     $query->leftJoin('drivers', 'trucks.driver_id', '=', 'drivers.id')
-                          ->orderBy('drivers.name', $orderDirection)
-                          ->select('trucks.*');
+                        ->orderBy('drivers.name', $orderDirection)
+                        ->select('trucks.*');
                     break;
                 default:
                     $query->orderBy('created_at', 'desc');
@@ -139,7 +139,7 @@ class TruckController extends Controller
             $q->whereHas('transporter', function ($subQuery) {
                 $subQuery->where('company_id', Auth::user()->company_id);
             })
-            ->orWhereNull('transporter_id');
+                ->orWhereNull('transporter_id');
         });
         $totalRecords = $totalQuery->count();
         $filteredRecords = $query->count();
@@ -150,7 +150,7 @@ class TruckController extends Controller
         $trucks = $query->skip($start)->take($length)->get();
 
         // Format data for DataTables
-        $data = $trucks->map(function($truck, $index) use ($start) {
+        $data = $trucks->map(function ($truck, $index) use ($start) {
             return [
                 'id' => $truck->id,
                 'truck_number' => '<a href="#" class="truck-number-link text-primary fw-bold" data-id="' . $truck->id . '" style="text-decoration: none; cursor: pointer;">' . $truck->truck_number . '</a>',
@@ -160,8 +160,8 @@ class TruckController extends Controller
                 'driver' => $truck->driver ? $truck->driver->name : '-',
                 // 'actions' => $this->getActionButtons($truck)
                 'actions' => Auth::user()->userRole->name === 'admin'
-                        ? $this->getActionButtons($truck)
-                        : ''  // empty string for non-admins
+                    ? $this->getActionButtons($truck)
+                    : ''  // empty string for non-admins
             ];
         });
 
@@ -216,7 +216,7 @@ class TruckController extends Controller
     {
         $truck = \App\Models\Truck::with('transporter')
             ->where('id', $truckId)
-            ->whereHas('transporter', function($q) {
+            ->whereHas('transporter', function ($q) {
                 $q->where('company_id', Auth::user()->company_id);
             })
             ->first();
@@ -237,7 +237,7 @@ class TruckController extends Controller
     {
         $truck = \App\Models\Truck::with('transporter')
             ->where('id', $truckId)
-            ->whereHas('transporter', function($q) {
+            ->whereHas('transporter', function ($q) {
                 $q->where('company_id', Auth::user()->company_id);
             })
             ->first();
@@ -270,40 +270,41 @@ class TruckController extends Controller
     public function store(Request $request)
     {
         // Fetch company_id for the given transporter_id
-    $companyId = \App\Models\Transporter::where('id', $request->transporter_id)->value('company_id');
+        $companyId = \App\Models\Transporter::where('id', $request->transporter_id)->value('company_id');
 
-    // Perform manual uniqueness check scoped by company_id
-    $exists = DB::table('trucks')
-        ->join('transporters', 'trucks.transporter_id', '=', 'transporters.id')
-        ->where('trucks.truck_number', $request->truck_number)
-        ->where('transporters.company_id', $companyId)
-        ->exists();
+        // Perform manual uniqueness check scoped by company_id
+        $exists = DB::table('trucks')
+            ->join('transporters', 'trucks.transporter_id', '=', 'transporters.id')
+            ->where('trucks.truck_number', $request->truck_number)
+            ->where('transporters.company_id', $companyId)
+            ->whereNull('trucks.deleted_at') // exclude soft-deleted records
+            ->exists();
 
-    if ($exists) {
-        $errorMessage = 'The truck number must be unique within the company.';
-        if ($request->expectsJson() || $request->ajax()) {
-            return response()->json([
-                'success' => false,
-                'message' => $errorMessage,
-                'errors' => ['truck_number' => [$errorMessage]]
-            ], 422);
+        if ($exists) {
+            $errorMessage = 'The truck number must be unique within the company.';
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMessage,
+                    'errors' => ['truck_number' => [$errorMessage]]
+                ], 422);
+            }
+            return redirect()->back()->withErrors(['truck_number' => $errorMessage])->withInput();
         }
-        return redirect()->back()->withErrors(['truck_number' => $errorMessage])->withInput();
-    }
 
-    // Proceed with validation of other fields except unique rule on truck_number
-    $validated = $request->validate([
-        'transporter_id' => 'required|exists:transporters,id',
-        'truck_number' => [
-            'required',
-            'string',
-            'regex:/^[A-Z]{2}[A-Z0-9]{1,2}[A-Z0-9]{1,3}[0-9]{4}$/',
-            // No unique rule here since handled above
-        ],
-        'truck_type' => 'required|string|max:50',
-        'driver_id' => 'nullable|exists:drivers,id',
-        'registration_date' => 'nullable|date',
-    ]);
+        // Proceed with validation of other fields except unique rule on truck_number
+        $validated = $request->validate([
+            'transporter_id' => 'required|exists:transporters,id',
+            'truck_number' => [
+                'required',
+                'string',
+                'regex:/^[A-Z]{2}[A-Z0-9]{1,2}[A-Z0-9]{1,3}[0-9]{4}$/',
+                // No unique rule here since handled above
+            ],
+            'truck_type' => 'required|string|max:50',
+            'driver_id' => 'nullable|exists:drivers,id',
+            'registration_date' => 'nullable|date',
+        ]);
         try {
             $truck = \App\Models\Truck::create($validated);
 
@@ -317,7 +318,6 @@ class TruckController extends Controller
             }
 
             return redirect()->route('trucks.index')->with('success', 'Truck created successfully!');
-
         } catch (\Illuminate\Database\QueryException $e) {
             // Handle database constraint violations
             if ($e->errorInfo[1] == 1062) { // Duplicate entry error
@@ -348,17 +348,17 @@ class TruckController extends Controller
         }
     }
     public function checkTruckNumber(Request $request)
-{
+    {
 
-    $company_id = Auth::user()->company_id;
-    $exists = \App\Models\Truck::where('truck_number', $request->truck_number)
-    ->whereHas('transporter', function ($query) use ($company_id) {
-        $query->where('company_id', $company_id);
-    })
+        $company_id = Auth::user()->company_id;
+        $exists = \App\Models\Truck::where('truck_number', $request->truck_number)
+            ->whereHas('transporter', function ($query) use ($company_id) {
+                $query->where('company_id', $company_id);
+            })
 
-    ->exists();
-    return response()->json(['exists' => $exists]);
-}
+            ->exists();
+        return response()->json(['exists' => $exists]);
+    }
 
     public function edit(\App\Models\Truck $truck)
     {
@@ -369,42 +369,43 @@ class TruckController extends Controller
 
     public function update(Request $request, \App\Models\Truck $truck)
     {
-         // Get company_id from transporter_id in request
-    $companyId = \App\Models\Transporter::where('id', $request->transporter_id)->value('company_id');
+        // Get company_id from transporter_id in request
+        $companyId = \App\Models\Transporter::where('id', $request->transporter_id)->value('company_id');
 
-    // Manual uniqueness check ignoring the current truck ID
-    $exists = DB::table('trucks')
-        ->join('transporters', 'trucks.transporter_id', '=', 'transporters.id')
-        ->where('trucks.truck_number', $request->truck_number)
-        ->where('transporters.company_id', $companyId)
-        ->where('trucks.id', '<>', $truck->id) // exclude current truck id
-        ->exists();
+        // Manual uniqueness check ignoring the current truck ID
+        $exists = DB::table('trucks')
+            ->join('transporters', 'trucks.transporter_id', '=', 'transporters.id')
+            ->where('trucks.truck_number', $request->truck_number)
+            ->where('transporters.company_id', $companyId)
+            ->where('trucks.id', '<>', $truck->id) // exclude current truck id
+            ->whereNull('trucks.deleted_at') // exclude soft-deleted records
+            ->exists();
 
-    if ($exists) {
-        $errorMessage = 'The truck number must be unique within the company.';
-        if ($request->expectsJson() || $request->ajax()) {
-            return response()->json([
-                'success' => false,
-                'message' => $errorMessage,
-                'errors' => ['truck_number' => [$errorMessage]]
-            ], 422);
+        if ($exists) {
+            $errorMessage = 'The truck number must be unique within the company.';
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMessage,
+                    'errors' => ['truck_number' => [$errorMessage]]
+                ], 422);
+            }
+            return redirect()->back()->withErrors(['truck_number' => $errorMessage])->withInput();
         }
-        return redirect()->back()->withErrors(['truck_number' => $errorMessage])->withInput();
-    }
 
-    // Validation excluding unique rule on truck_number because handled manually
-    $validated = $request->validate([
-        'transporter_id' => 'required|exists:transporters,id',
-        'truck_number' => [
-            'required',
-            'string',
-            'regex:/^[A-Z]{2}[A-Z0-9]{1,2}[A-Z0-9]{1,3}[0-9]{4}$/',
-            // no unique rule here
-        ],
-        'truck_type' => 'required|string|max:50',
-        'driver_id' => 'nullable|exists:drivers,id',
-        'registration_date' => 'nullable|date',
-    ]);
+        // Validation excluding unique rule on truck_number because handled manually
+        $validated = $request->validate([
+            'transporter_id' => 'required|exists:transporters,id',
+            'truck_number' => [
+                'required',
+                'string',
+                'regex:/^[A-Z]{2}[A-Z0-9]{1,2}[A-Z0-9]{1,3}[0-9]{4}$/',
+                // no unique rule here
+            ],
+            'truck_type' => 'required|string|max:50',
+            'driver_id' => 'nullable|exists:drivers,id',
+            'registration_date' => 'nullable|date',
+        ]);
 
         try {
             $truck->update($validated);
@@ -419,7 +420,6 @@ class TruckController extends Controller
             }
 
             return redirect()->route('trucks.index')->with('success', 'Truck updated successfully!');
-
         } catch (\Illuminate\Database\QueryException $e) {
             // Handle database constraint violations
             if ($e->errorInfo[1] == 1062) { // Duplicate entry error
@@ -449,57 +449,57 @@ class TruckController extends Controller
             return redirect()->back()->withErrors(['general' => $genericError])->withInput();
         }
     }
-//     public function removeTransporter(\App\Models\Truck $truck)
-// {
+    //     public function removeTransporter(\App\Models\Truck $truck)
+    // {
 
-//     $truck->update(['transporter_id' => null]);
+    //     $truck->update(['transporter_id' => null]);
 
-//     return response()->json([
-//         'message' => 'Truck has been removed from the transporter successfully'
-//     ]);
-// }
-// public function removeTransporter(\App\Models\Truck $truck)
-// {
-//     // Check if this truck has any delivered Lorry Receipts
-//     $lorryReceipt = \App\Models\LorryReceipt::where('truck_id', $truck->id)
-//         ->where('delivery_status', 'delivered')
-//         ->first();
+    //     return response()->json([
+    //         'message' => 'Truck has been removed from the transporter successfully'
+    //     ]);
+    // }
+    // public function removeTransporter(\App\Models\Truck $truck)
+    // {
+    //     // Check if this truck has any delivered Lorry Receipts
+    //     $lorryReceipt = \App\Models\LorryReceipt::where('truck_id', $truck->id)
+    //         ->where('delivery_status', 'delivered')
+    //         ->first();
 
-//     if ($lorryReceipt) {
-//         // If delivered Lorry Receipt exists, allow transporter removal
-//         $truck->update(['transporter_id' => null]);
+    //     if ($lorryReceipt) {
+    //         // If delivered Lorry Receipt exists, allow transporter removal
+    //         $truck->update(['transporter_id' => null]);
 
-//         return response()->json([
-//             'success' => 'Truck has been removed from the transporter successfully.'
-//         ]);
-//     } else {
-//         // If not delivered (in use), show error
-//         return response()->json([
-//             'error' => 'Truck cannot be removed from the transporter (it is in use)!!'
-//         ]);
-//     }
-// }
-public function removeTransporter(\App\Models\Truck $truck)
-{
-    // Check if this truck has any undelivered Lorry Receipts
-    $hasUndeliveredLr = \App\Models\LorryReceipt::where('truck_id', $truck->id)
-        ->where('delivery_status', '!=', 'delivered')
-        ->exists();
+    //         return response()->json([
+    //             'success' => 'Truck has been removed from the transporter successfully.'
+    //         ]);
+    //     } else {
+    //         // If not delivered (in use), show error
+    //         return response()->json([
+    //             'error' => 'Truck cannot be removed from the transporter (it is in use)!!'
+    //         ]);
+    //     }
+    // }
+    public function removeTransporter(\App\Models\Truck $truck)
+    {
+        // Check if this truck has any undelivered Lorry Receipts
+        $hasUndeliveredLr = \App\Models\LorryReceipt::where('truck_id', $truck->id)
+            ->where('delivery_status', '!=', 'delivered')
+            ->exists();
 
-    if (!$hasUndeliveredLr) {
-        // If no undelivered Lorry Receipts exist, allow transporter removal
-        $truck->update(['transporter_id' => null]);
+        if (!$hasUndeliveredLr) {
+            // If no undelivered Lorry Receipts exist, allow transporter removal
+            $truck->update(['transporter_id' => null]);
 
-        return response()->json([
-            'success' => 'Truck has been removed from the transporter successfully.'
-        ]);
-    } else {
-        // If undelivered Lorry Receipts exist, show error
-        return response()->json([
-            'error' => 'Truck cannot be removed from the transporter (it is in use)!!'
-        ]);
+            return response()->json([
+                'success' => 'Truck has been removed from the transporter successfully.'
+            ]);
+        } else {
+            // If undelivered Lorry Receipts exist, show error
+            return response()->json([
+                'error' => 'Truck cannot be removed from the transporter (it is in use)!!'
+            ]);
+        }
     }
-}
 
 
     public function destroy(\App\Models\Truck $truck)
@@ -517,7 +517,6 @@ public function removeTransporter(\App\Models\Truck $truck)
             }
 
             return redirect()->route('trucks.index')->with('success', 'Truck deleted successfully!');
-
         } catch (\Exception $e) {
             // Handle any errors during deletion
             $errorMessage = 'Unable to delete truck. Please try again.';
@@ -645,7 +644,6 @@ public function removeTransporter(\App\Models\Truck $truck)
                 'success' => true,
                 'message' => 'Truck owner assigned successfully.'
             ]);
-
         } catch (\Exception $e) {
             Log::error('Error assigning truck owner: ' . $e->getMessage());
             return response()->json([
