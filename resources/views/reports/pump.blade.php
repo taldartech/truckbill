@@ -1,4 +1,3 @@
-
 @extends('layouts.app')
 
 @section('title', 'Pump Wise Report')
@@ -9,6 +8,7 @@
         .select2-container--bootstrap-5 .select2-selection {
             min-height: 38px;
         }
+
         .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
             padding-left: 12px;
             padding-right: 20px;
@@ -18,25 +18,31 @@
             border: var(--bs-border-width) solid var(--bs-border-color);
             border-radius: 0.375rem;
         }
+
         .select2-container--bootstrap-5 .select2-selection--single:focus-visible {
             border-color: var(--bs-primary);
             box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
             outline: 0;
             border-radius: 0.375rem;
         }
+
         .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
             height: 36px;
             right: 12px;
         }
+
         .select2-dropdown {
             border: 1px solid #dee2e6;
             border-radius: 0.375rem;
         }
+
         .select2-results__option--highlighted {
             background-color: var(--bs-primary);
             color: white;
         }
-        .table th, .table td {
+
+        .table th,
+        .table td {
             white-space: nowrap;
             vertical-align: middle;
         }
@@ -83,7 +89,7 @@
         </div>
     </div>
 
-    @if(!$pumpId)
+    @if (!$pumpId)
         <div class="alert alert-warning">
             Please select a pump to generate the report.
         </div>
@@ -103,7 +109,7 @@
                             href="{{ route('reports.pump-export', [
                                 'start_date' => $startDate,
                                 'end_date' => $endDate,
-                                'pump_id' => $pumpId
+                                'pump_id' => $pumpId,
                             ]) }}">
                             <i class="bi bi-file-earmark-spreadsheet"></i> Export
                         </a>
@@ -124,12 +130,12 @@
                     </thead>
                     <tbody>
                         @php $grandTotal = 0; @endphp
-                        @foreach($pumpData as $index => $item)
+                        @foreach ($pumpData as $index => $item)
                             @php $grandTotal += $item['amount']; @endphp
-                            @foreach($item['lrs'] as $lr)
+                            @foreach ($item['lrs'] as $lr)
                                 <tr>
                                     <td>{{ $loop->parent->iteration }}</td>
-                                    
+
                                     <td>{{ $lr->lr_number ?? 'N/A' }}</td>
                                     <td>{{ $item['date'] ?? 'N/A' }}</td>
                                     {{-- in lr table their is truck_id from that fetch truck number --}}
@@ -138,8 +144,8 @@
                                     @endphp
                                     <td>{{ $truck->truck_number ?? 'N/A' }}</td>
 
-                                    <td>{{ $lr->destination_state ?? 'N/A' }}</td>
-                                   
+                                    <td>{{ $lr->destination_city }}, {{ $lr->destination_state ?? 'N/A' }}</td>
+
                                     <td class="text-end">₹{{ number_format($item['amount'], 2) }}</td>
                                 </tr>
                             @endforeach

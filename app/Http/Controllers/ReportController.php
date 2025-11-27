@@ -546,7 +546,7 @@ class ReportController extends Controller
 
                     if ($linked) {
                         $lrDetails = \App\Models\LorryReceipt::where('freight_booking_id', $linked->freight_booking_id)
-                            ->select('freight_booking_id', 'lr_number', 'destination_state', 'truck_id')
+                            ->select('freight_booking_id', 'lr_number', 'destination_state', 'truck_id', 'destination_city')
                             ->get();
 
                         return [
@@ -561,7 +561,7 @@ class ReportController extends Controller
                 // Else fetch directly from voucher payments (unlinked)
                 else {
                     $lrDetails = \App\Models\LorryReceipt::where('freight_booking_id', $payment->freight_booking_id)
-                        ->select('freight_booking_id', 'lr_number', 'destination_state', 'truck_id')
+                        ->select('freight_booking_id', 'lr_number', 'destination_state', 'truck_id', 'destination_city')
                         ->get();
 
                     return [

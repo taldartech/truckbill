@@ -42,7 +42,7 @@ class PumpExport implements FromCollection, ShouldAutoSize, WithEvents
         $data->push(['Pump:', $pump->pump_name]);
         $data->push(['Date Range:', $this->startDate . ' to ' . $this->endDate]);
         $data->push([]); // Empty row
-        
+
         // Add headers
         $data->push([
             'LR Number',
@@ -50,7 +50,7 @@ class PumpExport implements FromCollection, ShouldAutoSize, WithEvents
             'Truck Number',
             'Destination',
             'Amount (₹)',
-            
+
         ]);
 
         // Get all voucher payments for the selected pump and date range
@@ -72,7 +72,7 @@ class PumpExport implements FromCollection, ShouldAutoSize, WithEvents
             $lrDetails = null;
             $amount = 0;
             $date = null;
-          
+
 
             if ($payment->linked_voucher_id) {
                 // Handle linked voucher
@@ -84,20 +84,20 @@ class PumpExport implements FromCollection, ShouldAutoSize, WithEvents
 
                 if ($linked) {
                     $lrDetails = \App\Models\LorryReceipt::where('freight_booking_id', $linked->freight_booking_id)
-                        ->select('freight_booking_id', 'lr_number', 'destination_state', 'truck_id')
+                        ->select('freight_booking_id', 'lr_number', 'destination_state', 'truck_id', 'destination_city')
                         ->with('truck')
                         ->first();
-                    
+
                     $amount = $linked->amount;
                     $date = $linked->date;
                 }
             } else {
                 // Handle unlinked voucher
                 $lrDetails = \App\Models\LorryReceipt::where('freight_booking_id', $payment->freight_booking_id)
-                    ->select('freight_booking_id', 'lr_number', 'destination_state', 'truck_id')
+                    ->select('freight_booking_id', 'lr_number', 'destination_state', 'truck_id', 'destination_city')
                     ->with('truck')
                     ->first();
-                
+
                 $amount = $payment->amount;
                 $date = $payment->date;
             }
@@ -107,7 +107,7 @@ class PumpExport implements FromCollection, ShouldAutoSize, WithEvents
                     $lrDetails->lr_number ?? 'N/A',
                     \Carbon\Carbon::parse($date)->format('d-m-Y'),
                     $lrDetails->truck->truck_number ?? 'N/A',
-                    $lrDetails->destination_state ?? 'N/A',
+                    $lrDetails->destination_city . ', ' . $lrDetails->destination_state,
                     $amount,
                 ]);
 
@@ -125,7 +125,7 @@ class PumpExport implements FromCollection, ShouldAutoSize, WithEvents
     public function registerEvents(): array
     {
         return [
-            AfterSheet::class => function(AfterSheet $event) {
+            AfterSheet::class => function (AfterSheet $event) {
                 // Style the total row
                 $lastRow = $event->sheet->getHighestRow();
                 $event->sheet->getStyle("D{$lastRow}:E{$lastRow}")->applyFromArray([
@@ -138,7 +138,7 @@ class PumpExport implements FromCollection, ShouldAutoSize, WithEvents
                         ],
                     ]
                 ]);
-    
+
                 // Format amount column (starts from row 1)
                 $event->sheet->getStyle("E1:E{$lastRow}")
                     ->getNumberFormat()
