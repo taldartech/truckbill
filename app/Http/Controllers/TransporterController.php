@@ -62,29 +62,27 @@ class TransporterController extends Controller
                     if (!empty($column['search']['value'])) {
                         $searchValue = $column['search']['value'];
                         switch ($index) {
-                            case 1: // Name
+                            case 0: // Name
                                 $query->where('transporters.name', 'like', "%{$searchValue}%");
                                 break;
-                            case 2: // Short Name
+                            case 1: // Short Name
                                 $query->where('transporters.short_name', 'like', "%{$searchValue}%");
                                 break;
-                            case 3: // Contact Person
+                            case 2: // Beneficiary ID
+                                $query->where('transporters.beneficiary_id', 'like', "%{$searchValue}%");
+                                break;
+                            case 3: // PAN Number
+                                $query->where('transporters.pan_number', 'like', "%{$searchValue}%");
+                                break;
+                            case 4: // Contact Person
                                 $query->where('transporters.contact_person_name', 'like', "%{$searchValue}%");
                                 break;
-                            case 4: // Contact Number
+                            case 5: // Contact Number
                                 $query->where('transporters.mobile_number', 'like', "%{$searchValue}%");
                                 break;
-                            case 5: // Declaration Given
-                                if (strtolower($searchValue) === 'yes') {
-                                    $query->where('transporters.declaration_given', 1);
-                                } elseif (strtolower($searchValue) === 'no') {
-                                    $query->where('transporters.declaration_given', 0);
-                                }
-                                break;
-                            case 7: // Company
-                                $query->whereHas('company', function ($q) use ($searchValue) {
-                                    $q->where('name', 'like', "%{$searchValue}%");
-                                });
+                            case 6: // Advance Amount
+                                $searchValue = floatval($searchValue);
+                                $query->where('transporters.advance_amount', $searchValue);
                                 break;
                         }
                     }
@@ -97,31 +95,26 @@ class TransporterController extends Controller
                 $orderDirection = $request->order[0]['dir'];
 
                 switch ($orderColumn) {
-                    case 0: // Sr. No (ID)
-                        $query->orderBy('transporters.id', $orderDirection);
-                        break;
-                    case 1: // Name
+                    case 0: // Name
                         $query->orderBy('transporters.name', $orderDirection);
                         break;
-                    case 2: // Short Number
+                    case 1: // Short Number
                         $query->orderBy('transporters.short_name', $orderDirection);
                         break;
-                    case 3: // Contact Person
+                    case 2: // Beneficiary ID
+                        $query->orderBy('transporters.beneficiary_id', $orderDirection);
+                        break;
+                    case 3: // PAN Number
+                        $query->orderBy('transporters.pan_number', $orderDirection);
+                        break;
+                    case 4: // Contact Person
                         $query->orderBy('transporters.contact_person_name', $orderDirection);
                         break;
-                    case 4: // Contact Number
+                    case 5: // Contact Number
                         $query->orderBy('transporters.mobile_number', $orderDirection);
-                        break;
-                    case 5: // Declaration Given
-                        $query->orderBy('transporters.declaration_given', $orderDirection);
                         break;
                     case 6: // Advance Amount
                         $query->orderBy('transporters.advance_amount', $orderDirection);
-                        break;
-                    case 7: // Company
-                        $query->leftJoin('companies', 'companies.id', '=', 'transporters.company_id')
-                            ->orderBy('companies.name', $orderDirection)
-                            ->select('transporters.*');
                         break;
                     default:
                         $query->orderBy('transporters.created_at', 'desc');
@@ -149,6 +142,8 @@ class TransporterController extends Controller
                     'sr_no' => $start + $index + 1,
                     'name' => '<a href="javascript:void(0)" class="text-primary fw-bold transporter-name-link" data-id="' . $transporter->id . '" style="cursor: pointer; text-decoration: none;">' . ($transporter->name ?: '-') . '</a>',
                     'short_name' => $transporter->short_name ?: '-',
+                    'beneficiary_id' => $transporter->beneficiary_id ?: '-',
+                    'pan_number' => $transporter->pan_number ?: '-',
                     'contact_person' => $transporter->contact_person_name ?: '-',
 
                     'contact_number' => $transporter->mobile_number ?: '-',

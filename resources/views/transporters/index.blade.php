@@ -31,11 +31,10 @@
                 <table id="transportersTable" class="table table-bordered table-striped">
                     <thead>
                         <tr>
-                            <th style="width: 80px;">Sr. No</th>
                             <th>Name</th>
-                            {{-- <th>GST Number</th> --}}
-                            {{-- <th>GST Type</th> --}}
                             <th>Short Name</th>
+                            <th>Beneficiary ID</th>
+                            <th>PAN Number</th>
                             <th>Contact Person</th>
                             <th>Contact Number</th>
                             <th>Advance Amount</th>
@@ -73,9 +72,9 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     @if (Auth::user()->userRole->name === 'admin')
-                      <button type="button" class="btn btn-primary" id="editTransporterBtn" style="display: none;">
-                          <i class="bi bi-pencil"></i> Edit Transporter
-                      </button>
+                        <button type="button" class="btn btn-primary" id="editTransporterBtn" style="display: none;">
+                            <i class="bi bi-pencil"></i> Edit Transporter
+                        </button>
                     @endif
                 </div>
             </div>
@@ -161,14 +160,6 @@
                     type: 'GET'
                 },
                 columns: [{
-                        data: 'sr_no',
-                        name: 'sr_no',
-                        width: '80px',
-                        className: 'text-center',
-                        orderable: false,
-                        searchable: false
-                    },
-                    {
                         data: 'name',
                         name: 'name'
                     },
@@ -176,24 +167,26 @@
                     {
                         data: 'short_name',
                         name: 'short_name',
-                        width: '120px'
+                    },
+                    {
+                        data: 'beneficiary_id',
+                        name: 'beneficiary_id',
+                    },
+                    {
+                        data: 'pan_number',
+                        name: 'pan_number',
                     },
                     {
                         data: 'contact_person',
                         name: 'contact_person',
-                        width: '150px'
                     },
                     {
                         data: 'contact_number',
                         name: 'contact_number',
-                        width: '140px'
                     },
-
-
                     {
                         data: 'advance_amount',
                         name: 'advance_amount',
-                        width: '120px',
                         className: 'text-end'
                     },
                     @if (auth()->check() && auth()->user()->userRole->name === 'admin')
@@ -202,13 +195,12 @@
                             name: 'actions',
                             orderable: false,
                             searchable: false,
-                            width: '120px',
                             className: 'text-center'
                         }
                     @endif
                 ],
                 order: [
-                    [0, 'desc']
+                    [0, 'asc']
                 ],
                 pageLength: 10,
                 lengthMenu: [
@@ -245,7 +237,7 @@
                 searchDelay: 500,
                 initComplete: function() {
                     // Add individual column search
-                    this.api().columns([1, 2, 3, 4]).every(function() {
+                    this.api().columns([0, 1, 2, 3, 4, 5, 6]).every(function() {
                         var column = this;
                         var title = column.header().textContent;
 
@@ -520,7 +512,7 @@
                 //  confirm before submitting
                 let advanceAmount = $('#advance_amount').val();
                 if (!confirm('Are you sure you want to add an advance payment of ₹' + advanceAmount +
-                    '?')) {
+                        '?')) {
                     return false;
                 }
 
@@ -531,7 +523,7 @@
 
                 // Show loading state
                 submitBtn.prop('disabled', true).html(
-                '<i class="bi bi-hourglass-split"></i> Processing...');
+                    '<i class="bi bi-hourglass-split"></i> Processing...');
 
                 // Clear previous validation states
                 form.find('.form-control').removeClass('is-invalid is-valid');
