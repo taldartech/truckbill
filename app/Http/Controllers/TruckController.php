@@ -297,8 +297,7 @@ class TruckController extends Controller
         'truck_number' => [
             'required',
             'string',
-            'size:10',
-            'regex:/^[A-Z]{2}\d{2}[A-Z]{2}\d{4}$/',
+            'regex:/^[A-Z]{2}[A-Z0-9]{1,2}[A-Z0-9]{1,3}[0-9]{4}$/',
             // No unique rule here since handled above
         ],
         'truck_type' => 'required|string|max:50',
@@ -399,8 +398,7 @@ class TruckController extends Controller
         'truck_number' => [
             'required',
             'string',
-            'min:6',
-            'max:15',
+            'regex:/^[A-Z]{2}[A-Z0-9]{1,2}[A-Z0-9]{1,3}[0-9]{4}$/',
             // no unique rule here
         ],
         'truck_type' => 'required|string|max:50',
