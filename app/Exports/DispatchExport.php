@@ -30,21 +30,8 @@ class DispatchExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
      */
     public function collection()
     {
-        // Fetch data based on the provided parameters
-        // $company_id = Auth::user()->company_id;
-        // $query = FreightBooking::whereHas('lr', function ($query) {
-        //   $query->whereBetween('gr_date', [$this->startDate, $this->endDate]);
-        // });
-
-        // if ($company_id) {
-        //   $query->where('company_id', $company_id);
-        // }
-        // $query->where('tds_amount', '>', 0);
-
-        // $lrs = $query->get();
         $user = Auth::user()->company_id;
         if ($this->startDate || $this->endDate) {
-            // First, get the LorryReceipts with their freight bookings and voucher payments
             $query = LorryReceipt::with([
                 'freightBookings' => function ($q) {
                     $q->with(['voucherPayments']);
@@ -53,7 +40,8 @@ class DispatchExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                 'consignee',
                 'customer',
                 'truck'
-            ])->whereBetween('gr_date', [$this->startDate, $this->endDate]);
+            ])->whereBetween('gr_date', [$this->startDate, $this->endDate])
+                ->orderBy('gr_date', 'asc');
 
             if ($user) {
                 $query->where('company_id', $user);
@@ -147,9 +135,9 @@ class DispatchExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                 "Consignor" => $lr->consignor->name ?? 'N/A',
                 "Consignee" => $lr->consignee->name ?? 'N/A',
                 "GST Number" => $lr->customer->gst_number ?? 'N/A',
-                "TR Rate" => (float)($freightBooking->tr_fr_rate ?? 'N/A'),
-                "TR Freight" => (float)($freightBooking->tr_amount ?? 'N/A'),
-                "TDS" => (float)($freightBooking->tds_amount ?? 'N/A'),
+                "TR Rate" => (float)($freightBooking->tr_fr_rate ?? 0),
+                "TR Freight" => (float)($freightBooking->tr_amount ?? 0),
+                "TDS" => (float)($freightBooking->tds_amount ?? 0),
                 "Cash Advance" => $payments['cash'],
                 "Bank" => $payments['bank transfer'],
                 "Adjust In Advance" => $payments['adjust in advance'],

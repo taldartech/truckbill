@@ -5,9 +5,11 @@ namespace App\Exports;
 use App\Models\LorryReceipt;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 use Maatwebsite\Excel\Concerns\WithHeadings;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 
-class PendingMemoExport implements FromCollection, WithHeadings
+class PendingMemoExport implements FromCollection, WithHeadings, WithColumnFormatting
 {
     protected $customerId;
 
@@ -22,16 +24,16 @@ class PendingMemoExport implements FromCollection, WithHeadings
             'truck:id,truck_number',
             'customer:id,name'
         ])
-        ->where('company_id', Auth::user()->company_id)
-        ->whereNull('memo_id')
-        ->where('delivery_status', 'Delivered');
-        
+            ->where('company_id', Auth::user()->company_id)
+            ->whereNull('memo_id')
+            ->where('delivery_status', 'Delivered');
+
         // optionally filter by customer
         if ($this->customerId) {
             $query = $query->where('customer_id', $this->customerId);
         }
 
-        return $query->orderBy('gr_date', 'desc')->get()->map(function($lr) {
+        return $query->orderBy('gr_date', 'desc')->get()->map(function ($lr) {
             $amount = $lr->weight * $lr->fr_rate;
             return [
                 'Truck No' => $lr->truck->truck_number ?? 'N/A',
@@ -39,14 +41,14 @@ class PendingMemoExport implements FromCollection, WithHeadings
                 'From Place' => $lr->source_city,
                 'To Place' => $lr->destination_city,
                 'Consignment No' => $lr->lr_number,
-                'Date' => date('d-m-Y', strtotime($lr->gr_date)),
+                'Date' => Date::dateTimeToExcel(\Carbon\Carbon::parse($lr->gr_date)),
                 'Lane' => $lr->lane,
                 'QTY(MT)' => number_format($lr->weight, 2),
                 'Rate' => number_format($lr->fr_rate, 2),
                 'Damage' => number_format($lr->damage_amount, 2),
                 'Shortage' => number_format($lr->shortage_amount, 2),
                 'Amt.' => number_format($amount, 2),
-             
+
             ];
         });
     }
@@ -66,7 +68,14 @@ class PendingMemoExport implements FromCollection, WithHeadings
             'Damage',
             'Shortage',
             'Amt.',
-           
+
+        ];
+    }
+
+    public function columnFormats(): array
+    {
+        return [
+            'F' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_DDMMYYYY,
         ];
     }
 }

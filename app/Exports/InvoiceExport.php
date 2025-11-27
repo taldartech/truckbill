@@ -8,8 +8,10 @@ use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Carbon\Carbon;
+use Maatwebsite\Excel\Concerns\WithColumnFormatting;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 
-class InvoiceExport implements FromCollection, WithHeadings, ShouldAutoSize
+class InvoiceExport implements FromCollection, WithHeadings, ShouldAutoSize, WithColumnFormatting
 {
     private $startDate, $endDate;
 
@@ -23,10 +25,10 @@ class InvoiceExport implements FromCollection, WithHeadings, ShouldAutoSize
     public function collection()
     {
         $companyId = Auth::user()->company_id;
-        
-        $query = Invoice::with(['consignee', 'consignee.state','company'])
+
+        $query = Invoice::with(['consignee', 'consignee.state', 'company'])
             ->whereBetween('generated_date', [$this->startDate, $this->endDate]);
-            
+
         if ($companyId) {
             $query->where('company_id', $companyId);
         }
@@ -39,7 +41,7 @@ class InvoiceExport implements FromCollection, WithHeadings, ShouldAutoSize
                 'GSTIN/UIN of Recipient' => $invoice->consignee->gst_number ?? 'N/A',
                 'Receiver' => $invoice->consignee->name ?? 'N/A',
                 'Invoice No' => $invoice->manual_invoice_number ?? 'N/A',
-                'Date' => $invoice->generated_date ? Carbon::parse($invoice->generated_date)->format('d-m-Y') : 'N/A',
+                'Date' => Date::dateTimeToExcel(new Carbon($invoice->generated_date)),
                 'Amount' => number_format($invoice->net_amount ?? 0, 2),
                 'State' => $invoice->consignee->state->name ?? 'N/A',
                 'Reverse Charge' => $invoice->company->gst_scheme == 'reverse charge' ? 'Yes' : 'No',
@@ -70,6 +72,13 @@ class InvoiceExport implements FromCollection, WithHeadings, ShouldAutoSize
             'Rate',
             'Taxable Value',
             'Cess Amount',
+        ];
+    }
+
+    public function columnFormats(): array
+    {
+        return [
+            'E' => 'dd/mm/yyyy',
         ];
     }
 }
