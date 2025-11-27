@@ -33,28 +33,33 @@ Route::middleware(['auth', 'checkblock'])->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
     Route::get('/password/change', [LoginController::class, 'showChangePasswordForm'])->name('password.change');
     Route::post('/password/change', [LoginController::class, 'changePassword'])->name('password.change');
-    // User Management
+
+    Route::group(['middleware' => 'role:super_admin,master_admin'], function () {
+        // User Management
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
+        Route::post('/users', [UserController::class, 'store'])->name('users.store');
+        Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+        Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+        Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+        Route::get('/users/{user}/delete', [UserController::class, 'destroy'])->name('users.destroy');
+
+        // Company Registration
+        Route::get('/company/create', [CompanyController::class, 'create'])->name('company.create');
+        Route::post('/company', [CompanyController::class, 'store'])->name('company.store');
+        Route::get('/company', [CompanyController::class, 'index'])->name('company.index');
+        Route::get('/company/{company}/edit', [CompanyController::class, 'edit'])->name('company.edit');
+        Route::put('/company/{company}', [CompanyController::class, 'update'])->name('company.update');
+        Route::delete('/company/{company}', [CompanyController::class, 'destroy'])->name('company.destroy');
+    });
+    Route::group(['middleware' => 'role:master_admin'], function () {
+        Route::get('/company/{company}/block', [CompanyController::class, 'block'])->name('company.block');
+        Route::get('/company/{company}/unblock', [CompanyController::class, 'unblock'])->name('company.unblock');
+        Route::resource('promo_codes', PromoCodeController::class);
+    });
     Route::post('promo_codes/validate', [PaymentController::class, 'applyPromoCode'])->name('promo_codes.validate');
-    Route::resource('promo_codes', PromoCodeController::class);
-    Route::get('/users', [UserController::class, 'index'])->name('users.index');
-    Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
-    Route::post('/users', [UserController::class, 'store'])->name('users.store');
-    Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
-    Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
-    Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
-    Route::get('/users/{user}/delete', [UserController::class, 'destroy'])->name('users.destroy');
 
-    // Company Registration
-    Route::get('/company/create', [CompanyController::class, 'create'])->name('company.create');
-    Route::post('/company', [CompanyController::class, 'store'])->name('company.store');
-    Route::get('/company', [CompanyController::class, 'index'])->name('company.index');
-    Route::get('/company/{company}/edit', [CompanyController::class, 'edit'])->name('company.edit');
-    Route::put('/company/{company}', [CompanyController::class, 'update'])->name('company.update');
-    Route::delete('/company/{company}', [CompanyController::class, 'destroy'])->name('company.destroy');
-    Route::get('/company/{company}/block', [CompanyController::class, 'block'])->name('company.block');
-    Route::get('/company/{company}/unblock', [CompanyController::class, 'unblock'])->name('company.unblock');
-
-    Route::middleware(['superadmin'])->group(function () {
+    Route::middleware(['role:super_admin'])->group(function () {
         // Branch Management
         Route::prefix('branches')->group(function () {
             Route::get('/', [BranchController::class, 'index'])->name('branches.index');
@@ -96,27 +101,27 @@ Route::middleware(['auth', 'checkblock'])->group(function () {
     });
 
     // Consignee Management
-    Route::middleware(['moderator'])->group(function () {
+    Route::middleware(['role:admin,moderator'])->group(function () {
         Route::get('/consignees/details/{id}', [ConsigneeController::class, 'getDetails'])->name('consignees.details');
         Route::get('/consignees', [ConsigneeController::class, 'index'])->name('consignees.index');
         Route::get('/consignees/create', [ConsigneeController::class, 'create'])->name('consignees.create');
         Route::post('/consignees', [ConsigneeController::class, 'store'])->name('consignees.store');
         Route::get('/consignees/{id}', [ConsigneeController::class, 'getConsigneeDetails']);
     });
-    Route::middleware(['admin'])->group(function () {
+    Route::middleware(['role:admin'])->group(function () {
         Route::get('/consignees/{consignee}/edit', [ConsigneeController::class, 'edit'])->name('consignees.edit');
         Route::put('/consignees/{consignee}', [ConsigneeController::class, 'update'])->name('consignees.update');
         Route::delete('/consignees/{consignee}', [ConsigneeController::class, 'destroy'])->name('consignees.destroy');
     });
 
     // Transporters CRUD
-    Route::middleware(['moderator'])->group(function () {
+    Route::middleware(['role:admin,moderator'])->group(function () {
         Route::get('/transporters', [TransporterController::class, 'index'])->name('transporters.index');
         Route::get('/transporters/create', [TransporterController::class, 'create'])->name('transporters.create');
         Route::post('/transporters', [TransporterController::class, 'store'])->name('transporters.store');
         Route::get('/transporters/{transporter}', [TransporterController::class, 'show'])->name('transporters.show');
     });
-    Route::middleware(['admin'])->group(function () {
+    Route::middleware(['role:admin'])->group(function () {
         Route::get('/transporters/{transporter}/edit', [TransporterController::class, 'edit'])->name('transporters.edit');
         Route::put('/transporters/{transporter}', [TransporterController::class, 'update'])->name('transporters.update');
         Route::delete('/transporters/{transporter}', [TransporterController::class, 'destroy'])->name('transporters.destroy');
@@ -125,13 +130,13 @@ Route::middleware(['auth', 'checkblock'])->group(function () {
 
 
     //Truck Owner Management
-    Route::middleware(['moderator'])->group(function () {
+    Route::middleware(['role:admin,moderator'])->group(function () {
         Route::get('/truck_owners', [TruckOwnerController::class, 'index'])->name('truck_owners.index');
         Route::get('/truck_owners/create', [TruckOwnerController::class, 'create'])->name('truck_owners.create');
         Route::post('/truck_owners', [TruckOwnerController::class, 'store'])->name('truck_owners.store');
         Route::get('/truck_owners/{id}', [TruckOwnerController::class, 'show'])->name('truck_owners.show');
     });
-    Route::middleware(['admin'])->group(function () {
+    Route::middleware(['role:admin'])->group(function () {
         Route::get('/truck_owners/{transporter}/edit', [TruckOwnerController::class, 'edit'])->name('truck_owners.edit');
         Route::put('/truck_owners/{transporter}', [TruckOwnerController::class, 'update'])->name('truck_owners.update');
         Route::delete('/truck_owners/{transporter}', [TruckOwnerController::class, 'destroy'])->name('truck_owners.destroy');
@@ -139,16 +144,16 @@ Route::middleware(['auth', 'checkblock'])->group(function () {
 
     // Advance Payment Management
     Route::post('/advance-payments', [AdvancePaymentController::class, 'store'])->name('advance-payments.store')
-        ->middleware(['admin']);
+        ->middleware(['role:admin']);
 
     // Truck Management
-    Route::middleware(['moderator'])->group(function () {
+    Route::middleware(['role:admin,moderator'])->group(function () {
         Route::get('/trucks', [TruckController::class, 'index'])->name('trucks.index');
         Route::get('/trucks/create/{transporter_id}', [TruckController::class, 'create'])->name('trucks.create');
         Route::post('/trucks', [TruckController::class, 'store'])->name('trucks.store');
         Route::get('/trucks/{truck}', [TruckController::class, 'show'])->name('trucks.show');
     });
-    Route::middleware(['admin'])->group(function () {
+    Route::middleware(['role:admin'])->group(function () {
         Route::get('/trucks/{truck}/edit', [TruckController::class, 'edit'])->name('trucks.edit');
         Route::put('/trucks/{truck}', [TruckController::class, 'update'])->name('trucks.update');
         Route::put('/trucks/{truck}/assign-driver', [TruckController::class, 'assignDriver'])->name('trucks.assign-driver');
@@ -159,7 +164,7 @@ Route::middleware(['auth', 'checkblock'])->group(function () {
     });
 
     // Lorry Receipt CRUD
-    Route::middleware(['moderator'])->group(function () {
+    Route::middleware(['role:admin,moderator'])->group(function () {
         Route::get('/lorry_receipts/data', [LorryReceiptController::class, 'getLorryReceiptsData'])->name('lorry_receipts.data');
         Route::get('lorry_receipts/create-linked', [LorryReceiptController::class, 'createLinked'])->name('lorry_receipts.createLinked');
         Route::resource('lorry_receipts', LorryReceiptController::class)
@@ -169,14 +174,14 @@ Route::middleware(['auth', 'checkblock'])->group(function () {
         Route::get('/lorryreceipts/by-linked/{linkedId}', [App\Http\Controllers\LorryReceiptController::class, 'getByLinkedId'])
             ->name('lorryreceipts.by_linked');
     });
-    Route::middleware(['admin'])->group(function () {
+    Route::middleware(['role:admin'])->group(function () {
         Route::get('/lorry_receipts/{lorry_receipt}/edit', [LorryReceiptController::class, 'edit'])->name('lorry_receipts.edit');
         Route::put('/lorry_receipts/{lorry_receipt}', [LorryReceiptController::class, 'update'])->name('lorry_receipts.update');
         Route::delete('/lorry_receipts/{lorry_receipt}', [LorryReceiptController::class, 'destroy'])->name('lorry_receipts.destroy');
     });
 
     // Freight Bookings
-    Route::middleware(['moderator'])->group(function () {
+    Route::middleware(['role:admin,moderator'])->group(function () {
         Route::post('/freight_bookings/store_combined_payment', [FreightBookingController::class, 'storeCombinedPayment'])->name('freight_bookings.store_combined_payment');
         Route::get('/freight_bookings/data', [FreightBookingController::class, 'getFreightBookingsData'])->name('freight_bookings.datatable');
         Route::post('/freight_bookings/confirm', [FreightBookingController::class, 'confirm'])->name('freight_bookings.confirm');
@@ -188,7 +193,7 @@ Route::middleware(['auth', 'checkblock'])->group(function () {
     });
 
     // Invoices
-    Route::middleware(['moderator'])->group(function () {
+    Route::middleware(['role:admin,moderator'])->group(function () {
         Route::resource('invoices', InvoiceController::class)
             ->except(['edit', 'update', 'destroy']);
         Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->name('invoices.lrs');
@@ -196,14 +201,14 @@ Route::middleware(['auth', 'checkblock'])->group(function () {
         Route::get('/invoices/all-memos/{customerId}', [InvoiceController::class, 'getAllCustomerMemos']);
         Route::get('/invoices/pending-memo/{customerId}', [InvoiceController::class, 'getPendingMemo']);
     });
-    Route::middleware(['admin'])->group(function () {
+    Route::middleware(['role:admin'])->group(function () {
         Route::get('/invoices/{invoice}/edit', [InvoiceController::class, 'edit'])->name('invoices.edit');
         Route::put('/invoices/{invoice}', [InvoiceController::class, 'update'])->name('invoices.update');
         Route::delete('/invoices/{invoice}', [InvoiceController::class, 'destroy'])->name('invoices.destroy');
     });
 
     // Voucher Payments
-    Route::middleware(['admin'])->group(function () {
+    Route::middleware(['role:admin'])->group(function () {
         Route::resource('voucher_payments', VoucherPaymentController::class);
         Route::post('voucher_payments/bulk-update', [VoucherPaymentController::class, 'bulkUpdateStatus'])->name('voucher_payments.bulkUpdateStatus');
         Route::post('voucher_payments/bulk-payment', [VoucherPaymentController::class, 'bulkPayment'])->name('voucher_payments.bulkPayment');
@@ -223,67 +228,67 @@ Route::middleware(['auth', 'checkblock'])->group(function () {
     // Master Routes
     Route::prefix('master')->group(function () {
         // Countries
-        Route::middleware(['moderator'])->group(function () {
+        Route::middleware(['role:admin,moderator'])->group(function () {
             Route::get('/countries', [\App\Http\Controllers\CountryController::class, 'index'])->name('master.countries.index');
             Route::get('/countries/create', [\App\Http\Controllers\CountryController::class, 'create'])->name('master.countries.create');
             Route::post('/countries', [\App\Http\Controllers\CountryController::class, 'store'])->name('master.countries.store');
         });
-        Route::middleware(['admin'])->group(function () {
+        Route::middleware(['role:admin'])->group(function () {
             Route::get('/countries/{country}/edit', [\App\Http\Controllers\CountryController::class, 'edit'])->name('master.countries.edit');
             Route::put('/countries/{country}', [\App\Http\Controllers\CountryController::class, 'update'])->name('master.countries.update');
             Route::delete('/countries/{country}', [\App\Http\Controllers\CountryController::class, 'destroy'])->name('master.countries.destroy');
         });
 
         // States
-        Route::middleware(['moderator'])->group(function () {
+        Route::middleware(['role:admin,moderator'])->group(function () {
             Route::get('/states', [\App\Http\Controllers\StateController::class, 'index'])->name('master.states.index');
             Route::get('/states/create', [\App\Http\Controllers\StateController::class, 'create'])->name('master.states.create');
             Route::post('/states', [\App\Http\Controllers\StateController::class, 'store'])->name('master.states.store');
         });
-        Route::middleware(['admin'])->group(function () {
+        Route::middleware(['role:admin'])->group(function () {
             Route::get('/states/{state}/edit', [\App\Http\Controllers\StateController::class, 'edit'])->name('master.states.edit');
             Route::put('/states/{state}', [\App\Http\Controllers\StateController::class, 'update'])->name('master.states.update');
             Route::delete('/states/{state}', [\App\Http\Controllers\StateController::class, 'destroy'])->name('master.states.destroy');
         });
 
         // Cities
-        Route::middleware(['moderator'])->group(function () {
+        Route::middleware(['role:admin,moderator'])->group(function () {
             Route::get('/cities', [\App\Http\Controllers\CityController::class, 'index'])->name('master.cities.index');
             Route::get('/cities/create', [\App\Http\Controllers\CityController::class, 'create'])->name('master.cities.create');
             Route::post('/cities', [\App\Http\Controllers\CityController::class, 'store'])->name('master.cities.store');
         });
-        Route::middleware(['admin'])->group(function () {
+        Route::middleware(['role:admin'])->group(function () {
             Route::get('/cities/{city}/edit', [\App\Http\Controllers\CityController::class, 'edit'])->name('master.cities.edit');
             Route::put('/cities/{city}', [\App\Http\Controllers\CityController::class, 'update'])->name('master.cities.update');
             Route::delete('/cities/{city}', [\App\Http\Controllers\CityController::class, 'destroy'])->name('master.cities.destroy');
         });
 
         // Goods Types
-        Route::middleware(['moderator'])->group(function () {
+        Route::middleware(['role:admin,moderator'])->group(function () {
             Route::get('/goods-types', [\App\Http\Controllers\GoodsTypeController::class, 'index'])->name('master.goods-types.index');
             Route::get('/goods-types/create', [\App\Http\Controllers\GoodsTypeController::class, 'create'])->name('master.goods-types.create');
             Route::post('/goods-types', [\App\Http\Controllers\GoodsTypeController::class, 'store'])->name('master.goods-types.store');
         });
-        Route::middleware(['admin'])->group(function () {
+        Route::middleware(['role:admin'])->group(function () {
             Route::get('/goods-types/{goodsType}/edit', [\App\Http\Controllers\GoodsTypeController::class, 'edit'])->name('master.goods-types.edit');
             Route::put('/goods-types/{goodsType}', [\App\Http\Controllers\GoodsTypeController::class, 'update'])->name('master.goods-types.update');
             Route::delete('/goods-types/{goodsType}', [\App\Http\Controllers\GoodsTypeController::class, 'destroy'])->name('master.goods-types.destroy');
         });
 
         //Pumps
-        Route::middleware(['moderator'])->group(function () {
+        Route::middleware(['role:admin,moderator'])->group(function () {
             Route::get('/pumps', [PumpController::class, 'index'])->name('master.pump.index');
             Route::get('/pumps/create', [PumpController::class, 'create'])->name('master.pump.create');
             Route::post('/pumps', [PumpController::class, 'store'])->name('master.pump.store');
         });
-        Route::middleware(['admin'])->group(function () {
+        Route::middleware(['role:admin'])->group(function () {
             Route::get('/pumps/{pump}/edit', [PumpController::class, 'edit'])->name('master.pump.edit');
             Route::put('/pumps/{pump}', [PumpController::class, 'update'])->name('master.pump.update');
             Route::delete('/pumps/{pump}', [PumpController::class, 'destroy'])->name('master.pump.destroy');
         });
     });
 
-    Route::group(['prefix' => 'reports', 'middleware' => 'accountant'], function () {
+    Route::group(['prefix' => 'reports', 'middleware' => 'role:admin,accountant'], function () {
         Route::get('/consignor-consignee', [ReportController::class, 'consignor_consignee'])->name('reports.consignor-consignee');
         Route::get('/consignor-consignee-export', [ReportController::class, 'consignor_consignee_export'])->name('reports.consignor-consignee-export');
         Route::get('/tds', [ReportController::class, 'tds'])->name('reports.tds');
