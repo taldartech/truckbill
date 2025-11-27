@@ -40,124 +40,124 @@ class TransporterController extends Controller
 
             \Log::info('Query built successfully');
 
-        // Handle global search
-        if ($request->has('search') && $request->search['value']) {
-            $searchValue = $request->search['value'];
-            $query->where(function($q) use ($searchValue) {
-                $q->where('transporters.name', 'like', "%{$searchValue}%")
-                  ->orWhere('transporters.pan_number', 'like', "%{$searchValue}%")
-                  ->orWhere('transporters.mobile_number', 'like', "%{$searchValue}%")
-                  ->orWhereHas('company', function($companyQuery) use ($searchValue) {
-                      $companyQuery->where('name', 'like', "%{$searchValue}%");
-                  })
-                  ->orWhereHas('city', function($cityQuery) use ($searchValue) {
-                      $cityQuery->where('name', 'like', "%{$searchValue}%");
-                  });
-            });
-        }
+            // Handle global search
+            if ($request->has('search') && $request->search['value']) {
+                $searchValue = $request->search['value'];
+                $query->where(function ($q) use ($searchValue) {
+                    $q->where('transporters.name', 'like', "%{$searchValue}%")
+                        ->orWhere('transporters.pan_number', 'like', "%{$searchValue}%")
+                        ->orWhere('transporters.mobile_number', 'like', "%{$searchValue}%")
+                        ->orWhereHas('company', function ($companyQuery) use ($searchValue) {
+                            $companyQuery->where('name', 'like', "%{$searchValue}%");
+                        })
+                        ->orWhereHas('city', function ($cityQuery) use ($searchValue) {
+                            $cityQuery->where('name', 'like', "%{$searchValue}%");
+                        });
+                });
+            }
 
-        // Handle column-specific search
-        if ($request->has('columns')) {
-            foreach ($request->columns as $index => $column) {
-                if (!empty($column['search']['value'])) {
-                    $searchValue = $column['search']['value'];
-                    switch ($index) {
-                        case 1: // Name
-                            $query->where('transporters.name', 'like', "%{$searchValue}%");
-                            break;
-                        case 2: // Short Name
-                            $query->where('transporters.short_name', 'like', "%{$searchValue}%");
-                            break;
-                        case 3: // Contact Person
-                            $query->where('transporters.contact_person_name', 'like', "%{$searchValue}%");
-                            break;
-                        case 4: // Contact Number
-                            $query->where('transporters.mobile_number', 'like', "%{$searchValue}%");
-                            break;
-                        case 5: // Declaration Given
-                            if (strtolower($searchValue) === 'yes') {
-                                $query->where('transporters.declaration_given', 1);
-                            } elseif (strtolower($searchValue) === 'no') {
-                                $query->where('transporters.declaration_given', 0);
-                            }
-                            break;
-                        case 7: // Company
-                            $query->whereHas('company', function($q) use ($searchValue) {
-                                $q->where('name', 'like', "%{$searchValue}%");
-                            });
-                            break;
+            // Handle column-specific search
+            if ($request->has('columns')) {
+                foreach ($request->columns as $index => $column) {
+                    if (!empty($column['search']['value'])) {
+                        $searchValue = $column['search']['value'];
+                        switch ($index) {
+                            case 1: // Name
+                                $query->where('transporters.name', 'like', "%{$searchValue}%");
+                                break;
+                            case 2: // Short Name
+                                $query->where('transporters.short_name', 'like', "%{$searchValue}%");
+                                break;
+                            case 3: // Contact Person
+                                $query->where('transporters.contact_person_name', 'like', "%{$searchValue}%");
+                                break;
+                            case 4: // Contact Number
+                                $query->where('transporters.mobile_number', 'like', "%{$searchValue}%");
+                                break;
+                            case 5: // Declaration Given
+                                if (strtolower($searchValue) === 'yes') {
+                                    $query->where('transporters.declaration_given', 1);
+                                } elseif (strtolower($searchValue) === 'no') {
+                                    $query->where('transporters.declaration_given', 0);
+                                }
+                                break;
+                            case 7: // Company
+                                $query->whereHas('company', function ($q) use ($searchValue) {
+                                    $q->where('name', 'like', "%{$searchValue}%");
+                                });
+                                break;
+                        }
                     }
                 }
             }
-        }
 
-        // Handle sorting
-        if ($request->has('order')) {
-            $orderColumn = $request->order[0]['column'];
-            $orderDirection = $request->order[0]['dir'];
+            // Handle sorting
+            if ($request->has('order')) {
+                $orderColumn = $request->order[0]['column'];
+                $orderDirection = $request->order[0]['dir'];
 
-            switch ($orderColumn) {
-                case 0: // Sr. No (ID)
-                    $query->orderBy('transporters.id', $orderDirection);
-                    break;
-                case 1: // Name
-                    $query->orderBy('transporters.name', $orderDirection);
-                    break;
-                case 2: // Short Number
-                    $query->orderBy('transporters.short_name', $orderDirection);
-                    break;
-                case 3: // Contact Person
-                    $query->orderBy('transporters.contact_person_name', $orderDirection);
-                    break;
-                case 4: // Contact Number
-                    $query->orderBy('transporters.mobile_number', $orderDirection);
-                    break;
-                case 5: // Declaration Given
-                    $query->orderBy('transporters.declaration_given', $orderDirection);
-                    break;
-                case 6: // Advance Amount
-                    $query->orderBy('transporters.advance_amount', $orderDirection);
-                    break;
-                case 7: // Company
-                    $query->leftJoin('companies', 'companies.id', '=', 'transporters.company_id')
-                          ->orderBy('companies.name', $orderDirection)
-                          ->select('transporters.*');
-                    break;
-                default:
-                    $query->orderBy('transporters.created_at', 'desc');
+                switch ($orderColumn) {
+                    case 0: // Sr. No (ID)
+                        $query->orderBy('transporters.id', $orderDirection);
+                        break;
+                    case 1: // Name
+                        $query->orderBy('transporters.name', $orderDirection);
+                        break;
+                    case 2: // Short Number
+                        $query->orderBy('transporters.short_name', $orderDirection);
+                        break;
+                    case 3: // Contact Person
+                        $query->orderBy('transporters.contact_person_name', $orderDirection);
+                        break;
+                    case 4: // Contact Number
+                        $query->orderBy('transporters.mobile_number', $orderDirection);
+                        break;
+                    case 5: // Declaration Given
+                        $query->orderBy('transporters.declaration_given', $orderDirection);
+                        break;
+                    case 6: // Advance Amount
+                        $query->orderBy('transporters.advance_amount', $orderDirection);
+                        break;
+                    case 7: // Company
+                        $query->leftJoin('companies', 'companies.id', '=', 'transporters.company_id')
+                            ->orderBy('companies.name', $orderDirection)
+                            ->select('transporters.*');
+                        break;
+                    default:
+                        $query->orderBy('transporters.created_at', 'desc');
+                }
+            } else {
+                $query->orderBy('transporters.created_at', 'desc');
             }
-        } else {
-            $query->orderBy('transporters.created_at', 'desc');
-        }
 
-        // Get total count before pagination
-        $totalQuery = \App\Models\Transporter::where('is_owner', 0);
-        if (auth()->user()->userRole->name !== 'super_admin') {
-            $totalQuery->where('company_id', auth()->user()->company_id);
-        }
-        $totalRecords = $totalQuery->count();
-        $filteredRecords = $query->count();
+            // Get total count before pagination
+            $totalQuery = \App\Models\Transporter::where('is_owner', 0);
+            if (auth()->user()->userRole->name !== 'super_admin') {
+                $totalQuery->where('company_id', auth()->user()->company_id);
+            }
+            $totalRecords = $totalQuery->count();
+            $filteredRecords = $query->count();
 
-        // Handle pagination
-        $start = $request->start ?? 0;
-        $length = $request->length ?? 10;
-        $transporters = $query->offset($start)->limit($length)->get();
+            // Handle pagination
+            $start = $request->start ?? 0;
+            $length = $request->length ?? 10;
+            $transporters = $query->offset($start)->limit($length)->get();
 
-        // Format data for DataTables
-        $data = $transporters->map(function($transporter, $index) use ($start) {
-            return [
-                'sr_no' => $start + $index + 1,
-                'name' => '<a href="javascript:void(0)" class="text-primary fw-bold transporter-name-link" data-id="' . $transporter->id . '" style="cursor: pointer; text-decoration: none;">' . ($transporter->name ?: '-') . '</a>',
-                'short_name' => $transporter->short_name ?: '-',
-                'contact_person' => $transporter->contact_person_name ?: '-',
+            // Format data for DataTables
+            $data = $transporters->map(function ($transporter, $index) use ($start) {
+                return [
+                    'sr_no' => $start + $index + 1,
+                    'name' => '<a href="javascript:void(0)" class="text-primary fw-bold transporter-name-link" data-id="' . $transporter->id . '" style="cursor: pointer; text-decoration: none;">' . ($transporter->name ?: '-') . '</a>',
+                    'short_name' => $transporter->short_name ?: '-',
+                    'contact_person' => $transporter->contact_person_name ?: '-',
 
-                'contact_number' => $transporter->mobile_number ?: '-',
-                'declaration_given' => $transporter->declaration_given ? 'Yes' : 'No',
-                'advance_amount' => '₹' . number_format($transporter->advance_amount ?: 0, 2),
-                'company' => optional($transporter->company)->name ?: '-',
-                'actions' => $this->getActionButtons($transporter)
-            ];
-        });
+                    'contact_number' => $transporter->mobile_number ?: '-',
+                    'declaration_given' => $transporter->declaration_given ? 'Yes' : 'No',
+                    'advance_amount' => '₹' . number_format($transporter->advance_amount ?: 0, 2),
+                    'company' => optional($transporter->company)->name ?: '-',
+                    'actions' => $this->getActionButtons($transporter)
+                ];
+            });
 
             return response()->json([
                 'draw' => intval($request->draw),
@@ -165,7 +165,6 @@ class TransporterController extends Controller
                 'recordsFiltered' => $filteredRecords,
                 'data' => $data
             ]);
-
         } catch (\Exception $e) {
             \Log::error('DataTables error in transporters: ' . $e->getMessage());
             \Log::error('Stack trace: ' . $e->getTraceAsString());
@@ -185,12 +184,12 @@ class TransporterController extends Controller
         $buttons = '<div class="d-flex gap-1">';
 
 
-            $buttons .= '<button type="button" class="btn btn-sm btn-outline-success advance-payment-btn " title="Advance Payment" data-bs-toggle="tooltip" data-transporter-id="' . $transporter->id . '" data-transporter-name="' . htmlspecialchars($transporter->name) . '">';
-            $buttons .= '<i class="bi bi-currency-rupee "></i>';
-            $buttons .= '</button>';
+        $buttons .= '<button type="button" class="btn btn-sm btn-outline-success advance-payment-btn " title="Advance Payment" data-bs-toggle="tooltip" data-transporter-id="' . $transporter->id . '" data-transporter-name="' . htmlspecialchars($transporter->name) . '">';
+        $buttons .= '<i class="bi bi-currency-rupee "></i>';
+        $buttons .= '</button>';
 
 
-    // Edit button
+        // Edit button
         $editUrl = route('transporters.edit', $transporter->id);
         $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info " title="Edit Transporter" data-bs-toggle="tooltip">';
         $buttons .= '<i class="bi bi-pencil "></i></a>';
@@ -220,7 +219,7 @@ class TransporterController extends Controller
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get()
-            ->map(function($payment) {
+            ->map(function ($payment) {
                 return [
                     'id' => $payment->id,
                     'amount' => '₹' . number_format($payment->advance_amount, 2),
@@ -264,13 +263,13 @@ class TransporterController extends Controller
         $states = [];
         $cities = [];
 
-    if (old('country_id')) {
-        $states = \App\Models\State::where('country_id', old('country_id'))->get();
-    }
+        if (old('country_id')) {
+            $states = \App\Models\State::where('country_id', old('country_id'))->get();
+        }
 
-    if (old('state_id')) {
-        $cities = \App\Models\City::where('state_id', old('state_id'))->get();
-    }
+        if (old('state_id')) {
+            $cities = \App\Models\City::where('state_id', old('state_id'))->get();
+        }
         return view('transporters.create', compact('companies', 'trucks', 'countries', 'states', 'cities'));
     }
 
@@ -281,13 +280,17 @@ class TransporterController extends Controller
         $validated = $request->validate([
             'company_id' => 'required|exists:companies,id',
             'name' => 'required|string|max:255',
-           'gst_number' => [
+            'gst_number' => [
                 'nullable',
                 'string',
                 'max:15',
                 'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
                 Rule::unique('transporters')
-                ->where(fn($query) => $query->where('company_id', $request->company_id)),
+                    ->where(
+                        fn($query) => $query->where('company_id', $request->company_id)
+                            ->whereNULL('deleted_at')
+                            ->where('is_owner', 0)
+                    ),
             ],
             'pan_number' => [
                 'required',
@@ -295,7 +298,9 @@ class TransporterController extends Controller
                 'size:10',
                 'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
                 Rule::unique('transporters')
-                ->where(fn($query) => $query->where('company_id', $request->company_id)),
+                    ->where(fn($query) => $query->where('company_id', $request->company_id)
+                        ->whereNULL('deleted_at')
+                        ->where('is_owner', 0)),
             ],
             'gst_type' => 'nullable|in:composition,regular',
             'is_owner' => 'nullable|boolean',
@@ -337,14 +342,18 @@ class TransporterController extends Controller
                 'required',
                 'digits:10',
                 Rule::unique('transporters')
-                ->where(fn($query) => $query->where('company_id', $request->company_id)),
+                    ->where(fn($query) => $query->where('company_id', $request->company_id)
+                        ->whereNULL('deleted_at')
+                        ->where('is_owner', 0)),
             ],
             'short_name' => [
                 'nullable',
                 'string',
                 'max:255',
                 Rule::unique('transporters')
-                    ->where(fn($query) => $query->where('company_id', $request->company_id)),
+                    ->where(fn($query) => $query->where('company_id', $request->company_id)
+                        ->whereNULL('deleted_at')
+                        ->where('is_owner', 0)),
             ],
             'contact_person_name' => 'nullable|string|max:255',
         ], [
@@ -370,13 +379,13 @@ class TransporterController extends Controller
         }
 
         // Ensure uppercase PAN and GST numbers
-    if (!empty($validated['pan_number'])) {
-        $validated['pan_number'] = strtoupper($validated['pan_number']);
-    }
-    if (!empty($validated['gst_number'])) {
-        $validated['gst_number'] = strtoupper($validated['gst_number']);
-    }
-    //    dd($validated);
+        if (!empty($validated['pan_number'])) {
+            $validated['pan_number'] = strtoupper($validated['pan_number']);
+        }
+        if (!empty($validated['gst_number'])) {
+            $validated['gst_number'] = strtoupper($validated['gst_number']);
+        }
+        //    dd($validated);
         if (!isset($validated['advance_amount'])) {
             $validated['advance_amount'] = 0;
         }
@@ -391,25 +400,25 @@ class TransporterController extends Controller
         // Convert pan_active to boolean
         $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
         // dd($validated);
-         // Determine TDS Percentage
-    if ($validated['pan_active'] == false) {
-        // PAN not active → 20%
-        $validated['tds_percentage'] = 20.00;
-    } else {
-        // PAN active → check 4th character
-        $fourthChar = strtoupper(substr($validated['pan_number'], 3, 1));
-        $validChars = ['C', 'F', 'A', 'B', 'J', 'L', 'T'];
-        $nonValidChars = ['P', 'H'];
-
-        if (in_array($fourthChar, $validChars)) {
-            $validated['tds_percentage'] = 2.00;
-        } else if (in_array($fourthChar, $nonValidChars)) {
-            $validated['tds_percentage'] = 1.00;
-        } else {
-            // Default if PAN active but not in the given list
+        // Determine TDS Percentage
+        if ($validated['pan_active'] == false) {
+            // PAN not active → 20%
             $validated['tds_percentage'] = 20.00;
+        } else {
+            // PAN active → check 4th character
+            $fourthChar = strtoupper(substr($validated['pan_number'], 3, 1));
+            $validChars = ['C', 'F', 'A', 'B', 'J', 'L', 'T'];
+            $nonValidChars = ['P', 'H'];
+
+            if (in_array($fourthChar, $validChars)) {
+                $validated['tds_percentage'] = 2.00;
+            } else if (in_array($fourthChar, $nonValidChars)) {
+                $validated['tds_percentage'] = 1.00;
+            } else {
+                // Default if PAN active but not in the given list
+                $validated['tds_percentage'] = 20.00;
+            }
         }
-    }
 
         \App\Models\Transporter::create($validated);
 
@@ -425,13 +434,13 @@ class TransporterController extends Controller
         $states = [];
         $cities = [];
 
-    if (old('country_id')) {
-        $states = \App\Models\State::where('country_id', old('country_id'))->get();
-    }
+        if (old('country_id')) {
+            $states = \App\Models\State::where('country_id', old('country_id'))->get();
+        }
 
-    if (old('state_id')) {
-        $cities = \App\Models\City::where('state_id', old('state_id'))->get();
-    }
+        if (old('state_id')) {
+            $cities = \App\Models\City::where('state_id', old('state_id'))->get();
+        }
         // $countries = \App\Models\Country::all();
         // $states = $transporter->country_id ? \App\Models\State::where('country_id', $transporter->country_id)->get() : collect();
         // $cities = $transporter->state_id ? \App\Models\City::where('state_id', $transporter->state_id)->get() : collect();
@@ -443,16 +452,19 @@ class TransporterController extends Controller
         $validated = $request->validate([
             'company_id' => 'required|exists:companies,id',
             'name' => 'required|string|max:255',
-           'gst_number' => [
+            'gst_number' => [
                 'nullable',
                 'string',
                 'max:15',
                 'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
                 Rule::unique('transporters')
-                ->where(fn($query) =>
-                    $query->where('company_id', $request->company_id)
-                )
-                ->ignore($transporter->id),
+                    ->where(
+                        fn($query) =>
+                        $query->where('company_id', $request->company_id)
+                            ->whereNULL('deleted_at')
+                            ->where('is_owner', 0)
+                    )
+                    ->ignore($transporter->id),
             ],
             'pan_number' => [
                 'required',
@@ -460,10 +472,13 @@ class TransporterController extends Controller
                 'size:10',
                 'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
                 Rule::unique('transporters')
-                ->where(fn($query) =>
-                    $query->where('company_id', $request->company_id)
-                )
-                ->ignore($transporter->id),
+                    ->where(
+                        fn($query) =>
+                        $query->where('company_id', $request->company_id)
+                            ->whereNULL('deleted_at')
+                            ->where('is_owner', 0)
+                    )
+                    ->ignore($transporter->id),
             ],
             'gst_type' => 'nullable|in:composition,regular',
             'is_owner' => 'nullable|boolean',
@@ -505,17 +520,22 @@ class TransporterController extends Controller
                 'required',
                 'digits:10',
                 Rule::unique('transporters')
-                ->where(fn($query) =>
-                    $query->where('company_id', $request->company_id)
-                )
-                ->ignore($transporter->id),
+                    ->where(
+                        fn($query) =>
+                        $query->where('company_id', $request->company_id)
+                            ->whereNULL('deleted_at')
+                            ->where('is_owner', 0)
+                    )
+                    ->ignore($transporter->id),
             ],
-           'short_name' => [
+            'short_name' => [
                 'nullable',
                 'string',
                 'max:255',
                 Rule::unique('transporters')
-                    ->where(fn($query) => $query->where('company_id', $request->company_id))
+                    ->where(fn($query) => $query->where('company_id', $request->company_id)
+                        ->whereNULL('deleted_at')
+                        ->where('is_owner', 0))
                     ->ignore($transporter->id),
             ],
             'contact_person_name' => 'nullable|string|max:255',
@@ -526,13 +546,13 @@ class TransporterController extends Controller
             'mobile_number.unique' => 'This mobile number is already associated with another transporter.',
             'short_name.unique' => 'This short name is already associated with another transporter and cannot be used.',
         ]);
-            // Ensure uppercase PAN and GST numbers
-    if (!empty($validated['pan_number'])) {
-        $validated['pan_number'] = strtoupper($validated['pan_number']);
-    }
-    if (!empty($validated['gst_number'])) {
-        $validated['gst_number'] = strtoupper($validated['gst_number']);
-    }
+        // Ensure uppercase PAN and GST numbers
+        if (!empty($validated['pan_number'])) {
+            $validated['pan_number'] = strtoupper($validated['pan_number']);
+        }
+        if (!empty($validated['gst_number'])) {
+            $validated['gst_number'] = strtoupper($validated['gst_number']);
+        }
 
         if (!isset($validated['advance_amount'])) {
             $validated['advance_amount'] = 0;
@@ -548,28 +568,28 @@ class TransporterController extends Controller
 
         // Convert pan_active to boolean
         $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
-              // Determine TDS Percentage
+        // Determine TDS Percentage
 
-    if ($validated['pan_active'] == false) {
+        if ($validated['pan_active'] == false) {
 
-        // PAN not active → 20%
-        $validated['tds_percentage'] = 20.00;
-    } else {
-
-        // PAN active → check 4th character
-        $fourthChar = strtoupper(substr($validated['pan_number'], 3, 1));
-        $validChars = ['C', 'F', 'A', 'B', 'J', 'L', 'T'];
-        $nonValidChars = ['P', 'H'];
-
-        if (in_array($fourthChar, $validChars)) {
-            $validated['tds_percentage'] = 2.00;
-        } else if (in_array($fourthChar, $nonValidChars)) {
-            $validated['tds_percentage'] = 1.00;
-        } else {
-            // Default if PAN active but not in the given list
+            // PAN not active → 20%
             $validated['tds_percentage'] = 20.00;
+        } else {
+
+            // PAN active → check 4th character
+            $fourthChar = strtoupper(substr($validated['pan_number'], 3, 1));
+            $validChars = ['C', 'F', 'A', 'B', 'J', 'L', 'T'];
+            $nonValidChars = ['P', 'H'];
+
+            if (in_array($fourthChar, $validChars)) {
+                $validated['tds_percentage'] = 2.00;
+            } else if (in_array($fourthChar, $nonValidChars)) {
+                $validated['tds_percentage'] = 1.00;
+            } else {
+                // Default if PAN active but not in the given list
+                $validated['tds_percentage'] = 20.00;
+            }
         }
-    }
         $transporter->update($validated);
         return redirect()->route('transporters.index')->with('success', 'Transporter updated successfully!');
     }
@@ -624,8 +644,8 @@ class TransporterController extends Controller
             }
 
             $truckOwners = $query->select('id', 'name')
-                                ->orderBy('name')
-                                ->get();
+                ->orderBy('name')
+                ->get();
 
             return response()->json($truckOwners);
         } catch (\Exception $e) {
@@ -648,8 +668,8 @@ class TransporterController extends Controller
             }
 
             $agencies = $query->select('id', 'name')
-                             ->orderBy('name')
-                             ->get();
+                ->orderBy('name')
+                ->get();
 
             return response()->json($agencies);
         } catch (\Exception $e) {
