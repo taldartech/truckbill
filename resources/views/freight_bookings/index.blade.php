@@ -127,172 +127,165 @@
                     </div>
                 </div>
 
-                <!-- Results Count -->
-                {{-- <div class="row mb-3">
-                    <div class="col-12 text-end">
-                        <small class="text-muted">
-                            Showing {{ $bookings->firstItem() ?? 0 }} to {{ $bookings->lastItem() ?? 0 }} of
-                            {{ $bookings->total() }} results
-                        </small>
+                @if (request('search'))
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> Search results for: <strong>"{{ request('search') }}"</strong>
+                        <a href="{{ route('freight_bookings.index') }}" class="btn btn-sm btn-outline-primary ms-2">Clear
+                            Search</a>
                     </div>
-                </div> --}}
-            </div>
+                @endif
 
-            @if (request('search'))
-                <div class="alert alert-info">
-                    <i class="bi bi-info-circle"></i> Search results for: <strong>"{{ request('search') }}"</strong>
-                    <a href="{{ route('freight_bookings.index') }}" class="btn btn-sm btn-outline-primary ms-2">Clear
-                        Search</a>
-                </div>
-            @endif
-
-            <div class="table-responsive" style="font-size: 12px;">
-                <table id="freightBookingsTable" class="table table-bordered table-striped">
-                    <thead class="table-dark">
-                        <tr class="text-center" style="font-size: 12px;">
-                            <th style="width: 40px;"><input type="checkbox" id="select-all"></th>
-                            {{-- <th style="width: 80px;">Sr. No</th>
+                <div class="table-responsive" style="font-size: 12px;">
+                    <table id="freightBookingsTable" class="table table-bordered table-striped">
+                        <thead class="table-dark">
+                            <tr class="text-center" style="font-size: 12px;">
+                                <th style="width: 40px;"><input type="checkbox" id="select-all"></th>
+                                {{-- <th style="width: 80px;">Sr. No</th>
                         <th>FR Number</th> --}}
-                            <th class="text-center">GR Date</th>
+                                <th class="text-center">GR Date</th>
 
-                            <th>LR No</th>
-                            <th>Customer</th>
-                            <th>Transporter</th>
-                            <th>Short Name</th>
-                            <th>Reference</th>
-                            <th>Truck No</th>
-                            <th>Source City</th>
-                            <th>Destination City</th>
-                            <th>Weight</th>
-                            <th>Tr Rate</th>
-                            <th>Total Amount</th>
-                            <th class="text-end">Balance</th>
-                            <th class="text-center" style="width: 80px;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($bookings as $index => $booking)
-                            <tr
-                                class="@if ($booking->is_cancelled) table-danger @elseif($booking->is_delivered) table-success @endif">
-                                <td class="text-center">
-                                    @if ($booking->lr && $booking->lr->memo_id && $booking->balance_amount <= 0)
-                                        <span class="text-muted"
-                                            title="No checkbox available: memo_id is added and balance is zero"><i
-                                                class="bi bi-dash-circle"></i></span>
-                                    @elseif($booking->is_cancelled)
-                                        <span class="text-muted"
-                                            title="No checkbox available: Freight Booking is cancelled"><i
-                                                class="bi bi-dash-circle"></i></span>
-                                    @else
-                                        <input type="checkbox" class="row-checkbox" value="{{ $booking->id }}"
-                                            data-lr="{{ $booking->lr ? $booking->lr->lr_number : '' }}"
-                                            data-amount="{{ $booking->lr ? $booking->lr->amount : '' }}"
-                                            data-linked-lr-id="{{ $booking->lr ? $booking->lr->linked_lr_id : '' }}"
-                                            data-memo-id="{{ $booking->lr ? $booking->lr->memo_id : '' }}"
-                                            data-lr-id="{{ $booking->lr ? $booking->lr->id : '' }}"
-                                            data-truck="{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->truck_number : '' }}"
-                                            data-truck-id="{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->id : '' }}"
-                                            data-transporter-id="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->id : '' }}"
-                                            data-balance="{{ $booking->balance_amount ?? 0 }}"
-                                            data-voucher_number="{{ $booking->voucher_number ?? '' }}"
-                                            data-freight-booking-id="{{ $booking->id }}"
-                                            data-is-cancelled="{{ $booking->is_cancelled ? '1' : '0' }}"
-                                            data-is-delivered="{{ $booking->is_delivered ? '1' : '0' }}"
-                                            data-transporter="{{ $booking->transporter ? $booking->transporter->name : '' }}"
-                                            data-lr-transporter="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->name : '' }}"
-                                            data-fb-transporter="{{ $booking->transporter_name ?? ($booking->transporter ? $booking->transporter->name : '') }}"
-                                            data-tds-percentage="{{ $booking->transporter_tds_percentage ?? '' }}"
-                                            data-linked-lr-id="{{ $booking->linked_lr_id ?? '' }}"
-                                            data-customer-id="{{ $booking->lr && $booking->lr->customer ? $booking->lr->customer->id : '' }}">
-                                    @endif
-                                </td>
-                                {{-- <td class="text-center">{{ $bookings->firstItem() + $index }}</td>
+                                <th>LR No</th>
+                                <th>Customer</th>
+                                <th>Transporter</th>
+                                <th>Short Name</th>
+                                <th>Reference</th>
+                                <th>Truck No</th>
+                                <th>Source City</th>
+                                <th>Destination City</th>
+                                <th>Weight</th>
+                                <th>Tr Rate</th>
+                                <th>Total Amount</th>
+                                <th class="text-end">Balance</th>
+                                <th class="text-center" style="width: 80px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($bookings as $index => $booking)
+                                <tr
+                                    class="@if ($booking->is_cancelled) table-danger @elseif($booking->is_delivered) table-success @endif">
+                                    <td class="text-center">
+                                        @if ($booking->lr && $booking->lr->memo_id && $booking->balance_amount <= 0)
+                                            <span class="text-muted"
+                                                title="No checkbox available: memo_id is added and balance is zero"><i
+                                                    class="bi bi-dash-circle"></i></span>
+                                        @elseif($booking->is_cancelled)
+                                            <span class="text-muted"
+                                                title="No checkbox available: Freight Booking is cancelled"><i
+                                                    class="bi bi-dash-circle"></i></span>
+                                        @else
+                                            <input type="checkbox" class="row-checkbox" value="{{ $booking->id }}"
+                                                data-lr="{{ $booking->lr ? $booking->lr->lr_number : '' }}"
+                                                data-amount="{{ $booking->lr ? $booking->lr->amount : '' }}"
+                                                data-linked-lr-id="{{ $booking->lr ? $booking->lr->linked_lr_id : '' }}"
+                                                data-memo-id="{{ $booking->lr ? $booking->lr->memo_id : '' }}"
+                                                data-lr-id="{{ $booking->lr ? $booking->lr->id : '' }}"
+                                                data-truck="{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->truck_number : '' }}"
+                                                data-truck-id="{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->id : '' }}"
+                                                data-transporter-id="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->id : '' }}"
+                                                data-balance="{{ $booking->balance_amount ?? 0 }}"
+                                                data-voucher_number="{{ $booking->voucher_number ?? '' }}"
+                                                data-freight-booking-id="{{ $booking->id }}"
+                                                data-is-cancelled="{{ $booking->is_cancelled ? '1' : '0' }}"
+                                                data-is-delivered="{{ $booking->is_delivered ? '1' : '0' }}"
+                                                data-transporter="{{ $booking->transporter ? $booking->transporter->name : '' }}"
+                                                data-lr-transporter="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->name : '' }}"
+                                                data-fb-transporter="{{ $booking->transporter_name ?? ($booking->transporter ? $booking->transporter->name : '') }}"
+                                                data-tds-percentage="{{ $booking->transporter_tds_percentage ?? '' }}"
+                                                data-linked-lr-id="{{ $booking->linked_lr_id ?? '' }}"
+                                                data-customer-id="{{ $booking->lr && $booking->lr->customer ? $booking->lr->customer->id : '' }}">
+                                        @endif
+                                    </td>
+                                    {{-- <td class="text-center">{{ $bookings->firstItem() + $index }}</td>
                                 <td><a href="{{ route('freight_bookings.show', $booking->id) }}" class="text-primary text-decoration-underline">{{ $booking->id ? $booking->id : '-' }}</a></td> --}}
-                                {{-- <td class="text-center">
+                                    {{-- <td class="text-center">
                                     {{ $booking->lr && $booking->lr->gr_date ? date('d-m-Y', strtotime($booking->lr->gr_date)) : '-' }}
                                 </td> --}}
-                                <td class="text-center"
-                                    data-order="{{ $booking->lr && $booking->lr->gr_date ? date('Y-m-d', strtotime($booking->lr->gr_date)) : '' }}">
-                                    {{ $booking->lr && $booking->lr->gr_date ? date('d-m-Y', strtotime($booking->lr->gr_date)) : '-' }}
-                                </td>
-                                <td data-order="{{ $booking->lr->lr_number }}">
-                                    @if ($booking->lr)
-                                        {{ $booking->lr->lr_number }}
-                                        @if ($booking->linked_lr_id)
-                                            <span class="badge text-bg-info">[{{ $booking->linked_lr_id }}]</span>
+                                    <td class="text-center"
+                                        data-order="{{ $booking->lr && $booking->lr->gr_date ? date('Y-m-d', strtotime($booking->lr->gr_date)) : '' }}">
+                                        {{ $booking->lr && $booking->lr->gr_date ? date('d-m-Y', strtotime($booking->lr->gr_date)) : '-' }}
+                                    </td>
+                                    <td data-order="{{ $booking->lr->lr_number }}">
+                                        @if ($booking->lr)
+                                            {{ $booking->lr->lr_number }}
+                                            @if ($booking->linked_lr_id)
+                                                <span class="badge text-bg-info">[{{ $booking->linked_lr_id }}]</span>
+                                            @endif
+                                        @else
+                                            -
                                         @endif
-                                    @else
-                                        -
-                                    @endif
-                                </td>
-                                {{-- <td>{{ $booking->lr ? $booking->lr->customer->name : '-' }}</td> --}}
-                                <td data-order="{{ $booking?->lr?->customer?->name }}">
-                                    @if ($booking->lr)
-                                        {{ $booking->lr->customer->name }}
-                                        @if ($booking->lr->memo_id)
-                                            <span class="badge text-bg-success ms-1">[{{ $booking->lr->memo_id }}]</span>
+                                    </td>
+                                    {{-- <td>{{ $booking->lr ? $booking->lr->customer->name : '-' }}</td> --}}
+                                    <td data-order="{{ $booking?->lr?->customer?->name }}">
+                                        @if ($booking->lr)
+                                            {{ $booking->lr->customer->name }}
+                                            @if ($booking->lr->memo_id)
+                                                <span
+                                                    class="badge text-bg-success ms-1">[{{ $booking->lr->memo_id }}]</span>
+                                            @endif
+                                        @else
+                                            -
                                         @endif
-                                    @else
-                                        -
-                                    @endif
-                                </td>
-                                <td>
-                                    @php
-                                        $transporterName =
-                                            $booking->transporter_name ??
-                                            ($booking->transporter ? $booking->transporter->name : '-');
-                                        $badge = '';
+                                    </td>
+                                    <td>
+                                        @php
+                                            $transporterName =
+                                                $booking->transporter_name ??
+                                                ($booking->transporter ? $booking->transporter->name : '-');
+                                            $badge = '';
 
-                                        if ($booking->transporter && $booking->transporter->is_owner) {
-                                            $badge =
-                                                '<span class="badge bg-success ms-1" title="Truck Owner"><i class="bi bi-truck"></i></span>';
-                                        } else {
-                                            $badge =
-                                                '<span class="badge bg-info ms-1" title="Agency"><i class="bi bi-building"></i></span>';
-                                        }
-                                    @endphp
-                                    {!! $transporterName . ' ' . $badge !!}
-                                </td>
-                                <td data-order="{{ $booking?->transporter?->short_name }}">
-                                    @php
-                                        $shortName = $booking->transporter_name
-                                            ? $booking->transporter->short_name
-                                            : '-';
-                                    @endphp
-                                    {!! $shortName !!}
-                                </td>
-                                <td>{{ $booking?->lr?->reference?->name ?? '-' }}</td>
-                                <td>{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->truck_number : '-' }}
-                                </td>
-                                <td>{{ $booking->lr && $booking->lr->source_city ? $booking->lr->source_city : '-' }}</td>
-                                <td>{{ $booking->lr && $booking->lr->destination_city ? $booking->lr->destination_city : '-' }}
-                                </td>
-                                <td>{{ $booking->lr && $booking->lr->weight ? $booking->lr->weight : '-' }}</td>
-                                <td>{{ $booking->lr && $booking->tr_fr_rate ? $booking->tr_fr_rate : '-' }}</td>
-                                <td>{{ $booking->lr && $booking->tr_fr_rate ? $booking->tr_amount : '-' }}</td>
+                                            if ($booking->transporter && $booking->transporter->is_owner) {
+                                                $badge =
+                                                    '<span class="badge bg-success ms-1" title="Truck Owner"><i class="bi bi-truck"></i></span>';
+                                            } else {
+                                                $badge =
+                                                    '<span class="badge bg-info ms-1" title="Agency"><i class="bi bi-building"></i></span>';
+                                            }
+                                        @endphp
+                                        {!! $transporterName . ' ' . $badge !!}
+                                    </td>
+                                    <td data-order="{{ $booking?->transporter?->short_name }}">
+                                        @php
+                                            $shortName = $booking->transporter_name
+                                                ? $booking->transporter->short_name
+                                                : '-';
+                                        @endphp
+                                        {!! $shortName !!}
+                                    </td>
+                                    <td>{{ $booking?->lr?->reference?->name ?? '-' }}</td>
+                                    <td>{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->truck_number : '-' }}
+                                    </td>
+                                    <td>{{ $booking->lr && $booking->lr->source_city ? $booking->lr->source_city : '-' }}
+                                    </td>
+                                    <td>{{ $booking->lr && $booking->lr->destination_city ? $booking->lr->destination_city : '-' }}
+                                    </td>
+                                    <td>{{ $booking->lr && $booking->lr->weight ? $booking->lr->weight : '-' }}</td>
+                                    <td>{{ $booking->lr && $booking->tr_fr_rate ? $booking->tr_fr_rate : '-' }}</td>
+                                    <td>{{ $booking->lr && $booking->tr_fr_rate ? $booking->tr_amount : '-' }}</td>
 
-                                <td data-order="{{ $booking->balance_amount ?? 0 }}" class="text-end">
-                                    ₹{{ number_format($booking->balance_amount ?? 0, 2) }}</td>
-                                <td class="text-center">
-                                    <div class="btn-group" role="group">
-                                        <a href="{{ route('freight_bookings.show', $booking->id) }}"
-                                            class="btn btn-sm btn-outline-info" style="padding: 8px;" title="View">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                        <a href="{{ route('freight_bookings.edit', $booking->id) }}"
-                                            class="btn btn-sm btn-outline-primary" style="padding: 8px;" title="Edit">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-                                        <a href="{{ route('reports.voucher-receipt-export', ['lr_id' => $booking->lr->id]) }}"
-                                            target="_blank" class="btn btn-sm btn-outline-success">
-                                            <i class="fa fa-file"></i>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                                    <td data-order="{{ $booking->balance_amount ?? 0 }}" class="text-end">
+                                        ₹{{ number_format($booking->balance_amount ?? 0, 2) }}</td>
+                                    <td class="text-center">
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ route('freight_bookings.show', $booking->id) }}"
+                                                class="btn btn-sm btn-outline-info" style="padding: 8px;" title="View">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a href="{{ route('freight_bookings.edit', $booking->id) }}"
+                                                class="btn btn-sm btn-outline-primary" style="padding: 8px;"
+                                                title="Edit">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a href="{{ route('reports.voucher-receipt-export', ['lr_id' => $booking->lr->id]) }}"
+                                                target="_blank" class="btn btn-sm btn-outline-success">
+                                                <i class="fa fa-file"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -686,7 +679,7 @@
                     if (today > planEndDate) {
                         alert(
                             'Your subscription plan has expired. Please renew your subscription to continue using the service.'
-                            );
+                        );
                         // Stop further execution so modal doesn't open
                         return false; // or just return
                     }
@@ -728,7 +721,7 @@
 
                                 alert(
                                     `⚠️ Error: The following linked LRs do not have Freight Bookings:\n\n${lrNumbers}\n\nPlease create FRs for all linked LRs before proceeding with combined payment.`
-                                    );
+                                );
                                 console.log('❌ Missing FRs for:', missingLRs);
                                 return;
                             }
@@ -1674,7 +1667,7 @@
                 if (today > planEndDate) {
                     alert(
                         'Your subscription plan has expired. Please renew your subscription to continue using the service.'
-                        );
+                    );
                     // Stop further execution so modal doesn't open
                     return false; // or just return
                 }

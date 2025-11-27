@@ -54,8 +54,11 @@ class FreightBookingController extends Controller
             $endDate = $maxEndDate;
         }
 
-        $query->whereDate('freight_bookings.created_at', '>=', $startDate)
-            ->whereDate('freight_bookings.created_at', '<=', $endDate);
+        // Filter by date range for LR -> gr_date
+        $query->whereHas('lr', function ($q) use ($startDate, $endDate) {
+            $q->whereDate('gr_date', '>=', $startDate)
+                ->whereDate('gr_date', '<=', $endDate);
+        });
 
         // Search functionality
         if ($request->filled('search')) {
