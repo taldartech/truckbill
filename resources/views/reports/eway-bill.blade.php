@@ -59,20 +59,20 @@
                 <table class="table table-bordered table-striped" style="font-size: 12px !important;">
                     <thead>
                         <tr>
-                          <th>Sr No</th>
-                          <th>LR No</th>
-                          <th>GR Date</th>
-                          <th>Truck No</th>
-                          <th>Weight</th>
-                          <th>LR Rate</th>
-                          <th>LR Amount</th>
-                          <th>Consignor</th>
-                          <th>Consignee</th>
-                          <th>Destination</th>
-                          <th>Eway Bill No.</th>
-                          <th>Eway Bill Expiry Date</th>
-                          <th>Transporter/Truck Owner Name</th>
-                          <th>Transporter/Truck Owner Mobile No.</th>
+                            <th>Sr No</th>
+                            <th>LR No</th>
+                            <th>GR Date</th>
+                            <th>Truck No</th>
+                            <th>Weight</th>
+                            <th>LR Rate</th>
+                            <th>LR Amount</th>
+                            <th>Consignor</th>
+                            <th>Consignee</th>
+                            <th>Destination</th>
+                            <th>Eway Bill No.</th>
+                            <th>Eway Bill Expiry Date</th>
+                            <th>Transporter/Truck Owner Name</th>
+                            <th>Transporter/Truck Owner Mobile No.</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -102,9 +102,11 @@
                                     // Map the grouped payments to our expected keys
                                     foreach ($payments as $mode => $amount) {
                                         $normalizedMode = strtolower(trim($mode));
-                                        $matchingMode = $paymentSums->keys()->first(function ($key) use ($normalizedMode) {
-                                            return strtolower(trim($key)) === $normalizedMode;
-                                        });
+                                        $matchingMode = $paymentSums
+                                            ->keys()
+                                            ->first(function ($key) use ($normalizedMode) {
+                                                return strtolower(trim($key)) === $normalizedMode;
+                                            });
 
                                         if ($matchingMode !== null) {
                                             $payments[$mode] = $paymentSums[$matchingMode];
@@ -115,7 +117,8 @@
                             <tr>
                                 <td>{{ $index + 1 }}</td>
                                 <td>{{ $lr->lr_number }}</td>
-                                <td style="white-space: nowrap;">{{ \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') }}</td>
+                                <td style="white-space: nowrap;">{{ \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') }}
+                                </td>
                                 <td>{{ $lr->truck->truck_number ?? 'N/A' }}</td>
                                 <td>{{ $lr->weight }}</td>
                                 <td>{{ $lr->fr_rate }}</td>
@@ -123,10 +126,10 @@
                                 <td>{{ $lr->consignor->name ?? 'N/A' }}</td>
                                 <td>{{ $lr->consignee->name ?? 'N/A' }}</td>
                                 <td>{{ $lr->destination_city }}</td>
-                                <td>{{ $freightBooking->eway_bill_no ?? '0' }}</td>
+                                <td>{{ $freightBooking->eway_bill_number ?? '0' }}</td>
                                 <td>{{ $freightBooking->eway_bill_expiry ?? '0' }}</td>
-                                <td>{{$lr->transporter->name ?? 'N/A'}}</td>
-                                <td>{{$lr->transporter->mobile_number ?? 'N/A'}}</td>
+                                <td>{{ $lr->transporter->name ?? 'N/A' }}</td>
+                                <td>{{ $lr->transporter->mobile_number ?? 'N/A' }}</td>
                             </tr>
                         @endforeach
                     </tbody>

@@ -242,8 +242,15 @@
                                 <td>{{ $lr->reference->name ?? 'N/A' }}</td>
                                 <td>{{ $lr->transporter_type ?? 'N/A' }}</td>
                                 <td>{{ $lr->transporter->tds_percentage == 0 ? 'No' : 'Yes' }}</td>
-                                <td>{{ $freightBooking->eway_bill_no ?? 'N/A' }}</td>
-                                <td>{{ $freightBooking->eway_bill_expiry_date ?? 'N/A' }}</td>
+                                <td>{{ $freightBooking->eway_bill_number ?? 'N/A' }}</td>
+                                {{-- <td>{{ $freightBooking->eway_bill_expiry ?? 'N/A' }}</td> --}}
+                                <td style="white-space: nowrap;">
+                                    @if ($freightBooking && $freightBooking->eway_bill_expiry)
+                                        {{ \Carbon\Carbon::parse($freightBooking->eway_bill_expiry)->format('d-m-Y') }}
+                                    @else
+                                        N/A
+                                    @endif
+                                </td>
                                 <td>{{ $lr->delivery_status ?? 'N/A' }}</td>
                                 <td>{{ $lr->transporter->pan_number ?? 'N/A' }}</td>
                                 {{-- Rest of the row remains the same --}}
