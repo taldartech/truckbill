@@ -159,6 +159,7 @@
                             <th>Customer</th>
                             <th>Transporter</th>
                             <th>Short Name</th>
+                            <th>Reference</th>
                             <th>Truck No</th>
                             <th>Source City</th>
                             <th>Destination City</th>
@@ -170,7 +171,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($bookings as $index => $booking)
+                        @foreach ($bookings as $index => $booking)
                             <tr
                                 class="@if ($booking->is_cancelled) table-danger @elseif($booking->is_delivered) table-success @endif">
                                 <td class="text-center">
@@ -258,7 +259,9 @@
                                             ? $booking->transporter->short_name
                                             : '-';
                                     @endphp
-                                    {!! $shortName !!}</td>
+                                    {!! $shortName !!}
+                                </td>
+                                <td>{{ $booking?->lr?->reference?->name ?? '-' }}</td>
                                 <td>{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->truck_number : '-' }}
                                 </td>
                                 <td>{{ $booking->lr && $booking->lr->source_city ? $booking->lr->source_city : '-' }}</td>
@@ -281,38 +284,16 @@
                                             <i class="bi bi-pencil"></i>
                                         </a>
                                         <a href="{{ route('reports.voucher-receipt-export', ['lr_id' => $booking->lr->id]) }}"
-                                            target="_blank" class="btn btn-sm btn-outling-success">
+                                            target="_blank" class="btn btn-sm btn-outline-success">
                                             <i class="fa fa-file"></i>
                                         </a>
                                     </div>
                                 </td>
                             </tr>
-                        @empty
-                            {{-- <tr>
-                                <td colspan="12" class="text-center py-4">
-                                    <div class="text-muted">
-                                        <i class="bi bi-inbox display-4"></i>
-                                        <p class="mt-2">No freight bookings found</p>
-                                        @if (request('search'))
-                                            <p>Try adjusting your search criteria</p>
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr> --}}
-                        @endforelse
+                        @endforeach
                     </tbody>
                 </table>
             </div>
-            <div class="d-flex justify-content-center mt-3">
-                {{-- {{ $bookings->appends(request()->query())->links('pagination::bootstrap-5') }} --}}
-            </div>
-
-            <!-- Pagination -->
-            {{-- @if ($bookings->hasPages())
-            <div class="d-flex justify-content-center mt-4">
-                {{ $bookings->appends(request()->query())->links() }}
-            </div>
-        @endif --}}
         </div>
     </div>
 
@@ -420,7 +401,6 @@
             </div>
         </div>
     </div>
-
 @endsection
 
 @push('styles')
@@ -589,17 +569,14 @@
                 }
             }
 
-
             // Voucher Payment Modal
             $('#voucher-payment-btn').on('click', function() {
-
                 const checkedBoxes = $('.row-checkbox:checked');
 
                 if (checkedBoxes.length === 0) {
                     alert('Please select at least one freight booking.');
                     return;
                 }
-
 
 
 
@@ -616,431 +593,85 @@
                     totalAmount += balance;
 
                     tableBody += `
-                <tr>
-                    <td>${lrNumber}</td>
-                    <td>${truckNumber}</td>
-                    <td>${voucherNumber}</td>
-                    <td class="text-end">₹${balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-                    <td>
-                        <input type="number" class="form-control payment-amount allocated-input"
-                               data-id="${checkbox.val()}"
-                               value="${balance}"
-                               min="0.01"
-                               max="${balance}"
-                               step="0.01">
-                        <div class="form-text">Amount must be greater than zero and not exceed balance</div>
-                    </td>
-                </tr>
-            `;
+                        <tr>
+                            <td>${lrNumber}</td>
+                            <td>${truckNumber}</td>
+                            <td>${voucherNumber}</td>
+                            <td class="text-end">₹${balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                            <td>
+                                <input type="number" class="form-control payment-amount allocated-input"
+                                      data-id="${checkbox.val()}"
+                                      value="${balance}"
+                                      min="0.01"
+                                      max="${balance}"
+                                      step="0.01">
+                                <div class="form-text">Amount must be greater than zero and not exceed balance</div>
+                            </td>
+                        </tr>
+                    `;
                 });
 
                 const modalContent = `
-            <form id="voucherPaymentForm" method="POST" action="{{ route('freight_bookings.voucher_payment') }}">
-                @csrf
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Payment Type</label>
-                        <select name="payment_type_id" id="paymentType" class="form-select" required>
-                            <option value="">Select Payment Type</option>
-                            @foreach ($paymentTypes as $type)
-                                <option value="{{ $type->id }}">{{ $type->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Payment Mode</label>
-                        <select name="payment_mode_id" id="paymentMode" class="form-select" required>
-                            <option value="">Select Payment Mode</option>
-                            @foreach ($paymentModes as $mode)
-                                <option value="{{ $mode->id }}">{{ $mode->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
+                    <form id="voucherPaymentForm" method="POST" action="{{ route('freight_bookings.voucher_payment') }}">
+                        @csrf
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Payment Type</label>
+                                <select name="payment_type_id" id="paymentType" class="form-select" required>
+                                    <option value="">Select Payment Type</option>
+                                    @foreach ($paymentTypes as $type)
+                                        <option value="{{ $type->id }}">{{ $type->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Payment Mode</label>
+                                <select name="payment_mode_id" id="paymentMode" class="form-select" required>
+                                    <option value="">Select Payment Mode</option>
+                                    @foreach ($paymentModes as $mode)
+                                        <option value="{{ $mode->id }}">{{ $mode->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
 
-                <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr>
-                                <th>LR Number</th>
-                                <th>Truck Number</th>
-                                <th>Voucher Number</th>
-                                <th class="text-end">Balance Amount</th>
-                                <th class="text-end">Payment Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${tableBody}
-                        </tbody>
-                        <tfoot>
-                            <tr class="table-info">
-                                <th colspan="4" class="text-end">Total Payment:</th>
-                                <th class="text-end" id="totalPaymentAmount">₹${totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</th>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>LR Number</th>
+                                        <th>Truck Number</th>
+                                        <th>Voucher Number</th>
+                                        <th class="text-end">Balance Amount</th>
+                                        <th class="text-end">Payment Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${tableBody}
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-info">
+                                        <th colspan="4" class="text-end">Total Payment:</th>
+                                        <th class="text-end" id="totalPaymentAmount">₹${totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Remarks</label>
-                    <textarea name="remarks" id="paymentRemarks" class="form-control" rows="3"></textarea>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Reference ID (Optional)</label>
-                    <input type="text" name="reference_id" id="referenceId" class="form-control">
-                </div>
-            </form>
-        `;
+                        <div class="mb-3">
+                            <label class="form-label">Remarks</label>
+                            <textarea name="remarks" id="paymentRemarks" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Reference ID (Optional)</label>
+                            <input type="text" name="reference_id" id="referenceId" class="form-control">
+                        </div>
+                    </form>
+                `;
 
                 $('#voucherPaymentBody').html(modalContent);
             });
 
-            // Combined Payment Modal
-            // $('#combined-payment-btn').on('click', function() {
-            //     const checkedBoxes = $('.row-checkbox:checked');
-            //     // if (checkedBoxes.length < 2) {
-            //     //     alert('Select at least two bookings with the same Linked LR to use Combined Payment.');
-            //     //     return;
-            //     // }
-
-            //     let rowsHtml = '';
-            //     const bookingIds = [];
-            //     const balances = [];
-            //     let totalBalance = 0;
-
-            //     checkedBoxes.each(function() {
-            //         const cb = $(this);
-            //         const fbId = cb.data('freight-booking-id');
-            //         const lrNo = cb.data('lr');
-            //         const truckNo = cb.data('truck');
-            //         const balance = parseFloat(cb.data('balance')) || 0;
-            //         bookingIds.push(fbId);
-            //         balances.push(balance);
-            //         totalBalance += balance;
-
-            //         rowsHtml += `
-        //             <tr>
-        //                 <td>${lrNo}</td>
-        //                 <td>${truckNo}</td>
-        //                 <td class="text-end">₹${balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-        //                 <td class="text-end" style="max-width: 160px;">
-        //                     <input type="number"
-        //                       class="form-control form-control-sm allocated-input"
-        //                       name="payment_amounts[]"
-        //                       data-fb-id="${fbId}"
-        //                       data-balance="${balance}"
-        //                       min="0" max="${balance}" step="0.01" value="0.00">
-        //                       <div class="invalid-feedback">
-        //                         Amount must be between 0 and ₹${balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}
-        //                       </div>
-        //                 </td>
-        //             </tr>
-        //         `;
-            //     });
-
-            //     // allocated-input validation
-            //     $(document).off('input', '.allocated-input').on('input', '.allocated-input', function() {
-            //         let val = parseFloat($(this).val() || '0');
-            //         const max = parseFloat($(this).attr('max') || '0');
-            //         console.log("max", max);
-            //         if (val > max || val < 0) {
-            //             $(this).addClass('is-invalid');
-
-            //         } else {
-            //             $(this).removeClass('is-invalid');
-
-            //         }
-
-            //         // Update total allocated
-            //         let allocatedTotal = 0;
-            //         $('.allocated-input').each(function() {
-            //             allocatedTotal += parseFloat($(this).val() || '0');
-            //         });
-            //         $('#combinedAllocatedTotal').text('₹' + allocatedTotal.toLocaleString('en-IN', {
-            //             minimumFractionDigits: 2
-            //         }));
-
-            //         // Update combined amount input
-            //         $('#combinedAmountInput').val(allocatedTotal.toFixed(2));
-            //     });
-
-            //     const paymentTypeOptions = (paymentTypes || []).map(pt =>
-            //         `<option value="${pt.name}">${pt.name}</option>`).join('');
-            //     const paymentModeOptions = (paymentModes || []).map(pm =>
-            //         `<option value="${pm.name}">${pm.name}</option>`).join('');
-
-            //     const today = new Date().toISOString().slice(0, 10);
-
-            //     const modalContent = `
-        //         <form id="combinedPaymentForm" method="POST" action="{{ route('freight_bookings.store_combined_payment') }}">
-        //           @csrf
-        //           <div class="alert alert-secondary d-flex align-items-center justify-content-between">
-        //               <div>
-        //                   <strong>Total Balance of Selected:</strong> ₹<span id="combinedTotalBalance">${totalBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-        //               </div>
-        //               <div class="d-flex align-items-center gap-2">
-        //                   <label class="form-label mb-0">Combined Amount *</label>
-        //                   <div>
-        //                     <input type="number" step="0.01" min="0.01" max="${totalBalance}" class="form-control" id="combinedAmountInput" name="combined_amount" style="width: 200px;" required>
-        //                     <div class="invalid-feedback">
-        //                       Amount must be between 0.01 and ₹${totalBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}
-        //                     </div>
-        //                   </div>
-        //               </div>
-        //           </div>
-        //           <div class="table-responsive mb-2">
-        //               <table class="table table-sm table-bordered">
-        //                   <thead class="table-light">
-        //                       <tr>
-        //                           <th>LR Number</th>
-        //                           <th>Truck Number</th>
-        //                           <th class="text-end">Balance</th>
-        //                           <th class="text-end">Allocated</th>
-        //                       </tr>
-        //                   </thead>
-        //                   <tbody>
-        //                       ${rowsHtml}
-        //                   </tbody>
-        //                   <tfoot>
-        //                       <tr class="table-info">
-        //                           <th colspan="3" class="text-end">Total Allocated:</th>
-        //                           <th class="text-end" id="combinedAllocatedTotal">₹0.00</th>
-        //                       </tr>
-        //                   </tfoot>
-        //               </table>
-        //           </div>
-        //           <input type="hidden" id="combinedBookingIds" name="booking_ids[]">
-        //           <div id="combinedAmountsContainer"></div>
-        //           <div style="display: flex; gap: 15px; margin-bottom: 15px;">
-        //             <div style="flex: 1;">
-        //                 <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Type *</label>
-        //                 <select id="paymentType" name="payment_type" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
-        //                     <option value="">Select Payment Type</option>
-        //                     ${paymentTypes.map(type =>
-        //                         `<option value="${type.id}">${type.name}</option>`
-        //                     ).join('')}
-        //                 </select>
-        //             </div>
-        //             <div style="flex: 1;">
-        //               <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Mode *</label>
-        //               <select id="paymentMode" name="payment_mode" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
-        //                   <option value="">Select Payment Mode</option>
-        //                   ${paymentModes.map(mode =>
-        //                       `<option value="${mode.id}">${mode.name}</option>`
-        //                   ).join('')}
-        //               </select>
-        //             </div>
-        //             <div id="pumpNameContainer" style="display: none ; margin-bottom: 15px; flex: 1;">
-        //               <label style="display: block; margin-bottom: 5px; font-weight: bold;">Pump Name *</label>
-        //               <select id="pumpName" name="pump_id" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-        //                   <option value="">Select Pump</option>
-        //                   @foreach ($pumps as $pump)
-        //                       <option value="{{ $pump->id }}">{{ $pump->pump_name }} ({{ $pump->contact_name }}) </option>
-        //                   @endforeach
-        //               </select>
-        //             </div>
-        //           </div>
-        //           <div style="display: flex; gap: 20px; margin-bottom: 15px;">
-        //               <!-- Payment Date -->
-        //               <div style="flex: 1;">
-        //                   <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Date</label>
-        //                   <input type="date" id="paymentDate" name="payment_date" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-        //               </div>
-        //               <!-- Reference Transaction ID -->
-        //               <div style="flex: 1;">
-        //                   <label style="display: block; margin-bottom: 5px; font-weight: bold;">Remarks</label>
-        //               <textarea id="paymentRemarks" style="width: 100%; height: 60px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Enter any remarks..."></textarea>
-        //               </div>
-
-
-        //           </div>
-
-        //         </form>
-        //       `;
-
-            //     $('#combinedPaymentBody').html(modalContent);
-
-            //     // Seed hidden booking_ids[] inputs
-            //     const bookingIdsContainerHtml = bookingIds.map(id =>
-            //         `<input type="hidden" name="booking_ids[]" value="${id}">`).join('');
-            //     $('#combinedBookingIds').replaceWith(bookingIdsContainerHtml);
-
-            //     // Allocation logic
-            //     function allocateCombined(amount) {
-            //         let remaining = amount;
-            //         let allocatedTotal = 0;
-            //         const amountsContainer = $('#combinedAmountsContainer');
-            //         amountsContainer.empty();
-
-            //         $('.allocated-input').each(function(index) {
-            //             const bal = balances[index];
-            //             let alloc = 0;
-            //             if (remaining > 0) {
-            //                 alloc = Math.min(bal, remaining);
-            //                 remaining -= alloc;
-            //             }
-            //             allocatedTotal += alloc;
-            //             $(this).val(alloc.toFixed(2));
-            //             const fbId = $(this).data('fb-id');
-            //         });
-
-            //         $('#combinedAllocatedTotal').text('₹' + allocatedTotal.toLocaleString('en-IN', {
-            //             minimumFractionDigits: 2
-            //         }));
-            //     }
-
-            //     // Handle input changes
-            //     $(document).off('input', '#combinedAmountInput').on('input', '#combinedAmountInput',
-            //         function() {
-            //             const totalBal = totalBalance;
-            //             let entered = parseFloat($(this).val() || '0');
-            //             if (entered > totalBal || entered < 0) {
-            //                 $(this).addClass('is-invalid');
-            //             } else {
-            //                 $(this).removeClass('is-invalid');
-            //             }
-            //             allocateCombined(entered);
-            //         });
-
-            //     // Initialize with max (totalBalance)
-            //     $('#combinedAmountInput').val(totalBalance.toFixed(2)).trigger('input');
-
-            //     // Show modal
-            //     const modal = new bootstrap.Modal(document.getElementById('combinedPaymentModal'));
-            //     modal.show();
-            // });
-            //             $('#combined-payment-btn').on('click', function() {
-            //     const checkedBoxes = $('.row-checkbox:checked');
-            //     if (checkedBoxes.length === 0) {
-            //         alert('Please select at least one booking.');
-            //         return;
-            //     }
-
-            //     // Get first selected checkbox
-            //     const firstCb = checkedBoxes.first();
-            //     const linkedLrId = firstCb.data('linked-lr-id');
-            //     const fbId = firstCb.data('freight-booking-id');
-            //     const lrId = firstCb.data('lr-id');
-
-            //     // Function to build modal content
-            //     function buildCombinedModal(lrData) {
-            //         let rowsHtml = '';
-            //         const bookingIds = [];
-            //         const balances = [];
-            //         let totalBalance = 0;
-
-            //         lrData.forEach(lr => {
-            //             const fbId = lr.freight_booking_id;
-            //             const lrNo = lr.lr_number;
-            //             const truckNo = lr.truck_number;
-            //             const balance = parseFloat(lr.balance_amount) || 0;
-
-            //             bookingIds.push(fbId);
-            //             balances.push(balance);
-            //             totalBalance += balance;
-
-            //             rowsHtml += `
-        //                 <tr>
-        //                     <td>${lrNo}</td>
-        //                     <td>${truckNo}</td>
-        //                     <td class="text-end">₹${balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
-        //                     <td class="text-end" style="max-width:160px;">
-        //                         <input type="number"
-        //                                class="form-control form-control-sm allocated-input"
-        //                                name="payment_amounts[]"
-        //                                data-fb-id="${fbId}"
-        //                                data-balance="${balance}"
-        //                                min="0" max="${balance}"
-        //                                step="0.01"
-        //                                value="${balance.toFixed(2)}">
-        //                         <div class="invalid-feedback">
-        //                             Amount must be between 0 and ₹${balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}
-        //                         </div>
-        //                     </td>
-        //                 </tr>
-        //             `;
-            //         });
-
-            //         // Build your full modal HTML (same as your existing modal)
-            //         const modalContent = `
-        //             <form id="combinedPaymentForm" method="POST" action="{{ route('freight_bookings.store_combined_payment') }}">
-        //               @csrf
-        //               <div class="alert alert-secondary d-flex align-items-center justify-content-between">
-        //                 <div>
-        //                     <strong>Total Balance of Selected:</strong> ₹<span id="combinedTotalBalance">${totalBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-        //                 </div>
-        //                 <div class="d-flex align-items-center gap-2">
-        //                     <label class="form-label mb-0">Combined Amount *</label>
-        //                     <div>
-        //                       <input type="number" step="0.01" min="0.01" max="${totalBalance}" class="form-control" id="combinedAmountInput" name="combined_amount" style="width:200px;" required>
-        //                     </div>
-        //                 </div>
-        //               </div>
-
-        //               <div class="table-responsive mb-2">
-        //                 <table class="table table-sm table-bordered">
-        //                     <thead class="table-light">
-        //                         <tr>
-        //                             <th>LR Number</th>
-        //                             <th>Truck Number</th>
-        //                             <th class="text-end">Balance</th>
-        //                             <th class="text-end">Allocated</th>
-        //                         </tr>
-        //                     </thead>
-        //                     <tbody>${rowsHtml}</tbody>
-        //                     <tfoot>
-        //                         <tr class="table-info">
-        //                             <th colspan="3" class="text-end">Total Allocated:</th>
-        //                             <th class="text-end" id="combinedAllocatedTotal">₹0.00</th>
-        //                         </tr>
-        //                     </tfoot>
-        //                 </table>
-        //               </div>
-
-        //               ${bookingIds.map(id => `<input type="hidden" name="booking_ids[]" value="${id}">`).join('')}
-        //             </form>
-        //         `;
-
-            //         $('#combinedPaymentBody').html(modalContent);
-
-            //         // Rebind allocation logic (same as before)
-            //         $(document).off('input', '.allocated-input').on('input', '.allocated-input', function() {
-            //             const val = parseFloat($(this).val() || '0');
-            //             const max = parseFloat($(this).attr('max') || '0');
-            //             $(this).toggleClass('is-invalid', val > max || val < 0);
-
-            //             let allocatedTotal = 0;
-            //             $('.allocated-input').each(function() {
-            //                 allocatedTotal += parseFloat($(this).val() || '0');
-            //             });
-            //             $('#combinedAllocatedTotal').text('₹' + allocatedTotal.toLocaleString('en-IN', {minimumFractionDigits: 2}));
-            //             $('#combinedAmountInput').val(allocatedTotal.toFixed(2));
-            //         });
-
-            //         $('#combinedAmountInput').val(totalBalance.toFixed(2)).trigger('input');
-            //         new bootstrap.Modal(document.getElementById('combinedPaymentModal')).show();
-            //     }
-
-            //     // ✅ If linked_lr_id exists → fetch all related LRs
-            //     if (linkedLrId) {
-            //         $.get(`/lorryreceipts/by-linked/${linkedLrId}`, function(response) {
-            //             if (response.length > 0) {
-            //                 buildCombinedModal(response);
-            //             } else {
-            //                 alert('No related LRs found for this linked ID.');
-            //             }
-            //         });
-            //     } else {
-            //         // ✅ No linked_lr_id → only that LR
-            //         const lrData = [{
-            //             freight_booking_id: fbId,
-            //             lr_number: firstCb.data('lr'),
-            //             truck_number: firstCb.data('truck'),
-            //             balance_amount: parseFloat(firstCb.data('balance') || 0)
-            //         }];
-            //         buildCombinedModal(lrData);
-            //     }
-            // });
             // Combined Payment Button Click Handler
             const planEndDateStr = @json(Auth::user()->company->plan_end_date ?? null);
             const today = new Date();
@@ -1054,7 +685,8 @@
                     const planEndDate = new Date(planEndDateStr);
                     if (today > planEndDate) {
                         alert(
-                            'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+                            'Your subscription plan has expired. Please renew your subscription to continue using the service.'
+                            );
                         // Stop further execution so modal doesn't open
                         return false; // or just return
                     }
@@ -1095,7 +727,8 @@
                                 const lrNumbers = missingLRs.map(lr => lr.lr_number).join(', ');
 
                                 alert(
-                                    `⚠️ Error: The following linked LRs do not have Freight Bookings:\n\n${lrNumbers}\n\nPlease create FRs for all linked LRs before proceeding with combined payment.`);
+                                    `⚠️ Error: The following linked LRs do not have Freight Bookings:\n\n${lrNumbers}\n\nPlease create FRs for all linked LRs before proceeding with combined payment.`
+                                    );
                                 console.log('❌ Missing FRs for:', missingLRs);
                                 return;
                             }
@@ -1155,110 +788,110 @@
                     bookingIds.push(fbId);
 
                     rowsHtml += `
-            <tr>
-                <td>${lrNo}</td>
-                <td>${truckNo}</td>
-                    <input type="hidden"
-                        class="form-control form-control-sm allocated-input"
-                        name="payment_amounts[]"
-                        data-fb-id="${fbId}"
-                        data-balance="${balance}"
-                        min="0" max="${balance}"
-                        step="0.01"
-                        value="${balance.toFixed(2)}">
-            </tr>
-        `;
+                        <tr>
+                            <td>${lrNo}</td>
+                            <td>${truckNo}</td>
+                                <input type="hidden"
+                                    class="form-control form-control-sm allocated-input"
+                                    name="payment_amounts[]"
+                                    data-fb-id="${fbId}"
+                                    data-balance="${balance}"
+                                    min="0" max="${balance}"
+                                    step="0.01"
+                                    value="${balance.toFixed(2)}">
+                        </tr>
+                    `;
                 });
 
                 // Build the modal content with the existing structure
                 const modalContent = `
-        <form id="combinedPaymentForm" method="POST" action="{{ route('freight_bookings.store_combined_payment') }}">
-            @csrf
-            <div class="alert alert-secondary d-flex align-items-center justify-content-between">
-                <div>
-                    <strong>Total Balance of Selected:</strong> ₹<span id="combinedTotalBalance">${totalBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-                </div>
-                <div class="d-flex align-items-center gap-2">
-                    <label class="form-label mb-0">Combined Amount *</label>
-                    <div>
-                        <input type="number"
-                               step="0.01"
-                               min="0.01"
-                               max="${totalBalance}"
-                               class="form-control"
-                               id="combinedAmountInput"
-                               name="combined_amount"
-                               style="width: 200px;"
-                               value="${totalBalance.toFixed(2)}"
-                               required>
-                        <div class="invalid-feedback">
-                            Amount must be between 0.01 and ₹${totalBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}
+                    <form id="combinedPaymentForm" method="POST" action="{{ route('freight_bookings.store_combined_payment') }}">
+                        @csrf
+                        <div class="alert alert-secondary d-flex align-items-center justify-content-between">
+                            <div>
+                                <strong>Total Balance of Selected:</strong> ₹<span id="combinedTotalBalance">${totalBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <label class="form-label mb-0">Combined Amount *</label>
+                                <div>
+                                    <input type="number"
+                                          step="0.01"
+                                          min="0.01"
+                                          max="${totalBalance}"
+                                          class="form-control"
+                                          id="combinedAmountInput"
+                                          name="combined_amount"
+                                          style="width: 200px;"
+                                          value="${totalBalance.toFixed(2)}"
+                                          required>
+                                    <div class="invalid-feedback">
+                                        Amount must be between 0.01 and ₹${totalBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-            <div class="table-responsive mb-2">
-                <table class="table table-sm table-bordered">
-                    <thead class="table-light">
-                        <tr>
-                            <th>LR Number</th>
-                            <th>Truck Number</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${rowsHtml}
-                    </tbody>
-                    <tfoot class="d-none">
-                        <tr class="table-info">
-                            <th colspan="3" class="text-end">Total Allocated:</th>
-                            <th class="text-end" id="combinedAllocatedTotal">₹${totalBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</th>
-                        </tr>
-                    </tfoot>
-                </table>
-            </div>
-            ${bookingIds.map(id => `<input type="hidden" name="booking_ids[]" value="${id}">`).join('')}
-            <div id="combinedAmountsContainer"></div>
-            <div style="display: flex; gap: 15px; margin-bottom: 15px;">
-                <div style="flex: 1;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Type *</label>
-                    <select id="paymentType" name="payment_type" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
-                        <option value="">Select Payment Type</option>
-                        ${paymentTypes.map(type =>
-                            `<option value="${type.id}">${type.name}</option>`
-                        ).join('')}
-                    </select>
-                </div>
-                <div style="flex: 1;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Mode *</label>
-                    <select id="paymentMode" name="payment_mode" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
-                        <option value="">Select Payment Mode</option>
-                        ${paymentModes.map(mode =>
-                            `<option value="${mode.id}">${mode.name}</option>`
-                        ).join('')}
-                    </select>
-                </div>
-                <div id="pumpNameContainer" style="display: none; margin-bottom: 15px; flex: 1;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Pump Name *</label>
-                    <select id="pumpName" name="pump_id" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                        <option value="">Select Pump</option>
-                        @foreach ($pumps as $pump)
-                            <option value="{{ $pump->id }}">{{ $pump->pump_name }} ({{ $pump->contact_name }})</option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
-            <div style="display: flex; gap: 20px; margin-bottom: 15px;">
-                <div style="flex: 1;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Date</label>
-                    <input type="date" id="paymentDate" name="payment_date" value="{{ date('Y-m-d') }}" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
-                </div>
-                <div style="flex: 1;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Remarks</label>
-                    <textarea id="paymentRemarks" name="remarks" style="width: 100%; height: 60px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Enter any remarks..."></textarea>
-                </div>
-            </div>
-        </form>
-    `;
+                        <div class="table-responsive mb-2">
+                            <table class="table table-sm table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>LR Number</th>
+                                        <th>Truck Number</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${rowsHtml}
+                                </tbody>
+                                <tfoot class="d-none">
+                                    <tr class="table-info">
+                                        <th colspan="3" class="text-end">Total Allocated:</th>
+                                        <th class="text-end" id="combinedAllocatedTotal">₹${totalBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        ${bookingIds.map(id => `<input type="hidden" name="booking_ids[]" value="${id}">`).join('')}
+                        <div id="combinedAmountsContainer"></div>
+                        <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                            <div style="flex: 1;">
+                                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Type *</label>
+                                <select id="paymentType" name="payment_type" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
+                                    <option value="">Select Payment Type</option>
+                                    ${paymentTypes.map(type =>
+                                        `<option value="${type.id}">${type.name}</option>`
+                                    ).join('')}
+                                </select>
+                            </div>
+                            <div style="flex: 1;">
+                                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Mode *</label>
+                                <select id="paymentMode" name="payment_mode" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
+                                    <option value="">Select Payment Mode</option>
+                                    ${paymentModes.map(mode =>
+                                        `<option value="${mode.id}">${mode.name}</option>`
+                                    ).join('')}
+                                </select>
+                            </div>
+                            <div id="pumpNameContainer" style="display: none; margin-bottom: 15px; flex: 1;">
+                                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Pump Name *</label>
+                                <select id="pumpName" name="pump_id" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                                    <option value="">Select Pump</option>
+                                    @foreach ($pumps as $pump)
+                                        <option value="{{ $pump->id }}">{{ $pump->pump_name }} ({{ $pump->contact_name }})</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 20px; margin-bottom: 15px;">
+                            <div style="flex: 1;">
+                                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Date</label>
+                                <input type="date" id="paymentDate" name="payment_date" value="{{ date('Y-m-d') }}" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
+                            </div>
+                            <div style="flex: 1;">
+                                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Remarks</label>
+                                <textarea id="paymentRemarks" name="remarks" style="width: 100%; height: 60px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Enter any remarks..."></textarea>
+                            </div>
+                        </div>
+                    </form>
+                `;
 
                 // Update modal content
                 $('#combinedPaymentBody').html(modalContent);
@@ -1347,69 +980,6 @@
                 });
             }
 
-            // function initializeAmountAllocation(totalBalance) {
-            //     // Handle allocation when combined amount changes
-            //     $(document).off('input', '#combinedAmountInput').on('input', '#combinedAmountInput', function() {
-            //         const totalAmount = parseFloat($(this).val()) || 0;
-            //         const maxAmount = parseFloat($(this).attr('max')) || 0;
-
-            //         if (totalAmount > maxAmount || totalAmount < 0) {
-            //             $(this).addClass('is-invalid');
-            //             return;
-            //         }
-            //         $(this).removeClass('is-invalid');
-
-            //         // Distribute amount proportionally
-            //         let remaining = totalAmount;
-            //         let allocatedTotal = 0;
-
-            //         $('.allocated-input').each(function() {
-            //             const $input = $(this);
-            //             const balance = parseFloat($input.data('balance')) || 0;
-            //             const percentage = totalBalance > 0 ? (balance / totalBalance) : 0;
-            //             const allocated = Math.min(balance, Math.round(totalAmount * percentage * 100) / 100);
-
-            //             $input.val(allocated.toFixed(2));
-            //             remaining -= allocated;
-            //             allocatedTotal += allocated;
-            //         });
-
-            //         // Handle any remaining amount due to rounding
-            //         if (remaining > 0) {
-            //             $('.allocated-input').first().val(
-            //                 (parseFloat($('.allocated-input').first().val()) + remaining).toFixed(2)
-            //             );
-            //             allocatedTotal += remaining;
-            //         }
-
-            //         // Update total allocated display
-            //         $('#combinedAllocatedTotal').text('₹' + allocatedTotal.toLocaleString('en-IN', {minimumFractionDigits: 2}));
-            //     });
-
-            //     // Handle individual input changes
-            //     $(document).off('input', '.allocated-input').on('input', '.allocated-input', function() {
-            //         const $input = $(this);
-            //         const val = parseFloat($input.val()) || 0;
-            //         const max = parseFloat($input.attr('max')) || 0;
-
-            //         if (val > max || val < 0) {
-            //             $input.addClass('is-invalid');
-            //         } else {
-            //             $input.removeClass('is-invalid');
-            //         }
-
-            //         // Update total allocated
-            //         let allocatedTotal = 0;
-            //         $('.allocated-input').each(function() {
-            //             allocatedTotal += parseFloat($(this).val() || 0);
-            //         });
-
-            //         $('#combinedAllocatedTotal').text('₹' + allocatedTotal.toLocaleString('en-IN', {minimumFractionDigits: 2}));
-            //         $('#combinedAmountInput').val(allocatedTotal.toFixed(2));
-            //     });
-            // }
-
-
             // Handle submit of Combined Payment via AJAX
             $(document).off('submit', '#combinedPaymentForm').on('submit', '#combinedPaymentForm', function(e) {
                 e.preventDefault();
@@ -1458,9 +1028,7 @@
                     });
             });
 
-
             // Bulk Memo ID Modal
-
             $('#bulk-memo-id-btn').on('click', function() {
                 const checkedBoxes = $('.row-checkbox:checked');
                 const planEndDateStr = @json(Auth::user()->company->plan_end_date ?? null);
@@ -1497,15 +1065,15 @@
                     freightBookingIds.push(freightBookingId);
 
                     tableBody += `
-                <tr>
-                    <td>${lrNumber}</td>
-                    <td>${truckNumber}</td>
-                    <td>${voucherNumber}</td>
-                    <td class="text-end">₹${amount}</td>
-                    <input type="hidden" name="lr_ids[]" value="${lrId}">
-                    <input type="hidden" name="freight_booking_ids[]" value="${freightBookingId}">
-                </tr>
-            `;
+                        <tr>
+                            <td>${lrNumber}</td>
+                            <td>${truckNumber}</td>
+                            <td>${voucherNumber}</td>
+                            <td class="text-end">₹${amount}</td>
+                            <input type="hidden" name="lr_ids[]" value="${lrId}">
+                            <input type="hidden" name="freight_booking_ids[]" value="${freightBookingId}">
+                        </tr>
+                    `;
                 });
 
                 const modalContent = `
@@ -2105,7 +1673,8 @@
                 const planEndDate = new Date(planEndDateStr);
                 if (today > planEndDate) {
                     alert(
-                        'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+                        'Your subscription plan has expired. Please renew your subscription to continue using the service.'
+                        );
                     // Stop further execution so modal doesn't open
                     return false; // or just return
                 }
