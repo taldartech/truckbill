@@ -702,7 +702,7 @@ class FreightBookingController extends Controller
             ) {
                 abort(403, 'Unauthorized access to freight booking.');
             }
-            $pumps = Pump::where('company_id', auth()->user()->company_id)->get();
+            $pumps = Pump::where('user_id', Auth::user()->company->user_id)->get();
 
             // Load payment types and modes for the voucher payment modal
             $paymentTypes = \App\Models\PaymentType::all();
