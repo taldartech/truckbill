@@ -188,7 +188,7 @@
                         <p>Under RCM (Reverse Charge Mechanism) GST will be paid by service recipient only.</p>
                         <p>CONSIGNOR COPY</p>
                     </td>
-                    <td colspan="4" style="vertical-align: bottom">For Vinod Goods Carrier</td>
+                    <td colspan="4" style="vertical-align: bottom">For {{ Auth::user()->company->name }}</td>
                 </tr>
             </table>
         </div>
@@ -316,7 +316,7 @@
                         <p>Under RCM (Reverse Charge Mechanism) GST will be paid by service recipient only.</p>
                         <p>DRIVER COPY</p>
                     </td>
-                    <td colspan="4" style="vertical-align: bottom">For Vinod Goods Carrier</td>
+                    <td colspan="4" style="vertical-align: bottom">For {{ Auth::user()->company->name }}</td>
                 </tr>
             </table>
         </div>

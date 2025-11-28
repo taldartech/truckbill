@@ -157,7 +157,7 @@
         </td>
     </tr>
     <tr>
-        <td style="font-weight: bold; text-align: right;" colspan="13">For Vinod Goods Carrier</td>
+        <td style="font-weight: bold; text-align: right;" colspan="13">For {{ Auth::user()->company->name }}</td>
     </tr>
     <tr>
       <td colspan="13"></td>
