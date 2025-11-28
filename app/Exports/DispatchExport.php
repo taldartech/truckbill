@@ -159,7 +159,7 @@ class DispatchExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                 "Payment Made to" => $lr->transporter_type ?? 'N/A',
                 "TDS Deducted" => $lr->transporter->tds_percentage == 0 ? 'No' : 'Yes',
                 "E-way Bill No." => $freightBooking->eway_bill_number ?? 'N/A',
-                "E-way Bill Expiry Date" => $freightBooking->eway_bill_expiry ? Date::dateTimeToExcel(Carbon::parse($freightBooking->eway_bill_expiry)) : 'N/A',
+                "E-way Bill Expiry Date" => $freightBooking && $freightBooking->eway_bill_expiry ? Date::dateTimeToExcel(Carbon::parse($freightBooking->eway_bill_expiry)) : 'N/A',
                 "Remarks" => $lr->delivery_status ?? 'N/A',
                 "PAN No" => $lr->transporter->pan_number ?? 'N/A',
 
