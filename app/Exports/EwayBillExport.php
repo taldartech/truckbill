@@ -50,7 +50,7 @@ class EwayBillExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                     "Consignor" => $fr->lr->consignor->name,
                     "Consignee" => $fr->lr->consignee->name,
                     "Destination" => $fr->lr->destination_city,
-                    "Eway Bill No." => $fr->eway_bill_number,
+                    "Eway Bill No." => $fr->eway_bill_number ?? '-',
                     "Eway Bill Expiry Date" =>  Date::dateTimeToExcel(\Carbon\Carbon::parse($fr->eway_bill_expiry)),
                     "Transporter/Truck Owner Name" => $fr->transporter->name,
                     "Transporter/Truck Owner Mobile No." => $fr->transporter->mobile_number,

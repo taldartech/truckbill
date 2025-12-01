@@ -2,20 +2,15 @@
 
 namespace App\Exports;
 
-use App\Models\FreightBooking;
 use App\Models\LorryReceipt;
-use App\Models\Invoice;
-use App\Models\Truck;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 use Maatwebsite\Excel\Concerns\WithHeadings;
-use PhpOffice\PhpSpreadsheet\Shared\Date;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
-class DispatchExport implements FromCollection, WithHeadings, ShouldAutoSize, WithColumnFormatting
+class DispatchExport implements FromView, WithHeadings, ShouldAutoSize, WithColumnFormatting
 {
     private $startDate, $endDate;
 
@@ -25,10 +20,7 @@ class DispatchExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
         $this->endDate = $endDate;
     }
 
-    /**
-     * @return \Illuminate\Support\Collection
-     */
-    public function collection()
+    public function view(): \Illuminate\Contracts\View\View
     {
         $user = Auth::user()->company_id;
         if ($this->startDate || $this->endDate) {
@@ -48,124 +40,10 @@ class DispatchExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
             }
 
             $lrs = $query->get();
-
-            // Debug: Log the first few records to check relationships
-            if ($lrs->isNotEmpty()) {
-                \Log::info('First LorryReceipt data:', [
-                    'lr_id' => $lrs[0]->id,
-                    'lr_number' => $lrs[0]->lr_number,
-                    'has_freight_bookings' => $lrs[0]->relationLoaded('freightBookings') && $lrs[0]->freightBookings->isNotEmpty(),
-                    'freight_booking_count' => $lrs[0]->freightBookings->count(),
-                    'voucher_payments' => $lrs[0]->freightBookings->isNotEmpty() ?
-                        $lrs[0]->freightBookings[0]->voucherPayments->toArray() : 'No freight bookings'
-                ]);
-            }
-
-            $generated = true;
         } else {
             $lrs = [];
-            $generated = false;
         }
-
-        // Map data to the desired format
-        return $lrs->map(function ($lr, $index) {
-
-            // Get the first freight booking (or null if none exists)
-            $freightBooking = $lr->freightBookings->first();
-
-            // Initialize payments array with all payment types
-            $payments = [
-                'cash' => 0,
-                'adjust in advance' => 0,
-                'bank transfer' => 0,
-                'fuel(paid to pump)' => 0,
-            ];
-
-            // If we have a freight booking with loaded voucher payments
-            if ($freightBooking && $freightBooking->relationLoaded('voucherPayments')) {
-                // Group payments by payment mode and sum amounts
-                $paymentSums = $freightBooking->voucherPayments
-                    ->groupBy('payment_mode')
-                    ->map(function ($payments) {
-                        return $payments->sum('amount');
-                    });
-
-                // Map the grouped payments to our expected keys
-                foreach ($payments as $mode => $amount) {
-                    $normalizedMode = strtolower(trim($mode));
-                    $matchingMode = $paymentSums->keys()->first(function ($key) use ($normalizedMode) {
-                        return strtolower(trim($key)) === $normalizedMode;
-                    });
-
-                    if ($matchingMode !== null) {
-                        $payments[$mode] = $paymentSums[$matchingMode];
-                    }
-                }
-            }
-
-
-            $lrIds = $lr->id;
-            // in invoice table lr_ids are stored in array form
-
-            $invoice = Invoice::whereJsonContains('lr_ids', $lrIds)->first();
-            //   in truck table their is dirver id from that find mobile number
-            $truck = Truck::where('driver_id', $lr->truck->driver_id)->first();
-
-
-
-
-
-            return [
-                "Sr No" => $index + 1,
-                "Date" => Date::dateTimeToExcel(Carbon::parse($lr->gr_date)),
-                "LR No" => $lr->lr_number,
-                "GR No" => $lr->gr_number,
-
-                "Truck No" => $lr->truck->truck_number ?? 'N/A',
-                "Destination" => $lr->destination_city,
-                "Invoice No." => $lr->invoice_number,
-
-                "Weight" => $lr->weight,
-                "Bags" => $lr->no_of_units,
-                "Fr rate" => $lr->fr_rate,
-                " Amount" => $lr->amount,
-                "Unloading st." => $lr->unloading_station,
-                "Distt. " => $lr->destination_city,
-                "State" => $lr->destination_state,
-                "Consignor" => $lr->consignor->name ?? 'N/A',
-                "Consignee" => $lr->consignee->name ?? 'N/A',
-                "GST Number" => $lr->customer->gst_number ?? 'N/A',
-                "TR Rate" => (float)($freightBooking->tr_fr_rate ?? 0),
-                "TR Freight" => (float)($freightBooking->tr_amount ?? 0),
-                "TDS" => (float)($freightBooking->tds_amount ?? 0),
-                "Cash Advance" => $payments['cash'],
-                "Bank" => $payments['bank transfer'],
-                "Adjust In Advance" => $payments['adjust in advance'],
-                "Diesel" => $payments['fuel(paid to pump)'],
-                "Total" => (float)($payments['cash'] + $payments['bank transfer'] + $payments['adjust in advance'] + $payments['fuel(paid to pump)'] + ($freightBooking->tds_amount ?? 0)),
-                "Damage Amount" => (float)($freightBooking->damage_amount ?? 0),
-                "Shortage Amount" => (float)($freightBooking->shortage_amount ?? 0),
-                "Detention" => (float)($freightBooking->detention ?? 0),
-                "Deviation" => (float)($freightBooking->deviation ?? 0),
-                "Misc." => (float)($freightBooking->misc ?? 0),
-                "Balance" => (float)($freightBooking->balance_amount ?? 0),
-                "Diff" => (float)($lr->fr_rate - ($freightBooking->tr_fr_rate ?? 0)),
-                "Memo No." => $lr->memo_id ?? 'N/A',
-                "Bill No." => $invoice->manual_invoice_number ?? 'N/A',
-                "Driver No." => $truck->driver->mobile ?? 'N/A',
-                "Transporter Name" => $lr->transporter->name ?? 'N/A',
-
-                "Reference BY" => $lr->reference->name ?? 'N/A',
-                "Payment Made to" => $lr->transporter_type ?? 'N/A',
-                "TDS Deducted" => $lr->transporter->tds_percentage == 0 ? 'No' : 'Yes',
-                "E-way Bill No." => $freightBooking->eway_bill_number ?? 'N/A',
-                "E-way Bill Expiry Date" => $freightBooking && $freightBooking->eway_bill_expiry ? Date::dateTimeToExcel(Carbon::parse($freightBooking->eway_bill_expiry)) : 'N/A',
-                "Remarks" => $lr->delivery_status ?? 'N/A',
-                "PAN No" => $lr->transporter->pan_number ?? 'N/A',
-
-
-            ];
-        });
+        return view('reports.exports.dispatch', compact('lrs'));
     }
 
     public function headings(): array

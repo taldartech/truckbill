@@ -125,17 +125,17 @@ class ShortageDamageExport implements FromCollection, WithHeadings, ShouldAutoSi
 
             return [
                 "Sr No" => $index + 1,
-                "LR No" => $lr->lr_number,
+                "LR No" => $lr->lr_number ?? '-',
                 "Date" => Date::dateTimeToExcel(\Carbon\Carbon::parse($lr->gr_date)),
-                "Truck No" => $lr->truck->truck_number ?? 'N/A',
-                "Weight" => $lr->weight,
-                "TR Rate" => (float)($freightBooking->tr_fr_rate ?? 'N/A'),
-                "TR Freight" => (float)($freightBooking->tr_amount ?? 'N/A'),
-                "Consignor" => $lr->consignor->name ?? 'N/A',
-                "Consignee" => $lr->consignee->name ?? 'N/A',
-                "Destination" => $lr->destination_city,
-                "Shortage Amount" => (float)($freightBooking->shortage_amount ?? 0),
-                "Damage Amount" => (float)($freightBooking->damage_amount ?? 0),
+                "Truck No" => $lr->truck->truck_number ?? '-',
+                "Weight" => $lr->weight ?? '-',
+                "TR Rate" => $freightBooking->tr_fr_rate ?? '-',
+                "TR Freight" => $freightBooking->tr_amount ?? '-',
+                "Consignor" => $lr->consignor->name ?? '-',
+                "Consignee" => $lr->consignee->name ?? '-',
+                "Destination" => $lr->destination_city ?? '-',
+                "Shortage Amount" => $freightBooking->shortage_amount ?? '-',
+                "Damage Amount" => $freightBooking->damage_amount ?? '-',
             ];
         });
     }
