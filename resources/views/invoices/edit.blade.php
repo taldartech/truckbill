@@ -52,12 +52,12 @@
                     <input type="text" placeholder="Invoice Number" id="manual_invoice_number" name="manual_invoice_number"
                         class="form-control @error('manual_invoice_number') is-invalid @enderror"
                         value="{{ old('manual_invoice_number', $invoice->manual_invoice_number) }}" required>
-                    
+
                     {{-- Add this feedback div --}}
                     <div id="manual-invoice-number-feedback"></div>
-                    
-                    @error('manual_invoice_number') 
-                        <div class="text-danger">{{ $message }}</div> 
+
+                    @error('manual_invoice_number')
+                        <div class="text-danger">{{ $message }}</div>
                     @enderror
                     <div class="valid-feedback">Looks good!</div>
                 </div>
@@ -66,24 +66,6 @@
                     <input type="date" name="generated_date" class="form-control" required id="generated_date"
                         @if ($invoice->payment_status != 'pending') disabled @endif
                         value="{{ old('generated_date', $invoice->generated_date) }}">
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label for="payment_status" class="form-label">Payment Status *</label>
-                    <select name="payment_status" class="form-select" required id="payment_status">
-                        @if ($invoice->payment_status == 'pending')
-                            <option value="pending"
-                                {{ old('payment_status', $invoice->payment_status) == 'pending' ? 'selected' : '' }}>Pending
-                            </option>
-                        @endif
-                        @if ($invoice->payment_status != 'paid')
-                            <option value="partial"
-                                {{ old('payment_status', $invoice->payment_status) == 'partial' ? 'selected' : '' }}>
-                                Partial
-                            </option>
-                        @endif
-                        <option value="paid"
-                            {{ old('payment_status', $invoice->payment_status) == 'paid' ? 'selected' : '' }}>Paid</option>
-                    </select>
                 </div>
             </div>
             <button type="submit" class="btn btn-success">Update</button>

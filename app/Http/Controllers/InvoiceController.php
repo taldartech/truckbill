@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Invoice;
+use App\Models\InvoicePayment;
 use App\Models\Company;
 use App\Models\Consignee;
 use App\Models\LorryReceipt;
@@ -22,7 +23,7 @@ class InvoiceController extends Controller
             return $this->getInvoicesData($request);
         }
 
-        $invoices = Invoice::with(['company', 'consignee'])->orderByDesc('id');
+        $invoices = Invoice::with(['company', 'consignee', 'payments'])->orderByDesc('id');
 
         // Apply filters
         // if ($request->has('generated_date') && !empty($request->generated_date)) {
@@ -54,8 +55,8 @@ class InvoiceController extends Controller
             $invoices->where('payment_status', $request->payment_status);
         }
 
-        if (auth()->user()->userRole->name !== 'super_admin') {
-            $invoices = $invoices->where('company_id', auth()->user()->company_id);
+        if (Auth::user()->userRole->name !== 'super_admin') {
+            $invoices = $invoices->where('company_id', Auth::user()->company_id);
         }
 
         $invoices = $invoices->paginate(20);
@@ -65,14 +66,14 @@ class InvoiceController extends Controller
     public function getInvoicesData(Request $request)
     {
         try {
-            $query = Invoice::with(['company', 'consignee'])
+            $query = Invoice::with(['company', 'consignee', 'payments'])
                 ->leftJoin('companies', 'invoices.company_id', '=', 'companies.id')
                 ->leftJoin('consignees', 'invoices.consignee_id', '=', 'consignees.id')
                 ->select('invoices.*');
 
             // Only apply company_id filter for non-super_admin users
-            if (auth()->user()->userRole->name !== 'super_admin') {
-                $query->where('invoices.company_id', auth()->user()->company_id);
+            if (Auth::user()->userRole->name !== 'super_admin') {
+                $query->where('invoices.company_id', Auth::user()->company_id);
             }
 
             return DataTables::of($query)
@@ -87,6 +88,16 @@ class InvoiceController extends Controller
                 })
                 ->addColumn('total_amount_formatted', function ($row) {
                     return $row->total_amount ? '₹' . number_format($row->total_amount, 2) : '₹0.00';
+                })
+                ->addColumn('paid_amount_formatted', function ($row) {
+                    $paidAmount = $row->payments()->sum('amount');
+                    return '₹' . number_format($paidAmount, 2);
+                })
+                ->addColumn('remaining_amount_formatted', function ($row) {
+                    $paidAmount = $row->payments()->sum('amount');
+                    $remaining = $row->total_amount - $paidAmount;
+                    $class = $remaining > 0 ? 'text-danger' : 'text-success';
+                    return '<span class="' . $class . '">₹' . number_format($remaining, 2) . '</span>';
                 })
                 ->addColumn('payment_status_badge', function ($row) {
                     $statusClass = match ($row->payment_status) {
@@ -122,10 +133,10 @@ class InvoiceController extends Controller
                 })
                 ->orderColumn('company_name', 'companies.name $1')
                 ->orderColumn('consignee_name', 'consignees.name $1')
-                ->rawColumns(['payment_status_badge', 'invoice_type_badge', 'actions'])
+                ->rawColumns(['payment_status_badge', 'invoice_type_badge', 'actions', 'remaining_amount_formatted'])
                 ->make(true);
         } catch (\Exception $e) {
-            \Log::error('DataTables error: ' . $e->getMessage());
+            Log::error('DataTables error: ' . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
@@ -166,14 +177,14 @@ class InvoiceController extends Controller
 
     public function create()
     {
-        $company = auth()->user()->company;
+        $company = Auth::user()->company;
         $today = now()->startOfDay();
         $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
         if ($company->plan_end_date && $today->gt($planEndDate)) {
             return redirect()->route('invoices.index')
                 ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
-        $user = auth()->user();
+        $user = Auth::user();
         $company = null;
 
         if ($user && $user->company_id) {
@@ -192,7 +203,7 @@ class InvoiceController extends Controller
 
         $memos = DB::table('lorry_receipts')
             ->select('memo_id')
-            ->where('company_id', auth()->user()->company_id)
+            ->where('company_id', Auth::user()->company_id)
             ->where('customer_id', $customerId)
             ->where('invoice_generated', 0) // Only those not yet invoiced
             ->whereNotNull('memo_id')
@@ -213,7 +224,7 @@ class InvoiceController extends Controller
 
     function getAllCustomerMemos($customerId)
     {
-        $memos = LorryReceipt::where('company_id', auth()->user()->company_id)
+        $memos = LorryReceipt::where('company_id', Auth::user()->company_id)
             ->where('customer_id', $customerId)
             ->whereNotNull('memo_id')
             ->distinct()
@@ -231,7 +242,7 @@ class InvoiceController extends Controller
                 'string',
                 Rule::unique('invoices')->where(
                     fn($query) =>
-                    $query->where('company_id', auth()->user()->company_id)
+                    $query->where('company_id', Auth::user()->company_id)
                 ),
             ],
             'invoice_type' => 'required|in:Reverse,Forward',
@@ -247,7 +258,7 @@ class InvoiceController extends Controller
             'igst' => 'nullable|numeric|min:0',
         ]);
         $data['payment_status'] = 'pending';
-        $data['company_id'] = auth()->user()->company_id;
+        $data['company_id'] = Auth::user()->company_id;
 
 
 
@@ -271,7 +282,7 @@ class InvoiceController extends Controller
 
     public function show(Request $request, Invoice $invoice)
     {
-        $invoice->load(['company', 'consignee']);
+        $invoice->load(['company', 'consignee', 'payments.creator']);
         // Get memos directly from invoice table in invoice tabble their is lr_ids in arrays form fetch lr_ids and then use this lr_ids to fetch 'memo_id', 'lr_number', 'source_city as from_location', 'destination_city as to_location', 'fr_rate as rate', 'amount'
         $lrIds = $invoice->lr_ids;
         $memos = DB::table('lorry_receipts')
@@ -289,6 +300,8 @@ class InvoiceController extends Controller
                 'payment_status' => $invoice->payment_status,
                 'total_amount' => $invoice->total_amount,
                 'paid_amount' => $invoice->paid_amount,
+                'remaining_amount' => $invoice->remaining_amount,
+                'payments' => $invoice->payments,
                 'company' => $invoice->company,
                 'consignee' => $invoice->consignee,
                 'memos' => $memos,
@@ -304,7 +317,7 @@ class InvoiceController extends Controller
 
     public function edit(Invoice $invoice)
     {
-        $company = auth()->user()->company;
+        $company = Auth::user()->company;
         $today = now()->startOfDay();
         $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
         if ($company->plan_end_date && $today->gt($planEndDate)) {
@@ -340,22 +353,15 @@ class InvoiceController extends Controller
 
     public function update(Request $request, Invoice $invoice)
     {
-        $company = auth()->user()->company;
+        $company = Auth::user()->company;
         $today = now()->startOfDay();
         $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
         if ($company->plan_end_date && $today->gt($planEndDate)) {
             return redirect()->route('invoices.index')
                 ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
-        if ($invoice->payment_status === 'paid') {
-            return redirect()->back()->with('error', 'Cannot edit a paid invoice.');
-        }
-        if ($invoice->payment_status === 'partial') {
-            $data = $request->validate([
-                'payment_status' => 'required|in:partial,paid',
-            ]);
-            $invoice->update($data);
-            return redirect()->route('invoices.index')->with('success', 'Invoice updated successfully.');
+        if ($invoice->payment_status === 'paid' || $invoice->payment_status === 'partial') {
+            return redirect()->back()->with('error', 'Cannot edit a paid or partial invoice.');
         }
         $data = $request->validate([
             'manual_invoice_number' => [
@@ -363,11 +369,10 @@ class InvoiceController extends Controller
                 'string',
                 Rule::unique('invoices')->where(
                     fn($query) =>
-                    $query->where('company_id', auth()->user()->company_id)
+                    $query->where('company_id', Auth::user()->company_id)
                 )->ignore($invoice->id),
             ],
             'generated_date' => 'required|date',
-            'payment_status' => 'required|in:pending,partial,paid',
         ]);
 
         $invoice->update($data);
@@ -377,7 +382,7 @@ class InvoiceController extends Controller
 
     public function destroy(Invoice $invoice)
     {
-        $company = auth()->user()->company;
+        $company = Auth::user()->company;
         $today = now()->startOfDay();
         $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
         if ($company->plan_end_date && $today->gt($planEndDate)) {
@@ -443,7 +448,7 @@ class InvoiceController extends Controller
     {
         $manualNumber = $request->input('manual_invoice_number');
         $invoiceId = $request->input('invoice_id'); // Get invoice ID if editing
-        $companyId = auth()->user()->company_id;
+        $companyId = Auth::user()->company_id;
 
         $query = \App\Models\Invoice::where('manual_invoice_number', $manualNumber)
             ->where('company_id', $companyId);
@@ -466,5 +471,70 @@ class InvoiceController extends Controller
                 'message' => 'Available!'
             ]);
         }
+    }
+
+    /**
+     * Store a payment for an invoice
+     */
+    public function storePayment(Request $request, Invoice $invoice)
+    {
+        $validated = $request->validate([
+            'mode' => 'required|string|max:255',
+            'amount' => 'required|numeric|min:0.01',
+            'remark' => 'nullable|string|max:1000',
+            'payment_date' => 'required|date',
+        ]);
+
+        // Calculate remaining balance
+        $paidAmount = $invoice->payments()->sum('amount');
+        $remainingAmount = $invoice->total_amount - $paidAmount;
+
+        // Validate that payment amount doesn't exceed remaining balance
+        if ($validated['amount'] > $remainingAmount) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Payment amount cannot exceed the remaining balance of ₹' . number_format($remainingAmount, 2)
+            ], 422);
+        }
+
+        // Create payment
+        $payment = $invoice->payments()->create($validated);
+
+        // Update invoice payment status
+        $newPaidAmount = $invoice->payments()->sum('amount');
+        if ($newPaidAmount >= $invoice->total_amount) {
+            $invoice->payment_status = 'paid';
+        } elseif ($newPaidAmount > 0) {
+            $invoice->payment_status = 'partial';
+        } else {
+            $invoice->payment_status = 'pending';
+        }
+        $invoice->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Payment added successfully',
+            'payment' => $payment,
+            'paid_amount' => $newPaidAmount,
+            'remaining_amount' => $invoice->total_amount - $newPaidAmount,
+            'payment_status' => $invoice->payment_status,
+        ]);
+    }
+
+    /**
+     * Get payments for an invoice
+     */
+    public function getPayments(Invoice $invoice)
+    {
+        $payments = $invoice->payments()->orderByRaw('COALESCE(payment_date, created_at) DESC')->get();
+        $paidAmount = $invoice->payments()->sum('amount');
+        $remainingAmount = $invoice->total_amount - $paidAmount;
+
+        return response()->json([
+            'payments' => $payments,
+            'paid_amount' => $paidAmount,
+            'remaining_amount' => $remainingAmount,
+            'total_amount' => $invoice->total_amount,
+        ]);
     }
 }

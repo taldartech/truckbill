@@ -206,6 +206,10 @@ Route::middleware(['auth', 'checkblock'])->group(function () {
         Route::put('/invoices/{invoice}', [InvoiceController::class, 'update'])->name('invoices.update');
         Route::delete('/invoices/{invoice}', [InvoiceController::class, 'destroy'])->name('invoices.destroy');
     });
+    Route::middleware(['role:admin,moderator'])->group(function () {
+        Route::post('/invoices/{invoice}/payments', [InvoiceController::class, 'storePayment'])->name('invoices.payments.store');
+        Route::get('/invoices/{invoice}/payments', [InvoiceController::class, 'getPayments'])->name('invoices.payments.index');
+    });
 
     // Voucher Payments
     Route::middleware(['role:admin'])->group(function () {

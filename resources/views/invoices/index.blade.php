@@ -87,11 +87,13 @@
                     </div>
                     <div class="col-md-3 d-none" id="field_generated_date_from">
                         <label class="form-label">From Date</label>
-                        <input type="date" name="generated_date_from" class="form-control" value="{{ request('generated_date_from') }}">
+                        <input type="date" name="generated_date_from" class="form-control"
+                            value="{{ request('generated_date_from') }}">
                     </div>
                     <div class="col-md-3 d-none" id="field_generated_date_to">
                         <label class="form-label">To Date</label>
-                        <input type="date" name="generated_date_to" class="form-control" value="{{ request('generated_date_to') }}">
+                        <input type="date" name="generated_date_to" class="form-control"
+                            value="{{ request('generated_date_to') }}">
                     </div>
                 </div>
             </div>
@@ -124,7 +126,8 @@
                 </div>
                 <div class="col-md-3 d-none" id="field_generated_date">
                     <label class="form-label">Date</label>
-                    <input type="date" name="generated_date" class="form-control" value="{{ request('generated_date') }}">
+                    <input type="date" name="generated_date" class="form-control"
+                        value="{{ request('generated_date') }}">
                 </div>
             </div>
 
@@ -155,10 +158,10 @@
                             <th>Generated Date</th>
                             <th>Customer</th>
                             <th>Total Amount</th>
+                            <th>Paid Amount</th>
+                            <th>Remaining</th>
                             <th>Status</th>
-                            @if (auth()->user()->userRole->name === 'admin')
-                                <th>Actions</th>
-                            @endif
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -171,16 +174,22 @@
                                         {{ $invoice->manual_invoice_number }}
                                     </a>
                                 </td>
-                                <td>{{ is_array($invoice->memo_ids) ? implode(', ', $invoice->memo_ids) : $invoice->memo_ids }}</td>
+                                <td>{{ is_array($invoice->memo_ids) ? implode(', ', $invoice->memo_ids) : $invoice->memo_ids }}
+                                </td>
                                 <td>{{ $invoice->invoice_type }}</td>
                                 <td>{{ $invoice->generated_date }}</td>
                                 <td>{{ $invoice->consignee ? $invoice->consignee->name : '-' }}</td>
                                 <td class="text-success fw-bold">&#8377;{{ number_format($invoice->total_amount, 2) }}
                                 </td>
+                                <td class="text-info fw-bold">&#8377;{{ number_format($invoice->paid_amount, 2) }}
+                                </td>
+                                <td class="fw-bold {{ $invoice->remaining_amount > 0 ? 'text-danger' : 'text-success' }}">
+                                    &#8377;{{ number_format($invoice->remaining_amount, 2) }}
+                                </td>
                                 <td>{{ ucfirst($invoice->payment_status) }}</td>
-                                @if (auth()->user()->userRole->name === 'admin')
-                                    <td>
-                                        <div class="d-flex gap-1">
+                                <td>
+                                    <div class="d-flex gap-1">
+                                        @if (auth()->user()->userRole->name === 'admin')
                                             <a href="{{ route('invoices.show', $invoice->id) }}"
                                                 class="btn btn-sm btn-info" data-bs-toggle="tooltip"
                                                 data-bs-placement="top" title="View Invoice">
@@ -206,13 +215,24 @@
                                                     </button>
                                                 </form>
                                             @endif
-                                        </div>
-                                    </td>
-                                @endif
+                                        @endif
+                                        @if (in_array(auth()->user()->userRole->name, ['admin', 'moderator']) && $invoice->remaining_amount > 0)
+                                            <button type="button" class="btn btn-sm btn-success add-payment-btn"
+                                                data-bs-toggle="tooltip" data-bs-placement="top" title="Add Payment"
+                                                data-invoice-id="{{ $invoice->id }}"
+                                                data-invoice-number="{{ $invoice->manual_invoice_number }}"
+                                                data-total-amount="{{ $invoice->total_amount }}"
+                                                data-paid-amount="{{ $invoice->paid_amount }}"
+                                                data-remaining-amount="{{ $invoice->remaining_amount }}">
+                                                <i class="bi bi-cash-coin"></i>
+                                            </button>
+                                        @endif
+                                    </div>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="9" class="text-center">
+                                <td colspan="11" class="text-center">
                                     <div class="empty-state">
                                         <i class="bi bi-box"></i>
                                         <p class="mt-2">No invoices found.</p>
@@ -223,6 +243,75 @@
                     </tbody>
                 </table>
                 {{ $invoices->links() }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Payment Modal -->
+    <div class="modal fade" id="addPaymentModal" tabindex="-1" aria-labelledby="addPaymentModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="addPaymentModalLabel">
+                        <i class="bi bi-cash-coin"></i> Add Payment
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <form id="addPaymentForm">
+                    <div class="modal-body">
+                        <input type="hidden" id="payment_invoice_id" name="invoice_id">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Invoice Number</label>
+                            <input type="text" class="form-control" id="payment_invoice_number" readonly>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Total Amount</label>
+                                <input type="text" class="form-control" id="payment_total_amount" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Paid Amount</label>
+                                <input type="text" class="form-control" id="payment_paid_amount" readonly>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Remaining Balance</label>
+                            <input type="text" class="form-control fw-bold text-danger" id="payment_remaining_amount"
+                                readonly>
+                        </div>
+                        <div class="mb-3">
+                            <label for="payment_date" class="form-label fw-bold">Payment Date <span
+                                    class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="payment_date" name="payment_date" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="payment_mode" class="form-label fw-bold">Payment Mode <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="payment_mode" name="mode" required
+                                placeholder="e.g., Cash, Bank Transfer, Cheque, UPI">
+                        </div>
+                        <div class="mb-3">
+                            <label for="payment_amount" class="form-label fw-bold">Amount <span
+                                    class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="payment_amount" name="amount"
+                                step="0.01" min="0.01" required placeholder="0.00">
+                            <div class="form-text">Maximum: ₹<span id="max_payment_amount">0.00</span></div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="payment_remark" class="form-label">Remark</label>
+                            <textarea class="form-control" id="payment_remark" name="remark" rows="3" placeholder="Optional remarks"></textarea>
+                        </div>
+                        <div id="payment_error" class="alert alert-danger d-none"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> Add Payment
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -257,18 +346,31 @@
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        // Handle invoice details link click
-        $(document).on('click', '.invoice-details-link', function(e) {
-            e.preventDefault();
-            var invoiceId = $(this).data('id');
+        // Wait for both jQuery and Bootstrap to be loaded
+        $(document).ready(function() {
+            // Initialize tooltips - ensure Bootstrap is loaded
+            if (typeof bootstrap !== 'undefined') {
+                var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+            }
 
-            // Show modal with loading state
-            var modal = new bootstrap.Modal(document.getElementById('invoiceDetailsModal'));
-            modal.show();
+            // Handle invoice details link click
+            $(document).on('click', '.invoice-details-link', function(e) {
+                e.preventDefault();
+                var invoiceId = $(this).data('id');
 
-            $('#invoiceDetailsContent').html(`
+                // Show modal with loading state - ensure Bootstrap is loaded
+                if (typeof bootstrap === 'undefined') {
+                    alert('Error: Bootstrap is not loaded. Please refresh the page.');
+                    return;
+                }
+                var modal = new bootstrap.Modal(document.getElementById('invoiceDetailsModal'));
+                modal.show();
+
+                $('#invoiceDetailsContent').html(`
         <div class="text-center">
             <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
@@ -277,15 +379,15 @@
         </div>
     `);
 
-            // Show view full invoice button
-            $('#viewFullInvoiceBtn').attr('href', '/invoices/' + invoiceId).show();
+                // Show view full invoice button
+                $('#viewFullInvoiceBtn').attr('href', '/invoices/' + invoiceId).show();
 
-            // Fetch invoice details
-            $.ajax({
-                url: '/invoices/' + invoiceId,
-                type: 'GET',
-                success: function(data) {
-                    var detailsHtml = `
+                // Fetch invoice details
+                $.ajax({
+                    url: '/invoices/' + invoiceId,
+                    type: 'GET',
+                    success: function(data) {
+                        var detailsHtml = `
                 <div class="row">
                     <div class="col-md-6">
                         <div class="card h-100">
@@ -391,102 +493,220 @@
                 </div>
             `;
 
-                    $('#invoiceDetailsContent').html(detailsHtml);
-                },
-                error: function(xhr, status, error) {
-                    var errorMessage = 'Error loading invoice details. Please try again.';
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                        errorMessage = xhr.responseJSON.message;
-                    }
-                    $('#invoiceDetailsContent').html(`
+                        $('#invoiceDetailsContent').html(detailsHtml);
+                    },
+                    error: function(xhr, status, error) {
+                        var errorMessage = 'Error loading invoice details. Please try again.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        $('#invoiceDetailsContent').html(`
                 <div class="alert alert-danger">
                     <i class="bi bi-exclamation-triangle"></i> ${errorMessage}
                 </div>
             `);
+                    }
+                });
+            });
+
+            // Initialize tooltips - ensure Bootstrap is loaded
+            $(document).ready(function() {
+                if (typeof bootstrap !== 'undefined') {
+                    var tooltipTriggerList = [].slice.call(document.querySelectorAll(
+                        '[data-bs-toggle="tooltip"]'));
+                    var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+                        return new bootstrap.Tooltip(tooltipTriggerEl);
+                    });
                 }
             });
-        });
 
-        // Initialize tooltips
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-
-        // function toggleField(checkbox) {
-        //     const fieldId = 'field_' + checkbox.value;
-        //     const field = document.getElementById(fieldId);
-        //     if (checkbox.checked) {
-        //         field.classList.remove('d-none');
-        //     } else {
-        //         field.classList.add('d-none');
-        //         const input = field.querySelector('input, select');
-        //         if (input) input.value = '';
-        //     }
-        // }
-        function toggleField(checkbox) {
-    if(checkbox.value === 'generated_date') {
-        // Toggle both from and to date fields
-        ['field_generated_date_from', 'field_generated_date_to'].forEach(id => {
-            const field = document.getElementById(id);
-            if(checkbox.checked) {
-                field.classList.remove('d-none');
-            } else {
-                field.classList.add('d-none');
-                const input = field.querySelector('input');
-                if(input) input.value = '';
+            // function toggleField(checkbox) {
+            //     const fieldId = 'field_' + checkbox.value;
+            //     const field = document.getElementById(fieldId);
+            //     if (checkbox.checked) {
+            //         field.classList.remove('d-none');
+            //     } else {
+            //         field.classList.add('d-none');
+            //         const input = field.querySelector('input, select');
+            //         if (input) input.value = '';
+            //     }
+            // }
+            function toggleField(checkbox) {
+                if (checkbox.value === 'generated_date') {
+                    // Toggle both from and to date fields
+                    ['field_generated_date_from', 'field_generated_date_to'].forEach(id => {
+                        const field = document.getElementById(id);
+                        if (checkbox.checked) {
+                            field.classList.remove('d-none');
+                        } else {
+                            field.classList.add('d-none');
+                            const input = field.querySelector('input');
+                            if (input) input.value = '';
+                        }
+                    });
+                } else {
+                    const fieldId = 'field_' + checkbox.value;
+                    const field = document.getElementById(fieldId);
+                    if (checkbox.checked) {
+                        field.classList.remove('d-none');
+                    } else {
+                        field.classList.add('d-none');
+                        const input = field.querySelector('input, select');
+                        if (input) input.value = '';
+                    }
+                }
             }
-        });
-    } else {
-        const fieldId = 'field_' + checkbox.value;
-        const field = document.getElementById(fieldId);
-        if (checkbox.checked) {
-            field.classList.remove('d-none');
-        } else {
-            field.classList.add('d-none');
-            const input = field.querySelector('input, select');
-            if (input) input.value = '';
-        }
-    }
-}
 
 
-        // Initialize filter fields based on URL parameters
-        // document.addEventListener('DOMContentLoaded', function() {
-        //     // Get all filter checkboxes
-        //     const checkboxes = document.querySelectorAll('.form-check-input');
+            // Initialize filter fields based on URL parameters
+            // document.addEventListener('DOMContentLoaded', function() {
+            //     // Get all filter checkboxes
+            //     const checkboxes = document.querySelectorAll('.form-check-input');
 
-        //     // Check each checkbox based on URL parameters
-        //     checkboxes.forEach(checkbox => {
-        //         const value = checkbox.value;
-        //         const fieldId = 'field_' + value;
-        //         const field = document.getElementById(fieldId);
-        //         const urlValue = new URLSearchParams(window.location.search).get(value);
+            //     // Check each checkbox based on URL parameters
+            //     checkboxes.forEach(checkbox => {
+            //         const value = checkbox.value;
+            //         const fieldId = 'field_' + value;
+            //         const field = document.getElementById(fieldId);
+            //         const urlValue = new URLSearchParams(window.location.search).get(value);
 
-        //         if (urlValue) {
-        //             checkbox.checked = true;
-        //             field.classList.remove('d-none');
-        //         }
-        //     });
-        // });
-        document.addEventListener('DOMContentLoaded', function() {
-    const checkboxes = document.querySelectorAll('.form-check-input');
-    checkboxes.forEach(checkbox => {
-        const value = checkbox.value;
-        const urlValue = new URLSearchParams(window.location.search).get(value);
+            //         if (urlValue) {
+            //             checkbox.checked = true;
+            //             field.classList.remove('d-none');
+            //         }
+            //     });
+            // });
+            document.addEventListener('DOMContentLoaded', function() {
+                const checkboxes = document.querySelectorAll('.form-check-input');
+                checkboxes.forEach(checkbox => {
+                    const value = checkbox.value;
+                    const urlValue = new URLSearchParams(window.location.search).get(value);
 
-        if (urlValue) {
-            checkbox.checked = true;
-            if(value === 'generated_date') {
-                ['field_generated_date_from', 'field_generated_date_to'].forEach(id => {
-                    document.getElementById(id).classList.remove('d-none');
+                    if (urlValue) {
+                        checkbox.checked = true;
+                        if (value === 'generated_date') {
+                            ['field_generated_date_from', 'field_generated_date_to'].forEach(id => {
+                                document.getElementById(id).classList.remove('d-none');
+                            });
+                        } else {
+                            document.getElementById('field_' + value).classList.remove('d-none');
+                        }
+                    }
                 });
-            } else {
-                document.getElementById('field_' + value).classList.remove('d-none');
-            }
-        }
-    });
-});
+            });
 
+            // Add Payment Modal Handler
+            $(document).on('click', '.add-payment-btn', function(e) {
+                e.preventDefault();
+                console.log('Add payment button clicked'); // Debug
+
+                var invoiceId = $(this).data('invoice-id');
+                var invoiceNumber = $(this).data('invoice-number');
+                var totalAmount = parseFloat($(this).data('total-amount')) || 0;
+                var paidAmount = parseFloat($(this).data('paid-amount')) || 0;
+                var remainingAmount = parseFloat($(this).data('remaining-amount')) || 0;
+
+                console.log('Invoice data:', {
+                    invoiceId,
+                    invoiceNumber,
+                    totalAmount,
+                    paidAmount,
+                    remainingAmount
+                }); // Debug
+
+                // Validate data
+                if (!invoiceId) {
+                    alert('Error: Invoice ID is missing');
+                    return;
+                }
+
+                // Set form values
+                $('#payment_invoice_id').val(invoiceId);
+                $('#payment_invoice_number').val(invoiceNumber);
+                $('#payment_total_amount').val('₹' + totalAmount.toFixed(2));
+                $('#payment_paid_amount').val('₹' + paidAmount.toFixed(2));
+                $('#payment_remaining_amount').val('₹' + remainingAmount.toFixed(2));
+                $('#max_payment_amount').text(remainingAmount.toFixed(2));
+                $('#payment_amount').attr('max', remainingAmount);
+            $('#payment_amount').val('');
+            $('#payment_mode').val('');
+            $('#payment_remark').val('');
+            $('#payment_date').val(new Date().toISOString().split('T')[0]); // Set today's date
+            $('#payment_error').addClass('d-none').text('');
+
+                // Show modal - ensure Bootstrap is loaded
+                if (typeof bootstrap === 'undefined') {
+                    alert('Error: Bootstrap is not loaded. Please refresh the page.');
+                    return;
+                }
+                var modalElement = document.getElementById('addPaymentModal');
+                if (!modalElement) {
+                    alert('Error: Payment modal not found');
+                    return;
+                }
+                var modal = new bootstrap.Modal(modalElement);
+                modal.show();
+            });
+
+            // Handle payment form submission
+            $('#addPaymentForm').on('submit', function(e) {
+                e.preventDefault();
+                var invoiceId = $('#payment_invoice_id').val();
+            var formData = {
+                mode: $('#payment_mode').val(),
+                amount: parseFloat($('#payment_amount').val()),
+                remark: $('#payment_remark').val(),
+                payment_date: $('#payment_date').val(),
+                _token: '{{ csrf_token() }}'
+            };
+
+                // Validate amount
+                var remainingAmount = parseFloat($('#max_payment_amount').text());
+                if (formData.amount > remainingAmount) {
+                    $('#payment_error').removeClass('d-none').text(
+                        'Payment amount cannot exceed remaining balance of ₹' + remainingAmount.toFixed(
+                            2));
+                    return;
+                }
+
+                // Disable submit button
+                var submitBtn = $(this).find('button[type="submit"]');
+                submitBtn.prop('disabled', true).html(
+                    '<span class="spinner-border spinner-border-sm"></span> Processing...');
+
+                $.ajax({
+                    url: '/invoices/' + invoiceId + '/payments',
+                    type: 'POST',
+                    data: formData,
+                    success: function(response) {
+                        if (response.success) {
+                            // Close modal
+                            if (typeof bootstrap !== 'undefined') {
+                                var modal = bootstrap.Modal.getInstance(document.getElementById(
+                                    'addPaymentModal'));
+                                if (modal) {
+                                    modal.hide();
+                                }
+                            }
+
+                            // Show success message
+                            alert('Payment added successfully!');
+
+                            // Reload page to show updated amounts
+                            location.reload();
+                        }
+                    },
+                    error: function(xhr) {
+                        var errorMessage = 'Error adding payment. Please try again.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        $('#payment_error').removeClass('d-none').text(errorMessage);
+                        submitBtn.prop('disabled', false).html(
+                            '<i class="bi bi-check-circle"></i> Add Payment');
+                    }
+                });
+            });
+        }); // End of document ready
     </script>
 @endsection

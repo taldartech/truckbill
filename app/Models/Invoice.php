@@ -38,4 +38,29 @@ class Invoice extends Model
     {
         return $this->belongsTo(Company::class);
     }
+
+    public function payments()
+    {
+        return $this->hasMany(InvoicePayment::class);
+    }
+
+    /**
+     * Get total paid amount
+     */
+    public function getPaidAmountAttribute()
+    {
+        // Use loaded relationship if available, otherwise query
+        if ($this->relationLoaded('payments')) {
+            return $this->payments->sum('amount');
+        }
+        return $this->payments()->sum('amount');
+    }
+
+    /**
+     * Get remaining balance
+     */
+    public function getRemainingAmountAttribute()
+    {
+        return max(0, $this->total_amount - $this->paid_amount);
+    }
 }
