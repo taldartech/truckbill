@@ -11,7 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement('ALTER TABLE lorry_receipts MODIFY delivery_status ENUM("Pending", "Delivered", "Cancelled", "In-Progress") DEFAULT "Pending";');
+        $driver = Schema::getConnection()->getDriverName();
+
+        if (in_array($driver, ['mysql', 'mariadb'])) {
+            DB::statement('ALTER TABLE lorry_receipts MODIFY delivery_status ENUM("Pending", "Delivered", "Cancelled", "In-Progress") DEFAULT "Pending";');
+            return;
+        }
+
+        // SQLite (and other drivers) do not support enum ALTER statements; relax to string
+        Schema::table('lorry_receipts', function (Blueprint $table) {
+            $table->string('delivery_status')->default('Pending')->change();
+        });
     }
 
     /**
@@ -19,6 +29,15 @@ return new class extends Migration
      */
     public function down(): void
     {
-        DB::statement('ALTER TABLE lorry_receipts MODIFY delivery_status ENUM("Pending", "Delivered", "Cancelled") DEFAULT "Pending";');
+        $driver = Schema::getConnection()->getDriverName();
+
+        if (in_array($driver, ['mysql', 'mariadb'])) {
+            DB::statement('ALTER TABLE lorry_receipts MODIFY delivery_status ENUM("Pending", "Delivered", "Cancelled") DEFAULT "Pending";');
+            return;
+        }
+
+        Schema::table('lorry_receipts', function (Blueprint $table) {
+            $table->string('delivery_status')->default('Pending')->change();
+        });
     }
 };

@@ -8,32 +8,36 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Drop foreign keys with raw SQL to avoid errors if they do not exist
-        try { \DB::statement('ALTER TABLE customers DROP FOREIGN KEY customers_country_id_foreign'); } catch (\Exception $e) {}
-        try { \DB::statement('ALTER TABLE customers DROP FOREIGN KEY customers_state_id_foreign'); } catch (\Exception $e) {}
-        try { \DB::statement('ALTER TABLE customers DROP FOREIGN KEY customers_city_id_foreign'); } catch (\Exception $e) {}
-        // Drop columns if they exist
-        if (Schema::hasColumn('customers', 'country_id')) {
-            Schema::table('customers', function (Blueprint $table) {
-                $table->dropColumn('country_id');
-            });
+        $hasCountry = Schema::hasColumn('customers', 'country_id');
+        $hasState = Schema::hasColumn('customers', 'state_id');
+        $hasCity = Schema::hasColumn('customers', 'city_id');
+
+        if (! $hasCountry && ! $hasState && ! $hasCity) {
+            return;
         }
-        if (Schema::hasColumn('customers', 'state_id')) {
-            Schema::table('customers', function (Blueprint $table) {
-                $table->dropColumn('state_id');
-            });
-        }
-        if (Schema::hasColumn('customers', 'city_id')) {
-            Schema::table('customers', function (Blueprint $table) {
-                $table->dropColumn('city_id');
-            });
-        }
+
+        // Drop the foreign keys and columns in a driver-safe way (works on SQLite)
+        Schema::disableForeignKeyConstraints();
+
+        Schema::table('customers', function (Blueprint $table) use ($hasCountry, $hasState, $hasCity) {
+            if ($hasCountry) {
+                $table->dropConstrainedForeignId('country_id');
+            }
+
+            if ($hasState) {
+                $table->dropConstrainedForeignId('state_id');
+            }
+
+            if ($hasCity) {
+                $table->dropConstrainedForeignId('city_id');
+            }
+        });
+
+        Schema::enableForeignKeyConstraints();
     }
 
     public function down(): void
     {
-        Schema::table('customers', function (Blueprint $table) {
-            // No down migration, as columns will be re-created by the other migration
-        });
+        // Columns intentionally left removed; the prior migration can recreate them if needed.
     }
 };

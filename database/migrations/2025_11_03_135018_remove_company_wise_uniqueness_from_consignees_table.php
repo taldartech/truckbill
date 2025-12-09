@@ -11,22 +11,35 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // --- Disable FK checks globally for this session ---
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        $driver = Schema::getConnection()->getDriverName();
 
-        try {
-            DB::statement('ALTER TABLE consignees DROP INDEX consignees_company_pan_unique');
-        } catch (\Throwable $e) {
-            // Ignore if the index doesn't exist or was already removed
+        // Disable FK checks per driver
+        if (in_array($driver, ['mysql', 'mariadb'])) {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        } else {
+            Schema::disableForeignKeyConstraints();
         }
 
-        // --- Modify the column ---
+        // Drop the unique index if it exists
+        try {
+            Schema::table('consignees', function (Blueprint $table) {
+                $table->dropUnique('consignees_company_pan_unique');
+            });
+        } catch (\Throwable $e) {
+            // Index may already be missing; ignore
+        }
+
+        // Modify the column
         Schema::table('consignees', function (Blueprint $table) {
             $table->string('pan_number')->nullable()->change();
         });
 
-        // --- Re-enable FK checks ---
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        // Re-enable FK checks
+        if (in_array($driver, ['mysql', 'mariadb'])) {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        } else {
+            Schema::enableForeignKeyConstraints();
+        }
     }
 
     public function down(): void

@@ -12,15 +12,22 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('lorry_receipts', function (Blueprint $table) {
-            // Remove GR number field
-            $table->dropColumn('gr_number');
-            $table->dropColumn('gr_date');
+            // Remove GR number and date (drop unique index first for SQLite)
+            if (Schema::hasColumn('lorry_receipts', 'gr_number')) {
+                $table->dropUnique('lorry_receipts_gr_number_unique');
+                $table->dropColumn('gr_number');
+            }
+
+            if (Schema::hasColumn('lorry_receipts', 'gr_date')) {
+                $table->dropColumn('gr_date');
+            }
 
             // Remove damage and shortage related fields
-            $table->dropColumn('damage_rate');
-            $table->dropColumn('damage_qty');
-            $table->dropColumn('shortage_rate');
-            $table->dropColumn('shortage_qty');
+            foreach (['damage_rate', 'damage_qty', 'shortage_rate', 'shortage_qty'] as $column) {
+                if (Schema::hasColumn('lorry_receipts', $column)) {
+                    $table->dropColumn($column);
+                }
+            }
 
             // Add new damage and shortage amount fields
             $table->decimal('damage_amount', 10, 2)->nullable();
