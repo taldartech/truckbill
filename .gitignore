@@ -49,3 +49,4 @@ ad.js
 /vendor
 
 public/storage
+.phpunit.result.cache

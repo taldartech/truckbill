@@ -46,5 +46,11 @@
     "files": [
       "app/Helpers/NumberHelpers.php"
     ]
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/",
+      "Database\\Factories\\": "database/factories/"
+    }
   }
 }

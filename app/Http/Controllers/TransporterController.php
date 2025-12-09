@@ -10,6 +10,7 @@ use App\Models\Country;
 use App\Models\State;
 use App\Models\City;
 use Illuminate\Validation\Rule;
+use App\Models\Transporter;
 
 class TransporterController extends Controller
 {
