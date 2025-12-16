@@ -68,7 +68,7 @@
                             @endforeach
                         </select>
                     </div>
-                
+
                     <div class="col-md-3 text-end d-flex align-items-end justify-content-end gap-2">
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-search"></i> Search
@@ -83,7 +83,7 @@
         </div>
     </div>
 
-   
+
         <div class="card mb-4">
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center">
@@ -95,7 +95,7 @@
                             href="{{ route('reports.pending-memo-export', ['customer_id' => $customerId]) }}">
                             <i class="bi bi-file-earmark-spreadsheet"></i> Export
                         </a>
-                      
+
                     </div>
                 </div>
             </div>
@@ -122,7 +122,7 @@
                                     <th>Damage</th>
                                     <th>Shortage</th>
                                     <th>Amt.</th>
-                                    
+
                                 </tr>
                             </thead>
                             <tbody>
@@ -141,15 +141,15 @@
                                         <td>{{ $lr->lr_number }}</td>
                                         <td>{{ date('d-m-Y', strtotime($lr->gr_date)) }}</td>
                                         <td>{{ $lr->lane }}</td>
-                                        <td style="text-align: right">{{ number_format($lr->weight, 2) }}</td>
+                                        <td style="text-align: right">{{ number_format($lr->weight, 3) }}</td>
                                         <td style="text-align: right">{{ number_format($lr->fr_rate, 2) }}</td>
                                         <td style="text-align: right">{{ number_format($lr->damage_amount, 2) }}</td>
                                         <td style="text-align: right">{{ number_format($lr->shortage_amount, 2) }}</td>
                                         <td style="text-align: right">{{ number_format($amount, 2) }}</td>
-                                        
+
                                     </tr>
                                 @endforeach
-                               
+
                             </tbody>
                         </table>
                     </div>
@@ -158,7 +158,7 @@
                 @endif
             </div>
         </div>
-   
+
 @endsection
 
 @push('scripts')

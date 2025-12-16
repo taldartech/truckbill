@@ -87,7 +87,7 @@ class TransporterReportExport implements FromCollection, WithHeadings, ShouldAut
                 $lr->gr_number,
                 $lr->truck ? $lr->truck->truck_number : 'N/A',
                 $lr->destination_city . ', ' . $lr->destination_state,
-                number_format($lr->weight ?? 0, 2),
+                number_format($lr->weight ?? 0, 3),
                 number_format($lr->no_of_units ?? 0, 2),
                 $lr->consignor ? $lr->consignor->name : 'N/A',
                 $lr->consignee ? $lr->consignee->name : 'N/A',

@@ -77,7 +77,7 @@
               <div class="row">
                 <div class="col-md-3 mb-3">
                     <div class="confirmation-label">Weight</div>
-                    <div class="confirmation-value">{{ number_format($lorry_receipt->weight, 2) }} MT</div>
+                    <div class="confirmation-value">{{ number_format($lorry_receipt->weight, 3) }} MT</div>
                 </div>
                 <div class="col-md-3 mb-3">
                     <div class="confirmation-label">Goods Type</div>

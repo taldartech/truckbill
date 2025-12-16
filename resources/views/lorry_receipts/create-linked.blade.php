@@ -234,10 +234,10 @@
                                             <div class="text-danger">{{ $message }}</div>
                                         @enderror
                                     </div>
-                                   
+
                                 </div>
                                 <div class="row">
-                                    
+
                                     <div class="col-md-4">
                                         <label class="form-label">Consignor *</label>
                                         <select class="form-select select2 consignor-select" required>
@@ -315,7 +315,7 @@
                                     </div>
                                     <div class="col-md-2">
                                         <label class="form-label">Weight (Tons) *</label>
-                                        <input type="number" step="0.01" class="form-control weight" min="0.1"
+                                        <input type="number" step="0.001" class="form-control weight" min="0.1"
                                             max="100" required>
                                         <small class="text-muted">📏 Range: 0.1 - 100 tons</small>
                                     </div>
@@ -597,7 +597,7 @@
 
 
                 transporterLabel.textContent = selectedType === 'owner' ? 'Truck Owner *' : 'Agency *';
-                
+
                 if (selectedType === 'owner') {
                     // transporterLabel.textContent = 'Truck Owner *';
 

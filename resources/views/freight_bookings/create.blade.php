@@ -6,7 +6,7 @@
             {{ session('success') }}
         </div>
     @endif
-  
+
 
     <style>
         /* Prevent form expansion on validation errors */
@@ -127,7 +127,7 @@
                     <div class="mb-2">
                         <strong>Weight:</strong><br>
                         <span
-                            class="text-info fw-bold">{{ $lorry_receipt->first() ? number_format($lorry_receipt->first()->weight ?? 0, 2) : '0.00' }}
+                            class="text-info fw-bold">{{ $lorry_receipt->first() ? number_format($lorry_receipt->first()->weight ?? 0, 3) : '0.00' }}
                             MT</span>
                     </div>
                 </div>
@@ -143,7 +143,7 @@
                         <span
                             class="badge bg-success text-white fs-6">₹{{ $lorry_receipt->first() ? number_format($lorry_receipt->first()->amount ?? 0, 2) : '0.00' }}</span>
                     </div>
-                   
+
                 </div>
                 <div class="col-md-2">
                     <div class="mb-2">
@@ -272,7 +272,7 @@
                             required>
                         <small class="form-text text-muted">
                             <i class="fas fa-info-circle"></i> Auto-calculated: TR Freight Rate × Weight
-                            ({{ $lorry_receipt->first() ? number_format($lorry_receipt->first()->weight ?? 0, 2) : '0.00' }}
+                            ({{ $lorry_receipt->first() ? number_format($lorry_receipt->first()->weight ?? 0, 3) : '0.00' }}
                             MT). Must be greater than ₹0.
                         </small>
                         @error('tr_amount')

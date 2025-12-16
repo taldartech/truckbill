@@ -44,7 +44,7 @@ class PendingInvoiceExport implements FromCollection, WithHeadings, WithColumnFo
                 'Consignment No' => $lr->lr_number,
                 'Date' => Date::dateTimeToExcel(\Carbon\Carbon::parse($lr->gr_date)),
                 'Lane' => $lr->lane,
-                'QTY(MT)' => number_format($lr->weight, 2),
+                'QTY(MT)' => number_format($lr->weight, 3),
                 'Rate' => number_format($lr->fr_rate, 2),
                 'Damage' => number_format($lr->damage_amount, 2),
                 'Shortage' => number_format($lr->shortage_amount, 2),

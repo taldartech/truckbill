@@ -382,7 +382,7 @@
                         <div class="col-md-4">
                             <label for="weight" class="form-label">Weight * <small class="text-muted">(in
                                     Tons)</small></label>
-                            <input type="number" step="0.01" class="form-control" id="weight" name="weight"
+                            <input type="number" step="0.001" class="form-control" id="weight" name="weight"
                                 required value="{{ old('weight') }}" min="0.1" max="100"
                                 title="Weight must be between 0.1 and 100 tons">
                             @error('weight')
@@ -674,7 +674,7 @@
                 transporterSelect.innerHTML = '<option value="">Select Transporter</option>';
                 transporterSelect.disabled = false; // Reset disabled state
 
-                
+
 
                 transporterLabel.textContent = selectedType === 'owner' ? 'Truck Owner *' : 'Agency *';
 
@@ -1296,7 +1296,7 @@ grNumberInput.addEventListener('blur', function() {
         checkGRNumberUniqueness(grNumber);
     }
 });
-            
+
 
             // No. of Units validation
             const noOfUnitsInput = document.getElementById('no_of_units');

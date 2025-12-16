@@ -95,7 +95,7 @@
             <td>{{ $lr->lr_number }}</td>
             <td>{{ date('d-m-Y', strtotime($lr->gr_date)) }}</td>
             <td>{{ $lr->lane }}</td>
-            <td style="text-align: right">{{ number_format($lr->weight, 2) }}</td>
+            <td style="text-align: right">{{ number_format($lr->weight, 3) }}</td>
             <td style="text-align: right">{{ number_format($lr->fr_rate, 2) }}</td>
             <td style="text-align: right">{{ number_format($lr->damage_amount, 2) }}</td>
             <td style="text-align: right">{{ number_format($lr->shortage_amount, 2) }}</td>

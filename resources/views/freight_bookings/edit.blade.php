@@ -113,7 +113,7 @@
                     <div class="mb-2">
                         <strong>Weight:</strong><br>
                         <span
-                            class="badge bg-info text-white fs-6">{{ $freightBooking->lr ? number_format($freightBooking->lr->weight ?? 0, 2) : '0.00' }}
+                            class="badge bg-info text-white fs-6">{{ $freightBooking->lr ? number_format($freightBooking->lr->weight ?? 0, 3) : '0.00' }}
                             MT</span>
                     </div>
                 </div>
