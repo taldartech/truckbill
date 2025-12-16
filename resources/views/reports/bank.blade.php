@@ -13,6 +13,11 @@
 @endpush
 
 @section('content')
+    @if (session('error'))
+        <div class="alert alert-danger">
+            {{ session('error') }}
+        </div>
+    @endif
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" action="{{ route('reports.bank') }}" id="searchForm" onsubmit="validateForm(event)">
@@ -45,7 +50,7 @@
         <div class="alert alert-warning">
             Please select date range to generate the report.
         </div>
-    @elseif((empty($allPayments)) || ($allPayments->isEmpty()))
+    @elseif(empty($allPayments) || $allPayments->isEmpty())
         <div class="alert alert-info">
             No records found for the selected criteria.
         </div>

@@ -3,6 +3,11 @@
 @section('title', 'Dispatch Report')
 
 @section('content')
+    @if (session('error'))
+        <div class="alert alert-danger">
+            {{ session('error') }}
+        </div>
+    @endif
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" action="{{ route('reports.dispatch') }}" id="searchForm" onsubmit="validateForm(event)">
@@ -87,7 +92,7 @@
                 }
             </style>
             <div class="card-body table-sticky">
-              @include('reports.exports.dispatch')
+                @include('reports.exports.dispatch')
             </div>
         </div>
     @endif

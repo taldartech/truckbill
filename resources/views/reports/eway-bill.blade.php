@@ -3,6 +3,11 @@
 @section('title', 'Eway Bill Report')
 
 @section('content')
+    @if (session('error'))
+        <div class="alert alert-danger">
+            {{ session('error') }}
+        </div>
+    @endif
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" action="{{ route('reports.eway-bill') }}" id="searchForm" onsubmit="validateForm(event)">

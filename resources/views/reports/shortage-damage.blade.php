@@ -1,8 +1,13 @@
 @extends('layouts.app')
 
- @section('title', 'Shortage Damage Report')
+@section('title', 'Shortage Damage Report')
 
- @section('content')
+@section('content')
+    @if (session('error'))
+        <div class="alert alert-danger">
+            {{ session('error') }}
+        </div>
+    @endif
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" action="{{ route('reports.shortage-damage') }}" id="searchForm" onsubmit="validateForm(event)">
@@ -59,25 +64,18 @@
                 <table class="table table-bordered table-striped" style="font-size: 12px !important;">
                     <thead>
                         <tr>
-                          <th>Sr No</th>
-                          <th>LR No</th>
-                          <th>GR Date</th>
-                        
-                          <th>Truck No</th>
-                          <th>Weight</th>
-                          <th>LR Rate</th>
-                          <th>LR Amount</th>
-                          <th>Consignor</th>
-                          <th>Consignee</th>
-                          <th>Destination</th>
-                          <th>Shortage Amount</th>
-                          <th>Damage Amount</th>
-                          
-
-                         
-                        
-                          
-                          
+                            <th>Sr No</th>
+                            <th>LR No</th>
+                            <th>GR Date</th>
+                            <th>Truck No</th>
+                            <th>Weight</th>
+                            <th>LR Rate</th>
+                            <th>LR Amount</th>
+                            <th>Consignor</th>
+                            <th>Consignee</th>
+                            <th>Destination</th>
+                            <th>Shortage Amount</th>
+                            <th>Damage Amount</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -85,7 +83,6 @@
                             @php
                                 // Get the first freight booking (or null if none exists)
                                 $freightBooking = $lr->freightBookings->first();
-                                
                                 // Initialize payments array with all payment types
                                 $payments = [
                                     'cash' => 0,
@@ -106,10 +103,11 @@
                                     // Map the grouped payments to our expected keys
                                     foreach ($payments as $mode => $amount) {
                                         $normalizedMode = strtolower(trim($mode));
-                                        $matchingMode = $paymentSums->keys()->first(function ($key) use ($normalizedMode) {
-                                            return strtolower(trim($key)) === $normalizedMode;
-                                        });
-                                        
+                                        $matchingMode = $paymentSums
+                                            ->keys()
+                                            ->first(function ($key) use ($normalizedMode) {
+                                                return strtolower(trim($key)) === $normalizedMode;
+                                            });
                                         if ($matchingMode !== null) {
                                             $payments[$mode] = $paymentSums[$matchingMode];
                                         }
@@ -119,8 +117,8 @@
                             <tr>
                                 <td>{{ $index + 1 }}</td>
                                 <td>{{ $lr->lr_number }}</td>
-                                <td style="white-space: nowrap;">{{ \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') }}</td>
-                               
+                                <td style="white-space: nowrap;">{{ \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') }}
+                                </td>
                                 <td>{{ $lr->truck->truck_number ?? 'N/A' }}</td>
                                 <td>{{ $lr->weight }}</td>
                                 <td>{{ $lr->fr_rate }}</td>
@@ -130,9 +128,6 @@
                                 <td>{{ $lr->destination_city }}</td>
                                 <td>{{ $freightBooking->shortage_amount ?? '0' }}</td>
                                 <td>{{ $freightBooking->damage_amount ?? '0' }}</td>
-                               
-                               
-                             
                             </tr>
                         @endforeach
                     </tbody>

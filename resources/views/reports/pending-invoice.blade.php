@@ -59,6 +59,14 @@
             <form method="GET" action="{{ route('reports.pending-invoice') }}" id="searchForm">
                 <div class="row mb-2">
                     <div class="col-md-3">
+                        <label class="form-label">Start Date</label>
+                        <input type="date" name="start_date" class="form-control" value="{{ $startDate }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">End Date</label>
+                        <input type="date" name="end_date" class="form-control" value="{{ $endDate }}">
+                    </div>
+                    <div class="col-md-3">
                         <label class="form-label">Customer <span class="text-danger">*</span></label>
                         <select name="customer_id" class="form-select select2">
                             <option value="">Select Customer</option>
@@ -73,8 +81,7 @@
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-search"></i> Search
                         </button>
-                        <a href="{{ route('reports.pending-invoice') }}?date={{ date('Y-m-d') }}"
-                            class="btn btn-outline-secondary">
+                        <a href="{{ route('reports.pending-invoice') }}" class="btn btn-outline-secondary">
                             <i class="bi bi-arrow-clockwise"></i> Reset
                         </a>
                     </div>
@@ -84,80 +91,84 @@
     </div>
 
 
-        <div class="card mb-4">
-            <div class="card-header">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h3 class="card-title mb-0">Pending Invoice</h3>
-                    </div>
-                    <div class="d-flex">
-                        <a class="btn btn-warning ms-2" target="_blank"
-                            href="{{ route('reports.pending-invoice-export', ['customer_id' => $customerId]) }}">
-                            <i class="bi bi-file-earmark-spreadsheet"></i> Export
-                        </a>
+    <div class="card mb-4">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3 class="card-title mb-0">Pending Invoice</h3>
+                </div>
+                <div class="d-flex">
+                    <a class="btn btn-warning ms-2" target="_blank"
+                        href="{{ route('reports.pending-invoice-export', [
+                            'customer_id' => $customerId,
+                            'start_date' => $startDate,
+                            'end_date' => $endDate,
+                        ]) }}">
+                        <i class="bi bi-file-earmark-spreadsheet"></i> Export
+                    </a>
 
-                    </div>
                 </div>
             </div>
-            <div class="card-body" style="overflow-x: auto;">
-                @if ($lrs->count() > 0)
-                    @php
-                        $totalAmount = 0;
-                        $damageAmount = 0;
-                        $shortageAmount = 0;
-                    @endphp
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-striped">
-                            <thead>
+        </div>
+        <div class="card-body" style="overflow-x: auto;">
+            @if ($lrs->count() > 0)
+                @php
+                    $totalAmount = 0;
+                    $damageAmount = 0;
+                    $shortageAmount = 0;
+                @endphp
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Truck No</th>
+                                <th>Customer</th>
+                                <th>From Place</th>
+                                <th>To Place</th>
+                                <th>Consignment No</th>
+                                <th>Date</th>
+                                <th>Lane</th>
+                                <th>QTY(MT)</th>
+                                <th>Rate</th>
+                                <th>Damage</th>
+                                <th>Shortage</th>
+                                <th>Amt.</th>
+
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($lrs as $lr)
+                                @php
+                                    $damageAmount += $lr->damage_amount;
+                                    $shortageAmount += $lr->shortage_amount;
+                                    $amount = $lr->weight * $lr->fr_rate;
+                                    $totalAmount += $amount;
+                                @endphp
                                 <tr>
-                                    <th>Truck No</th>
-                                    <th>Customer</th>
-                                    <th>From Place</th>
-                                    <th>To Place</th>
-                                    <th>Consignment No</th>
-                                    <th>Date</th>
-                                    <th>Lane</th>
-                                    <th>QTY(MT)</th>
-                                    <th>Rate</th>
-                                    <th>Damage</th>
-                                    <th>Shortage</th>
-                                    <th>Amt.</th>
+                                    <td>{{ $lr->truck->truck_number ?? 'N/A' }}</td>
+                                    <td>{{ $lr->customer->name ?? 'N/A' }}</td>
+                                    <td>{{ $lr->source_city }}</td>
+                                    <td>{{ $lr->destination_city }}</td>
+                                    <td>{{ $lr->lr_number }}</td>
+                                    <td>{{ date('d-m-Y', strtotime($lr->gr_date)) }}</td>
+                                    <td>{{ $lr->lane }}</td>
+                                    <td style="text-align: right">{{ number_format($lr->weight, 3) }}</td>
+                                    <td style="text-align: right">{{ number_format($lr->fr_rate, 2) }}</td>
+                                    <td style="text-align: right">{{ number_format($lr->damage_amount, 2) }}</td>
+                                    <td style="text-align: right">{{ number_format($lr->shortage_amount, 2) }}</td>
+                                    <td style="text-align: right">{{ number_format($amount, 2) }}</td>
 
                                 </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($lrs as $lr)
-                                    @php
-                                        $damageAmount += $lr->damage_amount;
-                                        $shortageAmount += $lr->shortage_amount;
-                                        $amount = $lr->weight * $lr->fr_rate;
-                                        $totalAmount += $amount;
-                                    @endphp
-                                    <tr>
-                                        <td>{{ $lr->truck->truck_number ?? 'N/A' }}</td>
-                                        <td>{{ $lr->customer->name ?? 'N/A' }}</td>
-                                        <td>{{ $lr->source_city }}</td>
-                                        <td>{{ $lr->destination_city }}</td>
-                                        <td>{{ $lr->lr_number }}</td>
-                                        <td>{{ date('d-m-Y', strtotime($lr->gr_date)) }}</td>
-                                        <td>{{ $lr->lane }}</td>
-                                        <td style="text-align: right">{{ number_format($lr->weight, 3) }}</td>
-                                        <td style="text-align: right">{{ number_format($lr->fr_rate, 2) }}</td>
-                                        <td style="text-align: right">{{ number_format($lr->damage_amount, 2) }}</td>
-                                        <td style="text-align: right">{{ number_format($lr->shortage_amount, 2) }}</td>
-                                        <td style="text-align: right">{{ number_format($amount, 2) }}</td>
+                            @endforeach
 
-                                    </tr>
-                                @endforeach
-
-                            </tbody>
-                        </table>
-                    </div>
-                @else
-                    <div class="alert alert-info">No records found for the selected criteria.</div>
-                @endif
-            </div>
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                <div class="alert alert-info">No records found for the selected criteria.</div>
+            @endif
         </div>
+    </div>
 
 @endsection
 
@@ -173,5 +184,4 @@
             });
         });
     </script>
-
 @endpush

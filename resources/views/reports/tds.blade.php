@@ -3,6 +3,11 @@
 @section('title', 'TDS Report')
 
 @section('content')
+    @if (session('error'))
+        <div class="alert alert-danger">
+            {{ session('error') }}
+        </div>
+    @endif
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" action="{{ route('reports.tds') }}" id="searchForm" onsubmit="validateForm(event)">
@@ -59,23 +64,24 @@
                 <table class="table table-bordered table-striped" style="font-size: 12px !important;">
                     <thead>
                         <tr>
-                          <th>Sr No</th>
-                          <th>Date</th>
-                          <th>LR No</th>
-                          <th>Truck No</th>
-                          <th>Destination</th>
-                          <th>TR Freight</th>
-                          <th>TDS</th>
-                          <th>Rate</th>
-                          <th>Transport Name</th>
-                          <th>PAN No</th>
+                            <th>Sr No</th>
+                            <th>Date</th>
+                            <th>LR No</th>
+                            <th>Truck No</th>
+                            <th>Destination</th>
+                            <th>TR Freight</th>
+                            <th>TDS</th>
+                            <th>Rate</th>
+                            <th>Transport Name</th>
+                            <th>PAN No</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($lrs as $index => $lr)
                             <tr>
                                 <td>{{ $index + 1 }}</td>
-                                <td style="white-space: nowrap;">{{ \Carbon\Carbon::parse($lr->lr->gr_date)->format('d-m-Y') }}
+                                <td style="white-space: nowrap;">
+                                    {{ \Carbon\Carbon::parse($lr->lr->gr_date)->format('d-m-Y') }}
                                 </td>
                                 <td>{{ $lr->lr->lr_number }}</td>
                                 <td>{{ $lr->lr->truck->truck_number ?? 'N/A' }}</td>

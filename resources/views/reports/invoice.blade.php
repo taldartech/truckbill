@@ -3,6 +3,11 @@
 @section('title', 'Invoice Report')
 
 @section('content')
+    @if (session('error'))
+        <div class="alert alert-danger">
+            {{ session('error') }}
+        </div>
+    @endif
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" action="{{ route('reports.invoice') }}" id="searchForm" onsubmit="validateForm(event)">
@@ -22,8 +27,7 @@
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-search"></i> Search
                         </button>
-                        <a href="{{ route('reports.invoice') }}?date={{ date('Y-m-d') }}"
-                            class="btn btn-outline-secondary">
+                        <a href="{{ route('reports.invoice') }}?date={{ date('Y-m-d') }}" class="btn btn-outline-secondary">
                             <i class="bi bi-arrow-clockwise"></i> Reset
                         </a>
                     </div>
@@ -59,20 +63,20 @@
                 <table class="table table-bordered table-striped" style="font-size: 12px !important;">
                     <thead>
                         <tr>
-                          <th>Sr No</th>
-                          <th>GSTIN/UIN of Recipient</th>
-                          <th>Receiver</th>
-                          <th>Invoice Number</th>
-                          <th>Invoice Date</th>
-                          <th>Invoice Value</th>
-                          <th>Place of Supply</th>
-                          <th>Reverse Charge</th>
-                          <th>Applicable % of Tax</th>
-                          <th>Invoice Type</th>
-                          {{-- <th>E-Commerce GSTIN</th> --}}
-                          <th>Rate</th>
-                          <th>Taxable Value</th>
-                          {{-- <th>Cess Amount</th> --}}
+                            <th>Sr No</th>
+                            <th>GSTIN/UIN of Recipient</th>
+                            <th>Receiver</th>
+                            <th>Invoice Number</th>
+                            <th>Invoice Date</th>
+                            <th>Invoice Value</th>
+                            <th>Place of Supply</th>
+                            <th>Reverse Charge</th>
+                            <th>Applicable % of Tax</th>
+                            <th>Invoice Type</th>
+                            {{-- <th>E-Commerce GSTIN</th> --}}
+                            <th>Rate</th>
+                            <th>Taxable Value</th>
+                            {{-- <th>Cess Amount</th> --}}
                         </tr>
                     </thead>
                     <tbody>
@@ -82,15 +86,16 @@
                                 <td>{{ $invoice->consignee->gst_number }}</td>
                                 <td>{{ $invoice->consignee->name }}</td>
                                 <td>{{ $invoice->manual_invoice_number }}</td>
-                                <td style="white-space: nowrap;">{{ \Carbon\Carbon::parse($invoice->generated_date)->format('d-m-Y') }}
+                                <td style="white-space: nowrap;">
+                                    {{ \Carbon\Carbon::parse($invoice->generated_date)->format('d-m-Y') }}
                                 </td>
                                 <td>{{ $invoice->net_amount }}</td>
                                 <td>{{ $invoice->consignee->state->name }}</td>
                                 <td>{{ $invoice->invoice_type == 'Reverse' ? 'Yes' : 'No' }}</td>
                                 <td>{{ $invoice->applicable_tax_percentage }}%</td>
-                                <td>{{ "Regular B2B" }}</td>
+                                <td>{{ 'Regular B2B' }}</td>
                                 {{-- <td></td> --}}
-                                <td>{{ "5.00" }}</td>
+                                <td>{{ '5.00' }}</td>
                                 <td>{{ $invoice->net_amount }}</td>
                                 {{-- <td></td> --}}
                             </tr>

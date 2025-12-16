@@ -12,10 +12,14 @@ use PhpOffice\PhpSpreadsheet\Shared\Date;
 class PendingInvoiceExport implements FromCollection, WithHeadings, WithColumnFormatting
 {
     protected $customerId;
+    protected $startDate;
+    protected $endDate;
 
-    public function __construct($customerId = null)
+    public function __construct($customerId = null, $startDate = null, $endDate = null)
     {
         $this->customerId = $customerId;
+        $this->startDate = $startDate;
+        $this->endDate = $endDate;
     }
 
     public function collection()
@@ -32,6 +36,11 @@ class PendingInvoiceExport implements FromCollection, WithHeadings, WithColumnFo
         // optionally filter by customer
         if ($this->customerId) {
             $query = $query->where('customer_id', $this->customerId);
+        }
+
+        // optionally filter by date range
+        if ($this->startDate && $this->endDate) {
+            $query = $query->whereBetween('gr_date', [$this->startDate, $this->endDate]);
         }
 
         return $query->orderBy('gr_date', 'desc')->get()->map(function ($lr) {

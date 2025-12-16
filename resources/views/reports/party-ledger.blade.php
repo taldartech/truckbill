@@ -54,10 +54,14 @@
 @endpush
 
 @section('content')
+    @if (session('error'))
+        <div class="alert alert-danger">
+            {{ session('error') }}
+        </div>
+    @endif
     <div class="card mb-4">
         <div class="card-body">
-            <form method="GET" action="{{ route('reports.party-ledger') }}" id="searchForm"
-                onsubmit="validateForm(event)">
+            <form method="GET" action="{{ route('reports.party-ledger') }}" id="searchForm" onsubmit="validateForm(event)">
                 <div class="row mb-2">
                     <div class="col-md-3">
                         <label class="form-label">Start Date <span class="text-danger">*</span></label>
@@ -118,17 +122,17 @@
                 <table class="table table-bordered table-striped" style="font-size: 12px !important;">
                     <thead>
                         <tr>
-                          <th>Sr No</th>
-                          <th>Date</th>
-                          <th>LR Number</th>
-                          <th>Truck No</th>
-                          <th>Disptach (Destination)</th>
-                          <th>LR Rate</th>
-                          <th>LR Amt</th>
-                          <th>Bill no</th>
-                          <th>Bill Date</th>
-                          <th>Amount</th>
-                          <th>Payment Status</th>
+                            <th>Sr No</th>
+                            <th>Date</th>
+                            <th>LR Number</th>
+                            <th>Truck No</th>
+                            <th>Disptach (Destination)</th>
+                            <th>LR Rate</th>
+                            <th>LR Amt</th>
+                            <th>Bill no</th>
+                            <th>Bill Date</th>
+                            <th>Amount</th>
+                            <th>Payment Status</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -143,20 +147,20 @@
                                 <td style="text-align: right;">{{ number_format($lr->fr_rate, 2) }}</td>
                                 <td style="text-align: right;">{{ number_format($lr->amount, 2) }}</td>
                                 @php
-                                  $invoice = \App\Models\Invoice::whereJsonContains('lr_ids', $lr->id)->first();
-                                  // Fetch amount and payment status from the bill if exists
-                                  if ($invoice->total_amount == $invoice->net_amount) {
-                                      $gst = 5;
-                                  } else {
-                                      $gst = 0;
-                                  }
+                                    $invoice = \App\Models\Invoice::whereJsonContains('lr_ids', $lr->id)->first();
+                                    // Fetch amount and payment status from the bill if exists
+                                    if ($invoice->total_amount == $invoice->net_amount) {
+                                        $gst = 5;
+                                    } else {
+                                        $gst = 0;
+                                    }
                                 @endphp
                                 <td>{{ $invoice->manual_invoice_number }}</td>
                                 <td style="white-space: nowrap;">
                                     {{ $invoice->generated_date ? \Carbon\Carbon::parse($invoice->generated_date)->format('d-m-Y') : 'N/A' }}
                                 </td>
                                 <td style="text-align: right;">
-                                    {{ number_format($lr->amount + ($lr->amount * $gst / 100), 2) }}
+                                    {{ number_format($lr->amount + ($lr->amount * $gst) / 100, 2) }}
                                 </td>
                                 <td>{{ $invoice->payment_status }}</td>
                             </tr>
