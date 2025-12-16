@@ -1,4 +1,10 @@
-<table>
+@php
+    // Flag that tells this view whether it's being rendered for Excel export
+    // Default to false when included from a normal Blade view
+    $forExcel = $forExcel ?? false;
+@endphp
+
+<table class="table table-bordered table-striped" style="font-size: 12px !important;">
     <thead>
         <tr>
             <th>Sr No</th>
@@ -6,6 +12,7 @@
             <th>LR No</th>
             <th>GR No</th>
             <th>Truck No</th>
+            <th>Customer</th>
             <th>Destination</th>
             <th>Invoice No</th>
             <th>Weight</th>
@@ -60,11 +67,17 @@
                     $diff = $lr->amount - $freight?->tr_amount;
                 @endphp
                 <td>{{ $loop->iteration }}</td>
-                <td>{{ \PhpOffice\PhpSpreadsheet\Shared\Date::dateTimeToExcel(\Carbon\Carbon::parse($lr->gr_date)) }}
+                <td>
+                    @if ($forExcel)
+                        {{ \PhpOffice\PhpSpreadsheet\Shared\Date::dateTimeToExcel(\Carbon\Carbon::parse($lr->gr_date)) }}
+                    @else
+                        {{ \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') }}
+                    @endif
                 </td>
                 <td>{{ $lr->lr_number }}</td>
                 <td>{{ $lr->gr_number }}</td>
                 <td>{{ $lr->truck->truck_number }}</td>
+                <td>{{ $lr->customer->name ?? '-' }}</td>
                 <td>{{ $lr->destination_city ?? '-' }}</td>
                 <td>{{ $lr->invoice_number ?? '-' }}</td>
                 <td>{{ $lr->weight ?? 0 }}</td>
@@ -80,7 +93,7 @@
 
                 <td>{{ $freight?->tr_fr_rate ?? 0 }}</td>
                 <td>{{ $freight?->tr_amount ?? 0 }}</td>
-                <td>{{ $freight?->tds_amount ?? 0 }}</td>
+                <td>{{ round($freight?->tds_amount ?? 0) }}</td>
 
                 <td>{{ $cash ?? 0 }}</td>
                 <td>{{ $bank ?? 0 }}</td>
@@ -103,9 +116,25 @@
                 <td>{{ $lr->transporter->name ?? '-' }}</td>
                 <td>{{ $lr->reference?->name ?? '-' }}</td>
                 <td>{{ $lr->transporter->is_owner ? 'owner' : 'agency' }}</td>
-                <td>{{ $lr->transporter->tds_percentage ? 'Yes' : 'No' }}</td>
-                <td>{{ $freight?->eway_bill_number ?? '-' }}</td>
-                <td>{{ $freight?->eway_bill_expiry ? \PhpOffice\PhpSpreadsheet\Shared\Date::dateTimeToExcel(\Carbon\Carbon::parse($freight?->eway_bill_expiry)) : '-' }}
+                <td>{{ ($freight?->tds_amount ?? 0) > 0 ? 'Yes' : 'No' }}</td>
+                <td>
+                    @if ($forExcel)
+                        {{-- Cast to string and prefix with space so Excel keeps full number as text --}}
+                        {{ $freight?->eway_bill_number !== null ? ' ' . (string) $freight->eway_bill_number : '-' }}
+                    @else
+                        {{ $freight?->eway_bill_number ?? '-' }}
+                    @endif
+                </td>
+                <td>
+                    @if ($freight?->eway_bill_expiry)
+                        @if ($forExcel)
+                            {{ \PhpOffice\PhpSpreadsheet\Shared\Date::dateTimeToExcel(\Carbon\Carbon::parse($freight->eway_bill_expiry)) }}
+                        @else
+                            {{ \Carbon\Carbon::parse($freight->eway_bill_expiry)->format('d-m-Y') }}
+                        @endif
+                    @else
+                        -
+                    @endif
                 </td>
                 <td>{{ $lr->delivery_status ?? '-' }}</td>
                 <td>{{ $lr->transporter->pan_number ?? '-' }}</td>
