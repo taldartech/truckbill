@@ -14,12 +14,14 @@ class PendingMemoExport implements FromCollection, WithHeadings, WithColumnForma
     protected $customerId;
     protected $startDate;
     protected $endDate;
+    protected $status;
 
-    public function __construct($customerId = null, $startDate = null, $endDate = null)
+    public function __construct($customerId = null, $startDate = null, $endDate = null, $status = 'delivered')
     {
         $this->customerId = $customerId;
         $this->startDate = $startDate;
         $this->endDate = $endDate;
+        $this->status = $status;
     }
 
     public function collection()
@@ -29,8 +31,7 @@ class PendingMemoExport implements FromCollection, WithHeadings, WithColumnForma
             'customer:id,name'
         ])
             ->where('company_id', Auth::user()->company_id)
-            ->whereNull('memo_id')
-            ->where('delivery_status', 'Delivered');
+            ->whereNull('memo_id');
 
         // optionally filter by customer
         if ($this->customerId) {
@@ -40,6 +41,16 @@ class PendingMemoExport implements FromCollection, WithHeadings, WithColumnForma
         // optionally filter by date range
         if ($this->startDate && $this->endDate) {
             $query = $query->whereBetween('gr_date', [$this->startDate, $this->endDate]);
+        }
+
+        // optionally filter by LR status
+        $normalizedStatus = strtolower($this->status ?? 'delivered');
+        if ($normalizedStatus === 'in-progress') {
+            $query = $query->where('delivery_status', 'In-Progress');
+        } elseif ($normalizedStatus === 'delivered') {
+            $query = $query->where('delivery_status', 'Delivered');
+        } elseif ($normalizedStatus === 'both') {
+            $query = $query->whereIn('delivery_status', ['In-Progress', 'Delivered']);
         }
 
         return $query->orderBy('gr_date', 'desc')->get()->map(function ($lr) {

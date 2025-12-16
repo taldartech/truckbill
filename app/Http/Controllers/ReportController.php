@@ -701,6 +701,7 @@ class ReportController extends Controller
                 ->get();
 
             $customerId = $request->input('customer_id');
+            $status = $request->input('status', 'delivered'); // in-progress, delivered, both
             [$startDate, $endDate, $hasRange] = $this->normalizeDateRange($request);
 
             $lrs = collect();
@@ -718,12 +719,20 @@ class ReportController extends Controller
                 $ids = $idsQuery->pluck('id')->unique()->values();
 
                 if ($ids->count() > 0) {
-                    $lrs = LorryReceipt::with(['truck:id,truck_number', 'customer:id,name'])
+                    $lrsQuery = LorryReceipt::with(['truck:id,truck_number', 'customer:id,name'])
                         ->whereIn('id', $ids)
-                        ->where('delivery_status', 'Delivered')
-                        ->where('company_id', Auth::user()->company_id)
-                        ->orderBy('gr_date', 'desc')
-                        ->get();
+                        ->where('company_id', Auth::user()->company_id);
+
+                    $normalizedStatus = strtolower($status);
+                    if ($normalizedStatus === 'in-progress') {
+                        $lrsQuery->where('delivery_status', 'In-Progress');
+                    } elseif ($normalizedStatus === 'delivered') {
+                        $lrsQuery->where('delivery_status', 'Delivered');
+                    } elseif ($normalizedStatus === 'both') {
+                        $lrsQuery->whereIn('delivery_status', ['In-Progress', 'Delivered']);
+                    }
+
+                    $lrs = $lrsQuery->orderBy('gr_date', 'desc')->get();
                 }
             } else {
                 // Show pending memos for **all customers**
@@ -737,12 +746,20 @@ class ReportController extends Controller
                 $ids = $idsQuery->pluck('id')->unique()->values();
 
                 if ($ids->count() > 0) {
-                    $lrs = LorryReceipt::with(['truck:id,truck_number', 'customer:id,name'])
+                    $lrsQuery = LorryReceipt::with(['truck:id,truck_number', 'customer:id,name'])
                         ->whereIn('id', $ids)
-                        ->where('delivery_status', 'Delivered')
-                        ->where('company_id', Auth::user()->company_id)
-                        ->orderBy('gr_date', 'desc')
-                        ->get();
+                        ->where('company_id', Auth::user()->company_id);
+
+                    $normalizedStatus = strtolower($status);
+                    if ($normalizedStatus === 'in-progress') {
+                        $lrsQuery->where('delivery_status', 'In-Progress');
+                    } elseif ($normalizedStatus === 'delivered') {
+                        $lrsQuery->where('delivery_status', 'Delivered');
+                    } elseif ($normalizedStatus === 'both') {
+                        $lrsQuery->whereIn('delivery_status', ['In-Progress', 'Delivered']);
+                    }
+
+                    $lrs = $lrsQuery->orderBy('gr_date', 'desc')->get();
                 }
             }
 
@@ -752,6 +769,7 @@ class ReportController extends Controller
                 'lrs' => $lrs,
                 'startDate' => $startDate,
                 'endDate' => $endDate,
+                'status' => $status,
             ]);
         } catch (\Exception $e) {
             Log::error('Error in pending_memo: ' . $e->getMessage());
@@ -764,13 +782,15 @@ class ReportController extends Controller
 
         // Optionally get customer_id if you want to filter by customer as well
         $customerId = $request->input('customer_id');
+        $status = $request->input('status', 'delivered');
         [$startDate, $endDate, $hasRange] = $this->normalizeDateRange($request);
 
         return Excel::download(
             new PendingMemoExport(
                 $customerId,
                 $hasRange ? $startDate : null,
-                $hasRange ? $endDate : null
+                $hasRange ? $endDate : null,
+                $status
             ),
             'pending-memo.xlsx'
         );

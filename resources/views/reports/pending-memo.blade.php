@@ -76,6 +76,20 @@
                             @endforeach
                         </select>
                     </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Status</label>
+                        <select name="status" class="form-select">
+                            <option value="delivered" {{ ($status ?? 'delivered') === 'delivered' ? 'selected' : '' }}>
+                                Delivered
+                            </option>
+                            <option value="in-progress" {{ ($status ?? '') === 'in-progress' ? 'selected' : '' }}>
+                                In-Progress
+                            </option>
+                            <option value="both" {{ ($status ?? '') === 'both' ? 'selected' : '' }}>
+                                Both
+                            </option>
+                        </select>
+                    </div>
 
                     <div class="col-md-3 text-end d-flex align-items-end justify-content-end gap-2">
                         <button type="submit" class="btn btn-primary">
@@ -103,6 +117,7 @@
                             'customer_id' => $customerId,
                             'start_date' => $startDate,
                             'end_date' => $endDate,
+                            'status' => $status ?? 'delivered',
                         ]) }}">
                         <i class="bi bi-file-earmark-spreadsheet"></i> Export
                     </a>
