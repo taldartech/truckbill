@@ -434,6 +434,15 @@ class InvoiceController extends Controller
         return response()->json($result);
     }
 
+    public function getAllInvoiceNumbers()
+    {
+        $invoices = Invoice::where('company_id', Auth::user()->company_id)
+            ->orderByDesc('id')
+            ->get(['id', 'manual_invoice_number']);
+
+        return response()->json($invoices);
+    }
+
     public function getInvoiceNumbersForCustomer($customerId)
     {
         $invoices = Invoice::where('customer_id', $customerId)

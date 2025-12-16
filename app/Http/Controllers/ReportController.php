@@ -1012,12 +1012,14 @@ class ReportController extends Controller
         $customers = Consignee::where('company_id', Auth::user()->company_id)->get();
         $customerId = $request->input('customer_id') ?? null;
         $id = $request->input('invoice_number') ?? null;
-        $invoices = [];
-        $invoice = null;
-        if ($customerId) {
-            $invoices = Invoice::where('customer_id', $customerId)->get();
-            $invoice = Invoice::find($id);
-        }
+        // Load all invoices initially, filter by customer if selected
+        $invoices = Invoice::where('company_id', Auth::user()->company_id)
+            ->when($customerId, function ($query) use ($customerId) {
+                return $query->where('customer_id', $customerId);
+            })
+            ->orderByDesc('id')
+            ->get();
+        $invoice = Invoice::find($id);
         return view('reports.party-bill', compact('customers', 'customerId', 'id', 'invoices', 'invoice',));
     }
 
@@ -1099,12 +1101,14 @@ class ReportController extends Controller
         $customers = Consignee::where('company_id', Auth::user()->company_id)->get();
         $customerId = $request->input('customer_id') ?? null;
         $id = $request->input('invoice_number') ?? null;
-        $invoices = [];
-        $invoice = null;
-        if ($customerId) {
-            $invoices = Invoice::where('customer_id', $customerId)->get();
-            $invoice = Invoice::find($id);
-        }
+        // Load all invoices initially, filter by customer if selected
+        $invoices = Invoice::where('company_id', Auth::user()->company_id)
+            ->when($customerId, function ($query) use ($customerId) {
+                return $query->where('customer_id', $customerId);
+            })
+            ->orderByDesc('id')
+            ->get();
+        $invoice = Invoice::find($id);
         return view('reports.ultratech-bill', compact('customers', 'customerId', 'id', 'invoices', 'invoice',));
     }
 

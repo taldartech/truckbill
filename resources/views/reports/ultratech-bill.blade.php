@@ -59,9 +59,8 @@
             <form method="GET" action="{{ route('reports.ultratech-bill') }}" id="searchForm" onsubmit="validateForm(event)">
                 <div class="row mb-2">
                     <div class="col-md-3">
-                        <label class="form-label">Customer <span class="text-danger">*</span></label>
-                        <select name="customer_id" class="form-select select2" required
-                            onchange="fetchInvoiceNumbers(this.value)">
+                        <label class="form-label">Customer</label>
+                        <select name="customer_id" class="form-select select2" onchange="filterInvoiceNumbers(this.value)">
                             <option value="">Select Customer</option>
                             @foreach ($customers as $customer)
                                 <option @if ($customerId == $customer->id) selected @endif value="{{ $customer->id }}">
@@ -75,8 +74,7 @@
                             <option value="">Select Invoice Number</option>
                             @if (!empty($invoices))
                                 @foreach ($invoices as $inv)
-                                    <option @if ($id == $inv->id) selected @endif
-                                        value="{{ $inv->id }}">
+                                    <option @if ($id == $inv->id) selected @endif value="{{ $inv->id }}">
                                         {{ $inv->manual_invoice_number }}</option>
                                 @endforeach
                             @endif
@@ -95,9 +93,13 @@
         </div>
     </div>
 
-    @if (!$customerId)
-        <div class="alert alert-warning">
-            Please select the Customer to generate the report.
+    @if (!$invoice && $id)
+        <div class="alert alert-info">
+            No records found for the selected invoice.
+        </div>
+    @elseif (!$invoice && !$id)
+        <div class="alert alert-info">
+            Please select an Invoice Number to generate the report.
         </div>
     @elseif (!$invoice)
         <div class="alert alert-info">
@@ -138,26 +140,58 @@
         });
     </script>
     <script>
-        function fetchInvoiceNumbers(customerId) {
-            if (!customerId) {
-                $('select[name="invoice_number"]').html('<option value="">Select Invoice Number</option>');
-                return;
-            }
+        let allInvoices = [];
 
+        // Load all invoices on page load
+        $(document).ready(function() {
+            loadAllInvoices();
+        });
+
+        function loadAllInvoices() {
             $.ajax({
-                url: '/api/invoice-numbers/' + customerId,
+                url: '/api/invoice-numbers',
                 method: 'GET',
                 success: function(data) {
-                    let options = '<option value="">Select Invoice Number</option>';
-                    data.forEach(function(invoiceNumber) {
-                        options += `<option value="${invoiceNumber.id}">${invoiceNumber.manual_invoice_number}</option>`;
-                    });
-                    $('select[name="invoice_number"]').html(options);
+                    allInvoices = data;
+                    updateInvoiceDropdown(data);
                 },
                 error: function() {
                     alert('Failed to fetch invoice numbers. Please try again.');
                 }
             });
+        }
+
+        function filterInvoiceNumbers(customerId) {
+            if (!customerId) {
+                // If no customer selected, show all invoices
+                updateInvoiceDropdown(allInvoices);
+                return;
+            }
+
+            // Filter invoices by customer
+            $.ajax({
+                url: '/api/invoice-numbers/' + customerId,
+                method: 'GET',
+                success: function(data) {
+                    updateInvoiceDropdown(data);
+                },
+                error: function() {
+                    alert('Failed to fetch invoice numbers. Please try again.');
+                }
+            });
+        }
+
+        function updateInvoiceDropdown(invoices) {
+            let selectedInvoiceId = $('select[name="invoice_number"]').val() || '{{ $id ?? '' }}';
+            let options = '<option value="">Select Invoice Number</option>';
+            invoices.forEach(function(invoiceNumber) {
+                let selected = selectedInvoiceId == invoiceNumber.id ? 'selected' : '';
+                options +=
+                    `<option value="${invoiceNumber.id}" ${selected}>${invoiceNumber.manual_invoice_number}</option>`;
+            });
+            $('select[name="invoice_number"]').html(options);
+            // Trigger change event to update Select2
+            $('select[name="invoice_number"]').trigger('change');
         }
     </script>
 @endpush
