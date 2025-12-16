@@ -2,11 +2,6 @@
 
 @push('styles')
     <!-- DataTables CSS -->
-    {{-- @if (session('error'))
-    <div class="alert alert-danger mt-2">
-        {{ session('error') }}
-    </div>
-@endif --}}
 
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
@@ -916,35 +911,65 @@
                     }
                     $(this).removeClass('is-invalid');
 
-                    // Sequential allocation logic
-                    let remaining = totalAmount;
-                    let allocatedTotal = 0;
+                    // Percentage-based allocation logic
+                    // First, calculate total balance from all inputs
+                    let totalBalanceAmount = 0;
+                    $('.allocated-input').each(function() {
+                        totalBalanceAmount += parseFloat($(this).data('balance')) || 0;
+                    });
 
+                    let allocatedTotal = 0;
+                    let allocations = [];
+
+                    // Calculate percentage-based allocation for each booking
                     $('.allocated-input').each(function() {
                         const $input = $(this);
                         const balance = parseFloat($input.data('balance')) || 0;
-                        let alloc = 0;
 
-                        if (remaining > 0) {
-                            alloc = Math.min(balance, remaining);
-                            remaining -= alloc;
-                        }
+                        // Calculate percentage of total balance
+                        const percentage = totalBalanceAmount > 0 ? (balance / totalBalanceAmount) : 0;
 
-                        $input.val(alloc.toFixed(2));
+                        // Allocate based on percentage
+                        let alloc = totalAmount * percentage;
+
+                        // Ensure allocation doesn't exceed balance
+                        alloc = Math.min(alloc, balance);
+
+                        allocations.push({
+                            $input: $input,
+                            alloc: alloc
+                        });
+
                         allocatedTotal += alloc;
                     });
 
-                    // Handle any remaining (rounding adjustments)
-                    if (remaining > 0) {
-                        const $first = $('.allocated-input').first();
-                        const updated = parseFloat($first.val()) + remaining;
-                        $first.val(updated.toFixed(2));
-                        allocatedTotal += remaining;
+                    // Handle rounding differences
+                    const difference = totalAmount - allocatedTotal;
+                    if (Math.abs(difference) > 0.01) {
+                        // Distribute rounding difference to the first booking with remaining balance
+                        for (let i = 0; i < allocations.length; i++) {
+                            const item = allocations[i];
+                            const balance = parseFloat(item.$input.data('balance')) || 0;
+                            const currentAlloc = item.alloc;
+                            const remaining = balance - currentAlloc;
+
+                            if (remaining > 0 && difference > 0) {
+                                const adjustment = Math.min(remaining, Math.abs(difference));
+                                item.alloc += adjustment;
+                                allocatedTotal += adjustment;
+                                break; // Stop after adjusting first available
+                            }
+                        }
                     }
+
+                    // Apply allocations
+                    allocations.forEach(item => {
+                        item.$input.val(item.alloc.toFixed(2));
+                    });
 
                     // Update total allocated display
                     $('#combinedAllocatedTotal').text(
-                        '₹' + allocatedTotal.toLocaleString('en-IN', {
+                        '₹' + totalAmount.toLocaleString('en-IN', {
                             minimumFractionDigits: 2
                         })
                     );

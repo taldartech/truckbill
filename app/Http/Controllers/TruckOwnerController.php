@@ -9,6 +9,7 @@ use App\Models\State;
 use App\Models\City;
 use App\Models\Truck;
 use App\Models\Driver;
+use App\Models\FreightBooking;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -571,6 +572,9 @@ class TruckOwnerController extends Controller
         // Convert pan_active to boolean
         $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
 
+        // Check if declaration_given changed
+        $declarationChanged = $transporter->declaration_given != $validated['declaration_given'];
+
         if ($validated['declaration_given']) {
             // Rule 1: Declaration given → TDS = 0%
             $validated['tds_percentage'] = 0.00;
@@ -593,6 +597,12 @@ class TruckOwnerController extends Controller
         }
 
         $transporter->update($validated);
+
+        // If declaration_given changed, update related freight bookings with remaining balance
+        if ($declarationChanged) {
+            $this->updateFreightBookingsTds($transporter, $validated['tds_percentage']);
+        }
+
         return redirect()->route('truck_owners.index')->with('success', 'Truck Owner updated successfully!');
     }
 
@@ -605,5 +615,50 @@ class TruckOwnerController extends Controller
             'success' => true,
             'message' => 'Truck Owner deleted successfully!'
         ]);
+    }
+
+    /**
+     * Update TDS amount for freight bookings with remaining balance when declaration_given changes
+     */
+    private function updateFreightBookingsTds($transporter, $newTdsPercentage)
+    {
+        // Find all freight bookings with remaining balance for this transporter
+        $freightBookings = FreightBooking::where('transporter_id', $transporter->id)
+            ->where('balance_amount', '>', 0)
+            ->get();
+
+        foreach ($freightBookings as $freightBooking) {
+            // Calculate new TDS amount based on tr_amount
+            $newTdsAmount = $freightBooking->tr_amount * ($newTdsPercentage / 100);
+            $oldTdsAmount = $freightBooking->tds_amount ?? 0;
+            $tdsDifference = $newTdsAmount - $oldTdsAmount;
+
+            // Do not proceed if new TDS amount is greater than balance amount
+            if ($newTdsAmount > $freightBooking->balance_amount) {
+                // Skip updating this freight booking - keep balance_amount as is
+                continue;
+            }
+
+            // Update TDS amount
+            $freightBooking->tds_amount = $newTdsAmount;
+            $freightBooking->transporter_tds_percentage = $newTdsPercentage;
+
+            // Update balance amount only if balance_amount >= abs(TDS difference)
+            // If balance is less than TDS difference, don't deduct
+            if ($freightBooking->balance_amount >= abs($tdsDifference)) {
+                // Adjust balance by the TDS difference
+                // If TDS increased (positive difference), balance decreases
+                // If TDS decreased (negative difference), balance increases
+                $freightBooking->balance_amount = $freightBooking->balance_amount - $tdsDifference;
+
+                // Ensure balance doesn't go negative
+                if ($freightBooking->balance_amount < 0) {
+                    $freightBooking->balance_amount = 0;
+                }
+            }
+            // If balance_amount < abs(TDS difference), keep balance_amount as is (don't deduct)
+
+            $freightBooking->save();
+        }
     }
 }
