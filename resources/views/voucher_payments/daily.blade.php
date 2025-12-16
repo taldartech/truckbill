@@ -153,13 +153,6 @@
                             <button id="bulkActionBtn" class="btn btn-primary d-none">
                                 <i class="bi bi-arrow-up-circle"></i> Update Status
                             </button>
-                            {{-- @if (
-                                $payments->where('payment_status', 'pending')->where('payment_mode', 'bank transfer')->count() > 0 ||
-                                    $payments1->where('payment_status', 'pending')->where('payment_mode', 'bank transfer')->count() > 0)
-                                <a class="btn btn-warning ms-2" href="{{ route('voucher_payments.export_pending', ['date' => $selectedDate]) }}">
-                                    <i class="bi bi-file-earmark-spreadsheet"></i> Export Pending Bank Payments
-                                </a>
-                            @endif --}}
                         </div>
                     @endif
                 </div>
@@ -218,11 +211,13 @@
                                 <td>
                                     @if ($payment->freight_booking && $payment->freight_booking->transporter)
                                         @if ($payment->freight_booking->transporter->is_owner)
-                                            <i class="bi bi-truck"></i> {{ $payment->freight_booking->transporter->name }}
+                                            <i class="bi bi-truck"></i>
                                         @else
                                             <i class="bi bi-building"></i>
-                                            {{ $payment->freight_booking->transporter->name }}
                                         @endif
+                                        {{ $payment->freight_booking->transporter->name }} <br>
+                                        <small
+                                            class="text-muted">{{ $payment->freight_booking->transporter->beneficiary_id ?? '-' }}</small>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
@@ -301,7 +296,7 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <small>{{ $payment->created_at->setTimezone('Asia/Kolkata')->format('h:i A') }}</small>
+                                    <small>{{ $payment->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y h:i A') }}</small>
                                 </td>
                                 {{-- @if (auth()->user()->userRole->name === 'admin' || auth()->user()->userRole->name === 'super_admin')
                                 <td>
