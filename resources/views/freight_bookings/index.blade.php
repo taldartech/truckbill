@@ -449,6 +449,98 @@
     <script>
         const paymentTypes = @json($paymentTypes);
         const paymentModes = @json($paymentModes);
+        let selectedRows = {};
+        let selectedBookingIds = [];
+
+        $(document).on('change', '.row-checkbox', function() {
+            const id = $(this).val();
+
+            if (this.checked) {
+                selectedRows[id] = {
+                    id: id,
+                    lr: $(this).data('lr'),
+                    truck: $(this).data('truck'),
+                    balance: parseFloat($(this).data('balance') || 0),
+                    transporterId: $(this).data('transporter-id'),
+                    customerId: $(this).data('customer-id'),
+                    memoId: $(this).data('memo-id'),
+                    linkedLrId: $(this).data('linked-lr-id'),
+                    voucher_number: $(this).data('voucher_number'),
+                    freight_booking_id: $(this).data('freight-booking-id'),
+                    lr_id: $(this).data('lr-id'),
+                    transporter: $(this).data('transporter'),
+                    lr_transporter: $(this).data('lr-transporter'),
+                    fb_transporter: $(this).data('fb-transporter'),
+                    tds_percentage: $(this).data('tds-percentage')
+                };
+                if (!selectedBookingIds.includes(id)) {
+                    selectedBookingIds.push(id);
+                }
+            } else {
+                delete selectedRows[id];
+                selectedBookingIds = selectedBookingIds.filter(x => x !== id);
+            }
+        });
+
+        $('#select-all').on('change', function() {
+            const checked = this.checked;
+
+            $('.row-checkbox').each(function() {
+                const id = $(this).val();
+                $(this).prop('checked', checked);
+
+                if (checked) {
+                    if (!selectedBookingIds.includes(id)) {
+                        selectedBookingIds.push(id);
+                        selectedRows[id] = {
+                            id: id,
+                            lr: $(this).data('lr'),
+                            truck: $(this).data('truck'),
+                            balance: parseFloat($(this).data('balance') || 0),
+                            transporterId: $(this).data('transporter-id'),
+                            customerId: $(this).data('customer-id'),
+                            memoId: $(this).data('memo-id'),
+                            linkedLrId: $(this).data('linked-lr-id'),
+                            voucher_number: $(this).data('voucher_number'),
+                            freight_booking_id: $(this).data('freight-booking-id'),
+                            lr_id: $(this).data('lr-id')
+                        };
+                    }
+                } else {
+                    selectedBookingIds = [];
+                    selectedRows = {};
+                }
+            });
+
+            updatePaymentButtonsVisibility();
+        });
+
+        function updateSelectAllState() {
+            const total = $('.row-checkbox').length;
+            const checked = Object.values(selectedRows).length;
+
+            if (checked === 0) {
+                $('#select-all').prop({
+                    checked: false,
+                    indeterminate: false
+                });
+            } else if (checked === total) {
+                $('#select-all').prop({
+                    checked: true,
+                    indeterminate: false
+                });
+            } else {
+                $('#select-all').prop({
+                    indeterminate: true
+                });
+            }
+        }
+
+        function getSelectedCheckboxes() {
+            return selectedBookingIds
+                .map(id => $('.row-checkbox[value="' + id + '"]'))
+                .filter(cb => cb.length);
+        }
     </script>
 
     <script>
@@ -466,7 +558,7 @@
 
                 // Update select-all checkbox state
                 const totalCheckboxes = $('.row-checkbox').length;
-                const checkedCheckboxes = $('.row-checkbox:checked').length;
+                const checkedCheckboxes = Object.values(selectedRows).length;
 
                 if (checkedCheckboxes === 0) {
                     $('#select-all').prop('indeterminate', false).prop('checked', false);
@@ -477,95 +569,12 @@
                 }
             });
 
-            function updatePaymentButtonsVisibility() {
-                const checkedBoxes = $('.row-checkbox:checked');
-                $('#bulk-memo-id-btn, #voucher-payment-btn, #combined-payment-btn').hide();
-                if (checkedBoxes.length === 0) {
-                    return; // nothing selected
-                }
-                if (checkedBoxes.length === 1) {
-                    const singleLinkedLrId = checkedBoxes.data('linked-lr-id');
-                    if (!singleLinkedLrId) {
-                        $('#voucher-payment-btn').show(); // show only if linked_lr_id is null
-                    }
-                    if (singleLinkedLrId) {
-                        $('#combined-payment-btn').show();
-                    }
 
-                    const singleMemoId = checkedBoxes.data('memo-id');
-                    if (!singleMemoId) {
-                        $('#bulk-memo-id-btn').show();
-                    }
-                    return;
-                }
-                let firstCustomerId = null;
-                let firstTransporterId = null;
-                let firstLinkedLrId = null;
-                let allSameCustomer = true;
-                let allSameTransporter = true;
-                let allSameLinked = true;
-                let anyLinkedLrExists = false;
-                let allSameMemoId = true;
-
-                checkedBoxes.each(function() {
-                    const checkbox = $(this);
-                    const customerId = checkbox.data('customer-id');
-                    const transporterId = checkbox.data('transporter-id');
-                    const linkedLrId = checkbox.data('linked-lr-id') || '';
-                    const memoId = checkbox.data('memo-id');
-
-                    console.log(linkedLrId);
-
-
-
-                    if (linkedLrId) {
-                        anyLinkedLrExists = true;
-                    }
-                    if (memoId) {
-                        allSameMemoId = false;
-                    }
-
-                    if (firstCustomerId === null) {
-                        firstCustomerId = customerId;
-                        firstTransporterId = transporterId;
-                        firstLinkedLrId = linkedLrId;
-                    } else {
-                        if (customerId !== firstCustomerId) {
-                            allSameCustomer = false;
-                        }
-                        if (transporterId !== firstTransporterId) {
-                            allSameTransporter = false;
-                        }
-                        if (linkedLrId !== firstLinkedLrId) {
-                            allSameLinked = false;
-                        }
-                    }
-                });
-
-                // 1. Bulk Memo ID button → if customer same
-                if (allSameCustomer) {
-                    if (allSameMemoId) {
-                        $('#bulk-memo-id-btn').show();
-                    }
-                }
-
-                // 2. Voucher Payment button → if transporter same
-                if (allSameTransporter) {
-                    if (!anyLinkedLrExists) {
-                        $('#voucher-payment-btn').show();
-                    }
-                }
-
-                // 3. Combined Payment button → if linked_lr_id same and not empty
-                if (allSameLinked && firstLinkedLrId) {
-                    $('#combined-payment-btn').show();
-                }
-            }
 
             // Voucher Payment Modal
             $('#voucher-payment-btn').on('click', function() {
-                const checkedBoxes = $('.row-checkbox:checked');
-
+                const checkedBoxes = Object.values(selectedRows);
+                console.log(checkedBoxes);
                 if (checkedBoxes.length === 0) {
                     alert('Please select at least one freight booking.');
                     return;
@@ -576,12 +585,11 @@
                 let tableBody = '';
                 let totalAmount = 0;
 
-                checkedBoxes.each(function() {
-                    const checkbox = $(this);
-                    const lrNumber = checkbox.data('lr');
-                    const truckNumber = checkbox.data('truck');
-                    const balance = parseFloat(checkbox.data('balance')) || 0;
-                    const voucherNumber = checkbox.data('voucher_number');
+                checkedBoxes.forEach(function(data) {
+                    const lrNumber = data.lr;
+                    const truckNumber = data.truck;
+                    const balance = data.balance;
+                    const voucherNumber = data.voucher_number || '-';
 
                     totalAmount += balance;
 
@@ -593,7 +601,7 @@
                             <td class="text-end">₹${balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                             <td>
                                 <input type="number" class="form-control payment-amount allocated-input"
-                                      data-id="${checkbox.val()}"
+                                      data-id="${data.id}"
                                       value="${balance}"
                                       min="0.01"
                                       max="${balance}"
@@ -669,7 +677,7 @@
             const planEndDateStr = @json(Auth::user()->company->plan_end_date ?? null);
             const today = new Date();
             $('#combined-payment-btn').on('click', function() {
-                const checkedBoxes = $('.row-checkbox:checked');
+                const checkedBoxes = Object.values(selectedRows);
                 if (checkedBoxes.length === 0) {
                     alert('Please select at least one booking.');
                     return;
@@ -685,9 +693,9 @@
                     }
                 }
 
-                // Get first selected checkbox
-                const firstCb = checkedBoxes.first();
-                const linkedLrId = firstCb.data('linked-lr-id');
+                // Get first selected checkbox data
+                const firstData = checkedBoxes[0];
+                const linkedLrId = firstData.linkedLrId;
 
                 // If there's a linked LR ID, fetch all related LRs
                 if (linkedLrId) {
@@ -730,13 +738,12 @@
                             buildCombinedModal(lrsArray);
                         } else {
                             // Fallback to just the selected LRs if no linked ones found
-                            const lrData = Array.from(checkedBoxes).map(cb => {
-                                const $cb = $(cb);
+                            const lrData = checkedBoxes.map(data => {
                                 return {
-                                    freight_booking_id: $cb.data('freight-booking-id'),
-                                    lr_number: $cb.data('lr'),
-                                    truck_number: $cb.data('truck'),
-                                    balance_amount: parseFloat($cb.data('balance') || 0)
+                                    freight_booking_id: data.freight_booking_id,
+                                    lr_number: data.lr,
+                                    truck_number: data.truck,
+                                    balance_amount: data.balance
                                 };
                             });
                             buildCombinedModal(lrData);
@@ -747,13 +754,12 @@
                     });
                 } else {
                     // No linked LR ID, just use the selected rows
-                    const lrData = Array.from(checkedBoxes).map(cb => {
-                        const $cb = $(cb);
+                    const lrData = checkedBoxes.map(data => {
                         return {
-                            freight_booking_id: $cb.data('freight-booking-id'),
-                            lr_number: $cb.data('lr'),
-                            truck_number: $cb.data('truck'),
-                            balance_amount: parseFloat($cb.data('balance') || 0)
+                            freight_booking_id: data.freight_booking_id,
+                            lr_number: data.lr,
+                            truck_number: data.truck,
+                            balance_amount: data.balance
                         };
                     });
                     buildCombinedModal(lrData);
@@ -1023,7 +1029,7 @@
 
             // Bulk Memo ID Modal
             $('#bulk-memo-id-btn').on('click', function() {
-                const checkedBoxes = $('.row-checkbox:checked');
+                const checkedBoxes = Object.values(selectedRows);
                 const planEndDateStr = @json(Auth::user()->company->plan_end_date ?? null);
                 const today = new Date();
                 if (planEndDateStr && new Date(planEndDateStr) < today) {
@@ -1040,17 +1046,16 @@
                 let lrIds = [];
                 let freightBookingIds = [];
 
-                checkedBoxes.each(function() {
-                    const checkbox = $(this);
-                    const lrNumber = checkbox.data('lr');
-                    const truckNumber = checkbox.data('truck');
-                    const amount = parseFloat(checkbox.data('amount')) || 0;
-                    const balance = parseFloat(checkbox.data('balance')) || 0;
-                    const voucherNumber = checkbox.data('voucher_number');
-                    const freightBookingId = checkbox.data('freight-booking-id');
+                checkedBoxes.forEach(function(data) {
+                    const lrNumber = data.lr;
+                    const truckNumber = data.truck;
+                    const amount = data.balance;
+                    const balance = data.balance;
+                    const voucherNumber = data.voucher_number || '-';
+                    const freightBookingId = data.freight_booking_id;
 
                     // Get LR ID from the freight booking (we'll need to add this data attribute)
-                    const lrId = checkbox.data('lr-id'); // We'll need to add this
+                    const lrId = data.lr_id; // We'll need to add this
 
                     if (lrId) {
                         lrIds.push(lrId);
@@ -1062,7 +1067,7 @@
                             <td>${lrNumber}</td>
                             <td>${truckNumber}</td>
                             <td>${voucherNumber}</td>
-                            <td class="text-end">₹${amount}</td>
+                            <td class="text-end">₹${balance.toFixed(2)}</td>
                             <input type="hidden" name="lr_ids[]" value="${lrId}">
                             <input type="hidden" name="freight_booking_ids[]" value="${freightBookingId}">
                         </tr>
@@ -1127,6 +1132,87 @@
         function openVoucherPaymentModal() {
             updatePaymentButtonsVisibility();
             $('#voucherPaymentModal').modal('show');
+        }
+
+        function updatePaymentButtonsVisibility() {
+            const checkedBoxes = Object.values(selectedRows);
+            $('#bulk-memo-id-btn, #voucher-payment-btn, #combined-payment-btn').hide();
+            if (checkedBoxes.length === 0) {
+                return; // nothing selected
+            }
+            if (checkedBoxes.length === 1) {
+                const singleData = checkedBoxes[0];
+                const singleLinkedLrId = singleData.linkedLrId;
+                if (!singleLinkedLrId) {
+                    $('#voucher-payment-btn').show(); // show only if linked_lr_id is null
+                }
+                if (singleLinkedLrId) {
+                    $('#combined-payment-btn').show();
+                }
+
+                const singleMemoId = singleData.memoId;
+                if (!singleMemoId) {
+                    $('#bulk-memo-id-btn').show();
+                }
+                return;
+            }
+            let firstCustomerId = null;
+            let firstTransporterId = null;
+            let firstLinkedLrId = null;
+            let allSameCustomer = true;
+            let allSameTransporter = true;
+            let allSameLinked = true;
+            let anyLinkedLrExists = false;
+            let allSameMemoId = true;
+
+            checkedBoxes.forEach(function(data) {
+                const customerId = data.customerId;
+                const transporterId = data.transporterId;
+                const linkedLrId = data.linkedLrId || '';
+                const memoId = data.memoId;
+
+                if (linkedLrId) {
+                    anyLinkedLrExists = true;
+                }
+                if (memoId) {
+                    allSameMemoId = false;
+                }
+
+                if (firstCustomerId === null) {
+                    firstCustomerId = customerId;
+                    firstTransporterId = transporterId;
+                    firstLinkedLrId = linkedLrId;
+                } else {
+                    if (customerId !== firstCustomerId) {
+                        allSameCustomer = false;
+                    }
+                    if (transporterId !== firstTransporterId) {
+                        allSameTransporter = false;
+                    }
+                    if (linkedLrId !== firstLinkedLrId) {
+                        allSameLinked = false;
+                    }
+                }
+            });
+
+            // 1. Bulk Memo ID button → if customer same
+            if (allSameCustomer) {
+                if (allSameMemoId) {
+                    $('#bulk-memo-id-btn').show();
+                }
+            }
+
+            // 2. Voucher Payment button → if transporter same
+            if (allSameTransporter) {
+                if (!anyLinkedLrExists) {
+                    $('#voucher-payment-btn').show();
+                }
+            }
+
+            // 3. Combined Payment button → if linked_lr_id same and not empty
+            if (allSameLinked && firstLinkedLrId) {
+                $('#combined-payment-btn').show();
+            }
         }
     </script>
 @endpush
@@ -1317,7 +1403,7 @@
 
             // Voucher Payment Modal
             $('#voucher-payment-btn').on('click', function() {
-                const checkedBoxes = $('.row-checkbox:checked');
+                const checkedBoxes = Object.values(selectedRows);
 
                 if (checkedBoxes.length === 0) {
                     alert('Please select at least one freight booking.');
@@ -1326,8 +1412,8 @@
 
                 // ✅ Collect transporter IDs from selected rows
                 let transporterIds = [];
-                checkedBoxes.each(function() {
-                    transporterIds.push($(this).data('transporter-id'));
+                checkedBoxes.forEach(function(data) {
+                    transporterIds.push(data.transporterId);
                 });
 
                 // ✅ Check if all transporter IDs are the same
@@ -1342,12 +1428,11 @@
                 $('#voucherPaymentTableBody').empty();
 
                 let totalBalance = 0;
-                checkedBoxes.each(function() {
-                    const checkbox = $(this);
-                    const lrNumber = checkbox.data('lr');
-                    const balance = parseFloat(checkbox.data('balance')) || 0;
-                    const freightBookingId = checkbox.data('freight-booking-id');
-                    const voucherNumber = checkbox.data('voucher_number') || '-';
+                checkedBoxes.forEach(function(data) {
+                    const lrNumber = data.lr;
+                    const balance = data.balance;
+                    const freightBookingId = data.freight_booking_id;
+                    const voucherNumber = data.voucher_number || '-';
 
                     totalBalance += balance;
 
@@ -1430,7 +1515,7 @@
 
             // Handle bulk memo ID button
             $('#bulk-memo-id-btn').on('click', function() {
-
+                const checkedBoxes = Object.values(selectedRows);
 
                 if (checkedBoxes.length === 0) {
                     alert('Please select freight bookings first.');
@@ -1440,11 +1525,10 @@
                 // Clear previous data
                 $('#bulkMemoTableBody').empty();
 
-                checkedBoxes.each(function() {
-                    const checkbox = $(this);
-                    const lrNumber = checkbox.data('lr');
-                    const lrId = checkbox.data('lr-id');
-                    const freightBookingId = checkbox.data('freight-booking-id');
+                checkedBoxes.forEach(function(data) {
+                    const lrNumber = data.lr;
+                    const lrId = data.lr_id;
+                    const freightBookingId = data.freight_booking_id;
 
                     const row = `
                 <tr>
@@ -1543,6 +1627,37 @@
                 }
             });
 
+            // Restore checkbox states after pagination
+            table.on('draw', function() {
+                $('.row-checkbox').each(function() {
+                    const id = $(this).val();
+                    if (selectedBookingIds.includes(id)) {
+                        $(this).prop('checked', true);
+                        // Update selectedRows if not already stored
+                        if (!selectedRows[id]) {
+                            selectedRows[id] = {
+                                id: id,
+                                lr: $(this).data('lr'),
+                                truck: $(this).data('truck'),
+                                balance: parseFloat($(this).data('balance') || 0),
+                                transporterId: $(this).data('transporter-id'),
+                                customerId: $(this).data('customer-id'),
+                                memoId: $(this).data('memo-id'),
+                                linkedLrId: $(this).data('linked-lr-id'),
+                                voucher_number: $(this).data('voucher_number'),
+                                freight_booking_id: $(this).data('freight-booking-id'),
+                                lr_id: $(this).data('lr-id')
+                            };
+                        }
+                    } else {
+                        $(this).prop('checked', false);
+                    }
+                });
+
+                updateSelectAllState();
+                updatePaymentButtonsVisibility();
+            });
+
             // Apply column search
             $('#filterrow th input.column-search').on('keyup change', function() {
                 const index = $(this).closest('th').index();
@@ -1558,77 +1673,11 @@
 
             // Individual checkbox handler
             $(document).on('change', '.row-checkbox', function() {
-                const allChecked = $('.row-checkbox:checked').length === $('.row-checkbox').length;
+                const allChecked = Object.values(selectedRows).length === $('.row-checkbox').length;
                 $('#select-all').prop('checked', allChecked);
                 updatePaymentButtonsVisibility();
             });
 
-            // Function to update payment buttons visibility
-            // function updatePaymentButtonsVisibility() {
-            //     const checkedCount = $('.row-checkbox:checked').length;
-            //     if (checkedCount > 0) {
-            //         $('#bulk-payment-btn, #voucher-payment-btn').show();
-            //     } else {
-            //         $('#bulk-payment-btn, #voucher-payment-btn').hide();
-            //     }
-            // }
-            // function updatePaymentButtonsVisibility() {
-            //     const checkedBoxes = $('.row-checkbox:checked');
-
-            //     if (checkedBoxes.length === 0) {
-            //         // No selection - hide all buttons
-            //         $('#bulk-memo-id-btn, #voucher-payment-btn').hide();
-            //         return;
-            //     }
-
-            //     if (checkedBoxes.length === 1) {
-            //         // Single selection - show only voucher payment button
-            //         $('#voucher-payment-btn').show();
-            //         $('#bulk-memo-id-btn').hide();
-            //         return;
-            //     }
-
-            //     // Multiple selections - check if they have same truck and transporter
-            //     let firstTruckId = null;
-            //     let firstTransporterId = null;
-            //     let allSameTruckAndTransporter = true;
-            //     let hasAnyCancelled = false;
-
-            //     checkedBoxes.each(function() {
-            //         const checkbox = $(this);
-            //         const truckId = checkbox.data('truck-id');
-            //         const transporterId = checkbox.data('transporter-id');
-            //         const isCancelled = checkbox.data('is-cancelled') === '1';
-
-            //         // Check if any freight booking is cancelled
-            //         if (isCancelled) {
-            //             hasAnyCancelled = true;
-            //         }
-
-            //         if (firstTruckId === null) {
-            //             firstTruckId = truckId;
-            //             firstTransporterId = transporterId;
-            //         } else {
-            //             // Check if current selection has different truck or transporter
-            //             if (truckId !== firstTruckId && transporterId !== firstTransporterId) {
-            //                 allSameTruckAndTransporter = false;
-            //             }
-            //         }
-            //     });
-
-            //     // Show both buttons only if:
-            //     // 1. All selections have same truck and transporter
-            //     // 2. None of the freight bookings are cancelled
-            //     if (allSameTruckAndTransporter && !hasAnyCancelled) {
-            //         $('#bulk-memo-id-btn, #voucher-payment-btn').show();
-            //     } else {
-            //         // Hide both buttons if conditions are not met
-            //         $('#bulk-memo-id-btn, #voucher-payment-btn').hide();
-            //         if (!allSameTransporter && checkedBoxes.length > 1) {
-            //         console.log('Cannot process payment: Selected bookings have different transporters');
-            //     }
-            //     }
-            // }
 
             // Delete confirmation
             $(document).on('click', '.delete-btn', function(e) {
@@ -1653,12 +1702,12 @@
     </script>
     <script>
         function handleVoucherPayment() {
-            const checkboxes = document.querySelectorAll('.row-checkbox:checked');
+            const checkedBoxes = Object.values(selectedRows);
             const modalBody = document.getElementById('voucherPaymentBody');
 
             modalBody.innerHTML = '';
 
-            if (checkboxes.length === 0) {
+            if (checkedBoxes.length === 0) {
                 alert("Please select at least one Freight Booking.");
                 return;
             }
@@ -1675,17 +1724,16 @@
 
 
             // Check if any LR has no voucher number
-            const hasNoVoucher = Array.from(checkboxes).some(cb => cb.getAttribute('data-voucher_number') === '0');
+            const hasNoVoucher = checkedBoxes.some(data => data.voucher_number === '0' || !data.voucher_number);
             if (hasNoVoucher) {
                 alert("Please create Freight Booking first for selected Lorry Receipts.");
                 return;
             }
 
             // Check for LRs with zero balance and collect their numbers
-            const zeroBalanceLRs = Array.from(checkboxes).filter(cb => {
-                const balance = parseFloat(cb.getAttribute('data-balance') || 0);
-                return balance <= 0;
-            }).map(cb => cb.getAttribute('data-lr'));
+            const zeroBalanceLRs = checkedBoxes.filter(data => {
+                return data.balance <= 0;
+            }).map(data => data.lr);
 
             if (zeroBalanceLRs.length > 0) {
                 const message =
@@ -1695,9 +1743,8 @@
             }
 
             // Check if all selected bookings have zero balance
-            const allZeroBalance = Array.from(checkboxes).every(cb => {
-                const balance = parseFloat(cb.getAttribute('data-balance') || 0);
-                return balance <= 0;
+            const allZeroBalance = checkedBoxes.every(data => {
+                return data.balance <= 0;
             });
 
             if (allZeroBalance) {
@@ -1706,7 +1753,7 @@
             }
 
             // Collect truck numbers
-            const truckNumbers = Array.from(checkboxes).map(cb => cb.getAttribute('data-truck'));
+            const truckNumbers = checkedBoxes.map(data => data.truck);
             const firstTruck = truckNumbers[0];
             const allSameTruck = truckNumbers.every(truck => truck === firstTruck);
 
@@ -1724,24 +1771,25 @@
                       <div class="lr-details-content">
                           <div class="d-flex justify-content-between align-items-center">
                               <div class="badge bg-info fs-6">Truck Number: ${firstTruck || 'N/A'}</div>
-                              <div class="badge bg-secondary fs-6">${checkboxes.length} booking(s) selected</div>
+                              <div class="badge bg-secondary fs-6">${checkedBoxes.length} booking(s) selected</div>
                           </div>
                       </div>
                   </div>
               `;
 
             // Collect LR data for allocation
-            const lrData = Array.from(checkboxes).map(checkbox => ({
-                lrNumber: checkbox.getAttribute('data-lr'),
-                balance: parseFloat(checkbox.getAttribute('data-balance') || 0)
+            const lrData = checkedBoxes.map(data => ({
+                lrNumber: data.lr,
+                balance: data.balance
             }));
 
             // Add transporter details section
-            const firstTransporter = checkboxes[0].getAttribute('data-transporter');
-            const firstLrTransporter = checkboxes[0].getAttribute('data-lr-transporter');
+            const firstData = checkedBoxes[0];
+            const firstTransporter = firstData.transporter;
+            const firstLrTransporter = firstData.lr_transporter;
             // Get FB transporter and TDS info from first selected booking
-            const firstFbTransporter = checkboxes[0].getAttribute('data-fb-transporter');
-            const firstTdsPercentage = checkboxes[0].getAttribute('data-tds-percentage');
+            const firstFbTransporter = firstData.fb_transporter;
+            const firstTdsPercentage = firstData.tds_percentage;
 
             modalBody.innerHTML += `
                   <div class="alert alert-primary mb-3">
@@ -1764,7 +1812,7 @@
               `;
 
             // Fetch and display payment history first
-            fetchPaymentHistory(Array.from(checkboxes).map(cb => cb.value)).then(paymentHistory => {
+            fetchPaymentHistory(checkedBoxes.map(data => data.id)).then(paymentHistory => {
                 if (paymentHistory && paymentHistory.length > 0) {
                     let paymentRows = '';
                     paymentHistory.forEach(payment => {
@@ -1805,21 +1853,23 @@
                 }
 
                 // Continue with original layout - show payment form in original SweetAlert style
-                const lrRows = lrData.map((item, index) => {
-                    const voucherNumber = checkboxes[index].getAttribute('data-voucher_number');
-                    const freightBookingId = checkboxes[index].getAttribute('data-freight-booking-id');
+                const lrRows = checkedBoxes.map((data, index) => {
+                    const voucherNumber = data.voucher_number || '-';
+                    const freightBookingId = data.freight_booking_id;
+                    const lrNumber = data.lr;
+                    const balance = data.balance;
                     return `
                         <tr>
                             <td style="text-align: left; padding: 8px; border: 1px solid #ddd;">${freightBookingId || 'N/A'}</td>
-                            <td style="text-align: left; padding: 8px; border: 1px solid #ddd;">${item.lrNumber || 'N/A'}</td>
+                            <td style="text-align: left; padding: 8px; border: 1px solid #ddd;">${lrNumber || 'N/A'}</td>
                             <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${firstTruck || 'N/A'}</td>
                             <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${voucherNumber || 'N/A'}</td>
-                            <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">₹${item.balance.toFixed(2)}</td>
+                            <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">₹${balance.toFixed(2)}</td>
                             <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">
-                                <input type="number" step="0.01" min="0" max="${item.balance}"
+                                <input type="number" step="0.01" min="0" max="${balance}"
                                       style="width: 80px; text-align: right; border: 1px solid #ccc; padding: 2px;"
-                                      class="allocated-input" data-lr="${item.lrNumber}"
-                                      onchange="updateTotalPayment()" value="${item.balance.toFixed(2)}">
+                                      class="allocated-input" data-lr="${lrNumber}"
+                                      onchange="updateTotalPayment()" value="${balance.toFixed(2)}">
                             </td>
                         </tr>
                     `;
@@ -1898,21 +1948,23 @@
             }).catch(error => {
                 console.error('Error fetching payment history:', error);
                 // Continue with original layout even if history fetch fails
-                const lrRows = lrData.map((item, index) => {
-                    const voucherNumber = checkboxes[index].getAttribute('data-voucher_number');
-                    const freightBookingId = checkboxes[index].getAttribute('data-freight-booking-id');
+                const lrRows = checkedBoxes.map((data, index) => {
+                    const voucherNumber = data.voucher_number || '-';
+                    const freightBookingId = data.freight_booking_id;
+                    const lrNumber = data.lr;
+                    const balance = data.balance;
                     return `
                         <tr>
                             <td style="text-align: left; padding: 8px; border: 1px solid #ddd;">${freightBookingId || 'N/A'}</td>
-                            <td style="text-align: left; padding: 8px; border: 1px solid #ddd;">${item.lrNumber || 'N/A'}</td>
+                            <td style="text-align: left; padding: 8px; border: 1px solid #ddd;">${lrNumber || 'N/A'}</td>
                             <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${firstTruck || 'N/A'}</td>
                             <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${voucherNumber || 'N/A'}</td>
-                            <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">₹${item.balance.toFixed(2)}</td>
+                            <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">₹${balance.toFixed(2)}</td>
                             <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">
-                                <input type="number" step="0.01" min="0" max="${item.balance}"
+                                <input type="number" step="0.01" min="0" max="${balance}"
                                       style="width: 80px; text-align: right; border: 1px solid #ccc; padding: 2px;"
-                                      class="allocated-input" data-lr="${item.lrNumber}"
-                                      onchange="updateTotalPayment()" value="${item.balance.toFixed(2)}">
+                                      class="allocated-input" data-lr="${lrNumber}"
+                                      onchange="updateTotalPayment()" value="${balance.toFixed(2)}">
                             </td>
                         </tr>
                     `;
@@ -2293,7 +2345,7 @@
             const paymentMode = paymentModeSelect?.options[paymentModeSelect.selectedIndex]?.text || '';
 
             // Get selected freight booking IDs
-            const selectedIds = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value);
+            const selectedIds = Object.values(selectedRows).map(data => data.id);
 
             // Get allocated amounts
             const allocatedInputs = document.querySelectorAll('.allocated-input');
