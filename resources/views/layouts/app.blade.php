@@ -215,15 +215,16 @@
                 <!--begin::End Navbar Links-->
                 <ul class="navbar-nav ms-auto">
                     @auth
-                    @if(in_array(Auth::user()->user_role_id, [3,4,5]))
-                        <p class="mt-2 text-gray">
-                            <small>
-                                Expiry Date: {{ Auth::user()->company ? \Carbon\Carbon::parse(Auth::user()->company->plan_end_date)->format('d M, Y') : 'N/A' }}
-                                | LR Credits: {{ Auth::user()->company ? Auth::user()->company->lr_credits : 'N/A' }}
-                            </small>
-                        </p>
-                    @endif
-                @endauth
+                        @if (in_array(Auth::user()->user_role_id, [3, 4, 5]))
+                            <p class="mt-2 text-gray">
+                                <small>
+                                    Expiry Date:
+                                    {{ Auth::user()->company ? \Carbon\Carbon::parse(Auth::user()->company->plan_end_date)->format('d M, Y') : 'N/A' }}
+                                    | LR Credits: {{ Auth::user()->company ? Auth::user()->company->lr_credits : 'N/A' }}
+                                </small>
+                            </p>
+                        @endif
+                    @endauth
 
 
 
@@ -262,9 +263,8 @@
                                     style="display: none;">
                                     @csrf
                                 </form>
-                                <a href="{{ route('password.change') }}" class="btn btn-primary text-white  btn-sm rounded-3"
-                                    >Change Password</a
-                                >
+                                <a href="{{ route('password.change') }}"
+                                    class="btn btn-primary text-white  btn-sm rounded-3">Change Password</a>
 
                             </div>
                             <!--end::Menu Footer-->
@@ -306,39 +306,39 @@
 
                         </li>
                         @if (auth()->check() && auth()->user()->userRole->name === 'master_admin')
-                        <li class="nav-item">
-                            <a href="/users" class="nav-link{{ Request::is('users*') ? ' active' : '' }}">
-                                <i class="fas fa-users"></i>
-                                <p>Users</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link{{ Request::is('company') || Request::is('company/create') ? ' active' : '' }}"
-                                href="#companyMenu">
-                                <i class="fas fa-money-check-alt"></i>
-                                <p>
-                                    Company
-                                    <i class="nav-arrow bi bi-chevron-right"></i>
-                                </p>
-                            </a>
-                            <ul class="nav nav-treeview">
-                                <li class="nav-item">
-                                    <a href="/company"
-                                        class="nav-link{{ Request::is('company') ? ' active' : '' }}">
-                                        <i class="fas fa-list"></i>
-                                        <p>Company List</p>
-                                    </a>
-                                </li>
+                            <li class="nav-item">
+                                <a href="/users" class="nav-link{{ Request::is('users*') ? ' active' : '' }}">
+                                    <i class="fas fa-users"></i>
+                                    <p>Users</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link{{ Request::is('company') || Request::is('company/create') ? ' active' : '' }}"
+                                    href="#companyMenu">
+                                    <i class="fas fa-money-check-alt"></i>
+                                    <p>
+                                        Company
+                                        <i class="nav-arrow bi bi-chevron-right"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="/company"
+                                            class="nav-link{{ Request::is('company') ? ' active' : '' }}">
+                                            <i class="fas fa-list"></i>
+                                            <p>Company List</p>
+                                        </a>
+                                    </li>
 
-                            </ul>
-                        </li>
-                        <li class="nav-item">
-                            <a href="{{ route('promo_codes.index') }}"
-                                class="nav-link{{ Request::is('promo_codes*') ? ' active' : '' }}">
-                                <i class="fas fa-tag"></i>
-                                <p>Promo Codes</p>
-                            </a>
-                        </li>
+                                </ul>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('promo_codes.index') }}"
+                                    class="nav-link{{ Request::is('promo_codes*') ? ' active' : '' }}">
+                                    <i class="fas fa-tag"></i>
+                                    <p>Promo Codes</p>
+                                </a>
+                            </li>
                         @endif
 
                         @if (auth()->check() && auth()->user()->userRole->name === 'super_admin')
@@ -444,7 +444,7 @@
                         @endif
 
                         {{-- Master data menus hidden from moderator/accountant/operator users --}}
-                        @if (auth()->check() && !in_array(auth()->user()->userRole->name, ['accountant', 'super_admin','master_admin']))
+                        @if (auth()->check() && !in_array(auth()->user()->userRole->name, ['accountant', 'super_admin', 'master_admin']))
                             <li class="nav-item">
                                 <a class="nav-link{{ Request::is('transporters*') || Request::is('transporters/create') ? ' active' : '' }}"
                                     href="#transporterMenu">
@@ -523,7 +523,7 @@
                                 </ul>
                             </li>
                         @endif
-                        @if (auth()->check() && !in_array(auth()->user()->userRole->name, ['accountant', 'super_admin','master_admin']))
+                        @if (auth()->check() && !in_array(auth()->user()->userRole->name, ['accountant', 'super_admin', 'master_admin']))
                             <li class="nav-item">
                                 <a class="nav-link{{ Request::is('consignees*') || Request::is('consignees/create') ? ' active' : '' }}"
                                     href="#consigneeMenu">
@@ -553,7 +553,7 @@
                         @endif
 
                         {{-- Operational menus visible to all authenticated users including moderators --}}
-                        @if (auth()->check() && !in_array(auth()->user()->userRole->name, ['super_admin', 'accountant','master_admin']))
+                        @if (auth()->check() && !in_array(auth()->user()->userRole->name, ['super_admin', 'accountant', 'master_admin']))
                             <li class="nav-item">
                                 <a class="nav-link{{ Request::is('lorry_receipts*') || Request::is('lorry_receipts/create') ? ' active' : '' }}"
                                     href="#lorryReceiptMenu">
@@ -976,6 +976,29 @@
                 });
             }
         });
+    </script>
+
+    <script>
+        // Clear DataTable localStorage state on page load to reset filters
+        (function() {
+            // Get current page path
+            var currentPath = window.location.pathname;
+
+            // Clear all DataTable state from localStorage
+            // DataTables stores state with keys like: DataTables_<table-id>_<page-path>
+            var keysToRemove = [];
+            for (var i = 0; i < localStorage.length; i++) {
+                var key = localStorage.key(i);
+                if (key && key.startsWith('DataTables_')) {
+                    keysToRemove.push(key);
+                }
+            }
+
+            // Remove all DataTable state keys
+            keysToRemove.forEach(function(key) {
+                localStorage.removeItem(key);
+            });
+        })();
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.37.1/dist/apexcharts.min.js"
