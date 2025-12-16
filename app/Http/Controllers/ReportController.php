@@ -27,6 +27,7 @@ use App\Exports\PumpExport;
 use App\Models\VoucherPayment;
 use App\Exports\BankExport;
 use App\Exports\TransporterReportExport;
+use App\Exports\TransporterMasterExport;
 use App\Exports\UltratechBillExport;
 use App\Models\Company;
 use App\Models\Transporter;
@@ -1168,5 +1169,37 @@ class ReportController extends Controller
 
         $export = Excel::download(new TransporterReportExport($startDate, $endDate, $transporterId, $truckId, $referenceId), 'transporter_report.xlsx');
         return $export;
+    }
+
+    /**
+     * Transporter / Truck Owner master report (no date range, filter by type).
+     */
+    public function transporter_master(Request $request)
+    {
+        $type = $request->input('type', 'transporter'); // transporter, owner, both
+
+        $query = Transporter::with(['city', 'state', 'country'])
+            ->where('company_id', Auth::user()->company_id);
+
+        $normalizedType = strtolower($type);
+        if ($normalizedType === 'transporter') {
+            $query->where('is_owner', 0);
+        } elseif ($normalizedType === 'owner' || $normalizedType === 'truck_owner') {
+            $query->where('is_owner', 1);
+        } // both → no extra filter
+
+        $transporters = $query->orderBy('name')->get();
+
+        return view('reports.transporter-master', [
+            'transporters' => $transporters,
+            'type' => $type,
+        ]);
+    }
+
+    public function transporter_master_export(Request $request)
+    {
+        $type = $request->input('type', 'transporter');
+
+        return Excel::download(new TransporterMasterExport($type), 'transporter_truck_owner_report.xlsx');
     }
 }

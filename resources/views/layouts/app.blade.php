@@ -811,6 +811,13 @@
                                         </a>
                                     </li>
                                     <li class="nav-item">
+                                        <a href="{{ route('reports.transporter-master') }} "
+                                            class="nav-link{{ Request::is('reports/transporter-master') ? ' active' : '' }}">
+                                            <i class="fas fa-file-alt"></i>
+                                            <p>Transporter Master</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
                                         <a href="{{ route('reports.pending-memo') }} "
                                             class="nav-link{{ Request::is('reports/pending-memo') ? ' active' : '' }}">
                                             <i class="fas fa-file-alt"></i>

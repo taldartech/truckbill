@@ -341,6 +341,8 @@ Route::middleware(['auth', 'checkblock'])->group(function () {
         Route::get('/transporter-report-export', [ReportController::class, 'transporter_report_export'])->name('reports.transporter-report-export');
         Route::get('/pending-invoice', [ReportController::class, 'pending_invoice'])->name('reports.pending-invoice');
         Route::get('/pending-invoice-export', [ReportController::class, 'pendingInvoiceExport'])->name('reports.pending-invoice-export');
+        Route::get('/transporter-master', [ReportController::class, 'transporter_master'])->name('reports.transporter-master');
+        Route::get('/transporter-master-export', [ReportController::class, 'transporter_master_export'])->name('reports.transporter-master-export');
     });
     Route::get('/voucher-receipt-export', [ReportController::class, 'voucher_receipt_export'])->name('reports.voucher-receipt-export');
 });

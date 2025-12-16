@@ -21,6 +21,9 @@
             <a href="{{ route('truck_owners.create') }}" class="btn btn-info">
                 <i class="bi bi-plus"></i> Create
             </a>
+            <a href="{{ route('reports.transporter-master-export', ['type' => 'owner']) }}" class="btn btn-warning">
+                <i class="bi bi-file-earmark-spreadsheet"></i> Export Truck Owners
+            </a>
         </div>
 
         <div class="card mb-4">
