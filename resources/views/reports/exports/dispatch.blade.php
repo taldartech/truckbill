@@ -64,7 +64,7 @@
                     $bank = $vouchers?->where('payment_mode', 'bank transfer')->sum('amount');
                     $fuel = $vouchers?->where('payment_mode', 'fuel(paid to pump)')->sum('amount');
                     $advance = $vouchers?->where('payment_mode', 'adjust in advance')->sum('amount');
-                    $diff = $lr->amount - $freight?->tr_amount;
+                    $diff = $lr->fr_rate - ($freight?->tr_fr_rate);
                 @endphp
                 <td>{{ $loop->iteration }}</td>
                 <td>
