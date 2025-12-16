@@ -599,7 +599,7 @@
                                     </li>
                                 </ul>
                             </li>
-                            @if (in_array(auth()->user()->userRole->name, ['admin']))
+                            @if (in_array(auth()->user()->userRole->name, ['admin', 'moderator']))
                                 <li class="nav-item">
                                     <a class="nav-link{{ Request::is('voucher_payments*') || Request::is('voucher_payments/create') ? ' active' : '' }}"
                                         href="#voucherPaymentMenu">

@@ -211,12 +211,28 @@ Route::middleware(['auth', 'checkblock'])->group(function () {
     });
 
     // Voucher Payments
+    // Admin: full CRUD + bulk actions
     Route::middleware(['role:admin'])->group(function () {
-        Route::resource('voucher_payments', VoucherPaymentController::class);
+        // Create / Store
+        Route::get('voucher_payments/create', [VoucherPaymentController::class, 'create'])->name('voucher_payments.create');
+        Route::post('voucher_payments', [VoucherPaymentController::class, 'store'])->name('voucher_payments.store');
+
+        // Edit / Update / Delete
+        Route::get('voucher_payments/{voucher_payment}/edit', [VoucherPaymentController::class, 'edit'])->name('voucher_payments.edit');
+        Route::put('voucher_payments/{voucher_payment}', [VoucherPaymentController::class, 'update'])->name('voucher_payments.update');
+        Route::delete('voucher_payments/{voucher_payment}', [VoucherPaymentController::class, 'destroy'])->name('voucher_payments.destroy');
+
+        // Bulk / status updates
         Route::post('voucher_payments/bulk-update', [VoucherPaymentController::class, 'bulkUpdateStatus'])->name('voucher_payments.bulkUpdateStatus');
         Route::post('voucher_payments/bulk-payment', [VoucherPaymentController::class, 'bulkPayment'])->name('voucher_payments.bulkPayment');
-        Route::get('daily-payments', [VoucherPaymentController::class, 'dailyPayments'])->name('voucher_payments.daily');
         Route::put('voucher_payments/update-status', [VoucherPaymentController::class, 'updateStatus'])->name('voucher_payments.update_status');
+    });
+
+    // Admin + Moderator: read-only access (index, show, daily report)
+    Route::middleware(['role:admin,moderator'])->group(function () {
+        Route::get('voucher_payments', [VoucherPaymentController::class, 'index'])->name('voucher_payments.index');
+        Route::get('voucher_payments/{voucherNumber}', [VoucherPaymentController::class, 'show'])->name('voucher_payments.show');
+        Route::get('daily-payments', [VoucherPaymentController::class, 'dailyPayments'])->name('voucher_payments.daily');
     });
 
     // Driver CRUD
