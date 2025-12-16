@@ -90,7 +90,7 @@
             <td>{{ $lr->truck ? $lr->truck->truck_number : 'N/A' }}</td>
             <td>{{ $lr->destination_city }}</td>
             <td>{{ $lr->invoice_number }}</td>
-            <td>{{ \Carbon\Carbon::parse($invoice->invoice_date)->format('d-m-Y') }}</td>
+            <td>{{ \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') }}</td>
             <td>{{ $lr->weight }}</td>
             <td>{{ $lr->no_of_units }}</td>
             <td>{{ number_format($lr->fr_rate, 2) }}</td>

@@ -87,7 +87,7 @@
             @endphp
             <td>{{ $index + 1 }}</td>
             <td>{{ $lr->memo_id }}</td>
-            <td>{{ \Carbon\Carbon::parse($invoice->invoice_date)->format('d-m-Y') }}</td>
+            <td>{{ \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') }}</td>
             <td>{{ $lr->good_type }}</td>
             <td>{{ $lr->weight }}</td>
             <td>{{ $lr->truck ? $lr->truck->truck_number : 'N/A' }}</td>
