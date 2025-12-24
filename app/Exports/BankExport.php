@@ -31,52 +31,61 @@ class BankExport implements FromCollection, WithHeadings, WithTitle, ShouldAutoS
     {
         $companyId = Auth::user()->company_id;
 
-        $query = VoucherPayment::whereBetween('date', [$this->startDate, $this->endDate]);
-        $query->where('company_id', $companyId);
-        $query->whereNull('linked_voucher_id');
-        $query->where('payment_mode', 'bank transfer');
-        $query->where('payment_status', 'in-progress');
-        $payments = $query->get();
+        // Step 1: Fetch records from voucher_payments where linked_voucher_id is null
+        $payments = VoucherPayment::with(['freight_booking.lr.truck', 'freight_booking.lr.transporter', 'freight_booking'])
+            ->whereBetween('date', [$this->startDate, $this->endDate])
+            ->where('company_id', $companyId)
+            ->whereNull('linked_voucher_id')
+            ->where('payment_mode', 'bank transfer')
+            ->get();
 
-        $query1 = VoucherLinked::whereBetween('date', [$this->startDate, $this->endDate]);
-        $query1->where('company_id', $companyId);
-        $query1->where('payment_mode', 'bank transfer');
-        $query1->where('payment_status', 'in-progress');
-        $linked_payments = $query1->get();
+        // Step 2: Fetch all records from voucher_linked table
+        $linked_payments = VoucherLinked::with(['freight_booking.lr.truck', 'freight_booking.lr.transporter', 'freight_booking'])
+            ->whereBetween('date', [$this->startDate, $this->endDate])
+            ->where('company_id', $companyId)
+            ->where('payment_mode', 'bank transfer')
+            ->get();
+
         $allPayments = [];
-        if (isset($payments)) {
-            foreach ($payments as $payment) {
-                $tds_deducted = $payment->freight_booking->tds_amount == 0 ? 'No' : 'Yes';
-                $allPayments[] = [
-                    'Date' => Date::dateTimeToExcel(\Carbon\Carbon::parse($payment->date)),
-                    'LR Number' => $payment->freight_booking->lr->lr_number ?? '-',
-                    'Truck Number' => $payment->freight_booking->lr->truck->truck_number ?? '-',
-                    'Transporter Name' => $payment->freight_booking->lr->transporter->name ?? '-',
-                    'Short Name' => $payment->freight_booking->lr->transporter->short_name ?? '-',
-                    'Beneficiary ID' => $payment->freight_booking->lr->transporter->beneficiary_id ?? '-',
-                    'Amount' => $payment['amount'] ?? 0,
-                    'Narration' => $payment->freight_booking->lr->gr_number ?? '-',
-                    'TDS Deducted' => $tds_deducted,
-                ];
-            }
+
+        // Process unlinked voucher payments
+        foreach ($payments as $payment) {
+            $tds_deducted = $payment->freight_booking->tds_amount == 0 ? 'No' : 'Yes';
+            $status = ucfirst(str_replace('-', ' ', $payment->payment_status ?? 'N/A'));
+            $allPayments[] = [
+                'Date' => Date::dateTimeToExcel(\Carbon\Carbon::parse($payment->date)),
+                'LR Number' => $payment->freight_booking->lr->lr_number ?? '-',
+                'Truck Number' => $payment->freight_booking->lr->truck->truck_number ?? '-',
+                'Transporter Name' => $payment->freight_booking->lr->transporter->name ?? '-',
+                'Short Name' => $payment->freight_booking->lr->transporter->short_name ?? '-',
+                'Beneficiary ID' => $payment->freight_booking->lr->transporter->beneficiary_id ?? '-',
+                'Amount' => $payment['amount'] ?? 0,
+                'Narration' => $payment->freight_booking->lr->gr_number ?? '-',
+                'TDS Deducted' => $tds_deducted,
+                'Status' => $status,
+            ];
         }
-        if (isset($linked_payments)) {
-            foreach ($linked_payments as $linked_payment) {
-                $tds_deducted = $linked_payment->freight_booking->tds_amount == 0 ? 'No' : 'Yes';
-                $allPayments[] = [
-                    'Date' => Date::dateTimeToExcel(\Carbon\Carbon::parse($linked_payment->date)),
-                    'LR Number' => $linked_payment->freight_booking->lr->lr_number ?? '-',
-                    'Truck Number' => $linked_payment->freight_booking->lr->truck->truck_number ?? '-',
-                    'Transporter Name' => $linked_payment->freight_booking->lr->transporter->name ?? '-',
-                    'Short Name' => $linked_payment->freight_booking->lr->transporter->short_name ?? '-',
-                    'Beneficiary ID' => $linked_payment->freight_booking->lr->transporter->beneficiary_id ?? '-',
-                    'Amount' => $linked_payment['amount'] ?? 0,
-                    'Narration' => $linked_payment->freight_booking->lr->gr_number ?? '-',
-                    'TDS Deducted' => $tds_deducted,
-                ];
-            }
-            $allPayments = collect($allPayments)->sortBy('Date')->values();
+
+        // Process linked voucher payments
+        foreach ($linked_payments as $linked_payment) {
+            $tds_deducted = $linked_payment->freight_booking->tds_amount == 0 ? 'No' : 'Yes';
+            $status = ucfirst(str_replace('-', ' ', $linked_payment->payment_status ?? 'N/A'));
+            $allPayments[] = [
+                'Date' => Date::dateTimeToExcel(\Carbon\Carbon::parse($linked_payment->date)),
+                'LR Number' => $linked_payment->freight_booking->lr->lr_number ?? '-',
+                'Truck Number' => $linked_payment->freight_booking->lr->truck->truck_number ?? '-',
+                'Transporter Name' => $linked_payment->freight_booking->lr->transporter->name ?? '-',
+                'Short Name' => $linked_payment->freight_booking->lr->transporter->short_name ?? '-',
+                'Beneficiary ID' => $linked_payment->freight_booking->lr->transporter->beneficiary_id ?? '-',
+                'Amount' => $linked_payment['amount'] ?? 0,
+                'Narration' => $linked_payment->freight_booking->lr->gr_number ?? '-',
+                'TDS Deducted' => $tds_deducted,
+                'Status' => $status,
+            ];
         }
+
+        // Step 3: Sort by date
+        $allPayments = collect($allPayments)->sortBy('Date')->values();
 
         return $allPayments;
     }
@@ -93,6 +102,7 @@ class BankExport implements FromCollection, WithHeadings, WithTitle, ShouldAutoS
             'Amount (₹)',
             'Narration',
             'TDS Deducted',
+            'Status',
         ];
     }
 

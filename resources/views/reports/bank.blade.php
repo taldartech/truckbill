@@ -86,6 +86,7 @@
                             <th>Amount</th>
                             <th>Narration</th>
                             <th>TDS Deducted</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -106,6 +107,18 @@
                                 <td class="text-end">{{ number_format($payment['amount'], 2) }}</td>
                                 <td>{{ $payment['gr_number'] ?? 'N/A' }}</td>
                                 <td>{{ $payment['tds_deducted'] ?? 'N/A' }}</td>
+                                <td>
+                                    @if ($payment['payment_status'] === 'paid')
+                                        <span class="badge bg-success">Paid</span>
+                                    @elseif($payment['payment_status'] === 'pending')
+                                        <span class="badge bg-warning">Pending</span>
+                                    @elseif($payment['payment_status'] === 'in-progress')
+                                        <span class="badge bg-info">In Progress</span>
+                                    @else
+                                        <span
+                                            class="badge bg-secondary">{{ ucfirst($payment['payment_status'] ?? 'N/A') }}</span>
+                                    @endif
+                                </td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -113,7 +126,7 @@
                         <tr>
                             <th colspan="7" class="text-end">Grand Total:</th>
                             <th class="text-end">{{ number_format($grandTotal, 2) }}</th>
-                            <th colspan="2"></th>
+                            <th colspan="3"></th>
                         </tr>
                     </tfoot>
                 </table>

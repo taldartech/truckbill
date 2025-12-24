@@ -6,8 +6,10 @@ use App\Models\Company;
 use App\Models\Consignee;
 use App\Models\FreightBooking;
 use App\Models\LorryReceipt;
+use App\Models\Pump;
 use App\Models\User;
 use App\Models\UserRole;
+use App\Models\VoucherPayment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -48,7 +50,7 @@ class ReportExportTest extends TestCase
         ]);
     }
 
-    protected function seedLr(User $user): void
+    protected function seedLr(User $user): array
     {
         $customer = Consignee::create([
             'company_id' => $user->company_id,
@@ -98,7 +100,7 @@ class ReportExportTest extends TestCase
             'gr_date' => now()->toDateString(),
         ]);
 
-        FreightBooking::create([
+        $booking = FreightBooking::create([
             'lr_id' => $lr->id,
             'transporter_id' => $transporter->id,
             'tr_fr_rate' => 100,
@@ -109,6 +111,11 @@ class ReportExportTest extends TestCase
             'company_id' => $user->company_id,
             'voucher_number' => 9001,
         ]);
+
+        $lr->freight_booking_id = $booking->id;
+        $lr->save();
+
+        return [$lr, $booking];
     }
 
     public function test_admin_and_accountant_can_view_reports(): void
@@ -167,6 +174,68 @@ class ReportExportTest extends TestCase
         $this->actingAs($mod)->get('/reports/tds-export?' . http_build_query($params))->assertForbidden();
         $this->actingAs($mod)->get('/reports/transporter-report-export?' . http_build_query($params))->assertForbidden();
         $this->actingAs($mod)->get('/reports/transporter-master-export')->assertForbidden();
+    }
+
+    public function test_pump_report_shows_payment_status(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$lr, $booking] = $this->seedLr($admin);
+        $pump = Pump::create([
+            'user_id' => $admin->company->user_id,
+            'pump_name' => 'HP Pump',
+            'contact_name' => 'Operator',
+            'contact_number' => '9999999999',
+            'remark' => 'Test pump',
+        ]);
+
+        VoucherPayment::create([
+            'freight_booking_id' => $booking->id,
+            'voucher_number' => 'V-PUMP-1',
+            'payment_type' => 'cash',
+            'payment_mode' => 'bank transfer',
+            'amount' => 500,
+            'payment_status' => 'in-progress',
+            'company_id' => $admin->company_id,
+            'pump_id' => $pump->id,
+            'date' => now()->toDateString(),
+        ]);
+
+        $params = [
+            'start_date' => now()->subDays(1)->toDateString(),
+            'end_date' => now()->toDateString(),
+            'pump_id' => $pump->id,
+        ];
+
+        $this->actingAs($admin)->get('/reports/pump?' . http_build_query($params))
+            ->assertOk()
+            ->assertSee('HP Pump')
+            ->assertSee('LR-RPT-1');
+    }
+
+    public function test_bank_report_shows_payment_status(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$lr, $booking] = $this->seedLr($admin);
+
+        VoucherPayment::create([
+            'freight_booking_id' => $booking->id,
+            'voucher_number' => 'V-BANK-1',
+            'payment_type' => 'bank',
+            'payment_mode' => 'bank transfer',
+            'amount' => 700,
+            'payment_status' => 'pending',
+            'company_id' => $admin->company_id,
+            'date' => now()->toDateString(),
+        ]);
+
+        $params = [
+            'start_date' => now()->subDays(1)->toDateString(),
+            'end_date' => now()->toDateString(),
+        ];
+
+        $this->actingAs($admin)->get('/reports/bank?' . http_build_query($params))
+            ->assertOk()
+            ->assertSee('Pending');
     }
 }
 

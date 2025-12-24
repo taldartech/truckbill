@@ -131,6 +131,7 @@
                             <th>Truck No.</th>
                             <th>Destination</th>
                             <th>Diesel Amount</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -152,6 +153,18 @@
                                     <td>{{ $lr->destination_city }}, {{ $lr->destination_state ?? 'N/A' }}</td>
 
                                     <td class="text-end">₹{{ number_format($item['amount'], 2) }}</td>
+                                    <td>
+                                        @if ($item['payment_status'] === 'paid')
+                                            <span class="badge bg-success">Paid</span>
+                                        @elseif($item['payment_status'] === 'pending')
+                                            <span class="badge bg-warning">Pending</span>
+                                        @elseif($item['payment_status'] === 'in-progress')
+                                            <span class="badge bg-info">In Progress</span>
+                                        @else
+                                            <span
+                                                class="badge bg-secondary">{{ ucfirst($item['payment_status'] ?? 'N/A') }}</span>
+                                        @endif
+                                    </td>
                                 </tr>
                             @endforeach
                         @endforeach
@@ -160,6 +173,7 @@
                         <tr>
                             <th colspan="5" class="text-end">Grand Total:</th>
                             <th class="text-end">₹{{ number_format($grandTotal, 2) }}</th>
+                            <th></th>
                         </tr>
                     </tfoot>
                 </table>

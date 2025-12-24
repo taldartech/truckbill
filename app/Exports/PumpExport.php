@@ -46,70 +46,96 @@ class PumpExport implements FromCollection, ShouldAutoSize, WithEvents
             'Truck Number',
             'Destination',
             'Amount (₹)',
-
+            'Status',
         ]);
 
-        // Get all voucher payments for the selected pump and date range
-        $voucherPayments = \App\Models\VoucherPayment::with(['freight_booking.lr', 'pump'])
+        // Step 1: Fetch records from voucher_payments where linked_voucher_id is null
+        $voucherPayments = \App\Models\VoucherPayment::with(['freight_booking.lr', 'pump', 'freight_booking'])
+            ->where('pump_id', $this->pumpId)
+            ->where('company_id', $companyId)
+            ->whereNull('linked_voucher_id')
+            ->whereBetween('date', [$this->startDate, $this->endDate])
+            ->get();
+
+        // Step 2: Fetch all records from voucher_linked table
+        $linkedPayments = \App\Models\VoucherLinked::with(['freight_booking.lr', 'freight_booking'])
             ->where('pump_id', $this->pumpId)
             ->where('company_id', $companyId)
             ->whereBetween('date', [$this->startDate, $this->endDate])
             ->get();
 
+        $allPayments = collect();
         $processedFreightBookingIds = [];
         $totalAmount = 0;
 
+        // Process unlinked voucher payments
         foreach ($voucherPayments as $payment) {
             // Skip if we've already processed this freight booking
             if (in_array($payment->freight_booking_id, $processedFreightBookingIds)) {
                 continue;
             }
 
-            $lrDetails = null;
-            $amount = 0;
-            $date = null;
-
-
-            if ($payment->linked_voucher_id) {
-                // Handle linked voucher
-                $linked = \App\Models\VoucherLinked::where('id', $payment->linked_voucher_id)
-                    ->where('company_id', $companyId)
-                    ->where('freight_booking_id', $payment->freight_booking_id)
-                    ->where('pump_id', $payment->pump_id)
-                    ->first();
-
-                if ($linked) {
-                    $lrDetails = \App\Models\LorryReceipt::where('freight_booking_id', $linked->freight_booking_id)
-                        ->select('freight_booking_id', 'lr_number', 'destination_state', 'truck_id', 'destination_city')
-                        ->with('truck')
-                        ->first();
-
-                    $amount = $linked->amount;
-                    $date = $linked->date;
-                }
-            } else {
-                // Handle unlinked voucher
-                $lrDetails = \App\Models\LorryReceipt::where('freight_booking_id', $payment->freight_booking_id)
-                    ->select('freight_booking_id', 'lr_number', 'destination_state', 'truck_id', 'destination_city')
-                    ->with('truck')
-                    ->first();
-
-                $amount = $payment->amount;
-                $date = $payment->date;
-            }
+            $lrDetails = \App\Models\LorryReceipt::where('freight_booking_id', $payment->freight_booking_id)
+                ->select('freight_booking_id', 'lr_number', 'destination_state', 'truck_id', 'destination_city')
+                ->with('truck')
+                ->first();
 
             if ($lrDetails) {
-                $data->push([
-                    $lrDetails->lr_number ?? 'N/A',
-                    \Carbon\Carbon::parse($date)->format('d-m-Y'),
-                    $lrDetails->truck->truck_number ?? 'N/A',
-                    $lrDetails->destination_city . ', ' . $lrDetails->destination_state,
-                    $amount,
+                $allPayments->push([
+                    'date' => \Carbon\Carbon::parse($payment->date),
+                    'lr_number' => $lrDetails->lr_number ?? 'N/A',
+                    'truck_number' => $lrDetails->truck->truck_number ?? 'N/A',
+                    'destination' => $lrDetails->destination_city . ', ' . $lrDetails->destination_state,
+                    'amount' => $payment->amount,
+                    'payment_status' => $payment->payment_status ?? 'N/A',
                 ]);
 
-                $totalAmount += $amount;
+                $totalAmount += $payment->amount;
                 $processedFreightBookingIds[] = $payment->freight_booking_id;
             }
+        }
+
+        // Process linked voucher payments
+        foreach ($linkedPayments as $linked) {
+            // Skip if we've already processed this freight booking
+            if (in_array($linked->freight_booking_id, $processedFreightBookingIds)) {
+                continue;
+            }
+
+            $lrDetails = \App\Models\LorryReceipt::where('freight_booking_id', $linked->freight_booking_id)
+                ->select('freight_booking_id', 'lr_number', 'destination_state', 'truck_id', 'destination_city')
+                ->with('truck')
+                ->first();
+
+            if ($lrDetails) {
+                $allPayments->push([
+                    'date' => \Carbon\Carbon::parse($linked->date),
+                    'lr_number' => $lrDetails->lr_number ?? 'N/A',
+                    'truck_number' => $lrDetails->truck->truck_number ?? 'N/A',
+                    'destination' => $lrDetails->destination_city . ', ' . $lrDetails->destination_state,
+                    'amount' => $linked->amount,
+                    'payment_status' => $linked->payment_status ?? 'N/A',
+                ]);
+
+                $totalAmount += $linked->amount;
+                $processedFreightBookingIds[] = $linked->freight_booking_id;
+            }
+        }
+
+        // Step 3: Sort by date
+        $allPayments = $allPayments->sortBy('date')->values();
+
+        // Add rows to data collection
+        foreach ($allPayments as $payment) {
+            $status = ucfirst(str_replace('-', ' ', $payment['payment_status'] ?? 'N/A'));
+            $data->push([
+                $payment['lr_number'],
+                $payment['date']->format('d-m-Y'),
+                $payment['truck_number'],
+                $payment['destination'],
+                $payment['amount'],
+                $status,
+            ]);
         }
 
         // Add total row
