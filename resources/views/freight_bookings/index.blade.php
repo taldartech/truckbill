@@ -187,7 +187,9 @@
                                                 data-fb-transporter="{{ $booking->transporter_name ?? ($booking->transporter ? $booking->transporter->name : '') }}"
                                                 data-tds-percentage="{{ $booking->transporter_tds_percentage ?? '' }}"
                                                 data-linked-lr-id="{{ $booking->linked_lr_id ?? '' }}"
-                                                data-customer-id="{{ $booking->lr && $booking->lr->customer ? $booking->lr->customer->id : '' }}">
+                                                data-customer-id="{{ $booking->lr && $booking->lr->customer ? $booking->lr->customer->id : '' }}"
+                                                data-shortage-amount="{{ $booking->shortage_amount ?? 0 }}"
+                                                data-damage-amount="{{ $booking->damage_amount ?? 0 }}">
                                         @endif
                                     </td>
                                     {{-- <td class="text-center">{{ $bookings->firstItem() + $index }}</td>
@@ -467,7 +469,9 @@
                     lr_transporter: $(this).data('lr-transporter'),
                     fb_transporter: $(this).data('fb-transporter'),
                     tds_percentage: $(this).data('tds-percentage'),
-                    amount: $(this).data('amount')
+                    amount: $(this).data('amount'),
+                    shortage_amount: $(this).data('shortage-amount'),
+                    damage_amount: $(this).data('damage-amount')
                 };
                 if (!selectedBookingIds.includes(id)) {
                     selectedBookingIds.push(id);
@@ -1071,13 +1075,17 @@
                 let tableBody = '';
                 let lrIds = [];
                 let freightBookingIds = [];
+                let netAmount = 0;
 
                 checkedBoxes.forEach(function(data) {
                     const lrNumber = data.lr;
                     const truckNumber = data.truck;
-                    const amount = data.amount;
+                    const amount = parseFloat(data.amount) || 0;
                     const voucherNumber = data.voucher_number || '-';
                     const freightBookingId = data.freight_booking_id;
+                    const shortageAmount = parseFloat(data.shortage_amount) || 0;
+                    const damageAmount = parseFloat(data.damage_amount) || 0;
+                    netAmount += amount;
 
                     // Get LR ID from the freight booking (we'll need to add this data attribute)
                     const lrId = data.lr_id; // We'll need to add this
@@ -1092,7 +1100,9 @@
                             <td>${lrNumber}</td>
                             <td>${truckNumber}</td>
                             <td>${voucherNumber}</td>
-                            <td class="text-end">₹${amount.toFixed(2)}</td>
+                            <td class="text-end">₹${amount + shortageAmount + damageAmount}</td>
+                            <td class="text-end">₹${shortageAmount}</td>
+                            <td class="text-end">₹${damageAmount}</td>
                             <input type="hidden" name="lr_ids[]" value="${lrId}">
                             <input type="hidden" name="freight_booking_ids[]" value="${freightBookingId}">
                         </tr>
@@ -1118,11 +1128,19 @@
                                         <th>Truck Number</th>
                                         <th>Voucher Number</th>
                                         <th class="text-end">LR Amount</th>
+                                        <th class="text-end">Shortage</th>
+                                        <th class="text-end">Damage</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     ${tableBody}
                                 </tbody>
+                                <tfoot>
+                                    <tr class="table-info">
+                                        <th colspan="5" class="text-end">Net Amount:</th>
+                                        <th class="text-end">₹${netAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</th>
+                                    </tr>
+                                </tfoot>
                             </table>
                         </div>
 
