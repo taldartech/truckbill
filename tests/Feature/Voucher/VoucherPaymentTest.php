@@ -232,27 +232,45 @@ class VoucherPaymentTest extends TestCase
         $response->assertOk();
     }
 
-    public function test_moderator_only_sees_own_company_voucher(): void
+    public function test_moderator_can_view_readonly_voucher_screens_for_own_company(): void
     {
         $admin = $this->makeUser('admin');
         $mod = $this->makeUser('moderator');
-        [$booking, $ptype, $pmode] = $this->seedBaseData($admin);
+        [$modBooking, $ptype, $pmode] = $this->seedBaseData($mod, 201);
+        [$adminBooking] = $this->seedBaseData($admin, 301);
 
         VoucherPayment::create([
-            'freight_booking_id' => $booking->id,
-            'voucher_number' => 'V-005',
+            'freight_booking_id' => $modBooking->id,
+            'voucher_number' => 'V-MOD-1',
             'payment_type_id' => $ptype->id,
             'payment_mode_id' => $pmode->id,
             'payment_type' => 'cash',
             'payment_mode' => 'cash',
             'amount' => 500,
             'payment_status' => 'pending',
-            'company_id' => $admin->company_id,
+            'company_id' => $mod->company_id,
+            'date' => now()->toDateString(),
         ]);
 
-        // Moderator cannot see other company voucher
-        $response = $this->actingAs($mod)->get('/voucher_payments/V-005');
-        $response->assertStatus(403);
+        VoucherPayment::create([
+            'freight_booking_id' => $adminBooking->id,
+            'voucher_number' => 'V-ADMIN-1',
+            'payment_type_id' => $ptype->id,
+            'payment_mode_id' => $pmode->id,
+            'payment_type' => 'cash',
+            'payment_mode' => 'cash',
+            'amount' => 700,
+            'payment_status' => 'pending',
+            'company_id' => $admin->company_id,
+            'date' => now()->toDateString(),
+        ]);
+
+        $this->actingAs($mod)->get('/voucher_payments')->assertOk()
+            ->assertSee('V-MOD-1')
+            ->assertDontSee('V-ADMIN-1');
+
+        $this->actingAs($mod)->get('/voucher_payments/V-MOD-1')->assertOk();
+        $this->actingAs($mod)->get('/daily-payments')->assertOk();
     }
 }
 

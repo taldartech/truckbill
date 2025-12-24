@@ -102,6 +102,21 @@ class InvoiceTest extends TestCase
         return [$lr1, $lr2];
     }
 
+    protected function createInvoice(User $user, Consignee $customer, string $number): Invoice
+    {
+        return Invoice::create([
+            'manual_invoice_number' => $number,
+            'invoice_type' => 'Reverse',
+            'generated_date' => now()->toDateString(),
+            'customer_id' => $customer->id,
+            'total_amount' => 1000,
+            'payment_status' => 'pending',
+            'company_id' => $user->company_id,
+            'memo_ids' => [],
+            'lr_ids' => [],
+        ]);
+    }
+
     public function test_admin_and_moderator_can_access_index_and_data(): void
     {
         $admin = $this->makeUser('admin');
@@ -300,6 +315,42 @@ class InvoiceTest extends TestCase
 
         $this->actingAs($admin)->from('/invoices')->delete("/invoices/{$invoice->id}")
             ->assertRedirect('/invoices')->assertSessionHas('error');
+    }
+
+    public function test_invoice_numbers_api_returns_company_scoped_results(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        $this->createInvoice($admin, $customer, 'INV-ADMIN-1');
+
+        $other = $this->makeUser('master_admin');
+        $otherCustomer = $this->seedConsignees($other);
+        $this->createInvoice($other, $otherCustomer, 'INV-OTHER-1');
+
+        $response = $this->actingAs($admin)->get('/api/invoice-numbers');
+
+        $response->assertOk()
+            ->assertJsonFragment(['manual_invoice_number' => 'INV-ADMIN-1'])
+            ->assertJsonMissing(['manual_invoice_number' => 'INV-OTHER-1']);
+    }
+
+    public function test_invoice_numbers_api_filters_by_customer(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customerA = $this->seedConsignees($admin);
+        $customerB = Consignee::create([
+            'company_id' => $admin->company_id,
+            'name' => 'Other Customer',
+        ]);
+
+        $invoiceA = $this->createInvoice($admin, $customerA, 'INV-CUST-A');
+        $this->createInvoice($admin, $customerB, 'INV-CUST-B');
+
+        $response = $this->actingAs($admin)->get("/api/invoice-numbers/{$customerA->id}");
+
+        $response->assertOk()
+            ->assertJsonFragment(['manual_invoice_number' => $invoiceA->manual_invoice_number])
+            ->assertJsonMissing(['manual_invoice_number' => 'INV-CUST-B']);
     }
 }
 
