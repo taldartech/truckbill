@@ -29,11 +29,11 @@ class FreightBookingController extends Controller
             return $this->getFreightBookingsData($request);
         }
 
-        $query = FreightBooking::with(['lr.truck', 'linkedFreightBooking', 'company', 'transporter']);
+        $baseQuery = FreightBooking::with(['lr.truck', 'linkedFreightBooking', 'company', 'transporter']);
 
-        // Only apply company_id filter for non-super_admin users
+        // Company filter
         if (auth()->user()->userRole->name !== 'super_admin') {
-            $query->where('freight_bookings.company_id', auth()->user()->company_id);
+            $baseQuery->where('freight_bookings.company_id', auth()->user()->company_id);
         }
 
         // Default date range: last 15 days
@@ -55,37 +55,14 @@ class FreightBookingController extends Controller
         }
 
         // Filter by date range for LR -> gr_date
-        $query->whereHas('lr', function ($q) use ($startDate, $endDate) {
+        $baseQuery->whereHas('lr', function ($q) use ($startDate, $endDate) {
             $q->whereDate('gr_date', '>=', $startDate)
                 ->whereDate('gr_date', '<=', $endDate);
         });
 
-        // Search functionality
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('voucher_number', 'LIKE', "%{$search}%")
-                    ->orWhereHas('lr', function ($lrQuery) use ($search) {
-                        $lrQuery->where('lr_number', 'LIKE', "%{$search}%")
-                            ->orWhereHas('customer', function ($customerQuery) use ($search) {
-                                $customerQuery->where('name', 'LIKE', "%{$search}%");
-                            })
-                            ->orWhere('source_city', 'LIKE', "%{$search}%")
-                            ->orWhere('destination_city', 'LIKE', "%{$search}%")
-                            ->orWhereHas('truck', function ($truckQuery) use ($search) {
-                                $truckQuery->where('truck_number', 'LIKE', "%{$search}%");
-                            })
-                            ->orWhereHas('transporter', function ($transporterQuery) use ($search) {
-                                $transporterQuery->where('name', 'LIKE', "%{$search}%")
-                                    ->orWhere('short_name', 'LIKE', "%{$search}%");
-                            });
-                    });
-            });
-        }
-
         // Transporter filter
         if ($request->filled('transporter_id')) {
-            $query->where(function ($q) use ($request) {
+            $baseQuery->where(function ($q) use ($request) {
                 $q->where('transporter_id', $request->transporter_id)
                     ->orWhere('transporter_name', 'LIKE', "%{$request->transporter_id}%");
             });
@@ -93,42 +70,81 @@ class FreightBookingController extends Controller
 
         // Truck owner filter
         if ($request->filled('truck_owner_id')) {
-            $query->whereHas('lr.truck', function ($q) use ($request) {
+            $baseQuery->whereHas('lr.truck', function ($q) use ($request) {
                 $q->where('transporter_id', $request->truck_owner_id);
             });
         }
 
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $searchQuery = clone $baseQuery;
+            $searchQuery->where(function ($q) use ($search) {
+                $q->where('voucher_number', 'LIKE', "%{$search}%")
+                    ->orWhereHas('lr', function ($lrQuery) use ($search) {
+                        $lrQuery->where('lr_number', 'LIKE', "%{$search}%")
+                            ->orWhere('source_city', 'LIKE', "%{$search}%")
+                            ->orWhere('destination_city', 'LIKE', "%{$search}%")
+                            ->orWhereHas('customer', function ($customerQuery) use ($search) {
+                                $customerQuery->where('name', 'LIKE', "%{$search}%");
+                            })
+                            ->orWhereHas('truck', function ($truckQuery) use ($search) {
+                                $truckQuery->where('truck_number', 'LIKE', "%{$search}%");
+                            });
+                    });
+            });
 
-        // $bookings = $query->orderByDesc('freight_bookings.id')->paginate(10);
-        $bookings = $query
+            // IDs of direct matches
+            $searchResultIds = (clone $searchQuery)->pluck('id')->toArray();
+
+            // Step 2: Extract linked_lr_id from search results
+            $linkedIds = (clone $searchQuery)
+                ->whereNotNull('linked_lr_id')
+                ->pluck('linked_lr_id')
+                ->unique()
+                ->toArray();
+
+            // Step 3: Merge search results + all linked FRs
+            $baseQuery->where(function ($q) use ($searchResultIds, $linkedIds) {
+
+                if (!empty($searchResultIds)) {
+                    $q->whereIn('freight_bookings.id', $searchResultIds);
+                }
+
+                if (!empty($linkedIds)) {
+                    $q->orWhereIn('freight_bookings.linked_lr_id', $linkedIds);
+                }
+            });
+        }
+
+        /* ------------------------------------
+     | Grouped Ordering (UNCHANGED)
+     |------------------------------------ */
+        $bookings = $baseQuery
             ->select('freight_bookings.*')
             ->leftJoin(
                 DB::raw('(
-            SELECT linked_lr_id, MAX(id) as max_id
-            FROM freight_bookings
-            WHERE linked_lr_id IS NOT NULL
-            GROUP BY linked_lr_id
-        ) as fb_group'),
+                SELECT linked_lr_id, MAX(id) as max_id
+                FROM freight_bookings
+                WHERE linked_lr_id IS NOT NULL
+                GROUP BY linked_lr_id
+            ) as fb_group'),
                 function ($join) {
                     $join->on('freight_bookings.linked_lr_id', '=', 'fb_group.linked_lr_id');
                 }
             )
-            ->orderByDesc(DB::raw('COALESCE(fb_group.max_id, freight_bookings.id)')) // latest group OR latest row
-            ->orderByDesc('freight_bookings.id') // inside group
-            // ->paginate(10);
+            ->orderByDesc(DB::raw('COALESCE(fb_group.max_id, freight_bookings.id)'))
+            ->orderByDesc('freight_bookings.id')
             ->get();
 
-
-
-
-
-        // Get filter data
+        /* ------------------------------------
+     | Dropdown / Filter Data
+     |------------------------------------ */
         $transporters = Transporter::where('is_owner', 0)->orderBy('name')->get();
-        $truckOwners = Transporter::where('is_owner', 1)->orderBy('name')->get();
-        $lrs = LorryReceipt::all();
+        $truckOwners  = Transporter::where('is_owner', 1)->orderBy('name')->get();
+        $lrs          = LorryReceipt::all();
         $paymentTypes = \App\Models\PaymentType::all();
         $paymentModes = \App\Models\PaymentMode::all();
-        $customers = \App\Models\Consignee::all();
+        $customers    = \App\Models\Consignee::all();
 
         return view('freight_bookings.index', compact(
             'bookings',
