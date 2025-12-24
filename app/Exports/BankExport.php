@@ -72,7 +72,7 @@ class BankExport implements FromCollection, WithHeadings, WithTitle, ShouldAutoS
                 'Short Name' => $payment->freight_booking->lr->transporter->short_name ?? '-',
                 'Beneficiary ID' => $payment->freight_booking->lr->transporter->beneficiary_id ?? '-',
                 'Amount' => $payment['amount'] ?? 0,
-                'Narration' => $payment->freight_booking->lr->gr_number ?? '-',
+                'Narration' => 'GR NO ' . $payment->freight_booking->lr->gr_number ?? '-',
                 'TDS Deducted' => $tds_deducted,
                 'Status' => $status,
             ];
@@ -90,7 +90,7 @@ class BankExport implements FromCollection, WithHeadings, WithTitle, ShouldAutoS
                 'Short Name' => $linked_payment->freight_booking->lr->transporter->short_name ?? '-',
                 'Beneficiary ID' => $linked_payment->freight_booking->lr->transporter->beneficiary_id ?? '-',
                 'Amount' => $linked_payment['amount'] ?? 0,
-                'Narration' => $linked_payment->freight_booking->lr->gr_number ?? '-',
+                'Narration' => 'GR NO ' . $linked_payment->freight_booking->lr->gr_number ?? '-',
                 'TDS Deducted' => $tds_deducted,
                 'Status' => $status,
             ];

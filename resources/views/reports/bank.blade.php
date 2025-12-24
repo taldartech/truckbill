@@ -117,7 +117,7 @@
                                 <td>{{ $payment['name'] ?? 'N/A' }} </td>
                                 <td>{{ $payment['beneficiary_id'] ?? 'N/A' }}</td>
                                 <td class="text-end">{{ number_format($payment['amount'], 2) }}</td>
-                                <td>{{ $payment['gr_number'] ?? 'N/A' }}</td>
+                                <td> 'GR NO ' .{{ $payment['gr_number'] ?? 'N/A' }}</td>
                                 <td>{{ $payment['tds_deducted'] ?? 'N/A' }}</td>
                                 <td>
                                     @if ($payment['payment_status'] === 'paid')
