@@ -65,6 +65,7 @@
                     $fuel = $vouchers?->where('payment_mode', 'fuel(paid to pump)')->sum('amount');
                     $advance = $vouchers?->where('payment_mode', 'adjust in advance')->sum('amount');
                     $diff = $lr->fr_rate - ($freight?->tr_fr_rate);
+                    $invoice = \App\Models\Invoice::whereJsonContains('lr_ids', $lr->id)->first();
                 @endphp
                 <td>{{ $loop->iteration }}</td>
                 <td>
@@ -111,7 +112,7 @@
 
                 <td>{{ $diff ?? 0 }}</td>
                 <td>{{ $lr->memo_id ?? '-' }}</td>
-                <td>{{ $lr->bill_no ?? '-' }}</td>
+                <td>{{ $invoice->manual_invoice_number ?? '-' }}</td>
                 <td>{{ $lr->truck?->driver?->name ?? '-' }}</td>
                 <td>{{ $lr->transporter->name ?? '-' }}</td>
                 <td>{{ $lr->reference?->name ?? '-' }}</td>
