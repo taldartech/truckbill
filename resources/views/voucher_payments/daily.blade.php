@@ -180,6 +180,7 @@
                             <th>Amount</th>
                             <th>Status</th>
                             <th>Created Time</th>
+                            <th>Branch</th>
                             {{-- @if (auth()->user()->userRole->name === 'admin' || auth()->user()->userRole->name === 'super_admin')
                         <th>Action</th>
                         @endif --}}
@@ -217,7 +218,7 @@
                                         @endif
                                         {{ $payment->freight_booking->transporter->name }} <br>
                                         <small
-                                            class="text-muted">{{ $payment->freight_booking->transporter->beneficiary_id ?? '-' }}</small>
+                                        class="text-muted">{{ $payment->freight_booking->transporter->beneficiary_id ?? '-' }}</small>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
@@ -298,6 +299,13 @@
                                 <td>
                                     <small>{{ $payment->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y h:i A') }}</small>
                                 </td>
+                                <td>
+                                    @if ($payment->created_by && $payment->creator->branch)
+                                        {{ $payment->creator->branch->branch_name }}
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                </td>
                                 {{-- @if (auth()->user()->userRole->name === 'admin' || auth()->user()->userRole->name === 'super_admin')
                                 <td>
                                     <div class="dropdown">
@@ -351,11 +359,13 @@
                                 <td>
                                     @if ($payment->freight_booking && $payment->freight_booking->transporter)
                                         @if ($payment->freight_booking->transporter->is_owner)
-                                            <i class="bi bi-truck"></i> {{ $payment->freight_booking->transporter->name }}
+                                            <i class="bi bi-truck"></i>
                                         @else
                                             <i class="bi bi-building"></i>
-                                            {{ $payment->freight_booking->transporter->name }}
                                         @endif
+                                        {{ $payment->freight_booking->transporter->name }}
+                                        <br>
+                                        <small class="text-muted">{{ $payment->freight_booking->transporter->beneficiary_id ?? '-' }}</small>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
@@ -434,7 +444,14 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <small>{{ $payment->created_at->setTimezone('Asia/Kolkata')->format('h:i A') }}</small>
+                                    <small>{{ $payment->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y h:i A') }}</small>
+                                </td>
+                                <td>
+                                    @if ($payment->created_by && $payment->creator->branch)
+                                        {{ $payment->creator->branch->branch_name }}
+                                    @else
+                                        <span class="text-muted">-</span>
+                                    @endif
                                 </td>
                             </tr>
                         @endforeach
