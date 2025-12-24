@@ -218,7 +218,7 @@
                                         @endif
                                         {{ $payment->freight_booking->transporter->name }} <br>
                                         <small
-                                        class="text-muted">{{ $payment->freight_booking->transporter->beneficiary_id ?? '-' }}</small>
+                                            class="text-muted">{{ $payment->freight_booking->transporter->beneficiary_id ?? '-' }}</small>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
@@ -263,6 +263,9 @@
                                 <td>
                                     @if ($payment->payment_mode)
                                         {{ ucfirst($payment->payment_mode) }}
+                                        @if ($payment->pump)
+                                            <br><small class="text-muted">{{ $payment->pump->pump_name }}</small>
+                                        @endif
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
@@ -365,7 +368,8 @@
                                         @endif
                                         {{ $payment->freight_booking->transporter->name }}
                                         <br>
-                                        <small class="text-muted">{{ $payment->freight_booking->transporter->beneficiary_id ?? '-' }}</small>
+                                        <small
+                                            class="text-muted">{{ $payment->freight_booking->transporter->beneficiary_id ?? '-' }}</small>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
@@ -410,6 +414,9 @@
                                 <td>
                                     @if ($payment->payment_mode)
                                         {{ ucfirst($payment->payment_mode) }}
+                                        @if ($payment->pump)
+                                            <br><small class="text-muted">{{ $payment->pump->pump_name }}</small>
+                                        @endif
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif

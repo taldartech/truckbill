@@ -145,7 +145,8 @@ class VoucherPaymentController extends Controller
             'freight_booking.lr.truck',
             'freight_booking.lr.consignor.city',
             'freight_booking.lr.consignee.city',
-            'freight_booking.transporter' // Add transporter relationship
+            'freight_booking.transporter', // Add transporter relationship
+            'pump'
         ]);
 
         // Only apply company_id filter for non-super_admin users

@@ -173,7 +173,12 @@
                                 <td>{{ $payment->id }}</td>
                                 <td>{{ $payment->date }}</td>
                                 <td>{{ ucfirst($payment->payment_type) }}</td>
-                                <td>{{ ucfirst(str_replace('_', ' ', $payment->payment_mode)) }}</td>
+                                <td>
+                                    {{ ucfirst(str_replace('_', ' ', $payment->payment_mode)) }}
+                                    @if ($payment->pump)
+                                        <br><small class="text-muted">{{ $payment->pump->pump_name }}</small>
+                                    @endif
+                                </td>
                                 <td class="text-success fw-bold">₹{{ number_format($payment->amount, 2) }}</td>
                                 <td>{!! $payment->getPaymentStatusBadge() !!}</td>
                                 <td>{!! $payment->remark ?? '-' !!}</td>
@@ -219,7 +224,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="text-center">
+                                <td colspan="10" class="text-center">
                                     <div class="empty-state">
                                         <i class="bi bi-box"></i>
                                         <p class="mt-2">No payment records found.</p>

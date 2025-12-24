@@ -626,19 +626,23 @@
                             const statusBadge = payment.payment_status === 'paid' ? 'bg-success' :
                                 payment.payment_status === 'pending' ? 'bg-warning' :
                                 payment.payment_status === 'in progress' ? 'bg-info' : 'bg-secondary';
+                            const pumpName = payment.pump ? (payment.pump.pump_name || '') : '';
+                            const paymentModeDisplay = pumpName
+                                ? `${payment.payment_mode || 'N/A'}<br><small class="text-muted">${pumpName}</small>`
+                                : (payment.payment_mode || 'N/A');
 
                             tableHtml += `
-                    <tr>
-                        <td>#${payment.id}</td>
-                        <td>#${payment.freight_booking_id}</td>
-                        <td>${payment.voucher_number || 'N/A'}</td>
-                        <td>₹${parseFloat(payment.amount || 0).toFixed(2)}</td>
-                        <td>${payment.payment_type || 'N/A'}</td>
-                        <td>${payment.payment_mode || 'N/A'}</td>
-                        <td>${new Date(payment.date).toLocaleDateString('en-IN')}</td>
-                        <td><span class="badge ${statusBadge}">${payment.payment_status || 'N/A'}</span></td>
-                    </tr>
-                `;
+                                <tr>
+                                    <td>#${payment.id}</td>
+                                    <td>#${payment.freight_booking_id}</td>
+                                    <td>${payment.voucher_number || 'N/A'}</td>
+                                    <td>₹${parseFloat(payment.amount || 0).toFixed(2)}</td>
+                                    <td>${payment.payment_type || 'N/A'}</td>
+                                    <td>${paymentModeDisplay}</td>
+                                    <td>${new Date(payment.date).toLocaleDateString('en-IN')}</td>
+                                    <td><span class="badge ${statusBadge}">${payment.payment_status || 'N/A'}</span></td>
+                                </tr>
+                            `;
                         });
 
                         tableHtml += `
@@ -903,7 +907,12 @@
                                 <td>{{ $payment->voucher_number ?? 'N/A' }}</td>
                                 <td>₹{{ number_format($payment->amount, 2) }}</td>
                                 <td>{{ $payment->payment_type ?? 'N/A' }}</td>
-                                <td>{{ $payment->payment_mode ?? 'N/A' }}</td>
+                                <td>
+                                    {{ $payment->payment_mode ?? 'N/A' }}
+                                    @if ($payment->pump)
+                                        <br><small class="text-muted">{{ $payment->pump->pump_name }}</small>
+                                    @endif
+                                </td>
                                 <td>{{ $payment->date ? \Carbon\Carbon::parse($payment->date)->format('d-m-Y') : 'N/A' }}
                                 </td>
                                 <td>

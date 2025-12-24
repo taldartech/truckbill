@@ -1841,13 +1841,17 @@
                 if (paymentHistory && paymentHistory.length > 0) {
                     let paymentRows = '';
                     paymentHistory.forEach(payment => {
+                        const pumpName = payment.pump ? (payment.pump.pump_name || 'N/A') : '';
+                        const paymentModeDisplay = pumpName
+                            ? `${payment.payment_mode}<br><small class="text-muted">${pumpName}</small>`
+                            : payment.payment_mode;
                         paymentRows += `
                             <tr>
                                 <td>${new Date(payment.date).toLocaleDateString()}</td>
                                 <td>${payment.freight_booking_id || 'N/A'}</td>
                                 <td>${payment.freight_booking?.lr?.lr_number || 'N/A'}</td>
                                 <td>${payment.payment_type}</td>
-                                <td>${payment.payment_mode}</td>
+                                <td>${paymentModeDisplay}</td>
                                 <td class="text-end">₹${parseFloat(payment.amount).toFixed(2)}</td>
                             </tr>
                         `;

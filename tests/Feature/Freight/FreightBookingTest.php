@@ -6,6 +6,7 @@ use App\Models\Company;
 use App\Models\Consignee;
 use App\Models\FreightBooking;
 use App\Models\LorryReceipt;
+use App\Models\Pump;
 use App\Models\Transporter;
 use App\Models\Truck;
 use App\Models\User;
@@ -237,6 +238,42 @@ class FreightBookingTest extends TestCase
         ]);
 
         $response->assertOk();
+    }
+
+    public function test_payment_history_includes_pump_details(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        $fb = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'voucher_number' => 99,
+        ]));
+
+        $pump = Pump::create([
+            'user_id' => $admin->id,
+            'pump_name' => 'HP Pump',
+            'contact_name' => 'Operator',
+            'contact_number' => '9999999999',
+            'remark' => 'Test pump',
+        ]);
+
+        \App\Models\VoucherPayment::create([
+            'freight_booking_id' => $fb->id,
+            'voucher_number' => 'V-HP-1',
+            'payment_type' => 'cash',
+            'payment_mode' => 'cash',
+            'amount' => 500,
+            'payment_status' => 'pending',
+            'company_id' => $admin->company_id,
+            'pump_id' => $pump->id,
+            'date' => now()->toDateString(),
+        ]);
+
+        $response = $this->actingAs($admin)->post('/freight_bookings/payment-history', [
+            'freight_booking_ids' => [$fb->id],
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('payments.0.pump.pump_name', 'HP Pump');
     }
 }
 

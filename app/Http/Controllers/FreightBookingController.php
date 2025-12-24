@@ -716,7 +716,8 @@ class FreightBookingController extends Controller
                 ->orderBy('created_at', 'desc')
                 ->first();
 
-            $payments = \App\Models\VoucherPayment::where('freight_booking_id', $id)
+            $payments = \App\Models\VoucherPayment::with('pump')
+                ->where('freight_booking_id', $id)
                 ->orderBy('created_at', 'desc')
                 ->get();
 
@@ -1289,7 +1290,8 @@ class FreightBookingController extends Controller
 
             $payments = \App\Models\VoucherPayment::with([
                 'freight_booking.lr',
-                'freight_booking.transporter'
+                'freight_booking.transporter',
+                'pump'
             ])
                 ->whereIn('freight_booking_id', $validated['freight_booking_ids'])
                 ->orderBy('created_at', 'desc')
