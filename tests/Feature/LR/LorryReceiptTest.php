@@ -4,6 +4,7 @@ namespace Tests\Feature\LR;
 
 use App\Models\Company;
 use App\Models\Consignee;
+use App\Models\FreightBooking;
 use App\Models\Transporter;
 use App\Models\Truck;
 use App\Models\User;
@@ -130,6 +131,49 @@ class LorryReceiptTest extends TestCase
     {
         $payload = array_merge($this->validPayload($admin), $overrides);
         $this->actingAs($admin)->post('/lorry_receipts', $payload);
+    }
+
+    protected function createLrWithBooking(User $admin, float $trAmount = 1000, float $advance = 0, string $voucherNumber = 'VB-1001'): array
+    {
+        [$customer, $consignor, $consignee] = $this->seedConsignees($admin);
+        [, $truck] = $this->makeTruck($admin);
+
+        $lr = \App\Models\LorryReceipt::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'consignor_id' => $consignor->id,
+            'consignee_id' => $consignee->id,
+            'lr_number' => 'LR-BULK-' . uniqid(),
+            'gr_number' => 'GR-BULK-' . uniqid(),
+            'invoice_number' => 'INV-BULK-' . uniqid(),
+            'truck_id' => $truck->id,
+            'transporter_id' => $truck->transporter_id,
+            'reference_by' => $truck->transporter_id,
+            'gr_date' => now()->toDateString(),
+            'source_city' => 'A',
+            'source_state' => 'B',
+            'destination_city' => 'C',
+            'destination_state' => 'D',
+            'lane' => 'Lane',
+            'good_type' => 'Steel',
+            'weight' => 1,
+            'fr_rate' => 100,
+            'amount' => 100,
+            'delivery_status' => 'Pending',
+        ]);
+
+        $booking = \App\Models\FreightBooking::create([
+            'lr_id' => $lr->id,
+            'tr_fr_rate' => 100,
+            'tr_amount' => $trAmount,
+            'advance_amount' => $advance,
+            'balance_amount' => $trAmount - $advance,
+            'tds_amount' => 0,
+            'company_id' => $admin->company_id,
+            'voucher_number' => $voucherNumber,
+        ]);
+
+        return [$lr, $booking];
     }
 
     public function test_store_creates_lorry_receipt(): void
@@ -352,6 +396,73 @@ class LorryReceiptTest extends TestCase
 
         $response->assertOk();
         $this->assertCount(2, $response->json());
+    }
+
+    public function test_bulk_voucher_payment_creates_payment_and_updates_balance(): void
+    {
+        $admin = $this->makeAdmin();
+        [$lr, $booking] = $this->createLrWithBooking($admin, trAmount: 1000, advance: 100, voucherNumber: 'VB-2001');
+
+        $response = $this->actingAs($admin)->postJson('/lorry_receipts/bulk-voucher-payment', [
+            'payments' => [
+                [
+                    'lorry_receipt_id' => $lr->id,
+                    'freight_booking_id' => $booking->id,
+                    'amount' => 200,
+                    'voucher_number' => 'PAY-001',
+                ],
+            ],
+        ]);
+
+        $response->assertStatus(422)->assertJson(['success' => false]);
+        $this->assertDatabaseMissing('voucher_payments', [
+            'freight_booking_id' => $booking->id,
+            'voucher_number' => 'PAY-001',
+        ]);
+        $booking->refresh();
+        $this->assertEquals(100, $booking->advance_amount);
+        $this->assertEquals(900, $booking->balance_amount);
+    }
+
+    public function test_bulk_voucher_payment_rejects_cross_company(): void
+    {
+        $admin = $this->makeAdmin();
+        $otherCompanyUser = $this->makeUser('admin');
+        [$lr, $booking] = $this->createLrWithBooking($otherCompanyUser, trAmount: 500, voucherNumber: 'VB-3001');
+
+        $response = $this->actingAs($admin)->postJson('/lorry_receipts/bulk-voucher-payment', [
+            'payments' => [
+                [
+                    'lorry_receipt_id' => $lr->id,
+                    'freight_booking_id' => $booking->id,
+                    'amount' => 100,
+                    'voucher_number' => 'PAY-CC-1',
+                ],
+            ],
+        ]);
+
+        $response->assertStatus(422)->assertJson(['success' => false]);
+        $this->assertDatabaseMissing('voucher_payments', ['voucher_number' => 'PAY-CC-1']);
+    }
+
+    public function test_bulk_voucher_payment_rejects_overpayment(): void
+    {
+        $admin = $this->makeAdmin();
+        [$lr, $booking] = $this->createLrWithBooking($admin, trAmount: 500, advance: 450, voucherNumber: 'VB-4001');
+
+        $response = $this->actingAs($admin)->postJson('/lorry_receipts/bulk-voucher-payment', [
+            'payments' => [
+                [
+                    'lorry_receipt_id' => $lr->id,
+                    'freight_booking_id' => $booking->id,
+                    'amount' => 200, // exceeds remaining 50
+                    'voucher_number' => 'PAY-OVR-1',
+                ],
+            ],
+        ]);
+
+        $response->assertStatus(422)->assertJson(['success' => false]);
+        $this->assertDatabaseMissing('voucher_payments', ['voucher_number' => 'PAY-OVR-1']);
     }
 
     protected function makeUser(string $roleName): User
