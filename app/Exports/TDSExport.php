@@ -46,7 +46,7 @@ class TDSExport implements FromCollection, WithHeadings, ShouldAutoSize, WithCol
                 "LR No" => $lr->lr->lr_number,
                 "Truck No" => $lr->lr->truck->truck_number ?? 'N/A',
                 "Destination" => $lr->lr->destination_city . ', ' . $lr->lr->destination_state,
-                "TR Freight" => number_format($lr->tr_fr_rate, 2),
+                "TR Freight" => number_format($lr->tr_amount, 2),
                 "TDS" => (string) number_format($lr->tds_amount ?? 0, 2),
                 "Rate" => (string) $lr->transporter_tds_percentage . '%',
                 "Transport Name" => $lr->lr->transporter->name ?? 'N/A',
