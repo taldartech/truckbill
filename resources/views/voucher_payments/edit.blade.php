@@ -244,17 +244,31 @@
                         <div class="invalid-feedback">Please select a payment mode.</div>
                     </div>
                     <!--end::Col-->
-                    <div class="col-md-4 mb-3" id="pumpDropdownContainer" style="display: none;">
+                    <div class="col-md-4 mb-3" id="pumpDropdownContainer"
+                        style="display: {{ $voucher_payment->pump_id || (request()->has('show_pump') && request('show_pump') == '1') ? 'block' : 'none' }};">
                         <label for="pump_id" class="form-label">Select Pump</label>
-                        <select name="pump_id" id="pump_id" class="form-select">
-                            <option value="">Select Pump</option>
-                            @foreach ($pumps as $pump)
-                                <option value="{{ $pump->id }}"
-                                    {{ old('pump_id', $voucher_payment->pump_id) == $pump->id ? 'selected' : '' }}>
-                                    {{ $pump->pump_name }}
-                                </option>
-                            @endforeach
-                        </select>
+                        @if ($voucher_payment->linked_voucher_id == null)
+                            <select name="pump_id" id="pump_id" class="form-select">
+                                <option value="">Select Pump</option>
+                                @foreach ($pumps as $pump)
+                                    <option value="{{ $pump->id }}"
+                                        {{ old('pump_id', $voucher_payment->pump_id) == $pump->id ? 'selected' : '' }}>
+                                        {{ $pump->pump_name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        @else
+                            <select name="pump_id" id="pump_id" class="form-select" disabled>
+                                <option value="">Select Pump</option>
+                                @foreach ($pumps as $pump)
+                                    <option value="{{ $pump->id }}"
+                                        {{ old('pump_id', $voucher_payment->pump_id) == $pump->id ? 'selected' : '' }}>
+                                        {{ $pump->pump_name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <input type="hidden" name="pump_id" value="{{ $voucher_payment->pump_id }}">
+                        @endif
                         @error('pump_id')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
@@ -286,21 +300,21 @@
                     <div class="col-md-4 mb-3" @if (!$isAdmin) style="display: none;" @endif>
                         <label for="payment_status" class="form-label">Payment Status *</label>
                         @if ($voucher_payment->linked_voucher_id == null)
-                        <select name="payment_status" id="payment_status" class="form-select" required>
-                            <option value="pending"
-                                {{ old('payment_status', $voucher_payment->payment_status) == 'pending' ? 'selected' : '' }}>
-                                Pending</option>
-                            <option value="in-progress"
-                                {{ old('payment_status', $voucher_payment->payment_status) == 'in-progress' ? 'selected' : '' }}>
-                                In-Progress</option>
-                            <option value="paid" id="paidOption"
-                                {{ old('payment_status', $voucher_payment->payment_status) == 'paid' ? 'selected' : '' }}>
-                                Paid</option>
-                        </select>
+                            <select name="payment_status" id="payment_status" class="form-select" required>
+                                <option value="pending"
+                                    {{ old('payment_status', $voucher_payment->payment_status) == 'pending' ? 'selected' : '' }}>
+                                    Pending</option>
+                                <option value="in-progress"
+                                    {{ old('payment_status', $voucher_payment->payment_status) == 'in-progress' ? 'selected' : '' }}>
+                                    In-Progress</option>
+                                <option value="paid" id="paidOption"
+                                    {{ old('payment_status', $voucher_payment->payment_status) == 'paid' ? 'selected' : '' }}>
+                                    Paid</option>
+                            </select>
                         @else
-                        <input type="text" class="form-control" value="{{ ucfirst($voucher_payment->payment_status) }}"
-                            readonly>
-                        <input type="hidden" name="payment_status" value="{{ $voucher_payment->payment_status }}">
+                            <input type="text" class="form-control"
+                                value="{{ ucfirst($voucher_payment->payment_status) }}" readonly>
+                            <input type="hidden" name="payment_status" value="{{ $voucher_payment->payment_status }}">
                         @endif
                         @error('payment_status')
                             <div class="text-danger">{{ $message }}</div>
@@ -407,11 +421,24 @@
             function togglePumpDropdown() {
                 const selectedText = paymentModeIdSelect.options[paymentModeIdSelect.selectedIndex]?.text
                     .toLowerCase() || '';
-                if (selectedText === 'fuel') {
+                const currentPumpId = pumpSelect ? pumpSelect.value : '';
+                const hasExistingPump = @json($voucher_payment->pump_id != null);
+
+                // Show pump dropdown if:
+                // 1. Payment mode contains "fuel" or "pump" (e.g., "fuel", "fuel(paid to pump)"), OR
+                // 2. There's already a pump selected (for editing existing pump)
+                if (selectedText.includes('fuel') || selectedText.includes('pump') || hasExistingPump ||
+                    currentPumpId) {
                     pumpDropdownContainer.style.display = 'block';
                 } else {
-                    pumpDropdownContainer.style.display = 'none';
-                    pumpSelect.value = ''; // Reset pump selection
+                    // Only hide if no pump is selected and payment mode doesn't require pump
+                    if (!hasExistingPump && !currentPumpId) {
+                        pumpDropdownContainer.style.display = 'none';
+                        if (pumpSelect) pumpSelect.value = ''; // Reset pump selection
+                    } else {
+                        // Keep visible if there's an existing pump
+                        pumpDropdownContainer.style.display = 'block';
+                    }
                 }
             }
 
