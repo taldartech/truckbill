@@ -275,5 +275,37 @@ class FreightBookingTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('payments.0.pump.pump_name', 'HP Pump');
     }
+
+    public function test_update_recalculates_lr_amount_with_damage_and_shortage(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+
+        // Create initial booking with existing damage/shortage
+        $initialBooking = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'damage_amount' => 50,
+            'shortage_amount' => 20,
+            'balance_amount' => 7930, // tr_amount 10000 - advance 2000 - damage 50 - shortage 20
+            'voucher_number' => 5001,
+        ]));
+
+        // Update with new damage/shortage values
+        $payload = array_merge($this->bookingPayload($admin, $lr), [
+            'damage_amount' => 70,
+            'shortage_amount' => 10,
+            'balance_amount' => 7920, // tr_amount 10000 - advance 2000 - new damage/shortage 80
+            'voucher_number' => 5001,
+        ]);
+
+        $this->actingAs($admin)->put("/freight_bookings/{$initialBooking->id}", $payload)
+            ->assertRedirect(route('freight_bookings.index'));
+
+        $lr->refresh();
+
+        $this->assertEquals(70.0, (float) $lr->damage_amount);
+        $this->assertEquals(10.0, (float) $lr->shortage_amount);
+        // original amount (10000 + 50 + 20) - (70 + 10) = 9990
+        $this->assertEquals(9990.0, (float) $lr->amount);
+    }
 }
 

@@ -1007,13 +1007,20 @@ class FreightBookingController extends Controller
         $linkedLrId = $lorryReceipt->linked_lr_id ?? null;
         // dd($linkedLrId);
 
+        // Store old values before update for proper amount calculation
+        $oldDamageAmount = $freightBooking->damage_amount ?? 0;
+        $oldShortageAmount = $freightBooking->shortage_amount ?? 0;
+        $newDamageAmount = $data['damage_amount'] ?? 0;
+        $newShortageAmount = $data['shortage_amount'] ?? 0;
+
         // Update freight booking with lorry receipt's LR number
         $freightBooking->update(array_merge($data, [
             'lr_number' => $lorryReceipt->lr_number,
             'linked_lr_id' => $linkedLrId
         ]));
 
-
+        // Refresh freight booking to get updated values
+        $freightBooking->refresh();
 
         // Update lorry receipt status
         if ($lorryReceipt) {
@@ -1027,11 +1034,14 @@ class FreightBookingController extends Controller
                 'current_memo_id' => $lorryReceipt->memo_id,
                 'current_delivery_status' => $lorryReceipt->delivery_status,
                 'is_delivered_from_form' => $data['is_delivered'] ?? 'not_set',
-                'is_cancelled_from_form' => $data['is_cancelled'] ?? 'not_set'
+                'is_cancelled_from_form' => $data['is_cancelled'] ?? 'not_set',
+                'old_damage' => $oldDamageAmount,
+                'old_shortage' => $oldShortageAmount,
+                'new_damage' => $newDamageAmount,
+                'new_shortage' => $newShortageAmount
             ]);
 
             $deliveryStatus = 'Pending';
-            // dd($data);
             if (isset($data['is_cancelled']) && $data['is_cancelled'] === '1') {
                 // When freight booking is cancelled, lorry receipt goes back to Pending
                 $deliveryStatus = 'Pending';
@@ -1046,10 +1056,17 @@ class FreightBookingController extends Controller
                 \Log::info('FREIGHT BOOKING UPDATE: Setting status to In-Progress (default)');
             }
 
+            // Update damage and shortage amounts on lorry receipt
+            $lorryReceipt->damage_amount = $newDamageAmount;
+            $lorryReceipt->shortage_amount = $newShortageAmount;
+
+            // Recalculate LR amount: restore original amount first, then subtract new damage/shortage
+            // Formula: original_amount = current_amount + old_damage + old_shortage
+            // new_amount = original_amount - new_damage - new_shortage
+            $originalAmount = $lorryReceipt->amount + $oldDamageAmount + $oldShortageAmount;
+            $lorryReceipt->amount = max(0, $originalAmount - $newDamageAmount - $newShortageAmount);
+
             $lorryReceipt->delivery_status = $deliveryStatus;
-            $lorryReceipt->damage_amount = $freightBooking->damage_amount;
-            $lorryReceipt->shortage_amount = $freightBooking->shortage_amount;
-            $lorryReceipt->amount = $lorryReceipt->amount - ($freightBooking->damage_amount + $freightBooking->shortage_amount);
             $lorryReceipt->save();
 
             \Log::info('FREIGHT BOOKING UPDATE: Final LR state after save', [
