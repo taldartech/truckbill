@@ -466,7 +466,8 @@
                     transporter: $(this).data('transporter'),
                     lr_transporter: $(this).data('lr-transporter'),
                     fb_transporter: $(this).data('fb-transporter'),
-                    tds_percentage: $(this).data('tds-percentage')
+                    tds_percentage: $(this).data('tds-percentage'),
+                    amount: $(this).data('amount')
                 };
                 if (!selectedBookingIds.includes(id)) {
                     selectedBookingIds.push(id);
@@ -1074,8 +1075,7 @@
                 checkedBoxes.forEach(function(data) {
                     const lrNumber = data.lr;
                     const truckNumber = data.truck;
-                    const amount = data.balance;
-                    const balance = data.balance;
+                    const amount = data.amount;
                     const voucherNumber = data.voucher_number || '-';
                     const freightBookingId = data.freight_booking_id;
 
@@ -1092,7 +1092,7 @@
                             <td>${lrNumber}</td>
                             <td>${truckNumber}</td>
                             <td>${voucherNumber}</td>
-                            <td class="text-end">₹${balance.toFixed(2)}</td>
+                            <td class="text-end">₹${amount.toFixed(2)}</td>
                             <input type="hidden" name="lr_ids[]" value="${lrId}">
                             <input type="hidden" name="freight_booking_ids[]" value="${freightBookingId}">
                         </tr>
