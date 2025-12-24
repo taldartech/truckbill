@@ -20,11 +20,13 @@ class BankExport implements FromCollection, WithHeadings, WithTitle, ShouldAutoS
 {
     protected $startDate;
     protected $endDate;
+    protected $paymentStatus;
 
-    public function __construct($startDate = null, $endDate = null)
+    public function __construct($startDate = null, $endDate = null, $paymentStatus = null)
     {
         $this->startDate = $startDate;
         $this->endDate = $endDate;
+        $this->paymentStatus = $paymentStatus;
     }
 
     public function collection()
@@ -32,19 +34,29 @@ class BankExport implements FromCollection, WithHeadings, WithTitle, ShouldAutoS
         $companyId = Auth::user()->company_id;
 
         // Step 1: Fetch records from voucher_payments where linked_voucher_id is null
-        $payments = VoucherPayment::with(['freight_booking.lr.truck', 'freight_booking.lr.transporter', 'freight_booking'])
+        $paymentsQuery = VoucherPayment::with(['freight_booking.lr.truck', 'freight_booking.lr.transporter', 'freight_booking'])
             ->whereBetween('date', [$this->startDate, $this->endDate])
             ->where('company_id', $companyId)
             ->whereNull('linked_voucher_id')
-            ->where('payment_mode', 'bank transfer')
-            ->get();
+            ->where('payment_mode', 'bank transfer');
+
+        if ($this->paymentStatus) {
+            $paymentsQuery->where('payment_status', $this->paymentStatus);
+        }
+
+        $payments = $paymentsQuery->get();
 
         // Step 2: Fetch all records from voucher_linked table
-        $linked_payments = VoucherLinked::with(['freight_booking.lr.truck', 'freight_booking.lr.transporter', 'freight_booking'])
+        $linkedPaymentsQuery = VoucherLinked::with(['freight_booking.lr.truck', 'freight_booking.lr.transporter', 'freight_booking'])
             ->whereBetween('date', [$this->startDate, $this->endDate])
             ->where('company_id', $companyId)
-            ->where('payment_mode', 'bank transfer')
-            ->get();
+            ->where('payment_mode', 'bank transfer');
+
+        if ($this->paymentStatus) {
+            $linkedPaymentsQuery->where('payment_status', $this->paymentStatus);
+        }
+
+        $linked_payments = $linkedPaymentsQuery->get();
 
         $allPayments = [];
 

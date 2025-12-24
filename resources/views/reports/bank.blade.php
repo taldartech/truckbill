@@ -30,6 +30,17 @@
                         <label class="form-label">End Date <span class="text-danger">*</span></label>
                         <input type="date" name="end_date" class="form-control" value="{{ $endDate }}" required>
                     </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Payment Status</label>
+                        <select name="payment_status" class="form-select">
+                            <option value="">All Statuses</option>
+                            <option value="pending" {{ request('payment_status') == 'pending' ? 'selected' : '' }}>Pending
+                            </option>
+                            <option value="in-progress" {{ request('payment_status') == 'in-progress' ? 'selected' : '' }}>
+                                In Progress</option>
+                            <option value="paid" {{ request('payment_status') == 'paid' ? 'selected' : '' }}>Paid</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div class="row">
@@ -66,6 +77,7 @@
                             href="{{ route('reports.bank-export', [
                                 'start_date' => $startDate,
                                 'end_date' => $endDate,
+                                'payment_status' => request('payment_status'),
                             ]) }}">
                             <i class="bi bi-file-earmark-spreadsheet"></i> Export
                         </a>

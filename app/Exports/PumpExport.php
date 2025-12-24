@@ -14,12 +14,14 @@ class PumpExport implements FromCollection, ShouldAutoSize, WithEvents
     private $endDate;
     private $pumpId;
     private $pumpName;
+    private $paymentStatus;
 
-    public function __construct($startDate, $endDate, $pumpId)
+    public function __construct($startDate, $endDate, $pumpId, $paymentStatus = null)
     {
         $this->startDate = $startDate;
         $this->endDate = $endDate;
         $this->pumpId = $pumpId;
+        $this->paymentStatus = $paymentStatus;
         $this->pumpName = \App\Models\Pump::find($pumpId)->pump_name ?? 'Pump Report';
     }
 
@@ -50,19 +52,29 @@ class PumpExport implements FromCollection, ShouldAutoSize, WithEvents
         ]);
 
         // Step 1: Fetch records from voucher_payments where linked_voucher_id is null
-        $voucherPayments = \App\Models\VoucherPayment::with(['freight_booking.lr', 'pump', 'freight_booking'])
+        $voucherPaymentsQuery = \App\Models\VoucherPayment::with(['freight_booking.lr', 'pump', 'freight_booking'])
             ->where('pump_id', $this->pumpId)
             ->where('company_id', $companyId)
             ->whereNull('linked_voucher_id')
-            ->whereBetween('date', [$this->startDate, $this->endDate])
-            ->get();
+            ->whereBetween('date', [$this->startDate, $this->endDate]);
+
+        if ($this->paymentStatus) {
+            $voucherPaymentsQuery->where('payment_status', $this->paymentStatus);
+        }
+
+        $voucherPayments = $voucherPaymentsQuery->get();
 
         // Step 2: Fetch all records from voucher_linked table
-        $linkedPayments = \App\Models\VoucherLinked::with(['freight_booking.lr', 'freight_booking'])
+        $linkedPaymentsQuery = \App\Models\VoucherLinked::with(['freight_booking.lr', 'freight_booking'])
             ->where('pump_id', $this->pumpId)
             ->where('company_id', $companyId)
-            ->whereBetween('date', [$this->startDate, $this->endDate])
-            ->get();
+            ->whereBetween('date', [$this->startDate, $this->endDate]);
+
+        if ($this->paymentStatus) {
+            $linkedPaymentsQuery->where('payment_status', $this->paymentStatus);
+        }
+
+        $linkedPayments = $linkedPaymentsQuery->get();
 
         $allPayments = collect();
         $processedFreightBookingIds = [];

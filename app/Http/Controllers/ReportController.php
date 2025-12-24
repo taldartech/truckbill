@@ -426,25 +426,36 @@ class ReportController extends Controller
         [$startDate, $endDate, $hasRange] = $this->normalizeDateRange($request);
 
         $pumpId = $request->input('pump_id');
+        $paymentStatus = $request->input('payment_status');
         $companyId = Auth::user()->company_id;
 
         $pumpData = collect(); // default empty collection
 
         if ($pumpId && $hasRange) {
             // --- Step 1: Fetch records from voucher_payments where linked_voucher_id is null ---
-            $voucherPayments = \App\Models\VoucherPayment::with(['freight_booking.lr'])
+            $voucherPaymentsQuery = \App\Models\VoucherPayment::with(['freight_booking.lr'])
                 ->where('pump_id', $pumpId)
                 ->where('company_id', $companyId)
                 ->whereNull('linked_voucher_id')
-                ->whereBetween('date', [$startDate, $endDate])
-                ->get();
+                ->whereBetween('date', [$startDate, $endDate]);
+
+            if ($paymentStatus) {
+                $voucherPaymentsQuery->where('payment_status', $paymentStatus);
+            }
+
+            $voucherPayments = $voucherPaymentsQuery->get();
 
             // --- Step 2: Fetch all records from voucher_linked table ---
-            $linkedPayments = \App\Models\VoucherLinked::with(['freight_booking.lr'])
+            $linkedPaymentsQuery = \App\Models\VoucherLinked::with(['freight_booking.lr'])
                 ->where('pump_id', $pumpId)
                 ->where('company_id', $companyId)
-                ->whereBetween('date', [$startDate, $endDate])
-                ->get();
+                ->whereBetween('date', [$startDate, $endDate]);
+
+            if ($paymentStatus) {
+                $linkedPaymentsQuery->where('payment_status', $paymentStatus);
+            }
+
+            $linkedPayments = $linkedPaymentsQuery->get();
 
             // --- Step 3: Prepare merged data from unlinked payments ---
             $unlinkedData = $voucherPayments->map(function ($payment) {
@@ -489,7 +500,7 @@ class ReportController extends Controller
         }
 
         // --- Step 3: Return view ---
-        return view('reports.pump', compact('pumpData', 'startDate', 'endDate', 'pumpId', 'pumps'));
+        return view('reports.pump', compact('pumpData', 'startDate', 'endDate', 'pumpId', 'pumps', 'paymentStatus'));
     }
 
     public function pump_export(Request $request)
@@ -497,8 +508,9 @@ class ReportController extends Controller
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
         $pumpId = $request->input('pump_id');
+        $paymentStatus = $request->input('payment_status');
 
-        $export = Excel::download(new PumpExport($startDate, $endDate, $pumpId), 'pump_report.xlsx');
+        $export = Excel::download(new PumpExport($startDate, $endDate, $pumpId, $paymentStatus), 'pump_report.xlsx');
         return $export;
     }
 
@@ -760,6 +772,7 @@ class ReportController extends Controller
     public function bank(Request $request)
     {
         $companyId = Auth::user()->company_id;
+        $paymentStatus = $request->input('payment_status');
         [$startDate, $endDate, $hasRange] = $this->normalizeDateRange($request);
 
         if ($hasRange) {
@@ -768,12 +781,22 @@ class ReportController extends Controller
             $query->where('company_id', $companyId);
             $query->whereNull('linked_voucher_id');
             $query->where('payment_mode', 'bank transfer');
+
+            if ($paymentStatus) {
+                $query->where('payment_status', $paymentStatus);
+            }
+
             $payments = $query->get();
 
             $query1 = VoucherLinked::with(['freight_booking.lr.truck', 'freight_booking.lr.transporter'])
                 ->whereBetween('date', [$startDate, $endDate]);
             $query1->where('company_id', $companyId);
             $query1->where('payment_mode', 'bank transfer');
+
+            if ($paymentStatus) {
+                $query1->where('payment_status', $paymentStatus);
+            }
+
             $linked_payments = $query1->get();
         }
         $allPayments = [];
@@ -813,15 +836,16 @@ class ReportController extends Controller
             $allPayments = collect($allPayments)->sortBy('date')->values();
         }
 
-        return view('reports.bank', compact('startDate', 'endDate', 'allPayments'));
+        return view('reports.bank', compact('startDate', 'endDate', 'allPayments', 'paymentStatus'));
     }
 
     public function bank_export(Request $request)
     {
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
+        $paymentStatus = $request->input('payment_status');
 
-        $export = Excel::download(new BankExport($startDate, $endDate), 'bank_report.xlsx');
+        $export = Excel::download(new BankExport($startDate, $endDate, $paymentStatus), 'bank_report.xlsx');
         return $export;
     }
 

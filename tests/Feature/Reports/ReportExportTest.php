@@ -149,7 +149,25 @@ class ReportExportTest extends TestCase
     public function test_exports_succeed_for_admin(): void
     {
         $admin = $this->makeUser('admin');
-        $this->seedLr($admin);
+        [$lr, $booking] = $this->seedLr($admin);
+        $pump = Pump::create([
+            'user_id' => $admin->company->user_id,
+            'pump_name' => 'Pump Export',
+            'contact_name' => 'Op',
+            'contact_number' => '9000000000',
+            'remark' => 'Test',
+        ]);
+        VoucherPayment::create([
+            'freight_booking_id' => $booking->id,
+            'voucher_number' => 'V-PUMP-EXP',
+            'payment_type' => 'cash',
+            'payment_mode' => 'bank transfer',
+            'amount' => 300,
+            'payment_status' => 'pending',
+            'company_id' => $admin->company_id,
+            'pump_id' => $pump->id,
+            'date' => now()->toDateString(),
+        ]);
         $params = ['start_date' => now()->subDays(7)->toDateString(), 'end_date' => now()->toDateString()];
 
         $this->actingAs($admin)->get('/reports/consignor-consignee-export?' . http_build_query($params))->assertOk();
@@ -163,6 +181,7 @@ class ReportExportTest extends TestCase
         $this->actingAs($admin)->get('/reports/bank-export?' . http_build_query($params))->assertOk();
         $this->actingAs($admin)->get('/reports/transporter-report-export?' . http_build_query($params))->assertOk();
         $this->actingAs($admin)->get('/reports/transporter-master-export?type=transporter')->assertOk();
+        $this->actingAs($admin)->get('/reports/pump-export?' . http_build_query($params + ['pump_id' => $pump->id]))->assertOk();
     }
 
     public function test_exports_forbidden_for_moderator(): void
