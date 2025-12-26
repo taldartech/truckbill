@@ -3,6 +3,13 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Voucher Payments Report</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="192x192"  href="{{ asset('favicon/android-icon-192x192.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('favicon/apple-touch-icon.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon/favicon-16x16.png') }}">
+    <link rel="manifest" href="{{ asset('favicon/site.webmanifest') }}">
+    <!-- End Favicon -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -76,7 +83,7 @@
             {{ $company->phone }} | {{ $company->email }}
         </div>
         @endif
-        
+
         <div class="report-info">
             Generated on: {{ now()->format('d-M-Y H:i:s') }}
             @if(!empty($filters['start_date']) && !empty($filters['end_date']))
