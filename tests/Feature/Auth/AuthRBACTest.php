@@ -6,6 +6,9 @@ use App\Models\Company;
 use App\Models\User;
 use App\Models\UserRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -40,6 +43,38 @@ class AuthRBACTest extends TestCase
 
         $response->assertRedirect('/dashboard');
         $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_user_can_request_password_reset_link(): void
+    {
+        Notification::fake();
+        $user = $this->createUserWithRole('admin');
+
+        $response = $this->from('/forgot-password')->post(route('password.email'), [
+            'email' => $user->email,
+        ]);
+
+        $response->assertRedirect('/forgot-password');
+        Notification::assertSentTo($user, ResetPassword::class);
+    }
+
+    public function test_user_can_reset_password_with_valid_token(): void
+    {
+        $user = $this->createUserWithRole('admin');
+        $token = Password::createToken($user);
+
+        $response = $this->post(route('password.update'), [
+            'token' => $token,
+            'email' => $user->email,
+            'password' => 'new-password',
+            'password_confirmation' => 'new-password',
+        ]);
+
+        $response->assertRedirect('/login');
+        $this->assertCredentials([
+            'email' => $user->email,
+            'password' => 'new-password',
+        ]);
     }
 
     public function test_user_can_login_with_remember_me(): void
