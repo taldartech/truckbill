@@ -6,6 +6,7 @@ use App\Models\Company;
 use App\Models\User;
 use App\Models\UserRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
@@ -38,6 +39,21 @@ class AuthRBACTest extends TestCase
         ]);
 
         $response->assertRedirect('/dashboard');
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_user_can_login_with_remember_me(): void
+    {
+        $user = $this->createUserWithRole('admin');
+
+        $response = $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+            'remember' => true,
+        ]);
+
+        $response->assertRedirect('/dashboard');
+        $response->assertCookie(Auth::getRecallerName());
         $this->assertAuthenticatedAs($user);
     }
 

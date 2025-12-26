@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -15,29 +16,15 @@ class LoginController extends Controller
     {
         return view('auth.login');
     }
-
-    // public function login(Request $request)
-    // {
-    //     $credentials = $request->validate([
-    //         'email' => ['required', 'email'],
-    //         'password' => ['required'],
-    //     ]);
-
-    //     if (Auth::attempt($credentials)) {
-    //         $request->session()->regenerate();
-    //         return redirect()->intended('/dashboard');
-    //     }
-
-    //     return back()->withErrors([
-    //         'email' => 'Invalid credentials',
-    //     ]);
-    // }
     public function login(Request $request)
     {
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required'],
+            'remember' => ['sometimes', 'boolean'],
         ]);
+        $remember = $request->boolean('remember');
+        unset($credentials['remember']);
         // Check for email existence
         $user = \App\Models\User::where('email', $request->email)->first();
         if (!$user) {
@@ -45,7 +32,7 @@ class LoginController extends Controller
                 'email' => 'Email does not exist.',
             ])->withInput();
         }
-        if (Auth::attempt($credentials)) {
+        if (Auth::attempt($credentials, $remember)) {
             // Fetch the company related to the logged-in user
             $company_id = Auth::user()->company_id;
             $company = \App\Models\Company::find($company_id);
@@ -88,6 +75,7 @@ class LoginController extends Controller
             'new_password_confirmation' => 'required|same:new_password',
         ]);
 
+        /** @var User $user */
         $user = Auth::user();
 
 
