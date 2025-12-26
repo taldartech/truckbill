@@ -87,7 +87,7 @@
                             <div class="row g-3">
                                 <!-- Search Input -->
                                 <div class="col-md-5">
-                                    <label class="form-label">Search By LR, Customer, Truck, Srouce or Destination City &
+                                    <label class="form-label">Search By LR, Customer, Truck, Source or Destination City &
                                         Transporter</label>
                                     <input type="text" class="form-control" name="search"
                                         value="{{ request('search') }}" placeholder="LR , Truck, City & Transporter...">
