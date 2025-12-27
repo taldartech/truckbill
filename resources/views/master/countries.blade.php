@@ -134,11 +134,15 @@ $(document).ready(function() {
             // Add individual column search
             this.api().columns([1, 2]).every(function() {
                 var column = this;
-                var title = column.header().textContent;
+                var $header = $(column.header());
+                var title = $header.text().trim();
+
+                // Wrap existing text in a span to keep it at top
+                $header.html('<div style="margin-bottom: 5px;">' + title + '</div>');
 
                 // Create input element
                 var input = $('<input type="text" class="form-control form-control-sm" placeholder="Search ' + title + '" />')
-                    .appendTo($(column.header()))
+                    .appendTo($header)
                     .on('keyup change clear', function() {
                         if (column.search() !== this.value) {
                             column.search(this.value).draw();

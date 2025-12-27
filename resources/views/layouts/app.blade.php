@@ -63,6 +63,29 @@
             font-weight: bold !important;
         }
 
+        /* DataTable header alignment - align all header text to top */
+        table.dataTable thead th {
+            vertical-align: top !important;
+            position: relative;
+        }
+
+        /* Ensure header text stays at top - wrap it in a div */
+        table.dataTable thead th {
+            display: table-cell;
+        }
+
+        /* Style for search inputs in headers */
+        table.dataTable thead th input.form-control {
+            margin-top: 5px;
+            display: block;
+            width: 100%;
+        }
+
+        /* Ensure all header text aligns to top */
+        table.dataTable thead th {
+            text-align: left;
+        }
+
         html,
         body {
             font-size: 15px !important;
