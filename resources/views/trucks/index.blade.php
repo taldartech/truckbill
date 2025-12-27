@@ -59,7 +59,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                
+
             </div>
         </div>
     </div>
@@ -77,7 +77,7 @@
             </div>
             <div class="modal-body">
                 <input type="hidden" id="assign_truck_id" name="truck_id">
-                
+
                 <!-- Truck Information Display -->
                 <div class="card mb-3">
                     <div class="card-header bg-light">
@@ -96,7 +96,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Driver Selection Form -->
                 <form id="assignDriverForm">
                     @csrf
@@ -119,7 +119,7 @@
                         </div>
                     </div>
                 </form>
-                
+
                 <!-- Add New Driver Form (Initially Hidden) -->
                 <div id="addDriverForm" style="display: none;">
                     <div class="card border-primary">
@@ -163,7 +163,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="alert alert-info">
                     <i class="bi bi-info-circle"></i>
                     <strong>Note:</strong> You can add a new driver using the form above. The new driver will be automatically selected after creation.
@@ -297,7 +297,7 @@ $(document).ready(function() {
         pageLength: 10,
         lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
         dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
-             '<"row"<"col-sm-12 col-md-2"B><"col-sm-12 col-md-10"p>>' +
+             '<"row"<"col-sm-12 col-md-12"B>>' +
              '<"row"<"col-sm-12"tr>>' +
              '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
         buttons: [
@@ -331,7 +331,7 @@ $(document).ready(function() {
             this.api().columns([1, 2, 3, 4, 5]).every(function() {
                 var column = this;
                 var title = column.header().textContent;
-                
+
                 // Create input element
                 var input = $('<input type="text" class="form-control form-control-sm" placeholder="Search ' + title + '" />')
                     .appendTo($(column.header()))
@@ -343,7 +343,7 @@ $(document).ready(function() {
             });
         }
     });
-    
+
     // Handle delete confirmation
     $(document).on('submit', 'form[action*="destroy"]', function(e) {
         if (!confirm('Are you sure you want to delete this truck?')) {
@@ -351,12 +351,12 @@ $(document).ready(function() {
             return false;
         }
     });
-    
+
     // Handle truck number click to show details
     $(document).on('click', '.truck-number-link', function(e) {
         e.preventDefault();
         var truckId = $(this).data('id');
-        
+
         // Show modal with loading state
         $('#truckDetailsModal').modal('show');
         $('#truckDetailsContent').html(`
@@ -368,7 +368,7 @@ $(document).ready(function() {
             </div>
         `);
         $('#editTruckBtn').hide();
-        
+
         // Fetch truck details
         $.ajax({
             url: '/trucks/' + truckId,
@@ -449,9 +449,9 @@ $(document).ready(function() {
                         </div>
                     </div>
                 `;
-                
+
                 $('#truckDetailsContent').html(detailsHtml);
-                
+
                 // Show edit button and set up click handler
                 $('#editTruckBtn').show().off('click').on('click', function() {
                     window.location.href = '/trucks/' + data.id + '/edit';
@@ -467,32 +467,32 @@ $(document).ready(function() {
             }
         });
     });
-    
+
     // Handle assign driver button click
     $(document).on('click', '.assign-driver-btn', function(e) {
         e.preventDefault();
-        
+
         var truckId = $(this).data('truck-id');
         var truckNumber = $(this).data('truck-number');
         var truckType = $(this).data('truck-type');
         var transporterName = $(this).data('transporter-name');
         var currentDriverId = $(this).data('current-driver-id');
         var currentDriverName = $(this).data('current-driver-name');
-        
+
         // Populate truck information
         $('#assign_truck_id').val(truckId);
         $('#display_truck_number').text(truckNumber);
         $('#display_truck_type').text(truckType);
         $('#display_transporter_name').text(transporterName);
         $('#display_current_driver').text(currentDriverName || 'Not assigned');
-        
+
         // Load drivers and set current selection
         loadDriversForAssignment(currentDriverId);
-        
+
         // Show modal
         $('#assignDriverModal').modal('show');
     });
-    
+
     // Function to load drivers for assignment
     function loadDriversForAssignment(currentDriverId) {
         $.ajax({
@@ -502,7 +502,7 @@ $(document).ready(function() {
                 var driverSelect = $('#assign_driver_id');
                 driverSelect.empty();
                 driverSelect.append('<option value="">No Driver (Remove current assignment)</option>');
-                
+
                 drivers.forEach(function(driver) {
                     var selected = (driver.id == currentDriverId) ? 'selected' : '';
                     driverSelect.append('<option value="' + driver.id + '" ' + selected + '>' + driver.name + ' - ' + driver.mobile + '</option>');
@@ -513,31 +513,31 @@ $(document).ready(function() {
             }
         });
     }
-    
+
     // Show/Hide Add Driver Form
     $('#showAddDriverForm').on('click', function() {
         $('#addDriverForm').slideDown();
         $(this).hide();
     });
-    
+
     $('#cancelAddDriver').on('click', function() {
         $('#addDriverForm').slideUp();
         $('#showAddDriverForm').show();
         $('#newDriverForm')[0].reset();
         $('#newDriverForm').removeClass('was-validated');
     });
-    
+
     // Handle new driver form submission
     $('#newDriverForm').on('submit', function(e) {
         e.preventDefault();
-        
+
         // Validate form
         if (!this.checkValidity()) {
             e.stopPropagation();
             $(this).addClass('was-validated');
             return;
         }
-        
+
         var formData = {
             _token: $('meta[name="csrf-token"]').attr('content'),
             name: $('#new_driver_name').val(),
@@ -545,7 +545,7 @@ $(document).ready(function() {
             license_number: $('#new_driver_license').val(),
             address: $('#new_driver_address').val()
         };
-        
+
         $.ajax({
             url: '{{ route("drivers.store") }}',
             type: 'POST',
@@ -560,16 +560,16 @@ $(document).ready(function() {
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     `);
-                    
+
                     // Reset form and hide it
                     $('#newDriverForm')[0].reset();
                     $('#newDriverForm').removeClass('was-validated');
                     $('#addDriverForm').slideUp();
                     $('#showAddDriverForm').show();
-                    
+
                     // Reload drivers and auto-select the new one
                     loadDriversForAssignment(response.driver.id);
-                    
+
                     // Auto-hide success message
                     setTimeout(function() {
                         $('.alert-success').fadeOut();
@@ -579,10 +579,10 @@ $(document).ready(function() {
             error: function(xhr) {
                 var errors = xhr.responseJSON?.errors || {};
                 var errorMessage = 'Unable to add driver. Please check the form and try again.';
-                
+
                 // Clear previous error states
                 $('.is-invalid').removeClass('is-invalid');
-                
+
                 // Show field-specific errors
                 Object.keys(errors).forEach(function(field) {
                     var input = $('#new_driver_' + field);
@@ -591,12 +591,12 @@ $(document).ready(function() {
                         input.siblings('.invalid-feedback').text(errors[field][0]);
                     }
                 });
-                
+
                 // Show general error message
                 if (xhr.responseJSON?.message) {
                     errorMessage = xhr.responseJSON.message;
                 }
-                
+
                 $('body').prepend(`
                     <div class="alert alert-danger alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
                         <i class="bi bi-exclamation-triangle"></i>
@@ -604,21 +604,21 @@ $(document).ready(function() {
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 `);
-                
+
                 setTimeout(function() {
                     $('.alert-danger').fadeOut();
                 }, 5000);
             }
         });
     });
-    
+
     // Handle assign driver button click
     $('#assignDriverBtn').on('click', function(e) {
         e.preventDefault();
-        
+
         var truckId = $('#assign_truck_id').val();
         var driverId = $('#assign_driver_id').val();
-        
+
         $.ajax({
             url: '/trucks/' + truckId + '/assign-driver',
             type: 'PUT',
@@ -636,13 +636,13 @@ $(document).ready(function() {
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     `);
-                    
+
                     // Hide modal
                     $('#assignDriverModal').modal('hide');
-                    
+
                     // Refresh DataTable
                     $('#trucksTable').DataTable().ajax.reload();
-                    
+
                     // Auto-hide success message
                     setTimeout(function() {
                         $('.alert-success').fadeOut();
@@ -654,7 +654,7 @@ $(document).ready(function() {
                 if (xhr.responseJSON && xhr.responseJSON.message) {
                     errorMessage = xhr.responseJSON.message;
                 }
-                
+
                 // Show error message
                 $('body').prepend(`
                     <div class="alert alert-danger alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
@@ -663,14 +663,14 @@ $(document).ready(function() {
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 `);
-                
+
                 setTimeout(function() {
                     $('.alert-danger').fadeOut();
                 }, 5000);
             }
         });
     });
-    
+
     // Initialize Select2
     $('.select2').select2({
         placeholder: 'Search for a truck owner...',
@@ -683,7 +683,7 @@ $(document).ready(function() {
     $(document).on('click', '.assign-owner-btn', function() {
         var truckId = $(this).data('truck-id');
         var truckNumber = $(this).data('truck-number');
-        
+
         $('#assignTruckId').val(truckId);
         $('#assignOwnerModalLabel').text('Assign Owner for Truck: ' + truckNumber);
         $('#assignOwnerModal').modal('show');
@@ -692,7 +692,7 @@ $(document).ready(function() {
     // Handle form submission
     $('#assignOwnerForm').on('submit', function(e) {
         e.preventDefault();
-        
+
         $.ajax({
             url: $(this).attr('action'),
             type: 'POST',

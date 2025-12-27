@@ -34,9 +34,9 @@
                         <th>Mobile</th>
                         <th>License Number</th>
                         <th>Address</th>
-                       
+
                         <th style="width: 120px;">Actions</th>
-                       
+
                     </tr>
                 </thead>
             </table>
@@ -69,7 +69,7 @@
                             <div class="invalid-feedback">Please enter a valid 10-digit mobile number.</div>
                         </div>
                     </div>
-                    
+
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="modal_license_number" class="form-label">License Number</label>
@@ -121,7 +121,7 @@
                             <div class="invalid-feedback">Please enter a valid 10-digit mobile number.</div>
                         </div>
                     </div>
-                    
+
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="edit_license_number" class="form-label">License Number</label>
@@ -174,15 +174,15 @@ $(document).ready(function() {
             { data: 'mobile', name: 'mobile', orderable: true, searchable: true },
             { data: 'license_number', name: 'license_number', orderable: true, searchable: true },
             { data: 'address', name: 'address', orderable: true, searchable: true },
-        
+
             { data: 'actions', name: 'actions', orderable: false, searchable: false }
-         
+
         ],
         order: [[1, 'asc']],
         pageLength: 10,
         lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
         dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
-             '<"row"<"col-sm-12 col-md-2"B><"col-sm-12 col-md-10"p>>' +
+             '<"row"<"col-sm-12 col-md-12"B>>' +
              '<"row"<"col-sm-12"tr>>' +
              '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
         buttons: [
@@ -227,7 +227,7 @@ $(document).ready(function() {
             this.api().columns([1, 2,3,4]).every(function() {
                 var column = this;
                 var title = column.header().textContent;
-                
+
                 // Create input element
                 var input = $('<input type="text" class="form-control form-control-sm" placeholder="Search ' + title + '" />')
                     .appendTo($(column.header()))
@@ -239,15 +239,15 @@ $(document).ready(function() {
             });
         }
     });
-    
-    
+
+
 
     // Individual column searching
     $('#driversTable thead tr:eq(1) th').each(function(i) {
         if (i === 0 || i === {{ auth()->check() && auth()->user()->userRole->name === 'admin' ? '5' : '4' }}) {
             return; // Skip ID and Actions columns
         }
-        
+
         $('input', this).on('keyup change', function() {
             if (table.column(i).search() !== this.value) {
                 table.column(i).search(this.value).draw();
@@ -258,11 +258,11 @@ $(document).ready(function() {
     // Handle form submissions with AJAX to prevent page reload
     $(document).on('submit', 'form[action*="drivers"][action*="destroy"]', function(e) {
         e.preventDefault();
-        
+
         if (confirm('Are you sure you want to delete this driver?')) {
             var form = $(this);
             var url = form.attr('action');
-            
+
             $.ajax({
                 url: url,
                 type: 'POST',
@@ -276,12 +276,12 @@ $(document).ready(function() {
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     `);
-                    
+
                     // Auto-hide alert after 5 seconds
                     setTimeout(function() {
                         $('.alert-success').fadeOut();
                     }, 5000);
-                    
+
                     // Reload DataTable
                     table.ajax.reload(null, false);
                 },
@@ -294,7 +294,7 @@ $(document).ready(function() {
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     `);
-                    
+
                     setTimeout(function() {
                         $('.alert-danger').fadeOut();
                     }, 5000);
@@ -306,16 +306,16 @@ $(document).ready(function() {
     // Handle Add Driver form submission
     $('#addDriverForm').on('submit', function(e) {
         e.preventDefault();
-        
+
         // Clear previous validation states
         $(this).find('.form-control').removeClass('is-invalid is-valid');
         $(this).find('.invalid-feedback').hide();
-        
+
         // Show loading state
         const submitBtn = $(this).find('button[type="submit"]');
         const originalText = submitBtn.html();
         submitBtn.html('<i class="bi bi-hourglass-split"></i> Adding...').prop('disabled', true);
-        
+
         $.ajax({
             url: $(this).attr('action'),
             type: 'POST',
@@ -329,17 +329,17 @@ $(document).ready(function() {
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 `);
-                
+
                 // Auto-hide alert after 5 seconds
                 setTimeout(function() {
                     $('.alert-success').fadeOut();
                 }, 5000);
-                
+
                 // Reset form and close modal
                 $('#addDriverForm')[0].reset();
                 $('#addDriverForm .form-control').removeClass('is-invalid is-valid');
                 $('#addDriverModal').modal('hide');
-                
+
                 // Reload DataTable
                 table.ajax.reload(null, false);
             },
@@ -361,7 +361,7 @@ $(document).ready(function() {
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     `);
-                    
+
                     setTimeout(function() {
                         $('.alert-danger').fadeOut();
                     }, 5000);
@@ -388,21 +388,21 @@ $(document).ready(function() {
         const driverMobile = $(this).data('driver-mobile');
         const driverLicense = $(this).data('driver-license');
         const driverAddress = $(this).data('driver-address');
-        
+
         // Populate the edit form
         $('#edit_driver_id').val(driverId);
         $('#edit_name').val(driverName);
         $('#edit_mobile').val(driverMobile);
         $('#edit_license_number').val(driverLicense);
         $('#edit_address').val(driverAddress);
-        
+
         // Set the form action URL
         $('#editDriverForm').attr('action', `/drivers/${driverId}`);
-        
+
         // Clear any previous validation states
         $('#editDriverForm .form-control').removeClass('is-invalid is-valid');
         $('#editDriverForm .invalid-feedback').hide();
-        
+
         // Show the modal
         $('#editDriverModal').modal('show');
     });
@@ -410,16 +410,16 @@ $(document).ready(function() {
     // Handle Edit Driver form submission
     $('#editDriverForm').on('submit', function(e) {
         e.preventDefault();
-        
+
         // Clear previous validation states
         $(this).find('.form-control').removeClass('is-invalid is-valid');
         $(this).find('.invalid-feedback').hide();
-        
+
         // Show loading state
         const submitBtn = $(this).find('button[type="submit"]');
         const originalText = submitBtn.html();
         submitBtn.html('<i class="bi bi-hourglass-split"></i> Updating...').prop('disabled', true);
-        
+
         $.ajax({
             url: $(this).attr('action'),
             type: 'PUT',
@@ -433,15 +433,15 @@ $(document).ready(function() {
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 `);
-                
+
                 // Auto-hide alert after 5 seconds
                 setTimeout(function() {
                     $('.alert-success').fadeOut();
                 }, 5000);
-                
+
                 // Close modal
                 $('#editDriverModal').modal('hide');
-                
+
                 // Reload DataTable
                 table.ajax.reload(null, false);
             },
@@ -463,7 +463,7 @@ $(document).ready(function() {
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     `);
-                    
+
                     setTimeout(function() {
                         $('.alert-danger').fadeOut();
                     }, 5000);

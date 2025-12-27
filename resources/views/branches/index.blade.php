@@ -33,7 +33,6 @@
                         <th>Branch Name</th>
                         <th>Company</th>
                         <th>Contact Number</th>
-                       
                         <th>Address</th>
                         <th style="width: 120px;">Actions</th>
                     </tr>
@@ -88,7 +87,6 @@ $(document).ready(function() {
                 defaultContent: 'N/A',
                 width: '150px'
             },
-          
             {
                 data: 'branch_address',
                 name: 'branch_address',
@@ -107,7 +105,7 @@ $(document).ready(function() {
         pageLength: 10,
         lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
         dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
-             '<"row"<"col-sm-12 col-md-2"B><"col-sm-12 col-md-10"p>>' +
+             '<"row"<"col-sm-12 col-md-12"B>>' +
              '<"row"<"col-sm-12"tr>>' +
              '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
         buttons: [
@@ -142,7 +140,6 @@ $(document).ready(function() {
             this.api().columns([1, 2, 3, 4, 5]).every(function() {
                 var column = this;
                 var title = $(column.header()).text().trim();
-                
                 // Create input element
                 var input = $('<input type="text" class="form-control form-control-sm" placeholder="Search ' + title + '" />')
                     .appendTo($(column.header()))
@@ -154,7 +151,7 @@ $(document).ready(function() {
             });
         }
     });
-    
+
     // Handle delete confirmation
     $(document).on('submit', 'form[action*="destroy"]', function(e) {
         if (!confirm('Are you sure you want to delete this branch?')) {
