@@ -5,8 +5,8 @@ namespace Tests\Feature\Auth;
 use App\Models\Company;
 use App\Models\User;
 use App\Models\UserRole;
+use App\Notifications\ResetPasswordNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Auth;
@@ -55,7 +55,7 @@ class AuthRBACTest extends TestCase
         ]);
 
         $response->assertRedirect('/forgot-password');
-        Notification::assertSentTo($user, ResetPassword::class);
+        Notification::assertSentTo($user, ResetPasswordNotification::class);
     }
 
     public function test_user_can_reset_password_with_valid_token(): void
@@ -66,15 +66,100 @@ class AuthRBACTest extends TestCase
         $response = $this->post(route('password.update'), [
             'token' => $token,
             'email' => $user->email,
-            'password' => 'new-password',
-            'password_confirmation' => 'new-password',
+            'password' => 'NewPass123!',
+            'password_confirmation' => 'NewPass123!',
         ]);
 
         $response->assertRedirect('/login');
         $this->assertCredentials([
             'email' => $user->email,
-            'password' => 'new-password',
+            'password' => 'NewPass123!',
         ]);
+    }
+
+    public function test_reset_password_rejects_short_password(): void
+    {
+        $user = $this->createUserWithRole('admin');
+        $token = Password::createToken($user);
+
+        $response = $this->from(route('password.reset', ['token' => $token]) . '?email=' . urlencode($user->email))
+            ->post(route('password.update'), [
+                'token' => $token,
+                'email' => $user->email,
+                'password' => 'Short1!',
+                'password_confirmation' => 'Short1!',
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors('password');
+    }
+
+    public function test_reset_password_rejects_password_without_number(): void
+    {
+        $user = $this->createUserWithRole('admin');
+        $token = Password::createToken($user);
+
+        $response = $this->from(route('password.reset', ['token' => $token]) . '?email=' . urlencode($user->email))
+            ->post(route('password.update'), [
+                'token' => $token,
+                'email' => $user->email,
+                'password' => 'NoNumber!',
+                'password_confirmation' => 'NoNumber!',
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors('password');
+    }
+
+    public function test_reset_password_rejects_password_without_special_character(): void
+    {
+        $user = $this->createUserWithRole('admin');
+        $token = Password::createToken($user);
+
+        $response = $this->from(route('password.reset', ['token' => $token]) . '?email=' . urlencode($user->email))
+            ->post(route('password.update'), [
+                'token' => $token,
+                'email' => $user->email,
+                'password' => 'NoSpecial123',
+                'password_confirmation' => 'NoSpecial123',
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors('password');
+    }
+
+    public function test_reset_password_rejects_password_without_uppercase(): void
+    {
+        $user = $this->createUserWithRole('admin');
+        $token = Password::createToken($user);
+
+        $response = $this->from(route('password.reset', ['token' => $token]) . '?email=' . urlencode($user->email))
+            ->post(route('password.update'), [
+                'token' => $token,
+                'email' => $user->email,
+                'password' => 'nouppercase123!',
+                'password_confirmation' => 'nouppercase123!',
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors('password');
+    }
+
+    public function test_reset_password_rejects_password_without_lowercase(): void
+    {
+        $user = $this->createUserWithRole('admin');
+        $token = Password::createToken($user);
+
+        $response = $this->from(route('password.reset', ['token' => $token]) . '?email=' . urlencode($user->email))
+            ->post(route('password.update'), [
+                'token' => $token,
+                'email' => $user->email,
+                'password' => 'NOLOWERCASE123!',
+                'password_confirmation' => 'NOLOWERCASE123!',
+            ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHasErrors('password');
     }
 
     public function test_user_can_login_with_remember_me(): void

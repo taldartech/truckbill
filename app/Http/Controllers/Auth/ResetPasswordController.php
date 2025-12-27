@@ -23,11 +23,34 @@ class ResetPasswordController extends Controller
 
     public function reset(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
+        $request->validate([
             'token' => ['required'],
             'email' => ['required', 'email'],
-            'password' => ['required', 'confirmed', 'min:8'],
+            'password' => [
+                'required',
+                'confirmed',
+                'min:8',
+                function ($attribute, $value, $fail) {
+                    if (!preg_match('/[A-Z]/', $value)) {
+                        $fail('The password must contain at least one uppercase letter.');
+                    }
+                    if (!preg_match('/[a-z]/', $value)) {
+                        $fail('The password must contain at least one lowercase letter.');
+                    }
+                    if (!preg_match('/[0-9]/', $value)) {
+                        $fail('The password must contain at least one number.');
+                    }
+                    if (!preg_match('/[!@#$%^&*(),.?":{}|<>]/', $value)) {
+                        $fail('The password must contain at least one special character.');
+                    }
+                },
+            ],
+        ], [
+            'password.min' => 'The password must be at least 8 characters.',
+            'password.confirmed' => 'The password confirmation does not match.',
         ]);
+
+        $validated = $request->only('token', 'email', 'password');
 
         $status = Password::reset(
             $validated,
