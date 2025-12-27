@@ -8,8 +8,12 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    
+
     <style>
+        label {
+            font-weight: bold !important;
+        }
+
         body {
             font-family: 'Outfit', sans-serif;
             background: linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%);
@@ -42,7 +46,7 @@
             text-shadow: 0 2px 4px rgba(0,0,0,0.05);
             text-align: center;
         }
-        
+
         .logo-section {
             text-align: center;
             margin-bottom: 1.5rem;
@@ -84,7 +88,7 @@
         .input-group {
             position: relative;
         }
-        
+
         .input-group-text {
             background: rgba(255, 255, 255, 0.6);
             border: 1px solid rgba(255, 255, 255, 0.5);
@@ -125,7 +129,7 @@
             padding: 1rem;
             margin-bottom: 1.5rem;
         }
-        
+
         .alert-danger {
             background: rgba(254, 242, 242, 0.8);
             border: 1px solid #fecaca;
@@ -163,18 +167,18 @@
             text-decoration: none;
             transition: color 0.2s;
         }
-        
+
         .link-primary:hover, .back-link:hover {
             text-decoration: underline;
         }
-        
+
         .back-link {
             display: block;
             text-align: center;
             margin-top: 1.5rem;
             font-size: 0.9rem;
         }
-        
+
         .form-group {
             margin-bottom: 1.5rem;
         }
@@ -199,7 +203,7 @@
         function togglePassword(inputId) {
             const input = document.getElementById(inputId);
             const icon = document.getElementById('toggle-icon-' + inputId);
-            
+
             if (input.type === 'password') {
                 input.type = 'text';
                 icon.classList.remove('fa-eye');
