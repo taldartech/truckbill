@@ -94,11 +94,6 @@
                                 <input type="text" name="lr_no" class="form-control" value="{{ request('lr_no') }}">
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label">Freight Booking No</label>
-                                <input type="text" name="freight_booking_no" class="form-control"
-                                    value="{{ request('freight_booking_no') }}">
-                            </div>
-                            <div class="col-md-3">
                                 <label class="form-label">Payment Status</label>
                                 <select name="status" class="form-select">
                                     <option value="">All Statuses</option>
@@ -118,6 +113,18 @@
                                         <option value="{{ $paymentMode->name }}"
                                             {{ request('payment_mode') == $paymentMode->name ? 'selected' : '' }}>
                                             {{ $paymentMode->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Branch</label>
+                                <select name="branch" class="form-select">
+                                    <option value="">All Branches</option>
+                                    @foreach ($branches as $branch)
+                                        <option value="{{ $branch->id }}"
+                                            {{ request('branch') == $branch->id ? 'selected' : '' }}>
+                                            {{ $branch->branch_name }}
                                         </option>
                                     @endforeach
                                 </select>

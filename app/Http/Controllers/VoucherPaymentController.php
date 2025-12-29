@@ -40,7 +40,8 @@ class VoucherPaymentController extends Controller
             'freight_booking.transporter',
             'freight_booking.lr.consignor.city',
             'freight_booking.lr.consignee.city',
-            'freight_booking.lr.truck'
+            'freight_booking.lr.truck',
+            'creator.branch'
         ])->whereDate('date', $selectedDate)
             ->whereNull('linked_voucher_id');
         $query1 = VoucherLinked::with([
@@ -50,7 +51,8 @@ class VoucherPaymentController extends Controller
             'freight_booking.transporter',
             'freight_booking.lr.consignor.city',
             'freight_booking.lr.consignee.city',
-            'freight_booking.lr.truck'
+            'freight_booking.lr.truck',
+            'creator.branch'
         ])->whereDate('date', $selectedDate);
 
         // Apply company filter for non-super admin users
@@ -100,14 +102,6 @@ class VoucherPaymentController extends Controller
             });
         }
 
-        // Apply Freight Booking No filter
-        if ($request->filled('freight_booking_no')) {
-            $query->whereHas('freight_booking', function ($q) use ($request) {
-                $q->where('id', 'like', '%' . $request->freight_booking_no . '%')
-                    ->orWhere('voucher_number', 'like', '%' . $request->freight_booking_no . '%');
-            });
-        }
-
         // Apply Status filter
         if ($request->filled('status')) {
             $query->where('payment_status', $request->status);
@@ -119,6 +113,16 @@ class VoucherPaymentController extends Controller
             $query1->where('payment_mode', $request->payment_mode);
         }
 
+        // Apply Branch filter
+        if ($request->filled('branch')) {
+            $query->whereHas('creator', function ($q) use ($request) {
+                $q->where('branch_id', $request->branch);
+            });
+            $query1->whereHas('creator', function ($q) use ($request) {
+                $q->where('branch_id', $request->branch);
+            });
+        }
+
         $payments = $query->orderBy('created_at', 'desc')
             ->get();
         $payments1 = $query1->orderBy('created_at', 'desc')
@@ -127,6 +131,13 @@ class VoucherPaymentController extends Controller
         $transporters = \App\Models\Transporter::orderBy('name')->get();
         $cities = \App\Models\City::orderBy('name')->get();
         $paymentModes = \App\Models\PaymentMode::select('name')->get();
+        
+        // Get branches for filter dropdown
+        $branchesQuery = \App\Models\Branch::orderBy('branch_name');
+        if (auth()->user()->userRole->name !== 'super_admin') {
+            $branchesQuery->where('company_id', auth()->user()->company_id);
+        }
+        $branches = $branchesQuery->get();
 
         return view('voucher_payments.daily', [
             'payments' => $payments,
@@ -134,7 +145,8 @@ class VoucherPaymentController extends Controller
             'selectedDate' => $selectedDate,
             'transporters' => $transporters,
             'cities' => $cities,
-            'paymentModes' => $paymentModes
+            'paymentModes' => $paymentModes,
+            'branches' => $branches
         ]);
     }
     public function index(Request $request)
