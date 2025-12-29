@@ -8,6 +8,14 @@
     </div>
 @endif
 
+@if (session('warning'))
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <strong>⚠️ Duplicate Payment Warning:</strong>
+        <div style="margin-top: 10px;">{!! session('warning') !!}</div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
+
 <div class="container mt-4">
     <div class="row justify-content-center">
         <div class="col-12 col-lg-10 col-xl-8">
@@ -269,6 +277,16 @@
             });
         </script>
         <!--end::Body--> --}}
+        @if (session('warning') && session('duplicate_payment_id'))
+            <div class="card-body border-top">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="confirm_duplicate" id="confirm_duplicate" value="1" {{ old('confirm_duplicate') ? 'checked' : '' }}>
+                    <label class="form-check-label" for="confirm_duplicate">
+                        <strong>I confirm that I want to proceed with creating this duplicate payment</strong>
+                    </label>
+                </div>
+            </div>
+        @endif
         <!--begin::Footer-->
         <div class="card-footer">
             <button class="btn btn-info" type="submit">Submit form</button>

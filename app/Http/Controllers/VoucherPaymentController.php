@@ -16,6 +16,8 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Models\VoucherLinked;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class VoucherPaymentController extends Controller
 {
@@ -308,31 +310,93 @@ class VoucherPaymentController extends Controller
         // Add company_id to data
         $data['company_id'] = auth()->user()->company_id;
 
-        // Create voucher payment
-        $voucherPayment = VoucherPayment::create($data);
+        // Check for duplicate payment on the same day
+        $paymentDate = $data['date'] ?? now()->toDateString();
+        $duplicatePayment = \App\Models\VoucherPayment::where('freight_booking_id', $data['freight_booking_id'])
+            ->where('amount', $data['amount'])
+            ->where('payment_type_id', $data['payment_type_id'])
+            ->where('payment_mode_id', $data['payment_mode_id'])
+            ->whereDate('date', $paymentDate)
+            ->where('company_id', $data['company_id'])
+            ->first();
 
-        // Get the freight booking and update advance_amount
-        $freightBooking = \App\Models\FreightBooking::findOrFail($data['freight_booking_id']);
-
-        // Validate that advance amount won't exceed TR amount
-        if (($freightBooking->advance_amount + $data['amount']) > $freightBooking->tr_amount) {
+        if ($duplicatePayment && !$request->has('confirm_duplicate')) {
+            // Return warning with duplicate payment details
+            $freightBooking = \App\Models\FreightBooking::find($data['freight_booking_id']);
             return redirect()->back()
                 ->withInput()
-                ->with('error', 'Advance amount cannot exceed TR amount.');
+                ->with('warning', 'A similar payment already exists for this booking on ' . date('d-m-Y', strtotime($paymentDate)) . ':
+                    <br><strong>Amount:</strong> ₹' . number_format($duplicatePayment->amount, 2) . '
+                    <br><strong>Payment Type:</strong> ' . $duplicatePayment->payment_type . '
+                    <br><strong>Payment Mode:</strong> ' . $duplicatePayment->payment_mode . '
+                    <br><strong>Created:</strong> ' . $duplicatePayment->created_at->format('d-m-Y H:i:s') . '
+                    <br><br>If you want to proceed anyway, please confirm by checking "Confirm duplicate payment" and resubmit.')
+                ->with('duplicate_payment_id', $duplicatePayment->id);
         }
 
-        // Update advance_amount
-        $freightBooking->advance_amount += $data['amount'];
+        // Begin transaction to ensure atomicity
+        \DB::beginTransaction();
 
-        // Recalculate balance_amount
-        $freightBooking->balance_amount = $freightBooking->tr_amount - $freightBooking->advance_amount;
+        try {
+            // Use row-level locking to prevent race conditions
+            $freightBooking = \App\Models\FreightBooking::lockForUpdate()->findOrFail($data['freight_booking_id']);
 
-        // Save the freight booking
-        $freightBooking->save();
+            // Calculate effective payable amount (considering all deductions)
+            $effectivePayableAmount = $freightBooking->tr_amount
+                - ($freightBooking->tds_amount ?? 0)
+                - ($freightBooking->damage_amount ?? 0)
+                - ($freightBooking->shortage_amount ?? 0)
+                + ($freightBooking->detention ?? 0)
+                + ($freightBooking->deviation ?? 0)
+                - ($freightBooking->misc_expense ?? 0);
 
-        // Redirect back to lorry receipts page with success message
-        return redirect()->route('lorry_receipts.index')
-            ->with('success', 'Payment allocated successfully.');
+            // Validate that advance amount won't exceed effective payable amount
+            $newAdvanceAmount = $freightBooking->advance_amount + $data['amount'];
+            if ($newAdvanceAmount > $effectivePayableAmount) {
+                \DB::rollBack();
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Advance amount cannot exceed effective payable amount ₹' . number_format($effectivePayableAmount, 2) . '. Maximum allowed: ₹' . number_format($effectivePayableAmount - $freightBooking->advance_amount, 2));
+            }
+
+            // Validate payment doesn't exceed balance
+            if ($data['amount'] > $freightBooking->balance_amount) {
+                \DB::rollBack();
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Payment amount ₹' . number_format($data['amount'], 2) . ' cannot exceed balance amount ₹' . number_format($freightBooking->balance_amount, 2) . '.');
+            }
+
+            // Create voucher payment
+            $voucherPayment = VoucherPayment::create($data);
+
+            // Update advance_amount
+            $freightBooking->advance_amount += $data['amount'];
+
+            // Recalculate balance_amount using full formula
+            $freightBooking->balance_amount = $effectivePayableAmount - $freightBooking->advance_amount;
+            $freightBooking->balance_amount = max(0, $freightBooking->balance_amount); // Ensure non-negative
+
+            // Save the freight booking
+            $freightBooking->save();
+
+            \DB::commit();
+
+            // Redirect back to lorry receipts page with success message
+            return redirect()->route('lorry_receipts.index')
+                ->with('success', 'Payment allocated successfully.');
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            \Log::error('Error processing voucher payment', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $data
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'An error occurred while processing the payment. Please try again.');
+        }
     }
 
     /**
@@ -443,39 +507,82 @@ class VoucherPaymentController extends Controller
         if (empty($data['date'])) {
             $data['date'] = now()->toDateString();
         }
-        // Get the freight booking
-        $freightBooking = \App\Models\FreightBooking::findOrFail($data['freight_booking_id']);
 
-        // Calculate the difference in amount
+        // Calculate the difference in amount (needed outside try block)
         $amountDifference = $data['amount'] - $voucher_payment->amount;
 
-        // Check if the amount has changed
-        if ($amountDifference != 0) {
-            // Validate that advance amount won't exceed TR amount or go below 0
-            $newAdvanceAmount = $freightBooking->advance_amount + $amountDifference;
-            $tds_amount = $freightBooking->tds_amount ?? 0;
+        // Begin transaction to ensure atomicity
+        \DB::beginTransaction();
 
-            if ($newAdvanceAmount > ($freightBooking->tr_amount - $tds_amount)) {
-                return redirect()->back()
-                    ->withInput()
-                    ->with('error', 'Advance amount cannot exceed TR amount. Maximum allowed: ₹' .
-                        number_format(($freightBooking->tr_amount - $tds_amount) - ($freightBooking->advance_amount - $voucher_payment->amount), 2));
+        try {
+            // Use row-level locking to prevent race conditions
+            $freightBooking = \App\Models\FreightBooking::lockForUpdate()->findOrFail($data['freight_booking_id']);
+
+            // Check if the amount has changed
+            if ($amountDifference != 0) {
+                // Calculate effective payable amount (considering all deductions)
+                $effectivePayableAmount = $freightBooking->tr_amount
+                    - ($freightBooking->tds_amount ?? 0)
+                    - ($freightBooking->damage_amount ?? 0)
+                    - ($freightBooking->shortage_amount ?? 0)
+                    + ($freightBooking->detention ?? 0)
+                    + ($freightBooking->deviation ?? 0)
+                    - ($freightBooking->misc_expense ?? 0);
+
+                // Calculate new advance amount after this payment change
+                $newAdvanceAmount = $freightBooking->advance_amount + $amountDifference;
+
+                // Validate that advance amount won't exceed effective payable amount
+                if ($newAdvanceAmount > $effectivePayableAmount) {
+                    \DB::rollBack();
+                    $maxAllowed = $effectivePayableAmount - ($freightBooking->advance_amount - $voucher_payment->amount);
+                    return redirect()->back()
+                        ->withInput()
+                        ->with('error', 'Advance amount cannot exceed effective payable amount ₹' . number_format($effectivePayableAmount, 2) . '. Maximum allowed: ₹' . number_format($maxAllowed, 2));
+                }
+
+                // Validate that advance amount won't go below 0
+                if ($newAdvanceAmount < 0) {
+                    \DB::rollBack();
+                    $minAllowed = -($freightBooking->advance_amount - $voucher_payment->amount);
+                    return redirect()->back()
+                        ->withInput()
+                        ->with('error', 'Advance amount cannot be negative. Minimum allowed: ₹' . number_format($minAllowed, 2));
+                }
+
+                // Validate new payment amount doesn't exceed balance
+                $newBalanceAfterChange = $freightBooking->balance_amount - $amountDifference;
+                if ($newBalanceAfterChange < 0) {
+                    \DB::rollBack();
+                    return redirect()->back()
+                        ->withInput()
+                        ->with('error', 'Payment amount increase would cause negative balance. Maximum allowed: ₹' . number_format($voucher_payment->amount + $freightBooking->balance_amount, 2));
+                }
+
+                // Update advance_amount
+                $freightBooking->advance_amount = $newAdvanceAmount;
+
+                // Recalculate balance_amount using full formula
+                $freightBooking->balance_amount = $effectivePayableAmount - $freightBooking->advance_amount;
+                $freightBooking->balance_amount = max(0, $freightBooking->balance_amount); // Ensure non-negative
+
+                // Save the freight booking
+                $freightBooking->save();
             }
 
-            if ($newAdvanceAmount < 0) {
-                return redirect()->back()
-                    ->withInput()
-                    ->with('error', 'Advance amount cannot be negative. Minimum allowed: ₹0');
-            }
+            \DB::commit();
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            \Log::error('Error updating voucher payment', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'payment_id' => $voucher_payment->id,
+                'request_data' => $data
+            ]);
 
-            // Update advance_amount
-            $freightBooking->advance_amount = $newAdvanceAmount;
-
-            // Recalculate balance_amount
-            $freightBooking->balance_amount = ($freightBooking->tr_amount - $tds_amount) - $freightBooking->advance_amount;
-
-            // Save the freight booking
-            $freightBooking->save();
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'An error occurred while updating the payment. Please try again.');
         }
 
         // Update payment status if conditions are met

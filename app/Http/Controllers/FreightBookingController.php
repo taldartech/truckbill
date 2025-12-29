@@ -629,82 +629,134 @@ class FreightBookingController extends Controller
 
     public function storeCombinedPayment(Request $request)
     {
-        $request->validate([
-            'combined_amount' => 'required|numeric|min:1',
-            'payment_type' => 'required|exists:payment_types,id',
-            'payment_mode' => 'required|exists:payment_modes,id',
-            'pump_id' => 'nullable|exists:pumps,id',
-            'reference_number' => 'nullable|string|max:255',
-            'payment_date' => 'nullable|date',
-            'payment_remark' => 'nullable|string|max:1000',
-            'booking_ids' => 'required|array',
-            'payment_amounts' => 'required|array',
-            'notes' => 'nullable|string|max:1000',
-        ]);
+        try {
+            $request->validate([
+                'combined_amount' => 'required|numeric|min:1',
+                'payment_type' => 'required|exists:payment_types,id',
+                'payment_mode' => 'required|exists:payment_modes,id',
+                'pump_id' => 'nullable|exists:pumps,id',
+                'reference_number' => 'nullable|string|max:255',
+                'payment_date' => 'nullable|date',
+                'payment_remark' => 'nullable|string|max:1000',
+                'booking_ids' => 'required|array',
+                'payment_amounts' => 'required|array',
+                'notes' => 'nullable|string|max:1000',
+            ]);
 
-        $lr_ids = FreightBooking::whereIn('id', $request->input('booking_ids'))
-            ->pluck('lr_id')
-            ->toArray();
-        $lrs = LorryReceipt::whereIn('id', $lr_ids)->get()->select('lr_number')->toArray();
-        $lrs = array_map(function ($item) {
-            return $item['lr_number'];
-        }, $lrs);
+            $lr_ids = FreightBooking::whereIn('id', $request->input('booking_ids'))
+                ->pluck('lr_id')
+                ->toArray();
+            $lrs = LorryReceipt::whereIn('id', $lr_ids)->get()->select('lr_number')->toArray();
+            $lrs = array_map(function ($item) {
+                return $item['lr_number'];
+            }, $lrs);
 
-        $data = [];
-        $data['pump_id'] = $request->input('pump_id');
-        $data['payment_type_id'] = $request->input('payment_type');
-        $data['payment_mode_id'] = $request->input('payment_mode');
-        $data['payment_type'] = \App\Models\PaymentType::find($request->input('payment_type'))->name ?? 'N/A';
-        $data['payment_mode'] = \App\Models\PaymentMode::find($request->input('payment_mode'))->name ?? 'N/A';
-        $data['total_amount'] = $request->input('combined_amount');
-        $data['date'] = $request->input('payment_date') ?? date('Y-m-d');
-        $data['booking_ids'] = $request->input('booking_ids');
-        $data['payment_amounts'] = $request->input('payment_amounts');
-        $data['reference_number'] = $request->input('reference_number');
-        $data['notes'] = $request->input('notes')  . "   Combined Payment: " . ($request->input('combined_amount'))
-            . ". [LR IDs: " . implode(', ', $lrs) . "], Date: " . $data['date'];
-        if (strtolower($data['payment_mode']) === 'cash' || strtolower($data['payment_mode']) === 'adjust in advance') {
-            $paymentStatus = 'in-progress';
-        } else if (
-            strtolower($data['payment_mode']) === 'bank transfer' ||
-            strtolower($data['payment_mode']) === 'fuel' ||
-            strpos(strtolower($data['payment_mode']), 'pump') !== false
-        ) {
-            $paymentStatus = 'pending';
-        }
-        $response = $this->VoucherPayment(new Request($data));
-        $response = json_decode($response->getContent(), true);
-        if ($response['success'] !== true) {
-            return $response;
-        }
-
-        $voucherPayments = $response['processed_payments'] ?? [];
-
-        $VoucherLinked = \App\Models\VoucherLinked::create([
-            'date' => $data['date'],
-            'voucher_ids' => json_encode($voucherPayments),
-            'pump_id' => $data['pump_id'],
-            'company_id' => auth()->user()->company_id,
-            'payment_type' => $data['payment_type'],
-            'payment_type_id' => $data['payment_type_id'],
-            'payment_mode' => $data['payment_mode'],
-            'payment_mode_id' => $data['payment_mode_id'],
-            'amount' => $data['total_amount'],
-            'reference_transaction_id' => $data['reference_number'],
-            'remark' => $data['notes'],
-            'payment_status' => $paymentStatus,
-            'freight_booking_id' => $request->input('booking_ids')[0] ?? null,
-        ]);
-
-        foreach ($voucherPayments as $index => $voucherId) {
-            $voucher = \App\Models\VoucherPayment::find($voucherId);
-            if ($voucher) {
-                $voucher->linked_voucher_id = $VoucherLinked->id;
-                $voucher->save();
+            $data = [];
+            $data['pump_id'] = $request->input('pump_id');
+            $data['payment_type_id'] = $request->input('payment_type');
+            $data['payment_mode_id'] = $request->input('payment_mode');
+            $data['payment_type'] = \App\Models\PaymentType::find($request->input('payment_type'))->name ?? 'N/A';
+            $data['payment_mode'] = \App\Models\PaymentMode::find($request->input('payment_mode'))->name ?? 'N/A';
+            $data['total_amount'] = $request->input('combined_amount');
+            $data['date'] = $request->input('payment_date') ?? date('Y-m-d');
+            $data['booking_ids'] = $request->input('booking_ids');
+            $data['payment_amounts'] = $request->input('payment_amounts');
+            $data['reference_number'] = $request->input('reference_number');
+            $data['notes'] = $request->input('notes')  . "   Combined Payment: " . ($request->input('combined_amount'))
+                . ". [LR IDs: " . implode(', ', $lrs) . "], Date: " . $data['date'];
+            if (strtolower($data['payment_mode']) === 'cash' || strtolower($data['payment_mode']) === 'adjust in advance') {
+                $paymentStatus = 'in-progress';
+            } else if (
+                strtolower($data['payment_mode']) === 'bank transfer' ||
+                strtolower($data['payment_mode']) === 'fuel' ||
+                strpos(strtolower($data['payment_mode']), 'pump') !== false
+            ) {
+                $paymentStatus = 'pending';
             }
-        }
 
-        return $response;
+            // Call voucherPayment which handles all validations, transactions, and locking
+            $response = $this->VoucherPayment(new Request($data));
+            $responseContent = $response->getContent();
+            $response = json_decode($responseContent, true);
+
+            // If voucherPayment returned an error or warning, return it as JSON response
+            if ($response['success'] !== true) {
+                return response()->json($response, $response['warning'] ? 422 : 422);
+            }
+
+            $voucherPayments = $response['processed_payments'] ?? [];
+
+            // Wrap VoucherLinked creation in a transaction for data consistency
+            // Note: voucherPayment() already committed its transaction, so individual payments are safe
+            // This transaction ensures VoucherLinked and linking operations are atomic
+            \DB::beginTransaction();
+
+            try {
+                $VoucherLinked = \App\Models\VoucherLinked::create([
+                    'date' => $data['date'],
+                    'voucher_ids' => json_encode($voucherPayments),
+                    'pump_id' => $data['pump_id'],
+                    'company_id' => auth()->user()->company_id,
+                    'payment_type' => $data['payment_type'],
+                    'payment_type_id' => $data['payment_type_id'],
+                    'payment_mode' => $data['payment_mode'],
+                    'payment_mode_id' => $data['payment_mode_id'],
+                    'amount' => $data['total_amount'],
+                    'reference_transaction_id' => $data['reference_number'],
+                    'remark' => $data['notes'],
+                    'payment_status' => $paymentStatus,
+                    'freight_booking_id' => $request->input('booking_ids')[0] ?? null,
+                ]);
+
+                // Link voucher payments to VoucherLinked record
+                foreach ($voucherPayments as $index => $voucherId) {
+                    $voucher = \App\Models\VoucherPayment::find($voucherId);
+                    if ($voucher) {
+                        $voucher->linked_voucher_id = $VoucherLinked->id;
+                        $voucher->save();
+                    }
+                }
+
+                \DB::commit();
+
+                \Log::info('Combined payment created successfully', [
+                    'voucher_linked_id' => $VoucherLinked->id,
+                    'voucher_payments' => $voucherPayments,
+                    'total_amount' => $data['total_amount']
+                ]);
+
+                return response()->json($response);
+            } catch (\Exception $e) {
+                \DB::rollBack();
+                \Log::error('Error creating VoucherLinked for combined payment', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                    'voucher_payments' => $voucherPayments
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Combined payment was processed but failed to create linked record. Please contact administrator. Error: ' . $e->getMessage()
+                ], 500);
+            }
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Error in storeCombinedPayment', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while processing combined payment. Please try again.'
+            ], 500);
+        }
     }
 
 
@@ -1134,7 +1186,74 @@ class FreightBookingController extends Controller
                 $amount = $validated['payment_amounts'][$index] ?? 0;
 
                 if ($amount > 0) {
-                    $freightBooking = FreightBooking::findOrFail($bookingId);
+                    // Use row-level locking to prevent race conditions
+                    // This ensures only one payment can be processed at a time for this booking
+                    $freightBooking = FreightBooking::lockForUpdate()->findOrFail($bookingId);
+
+                    // Validate payment amount doesn't exceed balance
+                    if ($amount > $freightBooking->balance_amount) {
+                        \DB::rollBack();
+                        return response()->json([
+                            'success' => false,
+                            'message' => "Payment amount ₹{$amount} cannot exceed balance amount ₹{$freightBooking->balance_amount} for booking ID {$bookingId}.",
+                            'errors' => [
+                                'payment_amounts.' . $index => ["Payment amount cannot exceed balance amount ₹{$freightBooking->balance_amount}"]
+                            ]
+                        ], 422);
+                    }
+
+                    // Calculate effective payable amount (considering all deductions)
+                    $effectivePayableAmount = $freightBooking->tr_amount
+                        - ($freightBooking->tds_amount ?? 0)
+                        - ($freightBooking->damage_amount ?? 0)
+                        - ($freightBooking->shortage_amount ?? 0)
+                        + ($freightBooking->detention ?? 0)
+                        + ($freightBooking->deviation ?? 0)
+                        - ($freightBooking->misc_expense ?? 0);
+
+                    // Validate that advance_amount + payment won't exceed effective payable amount
+                    $newAdvanceAmount = $freightBooking->advance_amount + $amount;
+                    if ($newAdvanceAmount > $effectivePayableAmount) {
+                        \DB::rollBack();
+                        return response()->json([
+                            'success' => false,
+                            'message' => "Payment amount ₹{$amount} would cause advance amount (₹{$newAdvanceAmount}) to exceed effective payable amount ₹{$effectivePayableAmount} for booking ID {$bookingId}.",
+                            'errors' => [
+                                'payment_amounts.' . $index => ["Total advance amount cannot exceed effective payable amount ₹{$effectivePayableAmount}"]
+                            ]
+                        ], 422);
+                    }
+
+                    // Check for duplicate payment on the same day
+                    $paymentDate = $validated['date'] ?? now()->toDateString();
+                    $duplicatePayment = \App\Models\VoucherPayment::where('freight_booking_id', $bookingId)
+                        ->where('amount', $amount)
+                        ->where('payment_type_id', $validated['payment_type_id'])
+                        ->where('payment_mode_id', $validated['payment_mode_id'])
+                        ->whereDate('date', $paymentDate)
+                        ->where('company_id', auth()->user()->company_id)
+                        ->first();
+
+                    if ($duplicatePayment && !($request->has('confirm_duplicate') && $request->input('confirm_duplicate') == '1')) {
+                        \DB::rollBack();
+                        return response()->json([
+                            'success' => false,
+                            'warning' => true,
+                            'message' => "A similar payment already exists for this booking on " . date('d-m-Y', strtotime($paymentDate)) . ".",
+                            'duplicate_details' => [
+                                'id' => $duplicatePayment->id,
+                                'amount' => number_format($duplicatePayment->amount, 2),
+                                'payment_type' => $duplicatePayment->payment_type,
+                                'payment_mode' => $duplicatePayment->payment_mode,
+                                'created_at' => $duplicatePayment->created_at->format('d-m-Y H:i:s'),
+                                'date' => date('d-m-Y', strtotime($paymentDate))
+                            ],
+                            'booking_index' => $index,
+                            'errors' => [
+                                'payment_amounts.' . $index => ["Duplicate payment detected. Please confirm if you want to proceed."]
+                            ]
+                        ], 422);
+                    }
 
                     // Get payment type and mode from their IDs
                     $paymentType = \App\Models\PaymentType::find($validated['payment_type_id']);
@@ -1253,8 +1372,19 @@ class FreightBookingController extends Controller
                     $newAdvanceAmount = $freightBooking->advance_amount + $amount;
                     $newBalance = max(0, $freightBooking->balance_amount - $amount);
 
+                    // Recalculate balance using full formula for consistency
+                    $effectivePayableAmount = $freightBooking->tr_amount
+                        - ($freightBooking->tds_amount ?? 0)
+                        - ($freightBooking->damage_amount ?? 0)
+                        - ($freightBooking->shortage_amount ?? 0)
+                        + ($freightBooking->detention ?? 0)
+                        + ($freightBooking->deviation ?? 0)
+                        - ($freightBooking->misc_expense ?? 0);
+
+                    $calculatedBalance = $effectivePayableAmount - $newAdvanceAmount;
+
                     $freightBooking->update([
-                        'balance_amount' => $newBalance,
+                        'balance_amount' => max(0, $calculatedBalance),
                         'advance_amount' => $newAdvanceAmount
                     ]);
 

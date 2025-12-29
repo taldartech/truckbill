@@ -1031,6 +1031,63 @@
                     .then(async (res) => {
                         const data = await res.json().catch(() => ({}));
                         if (!res.ok || data.success === false) {
+                            // Check if this is a duplicate warning
+                            if (data.warning && data.duplicate_details) {
+                                const duplicate = data.duplicate_details;
+                                const confirmMessage = `⚠️ DUPLICATE PAYMENT WARNING ⚠️\n\n` +
+                                    `A similar payment already exists for booking ID ${data.booking_index || 'N/A'}:\n\n` +
+                                    `Date: ${duplicate.date}\n` +
+                                    `Amount: ₹${duplicate.amount}\n` +
+                                    `Payment Type: ${duplicate.payment_type}\n` +
+                                    `Payment Mode: ${duplicate.payment_mode}\n` +
+                                    `Created: ${duplicate.created_at}\n\n` +
+                                    `Do you want to proceed with creating this duplicate payment?`;
+                                
+                                return Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Duplicate Payment Detected',
+                                    html: `<div style="text-align: left;">
+                                        <p><strong>A similar payment already exists:</strong></p>
+                                        <ul style="text-align: left;">
+                                            <li><strong>Date:</strong> ${duplicate.date}</li>
+                                            <li><strong>Amount:</strong> ₹${duplicate.amount}</li>
+                                            <li><strong>Payment Type:</strong> ${duplicate.payment_type}</li>
+                                            <li><strong>Payment Mode:</strong> ${duplicate.payment_mode}</li>
+                                            <li><strong>Created:</strong> ${duplicate.created_at}</li>
+                                        </ul>
+                                        <p>Do you want to proceed with creating this duplicate payment?</p>
+                                    </div>`,
+                                    showCancelButton: true,
+                                    confirmButtonText: 'Yes, Proceed',
+                                    cancelButtonText: 'Cancel',
+                                    confirmButtonColor: '#ffc107',
+                                    cancelButtonColor: '#6c757d'
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        // Add confirm_duplicate flag and resubmit
+                                        formData.append('confirm_duplicate', '1');
+                                        
+                                        // Resubmit the form
+                                        return fetch(url, {
+                                            method: 'POST',
+                                            headers: {
+                                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
+                                                    .getAttribute('content')
+                                            },
+                                            body: formData
+                                        })
+                                        .then(async (res) => {
+                                            const data = await res.json().catch(() => ({}));
+                                            if (!res.ok || data.success === false) {
+                                                throw new Error(data.message || 'Failed to process combined payment');
+                                            }
+                                            return data;
+                                        });
+                                    } else {
+                                        throw new Error('Payment cancelled by user');
+                                    }
+                                });
+                            }
                             throw new Error(data.message || 'Failed to process combined payment');
                         }
                         return data;
@@ -1047,13 +1104,15 @@
                         });
                     })
                     .catch((err) => {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Payment Error',
-                            text: err.message ||
-                                'An error occurred while processing combined payment.',
-                            confirmButtonColor: '#dc3545'
-                        });
+                        if (err.message !== 'Payment cancelled by user') {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Payment Error',
+                                text: err.message ||
+                                    'An error occurred while processing combined payment.',
+                                confirmButtonColor: '#dc3545'
+                            });
+                        }
                     });
             });
 
@@ -2501,6 +2560,57 @@
                         // Refresh the page or table
                         location.reload();
                     } else {
+                        // Check if this is a duplicate warning
+                        if (data.warning && data.duplicate_details) {
+                            const duplicate = data.duplicate_details;
+                            const confirmMessage = `⚠️ DUPLICATE PAYMENT WARNING ⚠️\n\n` +
+                                `A similar payment already exists for this booking:\n\n` +
+                                `Date: ${duplicate.date}\n` +
+                                `Amount: ₹${duplicate.amount}\n` +
+                                `Payment Type: ${duplicate.payment_type}\n` +
+                                `Payment Mode: ${duplicate.payment_mode}\n` +
+                                `Created: ${duplicate.created_at}\n\n` +
+                                `Do you want to proceed with creating this duplicate payment?`;
+                            
+                            if (confirm(confirmMessage)) {
+                                // Add confirm_duplicate flag and resubmit
+                                formData.append('confirm_duplicate', '1');
+                                
+                                // Resubmit the form
+                                fetch('{{ route('freight_bookings.voucher_payment') }}', {
+                                    method: 'POST',
+                                    body: formData,
+                                    headers: {
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                                    }
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        alert(data.message || 'Payment processed successfully!');
+                                        $('#voucherPaymentModal').modal('hide');
+                                        location.reload();
+                                    } else {
+                                        alert(data.message || 'Error processing payment. Please try again.');
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Payment error:', error);
+                                    alert('An error occurred while processing the payment. Please try again.');
+                                })
+                                .finally(() => {
+                                    submitBtn.innerHTML = originalBtnText;
+                                    submitBtn.disabled = false;
+                                });
+                                return; // Exit early
+                            } else {
+                                // User cancelled, restore button
+                                submitBtn.innerHTML = originalBtnText;
+                                submitBtn.disabled = false;
+                                return;
+                            }
+                        }
+                        // Regular error
                         alert(data.message || 'Error processing payment. Please try again.');
                     }
                 })

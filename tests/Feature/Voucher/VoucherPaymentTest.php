@@ -178,16 +178,18 @@ class VoucherPaymentTest extends TestCase
             'payment_mode_id' => $pmode->id,
             'payment_type' => 'cash',
             'payment_mode' => 'cash',
-            'amount' => 20000, // exceeds tr_amount
+            'amount' => 20000, // exceeds tr_amount (10000)
             'payment_status' => 'pending',
             'date' => now()->toDateString(),
         ]);
 
         $response->assertRedirect('/voucher_payments/create');
-        // Controller redirects with error but still creates the record before check; ensure balance not exceeded
-        $this->assertEquals(1, VoucherPayment::where('voucher_number', 'V-002')->count());
+        // Controller validates before creating record and rolls back transaction on validation failure
+        $this->assertEquals(0, VoucherPayment::where('voucher_number', 'V-002')->count());
         $booking->refresh();
-        $this->assertTrue(($booking->advance_amount + 20000) > $booking->tr_amount);
+        // Ensure booking amounts remain unchanged
+        $this->assertEquals(0, $booking->advance_amount);
+        $this->assertEquals(10000, $booking->balance_amount);
     }
 
     public function test_moderator_forbidden_to_store(): void
