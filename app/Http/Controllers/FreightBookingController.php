@@ -1537,15 +1537,20 @@ class FreightBookingController extends Controller
 
             \DB::transaction(function () use ($validated) {
                 // Update memo_id and delivery_status for lorry receipts
-                \App\Models\LorryReceipt::whereIn('id', $validated['lr_ids'])
-                    ->update([
-                        'memo_id' => $validated['memo_id'],
-                        'delivery_status' => 'Delivered'
-                    ]);
+                // Update memo_id and delivery_status for lorry receipts individually to trigger auditing
+                $lorryReceipts = \App\Models\LorryReceipt::whereIn('id', $validated['lr_ids'])->get();
+                foreach ($lorryReceipts as $lr) {
+                    $lr->memo_id = $validated['memo_id'];
+                    $lr->delivery_status = 'Delivered';
+                    $lr->save();
+                }
 
-                // Update is_delivered for freight bookings
-                FreightBooking::whereIn('id', $validated['freight_booking_ids'])
-                    ->update(['is_delivered' => 1]);
+                // Update is_delivered for freight bookings individually to trigger auditing
+                $freightBookings = FreightBooking::whereIn('id', $validated['freight_booking_ids'])->get();
+                foreach ($freightBookings as $fb) {
+                    $fb->is_delivered = 1;
+                    $fb->save();
+                }
 
                 \Log::info('Bulk memo ID assignment completed', [
                     'memo_id' => $validated['memo_id'],

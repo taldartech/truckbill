@@ -905,11 +905,18 @@ class VoucherPaymentController extends Controller
                 $voucher_ids = array_merge($voucher_ids, json_decode(VoucherLinked::find($id)->voucher_ids));
             }
             $voucher_ids = array_merge($payment_ids, $voucher_ids);
-            // Update all payments
-            VoucherPayment::whereIn('id', $voucher_ids)
-                ->update(['payment_status' => $validated['new_status']]);
-            VoucherLinked::whereIn('id', $multiple_payment_ids)
-                ->update(['payment_status' => $validated['new_status']]);
+            // Update all payments individually to trigger auditing
+            $voucherPayments = VoucherPayment::whereIn('id', $voucher_ids)->get();
+            foreach ($voucherPayments as $payment) {
+                $payment->payment_status = $validated['new_status'];
+                $payment->save();
+            }
+            
+            $linkedPayments = VoucherLinked::whereIn('id', $multiple_payment_ids)->get();
+            foreach ($linkedPayments as $linkedPayment) {
+                $linkedPayment->payment_status = $validated['new_status'];
+                $linkedPayment->save();
+            }
 
             $updatedCount = count($payment_ids) + count($multiple_payment_ids);
 

@@ -267,11 +267,14 @@ class InvoiceController extends Controller
         $memoIds = $request->input('memo_ids', []);
         // unset($data['memo_ids']);
 
-        // Update lorry_receipts before invoice creation
+        // Update lorry_receipts before invoice creation individually to trigger auditing
         if (!empty($memoIds)) {
-            \App\Models\LorryReceipt::whereIn('memo_id', $memoIds)
-                ->update(['invoice_generated' => 1]);
-            $data['lr_ids'] = \App\Models\LorryReceipt::whereIn('memo_id', $memoIds)->pluck('id')->toArray();
+            $lorryReceipts = \App\Models\LorryReceipt::whereIn('memo_id', $memoIds)->get();
+            foreach ($lorryReceipts as $lr) {
+                $lr->invoice_generated = 1;
+                $lr->save();
+            }
+            $data['lr_ids'] = $lorryReceipts->pluck('id')->toArray();
         }
 
         $invoice = Invoice::create($data);
@@ -394,8 +397,12 @@ class InvoiceController extends Controller
         }
         $lr_ids = $invoice->lr_ids ?? [];
         if (!empty($lr_ids)) {
-            LorryReceipt::whereIn('id', $lr_ids)
-                ->update(['invoice_generated' => 0]);
+            // Update individually to trigger auditing
+            $lorryReceipts = LorryReceipt::whereIn('id', $lr_ids)->get();
+            foreach ($lorryReceipts as $lr) {
+                $lr->invoice_generated = 0;
+                $lr->save();
+            }
         }
         $invoice->delete();
         return redirect()->route('invoices.index')->with('success', 'Invoice deleted.');
