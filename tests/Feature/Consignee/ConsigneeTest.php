@@ -183,7 +183,7 @@ class ConsigneeTest extends TestCase
             'email' => 'detail@example.com',
         ]);
 
-        $response = $this->actingAs($user)->get("/consignees/{$consignee->id}");
+        $response = $this->actingAs($user)->get("/api/consignees/{$consignee->id}");
 
         $response->assertOk();
         $response->assertJsonFragment([

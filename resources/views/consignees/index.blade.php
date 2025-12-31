@@ -214,7 +214,7 @@ $(document).ready(function() {
 
         // Fetch consignee details
         $.ajax({
-            url: '/consignees/details/' + consigneeId,
+            url: '/api/consignees/' + consigneeId,
             type: 'GET',
             success: function(data) {
                 var detailsHtml = `

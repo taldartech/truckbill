@@ -92,11 +92,9 @@ Route::middleware(['auth.blocked'])->group(function () {
 
     // Consignee Management
     Route::middleware(['role:admin,moderator'])->group(function () {
-        Route::get('/consignees/details/{id}', [ConsigneeController::class, 'getDetails'])->name('consignees.details');
         Route::get('/consignees', [ConsigneeController::class, 'index'])->name('consignees.index');
         Route::get('/consignees/create', [ConsigneeController::class, 'create'])->name('consignees.create');
         Route::post('/consignees', [ConsigneeController::class, 'store'])->name('consignees.store');
-        Route::get('/consignees/{id}', [ConsigneeController::class, 'getConsigneeDetails']);
     });
     Route::middleware(['role:admin'])->group(function () {
         Route::get('/consignees/{consignee}/edit', [ConsigneeController::class, 'edit'])->name('consignees.edit');

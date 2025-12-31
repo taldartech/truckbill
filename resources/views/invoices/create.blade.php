@@ -563,7 +563,7 @@
                                     .value; // get selected customer
 
                                 // Fetch state again before calculating taxes
-                                fetch(`/consignees/${customerId}`, {
+                                fetch(`/api/consignees/${customerId}`, {
                                         cache: 'no-store',
                                         headers: {
                                             'X-Requested-With': 'XMLHttpRequest'
@@ -732,7 +732,7 @@
                 document.getElementById('prefilledCustomerId').value = selectedCustomerId;
                 document.getElementById('prefilledCustomerName').value = customerName;
 
-                fetch(`/consignees/${selectedCustomerId}`, {
+                fetch(`/api/consignees/${selectedCustomerId}`, {
                         cache: 'no-store',
                         headers: {
                             'X-Requested-With': 'XMLHttpRequest'

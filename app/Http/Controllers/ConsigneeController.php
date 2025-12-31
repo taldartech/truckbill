@@ -292,21 +292,6 @@ class ConsigneeController extends Controller
         }
     }
 
-    public function getConsigneeDetails($id)
-    {
-        $consignee = \App\Models\Consignee::with('state') // assuming relation
-            ->findOrFail($id);
-
-        return response()->json([
-            'id' => $consignee->id,
-            'name' => $consignee->name,
-            'state' => $consignee->state ? $consignee->state->name : null,
-            'email' => $consignee->email,
-        ]);
-    }
-
-
-
     public function edit(Consignee $consignee)
     {
         $countries = \App\Models\Country::all();
@@ -439,38 +424,15 @@ class ConsigneeController extends Controller
             ->with('success', 'Consignee deleted successfully!');
     }
 
-    public function getDetails($id)
-    {
-        $consignee = Consignee::with(['city', 'state', 'country', 'company'])->find($id);
-
-        if (!$consignee) {
-            return response()->json(['error' => 'Consignee not found'], 404);
-        }
-
-        return response()->json([
-            'id' => $consignee->id,
-            'name' => $consignee->name ?: 'Not provided',
-            'address' => $consignee->address ?: 'Not provided',
-            'contact_number' => $consignee->contact_number ?: 'Not provided',
-            'email' => $consignee->email ?: 'Not provided',
-            'gst_number' => $consignee->gst_number ?: 'Not provided',
-            'pan_number' => $consignee->pan_number ?: 'Not provided',
-            'city' => $consignee->city?->name ?: 'Not provided',
-            'state' => $consignee->state?->name ?: 'Not provided',
-            'country' => $consignee->country?->name ?: 'Not provided',
-            'company' => $consignee->company?->name ?: 'Not provided',
-            'created_at' => \Carbon\Carbon::parse($consignee->created_at)->setTimezone('Asia/Kolkata')->format('d M Y, h:i A') ?: 'Not available',
-            'updated_at' => \Carbon\Carbon::parse($consignee->updated_at)->setTimezone('Asia/Kolkata')->format('d M Y, h:i A') ?: 'Not available'
-        ]);
-    }
-
     /**
      * Get consignee data for API
+     * Consolidated method that returns all consignee details
+     * Used for both form data and detail views
      */
     public function getConsigneeApi($id)
     {
         try {
-            $query = Consignee::with(['city', 'state', 'country']);
+            $query = Consignee::with(['city', 'state', 'country', 'company']);
 
             // Apply company filter for non-super admin users
             if (auth()->user()->userRole->name !== 'super_admin') {
@@ -481,15 +443,18 @@ class ConsigneeController extends Controller
 
             return response()->json([
                 'id' => $consignee->id,
-                'name' => $consignee->name,
-                'contact_number' => $consignee->contact_number,
-                'address' => $consignee->address,
-                'city' => $consignee->city?->name,
-                'state' => $consignee->state?->name,
-                'country' => $consignee->country?->name,
-                'gst_number' => $consignee->gst_number,
-                'pan_number' => $consignee->pan_number,
-                'email' => $consignee->email
+                'name' => $consignee->name ?: 'Not provided',
+                'contact_number' => $consignee->contact_number ?: 'Not provided',
+                'address' => $consignee->address ?: 'Not provided',
+                'email' => $consignee->email ?: 'Not provided',
+                'gst_number' => $consignee->gst_number ?: 'Not provided',
+                'pan_number' => $consignee->pan_number ?: 'Not provided',
+                'city' => $consignee->city?->name ?: 'Not provided',
+                'state' => $consignee->state?->name ?: 'Not provided',
+                'country' => $consignee->country?->name ?: 'Not provided',
+                'company' => $consignee->company?->name ?: 'Not provided',
+                'created_at' => \Carbon\Carbon::parse($consignee->created_at)->setTimezone('Asia/Kolkata')->format('d M Y, h:i A') ?: 'Not available',
+                'updated_at' => \Carbon\Carbon::parse($consignee->updated_at)->setTimezone('Asia/Kolkata')->format('d M Y, h:i A') ?: 'Not available'
             ]);
         } catch (\Exception $e) {
             \Log::error('Error fetching consignee: ' . $e->getMessage());
