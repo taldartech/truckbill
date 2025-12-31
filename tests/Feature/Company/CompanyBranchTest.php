@@ -155,7 +155,7 @@ class CompanyBranchTest extends TestCase
         $super = $this->makeSuperAdmin();
         $company = $this->createCompanyFor($super);
 
-        $response = $this->actingAs($super)->post('/branches/store', [
+        $response = $this->actingAs($super)->post('/branches', [
             'company_id' => $company->id,
             'branch_name' => 'HQ',
             'branch_address' => '123 Street',
@@ -174,7 +174,7 @@ class CompanyBranchTest extends TestCase
     {
         $super = $this->makeSuperAdmin();
 
-        $response = $this->actingAs($super)->from(route('branches.create'))->post('/branches/store', [
+        $response = $this->actingAs($super)->from(route('branches.create'))->post('/branches', [
             'branch_name' => 'No Company',
             'branch_contact_number' => '1234567890',
             'head_office' => true,
