@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class LoginController extends Controller
 {
@@ -45,8 +46,27 @@ class LoginController extends Controller
                 ])->withInput();
             }
 
-            // Otherwise, regenerate session and redirect
+            $user = Auth::user();
+            
+            // Generate a new session token for this login
+            $sessionToken = \Illuminate\Support\Str::random(60);
+            
+            // Invalidate all other sessions for this user by deleting them from sessions table
+            DB::table('sessions')
+                ->where('user_id', $user->id)
+                ->where('id', '!=', $request->session()->getId())
+                ->delete();
+            
+            // Update user's session token
+            $user->session_token = $sessionToken;
+            $user->save();
+            
+            // Store session token in current session
+            $request->session()->put('session_token', $sessionToken);
+            
+            // Regenerate session ID for security
             $request->session()->regenerate();
+            
             return redirect()->intended('/dashboard');
         }
 
@@ -57,6 +77,14 @@ class LoginController extends Controller
 
     public function logout(Request $request)
     {
+        $user = Auth::user();
+        
+        // Clear session token when user logs out
+        if ($user) {
+            $user->session_token = null;
+            $user->save();
+        }
+        
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

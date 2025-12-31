@@ -19,6 +19,7 @@ class User extends Authenticatable
         'user_role_id',
         'company_id',
         'branch_id',
+        'session_token',
     ];
 
     public function company()
