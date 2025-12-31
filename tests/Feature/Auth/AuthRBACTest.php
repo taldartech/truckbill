@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\UserRole;
 use App\Notifications\ResetPasswordNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Auth;
@@ -43,6 +44,15 @@ class AuthRBACTest extends TestCase
 
         $response->assertRedirect('/dashboard');
         $this->assertAuthenticatedAs($user);
+
+        // Verify session token is generated and stored
+        $user->refresh();
+        $this->assertNotNull($user->session_token);
+        $this->assertEquals(60, strlen($user->session_token));
+
+        // Verify session token is stored in session
+        $this->assertNotNull(session('session_token'));
+        $this->assertEquals($user->session_token, session('session_token'));
     }
 
     public function test_user_can_request_password_reset_link(): void
@@ -175,6 +185,52 @@ class AuthRBACTest extends TestCase
         $response->assertRedirect('/dashboard');
         $response->assertCookie(Auth::getRecallerName());
         $this->assertAuthenticatedAs($user);
+
+        // Verify session token is generated even with remember me
+        $user->refresh();
+        $this->assertNotNull($user->session_token);
+        $this->assertEquals(60, strlen($user->session_token));
+    }
+
+    public function test_login_invalidates_other_sessions(): void
+    {
+        // Skip if database sessions are not being used
+        if (config('session.driver') !== 'database') {
+            $this->markTestSkipped('Database sessions not configured for testing');
+        }
+
+        $user = $this->createUserWithRole('admin');
+
+        // Create a fake session for the user (simulating another device)
+        DB::table('sessions')->insert([
+            'id' => 'old-session-id',
+            'user_id' => $user->id,
+            'ip_address' => '127.0.0.1',
+            'user_agent' => 'Test Agent',
+            'payload' => base64_encode(serialize(['data' => 'test'])),
+            'last_activity' => now()->timestamp,
+        ]);
+
+        // Verify old session exists
+        $this->assertDatabaseHas('sessions', [
+            'id' => 'old-session-id',
+            'user_id' => $user->id,
+        ]);
+
+        // Login from new session
+        $response = $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'password',
+        ]);
+
+        $response->assertRedirect('/dashboard');
+        $this->assertAuthenticatedAs($user);
+
+        // Verify old session is deleted
+        $this->assertDatabaseMissing('sessions', [
+            'id' => 'old-session-id',
+            'user_id' => $user->id,
+        ]);
     }
 
     public function test_login_fails_with_invalid_password(): void
