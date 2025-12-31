@@ -1,9 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Auth\ForgotPasswordController;
-use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\ConsigneeController;
 use App\Http\Controllers\UserController;
@@ -25,21 +22,8 @@ use App\Http\Controllers\BranchController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PromoCodeController;
 
-// Authentication Routes
-Route::middleware(['guest'])->group(function () {
-    Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [LoginController::class, 'login']);
-    Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
-    Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
-    Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
-    Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name('password.update');
-});
 // Protected Routes
-Route::middleware(['auth', 'checkblock'])->group(function () {
-    Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
-    Route::get('/password/change', [LoginController::class, 'showChangePasswordForm'])->name('password.change');
-    Route::post('/password/change', [LoginController::class, 'changePassword'])->name('password.change');
-
+Route::middleware(['auth.blocked'])->group(function () {
     Route::group(['middleware' => 'role:super_admin,master_admin'], function () {
         // User Management
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
@@ -99,7 +83,7 @@ Route::middleware(['auth', 'checkblock'])->group(function () {
     Route::redirect('/', '/dashboard');
 
     Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])
-        ->middleware(['auth', 'verified'])
+        ->middleware(['auth.blocked', 'verified'])
         ->name('dashboard');
 
     Route::get('/dashboard2', function () {
@@ -354,3 +338,4 @@ Route::middleware(['auth', 'checkblock'])->group(function () {
 });
 
 require __DIR__ . '/api-routes.php';
+require __DIR__ . '/auth.php';

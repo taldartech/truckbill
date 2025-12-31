@@ -13,15 +13,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
-            'checkblock' => \App\Http\Middleware\CheckBlockMiddleware::class,
-            'single.device' => \App\Http\Middleware\CheckSingleDeviceLogin::class,
+            'auth.blocked' => \App\Http\Middleware\CheckBlockMiddleware::class
         ]);
-        
-        // Apply single device login check to web middleware group
-        // The middleware itself checks if user is authenticated, so it's safe for all routes
-        $middleware->web(append: [
-            \App\Http\Middleware\CheckSingleDeviceLogin::class,
-        ]);
+
+        // Note: Single device login check is now included in CheckBlockMiddleware
+        // No need to apply CheckSingleDeviceLogin globally anymore
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
