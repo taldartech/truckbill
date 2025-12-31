@@ -197,7 +197,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Quick Actions Section -->
         <div class="card p-3 bg-light">
             <div class="row"><div class="col"><h5 class="mb-3">Quick Actions</h5></div></div>
@@ -228,7 +228,7 @@
                     <i class="fas fa-info-circle me-2"></i>
                     Please review the updated details below before submitting the form.
                 </div>
-                
+
                 <div class="row">
                     <div class="col-md-6">
                         <h6 class="text-primary mb-3"><i class="fas fa-user me-2"></i>Basic Information</h6>
@@ -248,7 +248,7 @@
                         </table>
                     </div>
                 </div>
-                
+
                 <div class="row mt-3">
                     <div class="col-md-6">
                         <h6 class="text-primary mb-3"><i class="fas fa-map-marker-alt me-2"></i>Location Details</h6>
@@ -289,7 +289,7 @@
             <h5 class="modal-title" id="addCountryModalLabel">Add Country</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-  
+
           <div class="modal-body">
             <div id="countryFormErrors" class="alert alert-danger d-none"></div>
             <div class="row g-3">
@@ -297,14 +297,14 @@
                 <label for="country_name" class="form-label">Country Name *</label>
                 <input type="text" class="form-control" id="country_name" name="name" required>
               </div>
-  
+
               <div class="col-md-6">
                 <label for="country_code" class="form-label">Country Code *</label>
                 <input type="text" class="form-control" id="country_code" name="code" required>
               </div>
             </div>
           </div>
-  
+
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
             <button type="submit" class="btn btn-info">
@@ -326,7 +326,7 @@
             <h5 class="modal-title" id="addStateModalLabel">Add State</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-  
+
           <div class="modal-body">
             <div id="stateFormErrors" class="alert alert-danger d-none"></div>
             <div class="row g-3">
@@ -334,12 +334,12 @@
                 <label for="state_name" class="form-label">State Name *</label>
                 <input type="text" class="form-control" id="state_name" name="name" required>
               </div>
-  
+
               <div class="col-md-6">
                 <label for="state_code" class="form-label">State Code *</label>
                 <input type="text" class="form-control" id="state_code" name="code" required maxlength="10">
               </div>
-  
+
               <div class="col-md-12">
                 <label for="modal_state_country_id" class="form-label">Country *</label>
                 <select class="form-select" id="modal_state_country_id" name="country_id" required>
@@ -351,7 +351,7 @@
               </div>
             </div>
           </div>
-  
+
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
             <button type="submit" class="btn btn-info">
@@ -373,7 +373,7 @@
             <h5 class="modal-title" id="addCityModalLabel">Add City</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-  
+
           <div class="modal-body">
             <div id="cityFormErrors" class="alert alert-danger d-none"></div>
             <div class="row g-3">
@@ -390,9 +390,9 @@
                     <option value="{{ $country->id }}">{{ $country->name }}</option>
                   @endforeach
                 </select>
-                
+
               </div>
-              
+
               <div class="col-md-6">
                 <label for="modal_city_state_id" class="form-label">State *</label>
                 <select class="form-select" id="modal_city_state_id" name="state_id" required>
@@ -401,7 +401,7 @@
               </div>
             </div>
           </div>
-  
+
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
             <button type="submit" class="btn btn-info">
@@ -428,11 +428,11 @@ function showConfirmationModal() {
     const name = document.getElementById('name')?.value || '-';
     const contactPerson = document.getElementById('contact_person_name')?.value || '-';
     const mobile = document.getElementById('mobile_number')?.value || '-';
-    
+
     const gstNumber = document.getElementById('gst_number')?.value || '-';
     const panNumber = document.getElementById('pan_number')?.value || '-';
     const panActive = document.querySelector('input[name="pan_active"]:checked')?.value === '1' ? 'Yes' : 'No';
-    
+
     const address = document.getElementById('address')?.value || '-';
     const countrySelect = document.getElementById('country_id');
     const country = countrySelect?.options[countrySelect.selectedIndex]?.text || '-';
@@ -440,7 +440,7 @@ function showConfirmationModal() {
     const state = stateSelect?.options[stateSelect.selectedIndex]?.text || '-';
     const citySelect = document.getElementById('city_id');
     const city = citySelect?.options[citySelect.selectedIndex]?.text || '-';
-    
+
     const isOwner = document.querySelector('input[name="is_owner"]:checked')?.value === '1' ? 'Yes' : 'No';
     const declaration = document.querySelector('input[name="declaration_given"]:checked')?.value === '1' ? 'Yes' : 'No';
     const advance = document.querySelector('input[name="advance_amount"]')?.value || '0';
@@ -452,17 +452,17 @@ function showConfirmationModal() {
     document.getElementById('confirm-name').textContent = name;
     document.getElementById('confirm-contact-person').textContent = contactPerson;
     document.getElementById('confirm-mobile').textContent = mobile;
-    
+
     document.getElementById('confirm-gst-number').textContent = gstNumber;
     document.getElementById('confirm-pan-number').textContent = panNumber;
     document.getElementById('confirm-pan-active').textContent = panActive;
     document.getElementById('confirm-tds-percentage').textContent = tdsPercentage;
-    
+
     document.getElementById('confirm-address').textContent = address;
     document.getElementById('confirm-country').textContent = country;
     document.getElementById('confirm-state').textContent = state;
     document.getElementById('confirm-city').textContent = city;
-    
+
     document.getElementById('confirm-is-owner').textContent = isOwner;
     document.getElementById('confirm-declaration').textContent = declaration;
     document.getElementById('confirm-advance').textContent = '₹' + parseFloat(advance).toFixed(2);
@@ -475,11 +475,11 @@ function showConfirmationModal() {
 // Function to submit the form after confirmation
 function submitForm() {
     const form = document.querySelector('.needs-validation');
-    
+
     // Hide modal
     const modal = bootstrap.Modal.getInstance(document.getElementById('confirmationModal'));
     modal.hide();
-    
+
     // Submit form
     form.submit();
 }
@@ -552,7 +552,7 @@ $(document).ready(function() {
     }
 
     function loadStates(countryId, callback = null) {
-        $.get('/api/dropdown/states/' + countryId, function(data) {
+        $.get('/api/states/' + countryId, function(data) {
             $('#state_id').empty().append('<option value="">Select State</option>');
             $.each(data, function(key, state) {
                 $('#state_id').append('<option value="' + state.id + '">' + state.name + '</option>');
@@ -563,7 +563,7 @@ $(document).ready(function() {
     }
 
     function loadCities(stateId, callback = null) {
-        $.get('/api/dropdown/cities/' + stateId, function(data) {
+        $.get('/api/cities/' + stateId, function(data) {
             $('#city_id').empty().append('<option value="">Select City</option>');
             $.each(data, function(key, city) {
                 $('#city_id').append('<option value="' + city.id + '">' + city.name + '</option>');
@@ -606,7 +606,7 @@ $(document).ready(function() {
         // Handle Country Modal Form Submission
         $('#addCountryForm').on('submit', function(e) {
             e.preventDefault();
-            
+
             const form = $(this);
             const submitBtn = form.find('button[type="submit"]');
             const spinner = submitBtn.find('.spinner-border');
@@ -614,19 +614,19 @@ $(document).ready(function() {
             const countryName = $('#country_name').val();
             const countryCode = $('#country_code').val();
             const csrfToken = $('meta[name="csrf-token"]').attr('content');
-            
+
             // Show loading state
             submitBtn.prop('disabled', true);
             spinner.removeClass('d-none');
             errorDiv.addClass('d-none');
-            
+
             // Create FormData object
             const formData = new FormData();
             formData.append('name', countryName);
             formData.append('code', countryCode);
             formData.append('from_modal', '1');
             formData.append('_token', csrfToken);
-            
+
             // Use jQuery AJAX instead of fetch for better FormData handling
             $.ajax({
                 url: '{{ route("master.countries.store") }}',
@@ -643,14 +643,14 @@ $(document).ready(function() {
                     if (data && data.success && data.country) {
                         // Add new country to the main dropdown
                         $('#country_id').append(`<option value="${data.country.id}">${data.country.name}</option>`);
-                        
+
                         // Add new country to modal dropdowns
                         $('#modal_state_country_id').append(`<option value="${data.country.id}">${data.country.name}</option>`);
                         $('#modal_city_country_id').append(`<option value="${data.country.id}">${data.country.name}</option>`);
-                        
+
                         // Select the newly created country
                         $('#country_id').val(data.country.id).trigger('change');
-                        
+
                         // Close modal and remove backdrop
                         $('#addCountryModal').modal('hide');
                         $('.modal-backdrop').remove();
@@ -677,7 +677,7 @@ $(document).ready(function() {
         // Handle State Modal Form Submission
         $('#addStateForm').on('submit', function(e) {
             e.preventDefault();
-            
+
             const form = $(this);
             const submitBtn = form.find('button[type="submit"]');
             const spinner = submitBtn.find('.spinner-border');
@@ -686,12 +686,12 @@ $(document).ready(function() {
             const stateCode = $('#state_code').val();
             const countryId = $('#modal_state_country_id').val();
             const csrfToken = $('meta[name="csrf-token"]').attr('content');
-            
+
             // Show loading state
             submitBtn.prop('disabled', true);
             spinner.removeClass('d-none');
             errorDiv.addClass('d-none');
-            
+
             // Create FormData object
             const formData = new FormData();
             formData.append('name', stateName);
@@ -699,7 +699,7 @@ $(document).ready(function() {
             formData.append('country_id', countryId);
             formData.append('from_modal', '1');
             formData.append('_token', csrfToken);
-            
+
             // Use jQuery AJAX instead of fetch for better FormData handling
             $.ajax({
                 url: '{{ route("master.states.store") }}',
@@ -716,13 +716,13 @@ $(document).ready(function() {
                     if (data && data.success && data.state) {
                         // Add new state to the main dropdown
                         $('#state_id').append(`<option value="${data.state.id}">${data.state.name}</option>`);
-                        
+
                         // Add new state to city modal dropdown
                         $('#modal_city_state_id').append(`<option value="${data.state.id}">${data.state.name}</option>`);
-                        
+
                         // Select the newly created state
                         $('#state_id').val(data.state.id).trigger('change');
-                        
+
                         // Close modal and remove backdrop
                         $('#addStateModal').modal('hide');
                         $('.modal-backdrop').remove();
@@ -749,30 +749,30 @@ $(document).ready(function() {
         // Handle City Modal Form Submission
         $('#addCityForm').on('submit', function(e) {
             e.preventDefault();
-            
+
             const form = $(this);
             const submitBtn = form.find('button[type="submit"]');
             const spinner = submitBtn.find('.spinner-border');
             const errorDiv = $('#cityFormErrors');
             const cityName = $('#modal_city_name').val();
             const stateId = $('#modal_city_state_id').val();
-          
+
             const csrfToken = $('meta[name="csrf-token"]').attr('content');
             console.log(cityName, stateId, csrfToken);
             // Show loading state
             submitBtn.prop('disabled', true);
             spinner.removeClass('d-none');
             errorDiv.addClass('d-none');
-            
+
             // Create FormData object
             const formData = new FormData();
             formData.append('name', cityName);
             formData.append('state_id', stateId);
-          
+
 
             formData.append('from_modal', '1');
             formData.append('_token', csrfToken);
-            
+
             // Use jQuery AJAX instead of fetch for better FormData handling
             $.ajax({
                 url: '{{ route("master.cities.store") }}',
@@ -789,10 +789,10 @@ $(document).ready(function() {
                     if (data && data.success && data.city) {
                         // Add new city to the main dropdown
                         $('#city_id').append(`<option value="${data.city.id}">${data.city.name}</option>`);
-                        
+
                         // Select new city
                         $('#city_id').val(data.city.id).trigger('change');
-                        
+
                         // Close modal and remove backdrop
                         $('#addCityModal').modal('hide');
                         $('.modal-backdrop').remove();
@@ -820,9 +820,9 @@ $(document).ready(function() {
         $('#modal_city_country_id').on('change', function() {
             const countryId = $(this).val();
             const stateSelect = $('#modal_city_state_id');
-            
+
             stateSelect.html('<option value="">Select State</option>');
-            
+
             if (countryId) {
                 $.get(`/api/states/${countryId}`)
                     .done(function(data) {
@@ -840,7 +840,7 @@ $(document).ready(function() {
         function showSuccessMessage(message) {
             // Remove any existing alerts
             $('.alert-success').remove();
-            
+
             // Create and show success alert
             const alertHtml = `
                 <div class="alert alert-success alert-dismissible fade show mt-2" role="alert">
@@ -848,14 +848,14 @@ $(document).ready(function() {
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             `;
-            
+
             // Insert after the page title or at the top of the form
             if ($('.card-header').length) {
                 $('.card-header').after(alertHtml);
             } else {
                 $('form').before(alertHtml);
             }
-            
+
             // Auto-hide after 5 seconds
             setTimeout(function() {
                 $('.alert-success').fadeOut();
@@ -866,7 +866,7 @@ $(document).ready(function() {
         function showErrorMessage(message) {
             // Remove any existing alerts
             $('.alert-danger').remove();
-            
+
             // Create and show error alert
             const alertHtml = `
                 <div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
@@ -874,7 +874,7 @@ $(document).ready(function() {
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             `;
-            
+
             // Insert after the page title or at the top of the form
             if ($('.card-header').length) {
                 $('.card-header').after(alertHtml);
@@ -922,7 +922,7 @@ if (countrySelect && stateSelect && citySelect) {
         stateSelect.innerHTML = '<option value="">Select State</option>';
         citySelect.length = 0;
         citySelect.innerHTML = '<option value="">Select City</option>';
-        
+
         if (countryId) {
             fetch(`/api/states/${countryId}`)
                 .then(response => response.json())
@@ -936,12 +936,12 @@ if (countrySelect && stateSelect && citySelect) {
                 });
         }
     });
-    
+
     stateSelect.addEventListener('change', function() {
         const stateId = this.value;
         citySelect.length = 0;
         citySelect.innerHTML = '<option value="">Select City</option>';
-        
+
         if (stateId) {
             fetch(`/api/cities/${stateId}`)
                 .then(response => response.json())
@@ -959,26 +959,26 @@ if (countrySelect && stateSelect && citySelect) {
 
     // Fresh approach using fetch API for modal submissions
     document.addEventListener('DOMContentLoaded', function() {
-        
+
         // Country Modal Handler
         const countryForm = document.getElementById('addCountryForm');
         if (countryForm) {
             countryForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
-                
+
                 const submitBtn = this.querySelector('button[type="submit"]');
                 const spinner = submitBtn.querySelector('.spinner-border');
                 const errorDiv = document.getElementById('countryFormErrors');
-                
+
                 // Show loading
                 submitBtn.disabled = true;
                 spinner?.classList.remove('d-none');
                 errorDiv?.classList.add('d-none');
-                
+
                 try {
                     const formData = new FormData(this);
                     formData.append('from_modal', '1');
-                    
+
                     const response = await fetch('{{ route("master.countries.store") }}', {
                         method: 'POST',
                         body: formData,
@@ -988,20 +988,20 @@ if (countrySelect && stateSelect && citySelect) {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                         }
                     });
-                    
+
                     const data = await response.json();
-                    
+
                     if (data.success && data.country) {
                         // Update all dropdowns
                         updateCountryDropdowns(data.country);
-                        
+
                         // Select new country
                         document.getElementById('country_id').value = data.country.id;
                         document.getElementById('country_id').dispatchEvent(new Event('change'));
-                        
+
                         // Clean close modal
                         closeModalClean('addCountryModal');
-                        
+
                         // Reset form
                         this.reset();
                     } else {
@@ -1025,20 +1025,20 @@ if (countrySelect && stateSelect && citySelect) {
         if (stateForm) {
             stateForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
-                
+
                 const submitBtn = this.querySelector('button[type="submit"]');
                 const spinner = submitBtn.querySelector('.spinner-border');
                 const errorDiv = document.getElementById('stateFormErrors');
-                
+
                 // Show loading
                 submitBtn.disabled = true;
                 spinner?.classList.remove('d-none');
                 errorDiv?.classList.add('d-none');
-                
+
                 try {
                     const formData = new FormData(this);
                     formData.append('from_modal', '1');
-                    
+
                     const response = await fetch('{{ route("master.states.store") }}', {
                         method: 'POST',
                         body: formData,
@@ -1048,20 +1048,20 @@ if (countrySelect && stateSelect && citySelect) {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                         }
                     });
-                    
+
                     const data = await response.json();
-                    
+
                     if (data.success && data.state) {
                         // Update dropdowns
                         updateStateDropdowns(data.state);
-                        
+
                         // Select new state
                         document.getElementById('state_id').value = data.state.id;
                         document.getElementById('state_id').dispatchEvent(new Event('change'));
-                        
+
                         // Clean close modal
                         closeModalClean('addStateModal');
-                        
+
                         // Reset form
                         this.reset();
                     } else {
@@ -1085,20 +1085,20 @@ if (countrySelect && stateSelect && citySelect) {
         if (cityForm) {
             cityForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
-                
+
                 const submitBtn = this.querySelector('button[type="submit"]');
                 const spinner = submitBtn.querySelector('.spinner-border');
                 const errorDiv = document.getElementById('cityFormErrors');
-                
+
                 // Show loading
                 submitBtn.disabled = true;
                 spinner?.classList.remove('d-none');
                 errorDiv?.classList.add('d-none');
-                
+
                 try {
                     const formData = new FormData(this);
                     formData.append('from_modal', '1');
-                    
+
                     const response = await fetch('{{ route("master.cities.store") }}', {
                         method: 'POST',
                         body: formData,
@@ -1108,20 +1108,20 @@ if (countrySelect && stateSelect && citySelect) {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                         }
                     });
-                    
+
                     const data = await response.json();
-                    
+
                     if (data.success && data.city) {
                         // Update dropdown
                         updateCityDropdown(data.city);
-                        
+
                         // Select new city
                         document.getElementById('city_id').value = data.city.id;
                         document.getElementById('city_id').dispatchEvent(new Event('change'));
-                        
+
                         // Clean close modal
                         closeModalClean('addCityModal');
-                        
+
                         // Reset form
                         this.reset();
                     } else {
@@ -1139,20 +1139,20 @@ if (countrySelect && stateSelect && citySelect) {
                 }
             });
         }
-        
+
         // Note: The country, state, and city cascading selects are handled by dynamic-dropdowns.js
         // No need for duplicate event listeners here
-        
+
         // Handle city change with validation
         $('#city_id').on('change', function() {
             const cityId = $(this).val();
             const stateId = $('#state_id').val();
             const countryId = $('#country_id').val();
-            
+
             // Clear validation errors
             $(this).removeClass('is-invalid');
             $(this).next('.invalid-feedback').remove();
-            
+
             // Additional client-side validation
             if (cityId && (!stateId || !countryId)) {
                 $(this).addClass('is-invalid');
@@ -1174,7 +1174,7 @@ if (countrySelect && stateSelect && citySelect) {
             }
         });
     }
-    
+
     function updateStateDropdowns(state) {
         const dropdowns = ['state_id', 'city_state_id'];
         dropdowns.forEach(id => {
@@ -1187,7 +1187,7 @@ if (countrySelect && stateSelect && citySelect) {
             }
         });
     }
-    
+
     function updateCityDropdown(city) {
         const select = document.getElementById('city_id');
         if (select) {
@@ -1197,14 +1197,14 @@ if (countrySelect && stateSelect && citySelect) {
             select.appendChild(option);
         }
     }
-    
+
     function closeModalClean(modalId) {
         const modal = document.getElementById(modalId);
         if (modal) {
             // Use Bootstrap's modal instance
             const bsModal = bootstrap.Modal.getInstance(modal) || new bootstrap.Modal(modal);
             bsModal.hide();
-            
+
             // Clean up after hide completes
             modal.addEventListener('hidden.bs.modal', function cleanup() {
                 document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
@@ -1217,10 +1217,10 @@ if (countrySelect && stateSelect && citySelect) {
     }
 
 </script>
-    
+
 
 <script src="/js/dynamic-dropdowns.js"></script>
-    
+
 @endsection
 
 @section('scripts')

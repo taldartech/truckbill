@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\DropdownController;
 use App\Http\Controllers\ConsigneeController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\FreightBookingController;
@@ -8,6 +9,7 @@ use App\Http\Controllers\LorryReceiptController;
 use App\Http\Controllers\TransporterController;
 use App\Http\Controllers\TruckController;
 use App\Http\Controllers\TruckOwnerController;
+use App\Http\Controllers\ValidationController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth.blocked')->group(function () {
@@ -27,8 +29,6 @@ Route::middleware('auth.blocked')->group(function () {
     Route::post('/api/check-lr-number-uniqueness', [LorryReceiptController::class, 'checkLrNumberUniqueness']);
     Route::post('/api/check-invoice-number-uniqueness', [LorryReceiptController::class, 'checkInvoiceNumberUniqueness']);
     Route::post('/api/check-gr-number-uniqueness', [LorryReceiptController::class, 'checkGRNumberUniqueness']);
-    Route::get('/api/dropdown/states/{countryId}', [\App\Http\Controllers\Api\DropdownController::class, 'states']);
-    Route::get('/api/dropdown/cities/{stateId}', [\App\Http\Controllers\Api\DropdownController::class, 'cities']);
     Route::get('/api/lorry-receipts/{customerId}', [LorryReceiptController::class, 'getLorryReceiptsForCustomer']);
     Route::get('/api/invoice-numbers', [InvoiceController::class, 'getAllInvoiceNumbers']);
     Route::get('/api/invoice-numbers/{customerId}', [InvoiceController::class, 'getInvoiceNumbersForCustomer']);
@@ -38,12 +38,12 @@ Route::middleware('auth.blocked')->group(function () {
     Route::get('/api/freight-bookings/{id}/details', [FreightBookingController::class, 'getFreightBookingDetails'])->name('api.freight_bookings.details');
 
     // API routes for dynamic dropdowns
-    Route::get('/api/states/{countryId}', [\App\Http\Controllers\Api\DropdownController::class, 'states']);
-    Route::get('/api/cities/{stateId}', [\App\Http\Controllers\Api\DropdownController::class, 'cities']);
+    Route::get('/api/states/{countryId}', [DropdownController::class, 'states']);
+    Route::get('/api/cities/{stateId}', [DropdownController::class, 'cities']);
 
     // Validation routes
-    Route::post('/api/validate/gst-number', [\App\Http\Controllers\ValidationController::class, 'checkGstNumber']);
-    Route::post('/api/validate/pan-number', [\App\Http\Controllers\ValidationController::class, 'checkPanNumber']);
+    Route::post('/api/validate/gst-number', [ValidationController::class, 'checkGstNumber']);
+    Route::post('/api/validate/pan-number', [ValidationController::class, 'checkPanNumber']);
 
     Route::post('/api/check-manual-invoice-number-uniqueness', [InvoiceController::class, 'checkManualInvoiceNumberUniqueness']);
     Route::get('/check-truck-number', function (Illuminate\Http\Request $request) {

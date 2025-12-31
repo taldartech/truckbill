@@ -37,7 +37,7 @@
     </div>
     <!--end::Header-->
 
-   
+
 
     <!--begin::Form-->
     <form action="{{ route('truck_owners.update', $transporter->id) }}" method="POST" class="needs-validation" novalidate="">
@@ -55,7 +55,7 @@
             <input type="hidden" name="is_owner" value="1">
             <!-- Hidden company field - automatically set based on user's company -->
             <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
-            
+
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label for="name" class="form-label">Truck Owner Name *</label>
@@ -208,7 +208,7 @@
                     <div class="invalid-feedback">Please select a country.</div>
                 </div>
                 <!--end::Col-->
-                
+
                 <div class="col-md-4">
                     <label for="state_id" class="form-label">State *</label>
                     <select class="form-select" id="state_id" name="state_id" required>
@@ -223,7 +223,7 @@
                     @error('state_id') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please select a state.</div>
                 </div>
-                
+
                 <div class="col-md-4">
                     <label for="city_id" class="form-label">City *</label>
                     <select class="form-select" id="city_id" name="city_id" required>
@@ -238,7 +238,7 @@
                     @error('city_id') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please select a city.</div>
                 </div>
-                
+
                 <!--end::Col-->
             </div>   --}}
             </div>
@@ -328,8 +328,8 @@
                             <td>{{ $truck->registration_date ? \Carbon\Carbon::parse($truck->registration_date)->format('d-m-Y') : '-' }}</td>
                             <td>
                                 <div class="btn-group" role="group">
-                                    <button type="button" class="btn btn-sm btn-outline-primary edit-truck-btn" 
-                                            title="Edit Truck" 
+                                    <button type="button" class="btn btn-sm btn-outline-primary edit-truck-btn"
+                                            title="Edit Truck"
                                             data-truck-id="{{ $truck->id }}"
                                             data-truck-number="{{ $truck->truck_number }}"
                                             data-truck-type="{{ $truck->truck_type }}"
@@ -337,15 +337,15 @@
                                             data-registration-date="{{ $truck->registration_date }}">
                                         <i class="bi bi-pencil"></i>
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-outline-danger delete-truck-btn" 
-                                            title="Delete Truck" 
+                                    <button type="button" class="btn btn-sm btn-outline-danger delete-truck-btn"
+                                            title="Delete Truck"
                                             data-truck-id="{{ $truck->id }}"
                                             data-truck-number="{{ $truck->truck_number }}">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                     {{-- add remove icon here --}}
-                                    <button type="button" class="btn btn-sm btn-outline-danger remove-truck-btn" 
-                                            title="Remove Truck" 
+                                    <button type="button" class="btn btn-sm btn-outline-danger remove-truck-btn"
+                                            title="Remove Truck"
                                             data-truck-id="{{ $truck->id }}"
                                             data-truck-number="{{ $truck->truck_number }}">
                                         <i class="bi bi-x-circle"></i>
@@ -397,7 +397,7 @@
                             <small class="form-text text-muted">Format: State code + digits + letters + digits (e.g., MH12AB1234)</small>
                         </div>
                     </div>
-                    
+
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="truck_type" class="form-label">Truck Type *</label>
@@ -427,7 +427,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="registration_date" class="form-label">Registration Date</label>
@@ -435,7 +435,7 @@
                             <small class="form-text text-muted">Optional field</small>
                         </div>
                     </div>
-                    
+
                     <!-- Add New Driver Form (Initially Hidden) -->
                     <div id="addDriverFormTruck" style="display: none;">
                         <hr class="my-4">
@@ -476,7 +476,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="alert alert-info mt-3">
                             <i class="bi bi-info-circle"></i>
                             <strong>Note:</strong> The new driver will be automatically selected after creation.
@@ -509,7 +509,7 @@
                     <i class="fas fa-info-circle me-2"></i>
                     Please review the details below before updating the truck owner.
                 </div>
-                
+
                 <div class="row">
                     <div class="col-md-6">
                         <h6 class="text-primary mb-3"><i class="fas fa-user me-2"></i>Basic Information</h6>
@@ -529,7 +529,7 @@
                         </table>
                     </div>
                 </div>
-                
+
                 <div class="row mt-3">
                     <div class="col-md-6">
                         <h6 class="text-primary mb-3"><i class="fas fa-map-marker-alt me-2"></i>Location Details</h6>
@@ -570,7 +570,7 @@
             <h5 class="modal-title" id="addCountryModalLabel">Add Country</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-  
+
           <div class="modal-body">
             <div id="countryFormErrors" class="alert alert-danger d-none"></div>
             <div class="row g-3">
@@ -578,14 +578,14 @@
                 <label for="country_name" class="form-label">Country Name *</label>
                 <input type="text" class="form-control" id="country_name" name="name" required>
               </div>
-  
+
               <div class="col-md-6">
                 <label for="country_code" class="form-label">Country Code *</label>
                 <input type="text" class="form-control" id="country_code" name="code" required>
               </div>
             </div>
           </div>
-  
+
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
             <button type="submit" class="btn btn-info">
@@ -607,7 +607,7 @@
             <h5 class="modal-title" id="addStateModalLabel">Add State</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-  
+
           <div class="modal-body">
             <div id="stateFormErrors" class="alert alert-danger d-none"></div>
             <div class="row g-3">
@@ -615,12 +615,12 @@
                 <label for="state_name" class="form-label">State Name *</label>
                 <input type="text" class="form-control" id="state_name" name="name" required>
               </div>
-  
+
               <div class="col-md-6">
                 <label for="state_code" class="form-label">State Code *</label>
                 <input type="text" class="form-control" id="state_code" name="code" required maxlength="10">
               </div>
-  
+
               <div class="col-md-12">
                 <label for="modal_state_country_id" class="form-label">Country *</label>
                 <select class="form-select" id="modal_state_country_id" name="country_id" required>
@@ -632,7 +632,7 @@
               </div>
             </div>
           </div>
-  
+
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
             <button type="submit" class="btn btn-info">
@@ -654,7 +654,7 @@
             <h5 class="modal-title" id="addCityModalLabel">Add City</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
-  
+
           <div class="modal-body">
             <div id="cityFormErrors" class="alert alert-danger d-none"></div>
             <div class="row g-3">
@@ -671,9 +671,9 @@
                     <option value="{{ $country->id }}">{{ $country->name }}</option>
                   @endforeach
                 </select>
-                
+
               </div>
-              
+
               <div class="col-md-6">
                 <label for="modal_city_state_id" class="form-label">State *</label>
                 <select class="form-select" id="modal_city_state_id" name="state_id" required>
@@ -682,7 +682,7 @@
               </div>
             </div>
           </div>
-  
+
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
             <button type="submit" class="btn btn-info">
@@ -710,11 +710,11 @@
         const name = document.getElementById('name')?.value || '-';
         const contactPerson = document.getElementById('contact_person_name')?.value || '-';
         const mobile = document.getElementById('mobile_number')?.value || '-';
-        
+
         const gstNumber = document.getElementById('gst_number')?.value || '-';
         const panNumber = document.getElementById('pan_number')?.value || '-';
         const panActive = document.querySelector('input[name="pan_active"]:checked')?.value === '1' ? 'Yes' : 'No';
-        
+
         const address = document.getElementById('address')?.value || '-';
         const countrySelect = document.getElementById('country_id');
         const country = countrySelect?.options[countrySelect.selectedIndex]?.text || '-';
@@ -722,7 +722,7 @@
         const state = stateSelect?.options[stateSelect.selectedIndex]?.text || '-';
         const citySelect = document.getElementById('city_id');
         const city = citySelect?.options[citySelect.selectedIndex]?.text || '-';
-        
+
         const declaration = document.querySelector('input[name="declaration_given"]:checked')?.value === '1' ? 'Yes' : 'No';
         const totalTrucks = document.getElementById('total_trucks')?.value || '0';
         const advance = '{{ old("advance_amount", $transporter->advance_amount) }}'; // Current advance amount
@@ -731,20 +731,20 @@
         document.getElementById('confirm-name').textContent = name;
         document.getElementById('confirm-contact-person').textContent = contactPerson;
         document.getElementById('confirm-mobile').textContent = mobile;
-        
+
         document.getElementById('confirm-gst-number').textContent = gstNumber;
         document.getElementById('confirm-pan-number').textContent = panNumber;
         document.getElementById('confirm-pan-active').textContent = panActive;
-        
+
         // Use TDS percentage from database
         const tdsPercentage = '{{ number_format($transporter->tds_percentage ?? 0, 2) }}%';
         document.getElementById('confirm-tds-percentage').textContent = tdsPercentage;
-        
+
         document.getElementById('confirm-address').textContent = address;
         document.getElementById('confirm-country').textContent = country;
         document.getElementById('confirm-state').textContent = state;
         document.getElementById('confirm-city').textContent = city;
-        
+
         document.getElementById('confirm-declaration').textContent = declaration;
         document.getElementById('confirm-total-trucks').textContent = totalTrucks;
         document.getElementById('confirm-advance').textContent = '₹' + parseFloat(advance || 0).toFixed(2);
@@ -769,7 +769,7 @@
         let countryId = "{{ old('country_id', $transporter->country_id) }}";
         let stateId = "{{ old('state_id', $transporter->state_id) }}";
         let cityId = "{{ old('city_id', $transporter->city_id) }}";
-    
+
         // Pre-fill states if editing
         if (countryId) {
             loadStates(countryId, stateId, function () {
@@ -779,7 +779,7 @@
                 }
             });
         }
-    
+
         // Country change
         $('#country_id').on('change', function () {
             let cid = $(this).val();
@@ -789,7 +789,7 @@
                 loadStates(cid);
             }
         });
-    
+
         // State change
         $('#state_id').on('change', function () {
             let sid = $(this).val();
@@ -798,9 +798,9 @@
                 loadCities(sid);
             }
         });
-    
+
         function loadStates(countryId, selectedStateId = null, callback = null) {
-            $.get('/api/dropdown/states/' + countryId, function (data) {
+            $.get('/api/states/' + countryId, function (data) {
                 $('#state_id').empty().append('<option value="">Select State</option>');
                 $.each(data, function (key, state) {
                     $('#state_id').append('<option value="' + state.id + '" ' +
@@ -809,9 +809,9 @@
                 if (callback) callback();
             });
         }
-    
+
         function loadCities(stateId, selectedCityId = null) {
-            $.get('/api/dropdown/cities/' + stateId, function (data) {
+            $.get('/api/cities/' + stateId, function (data) {
                 $('#city_id').empty().append('<option value="">Select City</option>');
                 $.each(data, function (key, city) {
                     $('#city_id').append('<option value="' + city.id + '" ' +
@@ -834,7 +834,7 @@
                 const driverSelect = $('#driver_id');
                 driverSelect.empty();
                 driverSelect.append('<option value="">Select</option>');
-                
+
                 drivers.forEach(function(driver) {
                     driverSelect.append(`<option value="${driver.id}">${driver.name} (${driver.mobile})</option>`);
                 });
@@ -861,39 +861,39 @@
     $(document).on('click', '.edit-truck-btn', function() {
         isEditMode = true;
         currentTruckId = $(this).data('truck-id');
-        
+
         $('#truckModalTitle').text('Edit Truck');
         $('#saveTruckText').text('Update Truck');
-        
+
         // Populate form with truck data
         $('#truck_id').val(currentTruckId);
         $('#truck_number').val($(this).data('truck-number'));
         $('#truck_type').val($(this).data('truck-type'));
         $('#registration_date').val($(this).data('registration-date'));
-        
+
         // Load drivers and select current driver
         loadDriversForTruck();
         setTimeout(() => {
             $('#driver_id').val($(this).data('driver-id'));
         }, 500);
-        
+
         $('#truckModal').modal('show');
     });
 
     // Handle truck form submission
     $('#truckForm').on('submit', function(e) {
         e.preventDefault();
-        
+
         const formData = $(this).serialize();
         const url = isEditMode ? `/trucks/${currentTruckId}` : '{{ route("trucks.store") }}';
         const method = isEditMode ? 'PUT' : 'POST';
-        
+
         // Add method field for PUT requests
         let data = formData;
         if (isEditMode) {
             data += '&_method=PUT';
         }
-        
+
         $.ajax({
             url: url,
             type: 'POST',
@@ -907,32 +907,32 @@
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 `);
-                
+
                 setTimeout(function() {
                     $('.alert-success').fadeOut();
                 }, 5000);
-                
+
                 $('#truckModal').modal('hide');
                 location.reload(); // Reload page to show updated trucks
             },
             error: function(xhr) {
                 console.log('AJAX Error:', xhr.status, xhr.responseText);
-                
+
                 if (xhr.status === 422) {
                     // Handle validation errors
                     const errors = xhr.responseJSON.errors;
                     console.log('Validation errors:', errors);
-                    
+
                     // Clear previous validation states
                     $('#truckForm .form-control, #truckForm .form-select').removeClass('is-invalid');
                     $('#truckForm .invalid-feedback').hide();
-                    
+
                     Object.keys(errors).forEach(function(field) {
                         const input = $(`#${field}`);
                         input.addClass('is-invalid');
                         input.siblings('.invalid-feedback').text(errors[field][0]).show();
                     });
-                    
+
                     // Show general validation error message
                     $('body').prepend(`
                         <div class="alert alert-warning alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
@@ -941,7 +941,7 @@
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     `);
-                    
+
                     setTimeout(function() {
                         $('.alert-warning').fadeOut();
                     }, 5000);
@@ -953,7 +953,7 @@
                     } else {
                         errorMessage += `Server returned ${xhr.status} error.`;
                     }
-                    
+
                     $('body').prepend(`
                         <div class="alert alert-danger alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
                             <i class="bi bi-exclamation-triangle"></i>
@@ -961,7 +961,7 @@
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     `);
-                    
+
                     setTimeout(function() {
                         $('.alert-danger').fadeOut();
                     }, 5000);
@@ -974,7 +974,7 @@
     $(document).on('click', '.delete-truck-btn', function() {
         const truckId = $(this).data('truck-id');
         const truckNumber = $(this).data('truck-number');
-        
+
         if (confirm(`Are you sure you want to delete truck "${truckNumber}"? This action cannot be undone.`)) {
             $.ajax({
                 url: `/trucks/${truckId}`,
@@ -991,15 +991,15 @@
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     `);
-                    
+
                     setTimeout(function() {
                         $('.alert-success').fadeOut();
                     }, 5000);
-                    
+
                     // Remove truck row from table
                     $(`#truck-row-${truckId}`).fadeOut(500, function() {
                         $(this).remove();
-                        
+
                         // Show empty state if no trucks left
                         if ($('#trucksTable tbody tr').length === 0) {
                             location.reload();
@@ -1014,7 +1014,7 @@
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     `);
-                    
+
                     setTimeout(function() {
                         $('.alert-danger').fadeOut();
                     }, 5000);
@@ -1024,21 +1024,21 @@
     });
 
     // Handle truck removal (unlink from transporter)
-    
+
     $(document).on('click', '.remove-truck-btn', function() {
     const truckId = $(this).data('truck-id');
     const truckNumber = $(this).data('truck-number');
     const $row = $(`#truck-row-${truckId}`);
     const $button = $(this);
-    
+
     console.log('Remove button clicked for truck ID:', truckId); // Debug log
-    
+
     if (confirm(`Are you sure you want to remove truck "${truckNumber}" from this transporter?`)) {
         // Show loading state
         $button.prop('disabled', true).html('<i class="bi bi-arrow-repeat fa-spin"></i> Removing...');
-        
+
         console.log('Sending AJAX request...'); // Debug log
-        
+
         $.ajax({
             url: `/trucks/${truckId}/remove-transporter`,
             type: 'POST',
@@ -1050,13 +1050,13 @@
     console.log('Success response:', response); // Debug log
     // Re-enable the button in both success and error cases
     $button.prop('disabled', false).html('<i class="bi bi-x-circle"></i>');
-    
+
     if (response.success) {
         // Remove the row from the table
         $row.fadeOut(400, function() {
             $(this).remove();
         });
-        
+
         // Show success message
         showAlert('success', `<i class="bi bi-check-circle"></i> ${response.success}`);
     } else if (response.error) {
@@ -1070,37 +1070,37 @@
             error: function(xhr, status, error) {
                 console.error('AJAX Error:', status, error); // Debug log
                 console.error('Response:', xhr.responseJSON); // Debug log
-                
+
                 // Show error message
-                const errorMsg = xhr.responseJSON && xhr.responseJSON.error 
-                    ? xhr.responseJSON.error 
+                const errorMsg = xhr.responseJSON && xhr.responseJSON.error
+                    ? xhr.responseJSON.error
                     : 'An error occurred while removing the truck. Please try again.';
-                
+
                 showAlert('danger', `<i class="bi bi-exclamation-triangle"></i> ${errorMsg}`);
-                
+
                 // Re-enable the button
                 $button.prop('disabled', false).html('<i class="bi bi-x-circle"></i>');
             }
         });
     }
-    
+
 });
 function showAlert(type, message) {
     const alertId = 'alert-' + Math.random().toString(36).substr(2, 9);
     const $alert = $(`
-        <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show position-fixed" 
+        <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show position-fixed"
              style="top: 20px; right: 20px; z-index: 1060; min-width: 300px;">
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     `);
-    
+
     // Remove any existing alerts
     $('.alert-dismissible.position-fixed').remove();
-    
+
     // Add new alert
     $('body').prepend($alert);
-    
+
     // Auto-remove after 5 seconds
     setTimeout(() => {
         $alert.alert('close');
@@ -1124,7 +1124,7 @@ function showAlert(type, message) {
         $('#addDriverFormTruck').slideDown();
         $(this).hide();
     });
-    
+
     $('#cancelAddDriverTruck').on('click', function() {
         $('#addDriverFormTruck').slideUp();
         $('#showAddDriverFormTruck').show();
@@ -1132,11 +1132,11 @@ function showAlert(type, message) {
         $('#new_driver_name_truck, #new_driver_mobile_truck, #new_driver_license_truck, #new_driver_address_truck').val('');
         $('#addDriverFormTruck .form-control').removeClass('is-invalid is-valid');
     });
-    
+
     // Handle new driver addition in truck modal
     $('#addDriverBtnTruck').on('click', function(e) {
         e.preventDefault();
-        
+
         // Get form data
         const driverData = {
             name: $('#new_driver_name_truck').val().trim(),
@@ -1145,7 +1145,7 @@ function showAlert(type, message) {
             address: $('#new_driver_address_truck').val().trim(),
             _token: $('meta[name="csrf-token"]').attr('content')
         };
-        
+
         // Basic validation
         let isValid = true;
         if (!driverData.name) {
@@ -1154,22 +1154,22 @@ function showAlert(type, message) {
         } else {
             $('#new_driver_name_truck').removeClass('is-invalid').addClass('is-valid');
         }
-        
+
         if (!driverData.mobile || !/^[0-9]{10}$/.test(driverData.mobile)) {
             $('#new_driver_mobile_truck').addClass('is-invalid');
             isValid = false;
         } else {
             $('#new_driver_mobile_truck').removeClass('is-invalid').addClass('is-valid');
         }
-        
+
         if (!isValid) {
             return;
         }
-        
+
         // Show loading state
         const originalText = $(this).html();
         $(this).html('<i class="bi bi-hourglass-split"></i> Adding...').prop('disabled', true);
-        
+
         $.ajax({
             url: '{{ route("drivers.store") }}',
             type: 'POST',
@@ -1184,19 +1184,19 @@ function showAlert(type, message) {
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     `);
-                    
+
                     // Reset and hide form
                     $('#new_driver_name_truck, #new_driver_mobile_truck, #new_driver_license_truck, #new_driver_address_truck').val('');
                     $('#addDriverFormTruck .form-control').removeClass('is-invalid is-valid');
                     $('#addDriverFormTruck').slideUp();
                     $('#showAddDriverFormTruck').show();
-                    
+
                     // Reload drivers and auto-select the new one
                     loadDriversForTruck();
                     setTimeout(() => {
                         $('#driver_id').val(response.driver.id);
                     }, 500);
-                    
+
                     // Auto-hide success message
                     setTimeout(function() {
                         $('.alert-success').fadeOut();
@@ -1213,7 +1213,7 @@ function showAlert(type, message) {
                 } else {
                     errorMessage += 'Please try again.';
                 }
-                
+
                 $('body').prepend(`
                     <div class="alert alert-danger alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
                         <i class="bi bi-exclamation-triangle"></i>
@@ -1221,7 +1221,7 @@ function showAlert(type, message) {
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 `);
-                
+
                 setTimeout(function() {
                     $('.alert-danger').fadeOut();
                 }, 5000);
@@ -1238,26 +1238,26 @@ function showAlert(type, message) {
 
     // Fresh approach using fetch API for modal submissions
     document.addEventListener('DOMContentLoaded', function() {
-        
+
         // Country Modal Handler
         const countryForm = document.getElementById('addCountryForm');
         if (countryForm) {
             countryForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
-                
+
                 const submitBtn = this.querySelector('button[type="submit"]');
                 const spinner = submitBtn.querySelector('.spinner-border');
                 const errorDiv = document.getElementById('countryFormErrors');
-                
+
                 // Show loading
                 submitBtn.disabled = true;
                 spinner?.classList.remove('d-none');
                 errorDiv?.classList.add('d-none');
-                
+
                 try {
                     const formData = new FormData(this);
                     formData.append('from_modal', '1');
-                    
+
                     const response = await fetch('{{ route("master.countries.store") }}', {
                         method: 'POST',
                         body: formData,
@@ -1267,26 +1267,26 @@ function showAlert(type, message) {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                         }
                     });
-                    
+
                     const data = await response.json();
-                    
+
                     if (response.ok && data.success && data.country) {
                         // Update all dropdowns
                         updateCountryDropdowns(data.country);
-                        
+
                         // Select new country
                         document.getElementById('country_id').value = data.country.id;
                         document.getElementById('country_id').dispatchEvent(new Event('change'));
-                        
+
                         // Clean close modal
                         closeModalClean('addCountryModal');
-                        
+
                         // Reset form
                         this.reset();
                     } else {
                         // Handle validation errors or server errors
                         let errorMessage = data.message || 'Failed to add country';
-                        
+
                         if (data.errors) {
                             // Handle validation errors
                             let errorHtml = '<ul class="mb-0">';
@@ -1320,20 +1320,20 @@ function showAlert(type, message) {
         if (stateForm) {
             stateForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
-                
+
                 const submitBtn = this.querySelector('button[type="submit"]');
                 const spinner = submitBtn.querySelector('.spinner-border');
                 const errorDiv = document.getElementById('stateFormErrors');
-                
+
                 // Show loading
                 submitBtn.disabled = true;
                 spinner?.classList.remove('d-none');
                 errorDiv?.classList.add('d-none');
-                
+
                 try {
                     const formData = new FormData(this);
                     formData.append('from_modal', '1');
-                    
+
                     const response = await fetch('{{ route("master.states.store") }}', {
                         method: 'POST',
                         body: formData,
@@ -1343,26 +1343,26 @@ function showAlert(type, message) {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                         }
                     });
-                    
+
                     const data = await response.json();
-                    
+
                     if (response.ok && data.success && data.state) {
                         // Update dropdowns
                         updateStateDropdowns(data.state);
-                        
+
                         // Select new state
                         document.getElementById('state_id').value = data.state.id;
                         document.getElementById('state_id').dispatchEvent(new Event('change'));
-                        
+
                         // Clean close modal
                         closeModalClean('addStateModal');
-                        
+
                         // Reset form
                         this.reset();
                     } else {
                         // Handle validation errors or server errors
                         let errorMessage = data.message || 'Failed to add state';
-                        
+
                         if (data.errors) {
                             // Handle validation errors
                             let errorHtml = '<ul class="mb-0">';
@@ -1396,20 +1396,20 @@ function showAlert(type, message) {
         if (cityForm) {
             cityForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
-                
+
                 const submitBtn = this.querySelector('button[type="submit"]');
                 const spinner = submitBtn.querySelector('.spinner-border');
                 const errorDiv = document.getElementById('cityFormErrors');
-                
+
                 // Show loading
                 submitBtn.disabled = true;
                 spinner?.classList.remove('d-none');
                 errorDiv?.classList.add('d-none');
-                
+
                 try {
                     const formData = new FormData(this);
                     formData.append('from_modal', '1');
-                    
+
                     const response = await fetch('{{ route("master.cities.store") }}', {
                         method: 'POST',
                         body: formData,
@@ -1419,26 +1419,26 @@ function showAlert(type, message) {
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                         }
                     });
-                    
+
                     const data = await response.json();
-                    
+
                     if (response.ok && data.success && data.city) {
                         // Update dropdown
                         updateCityDropdown(data.city);
-                        
+
                         // Select new city
                         document.getElementById('city_id').value = data.city.id;
                         document.getElementById('city_id').dispatchEvent(new Event('change'));
-                        
+
                         // Clean close modal
                         closeModalClean('addCityModal');
-                        
+
                         // Reset form
                         this.reset();
                     } else {
                         // Handle validation errors or server errors
                         let errorMessage = data.message || 'Failed to add city';
-                        
+
                         if (data.errors) {
                             // Handle validation errors
                             let errorHtml = '<ul class="mb-0">';
@@ -1466,23 +1466,23 @@ function showAlert(type, message) {
                 }
             });
         }
-        
+
         // Handle country change with validation and reset
         $('#country_id').on('change', function() {
             const countryId = $(this).val();
             const stateSelect = $('#state_id');
             const citySelect = $('#city_id');
-            
+
             // Reset state and city dropdowns when country changes
             stateSelect.html('<option value="">Select State</option>').val('');
             citySelect.html('<option value="">Select City</option>').val('');
-            
+
             // Clear validation errors
             stateSelect.removeClass('is-invalid');
             citySelect.removeClass('is-invalid');
             stateSelect.next('.invalid-feedback').remove();
             citySelect.next('.invalid-feedback').remove();
-            
+
             if (countryId) {
                 $.get(`/api/states/${countryId}`)
                     .done(function(data) {
@@ -1501,14 +1501,14 @@ function showAlert(type, message) {
             const stateId = $(this).val();
             const countryId = $('#country_id').val();
             const citySelect = $('#city_id');
-            
+
             // Reset city dropdown when state changes
             citySelect.html('<option value="">Select City</option>').val('');
-            
+
             // Clear validation errors
             citySelect.removeClass('is-invalid');
             citySelect.next('.invalid-feedback').remove();
-            
+
             if (stateId) {
                 $.get(`/api/cities/${stateId}`)
                     .done(function(data) {
@@ -1521,17 +1521,17 @@ function showAlert(type, message) {
                     });
             }
         });
-        
+
         // Handle city change with validation
         $('#city_id').on('change', function() {
             const cityId = $(this).val();
             const stateId = $('#state_id').val();
             const countryId = $('#country_id').val();
-            
+
             // Clear validation errors
             $(this).removeClass('is-invalid');
             $(this).next('.invalid-feedback').remove();
-            
+
             // Additional client-side validation
             if (cityId && (!stateId || !countryId)) {
                 $(this).addClass('is-invalid');
@@ -1553,7 +1553,7 @@ function showAlert(type, message) {
             }
         });
     }
-    
+
     function updateStateDropdowns(state) {
         const dropdowns = ['state_id', 'modal_city_state_id'];
         dropdowns.forEach(id => {
@@ -1566,7 +1566,7 @@ function showAlert(type, message) {
             }
         });
     }
-    
+
     function updateCityDropdown(city) {
         const select = document.getElementById('city_id');
         if (select) {
@@ -1576,14 +1576,14 @@ function showAlert(type, message) {
             select.appendChild(option);
         }
     }
-    
+
     function closeModalClean(modalId) {
         const modal = document.getElementById(modalId);
         if (modal) {
             // Use Bootstrap's modal instance
             const bsModal = bootstrap.Modal.getInstance(modal) || new bootstrap.Modal(modal);
             bsModal.hide();
-            
+
             // Clean up after hide completes
             modal.addEventListener('hidden.bs.modal', function cleanup() {
                 document.querySelectorAll('.modal-backdrop').forEach(backdrop => backdrop.remove());
