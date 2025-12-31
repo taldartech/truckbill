@@ -32,7 +32,6 @@ Route::middleware(['auth.blocked'])->group(function () {
         Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
         Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
         Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
-        Route::get('/users/{user}/delete', [UserController::class, 'destroy'])->name('users.destroy');
 
         // Company Registration
         Route::get('/company/create', [CompanyController::class, 'create'])->name('company.create');
