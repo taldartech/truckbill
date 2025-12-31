@@ -1202,7 +1202,7 @@ class LorryReceiptController extends Controller
                     + ($freightBooking->deviation ?? 0)
                     - ($freightBooking->misc_expense ?? 0);
 
-                $updateData['balance_amount'] = max(0, $newBalance);
+                $updateData['balance_amount'] = $newBalance;
             }
 
             // Update freight booking if there are changes

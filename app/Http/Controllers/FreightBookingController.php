@@ -1212,8 +1212,9 @@ class FreightBookingController extends Controller
                         - ($freightBooking->misc_expense ?? 0);
 
                     // Validate that advance_amount + payment won't exceed effective payable amount
+                    // Allow small tolerance (0.01) for floating point precision
                     $newAdvanceAmount = $freightBooking->advance_amount + $amount;
-                    if ($newAdvanceAmount > $effectivePayableAmount) {
+                    if ($newAdvanceAmount > $effectivePayableAmount + 0.01) {
                         \DB::rollBack();
                         return response()->json([
                             'success' => false,
@@ -1331,11 +1332,17 @@ class FreightBookingController extends Controller
                         //     'advance_amount' => $newTransporterAdvance
                         // ]);
 
-                        // update only balance in freight booking
-                        $newBalance = max(0, $freightBooking->balance_amount - $amount);
-                        $freightBooking->update([
-                            'balance_amount' => $newBalance
-                        ]);
+                        // Recalculate balance_amount using full formula (advance_amount not changed for adjust in advance)
+                        $effectivePayableAmount = $freightBooking->tr_amount
+                            - ($freightBooking->tds_amount ?? 0)
+                            - ($freightBooking->damage_amount ?? 0)
+                            - ($freightBooking->shortage_amount ?? 0)
+                            + ($freightBooking->detention ?? 0)
+                            + ($freightBooking->deviation ?? 0)
+                            - ($freightBooking->misc_expense ?? 0);
+                        
+                        $freightBooking->balance_amount = $effectivePayableAmount - $freightBooking->advance_amount;
+                        $freightBooking->save();
 
                         // \App\Models\AdvancePayment::create([
                         //     'company_id'      => $freightBooking->company_id,
@@ -1365,14 +1372,11 @@ class FreightBookingController extends Controller
                             'deducted' => $amount,
                             'new_advance' => $transporter->advance_amount,
                             'booking_id' => $bookingId,
-                            'new_balance' => $newBalance
+                            'new_balance' => $freightBooking->balance_amount
                         ]);
                     }
                     // normal payment flow (cash, bank, fuel, etc.)
-                    $newAdvanceAmount = $freightBooking->advance_amount + $amount;
-                    $newBalance = max(0, $freightBooking->balance_amount - $amount);
-
-                    // Recalculate balance using full formula for consistency
+                    // Calculate effective payable amount (considering all deductions)
                     $effectivePayableAmount = $freightBooking->tr_amount
                         - ($freightBooking->tds_amount ?? 0)
                         - ($freightBooking->damage_amount ?? 0)
@@ -1381,17 +1385,18 @@ class FreightBookingController extends Controller
                         + ($freightBooking->deviation ?? 0)
                         - ($freightBooking->misc_expense ?? 0);
 
-                    $calculatedBalance = $effectivePayableAmount - $newAdvanceAmount;
+                    $newAdvanceAmount = $freightBooking->advance_amount + $amount;
 
-                    $freightBooking->update([
-                        'balance_amount' => max(0, $calculatedBalance),
-                        'advance_amount' => $newAdvanceAmount
-                    ]);
+                    // Recalculate balance_amount using full formula
+                    $freightBooking->advance_amount = $newAdvanceAmount;
+                    $freightBooking->balance_amount = $effectivePayableAmount - $freightBooking->advance_amount;
+
+                    $freightBooking->save();
 
                     \Log::info('Processed normal payment for booking', [
                         'booking_id' => $bookingId,
                         'amount' => $amount,
-                        'new_balance' => $newBalance,
+                        'new_balance' => $freightBooking->balance_amount,
                         'new_advance_amount' => $newAdvanceAmount
                     ]);
 
