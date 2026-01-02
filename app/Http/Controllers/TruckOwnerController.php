@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AdvancePayment;
 use App\Models\Transporter;
 use App\Models\Company;
 use App\Models\Country;
@@ -24,14 +25,14 @@ class TruckOwnerController extends Controller
             return $this->getTruckOwnersData($request);
         }
 
-        $companies = \App\Models\Company::all();
+        $companies = Company::all();
         return view('truck_owner.index', compact('companies'));
     }
 
     private function getTruckOwnersData(Request $request)
     {
         try {
-            $query = \App\Models\Transporter::with(['company', 'city'])->where('is_owner', 1); // Show only truck owners
+            $query = Transporter::with(['company', 'city'])->where('is_owner', 1); // Show only truck owners
 
             // Only apply company_id filter for non-super_admin users
             if (auth()->user()->userRole->name !== 'super_admin') {
@@ -115,7 +116,7 @@ class TruckOwnerController extends Controller
                 $query->orderBy('transporters.id', 'desc');
             }
 
-            $totalRecords = \App\Models\Transporter::where('is_owner', 1)->count();
+            $totalRecords = Transporter::where('is_owner', 1)->count();
             $filteredRecords = $query->count();
 
             $start = $request->start ?? 0;
@@ -238,7 +239,7 @@ class TruckOwnerController extends Controller
                 'exists:states,id',
                 function ($attribute, $value, $fail) use ($request) {
                     if ($value && $request->country_id) {
-                        $state = \App\Models\State::find($value);
+                        $state = State::find($value);
                         if ($state && $state->country_id != $request->country_id) {
                             $fail('The selected state does not belong to the selected country.');
                         }
@@ -250,13 +251,13 @@ class TruckOwnerController extends Controller
                 'exists:cities,id',
                 function ($attribute, $value, $fail) use ($request) {
                     if ($value && $request->state_id) {
-                        $city = \App\Models\City::find($value);
+                        $city = City::find($value);
                         if ($city && $city->state_id != $request->state_id) {
                             $fail('The selected city does not belong to the selected state.');
                         }
                     }
                     if ($value && $request->country_id) {
-                        $city = \App\Models\City::find($value);
+                        $city = City::find($value);
                         if ($city && $city->country_id != $request->country_id) {
                             $fail('The selected city does not belong to the selected country.');
                         }
@@ -332,7 +333,7 @@ class TruckOwnerController extends Controller
             }
         }
 
-        \App\Models\Transporter::create($validated);
+        Transporter::create($validated);
         return redirect()->route('truck_owners.index')->with('success', 'Truck Owner created successfully!');
     }
 
@@ -370,9 +371,9 @@ class TruckOwnerController extends Controller
         ]);
     }
 
-    public function show($id)
+    public function show(Transporter $transporter)
     {
-        $transporter = \App\Models\Transporter::with(['company', 'city.state.country'])->findOrFail($id);
+        $transporter->load(['company', 'city.state.country']);
 
         // Check if user has permission to view this truck owner
         if (auth()->user()->userRole->name !== 'super_admin' && $transporter->company_id !== auth()->user()->company_id) {
@@ -385,7 +386,7 @@ class TruckOwnerController extends Controller
         }
 
         // Get last 10 advance payments for this truck owner
-        $advancePayments = \App\Models\AdvancePayment::where('transporter_id', $id)
+        $advancePayments = AdvancePayment::where('transporter_id', $transporter->id)
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get()
@@ -400,7 +401,7 @@ class TruckOwnerController extends Controller
             });
 
         // Get registered trucks for this truck owner
-        $trucks = \App\Models\Truck::where('transporter_id', $id)
+        $trucks = Truck::where('transporter_id', $transporter->id)
             ->with('driver')
             ->get()
             ->map(function ($truck) {
@@ -439,7 +440,7 @@ class TruckOwnerController extends Controller
         ]);
     }
 
-    public function edit(\App\Models\Transporter $transporter)
+    public function edit(Transporter $transporter)
     {
         // Load the trucks relationship with driver information
         $transporter->load(['trucks.driver']);
@@ -453,7 +454,7 @@ class TruckOwnerController extends Controller
         return view('truck_owner.edit', compact('transporter', 'companies', 'trucks', 'countries', 'states', 'cities'));
     }
 
-    public function update(Request $request, \App\Models\Transporter $transporter)
+    public function update(Request $request, Transporter $transporter)
     {
         $validated = $request->validate([
             'company_id' => 'required|exists:companies,id',
@@ -497,7 +498,7 @@ class TruckOwnerController extends Controller
                 'exists:states,id',
                 function ($attribute, $value, $fail) use ($request) {
                     if ($value && $request->country_id) {
-                        $state = \App\Models\State::find($value);
+                        $state = State::find($value);
                         if ($state && $state->country_id != $request->country_id) {
                             $fail('The selected state does not belong to the selected country.');
                         }
@@ -509,13 +510,13 @@ class TruckOwnerController extends Controller
                 'exists:cities,id',
                 function ($attribute, $value, $fail) use ($request) {
                     if ($value && $request->state_id) {
-                        $city = \App\Models\City::find($value);
+                        $city = City::find($value);
                         if ($city && $city->state_id != $request->state_id) {
                             $fail('The selected city does not belong to the selected state.');
                         }
                     }
                     if ($value && $request->country_id) {
-                        $city = \App\Models\City::find($value);
+                        $city = City::find($value);
                         if ($city && $city->country_id != $request->country_id) {
                             $fail('The selected city does not belong to the selected country.');
                         }
@@ -606,7 +607,7 @@ class TruckOwnerController extends Controller
         return redirect()->route('truck_owners.index')->with('success', 'Truck Owner updated successfully!');
     }
 
-    public function destroy(\App\Models\Transporter $transporter)
+    public function destroy(Transporter $transporter)
     {
         // Soft delete the truck owner
         $transporter->delete();

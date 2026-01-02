@@ -26,20 +26,10 @@ use App\Http\Controllers\PromoCodeController;
 Route::middleware(['auth.blocked'])->group(function () {
     Route::group(['middleware' => 'role:super_admin,master_admin'], function () {
         // User Management
-        Route::get('/users', [UserController::class, 'index'])->name('users.index');
-        Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
-        Route::post('/users', [UserController::class, 'store'])->name('users.store');
-        Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
-        Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
-        Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+        Route::resource('users', UserController::class)->except(['show']);
 
         // Company Registration
-        Route::get('/company/create', [CompanyController::class, 'create'])->name('company.create');
-        Route::post('/company', [CompanyController::class, 'store'])->name('company.store');
-        Route::get('/company', [CompanyController::class, 'index'])->name('company.index');
-        Route::get('/company/{company}/edit', [CompanyController::class, 'edit'])->name('company.edit');
-        Route::put('/company/{company}', [CompanyController::class, 'update'])->name('company.update');
-        Route::delete('/company/{company}', [CompanyController::class, 'destroy'])->name('company.destroy');
+        Route::resource('company', CompanyController::class)->except(['show']);
     });
     Route::group(['middleware' => 'role:master_admin'], function () {
         Route::get('/company/{company}/block', [CompanyController::class, 'block'])->name('company.block');
@@ -84,42 +74,28 @@ Route::middleware(['auth.blocked'])->group(function () {
 
     // Consignee Management
     Route::middleware(['role:admin,moderator'])->group(function () {
-        Route::get('/consignees', [ConsigneeController::class, 'index'])->name('consignees.index');
-        Route::get('/consignees/create', [ConsigneeController::class, 'create'])->name('consignees.create');
-        Route::post('/consignees', [ConsigneeController::class, 'store'])->name('consignees.store');
+        Route::resource('consignees', ConsigneeController::class)->only(['index', 'create', 'store']);
     });
     Route::middleware(['role:admin'])->group(function () {
-        Route::get('/consignees/{consignee}/edit', [ConsigneeController::class, 'edit'])->name('consignees.edit');
-        Route::put('/consignees/{consignee}', [ConsigneeController::class, 'update'])->name('consignees.update');
-        Route::delete('/consignees/{consignee}', [ConsigneeController::class, 'destroy'])->name('consignees.destroy');
+        Route::resource('consignees', ConsigneeController::class)->only(['edit', 'update', 'destroy']);
     });
 
     // Transporters CRUD
     Route::middleware(['role:admin,moderator'])->group(function () {
-        Route::get('/transporters', [TransporterController::class, 'index'])->name('transporters.index');
-        Route::get('/transporters/create', [TransporterController::class, 'create'])->name('transporters.create');
-        Route::post('/transporters', [TransporterController::class, 'store'])->name('transporters.store');
-        Route::get('/transporters/{transporter}', [TransporterController::class, 'show'])->name('transporters.show');
+        Route::resource('transporters', TransporterController::class)->only(['index', 'create', 'store', 'show']);
     });
     Route::middleware(['role:admin'])->group(function () {
-        Route::get('/transporters/{transporter}/edit', [TransporterController::class, 'edit'])->name('transporters.edit');
-        Route::put('/transporters/{transporter}', [TransporterController::class, 'update'])->name('transporters.update');
-        Route::delete('/transporters/{transporter}', [TransporterController::class, 'destroy'])->name('transporters.destroy');
+        Route::resource('transporters', TransporterController::class)->only(['edit', 'update', 'destroy']);
     });
     Route::get('/transporter/{id}/tds-info', [LorryReceiptController::class, 'getTdsInfo']);
 
 
     //Truck Owner Management
     Route::middleware(['role:admin,moderator'])->group(function () {
-        Route::get('/truck_owners', [TruckOwnerController::class, 'index'])->name('truck_owners.index');
-        Route::get('/truck_owners/create', [TruckOwnerController::class, 'create'])->name('truck_owners.create');
-        Route::post('/truck_owners', [TruckOwnerController::class, 'store'])->name('truck_owners.store');
-        Route::get('/truck_owners/{id}', [TruckOwnerController::class, 'show'])->name('truck_owners.show');
+        Route::resource('truck_owners', TruckOwnerController::class)->only(['index', 'create', 'store', 'show']);
     });
     Route::middleware(['role:admin'])->group(function () {
-        Route::get('/truck_owners/{transporter}/edit', [TruckOwnerController::class, 'edit'])->name('truck_owners.edit');
-        Route::put('/truck_owners/{transporter}', [TruckOwnerController::class, 'update'])->name('truck_owners.update');
-        Route::delete('/truck_owners/{transporter}', [TruckOwnerController::class, 'destroy'])->name('truck_owners.destroy');
+        Route::resource('truck_owners', TruckOwnerController::class)->only(['edit', 'update', 'destroy']);
     });
 
     // Advance Payment Management
