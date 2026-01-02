@@ -440,21 +440,21 @@ class TruckOwnerController extends Controller
         ]);
     }
 
-    public function edit(Transporter $transporter)
+    public function edit(Transporter $truck_owner)
     {
         // Load the trucks relationship with driver information
-        $transporter->load(['trucks.driver']);
+        $truck_owner->load(['trucks.driver']);
 
         $companies = Company::all();
-        $trucks = Truck::where('transporter_id', $transporter->id)->get();
+        $trucks = Truck::where('transporter_id', $truck_owner->id)->get();
         $countries = Country::all();
         $states = State::all();
         $cities = City::all();
 
-        return view('truck_owner.edit', compact('transporter', 'companies', 'trucks', 'countries', 'states', 'cities'));
+        return view('truck_owner.edit', compact('truck_owner', 'companies', 'trucks', 'countries', 'states', 'cities'));
     }
 
-    public function update(Request $request, Transporter $transporter)
+    public function update(Request $request, Transporter $truck_owner)
     {
         $validated = $request->validate([
             'company_id' => 'required|exists:companies,id',
@@ -471,7 +471,7 @@ class TruckOwnerController extends Controller
                             ->whereNULL('deleted_at')
                             ->where('is_owner', 1)
                     )
-                    ->ignore($transporter->id),
+                    ->ignore($truck_owner->id),
             ],
             'pan_number' => [
                 'nullable',
@@ -485,7 +485,7 @@ class TruckOwnerController extends Controller
                             ->whereNULL('deleted_at')
                             ->where('is_owner', 1)
                     )
-                    ->ignore($transporter->id),
+                    ->ignore($truck_owner->id),
             ],
             'declaration_given' => 'required|boolean',
             'total_trucks' => 'required|integer|min:0|max:10000',
@@ -533,7 +533,7 @@ class TruckOwnerController extends Controller
                             ->whereNULL('deleted_at')
                             ->where('is_owner', 1)
                     )
-                    ->ignore($transporter->id),
+                    ->ignore($truck_owner->id),
             ],
             'short_name' => [
                 'nullable',
@@ -546,7 +546,7 @@ class TruckOwnerController extends Controller
                             ->whereNULL('deleted_at')
                             ->where('is_owner', 1)
                     )
-                    ->ignore($transporter->id),
+                    ->ignore($truck_owner->id),
             ],
             'contact_person_name' => 'nullable|string|max:255',
         ], [
@@ -574,7 +574,7 @@ class TruckOwnerController extends Controller
         $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
 
         // Check if declaration_given changed
-        $declarationChanged = $transporter->declaration_given != $validated['declaration_given'];
+        $declarationChanged = $truck_owner->declaration_given != $validated['declaration_given'];
 
         if ($validated['declaration_given']) {
             // Rule 1: Declaration given → TDS = 0%
@@ -597,11 +597,11 @@ class TruckOwnerController extends Controller
             }
         }
 
-        $transporter->update($validated);
+        $truck_owner->update($validated);
 
         // If declaration_given changed, update related freight bookings with remaining balance
         if ($declarationChanged) {
-            $this->updateFreightBookingsTds($transporter, $validated['tds_percentage']);
+            $this->updateFreightBookingsTds($truck_owner, $validated['tds_percentage']);
         }
 
         return redirect()->route('truck_owners.index')->with('success', 'Truck Owner updated successfully!');

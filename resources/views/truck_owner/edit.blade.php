@@ -40,7 +40,7 @@
 
 
     <!--begin::Form-->
-    <form action="{{ route('truck_owners.update', $transporter->id) }}" method="POST" class="needs-validation" novalidate="">
+    <form action="{{ route('truck_owners.update', $truck_owner) }}" method="POST" class="needs-validation" novalidate="">
         @csrf
         @method('PUT')
         @php
@@ -59,27 +59,27 @@
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label for="name" class="form-label">Truck Owner Name *</label>
-                    <input placeholder="Enter Truck Owner Name" type="text" class="form-control" id="name" name="name" required value="{{ old('name', $transporter->name) }}">
+                    <input placeholder="Enter Truck Owner Name" type="text" class="form-control" id="name" name="name" required value="{{ old('name', $truck_owner->name) }}">
                     @error('name') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Advance Amount</label>
                     <div class="form-control-plaintext bg-light border rounded px-3 py-2">
-                        <strong>₹ {{ number_format($transporter->advance_amount, 2) }}</strong>
+                        <strong>₹ {{ number_format($truck_owner->advance_amount, 2) }}</strong>
                         <small class="text-muted d-block">Read-only field</small>
                     </div>
-                    <input type="hidden" name="advance_amount" value="{{ $transporter->advance_amount }}">
+                    <input type="hidden" name="advance_amount" value="{{ $truck_owner->advance_amount }}">
                 </div>
             </div>
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label for="gst_number" class="form-label">GST Number</label>
-            <input placeholder="Enter GST Number" type="text" class="form-control" id="gst_number" name="gst_number" value="{{ old('gst_number', $transporter->gst_number) }}">
+            <input placeholder="Enter GST Number" type="text" class="form-control" id="gst_number" name="gst_number" value="{{ old('gst_number', $truck_owner->gst_number) }}">
             @error('gst_number') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-6">
                     <label for="pan_number" class="form-label">PAN Number</label>
-                    <input placeholder="Enter PAN Number" type="text" class="form-control" id="pan_number" name="pan_number" required value="{{ old('pan_number', $transporter->pan_number) }}">
+                    <input placeholder="Enter PAN Number" type="text" class="form-control" id="pan_number" name="pan_number" required value="{{ old('pan_number', $truck_owner->pan_number) }}">
                     @error('pan_number') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
             </div>
@@ -87,18 +87,18 @@
                 <div class="col-md-6">
                     <label class="form-label">PAN is Active *</label><br>
                     <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="pan_active" id="pan_active_yes" value="1" {{ old('pan_active', $transporter->pan_active) == 1 ? 'checked' : '' }} required>
+                        <input class="form-check-input" type="radio" name="pan_active" id="pan_active_yes" value="1" {{ old('pan_active', $truck_owner->pan_active) == 1 ? 'checked' : '' }} required>
                         <label class="form-check-label" for="pan_active_yes">Yes</label>
                     </div>
                     <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="pan_active" id="pan_active_no" value="0" {{ old('pan_active', $transporter->pan_active) == 0 ? 'checked' : '' }} required>
+                        <input class="form-check-input" type="radio" name="pan_active" id="pan_active_no" value="0" {{ old('pan_active', $truck_owner->pan_active) == 0 ? 'checked' : '' }} required>
                         <label class="form-check-label" for="pan_active_no">No</label>
                     </div>
                     @error('pan_active') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-6">
                     <label for="mobile" class="form-label">Mobile</label>
-                    <input type="text" class="form-control" id="mobile" name="mobile_number" required value="{{ old('mobile_number', $transporter->mobile_number) }}">
+                    <input type="text" class="form-control" id="mobile" name="mobile_number" required value="{{ old('mobile_number', $truck_owner->mobile_number) }}">
                     @error('mobile_number') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please enter a valid mobile number.</div>
                 </div>
@@ -106,7 +106,7 @@
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label for="address" class="form-label">Address</label>
-                    <textarea class="form-control" id="address" name="address" rows="3">{{ old('address', $transporter->address) }}</textarea>
+                    <textarea class="form-control" id="address" name="address" rows="3">{{ old('address', $truck_owner->address) }}</textarea>
                     @error('address') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please enter an address.</div>
                 </div>
@@ -118,18 +118,18 @@
                     <div class="col-md-6">
                         <label class="form-label">Declaration Given? *</label><br>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="declaration_given" id="decl_yes" value="1" {{ old('declaration_given', $transporter->declaration_given) == 1 ? 'checked' : '' }} required>
+                            <input class="form-check-input" type="radio" name="declaration_given" id="decl_yes" value="1" {{ old('declaration_given', $truck_owner->declaration_given) == 1 ? 'checked' : '' }} required>
                             <label class="form-check-label" for="decl_yes">Yes</label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="declaration_given" id="decl_no" value="0" {{ old('declaration_given', $transporter->declaration_given) == 0 ? 'checked' : '' }} required>
+                            <input class="form-check-input" type="radio" name="declaration_given" id="decl_no" value="0" {{ old('declaration_given', $truck_owner->declaration_given) == 0 ? 'checked' : '' }} required>
                             <label class="form-check-label" for="decl_no">No</label>
                         </div>
                         @error('declaration_given') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-6">
                         <label for="total_trucks" class="form-label">Total Trucks *</label>
-                        <input type="number" class="form-control" id="total_trucks" name="total_trucks" min="0" required value="{{ old('total_trucks', $transporter->total_trucks) }}" placeholder="Enter total trucks">
+                        <input type="number" class="form-control" id="total_trucks" name="total_trucks" min="0" required value="{{ old('total_trucks', $truck_owner->total_trucks) }}" placeholder="Enter total trucks">
                         @error('total_trucks') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
                 </div>
@@ -143,7 +143,7 @@
                             <select class="form-select" id="country_id" name="country_id" required>
                                 <option value="">Select Country</option>
                                 @foreach($countries as $country)
-                                    <option value="{{ $country->id }}" {{ old('country_id', $transporter->country_id) == $country->id ? 'selected' : '' }}>
+                                    <option value="{{ $country->id }}" {{ old('country_id', $truck_owner->country_id) == $country->id ? 'selected' : '' }}>
                                         {{ $country->name }}
                                     </option>
                                 @endforeach
@@ -161,7 +161,7 @@
                                 <option value="">Select State</option>
                                 @if(old('country_id'))
                                     @foreach($states as $state)
-                                        <option value="{{ $state->id }}" {{ old('state_id', $transporter->state_id) == $state->id ? 'selected' : '' }}>
+                                        <option value="{{ $state->id }}" {{ old('state_id', $truck_owner->state_id) == $state->id ? 'selected' : '' }}>
                                             {{ $state->name }}
                                         </option>
                                     @endforeach
@@ -180,7 +180,7 @@
                                 <option value="">Select City</option>
                                 @if(old('state_id'))
                                     @foreach($cities as $city)
-                                        <option value="{{ $city->id }}" {{ old('city_id', $transporter->city_id) == $city->id ? 'selected' : '' }}>
+                                        <option value="{{ $city->id }}" {{ old('city_id', $truck_owner->city_id) == $city->id ? 'selected' : '' }}>
                                             {{ $city->name }}
                                         </option>
                                     @endforeach
@@ -199,7 +199,7 @@
                     <select class="form-select" id="country_id" name="country_id" required>
                         <option value="">Select Country</option>
                         @foreach($countries as $country)
-                            <option value="{{ $country->id }}" {{ old('country_id', $transporter->country_id) == $country->id ? 'selected' : '' }}>
+                            <option value="{{ $country->id }}" {{ old('country_id', $truck_owner->country_id) == $country->id ? 'selected' : '' }}>
                                 {{ $country->name }}
                             </option>
                         @endforeach
@@ -215,7 +215,7 @@
                         <option value="">Select State</option>
                         @foreach($states as $state)
                             <option value="{{ $state->id }}"
-                                {{ (old('state_id', $transporter->state_id) == $state->id) ? 'selected' : '' }}>
+                                {{ (old('state_id', $truck_owner->state_id) == $state->id) ? 'selected' : '' }}>
                                 {{ $state->name }}
                             </option>
                         @endforeach
@@ -230,7 +230,7 @@
                         <option value="">Select City</option>
                         @foreach($cities as $city)
                             <option value="{{ $city->id }}"
-                                {{ (old('city_id', $transporter->city_id) == $city->id) ? 'selected' : '' }}>
+                                {{ (old('city_id', $truck_owner->city_id) == $city->id) ? 'selected' : '' }}>
                                 {{ $city->name }}
                             </option>
                         @endforeach
@@ -319,7 +319,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($transporter->trucks as $truck)
+                        @foreach($truck_owner->trucks as $truck)
                         <tr id="truck-row-{{ $truck->id }}">
                             <td class="fw-bold">{{ $truck->truck_number }}</td>
                             <td>{{ $truck->truck_type }}</td>
@@ -356,7 +356,7 @@
                         @endforeach
                     </tbody>
                 </table>
-                @if($transporter->trucks->isEmpty())
+                @if($truck_owner->trucks->isEmpty())
                 <div class="text-center py-4">
                     <i class="bi bi-truck text-muted" style="font-size: 3rem;"></i>
                     <p class="text-muted mt-2">No trucks registered yet.</p>
@@ -383,12 +383,12 @@
             <form id="truckForm" method="POST">
                 @csrf
                 <input type="hidden" id="truck_id" name="truck_id">
-                <input type="hidden" name="transporter_id" value="{{ $transporter->id }}">
+                <input type="hidden" name="transporter_id" value="{{ $truck_owner->id }}">
                 <div class="modal-body">
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="truck_owner_display" class="form-label">Truck Owner *</label>
-                            <input type="text" class="form-control" id="truck_owner_display" value="{{ $transporter->name }}" disabled>
+                            <input type="text" class="form-control" id="truck_owner_display" value="{{ $truck_owner->name }}" disabled>
                         </div>
                         <div class="col-md-6">
                             <label for="truck_number" class="form-label">Truck Number *</label>
@@ -725,7 +725,7 @@
 
         const declaration = document.querySelector('input[name="declaration_given"]:checked')?.value === '1' ? 'Yes' : 'No';
         const totalTrucks = document.getElementById('total_trucks')?.value || '0';
-        const advance = '{{ old("advance_amount", $transporter->advance_amount) }}'; // Current advance amount
+        const advance = '{{ old("advance_amount", $truck_owner->advance_amount) }}'; // Current advance amount
 
         // Populate modal with form data
         document.getElementById('confirm-name').textContent = name;
@@ -737,7 +737,7 @@
         document.getElementById('confirm-pan-active').textContent = panActive;
 
         // Use TDS percentage from database
-        const tdsPercentage = '{{ number_format($transporter->tds_percentage ?? 0, 2) }}%';
+        const tdsPercentage = '{{ number_format($truck_owner->tds_percentage ?? 0, 2) }}%';
         document.getElementById('confirm-tds-percentage').textContent = tdsPercentage;
 
         document.getElementById('confirm-address').textContent = address;
@@ -766,9 +766,9 @@
 {{-- JS for cascading dropdowns --}}
 <script>
     $(document).ready(function () {
-        let countryId = "{{ old('country_id', $transporter->country_id) }}";
-        let stateId = "{{ old('state_id', $transporter->state_id) }}";
-        let cityId = "{{ old('city_id', $transporter->city_id) }}";
+        let countryId = "{{ old('country_id', $truck_owner->country_id) }}";
+        let stateId = "{{ old('state_id', $truck_owner->state_id) }}";
+        let cityId = "{{ old('city_id', $truck_owner->city_id) }}";
 
         // Pre-fill states if editing
         if (countryId) {
