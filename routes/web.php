@@ -31,10 +31,11 @@ Route::middleware(['auth.blocked'])->group(function () {
         // Company Registration
         Route::resource('company', CompanyController::class)->except(['show']);
     });
+    // Master Admin only routes
     Route::group(['middleware' => 'role:master_admin'], function () {
         Route::get('/company/{company}/block', [CompanyController::class, 'block'])->name('company.block');
         Route::get('/company/{company}/unblock', [CompanyController::class, 'unblock'])->name('company.unblock');
-        Route::resource('promo_codes', PromoCodeController::class);
+        Route::resource('promo_codes', PromoCodeController::class)->except(['show']);
     });
     Route::post('promo_codes/validate', [PaymentController::class, 'applyPromoCode'])->name('promo_codes.validate');
 

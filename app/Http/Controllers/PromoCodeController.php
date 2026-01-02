@@ -2,15 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StorePromoCodeRequest;
+use App\Http\Requests\UpdatePromoCodeRequest;
 use App\Models\PromoCode;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 
 class PromoCodeController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(): View
     {
         $promoCodes = PromoCode::orderBy('created_at', 'desc')->get();
         return view('promo_code.index', compact('promoCodes'));
@@ -19,7 +24,7 @@ class PromoCodeController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(): View
     {
         return view('promo_code.create');
     }
@@ -27,87 +32,68 @@ class PromoCodeController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StorePromoCodeRequest $request): RedirectResponse
     {
-        $request->validate([
-            'code' => 'required|unique:promo_codes,code',
-            'discount_type' => 'required|in:percentage,absolute',
-            'discount_value' => 'required|numeric|min:0',
-            'start_date' => 'required|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-            'max_uses' => 'nullable|integer|min:1',
-            'is_active' => 'nullable|boolean',
-        ]);
+        $validated = $request->validated();
 
-        PromoCode::create([
-            'code' => $request->code,
-            'discount_type' => $request->discount_type,
-            'discount_value' => $request->discount_value,
-            'start_date' => $request->start_date,
-            'end_date' => $request->end_date,
-            'max_uses' => $request->max_uses,
-            'is_active' => $request->has('is_active') ? (bool) $request->is_active : true,
-        ]);
+        // Set default is_active to true if not provided
+        if (!isset($validated['is_active'])) {
+            $validated['is_active'] = true;
+        } else {
+            $validated['is_active'] = (bool) $validated['is_active'];
+        }
 
-        return redirect()->route('promo_codes.index')->with('success', 'Promo code created successfully.');
-    }
+        DB::transaction(function () use ($validated) {
+            PromoCode::create($validated);
+        });
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        $promoCode = PromoCode::findOrFail($id);
-        return view('promo_code.show', compact('promoCode'));
+        return redirect()
+            ->route('promo_codes.index')
+            ->with('success', 'Promo code created successfully.');
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(PromoCode $promoCode): View
     {
-        $promoCode = PromoCode::findOrFail($id);
         return view('promo_code.edit', compact('promoCode'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UpdatePromoCodeRequest $request, PromoCode $promoCode): RedirectResponse
     {
-        $promoCode = PromoCode::findOrFail($id);
+        $validated = $request->validated();
 
-        $request->validate([
-            'code' => 'required|unique:promo_codes,code,' . $id,
-            'discount_type' => 'required|in:percentage,absolute',
-            'discount_value' => 'required|numeric|min:0',
-            'start_date' => 'required|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-            'max_uses' => 'nullable|integer|min:1',
-            'is_active' => 'nullable|boolean',
-        ]);
+        // Preserve existing is_active if not provided
+        if (!isset($validated['is_active'])) {
+            $validated['is_active'] = $promoCode->is_active;
+        } else {
+            $validated['is_active'] = (bool) $validated['is_active'];
+        }
 
-        $promoCode->update([
-            'code' => $request->code,
-            'discount_type' => $request->discount_type,
-            'discount_value' => $request->discount_value,
-            'start_date' => $request->start_date,
-            'end_date' => $request->end_date,
-            'max_uses' => $request->max_uses,
-            'is_active' => $request->has('is_active') ? (bool) $request->is_active : $promoCode->is_active,
-        ]);
+        DB::transaction(function () use ($validated, $promoCode) {
+            $promoCode->update($validated);
+        });
 
-        return redirect()->route('promo_codes.index')->with('success', 'Promo code updated successfully.');
+        return redirect()
+            ->route('promo_codes.index')
+            ->with('success', 'Promo code updated successfully.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(PromoCode $promoCode): RedirectResponse
     {
-        $promoCode = PromoCode::findOrFail($id);
-        $promoCode->delete();
+        DB::transaction(function () use ($promoCode) {
+            $promoCode->delete();
+        });
 
-        return redirect()->route('promo_codes.index')->with('success', 'Promo code deleted successfully.');
+        return redirect()
+            ->route('promo_codes.index')
+            ->with('success', 'Promo code deleted successfully.');
     }
 }
