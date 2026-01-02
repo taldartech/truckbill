@@ -2,102 +2,255 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Http\Requests\StoreBranchRequest;
+use App\Http\Requests\UpdateBranchRequest;
 use App\Models\Branch;
 use App\Models\Company;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 use Yajra\DataTables\Facades\DataTables;
-use Illuminate\Validation\Rule;
 
 class BranchController extends Controller
 {
-    // List all branches
-    public function index(Request $request)
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(Request $request): View|\Illuminate\Http\JsonResponse
     {
         if ($request->ajax()) {
-            //fetch company according to user->id 
-            $branches = \App\Models\Branch::with('company')
-        ->whereHas('company', function ($q) {
-            $q->where('user_id', auth()->user()->id);
-        })
-        ->get();
-            
-            return DataTables::of($branches)
-                ->addIndexColumn()
-                ->addColumn('action', function($row) {
-                    $btn = '<div role="group">';
-                    $btn .= '<a href="'.route('branches.edit', $row->id).'" class="btn btn-sm btn-info me-1"><i class="bi bi-pencil"></i></a>';
-                    $btn .= '<form action="'.route('branches.destroy', $row->id).'" method="POST" class="d-inline">';
-                    $btn .= csrf_field();
-                    $btn .= method_field('DELETE');
-                    $btn .= '<button type="submit" class="btn btn-sm btn-danger" style="display:inline-block;" onclick="return confirm(\'Are you sure you want to delete this branch?\')"><i class="bi bi-trash"></i></button>';
-                    $btn .= '</form>';
-                    $btn .= '</div>';
-                    return $btn;
-                })
-                ->rawColumns(['action'])
-                ->make(true);
+            return $this->getBranchesData($request);
         }
-        
+
         return view('branches.index');
     }
 
-    // Show create form
-    public function create()
+    /**
+     * Get branches data for DataTables.
+     */
+    private function getBranchesData(Request $request): \Illuminate\Http\JsonResponse
     {
-        $companies = Company::all()->where('user_id', auth()->user()->id); // select company for branch
-        
+        $user = Auth::user();
+        $companyIds = Company::where('user_id', $user->id)->pluck('id')->toArray();
+
+        $query = Branch::with('company')
+            ->whereIn('company_id', $companyIds);
+
+        // Apply search filters
+        if ($request->has('search') && $request->search['value']) {
+            $searchValue = $request->search['value'];
+            $query->where(function ($q) use ($searchValue) {
+                $q->where('branch_name', 'like', "%{$searchValue}%")
+                    ->orWhere('branch_contact_number', 'like', "%{$searchValue}%")
+                    ->orWhere('branch_address', 'like', "%{$searchValue}%")
+                    ->orWhereHas('company', function ($companyQuery) use ($searchValue) {
+                        $companyQuery->where('name', 'like', "%{$searchValue}%");
+                    });
+            });
+        }
+
+        // Apply sorting
+        if ($request->has('order')) {
+            $orderColumn = $request->order[0]['column'];
+            $orderDirection = $request->order[0]['dir'];
+
+            match ($orderColumn) {
+                1 => $query->orderBy('branch_name', $orderDirection),
+                2 => $query->join('companies', 'branches.company_id', '=', 'companies.id')
+                    ->orderBy('companies.name', $orderDirection)
+                    ->select('branches.*'),
+                3 => $query->orderBy('branch_contact_number', $orderDirection),
+                4 => $query->orderBy('branch_address', $orderDirection),
+                default => $query->orderBy('created_at', 'desc')
+            };
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        $branches = $query->get();
+
+        $data = $branches->map(function ($branch, $index) {
+            return [
+                'id' => $index + 1,
+                'branch_name' => $branch->branch_name,
+                'company' => [
+                    'name' => $branch->company?->name ?? 'N/A',
+                ],
+                'branch_contact_number' => $branch->branch_contact_number ?? 'N/A',
+                'branch_address' => $branch->branch_address ?? 'N/A',
+                'action' => $this->getActionButtons($branch),
+            ];
+        });
+
+        return response()->json([
+            'draw' => intval($request->draw ?? 1),
+            'recordsTotal' => $branches->count(),
+            'recordsFiltered' => $branches->count(),
+            'data' => $data,
+        ]);
+    }
+
+    /**
+     * Generate action buttons for DataTables.
+     */
+    private function getActionButtons(Branch $branch): string
+    {
+        $buttons = '<div class="d-flex gap-1">';
+
+        $editUrl = route('branches.edit', $branch->id);
+        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info me-1" title="Edit Branch">';
+        $buttons .= '<i class="bi bi-pencil"></i></a>';
+
+        $deleteUrl = route('branches.destroy', $branch->id);
+        $buttons .= '<form action="' . $deleteUrl . '" method="POST" class="d-inline" onsubmit="return confirm(\'Are you sure you want to delete this branch?\')">';
+        $buttons .= csrf_field() . method_field('DELETE');
+        $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete Branch">';
+        $buttons .= '<i class="bi bi-trash"></i></button></form>';
+
+        $buttons .= '</div>';
+        return $buttons;
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create(): View
+    {
+        $user = Auth::user();
+        $companies = Company::where('user_id', $user->id)->get();
+
         return view('branches.create', compact('companies'));
     }
 
-    // Store new branch
-    public function store(Request $request)
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(StoreBranchRequest $request): RedirectResponse
     {
-        $request->validate([
-            'company_id' => 'required|exists:companies,id',
-            'branch_name' => 'required|string|max:255',
-            'branch_address' => 'nullable|string',
-            'branch_contact_number' => 'nullable|unique:branches,branch_contact_number|digits:10',
-            'head_office' => 'required|boolean',
-        ]);
+        // Form Request validation already passed, now add controller-level validation
+        $validated = $request->validated();
 
-        Branch::create($request->all());
-        return redirect()->route('branches.index')->with('success', 'Branch created successfully!');
+        // Additional controller-level validation for branch constraints
+        $this->validateBranchConstraints($validated);
+
+        DB::transaction(function () use ($validated) {
+            Branch::create($validated);
+        });
+
+        return redirect()
+            ->route('branches.index')
+            ->with('success', 'Branch created successfully!');
     }
 
-    // Show edit form
-    public function edit(Branch $branch)
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(Branch $branch): View
     {
-        $companies = Company::all()->where('user_id', auth()->user()->id);
+        $user = Auth::user();
+
+        // Check authorization - user can only edit branches from their companies
+        if (!$this->canManageBranch($user, $branch)) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        $companies = Company::where('user_id', $user->id)->get();
+
         return view('branches.edit', compact('branch', 'companies'));
     }
 
-    // Update branch
-    public function update(Request $request, Branch $branch)
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(UpdateBranchRequest $request, Branch $branch): RedirectResponse
     {
-        $request->validate([
-            'company_id' => 'required|exists:companies,id',
-            'branch_name' => 'required|string|max:255',
-            'branch_address' => 'nullable|string',
-            'branch_contact_number' => [
-                'nullable',
-                'digits:10',
-                Rule::unique('branches', 'branch_contact_number')->ignore($branch->id),
-            ],
-            'head_office' => 'required|boolean',
-        ], [
-            'branch_contact_number.unique' => 'This contact number is already used by another branch.',
-            'branch_contact_number.max' => 'The contact number must not exceed 10 digits.',
-        ]);
+        // Form Request authorization and validation already passed, now add controller-level validation
+        $validated = $request->validated();
 
-        $branch->update($request->all());
-        return redirect()->route('branches.index')->with('success', 'Branch updated successfully!');
+        // Additional controller-level validation for branch constraints
+        $this->validateBranchConstraints($validated, $branch);
+
+        DB::transaction(function () use ($validated, $branch) {
+            $branch->update($validated);
+        });
+
+        return redirect()
+            ->route('branches.index')
+            ->with('success', 'Branch updated successfully!');
     }
 
-    // Delete branch
-    public function destroy(Branch $branch)
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Branch $branch): RedirectResponse
     {
-        $branch->delete(); // soft delete
-        return redirect()->route('branches.index')->with('success', 'Branch deleted successfully!');
+        $user = Auth::user();
+
+        // Check authorization - user can only delete branches from their companies
+        if (!$this->canManageBranch($user, $branch)) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        DB::transaction(function () use ($branch) {
+            $branch->delete();
+        });
+
+        return redirect()
+            ->route('branches.index')
+            ->with('success', 'Branch deleted successfully!');
     }
-    
+
+    /**
+     * Check if user can manage (edit/delete) the branch.
+     * Super admin can only manage branches from their own companies.
+     */
+    private function canManageBranch($user, Branch $branch): bool
+    {
+        $companyIds = Company::where('user_id', $user->id)->pluck('id')->toArray();
+        return in_array($branch->company_id, $companyIds);
+    }
+
+    /**
+     * Validate branch constraints for creation/update.
+     * Controller-level validation for branch name uniqueness and head office rules.
+     */
+    private function validateBranchConstraints(array $validated, ?Branch $branch = null): void
+    {
+        $companyId = $validated['company_id'];
+        $branchName = $validated['branch_name'];
+        $isHeadOffice = (bool) $validated['head_office'];
+
+        // Validate branch name uniqueness within the same company
+        $query = Branch::where('company_id', $companyId)
+            ->where('branch_name', $branchName);
+
+        if ($branch) {
+            $query->where('id', '!=', $branch->id);
+        }
+
+        if ($query->exists()) {
+            throw ValidationException::withMessages([
+                'branch_name' => 'A branch with this name already exists for the selected company.',
+            ]);
+        }
+
+        // Validate head office constraint: only one head office per company
+        if ($isHeadOffice) {
+            $headOfficeQuery = Branch::where('company_id', $companyId)
+                ->where('head_office', true);
+
+            if ($branch) {
+                $headOfficeQuery->where('id', '!=', $branch->id);
+            }
+
+            if ($headOfficeQuery->exists()) {
+                throw ValidationException::withMessages([
+                    'head_office' => 'This company already has a head office. Please unset the existing head office first.',
+                ]);
+            }
+        }
+    }
 }

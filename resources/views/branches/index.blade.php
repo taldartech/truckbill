@@ -77,7 +77,7 @@ $(document).ready(function() {
                 data: 'company.name',
                 name: 'company.name',
                 render: function(data, type, row) {
-                    return data || 'N/A';
+                    return (row.company && row.company.name) ? row.company.name : 'N/A';
                 },
                 width: '150px'
             },
