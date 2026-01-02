@@ -84,8 +84,6 @@ Route::middleware(['auth.blocked'])->group(function () {
     Route::middleware(['role:admin'])->group(function () {
         Route::resource('transporters', TransporterController::class)->only(['edit', 'update', 'destroy']);
     });
-    Route::get('/transporter/{id}/tds-info', [LorryReceiptController::class, 'getTdsInfo']);
-
 
     //Truck Owner Management
     Route::middleware(['role:admin,moderator'])->group(function () {

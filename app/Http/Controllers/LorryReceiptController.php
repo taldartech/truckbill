@@ -384,17 +384,6 @@ class LorryReceiptController extends Controller
 
         return view('lorry_receipts.create-linked', compact('companies', 'trucks', 'transporters', 'consignees', 'goodsTypes', 'statuses', 'truckOwners', 'agencies', 'tdsPercentages'));
     }
-    public function getTdsInfo($id)
-    {
-        $transporter = Transporter::findOrFail($id);
-
-        return response()->json([
-            'pan_active' => $transporter->pan_active,
-            'is_owner' => $transporter->is_owner,
-            'declaration_given' => $transporter->declaration_given,
-        ]);
-    }
-
 
     public function bulkPayment(Request $request)
     {
