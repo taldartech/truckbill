@@ -44,7 +44,7 @@ Route::middleware(['auth.blocked'])->group(function () {
         Route::resource('branches', BranchController::class)->except(['show']);
 
         // Voucher Template Routes
-        Route::resource('voucher_templates', VoucherTemplateController::class);
+        Route::resource('voucher_templates', VoucherTemplateController::class)->except(['create', 'store', 'show', 'destroy']);
 
         // Truck_Owner Bank Accounts
         Route::get('truck_owner_bank_accounts/index', [TruckOwnerBankAccountController::class, 'index'])->name('truck_owner_bank_accounts.index');

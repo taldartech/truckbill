@@ -18,25 +18,33 @@
                     <thead>
                         <tr>
                             <th>ID</th>
+                            <th>Company</th>
                             <th>Name</th>
-                            <th>Company Name</th>
                             <th>Address</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($company as $company)
+                        @forelse ($companies as $company)
                             <tr>
                                 <td>{{ $company->id }}</td>
                                 <td>{{ $company->name }}</td>
-                                <td>{{ $company->template_name }}</td>
-                                <td>{{ $company->template_address }}</td>
+                                <td>{{ $company->template_name ?? 'N/A' }}</td>
+                                <td>{{ Str::limit($company->template_address ?? 'N/A', 50) }}</td>
                                 <td>
-                                    <a href="{{ route('voucher_templates.edit', $company->id) }}"
-                                        class="btn btn-outline-primary btn-s"><i class="fa fa-edit"></i></a>
+                                    <a href="{{ route('voucher_templates.edit', $company) }}"
+                                        class="btn btn-outline-primary btn-sm" title="Edit Template">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
                                 </td>
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">
+                                    <i class="bi bi-inbox"></i> No companies found. Please create a company first.
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>

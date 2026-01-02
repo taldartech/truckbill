@@ -8,57 +8,55 @@
                     <div class="card-header">
                         <div class="card-title">Edit Voucher Template</div>
                     </div>
-                    <form action="{{ route('voucher_templates.update', $company->id) }}" method="POST" class="needs-validation" novalidate="">
+                    <form action="{{ route('voucher_templates.update', $voucher_template) }}" method="POST" class="needs-validation" novalidate="">
                         @csrf
                         @method('PUT')
                         @if (session('success'))
-                            <div class="alert alert-success">{{ session('success') }}</div>
+                            <div class="alert alert-success alert-dismissible fade show">
+                                <i class="bi bi-check-circle"></i> {{ session('success') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
                         @endif
                         <div class="card-body">
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label for="template_name" class="form-label">Name *</label>
-                                    <input type="text" class="form-control" id="template_name" name="template_name" required
-                                        value="{{ old('template_name', $company->template_name) }}">
+                                    <input type="text" class="form-control @error('template_name') is-invalid @enderror" id="template_name" name="template_name" required
+                                        value="{{ old('template_name', $voucher_template->template_name) }}">
                                     @error('template_name')
-                                        <div class="text-danger">{{ $message }}</div>
+                                        <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
-                                    <div class="valid-feedback">Looks good!</div>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="template_address" class="form-label">Address *</label>
-                                    <input type="text" class="form-control" id="template_address" name="template_address"
-                                        value="{{ old('template_address', $company->template_address) }}">
+                                    <input type="text" class="form-control @error('template_address') is-invalid @enderror" id="template_address" name="template_address" required
+                                        value="{{ old('template_address', $voucher_template->template_address) }}">
                                     @error('template_address')
-                                        <div class="text-danger">{{ $message }}</div>
+                                        <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
-                                    <div class="valid-feedback">Looks good!</div>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="template_header" class="form-label">Header</label>
-                                    <input type="text" class="form-control" id="template_header" name="template_header"
-                                        value="{{ old('template_header', $company->template_header) }}">
+                                    <input type="text" class="form-control @error('template_header') is-invalid @enderror" id="template_header" name="template_header"
+                                        value="{{ old('template_header', $voucher_template->template_header) }}">
                                     @error('template_header')
-                                        <div class="text-danger">{{ $message }}</div>
+                                        <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
-                                    <div class="valid-feedback">Looks good!</div>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="template_jurisdictional_boundary" class="form-label">Jurisdictional Boundary</label>
-                                    <input type="text" class="form-control" id="template_jurisdictional_boundary" name="template_jurisdictional_boundary"
-                                        value="{{ old('template_jurisdictional_boundary', $company->template_jurisdictional_boundary) }}">
+                                    <input type="text" class="form-control @error('template_jurisdictional_boundary') is-invalid @enderror" id="template_jurisdictional_boundary" name="template_jurisdictional_boundary"
+                                        value="{{ old('template_jurisdictional_boundary', $voucher_template->template_jurisdictional_boundary) }}">
                                     @error('template_jurisdictional_boundary')
-                                        <div class="text-danger">{{ $message }}</div>
+                                        <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
-                                    <div class="valid-feedback">Looks good!</div>
                                 </div>
                                 <div class="col-md-12">
                                     <label for="template_note" class="form-label">Note</label>
-                                    <textarea class="form-control texteditor" id="template_note" name="template_note">{{ old('template_note', $company->template_note) }}</textarea>
+                                    <textarea class="form-control texteditor @error('template_note') is-invalid @enderror" id="template_note" name="template_note" rows="5">{{ old('template_note', $voucher_template->template_note) }}</textarea>
                                     @error('template_note')
-                                        <div class="text-danger">{{ $message }}</div>
+                                        <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
-                                    <div class="valid-feedback">Looks good!</div>
                                 </div>
                             </div>
                         </div>
