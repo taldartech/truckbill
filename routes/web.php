@@ -69,10 +69,6 @@ Route::middleware(['auth.blocked'])->group(function () {
         ->middleware(['auth.blocked', 'verified'])
         ->name('dashboard');
 
-    Route::get('/dashboard2', function () {
-        return view('dashboard2');
-    });
-
     // Consignee Management
     Route::middleware(['role:admin,moderator'])->group(function () {
         Route::resource('consignees', ConsigneeController::class)->only(['index', 'create', 'store']);
