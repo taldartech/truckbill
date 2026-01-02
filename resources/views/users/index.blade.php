@@ -29,12 +29,12 @@
             <table id="usersTable" class="table table-bordered table-striped">
                 <thead>
                     <tr>
-                        <th style="width: 80px;">SR No.</th>
+                        <th>SR No.</th>
                         <th>Name</th>
                         <th>Email</th>
                         <th>Role</th>
                         <th>Company</th>
-                        <th style="width: 120px;">Actions</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
             </table>
@@ -68,7 +68,8 @@ $(document).ready(function() {
             {
                 data: 'id',
                 name: 'id',
-                width: '80px',
+                orderable: false,
+                searchable: false,
                 className: 'text-center'
             },
             {
@@ -82,7 +83,6 @@ $(document).ready(function() {
             {
                 data: 'role',
                 name: 'role',
-                width: '120px'
             },
             {
                 data: 'company',
@@ -93,11 +93,10 @@ $(document).ready(function() {
                 name: 'actions',
                 orderable: false,
                 searchable: false,
-                width: '120px',
                 className: 'text-center'
             }
         ],
-        order: [[0, 'desc']],
+        order: [[1, 'asc']],
         pageLength: 10,
         lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
         dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +

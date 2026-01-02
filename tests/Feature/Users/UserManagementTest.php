@@ -71,7 +71,7 @@ class UserManagementTest extends TestCase
         $response->assertOk()->assertViewIs('users.index');
     }
 
-    public function test_master_admin_datatable_returns_users_without_company(): void
+    public function test_master_admin_datatable_returns_super_admin_users(): void
     {
         $admin = $this->makeMasterAdmin();
         $super = $this->makeSuperAdmin();
@@ -82,13 +82,14 @@ class UserManagementTest extends TestCase
             ->get('/users?draw=1&start=0&length=10');
 
         $response->assertOk()
-            ->assertJsonFragment(['recordsTotal' => 2])
-            ->assertJsonFragment(['recordsFiltered' => 2]);
+            ->assertJsonFragment(['recordsTotal' => 1])
+            ->assertJsonFragment(['recordsFiltered' => 1]);
 
-        $this->assertCount(2, $response->json('data'));
+        // Master admin should only see super_admin users, not themselves
+        $this->assertCount(1, $response->json('data'));
         $emails = collect($response->json('data'))->pluck('email');
-        $this->assertTrue($emails->contains($admin->email));
         $this->assertTrue($emails->contains($super->email));
+        $this->assertFalse($emails->contains($admin->email));
     }
 
     public function test_super_admin_datatable_is_scoped_to_owned_companies(): void
@@ -120,7 +121,8 @@ class UserManagementTest extends TestCase
 
     public function test_store_creates_admin_with_company_and_branch(): void
     {
-        $actor = $this->makeMasterAdmin();
+        // Super admin can create company users
+        $actor = $this->makeSuperAdmin();
         $company = $this->createCompanyFor($actor);
         $branch = $this->createBranch($company);
 
@@ -140,6 +142,28 @@ class UserManagementTest extends TestCase
         $user = User::where('email', 'newadmin@example.com')->first();
         $this->assertNotNull($user);
         $this->assertSame(3, $user->user_role_id);
+        $this->assertTrue(Hash::check('secret123', $user->password));
+    }
+
+    public function test_master_admin_can_create_super_admin(): void
+    {
+        $actor = $this->makeMasterAdmin();
+
+        $response = $this->actingAs($actor)->post(route('users.store'), [
+            'name' => 'New Super Admin',
+            'email' => 'newsuper@example.com',
+            'password' => 'secret123',
+            'password_confirmation' => 'secret123',
+            'role' => 'super_admin',
+        ]);
+
+        $response->assertRedirect(route('users.index'));
+        $response->assertSessionHas('success');
+
+        $user = User::where('email', 'newsuper@example.com')->first();
+        $this->assertNotNull($user);
+        $this->assertSame(2, $user->user_role_id); // super_admin role_id
+        $this->assertNull($user->company_id);
         $this->assertTrue(Hash::check('secret123', $user->password));
     }
 
@@ -208,7 +232,8 @@ class UserManagementTest extends TestCase
 
     public function test_update_changes_role_and_password(): void
     {
-        $actor = $this->makeMasterAdmin();
+        // Super admin can update company users
+        $actor = $this->makeSuperAdmin();
         $company = $this->createCompanyFor($actor);
         $branch = $this->createBranch($company);
         $target = User::factory()->create([
@@ -234,6 +259,28 @@ class UserManagementTest extends TestCase
         $this->assertSame('Updated Name', $target->name);
         $this->assertSame('updated@example.com', $target->email);
         $this->assertSame(4, $target->user_role_id);
+        $this->assertTrue(Hash::check('newsecret', $target->password));
+    }
+
+    public function test_master_admin_can_update_super_admin(): void
+    {
+        $actor = $this->makeMasterAdmin();
+        $target = $this->makeSuperAdmin(['email' => 'super@example.com']);
+
+        $response = $this->actingAs($actor)->put(route('users.update', $target), [
+            'name' => 'Updated Super Admin',
+            'email' => 'updatedsuper@example.com',
+            'password' => 'newsecret',
+            'password_confirmation' => 'newsecret',
+            'role' => 'super_admin',
+        ]);
+
+        $response->assertRedirect(route('users.index'));
+
+        $target->refresh();
+        $this->assertSame('Updated Super Admin', $target->name);
+        $this->assertSame('updatedsuper@example.com', $target->email);
+        $this->assertSame(2, $target->user_role_id); // super_admin role_id
         $this->assertTrue(Hash::check('newsecret', $target->password));
     }
 }

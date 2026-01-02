@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Branch;
+use App\Models\Company;
 use App\Models\User;
 use App\Models\UserRole;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
@@ -13,144 +17,53 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        // Handle DataTables AJAX request
         if ($request->ajax()) {
             return $this->getUsersData($request);
         }
-        
-        // $roles = ['super_admin', 'admin', 'moderator', 'accountant'];
-        // $companies = \App\Models\Company::all()->where('user_id', auth()->user()->id);
         return view('users.index');
     }
 
-   
-    
+    /**
+     * Get users data for DataTables
+     */
     private function getUsersData(Request $request)
-{
-    $user = auth()->user();
+    {
+        $authUser = Auth::user();
+        $isMasterAdmin = $this->isMasterAdmin($authUser);
+        $isSuperAdmin = $this->isSuperAdmin($authUser);
 
-    // Start query with eager loading
-    $query = \App\Models\User::with(['company', 'userRole']);
+        // Build base query with eager loading
+        $query = User::with(['company', 'userRole']);
 
-    if ($user->userRole->name !== 'master_admin') {
-        // For regular users: filter by companies owned by the user
-        $companyIds = \App\Models\Company::where('user_id', $user->id)->pluck('id')->toArray();
-        $query->whereIn('company_id', $companyIds);
-    } else {
-        // For master_admin: filter users having user_role_id 1 or 2
-        $query->whereIn('user_role_id', [1, 2]);
-    }
-
-    // Handle search
-    if ($request->has('search') && $request->search['value']) {
-        $searchValue = $request->search['value'];
-        $query->where(function ($q) use ($searchValue) {
-            $q->where('name', 'like', "%{$searchValue}%")
-              ->orWhere('email', 'like', "%{$searchValue}%")
-              ->orWhereHas('userRole', function ($roleQuery) use ($searchValue) {
-                  $roleQuery->where('name', 'like', "%{$searchValue}%");
-              })
-              ->orWhereHas('company', function ($companyQuery) use ($searchValue) {
-                  $companyQuery->where('name', 'like', "%{$searchValue}%");
-              });
-        });
-    } 
-        // Handle column-specific search
-        if ($request->has('columns')) {
-            foreach ($request->columns as $index => $column) {
-                if (!empty($column['search']['value'])) {
-                    $searchValue = $column['search']['value'];
-                    switch ($index) {
-                        case 1: // Name
-                            $query->where('name', 'like', "%{$searchValue}%");
-                            break;
-                        case 2: // Email
-                            $query->where('email', 'like', "%{$searchValue}%");
-                            break;
-                        case 3: // Role
-                            $query->whereHas('userRole', function($roleQuery) use ($searchValue) {
-                                $roleQuery->where('name', 'like', "%{$searchValue}%");
-                            });
-                            break;
-                        case 4: // Company
-                            $query->whereHas('company', function($companyQuery) use ($searchValue) {
-                                $companyQuery->where('name', 'like', "%{$searchValue}%");
-                            });
-                            break;
-                    }
-                }
-            }
-        }
-        
-        // Handle sorting
-        if ($request->has('order')) {
-            $orderColumn = $request->order[0]['column'];
-            $orderDirection = $request->order[0]['dir'];
-            
-            switch ($orderColumn) {
-                case 0: // ID
-                    $query->orderBy('id', $orderDirection);
-                    break;
-                case 1: // Name
-                    $query->orderBy('name', $orderDirection);
-                    break;
-                case 2: // Email
-                    $query->orderBy('email', $orderDirection);
-                    break;
-                case 3: // Role
-                    $query->join('user_roles', 'users.user_role_id', '=', 'user_roles.id')
-                          ->orderBy('user_roles.name', $orderDirection)
-                          ->select('users.*');
-                    break;
-                case 4: // Company
-                    $query->join('companies', 'users.company_id', '=', 'companies.id')
-                          ->orderBy('companies.name', $orderDirection)
-                          ->select('users.*');
-                    break;
-                default:
-                    $query->orderBy('created_at', 'desc');
-            }
+        // Apply role-based filtering
+        if ($isMasterAdmin) {
+            // Master admin can only see and manage super_admin users (user_role_id = 2)
+            $query->where('user_role_id', 2);
+        } elseif ($isSuperAdmin) {
+            // Super admin sees users from their companies
+            $companyIds = Company::where('user_id', $authUser->id)->pluck('id')->toArray();
+            $query->whereIn('company_id', $companyIds);
         } else {
-            $query->orderBy('created_at', 'desc');
+            abort(403, 'Unauthorized access.');
         }
-        
-        // Get total count before pagination
-        $user = auth()->user();
-        if($user->userRole->name !== 'master_admin') {
-            $targetUserId = auth()->id(); // or any user id you want to filter by
 
-$totalRecords = \App\Models\User::whereHas('company', function ($query) use ($targetUserId) {
-    $query->where('user_id', $targetUserId);
-})->count();
+        // Apply search filters
+        $this->applySearchFilters($query, $request);
 
-$filteredRecords = $query->whereHas('company', function ($query) use ($targetUserId) {
-    $query->where('user_id', $targetUserId);
-})->count();
-        }
-        else {
-        // $totalRecords = \App\Models\User::count();
-        $totalRecords = \App\Models\User::whereNull('company_id')->count();
-        //filterwho have company id null in user table
-        // $filteredRecords = $query->count();
-        $filteredRecords = $query->whereNull('company_id')->count();
-        }
-//         $targetUserId = auth()->id(); // or any user id you want to filter by
+        // Apply sorting
+        $this->applySorting($query, $request);
 
-// $totalRecords = \App\Models\User::whereHas('company', function ($query) use ($targetUserId) {
-//     $query->where('user_id', $targetUserId);
-// })->count();
+        // Get counts for DataTables
+        $totalRecords = $this->getTotalRecords($authUser);
+        $filteredRecords = $query->count();
 
-// $filteredRecords = $query->whereHas('company', function ($query) use ($targetUserId) {
-//     $query->where('user_id', $targetUserId);
-// })->count();
-        
-        // Handle pagination
+        // Apply pagination
         $start = $request->start ?? 0;
         $length = $request->length ?? 10;
         $users = $query->skip($start)->take($length)->get();
-        
+
         // Format data for DataTables
-        $data = $users->map(function($user, $index) use ($start) {
+        $data = $users->map(function ($user, $index) use ($start) {
             return [
                 'id' => $index + $start + 1,
                 'name' => $user->name,
@@ -160,7 +73,7 @@ $filteredRecords = $query->whereHas('company', function ($query) use ($targetUse
                 'actions' => $this->getActionButtons($user)
             ];
         });
-        
+
         return response()->json([
             'draw' => intval($request->draw),
             'recordsTotal' => $totalRecords,
@@ -168,35 +81,109 @@ $filteredRecords = $query->whereHas('company', function ($query) use ($targetUse
             'data' => $data
         ]);
     }
-    
-    private function getActionButtons($user)
+
+    /**
+     * Apply search filters to query
+     */
+    private function applySearchFilters($query, Request $request): void
+    {
+        // Global search
+        if ($request->has('search') && $request->search['value']) {
+            $searchValue = $request->search['value'];
+            $query->where(function ($q) use ($searchValue) {
+                $q->where('name', 'like', "%{$searchValue}%")
+                    ->orWhere('email', 'like', "%{$searchValue}%")
+                    ->orWhereHas('userRole', function ($roleQuery) use ($searchValue) {
+                        $roleQuery->where('name', 'like', "%{$searchValue}%");
+                    })
+                    ->orWhereHas('company', function ($companyQuery) use ($searchValue) {
+                        $companyQuery->where('name', 'like', "%{$searchValue}%");
+                    });
+            });
+        }
+
+        // Column-specific search
+        if ($request->has('columns')) {
+            foreach ($request->columns as $index => $column) {
+                if (!empty($column['search']['value'])) {
+                    $searchValue = $column['search']['value'];
+                    match ($index) {
+                        1 => $query->where('name', 'like', "%{$searchValue}%"),
+                        2 => $query->where('email', 'like', "%{$searchValue}%"),
+                        3 => $query->whereHas('userRole', function ($roleQuery) use ($searchValue) {
+                            $roleQuery->where('name', 'like', "%{$searchValue}%");
+                        }),
+                        4 => $query->whereHas('company', function ($companyQuery) use ($searchValue) {
+                            $companyQuery->where('name', 'like', "%{$searchValue}%");
+                        }),
+                        default => null
+                    };
+                }
+            }
+        }
+    }
+
+    /**
+     * Apply sorting to query
+     */
+    private function applySorting($query, Request $request): void
+    {
+        if ($request->has('order')) {
+            $orderColumn = $request->order[0]['column'];
+            $orderDirection = $request->order[0]['dir'];
+
+            match ($orderColumn) {
+                0 => $query->orderBy('id', $orderDirection),
+                1 => $query->orderBy('name', $orderDirection),
+                2 => $query->orderBy('email', $orderDirection),
+                3 => $query->join('user_roles', 'users.user_role_id', '=', 'user_roles.id')
+                    ->orderBy('user_roles.name', $orderDirection)
+                    ->select('users.*'),
+                4 => $query->join('companies', 'users.company_id', '=', 'companies.id')
+                    ->orderBy('companies.name', $orderDirection)
+                    ->select('users.*'),
+                default => $query->orderBy('created_at', 'desc')
+            };
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+    }
+
+    /**
+     * Get total records count based on user role
+     */
+    private function getTotalRecords(User $authUser): int
+    {
+        if ($this->isMasterAdmin($authUser)) {
+            // Master admin can only see super_admin users
+            return User::where('user_role_id', 2)->count();
+        }
+
+        if ($this->isSuperAdmin($authUser)) {
+            $companyIds = Company::where('user_id', $authUser->id)->pluck('id')->toArray();
+            return User::whereIn('company_id', $companyIds)->count();
+        }
+
+        return 0;
+    }
+
+    /**
+     * Generate action buttons for DataTables
+     */
+    private function getActionButtons(User $user): string
     {
         $buttons = '<div class="d-flex gap-1">';
-        
-        // Check if user is super_admin - if so, disable edit and delete actions
-        $isMasterAdmin = $user->userRole && $user->userRole->name === 'master_admin';
-        
-        if ($isMasterAdmin) {
-            // Disabled buttons for super_admin users
-            $buttons .= '<span class="btn btn-sm btn-secondary disabled" title="Master Admin cannot be edited">';
-            $buttons .= '<i class="bi bi-pencil"></i></span>';
-            
-            $buttons .= '<span class="btn btn-sm btn-secondary disabled" title="Master Admin cannot be deleted">';
-            $buttons .= '<i class="bi bi-trash"></i></span>';
-        } else {
-            // Edit button
-            $editUrl = route('users.edit', $user->id);
-            $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit User">';
-            $buttons .= '<i class="bi bi-pencil"></i></a>';
-            
-            // Delete button
-            $deleteUrl = route('users.destroy', $user->id);
-            $buttons .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this user?\')">';
-            $buttons .= csrf_field() . method_field('DELETE');
-            $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete User">';
-            $buttons .= '<i class="bi bi-trash"></i></button></form>';
-        }
-        
+
+        $editUrl = route('users.edit', $user->id);
+        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit User">';
+        $buttons .= '<i class="bi bi-pencil"></i></a>';
+
+        $deleteUrl = route('users.destroy', $user->id);
+        $buttons .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this user?\')">';
+        $buttons .= csrf_field() . method_field('DELETE');
+        $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete User">';
+        $buttons .= '<i class="bi bi-trash"></i></button></form>';
+
         $buttons .= '</div>';
         return $buttons;
     }
@@ -206,226 +193,224 @@ $filteredRecords = $query->whereHas('company', function ($query) use ($targetUse
      */
     public function create()
     {
-        $companies = \App\Models\Company::all()->where('user_id', auth()->user()->id);
-        $roles = ['admin', 'moderator', 'accountant'];
-        $superAdmin = 'super_admin';
-        $branches = \App\Models\Branch::all();
-        return view('users.create', compact('companies', 'roles', 'superAdmin', 'branches'));
+        $authUser = Auth::user();
+        $isMasterAdmin = $this->isMasterAdmin($authUser);
+        $isSuperAdmin = $this->isSuperAdmin($authUser);
+
+        // Determine available roles
+        if ($isMasterAdmin) {
+            // Master admin can only create super_admin users
+            $roles = ['super_admin'];
+            $companies = collect(); // Master admin doesn't need companies
+            $branches = collect(); // Master admin doesn't need branches
+        } else {
+            // Super admin can create company users
+            $roles = ['admin', 'moderator', 'accountant'];
+            $companies = Company::where('user_id', $authUser->id)->get();
+            $branches = Branch::whereIn('company_id', $companies->pluck('id'))->get();
+        }
+
+        return view('users.create', compact('companies', 'roles', 'branches', 'isMasterAdmin', 'isSuperAdmin'));
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    // public function store(Request $request)
-    // {
-    //     $validated = $request->validate([
-    //         'name' => 'required|string|max:255',
-    //         'email' => 'required|email|unique:users,email',
-    //         'password' => 'required|string|min:6|confirmed',
-    //         'role' => 'required|in:super_admin,admin,moderator,accountant',
-    //         'company_id' => 'required|exists:companies,id',
-    //         'branch_id' => 'required|exists:branches,id',
-    //     ]);
-    //     $validated['password'] = bcrypt($validated['password']);
-    //     $userRole = UserRole::where('name', $validated['role'])->first();
-    //     if (!$userRole) {
-    //         // Create the role if it doesn't exist
-    //         $userRole = UserRole::create(['name' => $validated['role']]);
-    //     }
-    //     $validated['user_role_id'] = $userRole->id;
-    //     unset($validated['role']);
-    //     \App\Models\User::create($validated);
-    //     return redirect()->route('users.index')->with('success', 'User created successfully!');
-    // }
     public function store(Request $request)
-{
-    // Define allowed roles centrally for reuse
-    $allowedRoles = ['super_admin', 'admin', 'moderator', 'accountant'];
-
-    // Conditional validation rules for company_id and branch_id based on role
-    $rules = [
-        'name' => 'required|string|max:255',
-        'email' => 'required|email|unique:users,email',
-        'password' => 'required|string|min:6|confirmed',
-        'role' => 'required|in:' . implode(',', $allowedRoles),
-    ];
-
-    // Only require company_id and branch_id if role is not super_admin
-    if ($request->input('role') !== 'super_admin') {
-        $rules['company_id'] = 'required|exists:companies,id';
-        $rules['branch_id'] = 'required|exists:branches,id';
-    } else {
-        // For super_admin, nullify company_id and branch_id
-        $request->merge(['company_id' => null, 'branch_id' => null]);
-    }
-
-    $validated = $request->validate($rules);
-
-    $validated['password'] = bcrypt($validated['password']);
-
-    // Use firstOrCreate to simplify role retrieval or creation
-    $userRole = UserRole::firstOrCreate(['name' => $validated['role']]);
-
-    $validated['user_role_id'] = $userRole->id;
-    unset($validated['role']);
-
-    // Use a DB transaction to ensure data consistency
-    \DB::transaction(function () use ($validated) {
-        \App\Models\User::create($validated);
-    });
-
-    return redirect()->route('users.index')->with('success', 'User created successfully!');
-}
-
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(User $user)
     {
-        //
+        $authUser = Auth::user();
+        $isMasterAdmin = $this->isMasterAdmin($authUser);
+        $isSuperAdmin = $this->isSuperAdmin($authUser);
+
+        // Determine allowed roles
+        if ($isMasterAdmin) {
+            $allowedRoles = ['super_admin'];
+        } else {
+            $allowedRoles = ['admin', 'moderator', 'accountant'];
+        }
+
+        // Build validation rules
+        $rules = [
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:6|confirmed',
+            'role' => 'required|in:' . implode(',', $allowedRoles),
+        ];
+
+        // Add company and branch validation for non-super_admin roles
+        if ($request->input('role') !== 'super_admin') {
+            $rules['company_id'] = 'required|exists:companies,id';
+            $rules['branch_id'] = 'required|exists:branches,id';
+
+            // Verify company belongs to super_admin
+            if ($isSuperAdmin) {
+                $companyIds = Company::where('user_id', $authUser->id)->pluck('id')->toArray();
+                $rules['company_id'] .= '|in:' . implode(',', $companyIds);
+            }
+        } else {
+            // For super_admin, nullify company_id and branch_id
+            $request->merge(['company_id' => null, 'branch_id' => null]);
+        }
+
+        $validated = $request->validate($rules);
+        $validated['password'] = bcrypt($validated['password']);
+
+        // Get or create user role
+        $userRole = UserRole::firstOrCreate(['name' => $validated['role']]);
+        $validated['user_role_id'] = $userRole->id;
+        unset($validated['role']);
+
+        // Create user in transaction
+        DB::transaction(function () use ($validated) {
+            User::create($validated);
+        });
+
+        return redirect()->route('users.index')->with('success', 'User created successfully!');
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    // public function edit(User $user)
-    // {
-    //     $companies = \App\Models\Company::all()->where('user_id', auth()->user()->id);
-    //     $roles = ['admin', 'moderator', 'accountant'];
-    //     $branches = \App\Models\Branch::all();
-    //     return view('users.edit', compact('user', 'companies', 'roles', 'branches'));
-    // }
+    public function edit(User $user)
+    {
+        $authUser = Auth::user();
 
-public function edit(User $user)
-{
-    $authUser = auth()->user();
-
-    // Super Admin (user_role_id = 1) can access anyone
-    if ($authUser->user_role_id != 1) {
-        // Get logged-in user's company IDs
-        $companyIds = \App\Models\Company::where('user_id', $authUser->id)->pluck('id');
-
-        // Check if this user belongs to one of those companies
-        if (!in_array($user->company_id, $companyIds->toArray())) {
+        // Check authorization
+        if (!$this->canManageUser($authUser, $user)) {
             abort(403, 'Unauthorized access.');
         }
+
+        // Determine available roles
+        if ($this->isMasterAdmin($authUser)) {
+            // Master admin can only edit super_admin users
+            $roles = ['super_admin'];
+            $companies = collect(); // Master admin doesn't need companies
+            $branches = collect(); // Master admin doesn't need branches
+        } else {
+            // Super admin can edit company users
+            $roles = ['admin', 'moderator', 'accountant'];
+            $companies = Company::where('user_id', $authUser->id)->get();
+            $branches = Branch::whereIn('company_id', $companies->pluck('id'))->get();
+        }
+
+        return view('users.edit', compact('user', 'companies', 'roles', 'branches'));
     }
-
-    // Companies visible only for current user (or all for super admin)
-    $companies = ($authUser->user_role_id == 1)
-        ? \App\Models\Company::all()
-        : \App\Models\Company::where('user_id', $authUser->id)->get();
-
-    $roles = ['admin', 'moderator', 'accountant'];
-
-    // Branches filtered for company (or all for super admin)
-    $branches = ($authUser->user_role_id == 1)
-        ? \App\Models\Branch::all()
-        : \App\Models\Branch::whereIn('company_id', $companies->pluck('id'))->get();
-
-    return view('users.edit', compact('user', 'companies', 'roles', 'branches'));
-}
-
-
 
     /**
      * Update the specified resource in storage.
      */
-    // public function update(Request $request, User $user)
-    // {
-    //     $validated = $request->validate([
-    //         'name' => 'required|string|max:255',
-    //         'email' => 'required|email|unique:users,email,' . $user->id,
-    //         'password' => 'nullable|string|min:6|confirmed',
-    //         'role' => 'required|in:super_admin,admin,moderator,accountant',
-    //         'company_id' => 'required|exists:companies,id',
-    //         'branch_id' => 'required|exists:branches,id',
-    //     ]);
-    //     if ($validated['password']) {
-    //         $validated['password'] = bcrypt($validated['password']);
-    //     } else {
-    //         unset($validated['password']);
-    //     }
-    //     $userRole = UserRole::where('name', $validated['role'])->first();
-    //     if (!$userRole) {
-    //         return back()->withErrors(['role' => 'Invalid role selected.']);
-    //     }
-    //     $validated['user_role_id'] = $userRole->id;
-    //     unset($validated['role']);
-    //     $user->update($validated);
-    //     return redirect()->route('users.index')->with('success', 'User updated successfully!');
-    // }
     public function update(Request $request, User $user)
     {
-        // Define allowed roles centrally for reuse
-        $allowedRoles = ['super_admin', 'admin', 'moderator', 'accountant'];
-    
-        // Conditional validation rules for company_id and branch_id based on role
+        $authUser = Auth::user();
+
+        // Check authorization
+        if (!$this->canManageUser($authUser, $user)) {
+            abort(403, 'Unauthorized access.');
+        }
+
+        // Determine allowed roles
+        if ($this->isMasterAdmin($authUser)) {
+            $allowedRoles = ['super_admin'];
+        } else {
+            $allowedRoles = ['admin', 'moderator', 'accountant'];
+        }
+
+        // Build validation rules
         $rules = [
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
             'password' => 'nullable|string|min:6|confirmed',
             'role' => 'required|in:' . implode(',', $allowedRoles),
         ];
-    
-        // Only require company_id and branch_id if role is not super_admin
+
+        // Add company and branch validation for non-super_admin roles
         if ($request->input('role') !== 'super_admin') {
             $rules['company_id'] = 'required|exists:companies,id';
             $rules['branch_id'] = 'required|exists:branches,id';
+
+            // Verify company belongs to super_admin
+            if ($this->isSuperAdmin($authUser)) {
+                $companyIds = Company::where('user_id', $authUser->id)->pluck('id')->toArray();
+                $rules['company_id'] .= '|in:' . implode(',', $companyIds);
+            }
         } else {
-            // For super_admin, nullify company_id and branch_id in input
+            // For super_admin, nullify company_id and branch_id
             $request->merge(['company_id' => null, 'branch_id' => null]);
         }
-    
+
         $validated = $request->validate($rules);
-    
-        // Handle password: hash if provided, remove if empty
-        if ($validated['password']) {
+
+        // Handle password
+        if (!empty($validated['password'])) {
             $validated['password'] = bcrypt($validated['password']);
         } else {
             unset($validated['password']);
         }
-    
-        // Use firstOrCreate to fetch or create the role
+
+        // Get or create user role
         $userRole = UserRole::firstOrCreate(['name' => $validated['role']]);
-    
         $validated['user_role_id'] = $userRole->id;
         unset($validated['role']);
-    
-        // Use a DB transaction to ensure data consistency while updating
-        \DB::transaction(function () use ($validated, $user) {
+
+        // Update user in transaction
+        DB::transaction(function () use ($validated, $user) {
             $user->update($validated);
         });
-    
+
         return redirect()->route('users.index')->with('success', 'User updated successfully!');
     }
-    
-
-    
 
     /**
      * Remove the specified resource from storage.
      */
-    // public function destroy(User $user)
-    // {
-    //     $user->delete();
-    //     return redirect()->route('users.index')->with('success', 'User deleted successfully!');
-    // }
     public function destroy(User $user)
-{
-    // Get all company IDs belonging to the logged-in user
-    $companyIds = \App\Models\Company::where('user_id', auth()->user()->id)->pluck('id');
+    {
+        $authUser = Auth::user();
 
-    // Check if the user to be deleted belongs to one of these companies
-    if (!in_array($user->company_id, $companyIds->toArray())) {
-        abort(403, 'Unauthorized action.');
+        // Check authorization
+        if (!$this->canManageUser($authUser, $user)) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $user->delete();
+
+        return redirect()->route('users.index')->with('success', 'User deleted successfully!');
     }
 
-    // If authorized, proceed with delete
-    $user->delete();
+    /**
+     * Check if user is master_admin
+     */
+    private function isMasterAdmin(User $user): bool
+    {
+        return $user->userRole->name === 'master_admin';
+    }
 
-    return redirect()->route('users.index')->with('success', 'User deleted successfully!');
-}
+    /**
+     * Check if user is super_admin
+     */
+    private function isSuperAdmin(User $user): bool
+    {
+        return $user->userRole->name === 'super_admin';
+    }
 
+    /**
+     * Check if auth user can manage (edit/delete) target user
+     * - master_admin can only manage super_admin users
+     * - super_admin can manage users from their companies
+     */
+    private function canManageUser(User $authUser, User $targetUser): bool
+    {
+        if ($this->isMasterAdmin($authUser)) {
+            // Master admin can only manage super_admin users
+            return $this->isSuperAdmin($targetUser);
+        }
+
+        if ($this->isSuperAdmin($authUser)) {
+            // Super admin can manage users from their companies
+            $companyIds = Company::where('user_id', $authUser->id)->pluck('id')->toArray();
+            return in_array($targetUser->company_id, $companyIds);
+        }
+
+        return false;
+    }
 }
