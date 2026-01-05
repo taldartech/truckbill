@@ -364,8 +364,9 @@
                 <!--begin::Brand Link-->
                 <a href="#" class="brand-link">
 
+                    <img src="{{ asset('logo.png') }}" alt="TruckBill Logo" class="brand-image">
                     <!--begin::Brand Text-->
-                    <span class="brand-text " style="font-size: 1.2em;"> <strong>TruckBill-TMS</strong></span>
+                    <span class="brand-text text-brand-gradient m-0">TruckBill-TMS</span>
                     <!--end::Brand Text-->
                 </a>
                 <!--end::Brand Link-->

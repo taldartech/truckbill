@@ -191,7 +191,7 @@
                     <td class="header">
                         <div class="logo">
                             <a href="#">
-                                <img src="https://res.cloudinary.com/dyy2hc1zi/image/upload/v1766750445/logo_vlxyip.png" alt="TRUCKBILL" width="200" style="width: 200px; max-width: 200px; height: auto; display: block; margin: 0 auto; border: 0;">
+                                <img src="{{ asset('images/logo.png') }}" alt="TRUCKBILL" width="200" style="width: 200px; max-width: 200px; height: auto; display: block; margin: 0 auto; border: 0;">
                             </a>
                             <h1 style="margin-top: 15px;"><a href="#">TRUCKBILL</a></h1>
                         </div>

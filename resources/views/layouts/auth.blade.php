@@ -190,8 +190,8 @@
     <div class="container d-flex justify-content-center">
         <div class="auth-card">
             <div class="logo-section">
-                <img src="https://res.cloudinary.com/dyy2hc1zi/image/upload/v1766750445/logo_vlxyip.png" alt="TruckBill Logo" class="mb-3" style="max-height: 80px;">
-                <div class="brand-logo">TruckBill</div>
+                <img src="{{ asset('logo.png') }}" alt="TruckBill Logo" class="brand-image" style="max-height: 80px;">
+                <div class="brand-logo text-brand-gradient">TruckBill</div>
             </div>
 
             @yield('content')

@@ -23,6 +23,7 @@
     --brand-row-hover: #F0FDF4;
     --brand-table-header-bg: #F1F5F9;
     --brand-input-focus-shadow: rgba(47, 179, 111, 0.15);
+    --brand-gradient: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-accent-blue) 100%);
 }
 
 /* Base Typography Colors */
@@ -96,6 +97,12 @@ a:hover {
     color: var(--brand-text-primary) !important;
 }
 
+.brand-image {
+    max-height: 33px;
+    width: auto;
+    margin-right: 0;
+}
+
 .nav-sidebar .nav-link {
     color: var(--brand-text-primary) !important;
 }
@@ -145,6 +152,16 @@ a:hover {
 
 .bg-brand-active {
     background-color: var(--brand-active-bg) !important;
+}
+
+.text-brand-gradient {
+    background: var(--brand-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: inline-block;
+    font-weight: bold;
+    font-size: 1.6rem;
 }
 
 /* Bootstrap Button Overrides */
