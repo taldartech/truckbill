@@ -438,6 +438,46 @@
             waitForJQuery();
         });
 
+        // Global function to add LR item (defined early for accessibility)
+        function addLrItem(prefill = {}) {
+            const lrItemsContainer = document.getElementById('lr-items-container');
+            if (!lrItemsContainer) {
+                console.warn('LR items container not found');
+                return;
+            }
+            const tpl = document.getElementById('lr-item-template');
+            if (!tpl) {
+                console.warn('LR item template not found');
+                return;
+            }
+            const node = tpl.content.cloneNode(true);
+            lrItemsContainer.appendChild(node);
+            refreshIndices();
+            initSelect2In(lrItemsContainer.lastElementChild);
+        }
+
+        function refreshIndices() {
+            const lrItemsContainer = document.getElementById('lr-items-container');
+            if (!lrItemsContainer) return;
+            const items = lrItemsContainer.querySelectorAll('.lr-item');
+            items.forEach((item, idx) => {
+                const indexEl = item.querySelector('.lr-index');
+                if (indexEl) {
+                    indexEl.textContent = `#${idx + 1}`;
+                }
+            });
+        }
+
+        function initSelect2In(scope) {
+            if (typeof $ !== 'undefined' && $(scope).find('.select2').length) {
+                $(scope).find('.select2').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    minimumResultsForSearch: 0
+                });
+            }
+        }
+
         function initializeLorryReceiptForm() {
             $(document).ready(function() {
                 console.log('🚀 Linked Lorry Receipts Form initialized');
@@ -728,30 +768,10 @@
             const lrItemsContainer = document.getElementById('lr-items-container');
             const addBtn = document.getElementById('add-lr-item');
 
-            function addLrItem(prefill = {}) {
-                const tpl = document.getElementById('lr-item-template');
-                const node = tpl.content.cloneNode(true);
-                lrItemsContainer.appendChild(node);
-                refreshIndices();
-                initSelect2In(lrItemsContainer.lastElementChild);
+            // Functions are now defined globally above, just wire up the button
+            if (addBtn) {
+                addBtn.addEventListener('click', () => addLrItem());
             }
-
-            function refreshIndices() {
-                const items = lrItemsContainer.querySelectorAll('.lr-item');
-                items.forEach((item, idx) => {
-                    item.querySelector('.lr-index').textContent = `#${idx + 1}`;
-                });
-            }
-
-            function initSelect2In(scope) {
-                $(scope).find('.select2').select2({
-                    theme: 'bootstrap-5',
-                    width: '100%',
-                    minimumResultsForSearch: 0
-                });
-            }
-
-            addBtn.addEventListener('click', () => addLrItem());
 
             // Remove LR item
             lrItemsContainer.addEventListener('click', function(e) {

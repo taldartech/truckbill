@@ -26,38 +26,6 @@ class LorryReceiptController extends Controller
         return view('lorry_receipts.index');
     }
 
-    public function getByLinkedId($linkedId)
-    {
-        try {
-
-            $lrs = \App\Models\LorryReceipt::with(['truck', 'freightBookings'])
-                ->where('company_id', Auth::user()->company_id)
-                ->where('linked_lr_id', $linkedId)
-                ->get()
-                ->map(function ($lr) {
-                    $firstFreight = $lr->freightBookings->last();
-
-                    return [
-                        'id' => $lr->id,
-                        'lr_number' => $lr->lr_number,
-                        'truck_number' => $lr->truck ? $lr->truck->truck_number : '',
-                        'freight_booking_id' => $lr->freight_booking_id,
-                        'balance_amount' => $firstFreight ? (float) $firstFreight->balance_amount : 0,
-                    ];
-                })->sortBy('balance_amount') // 🔹 Sort ascending by balance
-                ->values();
-
-            return response()->json($lrs->values());
-        } catch (\Exception $e) {
-            Log::error('Error in getByLinkedId: '.$e->getMessage());
-
-            return response()->json([
-                'error' => 'An error occurred while fetching linked LRs',
-                'message' => $e->getMessage(),
-            ], 500);
-        }
-    }
-
     public function getLorryReceiptsData(Request $request)
     {
         try {
@@ -209,27 +177,17 @@ class LorryReceiptController extends Controller
                 ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
 
-        $companies = \App\Models\Company::all();
-        // $trucks = Truck::all();
         $trucks = Truck::with(['transporter', 'driver'])
             ->whereHas('transporter', function ($query) {
                 $query->where('company_id', Auth::user()->company_id);
             })
             ->get(); // Load both transporter and driver relationships
 
-        $transporters = Transporter::all();
-        $truckOwners = Transporter::where('is_owner', 1)->get();
         $agencies = Transporter::where('is_owner', 0)->where('company_id', Auth::user()->company_id)->get();
         $consignees = Consignee::where('company_id', Auth::user()->company_id)->orderBy('name')->get();
         $goodsTypes = GoodType::where('user_id', Auth::user()->company->user_id)->get();
-        $statuses = ['Pending', 'Delivered', 'Cancelled', 'In-Progress'];
-        $tdsPercentages = [
-            'default' => env('TDS_PERCENTAGE_DEFAULT', 20),
-            'agency' => env('TDS_PERCENTAGE_AGENCY', 2),
-            'owner' => env('TDS_PERCENTAGE_OWNER', 1),
-        ];
 
-        return view('lorry_receipts.create-linked', compact('companies', 'trucks', 'transporters', 'consignees', 'goodsTypes', 'statuses', 'truckOwners', 'agencies', 'tdsPercentages'));
+        return view('lorry_receipts.create-linked', compact('trucks', 'consignees', 'goodsTypes', 'agencies'));
     }
 
     public function bulkPayment(Request $request)
@@ -1353,5 +1311,37 @@ class LorryReceiptController extends Controller
         $references = Transporter::whereIn('id', $references)->get(['id', 'name']);
 
         return response()->json($references);
+    }
+
+    public function getByLinkedId($linkedId)
+    {
+        try {
+
+            $lrs = \App\Models\LorryReceipt::with(['truck', 'freightBookings'])
+                ->where('company_id', Auth::user()->company_id)
+                ->where('linked_lr_id', $linkedId)
+                ->get()
+                ->map(function ($lr) {
+                    $firstFreight = $lr->freightBookings->last();
+
+                    return [
+                        'id' => $lr->id,
+                        'lr_number' => $lr->lr_number,
+                        'truck_number' => $lr->truck ? $lr->truck->truck_number : '',
+                        'freight_booking_id' => $lr->freight_booking_id,
+                        'balance_amount' => $firstFreight ? (float) $firstFreight->balance_amount : 0,
+                    ];
+                })->sortBy('balance_amount') // 🔹 Sort ascending by balance
+                ->values();
+
+            return response()->json($lrs->values());
+        } catch (\Exception $e) {
+            Log::error('Error in getByLinkedId: '.$e->getMessage());
+
+            return response()->json([
+                'error' => 'An error occurred while fetching linked LRs',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
 }
