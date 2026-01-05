@@ -121,11 +121,11 @@
                                 <td>{{ $payment['tds_deducted'] ?? 'N/A' }}</td>
                                 <td>
                                     @if ($payment['payment_status'] === 'paid')
-                                        <span class="badge bg-success">Paid</span>
+                                        <span class="badge bg-brand-primary">Paid</span>
                                     @elseif($payment['payment_status'] === 'pending')
-                                        <span class="badge bg-warning">Pending</span>
+                                        <span class="badge bg-brand-warning">Pending</span>
                                     @elseif($payment['payment_status'] === 'in-progress')
-                                        <span class="badge bg-info">In Progress</span>
+                                        <span class="badge bg-brand-secondary">In Progress</span>
                                     @else
                                         <span
                                             class="badge bg-secondary">{{ ucfirst($payment['payment_status'] ?? 'N/A') }}</span>

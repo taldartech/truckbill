@@ -1,0 +1,230 @@
+:root {
+    /* Primary Colors */
+    --brand-primary: #2FB36F;
+    --brand-primary-dark: #23965C;
+    --brand-accent-blue: #2D8CFF;
+    --brand-accent-blue-dark: #1F6FE0;
+
+    /* Neutrals & Backgrounds */
+    --brand-bg: #F8FAFC;
+    --brand-card-bg: #FFFFFF;
+    --brand-border: #E5E7EB;
+    --brand-text-primary: #111827;
+    --brand-text-muted: #6B7280;
+
+    /* Status Colors */
+    --brand-success: #22C55E;
+    --brand-warning: #F59E0B;
+    --brand-danger: #EF4444;
+    --brand-info: #3B82F6;
+
+    /* Logic Colors */
+    --brand-active-bg: #E9F7F0;
+    --brand-row-hover: #F0FDF4;
+    --brand-table-header-bg: #F1F5F9;
+    --brand-input-focus-shadow: rgba(47, 179, 111, 0.15);
+}
+
+/* Base Typography Colors */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: var(--brand-text-primary) !important;
+}
+
+body {
+    color: var(--brand-text-primary);
+    background-color: var(--brand-bg);
+}
+
+.text-muted {
+    color: var(--brand-text-muted) !important;
+}
+
+a {
+    color: var(--brand-accent-blue);
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--brand-accent-blue-dark);
+}
+
+/* Standardized Buttons */
+.btn-brand-primary {
+    background-color: var(--brand-primary) !important;
+    color: #FFFFFF !important;
+    border: none;
+}
+
+.btn-brand-primary:hover {
+    background-color: var(--brand-primary-dark) !important;
+}
+
+.btn-brand-secondary {
+    border: 1px solid var(--brand-primary) !important;
+    color: var(--brand-primary) !important;
+    background-color: #FFFFFF !important;
+}
+
+.btn-brand-secondary:hover {
+    background-color: var(--brand-active-bg) !important;
+}
+
+.btn-brand-danger {
+    background-color: var(--brand-danger) !important;
+    color: #FFFFFF !important;
+    border: none;
+}
+
+/* Sidebar Styling Foundation */
+.app-sidebar,
+.main-sidebar {
+    background-color: var(--brand-card-bg) !important;
+    border-right: 1px solid var(--brand-border) !important;
+}
+
+.brand-link {
+    background-color: var(--brand-card-bg) !important;
+    border-bottom: 1px solid var(--brand-border) !important;
+}
+
+.brand-text {
+    color: var(--brand-text-primary) !important;
+}
+
+.nav-sidebar .nav-link {
+    color: var(--brand-text-primary) !important;
+}
+
+.nav-sidebar .nav-link:hover {
+    background-color: var(--brand-table-header-bg) !important;
+}
+
+.nav-sidebar .nav-link.active {
+    background-color: var(--brand-active-bg) !important;
+    color: var(--brand-primary) !important;
+    border-left: 4px solid var(--brand-primary) !important;
+}
+
+/* Table Foundation */
+.table thead th {
+    background-color: var(--brand-table-header-bg);
+    color: var(--brand-text-primary);
+}
+
+.table-hover tbody tr:hover {
+    background-color: var(--brand-row-hover);
+}
+
+/* Form Foundation */
+.form-control:focus {
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 2px var(--brand-input-focus-shadow);
+}
+
+/* Utility Classes */
+.text-brand-primary {
+    color: var(--brand-primary) !important;
+}
+
+.text-brand-secondary {
+    color: var(--brand-accent-blue) !important;
+}
+
+.bg-brand-primary {
+    background-color: var(--brand-primary) !important;
+}
+
+.bg-brand-secondary {
+    background-color: var(--brand-accent-blue) !important;
+}
+
+.bg-brand-active {
+    background-color: var(--brand-active-bg) !important;
+}
+
+/* Bootstrap Button Overrides */
+.btn-primary {
+    background-color: var(--brand-primary) !important;
+    border-color: var(--brand-primary) !important;
+    color: #FFFFFF !important;
+}
+
+.btn-primary:hover {
+    background-color: var(--brand-primary-dark) !important;
+    border-color: var(--brand-primary-dark) !important;
+}
+
+.btn-outline-primary {
+    color: var(--brand-primary) !important;
+    border-color: var(--brand-primary) !important;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--brand-active-bg) !important;
+    color: var(--brand-primary) !important;
+}
+
+.btn-success {
+    background-color: var(--brand-success) !important;
+    border-color: var(--brand-success) !important;
+    color: #FFFFFF !important;
+}
+
+.btn-warning {
+    background-color: var(--brand-warning) !important;
+    border-color: var(--brand-warning) !important;
+    color: #111827 !important;
+}
+
+.btn-danger {
+    background-color: var(--brand-danger) !important;
+    border-color: var(--brand-danger) !important;
+    color: #FFFFFF !important;
+}
+
+.btn-info {
+    background-color: var(--brand-info) !important;
+    border-color: var(--brand-info) !important;
+    color: #FFFFFF !important;
+}
+
+.btn-secondary {
+    background-color: #F3F4F6 !important;
+    border-color: #D1D5DB !important;
+    color: #374151 !important;
+}
+
+.btn-secondary:hover {
+    background-color: #E5E7EB !important;
+}
+
+/* Bootstrap Badge Overrides */
+.badge.bg-success {
+    background-color: var(--brand-success) !important;
+    color: #FFFFFF !important;
+}
+
+.badge.bg-warning {
+    background-color: var(--brand-warning) !important;
+    color: #111827 !important;
+}
+
+.badge.bg-danger {
+    background-color: var(--brand-danger) !important;
+    color: #FFFFFF !important;
+}
+
+.badge.bg-info {
+    background-color: var(--brand-info) !important;
+    color: #FFFFFF !important;
+}
+
+.badge.bg-secondary {
+    background-color: var(--brand-text-muted) !important;
+    color: #FFFFFF !important;
+}

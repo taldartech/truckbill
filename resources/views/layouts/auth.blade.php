@@ -8,6 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link rel="stylesheet" href="/css/brand.css">
 
     <style>
         label {
@@ -16,25 +17,23 @@
 
         body {
             font-family: 'Outfit', sans-serif;
-            background: linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%);
+            background-color: var(--brand-bg);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0;
-            color: #1e293b;
+            color: var(--brand-text-primary);
         }
 
         .auth-card {
-            background: rgba(255, 255, 255, 0.35);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255, 255, 255, 0.6);
+            background: #FFFFFF;
+            border: 1px solid var(--brand-border);
             border-radius: 24px;
             padding: 3rem;
             width: 100%;
             max-width: 480px;
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
         }
 
         .brand-logo {
@@ -101,7 +100,7 @@
         }
 
         .btn-auth {
-            background: #1e293b;
+            background: var(--brand-primary);
             border: none;
             border-radius: 12px;
             padding: 0.85rem;
@@ -111,13 +110,13 @@
             font-size: 1rem;
             margin-top: 1rem;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(30, 41, 59, 0.25);
+            box-shadow: 0 4px 12px rgba(47, 179, 111, 0.2);
         }
 
         .btn-auth:hover {
-            background: #0f172a;
+            background: var(--brand-primary-dark);
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(30, 41, 59, 0.3);
+            box-shadow: 0 10px 20px rgba(47, 179, 111, 0.25);
         }
 
         .alert-success {
@@ -162,13 +161,14 @@
         }
 
         .link-primary, .back-link {
-            color: #1e293b;
+            color: var(--brand-primary);
             font-weight: 600;
             text-decoration: none;
             transition: color 0.2s;
         }
 
         .link-primary:hover, .back-link:hover {
+            color: var(--brand-primary-dark);
             text-decoration: underline;
         }
 

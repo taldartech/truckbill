@@ -58,14 +58,14 @@
         }
 
         .card-header {
-            background-color: #f8f9fc;
-            border-bottom: 1px solid #e3e6f0;
+            background-color: var(--brand-table-header-bg);
+            border-bottom: 1px solid var(--brand-border);
         }
 
         .card-title {
             font-size: 1.1rem;
             font-weight: 700;
-            color: #4e73df;
+            color: var(--brand-primary);
             margin: 0;
         }
 

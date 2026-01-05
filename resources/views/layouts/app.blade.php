@@ -24,6 +24,7 @@
     <!-- AdminLTE Theme CSS -->
     <link href="/theme/dist/css/adminlte.min.css" rel="stylesheet">
     <link rel="stylesheet" href="/css/buttons.css">
+    <link rel="stylesheet" href="/css/brand.css">
 
     <!-- Include Select2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -146,6 +147,11 @@
         th,
         td {
             font-size: 1em !important;
+            border-color: var(--brand-border) !important;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: var(--brand-row-hover) !important;
         }
 
         .app-sidebar,
@@ -163,15 +169,15 @@
 
         .nav-link.active,
         .nav-link.router-link-exact-active {
-            background: #e8f0fe !important;
-            color: #003366 !important;
-            border-right: 4px solid #1a73e8 !important;
+            background: var(--brand-active-bg) !important;
+            color: var(--brand-primary) !important;
+            border-right: 4px solid var(--brand-primary) !important;
             font-weight: 600 !important;
         }
 
         .nav-link.active i,
         .nav-link.router-link-exact-active i {
-            color: #1a73e8 !important;
+            color: var(--brand-primary) !important;
         }
 
         /* User dropdown styling */
@@ -182,7 +188,7 @@
         }
 
         .user-header {
-            background: #003366 !important;
+            background: var(--brand-primary) !important;
             position: relative;
         }
 
@@ -218,21 +224,19 @@
         }
 
         .app-sidebar {
-            background-color: #003366 !important;
-            --lte-sidebar-hover-bg: rgba(255, 255, 255, 0.1);
-            --lte-sidebar-color: #e6eaf1;
-            --lte-sidebar-hover-color: #fff;
-            --lte-sidebar-active-color: #fff;
-            --lte-sidebar-menu-active-bg: rgba(255, 255, 255, 0.1);
-            --lte-sidebar-menu-active-color: #fff;
+            --lte-sidebar-hover-bg: rgba(0, 0, 0, 0.05);
+            --lte-sidebar-color: #374151;
+            --lte-sidebar-hover-color: #111827;
+            --lte-sidebar-active-color: var(--brand-primary);
+            --lte-sidebar-menu-active-bg: var(--brand-active-bg);
+            --lte-sidebar-menu-active-color: var(--brand-primary);
             --lte-sidebar-submenu-bg: transparent;
-            --lte-sidebar-submenu-color: #c2c7d0;
-            --lte-sidebar-submenu-hover-color: #fff;
-            --lte-sidebar-submenu-hover-bg: rgba(255, 255, 255, 0.1);
-            --lte-sidebar-submenu-active-color: #fff;
-            --lte-sidebar-submenu-active-bg: rgba(255, 255, 255, 0.1);
-            --lte-sidebar-header-color: #c5cad2;
-
+            --lte-sidebar-submenu-color: #4b5563;
+            --lte-sidebar-submenu-hover-color: #111827;
+            --lte-sidebar-submenu-hover-bg: rgba(0, 0, 0, 0.05);
+            --lte-sidebar-submenu-active-color: var(--brand-primary);
+            --lte-sidebar-submenu-active-bg: var(--brand-active-bg);
+            --lte-sidebar-header-color: #6b7280;
         }
 
         .sidebar-brand .brand-text {

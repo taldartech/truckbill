@@ -47,6 +47,7 @@
         }
         th {
             background-color: #f2f2f2;
+            color: #000;
             font-weight: bold;
         }
         .text-right {

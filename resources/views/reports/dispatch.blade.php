@@ -81,14 +81,24 @@
                     min-width: 100%;
                 }
 
+                .select2-dropdown {
+                    border: 1px solid var(--brand-border);
+                    border-radius: 0.375rem;
+                }
+
+                .select2-results__option--highlighted {
+                    background-color: var(--brand-primary);
+                    color: white;
+                }
+
                 .table-sticky thead th {
                     position: sticky;
                     top: 0;
-                    background: #fff;
+                    background: var(--brand-white);
                     /* Ensures visibility */
                     z-index: 2;
                     /* Keeps header above table rows */
-                    border-bottom: 1px solid #ddd;
+                    border-bottom: 1px solid var(--brand-border);
                 }
             </style>
             <div class="card-body table-sticky">

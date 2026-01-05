@@ -130,7 +130,7 @@ class TruckOwnerController extends Controller
                 $truckNumbers = $trucks->pluck('truck_number')->toArray();
                 $truckList = implode(', ', $truckNumbers);
                 $data[] = [
-                    'name' => '<a href="#" class="truck-owner-name-link text-primary fw-bold" data-bs-toggle="tooltip" title="Trucks: ' . htmlspecialchars($truckList) . '" data-id="' . $truckOwner->id . '" style="text-decoration: none;">' . ($truckOwner->name ?? 'N/A') . '</a>',
+                    'name' => '<a href="#" class="truck-owner-name-link text-brand-primary fw-bold" data-bs-toggle="tooltip" title="Trucks: ' . htmlspecialchars($truckList) . '" data-id="' . $truckOwner->id . '" style="text-decoration: none;">' . ($truckOwner->name ?? 'N/A') . '</a>',
                     'short_name' => $truckOwner->short_name ?? 'N/A',
                     'pan_number' => $truckOwner->pan_number ?? 'N/A',
                     'location' => $truckOwner->city->name ?? 'N/A',

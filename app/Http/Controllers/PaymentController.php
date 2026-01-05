@@ -231,7 +231,7 @@ class PaymentController extends Controller
                     'contact' => $company->contact_number ?? '',
                 ],
                 'theme' => [
-                    'color' => '#0d6efd',
+                    'color' => '#2FB36F',
                 ],
             ]);
         } catch (\Exception $e) {

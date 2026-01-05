@@ -12,16 +12,16 @@
         .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
             padding-left: 12px;
             padding-right: 20px;
-            color: #212529;
+            color: var(--brand-text-primary);
             line-height: 36px;
-            background: var(--bs-body-bg);
-            border: var(--bs-border-width) solid var(--bs-border-color);
+            background: var(--brand-card-bg);
+            border: 1px solid var(--brand-border);
             border-radius: 0.375rem;
         }
 
         .select2-container--bootstrap-5 .select2-selection--single:focus-visible {
-            border-color: var(--bs-primary);
-            box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+            border-color: var(--brand-primary);
+            box-shadow: 0 0 0 0.25rem var(--brand-primary-light);
             outline: 0;
             border-radius: 0.375rem;
         }
@@ -32,12 +32,12 @@
         }
 
         .select2-dropdown {
-            border: 1px solid #dee2e6;
+            border: 1px solid var(--brand-border);
             border-radius: 0.375rem;
         }
 
         .select2-results__option--highlighted {
-            background-color: var(--bs-primary);
+            background-color: var(--brand-primary);
             color: white;
         }
 

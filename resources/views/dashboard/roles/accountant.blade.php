@@ -1,7 +1,7 @@
 {{-- ACCOUNTANT DASHBOARD --}}
 <div class="row mb-3">
     <div class="col-12">
-        <h2 class="mb-0"><i class="fas fa-calculator text-success"></i> Accountant Dashboard</h2>
+        <h2 class="mb-0"><i class="fas fa-calculator text-brand-primary"></i> Accountant Dashboard</h2>
         <p class="text-muted">Financial overview and payment management</p>
     </div>
 </div>
@@ -10,7 +10,7 @@
 <div class="row">
     <div class="col-12 col-sm-6 col-md-3">
         <div class="info-box">
-            <span class="info-box-icon bg-success">
+            <span class="info-box-icon bg-brand-primary">
                 <i class="fa-solid fa-indian-rupee-sign"></i>
             </span>
             <div class="info-box-content">
@@ -22,7 +22,7 @@
     </div>
     <div class="col-12 col-sm-6 col-md-3">
         <div class="info-box">
-            <span class="info-box-icon bg-success">
+            <span class="info-box-icon bg-brand-primary">
                 <i class="fas fa-check-circle"></i>
             </span>
             <div class="info-box-content">
@@ -34,7 +34,7 @@
     </div>
     <div class="col-12 col-sm-6 col-md-3">
         <div class="info-box">
-            <span class="info-box-icon bg-warning">
+            <span class="info-box-icon bg-brand-warning">
                 <i class="fas fa-clock"></i>
             </span>
             <div class="info-box-content">
@@ -46,7 +46,7 @@
     </div>
     <div class="col-12 col-sm-6 col-md-3">
         <div class="info-box">
-            <span class="info-box-icon bg-danger">
+            <span class="info-box-icon bg-brand-danger">
                 <i class="fas fa-exclamation-circle"></i>
             </span>
             <div class="info-box-content">
@@ -61,7 +61,7 @@
 <div class="row">
     <div class="col-12 col-sm-6 col-md-3">
         <div class="info-box">
-            <span class="info-box-icon bg-info">
+            <span class="info-box-icon bg-brand-secondary">
                 <i class="fas fa-file-invoice"></i>
             </span>
             <div class="info-box-content">
@@ -90,7 +90,7 @@
     <div class="col-md-12">
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-chart-pie text-primary"></i> Payment Status Breakdown</h3>
+                <h3 class="card-title"><i class="fas fa-chart-pie text-brand-secondary"></i> Payment Status Breakdown</h3>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -117,7 +117,7 @@
     <div class="col-md-12">
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-exclamation-triangle text-danger"></i> Pending Payments (High Priority)</h3>
+                <h3 class="card-title"><i class="fas fa-exclamation-triangle text-brand-danger"></i> Pending Payments (High Priority)</h3>
                 <div class="card-tools">
                     <a href="{{ route('voucher_payments.index') }}" class="btn btn-sm btn-primary">View All</a>
                 </div>
@@ -166,7 +166,7 @@
     <div class="col-md-6">
         <div class="card h-100">
             <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-money-bill-wave text-success"></i> Recent Payments</h3>
+                <h3 class="card-title"><i class="fas fa-money-bill-wave text-brand-primary"></i> Recent Payments</h3>
                 <div class="card-tools">
                     <a href="{{ route('voucher_payments.index') }}" class="btn btn-sm btn-primary">View All</a>
                 </div>
@@ -215,7 +215,7 @@
     <div class="col-md-6">
         <div class="card h-100">
             <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-file-invoice text-info"></i> Recent Invoices</h3>
+                <h3 class="card-title"><i class="fas fa-file-invoice text-brand-secondary"></i> Recent Invoices</h3>
                 <div class="card-tools">
                     <a href="{{ route('invoices.index') }}" class="btn btn-sm btn-primary">View All</a>
                 </div>
@@ -266,7 +266,7 @@
     <div class="col-md-12">
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-trophy text-warning"></i> Top 5 Payers (This Month)</h3>
+                <h3 class="card-title"><i class="fas fa-trophy text-brand-warning"></i> Top 5 Payers (This Month)</h3>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">

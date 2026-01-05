@@ -153,7 +153,7 @@ class TruckController extends Controller
         $data = $trucks->map(function ($truck, $index) use ($start) {
             return [
                 'id' => $truck->id,
-                'truck_number' => '<a href="#" class="truck-number-link text-primary fw-bold" data-id="' . $truck->id . '" style="text-decoration: none; cursor: pointer;">' . $truck->truck_number . '</a>',
+                'truck_number' => '<a href="#" class="truck-number-link text-brand-primary fw-bold" data-id="' . $truck->id . '" style="text-decoration: none; cursor: pointer;">' . $truck->truck_number . '</a>',
                 'truck_type' => $truck->truck_type ?: '-',
                 'registration_date' => $truck->registration_date ? date('Y-m-d', strtotime($truck->registration_date)) : '-',
                 'transporter' => $truck->transporter ? $truck->transporter->name : '-',

@@ -1,7 +1,7 @@
 {{-- ADMIN DASHBOARD --}}
 <div class="row mb-3">
     <div class="col-12">
-        <h2 class="mb-0"><i class="fas fa-tachometer-alt text-primary"></i> Admin Dashboard</h2>
+        <h2 class="mb-0"><i class="fas fa-tachometer-alt text-brand-primary"></i> Admin Dashboard</h2>
         <p class="text-muted">Complete overview of your company operations</p>
     </div>
 </div>
@@ -10,7 +10,7 @@
 <div class="row">
     <div class="col-12 col-sm-6 col-md-3">
         <div class="info-box">
-            <span class="info-box-icon bg-info">
+            <span class="info-box-icon bg-brand-secondary">
                 <i class="fas fa-truck"></i>
             </span>
             <div class="info-box-content">
@@ -34,7 +34,7 @@
     </div>
     <div class="col-12 col-sm-6 col-md-3">
         <div class="info-box">
-            <span class="info-box-icon bg-warning">
+            <span class="info-box-icon bg-brand-warning">
                 <i class="fas fa-clock"></i>
             </span>
             <div class="info-box-content">
@@ -46,7 +46,7 @@
     </div>
     <div class="col-12 col-sm-6 col-md-3">
         <div class="info-box">
-            <span class="info-box-icon bg-primary">
+            <span class="info-box-icon bg-brand-secondary">
                 <i class="fas fa-users"></i>
             </span>
             <div class="info-box-content">
@@ -61,7 +61,7 @@
 <div class="row">
     <div class="col-12 col-sm-6 col-md-3">
         <div class="info-box">
-            <span class="info-box-icon bg-info">
+            <span class="info-box-icon bg-brand-secondary">
                 <i class="fas fa-file-invoice"></i>
             </span>
             <div class="info-box-content">
@@ -73,7 +73,7 @@
     </div>
     <div class="col-12 col-sm-6 col-md-3">
         <div class="info-box">
-            <span class="info-box-icon bg-danger">
+            <span class="info-box-icon bg-brand-danger">
                 <i class="fas fa-exclamation-circle"></i>
             </span>
             <div class="info-box-content">
@@ -90,7 +90,7 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-list text-info"></i> Recent Bookings</h3>
+                <h3 class="card-title"><i class="fas fa-list text-brand-secondary"></i> Recent Bookings</h3>
                 <div class="card-tools">
                     <a href="{{ route('freight_bookings.index') }}" class="btn btn-sm btn-primary">View All</a>
                 </div>
@@ -151,7 +151,7 @@
     <div class="col-md-4">
         <div class="card h-100">
             <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-truck text-primary"></i> Top 5 Transporters</h3>
+                <h3 class="card-title"><i class="fas fa-truck text-brand-primary"></i> Top 5 Transporters</h3>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -184,7 +184,7 @@
     <div class="col-md-4">
         <div class="card h-100">
             <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-users text-success"></i> Top 5 Customers</h3>
+                <h3 class="card-title"><i class="fas fa-users text-brand-primary"></i> Top 5 Customers</h3>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -217,7 +217,7 @@
     <div class="col-md-4">
         <div class="card h-100">
             <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-file-invoice text-info"></i> Recent Invoices</h3>
+                <h3 class="card-title"><i class="fas fa-file-invoice text-brand-secondary"></i> Recent Invoices</h3>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -255,7 +255,7 @@
     <div class="col-md-6">
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-chart-pie text-warning"></i> Payment Status Breakdown</h3>
+                <h3 class="card-title"><i class="fas fa-chart-pie text-brand-warning"></i> Payment Status Breakdown</h3>
             </div>
             <div class="card-body">
                 <div class="row">
@@ -308,7 +308,7 @@
     <div class="col-md-12">
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-exclamation-triangle text-danger"></i> Expired Eway Bills</h3>
+                <h3 class="card-title"><i class="fas fa-exclamation-triangle text-brand-danger"></i> Expired Eway Bills</h3>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -337,12 +337,12 @@
                                     @endphp
                                     <td
                                         @if ($expiryDate->isSameDay($today) || $expiryDate->lessThan($today))
-                                            style="background-color: #FF0000; color: white;"
+                                            style="background-color: var(--brand-danger); color: white;"
                                         @elseif ($expiryDate->isSameDay($today->copy()->addDay()))
-                                            style="background-color: #FFFF00;"
+                                            style="background-color: var(--brand-warning); color: #111827;"
                                         @else
                                             @if($expiryDate->isSameDay($today->copy()->addDays(2)))
-                                            style="background-color: #00FF00;"
+                                            style="background-color: var(--brand-success); color: white;"
                                             @endif
                                         @endif
                                     >

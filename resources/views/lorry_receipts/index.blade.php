@@ -12,13 +12,13 @@
         :root {
             --glass-bg: rgba(255, 255, 255, 0.75);
             --glass-border: rgba(255, 255, 255, 0.3);
-            --primary-indigo: #4f46e5;
-            --primary-indigo-dark: #4338ca;
-            --success-emerald: #10b981;
-            --warning-amber: #f59e0b;
-            --danger-rose: #f43f5e;
-            --slate-600: #475569;
-            --slate-800: #1e293b;
+            --primary-brand: var(--brand-primary);
+            --primary-brand-dark: var(--brand-primary-dark);
+            --success-brand: var(--brand-success);
+            --warning-brand: var(--brand-warning);
+            --danger-brand: var(--brand-danger);
+            --slate-600: var(--brand-text-muted);
+            --slate-800: var(--brand-text-primary);
         }
 
         .table td, .table th {
@@ -47,7 +47,7 @@
         #lorryReceiptsTable thead th {
             position: sticky;
             top: 0;
-            background: #f8fafc !important;
+            background: var(--brand-table-header-bg) !important;
             z-index: 20;
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
@@ -100,10 +100,10 @@
             letter-spacing: 0.05em;
         }
 
-        .status-delivered { background: #d1fae5; color: #065f46; }
-        .status-delivered .status-dot { background: #10b981; }
-        .status-pending { background: #fef3c7; color: #92400e; }
-        .status-pending .status-dot { background: #f59e0b; }
+        .status-delivered { background: var(--brand-active-bg); color: var(--brand-primary-dark); }
+        .status-delivered .status-dot { background: var(--brand-success); }
+        .status-pending { background: #FFF7ED; color: #9A3412; } /* Derived from Amber */
+        .status-pending .status-dot { background: var(--brand-warning); }
 
         /* Action Buttons */
         .btn-action {
@@ -133,21 +133,21 @@
         }
 
         /* Semantic Button Colors */
-        .btn-action-warning { background: var(--warning-amber) !important; }
-        .btn-action-success { background: var(--success-emerald) !important; }
-        .btn-action-info    { background: #0ea5e9 !important; }
-        .btn-action-primary { background: var(--primary-indigo) !important; }
-        .btn-action-danger  { background: var(--danger-rose) !important; }
-        .btn-action-muted   { background: #94a3b8 !important; }
+        .btn-action-warning { background: var(--warning-brand) !important; }
+        .btn-action-success { background: var(--success-brand) !important; }
+        .btn-action-info    { background: var(--brand-info) !important; }
+        .btn-action-primary { background: var(--primary-brand) !important; }
+        .btn-action-danger  { background: var(--danger-brand) !important; }
+        .btn-action-muted   { background: var(--brand-text-muted) !important; }
 
         .lr-number-link {
-            color: var(--primary-indigo) !important;
+            color: var(--brand-accent-blue) !important;
             font-weight: 700;
             text-decoration: none !important;
         }
 
         .lr-number-link:hover {
-            color: var(--primary-indigo-dark) !important;
+            color: var(--brand-accent-blue-dark) !important;
             text-decoration: underline !important;
         }
 
@@ -244,10 +244,10 @@
                     <div class="d-flex align-items-center gap-3">
                         <h4 class="card-title mb-0" style="white-space: nowrap;">Lorry Receipts</h4>
                         <div class="d-flex gap-2">
-                            <a href="{{ route('lorry_receipts.create') }}" class="header-pill-btn btn btn-primary border-0 shadow-sm" style="background: var(--primary-indigo);">
+                            <a href="{{ route('lorry_receipts.create') }}" class="header-pill-btn btn btn-primary border-0 shadow-sm" style="background: var(--brand-primary);">
                                 <i class="bi bi-plus-circle me-1"></i> Create
                             </a>
-                            <a href="{{ route('lorry_receipts.createLinked') }}" class="header-pill-btn btn btn-outline-primary shadow-sm" style="border-color: var(--primary-indigo); color: var(--primary-indigo);">
+                            <a href="{{ route('lorry_receipts.createLinked') }}" class="header-pill-btn btn btn-outline-primary shadow-sm" style="border-color: var(--brand-primary); color: var(--brand-primary);">
                                 <i class="bi bi-link-45deg me-1"></i> Linked
                             </a>
                         </div>
@@ -265,10 +265,10 @@
                             </div>
                         </div>
                         <div class="d-flex gap-2">
-                            <button type="button" class="filter-action-btn" id="filterBtn" style="background: var(--primary-indigo); color: white;" title="Filter" data-bs-toggle="tooltip">
+                            <button type="button" class="filter-action-btn" id="filterBtn" style="background: var(--brand-primary); color: white;" title="Filter" data-bs-toggle="tooltip">
                                 <i class="bi bi-funnel-fill"></i>
                             </button>
-                            <button type="button" class="filter-action-btn" id="resetDateFilter" style="background: var(--slate-800); color: white;" title="Reset" data-bs-toggle="tooltip">
+                            <button type="button" class="filter-action-btn" id="resetDateFilter" style="background: var(--brand-text-primary); color: white;" title="Reset" data-bs-toggle="tooltip">
                                 <i class="bi bi-arrow-counterclockwise"></i>
                             </button>
                         </div>
@@ -343,8 +343,8 @@
         .lr-details-section {
             margin-bottom: 1.5rem;
             border-radius: 0.5rem;
-            background-color: #f8f9fa;
-            border: 1px solid #e9ecef;
+            background-color: var(--brand-bg);
+            border: 1px solid var(--brand-border);
             overflow: hidden;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
         }
@@ -355,7 +355,7 @@
             margin: 0;
             font-size: 1rem;
             font-weight: 600;
-            color: #0d6efd;
+            color: var(--brand-primary);
             border-bottom: 1px solid #e9ecef;
         }
 
@@ -440,7 +440,7 @@
         .lr-details-section {
             margin-bottom: 20px;
             padding: 15px;
-            border: 1px solid #dee2e6;
+            border: 1px solid var(--brand-border);
             border-radius: 5px;
         }
 
@@ -509,8 +509,8 @@
         }
 
         .card-header {
-            background: linear-gradient(to right, #f8f9fa, #e9ecef);
-            border-bottom: 1px solid #e9ecef;
+            background: var(--brand-table-header-bg);
+            border-bottom: 1px solid var(--brand-border);
             padding: 15px 20px;
             border-radius: 10px 10px 0 0 !important;
         }
@@ -538,8 +538,8 @@
         }
 
         .table th {
-            background-color: #f8f9fa;
-            border-bottom: 2px solid #dee2e6;
+            background-color: var(--brand-table-header-bg);
+            border-bottom: 2px solid var(--brand-border);
             font-weight: 600;
             text-transform: uppercase;
             font-size: 0.8rem;
@@ -568,10 +568,6 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
 
-        .lr-number-link {
-            color: #0d6efd;
-            text-decoration: none;
-        }
     </style>
 
     @push('scripts')
@@ -718,7 +714,7 @@
                         {
                             data: 'amount_formatted',
                             name: 'amount',
-                            className: 'text-end fw-bold text-slate-800'
+                            className: 'text-end fw-bold text-brand-primary'
                         },
                         {
                             data: 'actions',

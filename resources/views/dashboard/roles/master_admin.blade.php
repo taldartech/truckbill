@@ -1,7 +1,7 @@
 {{-- MASTER ADMIN DASHBOARD --}}
 <div class="row mb-3">
     <div class="col-12">
-        <h2 class="mb-0"><i class="fas fa-crown text-warning"></i> Master Admin Dashboard</h2>
+        <h2 class="mb-0"><i class="fas fa-crown text-brand-warning"></i> Master Admin Dashboard</h2>
         <p class="text-muted">System-wide overview and platform metrics</p>
     </div>
 </div>
@@ -10,7 +10,7 @@
 <div class="row">
     <div class="col-12 col-sm-6 col-md-3">
         <div class="info-box">
-            <span class="info-box-icon bg-primary">
+            <span class="info-box-icon bg-brand-secondary">
                 <i class="fas fa-building"></i>
             </span>
             <div class="info-box-content">
@@ -22,7 +22,7 @@
     </div>
     <div class="col-12 col-sm-6 col-md-3">
         <div class="info-box">
-            <span class="info-box-icon bg-success">
+            <span class="info-box-icon bg-brand-primary">
                 <i class="fas fa-check-circle"></i>
             </span>
             <div class="info-box-content">
@@ -46,7 +46,7 @@
     </div>
     <div class="col-12 col-sm-6 col-md-3">
         <div class="info-box">
-            <span class="info-box-icon bg-info">
+            <span class="info-box-icon bg-brand-secondary">
                 <i class="fas fa-users"></i>
             </span>
             <div class="info-box-content">
@@ -61,7 +61,7 @@
 <div class="row">
     <div class="col-12 col-sm-6 col-md-3">
         <div class="info-box">
-            <span class="info-box-icon bg-warning">
+            <span class="info-box-icon bg-brand-secondary">
                 <i class="fas fa-truck"></i>
             </span>
             <div class="info-box-content">
@@ -73,7 +73,7 @@
     </div>
     <div class="col-12 col-sm-6 col-md-3">
         <div class="info-box">
-            <span class="info-box-icon bg-success">
+            <span class="info-box-icon bg-brand-primary">
                 <i class="fa-solid fa-indian-rupee-sign"></i>
             </span>
             <div class="info-box-content">
@@ -85,7 +85,7 @@
     </div>
     <div class="col-12 col-sm-6 col-md-3">
         <div class="info-box">
-            <span class="info-box-icon bg-warning">
+            <span class="info-box-icon bg-brand-warning">
                 <i class="fas fa-exclamation-triangle"></i>
             </span>
             <div class="info-box-content">
@@ -114,7 +114,7 @@
     <div class="col-md-12">
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-exclamation-triangle text-warning"></i> Companies with Expiring/Expired Plans</h3>
+                <h3 class="card-title"><i class="fas fa-exclamation-triangle text-brand-warning"></i> Companies with Expiring/Expired Plans</h3>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -165,7 +165,7 @@
     <div class="col-md-6">
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-chart-line text-success"></i> Top Companies by Revenue</h3>
+                <h3 class="card-title"><i class="fas fa-chart-line text-brand-primary"></i> Top Companies by Revenue</h3>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -198,7 +198,7 @@
     <div class="col-md-6">
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-building text-primary"></i> Recent Companies</h3>
+                <h3 class="card-title"><i class="fas fa-building text-brand-secondary"></i> Recent Companies</h3>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">

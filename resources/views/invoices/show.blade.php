@@ -44,11 +44,11 @@
                                 </tr>
                                 <tr>
                                     <th>Paid Amount:</th>
-                                    <td class="text-success fw-bold">&#8377;{{ number_format($invoice->paid_amount, 2) }}</td>
+                                    <td class="text-brand-primary fw-bold">&#8377;{{ number_format($invoice->paid_amount, 2) }}</td>
                                 </tr>
                                 <tr>
                                     <th>Remaining Amount:</th>
-                                    <td class="fw-bold {{ $invoice->remaining_amount > 0 ? 'text-danger' : 'text-success' }}">
+                                    <td class="fw-bold {{ $invoice->remaining_amount > 0 ? 'text-danger' : 'text-brand-primary' }}">
                                         &#8377;{{ number_format($invoice->remaining_amount, 2) }}
                                     </td>
                                 </tr>
@@ -134,7 +134,7 @@
                                                     <td>
                                                         <span class="badge bg-info">{{ $payment->mode }}</span>
                                                     </td>
-                                                    <td class="text-success fw-bold">&#8377;{{ number_format($payment->amount, 2) }}</td>
+                                                    <td class="text-brand-primary fw-bold">&#8377;{{ number_format($payment->amount, 2) }}</td>
                                                     <td>{{ $payment->remark ?: '-' }}</td>
                                                     <td>
                                                         @if($payment->creator)
@@ -156,7 +156,7 @@
                                             <tfoot class="table-light">
                                                 <tr>
                                                     <th colspan="3" class="text-end">Total Paid:</th>
-                                                    <th class="text-success">&#8377;{{ number_format($invoice->paid_amount, 2) }}</th>
+                                                    <th class="text-brand-primary">&#8377;{{ number_format($invoice->paid_amount, 2) }}</th>
                                                     <th colspan="2"></th>
                                                 </tr>
                                             </tfoot>

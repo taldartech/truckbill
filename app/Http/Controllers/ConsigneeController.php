@@ -127,7 +127,7 @@ class ConsigneeController extends Controller
             return [
                 'DT_RowIndex' => $start + $index + 1,
                 'id' => $consignee->id,
-                'name' => '<a href="javascript:void(0)" class="text-primary fw-bold consignee-name-link" data-id="' . $consignee->id . '" style="cursor: pointer; text-decoration: none;">' . ($consignee->name ?: '-') . '</a>',
+                'name' => '<a href="javascript:void(0)" class="text-brand-primary fw-bold consignee-name-link" data-id="' . $consignee->id . '" style="cursor: pointer; text-decoration: none;">' . ($consignee->name ?: '-') . '</a>',
                 'city' => $consignee->city?->name ?? '-',
                 'state' => $consignee->state?->name ?? '-',
                 'country' => $consignee->country?->name ?? '-',
