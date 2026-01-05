@@ -111,7 +111,7 @@ class StateController extends Controller
         
         return '
             <div class="d-flex gap-1">
-                <a href="' . $editUrl . '" class="btn btn-sm btn-info">
+                <a href="' . $editUrl . '" class="btn btn-sm btn-edit">
                     <i class="bi bi-pencil"></i>
                 </a>
                 <form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Delete this state?\')">

@@ -175,7 +175,7 @@ class UserController extends Controller
         $buttons = '<div class="d-flex gap-1">';
 
         $editUrl = route('users.edit', $user->id);
-        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit User">';
+        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-edit" title="Edit User">';
         $buttons .= '<i class="bi bi-pencil"></i></a>';
 
         $deleteUrl = route('users.destroy', $user->id);

@@ -281,10 +281,10 @@
 
             <!-- Form Actions -->
             <div class="d-flex justify-content-between align-items-center mt-4">
-                <a href="{{ route('truck_owners.index') }}" class="btn btn-secondary">
+                <a href="{{ route('truck_owners.index') }}" class="btn btn-back">
                     <i class="fas fa-arrow-left me-2"></i>Back to List
                 </a>
-                <button type="button" class="btn btn-primary" id="submitFormBtn">
+                <button type="button" class="btn btn-brand-primary" id="submitFormBtn">
                     <i class="fas fa-save me-2"></i>Update Truck Owner
                 </button>
             </div>
@@ -299,7 +299,7 @@
             <i class="bi bi-truck"></i> Registered Trucks
         </div>
         <div class="card-tools">
-            <button type="button" class="btn btn-success btn-sm" id="addNewTruckBtn">
+            <button type="button" class="btn btn-brand-primary btn-sm" id="addNewTruckBtn">
                 <i class="bi bi-plus-circle"></i> Add New Truck
             </button>
         </div>
@@ -485,7 +485,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success" id="saveTruckBtn">
+                    <button type="submit" class="btn btn-brand-primary" id="saveTruckBtn">
                         <i class="bi bi-save"></i> <span id="saveTruckText">Add Truck</span>
                     </button>
                 </div>
@@ -554,7 +554,7 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times me-2"></i>Cancel
                 </button>
-                <button type="button" class="btn btn-success" onclick="submitForm()">
+                <button type="button" class="btn btn-brand-primary" onclick="submitForm()">
                     <i class="fas fa-check me-2"></i>Confirm & Update
                 </button>
             </div>
@@ -588,7 +588,7 @@
 
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-info">
+            <button type="submit" class="btn btn-brand-primary">
               <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
               Submit form
             </button>
@@ -635,7 +635,7 @@
 
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-info">
+            <button type="submit" class="btn btn-brand-primary">
               <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
               Submit form
             </button>
@@ -685,7 +685,7 @@
 
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-info">
+            <button type="submit" class="btn btn-brand-primary">
               <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
               Submit form
             </button>

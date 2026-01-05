@@ -37,7 +37,7 @@
                                 <tr>
                                     <th>Payment Status:</th>
                                     <td>
-                                        <span class="badge bg-{{ $invoice->payment_status === 'paid' ? 'success' : ($invoice->payment_status === 'partial' ? 'warning' : 'danger') }}">
+                                        <span class="badge bg-{{ $invoice->payment_status === 'paid' ? 'brand-primary' : ($invoice->payment_status === 'partial' ? 'warning' : 'danger') }}">
                                             {{ ucfirst($invoice->payment_status) }}
                                         </span>
                                     </td>
@@ -170,7 +170,7 @@
             </div>
             <div class="card-footer text-end">
                 @if (in_array(auth()->user()->userRole->name, ['admin', 'moderator']) && $invoice->remaining_amount > 0)
-                    <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#addPaymentModal">
+                    <button type="button" class="btn btn-brand-primary me-2" data-bs-toggle="modal" data-bs-target="#addPaymentModal">
                         <i class="bi bi-cash-coin"></i> Add Payment
                     </button>
                 @endif
@@ -186,7 +186,7 @@
                             onclick="return confirm('Delete this invoice?')">Delete</button>
                     </form>
                 @endif
-                <a href="{{ route('invoices.index') }}" class="btn btn-secondary">Back to List</a>
+                <a href="{{ route('invoices.index') }}" class="btn btn-back">Back to List</a>
             </div>
         </div>
     </div>
@@ -195,7 +195,7 @@
     <div class="modal fade" id="addPaymentModal" tabindex="-1" aria-labelledby="addPaymentModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header bg-success text-white">
+                <div class="modal-header bg-brand-primary text-white">
                     <h5 class="modal-title" id="addPaymentModalLabel">
                         <i class="bi bi-cash-coin"></i> Add Payment
                     </h5>
@@ -243,7 +243,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-success">
+                        <button type="submit" class="btn btn-brand-primary">
                             <i class="bi bi-check-circle"></i> Add Payment
                         </button>
                     </div>

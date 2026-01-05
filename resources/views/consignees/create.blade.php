@@ -151,12 +151,11 @@
             </div>
         </div>
         
-        <!--begin::Footer-->
         <div class="card-footer">
-            <button class="btn btn-success" type="submit">
-                <i class="bi bi-check-circle"></i> Submit Form
+            <button class="btn btn-brand-primary" type="submit">
+                <i class="bi bi-check-circle"></i> Create Consignee
             </button>
-            <a href="{{ route('consignees.index') }}" class="btn btn-secondary">
+            <a href="{{ route('consignees.index') }}" class="btn btn-back">
                 <i class="bi bi-arrow-left"></i> Back to List
             </a>
         </div>
@@ -193,7 +192,7 @@
   
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-info">
+            <button type="submit" class="btn btn-brand-primary">
               <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
               Submit form
             </button>
@@ -240,7 +239,7 @@
   
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-info">
+            <button type="submit" class="btn btn-brand-primary">
               <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
               Submit form
             </button>
@@ -289,7 +288,7 @@
   
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-info">
+            <button type="submit" class="btn btn-brand-primary">
               <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
               Submit form
             </button>

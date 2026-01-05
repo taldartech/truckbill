@@ -150,7 +150,7 @@ class ConsigneeController extends Controller
 
         // Edit button
         $editUrl = route('consignees.edit', $consignee->id);
-        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit Consignee">';
+        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-edit" title="Edit Consignee">';
         $buttons .= '<i class="bi bi-pencil"></i></a>';
 
         // Delete button

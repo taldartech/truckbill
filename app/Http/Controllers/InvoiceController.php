@@ -96,12 +96,12 @@ class InvoiceController extends Controller
                 ->addColumn('remaining_amount_formatted', function ($row) {
                     $paidAmount = $row->payments()->sum('amount');
                     $remaining = $row->total_amount - $paidAmount;
-                    $class = $remaining > 0 ? 'text-danger' : 'text-success';
+                    $class = $remaining > 0 ? 'text-danger' : 'text-brand-primary';
                     return '<span class="' . $class . '">₹' . number_format($remaining, 2) . '</span>';
                 })
                 ->addColumn('payment_status_badge', function ($row) {
                     $statusClass = match ($row->payment_status) {
-                        'paid' => 'success',
+                        'paid' => 'brand-primary',
                         'pending' => 'warning',
                         'overdue' => 'danger',
                         default => 'secondary'
@@ -146,17 +146,17 @@ class InvoiceController extends Controller
         $actions = '<div class="btn-group" role="group">';
 
         // View button
-        $actions .= '<a href="' . route('invoices.show', $invoice->id) . '" class="btn btn-sm btn-outline-info" title="View">';
+        $actions .= '<a href="' . route('invoices.show', $invoice->id) . '" class="btn btn-sm btn-view" title="View">';
         $actions .= '<i class="bi bi-eye"></i>';
         $actions .= '</a>';
 
         // Edit button
-        $actions .= '<a href="' . route('invoices.edit', $invoice->id) . '" class="btn btn-sm btn-outline-primary" title="Edit">';
+        $actions .= '<a href="' . route('invoices.edit', $invoice->id) . '" class="btn btn-sm btn-edit" title="Edit">';
         $actions .= '<i class="bi bi-pencil"></i>';
         $actions .= '</a>';
 
         // Print button
-        $actions .= '<a href="' . route('invoices.print', $invoice->id) . '" class="btn btn-sm btn-outline-secondary" title="Print" target="_blank">';
+        $actions .= '<a href="' . route('invoices.print', $invoice->id) . '" class="btn btn-sm btn-back" title="Print" target="_blank">';
         $actions .= '<i class="bi bi-printer"></i>';
         $actions .= '</a>';
 

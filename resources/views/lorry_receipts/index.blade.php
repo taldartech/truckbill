@@ -141,13 +141,13 @@
         .btn-action-muted   { background: var(--brand-text-muted) !important; }
 
         .lr-number-link {
-            color: var(--brand-accent-blue) !important;
+            color: var(--brand-primary) !important;
             font-weight: 700;
             text-decoration: none !important;
         }
 
         .lr-number-link:hover {
-            color: var(--brand-accent-blue-dark) !important;
+            color: var(--brand-primary-dark) !important;
             text-decoration: underline !important;
         }
 
@@ -247,7 +247,7 @@
                             <a href="{{ route('lorry_receipts.create') }}" class="header-pill-btn btn btn-primary border-0 shadow-sm" style="background: var(--brand-primary);">
                                 <i class="bi bi-plus-circle me-1"></i> Create
                             </a>
-                            <a href="{{ route('lorry_receipts.createLinked') }}" class="header-pill-btn btn btn-outline-primary shadow-sm" style="border-color: var(--brand-primary); color: var(--brand-primary);">
+                            <a href="{{ route('lorry_receipts.createLinked') }}" class="header-pill-btn btn btn-edit shadow-sm">
                                 <i class="bi bi-link-45deg me-1"></i> Linked
                             </a>
                         </div>
@@ -520,12 +520,12 @@
         }
 
         /* Button styling */
-        .btn-info,
+        .btn-brand-primary,
         .btn-success {
             transition: all 0.2s ease;
         }
 
-        .btn-info:hover,
+        .btn-brand-primary:hover,
         .btn-success:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);

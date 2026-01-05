@@ -28,8 +28,8 @@
         </div>
         
         <div class="card-footer">
-            <a href="{{ route('master.goods-types.index') }}" class="btn btn-info">Back to List</a>
-            <button type="submit" class="btn btn-info">Submit form</button>
+            <a href="{{ route('master.goods-types.index') }}" class="btn btn-back">Back to List</a>
+            <button type="submit" class="btn btn-brand-primary">Submit form</button>
         </div>
     </form>
         </div>

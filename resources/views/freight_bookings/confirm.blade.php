@@ -134,7 +134,7 @@
                     <div class="confirmation-label">PAN Verified</div>
                     <div class="confirmation-value">
                         @if($formData['pan_verified'])
-                            <span class="badge bg-success">Yes</span>
+                            <span class="badge bg-brand-primary">Yes</span>
                         @else
                             <span class="badge bg-danger">No</span>
                         @endif
@@ -171,7 +171,7 @@
                     <div class="col-md-4">
                         <div class="d-flex justify-content-between">
                             <span>Balance Amount:</span>
-                            <span class="fw-bold text-success">₹{{ number_format($formData['balance_amount'], 2) }}</span>
+                            <span class="fw-bold text-brand-primary">₹{{ number_format($formData['balance_amount'], 2) }}</span>
                         </div>
                     </div>
                 </div>
@@ -188,14 +188,14 @@
             <input type="hidden" name="confirmed" value="1">
 
             <div class="d-flex justify-content-between mt-4">
-                <a href="javascript:history.back()" class="btn btn-outline-secondary">
+                <a href="javascript:history.back()" class="btn btn-back">
                     <i class="fas fa-arrow-left me-1"></i> Back to Edit
                 </a>
                 <div>
-                    <button type="submit" name="action" value="save" class="btn btn-success me-2">
+                    <button type="submit" name="action" value="save" class="btn btn-brand-primary me-2">
                         <i class="fas fa-check-circle me-1"></i> Confirm & Submit
                     </button>
-                    <button type="submit" name="action" value="save_and_view" class="btn btn-primary">
+                    <button type="submit" name="action" value="save_and_view" class="btn btn-view">
                         <i class="bi bi-eye me-1"></i> Save & do payment
                     </button>
 

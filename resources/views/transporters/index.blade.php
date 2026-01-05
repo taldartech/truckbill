@@ -18,7 +18,7 @@
         @endif
 
         <div class="d-flex justify-content-end gap-2 mb-3">
-            <a href="{{ route('transporters.create') }}" class="btn btn-info">
+            <a href="{{ route('transporters.create') }}" class="btn btn-brand-primary">
                 <i class="bi bi-plus"></i> Create
             </a>
             <a href="{{ route('reports.transporter-master-export', ['type' => 'transporter']) }}" class="btn btn-warning">
@@ -57,7 +57,7 @@
         aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
+                <div class="modal-header bg-brand-primary text-white">
                     <h5 class="modal-title" id="transporterDetailsModalLabel">
                         <i class="bi bi-truck"></i> Transporter Details
                     </h5>
@@ -75,7 +75,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     @if (Auth::user()->userRole->name === 'admin')
-                        <button type="button" class="btn btn-primary" id="editTransporterBtn" style="display: none;">
+                        <button type="button" class="btn btn-edit" id="editTransporterBtn" style="display: none;">
                             <i class="bi bi-pencil"></i> Edit Transporter
                         </button>
                     @endif
@@ -89,7 +89,7 @@
         aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header bg-success text-white">
+                <div class="modal-header bg-brand-primary text-white">
                     <h5 class="modal-title" id="advancePaymentModalLabel">
                         <i class="bi bi-currency-rupee"></i> Add Advance Payment
                     </h5>
@@ -131,7 +131,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-success">
+                        <button type="submit" class="btn btn-brand-primary">
                             <i class="bi bi-check-lg"></i> Add Payment
                         </button>
                     </div>
@@ -319,7 +319,7 @@
                                         </tr>
                                         <tr>
                                             <td class="fw-bold">Type:</td>
-                                            <td><span class="badge ${data.is_owner === 'Truck Owner' ? 'bg-success' : 'bg-info'}">${data.is_owner}</span></td>
+                                            <td><span class="badge ${data.is_owner === 'Truck Owner' ? 'bg-brand-primary' : 'bg-info'}">${data.is_owner}</span></td>
                                         </tr>
                                     </table>
                                 </div>
@@ -342,11 +342,11 @@
                                         </tr>
                                         <tr>
                                             <td class="fw-bold">PAN Active:</td>
-                                            <td><span class="badge ${data.pan_active === 'Yes' ? 'bg-success' : 'bg-warning'}">${data.pan_active}</span></td>
+                                            <td><span class="badge ${data.pan_active === 'Yes' ? 'bg-brand-primary' : 'bg-warning'}">${data.pan_active}</span></td>
                                         </tr>
                                         <tr>
                                             <td class="fw-bold">Declaration Given:</td>
-                                            <td><span class="badge ${data.declaration_given === 'Yes' ? 'bg-success' : 'bg-warning'}">${data.declaration_given}</span></td>
+                                            <td><span class="badge ${data.declaration_given === 'Yes' ? 'bg-brand-primary' : 'bg-warning'}">${data.declaration_given}</span></td>
                                         </tr>
                                         <tr>
                                             <td class="fw-bold">TDS Percentage:</td>
@@ -354,7 +354,7 @@
                                         </tr>
                                         <tr>
                                             <td class="fw-bold">Advance Amount:</td>
-                                            <td class="fw-bold text-success">${data.advance_amount}</td>
+                                            <td class="fw-bold text-brand-primary">${data.advance_amount}</td>
                                         </tr>
                                     </table>
                                 </div>
@@ -438,7 +438,7 @@
                             data.advance_payments.forEach(function(payment) {
                                 detailsHtml += `
                             <tr>
-                                <td class="fw-bold text-success">${payment.amount}</td>
+                                <td class="fw-bold text-brand-primary">${payment.amount}</td>
                                 <td>${payment.payment_date}</td>
                                 <td class="text-muted">${payment.remark}</td>
                                 <td class="text-muted small">${payment.created_at}</td>

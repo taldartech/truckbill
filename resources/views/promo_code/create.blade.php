@@ -87,7 +87,7 @@
                             </div>
                         </div>
                         <div class="card-footer">
-                            <button class="btn btn-info" type="submit">Create Promo Code</button>
+                            <button class="btn btn-brand-primary" type="submit">Create Promo Code</button>
                             <a href="{{ route('promo_codes.index') }}" class="btn btn-secondary">Back to List</a>
                         </div>
                     </div>

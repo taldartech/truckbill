@@ -140,8 +140,8 @@
 
                         <!--begin::Footer-->
                         <div class="card-footer">
-                            <button class="btn btn-info" type="submit">Update User</button>
-                            <a href="{{ route('users.index') }}" class="btn btn-info">Back to List</a>
+                            <button class="btn btn-brand-primary" type="submit">Update User</button>
+                            <a href="{{ route('users.index') }}" class="btn btn-back">Back to List</a>
                         </div>
                         <!--end::Footer-->
                     </form>

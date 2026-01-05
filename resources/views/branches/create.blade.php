@@ -79,8 +79,8 @@
         <!--end::Body-->
         <!--begin::Footer-->
         <div class="card-footer">
-            <button type="submit" class="btn btn-info">Save Branch</button>
-            <a href="{{ route('branches.index') }}" class="btn btn-info">Back to Branches</a>
+            <button type="submit" class="btn btn-brand-primary">Save Branch</button>
+            <a href="{{ route('branches.index') }}" class="btn btn-brand-primary">Back to Branches</a>
         </div>
         <!--end::Footer-->
     </form>

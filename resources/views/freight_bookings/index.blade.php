@@ -51,7 +51,7 @@
                         data-bs-target="#bulkMemoIdModal">
                         <i class="bi bi-clipboard-check"></i> Bulk Memo ID
                     </button>
-                    <button id="voucher-payment-btn" class="btn btn-info" style="display: none;">
+                    <button id="voucher-payment-btn" class="btn btn-brand-primary" style="display: none;">
                         <i class="bi bi-receipt"></i> Voucher Payment
                     </button>
                     <button id="combined-payment-btn" class="btn btn-warning" style="display: none;">
@@ -205,7 +205,7 @@
                                         @if ($booking->lr)
                                             {{ $booking->lr->lr_number }}
                                             @if ($booking->linked_lr_id)
-                                                <span class="badge text-bg-info">[{{ $booking->linked_lr_id }}]</span>
+                                                <span class="badge bg-brand-secondary">[{{ $booking->linked_lr_id }}]</span>
                                             @endif
                                         @else
                                             -
@@ -217,7 +217,7 @@
                                             {{ $booking->lr->customer->name }}
                                             @if ($booking->lr->memo_id)
                                                 <span
-                                                    class="badge text-bg-success ms-1">[{{ $booking->lr->memo_id }}]</span>
+                                                    class="badge bg-brand-secondary ms-1">[{{ $booking->lr->memo_id }}]</span>
                                             @endif
                                         @else
                                             -
@@ -232,7 +232,7 @@
 
                                             if ($booking->transporter && $booking->transporter->is_owner) {
                                                 $badge =
-                                                    '<span class="badge bg-success ms-1" title="Truck Owner"><i class="bi bi-truck"></i></span>';
+                                                    '<span class="badge bg-brand-secondary ms-1" title="Truck Owner"><i class="bi bi-truck"></i></span>';
                                             } else {
                                                 $badge =
                                                     '<span class="badge bg-info ms-1" title="Agency"><i class="bi bi-building"></i></span>';
@@ -1460,14 +1460,14 @@
     }
 
     /* Button styling */
-    .btn-info,
+    .btn-brand-primary,
     .btn-success,
     .btn-primary,
     .btn-warning {
         transition: all 0.2s ease;
     }
 
-    .btn-info:hover,
+    .btn-brand-primary:hover,
     .btn-success:hover,
     .btn-primary:hover,
     .btn-warning:hover {

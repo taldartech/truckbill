@@ -189,8 +189,8 @@
         <!--end::Body-->
         <!--begin::Footer-->
         <div class="card-footer">
-            <button class="btn btn-info" type="submit">Register Company</button>
-            <a href="/dashboard" class="btn btn-info">Back to Dashboard</a>
+            <button class="btn btn-brand-primary" type="submit">Register Company</button>
+            <a href="/dashboard" class="btn btn-brand-primary">Back to Dashboard</a>
         </div>
         <!--end::Footer-->
     </form>

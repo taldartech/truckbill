@@ -62,7 +62,7 @@
                         </div>
                         <div class="card-footer">
                             <button class="btn btn-success" type="submit">Update Voucher Template</button>
-                            <a href="{{ route('voucher_templates.index') }}" class="btn btn-info">Back to list</a>
+                            <a href="{{ route('voucher_templates.index') }}" class="btn btn-brand-primary">Back to list</a>
                         </div>
                     </form>
                 </div>

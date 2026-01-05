@@ -18,7 +18,7 @@
 
     {{-- Always visible container --}}
     <div class="d-flex justify-content-end gap-2 mb-3">
-        <a href="{{ route('master.pump.create') }}" class="btn btn-info">
+        <a href="{{ route('master.pump.create') }}" class="btn btn-brand-primary">
             <i class="bi bi-plus"></i> Create
         </a>
     </div>

@@ -39,8 +39,8 @@
         </div>
         
         <div class="card-footer">
-            <button type="submit" class="btn btn-info">Submit form</button>
-            <a href="{{ route('master.countries.index') }}" class="btn btn-info">Back to List</a>
+            <button type="submit" class="btn btn-brand-primary">Submit form</button>
+            <a href="{{ route('master.countries.index') }}" class="btn btn-back">Back to List</a>
         </div>
     </form>
         </div>

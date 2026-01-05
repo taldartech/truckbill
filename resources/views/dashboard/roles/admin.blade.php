@@ -11,7 +11,7 @@
     <div class="col-12 col-sm-6 col-md-3">
         <div class="info-box">
             <span class="info-box-icon bg-brand-secondary">
-                <i class="fas fa-truck"></i>
+                <i class="fas fa-truck text-brand-primary"></i>
             </span>
             <div class="info-box-content">
                 <span class="info-box-text">Total Bookings</span>
@@ -22,7 +22,7 @@
     </div>
     <div class="col-12 col-sm-6 col-md-3">
         <div class="info-box">
-            <span class="info-box-icon bg-success">
+            <span class="info-box-icon bg-brand-primary">
                 <i class="fa-solid fa-indian-rupee-sign"></i>
             </span>
             <div class="info-box-content">
@@ -47,7 +47,7 @@
     <div class="col-12 col-sm-6 col-md-3">
         <div class="info-box">
             <span class="info-box-icon bg-brand-secondary">
-                <i class="fas fa-users"></i>
+                <i class="fas fa-users text-brand-primary"></i>
             </span>
             <div class="info-box-content">
                 <span class="info-box-text">Active Transporters</span>
@@ -62,7 +62,7 @@
     <div class="col-12 col-sm-6 col-md-3">
         <div class="info-box">
             <span class="info-box-icon bg-brand-secondary">
-                <i class="fas fa-file-invoice"></i>
+                <i class="fas fa-file-invoice text-brand-primary"></i>
             </span>
             <div class="info-box-content">
                 <span class="info-box-text">Total Invoices</span>
@@ -127,7 +127,7 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <a href="{{ route('freight_bookings.show', $booking->id) }}" class="btn btn-sm btn-info">
+                                        <a href="{{ route('freight_bookings.show', $booking->id) }}" class="btn btn-sm btn-view">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                     </td>
@@ -280,7 +280,7 @@
     <div class="col-md-6">
         <div class="card">
             <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-chart-bar text-primary"></i> Booking Status</h3>
+                <h3 class="card-title"><i class="fas fa-chart-bar text-brand-primary"></i> Booking Status</h3>
             </div>
             <div class="card-body">
                 <div class="row">

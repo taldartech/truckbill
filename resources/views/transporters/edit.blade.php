@@ -143,7 +143,7 @@
                                     </option>
                                 @endforeach
                             </select>
-                            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addCountryModal" title="Add New Country">
+                            <button type="button" class="btn btn-brand-primary" data-bs-toggle="modal" data-bs-target="#addCityModal" title="Add New City">
                                 <i class="bi bi-plus"></i>
                             </button>
                         </div>
@@ -162,7 +162,7 @@
                                     @endforeach
                                 @endif
                             </select>
-                            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addStateModal" title="Add New State">
+                            <button type="button" class="btn btn-brand-primary" data-bs-toggle="modal" data-bs-target="#addStateModal" title="Add New State">
                                 <i class="bi bi-plus"></i>
                             </button>
                         </div>
@@ -181,7 +181,7 @@
                                     @endforeach
                                 @endif
                             </select>
-                            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addCityModal" title="Add New City">
+                            <button type="button" class="btn btn-brand-primary" data-bs-toggle="modal" data-bs-target="#addCityModal" title="Add New City">
                                 <i class="bi bi-plus"></i>
                             </button>
                         </div>
@@ -203,10 +203,10 @@
             <div class="row"><div class="col"><h5 class="mb-3">Quick Actions</h5></div></div>
             <div class="row g-2">
                 <div class="col-md-4">
-                    <button class="btn btn-success w-100 mb-2" type="button" onclick="showConfirmationModal()">💾 Update Transporter</button>
+                    <button class="btn btn-brand-primary w-100 mb-2" type="button" onclick="showConfirmationModal()">💾 Update Transporter</button>
                 </div>
                 <div class="col-md-4">
-                    <a href="{{ route('transporters.index') }}" class="btn btn-outline-dark w-100 mb-2">📄 Back to List</a>
+                    <a href="{{ route('transporters.index') }}" class="btn btn-back w-100 mb-2">📄 Back to List</a>
                 </div>
             </div>
         </div>
@@ -217,7 +217,7 @@
 <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
+            <div class="modal-header bg-brand-primary text-white">
                 <h5 class="modal-title" id="confirmationModalLabel">
                     <i class="fas fa-check-circle me-2"></i>Confirm Transporter Update
                 </h5>
@@ -273,7 +273,7 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times me-2"></i>Cancel
                 </button>
-                <button type="button" class="btn btn-success" onclick="submitForm()">
+                <button type="button" class="btn btn-brand-primary" onclick="submitForm()">
                     <i class="fas fa-check me-2"></i>Confirm & Update
                 </button>
             </div>
@@ -307,7 +307,7 @@
 
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-info">
+            <button type="submit" class="btn btn-brand-primary">
               <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
               Submit form
             </button>
@@ -354,7 +354,7 @@
 
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-info">
+            <button type="submit" class="btn btn-brand-primary">
               <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
               Submit form
             </button>
@@ -404,7 +404,7 @@
 
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn btn-info">
+            <button type="submit" class="btn btn-brand-primary">
               <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
               Submit form
             </button>

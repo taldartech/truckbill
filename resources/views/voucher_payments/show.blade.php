@@ -204,7 +204,7 @@
                                     <td>
                                         <div class="d-flex gap-1">
                                             <a href="{{ route('voucher_payments.edit', $payment) }}?lorry_receipt_id={{ $payment->freight_booking ? $payment->freight_booking->lr_id : '' }}&freight_booking_id={{ $payment->freight_booking_id }}"
-                                                class="btn btn-sm btn-info" data-bs-toggle="tooltip" data-bs-placement="top"
+                                                class="btn btn-sm btn-brand-primary" data-bs-toggle="tooltip" data-bs-placement="top"
                                                 title="Edit Payment">
                                                 <i class="bi bi-pencil"></i>
                                             </a>

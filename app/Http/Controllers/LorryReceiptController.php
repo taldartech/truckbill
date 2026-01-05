@@ -215,7 +215,7 @@ class LorryReceiptController extends Controller
         $editUrl = route('lorry_receipts.edit', $lorryReceipt->id);
         if ($lorryReceipt->invoice_generated == 0 && Auth::user()->userRole->name === 'admin') {
             $confirmMsg = $freightBooking ? ' onclick="return confirm(\'A freight booking already exists. Continue?\')"' : '';
-            $buttons .= '<a href="' . $editUrl . '" class="btn-action btn-action-primary" title="Edit" data-bs-toggle="tooltip"' . $confirmMsg . '>';
+            $buttons .= '<a href="' . $editUrl . '" class="btn-action btn-edit" title="Edit" data-bs-toggle="tooltip"' . $confirmMsg . '>';
             $buttons .= '<i class="bi bi-pencil"></i></a>';
         }
 

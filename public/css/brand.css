@@ -46,12 +46,13 @@ body {
 }
 
 a {
-    color: var(--brand-accent-blue);
+    color: var(--brand-primary);
     text-decoration: none;
+    transition: color 0.2s ease;
 }
 
 a:hover {
-    color: var(--brand-accent-blue-dark);
+    color: var(--brand-primary-dark);
 }
 
 /* Standardized Buttons */
@@ -147,7 +148,19 @@ a:hover {
 }
 
 .bg-brand-secondary {
-    background-color: var(--brand-accent-blue) !important;
+    background-color: #F1F5F9 !important;
+    /* Neutral Slate BG for secondary icons */
+    color: var(--brand-primary) !important;
+}
+
+.bg-brand-warning {
+    background-color: var(--brand-warning) !important;
+    color: #111827 !important;
+}
+
+.bg-brand-danger {
+    background-color: var(--brand-danger) !important;
+    color: #FFFFFF !important;
 }
 
 .bg-brand-active {
@@ -162,6 +175,61 @@ a:hover {
     display: inline-block;
     font-weight: bold;
     font-size: 1.6rem;
+}
+
+/* Pagination Standardization */
+.pagination .page-item.active .page-link {
+    background-color: var(--brand-primary) !important;
+    border-color: var(--brand-primary) !important;
+    color: #FFFFFF !important;
+}
+
+.pagination .page-link {
+    color: var(--brand-primary) !important;
+}
+
+.pagination .page-link:hover {
+    background-color: var(--brand-active-bg) !important;
+}
+
+/* Eye Icon / View Button Utility */
+.btn-view {
+    background-color: var(--brand-primary) !important;
+    border-color: var(--brand-primary) !important;
+    color: #FFFFFF !important;
+}
+
+.btn-view:hover {
+    background-color: var(--brand-primary-dark) !important;
+    border-color: var(--brand-primary-dark) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Edit Icon / Button Utility (Blue variant) */
+.btn-edit {
+    background-color: var(--brand-accent-blue) !important;
+    border-color: var(--brand-accent-blue) !important;
+    color: #FFFFFF !important;
+}
+
+.btn-edit:hover {
+    background-color: var(--brand-accent-blue-dark) !important;
+    border-color: var(--brand-accent-blue-dark) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Back / Cancel Button Utility (Grey variant) */
+.btn-back {
+    background-color: #F3F4F6 !important;
+    border-color: #D1D5DB !important;
+    color: #374151 !important;
+}
+
+.btn-back:hover {
+    background-color: #E5E7EB !important;
+    color: #111827 !important;
 }
 
 /* Bootstrap Button Overrides */

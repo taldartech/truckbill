@@ -180,10 +180,10 @@ class CompanyController extends Controller
 
             if ($invoiceCount == 0) {
                 $editUrl = route('company.edit', $company->id);
-                $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit Company">
+                $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-edit" title="Edit Company">
                        <i class="bi bi-pencil"></i></a>';
             } else {
-                $buttons .= '<a href="javascript:void(0)" class="btn btn-sm btn-info disabled" title="Edit Disabled">
+                $buttons .= '<a href="javascript:void(0)" class="btn btn-sm btn-edit disabled" title="Edit Disabled">
                        <i class="bi bi-pencil"></i></a>';
             }
 
@@ -206,7 +206,7 @@ class CompanyController extends Controller
                           <i class="bi bi-unlock"></i></a>';
             } else {
                 $blockUrl = route('company.block', $company->id);
-                $buttons .= '<a href="' . $blockUrl . '" class="btn btn-sm btn-info" title="Block User"
+                $buttons .= '<a href="' . $blockUrl . '" class="btn btn-sm btn-edit" title="Block User"
                           onclick="return confirm(\'Are you sure you want to block this company?\');">
                           <i class="bi bi-lock"></i></a>';
             }

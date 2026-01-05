@@ -18,7 +18,7 @@
         @endif
 
         <div class="d-flex justify-content-end gap-2 mb-3">
-            <a href="{{ route('truck_owners.create') }}" class="btn btn-info">
+            <a href="{{ route('truck_owners.create') }}" class="btn btn-brand-primary">
                 <i class="bi bi-plus"></i> Create
             </a>
             <a href="{{ route('reports.transporter-master-export', ['type' => 'owner']) }}" class="btn btn-warning">
@@ -128,7 +128,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-success">
+                        <button type="submit" class="btn btn-brand-primary">
                             <i class="bi bi-check-lg"></i> Add Payment
                         </button>
                     </div>
@@ -262,7 +262,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-success">
+                        <button type="submit" class="btn btn-brand-primary">
                             <i class="bi bi-truck"></i> Add Truck
                         </button>
                     </div>
@@ -509,7 +509,7 @@
                                         </tr>
                                         <tr>
                                             <td class="fw-bold">Type:</td>
-                                            <td><span class="badge bg-success">${data.is_owner}</span></td>
+                                            <td><span class="badge bg-brand-primary">${data.is_owner}</span></td>
                                         </tr>
                                     </table>
                                 </div>
@@ -532,11 +532,11 @@
                                         </tr>
                                         <tr>
                                             <td class="fw-bold">PAN Active:</td>
-                                            <td><span class="badge ${data.pan_active === 'Yes' ? 'bg-success' : 'bg-warning'}">${data.pan_active}</span></td>
+                                            <td><span class="badge ${data.pan_active === 'Yes' ? 'bg-brand-primary' : 'bg-warning'}">${data.pan_active}</span></td>
                                         </tr>
                                         <tr>
                                             <td class="fw-bold">Declaration Given:</td>
-                                            <td><span class="badge ${data.declaration_given === 'Yes' ? 'bg-success' : 'bg-warning'}">${data.declaration_given}</span></td>
+                                            <td><span class="badge ${data.declaration_given === 'Yes' ? 'bg-brand-primary' : 'bg-warning'}">${data.declaration_given}</span></td>
                                         </tr>
                                         <tr>
                                             <td class="fw-bold">TDS Percentage:</td>

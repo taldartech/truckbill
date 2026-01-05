@@ -68,8 +68,8 @@
                         value="{{ old('generated_date', $invoice->generated_date) }}">
                 </div>
             </div>
-            <button type="submit" class="btn btn-success">Update</button>
-            <a href="{{ route('invoices.index') }}" class="btn btn-secondary ms-2">Back to List</a>
+            <button type="submit" class="btn btn-brand-primary">Update</button>
+            <a href="{{ route('invoices.index') }}" class="btn btn-back ms-2">Back to List</a>
         </form>
     </div>
 @endsection

@@ -95,7 +95,7 @@
             <div class="d-flex w-100">
                 <div class="card-title h4">📝 Edit Lorry Receipt</div>
                 <div class="ms-auto">
-                    <a href="{{ route('consignees.create') }}" class="btn btn-info">
+                    <a href="{{ route('consignees.create') }}" class="btn btn-brand-primary">
                         <i class="bi bi-plus"></i> Create Consignee/Consignor/Customer</a>
                 </div>
             </div>
@@ -487,14 +487,13 @@
                     </div>
                     <div class="row g-2">
                         <div class="col-md-4">
-                            <button class="btn btn-success w-100" type="submit">💾 Update Lorry Receipt</button>
+                            <button class="btn btn-brand-primary w-100" type="submit">💾 Update Lorry Receipt</button>
                         </div>
                         {{-- <div class="col-md-4">
-                        <a href="{{ route('lorry_receipts.show', $lorry_receipt->id) }}" class="btn btn-info w-100">👁️ View Details</a>
+                        <a href="{{ route('lorry_receipts.show', $lorry_receipt->id) }}" class="btn btn-brand-primary w-100">👁️ View Details</a>
                     </div> --}}
                         <div class="col-md-4">
-                            <a href="{{ route('lorry_receipts.index') }}" class="btn btn-outline-dark w-100">📄 Back to
-                                List</a>
+                            <a href="{{ route('lorry_receipts.index') }}" class="btn btn-back w-100">📄 Back to List</a>
                         </div>
                     </div>
                 </div>

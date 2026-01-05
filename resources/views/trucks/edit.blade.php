@@ -55,8 +55,8 @@
             <input type="date" class="form-control" placeholder="Enter Registration Date" id="registration_date" name="registration_date" required value="{{ old('registration_date', $truck->registration_date) }}">
             @error('registration_date') <div class="text-danger">{{ $message }}</div> @enderror
         </div>
-        <button type="submit" class="btn btn-success">Update Truck</button>
-        <a href="{{ route('trucks.index') }}" class="btn btn-secondary ms-2">Back to List</a>
+        <button type="submit" class="btn btn-brand-primary">Update Truck</button>
+        <a href="{{ route('trucks.index') }}" class="btn btn-back ms-2">Back to List</a>
     </form>
 </div>
 @endsection

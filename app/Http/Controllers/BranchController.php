@@ -101,7 +101,7 @@ class BranchController extends Controller
         $buttons = '<div class="d-flex gap-1">';
 
         $editUrl = route('branches.edit', $branch->id);
-        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info me-1" title="Edit Branch">';
+        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-edit me-1" title="Edit Branch">';
         $buttons .= '<i class="bi bi-pencil"></i></a>';
 
         $deleteUrl = route('branches.destroy', $branch->id);

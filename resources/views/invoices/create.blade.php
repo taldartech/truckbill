@@ -180,7 +180,7 @@
             <input type="hidden" name="net_amount" id="netAmountInput" value="0">
 
             <div class="card-footer">
-                <button class="btn btn-info" type="submit">Generate Invoice</button>
+                <button class="btn btn-brand-primary" type="submit">Generate Invoice</button>
             </div>
         </form>
     </div>

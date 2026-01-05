@@ -16,7 +16,7 @@
     @endif
 
     <div class="d-flex justify-content-end gap-2 mb-3">
-        <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-backdrop="false"  data-bs-target="#addDriverModal">
+        <button type="button" class="btn btn-brand-primary" data-bs-toggle="modal" data-bs-backdrop="false"  data-bs-target="#addDriverModal">
             <i class="bi bi-plus"></i> Create
         </button>
     </div>

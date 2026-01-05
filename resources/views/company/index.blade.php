@@ -16,7 +16,7 @@
     @endif
     @if (auth()->user()->userRole->name !== 'master_admin')
     <div class="d-flex justify-content-end gap-2 mb-3">
-        <a href="{{ route('company.create') }}" class="btn btn-info">
+        <a href="{{ route('company.create') }}" class="btn btn-brand-primary">
             <i class="bi bi-plus"></i> Create
         </a>
     </div>

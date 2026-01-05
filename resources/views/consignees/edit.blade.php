@@ -429,8 +429,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-success">Add Country</button>
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-brand-primary">Add Country</button>
+                    <button type="button" class="btn btn-back" data-bs-dismiss="modal">Cancel</button>
                 </div>
             </form>
         </div>

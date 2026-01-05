@@ -170,13 +170,13 @@ class TruckOwnerController extends Controller
 
         if ($is_admin) {
             // Advance Payment Button (same as transporters)
-            $buttons .= '<button type="button" class="btn btn-sm btn-outline-success advance-payment-btn" aria-label="Advance Payment" title="Advance Payment" data-bs-placement="top" data-bs-toggle="tooltip" data-transporter-id="' . $truckOwner->id . '" data-transporter-name="' . htmlspecialchars($truckOwner->name) . '">';
+            $buttons .= '<button type="button" class="btn btn-sm btn-view advance-payment-btn" aria-label="Advance Payment" title="Advance Payment" data-bs-placement="top" data-bs-toggle="tooltip" data-transporter-id="' . $truckOwner->id . '" data-transporter-name="' . htmlspecialchars($truckOwner->name) . '">';
             $buttons .= '<i class="bi bi-currency-rupee"></i>';
             $buttons .= '</button>';
 
             // Edit Button (same as transporters)
             $editUrl = route('truck_owners.edit', $truckOwner->id);
-            $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit Truck Owner" aria-label="Edit Truck Owner" data-bs-placement="top" data-bs-toggle="tooltip">';
+            $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-edit" title="Edit Truck Owner" aria-label="Edit Truck Owner" data-bs-placement="top" data-bs-toggle="tooltip">';
             $buttons .= '<i class="bi bi-pencil"></i></a>';
 
             // Delete Button (AJAX-based)

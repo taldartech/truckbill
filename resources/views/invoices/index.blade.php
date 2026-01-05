@@ -14,11 +14,11 @@
 
         {{-- Always visible container --}}
         <div class="d-flex justify-content-end gap-2 mb-3">
-            <button type="button" class="btn btn-info"
+            <button type="button" class="btn btn-brand-primary"
                 onclick="document.getElementById('advanced-search-box').classList.toggle('d-none')">
                 <i class="bi bi-funnel"></i> Search filter
             </button>
-            <a href="{{ route('invoices.create') }}" class="btn btn-info">
+            <a href="{{ route('invoices.create') }}" class="btn btn-brand-primary">
                 <i class="bi bi-plus"></i> Create
             </a>
         </div>
@@ -37,7 +37,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="card text-bg-success mb-2">
+                <div class="card bg-brand-primary text-white mb-2">
                     <div class="card-body p-2">Paid: <b>{{ $paidCount }}</b></div>
                 </div>
             </div>
@@ -133,10 +133,10 @@
 
             {{-- Form action buttons --}}
             <div class="text-end mt-3">
-                <button type="submit" class="btn btn-secondary">
+                <button type="submit" class="btn btn-brand-primary">
                     <i class="bi bi-search"></i> Search
                 </button>
-                <a href="{{ route('invoices.index') }}" class="btn btn-outline-secondary ms-2">
+                <a href="{{ route('invoices.index') }}" class="btn btn-back ms-2">
                     <i class="bi bi-arrow-clockwise"></i> Reset
                 </a>
             </div>
@@ -179,11 +179,11 @@
                                 <td>{{ $invoice->invoice_type }}</td>
                                 <td>{{ $invoice->generated_date }}</td>
                                 <td>{{ $invoice->consignee ? $invoice->consignee->name : '-' }}</td>
-                                <td class="text-success fw-bold">&#8377;{{ number_format($invoice->total_amount, 2) }}
+                                <td class="text-brand-primary fw-bold">&#8377;{{ number_format($invoice->total_amount, 2) }}
                                 </td>
-                                <td class="text-info fw-bold">&#8377;{{ number_format($invoice->paid_amount, 2) }}
+                                <td class="text-brand-accent fw-bold">&#8377;{{ number_format($invoice->paid_amount, 2) }}
                                 </td>
-                                <td class="fw-bold {{ $invoice->remaining_amount > 0 ? 'text-danger' : 'text-success' }}">
+                                <td class="fw-bold {{ $invoice->remaining_amount > 0 ? 'text-danger' : 'text-brand-primary' }}">
                                     &#8377;{{ number_format($invoice->remaining_amount, 2) }}
                                 </td>
                                 <td>{{ ucfirst($invoice->payment_status) }}</td>
@@ -191,13 +191,13 @@
                                     <div class="d-flex gap-1">
                                         @if (auth()->user()->userRole->name === 'admin')
                                             <a href="{{ route('invoices.show', $invoice->id) }}"
-                                                class="btn btn-sm btn-info" data-bs-toggle="tooltip"
+                                                class="btn btn-sm btn-view" data-bs-toggle="tooltip"
                                                 data-bs-placement="top" title="View Invoice">
                                                 <i class="bi bi-eye"></i>
                                             </a>
                                             @if ($invoice->payment_status !== 'paid')
                                                 <a href="{{ route('invoices.edit', $invoice->id) }}"
-                                                    class="btn btn-sm btn-info" data-bs-toggle="tooltip"
+                                                    class="btn btn-sm btn-edit" data-bs-toggle="tooltip"
                                                     data-bs-placement="top" title="Edit Invoice">
                                                     <i class="bi bi-pencil"></i>
                                                 </a>
@@ -217,7 +217,7 @@
                                             @endif
                                         @endif
                                         @if (in_array(auth()->user()->userRole->name, ['admin', 'moderator']) && $invoice->remaining_amount > 0)
-                                            <button type="button" class="btn btn-sm btn-success add-payment-btn"
+                                            <button type="button" class="btn btn-sm btn-view add-payment-btn"
                                                 data-bs-toggle="tooltip" data-bs-placement="top" title="Add Payment"
                                                 data-invoice-id="{{ $invoice->id }}"
                                                 data-invoice-number="{{ $invoice->manual_invoice_number }}"
@@ -252,7 +252,7 @@
         aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header bg-success text-white">
+                <div class="modal-header bg-brand-primary text-white">
                     <h5 class="modal-title" id="addPaymentModalLabel">
                         <i class="bi bi-cash-coin"></i> Add Payment
                     </h5>
@@ -307,7 +307,7 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-success">
+                        <button type="submit" class="btn btn-brand-primary">
                             <i class="bi bi-check-circle"></i> Add Payment
                         </button>
                     </div>
@@ -410,7 +410,7 @@
                                     </tr>
                                     <tr>
                                         <td class="fw-bold">Status:</td>
-                                        <td><span class="badge bg-${data.payment_status === 'paid' ? 'success' : data.payment_status === 'partial' ? 'warning' : 'danger'}">${data.payment_status || 'N/A'}</span></td>
+                                        <td><span class="badge bg-${data.payment_status === 'paid' ? 'brand-primary' : data.payment_status === 'partial' ? 'warning' : 'danger'}">${data.payment_status || 'N/A'}</span></td>
                                     </tr>
                                 </table>
                             </div>
@@ -459,7 +459,7 @@
                                     <div class="col-md-4">
                                         <div class="d-flex justify-content-between">
                                             <span class="fw-bold">Balance:</span>
-                                            <span class="fw-bold ${(data.total_amount - data.paid_amount) > 0 ? 'text-danger' : 'text-success'}">
+                                            <span class="fw-bold ${(data.total_amount - data.paid_amount) > 0 ? 'text-danger' : 'text-brand-primary'}">
                                                 ₹${(data.total_amount - data.paid_amount).toFixed(2)}
                                             </span>
                                         </div>

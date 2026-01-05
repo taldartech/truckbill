@@ -121,14 +121,14 @@
                     <div class="mb-2">
                         <strong>LR Amount:</strong><br>
                         <span
-                            class="badge bg-success text-white fs-6">₹{{ $freightBooking->lr ? number_format($freightBooking->lr->amount ?? 0, 2) : '0.00' }}</span>
+                            class="badge bg-brand-primary text-white fs-6">₹{{ $freightBooking->lr ? number_format($freightBooking->lr->amount ?? 0, 2) : '0.00' }}</span>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="mb-2">
                         <strong>Rate:</strong><br>
                         <span
-                            class="badge bg-success text-white fs-6">₹{{ $freightBooking->lr ? number_format($freightBooking->lr->fr_rate ?? 0, 2) : '0.00' }}</span>
+                            class="badge bg-brand-primary text-white fs-6">₹{{ $freightBooking->lr ? number_format($freightBooking->lr->fr_rate ?? 0, 2) : '0.00' }}</span>
                     </div>
                 </div>
             </div>
@@ -482,11 +482,11 @@
                                 <i class="bi bi-x-circle"></i> Cannot Update - Cancelled
                             </button>
                         @else
-                            <button class="btn btn-success me-2" type="button" id="showConfirmationBtn">
+                            <button class="btn btn-brand-primary me-2" type="button" id="showConfirmationBtn">
                                 <i class="bi bi-check-circle"></i> Update Freight Booking
                             </button>
                         @endif
-                        <a href="{{ route('freight_bookings.index') }}" class="btn btn-outline-secondary">
+                        <a href="{{ route('freight_bookings.index') }}" class="btn btn-back">
                             <i class="bi bi-arrow-left"></i> Back to List
                         </a>
                     </div>
@@ -595,7 +595,7 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         <i class="fas fa-times me-1"></i> Cancel
                     </button>
-                    <button type="button" class="btn btn-success" id="confirmUpdateBtn">
+                    <button type="button" class="btn btn-brand-primary" id="confirmUpdateBtn">
                         <i class="fas fa-check-circle me-1"></i> Confirm Update
                     </button>
                 </div>

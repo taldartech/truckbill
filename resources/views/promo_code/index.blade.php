@@ -28,7 +28,7 @@
             <div class="card-header">
                 <h3 class="card-title">Promo Codes List</h3>
                 <div class="d-flex justify-content-end">
-                    <a href="{{ route('promo_codes.create') }}" class="btn btn-info">
+                    <a href="{{ route('promo_codes.create') }}" class="btn btn-brand-primary">
                         <i class="bi bi-plus"></i> Create
                     </a>
                 </div>

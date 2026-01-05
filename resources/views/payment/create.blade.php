@@ -35,7 +35,7 @@
                             <i class="fas fa-credit-card"></i> Payment Management - {{ $company->name }}
                         </h3>
                         <div class="card-tools">
-                            <a href="{{ route('payment.index') }}" class="btn btn-sm btn-secondary">
+                            <a href="{{ route('payment.index') }}" class="btn btn-sm btn-back">
                                 <i class="fas fa-arrow-left"></i> Back to List
                             </a>
                         </div>
@@ -316,7 +316,7 @@
                                         placeholder="Enter promo code if any">
                                 </div>
                                 <div class="col-md-6 mb-3 d-flex align-items-end">
-                                    <button type="button" class="btn btn-info" onclick="applyPromoCode()">
+                                    <button type="button" class="btn btn-brand-primary" onclick="applyPromoCode()">
                                         <i class="fas fa-tag"></i> Apply Promo Code
                                     </button>
                                 </div>
@@ -335,10 +335,10 @@
                             <!-- Submit Button -->
                             <div class="row mt-4">
                                 <div class="col-12">
-                                    <button type="submit" class="btn btn-primary btn-lg">
+                                    <button type="submit" class="btn btn-brand-primary btn-lg">
                                         <i class="fas fa-check"></i> Process Payment
                                     </button>
-                                    <a href="{{ route('payment.index') }}" class="btn btn-secondary btn-lg">
+                                    <a href="{{ route('payment.index') }}" class="btn btn-back btn-lg">
                                         <i class="fas fa-times"></i> Cancel
                                     </a>
                                 </div>

@@ -189,7 +189,7 @@
         <!--begin::Footer-->
         <div class="card-footer">
             <button class="btn btn-success" type="submit">Update Company</button>
-            <a href="{{ route('company.index') }}" class="btn btn-info">Back to list</a>
+            <a href="{{ route('company.index') }}" class="btn btn-brand-primary">Back to list</a>
         </div>
         <!--end::Footer-->
     </form>

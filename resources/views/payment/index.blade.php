@@ -13,7 +13,7 @@
                 <h3 class="mb-0">Payment Management</h3>
             </div>
             <div class="col-sm-6 text-end">
-                <a href="{{ route('payment.history') }}" class="btn btn-info">
+                <a href="{{ route('payment.history') }}" class="btn btn-brand-primary">
                     <i class="fas fa-history"></i> All Payment History
                 </a>
             </div>
@@ -82,9 +82,9 @@
                                     </td>
                                     <td class="text-center">
                                         <a href="{{ route('payment.create', ['company_id' => $company->id]) }}"
-                                            class="btn btn-primary btn-sm mb-1"><i class="fas fa-plus"></i></a>
+                                            class="btn btn-brand-primary btn-sm mb-1"><i class="fas fa-plus"></i></a>
                                         <a href="{{ route('payment.history', ['company_id' => $company->id]) }}"
-                                            class="btn btn-info btn-sm">
+                                            class="btn btn-brand-primary btn-sm">
                                             <i class="fas fa-history"></i>
                                         </a>
                                     </td>

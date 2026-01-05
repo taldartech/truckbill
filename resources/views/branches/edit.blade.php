@@ -83,8 +83,8 @@
         <!--end::Body-->
         <!--begin::Footer-->
         <div class="card-footer">
-            <button type="submit" class="btn btn-info">Update Branch</button>
-            <a href="{{ route('branches.index') }}" class="btn btn-info">Back to Branches</a>
+            <button type="submit" class="btn btn-brand-primary">Update Branch</button>
+            <a href="{{ route('branches.index') }}" class="btn btn-brand-primary">Back to Branches</a>
         </div>
         <!--end::Footer-->
     </form>

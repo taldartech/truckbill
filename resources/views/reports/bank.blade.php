@@ -45,10 +45,10 @@
 
                 <div class="row">
                     <div class="col-12 text-end">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-brand-primary">
                             <i class="bi bi-search"></i> Search
                         </button>
-                        <a href="{{ route('reports.bank') }}" class="btn btn-outline-secondary">
+                        <a href="{{ route('reports.bank') }}" class="btn btn-back">
                             <i class="bi bi-arrow-clockwise"></i> Reset
                         </a>
                     </div>

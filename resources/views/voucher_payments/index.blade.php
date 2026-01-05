@@ -13,10 +13,10 @@
 
     {{-- Always visible container --}}
     <div class="d-flex justify-content-end gap-2 mb-3">
-        <button type="button" class="btn btn-info" onclick="document.getElementById('advanced-search-box').classList.toggle('d-none')">
+        <button type="button" class="btn btn-brand-primary" onclick="document.getElementById('advanced-search-box').classList.toggle('d-none')">
             <i class="bi bi-funnel"></i> Search filter
         </button>
-        {{-- <a href="{{ route('voucher_payments.create') }}" class="btn btn-info">
+        {{-- <a href="{{ route('voucher_payments.create') }}" class="btn btn-brand-primary">
             <i class="bi bi-plus"></i> Create
         </a> --}}
     </div>

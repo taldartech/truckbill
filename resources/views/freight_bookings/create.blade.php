@@ -141,7 +141,7 @@
                     <div class="mb-2">
                         <strong>Amount:</strong><br>
                         <span
-                            class="badge bg-success text-white fs-6">₹{{ $lorry_receipt->first() ? number_format($lorry_receipt->first()->amount ?? 0, 2) : '0.00' }}</span>
+                            class="badge bg-brand-primary text-white fs-6">₹{{ $lorry_receipt->first() ? number_format($lorry_receipt->first()->amount ?? 0, 2) : '0.00' }}</span>
                     </div>
 
                 </div>
@@ -152,7 +152,7 @@
                         @php
                             $rate = $lorry_receipt->first() ? $lorry_receipt->first()->fr_rate : 0;
                         @endphp
-                            class="badge bg-success text-white fs-6">₹{{ number_format($rate, 2) }}</span>
+                            class="badge bg-brand-primary text-white fs-6">₹{{ number_format($rate, 2) }}</span>
                     </div>
                     </div>
                 @if ($lorry_receipt->first() && $lorry_receipt->first()->freight_booking_id)
@@ -434,11 +434,11 @@
             <!--end::Body-->
             <!--begin::Footer-->
             <div class="card-footer d-flex justify-content-between">
-                <a href="{{ route('freight_bookings.index') }}" class="btn btn-outline-dark">
+                <a href="{{ route('freight_bookings.index') }}" class="btn btn-back">
                     <i class="bi bi-arrow-left"></i> Back to List
                 </a>
                 <div>
-                    <button class="btn btn-success me-2" type="submit" name="action" value="save">
+                    <button class="btn btn-brand-primary me-2" type="submit" name="action" value="save">
                         <i class="bi bi-check-circle"></i> Continue to Review
                     </button>
 

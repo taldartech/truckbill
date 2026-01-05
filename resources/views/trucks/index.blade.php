@@ -59,7 +59,11 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-
+                @if (Auth::user()->userRole->name === 'admin')
+                    <button type="button" class="btn btn-edit" id="editTruckBtn" style="display: none;">
+                        <i class="bi bi-pencil"></i> Edit Truck
+                    </button>
+                @endif
             </div>
         </div>
     </div>

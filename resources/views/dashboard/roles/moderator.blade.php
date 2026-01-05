@@ -129,7 +129,7 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <a href="{{ route('freight_bookings.show', $booking->id) }}" class="btn btn-sm btn-info">
+                                        <a href="{{ route('freight_bookings.show', $booking->id) }}" class="btn btn-sm btn-view">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                     </td>

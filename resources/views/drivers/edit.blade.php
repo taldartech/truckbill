@@ -27,7 +27,7 @@
             @error('address') <div class="text-danger">{{ $message }}</div> @enderror
         </div>
         <button type="submit" class="btn btn-success">Update Driver</button>
-        <a href="{{ route('drivers.index') }}" class="btn btn-secondary ms-2">Back to List</a>
+        <a href="{{ route('drivers.index') }}" class="btn btn-back ms-2">Back to List</a>
     </form>
 </div>
 @endsection

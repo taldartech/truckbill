@@ -84,10 +84,10 @@
                 <div class="row"><div class="col"><h5 class="mb-3">Quick Actions</h5></div></div>
                 <div class="row g-2">
                     <div class="col-md-4">
-                        <button class="btn btn-success w-100 mb-2" type="submit">💾 Submit Form</button>
+                        <button class="btn btn-brand-primary w-100 mb-2" type="submit">💾 Create Truck</button>
                     </div>
                     <div class="col-md-4">
-                        <a href="{{ route('transporters.index') }}" class="btn btn-outline-dark w-100 mb-2">📄 Back to List</a>
+                        <a href="{{ route('transporters.index') }}" class="btn btn-back w-100 mb-2">📄 Back to List</a>
                     </div>
                 </div>
             </div>
@@ -95,8 +95,8 @@
         <!--end::Body-->
         {{-- <!--begin::Footer-->
         <div class="card-footer">
-            <button class="btn btn-info" type="submit">Submit form</button>
-            <a href="{{ route('trucks.index') }}" class="btn btn-info">Back to List</a>
+            <button class="btn btn-brand-primary" type="submit">Submit form</button>
+            <a href="{{ route('trucks.index') }}" class="btn btn-back">Back to List</a>
         </div>
         <!--end::Footer--> --}}
         <!-- Quick Actions Section -->
