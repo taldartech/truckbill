@@ -566,40 +566,6 @@
                     })
                     .catch(error => console.error('Error:', error));
             }
-
-            // Function to load LR details
-            function loadLRDetails() {
-                const selectedLR = lrSelect.value;
-                if (!selectedLR) {
-                    document.getElementById('transporter_id').value = '';
-                    document.getElementById('truck_id').value = '';
-                    return;
-                }
-
-                // Make AJAX request to get LR details
-                fetch(`/api/lorry_receipts/${selectedLR}`)
-                    .then(response => response.json())
-                    .then(lr => {
-                        // Set transporter
-                        const transporterSelect = document.getElementById('transporter_id');
-                        const truckSelect = document.getElementById('truck_id');
-
-                        // Get transporter name
-                        fetch(`/api/transporters/${lr.transporter_id}`)
-                            .then(response => response.json())
-                            .then(transporter => {
-                                transporterSelect.value = `${transporter.name}`;
-                            });
-
-                        // Get truck number
-                        fetch(`/api/trucks/${lr.truck_id}`)
-                            .then(response => response.json())
-                            .then(truck => {
-                                truckSelect.value = `${truck.truck_number}`;
-                            });
-                    })
-                    .catch(error => console.error('Error:', error));
-            }
         });
     </script>
 
@@ -694,62 +660,11 @@
                     })
                     .catch(error => console.error('Error:', error));
             }
-
-            // Function to load LR details
-            function loadLRDetails() {
-                const selectedLR = lrSelect ? lrSelect.value : '';
-                if (!selectedLR) {
-                    const transporterInput = document.getElementById('transporter_id');
-                    const truckInput = document.getElementById('truck_id');
-                    if (transporterInput) transporterInput.value = '';
-                    if (truckInput) truckInput.value = '';
-                    return;
-                }
-
-                // Make AJAX request to get LR details
-                fetch(`/api/lorry_receipts/${selectedLR}`)
-                    .then(response => response.json())
-                    .then(lr => {
-                        // Set transporter
-                        const transporterSelect = document.getElementById('transporter_id');
-                        const truckSelect = document.getElementById('truck_id');
-
-                        // Get transporter name
-                        if (lr.transporter_id) {
-                            fetch(`/api/transporters/${lr.transporter_id}`)
-                                .then(response => response.json())
-                                .then(transporter => {
-                                    if (transporterSelect) {
-                                        transporterSelect.value = `${transporter.name}`;
-                                    }
-                                })
-                                .catch(error => console.error('Error fetching transporter:', error));
-                        }
-
-                        // Get truck number
-                        if (lr.truck_id) {
-                            fetch(`/api/trucks/${lr.truck_id}`)
-                                .then(response => response.json())
-                                .then(truck => {
-                                    if (truckSelect) {
-                                        truckSelect.value = `${truck.truck_number}`;
-                                    }
-                                })
-                                .catch(error => console.error('Error fetching truck:', error));
-                        }
-                    })
-                    .catch(error => console.error('Error fetching LR details:', error));
-            }
-
             // Update trucks when transporter changes
             if (transporterSelect) {
                 transporterSelect.addEventListener('change', updateTrucks);
             }
 
-            // Load LR details when LR changes
-            if (lrSelect) {
-                lrSelect.addEventListener('change', loadLRDetails);
-            }
         });
     </script>
 @endsection

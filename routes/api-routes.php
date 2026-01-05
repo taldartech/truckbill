@@ -18,7 +18,6 @@ Route::middleware('auth.blocked')->group(function () {
     Route::get('/api/trucks/{truck}/agency-transporters', [TruckController::class, 'getAgencyTransporters']);
     Route::get('/api/trucks/{transporter}/lrs', [TruckController::class, 'getTrucksFromLrs']);
     Route::get('/api/drivers', [DriverController::class, 'getDriversApi']);
-    Route::get('/api/lorry_receipts/{id}', [FreightBookingController::class, 'getLorryReceipt']);
     Route::get('/api/transporters/{id}', [FreightBookingController::class, 'getTransporter']);
     Route::get('/api/trucks/{id}', [FreightBookingController::class, 'getTruck']);
     Route::get('/api/truck-owners', [TransporterController::class, 'getTruckOwnersApi']);
