@@ -116,13 +116,12 @@ Route::middleware(['auth.blocked'])->group(function () {
 
     // Lorry Receipt CRUD
     Route::middleware(['role:admin,moderator'])->group(function () {
-        Route::get('/lorry_receipts/data', [LorryReceiptController::class, 'getLorryReceiptsData'])->name('lorry_receipts.data');
         Route::get('lorry_receipts/create-linked', [LorryReceiptController::class, 'createLinked'])->name('lorry_receipts.createLinked');
         Route::resource('lorry_receipts', LorryReceiptController::class)
-            ->except(['edit', 'update', 'destroy']);
+            ->except(['edit', 'update', 'destroy', 'show']);
         Route::post('lorry_receipts/bulk-payment', [LorryReceiptController::class, 'bulkPayment'])->name('lorry_receipts.bulkPayment');
         Route::post('lorry_receipts/bulk-voucher-payment', [LorryReceiptController::class, 'bulkVoucherPayment'])->name('lorry_receipts.bulkVoucherPayment');
-        Route::get('/lorryreceipts/by-linked/{linkedId}', [App\Http\Controllers\LorryReceiptController::class, 'getByLinkedId'])
+        Route::get('/lorryreceipts/by-linked/{linkedId}', [LorryReceiptController::class, 'getByLinkedId'])
             ->name('lorryreceipts.by_linked');
     });
     Route::middleware(['role:admin'])->group(function () {

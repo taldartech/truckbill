@@ -21,78 +21,13 @@ class LorryReceiptController extends Controller
     public function index(Request $request)
     {
         // Handle DataTables AJAX request
-        // dd($request->all());
         if ($request->ajax()) {
             return $this->getLorryReceiptsData($request);
         }
 
-        $statuses = ['Pending', 'Delivered', 'Cancelled', 'In-Progress'];
-        $customers = \App\Models\Consignee::all();
-        $query = \App\Models\LorryReceipt::with(['truck', 'transporter', 'consignor', 'consignee', 'company', 'customer', 'freightBookings']);
-
-        // Only apply company_id filter for non-super_admin users
-        if (auth()->user()->userRole->name !== 'super_admin') {
-            $query->where('company_id', auth()->user()->company_id);
-        }
-
-        if ($request->customer_id || $request->customer) {
-            $query->where('customer_id', $request->customer_id ?? $request->customer);
-        }
-
-        if ($request->truck_id) {
-            $query->where('truck_id', $request->truck_id);
-        }
-
-        if ($request->transporter_id) {
-            $query->where('transporter_id', $request->transporter_id);
-        }
-
-        if ($request->delivery_status) {
-            $query->where('delivery_status', $request->delivery_status);
-        }
-
-        if ($request->gr_date_from) {
-            $query->where('gr_date', '>=', $request->gr_date_from);
-        }
-
-        if ($request->gr_date_to) {
-            $query->where('gr_date', '<=', $request->gr_date_to);
-        }
-
-        if ($request->truck_number) {
-            $query->whereHas('truck', function ($q) use ($request) {
-                $q->where('truck_number', 'like', '%' . $request->truck_number . '%');
-            });
-        }
-
-        $lrs = $query->orderBy('id', 'desc')->paginate(10);
-
-        // Get payment types and payment modes
-        $paymentTypes = \App\Models\PaymentType::all();
-        $paymentModes = \App\Models\PaymentMode::all();
-        $customers = Consignee::where('company_id', auth()->user()->company_id)->orderBy('name')->get();
-
-        return view('lorry_receipts.index', [
-            'lrs' => $lrs,
-            'statuses' => $statuses,
-            'paymentTypes' => $paymentTypes,
-            'paymentModes' => $paymentModes,
-            'customers' => $customers,
-        ]);
+        return view('lorry_receipts.index');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(LorryReceipt $lorryReceipt)
-    {
-        // Check if user has access to this lorry receipt's company
-        if ($lorryReceipt->company_id !== auth()->user()->company_id) {
-            abort(403, 'Unauthorized access to this lorry receipt.');
-        }
-
-        return view('lorry_receipts.show', compact('lorryReceipt'));
-    }
     public function getByLinkedId($linkedId)
     {
         try {
@@ -112,7 +47,6 @@ class LorryReceiptController extends Controller
                     ];
                 })->sortBy('balance_amount') // 🔹 Sort ascending by balance
                 ->values();
-            \Log::info('Linked LRs fetched successfully', $lrs->toArray());
 
             return response()->json($lrs->values());
         } catch (\Exception $e) {
@@ -186,8 +120,6 @@ class LorryReceiptController extends Controller
     public function getLorryReceiptsData(Request $request)
     {
         try {
-            \Log::info('DataTables request started');
-
             $query = LorryReceipt::with(['truck', 'transporter', 'consignor', 'consignee', 'company', 'customer']);
 
             // Only apply company_id filter for non-super_admin users
@@ -198,14 +130,8 @@ class LorryReceiptController extends Controller
             $query->when($request->has('gr_date_from') && $request->has('gr_date_to'), function ($query) use ($request) {
                 $query->whereBetween('gr_date', [$request->gr_date_from, $request->gr_date_to]);
             });
-            \Log::info('Query built successfully');
 
             return DataTables::of($query)
-
-                // ->addColumn('row_class', function ($row) {
-                //     return $row->memo_id ? 'memo-assigned' : '';
-                // })
-
                 ->addColumn('sr_no', function ($row) {
                     static $counter = 0;
                     return ++$counter;
@@ -260,61 +186,48 @@ class LorryReceiptController extends Controller
 
     private function getActionButtons($lorryReceipt)
     {
-        $buttons = '<div class="d-flex gap-1">';
+        $buttons = '<div class="d-flex gap-1 justify-content-center">';
 
-        // Freight booking button - check if freight booking already exists
+        // Freight booking button
         $freight_booking_id = $lorryReceipt->freight_booking_id;
         $freightBooking = FreightBooking::find($freight_booking_id);
         $company = auth()->user()->company;
         $today = now()->startOfDay();
         $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
+
         if ($freight_booking_id) {
-            // If freight booking exists, redirect to edit form
-            $buttons .= '<a href="' . route('freight_bookings.edit', $freight_booking_id) . '" class="btn btn-sm btn-warning" title="Edit Freight Booking" data-bs-toggle="tooltip">';
-            $buttons .= '<i class="bi bi-truck"></i>';
-            $buttons .= '</a>';
+            $buttons .= '<a href="' . route('freight_bookings.edit', $freight_booking_id) . '" class="btn-action btn-action-warning" title="Edit Freight Booking" data-bs-toggle="tooltip">';
+            $buttons .= '<i class="bi bi-truck"></i></a>';
         } else {
-            // If no freight booking exists, redirect to create form
             if ($company->lr_credits <= 0) {
-                $buttons .= '<a class="btn btn-sm btn-success" title="Cannot create Freight Booking due to insufficient credits" data-bs-toggle="tooltip" onclick="alert(\'You do not have enough credits to create a Freight Booking.\')">';
-                $buttons .= '<i class="bi bi-truck"></i>';
-                $buttons .= '</a>';
+                $buttons .= '<button class="btn-action btn-action-muted" title="Insufficient Credits" data-bs-toggle="tooltip" onclick="alert(\'Insufficient credits\')">';
+                $buttons .= '<i class="bi bi-truck"></i></button>';
             } else if ($company->plan_end_date && $today->gt($planEndDate)) {
-                $buttons .= '<a class="btn btn-sm btn-success" title="Cannot create Freight Booking due to subscription plan expired" data-bs-toggle="tooltip" onclick="alert(\'Your subscription plan has expired. Please renew your subscription to continue using the service.\')">';
-                $buttons .= '<i class="bi bi-truck"></i>';
-                $buttons .= '</a>';
+                $buttons .= '<button class="btn-action btn-action-muted" title="Plan Expired" data-bs-toggle="tooltip" onclick="alert(\'Plan expired\')">';
+                $buttons .= '<i class="bi bi-truck"></i></button>';
             } else {
-                $buttons .= '<a href="' . route('freight_bookings.create') . '?lorry_receipt_id=' . $lorryReceipt->id . '" class="btn btn-sm btn-success" title="Create Freight Booking" data-bs-toggle="tooltip">';
-                $buttons .= '<i class="bi bi-truck"></i>';
-                $buttons .= '</a>';
+                $buttons .= '<a href="' . route('freight_bookings.create') . '?lorry_receipt_id=' . $lorryReceipt->id . '" class="btn-action btn-action-success" title="Create Freight Booking" data-bs-toggle="tooltip">';
+                $buttons .= '<i class="bi bi-truck"></i></a>';
             }
         }
 
-        // Edit button - check if freight booking exists and add confirmation
+        // Edit button
         $editUrl = route('lorry_receipts.edit', $lorryReceipt->id);
         if ($lorryReceipt->invoice_generated == 0 && Auth::user()->userRole->name === 'admin') {
-            if ($freightBooking) {
-                // If freight booking exists, add confirmation dialog
-                $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit" data-bs-toggle="tooltip" onclick="return confirm(\'A freight booking already exists for this Lorry Receipt. Do you still want to continue and edit it?\')">';
-                $buttons .= '<i class="bi bi-pencil"></i></a>';
-            } else {
-                // If no freight booking exists, normal edit button
-                $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-info" title="Edit" data-bs-toggle="tooltip">';
-                $buttons .= '<i class="bi bi-pencil"></i></a>';
-            }
+            $confirmMsg = $freightBooking ? ' onclick="return confirm(\'A freight booking already exists. Continue?\')"' : '';
+            $buttons .= '<a href="' . $editUrl . '" class="btn-action btn-action-primary" title="Edit" data-bs-toggle="tooltip"' . $confirmMsg . '>';
+            $buttons .= '<i class="bi bi-pencil"></i></a>';
         }
 
         if ($lorryReceipt->delivery_status != 'Delivered' && Auth::user()->userRole->name === 'admin') {
-            // Delete button
             $deleteUrl = route('lorry_receipts.destroy', $lorryReceipt->id);
-            $buttons .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this lorry receipt?\')">';
+            $buttons .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure?\')">';
             $buttons .= csrf_field() . method_field('DELETE');
-            $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete" data-bs-toggle="tooltip">';
+            $buttons .= '<button type="submit" class="btn-action btn-action-danger" title="Delete" data-bs-toggle="tooltip">';
             $buttons .= '<i class="bi bi-trash"></i></button></form>';
         }
 
         $buttons .= '</div>';
-
         return $buttons;
     }
 

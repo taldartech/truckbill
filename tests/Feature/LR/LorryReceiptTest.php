@@ -490,13 +490,13 @@ class LorryReceiptTest extends TestCase
         $this->actingAs($admin)->get('/lorry_receipts')->assertOk();
         $this->actingAs($admin)
             ->withHeader('X-Requested-With', 'XMLHttpRequest')
-            ->get('/lorry_receipts/data')
+            ->get('/lorry_receipts')
             ->assertOk();
 
         $this->actingAs($moderator)->get('/lorry_receipts')->assertOk();
         $this->actingAs($moderator)
             ->withHeader('X-Requested-With', 'XMLHttpRequest')
-            ->get('/lorry_receipts/data')
+            ->get('/lorry_receipts')
             ->assertOk();
     }
 
@@ -530,7 +530,7 @@ class LorryReceiptTest extends TestCase
         $this->actingAs($super)->get('/lorry_receipts')->assertForbidden();
         $this->actingAs($super)
             ->withHeader('X-Requested-With', 'XMLHttpRequest')
-            ->get('/lorry_receipts/data')
+            ->get('/lorry_receipts')
             ->assertForbidden();
 
         // log out to simulate guest
