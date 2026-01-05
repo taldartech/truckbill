@@ -147,7 +147,7 @@
               return;
           }
           $.ajax({
-              url: '/api/lorry-receipts/' + customerId,
+              url: '/api/lorry-receipts/customer/' + customerId,
               method: 'GET',
               success: function(data) {
                   let options = '<option value="">Select LR Number</option>';

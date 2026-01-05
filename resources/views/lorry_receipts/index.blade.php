@@ -38,7 +38,7 @@
             min-width: 1200px; /* Force overflow on smaller screens */
         }
 
-        #lorryReceiptsTable th, 
+        #lorryReceiptsTable th,
         #lorryReceiptsTable td {
             white-space: nowrap !important;
         }
@@ -626,19 +626,6 @@
                         lrNumberCell.on('click', function() {
                             showLRDetails(data.id);
                         });
-
-                        // Apply memo-assigned class to rows with memo_id
-                        if (data.row_class && data.row_class.includes('memo-assigned')) {
-                            $(row).addClass('memo-assigned');
-
-                            // Add tooltip to show memo ID
-                            var memoId = $(row).find('input.rowCheckbox').data('memo-id');
-                            if (memoId) {
-                                $(row).attr('title', 'Memo ID: ' + memoId);
-                                $(row).attr('data-bs-toggle', 'tooltip');
-                                $(row).attr('data-bs-placement', 'top');
-                            }
-                        }
                     },
                     ajax: {
                         url: '{{ route('lorry_receipts.index') }}',
@@ -721,7 +708,6 @@
                             name: 'actions',
                             orderable: false,
                             searchable: false,
-                            width: '110px',
                             className: 'text-center'
                         }
                     ],
@@ -735,12 +721,8 @@
                     }
                 });
 
-
-
                 $('#filterBtn').on('click', function() {
                     $('#lorryReceiptsTable').DataTable().ajax.reload();
-
-
                 });
 
                 $('#resetDateFilter').on('click', function() {
@@ -748,9 +730,6 @@
                     $('#toDate').val('');
                     table.ajax.reload();
                 });
-
-
-
             });
 
             // Helper function to format GR Date to DD-MM-YYYY
@@ -763,250 +742,187 @@
                 return dateString;
             }
 
-            // Show LR Details function
-            function showLRDetails(id) {
-                const modal = new bootstrap.Modal(document.getElementById('lrDetailsModal'));
+            // Show LR Details function - Optimized with merged API call
+            async function showLRDetails(id) {
+                const modalElement = document.getElementById('lrDetailsModal');
                 const contentDiv = document.getElementById('lrDetailsContent');
+                const modal = new bootstrap.Modal(modalElement);
 
                 // Show loading state
                 contentDiv.innerHTML = `
-                    <div class="text-center">
+                    <div class="text-center py-4">
                         <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
-                        <p class="mt-2">Loading LR details...</p>
+                        <p class="mt-2 text-muted">Loading lorry receipt details...</p>
                     </div>
                 `;
+                modal.show();
 
-                // Fetch LR details
-                fetch(`/api/lorry-receipts/${id}/details`)
-                    .then(response => response.json())
-                    .then(lr => {
-                        let detailsHtml = `
-                            ${lr.linked_lr_id === null ? `
-                                        <div class="row">
-                                            <!-- Basic Information -->
-                                            <div class="col-md-6">
-                                                <div class="card h-100">
-                                                    <div class="card-header bg-light">
-                                                        <h6 class="mb-0"><i class="bi bi-info-circle"></i> Basic Information</h6>
-                                                    </div>
-                                                    <div class="card-body">
-                                                        <table class="table table-borderless table-sm">
-                                                            <tr>
-                                                                <td class="fw-bold">LR Number:</td>
-                                                                <td>${lr.lr_number}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td class="fw-bold">GR Date:</td>
-                                                                <td>${formatGRDate(lr.gr_date)}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td class="fw-bold">Status:</td>
-                                                                <td><span class="badge ${lr.delivery_status === 'Delivered' ? 'bg-success' : 'bg-warning'}">${lr.delivery_status}</span></td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td class="fw-bold">Invoice Number:</td>
-                                                                <td>${lr.invoice_number || 'N/A'}</td>
-                                                            </tr>
-                                                        </table>
-                                                    </div>
-                                                </div>
-                                            </div>
+                try {
+                    // Single API call that includes linked LRs if available
+                    const response = await fetch(`/api/lorry-receipts/${id}/details`);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const lr = await response.json();
 
-                                            <!-- Parties -->
-                                            <div class="col-md-6">
-                                                <div class="card h-100">
-                                                    <div class="card-header bg-light">
-                                                        <h6 class="mb-0"><i class="bi bi-people"></i> Parties</h6>
-                                                    </div>
-                                                    <div class="card-body">
-                                                        <table class="table table-borderless table-sm">
-                                                            <tr>
-                                                                <td class="fw-bold">Customer:</td>
-                                                                <td>${lr.customer ? lr.customer.name : 'N/A'}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td class="fw-bold">Consignor:</td>
-                                                                <td>${lr.consignor ? lr.consignor.name : 'N/A'}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td class="fw-bold">Consignee:</td>
-                                                                <td>${lr.consignee ? lr.consignee.name : 'N/A'}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td class="fw-bold">Transporter:</td>
-                                                                <td>${lr.transporter ? lr.transporter.name : 'N/A'}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td class="fw-bold">Reference By:</td>
-                                                                <td>${lr.reference_by ? lr.reference.name : 'N/A'}</td>
-                                                            </tr>
-                                                        </table>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                    // Build HTML content
+                    let detailsHtml = '';
 
-                                        <div class="row mt-3">
-                                            <!-- Transport Details -->
-                                            <div class="col-md-12">
-                                                <div class="card">
-                                                    <div class="card-header bg-light">
-                                                        <h6 class="mb-0"><i class="bi bi-truck"></i> Transport Details</h6>
-                                                    </div>
-                                                    <div class="card-body">
-                                                        <table class="table table-borderless table-sm">
-                                                            <tr>
-                                                                <td class="fw-bold">Truck Number:</td>
-                                                                <td>${lr.truck ? lr.truck.truck_number : 'N/A'}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td class="fw-bold">Goods:</td>
-                                                                <td>${lr.good_type}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td class="fw-bold">Weight:</td>
-                                                                <td>${lr.weight}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td class="fw-bold">Amount:</td>
-                                                                <td class="fw-bold text-success">${lr.amount}</td>
-                                                            </tr>
-                                                        </table>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        ` : ''}
-                            <div class="row mt-3">
-                                <div class="col-md-12">
-                                    <div id="linkedLRSection"></div>
-                                </div>
-                            </div>
-                            <div class="row mt-3">
-                                <!-- Created By & Updated By Users -->
-                                <div class="col-md-12">
-                                    <div class="card">
+                    // Basic info and parties sections (only if not linked)
+                    if (!lr.linked_lr_id) {
+                        detailsHtml = `
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="card h-100">
                                         <div class="card-header bg-light">
-                                            <h6 class="mb-0"><i class="bi bi-person-circle"></i> User Information</h6>
+                                            <h6 class="mb-0"><i class="bi bi-info-circle"></i> Basic Information</h6>
                                         </div>
                                         <div class="card-body">
                                             <table class="table table-borderless table-sm">
-                                                <tr>
-                                                    <td class="fw-bold">Created By:</td>
-                                                    <td>${lr.created_by ? lr.creator.name + ' (' + lr.creator.email + ')' : 'N/A'}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="fw-bold">Last Updated By:</td>
-                                                    <td>${lr.updated_by ? lr.updater.name + ' (' + lr.updater.email + ')' : 'N/A'}</td>
-                                                </tr>
+                                                <tr><td class="fw-bold">LR Number:</td><td>${lr.lr_number}</td></tr>
+                                                <tr><td class="fw-bold">GR Date:</td><td>${formatGRDate(lr.gr_date)}</td></tr>
+                                                <tr><td class="fw-bold">Status:</td><td><span class="badge ${lr.delivery_status === 'Delivered' ? 'bg-success' : 'bg-warning'}">${lr.delivery_status}</span></td></tr>
+                                                <tr><td class="fw-bold">Invoice Number:</td><td>${lr.invoice_number || 'N/A'}</td></tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card h-100">
+                                        <div class="card-header bg-light">
+                                            <h6 class="mb-0"><i class="bi bi-people"></i> Parties</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <table class="table table-borderless table-sm">
+                                                <tr><td class="fw-bold">Customer:</td><td>${lr.customer?.name || 'N/A'}</td></tr>
+                                                <tr><td class="fw-bold">Consignor:</td><td>${lr.consignor?.name || 'N/A'}</td></tr>
+                                                <tr><td class="fw-bold">Consignee:</td><td>${lr.consignee?.name || 'N/A'}</td></tr>
+                                                <tr><td class="fw-bold">Transporter:</td><td>${lr.transporter?.name || 'N/A'}</td></tr>
+                                                <tr><td class="fw-bold">Reference By:</td><td>${lr.reference?.name || 'N/A'}</td></tr>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-md-12">
+                                    <div class="card">
+                                        <div class="card-header bg-light">
+                                            <h6 class="mb-0"><i class="bi bi-truck"></i> Transport Details</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <table class="table table-borderless table-sm">
+                                                <tr><td class="fw-bold">Truck Number:</td><td>${lr.truck?.truck_number || 'N/A'}</td></tr>
+                                                <tr><td class="fw-bold">Goods:</td><td>${lr.good_type || 'N/A'}</td></tr>
+                                                <tr><td class="fw-bold">Weight:</td><td>${lr.weight || 'N/A'}</td></tr>
+                                                <tr><td class="fw-bold">Amount:</td><td class="fw-bold text-success">${lr.amount || '0'}</td></tr>
                                             </table>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         `;
+                    }
 
+                    // Linked LRs section (if data available from merged API response)
+                    let linkedLRSectionHtml = '';
+                    if (lr.linked_lrs_data) {
+                        const { common, lrs } = lr.linked_lrs_data;
+                        const lrRows = lrs.map(linkedLR => `
+                            <tr>
+                                <td>${linkedLR.lr_number}</td>
+                                <td>${linkedLR.customer || 'N/A'}</td>
+                                <td>${linkedLR.consignor || 'N/A'}</td>
+                                <td>${linkedLR.consignee || 'N/A'}</td>
+                                <td>${linkedLR.good_type || 'N/A'}</td>
+                                <td>${linkedLR.weight || 'N/A'}</td>
+                                <td class="fw-bold text-success">${linkedLR.amount || '0'}</td>
+                                <td><span class="badge bg-${linkedLR.status === 'delivered' ? 'success' : 'warning'}">${linkedLR.status || 'N/A'}</span></td>
+                            </tr>
+                        `).join('');
 
-                        // After setting contentDiv.innerHTML, load the linked LRs if needed
-
-                        if (lr.linked_lr_id) {
-                            fetch(`/api/lorry-receipts/linked/${lr.linked_lr_id}`)
-                                .then(response => response.json())
-                                .then(data => {
-                                    const linkedSection = document.getElementById('linkedLRSection');
-                                    const {
-                                        common,
-                                        lrs
-                                    } = data;
-
-                                    let commonHtml = `
-                                        <div class="card mb-3">
-                                            <div class="card-header bg-light">
-                                                <h6 class="mb-0"><i class="bi bi-truck"></i> Common Details</h6>
-                                            </div>
-                                            <div class="card-body">
-                                                <table class="table table-borderless table-sm">
-                                                    <tr><td class="fw-bold">Transporter:</td><td>${common.transporter || 'Varies'}</td></tr>
-                                                    <tr><td class="fw-bold">Truck Number:</td><td>${common.truck_number || 'Varies'}</td></tr>
-                                                <tr>
-                                                        <td class="fw-bold">GR Date:</td>
-                                                        <td>${common.gr_date ? formatGRDate(common.gr_date) : 'Varies'}</td>
-                                                    </tr>
-                                                    <tr><td class="fw-bold">Reference By:</td><td>${common.reference_by || 'Varies'}</td></tr>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    `;
-
-                                    let lrRows = lrs.map(linkedLR => `
-                                        <tr>
-                                            <td>${linkedLR.lr_number}</td>
-                                            <td>${linkedLR.customer || 'N/A'}</td>
-                                            <td>${linkedLR.consignor || 'N/A'}</td>
-                                            <td>${linkedLR.consignee || 'N/A'}</td>
-                                            <td>${linkedLR.good_type || 'N/A'}</td>
-                                            <td>${linkedLR.weight || 'N/A'}</td>
-                                            <td class="fw-bold text-success">${linkedLR.amount || '0'}</td>
-                                            <td><span class="badge bg-${linkedLR.status === 'delivered' ? 'success' : 'warning'}">${linkedLR.status || 'N/A'}</span></td>
-                                        </tr>
-                                    `).join('');
-
-                                    linkedSection.innerHTML = `
-                                        ${commonHtml}
-                                        <div class="card">
-                                            <div class="card-header bg-light">
-                                                <h6 class="mb-0"><i class="bi bi-list"></i> Linked Lorry Receipts</h6>
-                                            </div>
-                                            <div class="card-body">
-                                                <table class="table table-bordered">
-                                                    <thead class="table-light">
-                                                        <tr>
-                                                            <th>LR Number</th>
-                                                            <th>Customer</th>
-                                                            <th>Consignor</th>
-                                                            <th>Consignee</th>
-                                                            <th>Goods</th>
-                                                            <th>Weight</th>
-                                                            <th>Amount</th>
-                                                            <th>Status</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>${lrRows}</tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    `;
-                                })
-                                .catch(error => {
-                                    console.error('Error fetching linked LRs:', error);
-                                    document.getElementById('linkedLRSection').innerHTML =
-                                        '<div class="alert alert-danger">Error loading linked LR details</div>';
-                                });
-                        }
-
-
-                        contentDiv.innerHTML = detailsHtml;
-
-                        // Update the edit button's href with the correct URL
-                        const editBtn = document.getElementById('editLorryReceiptBtn');
-                        if (editBtn) {
-                            editBtn.href = `/lorry_receipts/${id}/edit`;
-                        }
-
-                        modal.show();
-                    })
-                    .catch(error => {
-                        console.error('Error fetching LR details:', error);
-                        contentDiv.innerHTML = `
-                            <div class="alert alert-danger">
-                                <i class="bi bi-exclamation-triangle"></i>
-                                <strong>Error:</strong> Unable to load LR details. Please try again.
+                        linkedLRSectionHtml = `
+                            <div class="card mb-3">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="bi bi-truck"></i> Common Details</h6>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-borderless table-sm">
+                                        <tr><td class="fw-bold">Transporter:</td><td>${common.transporter || 'Varies'}</td></tr>
+                                        <tr><td class="fw-bold">Truck Number:</td><td>${common.truck_number || 'Varies'}</td></tr>
+                                        <tr><td class="fw-bold">GR Date:</td><td>${common.gr_date ? formatGRDate(common.gr_date) : 'Varies'}</td></tr>
+                                        <tr><td class="fw-bold">Reference By:</td><td>${common.reference_by || 'Varies'}</td></tr>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h6 class="mb-0"><i class="bi bi-list"></i> Linked Lorry Receipts</h6>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-bordered">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>LR Number</th>
+                                                <th>Customer</th>
+                                                <th>Consignor</th>
+                                                <th>Consignee</th>
+                                                <th>Goods</th>
+                                                <th>Weight</th>
+                                                <th>Amount</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>${lrRows}</tbody>
+                                    </table>
+                                </div>
                             </div>
                         `;
-                        modal.show();
-                    });
+                    }
+
+                    // User information section
+                    const creator = lr.created_by && lr.creator ? `${lr.creator.name} (${lr.creator.email})` : 'N/A';
+                    const updater = lr.updated_by && lr.updater ? `${lr.updater.name} (${lr.updater.email})` : 'N/A';
+
+                    detailsHtml += `
+                        <div class="row mt-3">
+                            <div class="col-md-12">${linkedLRSectionHtml}</div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-12">
+                                <div class="card">
+                                    <div class="card-header bg-light">
+                                        <h6 class="mb-0"><i class="bi bi-person-circle"></i> User Information</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <table class="table table-borderless table-sm">
+                                            <tr><td class="fw-bold">Created By:</td><td>${creator}</td></tr>
+                                            <tr><td class="fw-bold">Last Updated By:</td><td>${updater}</td></tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    contentDiv.innerHTML = detailsHtml;
+
+                    // Update edit button
+                    const editBtn = document.getElementById('editLorryReceiptBtn');
+                    if (editBtn) {
+                        editBtn.href = `/lorry_receipts/${id}/edit`;
+                    }
+                } catch (error) {
+                    console.error('Error fetching LR details:', error);
+                    contentDiv.innerHTML = `
+                        <div class="alert alert-danger m-3">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>Error:</strong> Unable to load LR details. Please try again.
+                        </div>
+                    `;
+                }
             }
         </script>
     @endpush

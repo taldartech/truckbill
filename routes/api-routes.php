@@ -28,12 +28,11 @@ Route::middleware('auth.blocked')->group(function () {
     Route::post('/api/check-lr-number-uniqueness', [LorryReceiptController::class, 'checkLrNumberUniqueness']);
     Route::post('/api/check-invoice-number-uniqueness', [LorryReceiptController::class, 'checkInvoiceNumberUniqueness']);
     Route::post('/api/check-gr-number-uniqueness', [LorryReceiptController::class, 'checkGRNumberUniqueness']);
-    Route::get('/api/lorry-receipts/{customerId}', [LorryReceiptController::class, 'getLorryReceiptsForCustomer']);
+    Route::get('/api/lorry-receipts/customer/{customerId}', [LorryReceiptController::class, 'getLorryReceiptsForCustomer']);
     Route::get('/api/invoice-numbers', [InvoiceController::class, 'getAllInvoiceNumbers']);
     Route::get('/api/invoice-numbers/{customerId}', [InvoiceController::class, 'getInvoiceNumbersForCustomer']);
     Route::get('/api/references/{transporterId}/{truckId}/lrs', [LorryReceiptController::class, 'getReferencesForTransporterTruck']);
     Route::get('/api/lorry-receipts/{id}/details', [LorryReceiptController::class, 'details'])->name('lorry_receipts.details');
-    Route::get('/api/lorry-receipts/linked/{linkedLrId}', [LorryReceiptController::class, 'getLinkedLRs']);
     Route::get('/api/freight-bookings/{id}/details', [FreightBookingController::class, 'getFreightBookingDetails'])->name('api.freight_bookings.details');
 
     // API routes for dynamic dropdowns
