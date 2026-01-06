@@ -19,22 +19,6 @@
             word-wrap: break-word;
         }
 
-        /* Ensure consistent column widths */
-        .row .col-md-4 {
-            flex: 0 0 33.333333%;
-            max-width: 33.333333%;
-        }
-
-        /* Prevent card from expanding */
-        .card {
-            overflow: hidden;
-        }
-
-        /* Consistent spacing for form groups */
-        .mb-3 {
-            margin-bottom: 1rem !important;
-        }
-
         /* Select2 custom styling for truck dropdown */
         .select2-container--bootstrap-5 .select2-selection {
             min-height: 38px;

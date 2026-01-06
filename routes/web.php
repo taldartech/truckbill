@@ -120,7 +120,6 @@ Route::middleware(['auth.blocked'])->group(function () {
         Route::resource('lorry_receipts', LorryReceiptController::class)
             ->except(['edit', 'update', 'destroy', 'show']);
         Route::post('lorry_receipts/bulk-payment', [LorryReceiptController::class, 'bulkPayment'])->name('lorry_receipts.bulkPayment');
-        Route::post('lorry_receipts/bulk-voucher-payment', [LorryReceiptController::class, 'bulkVoucherPayment'])->name('lorry_receipts.bulkVoucherPayment');
         Route::get('/lorryreceipts/by-linked/{linkedId}', [LorryReceiptController::class, 'getByLinkedId'])
             ->name('lorryreceipts.by_linked');
     });
