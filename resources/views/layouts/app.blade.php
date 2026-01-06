@@ -872,13 +872,13 @@
                                             <p>Party Bill</p>
                                         </a>
                                     </li>
-                                    <li class="nav-item">
+                                    {{-- <li class="nav-item">
                                         <a href="{{ route('reports.ultratech-bill') }}"
                                             class="nav-link{{ Request::is('reports/ultratech-bill') ? ' active' : '' }}">
                                             <i class="fas fa-file-alt"></i>
                                             <p>Ultratech Bill</p>
                                         </a>
-                                    </li>
+                                    </li> --}}
                                     <li class="nav-item">
                                         <a href="{{ route('reports.memo-copy') }}"
                                             class="nav-link{{ Request::is('reports/memo-copy') ? ' active' : '' }}">
