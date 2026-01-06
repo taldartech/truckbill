@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'TruckBill')</title>
-    <link rel="icon" type="image/png" sizes="192x192"  href="{{ asset('favicon/android-icon-192x192.png') }}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ asset('favicon/android-icon-192x192.png') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
@@ -42,7 +43,7 @@
             color: #1e293b;
             margin-bottom: 0.5rem;
             letter-spacing: -0.03em;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
             text-align: center;
         }
 
@@ -160,14 +161,16 @@
             border-color: #1e293b;
         }
 
-        .link-primary, .back-link {
+        .link-primary,
+        .back-link {
             color: var(--brand-primary);
             font-weight: 600;
             text-decoration: none;
             transition: color 0.2s;
         }
 
-        .link-primary:hover, .back-link:hover {
+        .link-primary:hover,
+        .back-link:hover {
             color: var(--brand-primary-dark);
             text-decoration: underline;
         }
@@ -182,10 +185,10 @@
         .form-group {
             margin-bottom: 1.5rem;
         }
-
-        @stack('styles')
     </style>
+    @stack('styles')
 </head>
+
 <body>
     <div class="container d-flex justify-content-center">
         <div class="auth-card">
@@ -217,4 +220,5 @@
     </script>
     @stack('scripts')
 </body>
+
 </html>
