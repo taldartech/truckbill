@@ -96,13 +96,11 @@
                                 <!-- Date Range -->
                                 <div class="col-md-2">
                                     <label class="form-label">From Date</label>
-                                    <input type="date" class="form-control" name="start_date" value="{{ $startDate }}"
-                                        max="{{ date('Y-m-d') }}">
+                                    <input type="date" class="form-control" name="start_date" value="{{ $startDate }}">
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label">To Date</label>
-                                    <input type="date" class="form-control" name="end_date" value="{{ $endDate }}"
-                                        max="{{ date('Y-m-d') }}">
+                                    <input type="date" class="form-control" name="end_date" value="{{ $endDate }}">
                                 </div>
 
 
@@ -1042,7 +1040,7 @@
                                     `Payment Mode: ${duplicate.payment_mode}\n` +
                                     `Created: ${duplicate.created_at}\n\n` +
                                     `Do you want to proceed with creating this duplicate payment?`;
-                                
+
                                 return Swal.fire({
                                     icon: 'warning',
                                     title: 'Duplicate Payment Detected',
@@ -1066,7 +1064,7 @@
                                     if (result.isConfirmed) {
                                         // Add confirm_duplicate flag and resubmit
                                         formData.append('confirm_duplicate', '1');
-                                        
+
                                         // Resubmit the form
                                         return fetch(url, {
                                             method: 'POST',
@@ -2571,11 +2569,11 @@
                                 `Payment Mode: ${duplicate.payment_mode}\n` +
                                 `Created: ${duplicate.created_at}\n\n` +
                                 `Do you want to proceed with creating this duplicate payment?`;
-                            
+
                             if (confirm(confirmMessage)) {
                                 // Add confirm_duplicate flag and resubmit
                                 formData.append('confirm_duplicate', '1');
-                                
+
                                 // Resubmit the form
                                 fetch('{{ route('freight_bookings.voucher_payment') }}', {
                                     method: 'POST',

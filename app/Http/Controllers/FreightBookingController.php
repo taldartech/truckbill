@@ -37,8 +37,8 @@ class FreightBookingController extends Controller
         }
 
         // Default date range: last 15 days
-        $endDate = $request->input('end_date', date('Y-m-d'));
-        $startDate = $request->input('start_date', date('Y-m-d', strtotime('-15 days')));
+        $endDate = $request->input('end_date', date('Y-m-d', strtotime('+7 days')));
+        $startDate = $request->input('start_date', date('Y-m-d', strtotime('-7 days')));
 
         // Apply date range filter if provided
         if ($request->filled('start_date')) {
@@ -1340,7 +1340,7 @@ class FreightBookingController extends Controller
                             + ($freightBooking->detention ?? 0)
                             + ($freightBooking->deviation ?? 0)
                             - ($freightBooking->misc_expense ?? 0);
-                        
+
                         $freightBooking->balance_amount = $effectivePayableAmount - $freightBooking->advance_amount;
                         $freightBooking->save();
 
