@@ -140,8 +140,8 @@
                                 <th>LR No</th>
                                 <th>Customer</th>
                                 <th>Transporter</th>
-                                <th>Short Name</th>
-                                <th>Reference</th>
+                                {{-- <th>Short Name</th>
+                                <th>Reference</th> --}}
                                 <th>Truck No</th>
                                 <th>Source City</th>
                                 <th>Destination City</th>
@@ -238,7 +238,7 @@
                                         @endphp
                                         {!! $transporterName . ' ' . $badge !!}
                                     </td>
-                                    <td data-order="{{ $booking?->transporter?->short_name }}">
+                                    {{-- <td data-order="{{ $booking?->transporter?->short_name }}">
                                         @php
                                             $shortName = $booking->transporter_name
                                                 ? $booking->transporter->short_name
@@ -246,7 +246,7 @@
                                         @endphp
                                         {!! $shortName !!}
                                     </td>
-                                    <td>{{ $booking?->lr?->reference?->name ?? '-' }}</td>
+                                    <td>{{ $booking?->lr?->reference?->name ?? '-' }}</td> --}}
                                     <td>{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->truck_number : '-' }}
                                     </td>
                                     <td>{{ $booking->lr && $booking->lr->source_city ? $booking->lr->source_city : '-' }}
@@ -1801,6 +1801,10 @@
         });
     </script>
     <script>
+        // Global variables for plan expiry check
+        const planEndDateStr = @json(Auth::user()->company->plan_end_date ?? null);
+        const today = new Date();
+
         function handleVoucherPayment() {
             const checkedBoxes = Object.values(selectedRows);
             const modalBody = document.getElementById('voucherPaymentBody');
