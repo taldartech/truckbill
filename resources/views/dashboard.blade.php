@@ -10,80 +10,39 @@
 
 @push('styles')
     <style>
-        .info-box {
-            box-shadow: 0 0 1px rgba(0, 0, 0, .125), 0 1px 3px rgba(0, 0, 0, .2);
-            border-radius: .25rem;
-            background: #fff;
-            display: flex;
-            margin-bottom: 1rem;
-            min-height: 80px;
-            padding: .5rem;
-            position: relative;
-        }
-
-        .info-box .icon {
-            border-radius: .25rem;
-            -ms-flex-align: center;
-            align-items: center;
-            display: -ms-flexbox;
-            display: flex;
-            font-size: 1.875rem;
-            -ms-flex-pack: center;
-            justify-content: center;
-            text-align: center;
-            width: 70px;
-        }
-
-        .info-box .content {
-            -ms-flex: 1;
-            flex: 1;
-            padding: 5px 10px;
-        }
-
-        .info-box .text {
-            display: block;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .info-box .number {
-            display: block;
-            font-weight: 700;
-            margin-top: .25rem;
-        }
-
-        .card {
+        .content-header {
+            padding: 1rem 0;
             margin-bottom: 1.5rem;
-            box-shadow: 0 0 0.375rem rgba(0, 0, 0, .1);
+        }
+        
+        .container-fluid {
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
         }
 
-        .card-header {
-            background-color: var(--brand-table-header-bg);
-            border-bottom: 1px solid var(--brand-border);
-        }
-
-        .card-title {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--brand-primary);
-            margin: 0;
-        }
-
-        .table-responsive {
-            display: block;
-            width: 100%;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-
+        /* Chart container refinement */
         .chart-container {
             position: relative;
-            min-height: 300px;
+            min-height: 350px;
+            width: 100%;
         }
 
-        .badge {
-            padding: 0.25em 0.6em;
-            font-size: 0.875rem;
+        /* Generic card overrides for consistency */
+        .card {
+            border: none;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-radius: 12px;
+        }
+
+        /* Table header styling */
+        .table thead th {
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+            background-color: #f8fafc;
+            color: #64748b;
+            border-bottom: 2px solid #e2e8f0;
         }
     </style>
 @endpush

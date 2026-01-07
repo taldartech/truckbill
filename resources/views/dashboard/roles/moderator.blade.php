@@ -1,266 +1,190 @@
-{{-- MODERATOR DASHBOARD --}}
-<div class="row mb-3">
-    <div class="col-12">
-        <h2 class="mb-0"><i class="fas fa-tasks text-brand-secondary"></i> Moderator Dashboard</h2>
-        <p class="text-muted">Operational overview and booking management</p>
+{{-- MODERATOR DASHBOARD - KPI Cards --}}
+<div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+        <h2 class="fw-bold mb-1"><i class="fas fa-tasks text-brand-primary"></i> Moderator Dashboard</h2>
+        <p class="text-muted mb-0">Operational overview and priority tasks.</p>
+    </div>
+    <div class="col-md-4 text-md-end">
+        <div class="badge bg-brand-active text-brand-primary px-3 py-2 rounded-pill">
+            <i class="fas fa-calendar-alt me-1"></i> {{ now()->format('d M, Y') }}
+        </div>
     </div>
 </div>
 
-<!-- Operational Statistics -->
-<div class="row">
+<!-- Moderator KPI Cards -->
+<div class="row g-3">
     <div class="col-12 col-sm-6 col-md-3">
-        <div class="info-box">
-            <span class="info-box-icon bg-brand-secondary">
-                <i class="fas fa-truck"></i>
-            </span>
-            <div class="info-box-content">
-                <span class="info-box-text">Total Bookings</span>
-                <span class="info-box-number">{{ number_format($operationalStats['total_bookings']) }}</span>
-                <small>This Month</small>
-            </div>
-        </div>
-    </div>
-    <div class="col-12 col-sm-6 col-md-3">
-        <div class="info-box">
-            <span class="info-box-icon bg-brand-secondary">
-                <i class="fas fa-truck-loading"></i>
-            </span>
-            <div class="info-box-content">
-                <span class="info-box-text">Active Trucks</span>
-                <span class="info-box-number">{{ number_format($operationalStats['active_trucks']) }}</span>
-                <small>Total Trucks</small>
+        <div class="card glass-card info-box">
+            <div class="card-body p-0 d-flex align-items-center">
+                <div class="icon-circle bg-soft-primary me-3 shadow-sm">
+                    <i class="fas fa-truck text-primary"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted fw-semi-bold mb-1">Incoming Bookings</h6>
+                    <h3 class="fw-bold mb-1">{{ number_format($moderatorStats['incoming_bookings']) }}</h3>
+                    <span class="badge bg-soft-primary text-primary rounded-pill">Pending Assignment</span>
+                </div>
             </div>
         </div>
     </div>
     <div class="col-12 col-sm-6 col-md-3">
-        <div class="info-box">
-            <span class="info-box-icon bg-brand-primary">
-                <i class="fas fa-users"></i>
-            </span>
-            <div class="info-box-content">
-                <span class="info-box-text">Active Transporters</span>
-                <span class="info-box-number">{{ number_format($operationalStats['active_transporters']) }}</span>
-                <small>Currently Active</small>
+        <div class="card glass-card info-box">
+            <div class="card-body p-0 d-flex align-items-center">
+                <div class="icon-circle bg-soft-success me-3 shadow-sm">
+                    <i class="fas fa-route text-success"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted fw-semi-bold mb-1">Loading In Progress</h6>
+                    <h3 class="fw-bold mb-1">{{ number_format($moderatorStats['loading_in_progress']) }}</h3>
+                    <span class="badge bg-soft-success text-success rounded-pill">At Warehouse</span>
+                </div>
             </div>
         </div>
     </div>
     <div class="col-12 col-sm-6 col-md-3">
-        <div class="info-box">
-            <span class="info-box-icon bg-brand-warning">
-                <i class="fas fa-clock"></i>
-            </span>
-            <div class="info-box-content">
-                <span class="info-box-text">Pending Bookings</span>
-                <span class="info-box-number">{{ number_format($operationalStats['pending_bookings']) }}</span>
-                <small>Require Action</small>
+        <div class="card glass-card info-box">
+            <div class="card-body p-0 d-flex align-items-center">
+                <div class="icon-circle bg-soft-info me-3 shadow-sm">
+                    <i class="fas fa-shipping-fast text-info"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted fw-semi-bold mb-1">En-Route</h6>
+                    <h3 class="fw-bold mb-1">{{ number_format($moderatorStats['en_route']) }}</h3>
+                    <span class="badge bg-soft-info text-info rounded-pill">On Road</span>
+                </div>
             </div>
         </div>
     </div>
-</div>
-
-<!-- Booking Status -->
-<div class="row mt-4">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-chart-bar text-brand-primary"></i> Booking Status Overview</h3>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-4 text-center">
-                        <h3 class="text-success">{{ number_format($bookingStatuses['delivered']) }}</h3>
-                        <p class="mb-0"><strong>Delivered</strong></p>
-                    </div>
-                    <div class="col-md-4 text-center">
-                        <h3 class="text-info">{{ number_format($bookingStatuses['in_progress']) }}</h3>
-                        <p class="mb-0"><strong>In Progress</strong></p>
-                    </div>
-                    <div class="col-md-4 text-center">
-                        <h3 class="text-danger">{{ number_format($bookingStatuses['cancelled']) }}</h3>
-                        <p class="mb-0"><strong>Cancelled</strong></p>
-                    </div>
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="card glass-card info-box">
+            <div class="card-body p-0 d-flex align-items-center">
+                <div class="icon-circle bg-soft-warning me-3 shadow-sm">
+                    <i class="fas fa-clock text-warning"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted fw-semi-bold mb-1">Delayed Trips</h6>
+                    <h3 class="fw-bold mb-1">{{ number_format($moderatorStats['delayed_trips']) }}</h3>
+                    <span class="badge bg-soft-warning text-warning rounded-pill">Check Required</span>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Recent Bookings -->
-<div class="row mt-4">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-list text-brand-secondary"></i> Recent Bookings</h3>
-                <div class="card-tools">
-                    <a href="{{ route('freight_bookings.index') }}" class="btn btn-sm btn-primary">View All</a>
+<div class="row g-3 mt-1">
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="card glass-card info-box">
+            <div class="card-body p-0 d-flex align-items-center">
+                <div class="icon-circle bg-soft-danger me-3 shadow-sm">
+                    <i class="fas fa-file-invoice text-danger"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted fw-semi-bold mb-1">Pending Invoice</h6>
+                    <h3 class="fw-bold mb-1">{{ number_format($operationalStats['lrs_pending_invoice']) }}</h3>
+                    <span class="badge bg-soft-danger text-danger rounded-pill">Not Invoiced</span>
                 </div>
             </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover table-striped">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Consignor</th>
-                                <th>Consignee</th>
-                                <th>Truck Number</th>
-                                <th>Status</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($recentBookings as $booking)
-                                <tr>
-                                    <td>#{{ $booking->id }}</td>
-                                    <td>{{ $booking->lr->consignor->name ?? 'N/A' }}</td>
-                                    <td>{{ $booking->lr->consignee->name ?? 'N/A' }}</td>
-                                    <td>{{ $booking->lr->truck->truck_number ?? 'N/A' }}</td>
-                                    <td>
-                                        @php
-                                            $statusClass = [
-                                                'Pending' => 'warning',
-                                                'In-Progress' => 'info',
-                                                'Delivered' => 'success',
-                                                'Cancelled' => 'danger',
-                                            ][$booking->lr->delivery_status] ?? 'secondary';
-                                        @endphp
-                                        <span class="badge bg-{{ $statusClass }}">
-                                            {{ str_replace('_', ' ', ucfirst($booking->lr->delivery_status)) }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <a href="{{ route('freight_bookings.show', $booking->id) }}" class="btn btn-sm btn-view">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="6" class="text-center">No recent bookings</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="card glass-card info-box">
+            <div class="card-body p-0 d-flex align-items-center">
+                <div class="icon-circle bg-soft-warning me-3 shadow-sm">
+                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted fw-semi-bold mb-1">E-Way Expiring</h6>
+                    <h3 class="fw-bold mb-1">{{ number_format($operationalStats['eway_bills_expiring_today']) }}</h3>
+                    <span class="badge bg-soft-warning text-warning rounded-pill">Expiring Today</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="card glass-card info-box">
+            <div class="card-body p-0 d-flex align-items-center">
+                <div class="icon-circle bg-soft-danger me-3 shadow-sm">
+                    <i class="fas fa-times-circle text-danger"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted fw-semi-bold mb-1">Expired E-Way</h6>
+                    <h3 class="fw-bold mb-1">{{ number_format($operationalStats['expired_eway_bills']) }}</h3>
+                    <span class="badge bg-soft-danger text-danger rounded-pill">Urgent Action</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="card glass-card info-box">
+            <div class="card-body p-0 d-flex align-items-center">
+                <div class="icon-circle bg-soft-warning me-3 shadow-sm">
+                    <i class="fas fa-money-bill-wave text-warning"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted fw-semi-bold mb-1">Outstanding Amount</h6>
+                    <h3 class="fw-bold mb-1">₹{{ number_format($operationalStats['outstanding_amount'], 2) }}</h3>
+                    <span class="badge bg-soft-warning text-warning rounded-pill">Invoice Balance</span>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Top Lists -->
-<div class="row mt-4">
-    <!-- Top Trucks -->
-    <div class="col-md-6">
-        <div class="card h-100">
-            <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-truck text-brand-primary"></i> Top 5 Trucks</h3>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover table-striped">
-                        <thead>
-                            <tr>
-                                <th>Truck Number</th>
-                                <th class="text-end">LR Count</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($topTrucks as $truck)
-                                <tr>
-                                    <td>{{ $truck->truck_number ?? 'N/A' }}</td>
-                                    <td class="text-end">{{ $truck->lr_count ?? 0 }}</td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="2" class="text-center">No data available</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Top Transporters -->
-    <div class="col-md-6">
-        <div class="card h-100">
-            <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-users text-brand-primary"></i> Top 5 Transporters</h3>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover table-striped">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th class="text-end">Bookings</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($topTransporters as $transporter)
-                                <tr>
-                                    <td>{{ Str::limit($transporter->name, 20) }}</td>
-                                    <td class="text-end">{{ $transporter->lorry_receipts_count }}</td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="2" class="text-center">No data available</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Expired Eway Bills -->
+<!-- Priority 1: Expired Eway Bills (Critical Alert) -->
 @if(isset($expiredEwayBills) && $expiredEwayBills->count() > 0)
 <div class="row mt-4">
     <div class="col-md-12">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-exclamation-triangle text-brand-danger"></i> Expired Eway Bills</h3>
+        <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 16px;">
+            <div class="card-header bg-soft-danger text-danger border-0 py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-exclamation-triangle me-2"></i> Expired Eway Bills (Urgent)</h5>
+                    <span class="badge bg-danger text-white px-3 rounded-pill">{{ $expiredEwayBills->count() }} Urgent</span>
+                </div>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover table-striped">
-                        <thead>
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-soft-secondary">
                             <tr>
-                                <th>SR no.</th>
-                                <th>LR Number</th>
-                                <th>Truck Number</th>
+                                <th class="ps-4">LR Number</th>
+                                <th>Truck & Destination</th>
                                 <th>Driver Mobile</th>
-                                <th>Destination</th>
                                 <th>Expiry Date</th>
+                                <th class="text-end pe-4">Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($expiredEwayBills as $ewayBill)
+                            @foreach($expiredEwayBills->take(10) as $ewayBill)
+                                @php
+                                    $expiryDate = \Carbon\Carbon::parse($ewayBill->eway_bill_expiry)->startOfDay();
+                                    $today = \Carbon\Carbon::today()->startOfDay();
+                                    $tomorrow = $today->copy()->addDay();
+
+                                    if ($expiryDate->isPast() || $expiryDate->isSameDay($today)) {
+                                        $expiryClass = 'text-danger';
+                                        $bgClass = 'bg-soft-danger';
+                                    } elseif ($expiryDate->isSameDay($tomorrow)) {
+                                        $expiryClass = 'text-warning';
+                                        $bgClass = 'bg-soft-warning';
+                                    } else {
+                                        $expiryClass = 'text-muted';
+                                        $bgClass = '';
+                                    }
+                                @endphp
                                 <tr>
-                                    <td>{{ $loop->iteration }}</td>
-                                    <td>{{ $ewayBill->lr->lr_number }}</td>
-                                    <td>{{ $ewayBill->lr->truck->truck_number ?? 'N/A' }}</td>
+                                    <td class="ps-4"><span class="fw-bold text-dark">#{{ $ewayBill->lr->lr_number }}</span></td>
+                                    <td>
+                                        <div class="d-flex flex-column">
+                                            <span class="fw-medium">{{ $ewayBill->lr->truck->truck_number ?? 'N/A' }}</span>
+                                            <small class="text-muted"><i class="fas fa-map-marker-alt me-1"></i> {{ $ewayBill->lr->destination_city }}</small>
+                                        </div>
+                                    </td>
                                     <td>{{ $ewayBill->lr?->truck?->driver?->mobile ?? '-' }}</td>
-                                    <td>{{ $ewayBill->lr->destination_city }}</td>
-                                    @php
-                                        $expiryDate = \Carbon\Carbon::parse($ewayBill->eway_bill_expiry);
-                                        $today = \Carbon\Carbon::today();
-                                    @endphp
-                                    <td
-                                        @if ($expiryDate->isSameDay($today) || $expiryDate->lessThan($today))
-                                            style="background-color: var(--brand-danger); color: white;"
-                                        @elseif ($expiryDate->isSameDay($today->copy()->addDay()))
-                                            style="background-color: var(--brand-warning); color: #111827;"
-                                        @else
-                                            @if($expiryDate->isSameDay($today->copy()->addDays(2)))
-                                            style="background-color: var(--brand-success); color: white;"
-                                            @endif
-                                        @endif
-                                    >
-                                        {{ $ewayBill->eway_bill_expiry }}
+                                    <td><span class="badge {{ $bgClass }} {{ $expiryClass }} px-3 py-2 rounded-pill fw-bold">{{ $ewayBill->eway_bill_expiry }}</span></td>
+                                    <td class="text-end pe-4 align-middle">
+                                        <a href="{{ route('freight_bookings.show', $ewayBill->id) }}" class="btn btn-icon btn-view rounded-circle">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
                                     </td>
                                 </tr>
                             @endforeach
@@ -272,4 +196,49 @@
     </div>
 </div>
 @endif
+
+<!-- Priority 2: Booking Status Overview -->
+@if(isset($bookingStatuses))
+<div class="row mt-4 mb-4">
+    <div class="col-md-12">
+        <div class="card glass-card">
+            <div class="card-header bg-transparent border-0 py-3">
+                <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-chart-bar text-brand-primary me-2"></i> Booking Status Overview</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4 border-end">
+                        <div class="p-3">
+                            <h2 class="text-success fw-bold mb-1">{{ number_format($bookingStatuses['delivered']) }}</h2>
+                            <p class="text-muted mb-0 fw-medium">Delivered</p>
+                            <div class="progress mt-2" style="height: 6px; border-radius: 3px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 border-end">
+                        <div class="p-3">
+                            <h2 class="text-info fw-bold mb-1">{{ number_format($bookingStatuses['in_progress']) }}</h2>
+                            <p class="text-muted mb-0 fw-medium">In Progress</p>
+                            <div class="progress mt-2" style="height: 6px; border-radius: 3px;">
+                                <div class="progress-bar bg-info" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3">
+                            <h2 class="text-danger fw-bold mb-1">{{ number_format($bookingStatuses['cancelled']) }}</h2>
+                            <p class="text-muted mb-0 fw-medium">Cancelled</p>
+                            <div class="progress mt-2" style="height: 6px; border-radius: 3px;">
+                                <div class="progress-bar bg-danger" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
 

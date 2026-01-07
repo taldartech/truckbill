@@ -24,6 +24,24 @@
     --brand-table-header-bg: #F1F5F9;
     --brand-input-focus-shadow: rgba(47, 179, 111, 0.15);
     --brand-gradient: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-accent-blue) 100%);
+    --brand-gradient-success: linear-gradient(135deg, #22C55E 0%, #10B981 100%);
+    --brand-gradient-warning: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+    --brand-gradient-danger: linear-gradient(135deg, #EF4444 0%, #B91C1C 100%);
+    --brand-gradient-info: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+    --brand-gradient-secondary: linear-gradient(135deg, #6B7280 0%, #374151 100%);
+
+    /* Soft Backgrounds */
+    --brand-soft-primary: rgba(47, 179, 111, 0.1);
+    --brand-soft-success: rgba(34, 197, 94, 0.1);
+    --brand-soft-info: rgba(59, 130, 246, 0.1);
+    --brand-soft-warning: rgba(245, 158, 11, 0.1);
+    --brand-soft-danger: rgba(239, 68, 68, 0.1);
+    --brand-soft-secondary: rgba(107, 114, 128, 0.1);
+
+    /* Glassmorphism */
+    --brand-glass-bg: rgba(255, 255, 255, 0.7);
+    --brand-glass-border: rgba(255, 255, 255, 0.4);
+    --brand-glass-blur: 10px;
 }
 
 /* Base Typography Colors */
@@ -178,6 +196,64 @@ a:hover {
     vertical-align: middle;
 }
 
+/* Glassmorphism Utilities */
+.glass-card {
+    background: var(--brand-glass-bg) !important;
+    backdrop-filter: blur(var(--brand-glass-blur)) !important;
+    -webkit-backdrop-filter: blur(var(--brand-glass-blur)) !important;
+    border: 1px solid var(--brand-glass-border) !important;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07) !important;
+    border-radius: 16px !important;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+.glass-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.12) !important;
+}
+
+.info-box.glass-card {
+    padding: 0.85rem 1rem !important;
+    height: 100%;
+}
+
+.bg-gradient-primary {
+    background: var(--brand-gradient) !important;
+    color: white !important;
+}
+
+.bg-gradient-success {
+    background: var(--brand-gradient-success) !important;
+    color: white !important;
+}
+
+.bg-gradient-warning {
+    background: var(--brand-gradient-warning) !important;
+    color: white !important;
+}
+
+.bg-gradient-danger {
+    background: var(--brand-gradient-danger) !important;
+    color: white !important;
+}
+
+.bg-gradient-info {
+    background: var(--brand-gradient-info) !important;
+    color: white !important;
+}
+
+.icon-circle {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
 /* Pagination Standardization */
 .pagination .page-item.active .page-link {
     background-color: var(--brand-primary) !important;
@@ -313,4 +389,53 @@ a:hover {
 .badge.bg-secondary {
     background-color: var(--brand-text-muted) !important;
     color: #FFFFFF !important;
+}
+
+/* Dashboard Soft Backgrounds & Typography */
+.bg-soft-primary {
+    background-color: var(--brand-soft-primary) !important;
+}
+
+.bg-soft-success {
+    background-color: var(--brand-soft-success) !important;
+}
+
+.bg-soft-info {
+    background-color: var(--brand-soft-info) !important;
+}
+
+.bg-soft-warning {
+    background-color: var(--brand-soft-warning) !important;
+}
+
+.bg-soft-danger {
+    background-color: var(--brand-soft-danger) !important;
+}
+
+.bg-soft-secondary {
+    background-color: var(--brand-soft-secondary) !important;
+}
+
+.fw-semi-bold {
+    font-weight: 600 !important;
+}
+
+.btn-icon {
+    width: 32px !important;
+    height: 32px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    line-height: 0 !important;
+    vertical-align: middle !important;
+    transition: all 0.2s ease;
+}
+
+.btn-icon:hover {
+    transform: scale(1.1);
+}
+
+.rounded-16 {
+    border-radius: 16px !important;
 }

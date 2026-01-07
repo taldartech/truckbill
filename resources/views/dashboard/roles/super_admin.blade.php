@@ -1,121 +1,164 @@
-{{-- SUPER ADMIN DASHBOARD --}}
-<div class="row mb-3">
-    <div class="col-12">
-        <h2 class="mb-0"><i class="fas fa-user-shield text-brand-primary"></i> Super Admin Dashboard</h2>
-        <p class="text-muted">Manage your companies and users</p>
+{{-- SUPER ADMIN DASHBOARD - KPI Cards --}}
+<div class="row mb-4 align-items-center">
+    <div class="col-md-8">
+        <h2 class="fw-bold mb-1"><i class="fas fa-user-shield text-brand-primary"></i> Super Admin Dashboard</h2>
+        <p class="text-muted mb-0">Company management and multi-company revenue overview.</p>
     </div>
-</div>
-
-<!-- Admin Statistics -->
-<div class="row">
-    <div class="col-12 col-sm-6 col-md-3">
-        <div class="info-box">
-            <span class="info-box-icon bg-brand-primary">
-                <i class="fas fa-building"></i>
-            </span>
-            <div class="info-box-content">
-                <span class="info-box-text">Total Companies</span>
-                <span class="info-box-number">{{ number_format($adminStats['total_companies']) }}</span>
-                <small>Your Companies</small>
-            </div>
-        </div>
-    </div>
-    <div class="col-12 col-sm-6 col-md-3">
-        <div class="info-box">
-            <span class="info-box-icon bg-brand-secondary">
-                <i class="fas fa-truck"></i>
-            </span>
-            <div class="info-box-content">
-                <span class="info-box-text">Total Bookings</span>
-                <span class="info-box-number">{{ number_format($adminStats['total_bookings']) }}</span>
-                <small>This Month</small>
-            </div>
-        </div>
-    </div>
-    <div class="col-12 col-sm-6 col-md-3">
-        <div class="info-box">
-            <span class="info-box-icon bg-brand-primary">
-                <i class="fa-solid fa-indian-rupee-sign"></i>
-            </span>
-            <div class="info-box-content">
-                <span class="info-box-text">Total Revenue</span>
-                <span class="info-box-number">₹{{ number_format($adminStats['total_revenue'], 2) }}</span>
-                <small>This Month</small>
-            </div>
-        </div>
-    </div>
-    <div class="col-12 col-sm-6 col-md-3">
-        <div class="info-box">
-            <span class="info-box-icon bg-brand-warning">
-                <i class="fas fa-users"></i>
-            </span>
-            <div class="info-box-content">
-                <span class="info-box-text">Total Users</span>
-                <span class="info-box-number">{{ number_format($adminStats['total_users']) }}</span>
-                <small>Across Companies</small>
-            </div>
+    <div class="col-md-4 text-md-end">
+        <div class="badge bg-brand-active text-brand-primary px-3 py-2 rounded-pill">
+            <i class="fas fa-calendar-alt me-1"></i> {{ now()->format('d M, Y') }}
         </div>
     </div>
 </div>
 
-<div class="row">
+<!-- SuperAdmin KPI Cards -->
+<div class="row g-3">
     <div class="col-12 col-sm-6 col-md-3">
-        <div class="info-box">
-            <span class="info-box-icon bg-brand-danger">
-                <i class="fas fa-exclamation-triangle"></i>
-            </span>
-            <div class="info-box-content">
-                <span class="info-box-text">Expiring Plans</span>
-                <span class="info-box-number">{{ number_format($adminStats['expiring_plans']) }}</span>
-                <small>Next 7 Days</small>
+        <div class="card glass-card info-box">
+            <div class="card-body p-0 d-flex align-items-center">
+                <div class="icon-circle bg-soft-success me-3 shadow-sm">
+                    <i class="fa-solid fa-indian-rupee-sign text-success"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted fw-semi-bold mb-1">Monthly Revenue</h6>
+                    <h3 class="fw-bold mb-1 text-truncate">₹{{ number_format($adminStats['monthly_revenue'], 2) }}</h3>
+                    <span class="badge bg-soft-success text-success rounded-pill">Total Revenue</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="card glass-card info-box">
+            <div class="card-body p-0 d-flex align-items-center">
+                <div class="icon-circle bg-soft-primary me-3 shadow-sm">
+                    <i class="fas fa-building text-primary"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted fw-semi-bold mb-1">Total Companies</h6>
+                    <h3 class="fw-bold mb-1">{{ number_format($adminStats['total_companies']) }}</h3>
+                    <span class="badge bg-soft-primary text-primary rounded-pill">Registered</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="card glass-card info-box">
+            <div class="card-body p-0 d-flex align-items-center">
+                <div class="icon-circle bg-soft-info me-3 shadow-sm">
+                    <i class="fas fa-check-circle text-info"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted fw-semi-bold mb-1">Active Companies</h6>
+                    <h3 class="fw-bold mb-1">{{ number_format($adminStats['active_companies']) }}</h3>
+                    <span class="badge bg-soft-info text-info rounded-pill">Live Now</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="card glass-card info-box">
+            <div class="card-body p-0 d-flex align-items-center">
+                <div class="icon-circle bg-soft-danger me-3 shadow-sm">
+                    <i class="fas fa-times-circle text-danger"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted fw-semi-bold mb-1">Expired Plans</h6>
+                    <h3 class="fw-bold mb-1">{{ number_format($adminStats['expired_plans']) }}</h3>
+                    <span class="badge bg-soft-danger text-danger rounded-pill">Action Required</span>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Companies with Expiring Plans -->
+<div class="row g-3 mt-1">
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="card glass-card info-box">
+            <div class="card-body p-0 d-flex align-items-center">
+                <div class="icon-circle bg-soft-warning me-3 shadow-sm">
+                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted fw-semi-bold mb-1">Upcoming Renewals</h6>
+                    <h3 class="fw-bold mb-1">{{ number_format($adminStats['upcoming_renewals']) }}</h3>
+                    <span class="badge bg-soft-warning text-warning rounded-pill">Next 30 Days</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="card glass-card info-box">
+            <div class="card-body p-0 d-flex align-items-center">
+                <div class="icon-circle bg-soft-secondary me-3 shadow-sm">
+                    <i class="fas fa-users text-dark"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted fw-semi-bold mb-1">Total Users</h6>
+                    <h3 class="fw-bold mb-1">{{ number_format($adminStats['total_users']) }}</h3>
+                    <span class="badge bg-soft-secondary text-muted text-dark rounded-pill">Across Platform</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-md-3">
+        <div class="card glass-card info-box">
+            <div class="card-body p-0 d-flex align-items-center">
+                <div class="icon-circle bg-soft-warning me-3 shadow-sm">
+                    <i class="fas fa-money-bill-wave text-warning"></i>
+                </div>
+                <div>
+                    <h6 class="text-muted fw-semi-bold mb-1">Outstanding Amount</h6>
+                    <h3 class="fw-bold mb-1">₹{{ number_format($adminStats['outstanding_amount'], 2) }}</h3>
+                    <span class="badge bg-soft-warning text-warning rounded-pill">Invoice Balance</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Priority 1: Companies with Expiring/Expired Plans (Critical) -->
+@if(isset($expiringCompanies) && $expiringCompanies->count() > 0)
 <div class="row mt-4">
     <div class="col-md-12">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-exclamation-triangle text-brand-warning"></i> Companies with Expiring/Expired Plans</h3>
+        <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 16px;">
+            <div class="card-header bg-soft-danger text-danger border-0 py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-exclamation-triangle me-2"></i> Expiring/Expired Plans (Urgent)</h5>
+                    <span class="badge bg-danger text-white px-3 rounded-pill">{{ $expiringCompanies->count() }} Urgent</span>
+                </div>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover table-striped">
-                        <thead>
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-soft-secondary">
                             <tr>
-                                <th>Company Name</th>
+                                <th class="ps-4">Company Name</th>
                                 <th>Plan End Date</th>
                                 <th>Status</th>
-                                <th>Contact Person</th>
+                                <th class="pe-4">Contact Person</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($expiringCompanies as $company)
+                            @foreach($expiringCompanies->take(10) as $company)
+                                @php
+                                    $expiryDate = \Carbon\Carbon::parse($company->plan_end_date);
+                                    $today = \Carbon\Carbon::today();
+                                @endphp
                                 <tr>
-                                    <td>{{ $company->name }}</td>
-                                    <td>{{ $company->plan_end_date }}</td>
+                                    <td class="ps-4 fw-bold text-dark">{{ $company->name }}</td>
+                                    <td>{{ $expiryDate->format('d M, Y') }}</td>
                                     <td>
-                                        @php
-                                            $expiryDate = \Carbon\Carbon::parse($company->plan_end_date);
-                                            $today = \Carbon\Carbon::today();
-                                        @endphp
                                         @if($expiryDate->isPast())
-                                            <span class="badge bg-danger">Expired</span>
+                                            <span class="badge bg-soft-danger text-danger px-3 rounded-pill">Expired</span>
                                         @elseif($expiryDate->isSameDay($today))
-                                            <span class="badge bg-warning">Expires Today</span>
+                                            <span class="badge bg-soft-warning text-warning px-3 rounded-pill">Expires Today</span>
                                         @else
-                                            <span class="badge bg-info">Expires Soon</span>
+                                            <span class="badge bg-soft-info text-info px-3 rounded-pill">Expires Soon</span>
                                         @endif
                                     </td>
-                                    <td>{{ $company->contact_person ?? 'N/A' }}</td>
+                                    <td class="pe-4">{{ $company->contact_person ?? 'N/A' }}</td>
                                 </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="4" class="text-center">No companies with expiring plans</td>
-                                </tr>
-                            @endforelse
+                            @endforeach
                         </tbody>
                     </table>
                 </div>
@@ -123,90 +166,64 @@
         </div>
     </div>
 </div>
+@endif
 
-<!-- Revenue by Company -->
+<!-- Priority 2: Upcoming Plan Expiry List -->
+@if(isset($upcomingPlanExpiry) && $upcomingPlanExpiry->count() > 0)
 <div class="row mt-4">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-chart-line text-brand-primary"></i> Revenue by Company</h3>
+    <div class="col-md-12">
+        <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 16px;">
+            <div class="card-header bg-soft-warning text-warning border-0 py-3">
+                <h5 class="mb-0 fw-bold"><i class="fas fa-calendar-alt me-2"></i> Upcoming Plan Expiry (Next 30 Days)</h5>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover table-striped">
-                        <thead>
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-soft-secondary">
                             <tr>
-                                <th>Company Name</th>
-                                <th class="text-end">Monthly Revenue</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($revenueByCompany as $company)
-                                <tr>
-                                    <td>{{ $company->name }}</td>
-                                    <td class="text-end">₹{{ number_format($company->monthly_revenue ?? 0, 2) }}</td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="2" class="text-center">No data available</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Recent Bookings -->
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title"><i class="fas fa-list text-brand-secondary"></i> Recent Bookings</h3>
-                <div class="card-tools">
-                    <a href="{{ route('freight_bookings.index') }}" class="btn btn-sm btn-primary">View All</a>
-                </div>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover table-striped">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Consignor</th>
+                                <th class="ps-4">Company Name</th>
+                                <th>Plan End Date</th>
+                                <th>Time Remaining</th>
                                 <th>Status</th>
-                                <th>Action</th>
+                                <th class="pe-4">Contact</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($recentBookings as $booking)
+                            @foreach($upcomingPlanExpiry as $company)
+                                @php
+                                    $expiryDate = \Carbon\Carbon::parse($company->plan_end_date);
+                                    $today = \Carbon\Carbon::today();
+                                    $daysRemaining = $today->diffInDays($expiryDate, false);
+
+                                    if ($daysRemaining <= 1) {
+                                        $badgeClass = 'bg-soft-warning text-warning';
+                                        $statusText = 'Expires Tomorrow';
+                                    } elseif ($daysRemaining <= 7) {
+                                        $badgeClass = 'bg-soft-info text-info';
+                                        $statusText = 'Final Week';
+                                    } else {
+                                        $badgeClass = 'bg-soft-success text-success';
+                                        $statusText = 'Active';
+                                    }
+                                @endphp
                                 <tr>
-                                    <td>#{{ $booking->id }}</td>
-                                    <td>{{ $booking->lr->consignor->name ?? 'N/A' }}</td>
+                                    <td class="ps-4 fw-medium text-dark">{{ $company->name }}</td>
+                                    <td>{{ $expiryDate->format('d M Y') }}</td>
                                     <td>
-                                        @php
-                                            $statusClass = [
-                                                'Pending' => 'warning',
-                                                'In-Progress' => 'info',
-                                                'Delivered' => 'success',
-                                                'Cancelled' => 'danger',
-                                            ][$booking->lr->delivery_status] ?? 'secondary';
-                                        @endphp
-                                        <span class="badge bg-{{ $statusClass }}">
-                                            {{ str_replace('_', ' ', ucfirst($booking->lr->delivery_status)) }}
-                                        </span>
+                                        @if($daysRemaining == 0)
+                                            <span class="text-danger fw-bold">Today</span>
+                                        @elseif($daysRemaining == 1)
+                                            <span class="text-warning fw-bold">1 Day</span>
+                                        @else
+                                            <span class="text-info fw-semi-bold">{{ $daysRemaining }} Days</span>
+                                        @endif
                                     </td>
                                     <td>
-                                        <a href="{{ route('freight_bookings.show', $booking->id) }}" class="btn btn-sm btn-view">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
+                                        <span class="badge {{ $badgeClass }} px-3 rounded-pill">{{ $statusText }}</span>
                                     </td>
+                                    <td class="pe-4">{{ $company->contact_person ?? '-' }}</td>
                                 </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="4" class="text-center">No recent bookings</td>
-                                </tr>
-                            @endforelse
+                            @endforeach
                         </tbody>
                     </table>
                 </div>
@@ -214,4 +231,39 @@
         </div>
     </div>
 </div>
+@endif
+
+<!-- Priority 3: Revenue by Company -->
+@if(isset($revenueByCompany) && $revenueByCompany->count() > 0)
+<div class="row mt-4 mb-4">
+    <div class="col-md-12">
+        <div class="card border-0 shadow-sm overflow-hidden" style="border-radius: 16px;">
+            <div class="card-header bg-white border-0 py-3 mt-1">
+                <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-chart-line text-brand-primary me-2"></i> Revenue Overview (Top 10)</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-soft-secondary">
+                            <tr>
+                                <th class="ps-4">Company Name</th>
+                                <th class="text-end pe-4">Monthly Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($revenueByCompany->take(10) as $company)
+                                <tr>
+                                    <td class="ps-4 fw-medium">{{ Str::limit($company->name, 40) }}</td>
+                                    <td class="text-end pe-4 fw-bold text-success">₹{{ number_format($company->monthly_revenue ?? 0, 2) }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
 
