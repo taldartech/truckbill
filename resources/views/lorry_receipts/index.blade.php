@@ -294,7 +294,7 @@
                             <th>Weight</th>
                             <th>Rate</th>
                             <th>Amount</th>
-                            <th style="width: 110px;"></th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                 </table>
