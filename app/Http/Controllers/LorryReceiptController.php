@@ -906,6 +906,10 @@ class LorryReceiptController extends Controller
                     $updateData['transporter_id'] = $transporter->id;
                     $updateData['transporter_name'] = $transporter->name;
                     $updateData['transporter_tds_percentage'] = $transporter->tds_percentage;
+
+                    // Recalculate tds_amount based on new transporter TDS percentage
+                    $newTdsAmount = round($freightBooking->tr_amount * ($transporter->tds_percentage / 100), 2);
+                    $updateData['tds_amount'] = $newTdsAmount;
                 }
             }
 
@@ -941,10 +945,33 @@ class LorryReceiptController extends Controller
                 $damageAmount = $freightBooking->damage_amount ?? 0;
                 $shortageAmount = $freightBooking->shortage_amount ?? 0;
 
+                // Use new tds_amount if it's being updated, otherwise use existing
+                $tdsAmount = isset($updateData['tds_amount']) ? $updateData['tds_amount'] : ($freightBooking->tds_amount ?? 0);
+
                 // Recalculate balance: tr_amount - advance_amount - tds_amount - damage_amount - shortage_amount + detention + deviation - misc_expense
                 $newBalance = $trAmount
                     - $freightBooking->advance_amount
-                    - ($freightBooking->tds_amount ?? 0)
+                    - $tdsAmount
+                    - $damageAmount
+                    - $shortageAmount
+                    + ($freightBooking->detention ?? 0)
+                    + ($freightBooking->deviation ?? 0)
+                    - ($freightBooking->misc_expense ?? 0);
+
+                $updateData['balance_amount'] = $newBalance;
+            }
+
+            // Recalculate balance_amount if tds_amount changed (but tr_amount didn't)
+            if (isset($updateData['tds_amount']) && !isset($updateData['tr_amount'])) {
+                $trAmount = $freightBooking->tr_amount;
+                $damageAmount = $freightBooking->damage_amount ?? 0;
+                $shortageAmount = $freightBooking->shortage_amount ?? 0;
+                $newTdsAmount = $updateData['tds_amount'];
+
+                // Recalculate balance: tr_amount - advance_amount - tds_amount - damage_amount - shortage_amount + detention + deviation - misc_expense
+                $newBalance = $trAmount
+                    - $freightBooking->advance_amount
+                    - $newTdsAmount
                     - $damageAmount
                     - $shortageAmount
                     + ($freightBooking->detention ?? 0)
