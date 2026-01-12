@@ -2,11 +2,176 @@
 
 @push('styles')
     <!-- DataTables CSS -->
-
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/searchpanes/2.2.0/css/searchPanes.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <style>
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --primary-brand: var(--brand-primary);
+            --primary-brand-dark: var(--brand-primary-dark);
+            --success-brand: var(--brand-success);
+            --warning-brand: var(--brand-warning);
+            --danger-brand: var(--brand-danger);
+            --slate-600: var(--brand-text-muted);
+            --slate-800: var(--brand-text-primary);
+        }
+
+        .table td, .table th {
+            padding: 4px 8px !important;
+            font-size: 11.5px !important;
+            vertical-align: middle;
+            border-color: rgba(0,0,0,0.05) !important;
+        }
+
+        /* Glassmorphism Cards */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+        }
+
+        .card-header {
+            background: transparent !important;
+            border-bottom: 1px solid rgba(0,0,0,0.05) !important;
+            padding: 12px 20px !important;
+        }
+
+        .card-title {
+            color: var(--slate-800);
+            font-weight: 700 !important;
+            letter-spacing: -0.025em;
+        }
+
+        /* Action Buttons */
+        .btn-action {
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            background: white;
+            color: var(--slate-600);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            opacity: 0.9;
+        }
+
+        .btn-action i {
+            color: white !important;
+            font-size: 14px;
+        }
+
+        .btn-action-info    { background: var(--brand-info) !important; }
+        .btn-action-primary { background: var(--brand-primary) !important; }
+        .btn-action-success { background: var(--brand-success) !important; }
+
+        .header-pill-btn {
+            border-radius: 50px !important;
+            font-size: 11px !important;
+            font-weight: 600 !important;
+            padding: 4px 12px !important;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .header-pill-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+        }
+
+        .input-group-custom {
+            background: white;
+            border-radius: 10px;
+            padding: 2px 8px;
+            border: 1px solid rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        }
+
+        .input-group-custom span {
+            font-size: 10px;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--slate-600);
+            margin-right: 8px;
+        }
+
+        .input-group-custom input {
+            border: none !important;
+            font-size: 12px !important;
+            padding: 2px 0 !important;
+            background: transparent !important;
+            outline: none !important;
+            box-shadow: none !important;
+        }
+
+        /* Compact Status Legend */
+        .status-legend {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            font-size: 11px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .legend-delivered { background-color: #d1e7dd; }
+        .legend-cancelled { background-color: #f8d7da; }
+        .legend-pending   { background-color: #ffffff; }
+
+        .table-success { background-color: #d1e7dd !important; border-color: #badbcc !important; }
+        .table-danger  { background-color: #f8d7da !important; border-color: #f5c2c7 !important; }
+
+        .filter-action-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .filter-action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        /* last .row child of .dataTables_wrapper */
+        .dataTables_wrapper .row:last-child {
+            padding: 0 22px !important;
+        }
+    </style>
 @endpush
 
 @push('scripts')
@@ -32,139 +197,117 @@
 @endpush
 
 @section('content')
-    <div class="container mt-4">
-        <div class="col-sm-6">
-            <h3 class="mb-0">Freight Bookings Management</h3>
+    <div class="container-fluid py-1 mt-2">
+        <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+            <h3 class="mb-0 card-title animate__animated animate__fadeInDown">Freight Bookings</h3>
+            @if (session('success'))
+                <span class="badge text-bg-dark border animate__animated animate__fadeIn"><i class="bi bi-check-circle-fill text-success me-1"></i> {{ session('success') }}</span>
+            @endif
+            @if (session('error'))
+                <span class="badge text-bg-dark border animate__animated animate__fadeIn"><i class="bi bi-exclamation-triangle-fill text-danger me-1"></i> {{ session('error') }}</span>
+            @endif
         </div>
-        @if (session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
-        @endif
-        @if (session('error'))
-            <div class="alert alert-danger">{{ session('error') }}</div>
-        @endif
 
-        <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h3 class="card-title mb-0">Freight Bookings List</h3>
+
+        <!-- Search & Operations Section -->
+        <div class="glass-card mb-2 animate__animated animate__fadeInDown">
+            <div class="card-header py-1 d-flex justify-content-between align-items-center" style="background-color: rgba(0, 0, 0, 0.1) !important;">
+                <div class="d-flex align-items-center gap-4">
+                    <h6 class="card-title mb-0">Search & Filters</h6>
+                    <div class="status-legend mb-0 d-none d-md-flex">
+                        <div class="legend-item">
+                            <div class="legend-color legend-delivered"></div>
+                            <span class="small">Delivered</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color legend-cancelled"></div>
+                            <span class="small">Cancelled</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color legend-pending"></div>
+                            <span class="small">Pending</span>
+                        </div>
+                    </div>
+                </div>
                 <div class="d-flex gap-2">
-                    <button id="bulk-memo-id-btn" class="btn btn-primary" style="display: none;" data-bs-toggle="modal"
-                        data-bs-target="#bulkMemoIdModal">
-                        <i class="bi bi-clipboard-check"></i> Bulk Memo ID
+                    <button id="bulk-memo-id-btn" class="header-pill-btn btn btn-primary border-0" style="display: none; height: 32px; padding: 0 16px !important; font-size: 12px !important;" data-bs-toggle="modal" data-bs-target="#bulkMemoIdModal">
+                        <i class="bi bi-clipboard-check"></i> Bulk Memo
                     </button>
-                    <button id="voucher-payment-btn" class="btn btn-brand-primary" style="display: none;">
-                        <i class="bi bi-receipt"></i> Voucher Payment
+                    <button id="voucher-payment-btn" class="header-pill-btn btn btn-brand-primary border-0" style="display: none; height: 32px; padding: 0 16px !important; font-size: 12px !important;">
+                        <i class="bi bi-receipt"></i> Voucher
                     </button>
-                    <button id="combined-payment-btn" class="btn btn-warning" style="display: none;">
-                        <i class="bi bi-collection"></i> Combined Payment
+                    <button id="combined-payment-btn" class="header-pill-btn btn btn-warning border-0" style="display: none; height: 32px; padding: 0 16px !important; font-size: 12px !important;">
+                        <i class="bi bi-collection"></i> Combined
                     </button>
                 </div>
             </div>
-            <div class="card-body">
-                <!-- Status Legend -->
-                <div class="status-legend">
-                    <div class="legend-item">
-                        <div class="legend-color legend-delivered"></div>
-                        <span>Delivered</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color legend-cancelled"></div>
-                        <span>Cancelled</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color legend-pending"></div>
-                        <span>Pending</span>
-                    </div>
-                </div>
-
-                <!-- Search and Filter Section -->
-                <!-- Search and Filter Section -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">Search & Filters</h5>
-                    </div>
-                    <div class="card-body">
-                        <form method="GET" action="{{ route('freight_bookings.index') }}" id="searchForm">
-                            <div class="row g-3">
-                                <!-- Search Input -->
-                                <div class="col-md-5">
-                                    <label class="form-label">Search By LR, Customer, Truck, Source or Destination City &
-                                        Transporter</label>
-                                    <input type="text" class="form-control" name="search"
-                                        value="{{ request('search') }}" placeholder="LR , Truck, City & Transporter...">
+            <div class="card-header" style="padding: 10px 16px !important;">
+                <form method="GET" action="{{ route('freight_bookings.index') }}" id="searchForm">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-5">
+                            <input type="text" class="form-control form-control-sm" name="search"
+                                value="{{ request('search') }}" placeholder="LR, Customer, Truck, City...">
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex gap-2">
+                                <div class="input-group-custom flex-grow-1">
+                                    <span>From</span>
+                                    <input type="date" name="start_date" value="{{ $startDate }}">
                                 </div>
-
-                                <!-- Date Range -->
-                                <div class="col-md-2">
-                                    <label class="form-label">From Date</label>
-                                    <input type="date" class="form-control" name="start_date" value="{{ $startDate }}">
-                                </div>
-                                <div class="col-md-2">
-                                    <label class="form-label">To Date</label>
-                                    <input type="date" class="form-control" name="end_date" value="{{ $endDate }}">
-                                </div>
-
-
-                                <!-- Buttons -->
-                                <div class="col-md-1 d-flex align-items-end">
-                                    <button type="submit" class="btn btn-primary w-100">
-                                        <i class="bi bi-search"></i> Apply
-                                    </button>
-                                </div>
-                                <div class="col-md-1 d-flex align-items-end">
-                                    <a href="{{ route('freight_bookings.index') }}" class="btn btn-outline-secondary w-100">
-                                        <i class="bi bi-arrow-counterclockwise"></i> Reset
-                                    </a>
+                                <div class="input-group-custom flex-grow-1">
+                                    <span>To</span>
+                                    <input type="date" name="end_date" value="{{ $endDate }}">
                                 </div>
                             </div>
-                        </form>
+                        </div>
+                        <div class="col-md-1 d-flex gap-2 justify-content-end">
+                            <button type="submit" class="filter-action-btn" style="background: var(--brand-primary); color: white;" title="Filter" data-bs-toggle="tooltip">
+                                <i class="bi bi-funnel-fill"></i>
+                            </button>
+                            <a href="{{ route('freight_bookings.index') }}" class="filter-action-btn" style="background: var(--brand-text-primary); color: white;" title="Reset" data-bs-toggle="tooltip">
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                            </a>
+                        </div>
                     </div>
-                </div>
+                </form>
+            </div>
+        </div>
 
-                @if (request('search'))
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle"></i> Search results for: <strong>"{{ request('search') }}"</strong>
-                        <a href="{{ route('freight_bookings.index') }}" class="btn btn-sm btn-outline-primary ms-2">Clear
-                            Search</a>
-                    </div>
-                @endif
+        @if (request('search'))
+            <div class="alert alert-info py-1 px-3 mb-2 animate__animated animate__fadeIn" style="font-size: 11px;">
+                <i class="bi bi-info-circle me-1"></i> Results for: <strong>"{{ request('search') }}"</strong>
+                <a href="{{ route('freight_bookings.index') }}" class="btn btn-link btn-sm p-0 ms-2" style="font-size: 11px;">Clear Search</a>
+            </div>
+        @endif
 
-                <div class="table-responsive" style="font-size: 12px;">
-                    <table id="freightBookingsTable" class="table table-bordered table-striped">
-                        <thead class="table-dark">
-                            <tr class="text-center" style="font-size: 12px;">
-                                <th style="width: 40px;"><input type="checkbox" id="select-all"></th>
-                                {{-- <th style="width: 80px;">Sr. No</th>
-                        <th>FR Number</th> --}}
+        <div class="glass-card animate__animated animate__fadeInUp">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table id="freightBookingsTable" class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 40px;" class="text-center"><input type="checkbox" id="select-all"></th>
                                 <th class="text-center">GR Date</th>
-
                                 <th>LR No</th>
                                 <th>Customer</th>
                                 <th>Transporter</th>
-                                {{-- <th>Short Name</th>
-                                <th>Reference</th> --}}
                                 <th>Truck No</th>
-                                <th>Source City</th>
-                                <th>Destination City</th>
+                                <th>Route</th>
                                 <th>Weight</th>
-                                <th>Tr Rate</th>
-                                <th>Total Amount</th>
+                                <th>Rate</th>
+                                <th>Total</th>
                                 <th class="text-end">Balance</th>
-                                <th class="text-center" style="width: 80px;">Actions</th>
+                                <th class="text-center" style="width: 100px;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach ($bookings as $index => $booking)
-                                <tr
-                                    class="@if ($booking->is_cancelled) table-danger @elseif($booking->is_delivered) table-success @endif">
+                                <tr class="@if ($booking->is_cancelled) table-danger @elseif($booking->is_delivered) table-success @endif">
                                     <td class="text-center">
                                         @if ($booking->lr && $booking->lr->memo_id && $booking->balance_amount <= 0)
-                                            <span class="text-muted"
-                                                title="No checkbox available: memo_id is added and balance is zero"><i
-                                                    class="bi bi-dash-circle"></i></span>
+                                            <span class="text-muted"><i class="bi bi-dash-circle"></i></span>
                                         @elseif($booking->is_cancelled)
-                                            <span class="text-muted"
-                                                title="No checkbox available: Freight Booking is cancelled"><i
-                                                    class="bi bi-dash-circle"></i></span>
+                                            <span class="text-muted"><i class="bi bi-dash-circle"></i></span>
                                         @else
                                             <input type="checkbox" class="row-checkbox" value="{{ $booking->id }}"
                                                 data-lr="{{ $booking->lr ? $booking->lr->lr_number : '' }}"
@@ -184,38 +327,30 @@
                                                 data-lr-transporter="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->name : '' }}"
                                                 data-fb-transporter="{{ $booking->transporter_name ?? ($booking->transporter ? $booking->transporter->name : '') }}"
                                                 data-tds-percentage="{{ $booking->transporter_tds_percentage ?? '' }}"
-                                                data-linked-lr-id="{{ $booking->linked_lr_id ?? '' }}"
                                                 data-customer-id="{{ $booking->lr && $booking->lr->customer ? $booking->lr->customer->id : '' }}"
                                                 data-shortage-amount="{{ $booking->shortage_amount ?? 0 }}"
                                                 data-damage-amount="{{ $booking->damage_amount ?? 0 }}">
                                         @endif
                                     </td>
-                                    {{-- <td class="text-center">{{ $bookings->firstItem() + $index }}</td>
-                                <td><a href="{{ route('freight_bookings.show', $booking->id) }}" class="text-primary text-decoration-underline">{{ $booking->id ? $booking->id : '-' }}</a></td> --}}
-                                    {{-- <td class="text-center">
-                                    {{ $booking->lr && $booking->lr->gr_date ? date('d-m-Y', strtotime($booking->lr->gr_date)) : '-' }}
-                                </td> --}}
                                     <td class="text-center"
                                         data-order="{{ $booking->lr && $booking->lr->gr_date ? date('Y-m-d', strtotime($booking->lr->gr_date)) : '' }}">
                                         {{ $booking->lr && $booking->lr->gr_date ? date('d-m-Y', strtotime($booking->lr->gr_date)) : '-' }}
                                     </td>
                                     <td data-order="{{ $booking->lr->lr_number }}">
                                         @if ($booking->lr)
-                                            {{ $booking->lr->lr_number }}
+                                            <span class="fw-bold text-primary">{{ $booking->lr->lr_number }}</span>
                                             @if ($booking->linked_lr_id)
-                                                <span class="badge bg-brand-secondary">[{{ $booking->linked_lr_id }}]</span>
+                                                <span class="badge text-bg-dark border-secondary">[{{ $booking->linked_lr_id }}]</span>
                                             @endif
                                         @else
                                             -
                                         @endif
                                     </td>
-                                    {{-- <td>{{ $booking->lr ? $booking->lr->customer->name : '-' }}</td> --}}
                                     <td data-order="{{ $booking?->lr?->customer?->name }}">
                                         @if ($booking->lr)
                                             {{ $booking->lr->customer->name }}
                                             @if ($booking->lr->memo_id)
-                                                <span
-                                                    class="badge bg-brand-secondary ms-1">[{{ $booking->lr->memo_id }}]</span>
+                                                <span class="badge text-bg-dark border-secondary ms-1">[{{ $booking->lr->memo_id }}]</span>
                                             @endif
                                         @else
                                             -
@@ -223,56 +358,43 @@
                                     </td>
                                     <td>
                                         @php
-                                            $transporterName =
-                                                $booking->transporter_name ??
-                                                ($booking->transporter ? $booking->transporter->name : '-');
+                                            $transporterName = $booking->transporter_name ?? ($booking->transporter ? $booking->transporter->name : '-');
                                             $badge = '';
-
                                             if ($booking->transporter && $booking->transporter->is_owner) {
-                                                $badge =
-                                                    '<span class="badge bg-brand-secondary ms-1" title="Truck Owner"><i class="bi bi-truck"></i></span>';
+                                                $badge = '<span class="badge text-bg-dark border-secondary ms-1" title="Owner"><i class="bi bi-truck"></i></span>';
                                             } else {
-                                                $badge =
-                                                    '<span class="badge bg-info ms-1" title="Agency"><i class="bi bi-building"></i></span>';
+                                                $badge = '<span class="badge bg-info ms-1" title="Agency"><i class="bi bi-building"></i></span>';
                                             }
                                         @endphp
                                         {!! $transporterName . ' ' . $badge !!}
                                     </td>
-                                    {{-- <td data-order="{{ $booking?->transporter?->short_name }}">
-                                        @php
-                                            $shortName = $booking->transporter_name
-                                                ? $booking->transporter->short_name
-                                                : '-';
-                                        @endphp
-                                        {!! $shortName !!}
-                                    </td>
-                                    <td>{{ $booking?->lr?->reference?->name ?? '-' }}</td> --}}
-                                    <td>{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->truck_number : '-' }}
-                                    </td>
-                                    <td>{{ $booking->lr && $booking->lr->source_city ? $booking->lr->source_city : '-' }}
-                                    </td>
-                                    <td>{{ $booking->lr && $booking->lr->destination_city ? $booking->lr->destination_city : '-' }}
+                                    <td>{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->truck_number : '-' }}</td>
+                                    <td>
+                                        <div class="small">
+                                            <span class="text-muted">{{ $booking->lr && $booking->lr->source_city ? $booking->lr->source_city : '-' }}</span>
+                                            <i class="bi bi-arrow-right mx-1 text-muted"></i>
+                                            <span class="text-muted">{{ $booking->lr && $booking->lr->destination_city ? $booking->lr->destination_city : '-' }}</span>
+                                        </div>
                                     </td>
                                     <td>{{ $booking->lr && $booking->lr->weight ? $booking->lr->weight : '-' }}</td>
-                                    <td>{{ $booking->lr && $booking->tr_fr_rate ? $booking->tr_fr_rate : '-' }}</td>
-                                    <td>{{ $booking->lr && $booking->tr_fr_rate ? $booking->tr_amount : '-' }}</td>
-
-                                    <td data-order="{{ $booking->balance_amount ?? 0 }}" class="text-end">
-                                        ₹{{ number_format($booking->balance_amount ?? 0, 2) }}</td>
+                                    <td class="text-muted">{{ $booking->lr && $booking->tr_fr_rate ? $booking->tr_fr_rate : '-' }}</td>
+                                    <td class="fw-bold">{{ $booking->lr && $booking->tr_fr_rate ? $booking->tr_amount : '-' }}</td>
+                                    <td data-order="{{ $booking->balance_amount ?? 0 }}" class="text-end fw-bold text-brand-primary">
+                                        ₹{{ number_format($booking->balance_amount ?? 0, 2) }}
+                                    </td>
                                     <td class="text-center">
-                                        <div class="btn-group" role="group">
+                                        <div class="d-flex justify-content-center gap-1">
                                             <a href="{{ route('freight_bookings.show', $booking->id) }}"
-                                                class="btn btn-sm btn-outline-info" style="padding: 8px;" title="View">
+                                                class="btn-action btn-action-info" title="View">
                                                 <i class="bi bi-eye"></i>
                                             </a>
                                             <a href="{{ route('freight_bookings.edit', $booking->id) }}"
-                                                class="btn btn-sm btn-outline-primary" style="padding: 8px;"
-                                                title="Edit">
+                                                class="btn-action btn-action-primary" title="Edit">
                                                 <i class="bi bi-pencil"></i>
                                             </a>
                                             <a href="{{ route('reports.voucher-receipt-export', ['lr_id' => $booking->lr->id]) }}"
-                                                target="_blank" class="btn btn-sm btn-outline-success">
-                                                <i class="fa fa-file"></i>
+                                                target="_blank" class="btn-action btn-action-success" title="Export">
+                                                <i class="bi bi-file-earmark-text"></i>
                                             </a>
                                         </div>
                                     </td>
@@ -391,54 +513,7 @@
     </div>
 @endsection
 
-@push('styles')
-    <style>
-        /* Status row highlighting */
-        .table-success {
-            background-color: #d1e7dd !important;
-            border-color: #badbcc !important;
-        }
 
-        .table-danger {
-            background-color: #f8d7da !important;
-            border-color: #f5c2c7 !important;
-        }
-
-        /* Legend for status colors */
-        .status-legend {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            margin-bottom: 15px;
-            font-size: 0.875rem;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .legend-color {
-            width: 20px;
-            height: 15px;
-            border-radius: 3px;
-            border: 1px solid #dee2e6;
-        }
-
-        .legend-delivered {
-            background-color: #d1e7dd;
-        }
-
-        .legend-cancelled {
-            background-color: #f8d7da;
-        }
-
-        .legend-pending {
-            background-color: #ffffff;
-        }
-    </style>
-@endpush
 
 @push('scripts')
     <script>
