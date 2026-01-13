@@ -222,6 +222,12 @@
             outline: none !important;
             box-shadow: none !important;
         }
+
+        /* dataTables_wrapper .row first & last child */
+        .dataTables_wrapper .row:first-child,
+        .dataTables_wrapper .row:last-child {
+            padding: 0 12px !important;
+        }
     </style>
 @endpush
 
@@ -301,6 +307,31 @@
             </div>
         </div>
     </div>
+    <!-- LR Copy Modal -->
+    <div class="modal fade" id="lrCopyModal" tabindex="-1" aria-labelledby="lrCopyModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="lrCopyModalLabel">
+                        <i class="bi bi-file-earmark-text"></i> LR Copy
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p class="mb-4">Select the type of LR copy you want to generate:</p>
+                    <div class="d-flex gap-3 justify-content-center">
+                        <button type="button" class="btn btn-primary btn-lg" onclick="generateLrCopy(true)">
+                            <i class="bi bi-truck"></i> With Freight
+                        </button>
+                        <button type="button" class="btn btn-outline-primary btn-lg" onclick="generateLrCopy(false)">
+                            <i class="bi bi-file-text"></i> Without Freight
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Lorry Receipt Details Modal -->
     <div class="modal fade" id="lrDetailsModal" tabindex="-1" aria-labelledby="lrDetailsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
@@ -922,6 +953,54 @@
                             <strong>Error:</strong> Unable to load LR details. Please try again.
                         </div>
                     `;
+                }
+            }
+
+            // LR Copy functionality
+            let currentLrId = null;
+
+            // Handle LR Copy button click
+            $(document).on('click', '.lr-copy-btn', function() {
+                currentLrId = $(this).data('lr-id');
+            });
+
+            function generateLrCopy(withFreight) {
+                if (!currentLrId) {
+                    alert('Error: LR ID not found. Please try again.');
+                    return;
+                }
+
+                const url = '{{ route("reports.lr-copy-export") }}?lr_id=' + currentLrId + '&show_freight=' + (withFreight ? '1' : '0');
+                window.open(url, '_blank');
+
+                // Close modal and remove backdrop
+                const modalElement = document.getElementById('lrCopyModal');
+                const modal = bootstrap.Modal.getInstance(modalElement);
+
+                if (modal) {
+                    // Hide modal
+                    modal.hide();
+
+                    // Remove backdrop immediately
+                    setTimeout(function() {
+                        const backdrop = document.querySelector('.modal-backdrop');
+                        if (backdrop) {
+                            backdrop.remove();
+                        }
+                        // Remove modal-open class and styles from body
+                        document.body.classList.remove('modal-open');
+                        document.body.style.overflow = '';
+                        document.body.style.paddingRight = '';
+                    }, 100);
+                } else {
+                    // If modal instance doesn't exist, manually remove backdrop
+                    const backdrop = document.querySelector('.modal-backdrop');
+                    if (backdrop) {
+                        backdrop.remove();
+                    }
+                    document.body.classList.remove('modal-open');
+                    document.body.style.overflow = '';
+                    document.body.style.paddingRight = '';
                 }
             }
         </script>

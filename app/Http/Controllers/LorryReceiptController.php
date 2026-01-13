@@ -167,6 +167,10 @@ class LorryReceiptController extends Controller
             $buttons .= '<i class="bi bi-trash"></i></button></form>';
         }
 
+        // LR Copy button
+        $buttons .= '<button type="button" class="btn-action btn-action-info lr-copy-btn" title="LR Copy" data-bs-toggle="modal" data-bs-target="#lrCopyModal" data-lr-id="'.$lorryReceipt->id.'">';
+        $buttons .= '<i class="bi bi-file-earmark-text"></i></button>';
+
         $buttons .= '</div>';
 
         return $buttons;
