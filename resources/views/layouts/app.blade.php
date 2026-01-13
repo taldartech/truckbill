@@ -250,9 +250,76 @@
         }
 
 
-        /* .nav-link {
-        color: #003366 !important;
-      } */
+        /* Credits Display Premium Design */
+        .credits-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(var(--brand-primary-rgb, 0, 51, 102), 0.05);
+            border: 1px solid rgba(var(--brand-primary-rgb, 0, 51, 102), 0.1);
+            padding: 4px 12px;
+            border-radius: 50px;
+            margin-top: 4px;
+            backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+        }
+
+        .credits-container:hover {
+            background: rgba(var(--brand-primary-rgb, 0, 51, 102), 0.08);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .credit-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #4b5563;
+        }
+
+        .credit-pill i {
+            color: var(--brand-primary);
+            font-size: 14px;
+        }
+
+        .credit-pill .label {
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+        }
+
+        .credit-pill .value {
+            color: var(--brand-primary);
+            font-weight: 700;
+        }
+
+        .credit-divider {
+            width: 1px;
+            height: 14px;
+            background: rgba(0,0,0,0.1);
+        }
+
+        @media (max-width: 991.98px) {
+            .credit-pill .label {
+                display: none;
+            }
+            .credits-container {
+                padding: 4px 8px;
+                gap: 8px;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            .credit-pill {
+                font-size: 10px;
+            }
+            .credits-container {
+                gap: 6px;
+                margin-right: 5px !important;
+            }
+        }
     </style>
     @stack('styles')
 </head>
@@ -298,13 +365,21 @@
                 <ul class="navbar-nav ms-auto">
                     @auth
                         @if (in_array(Auth::user()->user_role_id, [3, 4, 5]))
-                            <p class="mt-2 text-gray">
-                                <small>
-                                    Expiry Date:
-                                    {{ Auth::user()->company ? \Carbon\Carbon::parse(Auth::user()->company->plan_end_date)->format('d M, Y') : 'N/A' }}
-                                    | LR Credits: {{ Auth::user()->company ? Auth::user()->company->lr_credits : 'N/A' }}
-                                </small>
-                            </p>
+                            <li class="nav-item d-flex align-items-center me-3">
+                                <div class="credits-container">
+                                    <div class="credit-pill" title="Plan Expiry">
+                                        <i class="bi bi-calendar-event"></i>
+                                        <span class="label">Expiry:</span>
+                                        <span class="value">{{ Auth::user()->company ? \Carbon\Carbon::parse(Auth::user()->company->plan_end_date)->format('d M, Y') : 'N/A' }}</span>
+                                    </div>
+                                    <div class="credit-divider"></div>
+                                    <div class="credit-pill" title="LR Credits Remaining">
+                                        <i class="bi bi-coin"></i>
+                                        <span class="label">Credits:</span>
+                                        <span class="value">{{ Auth::user()->company ? Auth::user()->company->lr_credits : 'N/A' }}</span>
+                                    </div>
+                                </div>
+                            </li>
                         @endif
                     @endauth
 
