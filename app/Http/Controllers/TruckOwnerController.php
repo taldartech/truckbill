@@ -371,22 +371,22 @@ class TruckOwnerController extends Controller
         ]);
     }
 
-    public function show(Transporter $transporter)
+    public function show(Transporter $truck_owner)
     {
-        $transporter->load(['company', 'city.state.country']);
+        $truck_owner->load(['company', 'city.state.country']);
 
         // Check if user has permission to view this truck owner
-        if (auth()->user()->userRole->name !== 'super_admin' && $transporter->company_id !== auth()->user()->company_id) {
+        if (auth()->user()->userRole->name !== 'super_admin' && $truck_owner->company_id !== auth()->user()->company_id) {
             abort(403, 'Unauthorized access to this truck owner.');
         }
 
         // Ensure this is actually a truck owner (is_owner = 1)
-        if (!$transporter->is_owner) {
+        if (!$truck_owner->is_owner) {
             abort(404, 'Truck owner not found.');
         }
 
         // Get last 10 advance payments for this truck owner
-        $advancePayments = AdvancePayment::where('transporter_id', $transporter->id)
+        $advancePayments = AdvancePayment::where('transporter_id', $truck_owner->id)
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get()
@@ -401,7 +401,7 @@ class TruckOwnerController extends Controller
             });
 
         // Get registered trucks for this truck owner
-        $trucks = Truck::where('transporter_id', $transporter->id)
+        $trucks = Truck::where('transporter_id', $truck_owner->id)
             ->with('driver')
             ->get()
             ->map(function ($truck) {
@@ -415,26 +415,26 @@ class TruckOwnerController extends Controller
             });
 
         return response()->json([
-            'id' => $transporter->id,
-            'name' => $transporter->name,
-            'short_name' => $transporter->short_name,
-            'contact_person_name' => $transporter->contact_person_name,
-            'gst_number' => $transporter->gst_number ?: 'Not provided',
-            'pan_number' => $transporter->pan_number,
-            'pan_active' => $transporter->pan_active ? 'Yes' : 'No',
-            'mobile_number' => $transporter->mobile_number,
-            'address' => $transporter->address ?: 'Not provided',
-            'country' => optional($transporter->city->state->country)->name ?: 'Not specified',
-            'state' => optional($transporter->city->state)->name ?: 'Not specified',
-            'city' => optional($transporter->city)->name ?: 'Not specified',
-            'company' => optional($transporter->company)->name ?: 'Not specified',
+            'id' => $truck_owner->id,
+            'name' => $truck_owner->name,
+            'short_name' => $truck_owner->short_name,
+            'contact_person_name' => $truck_owner->contact_person_name,
+            'gst_number' => $truck_owner->gst_number ?: 'Not provided',
+            'pan_number' => $truck_owner->pan_number,
+            'pan_active' => $truck_owner->pan_active ? 'Yes' : 'No',
+            'mobile_number' => $truck_owner->mobile_number,
+            'address' => $truck_owner->address ?: 'Not provided',
+            'country' => optional($truck_owner->city->state->country)->name ?: 'Not specified',
+            'state' => optional($truck_owner->city->state)->name ?: 'Not specified',
+            'city' => optional($truck_owner->city)->name ?: 'Not specified',
+            'company' => optional($truck_owner->company)->name ?: 'Not specified',
             'is_owner' => 'Truck Owner',
-            'declaration_given' => $transporter->declaration_given ? 'Yes' : 'No',
-            'tds_percentage' => $transporter->tds_percentage ?: '0',
-            'total_trucks' => $transporter->total_trucks,
-            'advance_amount' => '₹' . number_format($transporter->advance_amount, 2),
-            'created_at' => $transporter->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
-            'updated_at' => $transporter->updated_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
+            'declaration_given' => $truck_owner->declaration_given ? 'Yes' : 'No',
+            'tds_percentage' => $truck_owner->tds_percentage ?: '0',
+            'total_trucks' => $truck_owner->total_trucks,
+            'advance_amount' => '₹' . number_format($truck_owner->advance_amount, 2),
+            'created_at' => $truck_owner->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
+            'updated_at' => $truck_owner->updated_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
             'advance_payments' => $advancePayments,
             'trucks' => $trucks
         ]);
@@ -607,10 +607,10 @@ class TruckOwnerController extends Controller
         return redirect()->route('truck_owners.index')->with('success', 'Truck Owner updated successfully!');
     }
 
-    public function destroy(Transporter $transporter)
+    public function destroy(Transporter $truck_owner)
     {
         // Soft delete the truck owner
-        $transporter->delete();
+        $truck_owner->delete();
 
         return response()->json([
             'success' => true,
