@@ -58,7 +58,7 @@ class InvoiceController extends Controller
         if (Auth::user()->userRole->name !== 'super_admin') {
             $invoices = $invoices->where('company_id', Auth::user()->company_id);
         }
-
+        $invoices = $invoices->orderBy('generated_date', 'desc');
         $invoices = $invoices->paginate(20);
         return view('invoices.index', compact('invoices'));
     }
