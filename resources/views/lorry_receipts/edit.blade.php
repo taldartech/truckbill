@@ -463,17 +463,17 @@
                             <small class="text-muted">🔒 Auto-filled</small>
                         </div>
                         <div class="col-md-4">
-                            <label for="amount" class="form-label">Amount * <small
-                                    class="text-muted">(Auto-calculated)</small></label>
-                            <input type="number" step="0.01" class="form-control" id="amount" name="amount"
-                                required value="{{ old('amount', $lorry_receipt->amount) }}"
-                                title="Auto-calculated: Weight × Freight Rate (editable)">
-                            @error('amount')
+                            <label for="actual_amount" class="form-label">Actual Amount * <small
+                                    class="text-muted">(Weight × Freight Rate)</small></label>
+                            <input type="number" step="0.01" class="form-control" id="actual_amount" name="actual_amount"
+                                required value="{{ old('actual_amount', $lorry_receipt->actual_amount ?? $lorry_receipt->amount) }}"
+                                title="Actual Amount: Weight × Freight Rate (editable)">
+                            @error('actual_amount')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
-                            <div class="invalid-feedback">Please enter an amount.</div>
-                            <small class="text-muted">💡 Calculated as: Weight × Freight Rate -(Shortage Amount + Damage
-                                Amount)</small>
+                            <div class="invalid-feedback">Please enter an actual amount.</div>
+                            <small class="text-muted">💡 Actual Amount = Weight × Freight Rate</small>
+                            <input type="hidden" id="amount" name="amount" value="{{ old('amount', $lorry_receipt->amount) }}">
                         </div>
                     </div>
                 </div>
@@ -532,45 +532,59 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 Lorry Receipt Edit Form initialized');
 
-            // Auto-calculate amount based on weight × freight rate
+            // Auto-calculate actual_amount and amount based on weight × freight rate
             const weightInput = document.getElementById('weight');
             const frRateInput = document.getElementById('fr_rate');
+            const actualAmountInput = document.getElementById('actual_amount');
             const amountInput = document.getElementById('amount');
             const shortageAmountInput = document.getElementById('shortage_amount');
             const damageAmountInput = document.getElementById('damage_amount');
             let isManuallyEdited = false;
 
             function calculateAmount() {
-                if (isManuallyEdited) return;
-
                 const weight = parseFloat(weightInput.value) || 0;
                 const frRate = parseFloat(frRateInput.value) || 0;
+                const shortageAmount = parseFloat(shortageAmountInput.value) || 0;
+                const damageAmount = parseFloat(damageAmountInput.value) || 0;
 
                 if (weight > 0 && frRate > 0) {
-                    const calculatedAmount = weight * frRate - (parseFloat(shortageAmountInput.value) || 0) - (
-                        parseFloat(damageAmountInput.value) || 0);
-                    amountInput.value = calculatedAmount.toFixed(2);
+                    // Calculate actual_amount = weight * fr_rate (only if not manually edited)
+                    if (!isManuallyEdited) {
+                        const calculatedActualAmount = weight * frRate;
+                        actualAmountInput.value = calculatedActualAmount.toFixed(2);
+                    }
 
-                    // Visual feedback for auto-calculation
-                    amountInput.classList.remove('amount-manually-edited');
-                    amountInput.classList.add('amount-auto-calculated');
+                    // Always calculate amount = actual_amount - shortage - damage
+                    const actualAmount = parseFloat(actualAmountInput.value) || 0;
+                    const calculatedAmount = actualAmount - shortageAmount - damageAmount;
+                    amountInput.value = Math.max(0, calculatedAmount).toFixed(2);
+
                     console.log(
-                        `💰 Auto-calculated amount: ₹${calculatedAmount.toFixed(2)} (${weight} tons × ₹${frRate}/ton)`
+                        `💰 Actual Amount: ${actualAmount.toFixed(2)}, Amount: ${calculatedAmount.toFixed(2)} (${actualAmount.toFixed(2)} - ${shortageAmount} - ${damageAmount})`
                     );
                 }
             }
 
             // Auto-calculate on weight or freight rate change
-            weightInput.addEventListener('input', calculateAmount);
-            frRateInput.addEventListener('input', calculateAmount);
-
-            // Track manual edits to amount field
-            amountInput.addEventListener('input', function() {
-                isManuallyEdited = true;
-                this.classList.remove('amount-auto-calculated');
-                this.classList.add('amount-manually-edited');
-                console.log('✏️ Amount manually edited by user');
+            weightInput.addEventListener('input', function() {
+                isManuallyEdited = false;
+                calculateAmount();
             });
+            frRateInput.addEventListener('input', function() {
+                isManuallyEdited = false;
+                calculateAmount();
+            });
+
+            // Update amount when actual_amount, shortage, or damage changes
+            actualAmountInput.addEventListener('input', function() {
+                isManuallyEdited = true;
+                calculateAmount();
+            });
+            shortageAmountInput.addEventListener('input', calculateAmount);
+            damageAmountInput.addEventListener('input', calculateAmount);
+
+            // Initialize calculation on page load
+            calculateAmount();
 
             // Initialize Select2 for better dropdowns
             $('#customer_id, #consignor_id, #consignee_id, #transporter_id, #truck_id').select2({
@@ -1036,8 +1050,13 @@
                 }
             }
 
-            // Auto-calculate amount when weight or freight rate changes
+            // Auto-calculate actual_amount and amount when weight or freight rate changes
             $('#weight, #fr_rate').on('input', function() {
+                calculateAmount();
+            });
+
+            // Update amount when actual_amount, shortage, or damage changes
+            $('#actual_amount, #shortage_amount, #damage_amount').on('input', function() {
                 calculateAmount();
             });
 
@@ -1046,10 +1065,21 @@
                 const frRate = parseFloat($('#fr_rate').val()) || 0;
                 const shortageAmount = parseFloat($('#shortage_amount').val()) || 0;
                 const damageAmount = parseFloat($('#damage_amount').val()) || 0;
-                const amount = weight * frRate - (shortageAmount + damageAmount);
 
                 if (weight > 0 && frRate > 0) {
-                    $('#amount').val(amount.toFixed(2));
+                    // Calculate actual_amount = weight * fr_rate (only if actual_amount is empty or matches calculation)
+                    const currentActualAmount = parseFloat($('#actual_amount').val()) || 0;
+                    const calculatedActualAmount = weight * frRate;
+
+                    // Only auto-update actual_amount if it's empty or matches the calculation (not manually edited)
+                    if (currentActualAmount === 0 || Math.abs(currentActualAmount - calculatedActualAmount) < 0.01) {
+                        $('#actual_amount').val(calculatedActualAmount.toFixed(2));
+                    }
+
+                    // Always calculate amount = actual_amount - shortage - damage
+                    const actualAmount = parseFloat($('#actual_amount').val()) || 0;
+                    const amount = actualAmount - (shortageAmount + damageAmount);
+                    $('#amount').val(Math.max(0, amount).toFixed(2));
                 }
             }
 
@@ -1626,9 +1656,10 @@
             });
         })();
 
-        // Auto-calculate amount based on weight × freight rate
+        // Auto-calculate actual_amount and amount based on weight × freight rate
         const weightInput = document.getElementById('weight');
         const frRateInput = document.getElementById('fr_rate');
+        const actualAmountInput = document.getElementById('actual_amount');
         const amountInput = document.getElementById('amount');
         const shortageAmountInput = document.getElementById('shortage_amount');
         const damageAmountInput = document.getElementById('damage_amount');
@@ -1640,15 +1671,22 @@
             const damageAmount = parseFloat(damageAmountInput.value) || 0;
 
             if (weight > 0 && frRate > 0) {
-                const calculatedAmount = weight * frRate - (shortageAmount + damageAmount);
-                amountInput.value = calculatedAmount.toFixed(2);
+                // Calculate actual_amount = weight * fr_rate (only if actual_amount is empty or matches calculation)
+                const currentActualAmount = parseFloat(actualAmountInput.value) || 0;
+                const calculatedActualAmount = weight * frRate;
 
-                // Add visual feedback to show it's auto-calculated
-                amountInput.style.backgroundColor = '#e8f5e8';
-                amountInput.title = `Auto-calculated: ${weight} × ${frRate} = ${calculatedAmount.toFixed(2)}`;
+                // Only auto-update actual_amount if it's empty or matches the calculation (not manually edited)
+                if (currentActualAmount === 0 || Math.abs(currentActualAmount - calculatedActualAmount) < 0.01) {
+                    actualAmountInput.value = calculatedActualAmount.toFixed(2);
+                }
+
+                // Always calculate amount = actual_amount - shortage - damage
+                const actualAmount = parseFloat(actualAmountInput.value) || 0;
+                const calculatedAmount = actualAmount - (shortageAmount + damageAmount);
+                amountInput.value = Math.max(0, calculatedAmount).toFixed(2);
 
                 console.log(
-                    `💰 Amount auto-calculated: ${weight} × ${frRate} = ${calculatedAmount.toFixed(2)}`);
+                    `💰 Actual Amount: ${actualAmount.toFixed(2)}, Amount: ${calculatedAmount.toFixed(2)}`);
             }
         }
 
@@ -1658,6 +1696,11 @@
             calculateAmount();
         });
         frRateInput.addEventListener('input', calculateAmount);
+
+        // Update amount when actual_amount, shortage, or damage changes
+        actualAmountInput.addEventListener('input', calculateAmount);
+        shortageAmountInput.addEventListener('input', calculateAmount);
+        damageAmountInput.addEventListener('input', calculateAmount);
 
         // Weight validation function
         function validateWeight() {
@@ -1684,14 +1727,6 @@
 
         // Add blur validation for weight
         weightInput.addEventListener('blur', validateWeight);
-
-        // Allow user to manually edit amount (remove auto-calculated styling when manually edited)
-        amountInput.addEventListener('input', function() {
-            // Remove auto-calculated styling when user manually edits
-            this.style.backgroundColor = '';
-            this.title = 'Manually edited amount';
-            console.log('✏️ Amount manually edited by user');
-        });
 
         // Calculate amount on page load if values exist
         if (weightInput.value && frRateInput.value) {

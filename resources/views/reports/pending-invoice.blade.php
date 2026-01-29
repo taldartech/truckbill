@@ -141,7 +141,7 @@
                                 @php
                                     $damageAmount += $lr->damage_amount;
                                     $shortageAmount += $lr->shortage_amount;
-                                    $amount = $lr->weight * $lr->fr_rate;
+                                    $amount = $lr->actual_amount ?? 0;
                                     $totalAmount += $amount;
                                 @endphp
                                 <tr>

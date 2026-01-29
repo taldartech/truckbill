@@ -98,7 +98,7 @@
             <td>{{ number_format($lr->damage_amount ?? 0, 2) }}</td>
             @php
                 $totalShortageDamage = ($lr->shortage_amount ?? 0) + ($lr->damage_amount ?? 0);
-                $amount = $lr->fr_rate * $lr->weight - $totalShortageDamage;
+                $amount = $lr->actual_amount - $totalShortageDamage;
                 $totalAmount += $amount;
             @endphp
             <td>{{ number_format($amount, 2) }}</td>

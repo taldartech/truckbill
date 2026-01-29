@@ -32,6 +32,7 @@ class LorryReceipt extends Model
         'good_type',
         'fr_rate',
         'amount',
+        'actual_amount',
         'gr_date',
         'memo_id',
         'lane',

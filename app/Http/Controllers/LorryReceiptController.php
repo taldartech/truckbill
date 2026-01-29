@@ -437,6 +437,7 @@ class LorryReceiptController extends Controller
                         'no_of_units' => $item['no_of_units'] ?? null,
                         'fr_rate' => $item['fr_rate'],
                         'amount' => $item['amount'],
+                        'actual_amount' => $item['amount'],
                         'damage_amount' => $item['damage_amount'] ?? null,
                         'shortage_amount' => $item['shortage_amount'] ?? null,
                         // Shared
@@ -553,6 +554,9 @@ class LorryReceiptController extends Controller
 
         // Note: Amount field is auto-calculated but user can override the value
         // No validation check needed - store whatever amount the user enters
+
+        // Calculate and set actual_amount (weight * fr_rate) - this should not change
+        $validated['actual_amount'] = $validated['amount'];
 
         // Add company_id to validated data
         $validated['company_id'] = Auth::user()->company_id;
@@ -828,7 +832,7 @@ class LorryReceiptController extends Controller
             'weight' => 'required|numeric|min:0',
             'no_of_units' => 'nullable|numeric|min:1|max:100000',
             'fr_rate' => 'required|numeric|min:1|max:20000',
-            'amount' => 'required|numeric|min:0',
+            'actual_amount' => 'required|numeric|min:0',
             'damage_amount' => 'nullable|numeric',
             'shortage_amount' => 'nullable|numeric',
             'transporter_type' => 'nullable|in:owner,agency',
@@ -858,22 +862,11 @@ class LorryReceiptController extends Controller
         // Remove delivery_status from validated data to keep existing value
         // unset($validated['delivery_status']);
 
-        // Check if lr_number already exists
-        // if (\App\Models\LorryReceipt::where('lr_number', $validated['lr_number'])->exists()) {
-        //     return redirect()->back()->withErrors(['lr_number' => 'LR Number already exists. Please use a unique LR Number.']);
-        // }
-        // Calculate expected amount from weight and freight rate
-        //  $expectedAmount = ($validated['weight'] * $validated['fr_rate'])->round(2);
-        $expectedAmount = round($validated['weight'] * $validated['fr_rate'] - ($validated['shortage_amount'] + $validated['damage_amount']), 2);
 
-        // Check if entered amount matches calculated amount
-        if ($validated['amount'] != $expectedAmount) {
-            return redirect()->back()->withErrors([
-                'amount' => 'The entered amount does not match the calculated amount. '.
-                    'Expected amount is: '.$expectedAmount.
-                    ' (Weight: '.$validated['weight'].' × FR Rate: '.$validated['fr_rate'].')',
-            ])->withInput();
-        }
+        // Calculate amount from actual_amount - shortage_amount - damage_amount
+        $shortageAmount = $validated['shortage_amount'] ?? 0;
+        $damageAmount = $validated['damage_amount'] ?? 0;
+        $validated['amount'] = max(0, round($validated['actual_amount'] - $shortageAmount - $damageAmount, 2));
 
         // Add company_id to validated data
         $validated['company_id'] = Auth::user()->company_id;

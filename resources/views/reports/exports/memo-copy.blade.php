@@ -13,7 +13,7 @@
     $charge_types = $lrs->groupBy('lane')->keys();
     foreach ($charge_types as $type) {
         $chargeTypeTotals[$type] = $lrs->where('lane', $type)->sum(function ($lr) {
-            return $lr->weight * $lr->fr_rate;
+            return $lr->actual_amount ?? 0;
         });
         $chargeTypeWeights[$type] = $lrs->where('lane', $type)->sum('weight');
     }
@@ -85,7 +85,7 @@
         @php
             $damageAmount += $lr->damage_amount;
             $shortageAmount += $lr->shortage_amount;
-            $amount = $lr->weight * $lr->fr_rate;
+            $amount = $lr->actual_amount ?? 0;
             $totalAmount += $amount;
         @endphp
         <tr>

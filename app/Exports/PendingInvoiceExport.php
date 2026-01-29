@@ -44,7 +44,7 @@ class PendingInvoiceExport implements FromCollection, WithHeadings, WithColumnFo
         }
 
         return $query->orderBy('gr_date', 'desc')->get()->map(function ($lr) {
-            $amount = $lr->weight * $lr->fr_rate;
+            $amount = $lr->actual_amount ?? 0;
             return [
                 'Truck No' => $lr->truck->truck_number ?? 'N/A',
                 'Customer' => $lr->customer->name ?? 'N/A',
