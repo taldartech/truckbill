@@ -128,7 +128,8 @@ class ShortageDamageExport implements FromCollection, WithHeadings, ShouldAutoSi
                 "LR No" => $lr->lr_number ?? '-',
                 "Date" => Date::dateTimeToExcel(\Carbon\Carbon::parse($lr->gr_date)),
                 "Truck No" => $lr->truck->truck_number ?? '-',
-                "Weight" => $lr->weight ?? '-',
+                "Loading Weight" => $lr->weight ?? '-',
+                "Unloading Weight" => $lr->unloading_weight ?? $lr->weight ?? '-',
                 "TR Rate" => $freightBooking->tr_fr_rate ?? '-',
                 "TR Freight" => $freightBooking->tr_amount ?? '-',
                 "Consignor" => $lr->consignor->name ?? '-',
@@ -148,7 +149,8 @@ class ShortageDamageExport implements FromCollection, WithHeadings, ShouldAutoSi
             "GR Date",
 
             "Truck No",
-            "Weight",
+            "Loading Weight",
+            "Unloading Weight",
             "LR Rate",
             "LR Amount",
 

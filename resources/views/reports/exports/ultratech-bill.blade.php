@@ -11,67 +11,68 @@
 </style>
 <table class="table table-bordered" style="font-size: 13px!important;">
     <tr>
-        <td style="font-weight: bold; text-align: center; font-size: 18px!important" colspan="12">{{ $company->name }}</td>
+        <td style="font-weight: bold; text-align: center; font-size: 18px!important" colspan="13">{{ $company->name }}</td>
     </tr>
     <tr>
-        <td style="font-weight: bold; text-align: center; font-size: 16px!important" colspan="12">{{ $company->address }}</td>
+        <td style="font-weight: bold; text-align: center; font-size: 16px!important" colspan="13">{{ $company->address }}</td>
     </tr>
     <tr>
-        <td style="text-align: center; font-size: 15px!important" colspan="12">
+        <td style="text-align: center; font-size: 15px!important" colspan="13">
             {{ optional($company->city)->name . ', ' . optional($company->state)->name . ' - ' . $company->pin_code ?? '' . ' Phone No ' . $company->contact_number }}
         </td>
     </tr>
     <tr>
-        <td colspan="12"></td>
+        <td colspan="13"></td>
     </tr>
     <tr>
-        <td style="font-weight: bold; text-align: center; font-size: 15px!important" colspan="12">TRANSPORTATION BILL</td>
+        <td style="font-weight: bold; text-align: center; font-size: 15px!important" colspan="13">TRANSPORTATION BILL</td>
     </tr>
     <tr>
         <td style="font-weight: bold;">To,</td>
-        <td colspan="11"></td>
+        <td colspan="12"></td>
     </tr>
     <tr>
         <td style="font-weight: bold;" colspan="3">{{ $invoice->consignee->name }}</td>
         <td colspan="6"></td>
         <td style="font-weight: bold;">PAN No.:</td>
-        <td colspan="2">{{ $company->pan_number }}</td>
+        <td colspan="3">{{ $company->pan_number }}</td>
     </tr>
     <tr>
         <td style="font-weight: bold;" colspan="3">{{ $invoice->consignee->address . ', ' . $invoice->consignee->city->name . ', ' . $invoice->consignee->state->name }}</td>
         <td colspan="6"></td>
         <td style="font-weight: bold;">Bill No.:</td>
-        <td style="font-weight: bold;" colspan="2">{{ $invoice->manual_invoice_number }}</td>
+        <td style="font-weight: bold;" colspan="3">{{ $invoice->manual_invoice_number }}</td>
     </tr>
     <tr>
         <td colspan="3">GSTIN: {{ $invoice->consignee->gst_number }}</td>
         <td colspan="6"></td>
         <td style="font-weight: bold;">Bill Date:</td>
-        <td style="font-weight: bold;" colspan="2">{{ $invoice->generated_date }}</td>
+        <td style="font-weight: bold;" colspan="3">{{ $invoice->generated_date }}</td>
     </tr>
     <tr>
         <td colspan="3">PAN No.: {{ $invoice->consignee->pan_number }}</td>
         <td colspan="6"></td>
         <td style="font-weight: bold;">GSTIN:</td>
-        <td colspan="2">{{ $company->gst_number }}</td>
+        <td colspan="3">{{ $company->gst_number }}</td>
     </tr>
     <tr>
         <td colspan="3">State Code: {{ $invoice->consignee->state->code }}</td>
         <td colspan="6"></td>
         <td style="font-weight: bold;">Reverse Charge:</td>
-        <td style="font-weight: bold;" colspan="2">{{ $invoice->invoice_type == 'Forward' ? 'No' : 'Yes' }}</td>
+        <td style="font-weight: bold;" colspan="3">{{ $invoice->invoice_type == 'Forward' ? 'No' : 'Yes' }}</td>
     </tr>
     <tr>
         <td colspan="9"></td>
         <td style="font-weight: bold;">SAC Code:</td>
-        <td colspan="2">996511</td>
+        <td colspan="3">996511</td>
     </tr>
     <tr>
         <td style="font-weight: bold;">Sr.No.</td>
         <td style="font-weight: bold;">Memo No</td>
         <td style="font-weight: bold;">Date</td>
         <td style="font-weight: bold;">Material Name</td>
-        <td style="font-weight: bold;">Qty (MT)</td>
+        <td style="font-weight: bold;">Loading Qty (MT)</td>
+        <td style="font-weight: bold;">Unloading Qty (MT)</td>
         <td style="font-weight: bold;">Truck No</td>
         <td style="font-weight: bold;">LR No</td>
         <td style="font-weight: bold;">Destination</td>
@@ -90,6 +91,7 @@
             <td>{{ \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') }}</td>
             <td>{{ $lr->good_type }}</td>
             <td>{{ $lr->weight }}</td>
+            <td>{{ $lr->unloading_weight ?? $lr->weight }}</td>
             <td>{{ $lr->truck ? $lr->truck->truck_number : 'N/A' }}</td>
             <td>{{ $lr->lr_number }}</td>
             <td>{{ $lr->destination_city }}</td>
@@ -118,7 +120,7 @@
         $totalgst = $cgst + $sgst + $igst;
     @endphp
     <tr>
-        <td style="font-weight: bold;" colspan="9">
+        <td style="font-weight: bold;" colspan="10">
           Remark:
         </td>
         <td style="font-weight: bold;" colspan="2">Amount</td>
@@ -126,27 +128,27 @@
     </tr>
     @if ($cgst > 0)
         <tr>
-            <td colspan="9"></td>
+            <td colspan="10"></td>
             <td style="font-weight: bold;" colspan="2">CGST {{ $cgstpercent }}%</td>
             <td>{{ number_format($cgst, 2) }}</td>
         </tr>
     @endif
     @if ($sgst > 0)
         <tr>
-            <td colspan="9"></td>
+            <td colspan="10"></td>
             <td style="font-weight: bold;" colspan="2">SGST {{ $sgstpercent }}%</td>
             <td>{{ number_format($sgst, 2) }}</td>
         </tr>
     @endif
     @if ($igst > 0)
         <tr>
-            <td colspan="9"></td>
+            <td colspan="10"></td>
             <td style="font-weight: bold;" colspan="2">IGST {{ $igstpercent }}%</td>
             <td>{{ number_format($igst, 2) }}</td>
         </tr>
     @endif
     <tr>
-        <td colspan="9"></td>
+        <td colspan="10"></td>
         <td style="font-weight: bold;" colspan="2">Total Amount</td>
         @php
             $grandTotal = $invoice->invoice_type == 'Reverse' ? $totalAmount : $totalAmount + $totalgst;
@@ -154,18 +156,18 @@
         <td>{{ number_format($grandTotal, 2) }}</td>
     </tr>
     <tr>
-        <td style="font-weight: bold;" colspan="9">{{ ucfirst(getIndianCurrency($grandTotal)) }} Only</td>
+        <td style="font-weight: bold;" colspan="10">{{ ucfirst(getIndianCurrency($grandTotal)) }} Only</td>
         <td style="font-weight: bold;" colspan="3">FOR {{ $company->name }}</td>
     </tr>
     <tr>
-        <td colspan="9"></td>
+        <td colspan="10"></td>
         <td colspan="3" rowspan="2"></td>
     </tr>
     <tr>
-        <td colspan="9"></td>
+        <td colspan="10"></td>
     </tr>
     <tr>
-        <td style="font-weight: bold;" colspan="9">Note :- GST Liability of Debtor:-  {{ $invoice->consignee->name }}  Under Reverse Charge
+        <td style="font-weight: bold;" colspan="10">Note :- GST Liability of Debtor:-  {{ $invoice->consignee->name }}  Under Reverse Charge
             Mechanism of GST Act, 2017</td>
         <td style="font-weight: bold;" colspan="3">Authorized Signature</td>
     </tr>

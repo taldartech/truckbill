@@ -15,7 +15,8 @@
             <th>Customer</th>
             <th>Destination</th>
             <th>Invoice No</th>
-            <th>Weight</th>
+            <th>Loading Weight</th>
+            <th>Unloading Weight</th>
             <th>Bags</th>
             <th>Fr rate</th>
             <th>Amount</th>
@@ -82,6 +83,7 @@
                 <td>{{ $lr->destination_city ?? '-' }}</td>
                 <td>{{ $lr->invoice_number ?? '-' }}</td>
                 <td>{{ $lr->weight ?? 0 }}</td>
+                <td>{{ $lr->unloading_weight ?? $lr->weight ?? 0 }}</td>
                 <td>{{ $lr->no_of_units ?? 0 }}</td>
                 <td>{{ $lr->fr_rate ?? 0 }}</td>
                 <td>{{ $lr->amount ?? 0 }}</td>

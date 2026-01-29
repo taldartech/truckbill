@@ -25,46 +25,43 @@
 </style>
 <table class="table table-bordered" style="font-size: 13px!important;">
     <tr>
-        <td style="text-align: center; font-weight: bold; font-size: 18px!important;" colspan="13">{{ $company->name }}
+        <td style="text-align: center; font-weight: bold; font-size: 18px!important;" colspan="14">{{ $company->name }}
         </td>
     </tr>
     <tr>
-        <td style="text-align: center; font-weight: bold; font-size: 16px!important;" colspan="13">
+        <td style="text-align: center; font-weight: bold; font-size: 16px!important;" colspan="14">
             {{ $company->address }}, {{ optional($company->city)->name }}
         </td>
     </tr>
     <tr>
-        <td style="text-align: center; font-weight: bold; font-size: 15px!important;" colspan="13">
+        <td style="text-align: center; font-weight: bold; font-size: 15px!important;" colspan="14">
             {{ 'Phone No ' . $company->contact_number }}
         </td>
     </tr>
     <tr>
-        <td style="text-align: right; font-weight: bold;" colspan="13">Service Tax Regn No :</td>
-    </tr>
-    <tr>
         <td style="font-weight: bold;" colspan="2">Memo No.: {{ $memo_id }}</td>
-        <td style="font-weight: bold;" colspan="8">
+        <td style="font-weight: bold;" colspan="9">
             {{ $customer->name }}, {{ $customer->address }}, {{ $customer->city->name }}
         </td>
         <td style="font-weight: bold;" colspan="3">Dt: {{ date('d-m-Y') }}</td>
     </tr>
     <tr>
-        <td style="font-weight: bold; text-align: center" colspan="13">Summary</td>
+        <td style="font-weight: bold; text-align: center" colspan="14">Summary</td>
     </tr>
     <tr>
         <td style="font-weight: bold;" colspan="7">Charge Type</td>
         <td style="font-weight: bold;" colspan="3">QTY (MT)</td>
-        <td style="font-weight: bold;" colspan="3">Amount</td>
+        <td style="font-weight: bold;" colspan="4">Amount</td>
     </tr>
     @foreach ($charge_types as $type)
         <tr>
             <td colspan="7">{{ $type }}</td>
             <td style="text-align: right" colspan="3">{{ number_format($chargeTypeWeights[$type], 2) }}</td>
-            <td style="text-align: right" colspan="3">{{ number_format($chargeTypeTotals[$type], 2) }}</td>
+            <td style="text-align: right" colspan="4">{{ number_format($chargeTypeTotals[$type], 2) }}</td>
         </tr>
     @endforeach
     <tr>
-        <td colspan="13"></td>
+        <td colspan="14"></td>
     </tr>
     <tr>
         <td style="font-weight: bold">Truck No</td>
@@ -73,7 +70,8 @@
         <td style="font-weight: bold">Consignment No</td>
         <td style="font-weight: bold">Date</td>
         <td style="font-weight: bold">Lane</td>
-        <td style="font-weight: bold">QTY(MT)</td>
+        <td style="font-weight: bold">Loading QTY(MT)</td>
+        <td style="font-weight: bold">Unloading QTY(MT)</td>
         <td style="font-weight: bold">Rate</td>
         <td style="font-weight: bold">Damage</td>
         <td style="font-weight: bold">Shortage</td>
@@ -96,6 +94,7 @@
             <td>{{ date('d-m-Y', strtotime($lr->gr_date)) }}</td>
             <td>{{ $lr->lane }}</td>
             <td style="text-align: right">{{ number_format($lr->weight, 3) }}</td>
+            <td style="text-align: right">{{ number_format($lr->unloading_weight ?? $lr->weight, 3) }}</td>
             <td style="text-align: right">{{ number_format($lr->fr_rate, 2) }}</td>
             <td style="text-align: right">{{ number_format($lr->damage_amount, 2) }}</td>
             <td style="text-align: right">{{ number_format($lr->shortage_amount, 2) }}</td>
@@ -105,17 +104,17 @@
         </tr>
     @endforeach
     <tr>
-        <td colspan="8"></td>
+        <td colspan="9"></td>
         <td style="font-weight: bold; text-align: right;" colspan="4">Gross Total:</td>
         <td>{{ number_format($totalAmount, 2) }}</td>
     </tr>
     <tr>
-        <td colspan="8"></td>
+        <td colspan="9"></td>
         <td style="font-weight: bold; text-align: right;" colspan="4">Less :Shortage</td>
         <td>{{ number_format($shortageAmount, 2) }}</td>
     </tr>
     <tr>
-        <td colspan="8"></td>
+        <td colspan="9"></td>
         <td style="font-weight: bold; text-align: right;" colspan="4">Less: Damage</td>
         <td>{{ number_format($damageAmount, 2) }}</td>
     </tr>
@@ -123,49 +122,49 @@
         $netAmount = $totalAmount - $damageAmount - $shortageAmount;
     @endphp
     <tr>
-        <td colspan="8"></td>
+        <td colspan="9"></td>
         <td style="font-weight: bold; text-align: right;" colspan="4">Net Total</td>
         <td>{{ number_format($netAmount, 2) }}</td>
     </tr>
     <tr>
-        <td colspan="8"></td>
+        <td colspan="9"></td>
         <td style="font-weight: bold; text-align: right;" colspan="4">Service Tax</td>
         <td>0.00</td>
     </tr>
     <tr>
-        <td colspan="8"></td>
+        <td colspan="9"></td>
         <td style="font-weight: bold; text-align: right;" colspan="4">Swachh Bharat cess</td>
         <td>0.00</td>
     </tr>
     <tr>
-        <td colspan="8"></td>
+        <td colspan="9"></td>
         <td style="font-weight: bold; text-align: right;" colspan="4">Total Value :</td>
         <td>{{ number_format($netAmount, 2) }}</td>
     </tr>
     <tr>
-        <td colspan="13">
+        <td colspan="14">
             In words: {{ getIndianCurrency($netAmount) }}
         </td>
     </tr>
     <tr>
-        <td style="font-weight: bold; text-align: center;" colspan="13">DECLARATION</td>
+        <td style="font-weight: bold; text-align: center;" colspan="14">DECLARATION</td>
     </tr>
     <tr>
-        <td colspan="13">
+        <td colspan="14">
             We hereby declare that we have not availed GST credit paid on input or capital goods used for providing
             services under GST rules 2017. GST service file under RCM &amp; GST liabilities is of service recipient.
         </td>
     </tr>
     <tr>
-        <td style="font-weight: bold; text-align: right;" colspan="13">For {{ Auth::user()->company->name }}</td>
+        <td style="font-weight: bold; text-align: right;" colspan="14">For {{ Auth::user()->company->name }}</td>
     </tr>
     <tr>
-      <td colspan="13"></td>
+      <td colspan="14"></td>
     </tr>
     <tr>
-      <td colspan="13"></td>
+      <td colspan="14"></td>
     </tr>
     <tr>
-        <td style="text-align: right;" colspan="13">Authorised Signature</td>
+        <td style="text-align: right;" colspan="14">Authorised Signature</td>
     </tr>
 </table>

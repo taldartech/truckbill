@@ -68,7 +68,8 @@
                             <th>LR No</th>
                             <th>GR Date</th>
                             <th>Truck No</th>
-                            <th>Weight</th>
+                            <th>Loading Weight</th>
+                            <th>Unloading Weight</th>
                             <th>LR Rate</th>
                             <th>LR Amount</th>
                             <th>Consignor</th>
@@ -121,6 +122,7 @@
                                 </td>
                                 <td>{{ $lr->truck->truck_number ?? 'N/A' }}</td>
                                 <td>{{ $lr->weight }}</td>
+                                <td>{{ $lr->unloading_weight ?? $lr->weight }}</td>
                                 <td>{{ $lr->fr_rate }}</td>
                                 <td>{{ $lr->amount }}</td>
                                 <td>{{ $lr->consignor->name ?? 'N/A' }}</td>

@@ -155,7 +155,8 @@
                             <th>GR No</th>
                             <th>Truck No</th>
                             <th>Destination</th>
-                            <th>Weight</th>
+                            <th>Loading Weight</th>
+                            <th>Unloading Weight</th>
                             <th>Bags</th>
                             <th>Consignor Name</th>
                             <th>Consignee Name</th>
@@ -208,6 +209,7 @@
                                 <td>{{ $lr->truck_id ? $lr->truck->truck_number : 'N/A' }}</td>
                                 <td>{{ $lr->destination_city . ', ' . $lr->destination_state }}</td>
                                 <td>{{ $lr->weight }}</td>
+                                <td>{{ $lr->unloading_weight ?? $lr->weight }}</td>
                                 <td>{{ $lr->no_of_units }}</td>
                                 <td>{{ $lr->consignor_id ? $lr->consignor->name : 'N/A' }}</td>
                                 <td>{{ $lr->consignee_id ? $lr->consignee->name : 'N/A' }}</td>

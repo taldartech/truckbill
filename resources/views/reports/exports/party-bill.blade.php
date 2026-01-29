@@ -11,60 +11,60 @@
 </style>
 <table class="table table-bordered" style="font-size: 13px!important;">
     <tr>
-        <td style="font-weight: bold; text-align: center; font-size: 18px!important" colspan="12">{{ $company->name }}</td>
+        <td style="font-weight: bold; text-align: center; font-size: 18px!important" colspan="13">{{ $company->name }}</td>
     </tr>
     <tr>
-        <td style="font-weight: bold; text-align: center; font-size: 16px!important" colspan="12">{{ $company->address }}</td>
+        <td style="font-weight: bold; text-align: center; font-size: 16px!important" colspan="13">{{ $company->address }}</td>
     </tr>
     <tr>
-        <td style="text-align: center; font-size: 15px!important" colspan="12">
+        <td style="text-align: center; font-size: 15px!important" colspan="13">
             {{ optional($company->city)->name . ', ' . optional($company->state)->name . ' - ' . $company->pin_code ?? '' . ' Phone No ' . $company->contact_number }}
         </td>
     </tr>
     <tr>
-        <td colspan="12"></td>
+        <td colspan="13"></td>
     </tr>
     <tr>
-        <td style="font-weight: bold; text-align: center; font-size: 15px!important" colspan="12">TRANSPORTATION BILL</td>
+        <td style="font-weight: bold; text-align: center; font-size: 15px!important" colspan="13">TRANSPORTATION BILL</td>
     </tr>
     <tr>
         <td style="font-weight: bold;">To,</td>
-        <td colspan="11"></td>
+        <td colspan="12"></td>
     </tr>
     <tr>
         <td style="font-weight: bold;" colspan="3">{{ $invoice->consignee->name }}</td>
         <td colspan="6"></td>
         <td style="font-weight: bold;">PAN No.:</td>
-        <td colspan="2">{{ $company->pan_number }}</td>
+        <td colspan="3">{{ $company->pan_number }}</td>
     </tr>
     <tr>
         <td style="font-weight: bold;" colspan="3">{{ $invoice->consignee->city->name }}</td>
         <td colspan="6"></td>
         <td style="font-weight: bold;">Bill No.:</td>
-        <td style="font-weight: bold;" colspan="2">{{ $invoice->manual_invoice_number }}</td>
+        <td style="font-weight: bold;" colspan="3">{{ $invoice->manual_invoice_number }}</td>
     </tr>
     <tr>
         <td colspan="3">GSTIN: {{ $invoice->consignee->gst_number }}</td>
         <td colspan="6"></td>
         <td style="font-weight: bold;">Bill Date:</td>
-        <td style="font-weight: bold;" colspan="2">{{ $invoice->generated_date }}</td>
+        <td style="font-weight: bold;" colspan="3">{{ $invoice->generated_date }}</td>
     </tr>
     <tr>
         <td colspan="3">PAN No.: {{ $invoice->consignee->pan_number }}</td>
         <td colspan="6"></td>
         <td style="font-weight: bold;">GSTIN:</td>
-        <td colspan="2">{{ $company->gst_number }}</td>
+        <td colspan="3">{{ $company->gst_number }}</td>
     </tr>
     <tr>
         <td colspan="3">State Code: {{ $invoice->consignee->state->code }}</td>
         <td colspan="6"></td>
         <td style="font-weight: bold;">Reverse Charge:</td>
-        <td style="font-weight: bold;" colspan="2">{{ $invoice->invoice_type == 'Forward' ? 'No' : 'Yes' }}</td>
+        <td style="font-weight: bold;" colspan="3">{{ $invoice->invoice_type == 'Forward' ? 'No' : 'Yes' }}</td>
     </tr>
     <tr>
         <td colspan="9"></td>
         <td style="font-weight: bold;">SAC Code:</td>
-        <td colspan="2">996511</td>
+        <td colspan="3">996511</td>
     </tr>
     <tr>
         <td style="font-weight: bold;">Sr.No.</td>
@@ -73,7 +73,8 @@
         <td style="font-weight: bold;">Destination</td>
         <td style="font-weight: bold;">Invoice No.</td>
         <td style="font-weight: bold;">Invoice date</td>
-        <td style="font-weight: bold;">Wt.</td>
+        <td style="font-weight: bold;">Loading Wt.</td>
+        <td style="font-weight: bold;">Unloading Wt.</td>
         <td style="font-weight: bold;">Bags</td>
         <td style="font-weight: bold;">Fr rate</td>
         <td style="font-weight: bold;">Shortage</td>
@@ -92,6 +93,7 @@
             <td>{{ $lr->invoice_number }}</td>
             <td>{{ \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') }}</td>
             <td>{{ $lr->weight }}</td>
+            <td>{{ $lr->unloading_weight ?? $lr->weight }}</td>
             <td>{{ $lr->no_of_units }}</td>
             <td>{{ number_format($lr->fr_rate, 2) }}</td>
             <td>{{ number_format($lr->shortage_amount ?? 0, 2) }}</td>
