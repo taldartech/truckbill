@@ -89,6 +89,12 @@ class FreightBookingController extends Controller
                             })
                             ->orWhereHas('truck', function ($truckQuery) use ($search) {
                                 $truckQuery->where('truck_number', 'LIKE', "%{$search}%");
+                            })
+                            ->orWhereHas('transporter', function ($transporterQuery) use ($search) {
+                            $transporterQuery->where('name', 'LIKE', "%{$search}%");
+                            })
+                            ->orWhereHas('reference', function ($referenceQuery) use ($search) {
+                            $referenceQuery->where('name', 'LIKE', "%{$search}%");
                             });
                     });
             });
