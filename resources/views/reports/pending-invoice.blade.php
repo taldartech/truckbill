@@ -121,12 +121,13 @@
                     <table class="table table-bordered table-striped">
                         <thead>
                             <tr>
+                                <th>Date</th>
+                                <th>Consignment No</th>
+                                <th>Memo No</th>
                                 <th>Truck No</th>
                                 <th>Customer</th>
                                 <th>From Place</th>
                                 <th>To Place</th>
-                                <th>Consignment No</th>
-                                <th>Date</th>
                                 <th>Lane</th>
                                 <th>QTY(MT)</th>
                                 <th>Rate</th>
@@ -145,12 +146,13 @@
                                     $totalAmount += $amount;
                                 @endphp
                                 <tr>
+                                    <td>{{ date('d-m-Y', strtotime($lr->gr_date)) }}</td>
+                                    <td>{{ $lr->lr_number }}</td>
+                                    <td>{{ $lr->memo_id }}</td>
                                     <td>{{ $lr->truck->truck_number ?? 'N/A' }}</td>
                                     <td>{{ $lr->customer->name ?? 'N/A' }}</td>
                                     <td>{{ $lr->source_city }}</td>
                                     <td>{{ $lr->destination_city }}</td>
-                                    <td>{{ $lr->lr_number }}</td>
-                                    <td>{{ date('d-m-Y', strtotime($lr->gr_date)) }}</td>
                                     <td>{{ $lr->lane }}</td>
                                     <td style="text-align: right">{{ number_format($lr->weight, 3) }}</td>
                                     <td style="text-align: right">{{ number_format($lr->fr_rate, 2) }}</td>
