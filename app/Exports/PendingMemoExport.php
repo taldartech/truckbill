@@ -56,12 +56,12 @@ class PendingMemoExport implements FromCollection, WithHeadings, WithColumnForma
         return $query->orderBy('gr_date', 'desc')->get()->map(function ($lr) {
             $amount = $lr->actual_amount ?? 0;
             return [
+                'Date' => Date::dateTimeToExcel(\Carbon\Carbon::parse($lr->gr_date)),
+                'Consignment No' => $lr->lr_number,
                 'Truck No' => $lr->truck->truck_number ?? 'N/A',
                 'Customer' => $lr->customer->name ?? 'N/A',
                 'From Place' => $lr->source_city,
                 'To Place' => $lr->destination_city,
-                'Consignment No' => $lr->lr_number,
-                'Date' => Date::dateTimeToExcel(\Carbon\Carbon::parse($lr->gr_date)),
                 'Lane' => $lr->lane,
                 'QTY(MT)' => number_format($lr->weight, 3),
                 'Rate' => number_format($lr->fr_rate, 2),
@@ -76,12 +76,12 @@ class PendingMemoExport implements FromCollection, WithHeadings, WithColumnForma
     public function headings(): array
     {
         return [
+            'Date',
+            'Consignment No',
             'Truck No',
             'Customer',
             'From Place',
             'To Place',
-            'Consignment No',
-            'Date',
             'Lane',
             'QTY(MT)',
             'Rate',
