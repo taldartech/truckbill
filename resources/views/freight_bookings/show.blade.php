@@ -48,6 +48,25 @@
             font-size: 0.875rem;
             padding: 0.375rem 0.75rem;
         }
+
+        .combined-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .combined-table td {
+            text-align: right;
+        }
+
+        .combined-table td:last-child {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .combined-table tr td:first-child {
+            text-align: left;
+        }
     </style>
 
     @if ($freightBooking->is_cancelled)
@@ -82,11 +101,11 @@
             <div class="card-toolbar">
                 @if (!$freightBooking->is_cancelled)
                     @if ($freightBooking->balance_amount > 0)
-                        @if( !$freightBooking->linked_lr_id)
-                        <button type="button" class="btn btn-sm btn-success me-2"
-                            onclick="openVoucherPaymentModal({{ $freightBooking->id }})">
-                            <i class="bi bi-credit-card"></i> Voucher Payment
-                        </button>
+                        @if (!$freightBooking->linked_lr_id)
+                            <button type="button" class="btn btn-sm btn-success me-2"
+                                onclick="openVoucherPaymentModal({{ $freightBooking->id }})">
+                                <i class="bi bi-credit-card"></i> Voucher Payment
+                            </button>
                         @endif
                     @else
                         <button type="button" class="btn btn-sm btn-secondary me-2" disabled
@@ -94,8 +113,7 @@
                             <i class="bi bi-credit-card"></i> Voucher Payment
                         </button>
                     @endif
-                    <a href="{{ route('freight_bookings.edit', $freightBooking->id) }}"
-                        class="btn btn-sm btn-primary me-2">
+                    <a href="{{ route('freight_bookings.edit', $freightBooking->id) }}" class="btn btn-sm btn-primary me-2">
                         <i class="bi bi-pencil"></i> Edit
                     </a>
                 @else
@@ -238,38 +256,115 @@
                 <div class="col-md-6">
                     <div class="info-card card">
                         <div class="card-header">
-                            <h5 class="mb-0">Financial Information</h5>
+                            <h5 class="mb-0">Financial Information {!! $freightBooking->linked_lr_id ? '<span class="badge bg-primary">Combined</span>' : '' !!}</h5>
                         </div>
                         <div class="card-body">
-                            <div class="info-row">
-                                <span class="info-label">TR Rate:</span>
-                                <span class="info-value">₹{{ number_format($freightBooking->tr_fr_rate ?? 0, 2) }}</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-label">TR Amount:</span>
-                                <span class="info-value">₹{{ number_format($freightBooking->tr_amount ?? 0, 2) }}</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-label">Advance:</span>
-                                <span
-                                    class="info-value">₹{{ number_format($freightBooking->advance_amount ?? 0, 2) }}</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-label">TDS Amount:</span>
-                                <span class="info-value">₹{{ number_format($freightBooking->tds_amount ?? 0, 2) }}</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-label">Balance:</span>
-                                <span class="info-value">
-                                    @php
-
-                                        $badgeClass = 'bg-success';
-                                    @endphp
+                            @if (!$freightBooking->linked_lr_id)
+                                <div class="info-row">
+                                    <span class="info-label">TR Rate:</span>
                                     <span
-                                        class="badge {{ $badgeClass }} badge-status">₹{{ number_format($freightBooking->balance_amount ?? 0, 2) }}</span>
-                                </span>
-                            </div>
+                                        class="info-value">₹{{ number_format($freightBooking->tr_fr_rate ?? 0, 2) }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">TR Amount:</span>
+                                    <span
+                                        class="info-value">₹{{ number_format($freightBooking->tr_amount ?? 0, 2) }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Advance:</span>
+                                    <span
+                                        class="info-value">₹{{ number_format($freightBooking->advance_amount ?? 0, 2) }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">TDS Amount:</span>
+                                    <span
+                                        class="info-value">₹{{ number_format($freightBooking->tds_amount ?? 0, 2) }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Balance:</span>
+                                    <span class="info-value">
+                                        @php
 
+                                            $badgeClass = 'bg-success';
+                                        @endphp
+                                        <span
+                                            class="badge {{ $badgeClass }} badge-status">₹{{ number_format($freightBooking->balance_amount ?? 0, 2) }}</span>
+                                    </span>
+                                </div>
+                            @else
+                                @php
+                                    $freightBookingIds = \App\Models\FreightBooking::where(
+                                        'linked_lr_id',
+                                        $freightBooking->linked_lr_id,
+                                    )
+                                        ->where('is_cancelled', false)
+                                        ->where('company_id', auth()->user()->company_id)
+                                        ->pluck('id')
+                                        ->toArray();
+                                    $frs = [];
+                                    foreach ($freightBookingIds as $freightBookingId) {
+                                        $frs[] = \App\Models\FreightBooking::find($freightBookingId);
+                                    }
+                                    $total_tr_amount = 0;
+                                    $total_advance = 0;
+                                    $total_tds_amount = 0;
+                                    $total_balance = 0;
+                                    foreach ($frs as $fr) {
+                                        $total_tr_amount += $fr->tr_amount;
+                                        $total_advance += $fr->advance_amount;
+                                        $total_tds_amount += $fr->tds_amount;
+                                        $total_balance += $fr->balance_amount;
+                                    }
+                                @endphp
+                                <table class="table combined-table">
+                                    <thead>
+                                        <tr>
+                                            <th></th>
+                                            @foreach ($frs as $fr)
+                                                <th>{{ $fr->lr->lr_number }}</th>
+                                            @endforeach
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>TR Rate</td>
+                                            @foreach ($frs as $fr)
+                                                <td>{{ number_format($fr->tr_fr_rate, 2) }}</td>
+                                            @endforeach
+                                            <td></td>
+                                        </tr>
+                                        <tr>
+                                            <td>TR Amount</td>
+                                            @foreach ($frs as $fr)
+                                                <td>{{ number_format($fr->tr_amount, 2) }}</td>
+                                            @endforeach
+                                            <td>{{ number_format($total_tr_amount, 2) }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Advance</td>
+                                            @foreach ($frs as $fr)
+                                                <td>{{ number_format($fr->advance_amount, 2) }}</td>
+                                            @endforeach
+                                            <td>{{ number_format($total_advance, 2) }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>TDS Amount</td>
+                                            @foreach ($frs as $fr)
+                                                <td>{{ number_format($fr->tds_amount, 2) }}</td>
+                                            @endforeach
+                                            <td>{{ number_format($total_tds_amount, 2) }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Balance</td>
+                                            @foreach ($frs as $fr)
+                                                <td>{{ number_format($fr->balance_amount, 2) }}</td>
+                                            @endforeach
+                                            <td>{{ number_format($total_balance, 2) }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -488,8 +583,7 @@
                                 <select class="form-select" id="paymentType" required>
                                     <option value="">Select Payment Type</option>
                                     @foreach ($paymentTypes as $type)
-                                        <option value="{{ $type->name }}" data-id="{{ $type->id }}"
-                                            {{ isset($existingPayment) && $existingPayment->payment_type_id == $type->id ? 'selected' : '' }}>
+                                        <option value="{{ $type->name }}" data-id="{{ $type->id }}">
                                             {{ $type->name }}
                                         </option>
                                     @endforeach
@@ -504,8 +598,7 @@
                                 <select class="form-select" id="paymentMode" required>
                                     <option value="">Select Payment Mode</option>
                                     @foreach ($paymentModes as $mode)
-                                        <option value="{{ $mode->name }}" data-id="{{ $mode->id }}"
-                                            {{ isset($existingPayment) && $existingPayment->payment_mode_id == $mode->id ? 'selected' : '' }}>
+                                        <option value="{{ $mode->name }}" data-id="{{ $mode->id }}">
                                             {{ $mode->name }}
                                         </option>
                                     @endforeach
@@ -530,25 +623,17 @@
                     </div>
 
                     <div class="row">
-                        {{-- <div class="col-md-4">
-                            <div class="mb-3">
-                                <label for="referenceId" class="form-label">Reference Transaction ID</label>
-                                <input type="text" class="form-control" id="referenceId"
-                                    placeholder="Enter reference ID"
-                                    value="{{ isset($existingPayment) ? $existingPayment->reference_transaction_id : '' }}">
-                            </div>
-                        </div> --}}
                         <div class="col-md-4">
                             <div class="mb-3">
                                 <label for="paymentRemarks" class="form-label">Remarks</label>
-                                <textarea class="form-control" id="paymentRemarks" rows="2" placeholder="Enter remarks">{{ isset($existingPayment) ? $existingPayment->remark : '' }}</textarea>
+                                <textarea class="form-control" id="paymentRemarks" rows="2" placeholder="Enter remarks"></textarea>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="mb-3">
                                 <label for="paymentDate" class="form-label">Payment Date</label>
                                 <input type="date" class="form-control" name="date" id="paymentDate"
-                                    value="{{ isset($existingPayment) ? $existingPayment->date : '' }}">
+                                    value="">
                             </div>
                         </div>
                     </div>
@@ -627,9 +712,9 @@
                                 payment.payment_status === 'pending' ? 'bg-warning' :
                                 payment.payment_status === 'in progress' ? 'bg-info' : 'bg-secondary';
                             const pumpName = payment.pump ? (payment.pump.pump_name || '') : '';
-                            const paymentModeDisplay = pumpName
-                                ? `${payment.payment_mode || 'N/A'}<br><small class="text-muted">${pumpName}</small>`
-                                : (payment.payment_mode || 'N/A');
+                            const paymentModeDisplay = pumpName ?
+                                `${payment.payment_mode || 'N/A'}<br><small class="text-muted">${pumpName}</small>` :
+                                (payment.payment_mode || 'N/A');
 
                             tableHtml += `
                                 <tr>
