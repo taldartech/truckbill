@@ -253,10 +253,12 @@ class DashboardController extends Controller
                 ->count(),
             'eway_bills_expiring_today' => FreightBooking::where('company_id', $companyId)
                 ->where('is_delivered', 0)
+                ->where('is_cancelled', 0)
                 ->whereDate('eway_bill_expiry', $today)
                 ->count(),
             'expired_eway_bills' => FreightBooking::where('company_id', $companyId)
                 ->where('is_delivered', 0)
+                ->where('is_cancelled', 0)
                 ->where('eway_bill_expiry', '<', $today)
                 ->count(),
             'outstanding_amount' => $outstandingAmount,
@@ -314,6 +316,7 @@ class DashboardController extends Controller
         $expiredEwayBills = FreightBooking::with('lr')
             ->where('company_id', $companyId)
             ->where('is_delivered', 0)
+            ->where('is_cancelled', 0)
             ->where('eway_bill_expiry', '<=', now()->addDays(2)->endOfDay())
             ->orderBy('eway_bill_expiry', 'asc')
             ->get();
@@ -414,10 +417,12 @@ class DashboardController extends Controller
                 ->count(),
             'eway_bills_expiring_today' => FreightBooking::where('company_id', $companyId)
                 ->where('is_delivered', 0)
+                ->where('is_cancelled', 0)
                 ->whereDate('eway_bill_expiry', $today)
                 ->count(),
             'expired_eway_bills' => FreightBooking::where('company_id', $companyId)
                 ->where('is_delivered', 0)
+                ->where('is_cancelled', 0)
                 ->where('eway_bill_expiry', '<', $today)
                 ->count(),
             'outstanding_amount' => $outstandingAmount,
@@ -494,6 +499,7 @@ class DashboardController extends Controller
         $expiredEwayBills = FreightBooking::with('lr')
             ->where('company_id', $companyId)
             ->where('is_delivered', 0)
+            ->where('is_cancelled', 0)
             ->where('eway_bill_expiry', '<=', now()->addDays(2)->endOfDay())
             ->orderBy('eway_bill_expiry', 'asc')
             ->get();
