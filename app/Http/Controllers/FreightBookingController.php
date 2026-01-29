@@ -75,6 +75,15 @@ class FreightBookingController extends Controller
             });
         }
 
+
+        // Pending memo filter (only show bookings whose LR has no memo_id)
+        if ($request->filled('pending_memo')) {
+            $baseQuery->whereHas('lr', function ($q) {
+                $q->where('memo_id', null);
+            });
+            $baseQuery->where('is_cancelled', 0);
+        }
+
         if ($request->filled('search')) {
             $search = $request->search;
             $searchQuery = clone $baseQuery;
@@ -91,10 +100,10 @@ class FreightBookingController extends Controller
                                 $truckQuery->where('truck_number', 'LIKE', "%{$search}%");
                             })
                             ->orWhereHas('transporter', function ($transporterQuery) use ($search) {
-                            $transporterQuery->where('name', 'LIKE', "%{$search}%");
+                                $transporterQuery->where('name', 'LIKE', "%{$search}%");
                             })
                             ->orWhereHas('reference', function ($referenceQuery) use ($search) {
-                            $referenceQuery->where('name', 'LIKE', "%{$search}%");
+                                $referenceQuery->where('name', 'LIKE', "%{$search}%");
                             });
                     });
             });

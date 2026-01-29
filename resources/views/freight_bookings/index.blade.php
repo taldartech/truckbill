@@ -260,6 +260,16 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- Pending Memo -->
+                        <div class="col-md-2 d-flex align-items-end">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" name="pending_memo" value="1"
+                                    id="pendingMemoFilter" {{ request('pending_memo') ? 'checked' : '' }}>
+                                <label class="form-check-label" for="pendingMemoFilter">
+                                    Pending Memo
+                                </label>
+                            </div>
+                        </div>
                         <div class="col-md-1 d-flex gap-2 justify-content-end">
                             <button type="submit" class="filter-action-btn" style="background: var(--brand-primary); color: white;" title="Filter" data-bs-toggle="tooltip">
                                 <i class="bi bi-funnel-fill"></i>
