@@ -552,11 +552,23 @@ class LorryReceiptController extends Controller
             return redirect()->back()->withErrors(['lr_number' => 'LR Number already exists. Please use a unique LR Number.']);
         }
 
-        // Note: Amount field is auto-calculated but user can override the value
-        // No validation check needed - store whatever amount the user enters
+        // Set unloading_weight = weight initially (for loose weight mode)
+        if (!isset($validated['unloading_weight']) || $validated['unloading_weight'] === null) {
+            $validated['unloading_weight'] = $validated['weight'];
+        }
 
-        // Calculate and set actual_amount (weight * fr_rate) - this should not change
-        $validated['actual_amount'] = $validated['amount'];
+        // Calculate amount and actual_amount using loose weight (min of loading/unloading weight)
+        $loadingWeight = $validated['weight'];
+        $unloadingWeight = $validated['unloading_weight'];
+        $effectiveWeight = min($loadingWeight, $unloadingWeight);
+
+        // Calculate actual_amount based on loose weight (for invoice generation)
+        $validated['actual_amount'] = round($effectiveWeight * $validated['fr_rate'], 2);
+
+        // Calculate amount: actual_amount - shortage - damage (if provided)
+        $shortageAmount = $validated['shortage_amount'] ?? 0;
+        $damageAmount = $validated['damage_amount'] ?? 0;
+        $validated['amount'] = max(0, round($validated['actual_amount'] - $shortageAmount - $damageAmount, 2));
 
         // Add company_id to validated data
         $validated['company_id'] = Auth::user()->company_id;
@@ -862,8 +874,20 @@ class LorryReceiptController extends Controller
         // Remove delivery_status from validated data to keep existing value
         // unset($validated['delivery_status']);
 
+        // Set unloading_weight = weight initially if not set (for loose weight mode)
+        if (!isset($validated['unloading_weight']) || $validated['unloading_weight'] === null) {
+            $validated['unloading_weight'] = $validated['weight'];
+        }
 
-        // Calculate amount from actual_amount - shortage_amount - damage_amount
+        // Calculate amount and actual_amount using loose weight (min of loading/unloading weight)
+        $loadingWeight = $validated['weight'];
+        $unloadingWeight = $validated['unloading_weight'];
+        $effectiveWeight = min($loadingWeight, $unloadingWeight);
+
+        // Calculate actual_amount based on loose weight (for invoice generation)
+        $validated['actual_amount'] = round($effectiveWeight * $validated['fr_rate'], 2);
+
+        // Calculate amount: actual_amount - shortage - damage
         $shortageAmount = $validated['shortage_amount'] ?? 0;
         $damageAmount = $validated['damage_amount'] ?? 0;
         $validated['amount'] = max(0, round($validated['actual_amount'] - $shortageAmount - $damageAmount, 2));
@@ -904,8 +928,10 @@ class LorryReceiptController extends Controller
                     $updateData['transporter_name'] = $transporter->name;
                     $updateData['transporter_tds_percentage'] = $transporter->tds_percentage;
 
-                    // Recalculate tds_amount based on new transporter TDS percentage
-                    $newTdsAmount = round($freightBooking->tr_amount * ($transporter->tds_percentage / 100), 2);
+                    // Recalculate tds_amount based on loading_weight (not loose weight) and transporter TDS percentage
+                    $loadingWeight = $lorry_receipt->weight;
+                    $tdsBaseAmount = round($freightBooking->tr_fr_rate * $loadingWeight, 2);
+                    $newTdsAmount = round($tdsBaseAmount * ($transporter->tds_percentage / 100), 2);
                     $updateData['tds_amount'] = $newTdsAmount;
                 }
             }
@@ -923,17 +949,31 @@ class LorryReceiptController extends Controller
                 }
             }
 
-            // Handle weight changes - recalculate tr_amount using existing tr_fr_rate
+            // Handle weight changes - recalculate tr_amount and tds_amount
             $weightChanged = isset($validated['weight']) && $validated['weight'] != $oldWeight;
+            $unloadingWeightChanged = isset($validated['unloading_weight']) &&
+                ($lorry_receipt->unloading_weight != $validated['unloading_weight']);
 
-            if ($weightChanged) {
+            if ($weightChanged || $unloadingWeightChanged) {
                 // Refresh to get updated weight value after the update
                 $lorry_receipt->refresh();
-                $newWeight = $lorry_receipt->weight;
+                $loadingWeight = $lorry_receipt->weight;
+                $unloadingWeight = $lorry_receipt->unloading_weight ?? $loadingWeight;
+
+                // Use min of loading and unloading weight for loose weight mode (for tr_amount)
+                $effectiveWeight = min($loadingWeight, $unloadingWeight);
 
                 // Recalculate tr_amount using existing tr_fr_rate (do not change tr_fr_rate)
-                $newTrAmount = round($freightBooking->tr_fr_rate * $newWeight, 2);
+                $newTrAmount = round($freightBooking->tr_fr_rate * $effectiveWeight, 2);
                 $updateData['tr_amount'] = $newTrAmount;
+
+                // Recalculate TDS based on loading_weight (not loose weight) if loading weight changed
+                if ($weightChanged) {
+                    $tdsBaseAmount = round($freightBooking->tr_fr_rate * $loadingWeight, 2);
+                    $tdsPercentage = $freightBooking->transporter_tds_percentage ?? 0;
+                    $newTdsAmount = round($tdsBaseAmount * ($tdsPercentage / 100), 2);
+                    $updateData['tds_amount'] = $newTdsAmount;
+                }
             }
 
             // Recalculate balance_amount if tr_amount changed

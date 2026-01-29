@@ -495,7 +495,7 @@
     <!-- Bulk Memo ID Modal -->
     <div class="modal fade" id="bulkMemoIdModal" tabindex="-1" aria-labelledby="bulkMemoIdModalLabel"
         aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title"><i class="bi bi-clipboard-check"></i> Bulk Memo ID Assignment</h5>
@@ -1279,10 +1279,19 @@
                         <div class="alert alert-info">
                             <i class="bi bi-info-circle"></i>
                             <strong>Note:</strong> Assigning memo ID will:
-                            <ul class="mb-0 mt-2">
+                            <ul class="mb-0 mt-0">
                                 <li>Set lorry receipt status to "Delivered"</li>
                                 <li>Mark associated freight bookings as delivered</li>
                                 <li>This action cannot be easily undone</li>
+                            </ul>
+                        </div>
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>Loose Weight System:</strong>
+                            <ul class="mb-0 mt-0">
+                                <li>Voucher payments and invoices are generated against the <strong>lower</strong> of loading weight and unloading weight</li>
+                                <li>TDS deductions for transporters are <strong>always</strong> based on the loading weight</li>
+                                <li>After delivery, you have to edit the unloading weight from the FR edit page</li>
                             </ul>
                         </div>
                     </form>

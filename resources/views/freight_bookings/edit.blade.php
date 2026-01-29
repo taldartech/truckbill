@@ -109,9 +109,9 @@
                             class="badge bg-secondary text-white fs-6">{{ $freightBooking->lr ? $freightBooking->lr->good_type : 'N/A' }}</span>
                     </div>
                 </div>
-                <div class="col-md-3">
+                    <div class="col-md-3">
                     <div class="mb-2">
-                        <strong>Weight:</strong><br>
+                        <strong>Loading Weight:</strong><br>
                         <span
                             class="badge bg-info text-white fs-6">{{ $freightBooking->lr ? number_format($freightBooking->lr->weight ?? 0, 3) : '0.00' }}
                             MT</span>
@@ -230,8 +230,8 @@
                             {{  $is_voucher_created || !$is_admin ? 'readonly style=background-color:#e9ecef;' : '' }}
                             {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
                         <small class="form-text text-muted">
-                            <i class="fas fa-info-circle"></i> Auto-calculated: TR Freight Rate × Weight. Must be greater
-                            than ₹0.
+                            <i class="fas fa-info-circle"></i> Auto-calculated: TR Freight Rate × Min(Loading Weight, Unloading Weight). Must be greater
+                            than 0.
                         </small>
                         @error('tr_amount')
                             <div class="text-danger">{{ $message }}</div>
@@ -411,7 +411,20 @@
                                             <div class="text-danger">{{ $message }}</div>
                                         @enderror
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-2">
+                                <label for="unloading_weight" class="form-label">Unloading Weight *</label>
+                                <input type="number" step="0.01" min="0"
+                                    class="form-control form-control-sm @error('unloading_weight') is-invalid @enderror"
+                                    name="unloading_weight" id="unloading_weight"
+                                    value="{{ old('unloading_weight', $freightBooking->lr ? ($freightBooking->lr->unloading_weight ?? $freightBooking->lr->weight ?? 0) : 0) }}"
+                                    placeholder="Enter unloading weight" required
+                                    {{ $is_invoice_generated ? 'readonly style=background-color:#e9ecef;' : '' }}
+                                    {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
+                                @error('unloading_weight')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="col-md-2">
                                 <label for="damage_amount" class="form-label">Damage Amount</label>
                                 <input type="number" step="0.01" min="0"
                                     class="form-control form-control-sm @error('damage_amount') is-invalid @enderror"
@@ -427,7 +440,7 @@
                                     <div class="text-danger">{{ $message }}</div>
                                 @enderror
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <label for="shortage_amount" class="form-label">Shortage Amount</label>
                                 <input type="number" step="0.01" min="0"
                                     class="form-control form-control-sm @error('shortage_amount') is-invalid @enderror"
@@ -903,6 +916,8 @@
             // Get all required elements with null checks
             const weightElement = document.getElementById('weight');
             const weight = weightElement ? parseFloat(weightElement.value || 0) : 0;
+            const unloadingWeightInput = document.getElementById('unloading_weight');
+            const unloadingWeight = unloadingWeightInput ? parseFloat(unloadingWeightInput.value || 0) : weight;
             const rateInput = document.getElementById('tr_fr_rate');
             const amountInput = document.getElementById('tr_amount');
             const trAmountInput = document.getElementById('tr_amount');
@@ -929,8 +944,12 @@
                 const shortageAmount = parseFloat(document.getElementById('shortage_amount') ? document
                     .getElementById('shortage_amount').value : 0) || 0;
 
-                // Calculate TDS Amount based on TR Amount
-                const tdsAmount = (trAmount * (tdsPercentage / 100)).toFixed(2);
+                // Calculate TDS Amount based on loading_weight (not loose weight)
+                // TDS = loading_weight * tr_fr_rate * tds_percentage
+                const loadingWeight = parseFloat(weightElement ? weightElement.value : 0) || 0;
+                const trFrRate = parseFloat(rateInput ? rateInput.value : 0) || 0;
+                const tdsBaseAmount = loadingWeight * trFrRate;
+                const tdsAmount = Math.round(tdsBaseAmount * (tdsPercentage / 100));
                 if (tdsAmountInput) {
                     tdsAmountInput.value = tdsAmount;
                 }
@@ -943,18 +962,26 @@
                 }
             }
 
+            // Function to calculate TR Amount using loose weight (min of loading and unloading weight)
+            function calculateTrAmount() {
+                const rate = parseFloat(rateInput ? rateInput.value : 0) || 0;
+                const loadingWeight = parseFloat(weightElement ? weightElement.value : 0) || 0;
+                const unloadingWeight = parseFloat(unloadingWeightInput ? unloadingWeightInput.value : 0) || loadingWeight;
+                const effectiveWeight = Math.min(loadingWeight, unloadingWeight);
+                const amount = (effectiveWeight * rate).toFixed(2);
+                if (amountInput) {
+                    amountInput.value = amount;
+                }
+                // Recalculate TDS (based on loading_weight) and Balance when TR Amount changes
+                calculateTdsAndBalance();
+            }
+
             // Add null checks for event listeners
             if (rateInput) {
-                rateInput.addEventListener('input', function() {
-                    const rate = parseFloat(rateInput.value || 0);
-                    const amount = (weight * rate).toFixed(2);
-                    if (amountInput) {
-                        amountInput.value = amount;
-                    }
-
-                    // Recalculate TDS and Balance when TR Amount changes
-                    calculateTdsAndBalance();
-                });
+                rateInput.addEventListener('input', calculateTrAmount);
+            }
+            if (unloadingWeightInput) {
+                unloadingWeightInput.addEventListener('input', calculateTrAmount);
             }
 
             // Update TDS and balance when TR Amount changes (manual input)

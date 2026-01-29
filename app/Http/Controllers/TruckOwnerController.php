@@ -644,20 +644,20 @@ class TruckOwnerController extends Controller
             $freightBooking->tds_amount = $newTdsAmount;
             $freightBooking->transporter_tds_percentage = $newTdsPercentage;
 
-            // Update balance amount only if balance_amount >= abs(TDS difference)
-            // If balance is less than TDS difference, don't deduct
-            if ($freightBooking->balance_amount >= abs($tdsDifference)) {
-                // Adjust balance by the TDS difference
-                // If TDS increased (positive difference), balance decreases
-                // If TDS decreased (negative difference), balance increases
-                $freightBooking->balance_amount = $freightBooking->balance_amount - $tdsDifference;
+            // Recalculate balance_amount using full formula to ensure accuracy
+            $freightBooking->balance_amount = $freightBooking->tr_amount
+                - $freightBooking->advance_amount
+                - $newTdsAmount
+                - ($freightBooking->damage_amount ?? 0)
+                - ($freightBooking->shortage_amount ?? 0)
+                + ($freightBooking->detention ?? 0)
+                + ($freightBooking->deviation ?? 0)
+                - ($freightBooking->misc_expense ?? 0);
 
-                // Ensure balance doesn't go negative
-                if ($freightBooking->balance_amount < 0) {
-                    $freightBooking->balance_amount = 0;
-                }
+            // Ensure balance doesn't go negative
+            if ($freightBooking->balance_amount < 0) {
+                $freightBooking->balance_amount = 0;
             }
-            // If balance_amount < abs(TDS difference), keep balance_amount as is (don't deduct)
 
             $freightBooking->save();
         }

@@ -28,6 +28,7 @@ class LorryReceipt extends Model
         'source_state',
         'destination_state',
         'weight',
+        'unloading_weight',
         'no_of_units',
         'good_type',
         'fr_rate',

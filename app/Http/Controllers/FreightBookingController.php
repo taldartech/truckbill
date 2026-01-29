@@ -1024,6 +1024,7 @@ class FreightBookingController extends Controller
             'misc_expense' => 'nullable|numeric',
             'damage_amount' => 'nullable|numeric',
             'shortage_amount' => 'nullable|numeric',
+            'unloading_weight' => 'nullable|numeric|min:0',
             'pan_verified' => 'required|boolean',
             'remark' => 'nullable|string',
             'is_delivered' => 'boolean',
@@ -1042,28 +1043,27 @@ class FreightBookingController extends Controller
         // Use the new TR amount from form data instead of existing
         $newTrAmount = $data['tr_amount'];
 
-        // Calculate balance on the server side using new TR amount
+        // Store old values before update for proper amount calculation
+        $oldDamageAmount = $freightBooking->damage_amount ?? 0;
+        $oldShortageAmount = $freightBooking->shortage_amount ?? 0;
+        $newDamageAmount = $data['damage_amount'] ?? 0;
+        $newShortageAmount = $data['shortage_amount'] ?? 0;
+
+        // Recalculate balance on the server side to ensure consistency
+        // This ensures balance is always correct when TDS, TR amount, or other fields change
         $calculatedBalance = $newTrAmount
             - $data['advance_amount']
             - ($data['tds_amount'] ?? 0)
             + ($data['detention'] ?? 0)
             + ($data['deviation'] ?? 0)
             - ($data['misc_expense'] ?? 0)
-            - ($data['damage_amount'] ?? 0)
-            - ($data['shortage_amount'] ?? 0);
+            - $newDamageAmount
+            - $newShortageAmount;
 
-        // Skip balance validation - let frontend handle it
-        // The balance amount will be recalculated and stored correctly
-        // dd($lorryReceipt->linked_lr_id);
+        // Update balance_amount with calculated value
+        $data['balance_amount'] = $calculatedBalance;
 
         $linkedLrId = $lorryReceipt->linked_lr_id ?? null;
-        // dd($linkedLrId);
-
-        // Store old values before update for proper amount calculation
-        $oldDamageAmount = $freightBooking->damage_amount ?? 0;
-        $oldShortageAmount = $freightBooking->shortage_amount ?? 0;
-        $newDamageAmount = $data['damage_amount'] ?? 0;
-        $newShortageAmount = $data['shortage_amount'] ?? 0;
 
         // Update freight booking with lorry receipt's LR number
         $freightBooking->update(array_merge($data, [
@@ -1112,11 +1112,53 @@ class FreightBookingController extends Controller
             $lorryReceipt->damage_amount = $newDamageAmount;
             $lorryReceipt->shortage_amount = $newShortageAmount;
 
-            // Recalculate LR amount: restore original amount first, then subtract new damage/shortage
-            // Formula: original_amount = current_amount + old_damage + old_shortage
-            // new_amount = original_amount - new_damage - new_shortage
-            $originalAmount = $lorryReceipt->amount + $oldDamageAmount + $oldShortageAmount;
-            $lorryReceipt->amount = max(0, $originalAmount - $newDamageAmount - $newShortageAmount);
+            // Update unloading_weight if provided (for loose weight mode)
+            if (isset($data['unloading_weight'])) {
+                $lorryReceipt->unloading_weight = $data['unloading_weight'];
+
+                // Recalculate tr_amount using min(loading_weight, unloading_weight) if unloading_weight changed
+                $loadingWeight = $lorryReceipt->weight;
+                $unloadingWeight = $data['unloading_weight'];
+                $effectiveWeight = min($loadingWeight, $unloadingWeight);
+                $newTrAmount = round($freightBooking->tr_fr_rate * $effectiveWeight, 2);
+
+                // Recalculate TDS based on loading_weight (not loose weight)
+                $tdsBaseAmount = round($freightBooking->tr_fr_rate * $loadingWeight, 2);
+                $tdsPercentage = $freightBooking->transporter_tds_percentage ?? 0;
+                $newTdsAmount = round($tdsBaseAmount * ($tdsPercentage / 100), 2);
+
+                // Update tr_amount and tds_amount if they differ from calculated values
+                $trAmountChanged = abs($freightBooking->tr_amount - $newTrAmount) > 0.01;
+                $tdsAmountChanged = abs(($freightBooking->tds_amount ?? 0) - $newTdsAmount) > 0.01;
+
+                if ($trAmountChanged || $tdsAmountChanged) {
+                    $freightBooking->tr_amount = $newTrAmount;
+                    $freightBooking->tds_amount = $newTdsAmount;
+
+                    // Recalculate balance_amount
+                    $freightBooking->balance_amount = $newTrAmount
+                        - $freightBooking->advance_amount
+                        - $newTdsAmount
+                        - ($freightBooking->damage_amount ?? 0)
+                        - ($freightBooking->shortage_amount ?? 0)
+                        + ($freightBooking->detention ?? 0)
+                        + ($freightBooking->deviation ?? 0)
+                        - ($freightBooking->misc_expense ?? 0);
+
+                    $freightBooking->save();
+                }
+            }
+
+            // Recalculate LR amount and actual_amount using loose weight
+            $loadingWeight = $lorryReceipt->weight;
+            $unloadingWeight = $lorryReceipt->unloading_weight ?? $loadingWeight;
+            $effectiveWeight = min($loadingWeight, $unloadingWeight);
+
+            // Calculate actual_amount based on loose weight
+            $lorryReceipt->actual_amount = round($effectiveWeight * $lorryReceipt->fr_rate, 2);
+
+            // Calculate amount: actual_amount - damage - shortage
+            $lorryReceipt->amount = max(0, round($lorryReceipt->actual_amount - $newDamageAmount - $newShortageAmount, 2));
 
             $lorryReceipt->delivery_status = $deliveryStatus;
             $lorryReceipt->save();
