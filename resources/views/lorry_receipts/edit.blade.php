@@ -418,6 +418,18 @@
                             <div class="invalid-feedback">Please enter a valid number of units (max 100,000).</div>
                             <small class="text-muted">📦 Max: 100,000 units</small>
                         </div>
+                        <div class="col-md-4">
+                            <label for="unloading_weight" class="form-label">Unloading Weight * <small class="text-muted">(in
+                                    Tons)</small></label>
+                            <input type="number" step="0.001" class="form-control" id="unloading_weight" name="unloading_weight"
+                                required value="{{ old('unloading_weight', $lorry_receipt->unloading_weight) }}" min="0.1"
+                                max="100" title="Unloading weight must be between 0.1 and 100 tons" disabled>
+                            @error('unloading_weight')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                            <div class="invalid-feedback">Please enter an unloading weight between 0.1 and 100 tons.</div>
+                            <small class="text-muted">📏 Range: 0.1 - 100 tons</small>
+                        </div>
 
                     </div>
                     <div class="row mb-3">
@@ -535,6 +547,7 @@
             // Auto-calculate actual_amount and amount based on weight × freight rate
             const weightInput = document.getElementById('weight');
             const frRateInput = document.getElementById('fr_rate');
+            const unloadingWeightInput = document.getElementById('unloading_weight');
             const actualAmountInput = document.getElementById('actual_amount');
             const amountInput = document.getElementById('amount');
             const shortageAmountInput = document.getElementById('shortage_amount');
@@ -543,15 +556,29 @@
 
             function calculateAmount() {
                 const weight = parseFloat(weightInput.value) || 0;
+                const unloadingWeight = unloadingWeightInput ? (parseFloat(unloadingWeightInput.value) || weight) : weight;
                 const frRate = parseFloat(frRateInput.value) || 0;
                 const shortageAmount = parseFloat(shortageAmountInput.value) || 0;
                 const damageAmount = parseFloat(damageAmountInput.value) || 0;
 
                 if (weight > 0 && frRate > 0) {
-                    // Calculate actual_amount = weight * fr_rate (only if not manually edited)
-                    if (!isManuallyEdited) {
-                        const calculatedActualAmount = weight * frRate;
-                        actualAmountInput.value = calculatedActualAmount.toFixed(2);
+                    // Only recalculate actual_amount if loading_weight != unloading_weight
+                    // If weights are equal, use manually entered actual_amount (allow manual editing)
+                    const weightsEqual = Math.abs(weight - unloadingWeight) < 0.01;
+
+                    if (!weightsEqual) {
+                        // Weights are different - always recalculate actual_amount using min(loading, unloading)
+                        if (!isManuallyEdited) {
+                            const effectiveWeight = Math.min(weight, unloadingWeight);
+                            const calculatedActualAmount = effectiveWeight * frRate;
+                            actualAmountInput.value = calculatedActualAmount.toFixed(2);
+                        }
+                    } else {
+                        // Weights are equal - only calculate if not manually edited
+                        if (!isManuallyEdited) {
+                            const calculatedActualAmount = weight * frRate;
+                            actualAmountInput.value = calculatedActualAmount.toFixed(2);
+                        }
                     }
 
                     // Always calculate amount = actual_amount - shortage - damage
@@ -565,11 +592,17 @@
                 }
             }
 
-            // Auto-calculate on weight or freight rate change
+            // Auto-calculate on weight, unloading_weight, or freight rate change
             weightInput.addEventListener('input', function() {
                 isManuallyEdited = false;
                 calculateAmount();
             });
+            if (unloadingWeightInput) {
+                unloadingWeightInput.addEventListener('input', function() {
+                    isManuallyEdited = false;
+                    calculateAmount();
+                });
+            }
             frRateInput.addEventListener('input', function() {
                 isManuallyEdited = false;
                 calculateAmount();
@@ -1050,10 +1083,20 @@
                 }
             }
 
-            // Auto-calculate actual_amount and amount when weight or freight rate changes
+            // Check if unloading_weight field exists (for loose weight mode)
+            const unloadingWeightInput = $('#unloading_weight');
+            const hasUnloadingWeight = unloadingWeightInput.length > 0;
+
+            // Auto-calculate actual_amount and amount when weight, unloading_weight, or freight rate changes
             $('#weight, #fr_rate').on('input', function() {
                 calculateAmount();
             });
+
+            if (hasUnloadingWeight) {
+                $('#unloading_weight').on('input', function() {
+                    calculateAmount();
+                });
+            }
 
             // Update amount when actual_amount, shortage, or damage changes
             $('#actual_amount, #shortage_amount, #damage_amount').on('input', function() {
@@ -1062,18 +1105,29 @@
 
             function calculateAmount() {
                 const weight = parseFloat($('#weight').val()) || 0;
+                const unloadingWeight = hasUnloadingWeight ? (parseFloat($('#unloading_weight').val()) || weight) : weight;
                 const frRate = parseFloat($('#fr_rate').val()) || 0;
                 const shortageAmount = parseFloat($('#shortage_amount').val()) || 0;
                 const damageAmount = parseFloat($('#damage_amount').val()) || 0;
 
                 if (weight > 0 && frRate > 0) {
-                    // Calculate actual_amount = weight * fr_rate (only if actual_amount is empty or matches calculation)
-                    const currentActualAmount = parseFloat($('#actual_amount').val()) || 0;
-                    const calculatedActualAmount = weight * frRate;
+                    // Only recalculate actual_amount if loading_weight != unloading_weight
+                    // If weights are equal, use manually entered actual_amount (allow manual editing)
+                    const weightsEqual = Math.abs(weight - unloadingWeight) < 0.01;
 
-                    // Only auto-update actual_amount if it's empty or matches the calculation (not manually edited)
-                    if (currentActualAmount === 0 || Math.abs(currentActualAmount - calculatedActualAmount) < 0.01) {
+                    if (!weightsEqual) {
+                        // Weights are different - always recalculate actual_amount using min(loading, unloading)
+                        const effectiveWeight = Math.min(weight, unloadingWeight);
+                        const calculatedActualAmount = effectiveWeight * frRate;
                         $('#actual_amount').val(calculatedActualAmount.toFixed(2));
+                    } else {
+                        // Weights are equal - only auto-calculate if actual_amount is empty or matches calculation
+                        // This allows manual editing when weights are equal
+                        const currentActualAmount = parseFloat($('#actual_amount').val()) || 0;
+                        const calculatedActualAmount = weight * frRate;
+                        if (currentActualAmount === 0 || Math.abs(currentActualAmount - calculatedActualAmount) < 0.01) {
+                            $('#actual_amount').val(calculatedActualAmount.toFixed(2));
+                        }
                     }
 
                     // Always calculate amount = actual_amount - shortage - damage
@@ -1659,6 +1713,7 @@
         // Auto-calculate actual_amount and amount based on weight × freight rate
         const weightInput = document.getElementById('weight');
         const frRateInput = document.getElementById('fr_rate');
+        const unloadingWeightInput = document.getElementById('unloading_weight');
         const actualAmountInput = document.getElementById('actual_amount');
         const amountInput = document.getElementById('amount');
         const shortageAmountInput = document.getElementById('shortage_amount');
@@ -1666,18 +1721,29 @@
 
         function calculateAmount() {
             const weight = parseFloat(weightInput.value) || 0;
+            const unloadingWeight = unloadingWeightInput ? (parseFloat(unloadingWeightInput.value) || weight) : weight;
             const frRate = parseFloat(frRateInput.value) || 0;
             const shortageAmount = parseFloat(shortageAmountInput.value) || 0;
             const damageAmount = parseFloat(damageAmountInput.value) || 0;
 
             if (weight > 0 && frRate > 0) {
-                // Calculate actual_amount = weight * fr_rate (only if actual_amount is empty or matches calculation)
-                const currentActualAmount = parseFloat(actualAmountInput.value) || 0;
-                const calculatedActualAmount = weight * frRate;
+                // Only recalculate actual_amount if loading_weight != unloading_weight
+                // If weights are equal, use manually entered actual_amount (allow manual editing)
+                const weightsEqual = Math.abs(weight - unloadingWeight) < 0.01;
 
-                // Only auto-update actual_amount if it's empty or matches the calculation (not manually edited)
-                if (currentActualAmount === 0 || Math.abs(currentActualAmount - calculatedActualAmount) < 0.01) {
+                if (!weightsEqual) {
+                    // Weights are different - always recalculate actual_amount using min(loading, unloading)
+                    const effectiveWeight = Math.min(weight, unloadingWeight);
+                    const calculatedActualAmount = effectiveWeight * frRate;
                     actualAmountInput.value = calculatedActualAmount.toFixed(2);
+                } else {
+                    // Weights are equal - only auto-calculate if actual_amount is empty or matches calculation
+                    // This allows manual editing when weights are equal
+                    const currentActualAmount = parseFloat(actualAmountInput.value) || 0;
+                    const calculatedActualAmount = weight * frRate;
+                    if (currentActualAmount === 0 || Math.abs(currentActualAmount - calculatedActualAmount) < 0.01) {
+                        actualAmountInput.value = calculatedActualAmount.toFixed(2);
+                    }
                 }
 
                 // Always calculate amount = actual_amount - shortage - damage
@@ -1697,7 +1763,10 @@
         });
         frRateInput.addEventListener('input', calculateAmount);
 
-        // Update amount when actual_amount, shortage, or damage changes
+        // Update amount when actual_amount, unloading_weight, shortage, or damage changes
+        if (unloadingWeightInput) {
+            unloadingWeightInput.addEventListener('input', calculateAmount);
+        }
         actualAmountInput.addEventListener('input', calculateAmount);
         shortageAmountInput.addEventListener('input', calculateAmount);
         damageAmountInput.addEventListener('input', calculateAmount);

@@ -1137,11 +1137,19 @@ class FreightBookingController extends Controller
             if (isset($data['unloading_weight'])) {
                 $lorryReceipt->unloading_weight = $data['unloading_weight'];
 
-                // Recalculate tr_amount using min(loading_weight, unloading_weight) if unloading_weight changed
                 $loadingWeight = $lorryReceipt->weight;
                 $unloadingWeight = $data['unloading_weight'];
-                $effectiveWeight = min($loadingWeight, $unloadingWeight);
-                $newTrAmount = round($freightBooking->tr_fr_rate * $effectiveWeight, 2);
+
+                // Only recalculate tr_amount if loading_weight != unloading_weight
+                // If weights are equal, use the manually entered tr_amount from form
+                if (abs($loadingWeight - $unloadingWeight) > 0.01) {
+                    // Weights are different - always recalculate tr_amount
+                    $effectiveWeight = min($loadingWeight, $unloadingWeight);
+                    $newTrAmount = round($freightBooking->tr_fr_rate * $effectiveWeight, 2);
+                } else {
+                    // Weights are equal - use manually entered tr_amount from form
+                    $newTrAmount = $data['tr_amount'];
+                }
 
                 // Recalculate TDS based on loading_weight (not loose weight)
                 $tdsBaseAmount = round($freightBooking->tr_fr_rate * $loadingWeight, 2);
@@ -1173,10 +1181,20 @@ class FreightBookingController extends Controller
             // Recalculate LR amount and actual_amount using loose weight
             $loadingWeight = $lorryReceipt->weight;
             $unloadingWeight = $lorryReceipt->unloading_weight ?? $loadingWeight;
-            $effectiveWeight = min($loadingWeight, $unloadingWeight);
 
-            // Calculate actual_amount based on loose weight
-            $lorryReceipt->actual_amount = round($effectiveWeight * $lorryReceipt->fr_rate, 2);
+            // Only recalculate actual_amount if loading_weight != unloading_weight
+            // If weights are equal, use the manually entered actual_amount from LR form (if available)
+            if (abs($loadingWeight - $unloadingWeight) > 0.01) {
+                // Weights are different - always recalculate actual_amount
+                $effectiveWeight = min($loadingWeight, $unloadingWeight);
+                $lorryReceipt->actual_amount = round($effectiveWeight * $lorryReceipt->fr_rate, 2);
+            } else {
+                // Weights are equal - actual_amount should be set from LR edit form
+                // If not set, calculate it (for backward compatibility)
+                if (!isset($lorryReceipt->actual_amount) || $lorryReceipt->actual_amount === null) {
+                    $lorryReceipt->actual_amount = round($loadingWeight * $lorryReceipt->fr_rate, 2);
+                }
+            }
 
             // Calculate amount: actual_amount - damage - shortage
             $lorryReceipt->amount = max(0, round($lorryReceipt->actual_amount - $newDamageAmount - $newShortageAmount, 2));

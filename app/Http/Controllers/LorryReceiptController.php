@@ -560,10 +560,17 @@ class LorryReceiptController extends Controller
         // Calculate amount and actual_amount using loose weight (min of loading/unloading weight)
         $loadingWeight = $validated['weight'];
         $unloadingWeight = $validated['unloading_weight'];
-        $effectiveWeight = min($loadingWeight, $unloadingWeight);
 
-        // Calculate actual_amount based on loose weight (for invoice generation)
-        $validated['actual_amount'] = round($effectiveWeight * $validated['fr_rate'], 2);
+        // Only recalculate actual_amount if loading_weight != unloading_weight
+        // If weights are equal, use the manually entered actual_amount from form
+        if (abs($loadingWeight - $unloadingWeight) > 0.01) {
+            // Weights are different - always recalculate actual_amount
+            $effectiveWeight = min($loadingWeight, $unloadingWeight);
+            $validated['actual_amount'] = round($effectiveWeight * $validated['fr_rate'], 2);
+        } else {
+            // Weights are equal - use manually entered actual_amount from form (already in $validated)
+            // No recalculation needed, keep the user-entered value
+        }
 
         // Calculate amount: actual_amount - shortage - damage (if provided)
         $shortageAmount = $validated['shortage_amount'] ?? 0;
@@ -882,10 +889,17 @@ class LorryReceiptController extends Controller
         // Calculate amount and actual_amount using loose weight (min of loading/unloading weight)
         $loadingWeight = $validated['weight'];
         $unloadingWeight = $validated['unloading_weight'];
-        $effectiveWeight = min($loadingWeight, $unloadingWeight);
 
-        // Calculate actual_amount based on loose weight (for invoice generation)
-        $validated['actual_amount'] = round($effectiveWeight * $validated['fr_rate'], 2);
+        // Only recalculate actual_amount if loading_weight != unloading_weight
+        // If weights are equal, use the manually entered actual_amount from form
+        if (abs($loadingWeight - $unloadingWeight) > 0.01) {
+            // Weights are different - always recalculate actual_amount
+            $effectiveWeight = min($loadingWeight, $unloadingWeight);
+            $validated['actual_amount'] = round($effectiveWeight * $validated['fr_rate'], 2);
+        } else {
+            // Weights are equal - use manually entered actual_amount from form (already in $validated)
+            // No recalculation needed, keep the user-entered value
+        }
 
         // Calculate amount: actual_amount - shortage - damage
         $shortageAmount = $validated['shortage_amount'] ?? 0;
@@ -960,12 +974,15 @@ class LorryReceiptController extends Controller
                 $loadingWeight = $lorry_receipt->weight;
                 $unloadingWeight = $lorry_receipt->unloading_weight ?? $loadingWeight;
 
-                // Use min of loading and unloading weight for loose weight mode (for tr_amount)
-                $effectiveWeight = min($loadingWeight, $unloadingWeight);
-
-                // Recalculate tr_amount using existing tr_fr_rate (do not change tr_fr_rate)
-                $newTrAmount = round($freightBooking->tr_fr_rate * $effectiveWeight, 2);
-                $updateData['tr_amount'] = $newTrAmount;
+                // Only recalculate tr_amount if loading_weight != unloading_weight
+                // If weights are equal, keep the existing tr_amount (user may have manually edited it)
+                if (abs($loadingWeight - $unloadingWeight) > 0.01) {
+                    // Weights are different - always recalculate tr_amount
+                    $effectiveWeight = min($loadingWeight, $unloadingWeight);
+                    $newTrAmount = round($freightBooking->tr_fr_rate * $effectiveWeight, 2);
+                    $updateData['tr_amount'] = $newTrAmount;
+                }
+                // If weights are equal, don't update tr_amount - use existing value (may be manually edited)
 
                 // Recalculate TDS based on loading_weight (not loose weight) if loading weight changed
                 if ($weightChanged) {

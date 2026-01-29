@@ -963,17 +963,27 @@
             }
 
             // Function to calculate TR Amount using loose weight (min of loading and unloading weight)
+            // Only auto-calculates when loading_weight != unloading_weight
+            // When weights are equal, user can manually edit tr_amount
             function calculateTrAmount() {
                 const rate = parseFloat(rateInput ? rateInput.value : 0) || 0;
                 const loadingWeight = parseFloat(weightElement ? weightElement.value : 0) || 0;
                 const unloadingWeight = parseFloat(unloadingWeightInput ? unloadingWeightInput.value : 0) || loadingWeight;
-                const effectiveWeight = Math.min(loadingWeight, unloadingWeight);
-                const amount = (effectiveWeight * rate).toFixed(2);
-                if (amountInput) {
-                    amountInput.value = amount;
+
+                // Only recalculate if loading_weight != unloading_weight
+                // If weights are equal, don't auto-calculate (allow manual editing)
+                if (Math.abs(loadingWeight - unloadingWeight) > 0.01) {
+                    const effectiveWeight = Math.min(loadingWeight, unloadingWeight);
+                    const amount = (effectiveWeight * rate).toFixed(2);
+                    if (amountInput) {
+                        amountInput.value = amount;
+                    }
+                    // Recalculate TDS (based on loading_weight) and Balance when TR Amount changes
+                    calculateTdsAndBalance();
+                } else {
+                    // Weights are equal - only recalculate TDS and Balance, don't change tr_amount
+                    calculateTdsAndBalance();
                 }
-                // Recalculate TDS (based on loading_weight) and Balance when TR Amount changes
-                calculateTdsAndBalance();
             }
 
             // Add null checks for event listeners
@@ -982,6 +992,9 @@
             }
             if (unloadingWeightInput) {
                 unloadingWeightInput.addEventListener('input', calculateTrAmount);
+            }
+            if (weightElement) {
+                weightElement.addEventListener('input', calculateTrAmount);
             }
 
             // Update TDS and balance when TR Amount changes (manual input)
