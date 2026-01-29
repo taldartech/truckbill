@@ -4,13 +4,13 @@ namespace App\Exports;
 
 use App\Models\LorryReceipt;
 use App\Models\PaymentMode;
-use BcMath\Number;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class TransporterReportExport implements FromCollection, WithHeadings, ShouldAutoSize, WithColumnFormatting
 {
@@ -87,23 +87,23 @@ class TransporterReportExport implements FromCollection, WithHeadings, ShouldAut
                 $lr->gr_number,
                 $lr->truck ? $lr->truck->truck_number : 'N/A',
                 $lr->destination_city . ', ' . $lr->destination_state,
-                number_format($lr->weight ?? 0, 3),
-                number_format($lr->unloading_weight ?? $lr->weight ?? 0, 3),
-                number_format($lr->no_of_units ?? 0, 2),
+                (float) ($lr->weight ?? 0),
+                (float) ($lr->unloading_weight ?? $lr->weight ?? 0),
+                (float) ($lr->no_of_units ?? 0),
                 $lr->consignor ? $lr->consignor->name : 'N/A',
                 $lr->consignee ? $lr->consignee->name : 'N/A',
-                number_format($fr->tr_fr_rate ?? 0, 2),
-                number_format($fr->tr_amount ?? 0, 2),
-                number_format($fr->tds_amount ?? 0, 2),
+                (float) ($fr->tr_fr_rate ?? 0),
+                (float) ($fr->tr_amount ?? 0),
+                (float) ($fr->tds_amount ?? 0),
             ];
             foreach ($this->paymentNames as $paymentName) {
-                $row[] = number_format($payments[$paymentName] ?? 0, 2);
+                $row[] = (float) ($payments[$paymentName] ?? 0);
             }
             $row = array_merge($row, [
-                number_format($fr->damage_amount ?? 0, 2),
-                number_format($fr->short_amount ?? 0, 2),
-                number_format($fr->misc_expenses ?? 0, 2),
-                number_format($total_balance ?? 0, 2),
+                (float) ($fr->damage_amount ?? 0),
+                (float) ($fr->short_amount ?? 0),
+                (float) ($fr->misc_expenses ?? 0),
+                (float) ($total_balance ?? 0),
             ]);
             $data[] = $row;
         }
@@ -144,8 +144,25 @@ class TransporterReportExport implements FromCollection, WithHeadings, ShouldAut
 
     public function columnFormats(): array
     {
-        return [
-            'A' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_DDMMYYYY,
+        $formats = [
+            'A' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'F' => '#,##0.000',
+            'G' => '#,##0.000',
+            'H' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'K' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'L' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'M' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
         ];
+        $paymentCount = count($this->paymentNames);
+        $numFormat = NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1;
+        for ($i = 0; $i < $paymentCount; $i++) {
+            $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(14 + $i);
+            $formats[$col] = $numFormat;
+        }
+        for ($idx = 0; $idx < 4; $idx++) {
+            $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(14 + $paymentCount + $idx);
+            $formats[$col] = $numFormat;
+        }
+        return $formats;
     }
 }

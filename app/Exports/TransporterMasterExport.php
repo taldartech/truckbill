@@ -5,10 +5,12 @@ namespace App\Exports;
 use App\Models\Transporter;
 use Illuminate\Support\Facades\Auth;
 use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithColumnFormatting;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
-class TransporterMasterExport implements FromCollection, WithHeadings, ShouldAutoSize
+class TransporterMasterExport implements FromCollection, WithHeadings, ShouldAutoSize, WithColumnFormatting
 {
   protected $type;
 
@@ -45,10 +47,10 @@ class TransporterMasterExport implements FromCollection, WithHeadings, ShouldAut
         'PAN Active' => $t->pan_active ? 'Yes' : 'No',
         'GST Number' => $t->gst_number,
         'Beneficiary ID' => $t->beneficiary_id,
-        'TDS Percentage' => $t->tds_percentage,
+        'TDS Percentage' => (float) ($t->tds_percentage ?? 0),
         'Declaration Given' => $t->is_owner ? ($t->declaration_given ? 'Yes' : 'No') : '-',
-        'Total Trucks' => $t->is_owner ? $t->total_trucks : '-',
-        'Advance Amount' => $t->advance_amount,
+        'Total Trucks' => $t->is_owner ? (int) ($t->total_trucks ?? 0) : '',
+        'Advance Amount' => (float) ($t->advance_amount ?? 0),
       ];
     });
   }
@@ -74,6 +76,15 @@ class TransporterMasterExport implements FromCollection, WithHeadings, ShouldAut
       'Declaration Given',
       'Total Trucks',
       'Advance Amount',
+    ];
+  }
+
+  public function columnFormats(): array
+  {
+    return [
+      'O' => NumberFormat::FORMAT_NUMBER_00,
+      'Q' => NumberFormat::FORMAT_NUMBER_00,
+      'R' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
     ];
   }
 }

@@ -9,6 +9,7 @@ use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class TDSExport implements FromCollection, WithHeadings, ShouldAutoSize, WithColumnFormatting
 {
@@ -46,9 +47,9 @@ class TDSExport implements FromCollection, WithHeadings, ShouldAutoSize, WithCol
                 "LR No" => $lr->lr->lr_number,
                 "Truck No" => $lr->lr->truck->truck_number ?? 'N/A',
                 "Destination" => $lr->lr->destination_city . ', ' . $lr->lr->destination_state,
-                "TR Freight" => number_format($lr->tr_amount, 2),
-                "TDS" => (string) number_format($lr->tds_amount ?? 0, 2),
-                "Rate" => (string) $lr->transporter_tds_percentage . '%',
+                "TR Freight" => (float) ($lr->tr_amount ?? 0),
+                "TDS" => (float) ($lr->tds_amount ?? 0),
+                "Rate" => (string) ($lr->transporter_tds_percentage ?? 0) . '%',
                 "Transport Name" => $lr->lr->transporter->name ?? 'N/A',
                 "PAN No" => $lr->lr->transporter->pan_number ?? 'N/A',
             ];
@@ -74,7 +75,9 @@ class TDSExport implements FromCollection, WithHeadings, ShouldAutoSize, WithCol
     public function columnFormats(): array
     {
         return [
-            'B' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'B' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'F' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'G' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
         ];
     }
 }

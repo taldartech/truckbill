@@ -12,6 +12,7 @@ use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class ShortageDamageExport implements FromCollection, WithHeadings, ShouldAutoSize, WithColumnFormatting
 {
@@ -128,15 +129,15 @@ class ShortageDamageExport implements FromCollection, WithHeadings, ShouldAutoSi
                 "LR No" => $lr->lr_number ?? '-',
                 "Date" => Date::dateTimeToExcel(\Carbon\Carbon::parse($lr->gr_date)),
                 "Truck No" => $lr->truck->truck_number ?? '-',
-                "Loading Weight" => $lr->weight ?? '-',
-                "Unloading Weight" => $lr->unloading_weight ?? $lr->weight ?? '-',
-                "TR Rate" => $freightBooking->tr_fr_rate ?? '-',
-                "TR Freight" => $freightBooking->tr_amount ?? '-',
+                "Loading Weight" => (float) ($lr->weight ?? 0),
+                "Unloading Weight" => (float) ($lr->unloading_weight ?? $lr->weight ?? 0),
+                "TR Rate" => (float) ($freightBooking->tr_fr_rate ?? 0),
+                "TR Freight" => (float) ($freightBooking->tr_amount ?? 0),
                 "Consignor" => $lr->consignor->name ?? '-',
                 "Consignee" => $lr->consignee->name ?? '-',
                 "Destination" => $lr->destination_city ?? '-',
-                "Shortage Amount" => $freightBooking->shortage_amount ?? '-',
-                "Damage Amount" => $freightBooking->damage_amount ?? '-',
+                "Shortage Amount" => (float) ($freightBooking->shortage_amount ?? 0),
+                "Damage Amount" => (float) ($freightBooking->damage_amount ?? 0),
             ];
         });
     }
@@ -166,7 +167,13 @@ class ShortageDamageExport implements FromCollection, WithHeadings, ShouldAutoSi
     public function columnFormats(): array
     {
         return [
-            'C' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'C' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'E' => '#,##0.000',
+            'F' => '#,##0.000',
+            'G' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'H' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'L' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'M' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
         ];
     }
 }

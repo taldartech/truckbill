@@ -8,6 +8,7 @@ use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class ConsignorConsigneeExport implements FromCollection, WithHeadings, ShouldAutoSize, WithColumnFormatting
 {
@@ -53,9 +54,9 @@ class ConsignorConsigneeExport implements FromCollection, WithHeadings, ShouldAu
                 "LR No" => $lr->lr_number,
                 "Inv No of Factory" => $lr->invoice_number,
                 "Truck No" => $lr->truck->truck_number ?? '-',
-                "Weight" => $lr->weight,
-                "LR Rate" => $lr->fr_rate,
-                "LR Amt" => $lr->amount,
+                "Weight" => (float) ($lr->weight ?? 0),
+                "LR Rate" => (float) ($lr->fr_rate ?? 0),
+                "LR Amt" => (float) ($lr->amount ?? 0),
                 "Consignor Name" => optional($lr->consignor)->name,
                 "Consignee Name" => optional($lr->consignee)->name,
                 "Destination" => $lr->destination_city . ", " . $lr->destination_state,
@@ -85,7 +86,10 @@ class ConsignorConsigneeExport implements FromCollection, WithHeadings, ShouldAu
     public function columnFormats(): array
     {
         return [
-            'B' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'B' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'F' => '#,##0.000',
+            'G' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'H' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
         ];
     }
 }

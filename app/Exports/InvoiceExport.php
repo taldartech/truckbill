@@ -10,6 +10,7 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class InvoiceExport implements FromCollection, WithHeadings, ShouldAutoSize, WithColumnFormatting
 {
@@ -42,14 +43,14 @@ class InvoiceExport implements FromCollection, WithHeadings, ShouldAutoSize, Wit
                 'Receiver' => $invoice->consignee->name ?? 'N/A',
                 'Invoice No' => $invoice->manual_invoice_number ?? 'N/A',
                 'Date' => Date::dateTimeToExcel(new Carbon($invoice->generated_date)),
-                'Amount' => number_format($invoice->net_amount ?? 0, 2),
+                'Amount' => (float) ($invoice->net_amount ?? 0),
                 'State' => $invoice->consignee->state->name ?? 'N/A',
                 'Reverse Charge' => $invoice->company->gst_scheme == 'reverse charge' ? 'Yes' : 'No',
                 'Applicable % of Tax' => "-",
                 'Invoice Type' => "Regular B2B",
                 'E-Commerce GSTIN' => "",
                 'Rate' => "5.00",
-                'Taxable Value' => number_format($invoice->net_amount ?? 0, 2),
+                'Taxable Value' => (float) ($invoice->net_amount ?? 0),
                 'Cess Amount' => "",
             ];
         });
@@ -78,7 +79,9 @@ class InvoiceExport implements FromCollection, WithHeadings, ShouldAutoSize, Wit
     public function columnFormats(): array
     {
         return [
-            'E' => 'dd/mm/yyyy',
+            'E' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'F' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'M' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
         ];
     }
 }

@@ -61,12 +61,32 @@ class DispatchExport implements FromView, ShouldAutoSize, WithColumnFormatting
      */
     public function columnFormats(): array
     {
+        $numFormat = NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1;
+        $weightFormat = '#,##0.000';
+
         return [
-            // gr_date
             'B' => NumberFormat::FORMAT_DATE_DDMMYYYY,
-            // eway_bill_number - force as text to avoid scientific notation
+            'I' => $weightFormat,
+            'J' => $weightFormat,
+            'K' => NumberFormat::FORMAT_NUMBER_00,
+            'L' => $numFormat,
+            'M' => $numFormat,
+            'T' => $numFormat,
+            'U' => $numFormat,
+            'V' => $numFormat,
+            'W' => $numFormat,
+            'X' => $numFormat,
+            'Y' => $numFormat,
+            'Z' => $numFormat,
+            'AA' => $numFormat,
+            'AB' => $numFormat,
+            'AC' => $numFormat,
+            'AD' => $numFormat,
+            'AE' => $numFormat,
+            'AF' => $numFormat,
+            'AG' => $numFormat,
+            'AH' => $numFormat,
             'AO' => NumberFormat::FORMAT_NUMBER,
-            // eway_bill_expiry_date
             'AP' => NumberFormat::FORMAT_DATE_DDMMYYYY,
         ];
     }

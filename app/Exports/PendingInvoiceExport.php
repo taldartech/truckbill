@@ -8,6 +8,7 @@ use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class PendingInvoiceExport implements FromCollection, WithHeadings, WithColumnFormatting
 {
@@ -54,11 +55,11 @@ class PendingInvoiceExport implements FromCollection, WithHeadings, WithColumnFo
                 'From Place' => $lr->source_city,
                 'To Place' => $lr->destination_city,
                 'Lane' => $lr->lane,
-                'QTY(MT)' => number_format($lr->weight, 3),
-                'Rate' => number_format($lr->fr_rate, 2),
-                'Damage' => number_format($lr->damage_amount, 2),
-                'Shortage' => number_format($lr->shortage_amount, 2),
-                'Amt.' => number_format($amount, 2),
+                'QTY(MT)' => (float) ($lr->weight ?? 0),
+                'Rate' => (float) ($lr->fr_rate ?? 0),
+                'Damage' => (float) ($lr->damage_amount ?? 0),
+                'Shortage' => (float) ($lr->shortage_amount ?? 0),
+                'Amt.' => (float) $amount,
             ];
         });
     }
@@ -85,7 +86,12 @@ class PendingInvoiceExport implements FromCollection, WithHeadings, WithColumnFo
     public function columnFormats(): array
     {
         return [
-            'F' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'A' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'I' => '#,##0.000',
+            'J' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'K' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'L' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'M' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
         ];
     }
 }

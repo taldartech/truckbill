@@ -12,6 +12,7 @@ use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class EwayBillExport implements FromCollection, WithHeadings, ShouldAutoSize, WithColumnFormatting
 {
@@ -44,14 +45,14 @@ class EwayBillExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
                     "LR No" => $fr->lr->lr_number,
                     "GR Date" => Date::dateTimeToExcel(\Carbon\Carbon::parse($fr->lr->gr_date)),
                     "Truck No" => $fr->lr->truck->truck_number,
-                    "Weight" => $fr->lr->weight,
-                    "LR Rate" => $fr->lr->fr_rate,
-                    "LR Amount" => $fr->lr->amount,
+                    "Weight" => (float) ($fr->lr->weight ?? 0),
+                    "LR Rate" => (float) ($fr->lr->fr_rate ?? 0),
+                    "LR Amount" => (float) ($fr->lr->amount ?? 0),
                     "Consignor" => $fr->lr->consignor->name,
                     "Consignee" => $fr->lr->consignee->name,
                     "Destination" => $fr->lr->destination_city,
                     "Eway Bill No." => $fr->eway_bill_number ?? '-',
-                    "Eway Bill Expiry Date" =>  Date::dateTimeToExcel(\Carbon\Carbon::parse($fr->eway_bill_expiry)),
+                    "Eway Bill Expiry Date" => Date::dateTimeToExcel(\Carbon\Carbon::parse($fr->eway_bill_expiry)),
                     "Transporter/Truck Owner Name" => $fr->transporter->name,
                     "Transporter/Truck Owner Mobile No." => $fr->transporter->mobile_number,
                 ];
@@ -87,8 +88,11 @@ class EwayBillExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
     public function columnFormats(): array
     {
         return [
-            'C' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'L' => \PhpOffice\PhpSpreadsheet\Style\NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'C' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'E' => '#,##0.000',
+            'F' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'G' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'L' => NumberFormat::FORMAT_DATE_DDMMYYYY,
         ];
     }
 }
