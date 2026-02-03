@@ -301,8 +301,8 @@ class FreightBookingTest extends TestCase
 
         $this->assertEquals(70.0, (float) $lr->damage_amount);
         $this->assertEquals(10.0, (float) $lr->shortage_amount);
-        // original amount (10000 + 50 + 20) - (70 + 10) = 9990
-        $this->assertEquals(9990.0, (float) $lr->amount);
+        // amount = actual_amount - damage - shortage = 10000 - 70 - 10 = 9920
+        $this->assertEquals(9920.0, (float) $lr->amount);
     }
 }
 

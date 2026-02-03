@@ -117,6 +117,7 @@ class LorryReceiptTest extends TestCase
             'weight' => 10,
             'no_of_units' => 1,
             'fr_rate' => 1000,
+            'actual_amount' => 10000,
             'amount' => 10000,
             'damage_amount' => 0,
             'shortage_amount' => 0,
