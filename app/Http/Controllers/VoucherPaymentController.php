@@ -37,7 +37,7 @@ class VoucherPaymentController extends Controller
             'freight_booking.lr',
             'company',
             'pump',
-            'freight_booking.transporter',
+            'freight_booking.transporter.transporterMaster',
             'freight_booking.lr.consignor.city',
             'freight_booking.lr.consignee.city',
             'freight_booking.lr.truck',
@@ -48,7 +48,7 @@ class VoucherPaymentController extends Controller
             'freight_booking.lr',
             'company',
             'pump',
-            'freight_booking.transporter',
+            'freight_booking.transporter.transporterMaster',
             'freight_booking.lr.consignor.city',
             'freight_booking.lr.consignee.city',
             'freight_booking.lr.truck',
@@ -128,7 +128,11 @@ class VoucherPaymentController extends Controller
         $payments1 = $query1->orderBy('created_at', 'desc')
             ->get();
         // Get filter data for dropdowns
-        $transporters = \App\Models\Transporter::orderBy('name')->get();
+        $transporters = \App\Models\Transporter::with('transporterMaster')
+            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+            ->orderBy('transporter_masters.name')
+            ->select('transporters.*')
+            ->get();
         $cities = \App\Models\City::orderBy('name')->get();
         $paymentModes = \App\Models\PaymentMode::select('name')->get();
 
@@ -159,7 +163,7 @@ class VoucherPaymentController extends Controller
             'freight_booking.lr.truck',
             'freight_booking.lr.consignor.city',
             'freight_booking.lr.consignee.city',
-            'freight_booking.transporter', // Add transporter relationship
+            'freight_booking.transporter.transporterMaster', // Add transporter relationship
             'pump'
         ]);
 
@@ -236,7 +240,7 @@ class VoucherPaymentController extends Controller
             'freight_booking.lr.truck',
             'freight_booking.lr.consignor.city',
             'freight_booking.lr.consignee.city',
-            'freight_booking.transporter' // Add transporter relationship
+            'freight_booking.transporter.transporterMaster' // Add transporter relationship
         ])->whereIn('id', $latestPaymentIds)->get()->keyBy('voucher_number');
 
         // Get total amounts for each voucher
@@ -267,7 +271,7 @@ class VoucherPaymentController extends Controller
         //     })
         //     ->get();
 
-        $lorry_receipt = \App\Models\LorryReceipt::with(['transporter:id,name', 'truck:id,truck_number'])
+        $lorry_receipt = \App\Models\LorryReceipt::with(['transporter.transporterMaster', 'truck:id,truck_number'])
             ->select('id', 'lr_number', 'transporter_id', 'truck_id', 'customer_id', 'consignor_id', 'consignee_id')
             ->when($lorry_receipt_id, function ($query) use ($lorry_receipt_id) {
                 $query->where('id', $lorry_receipt_id);
@@ -469,7 +473,7 @@ class VoucherPaymentController extends Controller
         $freight_booking_id = $request->query('freight_booking_id', $voucher_payment->freight_booking_id);
 
         // Get the lorry receipt
-        $lorry_receipt = \App\Models\LorryReceipt::with(['transporter:id,name', 'truck:id,truck_number', 'customer:id,name', 'consignor:id,name', 'consignee:id,name'])
+        $lorry_receipt = \App\Models\LorryReceipt::with(['transporter.transporterMaster', 'truck:id,truck_number', 'customer:id,name', 'consignor:id,name', 'consignee:id,name'])
             ->select('id', 'lr_number', 'transporter_id', 'truck_id', 'customer_id', 'consignor_id', 'consignee_id')
             ->where('id', $lorry_receipt_id)
             ->get();
@@ -477,7 +481,7 @@ class VoucherPaymentController extends Controller
         $balanceAmount = null;
         $freightBooking = null;
         if ($freight_booking_id) {
-            $freightBooking = \App\Models\FreightBooking::with(['transporter'])
+            $freightBooking = \App\Models\FreightBooking::with(['transporter.transporterMaster'])
                 ->find($freight_booking_id);
             if ($freightBooking) {
                 $balanceAmount = $freightBooking->balance_amount;

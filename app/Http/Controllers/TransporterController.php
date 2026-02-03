@@ -11,6 +11,13 @@ use App\Models\State;
 use App\Models\City;
 use Illuminate\Validation\Rule;
 use App\Models\Transporter;
+use App\Models\TransporterMaster;
+use App\Models\User;
+use App\Http\Requests\StoreTransporterRequest;
+use App\Http\Requests\UpdateTransporterRequest;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 
 class TransporterController extends Controller
 {
@@ -31,7 +38,7 @@ class TransporterController extends Controller
         try {
             \Log::info('DataTables request started for transporters');
 
-            $query = \App\Models\Transporter::with(['company', 'city'])
+            $query = \App\Models\Transporter::with(['company', 'transporterMaster'])
                 ->where('is_owner', 0); // Default to show only Agencies
 
             // Only apply company_id filter for non-super_admin users
@@ -45,15 +52,11 @@ class TransporterController extends Controller
             if ($request->has('search') && $request->search['value']) {
                 $searchValue = $request->search['value'];
                 $query->where(function ($q) use ($searchValue) {
-                    $q->where('transporters.name', 'like', "%{$searchValue}%")
-                        ->orWhere('transporters.pan_number', 'like', "%{$searchValue}%")
+                    $q->whereHas('transporterMaster', fn ($m) => $m->where('name', 'like', "%{$searchValue}%")
+                        ->orWhere('pan_number', 'like', "%{$searchValue}%"))
                         ->orWhere('transporters.mobile_number', 'like', "%{$searchValue}%")
-                        ->orWhereHas('company', function ($companyQuery) use ($searchValue) {
-                            $companyQuery->where('name', 'like', "%{$searchValue}%");
-                        })
-                        ->orWhereHas('city', function ($cityQuery) use ($searchValue) {
-                            $cityQuery->where('name', 'like', "%{$searchValue}%");
-                        });
+                        ->orWhereHas('company', fn ($companyQuery) => $companyQuery->where('name', 'like', "%{$searchValue}%"))
+                        ->orWhereHas('transporterMaster.city', fn ($cityQuery) => $cityQuery->where('name', 'like', "%{$searchValue}%"));
                 });
             }
 
@@ -64,7 +67,7 @@ class TransporterController extends Controller
                         $searchValue = $column['search']['value'];
                         switch ($index) {
                             case 0: // Name
-                                $query->where('transporters.name', 'like', "%{$searchValue}%");
+                                $query->whereHas('transporterMaster', fn ($m) => $m->where('name', 'like', "%{$searchValue}%"));
                                 break;
                             case 1: // Short Name
                                 $query->where('transporters.short_name', 'like', "%{$searchValue}%");
@@ -73,7 +76,7 @@ class TransporterController extends Controller
                                 $query->where('transporters.beneficiary_id', 'like', "%{$searchValue}%");
                                 break;
                             case 3: // PAN Number
-                                $query->where('transporters.pan_number', 'like', "%{$searchValue}%");
+                                $query->whereHas('transporterMaster', fn ($m) => $m->where('pan_number', 'like', "%{$searchValue}%"));
                                 break;
                             case 4: // Contact Person
                                 $query->where('transporters.contact_person_name', 'like', "%{$searchValue}%");
@@ -97,7 +100,9 @@ class TransporterController extends Controller
 
                 switch ($orderColumn) {
                     case 0: // Name
-                        $query->orderBy('transporters.name', $orderDirection);
+                        $query->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+                            ->orderBy('transporter_masters.name', $orderDirection)
+                            ->select('transporters.*');
                         break;
                     case 1: // Short Number
                         $query->orderBy('transporters.short_name', $orderDirection);
@@ -106,7 +111,9 @@ class TransporterController extends Controller
                         $query->orderBy('transporters.beneficiary_id', $orderDirection);
                         break;
                     case 3: // PAN Number
-                        $query->orderBy('transporters.pan_number', $orderDirection);
+                        $query->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+                            ->orderBy('transporter_masters.pan_number', $orderDirection)
+                            ->select('transporters.*');
                         break;
                     case 4: // Contact Person
                         $query->orderBy('transporters.contact_person_name', $orderDirection);
@@ -203,7 +210,7 @@ class TransporterController extends Controller
 
     public function show($id)
     {
-        $transporter = \App\Models\Transporter::with(['company', 'city.state.country'])->findOrFail($id);
+        $transporter = \App\Models\Transporter::with(['company', 'transporterMaster.city.state.country'])->findOrFail($id);
 
         // Check if user has permission to view this transporter
         if (auth()->user()->userRole->name !== 'super_admin' && $transporter->company_id !== auth()->user()->company_id) {
@@ -235,9 +242,9 @@ class TransporterController extends Controller
             'pan_active' => $transporter->pan_active ? 'Yes' : 'No',
             'mobile_number' => $transporter->mobile_number,
             'address' => $transporter->address ?: 'Not provided',
-            'country' => optional($transporter->city->state->country)->name ?: 'Not specified',
-            'state' => optional($transporter->city->state)->name ?: 'Not specified',
-            'city' => optional($transporter->city)->name ?: 'Not specified',
+            'country' => optional($transporter->transporterMaster?->city?->state?->country)->name ?: 'Not specified',
+            'state' => optional($transporter->transporterMaster?->city?->state)->name ?: 'Not specified',
+            'city' => optional($transporter->transporterMaster?->city)->name ?: 'Not specified',
             'company' => optional($transporter->company)->name ?: 'Not specified',
             'is_owner' => $transporter->is_owner ? 'Truck Owner' : 'Agency',
             'declaration_given' => $transporter->declaration_given ? 'Yes' : 'No',
@@ -269,160 +276,102 @@ class TransporterController extends Controller
         return view('transporters.create', compact('companies', 'trucks', 'countries', 'states', 'cities'));
     }
 
-    public function store(Request $request)
+    public function store(StoreTransporterRequest $request)
     {
+        $validated = $request->validated();
 
-        // dd($request->all());
-        $validated = $request->validate([
-            'company_id' => 'required|exists:companies,id',
-            'name' => 'required|string|max:255',
-            'gst_number' => [
-                'nullable',
-                'string',
-                'max:15',
-                'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
-                Rule::unique('transporters')
-                    ->where(
-                        fn($query) => $query->where('company_id', $request->company_id)
-                            ->whereNULL('deleted_at')
-                            ->where('is_owner', 0)
-                    ),
-            ],
-            'pan_number' => [
-                'required',
-                'string',
-                'size:10',
-                'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
-                Rule::unique('transporters')
-                    ->where(fn($query) => $query->where('company_id', $request->company_id)
-                        ->whereNULL('deleted_at')
-                        ->where('is_owner', 0)),
-            ],
-            'gst_type' => 'nullable|in:composition,regular',
-            'is_owner' => 'nullable|boolean',
-            'advance_amount' => 'nullable|numeric',
-            'pan_active' => 'required|boolean',
-            'address' => 'nullable|string|max:255',
-            'country_id' => 'nullable|exists:countries,id',
-            'state_id' => [
-                'nullable',
-                'exists:states,id',
-                function ($attribute, $value, $fail) use ($request) {
-                    if ($value && $request->country_id) {
-                        $state = \App\Models\State::find($value);
-                        if ($state && $state->country_id != $request->country_id) {
-                            $fail('The selected state does not belong to the selected country.');
-                        }
-                    }
-                },
-            ],
-            'city_id' => [
-                'nullable',
-                'exists:cities,id',
-                function ($attribute, $value, $fail) use ($request) {
-                    if ($value && $request->state_id) {
-                        $city = \App\Models\City::find($value);
-                        if ($city && $city->state_id != $request->state_id) {
-                            $fail('The selected city does not belong to the selected state.');
-                        }
-                    }
-                    if ($value && $request->country_id) {
-                        $city = \App\Models\City::find($value);
-                        if ($city && $city->country_id != $request->country_id) {
-                            $fail('The selected city does not belong to the selected country.');
-                        }
-                    }
-                },
-            ],
-            'mobile_number' => [
-                'required',
-                'digits:10',
-                Rule::unique('transporters')
-                    ->where(fn($query) => $query->where('company_id', $request->company_id)
-                        ->whereNULL('deleted_at')
-                        ->where('is_owner', 0)),
-            ],
-            'short_name' => [
-                'nullable',
-                'string',
-                'max:255',
-                Rule::unique('transporters')
-                    ->where(fn($query) => $query->where('company_id', $request->company_id)
-                        ->whereNULL('deleted_at')
-                        ->where('is_owner', 0)),
-            ],
-            'contact_person_name' => 'nullable|string|max:255',
-        ], [
-            'pan_number.unique' => 'This PAN number is already associated with another transporter and cannot be used.',
-            'gst_number.unique' => 'This GST number is already associated with another transporter and cannot be used.',
-            'mobile_number.unique' => 'This mobile number is already associated with another transporter.',
-            'short_name.unique' => 'This short name is already associated with another transporter and cannot be used.',
-        ]);
-
-        // Handle duplicate short name
-        if (!empty($validated['short_name'])) {
-            $existingShortName = Transporter::where('short_name', $validated['short_name'])->first();
-            if ($existingShortName) {
-                // Append a suffix to make it unique
+        $shortName = $validated['short_name'] ?? null;
+        if ($shortName) {
+            $existing = Transporter::where('short_name', $shortName)->where('company_id', $validated['company_id'])->exists();
+            if ($existing) {
                 $suffix = 1;
                 do {
-                    $newShortName = $validated['short_name'] . '-' . $suffix;
-                    $existingShortName = Transporter::where('short_name', $newShortName)->first();
+                    $shortName = ($validated['short_name'] ?? '') . '-' . $suffix;
+                    $existing = Transporter::where('short_name', $shortName)->where('company_id', $validated['company_id'])->exists();
                     $suffix++;
-                } while ($existingShortName);
-                $validated['short_name'] = $newShortName;
+                } while ($existing);
             }
+            $validated['short_name'] = $shortName;
         }
 
-        // Ensure uppercase PAN and GST numbers
-        if (!empty($validated['pan_number'])) {
-            $validated['pan_number'] = strtoupper($validated['pan_number']);
-        }
-        if (!empty($validated['gst_number'])) {
-            $validated['gst_number'] = strtoupper($validated['gst_number']);
-        }
-        //    dd($validated);
-        if (!isset($validated['advance_amount'])) {
-            $validated['advance_amount'] = 0;
-        }
-        if (!isset($validated['is_owner'])) {
-            $validated['is_owner'] = 0;
-        }
-
-        // Set declaration_given and total_trucks with default values for transporters
+        $validated['advance_amount'] = $validated['advance_amount'] ?? 0;
+        $validated['is_owner'] = 0;
         $validated['declaration_given'] = false;
         $validated['total_trucks'] = 0;
 
-        // Convert pan_active to boolean
-        $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
-        // dd($validated);
-        // Determine TDS Percentage
-        if ($validated['pan_active'] == false) {
-            // PAN not active → 20%
-            $validated['tds_percentage'] = 20.00;
-        } else {
-            // PAN active → check 4th character
-            $fourthChar = strtoupper(substr($validated['pan_number'], 3, 1));
-            $validChars = ['C', 'F', 'A', 'B', 'J', 'L', 'T'];
-            $nonValidChars = ['P', 'H'];
-
-            if (in_array($fourthChar, $validChars)) {
-                $validated['tds_percentage'] = 2.00;
-            } else if (in_array($fourthChar, $nonValidChars)) {
-                $validated['tds_percentage'] = 1.00;
-            } else {
-                // Default if PAN active but not in the given list
-                $validated['tds_percentage'] = 20.00;
-            }
+        if ($request->filled('transporter_master_id')) {
+            $master = TransporterMaster::findOrFail($request->transporter_master_id);
+            $validated['transporter_master_id'] = $master->id;
+            $validated['tds_percentage'] = $this->calculateTdsFromPan($master->pan_number, $master->pan_active);
+            Transporter::create($validated);
+            return redirect()->route('transporters.index')->with('success', 'Transporter created successfully!');
         }
 
-        \App\Models\Transporter::create($validated);
+        return DB::transaction(function () use ($validated) {
+            $masterData = [
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'pan_number' => strtoupper($validated['pan_number']),
+                'gst_number' => ! empty($validated['gst_number']) ? strtoupper($validated['gst_number']) : null,
+                'gst_type' => $validated['gst_type'] ?? null,
+                'pan_active' => (bool) $validated['pan_active'],
+                'address' => $validated['address'] ?? null,
+                'city_id' => $validated['city_id'] ?? null,
+                'state_id' => $validated['state_id'] ?? null,
+                'country_id' => $validated['country_id'] ?? null,
+            ];
+            $master = TransporterMaster::create($masterData);
 
-        return redirect()->route('transporters.index')->with('success', 'Transporter created successfully!');
+            $transporterData = [
+                'transporter_master_id' => $master->id,
+                'company_id' => $validated['company_id'],
+                'is_owner' => 0,
+                'contact_person_name' => $validated['contact_person_name'] ?? null,
+                'mobile_number' => $validated['mobile_number'],
+                'short_name' => $validated['short_name'] ?? null,
+                'advance_amount' => $validated['advance_amount'] ?? 0,
+                'declaration_given' => false,
+                'total_trucks' => 0,
+                'tds_percentage' => $this->calculateTdsFromPan($master->pan_number, $master->pan_active),
+            ];
+            Transporter::create($transporterData);
+
+            $transporterRoleId = \DB::table('user_roles')->where('name', 'transporter')->value('id');
+            $user = User::create([
+                'name' => $master->name,
+                'email' => $master->email,
+                'password' => bcrypt(\Str::random(32)),
+                'user_role_id' => $transporterRoleId,
+                'company_id' => null,
+                'transporter_master_id' => $master->id,
+            ]);
+
+            Password::sendResetLink(['email' => $master->email]);
+
+            return redirect()->route('transporters.index')->with('success', 'Transporter created successfully! A password setup link has been sent to ' . $master->email);
+        });
+    }
+
+    private function calculateTdsFromPan(string $panNumber, bool $panActive): float
+    {
+        if (! $panActive) {
+            return 20.00;
+        }
+        $fourthChar = strtoupper(substr($panNumber, 3, 1));
+        $validChars = ['C', 'F', 'A', 'B', 'J', 'L', 'T'];
+        $nonValidChars = ['P', 'H'];
+        if (in_array($fourthChar, $validChars)) {
+            return 2.00;
+        }
+        if (in_array($fourthChar, $nonValidChars)) {
+            return 1.00;
+        }
+        return 20.00;
     }
 
     public function edit(\App\Models\Transporter $transporter)
     {
+        $transporter->load(['transporterMaster.city.state.country']);
         $companies = \App\Models\Company::all();
         // Filter trucks to show only those belonging to this transporter
         $trucks = \App\Models\Truck::where('transporter_id', $transporter->id)->get();
@@ -443,150 +392,25 @@ class TransporterController extends Controller
         return view('transporters.edit', compact('transporter', 'companies', 'trucks', 'countries', 'states', 'cities'));
     }
 
-    public function update(Request $request, \App\Models\Transporter $transporter)
+    public function update(UpdateTransporterRequest $request, \App\Models\Transporter $transporter)
     {
-        $validated = $request->validate([
-            'company_id' => 'required|exists:companies,id',
-            'name' => 'required|string|max:255',
-            'gst_number' => [
-                'nullable',
-                'string',
-                'max:15',
-                'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
-                Rule::unique('transporters')
-                    ->where(
-                        fn($query) =>
-                        $query->where('company_id', $request->company_id)
-                            ->whereNULL('deleted_at')
-                            ->where('is_owner', 0)
-                    )
-                    ->ignore($transporter->id),
-            ],
-            'pan_number' => [
-                'required',
-                'string',
-                'size:10',
-                'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
-                Rule::unique('transporters')
-                    ->where(
-                        fn($query) =>
-                        $query->where('company_id', $request->company_id)
-                            ->whereNULL('deleted_at')
-                            ->where('is_owner', 0)
-                    )
-                    ->ignore($transporter->id),
-            ],
-            'gst_type' => 'nullable|in:composition,regular',
-            'is_owner' => 'nullable|boolean',
-            'advance_amount' => 'nullable|numeric',
-            'pan_active' => 'required|boolean',
-            'address' => 'nullable|string|max:255',
-            'country_id' => 'nullable|exists:countries,id',
-            'state_id' => [
-                'nullable',
-                'exists:states,id',
-                function ($attribute, $value, $fail) use ($request) {
-                    if ($value && $request->country_id) {
-                        $state = \App\Models\State::find($value);
-                        if ($state && $state->country_id != $request->country_id) {
-                            $fail('The selected state does not belong to the selected country.');
-                        }
-                    }
-                },
-            ],
-            'city_id' => [
-                'nullable',
-                'exists:cities,id',
-                function ($attribute, $value, $fail) use ($request) {
-                    if ($value && $request->state_id) {
-                        $city = \App\Models\City::find($value);
-                        if ($city && $city->state_id != $request->state_id) {
-                            $fail('The selected city does not belong to the selected state.');
-                        }
-                    }
-                    if ($value && $request->country_id) {
-                        $city = \App\Models\City::find($value);
-                        if ($city && $city->country_id != $request->country_id) {
-                            $fail('The selected city does not belong to the selected country.');
-                        }
-                    }
-                },
-            ],
-            'mobile_number' => [
-                'required',
-                'digits:10',
-                Rule::unique('transporters')
-                    ->where(
-                        fn($query) =>
-                        $query->where('company_id', $request->company_id)
-                            ->whereNULL('deleted_at')
-                            ->where('is_owner', 0)
-                    )
-                    ->ignore($transporter->id),
-            ],
-            'short_name' => [
-                'nullable',
-                'string',
-                'max:255',
-                Rule::unique('transporters')
-                    ->where(fn($query) => $query->where('company_id', $request->company_id)
-                        ->whereNULL('deleted_at')
-                        ->where('is_owner', 0))
-                    ->ignore($transporter->id),
-            ],
-            'contact_person_name' => 'nullable|string|max:255',
+        $validated = $request->validated();
+        $updateData = [
+            'company_id' => $validated['company_id'],
+            'contact_person_name' => $validated['contact_person_name'] ?? null,
+            'mobile_number' => $validated['mobile_number'],
+            'advance_amount' => $validated['advance_amount'] ?? 0,
+            'tds_percentage' => $validated['tds_percentage'] ?? null,
+            'declaration_given' => $validated['declaration_given'] ?? false,
+            'total_trucks' => $validated['total_trucks'] ?? 0,
+        ];
 
-
-        ], [
-            'pan_number.unique' => 'This PAN number is already associated with another transporter and cannot be used.',
-            'mobile_number.unique' => 'This mobile number is already associated with another transporter.',
-            'short_name.unique' => 'This short name is already associated with another transporter and cannot be used.',
-        ]);
-        // Ensure uppercase PAN and GST numbers
-        if (!empty($validated['pan_number'])) {
-            $validated['pan_number'] = strtoupper($validated['pan_number']);
-        }
-        if (!empty($validated['gst_number'])) {
-            $validated['gst_number'] = strtoupper($validated['gst_number']);
+        if (auth()->user()->userRole->name === 'super_admin') {
+            $updateData['short_name'] = $validated['short_name'] ?? null;
+            $updateData['beneficiary_id'] = $validated['beneficiary_id'] ?? null;
         }
 
-        if (!isset($validated['advance_amount'])) {
-            $validated['advance_amount'] = 0;
-        }
-
-        if (!isset($validated['is_owner'])) {
-            $validated['is_owner'] = 0;
-        }
-
-        // Set declaration_given and total_trucks with default values for transporters
-        $validated['declaration_given'] = false;
-        $validated['total_trucks'] = 0;
-
-        // Convert pan_active to boolean
-        $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
-        // Determine TDS Percentage
-
-        if ($validated['pan_active'] == false) {
-
-            // PAN not active → 20%
-            $validated['tds_percentage'] = 20.00;
-        } else {
-
-            // PAN active → check 4th character
-            $fourthChar = strtoupper(substr($validated['pan_number'], 3, 1));
-            $validChars = ['C', 'F', 'A', 'B', 'J', 'L', 'T'];
-            $nonValidChars = ['P', 'H'];
-
-            if (in_array($fourthChar, $validChars)) {
-                $validated['tds_percentage'] = 2.00;
-            } else if (in_array($fourthChar, $nonValidChars)) {
-                $validated['tds_percentage'] = 1.00;
-            } else {
-                // Default if PAN active but not in the given list
-                $validated['tds_percentage'] = 20.00;
-            }
-        }
-        $transporter->update($validated);
+        $transporter->update($updateData);
         return redirect()->route('transporters.index')->with('success', 'Transporter updated successfully!');
     }
 
@@ -620,6 +444,60 @@ class TransporterController extends Controller
         ]);
     }
 
+    /**
+     * Look up TransporterMaster by PAN. Optional company_id + is_owner check for "already registered" in same company as transporter (0) or truck owner (1).
+     */
+    public function getTransporterMasterByPan(Request $request)
+    {
+        $panNumber = strtoupper(trim($request->query('pan_number', '')));
+        if (strlen($panNumber) !== 10 || ! preg_match('/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/', $panNumber)) {
+            return response()->json(['error' => 'Invalid PAN number'], 422);
+        }
+
+        $companyId = $request->query('company_id');
+        $isOwner = $request->has('is_owner') ? (int) $request->query('is_owner') : null;
+
+        $master = TransporterMaster::with(['city', 'state', 'country'])
+            ->where('pan_number', $panNumber)
+            ->first();
+
+        $alreadyRegistered = false;
+        if ($master && $companyId !== null && $companyId !== '' && $isOwner !== null) {
+            $alreadyRegistered = Transporter::where('transporter_master_id', $master->id)
+                ->where('company_id', (int) $companyId)
+                ->where('is_owner', (int) $isOwner)
+                ->exists();
+        }
+
+        if (! $master) {
+            return response()->json([
+                'found' => false,
+                'already_registered' => false,
+            ]);
+        }
+
+        return response()->json([
+            'found' => true,
+            'already_registered' => $alreadyRegistered,
+            'master' => [
+                'id' => $master->id,
+                'name' => $master->name,
+                'email' => $master->email,
+                'pan_number' => $master->pan_number,
+                'gst_number' => $master->gst_number,
+                'gst_type' => $master->gst_type,
+                'pan_active' => $master->pan_active,
+                'address' => $master->address,
+                'city_id' => $master->city_id,
+                'state_id' => $master->state_id,
+                'country_id' => $master->country_id,
+                'city' => $master->city?->name,
+                'state' => $master->state?->name,
+                'country' => $master->country?->name,
+            ],
+        ]);
+    }
+
     public function destroy(\App\Models\Transporter $transporter)
     {
         $transporter->delete();
@@ -632,16 +510,19 @@ class TransporterController extends Controller
     public function getTruckOwnersApi()
     {
         try {
-            $query = \App\Models\Transporter::where('is_owner', 1);
+            $query = \App\Models\Transporter::with('transporterMaster')
+                ->where('is_owner', 1);
 
             // Apply company filter for non-super admin users
             if (auth()->user()->userRole->name !== 'super_admin') {
                 $query->where('company_id', auth()->user()->company_id);
             }
 
-            $truckOwners = $query->select('id', 'name')
-                ->orderBy('name')
-                ->get();
+            $truckOwners = $query->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+                ->orderBy('transporter_masters.name')
+                ->select('transporters.*')
+                ->get()
+                ->map(fn ($t) => ['id' => $t->id, 'name' => $t->name]);
 
             return response()->json($truckOwners);
         } catch (\Exception $e) {
@@ -656,16 +537,19 @@ class TransporterController extends Controller
     public function getAgenciesApi()
     {
         try {
-            $query = \App\Models\Transporter::where('is_owner', 0);
+            $query = \App\Models\Transporter::with('transporterMaster')
+                ->where('is_owner', 0);
 
             // Apply company filter for non-super admin users
             if (auth()->user()->userRole->name !== 'super_admin') {
                 $query->where('company_id', auth()->user()->company_id);
             }
 
-            $agencies = $query->select('id', 'name')
-                ->orderBy('name')
-                ->get();
+            $agencies = $query->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+                ->orderBy('transporter_masters.name')
+                ->select('transporters.*')
+                ->get()
+                ->map(fn ($t) => ['id' => $t->id, 'name' => $t->name]);
 
             return response()->json($agencies);
         } catch (\Exception $e) {

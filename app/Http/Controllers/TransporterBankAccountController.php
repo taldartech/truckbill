@@ -11,39 +11,40 @@ class TransporterBankAccountController extends Controller
     {
         // Get all companies for super admin
         $companies = \App\Models\Company::all()->where('user_id', auth()->user()->id);
-        
+
         // Get selected company ID and search term
         $selectedCompanyId = $request->get('company_id');
         $search = $request->get('search');
-        
+
         // Initialize empty collections
         $transporters = collect();
-        
+
         // If company is selected, get transporters for that company (excluding truck owners)
         if ($selectedCompanyId) {
-            $query = Transporter::where('is_owner', 0)
+            $query = Transporter::with('transporterMaster')
+                ->where('is_owner', 0)
                 ->where('company_id', $selectedCompanyId);
-            
+
             // Add search functionality
             if ($search) {
                 $query->where(function($q) use ($search) {
-                    $q->where('name', 'LIKE', '%' . $search . '%')
-                      ->orWhere('gst_number', 'LIKE', '%' . $search . '%')
-                      ->orWhere('pan_number', 'LIKE', '%' . $search . '%')
+                    $q->whereHas('transporterMaster', fn ($m) => $m->where('name', 'LIKE', '%' . $search . '%')
+                        ->orWhere('gst_number', 'LIKE', '%' . $search . '%')
+                        ->orWhere('pan_number', 'LIKE', '%' . $search . '%'))
                       ->orWhere('beneficiary_id', 'LIKE', '%' . $search . '%');
                 });
             }
-            
+
             $transporters = $query->paginate(10)->appends($request->query());
         }
-        
+
         return view('transporter_bank_accounts.index', compact('companies', 'transporters', 'selectedCompanyId', 'search'));
     }
 
     public function updateBeneficiaryId(Request $request, $transporterId)
     {
         $transporter = Transporter::findOrFail($transporterId);
-        
+
         $validated = $request->validate([
             'beneficiary_id' => 'required|string|max:255|unique:transporters,beneficiary_id,' . $transporter->id,
             'short_name' => 'required|string|max:255|unique:transporters,short_name,' . $transporter->id,

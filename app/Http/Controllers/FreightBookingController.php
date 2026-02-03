@@ -29,7 +29,7 @@ class FreightBookingController extends Controller
             return $this->getFreightBookingsData($request);
         }
 
-        $baseQuery = FreightBooking::with(['lr.truck', 'linkedFreightBooking', 'company', 'transporter']);
+        $baseQuery = FreightBooking::with(['lr.truck', 'linkedFreightBooking', 'company', 'transporter.transporterMaster']);
 
         // Company filter
         if (auth()->user()->userRole->name !== 'super_admin') {
@@ -99,10 +99,10 @@ class FreightBookingController extends Controller
                             ->orWhereHas('truck', function ($truckQuery) use ($search) {
                                 $truckQuery->where('truck_number', 'LIKE', "%{$search}%");
                             })
-                            ->orWhereHas('transporter', function ($transporterQuery) use ($search) {
+                            ->orWhereHas('transporter.transporterMaster', function ($transporterQuery) use ($search) {
                                 $transporterQuery->where('name', 'LIKE', "%{$search}%");
                             })
-                            ->orWhereHas('reference', function ($referenceQuery) use ($search) {
+                            ->orWhereHas('reference.transporterMaster', function ($referenceQuery) use ($search) {
                                 $referenceQuery->where('name', 'LIKE', "%{$search}%");
                             });
                     });
@@ -154,8 +154,18 @@ class FreightBookingController extends Controller
         /* ------------------------------------
      | Dropdown / Filter Data
      |------------------------------------ */
-        $transporters = Transporter::where('is_owner', 0)->orderBy('name')->get();
-        $truckOwners  = Transporter::where('is_owner', 1)->orderBy('name')->get();
+        $transporters = Transporter::with('transporterMaster')
+            ->where('is_owner', 0)
+            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+            ->orderBy('transporter_masters.name')
+            ->select('transporters.*')
+            ->get();
+        $truckOwners = Transporter::with('transporterMaster')
+            ->where('is_owner', 1)
+            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+            ->orderBy('transporter_masters.name')
+            ->select('transporters.*')
+            ->get();
         $lrs          = LorryReceipt::all();
         $paymentTypes = \App\Models\PaymentType::all();
         $paymentModes = \App\Models\PaymentMode::all();
@@ -180,7 +190,7 @@ class FreightBookingController extends Controller
         try {
             \Log::info('FreightBookings DataTables request started');
 
-            $query = FreightBooking::with(['lr.truck', 'linkedFreightBooking', 'company', 'transporter'])
+            $query = FreightBooking::with(['lr.truck', 'linkedFreightBooking', 'company', 'transporter.transporterMaster'])
                 ->select('freight_bookings.*');
 
             // Only apply company_id filter for non-super_admin users
@@ -342,7 +352,7 @@ class FreightBookingController extends Controller
     {
         $freightBooking = FreightBooking::with([
             'lr' => function ($query) {
-                $query->with(['transporter', 'truck', 'consignor', 'consignee']);
+                $query->with(['transporter.transporterMaster', 'truck', 'consignor', 'consignee']);
             }
         ])->find($id);
 
@@ -384,12 +394,12 @@ class FreightBookingController extends Controller
         ];
 
         $lorry_receipt = \App\Models\LorryReceipt::with([
-            'transporter:id,name,tds_percentage,is_owner',
+            'transporter.transporterMaster',
             'truck:id,truck_number',
             'customer:id,name',
             'consignor:id,name',
             'consignee:id,name',
-            'reference:id,name'
+            'reference.transporterMaster'
         ])
             ->select('id', 'lr_number', 'transporter_id', 'truck_id', 'reference_by', 'customer_id', 'consignor_id', 'consignee_id', 'good_type', 'source_city', 'destination_city', 'source_state', 'destination_state', 'weight', 'no_of_units', 'amount', 'fr_rate')
             ->when($lorry_receipt_id, function ($query) use ($lorry_receipt_id) {
@@ -533,7 +543,7 @@ class FreightBookingController extends Controller
         $formData = $validator->validated();
 
         // Get the lorry receipt with its relationships
-        $lorry_receipt = LorryReceipt::with(['transporter', 'truck', 'customer', 'consignor', 'consignee', 'reference'])
+        $lorry_receipt = LorryReceipt::with(['transporter.transporterMaster', 'truck', 'customer', 'consignor', 'consignee', 'reference.transporterMaster'])
             ->findOrFail($formData['lr_id']);
 
         // Return the confirmation view with the form data and lorry receipt
@@ -861,7 +871,7 @@ class FreightBookingController extends Controller
 
             // Get goods types
             $goodsTypes = \App\Models\GoodType::where('user_id', Auth::user()->company->user_id)->get();
-            $lorry_receipt = \App\Models\LorryReceipt::with(['transporter:id,name', 'truck:id,truck_number'])
+            $lorry_receipt = \App\Models\LorryReceipt::with(['transporter.transporterMaster', 'truck:id,truck_number'])
                 ->select('id', 'lr_number', 'transporter_id', 'truck_id', 'customer_id', 'consignor_id', 'consignee_id', 'good_type', 'reference_by')
                 ->when($lorryReceipt, function ($query) use ($lorryReceipt) {
                     $query->where('id', $lorryReceipt->id);
@@ -994,7 +1004,7 @@ class FreightBookingController extends Controller
 
     public function getTransporter($id)
     {
-        $transporter = \App\Models\Transporter::find($id);
+        $transporter = \App\Models\Transporter::with('transporterMaster')->find($id);
         if (!$transporter) {
             return response()->json(['error' => 'Transporter not found'], 404);
         }
@@ -1003,7 +1013,7 @@ class FreightBookingController extends Controller
 
     public function getTruck($id)
     {
-        $truck = \App\Models\Truck::find($id);
+        $truck = \App\Models\Truck::with(['transporter.transporterMaster', 'driver'])->find($id);
         if (!$truck) {
             return response()->json(['error' => 'Truck not found'], 404);
         }

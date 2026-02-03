@@ -73,18 +73,15 @@ class FreightBookingTest extends TestCase
 
     protected function makeTransporterAndTruck(User $user): array
     {
-        $transporter = Transporter::create([
-            'company_id' => $user->company_id,
-            'name' => 'Fast Logistics',
-            'pan_number' => 'ABCDE1234F',
-            'mobile_number' => '9999999999',
-            'is_owner' => 0,
-            'pan_active' => true,
-            'declaration_given' => false,
-            'tds_percentage' => 20,
-            'total_trucks' => 0,
-            'advance_amount' => 0,
-        ]);
+        $transporter = Transporter::factory()
+            ->forCompany($user->company_id)
+            ->create([
+                'mobile_number' => '9999999999',
+                'declaration_given' => false,
+                'tds_percentage' => 20,
+                'total_trucks' => 0,
+                'advance_amount' => 0,
+            ]);
 
         $truck = Truck::create([
             'transporter_id' => $transporter->id,

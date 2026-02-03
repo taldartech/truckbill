@@ -23,6 +23,7 @@ Route::middleware('auth.blocked')->group(function () {
     Route::get('/api/truck-owners', [TransporterController::class, 'getTruckOwnersApi']);
     Route::get('/api/agencies', [TransporterController::class, 'getAgenciesApi']);
     Route::get('/api/consignees/{id}', [ConsigneeController::class, 'getConsigneeApi']);
+    Route::get('/api/transporter-master-by-pan', [TransporterController::class, 'getTransporterMasterByPan']);
     Route::post('/api/calculate-tds-percentage', [TransporterController::class, 'calculateTdsPercentage']);
     Route::post('/api/calculate-truck-owner-tds-percentage', [TruckOwnerController::class, 'calculateTruckOwnerTdsPercentage']);
     Route::post('/api/check-lr-number-uniqueness', [LorryReceiptController::class, 'checkLrNumberUniqueness']);
@@ -49,7 +50,7 @@ Route::middleware('auth.blocked')->group(function () {
         return response()->json(['exists' => $exists]);
     });
     Route::get('/get-transporter-name/{truck}', function ($truckId) {
-        $truck = \App\Models\Truck::with('transporter')->find($truckId);
+        $truck = \App\Models\Truck::with('transporter.transporterMaster')->find($truckId);
 
         if ($truck && $truck->transporter) {
             return response()->json(['transporter_name' => $truck->transporter->name]);

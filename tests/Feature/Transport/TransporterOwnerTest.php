@@ -70,6 +70,7 @@ class TransporterOwnerTest extends TestCase
         $payload = [
             'company_id' => $admin->company_id,
             'name' => 'Fast Logistics',
+            'email' => 'fast@example.com',
             'gst_number' => '12ABCDE1234F1Z5',
             'pan_number' => 'ABCDE1234F',
             'advance_amount' => 1000,
@@ -86,11 +87,13 @@ class TransporterOwnerTest extends TestCase
         $response = $this->actingAs($admin)->post('/transporters', $payload);
 
         $response->assertRedirect(route('transporters.index'));
-        $this->assertDatabaseHas('transporters', [
+        $this->assertDatabaseHas('transporter_masters', [
             'name' => 'Fast Logistics',
+            'pan_number' => 'ABCDE1234F',
+        ]);
+        $this->assertDatabaseHas('transporters', [
             'company_id' => $admin->company_id,
             'is_owner' => 0,
-            'pan_number' => 'ABCDE1234F',
         ]);
     }
 
@@ -99,13 +102,13 @@ class TransporterOwnerTest extends TestCase
         $admin = $this->makeAdmin();
         [$country, $state, $city] = $this->seedGeo();
 
-        Transporter::create([
-            'company_id' => $admin->company_id,
+        $master = \App\Models\TransporterMaster::factory()->create([
             'name' => 'Existing',
             'pan_number' => 'ABCDE1234F',
+        ]);
+        Transporter::factory()->forCompany($admin->company_id)->create([
+            'transporter_master_id' => $master->id,
             'mobile_number' => '9999999999',
-            'is_owner' => 0,
-            'pan_active' => true,
         ]);
 
         $response = $this->actingAs($admin)->from('/transporters/create')->post('/transporters', [
@@ -149,8 +152,11 @@ class TransporterOwnerTest extends TestCase
         ]);
 
         $response->assertRedirect(route('truck_owners.index'));
-        $this->assertDatabaseHas('transporters', [
+        $this->assertDatabaseHas('transporter_masters', [
             'name' => 'Owner One',
+            'pan_number' => 'ABCPD1234Q',
+        ]);
+        $this->assertDatabaseHas('transporters', [
             'company_id' => $admin->company_id,
             'is_owner' => 1,
             'tds_percentage' => 1.00,

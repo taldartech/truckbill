@@ -463,7 +463,20 @@
                             </a>
 
                         </li>
-                        @if (auth()->check() && auth()->user()->userRole->name === 'master_admin')
+                        @if (auth()->check() && auth()->user()->userRole->name === 'transporter')
+                            <li class="nav-item">
+                                <a href="{{ route('transporter.freight_bookings.index') }}" class="nav-link{{ Request::is('transporter/freight-bookings*') ? ' active' : '' }}">
+                                    <i class="fas fa-truck"></i>
+                                    <p>My Freight Bookings</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('transporter.payments.index') }}" class="nav-link{{ Request::is('transporter/payments*') ? ' active' : '' }}">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                    <p>My Payments</p>
+                                </a>
+                            </li>
+                        @elseif (auth()->check() && auth()->user()->userRole->name === 'master_admin')
                             <li class="nav-item">
                                 <a href="/users" class="nav-link{{ Request::is('users*') ? ' active' : '' }}">
                                     <i class="fas fa-users"></i>
@@ -602,7 +615,7 @@
                         @endif
 
                         {{-- Master data menus hidden from moderator/accountant/operator users --}}
-                        @if (auth()->check() && !in_array(auth()->user()->userRole->name, ['accountant', 'super_admin', 'master_admin']))
+                        @if (auth()->check() && in_array(auth()->user()->userRole->name, ['admin', 'moderator']))
                             <li class="nav-item">
                                 <a class="nav-link{{ Request::is('transporters*') || Request::is('transporters/create') ? ' active' : '' }}"
                                     href="#transporterMenu">
@@ -681,7 +694,7 @@
                                 </ul>
                             </li>
                         @endif
-                        @if (auth()->check() && !in_array(auth()->user()->userRole->name, ['accountant', 'super_admin', 'master_admin']))
+                        @if (auth()->check() && in_array(auth()->user()->userRole->name, ['admin', 'moderator']))
                             <li class="nav-item">
                                 <a class="nav-link{{ Request::is('consignees*') || Request::is('consignees/create') ? ' active' : '' }}"
                                     href="#consigneeMenu">
@@ -711,7 +724,7 @@
                         @endif
 
                         {{-- Operational menus visible to all authenticated users including moderators --}}
-                        @if (auth()->check() && !in_array(auth()->user()->userRole->name, ['super_admin', 'accountant', 'master_admin']))
+                        @if (auth()->check() && in_array(auth()->user()->userRole->name, ['admin', 'moderator']))
                             <li class="nav-item">
                                 <a class="nav-link{{ Request::is('lorry_receipts*') || Request::is('lorry_receipts/create') ? ' active' : '' }}"
                                     href="#lorryReceiptMenu">

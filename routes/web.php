@@ -21,6 +21,7 @@ use App\Http\Controllers\VoucherTemplateController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PromoCodeController;
+use App\Http\Controllers\TransporterDashboardController;
 
 // Protected Routes
 Route::middleware(['auth.blocked'])->group(function () {
@@ -64,6 +65,13 @@ Route::middleware(['auth.blocked'])->group(function () {
     });
 
     Route::redirect('/', '/dashboard');
+
+    // Transporter-specific routes (transporter role)
+    Route::prefix('transporter')->name('transporter.')->middleware(['role:transporter'])->group(function () {
+        Route::get('/freight-bookings', [TransporterDashboardController::class, 'freightBookings'])->name('freight_bookings.index');
+        Route::get('/freight-bookings/{freight_booking}', [TransporterDashboardController::class, 'showFreightBooking'])->name('freight_bookings.show');
+        Route::get('/payments', [TransporterDashboardController::class, 'payments'])->name('payments.index');
+    });
 
     Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])
         ->middleware(['auth.blocked', 'verified'])

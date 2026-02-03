@@ -776,7 +776,7 @@ class ReportController extends Controller
         [$startDate, $endDate, $hasRange] = $this->normalizeDateRange($request);
 
         if ($hasRange) {
-            $query = VoucherPayment::with(['freight_booking.lr.truck', 'freight_booking.lr.transporter'])
+            $query = VoucherPayment::with(['freight_booking.lr.truck', 'freight_booking.lr.transporter.transporterMaster'])
                 ->whereBetween('date', [$startDate, $endDate]);
             $query->where('company_id', $companyId);
             $query->whereNull('linked_voucher_id');
@@ -788,7 +788,7 @@ class ReportController extends Controller
 
             $payments = $query->get();
 
-            $query1 = VoucherLinked::with(['freight_booking.lr.truck', 'freight_booking.lr.transporter'])
+            $query1 = VoucherLinked::with(['freight_booking.lr.truck', 'freight_booking.lr.transporter.transporterMaster'])
                 ->whereBetween('date', [$startDate, $endDate]);
             $query1->where('company_id', $companyId);
             $query1->where('payment_mode', 'bank transfer');
@@ -1028,7 +1028,7 @@ class ReportController extends Controller
         $endDate = $request->input('end_date') ?? date('Y-m-d');
         $startDate = max($request->input('start_date') ?? date('Y-m-d', strtotime('-3 months')), date('Y-m-d', strtotime('-3 months', strtotime($endDate))));
 
-        $transporters = Transporter::where('company_id', Auth::user()->company_id)->get();
+        $transporters = Transporter::with('transporterMaster')->where('company_id', Auth::user()->company_id)->get();
         $transporterId = $request->input('transporter_id') ?? null;
         $trucks = [];
         $truckId = $request->input('truck_id') ?? null;
@@ -1050,7 +1050,7 @@ class ReportController extends Controller
                 $query->where('truck_id', $truckId);
                 $references = LorryReceipt::where('truck_id', $truckId)
                     ->get(['reference_by']);
-                $references = Transporter::whereIn('id', $references->pluck('reference_by'))->get();
+                $references = Transporter::with('transporterMaster')->whereIn('id', $references->pluck('reference_by'))->get();
             }
             if ($referenceId) {
                 $query->where('reference_by', $referenceId);
@@ -1083,7 +1083,7 @@ class ReportController extends Controller
     {
         $type = $request->input('type', 'transporter'); // transporter, owner, both
 
-        $query = Transporter::with(['city', 'state', 'country'])
+        $query = Transporter::with(['transporterMaster.city', 'transporterMaster.state', 'transporterMaster.country'])
             ->where('company_id', Auth::user()->company_id);
 
         $normalizedType = strtolower($type);
@@ -1093,7 +1093,10 @@ class ReportController extends Controller
             $query->where('is_owner', 1);
         } // both → no extra filter
 
-        $transporters = $query->orderBy('name')->get();
+        $transporters = $query->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+            ->orderBy('transporter_masters.name')
+            ->select('transporters.*')
+            ->get();
 
         return view('reports.transporter-master', [
             'transporters' => $transporters,

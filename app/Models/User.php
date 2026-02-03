@@ -19,8 +19,14 @@ class User extends Authenticatable
         'user_role_id',
         'company_id',
         'branch_id',
+        'transporter_master_id',
         'session_token',
     ];
+
+    public function transporterMaster()
+    {
+        return $this->belongsTo(TransporterMaster::class, 'transporter_master_id');
+    }
 
     public function company()
     {

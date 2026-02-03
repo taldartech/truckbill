@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AdvancePayment;
 use App\Models\Transporter;
+use App\Models\TransporterMaster;
 use App\Models\Company;
 use App\Models\Country;
 use App\Models\State;
@@ -11,6 +12,8 @@ use App\Models\City;
 use App\Models\Truck;
 use App\Models\Driver;
 use App\Models\FreightBooking;
+use App\Http\Requests\StoreTruckOwnerRequest;
+use App\Http\Requests\UpdateTruckOwnerRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -32,7 +35,7 @@ class TruckOwnerController extends Controller
     private function getTruckOwnersData(Request $request)
     {
         try {
-            $query = Transporter::with(['company', 'city'])->where('is_owner', 1); // Show only truck owners
+            $query = Transporter::with(['company', 'transporterMaster.city'])->where('is_owner', 1); // Show only truck owners
 
             // Only apply company_id filter for non-super_admin users
             if (auth()->user()->userRole->name !== 'super_admin') {
@@ -43,12 +46,10 @@ class TruckOwnerController extends Controller
             if ($request->has('search') && $request->search['value']) {
                 $searchValue = $request->search['value'];
                 $query->where(function ($q) use ($searchValue) {
-                    $q->where('transporters.name', 'like', "%{$searchValue}%")
-                        ->orWhere('transporters.pan_number', 'like', "%{$searchValue}%")
+                    $q->whereHas('transporterMaster', fn ($m) => $m->where('name', 'like', "%{$searchValue}%")
+                            ->orWhere('pan_number', 'like', "%{$searchValue}%"))
                         ->orWhere('transporters.mobile_number', 'like', "%{$searchValue}%")
-                        ->orWhereHas('city', function ($cityQuery) use ($searchValue) {
-                            $cityQuery->where('name', 'like', "%{$searchValue}%");
-                        });
+                        ->orWhereHas('transporterMaster', fn ($m) => $m->whereHas('city', fn ($c) => $c->where('name', 'like', "%{$searchValue}%")));
                 });
             }
 
@@ -59,18 +60,16 @@ class TruckOwnerController extends Controller
                         $searchValue = $column['search']['value'];
                         switch ($index) {
                             case 0: // Name
-                                $query->where('transporters.name', 'like', "%{$searchValue}%");
+                                $query->whereHas('transporterMaster', fn ($m) => $m->where('name', 'like', "%{$searchValue}%"));
                                 break;
                             case 1: // Short Name
                                 $query->where('transporters.short_name', 'like', "%{$searchValue}%");
                                 break;
                             case 2: // PAN Number
-                                $query->where('transporters.pan_number', 'like', "%{$searchValue}%");
+                                $query->whereHas('transporterMaster', fn ($m) => $m->where('pan_number', 'like', "%{$searchValue}%"));
                                 break;
                             case 3: // Location (City)
-                                $query->whereHas('city', function ($cityQuery) use ($searchValue) {
-                                    $cityQuery->where('name', 'like', "%{$searchValue}%");
-                                });
+                                $query->whereHas('transporterMaster.city', fn ($cityQuery) => $cityQuery->where('name', 'like', "%{$searchValue}%"));
                                 break;
                             case 4: // Contact Number (Mobile)
                                 $query->where('transporters.mobile_number', 'like', "%{$searchValue}%");
@@ -87,16 +86,21 @@ class TruckOwnerController extends Controller
 
                 switch ($orderColumn) {
                     case 0: // Name
-                        $query->orderBy('transporters.name', $orderDir);
+                        $query->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+                            ->orderBy('transporter_masters.name', $orderDir)
+                            ->select('transporters.*');
                         break;
                     case 1: // Short Name
                         $query->orderBy('transporters.short_name', $orderDir);
                         break;
                     case 2: // PAN Number
-                        $query->orderBy('transporters.pan_number', $orderDir);
+                        $query->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+                            ->orderBy('transporter_masters.pan_number', $orderDir)
+                            ->select('transporters.*');
                         break;
                     case 3: // Location (City)
-                        $query->join('cities', 'transporters.city_id', '=', 'cities.id')
+                        $query->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+                            ->leftJoin('cities', 'transporter_masters.city_id', '=', 'cities.id')
                             ->orderBy('cities.name', $orderDir)
                             ->select('transporters.*');
                         break;
@@ -197,144 +201,97 @@ class TruckOwnerController extends Controller
         return view('truck_owner.create', compact('companies', 'countries', 'states', 'cities'));
     }
 
-    public function store(Request $request)
+    public function store(StoreTruckOwnerRequest $request)
     {
-        $validated = $request->validate([
-            'company_id' => 'required|exists:companies,id',
-            'name' => 'required|string|max:255',
-            'gst_number' => [
-                'nullable',
-                'string',
-                'max:15',
-                'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
-                Rule::unique('transporters')
-                    ->where(
-                        fn($query) =>
-                        $query->where('company_id', $request->company_id)
-                            ->whereNULL('deleted_at')
-                            ->where('is_owner', 1)
-                    ),
-            ],
-            'pan_number' => [
-                'nullable',
-                'string',
-                'size:10',
-                'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
-                Rule::unique('transporters')
-                    ->where(
-                        fn($query) =>
-                        $query->where('company_id', $request->company_id)
-                            ->whereNULL('deleted_at')
-                            ->where('is_owner', 1)
-                    ),
-            ],
-            'declaration_given' => 'required|boolean',
-            'total_trucks' => 'required|integer|min:0|max:10000',
-            'advance_amount' => 'nullable|numeric',
-            'pan_active' => 'required|boolean',
-            'address' => 'nullable|string|max:255',
-            'country_id' => 'nullable|exists:countries,id',
-            'state_id' => [
-                'nullable',
-                'exists:states,id',
-                function ($attribute, $value, $fail) use ($request) {
-                    if ($value && $request->country_id) {
-                        $state = State::find($value);
-                        if ($state && $state->country_id != $request->country_id) {
-                            $fail('The selected state does not belong to the selected country.');
-                        }
-                    }
-                },
-            ],
-            'city_id' => [
-                'nullable',
-                'exists:cities,id',
-                function ($attribute, $value, $fail) use ($request) {
-                    if ($value && $request->state_id) {
-                        $city = City::find($value);
-                        if ($city && $city->state_id != $request->state_id) {
-                            $fail('The selected city does not belong to the selected state.');
-                        }
-                    }
-                    if ($value && $request->country_id) {
-                        $city = City::find($value);
-                        if ($city && $city->country_id != $request->country_id) {
-                            $fail('The selected city does not belong to the selected country.');
-                        }
-                    }
-                },
-            ],
-            'mobile_number' => [
-                'required',
-                'digits:10',
-                Rule::unique('transporters')
-                    ->where(
-                        fn($query) =>
-                        $query->where('company_id', $request->company_id)
-                            ->whereNULL('deleted_at')
-                            ->where('is_owner', 1)
-                    ),
-            ],
-            'short_name' => [
-                'nullable',
-                'string',
-                'max:255',
-                Rule::unique('transporters')
-                    ->where(
-                        fn($query) =>
-                        $query->where('company_id', $request->company_id)
-                            ->whereNULL('deleted_at')
-                            ->where('is_owner', 1)
-                    ),
-            ],
-            'contact_person_name' => 'nullable|string|max:255',
-        ], [
-            'pan_number.unique' => 'This PAN number is already registered with another truck owner or transporter.',
-            'gst_number.unique' => 'This GST number is already registered with another truck owner or transporter.',
-            'mobile_number.unique' => 'This mobile number is already registered with another truck owner or transporter.',
+        $validated = $request->validated();
+
+        $shortName = $validated['short_name'] ?? null;
+        if ($shortName) {
+            $existing = Transporter::where('short_name', $shortName)->where('company_id', $validated['company_id'])->where('is_owner', 1)->exists();
+            if ($existing) {
+                $suffix = 1;
+                do {
+                    $shortName = ($validated['short_name'] ?? '') . '-' . $suffix;
+                    $existing = Transporter::where('short_name', $shortName)->where('company_id', $validated['company_id'])->where('is_owner', 1)->exists();
+                    $suffix++;
+                } while ($existing);
+            }
+            $validated['short_name'] = $shortName;
+        }
+
+        $validated['advance_amount'] = $validated['advance_amount'] ?? 0;
+        $validated['is_owner'] = 1;
+
+        if ($request->filled('transporter_master_id')) {
+            $master = TransporterMaster::findOrFail($request->transporter_master_id);
+            $validated['transporter_master_id'] = $master->id;
+            $validated['tds_percentage'] = $this->calculateTruckOwnerTdsFromPan($master->pan_number, $master->pan_active, $validated['declaration_given']);
+            Transporter::create([
+                'transporter_master_id' => $validated['transporter_master_id'],
+                'company_id' => $validated['company_id'],
+                'is_owner' => 1,
+                'contact_person_name' => $validated['contact_person_name'] ?? null,
+                'mobile_number' => $validated['mobile_number'],
+                'short_name' => $validated['short_name'] ?? null,
+                'declaration_given' => $validated['declaration_given'],
+                'total_trucks' => $validated['total_trucks'],
+                'advance_amount' => $validated['advance_amount'],
+                'tds_percentage' => $validated['tds_percentage'],
+            ]);
+            return redirect()->route('truck_owners.index')->with('success', 'Truck Owner created successfully!');
+        }
+
+        $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
+        $validated['pan_number'] = strtoupper($validated['pan_number']);
+        $validated['gst_number'] = ! empty($validated['gst_number']) ? strtoupper($validated['gst_number']) : null;
+        $validated['tds_percentage'] = $this->calculateTruckOwnerTdsFromPan($validated['pan_number'], $validated['pan_active'], $validated['declaration_given']);
+
+        $masterData = [
+            'name' => $validated['name'],
+            'email' => $validated['pan_number'] . '@truckowner.placeholder',
+            'pan_number' => $validated['pan_number'],
+            'gst_number' => $validated['gst_number'],
+            'gst_type' => null,
+            'pan_active' => $validated['pan_active'],
+            'address' => $validated['address'] ?? null,
+            'city_id' => $validated['city_id'] ?? null,
+            'state_id' => $validated['state_id'] ?? null,
+            'country_id' => $validated['country_id'] ?? null,
+        ];
+        $master = TransporterMaster::create($masterData);
+
+        Transporter::create([
+            'transporter_master_id' => $master->id,
+            'company_id' => $validated['company_id'],
+            'is_owner' => 1,
+            'contact_person_name' => $validated['contact_person_name'] ?? null,
+            'mobile_number' => $validated['mobile_number'],
+            'short_name' => $validated['short_name'] ?? null,
+            'declaration_given' => $validated['declaration_given'],
+            'total_trucks' => $validated['total_trucks'],
+            'advance_amount' => $validated['advance_amount'],
+            'tds_percentage' => $validated['tds_percentage'],
         ]);
 
-        // Ensure uppercase PAN and GST numbers
-        if (!empty($validated['pan_number'])) {
-            $validated['pan_number'] = strtoupper($validated['pan_number']);
-        }
-        if (!empty($validated['gst_number'])) {
-            $validated['gst_number'] = strtoupper($validated['gst_number']);
-        }
-
-        // Always set truck owner specific fields (system controlled, not user input)
-        // Handle advance_amount - use provided value or default to 0
-        if (!isset($validated['advance_amount'])) {
-            $validated['advance_amount'] = 0;
-        }
-        $validated['is_owner'] = 1; // Always true for truck owners (this differentiates from transporters)
-
-        // Convert pan_active to boolean
-        $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
-
-        if ($validated['declaration_given']) {
-            // Rule 1: Declaration given → TDS = 0%
-            $validated['tds_percentage'] = 0.00;
-        } else {
-            // Rule 2: Declaration not given
-            if ($validated['pan_active'] == false) {
-                // PAN not active → 20%
-                $validated['tds_percentage'] = 20.00;
-            } else {
-                // PAN active → check 4th character
-                $fourthChar = strtoupper(substr($validated['pan_number'], 3, 1));
-                if (in_array($fourthChar, ['P', 'H'])) {
-                    $validated['tds_percentage'] = 1.00;
-                } else if (in_array($fourthChar, ['C', 'F', 'A', 'B', 'J', 'L', 'T'])) {
-                    $validated['tds_percentage'] = 2.00;
-                } else {
-                    $validated['tds_percentage'] = 20.00;
-                }
-            }
-        }
-
-        Transporter::create($validated);
         return redirect()->route('truck_owners.index')->with('success', 'Truck Owner created successfully!');
+    }
+
+    private function calculateTruckOwnerTdsFromPan(string $panNumber, bool $panActive, bool $declarationGiven): float
+    {
+        if ($declarationGiven) {
+            return 0.00;
+        }
+        if (! $panActive) {
+            return 20.00;
+        }
+        $fourthChar = strtoupper(substr($panNumber, 3, 1));
+        if (in_array($fourthChar, ['P', 'H'])) {
+            return 1.00;
+        }
+        if (in_array($fourthChar, ['C', 'F', 'A', 'B', 'J', 'L', 'T'])) {
+            return 2.00;
+        }
+        return 20.00;
     }
 
     public function calculateTruckOwnerTdsPercentage(Request $request)
@@ -373,7 +330,7 @@ class TruckOwnerController extends Controller
 
     public function show(Transporter $truck_owner)
     {
-        $truck_owner->load(['company', 'city.state.country']);
+        $truck_owner->load(['company', 'transporterMaster.city.state.country']);
 
         // Check if user has permission to view this truck owner
         if (auth()->user()->userRole->name !== 'super_admin' && $truck_owner->company_id !== auth()->user()->company_id) {
@@ -424,9 +381,9 @@ class TruckOwnerController extends Controller
             'pan_active' => $truck_owner->pan_active ? 'Yes' : 'No',
             'mobile_number' => $truck_owner->mobile_number,
             'address' => $truck_owner->address ?: 'Not provided',
-            'country' => optional($truck_owner->city->state->country)->name ?: 'Not specified',
-            'state' => optional($truck_owner->city->state)->name ?: 'Not specified',
-            'city' => optional($truck_owner->city)->name ?: 'Not specified',
+            'country' => optional($truck_owner->transporterMaster?->city?->state?->country)->name ?: 'Not specified',
+            'state' => optional($truck_owner->transporterMaster?->city?->state)->name ?: 'Not specified',
+            'city' => optional($truck_owner->transporterMaster?->city)->name ?: 'Not specified',
             'company' => optional($truck_owner->company)->name ?: 'Not specified',
             'is_owner' => 'Truck Owner',
             'declaration_given' => $truck_owner->declaration_given ? 'Yes' : 'No',
@@ -442,8 +399,8 @@ class TruckOwnerController extends Controller
 
     public function edit(Transporter $truck_owner)
     {
-        // Load the trucks relationship with driver information
-        $truck_owner->load(['trucks.driver']);
+        // Load the trucks relationship with driver information and transporterMaster for name/address accessors
+        $truck_owner->load(['trucks.driver', 'transporterMaster.city.state.country']);
 
         $companies = Company::all();
         $trucks = Truck::where('transporter_id', $truck_owner->id)->get();
@@ -454,152 +411,36 @@ class TruckOwnerController extends Controller
         return view('truck_owner.edit', compact('truck_owner', 'companies', 'trucks', 'countries', 'states', 'cities'));
     }
 
-    public function update(Request $request, Transporter $truck_owner)
+    public function update(UpdateTruckOwnerRequest $request, Transporter $truck_owner)
     {
-        $validated = $request->validate([
-            'company_id' => 'required|exists:companies,id',
-            'name' => 'required|string|max:255',
-            'gst_number' => [
-                'nullable',
-                'string',
-                'max:15',
-                'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
-                Rule::unique('transporters')
-                    ->where(
-                        fn($query) =>
-                        $query->where('company_id', $request->company_id)
-                            ->whereNULL('deleted_at')
-                            ->where('is_owner', 1)
-                    )
-                    ->ignore($truck_owner->id),
-            ],
-            'pan_number' => [
-                'nullable',
-                'string',
-                'size:10',
-                'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
-                Rule::unique('transporters')
-                    ->where(
-                        fn($query) =>
-                        $query->where('company_id', $request->company_id)
-                            ->whereNULL('deleted_at')
-                            ->where('is_owner', 1)
-                    )
-                    ->ignore($truck_owner->id),
-            ],
-            'declaration_given' => 'required|boolean',
-            'total_trucks' => 'required|integer|min:0|max:10000',
-            'advance_amount' => 'nullable|numeric',
-            'pan_active' => 'required|boolean',
-            'address' => 'nullable|string|max:255',
-            'country_id' => 'nullable|exists:countries,id',
-            'state_id' => [
-                'nullable',
-                'exists:states,id',
-                function ($attribute, $value, $fail) use ($request) {
-                    if ($value && $request->country_id) {
-                        $state = State::find($value);
-                        if ($state && $state->country_id != $request->country_id) {
-                            $fail('The selected state does not belong to the selected country.');
-                        }
-                    }
-                },
-            ],
-            'city_id' => [
-                'nullable',
-                'exists:cities,id',
-                function ($attribute, $value, $fail) use ($request) {
-                    if ($value && $request->state_id) {
-                        $city = City::find($value);
-                        if ($city && $city->state_id != $request->state_id) {
-                            $fail('The selected city does not belong to the selected state.');
-                        }
-                    }
-                    if ($value && $request->country_id) {
-                        $city = City::find($value);
-                        if ($city && $city->country_id != $request->country_id) {
-                            $fail('The selected city does not belong to the selected country.');
-                        }
-                    }
-                },
-            ],
-            'mobile_number' => [
-                'required',
-                'digits:10',
-                Rule::unique('transporters')
-                    ->where(
-                        fn($query) =>
-                        $query->where('company_id', $request->company_id)
-                            ->whereNULL('deleted_at')
-                            ->where('is_owner', 1)
-                    )
-                    ->ignore($truck_owner->id),
-            ],
-            'short_name' => [
-                'nullable',
-                'string',
-                'max:255',
-                Rule::unique('transporters')
-                    ->where(
-                        fn($query) =>
-                        $query->where('company_id', $request->company_id)
-                            ->whereNULL('deleted_at')
-                            ->where('is_owner', 1)
-                    )
-                    ->ignore($truck_owner->id),
-            ],
-            'contact_person_name' => 'nullable|string|max:255',
-        ], [
-            'pan_number.unique' => 'This PAN number is already registered with another truck owner or transporter.',
-            'gst_number.unique' => 'This GST number is already registered with another truck owner or transporter.',
-            'mobile_number.unique' => 'This mobile number is already registered with another truck owner or transporter.',
-        ]);
+        $validated = $request->validated();
 
-        // Ensure uppercase PAN and GST numbers
-        if (!empty($validated['pan_number'])) {
-            $validated['pan_number'] = strtoupper($validated['pan_number']);
-        }
-        if (!empty($validated['gst_number'])) {
-            $validated['gst_number'] = strtoupper($validated['gst_number']);
-        }
-
-        // Always set truck owner specific fields (system controlled, not user input)
-        // Handle advance_amount - use provided value or default to 0
-        if (!isset($validated['advance_amount'])) {
-            $validated['advance_amount'] = 0;
-        }
-        $validated['is_owner'] = 1; // Always true for truck owners (this differentiates from transporters)
-
-        // Convert pan_active to boolean
-        $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
-
-        // Check if declaration_given changed
         $declarationChanged = $truck_owner->declaration_given != $validated['declaration_given'];
 
-        if ($validated['declaration_given']) {
-            // Rule 1: Declaration given → TDS = 0%
-            $validated['tds_percentage'] = 0.00;
-        } else {
-            // Rule 2: Declaration not given
-            if ($validated['pan_active'] == false) {
-                // PAN not active → 20%
-                $validated['tds_percentage'] = 20.00;
-            } else {
-                // PAN active → check 4th character
-                $fourthChar = strtoupper(substr($validated['pan_number'], 3, 1));
-                if (in_array($fourthChar, ['P', 'H'])) {
-                    $validated['tds_percentage'] = 1.00;
-                } else if (in_array($fourthChar, ['C', 'F', 'A', 'B', 'J', 'L', 'T'])) {
-                    $validated['tds_percentage'] = 2.00;
-                } else {
-                    $validated['tds_percentage'] = 20.00;
-                }
-            }
+        $master = $truck_owner->transporterMaster;
+        $validated['tds_percentage'] = $this->calculateTruckOwnerTdsFromPan(
+            $master->pan_number,
+            $master->pan_active,
+            $validated['declaration_given']
+        );
+
+        $updateData = [
+            'company_id' => $validated['company_id'],
+            'contact_person_name' => $validated['contact_person_name'] ?? null,
+            'mobile_number' => $validated['mobile_number'],
+            'declaration_given' => $validated['declaration_given'],
+            'total_trucks' => $validated['total_trucks'],
+            'advance_amount' => $validated['advance_amount'] ?? 0,
+            'tds_percentage' => $validated['tds_percentage'],
+        ];
+
+        if (auth()->user()->userRole->name === 'super_admin') {
+            $updateData['short_name'] = $validated['short_name'] ?? null;
+            $updateData['beneficiary_id'] = $validated['beneficiary_id'] ?? null;
         }
 
-        $truck_owner->update($validated);
+        $truck_owner->update($updateData);
 
-        // If declaration_given changed, update related freight bookings with remaining balance
         if ($declarationChanged) {
             $this->updateFreightBookingsTds($truck_owner, $validated['tds_percentage']);
         }

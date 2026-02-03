@@ -11,7 +11,9 @@ use App\Models\User;
 use App\Models\Company;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use App\Models\AdvancePayment;
 use App\Models\FreightBooking;
+use App\Models\VoucherPayment;
 
 class DashboardController extends Controller
 {
@@ -40,6 +42,9 @@ class DashboardController extends Controller
 
             case 'accountant':
                 return $this->accountantDashboard();
+
+            case 'transporter':
+                return $this->transporterDashboard();
 
             default:
                 return $this->defaultDashboard();
@@ -298,12 +303,13 @@ class DashboardController extends Controller
             ->get();
 
         // Top transporters
-        $topTransporters = Transporter::where('is_owner', 0)
+        $topTransporters = Transporter::with('transporterMaster')
+            ->where('is_owner', 0)
             ->where('company_id', $companyId)
             ->withCount('lorryReceipts')
             ->orderByDesc('lorry_receipts_count')
             ->take(5)
-            ->get(['name', 'lorry_receipts_count']);
+            ->get();
 
         // Top consignees
         $topConsignees = \App\Models\Consignee::where('company_id', $companyId)
@@ -488,12 +494,13 @@ class DashboardController extends Controller
             ->get();
 
         // Top transporters
-        $topTransporters = Transporter::where('is_owner', 0)
+        $topTransporters = Transporter::with('transporterMaster')
+            ->where('is_owner', 0)
             ->where('company_id', $companyId)
             ->withCount('lorryReceipts')
             ->orderByDesc('lorry_receipts_count')
             ->take(5)
-            ->get(['name', 'lorry_receipts_count']);
+            ->get();
 
         // Expired Eway bills
         $expiredEwayBills = FreightBooking::with('lr')
@@ -627,6 +634,75 @@ class DashboardController extends Controller
             'financialStats',
             'pendingInvoices',
             'recentInvoicePayments'
+        ));
+    }
+
+    private function transporterDashboard()
+    {
+        $user = auth()->user();
+        $transporterMasterId = $user->transporter_master_id;
+        if (! $transporterMasterId) {
+            return view('dashboard', ['transporterStats' => [], 'recentFreightBookings' => collect(), 'recentPayments' => collect(), 'expiredEwayBills' => collect()]);
+        }
+
+        $transporterIds = Transporter::where('transporter_master_id', $transporterMasterId)->pluck('id');
+        $today = now()->startOfDay();
+        $startOfMonth = now()->copy()->startOfMonth();
+        $endOfMonth = now()->copy()->endOfMonth();
+
+        $transporterStats = [
+            'total_bookings' => FreightBooking::whereIn('transporter_id', $transporterIds)
+                ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+                ->count(),
+            'active_trips' => FreightBooking::whereIn('transporter_id', $transporterIds)
+                ->where('is_delivered', false)
+                ->where('is_cancelled', false)
+                ->count(),
+            'pending_lrs' => \App\Models\LorryReceipt::whereIn('transporter_id', $transporterIds)
+                ->where('delivery_status', 'Pending')
+                ->whereNull('deleted_at')
+                ->count(),
+            'delivered_today' => \App\Models\LorryReceipt::whereIn('transporter_id', $transporterIds)
+                ->where('delivery_status', 'Delivered')
+                ->whereDate('updated_at', $today)
+                ->whereNull('deleted_at')
+                ->count(),
+            'payments_received' => \App\Models\VoucherPayment::whereHas('freight_booking', fn ($q) => $q->whereIn('transporter_id', $transporterIds))
+                ->where('payment_status', 'paid')
+                ->sum('amount'),
+            'advance_received' => \App\Models\AdvancePayment::whereIn('transporter_id', $transporterIds)->sum('advance_amount'),
+            'expired_eway_bills' => FreightBooking::whereIn('transporter_id', $transporterIds)
+                ->where('is_delivered', 0)
+                ->where('is_cancelled', 0)
+                ->where('eway_bill_expiry', '<', now()->startOfDay())
+                ->count(),
+        ];
+
+        $recentFreightBookings = FreightBooking::with(['lr.consignor', 'lr.consignee', 'lr.truck'])
+            ->whereIn('transporter_id', $transporterIds)
+            ->latest()
+            ->take(10)
+            ->get();
+
+        $recentPayments = \App\Models\VoucherPayment::with('freight_booking.lr')
+            ->whereHas('freight_booking', fn ($q) => $q->whereIn('transporter_id', $transporterIds))
+            ->latest()
+            ->take(10)
+            ->get();
+
+        $expiredEwayBills = FreightBooking::with('lr')
+            ->whereIn('transporter_id', $transporterIds)
+            ->where('is_delivered', 0)
+            ->where('is_cancelled', 0)
+            ->where('eway_bill_expiry', '<=', now()->addDays(2)->endOfDay())
+            ->orderBy('eway_bill_expiry', 'asc')
+            ->get();
+
+        return view('dashboard', compact(
+            'transporterStats',
+            'recentFreightBookings',
+            'recentPayments',
+            'expiredEwayBills'
         ));
     }
 

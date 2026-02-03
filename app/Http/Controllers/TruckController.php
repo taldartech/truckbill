@@ -12,7 +12,8 @@ class TruckController extends Controller
 {
     public function getTrucksForTransporter($transporterId)
     {
-        $trucks = \App\Models\Truck::where('transporter_id', $transporterId)
+        $trucks = \App\Models\Truck::with(['transporter.transporterMaster', 'driver'])
+            ->where('transporter_id', $transporterId)
             ->whereHas('transporter', function ($q) {
                 $q->where('company_id', Auth::user()->company_id);
             })
@@ -27,11 +28,14 @@ class TruckController extends Controller
             return $this->getTrucksData($request);
         }
         // Get only transporters who are owners
-        $owners = \App\Models\Transporter::where('is_owner', 1)
+        $owners = \App\Models\Transporter::with('transporterMaster')
+            ->where('is_owner', 1)
             ->where('company_id', Auth::user()->company_id)
             ->get();
 
-        $transporters = \App\Models\Transporter::where('company_id', Auth::user()->company_id)->get();
+        $transporters = \App\Models\Transporter::with('transporterMaster')
+            ->where('company_id', Auth::user()->company_id)
+            ->get();
         $drivers = \App\Models\Driver::all();
         return view('trucks.index', compact('transporters', 'drivers', 'owners'));
     }
@@ -42,7 +46,7 @@ class TruckController extends Controller
         //     $q->where('company_id', Auth::user()->company_id);
 
         // });
-        $query = \App\Models\Truck::with(['transporter', 'driver'])
+        $query = \App\Models\Truck::with(['transporter.transporterMaster', 'driver'])
             ->where(function ($q) {
                 $q->whereHas('transporter', function ($subQuery) {
                     $subQuery->where('company_id', Auth::user()->company_id);
@@ -57,7 +61,7 @@ class TruckController extends Controller
                 $q->where('truck_number', 'like', "%{$searchValue}%")
                     ->orWhere('truck_type', 'like', "%{$searchValue}%")
                     ->orWhere('registration_date', 'like', "%{$searchValue}%")
-                    ->orWhereHas('transporter', function ($transporterQuery) use ($searchValue) {
+                    ->orWhereHas('transporter.transporterMaster', function ($transporterQuery) use ($searchValue) {
                         $transporterQuery->where('name', 'like', "%{$searchValue}%");
                     })
                     ->orWhereHas('driver', function ($driverQuery) use ($searchValue) {
@@ -82,7 +86,7 @@ class TruckController extends Controller
                             $query->where('registration_date', 'like', "%{$searchValue}%");
                             break;
                         case 4: // Transporter
-                            $query->whereHas('transporter', function ($transporterQuery) use ($searchValue) {
+                            $query->whereHas('transporter.transporterMaster', function ($transporterQuery) use ($searchValue) {
                                 $transporterQuery->where('name', 'like', "%{$searchValue}%");
                             });
                             break;
@@ -114,9 +118,10 @@ class TruckController extends Controller
                 case 3: // Registration Date
                     $query->orderBy('registration_date', $orderDirection);
                     break;
-                case 4: // Transporter
+                        case 4: // Transporter
                     $query->join('transporters', 'trucks.transporter_id', '=', 'transporters.id')
-                        ->orderBy('transporters.name', $orderDirection)
+                        ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+                        ->orderBy('transporter_masters.name', $orderDirection)
                         ->select('trucks.*');
                     break;
                 case 5: // Driver
@@ -214,7 +219,7 @@ class TruckController extends Controller
 
     public function getOwnerTransporters($truckId)
     {
-        $truck = \App\Models\Truck::with('transporter')
+        $truck = \App\Models\Truck::with('transporter.transporterMaster')
             ->where('id', $truckId)
             ->whereHas('transporter', function ($q) {
                 $q->where('company_id', Auth::user()->company_id);
@@ -226,7 +231,8 @@ class TruckController extends Controller
         }
 
         // Get all transporters that are owners
-        $ownerTransporters = \App\Models\Transporter::where('company_id', Auth::user()->company_id)
+        $ownerTransporters = \App\Models\Transporter::with('transporterMaster')
+            ->where('company_id', Auth::user()->company_id)
             ->where('is_owner', 1)
             ->get();
 
@@ -235,7 +241,7 @@ class TruckController extends Controller
 
     public function getAgencyTransporters($truckId)
     {
-        $truck = \App\Models\Truck::with('transporter')
+        $truck = \App\Models\Truck::with('transporter.transporterMaster')
             ->where('id', $truckId)
             ->whereHas('transporter', function ($q) {
                 $q->where('company_id', Auth::user()->company_id);
@@ -247,7 +253,8 @@ class TruckController extends Controller
         }
 
         // Get all transporters that are agencies
-        $agencyTransporters = \App\Models\Transporter::where('company_id', Auth::user()->company_id)
+        $agencyTransporters = \App\Models\Transporter::with('transporterMaster')
+            ->where('company_id', Auth::user()->company_id)
             ->where('is_owner', 0)
             ->get();
 
@@ -259,7 +266,8 @@ class TruckController extends Controller
     public function create($transporter_id)
     {
         // Fetch only the specific transporter
-        $transporter = \App\Models\Transporter::where('company_id', Auth::user()->company_id)
+        $transporter = \App\Models\Transporter::with('transporterMaster')
+            ->where('company_id', Auth::user()->company_id)
             ->where('id', $transporter_id)
             ->firstOrFail();
 
@@ -362,7 +370,9 @@ class TruckController extends Controller
 
     public function edit(\App\Models\Truck $truck)
     {
-        $transporters = \App\Models\Transporter::where('company_id', Auth::user()->company_id)->get();
+        $transporters = \App\Models\Transporter::with('transporterMaster')
+            ->where('company_id', Auth::user()->company_id)
+            ->get();
         $drivers = \App\Models\Driver::all();
         return view('trucks.edit', compact('truck', 'transporters', 'drivers'));
     }
@@ -609,7 +619,9 @@ class TruckController extends Controller
     public function getTrucksFromLrs($transporterId)
     {
         $lrs = \App\Models\LorryReceipt::where('transporter_id', $transporterId)->get(['truck_id']);
-        $trucks = \App\Models\Truck::whereIn('id', $lrs->pluck('truck_id'))->get();
+        $trucks = \App\Models\Truck::with(['transporter.transporterMaster', 'driver'])
+            ->whereIn('id', $lrs->pluck('truck_id'))
+            ->get();
         return response()->json($trucks);
     }
 

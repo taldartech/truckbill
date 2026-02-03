@@ -56,21 +56,20 @@ class TruckTest extends TestCase
 
     protected function makeTransporter(User $admin, City $city): Transporter
     {
-        return Transporter::create([
-            'company_id' => $admin->company_id,
-            'name' => 'Fast Logistics',
-            'pan_number' => 'ABCDE1234F',
-            'mobile_number' => '9999999999',
-            'city_id' => $city->id,
-            'state_id' => $city->state_id,
-            'country_id' => $city->country_id,
-            'is_owner' => 0,
-            'pan_active' => true,
-            'declaration_given' => false,
-            'tds_percentage' => 20,
-            'total_trucks' => 0,
-            'advance_amount' => 0,
-        ]);
+        $master = \App\Models\TransporterMaster::factory()
+            ->withLocation($city->id, $city->state_id, $city->country_id)
+            ->create(['name' => 'Fast Logistics', 'pan_number' => 'ABCDE1234F']);
+
+        return Transporter::factory()
+            ->forCompany($admin->company_id)
+            ->create([
+                'transporter_master_id' => $master->id,
+                'mobile_number' => '9999999999',
+                'declaration_given' => false,
+                'tds_percentage' => 20,
+                'total_trucks' => 0,
+                'advance_amount' => 0,
+            ]);
     }
 
     public function test_truck_index_view_loads(): void

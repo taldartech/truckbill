@@ -51,71 +51,102 @@
             <div class="text-danger">{{ $message }}</div>
         @enderror
         <div class="card-body">
-            {{-- Hidden fields for truck owner identification --}}
             <input type="hidden" name="is_owner" value="1">
-            <!-- Hidden company field - automatically set based on user's company -->
-            <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
+            @if($canEditCompany)
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="company_id" class="form-label">Company *</label>
+                        <select class="form-select @error('company_id') is-invalid @enderror" id="company_id" name="company_id" required>
+                            <option value="">Select Company</option>
+                            @foreach($companies as $company)
+                                <option value="{{ $company->id }}" {{ old('company_id', $truck_owner->company_id) == $company->id ? 'selected' : '' }}>
+                                    {{ $company->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('company_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+            @else
+                <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
+            @endif
+            <input type="hidden" name="advance_amount" value="{{ $truck_owner->advance_amount }}">
 
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label for="name" class="form-label">Truck Owner Name *</label>
-                    <input placeholder="Enter Truck Owner Name" type="text" class="form-control" id="name" name="name" required value="{{ old('name', $truck_owner->name) }}">
-                    @error('name') <div class="text-danger">{{ $message }}</div> @enderror
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Advance Amount</label>
-                    <div class="form-control-plaintext bg-light border rounded px-3 py-2">
-                        <strong>₹ {{ number_format($truck_owner->advance_amount, 2) }}</strong>
-                        <small class="text-muted d-block">Read-only field</small>
+            @php $master = $truck_owner->transporterMaster; @endphp
+            <div class="card mb-4 p-3 bg-light" id="masterDataSection">
+                <div class="row"><div class="col"><h5 class="mb-3 text-muted"><i class="fas fa-lock me-2"></i> Master Data (Read-only)</h5></div></div>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Name</label>
+                        <div class="form-control-plaintext bg-white border rounded px-3 py-2" id="display_master_name">{{ $master->name ?? '-' }}</div>
                     </div>
-                    <input type="hidden" name="advance_amount" value="{{ $truck_owner->advance_amount }}">
-                </div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label for="gst_number" class="form-label">GST Number</label>
-            <input placeholder="Enter GST Number" type="text" class="form-control" id="gst_number" name="gst_number" value="{{ old('gst_number', $truck_owner->gst_number) }}">
-            @error('gst_number') <div class="text-danger">{{ $message }}</div> @enderror
-                </div>
-                <div class="col-md-6">
-                    <label for="pan_number" class="form-label">PAN Number</label>
-                    <input placeholder="Enter PAN Number" type="text" class="form-control" id="pan_number" name="pan_number" required value="{{ old('pan_number', $truck_owner->pan_number) }}">
-                    @error('pan_number') <div class="text-danger">{{ $message }}</div> @enderror
-                </div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label class="form-label">PAN is Active *</label><br>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="pan_active" id="pan_active_yes" value="1" {{ old('pan_active', $truck_owner->pan_active) == 1 ? 'checked' : '' }} required>
-                        <label class="form-check-label" for="pan_active_yes">Yes</label>
+                    <div class="col-md-4">
+                        <label class="form-label">PAN Number</label>
+                        <div class="form-control-plaintext bg-white border rounded px-3 py-2" id="display_master_pan">{{ $master->pan_number ?? '-' }}</div>
                     </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="pan_active" id="pan_active_no" value="0" {{ old('pan_active', $truck_owner->pan_active) == 0 ? 'checked' : '' }} required>
-                        <label class="form-check-label" for="pan_active_no">No</label>
+                    <div class="col-md-4">
+                        <label class="form-label">GST Number</label>
+                        <div class="form-control-plaintext bg-white border rounded px-3 py-2" id="display_master_gst">{{ $master->gst_number ?? '-' }}</div>
                     </div>
-                    @error('pan_active') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
-                <div class="col-md-6">
-                    <label for="mobile" class="form-label">Mobile</label>
-                    <input type="text" class="form-control" id="mobile" name="mobile_number" required value="{{ old('mobile_number', $truck_owner->mobile_number) }}">
-                    @error('mobile_number') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please enter a valid mobile number.</div>
-                </div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <label for="address" class="form-label">Address</label>
-                    <textarea class="form-control" id="address" name="address" rows="3">{{ old('address', $truck_owner->address) }}</textarea>
-                    @error('address') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please enter an address.</div>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Address</label>
+                        <div class="form-control-plaintext bg-white border rounded px-3 py-2" id="display_master_address">{{ $master->address ?? '-' }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">City / State / Country</label>
+                        <div class="form-control-plaintext bg-white border rounded px-3 py-2" id="display_master_location">{{ optional($master->city)->name ?? '-' }} / {{ optional($master->state)->name ?? '-' }} / {{ optional($master->country)->name ?? '-' }}</div>
+                    </div>
                 </div>
             </div>
-            <!-- Additional Details Section -->
+
             <div class="card mb-4 p-3 bg-light">
-                <div class="row"><div class="col"><h5 class="mb-3">Additional Details</h5></div></div>
-                <div class="row mb-2">
-                    <div class="col-md-6">
+                <div class="row"><div class="col"><h5 class="mb-3">Editable Fields</h5></div></div>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label for="contact_person_name" class="form-label">Contact Person Name</label>
+                        <input type="text" class="form-control" id="contact_person_name" name="contact_person_name" value="{{ old('contact_person_name', $truck_owner->contact_person_name) }}">
+                        @error('contact_person_name') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label for="mobile_number" class="form-label">Mobile Number *</label>
+                        <input type="text" class="form-control" id="mobile_number" name="mobile_number" required value="{{ old('mobile_number', $truck_owner->mobile_number) }}" maxlength="10">
+                        @error('mobile_number') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label for="short_name" class="form-label">Short Name</label>
+                        @if(auth()->user()->userRole->name === 'super_admin')
+                            <input type="text" class="form-control" id="short_name" name="short_name" value="{{ old('short_name', $truck_owner->short_name) }}">
+                        @else
+                            <div class="form-control-plaintext bg-light border rounded px-3 py-2">{{ $truck_owner->short_name ?? '-' }}</div>
+                            <small class="text-muted">Editable only from Super Admin panel</small>
+                        @endif
+                        @error('short_name') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Advance Amount</label>
+                        <div class="form-control-plaintext bg-light border rounded px-3 py-2"><strong>₹ {{ number_format($truck_owner->advance_amount, 2) }}</strong></div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="beneficiary_id" class="form-label">Beneficiary ID</label>
+                        @if(auth()->user()->userRole->name === 'super_admin')
+                            <input type="text" class="form-control" id="beneficiary_id" name="beneficiary_id" value="{{ old('beneficiary_id', $truck_owner->beneficiary_id) }}">
+                        @else
+                            <div class="form-control-plaintext bg-light border rounded px-3 py-2">{{ $truck_owner->beneficiary_id ?? '-' }}</div>
+                            <small class="text-muted">Editable only from Super Admin panel</small>
+                        @endif
+                        @error('beneficiary_id') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">TDS %</label>
+                        <div class="form-control-plaintext bg-light border rounded px-3 py-2">{{ number_format($truck_owner->tds_percentage ?? 0, 2) }}%</div>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4">
                         <label class="form-label">Declaration Given? *</label><br>
                         <div class="form-check form-check-inline">
                             <input class="form-check-input" type="radio" name="declaration_given" id="decl_yes" value="1" {{ old('declaration_given', $truck_owner->declaration_given) == 1 ? 'checked' : '' }} required>
@@ -127,120 +158,12 @@
                         </div>
                         @error('declaration_given') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label for="total_trucks" class="form-label">Total Trucks *</label>
-                        <input type="number" class="form-control" id="total_trucks" name="total_trucks" min="0" required value="{{ old('total_trucks', $truck_owner->total_trucks) }}" placeholder="Enter total trucks">
+                        <input type="number" class="form-control" id="total_trucks" name="total_trucks" min="0" required value="{{ old('total_trucks', $truck_owner->total_trucks) }}">
                         @error('total_trucks') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
                 </div>
-                {{-- Advance amount is now hidden as per truck owner requirements --}}
-            </div>
-            <div class="card mb-4 p-3 bg-light">
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label for="country_id" class="form-label">Country *</label>
-                        <div class="input-group">
-                            <select class="form-select" id="country_id" name="country_id" required>
-                                <option value="">Select Country</option>
-                                @foreach($countries as $country)
-                                    <option value="{{ $country->id }}" {{ old('country_id', $truck_owner->country_id) == $country->id ? 'selected' : '' }}>
-                                        {{ $country->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addCountryModal" title="Add New Country">
-                                <i class="bi bi-plus"></i>
-                            </button>
-                        </div>
-                        @error('country_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="state_id" class="form-label">State *</label>
-                        <div class="input-group">
-                            <select class="form-select" id="state_id" name="state_id" required>
-                                <option value="">Select State</option>
-                                @if(old('country_id'))
-                                    @foreach($states as $state)
-                                        <option value="{{ $state->id }}" {{ old('state_id', $truck_owner->state_id) == $state->id ? 'selected' : '' }}>
-                                            {{ $state->name }}
-                                        </option>
-                                    @endforeach
-                                @endif
-                            </select>
-                            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addStateModal" title="Add New State">
-                                <i class="bi bi-plus"></i>
-                            </button>
-                        </div>
-                        @error('state_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="city_id" class="form-label">City *</label>
-                        <div class="input-group">
-                            <select class="form-select" id="city_id" name="city_id" required>
-                                <option value="">Select City</option>
-                                @if(old('state_id'))
-                                    @foreach($cities as $city)
-                                        <option value="{{ $city->id }}" {{ old('city_id', $truck_owner->city_id) == $city->id ? 'selected' : '' }}>
-                                            {{ $city->name }}
-                                        </option>
-                                    @endforeach
-                                @endif
-                            </select>
-                            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addCityModal" title="Add New City">
-                                <i class="bi bi-plus"></i>
-                            </button>
-                        </div>
-                        @error('city_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                </div>
-            {{-- <div class="row mb-3">
-                <div class="col-md-4">
-                    <label for="country_id" class="form-label">Country * </label>
-                    <select class="form-select" id="country_id" name="country_id" required>
-                        <option value="">Select Country</option>
-                        @foreach($countries as $country)
-                            <option value="{{ $country->id }}" {{ old('country_id', $truck_owner->country_id) == $country->id ? 'selected' : '' }}>
-                                {{ $country->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('country_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please select a country.</div>
-                </div>
-                <!--end::Col-->
-
-                <div class="col-md-4">
-                    <label for="state_id" class="form-label">State *</label>
-                    <select class="form-select" id="state_id" name="state_id" required>
-                        <option value="">Select State</option>
-                        @foreach($states as $state)
-                            <option value="{{ $state->id }}"
-                                {{ (old('state_id', $truck_owner->state_id) == $state->id) ? 'selected' : '' }}>
-                                {{ $state->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('state_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please select a state.</div>
-                </div>
-
-                <div class="col-md-4">
-                    <label for="city_id" class="form-label">City *</label>
-                    <select class="form-select" id="city_id" name="city_id" required>
-                        <option value="">Select City</option>
-                        @foreach($cities as $city)
-                            <option value="{{ $city->id }}"
-                                {{ (old('city_id', $truck_owner->city_id) == $city->id) ? 'selected' : '' }}>
-                                {{ $city->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('city_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please select a city.</div>
-                </div>
-
-                <!--end::Col-->
-            </div>   --}}
             </div>
             <!-- Registered Trucks Section -->
 {{-- <div class="card mb-4 p-3 bg-light">
@@ -697,6 +620,16 @@
 
 {{-- JS for confirmation modal --}}
 <script>
+    // Master data (read-only from TransporterMaster)
+    const masterData = {
+        name: {!! json_encode($master->name ?? '') !!},
+        panNumber: {!! json_encode($master->pan_number ?? '') !!},
+        panActive: {{ $master->pan_active ? 'true' : 'false' }},
+        gstNumber: {!! json_encode($master->gst_number ?? '') !!},
+        address: {!! json_encode($master->address ?? '') !!},
+        location: {!! json_encode((optional($master->city)->name ?? '-') . ' / ' . (optional($master->state)->name ?? '-') . ' / ' . (optional($master->country)->name ?? '-')) !!}
+    };
+
     // Function to show confirmation modal with form data
     function showConfirmationModal() {
         // First validate the form
@@ -706,48 +639,51 @@
             return;
         }
 
-        // Get form values with safe access
-        const name = document.getElementById('name')?.value || '-';
+        // Get editable form values
         const contactPerson = document.getElementById('contact_person_name')?.value || '-';
         const mobile = document.getElementById('mobile_number')?.value || '-';
-
-        const gstNumber = document.getElementById('gst_number')?.value || '-';
-        const panNumber = document.getElementById('pan_number')?.value || '-';
-        const panActive = document.querySelector('input[name="pan_active"]:checked')?.value === '1' ? 'Yes' : 'No';
-
-        const address = document.getElementById('address')?.value || '-';
-        const countrySelect = document.getElementById('country_id');
-        const country = countrySelect?.options[countrySelect.selectedIndex]?.text || '-';
-        const stateSelect = document.getElementById('state_id');
-        const state = stateSelect?.options[stateSelect.selectedIndex]?.text || '-';
-        const citySelect = document.getElementById('city_id');
-        const city = citySelect?.options[citySelect.selectedIndex]?.text || '-';
-
         const declaration = document.querySelector('input[name="declaration_given"]:checked')?.value === '1' ? 'Yes' : 'No';
         const totalTrucks = document.getElementById('total_trucks')?.value || '0';
-        const advance = '{{ old("advance_amount", $truck_owner->advance_amount) }}'; // Current advance amount
+        const advance = document.querySelector('input[name="advance_amount"]')?.value || '{{ $truck_owner->advance_amount }}';
 
-        // Populate modal with form data
-        document.getElementById('confirm-name').textContent = name;
+        // Populate modal - master data (read-only)
+        document.getElementById('confirm-name').textContent = masterData.name || '-';
+        document.getElementById('confirm-gst-number').textContent = masterData.gstNumber || '-';
+        document.getElementById('confirm-pan-number').textContent = masterData.panNumber || '-';
+        document.getElementById('confirm-pan-active').textContent = masterData.panActive ? 'Yes' : 'No';
+        document.getElementById('confirm-address').textContent = masterData.address || '-';
+        const locParts = (masterData.location || '-').split(' / ');
+        document.getElementById('confirm-country').textContent = locParts[2] || '-';
+        document.getElementById('confirm-state').textContent = locParts[1] || '-';
+        document.getElementById('confirm-city').textContent = locParts[0] || '-';
+
+        // Editable fields
         document.getElementById('confirm-contact-person').textContent = contactPerson;
         document.getElementById('confirm-mobile').textContent = mobile;
-
-        document.getElementById('confirm-gst-number').textContent = gstNumber;
-        document.getElementById('confirm-pan-number').textContent = panNumber;
-        document.getElementById('confirm-pan-active').textContent = panActive;
-
-        // Use TDS percentage from database
-        const tdsPercentage = '{{ number_format($truck_owner->tds_percentage ?? 0, 2) }}%';
-        document.getElementById('confirm-tds-percentage').textContent = tdsPercentage;
-
-        document.getElementById('confirm-address').textContent = address;
-        document.getElementById('confirm-country').textContent = country;
-        document.getElementById('confirm-state').textContent = state;
-        document.getElementById('confirm-city').textContent = city;
-
         document.getElementById('confirm-declaration').textContent = declaration;
         document.getElementById('confirm-total-trucks').textContent = totalTrucks;
         document.getElementById('confirm-advance').textContent = '₹' + parseFloat(advance || 0).toFixed(2);
+
+        // Recalculate TDS when declaration changes (call truck owner TDS API)
+        fetch('/api/calculate-truck-owner-tds-percentage', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+                pan_number: masterData.panNumber,
+                pan_active: masterData.panActive ? '1' : '0',
+                declaration_given: declaration === 'Yes' ? '1' : '0'
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('confirm-tds-percentage').textContent = (data.tds_percentage || '0.00') + '%';
+        })
+        .catch(() => {
+            document.getElementById('confirm-tds-percentage').textContent = '{{ number_format($truck_owner->tds_percentage ?? 0, 2) }}%';
+        });
 
         // Show the modal
         const modal = new bootstrap.Modal(document.getElementById('confirmationModal'));

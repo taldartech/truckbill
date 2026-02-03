@@ -57,19 +57,16 @@ class ReportExportTest extends TestCase
             'name' => 'Customer',
         ]);
 
-        $transporter = \App\Models\Transporter::create([
-            'company_id' => $user->company_id,
-            'name' => 'Fast Logistics',
-            'short_name' => 'FL',
-            'pan_number' => 'ABCDE1234F',
-            'mobile_number' => '9999999999',
-            'is_owner' => 0,
-            'pan_active' => true,
-            'declaration_given' => false,
-            'tds_percentage' => 20,
-            'total_trucks' => 0,
-            'advance_amount' => 0,
-        ]);
+        $transporter = \App\Models\Transporter::factory()
+            ->forCompany($user->company_id)
+            ->create([
+                'short_name' => 'FL',
+                'mobile_number' => '9999999999',
+                'declaration_given' => false,
+                'tds_percentage' => 20,
+                'total_trucks' => 0,
+                'advance_amount' => 0,
+            ]);
 
         $truck = \App\Models\Truck::create([
             'transporter_id' => $transporter->id,

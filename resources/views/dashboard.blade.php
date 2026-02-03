@@ -14,7 +14,7 @@
             padding: 1rem 0;
             margin-bottom: 1.5rem;
         }
-        
+
         .container-fluid {
             padding-left: 1.5rem;
             padding-right: 1.5rem;
@@ -57,23 +57,27 @@
             {{-- MASTER ADMIN DASHBOARD --}}
             @if($userRole === 'master_admin' && isset($systemStats))
                 @include('dashboard.roles.master_admin')
-            
+
             {{-- SUPER ADMIN DASHBOARD --}}
             @elseif($userRole === 'super_admin' && isset($adminStats))
                 @include('dashboard.roles.super_admin')
-            
+
             {{-- ADMIN DASHBOARD --}}
             @elseif($userRole === 'admin' && isset($monthlyStats))
                 @include('dashboard.roles.admin')
-            
+
             {{-- MODERATOR DASHBOARD --}}
             @elseif($userRole === 'moderator' && isset($operationalStats))
                 @include('dashboard.roles.moderator')
-            
+
             {{-- ACCOUNTANT DASHBOARD --}}
             @elseif($userRole === 'accountant' && isset($financialStats))
                 @include('dashboard.roles.accountant')
-            
+
+            {{-- TRANSPORTER DASHBOARD --}}
+            @elseif($userRole === 'transporter' && isset($transporterStats))
+                @include('dashboard.roles.transporter')
+
             {{-- DEFAULT FALLBACK --}}
             @else
                 <div class="row">

@@ -58,7 +58,7 @@ class LorryReceiptController extends Controller
     private function getLorryReceiptsData(Request $request): \Illuminate\Http\JsonResponse
     {
         try {
-            $query = LorryReceipt::with(['truck', 'transporter', 'consignor', 'consignee', 'company', 'customer']);
+            $query = LorryReceipt::with(['truck', 'transporter.transporterMaster', 'consignor', 'consignee', 'company', 'customer']);
 
             // Only apply company_id filter for non-super_admin users
             if (Auth::user()->userRole->name !== 'super_admin') {
@@ -183,14 +183,18 @@ class LorryReceiptController extends Controller
         }
 
         $companyId = Auth::user()->company_id;
-        $trucks = Truck::with(['transporter', 'driver'])
+        $trucks = Truck::with(['transporter.transporterMaster', 'driver'])
             ->whereHas('transporter', function ($query) use ($companyId) {
                 $query->where('company_id', $companyId);
             })
             ->get();
 
-        $agencies = Transporter::where('is_owner', 0)
+        $agencies = Transporter::with('transporterMaster')
+            ->where('is_owner', 0)
             ->where('company_id', $companyId)
+            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+            ->orderBy('transporter_masters.name')
+            ->select('transporters.*')
             ->get();
         $consignees = Consignee::where('company_id', $companyId)
             ->orderBy('name')
@@ -208,14 +212,18 @@ class LorryReceiptController extends Controller
         }
 
         $companyId = Auth::user()->company_id;
-        $trucks = Truck::with(['transporter', 'driver'])
+        $trucks = Truck::with(['transporter.transporterMaster', 'driver'])
             ->whereHas('transporter', function ($query) use ($companyId) {
                 $query->where('company_id', $companyId);
             })
             ->get();
 
-        $agencies = Transporter::where('is_owner', 0)
+        $agencies = Transporter::with('transporterMaster')
+            ->where('is_owner', 0)
             ->where('company_id', $companyId)
+            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+            ->orderBy('transporter_masters.name')
+            ->select('transporters.*')
             ->get();
         $consignees = Consignee::where('company_id', $companyId)
             ->orderBy('name')
@@ -562,14 +570,17 @@ class LorryReceiptController extends Controller
         $unloadingWeight = $validated['unloading_weight'];
 
         // Only recalculate actual_amount if loading_weight != unloading_weight
-        // If weights are equal, use the manually entered actual_amount from form
+        // If weights are equal, use the manually entered actual_amount from form if provided, otherwise calculate it
         if (abs($loadingWeight - $unloadingWeight) > 0.01) {
             // Weights are different - always recalculate actual_amount
             $effectiveWeight = min($loadingWeight, $unloadingWeight);
             $validated['actual_amount'] = round($effectiveWeight * $validated['fr_rate'], 2);
         } else {
-            // Weights are equal - use manually entered actual_amount from form (already in $validated)
-            // No recalculation needed, keep the user-entered value
+            // Weights are equal - use manually entered actual_amount from form if provided, otherwise calculate it
+            if (!isset($validated['actual_amount']) || $validated['actual_amount'] === null) {
+                $effectiveWeight = min($loadingWeight, $unloadingWeight);
+                $validated['actual_amount'] = round($effectiveWeight * $validated['fr_rate'], 2);
+            }
         }
 
         // Calculate amount: actual_amount - shortage - damage (if provided)
@@ -724,24 +735,33 @@ class LorryReceiptController extends Controller
         }
 
         $companyId = Auth::user()->company_id;
-        $lorry_receipt->load(['truck.transporter', 'truck.driver', 'customer', 'transporter', 'consignor', 'consignee']);
+        $lorry_receipt->load(['truck.transporter.transporterMaster', 'truck.driver', 'customer', 'transporter.transporterMaster', 'consignor', 'consignee']);
 
-        $trucks = Truck::with(['transporter', 'driver'])
+        $trucks = Truck::with(['transporter.transporterMaster', 'driver'])
             ->whereHas('transporter', function ($query) use ($companyId) {
                 $query->withTrashed()->where('company_id', $companyId);
             })
             ->get();
 
-        $transporters = Transporter::withTrashed()
+        $transporters = Transporter::withTrashed()->with('transporterMaster')
             ->where('company_id', $companyId)
+            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+            ->orderBy('transporter_masters.name')
+            ->select('transporters.*')
             ->get();
-        $truckOwners = Transporter::withTrashed()
+        $truckOwners = Transporter::withTrashed()->with('transporterMaster')
             ->where('company_id', $companyId)
             ->where('is_owner', 1)
+            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+            ->orderBy('transporter_masters.name')
+            ->select('transporters.*')
             ->get();
-        $agencies = Transporter::withTrashed()
+        $agencies = Transporter::withTrashed()->with('transporterMaster')
             ->where('company_id', $companyId)
             ->where('is_owner', 0)
+            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+            ->orderBy('transporter_masters.name')
+            ->select('transporters.*')
             ->get();
         $consignees = Consignee::withTrashed()
             ->where('company_id', $companyId)
@@ -891,14 +911,17 @@ class LorryReceiptController extends Controller
         $unloadingWeight = $validated['unloading_weight'];
 
         // Only recalculate actual_amount if loading_weight != unloading_weight
-        // If weights are equal, use the manually entered actual_amount from form
+        // If weights are equal, use the manually entered actual_amount from form if provided, otherwise calculate it
         if (abs($loadingWeight - $unloadingWeight) > 0.01) {
             // Weights are different - always recalculate actual_amount
             $effectiveWeight = min($loadingWeight, $unloadingWeight);
             $validated['actual_amount'] = round($effectiveWeight * $validated['fr_rate'], 2);
         } else {
-            // Weights are equal - use manually entered actual_amount from form (already in $validated)
-            // No recalculation needed, keep the user-entered value
+            // Weights are equal - use manually entered actual_amount from form if provided, otherwise calculate it
+            if (!isset($validated['actual_amount']) || $validated['actual_amount'] === null) {
+                $effectiveWeight = min($loadingWeight, $unloadingWeight);
+                $validated['actual_amount'] = round($effectiveWeight * $validated['fr_rate'], 2);
+            }
         }
 
         // Calculate amount: actual_amount - shortage - damage
@@ -1156,7 +1179,7 @@ class LorryReceiptController extends Controller
 
         // If this LR has linked_lr_id, fetch and include linked LRs data
         if ($lorryReceipt->linked_lr_id) {
-            $linkedLRs = LorryReceipt::with(['consignor', 'consignee', 'customer', 'transporter', 'truck', 'reference'])
+            $linkedLRs = LorryReceipt::with(['consignor', 'consignee', 'customer', 'transporter.transporterMaster', 'truck', 'reference.transporterMaster'])
                 ->where('company_id', Auth::user()->company_id)
                 ->where('linked_lr_id', $lorryReceipt->linked_lr_id)
                 ->get();
@@ -1232,7 +1255,10 @@ class LorryReceiptController extends Controller
             ->get(['reference_by']);
 
         $references = $lrs->pluck('reference_by')->unique()->filter();
-        $references = Transporter::whereIn('id', $references)->get(['id', 'name']);
+        $references = Transporter::with('transporterMaster')
+            ->whereIn('id', $references)
+            ->get()
+            ->map(fn ($t) => ['id' => $t->id, 'name' => $t->name]);
 
         return response()->json($references);
     }

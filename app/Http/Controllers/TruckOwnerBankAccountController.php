@@ -21,15 +21,16 @@ class TruckOwnerBankAccountController extends Controller
 
         // If company is selected, get truck owners for that company
         if ($selectedCompanyId) {
-            $query = Transporter::where('is_owner', 1)
+            $query = Transporter::with('transporterMaster')
+                ->where('is_owner', 1)
                 ->where('company_id', $selectedCompanyId);
 
             // Add search functionality
             if ($search) {
                 $query->where(function($q) use ($search) {
-                    $q->where('name', 'LIKE', '%' . $search . '%')
-                      ->orWhere('gst_number', 'LIKE', '%' . $search . '%')
-                      ->orWhere('pan_number', 'LIKE', '%' . $search . '%')
+                    $q->whereHas('transporterMaster', fn ($m) => $m->where('name', 'LIKE', '%' . $search . '%')
+                        ->orWhere('gst_number', 'LIKE', '%' . $search . '%')
+                        ->orWhere('pan_number', 'LIKE', '%' . $search . '%'))
                       ->orWhere('beneficiary_id', 'LIKE', '%' . $search . '%');
                 });
             }

@@ -21,7 +21,7 @@ class TransporterMasterExport implements FromCollection, WithHeadings, ShouldAut
 
   public function collection()
   {
-    $query = Transporter::with(['city', 'state', 'country'])
+    $query = Transporter::with(['transporterMaster.city', 'transporterMaster.state', 'transporterMaster.country'])
       ->where('company_id', Auth::user()->company_id);
 
     $normalizedType = strtolower($this->type);
@@ -31,7 +31,9 @@ class TransporterMasterExport implements FromCollection, WithHeadings, ShouldAut
       $query->where('is_owner', 1);
     } // both → no additional filter
 
-    return $query->orderBy('name')->get()->values()->map(function ($t, $index) {
+    return $query->orderBy(
+        \App\Models\TransporterMaster::select('name')->whereColumn('transporter_masters.id', 'transporters.transporter_master_id')
+    )->get()->values()->map(function ($t, $index) {
       return [
         'S. No' => $index + 1,
         'Type' => $t->is_owner ? 'Truck Owner' : 'Transporter',
@@ -40,9 +42,9 @@ class TransporterMasterExport implements FromCollection, WithHeadings, ShouldAut
         'Contact Person Name' => $t->contact_person_name,
         'Mobile Number' => $t->mobile_number,
         'Address' => $t->address,
-        'City' => optional($t->city)->name,
-        'State' => optional($t->state)->name,
-        'Country' => optional($t->country)->name,
+        'City' => optional($t->transporterMaster?->city)->name,
+        'State' => optional($t->transporterMaster?->state)->name,
+        'Country' => optional($t->transporterMaster?->country)->name,
         'PAN Number' => $t->pan_number,
         'PAN Active' => $t->pan_active ? 'Yes' : 'No',
         'GST Number' => $t->gst_number,

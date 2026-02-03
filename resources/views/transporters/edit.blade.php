@@ -68,14 +68,42 @@
                 <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
             @endif
 
+            @php $master = $transporter->transporterMaster; @endphp
             <div class="card mb-4 p-3 bg-light">
-                <div class="row"><div class="col"><h5 class="mb-3">Basic Information</h5></div></div>
+                <div class="row"><div class="col"><h5 class="mb-3 text-muted"><i class="fas fa-lock me-2"></i> Master Data (Read-only)</h5></div></div>
                 <div class="row mb-3">
                     <div class="col-md-4">
-                        <label for="name" class="form-label">Name *</label>
-                        <input type="text" class="form-control @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name', $transporter->name) }}" required>
-                        @error('name') <div class="text-danger">{{ $message }}</div> @enderror
+                        <label class="form-label">Name</label>
+                        <div class="form-control-plaintext bg-white border rounded px-3 py-2">{{ $master->name ?? '-' }}</div>
                     </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Email</label>
+                        <div class="form-control-plaintext bg-white border rounded px-3 py-2">{{ $master->email ?? '-' }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">PAN Number</label>
+                        <div class="form-control-plaintext bg-white border rounded px-3 py-2">{{ $master->pan_number ?? '-' }}</div>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label">GST Number</label>
+                        <div class="form-control-plaintext bg-white border rounded px-3 py-2">{{ $master->gst_number ?? '-' }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Address</label>
+                        <div class="form-control-plaintext bg-white border rounded px-3 py-2">{{ $master->address ?? '-' }}</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">City / State / Country</label>
+                        <div class="form-control-plaintext bg-white border rounded px-3 py-2">{{ optional($master->city)->name ?? '-' }} / {{ optional($master->state)->name ?? '-' }} / {{ optional($master->country)->name ?? '-' }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4 p-3 bg-light">
+                <div class="row"><div class="col"><h5 class="mb-3">Editable Fields</h5></div></div>
+                <div class="row mb-3">
                     <div class="col-md-4">
                         <label for="contact_person_name" class="form-label">Contact Person Name</label>
                         <input type="text" class="form-control @error('contact_person_name') is-invalid @enderror" id="contact_person_name" name="contact_person_name" value="{{ old('contact_person_name', $transporter->contact_person_name) }}">
@@ -86,113 +114,36 @@
                         <input type="text" class="form-control @error('mobile_number') is-invalid @enderror" id="mobile_number" name="mobile_number" value="{{ old('mobile_number', $transporter->mobile_number) }}" required pattern="[0-9]{10}" maxlength="10">
                         @error('mobile_number') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
+                    <div class="col-md-4">
+                        <label for="short_name" class="form-label">Short Name</label>
+                        @if(auth()->user()->userRole->name === 'super_admin')
+                            <input type="text" class="form-control @error('short_name') is-invalid @enderror" id="short_name" name="short_name" value="{{ old('short_name', $transporter->short_name) }}">
+                        @else
+                            <div class="form-control-plaintext bg-light border rounded px-3 py-2">{{ $transporter->short_name ?? '-' }}</div>
+                            <small class="text-muted">Editable only from Super Admin panel</small>
+                        @endif
+                        @error('short_name') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
                 </div>
                 <div class="row mb-3">
                     <div class="col-md-4">
                         <label class="form-label">Advance Amount</label>
-                        <div class="form-control-plaintext bg-light border rounded px-3 py-2">
-                            <strong>₹ {{ number_format($transporter->advance_amount, 2) }}</strong>
-                            <small class="text-muted d-block">Read-only field</small>
-                        </div>
+                        <div class="form-control-plaintext bg-light border rounded px-3 py-2"><strong>₹ {{ number_format($transporter->advance_amount, 2) }}</strong></div>
                         <input type="hidden" name="advance_amount" value="{{ $transporter->advance_amount }}">
                     </div>
-                </div>
-            </div>
-
-            <div class="card mb-4 p-3 bg-light">
-                <div class="row"><div class="col"><h5 class="mb-3">GST & PAN Information</h5></div></div>
-                <div class="row mb-3">
                     <div class="col-md-4">
-                        <label for="gst_number" class="form-label">GST Number</label>
-                        <input type="text" class="form-control @error('gst_number') is-invalid @enderror" id="gst_number" name="gst_number" value="{{ old('gst_number', $transporter->gst_number) }}" maxlength="15" style="text-transform: uppercase;">
-                        @error('gst_number') <div class="text-danger">{{ $message }}</div> @enderror
+                        <label for="beneficiary_id" class="form-label">Beneficiary ID</label>
+                        @if(auth()->user()->userRole->name === 'super_admin')
+                            <input type="text" class="form-control" id="beneficiary_id" name="beneficiary_id" value="{{ old('beneficiary_id', $transporter->beneficiary_id) }}">
+                        @else
+                            <div class="form-control-plaintext bg-light border rounded px-3 py-2">{{ $transporter->beneficiary_id ?? '-' }}</div>
+                            <small class="text-muted">Editable only from Super Admin panel</small>
+                        @endif
+                        @error('beneficiary_id') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4">
-                        <!-- Empty column for consistent 3-column layout -->
-                    </div>
-                </div>
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label for="pan_number" class="form-label">PAN Number *</label>
-                        <input type="text" class="form-control @error('pan_number') is-invalid @enderror" id="pan_number" name="pan_number" value="{{ old('pan_number', $transporter->pan_number) }}" required maxlength="10" style="text-transform: uppercase;">
-                        @error('pan_number') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="pan_active" class="form-label">PAN Active *</label>
-                        <select class="form-select @error('pan_active') is-invalid @enderror" id="pan_active" name="pan_active" required>
-                            <option value="">Select Status</option>
-                            <option value="1" {{ old('pan_active', $transporter->pan_active) == '1' ? 'selected' : '' }}>Yes</option>
-                            <option value="0" {{ old('pan_active', $transporter->pan_active) == '0' ? 'selected' : '' }}>No</option>
-                        </select>
-                        @error('pan_active') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                </div>
-            </div>
-
-            <div class="card mb-4 p-3 bg-light">
-                <div class="row"><div class="col"><h5 class="mb-3">Location Details</h5></div></div>
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label for="country_id" class="form-label">Country *</label>
-                        <div class="input-group">
-                            <select class="form-select" id="country_id" name="country_id" required>
-                                <option value="">Select Country</option>
-                                @foreach($countries as $country)
-                                    <option value="{{ $country->id }}" {{ old('country_id', $transporter->country_id) == $country->id ? 'selected' : '' }}>
-                                        {{ $country->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            <button type="button" class="btn btn-brand-primary" data-bs-toggle="modal" data-bs-target="#addCityModal" title="Add New City">
-                                <i class="bi bi-plus"></i>
-                            </button>
-                        </div>
-                        @error('country_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="state_id" class="form-label">State *</label>
-                        <div class="input-group">
-                            <select class="form-select" id="state_id" name="state_id" required>
-                                <option value="">Select State</option>
-                                @if(old('country_id'))
-                                    @foreach($states as $state)
-                                        <option value="{{ $state->id }}" {{ old('state_id', $transporter->state_id) == $state->id ? 'selected' : '' }}>
-                                            {{ $state->name }}
-                                        </option>
-                                    @endforeach
-                                @endif
-                            </select>
-                            <button type="button" class="btn btn-brand-primary" data-bs-toggle="modal" data-bs-target="#addStateModal" title="Add New State">
-                                <i class="bi bi-plus"></i>
-                            </button>
-                        </div>
-                        @error('state_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="city_id" class="form-label">City *</label>
-                        <div class="input-group">
-                            <select class="form-select" id="city_id" name="city_id" required>
-                                <option value="">Select City</option>
-                                @if(old('state_id'))
-                                    @foreach($cities as $city)
-                                        <option value="{{ $city->id }}" {{ old('city_id', $transporter->city_id) == $city->id ? 'selected' : '' }}>
-                                            {{ $city->name }}
-                                        </option>
-                                    @endforeach
-                                @endif
-                            </select>
-                            <button type="button" class="btn btn-brand-primary" data-bs-toggle="modal" data-bs-target="#addCityModal" title="Add New City">
-                                <i class="bi bi-plus"></i>
-                            </button>
-                        </div>
-                        @error('city_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                </div>
-                <div class="row mb-3">
-                    <div class="col-md-12">
-                        <label for="address" class="form-label">Address</label>
-                        <textarea class="form-control @error('address') is-invalid @enderror" id="address" name="address" rows="3">{{ old('address', $transporter->address) }}</textarea>
-                        @error('address') <div class="text-danger">{{ $message }}</div> @enderror
+                        <label class="form-label">TDS %</label>
+                        <div class="form-control-plaintext bg-light border rounded px-3 py-2">{{ number_format($transporter->tds_percentage ?? 0, 2) }}%</div>
                     </div>
                 </div>
             </div>
