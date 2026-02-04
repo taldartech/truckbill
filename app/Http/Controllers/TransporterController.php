@@ -340,7 +340,7 @@ class TransporterController extends Controller
             $user = User::create([
                 'name' => $master->name,
                 'email' => $master->email,
-                'password' => bcrypt(\Str::random(32)),
+                'password' => bcrypt($master->mobile_number),
                 'user_role_id' => $transporterRoleId,
                 'company_id' => null,
                 'transporter_master_id' => $master->id,
