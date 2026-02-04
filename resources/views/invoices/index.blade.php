@@ -189,12 +189,12 @@
                                 <td>{{ ucfirst($invoice->payment_status) }}</td>
                                 <td>
                                     <div class="d-flex gap-1">
+                                        <a href="{{ route('reports.party-bill-export', ['invoice_number' => $invoice->id, 'type' => 'pdf']) }}"
+                                            class="btn btn-sm btn-primary" data-bs-toggle="tooltip" target="_blank"
+                                            data-bs-placement="top" title="View PDF">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
                                         @if (auth()->user()->userRole->name === 'admin')
-                                            <a href="{{ route('invoices.show', $invoice->id) }}"
-                                                class="btn btn-sm btn-view" data-bs-toggle="tooltip"
-                                                data-bs-placement="top" title="View Invoice">
-                                                <i class="bi bi-eye"></i>
-                                            </a>
                                             @if ($invoice->payment_status !== 'paid')
                                                 <a href="{{ route('invoices.edit', $invoice->id) }}"
                                                     class="btn btn-sm btn-edit" data-bs-toggle="tooltip"
@@ -216,7 +216,7 @@
                                                 </form>
                                             @endif
                                         @endif
-                                        @if (in_array(auth()->user()->userRole->name, ['admin', 'moderator']) && $invoice->remaining_amount > 0)
+                                        @if (in_array(auth()->user()->userRole->name, ['admin']) && $invoice->remaining_amount > 0)
                                             <button type="button" class="btn btn-sm btn-view add-payment-btn"
                                                 data-bs-toggle="tooltip" data-bs-placement="top" title="Add Payment"
                                                 data-invoice-id="{{ $invoice->id }}"

@@ -112,13 +112,13 @@
                     <div>
                         <h3 class="card-title mb-0">Party Bill</h3>
                     </div>
-                    <div class="d-flex">
-                        <a class="btn btn-warning ms-2"
+                    <div class="d-flex gap-2">
+                        <a class="btn btn-warning"
                             href="{{ route('reports.party-bill-export', ['invoice_number' => $id]) }}">
                             <i class="bi bi-file-earmark-spreadsheet"></i> Export
                         </a>
                         <a href="{{ route('reports.party-bill-export', ['invoice_number' => $invoice->id, 'type' => 'pdf']) }}"
-                            class="btn btn-danger btn-sm" target="_blank">
+                            class="btn btn-danger" target="_blank">
                             <i class="fas fa-file-pdf"></i> PDF
                         </a>
                     </div>
