@@ -13,9 +13,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('lorry_receipts', function (Blueprint $table) {
-            $table->decimal('unloading_weight', 10, 2)->nullable()->after('weight');
+            $table->decimal('unloading_weight', 10, 3)->nullable()->after('weight');
         });
-        
+
         // Set unloading_weight = weight for existing records
         DB::statement('UPDATE lorry_receipts SET unloading_weight = weight WHERE unloading_weight IS NULL');
     }

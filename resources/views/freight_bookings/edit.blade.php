@@ -413,7 +413,7 @@
                             </div>
                             <div class="col-md-2">
                                 <label for="unloading_weight" class="form-label">Unloading Weight *</label>
-                                <input type="number" step="0.01" min="0"
+                                <input type="number" step="0.001" min="0"
                                     class="form-control form-control-sm @error('unloading_weight') is-invalid @enderror"
                                     name="unloading_weight" id="unloading_weight"
                                     value="{{ old('unloading_weight', $freightBooking->lr ? ($freightBooking->lr->unloading_weight ?? $freightBooking->lr->weight ?? 0) : 0) }}"
