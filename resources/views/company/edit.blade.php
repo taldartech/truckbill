@@ -47,11 +47,21 @@
                 <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="gst_scheme" class="form-label">GST Scheme</label>
-                    <select class="form-select" id="gst_scheme" name="gst_scheme" required value="{{ old('gst_scheme', $company->gst_scheme) }}">
-
-                        <option value="reverse charge" {{ old('gst_scheme', $company->gst_scheme) == 'reverse charge' ? 'selected' : '' }}>Reverse Charge</option>
-                        <option value="forward charge" {{ old('gst_scheme', $company->gst_scheme) == 'forward charge' ? 'selected' : '' }}>Forward Charge</option>
-                    </select>
+                    @if($hasInvoicesInFy ?? false)
+                        <input type="hidden" name="gst_scheme" value="{{ old('gst_scheme', $company->gst_scheme) }}">
+                        <select class="form-select" id="gst_scheme" disabled>
+                            <option value="reverse charge" {{ old('gst_scheme', $company->gst_scheme) == 'reverse charge' ? 'selected' : '' }}>Reverse Charge</option>
+                            <option value="forward charge" {{ old('gst_scheme', $company->gst_scheme) == 'forward charge' ? 'selected' : '' }}>Forward Charge</option>
+                        </select>
+                        <small class="form-text text-warning">
+                            <i class="fas fa-lock"></i> Cannot change GST scheme. Invoices have been created for the current financial year (April {{ $fyStart->year }} - March {{ $fyEnd->year }}).
+                        </small>
+                    @else
+                        <select class="form-select" id="gst_scheme" name="gst_scheme" required value="{{ old('gst_scheme', $company->gst_scheme) }}">
+                            <option value="reverse charge" {{ old('gst_scheme', $company->gst_scheme) == 'reverse charge' ? 'selected' : '' }}>Reverse Charge</option>
+                            <option value="forward charge" {{ old('gst_scheme', $company->gst_scheme) == 'forward charge' ? 'selected' : '' }}>Forward Charge</option>
+                        </select>
+                    @endif
                     @error('gst_scheme') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="valid-feedback">Looks good!</div>
                 </div>

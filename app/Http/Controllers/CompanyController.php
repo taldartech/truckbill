@@ -158,34 +158,11 @@ class CompanyController extends Controller
     {
         $buttons = '<div class="d-flex gap-1">';
 
-        // Edit button
-        //this edit button should only visible when their in no invoice created  for that financial year
-        //take invoice value from 1 st april of that year to 21 march of next year
-        //take latest year
-        // Determine start and end of financial year
-        $startOfYear = Carbon::now()->month >= 4
-            ? Carbon::create(Carbon::now()->year, 4, 1)->startOfDay()
-            : Carbon::create(Carbon::now()->year - 1, 4, 1)->startOfDay();
-
-        $endOfYear = $startOfYear->copy()->addYear()->subDay()->endOfDay();
-
-        // Count invoices for the company in financial year
-        //take latest year
-        // Determine start and end of financial year
-        $invoiceCount = \App\Models\Invoice::where('company_id', $company->id)
-            ->whereBetween('created_at', [$startOfYear, $endOfYear])
-            ->count();
+        // Edit button - always allow edit; GST scheme change restricted in edit form when invoices exist
         if (auth()->user()->userRole->name !== 'master_admin') {
-
-
-            if ($invoiceCount == 0) {
-                $editUrl = route('company.edit', $company->id);
-                $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-edit" title="Edit Company">
-                       <i class="bi bi-pencil"></i></a>';
-            } else {
-                $buttons .= '<a href="javascript:void(0)" class="btn btn-sm btn-edit disabled" title="Edit Disabled">
-                       <i class="bi bi-pencil"></i></a>';
-            }
+            $editUrl = route('company.edit', $company->id);
+            $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-edit" title="Edit Company">
+                    <i class="bi bi-pencil"></i></a>';
 
 
 
@@ -238,12 +215,58 @@ class CompanyController extends Controller
         $states = \App\Models\State::where('country_id', $company->country_id)->get();
         $cities = \App\Models\City::where('state_id', $company->state_id)->get();
         $companySlabs = config('payments.gst_slabs');
-        return view('company.edit', compact('company', 'countries', 'states', 'cities', 'companySlabs'));
+
+        $now = Carbon::now();
+        $currentMonth = $now->month;
+        $currentYear = $now->year;
+
+        if ($currentMonth >= 4) {
+            $fyStart = Carbon::create($currentYear, 4, 1)->startOfDay();
+            $fyEnd = Carbon::create($currentYear + 1, 3, 31)->endOfDay();
+        } else {
+            $fyStart = Carbon::create($currentYear - 1, 4, 1)->startOfDay();
+            $fyEnd = Carbon::create($currentYear, 3, 31)->endOfDay();
+        }
+
+        $hasInvoicesInFy = \App\Models\Invoice::where('company_id', $company->id)
+            ->whereBetween('generated_date', [$fyStart->toDateString(), $fyEnd->toDateString()])
+            ->exists();
+
+        return view('company.edit', compact('company', 'countries', 'states', 'cities', 'companySlabs', 'hasInvoicesInFy', 'fyStart', 'fyEnd'));
     }
 
     public function update(Request $request, $id)
     {
         $company = \App\Models\Company::findOrFail($id);
+
+        $newGstScheme = $request->input('gst_scheme');
+        $oldGstScheme = $company->gst_scheme;
+        $gstSchemeChanged = $newGstScheme !== $oldGstScheme;
+
+        if ($gstSchemeChanged && $newGstScheme !== null) {
+            $now = Carbon::now();
+            $currentMonth = $now->month;
+            $currentYear = $now->year;
+
+            if ($currentMonth >= 4) {
+                $fyStart = Carbon::create($currentYear, 4, 1)->startOfDay();
+                $fyEnd = Carbon::create($currentYear + 1, 3, 31)->endOfDay();
+            } else {
+                $fyStart = Carbon::create($currentYear - 1, 4, 1)->startOfDay();
+                $fyEnd = Carbon::create($currentYear, 3, 31)->endOfDay();
+            }
+
+            $hasInvoices = \App\Models\Invoice::where('company_id', $company->id)
+                ->whereBetween('generated_date', [$fyStart->toDateString(), $fyEnd->toDateString()])
+                ->exists();
+
+            if ($hasInvoices) {
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(['gst_scheme' => 'Cannot change GST scheme. Invoices have already been created for the current financial year (April '.$fyStart->year.' - March '.$fyEnd->year.').']);
+            }
+        }
+
         $validated = $request->validate([
             'name' => [
                 'required',
