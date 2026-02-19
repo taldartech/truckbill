@@ -93,7 +93,7 @@
             <td>{{ $lr->invoice_number }}</td>
             <td>{{ \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') }}</td>
             <td>{{ $lr->weight }}</td>
-            <td>{{ $lr->unloading_weight ?? $lr->weight }}</td>
+            <td>{{ number_format($lr->unloading_weight ?? $lr->weight, 3) }}</td>
             <td>{{ $lr->no_of_units }}</td>
             <td>{{ number_format($lr->fr_rate, 2) }}</td>
             <td>{{ number_format($lr->shortage_amount ?? 0, 2) }}</td>

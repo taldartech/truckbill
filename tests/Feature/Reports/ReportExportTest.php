@@ -253,5 +253,24 @@ class ReportExportTest extends TestCase
             ->assertOk()
             ->assertSee('Pending');
     }
+
+    public function test_report_exports_display_unloading_weight_with_three_decimals(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$lr] = $this->seedLr($admin);
+        $lr->update(['unloading_weight' => 12.345]);
+
+        $params = ['start_date' => now()->subDays(7)->toDateString(), 'end_date' => now()->toDateString()];
+
+        $this->actingAs($admin)
+            ->get('/reports/dispatch?' . http_build_query($params))
+            ->assertOk()
+            ->assertSee('12.345');
+
+        $this->actingAs($admin)
+            ->get('/reports/transporter-report?' . http_build_query($params))
+            ->assertOk()
+            ->assertSee('12.345');
+    }
 }
 

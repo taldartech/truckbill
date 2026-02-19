@@ -122,7 +122,7 @@
                                 </td>
                                 <td>{{ $lr->truck->truck_number ?? 'N/A' }}</td>
                                 <td>{{ $lr->weight }}</td>
-                                <td>{{ $lr->unloading_weight ?? $lr->weight }}</td>
+                                <td>{{ number_format($lr->unloading_weight ?? $lr->weight, 3) }}</td>
                                 <td>{{ $lr->fr_rate }}</td>
                                 <td>{{ $lr->amount }}</td>
                                 <td>{{ $lr->consignor->name ?? 'N/A' }}</td>

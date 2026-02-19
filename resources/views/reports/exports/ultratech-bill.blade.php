@@ -91,7 +91,7 @@
             <td>{{ \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') }}</td>
             <td>{{ $lr->good_type }}</td>
             <td>{{ $lr->weight }}</td>
-            <td>{{ $lr->unloading_weight ?? $lr->weight }}</td>
+            <td>{{ number_format($lr->unloading_weight ?? $lr->weight, 3) }}</td>
             <td>{{ $lr->truck ? $lr->truck->truck_number : 'N/A' }}</td>
             <td>{{ $lr->lr_number }}</td>
             <td>{{ $lr->destination_city }}</td>

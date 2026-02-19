@@ -83,7 +83,7 @@
                 <td>{{ $lr->destination_city ?? '-' }}</td>
                 <td>{{ $lr->invoice_number ?? '-' }}</td>
                 <td>{{ $lr->weight ?? 0 }}</td>
-                <td>{{ $lr->unloading_weight ?? $lr->weight ?? 0 }}</td>
+                <td>{{ number_format($lr->unloading_weight ?? $lr->weight ?? 0, 3) }}</td>
                 <td>{{ $lr->no_of_units ?? 0 }}</td>
                 <td>{{ $lr->fr_rate ?? 0 }}</td>
                 <td>{{ $lr->actual_amount ?? 0 }}</td>
