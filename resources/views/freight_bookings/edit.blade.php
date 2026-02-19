@@ -928,6 +928,14 @@
             const tdsPercentageElement = document.getElementById('transporter_tds_percentage');
             const tdsPercentage = tdsPercentageElement ? parseFloat(tdsPercentageElement.value || 0) : 0;
 
+            // Track previous values for TDS calculation
+            let previousLoadingWeight = parseFloat(weightElement ? weightElement.value : 0) || 0;
+            let previousRate = parseFloat(rateInput ? rateInput.value : 0) || 0;
+            let previousTdsAmount = parseFloat(tdsAmountInput ? tdsAmountInput.value : 0) || 0;
+
+            // Check if freight booking is delivered
+            const isDelivered = @json((bool) ($is_delivered ?? false));
+
             // Function to calculate TDS and Balance amounts
             function calculateTdsAndBalance() {
                 const trAmount = parseFloat(trAmountInput ? trAmountInput.value : 0) || 0;
@@ -944,18 +952,42 @@
                 const shortageAmount = parseFloat(document.getElementById('shortage_amount') ? document
                     .getElementById('shortage_amount').value : 0) || 0;
 
-                // Calculate TDS Amount based on loading_weight (not loose weight)
-                // TDS = loading_weight * tr_fr_rate * tds_percentage
+                // TDS calculation logic:
+                // Before delivery: Calculate TDS from freight amount (TR amount)
+                // After delivery: Only recalculate if loading_weight or rate changed, else keep previous TDS
                 const loadingWeight = parseFloat(weightElement ? weightElement.value : 0) || 0;
                 const trFrRate = parseFloat(rateInput ? rateInput.value : 0) || 0;
-                const tdsBaseAmount = loadingWeight * trFrRate;
-                const tdsAmount = Math.round(tdsBaseAmount * (tdsPercentage / 100));
+
+                let tdsAmount = previousTdsAmount;
+                let shouldRecalculateTds = false;
+
+                if (!isDelivered) {
+                    shouldRecalculateTds = true;
+                } else {
+                    const loadingWeightChanged = Math.abs(previousLoadingWeight - loadingWeight) > 0.01;
+                    const rateChanged = Math.abs(previousRate - trFrRate) > 0.01;
+
+                    if (loadingWeightChanged || rateChanged) {
+                        shouldRecalculateTds = true;
+                    }
+                }
+
+                if (shouldRecalculateTds) {
+                    if (!isDelivered) {
+                        tdsAmount = Math.round(trAmount * (tdsPercentage / 100) * 100) / 100;
+                    } else {
+                        const tdsBaseAmount = loadingWeight * trFrRate;
+                        tdsAmount = Math.round(tdsBaseAmount * (tdsPercentage / 100) * 100) / 100;
+                    }
+                    previousTdsAmount = tdsAmount;
+                }
+
                 if (tdsAmountInput) {
-                    tdsAmountInput.value = tdsAmount;
+                    tdsAmountInput.value = tdsAmount.toFixed(2);
                 }
 
                 // Calculate Balance Amount: TR Amount - Advance - TDS + Detention + Deviation - Misc Expense - Damage - Shortage
-                const balance = trAmount - advanceAmount - parseFloat(tdsAmount) + detention + deviation -
+                const balance = trAmount - advanceAmount - tdsAmount + detention + deviation -
                     miscExpense - damageAmount - shortageAmount;
                 if (balanceAmountInput) {
                     balanceAmountInput.value = balance.toFixed(2);
@@ -963,27 +995,29 @@
             }
 
             // Function to calculate TR Amount using loose weight (min of loading and unloading weight)
-            // Only auto-calculates when loading_weight != unloading_weight
-            // When weights are equal, user can manually edit tr_amount
+            // When weight or rate changes → ALWAYS recalculate (mandatory, override any manual edit)
             function calculateTrAmount() {
                 const rate = parseFloat(rateInput ? rateInput.value : 0) || 0;
                 const loadingWeight = parseFloat(weightElement ? weightElement.value : 0) || 0;
                 const unloadingWeight = parseFloat(unloadingWeightInput ? unloadingWeightInput.value : 0) || loadingWeight;
 
-                // Only recalculate if loading_weight != unloading_weight
-                // If weights are equal, don't auto-calculate (allow manual editing)
                 if (Math.abs(loadingWeight - unloadingWeight) > 0.01) {
                     const effectiveWeight = Math.min(loadingWeight, unloadingWeight);
                     const amount = (effectiveWeight * rate).toFixed(2);
                     if (amountInput) {
                         amountInput.value = amount;
                     }
-                    // Recalculate TDS (based on loading_weight) and Balance when TR Amount changes
-                    calculateTdsAndBalance();
                 } else {
-                    // Weights are equal - only recalculate TDS and Balance, don't change tr_amount
-                    calculateTdsAndBalance();
+                    const amount = (loadingWeight * rate).toFixed(2);
+                    if (amountInput) {
+                        amountInput.value = amount;
+                    }
                 }
+
+                previousLoadingWeight = loadingWeight;
+                previousRate = rate;
+
+                calculateTdsAndBalance();
             }
 
             // Add null checks for event listeners
@@ -991,7 +1025,34 @@
                 rateInput.addEventListener('input', calculateTrAmount);
             }
             if (unloadingWeightInput) {
-                unloadingWeightInput.addEventListener('input', calculateTrAmount);
+                unloadingWeightInput.addEventListener('input', function() {
+                    const loadingWeight = parseFloat(weightElement ? weightElement.value : 0) || 0;
+                    const trFrRate = parseFloat(rateInput ? rateInput.value : 0) || 0;
+
+                    const loadingWeightChanged = Math.abs(previousLoadingWeight - loadingWeight) > 0.01;
+                    const rateChanged = Math.abs(previousRate - trFrRate) > 0.01;
+
+                    calculateTrAmount();
+
+                    // For TDS: after delivery, only recalculate if loading_weight or rate changed
+                    if (isDelivered && !loadingWeightChanged && !rateChanged) {
+                        if (tdsAmountInput) {
+                            tdsAmountInput.value = previousTdsAmount.toFixed(2);
+                        }
+                        const trAmount = parseFloat(trAmountInput ? trAmountInput.value : 0) || 0;
+                        const advanceAmount = parseFloat(document.getElementById('advance_amount_main') ? document.getElementById('advance_amount_main').value : 0) || 0;
+                        const detention = parseFloat(document.getElementById('detention') ? document.getElementById('detention').value : 0) || 0;
+                        const deviation = parseFloat(document.getElementById('deviation') ? document.getElementById('deviation').value : 0) || 0;
+                        const miscExpense = parseFloat(document.getElementById('misc_expense') ? document.getElementById('misc_expense').value : 0) || 0;
+                        const damageAmount = parseFloat(document.getElementById('damage_amount') ? document.getElementById('damage_amount').value : 0) || 0;
+                        const shortageAmount = parseFloat(document.getElementById('shortage_amount') ? document.getElementById('shortage_amount').value : 0) || 0;
+                        const balance = trAmount - advanceAmount - previousTdsAmount + detention + deviation - miscExpense - damageAmount - shortageAmount;
+                        const balanceAmountInput = document.getElementById('balance_amount');
+                        if (balanceAmountInput) {
+                            balanceAmountInput.value = balance.toFixed(2);
+                        }
+                    }
+                });
             }
             if (weightElement) {
                 weightElement.addEventListener('input', calculateTrAmount);
@@ -999,8 +1060,15 @@
 
             // Update TDS and balance when TR Amount changes (manual input)
             if (trAmountInput) {
-                trAmountInput.addEventListener('input', calculateTdsAndBalance);
+                trAmountInput.addEventListener('input', function() {
+                    calculateTdsAndBalance();
+                });
             }
+
+            // Initialize previous values
+            previousLoadingWeight = parseFloat(weightElement ? weightElement.value : 0) || 0;
+            previousRate = parseFloat(rateInput ? rateInput.value : 0) || 0;
+            previousTdsAmount = parseFloat(tdsAmountInput ? tdsAmountInput.value : 0) || 0;
 
             // Calculate initial TDS and balance if values exist
             calculateTdsAndBalance();

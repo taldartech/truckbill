@@ -4,9 +4,14 @@ namespace Tests\Feature\Transport;
 
 use App\Models\City;
 use App\Models\Company;
+use App\Models\Consignee;
 use App\Models\Country;
+use App\Models\FreightBooking;
+use App\Models\LorryReceipt;
 use App\Models\State;
 use App\Models\Transporter;
+use App\Models\TransporterMaster;
+use App\Models\Truck;
 use App\Models\User;
 use App\Models\UserRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -161,6 +166,90 @@ class TransporterOwnerTest extends TestCase
             'is_owner' => 1,
             'tds_percentage' => 1.00,
         ]);
+    }
+
+    public function test_truck_owner_update_does_not_change_tds_when_payment_complete(): void
+    {
+        $admin = $this->makeAdmin();
+        [$country, $state, $city] = $this->seedGeo();
+
+        $master = TransporterMaster::factory()->create([
+            'name' => 'Owner Paid',
+            'pan_number' => 'ABCPD1234Q',
+            'pan_active' => true,
+        ]);
+
+        $truckOwner = Transporter::factory()->forCompany($admin->company_id)->truckOwner()->create([
+            'transporter_master_id' => $master->id,
+            'mobile_number' => '7777777777',
+            'declaration_given' => false,
+            'tds_percentage' => 1,
+            'total_trucks' => 2,
+            'advance_amount' => 0,
+        ]);
+
+        $truck = Truck::create([
+            'transporter_id' => $truckOwner->id,
+            'truck_number' => 'GJ01XX0001',
+            'truck_type' => 'Flatbed',
+        ]);
+
+        $customer = Consignee::create(['company_id' => $admin->company_id, 'name' => 'C', 'address' => 'A']);
+        $consignor = Consignee::create(['company_id' => $admin->company_id, 'name' => 'S', 'address' => 'A']);
+        $consignee = Consignee::create(['company_id' => $admin->company_id, 'name' => 'E', 'address' => 'A']);
+
+        $lr = LorryReceipt::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'consignor_id' => $consignor->id,
+            'consignee_id' => $consignee->id,
+            'truck_id' => $truck->id,
+            'transporter_id' => $truckOwner->id,
+            'reference_by' => $truckOwner->id,
+            'lr_number' => 'LR-TO-' . uniqid(),
+            'gr_number' => 'GR-TO-' . uniqid(),
+            'invoice_number' => 'INV-TO-' . uniqid(),
+            'gr_date' => now()->toDateString(),
+            'source_city' => 'A',
+            'source_state' => 'B',
+            'destination_city' => 'C',
+            'destination_state' => 'D',
+            'lane' => 'L1',
+            'good_type' => 'Steel',
+            'weight' => 10,
+            'fr_rate' => 100,
+            'amount' => 1000,
+            'damage_amount' => 0,
+            'shortage_amount' => 0,
+            'delivery_status' => 'Pending',
+        ]);
+
+        $fb = FreightBooking::create([
+            'lr_id' => $lr->id,
+            'transporter_id' => $truckOwner->id,
+            'tr_fr_rate' => 100,
+            'tr_amount' => 1000,
+            'advance_amount' => 1000,
+            'balance_amount' => 0,
+            'tds_amount' => 5,
+            'company_id' => $admin->company_id,
+            'transporter_tds_percentage' => 1,
+            'voucher_number' => 'VB-TO-001',
+        ]);
+
+        $response = $this->actingAs($admin)->put("/truck_owners/{$truckOwner->id}", [
+            'company_id' => $admin->company_id,
+            'contact_person_name' => 'Updated Name',
+            'mobile_number' => '7777777777',
+            'advance_amount' => 0,
+            'declaration_given' => true,
+            'total_trucks' => 2,
+        ]);
+
+        $response->assertRedirect(route('truck_owners.index'));
+
+        $fb->refresh();
+        $this->assertEquals(5.0, (float) $fb->tds_amount);
     }
 }
 

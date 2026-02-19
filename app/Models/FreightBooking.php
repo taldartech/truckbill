@@ -92,4 +92,44 @@ class FreightBooking extends Model
     {
         return $this->hasMany(\App\Models\VoucherPayment::class, 'freight_booking_id');
     }
+
+    /**
+     * Check if TDS amount can be changed for this freight booking
+     *
+     * TDS can be changed if:
+     * 1. TDS is not submitted (submission date hasn't passed)
+     * 2. OR complete payment is done to the transporter (balance_amount <= 0.01)
+     *
+     * TDS submission happens on the 3rd of next month (date from config, default: 3)
+     *
+     * @return bool
+     */
+    public function canChangeTdsAmount(): bool
+    {
+        // If payment is completed (balance_amount <= 0.01), TDS can not be changed
+        if (($this->balance_amount ?? 0) <= 0.01) {
+            return false;
+        }
+
+        // Check if TDS submission date has passed
+        if (! $this->lr || ! $this->lr->gr_date) {
+            // If no GR date, allow change (edge case)
+            return true;
+        }
+
+        $grDate = \Carbon\Carbon::parse($this->lr->gr_date);
+        $grMonth = $grDate->month;
+        $grYear = $grDate->year;
+
+        $submissionDay = config('payments.tds_submission_day', 3);
+
+        // Calculate submission date: 3rd (or from config) of next month
+        $submissionDate = \Carbon\Carbon::create($grYear, $grMonth, 1)
+            ->addMonth()
+            ->day($submissionDay)
+            ->startOfDay();
+
+        // If current date is before submission date, TDS can be changed
+        return \Carbon\Carbon::now()->lt($submissionDate);
+    }
 }

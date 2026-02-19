@@ -6,6 +6,7 @@ use App\Models\Company;
 use App\Models\Consignee;
 use App\Models\FreightBooking;
 use App\Models\LorryReceipt;
+use Carbon\Carbon;
 use App\Models\Pump;
 use App\Models\Transporter;
 use App\Models\Truck;
@@ -271,6 +272,46 @@ class FreightBookingTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('payments.0.pump.pump_name', 'HP Pump');
+    }
+
+    public function test_update_does_not_change_tds_when_submission_date_passed(): void
+    {
+        Carbon::setTestNow('2025-02-05 12:00:00');
+
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        $lr->update(['gr_date' => '2025-01-15', 'delivery_status' => 'Delivered']);
+
+        $initialBooking = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'damage_amount' => 0,
+            'shortage_amount' => 0,
+            'balance_amount' => 4800,
+            'tds_amount' => 200,
+            'transporter_tds_percentage' => 2,
+            'voucher_number' => 5002,
+            'is_delivered' => true,
+        ]));
+
+        $newTrAmount = 9000;
+        $payload = array_merge($this->bookingPayload($admin, $lr), [
+            'unloading_weight' => 9,
+            'tr_amount' => $newTrAmount,
+            'balance_amount' => $newTrAmount - 2000 - 200,
+            'tds_amount' => 200,
+            'damage_amount' => 0,
+            'shortage_amount' => 0,
+            'voucher_number' => 5002,
+            'is_delivered' => true,
+        ]);
+
+        $this->actingAs($admin)->put("/freight_bookings/{$initialBooking->id}", $payload)
+            ->assertRedirect(route('freight_bookings.index'));
+
+        $initialBooking->refresh();
+        $this->assertEquals(200.0, (float) $initialBooking->tds_amount);
+        $this->assertEquals(9000.0, (float) $initialBooking->tr_amount);
+
+        Carbon::setTestNow();
     }
 
     public function test_update_recalculates_lr_amount_with_damage_and_shortage(): void

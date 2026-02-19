@@ -216,7 +216,7 @@
                         </div>
                         <div class="col-md-4">
                             <label for="transporter_id" id="transporterLabel" class="form-label">Transporter *</label>
-                            <select class="form-select" id="transporter_id" name="transporter_id" required onchange="showTdsPercentage(this.value)">
+                            <select class="form-select" id="transporter_id" name="transporter_id" required onchange="showTdsPercentage(this.value)" {{ (!isset($canChangeTransporter) || !$canChangeTransporter) ? 'disabled' : '' }}>
                                 <option value="">Select Transporter</option>
                                 @foreach ($transporters as $transporter)
                                     <option value="{{ $transporter->id }}"
@@ -225,6 +225,10 @@
                                     </option>
                                 @endforeach
                             </select>
+                            @if (!isset($canChangeTransporter) || !$canChangeTransporter)
+                                <input type="hidden" name="transporter_id" value="{{ $lorry_receipt->transporter_id }}">
+                                <small class="text-danger d-block mt-1">⚠️ Transporter cannot be changed because TDS has already been submitted.</small>
+                            @endif
                             @error('transporter_id')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
@@ -552,7 +556,6 @@
             const amountInput = document.getElementById('amount');
             const shortageAmountInput = document.getElementById('shortage_amount');
             const damageAmountInput = document.getElementById('damage_amount');
-            let isManuallyEdited = false;
 
             function calculateAmount() {
                 const weight = parseFloat(weightInput.value) || 0;
@@ -562,23 +565,16 @@
                 const damageAmount = parseFloat(damageAmountInput.value) || 0;
 
                 if (weight > 0 && frRate > 0) {
-                    // Only recalculate actual_amount if loading_weight != unloading_weight
-                    // If weights are equal, use manually entered actual_amount (allow manual editing)
+                    // When weight or rate changes → ALWAYS recalculate (mandatory, override any manual edit)
                     const weightsEqual = Math.abs(weight - unloadingWeight) < 0.01;
 
                     if (!weightsEqual) {
-                        // Weights are different - always recalculate actual_amount using min(loading, unloading)
-                        if (!isManuallyEdited) {
-                            const effectiveWeight = Math.min(weight, unloadingWeight);
-                            const calculatedActualAmount = effectiveWeight * frRate;
-                            actualAmountInput.value = calculatedActualAmount.toFixed(2);
-                        }
+                        const effectiveWeight = Math.min(weight, unloadingWeight);
+                        const calculatedActualAmount = effectiveWeight * frRate;
+                        actualAmountInput.value = calculatedActualAmount.toFixed(2);
                     } else {
-                        // Weights are equal - only calculate if not manually edited
-                        if (!isManuallyEdited) {
-                            const calculatedActualAmount = weight * frRate;
-                            actualAmountInput.value = calculatedActualAmount.toFixed(2);
-                        }
+                        const calculatedActualAmount = weight * frRate;
+                        actualAmountInput.value = calculatedActualAmount.toFixed(2);
                     }
 
                     // Always calculate amount = actual_amount - shortage - damage
@@ -594,24 +590,25 @@
 
             // Auto-calculate on weight, unloading_weight, or freight rate change
             weightInput.addEventListener('input', function() {
-                isManuallyEdited = false;
                 calculateAmount();
             });
             if (unloadingWeightInput) {
                 unloadingWeightInput.addEventListener('input', function() {
-                    isManuallyEdited = false;
                     calculateAmount();
                 });
             }
             frRateInput.addEventListener('input', function() {
-                isManuallyEdited = false;
                 calculateAmount();
             });
 
             // Update amount when actual_amount, shortage, or damage changes
+            // User can manually edit actual_amount, but if weight/rate changes, it will be recalculated
             actualAmountInput.addEventListener('input', function() {
-                isManuallyEdited = true;
-                calculateAmount();
+                const actualAmount = parseFloat(actualAmountInput.value) || 0;
+                const shortageAmount = parseFloat(shortageAmountInput.value) || 0;
+                const damageAmount = parseFloat(damageAmountInput.value) || 0;
+                const calculatedAmount = actualAmount - shortageAmount - damageAmount;
+                amountInput.value = Math.max(0, calculatedAmount).toFixed(2);
             });
             shortageAmountInput.addEventListener('input', calculateAmount);
             damageAmountInput.addEventListener('input', calculateAmount);

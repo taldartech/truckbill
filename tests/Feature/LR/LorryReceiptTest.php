@@ -8,6 +8,7 @@ use App\Models\FreightBooking;
 use App\Models\Transporter;
 use App\Models\Truck;
 use App\Models\User;
+use Carbon\Carbon;
 use App\Models\UserRole;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -452,6 +453,78 @@ class LorryReceiptTest extends TestCase
 
         // Admin can delete
         $this->actingAs($admin)->delete("/lorry_receipts/{$lr->id}")->assertRedirect(route('lorry_receipts.index'));
+    }
+
+    public function test_update_blocks_transporter_change_when_tds_submitted(): void
+    {
+        Carbon::setTestNow('2025-02-05 12:00:00');
+
+        $admin = $this->makeAdmin();
+        [$customer, $consignor, $consignee] = $this->seedConsignees($admin);
+        [$transporter1, $truck1] = $this->makeTruck($admin);
+        $transporter2 = Transporter::factory()->forCompany($admin->company_id)->create([
+            'mobile_number' => '8888888888',
+        ]);
+        $truck2 = Truck::create([
+            'transporter_id' => $transporter2->id,
+            'truck_number' => 'GJ02CD5678',
+            'truck_type' => 'Flatbed',
+        ]);
+
+        $lr = \App\Models\LorryReceipt::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'consignor_id' => $consignor->id,
+            'consignee_id' => $consignee->id,
+            'lr_number' => 'LR-TDS-001',
+            'gr_number' => 'GR-TDS-001',
+            'invoice_number' => 'INV-TDS-001',
+            'truck_id' => $truck1->id,
+            'transporter_id' => $transporter1->id,
+            'reference_by' => $transporter1->id,
+            'gr_date' => '2025-01-15',
+            'source_city' => 'A',
+            'source_state' => 'B',
+            'destination_city' => 'C',
+            'destination_state' => 'D',
+            'lane' => 'Lane',
+            'good_type' => 'Steel',
+            'weight' => 10,
+            'fr_rate' => 100,
+            'actual_amount' => 1000,
+            'amount' => 1000,
+            'delivery_status' => 'Pending',
+        ]);
+
+        FreightBooking::create([
+            'lr_id' => $lr->id,
+            'transporter_id' => $transporter1->id,
+            'tr_fr_rate' => 100,
+            'tr_amount' => 1000,
+            'advance_amount' => 0,
+            'balance_amount' => 500,
+            'tds_amount' => 20,
+            'company_id' => $admin->company_id,
+            'transporter_tds_percentage' => 2,
+            'voucher_number' => 'VB-TDS-001',
+        ]);
+
+        $payload = $this->validPayload($admin);
+        $payload['lr_number'] = 'LR-TDS-001';
+        $payload['gr_number'] = 'GR-TDS-001';
+        $payload['invoice_number'] = 'INV-TDS-001';
+        $payload['transporter_id'] = $transporter2->id;
+        $payload['truck_id'] = $truck2->id;
+        $payload['reference_by'] = $transporter2->id;
+
+        $response = $this->actingAs($admin)->from("/lorry_receipts/{$lr->id}/edit")
+            ->put("/lorry_receipts/{$lr->id}", $payload);
+
+        $response->assertRedirect("/lorry_receipts/{$lr->id}/edit");
+        $response->assertSessionHasErrors(['transporter_id']);
+        $this->assertEquals($transporter1->id, $lr->fresh()->transporter_id);
+
+        Carbon::setTestNow();
     }
 
     public function test_super_admin_forbidden_and_guest_redirected(): void

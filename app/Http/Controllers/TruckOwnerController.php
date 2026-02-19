@@ -460,28 +460,36 @@ class TruckOwnerController extends Controller
     }
 
     /**
-     * Update TDS amount for freight bookings with remaining balance when declaration_given changes
+     * Update TDS amount for freight bookings when declaration_given changes
+     * TDS can only be changed if:
+     * 1. TDS is not submitted (submission date hasn't passed)
+     * 2. OR complete payment is done to the transporter (balance_amount <= 0.01)
      */
-    private function updateFreightBookingsTds($transporter, $newTdsPercentage)
+    private function updateFreightBookingsTds($transporter, $newTdsPercentage): void
     {
-        // Find all freight bookings with remaining balance for this transporter
         $freightBookings = FreightBooking::where('transporter_id', $transporter->id)
-            ->where('balance_amount', '>', 0)
             ->get();
 
         foreach ($freightBookings as $freightBooking) {
-            // Calculate new TDS amount based on tr_amount
-            $newTdsAmount = $freightBooking->tr_amount * ($newTdsPercentage / 100);
-            $oldTdsAmount = $freightBooking->tds_amount ?? 0;
-            $tdsDifference = $newTdsAmount - $oldTdsAmount;
-
-            // Do not proceed if new TDS amount is greater than balance amount
-            if ($newTdsAmount > $freightBooking->balance_amount) {
-                // Skip updating this freight booking - keep balance_amount as is
+            if (! $freightBooking->canChangeTdsAmount()) {
                 continue;
             }
 
-            // Update TDS amount
+            // Get loading weight from LR (TDS is calculated from loading_weight * rate, not tr_amount)
+            $loadingWeight = $freightBooking->lr ? $freightBooking->lr->weight : 0;
+            if ($loadingWeight <= 0) {
+                continue;
+            }
+
+            // Calculate new TDS amount based on loading_weight * rate (not tr_amount)
+            $tdsBaseAmount = round($freightBooking->tr_fr_rate * $loadingWeight, 2);
+            $newTdsAmount = round($tdsBaseAmount * ($newTdsPercentage / 100), 2);
+
+            // Do not proceed if new TDS amount is greater than balance amount
+            if ($newTdsAmount > $freightBooking->balance_amount) {
+                continue;
+            }
+
             $freightBooking->tds_amount = $newTdsAmount;
             $freightBooking->transporter_tds_percentage = $newTdsPercentage;
 
@@ -495,7 +503,6 @@ class TruckOwnerController extends Controller
                 + ($freightBooking->deviation ?? 0)
                 - ($freightBooking->misc_expense ?? 0);
 
-            // Ensure balance doesn't go negative
             if ($freightBooking->balance_amount < 0) {
                 $freightBooking->balance_amount = 0;
             }

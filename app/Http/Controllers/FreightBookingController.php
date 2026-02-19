@@ -1080,6 +1080,12 @@ class FreightBookingController extends Controller
         $newDamageAmount = $data['damage_amount'] ?? 0;
         $newShortageAmount = $data['shortage_amount'] ?? 0;
 
+        // Store old loading_weight and rate to detect changes for TDS calculation
+        $oldLoadingWeight = $lorryReceipt->weight ?? 0;
+        $oldTrFrRate = $freightBooking->tr_fr_rate ?? 0;
+        $newTrFrRate = $data['tr_fr_rate'] ?? 0;
+        $isDelivered = ($lorryReceipt->delivery_status === 'Delivered') || (isset($data['is_delivered']) && $data['is_delivered'] === '1');
+
         // Recalculate balance on the server side to ensure consistency
         // This ensures balance is always correct when TDS, TR amount, or other fields change
         $calculatedBalance = $newTrAmount
@@ -1161,23 +1167,55 @@ class FreightBookingController extends Controller
                     $newTrAmount = $data['tr_amount'];
                 }
 
-                // Recalculate TDS based on loading_weight (not loose weight)
-                $tdsBaseAmount = round($freightBooking->tr_fr_rate * $loadingWeight, 2);
-                $tdsPercentage = $freightBooking->transporter_tds_percentage ?? 0;
-                $newTdsAmount = round($tdsBaseAmount * ($tdsPercentage / 100), 2);
+                // TDS calculation logic:
+                // Before delivery: TDS is calculated from freight amount (TR amount)
+                // After delivery: TDS from loading_weight * rate; only change if loading_weight or rate changed
+                $loadingWeightChanged = abs($oldLoadingWeight - $loadingWeight) > 0.01;
+                $rateChanged = abs($oldTrFrRate - $newTrFrRate) > 0.01;
+
+                $shouldRecalculateTds = false;
+                if ($isDelivered) {
+                    // After delivery: only recalculate TDS if loading_weight or rate changed
+                    $shouldRecalculateTds = $loadingWeightChanged || $rateChanged;
+                } else {
+                    // Before delivery: always recalculate TDS (from freight amount)
+                    $shouldRecalculateTds = true;
+                }
+
+                if ($shouldRecalculateTds) {
+                    $tdsPercentage = $freightBooking->transporter_tds_percentage ?? 0;
+                    if (! $isDelivered) {
+                        // Before delivery: TDS = freight amount (TR amount) * tds_percentage
+                        $newTdsAmount = round($newTrAmount * ($tdsPercentage / 100), 2);
+                    } else {
+                        // After delivery: TDS = loading_weight * rate * tds_percentage
+                        $tdsBaseAmount = round($newTrFrRate * $loadingWeight, 2);
+                        $newTdsAmount = round($tdsBaseAmount * ($tdsPercentage / 100), 2);
+                    }
+                } else {
+                    // Keep existing TDS amount (loading_weight and rate didn't change)
+                    $newTdsAmount = $freightBooking->tds_amount ?? 0;
+                }
 
                 // Update tr_amount and tds_amount if they differ from calculated values
                 $trAmountChanged = abs($freightBooking->tr_amount - $newTrAmount) > 0.01;
                 $tdsAmountChanged = abs(($freightBooking->tds_amount ?? 0) - $newTdsAmount) > 0.01;
 
-                if ($trAmountChanged || $tdsAmountChanged) {
-                    $freightBooking->tr_amount = $newTrAmount;
-                    $freightBooking->tds_amount = $newTdsAmount;
+                // Check if TDS can be changed before updating
+                $canChangeTds = $freightBooking->canChangeTdsAmount();
 
-                    // Recalculate balance_amount
+                if ($trAmountChanged || ($tdsAmountChanged && $canChangeTds)) {
+                    $freightBooking->tr_amount = $newTrAmount;
+                    // Only update TDS if it can be changed and should be recalculated
+                    if ($tdsAmountChanged && $canChangeTds && $shouldRecalculateTds) {
+                        $freightBooking->tds_amount = $newTdsAmount;
+                    }
+
+                    // Recalculate balance_amount using current TDS amount (may be old if TDS cannot be changed)
+                    $currentTdsAmount = $freightBooking->tds_amount ?? 0;
                     $freightBooking->balance_amount = $newTrAmount
                         - $freightBooking->advance_amount
-                        - $newTdsAmount
+                        - $currentTdsAmount
                         - ($freightBooking->damage_amount ?? 0)
                         - ($freightBooking->shortage_amount ?? 0)
                         + ($freightBooking->detention ?? 0)
@@ -1185,6 +1223,52 @@ class FreightBookingController extends Controller
                         - ($freightBooking->misc_expense ?? 0);
 
                     $freightBooking->save();
+                }
+            } else {
+                // If unloading_weight is not being updated, check if rate or loading_weight changed
+                // and recalculate TDS accordingly
+                $loadingWeight = $lorryReceipt->weight ?? 0;
+                $loadingWeightChanged = abs($oldLoadingWeight - $loadingWeight) > 0.01;
+                $rateChanged = abs($oldTrFrRate - $newTrFrRate) > 0.01;
+
+                $shouldRecalculateTds = false;
+                if ($isDelivered) {
+                    // After delivery: only recalculate TDS if loading_weight or rate changed
+                    $shouldRecalculateTds = $loadingWeightChanged || $rateChanged;
+                } else {
+                    // Before delivery: always recalculate TDS from freight amount
+                    $shouldRecalculateTds = $loadingWeightChanged || $rateChanged;
+                }
+
+                if ($shouldRecalculateTds) {
+                    $tdsPercentage = $freightBooking->transporter_tds_percentage ?? 0;
+                    if (! $isDelivered) {
+                        // Before delivery: TDS = freight amount (TR amount) * tds_percentage
+                        $newTdsAmount = round($freightBooking->tr_amount * ($tdsPercentage / 100), 2);
+                    } else {
+                        // After delivery: TDS = loading_weight * rate * tds_percentage
+                        $tdsBaseAmount = round($newTrFrRate * $loadingWeight, 2);
+                        $newTdsAmount = round($tdsBaseAmount * ($tdsPercentage / 100), 2);
+                    }
+
+                    $tdsAmountChanged = abs(($freightBooking->tds_amount ?? 0) - $newTdsAmount) > 0.01;
+                    $canChangeTds = $freightBooking->canChangeTdsAmount();
+
+                    if ($tdsAmountChanged && $canChangeTds) {
+                        $freightBooking->tds_amount = $newTdsAmount;
+
+                        // Recalculate balance_amount with new TDS
+                        $freightBooking->balance_amount = $freightBooking->tr_amount
+                            - $freightBooking->advance_amount
+                            - $newTdsAmount
+                            - ($freightBooking->damage_amount ?? 0)
+                            - ($freightBooking->shortage_amount ?? 0)
+                            + ($freightBooking->detention ?? 0)
+                            + ($freightBooking->deviation ?? 0)
+                            - ($freightBooking->misc_expense ?? 0);
+
+                        $freightBooking->save();
+                    }
                 }
             }
 

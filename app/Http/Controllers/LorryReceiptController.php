@@ -775,10 +775,46 @@ class LorryReceiptController extends Controller
             'owner' => env('TDS_PERCENTAGE_OWNER', 1),
         ];
 
+        // Check if transporter can be changed (TDS not submitted)
+        // Transporter cannot be changed if TDS is submitted, regardless of payment status
+        $canChangeTransporter = true;
+        $freightBookings = \App\Models\FreightBooking::where('lr_id', $lorry_receipt->id)->get();
+
+        $grDateToCheck = null;
+        if ($lorry_receipt->gr_date) {
+            $grDateToCheck = $lorry_receipt->gr_date;
+        } elseif (! $freightBookings->isEmpty()) {
+            foreach ($freightBookings as $freightBooking) {
+                if ($freightBooking->lr && $freightBooking->lr->gr_date) {
+                    $grDateToCheck = $freightBooking->lr->gr_date;
+                    break;
+                }
+            }
+        }
+
+        if ($grDateToCheck) {
+            $grDate = \Carbon\Carbon::parse($grDateToCheck);
+            $grMonth = $grDate->month;
+            $grYear = $grDate->year;
+
+            $submissionDay = config('payments.tds_submission_day', 3);
+
+            $submissionDate = \Carbon\Carbon::create($grYear, $grMonth, 1)
+                ->addMonth()
+                ->day($submissionDay)
+                ->startOfDay();
+
+            $today = \Carbon\Carbon::now()->startOfDay();
+            if ($today->gte($submissionDate)) {
+                $canChangeTransporter = false;
+            }
+        }
+
         return view('lorry_receipts.edit', [
             'lorry_receipt' => $lorry_receipt,
             'trucks' => $trucks,
             'transporters' => $transporters,
+            'canChangeTransporter' => $canChangeTransporter,
             'statuses' => $statuses,
             'customers' => $consignees,
             'consignors' => $consignees,
@@ -939,6 +975,19 @@ class LorryReceiptController extends Controller
         $oldDeliveryStatus = $lorry_receipt->delivery_status;
         $oldWeight = $lorry_receipt->weight;
 
+        // Check if transporter is being changed and if TDS is submitted
+        if (isset($validated['transporter_id']) && $validated['transporter_id'] != $oldTransporterId) {
+            $freightBookings = \App\Models\FreightBooking::where('lr_id', $lorry_receipt->id)->get();
+
+            foreach ($freightBookings as $freightBooking) {
+                if (! $freightBooking->canChangeTdsAmount()) {
+                    return redirect()->back()->withErrors([
+                        'transporter_id' => 'Transporter cannot be changed because TDS has already been submitted for this freight booking.',
+                    ])->withInput();
+                }
+            }
+        }
+
         $lorry_receipt->update($validated);
 
         // Sync changes to related FreightBookings
@@ -966,10 +1015,13 @@ class LorryReceiptController extends Controller
                     $updateData['transporter_tds_percentage'] = $transporter->tds_percentage;
 
                     // Recalculate tds_amount based on loading_weight (not loose weight) and transporter TDS percentage
-                    $loadingWeight = $lorry_receipt->weight;
-                    $tdsBaseAmount = round($freightBooking->tr_fr_rate * $loadingWeight, 2);
-                    $newTdsAmount = round($tdsBaseAmount * ($transporter->tds_percentage / 100), 2);
-                    $updateData['tds_amount'] = $newTdsAmount;
+                    // Check if TDS can be changed before updating
+                    if ($freightBooking->canChangeTdsAmount()) {
+                        $loadingWeight = $lorry_receipt->weight;
+                        $tdsBaseAmount = round($freightBooking->tr_fr_rate * $loadingWeight, 2);
+                        $newTdsAmount = round($tdsBaseAmount * ($transporter->tds_percentage / 100), 2);
+                        $updateData['tds_amount'] = $newTdsAmount;
+                    }
                 }
             }
 
@@ -1008,7 +1060,7 @@ class LorryReceiptController extends Controller
                 // If weights are equal, don't update tr_amount - use existing value (may be manually edited)
 
                 // Recalculate TDS based on loading_weight (not loose weight) if loading weight changed
-                if ($weightChanged) {
+                if ($weightChanged && $freightBooking->canChangeTdsAmount()) {
                     $tdsBaseAmount = round($freightBooking->tr_fr_rate * $loadingWeight, 2);
                     $tdsPercentage = $freightBooking->transporter_tds_percentage ?? 0;
                     $newTdsAmount = round($tdsBaseAmount * ($tdsPercentage / 100), 2);

@@ -1,5 +1,7 @@
 <?php
 return [
+    'tds_submission_day' => (int) env('TDS_SUBMISSION_DAY', 3),
+
     'gst_slabs' => explode(',', env('GST_SLABS', '5,12,18')),
 
     'truck_count_1' => env('TRUCK_COUNT_1', '1-10'),
