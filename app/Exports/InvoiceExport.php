@@ -34,7 +34,7 @@ class InvoiceExport implements FromCollection, WithHeadings, ShouldAutoSize, Wit
             $query->where('company_id', $companyId);
         }
 
-        $invoices = $query->orderBy('generated_date', 'desc')->get();
+        $invoices = $query->orderBy('generated_date', 'asc')->get();
 
         return $invoices->map(function ($invoice, $index) {
             return [

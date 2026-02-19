@@ -2,11 +2,15 @@
 
 namespace Tests\Feature\Reports;
 
+use App\Exports\InvoiceExport;
 use App\Models\Company;
 use App\Models\Consignee;
+use App\Models\Country;
 use App\Models\FreightBooking;
+use App\Models\Invoice;
 use App\Models\LorryReceipt;
 use App\Models\Pump;
+use App\Models\State;
 use App\Models\User;
 use App\Models\UserRole;
 use App\Models\VoucherPayment;
@@ -271,6 +275,108 @@ class ReportExportTest extends TestCase
             ->get('/reports/transporter-report?' . http_build_query($params))
             ->assertOk()
             ->assertSee('12.345');
+    }
+
+    public function test_invoice_report_displays_invoices_sorted_ascending_by_generated_date(): void
+    {
+        $admin = $this->makeUser('admin');
+        $country = Country::create(['name' => 'India', 'code' => 'IN']);
+        $state = State::create(['name' => 'Gujarat', 'country_id' => $country->id]);
+        $customer = Consignee::create([
+            'company_id' => $admin->company_id,
+            'name' => 'Invoice Customer',
+            'state_id' => $state->id,
+        ]);
+
+        Invoice::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'manual_invoice_number' => 'INV-DATE-3',
+            'invoice_type' => 'Reverse',
+            'generated_date' => '2025-01-03',
+            'total_amount' => 1000,
+            'net_amount' => 1000,
+        ]);
+        Invoice::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'manual_invoice_number' => 'INV-DATE-1',
+            'invoice_type' => 'Reverse',
+            'generated_date' => '2025-01-01',
+            'total_amount' => 1000,
+            'net_amount' => 1000,
+        ]);
+        Invoice::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'manual_invoice_number' => 'INV-DATE-2',
+            'invoice_type' => 'Reverse',
+            'generated_date' => '2025-01-02',
+            'total_amount' => 1000,
+            'net_amount' => 1000,
+        ]);
+
+        $params = [
+            'start_date' => '2025-01-01',
+            'end_date' => '2025-01-31',
+        ];
+
+        $response = $this->actingAs($admin)->get('/reports/invoice?' . http_build_query($params));
+
+        $response->assertOk();
+        $content = $response->getContent();
+        $pos1 = strpos($content, 'INV-DATE-1');
+        $pos2 = strpos($content, 'INV-DATE-2');
+        $pos3 = strpos($content, 'INV-DATE-3');
+        $this->assertNotFalse($pos1);
+        $this->assertNotFalse($pos2);
+        $this->assertNotFalse($pos3);
+        $this->assertLessThan($pos2, $pos1, 'INV-DATE-1 should appear before INV-DATE-2');
+        $this->assertLessThan($pos3, $pos2, 'INV-DATE-2 should appear before INV-DATE-3');
+    }
+
+    public function test_invoice_export_returns_invoices_sorted_ascending_by_generated_date(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = Consignee::create([
+            'company_id' => $admin->company_id,
+            'name' => 'Export Customer',
+        ]);
+
+        Invoice::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'manual_invoice_number' => 'INV-EXP-3',
+            'invoice_type' => 'Reverse',
+            'generated_date' => '2025-01-15',
+            'total_amount' => 1000,
+            'net_amount' => 1000,
+        ]);
+        Invoice::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'manual_invoice_number' => 'INV-EXP-1',
+            'invoice_type' => 'Reverse',
+            'generated_date' => '2025-01-05',
+            'total_amount' => 1000,
+            'net_amount' => 1000,
+        ]);
+        Invoice::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'manual_invoice_number' => 'INV-EXP-2',
+            'invoice_type' => 'Reverse',
+            'generated_date' => '2025-01-10',
+            'total_amount' => 1000,
+            'net_amount' => 1000,
+        ]);
+
+        $this->actingAs($admin);
+        $export = new InvoiceExport('2025-01-01', '2025-01-31');
+        $collection = $export->collection();
+
+        $invoiceNumbers = $collection->pluck('Invoice No')->values()->all();
+        $this->assertSame(['INV-EXP-1', 'INV-EXP-2', 'INV-EXP-3'], $invoiceNumbers);
     }
 }
 

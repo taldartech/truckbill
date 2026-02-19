@@ -312,7 +312,7 @@ class ReportController extends Controller
             if ($user) {
                 $query->where('company_id', $user);
             }
-            $query->orderBy('generated_date', 'desc');
+            $query->orderBy('generated_date', 'asc');
             $invoices = $query->get();
         }
 
