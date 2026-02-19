@@ -41,6 +41,7 @@ class FreightBookingTest extends TestCase
             'gst_slab' => config('payments.gst_slabs')[0],
             'lr_credits' => 5,
             'is_blocked' => false,
+            'plan_end_date' => now()->addYear(),
         ]);
 
         $roleId = UserRole::where('name', $role)->value('id');
@@ -310,6 +311,48 @@ class FreightBookingTest extends TestCase
         $initialBooking->refresh();
         $this->assertEquals(200.0, (float) $initialBooking->tds_amount);
         $this->assertEquals(9000.0, (float) $initialBooking->tr_amount);
+
+        Carbon::setTestNow();
+    }
+
+    public function test_edit_page_shows_tds_lock_message_when_cannot_change_tds(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+
+        $fb = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'balance_amount' => 0,
+            'tds_amount' => 200,
+            'voucher_number' => 5001,
+        ]));
+        $lr->update(['freight_booking_id' => $fb->id]);
+
+        $response = $this->actingAs($admin)->get("/freight_bookings/{$fb->id}/edit");
+
+        $response->assertOk()
+            ->assertSee('TDS already submitted; amount cannot be changed.');
+    }
+
+    public function test_edit_page_shows_tds_auto_calculated_message_when_can_change_tds(): void
+    {
+        Carbon::setTestNow('2025-02-01 12:00:00');
+
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        $lr->update(['gr_date' => '2025-01-15']);
+
+        $fb = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'balance_amount' => 500,
+            'tds_amount' => 200,
+            'voucher_number' => 5001,
+        ]));
+        $lr->update(['freight_booking_id' => $fb->id]);
+
+        $response = $this->actingAs($admin)->get("/freight_bookings/{$fb->id}/edit");
+
+        $response->assertOk()
+            ->assertSee('Auto-calculated based on transporter TDS percentage')
+            ->assertDontSee('TDS already submitted; amount cannot be changed.');
 
         Carbon::setTestNow();
     }

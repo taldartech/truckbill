@@ -243,9 +243,15 @@
                             class="form-control @error('tds_amount') is-invalid @enderror" name="tds_amount"
                             id="tds_amount" value="{{ old('tds_amount', $freightBooking->tds_amount) }}" readonly
                             style="background-color: #f8f9fa;" {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
+                        @if(isset($canChangeTds) && !$canChangeTds)
+                        <small class="form-text text-muted text-warning">
+                            <i class="fas fa-lock"></i> TDS already submitted; amount cannot be changed.
+                        </small>
+                        @else
                         <small class="form-text text-muted">
                             <i class="fas fa-percentage"></i> Auto-calculated based on transporter TDS percentage
                         </small>
+                        @endif
                         @error('tds_amount')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
@@ -935,6 +941,8 @@
 
             // Check if freight booking is delivered
             const isDelivered = @json((bool) ($is_delivered ?? false));
+            // TDS already submitted to government cannot be changed
+            const canChangeTds = @json($canChangeTds ?? true);
 
             // Function to calculate TDS and Balance amounts
             function calculateTdsAndBalance() {
@@ -953,6 +961,7 @@
                     .getElementById('shortage_amount').value : 0) || 0;
 
                 // TDS calculation logic:
+                // If TDS already submitted, never change TDS amount.
                 // Before delivery: Calculate TDS from freight amount (TR amount)
                 // After delivery: Only recalculate if loading_weight or rate changed, else keep previous TDS
                 const loadingWeight = parseFloat(weightElement ? weightElement.value : 0) || 0;
@@ -961,25 +970,27 @@
                 let tdsAmount = previousTdsAmount;
                 let shouldRecalculateTds = false;
 
-                if (!isDelivered) {
-                    shouldRecalculateTds = true;
-                } else {
-                    const loadingWeightChanged = Math.abs(previousLoadingWeight - loadingWeight) > 0.01;
-                    const rateChanged = Math.abs(previousRate - trFrRate) > 0.01;
-
-                    if (loadingWeightChanged || rateChanged) {
-                        shouldRecalculateTds = true;
-                    }
-                }
-
-                if (shouldRecalculateTds) {
+                if (canChangeTds) {
                     if (!isDelivered) {
-                        tdsAmount = Math.round(trAmount * (tdsPercentage / 100) * 100) / 100;
+                        shouldRecalculateTds = true;
                     } else {
-                        const tdsBaseAmount = loadingWeight * trFrRate;
-                        tdsAmount = Math.round(tdsBaseAmount * (tdsPercentage / 100) * 100) / 100;
+                        const loadingWeightChanged = Math.abs(previousLoadingWeight - loadingWeight) > 0.01;
+                        const rateChanged = Math.abs(previousRate - trFrRate) > 0.01;
+
+                        if (loadingWeightChanged || rateChanged) {
+                            shouldRecalculateTds = true;
+                        }
                     }
-                    previousTdsAmount = tdsAmount;
+
+                    if (shouldRecalculateTds) {
+                        if (!isDelivered) {
+                            tdsAmount = Math.round(trAmount * (tdsPercentage / 100) * 100) / 100;
+                        } else {
+                            const tdsBaseAmount = loadingWeight * trFrRate;
+                            tdsAmount = Math.round(tdsBaseAmount * (tdsPercentage / 100) * 100) / 100;
+                        }
+                        previousTdsAmount = tdsAmount;
+                    }
                 }
 
                 if (tdsAmountInput) {

@@ -948,6 +948,7 @@ class FreightBookingController extends Controller
                         'transporter' => $transporter ?? null,
                         'tdsPercentages' => $tdsPercentages,
                         'tdsPercentage'   => $tdsPercentage, // send to view
+                        'canChangeTds' => $freightBooking->canChangeTdsAmount(),
                         'preFilled' => [
                             'lr_number' => $lr->lr_number,
                             'lr_id' => $lr->id,
@@ -972,6 +973,7 @@ class FreightBookingController extends Controller
                 'goods_type' => $goodsTypes,
                 'transporter' => $transporter,
                 'truck' => $truck,
+                'canChangeTds' => $freightBooking->canChangeTdsAmount(),
                 'preFilled' => [
                     'lr_number' => $freightBooking->lr ? $freightBooking->lr->lr_number : '',
                     'lr_id' => $freightBooking->lr_id,
