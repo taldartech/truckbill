@@ -295,13 +295,43 @@ class InvoiceController extends Controller
             ->get();
 
         if ($request->ajax()) {
+            $sgst = $invoice->sgst ?? 0;
+            $cgst = $invoice->cgst ?? 0;
+            $igst = $invoice->igst ?? 0;
+            $totalGst = $sgst + $cgst + $igst;
+            $baseAmount = $invoice->net_amount - $totalGst ?? 0;
+            $netAmount = $invoice->net_amount ?? 0;
+            $sgstRate = 0;
+            $cgstRate = 0;
+            $igstRate = 0;
+            if ($baseAmount > 0) {
+                if ($sgst > 0) {
+                    $sgstRate = ($sgst / $baseAmount) * 100;
+                }
+                if ($cgst > 0) {
+                    $cgstRate = ($cgst / $baseAmount) * 100;
+                }
+                if ($igst > 0) {
+                    $igstRate = ($igst / $baseAmount) * 100;
+                }
+            }
+
             return response()->json([
                 'id' => $invoice->id,
                 'manual_invoice_number' => $invoice->manual_invoice_number,
                 'invoice_type' => $invoice->invoice_type,
                 'generated_date' => $invoice->generated_date,
                 'payment_status' => $invoice->payment_status,
-                'total_amount' => $invoice->total_amount,
+                'total_amount' => $invoice->total_amount - $totalGst,
+                'net_amount' => $invoice->net_amount,
+                'base_amount' => $baseAmount,
+                'sgst' => $sgst,
+                'cgst' => $cgst,
+                'igst' => $igst,
+                'sgst_rate' => $sgstRate,
+                'cgst_rate' => $cgstRate,
+                'igst_rate' => $igstRate,
+                'total_gst' => $totalGst,
                 'paid_amount' => $invoice->paid_amount,
                 'remaining_amount' => $invoice->remaining_amount,
                 'payments' => $invoice->payments,

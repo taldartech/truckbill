@@ -350,11 +350,29 @@
         // Wait for both jQuery and Bootstrap to be loaded
         $(document).ready(function() {
             // Initialize tooltips - ensure Bootstrap is loaded
-            if (typeof bootstrap !== 'undefined') {
+            if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
                 var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
                 var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
                     return new bootstrap.Tooltip(tooltipTriggerEl);
                 });
+            }
+
+            function showInvoiceModal(modalElement) {
+                if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                    var modal = new bootstrap.Modal(modalElement);
+                    modal.show();
+                } else {
+                    setTimeout(function() {
+                        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                            var modal = new bootstrap.Modal(modalElement);
+                            modal.show();
+                        } else {
+                            modalElement.classList.add('show');
+                            modalElement.style.display = 'block';
+                            document.body.classList.add('modal-open');
+                        }
+                    }, 100);
+                }
             }
 
             // Handle invoice details link click
@@ -362,13 +380,8 @@
                 e.preventDefault();
                 var invoiceId = $(this).data('id');
 
-                // Show modal with loading state - ensure Bootstrap is loaded
-                if (typeof bootstrap === 'undefined') {
-                    alert('Error: Bootstrap is not loaded. Please refresh the page.');
-                    return;
-                }
-                var modal = new bootstrap.Modal(document.getElementById('invoiceDetailsModal'));
-                modal.show();
+                var modalElement = document.getElementById('invoiceDetailsModal');
+                showInvoiceModal(modalElement);
 
                 $('#invoiceDetailsContent').html(`
         <div class="text-center">
@@ -443,28 +456,36 @@
                                 <h6 class="mb-0"><i class="bi bi-currency-rupee"></i> Financial Information</h6>
                             </div>
                             <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <div class="d-flex justify-content-between">
-                                            <span class="fw-bold">Total Amount:</span>
-                                            <span>₹${data.total_amount ? parseFloat(data.total_amount).toFixed(2) : '0.00'}</span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="d-flex justify-content-between">
-                                            <span class="fw-bold">Paid Amount:</span>
-                                            <span>₹${data.paid_amount ? parseFloat(data.paid_amount).toFixed(2) : '0.00'}</span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="d-flex justify-content-between">
-                                            <span class="fw-bold">Balance:</span>
-                                            <span class="fw-bold ${(data.total_amount - data.paid_amount) > 0 ? 'text-danger' : 'text-brand-primary'}">
-                                                ₹${(data.total_amount - data.paid_amount).toFixed(2)}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
+                                <table class="table table-borderless table-sm mb-0">
+                                    <tr>
+                                        <th class="fw-bold" style="width: 50%;">Base Amount:</th>
+                                        <td class="text-end">₹${data.total_amount ? parseFloat(data.total_amount).toFixed(2) : '0.00'}</td>
+                                    </tr>
+                                    ${(data.sgst > 0 || data.cgst > 0 || data.igst > 0) ? `
+                                    ${data.sgst > 0 ? `
+                                    <tr>
+                                        <th class="fw-bold">SGST (${data.sgst_rate ? parseFloat(data.sgst_rate).toFixed(2) : '0.00'}%):</th>
+                                        <td class="text-end">₹${parseFloat(data.sgst).toFixed(2)}</td>
+                                    </tr>
+                                    ` : ''}
+                                    ${data.cgst > 0 ? `
+                                    <tr>
+                                        <th class="fw-bold">CGST (${data.cgst_rate ? parseFloat(data.cgst_rate).toFixed(2) : '0.00'}%):</th>
+                                        <td class="text-end">₹${parseFloat(data.cgst).toFixed(2)}</td>
+                                    </tr>
+                                    ` : ''}
+                                    ${data.igst > 0 ? `
+                                    <tr>
+                                        <th class="fw-bold">IGST (${data.igst_rate ? parseFloat(data.igst_rate).toFixed(2) : '0.00'}%):</th>
+                                        <td class="text-end">₹${parseFloat(data.igst).toFixed(2)}</td>
+                                    </tr>
+                                    ` : ''}
+                                    ` : ''}
+                                    <tr>
+                                        <th class="fw-bold">Net Amount (After GST)${(data.invoice_type === 'Reverse') ? ' Under RCM' : ''}:</th>
+                                        <td class="text-end"><strong>₹${parseFloat(data.invoice_type === 'Reverse' ? (data.total_amount || 0) : (data.net_amount || 0)).toFixed(2)}</strong></td>
+                                    </tr>
+                                </table>
                             </div>
                         </div>
                     </div>

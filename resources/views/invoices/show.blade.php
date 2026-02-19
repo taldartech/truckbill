@@ -31,10 +31,6 @@
                                     <td>{{ $invoice->consignee ? $invoice->consignee->name : 'N/A' }}</td>
                                 </tr>
                                 <tr>
-                                    <th>Total Amount:</th>
-                                    <td>&#8377;{{ number_format($invoice->total_amount, 2) }}</td>
-                                </tr>
-                                <tr>
                                     <th>Payment Status:</th>
                                     <td>
                                         <span class="badge bg-{{ $invoice->payment_status === 'paid' ? 'brand-primary' : ($invoice->payment_status === 'partial' ? 'warning' : 'danger') }}">
@@ -89,8 +85,62 @@
                             </table>
                         </div>
                     </div>
-                </div>
-                <div class="row">
+                    <div class="col-md-6">
+                        <h4>Tax Breakup</h4>
+                        <div class="table-responsive">
+                            <table class="table">
+                                @php
+                                    $sgst = $invoice->sgst ?? 0;
+                                    $cgst = $invoice->cgst ?? 0;
+                                    $igst = $invoice->igst ?? 0;
+                                    $totalGst = $sgst + $cgst + $igst;
+                                    $baseAmount = $invoice->total_amount - $totalGst ?? 0;
+                                    $netAmount = $invoice->net_amount ?? 0;
+
+                                    $sgstRate = 0;
+                                    $cgstRate = 0;
+                                    $igstRate = 0;
+                                    if ($baseAmount > 0) {
+                                        if ($sgst > 0) {
+                                            $sgstRate = ($sgst / $baseAmount) * 100;
+                                        }
+                                        if ($cgst > 0) {
+                                            $cgstRate = ($cgst / $baseAmount) * 100;
+                                        }
+                                        if ($igst > 0) {
+                                            $igstRate = ($igst / $baseAmount) * 100;
+                                        }
+                                    }
+                                @endphp
+                                <tr>
+                                    <th>Base Amount:</th>
+                                    <td>&#8377;{{ number_format($baseAmount, 2) }}</td>
+                                </tr>
+                                @if($sgst > 0)
+                                <tr>
+                                    <th>SGST ({{ number_format($sgstRate, 2) }}%):</th>
+                                    <td>&#8377;{{ number_format($sgst, 2) }}</td>
+                                </tr>
+                                @endif
+                                @if($cgst > 0)
+                                <tr>
+                                    <th>CGST ({{ number_format($cgstRate, 2) }}%):</th>
+                                    <td>&#8377;{{ number_format($cgst, 2) }}</td>
+                                </tr>
+                                @endif
+                                @if($igst > 0)
+                                <tr>
+                                    <th>IGST ({{ number_format($igstRate, 2) }}%):</th>
+                                    <td>&#8377;{{ number_format($igst, 2) }}</td>
+                                </tr>
+                                @endif
+                                <tr>
+                                    <th>Net Amount (After GST) {{ ($invoice->invoice_type ?? '') == 'Reverse' ? 'Under RCM' : '' }}:</th>
+                                    <td><strong>&#8377;{{ number_format(($invoice->invoice_type ?? '') == 'Reverse' ? $baseAmount : $netAmount, 2) }}</strong></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
                     <div class="col-md-6">
                         <h4>User Information</h4>
                         <div class="table-responsive">
@@ -107,7 +157,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Payment History Section -->
                 <div class="row mt-4">
                     <div class="col-12">

@@ -256,6 +256,75 @@ class InvoiceTest extends TestCase
         $this->assertEquals(0, InvoicePayment::where('invoice_id', $invoice->id)->count());
     }
 
+    public function test_invoice_ajax_response_includes_gst_breakup(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        [$lr1] = $this->seedLrs($admin, $customer);
+
+        $invoice = Invoice::create([
+            'manual_invoice_number' => 'INV-GST-001',
+            'invoice_type' => 'regular',
+            'generated_date' => now()->toDateString(),
+            'customer_id' => $customer->id,
+            'total_amount' => 1000,
+            'net_amount' => 1180,
+            'sgst' => 90,
+            'cgst' => 90,
+            'igst' => 0,
+            'payment_status' => 'pending',
+            'company_id' => $admin->company_id,
+            'lr_ids' => [$lr1->id],
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->get("/invoices/{$invoice->id}");
+
+        $response->assertOk();
+        $data = $response->json();
+        $this->assertSame(1000.0, (float) $data['base_amount']);
+        $this->assertSame(1180.0, (float) $data['net_amount']);
+        $this->assertSame(90.0, (float) $data['sgst']);
+        $this->assertSame(90.0, (float) $data['cgst']);
+        $this->assertSame(0.0, (float) $data['igst']);
+        $this->assertSame(9.0, (float) $data['sgst_rate']);
+        $this->assertSame(9.0, (float) $data['cgst_rate']);
+        $this->assertSame(0.0, (float) $data['igst_rate']);
+        $this->assertSame(180.0, (float) $data['total_gst']);
+    }
+
+    public function test_invoice_show_page_displays_tax_breakup(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        [$lr1] = $this->seedLrs($admin, $customer);
+
+        $invoice = Invoice::create([
+            'manual_invoice_number' => 'INV-SHOW-001',
+            'invoice_type' => 'regular',
+            'generated_date' => now()->toDateString(),
+            'customer_id' => $customer->id,
+            'total_amount' => 1000,
+            'net_amount' => 1180,
+            'sgst' => 90,
+            'cgst' => 90,
+            'igst' => 0,
+            'payment_status' => 'pending',
+            'company_id' => $admin->company_id,
+            'lr_ids' => [$lr1->id],
+        ]);
+
+        $response = $this->actingAs($admin)->get("/invoices/{$invoice->id}");
+
+        $response->assertOk()
+            ->assertSee('Tax Breakup')
+            ->assertSee('Base Amount')
+            ->assertSee('SGST')
+            ->assertSee('CGST')
+            ->assertSee('Net Amount (After GST)');
+    }
+
     public function test_moderator_cannot_edit_or_destroy_invoice(): void
     {
         $admin = $this->makeUser('admin');
