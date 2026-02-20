@@ -89,7 +89,7 @@ class EwayBillExport implements FromCollection, WithHeadings, ShouldAutoSize, Wi
     {
         return [
             'C' => NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'E' => '#,##0.000',
+            'E' => '0.000', // Weight (3 decimals)
             'F' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
             'G' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
             'L' => NumberFormat::FORMAT_DATE_DDMMYYYY,

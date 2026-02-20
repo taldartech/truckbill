@@ -146,8 +146,8 @@ class TransporterReportExport implements FromCollection, WithHeadings, ShouldAut
     {
         $formats = [
             'A' => NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'F' => '#,##0.000',
-            'G' => '#,##0.000',
+            'F' => '0.000', // Loading Weight (3 decimals)
+            'G' => '0.000', // Unloading Weight (3 decimals)
             'H' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
             'K' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
             'L' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,

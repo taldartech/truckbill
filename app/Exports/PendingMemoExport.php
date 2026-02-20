@@ -96,7 +96,7 @@ class PendingMemoExport implements FromCollection, WithHeadings, WithColumnForma
     {
         return [
             'A' => NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'H' => '#,##0.000',
+            'H' => '0.000', // QTY(MT) - 3 decimals
             'I' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
             'J' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
             'K' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,

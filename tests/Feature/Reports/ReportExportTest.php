@@ -2,7 +2,13 @@
 
 namespace Tests\Feature\Reports;
 
+use App\Exports\ConsignorConsigneeExport;
+use App\Exports\EwayBillExport;
 use App\Exports\InvoiceExport;
+use App\Exports\PendingInvoiceExport;
+use App\Exports\PendingMemoExport;
+use App\Exports\ShortageDamageExport;
+use App\Exports\TransporterReportExport;
 use App\Models\Company;
 use App\Models\Consignee;
 use App\Models\Country;
@@ -14,6 +20,7 @@ use App\Models\State;
 use App\Models\User;
 use App\Models\UserRole;
 use App\Models\VoucherPayment;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -458,6 +465,37 @@ class ReportExportTest extends TestCase
         $content = $response->getContent();
         $this->assertStringContainsString('5000', $content, 'Reverse invoice should display total_amount 5000');
         $this->assertStringContainsString('2700', $content, 'Forward invoice should display net_amount 2700');
+    }
+
+    public function test_export_weight_columns_use_string_format_for_consistency(): void
+    {
+        $start = Carbon::today()->subDays(7)->toDateString();
+        $end = Carbon::today()->toDateString();
+        $weightFormat = '0.000';
+
+        $consignorConsignee = new ConsignorConsigneeExport($start, $end, null, null);
+        $this->assertSame($weightFormat, $consignorConsignee->columnFormats()['F'] ?? null);
+
+        $ewayBill = new EwayBillExport($start, $end);
+        $this->assertSame($weightFormat, $ewayBill->columnFormats()['E'] ?? null);
+
+        $pendingInvoice = new PendingInvoiceExport(null, $start, $end);
+        $this->assertSame($weightFormat, $pendingInvoice->columnFormats()['I'] ?? null);
+
+        $pendingMemo = new PendingMemoExport(null, $start, $end);
+        $this->assertSame($weightFormat, $pendingMemo->columnFormats()['H'] ?? null);
+
+        $shortageDamage = new ShortageDamageExport($start, $end);
+        $formats = $shortageDamage->columnFormats();
+        $this->assertSame($weightFormat, $formats['E'] ?? null);
+        $this->assertSame($weightFormat, $formats['F'] ?? null);
+
+        $admin = $this->makeUser('admin');
+        $this->actingAs($admin);
+        $transporterReport = new TransporterReportExport($start, $end, null, null, null);
+        $formats = $transporterReport->columnFormats();
+        $this->assertSame($weightFormat, $formats['F'] ?? null);
+        $this->assertSame($weightFormat, $formats['G'] ?? null);
     }
 }
 

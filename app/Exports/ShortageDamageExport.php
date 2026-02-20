@@ -168,8 +168,8 @@ class ShortageDamageExport implements FromCollection, WithHeadings, ShouldAutoSi
     {
         return [
             'C' => NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'E' => '#,##0.000',
-            'F' => '#,##0.000',
+            'E' => '0.000', // Loading Weight (3 decimals)
+            'F' => '0.000', // Unloading Weight (3 decimals)
             'G' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
             'H' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
             'L' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,

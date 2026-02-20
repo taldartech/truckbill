@@ -87,7 +87,7 @@ class PendingInvoiceExport implements FromCollection, WithHeadings, WithColumnFo
     {
         return [
             'A' => NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'I' => '#,##0.000',
+            'I' => '0.000', // QTY(MT) - 3 decimals
             'J' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
             'K' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
             'L' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,

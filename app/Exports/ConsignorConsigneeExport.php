@@ -87,7 +87,7 @@ class ConsignorConsigneeExport implements FromCollection, WithHeadings, ShouldAu
     {
         return [
             'B' => NumberFormat::FORMAT_DATE_DDMMYYYY,
-            'F' => '#,##0.000',
+            'F' => '0.000', // Weight (3 decimals)
             'G' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
             'H' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
         ];
