@@ -651,7 +651,7 @@
         </div>
     </div>
 
-
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         // Function to open voucher payment modal for single freight booking
         function openVoucherPaymentModal(freightBookingId) {
@@ -918,10 +918,27 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert('Payment submitted successfully!');
-                        // Close modal and refresh page
-                        bootstrap.Modal.getInstance(document.getElementById('voucherPaymentModal')).hide();
-                        window.location.reload();
+                        let successText = 'Payment submitted successfully!';
+                        if (data.adjust_in_advance && data.remaining_advance_balance !== undefined) {
+                            const name = data.transporter_name || 'Transporter';
+                            const bal = parseFloat(data.remaining_advance_balance).toFixed(2);
+                            successText += '\n\nRemaining advance balance (' + name + '): ₹ ' + bal;
+                        }
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success!',
+                                text: successText,
+                                confirmButtonColor: '#28a745'
+                            }).then(() => {
+                                bootstrap.Modal.getInstance(document.getElementById('voucherPaymentModal')).hide();
+                                window.location.reload();
+                            });
+                        } else {
+                            alert(successText);
+                            bootstrap.Modal.getInstance(document.getElementById('voucherPaymentModal')).hide();
+                            window.location.reload();
+                        }
                     } else {
                         alert('Error: ' + (data.message || 'Failed to submit payment'));
                     }
@@ -1098,7 +1115,6 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         (function() {
             const totalBalance = {{ $combinedTotalBalance }};
@@ -1188,7 +1204,13 @@
                 })
                 .then(data => {
                     bootstrap.Modal.getInstance(document.getElementById('combinedPaymentModal'))?.hide();
-                    (typeof Swal !== 'undefined' ? Swal.fire({ icon: 'success', title: 'Success', text: data.message || 'Combined payment processed successfully' }) : Promise.resolve())
+                    let successText = data.message || 'Combined payment processed successfully';
+                    if (data.adjust_in_advance && data.remaining_advance_balance !== undefined) {
+                        const name = data.transporter_name || 'Transporter';
+                        const bal = parseFloat(data.remaining_advance_balance).toFixed(2);
+                        successText += '\n\nRemaining advance balance (' + name + '): ₹ ' + bal;
+                    }
+                    (typeof Swal !== 'undefined' ? Swal.fire({ icon: 'success', title: 'Success', text: successText }) : Promise.resolve())
                         .then(() => { window.location.reload(); });
                 })
                 .catch(err => {

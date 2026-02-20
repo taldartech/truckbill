@@ -1177,10 +1177,16 @@
                     })
                     .then((data) => {
                         $('#combinedPaymentModal').modal('hide');
+                        let successText = data.message || 'Combined payment processed successfully';
+                        if (data.adjust_in_advance && data.remaining_advance_balance !== undefined) {
+                            const name = data.transporter_name || 'Transporter';
+                            const bal = parseFloat(data.remaining_advance_balance).toFixed(2);
+                            successText += '\n\nRemaining advance balance (' + name + '): ₹ ' + bal;
+                        }
                         Swal.fire({
                             icon: 'success',
                             title: 'Success',
-                            text: data.message || 'Combined payment processed successfully',
+                            text: successText,
                             confirmButtonColor: '#28a745'
                         }).then(() => {
                             window.location.reload();
@@ -2402,10 +2408,20 @@
                     if (data.success) {
                         // Close modal
                         $('#individualPaymentModal').modal('hide');
-                        // Show success message
-                        alert(data.message || 'Payment processed successfully!');
-                        // Refresh the table
-                        $('#freightBookingsTable').DataTable().ajax.reload();
+                        let successText = data.message || 'Payment processed successfully!';
+                        if (data.adjust_in_advance && data.remaining_advance_balance !== undefined) {
+                            const name = data.transporter_name || 'Transporter';
+                            const bal = parseFloat(data.remaining_advance_balance).toFixed(2);
+                            successText += '\n\nRemaining advance balance (' + name + '): ₹ ' + bal;
+                        }
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: successText,
+                            confirmButtonColor: '#28a745'
+                        }).then(() => {
+                            $('#freightBookingsTable').DataTable().ajax.reload();
+                        });
                     } else {
                         // Show error message
                         alert(data.message || 'Error processing payment. Please try again.');
@@ -2651,10 +2667,21 @@
                 .then(data => {
                     // Hide modal
                     if (data.success) {
-                        alert(data.message || 'Payment processed successfully!');
-                        $('#voucherPaymentModal').modal('hide');
-                        // Refresh the page or table
-                        location.reload();
+                        let successText = data.message || 'Payment processed successfully!';
+                        if (data.adjust_in_advance && data.remaining_advance_balance !== undefined) {
+                            const name = data.transporter_name || 'Transporter';
+                            const bal = parseFloat(data.remaining_advance_balance).toFixed(2);
+                            successText += '\n\nRemaining advance balance (' + name + '): ₹ ' + bal;
+                        }
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success!',
+                            text: successText,
+                            confirmButtonColor: '#28a745'
+                        }).then(() => {
+                            $('#voucherPaymentModal').modal('hide');
+                            location.reload();
+                        });
                     } else {
                         // Check if this is a duplicate warning
                         if (data.warning && data.duplicate_details) {
@@ -2683,9 +2710,21 @@
                                 .then(response => response.json())
                                 .then(data => {
                                     if (data.success) {
-                                        alert(data.message || 'Payment processed successfully!');
-                                        $('#voucherPaymentModal').modal('hide');
-                                        location.reload();
+                                        let successText = data.message || 'Payment processed successfully!';
+                                        if (data.adjust_in_advance && data.remaining_advance_balance !== undefined) {
+                                            const name = data.transporter_name || 'Transporter';
+                                            const bal = parseFloat(data.remaining_advance_balance).toFixed(2);
+                                            successText += '\n\nRemaining advance balance (' + name + '): ₹ ' + bal;
+                                        }
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Success!',
+                                            text: successText,
+                                            confirmButtonColor: '#28a745'
+                                        }).then(() => {
+                                            $('#voucherPaymentModal').modal('hide');
+                                            location.reload();
+                                        });
                                     } else {
                                         alert(data.message || 'Error processing payment. Please try again.');
                                     }

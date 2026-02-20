@@ -1596,12 +1596,28 @@ class FreightBookingController extends Controller
                 'processed_payments' => $processedPayments
             ]);
 
-            return response()->json([
+            $payload = [
                 'success' => true,
                 'message' => 'Voucher payment processed successfully',
                 'processed_count' => count($processedPayments),
-                'processed_payments' => $processedPayments
-            ]);
+                'processed_payments' => $processedPayments,
+            ];
+
+            if (strtolower($validated['payment_mode'] ?? '') === 'adjust in advance' && count($processedPayments) > 0) {
+                $firstBookingId = $validated['booking_ids'][0];
+                $firstBooking = FreightBooking::find($firstBookingId);
+                $transporterId = $firstBooking?->transporter_id ?? $firstBooking?->lr?->transporter_id;
+                if ($transporterId) {
+                    $transporter = \App\Models\Transporter::find($transporterId);
+                    if ($transporter) {
+                        $payload['adjust_in_advance'] = true;
+                        $payload['remaining_advance_balance'] = (float) $transporter->advance_amount;
+                        $payload['transporter_name'] = $transporter->name;
+                    }
+                }
+            }
+
+            return response()->json($payload);
         } catch (\Illuminate\Validation\ValidationException $e) {
             \Log::error('Validation error in voucher payment', [
                 'errors' => $e->errors(),

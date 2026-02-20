@@ -502,5 +502,43 @@ class FreightBookingTest extends TestCase
             ->assertSee('Combined', false)
             ->assertSee('Payment History');
     }
+
+    public function test_voucher_payment_includes_remaining_advance_balance_for_adjust_in_advance_mode(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        $transporter = $lr->transporter;
+        $transporter->update(['advance_amount' => 2500]);
+
+        $fb = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'transporter_id' => $transporter->id,
+            'balance_amount' => 5000,
+            'voucher_number' => 6010,
+        ]));
+        $lr->update(['freight_booking_id' => $fb->id]);
+
+        $paymentType = \App\Models\PaymentType::firstOrCreate(['name' => 'final']);
+        $paymentMode = \App\Models\PaymentMode::firstOrCreate(['name' => 'adjust in advance']);
+
+        $response = $this->actingAs($admin)->post(route('freight_bookings.voucher_payment'), [
+            'payment_type_id' => $paymentType->id,
+            'payment_mode_id' => $paymentMode->id,
+            'payment_type' => 'final',
+            'payment_mode' => 'adjust in advance',
+            'booking_ids' => [$fb->id],
+            'payment_amounts' => [1000],
+            'total_amount' => 1000,
+            'date' => now()->toDateString(),
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('adjust_in_advance', true)
+            ->assertJsonStructure(['remaining_advance_balance', 'transporter_name']);
+
+        $remaining = $response->json('remaining_advance_balance');
+        $this->assertIsNumeric($remaining);
+        $this->assertGreaterThanOrEqual(0, $remaining);
+    }
 }
 
