@@ -89,14 +89,14 @@
                                 <td style="white-space: nowrap;">
                                     {{ \Carbon\Carbon::parse($invoice->generated_date)->format('d-m-Y') }}
                                 </td>
-                                <td>{{ $invoice->net_amount }}</td>
+                                <td>{{ $invoice->invoice_type == 'Reverse' ? $invoice->total_amount : $invoice->net_amount }}</td>
                                 <td>{{ $invoice->consignee->state->name }}</td>
                                 <td>{{ $invoice->invoice_type == 'Reverse' ? 'Yes' : 'No' }}</td>
-                                <td>{{ $invoice->applicable_tax_percentage }}%</td>
+                                <td>{{ $invoice->applicable_tax_percentage ?? '5' }}%</td>
                                 <td>{{ 'Regular B2B' }}</td>
                                 {{-- <td></td> --}}
                                 <td>{{ '5.00' }}</td>
-                                <td>{{ $invoice->net_amount }}</td>
+                                <td>{{ $invoice->invoice_type == 'Reverse' ? $invoice->total_amount : $invoice->net_amount }}</td>
                                 {{-- <td></td> --}}
                             </tr>
                         @endforeach

@@ -37,20 +37,24 @@ class InvoiceExport implements FromCollection, WithHeadings, ShouldAutoSize, Wit
         $invoices = $query->orderBy('generated_date', 'asc')->get();
 
         return $invoices->map(function ($invoice, $index) {
+            $displayAmount = ($invoice->invoice_type ?? '') === 'Reverse'
+                ? ($invoice->total_amount ?? 0)
+                : ($invoice->net_amount ?? 0);
+
             return [
                 'Sr No' => $index + 1,
                 'GSTIN/UIN of Recipient' => $invoice->consignee->gst_number ?? 'N/A',
                 'Receiver' => $invoice->consignee->name ?? 'N/A',
                 'Invoice No' => $invoice->manual_invoice_number ?? 'N/A',
                 'Date' => Date::dateTimeToExcel(new Carbon($invoice->generated_date)),
-                'Amount' => (float) ($invoice->net_amount ?? 0),
+                'Amount' => (float) $displayAmount,
                 'State' => $invoice->consignee->state->name ?? 'N/A',
                 'Reverse Charge' => $invoice->company->gst_scheme == 'reverse charge' ? 'Yes' : 'No',
                 'Applicable % of Tax' => "-",
                 'Invoice Type' => "Regular B2B",
                 'E-Commerce GSTIN' => "",
                 'Rate' => "5.00",
-                'Taxable Value' => (float) ($invoice->net_amount ?? 0),
+                'Taxable Value' => (float) $displayAmount,
                 'Cess Amount' => "",
             ];
         });

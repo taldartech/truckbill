@@ -378,5 +378,86 @@ class ReportExportTest extends TestCase
         $invoiceNumbers = $collection->pluck('Invoice No')->values()->all();
         $this->assertSame(['INV-EXP-1', 'INV-EXP-2', 'INV-EXP-3'], $invoiceNumbers);
     }
+
+    public function test_invoice_export_displays_total_amount_for_reverse_and_net_amount_for_forward(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = Consignee::create([
+            'company_id' => $admin->company_id,
+            'name' => 'Amount Test Customer',
+        ]);
+
+        Invoice::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'manual_invoice_number' => 'INV-REVERSE',
+            'invoice_type' => 'Reverse',
+            'generated_date' => '2025-01-10',
+            'total_amount' => 5000,
+            'net_amount' => 4500,
+        ]);
+        Invoice::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'manual_invoice_number' => 'INV-FORWARD',
+            'invoice_type' => 'Forward',
+            'generated_date' => '2025-01-11',
+            'total_amount' => 3000,
+            'net_amount' => 2700,
+        ]);
+
+        $this->actingAs($admin);
+        $export = new InvoiceExport('2025-01-01', '2025-01-31');
+        $collection = $export->collection();
+
+        $reverseRow = $collection->firstWhere('Invoice No', 'INV-REVERSE');
+        $forwardRow = $collection->firstWhere('Invoice No', 'INV-FORWARD');
+
+        $this->assertNotNull($reverseRow);
+        $this->assertNotNull($forwardRow);
+        $this->assertSame(5000.0, $reverseRow['Amount'], 'Reverse invoice should display total_amount');
+        $this->assertSame(5000.0, $reverseRow['Taxable Value'], 'Reverse invoice Taxable Value should match Amount');
+        $this->assertSame(2700.0, $forwardRow['Amount'], 'Forward invoice should display net_amount');
+        $this->assertSame(2700.0, $forwardRow['Taxable Value'], 'Forward invoice Taxable Value should match Amount');
+    }
+
+    public function test_invoice_report_displays_total_amount_for_reverse_and_net_amount_for_forward(): void
+    {
+        $admin = $this->makeUser('admin');
+        $country = Country::create(['name' => 'India', 'code' => 'IN']);
+        $state = State::create(['name' => 'Gujarat', 'country_id' => $country->id]);
+        $customer = Consignee::create([
+            'company_id' => $admin->company_id,
+            'name' => 'Report Amount Customer',
+            'state_id' => $state->id,
+        ]);
+
+        Invoice::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'manual_invoice_number' => 'INV-RPT-REV',
+            'invoice_type' => 'Reverse',
+            'generated_date' => '2025-01-10',
+            'total_amount' => 5000,
+            'net_amount' => 4500,
+        ]);
+        Invoice::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'manual_invoice_number' => 'INV-RPT-FWD',
+            'invoice_type' => 'Forward',
+            'generated_date' => '2025-01-11',
+            'total_amount' => 3000,
+            'net_amount' => 2700,
+        ]);
+
+        $params = ['start_date' => '2025-01-01', 'end_date' => '2025-01-31'];
+        $response = $this->actingAs($admin)->get('/reports/invoice?' . http_build_query($params));
+
+        $response->assertOk();
+        $content = $response->getContent();
+        $this->assertStringContainsString('5000', $content, 'Reverse invoice should display total_amount 5000');
+        $this->assertStringContainsString('2700', $content, 'Forward invoice should display net_amount 2700');
+    }
 }
 
