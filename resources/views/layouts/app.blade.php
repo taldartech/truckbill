@@ -579,6 +579,13 @@
                                 </a>
                             </li>
                             <li class="nav-item">
+                                <a href="{{ route('company_bank_details.index') }}"
+                                    class="nav-link{{ Request::is('company_bank_details*') ? ' active' : '' }}">
+                                    <i class="fas fa-university"></i>
+                                    <p>Company Bank Details</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
                                 <a class="nav-link{{ Request::is('truck_owner_bank_accounts*') || Request::is('transporter_bank_accounts*') ? ' active' : '' }}"
                                     href="#bankAccountMenu">
                                     <i class="fas fa-university"></i>

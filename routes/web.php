@@ -18,6 +18,7 @@ use App\Http\Controllers\AdvancePaymentController;
 use App\Http\Controllers\PumpController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\VoucherTemplateController;
+use App\Http\Controllers\CompanyBankDetailsController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PromoCodeController;
@@ -46,6 +47,11 @@ Route::middleware(['auth.blocked'])->group(function () {
 
         // Voucher Template Routes
         Route::resource('voucher_templates', VoucherTemplateController::class)->except(['create', 'store', 'show', 'destroy']);
+
+        // Company Bank Details
+        Route::get('company_bank_details', [CompanyBankDetailsController::class, 'index'])->name('company_bank_details.index');
+        Route::get('company_bank_details/{id}/edit', [CompanyBankDetailsController::class, 'edit'])->name('company_bank_details.edit');
+        Route::put('company_bank_details/{id}', [CompanyBankDetailsController::class, 'update'])->name('company_bank_details.update');
 
         // Truck_Owner Bank Accounts
         Route::get('truck_owner_bank_accounts/index', [TruckOwnerBankAccountController::class, 'index'])->name('truck_owner_bank_accounts.index');

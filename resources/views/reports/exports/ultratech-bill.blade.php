@@ -121,34 +121,37 @@
     @endphp
     <tr>
         <td style="font-weight: bold;" colspan="10">
-          Remark:
+            Remark:
         </td>
         <td style="font-weight: bold;" colspan="2">Amount</td>
         <td>{{ number_format($totalAmount, 2) }}</td>
     </tr>
-    @if ($cgst > 0)
-        <tr>
-            <td colspan="10"></td>
+    <tr>
+        <td style="font-weight: bold;" colspan="2">Account No:</td>
+        <td colspan="8">{{ $company->account_number ?? '' }}</td>
+        @if ($cgst > 0)
             <td style="font-weight: bold;" colspan="2">CGST {{ $cgstpercent }}%</td>
             <td>{{ number_format($cgst, 2) }}</td>
-        </tr>
-    @endif
-    @if ($sgst > 0)
-        <tr>
-            <td colspan="10"></td>
-            <td style="font-weight: bold;" colspan="2">SGST {{ $sgstpercent }}%</td>
-            <td>{{ number_format($sgst, 2) }}</td>
-        </tr>
-    @endif
-    @if ($igst > 0)
-        <tr>
-            <td colspan="10"></td>
+        @elseif ($igst > 0)
             <td style="font-weight: bold;" colspan="2">IGST {{ $igstpercent }}%</td>
             <td>{{ number_format($igst, 2) }}</td>
-        </tr>
-    @endif
+        @else
+            <td colspan="3"></td>
+        @endif
+    </tr>
     <tr>
-        <td colspan="10"></td>
+        <td style="font-weight: bold;" colspan="2">IFSC CODE:</td>
+        <td colspan="8">{{ $company->ifsc ?? '' }}</td>
+        @if ($sgst > 0)
+            <td style="font-weight: bold;" colspan="2">SGST {{ $sgstpercent }}%</td>
+            <td>{{ number_format($sgst, 2) }}</td>
+        @else
+            <td colspan="3"></td>
+        @endif
+    </tr>
+    <tr>
+        <td style="font-weight: bold;" colspan="2">BANK:</td>
+        <td colspan="8">{{ $company->bank ?? '' }}</td>
         <td style="font-weight: bold;" colspan="2">Total Amount</td>
         @php
             $grandTotal = $invoice->invoice_type == 'Reverse' ? $totalAmount : $totalAmount + $totalgst;
