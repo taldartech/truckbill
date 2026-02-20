@@ -4,9 +4,14 @@
     <div class="container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h3>Voucher Details: {{ $voucherNumber }}</h3>
-            <a href="{{ route('voucher_payments.index') }}" class="btn btn-secondary">
-                <i class="bi bi-arrow-left"></i> Back to List
-            </a>
+            <div class="d-flex gap-2">
+                <a href="{{ route('voucher_payments.index') }}{{ request()->getQueryString() ? '?' . request()->getQueryString() : '' }}" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Back
+                </a>
+                <a href="{{ route('voucher_payments.index') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-list-ul"></i> Back to List
+                </a>
+            </div>
         </div>
 
         @if (session('success'))

@@ -150,7 +150,7 @@
                         <tr class="align-middle">
 
                             <td>
-                                <a href="{{ route('voucher_payments.show', $payment->voucher_number) }}" class="fw-bold text-decoration-none">
+                                <a href="{{ route('voucher_payments.show', $payment->voucher_number) }}{{ request()->getQueryString() ? '?' . request()->getQueryString() : '' }}" class="fw-bold text-decoration-none">
                                     {{ $payment->voucher_number }}
                                     <i class="bi bi-box-arrow-up-right ms-1 small"></i>
                                 </a>
@@ -206,7 +206,7 @@
                             @if(auth()->check() && auth()->user()->userRole->name === 'admin')
                             <td>
                                 <div class="d-flex gap-1">
-                                    <a href="{{ route('voucher_payments.show', $payment->voucher_number) }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip"
+                                    <a href="{{ route('voucher_payments.show', $payment->voucher_number) }}{{ request()->getQueryString() ? '?' . request()->getQueryString() : '' }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip"
                             data-bs-placement="top"
                             title="View Details">
                                         <i class="bi bi-eye"></i>

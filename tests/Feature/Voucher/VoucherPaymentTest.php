@@ -271,5 +271,78 @@ class VoucherPaymentTest extends TestCase
         $this->actingAs($mod)->get('/voucher_payments/V-MOD-1')->assertOk();
         $this->actingAs($mod)->get('/daily-payments')->assertOk();
     }
+
+    public function test_voucher_index_links_retain_query_string(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype, $pmode] = $this->seedBaseData($admin);
+
+        VoucherPayment::create([
+            'freight_booking_id' => $booking->id,
+            'voucher_number' => 'V-QS-001',
+            'payment_type_id' => $ptype->id,
+            'payment_mode_id' => $pmode->id,
+            'payment_type' => 'cash',
+            'payment_mode' => 'cash',
+            'amount' => 500,
+            'payment_status' => 'pending',
+            'company_id' => $admin->company_id,
+            'date' => now()->toDateString(),
+        ]);
+
+        $response = $this->actingAs($admin)->get('/voucher_payments?date=' . now()->toDateString());
+        $response->assertOk()
+            ->assertSee('V-QS-001')
+            ->assertSee('voucher_payments/V-QS-001?date=' . now()->toDateString(), false);
+    }
+
+    public function test_voucher_show_page_has_back_and_back_to_list_buttons(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype, $pmode] = $this->seedBaseData($admin);
+
+        VoucherPayment::create([
+            'freight_booking_id' => $booking->id,
+            'voucher_number' => 'V-SHOW-001',
+            'payment_type_id' => $ptype->id,
+            'payment_mode_id' => $pmode->id,
+            'payment_type' => 'cash',
+            'payment_mode' => 'cash',
+            'amount' => 500,
+            'payment_status' => 'pending',
+            'company_id' => $admin->company_id,
+            'date' => now()->toDateString(),
+        ]);
+
+        $response = $this->actingAs($admin)->get('/voucher_payments/V-SHOW-001');
+        $response->assertOk()
+            ->assertSee('Back')
+            ->assertSee('Back to List');
+    }
+
+    public function test_voucher_show_back_button_preserves_query_string(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype, $pmode] = $this->seedBaseData($admin);
+
+        VoucherPayment::create([
+            'freight_booking_id' => $booking->id,
+            'voucher_number' => 'V-QS-SHOW',
+            'payment_type_id' => $ptype->id,
+            'payment_mode_id' => $pmode->id,
+            'payment_type' => 'cash',
+            'payment_mode' => 'cash',
+            'amount' => 500,
+            'payment_status' => 'pending',
+            'company_id' => $admin->company_id,
+            'date' => now()->toDateString(),
+        ]);
+
+        $query = 'date=' . now()->toDateString() . '&transporter=1';
+        $response = $this->actingAs($admin)->get('/voucher_payments/V-QS-SHOW?' . $query);
+        $response->assertOk();
+        $this->assertStringContainsString('?date=', $response->getContent());
+        $this->assertStringContainsString('transporter=1', $response->getContent());
+    }
 }
 
