@@ -195,7 +195,7 @@
                     </div>
                 </div>
 
-                <!-- Invoice remark -->
+                <!-- Summary -->
                 <div class="card card-outline card-default shadow-sm mb-3" id="summarySection" style="display: none;">
                     <div class="card-body">
                         <div class="row g-3">
@@ -205,10 +205,6 @@
                                 @error('total_amount')
                                     <div class="text-danger small">{{ $message }}</div>
                                 @enderror
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Invoice remark</label>
-                                <textarea name="custom_invoice_remark" class="form-control" rows="2" placeholder="e.g. Difference freight invoice...">{{ old('custom_invoice_remark') }}</textarea>
                             </div>
                         </div>
                     </div>

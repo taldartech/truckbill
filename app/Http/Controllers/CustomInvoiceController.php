@@ -116,7 +116,6 @@ class CustomInvoiceController extends Controller
                 'lr_number' => 'required|string',
                 'amount' => 'required|numeric|min:0',
                 'remark' => 'nullable|string',
-                'custom_invoice_remark' => 'nullable|string',
             ]);
 
             if ($data['custom_invoice'] === 'rate_difference') {
@@ -185,7 +184,6 @@ class CustomInvoiceController extends Controller
             $data['cgst'] = round($cgst, 2);
             $data['igst'] = round($igst, 2);
             $data['net_amount'] = round($netAmount, 2);
-            $data['custom_invoice_remark'] = $request->input('custom_invoice_remark');
 
             $invoice = Invoice::create($data);
 

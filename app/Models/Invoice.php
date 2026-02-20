@@ -14,7 +14,6 @@ class Invoice extends Model
         'company_id',
         'invoice_type',
         'custom_invoice',
-        'custom_invoice_remark',
         'generated_date',
         'customer_id',
         'total_amount',

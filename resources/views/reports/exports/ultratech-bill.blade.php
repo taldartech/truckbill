@@ -163,9 +163,7 @@
         $totalgst = $cgst + $sgst + $igst;
     @endphp
     <tr>
-        <td style="font-weight: bold;" colspan="10">
-            Remark: {{ $invoice->custom_invoice ? ($invoice->custom_invoice_remark ?? '') : '' }}
-        </td>
+        <td style="font-weight: bold;" colspan="10"></td>
         <td style="font-weight: bold;" colspan="2">Amount</td>
         <td>{{ number_format($totalAmount, 2) }}</td>
     </tr>

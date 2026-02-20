@@ -64,9 +64,6 @@
                     <div class="col-md-6">
                         @if($invoice->custom_invoice)
                             <h4>Custom invoice details</h4>
-                            @if($invoice->custom_invoice_remark)
-                                <p class="text-muted small mb-2">{{ $invoice->custom_invoice_remark }}</p>
-                            @endif
                             <div class="table-responsive">
                                 <table class="table table-sm">
                                     <thead>

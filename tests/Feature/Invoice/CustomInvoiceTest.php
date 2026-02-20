@@ -153,7 +153,6 @@ class CustomInvoiceTest extends TestCase
             'portal_rate' => 45,
             'diff' => 5,
             'remark' => 'Rate diff',
-            'custom_invoice_remark' => 'Freight difference',
         ];
 
         $response = $this->actingAs($admin)->post(route('custom-invoices.store'), $payload);
