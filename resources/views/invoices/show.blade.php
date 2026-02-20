@@ -22,15 +22,15 @@
                                     <th>Invoice Type:</th>
                                     <td>{{ ucfirst($invoice->invoice_type) }}</td>
                                 </tr>
-                                @if($invoice->custom_invoice)
-                                <tr>
-                                    <th>Custom invoice:</th>
-                                    <td>
-                                        <span class="badge bg-{{ $invoice->custom_invoice === 'rate_difference' ? 'primary' : 'warning' }}">
-                                            {{ $invoice->custom_invoice === 'rate_difference' ? 'Rate difference' : 'Shortage & damage' }}
-                                        </span>
-                                    </td>
-                                </tr>
+                                @if ($invoice->custom_invoice)
+                                    <tr>
+                                        <th>Custom invoice:</th>
+                                        <td>
+                                            <span class="badge bg-{{ $invoice->custom_invoice === 'rate_difference' ? 'primary' : 'warning' }}">
+                                                {{ $invoice->custom_invoice === 'rate_difference' ? 'Rate difference' : 'Shortage & damage' }}
+                                            </span>
+                                        </td>
+                                    </tr>
                                 @endif
                                 <tr>
                                     <th>Generated Date:</th>
@@ -62,55 +62,62 @@
                         </div>
                     </div>
                     <div class="col-md-6">
-                        @if($invoice->custom_invoice)
+                        @if ($invoice->custom_invoice)
                             <h4>Custom invoice details</h4>
-                            <div class="table-responsive">
-                                <table class="table table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>Sr</th>
-                                            <th>LR No</th>
-                                            <th>Truck</th>
-                                            <th>Destination</th>
-                                            @if($invoice->custom_invoice === 'rate_difference')
-                                                <th>Portal rate</th>
-                                                <th>Diff</th>
-                                            @else
-                                                <th>Damage</th>
-                                                <th>Damage rate</th>
-                                                <th>Shortage</th>
-                                            @endif
-                                            <th>Amount</th>
-                                            <th>Remark</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @forelse($customDetails ?? [] as $row)
-                                            @php $lr = $row->lorryReceipt; @endphp
+                            @forelse($customDetails ?? [] as $row)
+                                @php $lr = $row->lorryReceipt; @endphp
+                                <div class="table-responsive mb-3">
+                                    <table class="table">
+                                        <tbody>
                                             <tr>
-                                                <td>{{ $loop->iteration }}</td>
+                                                <td class="text-muted small">LR No</td>
                                                 <td>{{ $lr ? $lr->lr_number : '—' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-muted small">Truck</td>
                                                 <td>{{ $lr && $lr->truck ? $lr->truck->truck_number : '—' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-muted small">Destination</td>
                                                 <td>{{ $lr ? ($lr->destination_city ?? '—') : '—' }}</td>
-                                                @if($invoice->custom_invoice === 'rate_difference')
+                                            </tr>
+                                            @if ($invoice->custom_invoice === 'rate_difference')
+                                                <tr>
+                                                    <td class="text-muted small">Portal rate</td>
                                                     <td>{{ $row->portal_rate !== null ? number_format($row->portal_rate, 2) : '—' }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-muted small">Diff</td>
                                                     <td>{{ $row->diff !== null ? number_format($row->diff, 2) : '—' }}</td>
-                                                @else
+                                                </tr>
+                                            @else
+                                                <tr>
+                                                    <td class="text-muted small">Damage</td>
                                                     <td>{{ $row->damage_qty !== null ? $row->damage_qty : '—' }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-muted small">Damage rate</td>
                                                     <td>{{ $row->damage_rate !== null ? number_format($row->damage_rate, 2) : '—' }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-muted small">Shortage</td>
                                                     <td>{{ $row->shortage_qty !== null ? $row->shortage_qty : '—' }}</td>
-                                                @endif
-                                                <td>&#8377;{{ number_format($row->amount ?? 0, 2) }}</td>
+                                                </tr>
+                                            @endif
+                                            <tr>
+                                                <td class="text-muted small">Amount</td>
+                                                <td class="fw-semibold">&#8377;{{ number_format($row->amount ?? 0, 2) }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-muted small">Remark</td>
                                                 <td>{{ $row->remark ?? '—' }}</td>
                                             </tr>
-                                        @empty
-                                            <tr>
-                                                <td colspan="{{ $invoice->custom_invoice === 'rate_difference' ? 9 : 10 }}" class="text-center text-muted">No line items.</td>
-                                            </tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
-                            </div>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            @empty
+                                <p class="text-muted">No line items.</p>
+                            @endforelse
                         @else
                             <h4>Associated Memos</h4>
                             <div class="table-responsive">

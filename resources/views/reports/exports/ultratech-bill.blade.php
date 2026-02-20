@@ -67,7 +67,11 @@
         <td style="font-weight: bold;">SAC Code:</td>
         <td colspan="3">996511</td>
     </tr>
-    @if($invoice->custom_invoice)
+    @php $remark = ''; @endphp
+    @if ($invoice->custom_invoice)
+        @foreach ($customDetails as $row)
+            @php $remark .= ($row->remark ?? '') . ' '; @endphp
+        @endforeach
     <tr>
         <td style="font-weight: bold;">Sr.No.</td>
         <td style="font-weight: bold;">Gr.no.</td>
@@ -167,6 +171,12 @@
         <td style="font-weight: bold;" colspan="2">Amount</td>
         <td>{{ number_format($totalAmount, 2) }}</td>
     </tr>
+    @if (trim($remark))
+        <tr>
+            <td style="font-weight: bold;" colspan="10">Remark: {{ trim($remark) }}</td>
+            <td colspan="3"></td>
+        </tr>
+    @endif
     <tr>
         <td style="font-weight: bold;" colspan="2">Account No:</td>
         <td colspan="8">{{ $company->account_number ?? '' }}</td>

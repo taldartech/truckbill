@@ -188,7 +188,7 @@
                                 @enderror
                             </div>
                             <div class="col-12">
-                                <label class="form-label">Line remark</label>
+                                <label class="form-label">Remark</label>
                                 <input type="text" name="remark" class="form-control" value="{{ old('remark') }}" placeholder="Optional">
                             </div>
                         </div>

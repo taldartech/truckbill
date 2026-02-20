@@ -99,6 +99,15 @@ class CustomInvoiceTest extends TestCase
         $response->assertOk();
     }
 
+    public function test_custom_invoice_create_page_shows_remark_label(): void
+    {
+        $admin = $this->makeUser('admin');
+        $response = $this->actingAs($admin)->get(route('custom-invoices.create'));
+        $response->assertOk();
+        $response->assertSee('Remark');
+        $response->assertDontSee('Line remark');
+    }
+
     public function test_moderator_can_access_custom_invoice_create_page(): void
     {
         $mod = $this->makeUser('moderator');
@@ -172,6 +181,36 @@ class CustomInvoiceTest extends TestCase
         $this->assertNotNull($detail);
         $this->assertSame(45.0, (float) $detail->portal_rate);
         $this->assertSame(5.0, (float) $detail->diff);
+    }
+
+    public function test_invoice_show_displays_custom_invoice_details_with_remark(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsigneeWithState($admin);
+        $this->seedLr($admin, $customer);
+
+        $this->actingAs($admin)->post(route('custom-invoices.store'), [
+            'custom_invoice' => 'rate_difference',
+            'manual_invoice_number' => 'CINV-SHOW-001',
+            'invoice_type' => 'Reverse',
+            'generated_date' => now()->toDateString(),
+            'customer_id' => $customer->id,
+            'total_amount' => 150,
+            'lr_number' => 'LR-CUSTOM-001',
+            'amount' => 150,
+            'portal_rate' => 40,
+            'diff' => 10,
+            'remark' => 'Rate difference note',
+        ]);
+
+        $invoice = Invoice::where('manual_invoice_number', 'CINV-SHOW-001')->first();
+        $response = $this->actingAs($admin)->get(route('invoices.show', $invoice));
+
+        $response->assertOk();
+        $response->assertSee('Custom invoice details');
+        $response->assertSee('LR No');
+        $response->assertSee('Remark');
+        $response->assertSee('Rate difference note');
     }
 
     public function test_admin_can_store_shortage_damage_custom_invoice(): void

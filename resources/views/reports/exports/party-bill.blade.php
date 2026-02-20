@@ -67,7 +67,11 @@
         <td style="font-weight: bold;">SAC Code:</td>
         <td colspan="3">996511</td>
     </tr>
+    @php $remark = ''; @endphp
     @if ($invoice->custom_invoice)
+        @foreach ($customDetails as $row)
+            @php $remark .= ($row->remark ?? '') . ' '; @endphp
+        @endforeach
         <tr>
             <td style="font-weight: bold;">Sr.No.</td>
             <td style="font-weight: bold;">Gr.no.</td>
@@ -198,6 +202,12 @@
         @endphp
         <td>{{ number_format($grandTotal, 2) }}</td>
     </tr>
+    @if (trim($remark))
+        <tr>
+            <td style="font-weight: bold;" colspan="9">Remark: {{ trim($remark) }}</td>
+            <td colspan="4"></td>
+        </tr>
+    @endif
     <tr>
         <td style="font-weight: bold;" colspan="9">{{ ucfirst(getIndianCurrency($grandTotal)) }} Only</td>
         <td style="font-weight: bold;" colspan="3">FOR {{ $company->name }}</td>
