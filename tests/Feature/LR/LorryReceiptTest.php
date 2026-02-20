@@ -527,6 +527,55 @@ class LorryReceiptTest extends TestCase
         Carbon::setTestNow();
     }
 
+    public function test_lorry_receipt_views_contain_declaration_warning_markup(): void
+    {
+        $admin = $this->makeAdmin();
+        [$customer, $consignor, $consignee] = $this->seedConsignees($admin);
+        [, $truck] = $this->makeTruck($admin);
+
+        $responseCreate = $this->actingAs($admin)->get('/lorry_receipts/create');
+        $responseCreate->assertOk();
+        $responseCreate->assertSee('id="declarationWarning"', false);
+        $responseCreate->assertSee('Declaration is not submitted for the selected truck owner');
+        $responseCreate->assertSee('Edit Truck Owner');
+
+        $responseCreateLinked = $this->actingAs($admin)->get('/lorry_receipts/create-linked');
+        $responseCreateLinked->assertOk();
+        $responseCreateLinked->assertSee('id="declarationWarning"', false);
+        $responseCreateLinked->assertSee('Declaration is not submitted for the selected truck owner');
+        $responseCreateLinked->assertSee('Edit Truck Owner');
+
+        $lr = \App\Models\LorryReceipt::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'consignor_id' => $consignor->id,
+            'consignee_id' => $consignee->id,
+            'lr_number' => 'LR-DECL',
+            'gr_number' => 'GR-DECL',
+            'invoice_number' => 'INV-DECL',
+            'truck_id' => $truck->id,
+            'transporter_id' => $truck->transporter_id,
+            'reference_by' => $truck->transporter_id,
+            'gr_date' => now()->toDateString(),
+            'source_city' => 'A',
+            'source_state' => 'B',
+            'destination_city' => 'C',
+            'destination_state' => 'D',
+            'lane' => 'Lane',
+            'good_type' => 'Steel',
+            'weight' => 1,
+            'fr_rate' => 100,
+            'amount' => 100,
+            'delivery_status' => 'Pending',
+        ]);
+
+        $responseEdit = $this->actingAs($admin)->get("/lorry_receipts/{$lr->id}/edit");
+        $responseEdit->assertOk();
+        $responseEdit->assertSee('id="declarationWarning"', false);
+        $responseEdit->assertSee('Declaration is not submitted for the selected truck owner');
+        $responseEdit->assertSee('Edit Truck Owner');
+    }
+
     public function test_super_admin_forbidden_and_guest_redirected(): void
     {
         $super = $this->makeUser('super_admin');

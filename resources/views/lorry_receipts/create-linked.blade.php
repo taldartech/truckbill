@@ -80,6 +80,24 @@
             background-color: var(--bs-primary);
             color: white;
         }
+
+        /* Highlight transporter input when declaration not given */
+        #transporter_id.declaration-warning {
+            border-color: #ffc107 !important;
+            border-width: 2px !important;
+            box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25) !important;
+        }
+
+        /* Highlight Select2 container when declaration not given */
+        .select2-container.declaration-warning {
+            border-color: #ffc107 !important;
+            border-width: 2px !important;
+            box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25) !important;
+        }
+
+        .select2-container.declaration-warning .select2-selection__rendered {
+            background-color: #fff3cd !important;
+        }
     </style>
     <div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
         <!--begin::Header-->
@@ -99,6 +117,14 @@
             @csrf
             <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
             <div class="card-body">
+                <!-- Declaration Warning (shown at top when truck owner declaration not submitted) -->
+                <div id="declarationWarning" class="alert alert-warning mb-3" style="display: none;">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Warning:</strong> Declaration is not submitted for the selected truck owner.
+                    <a href="#" id="editTruckOwnerLink" target="_blank" class="alert-link">
+                        <i class="bi bi-pencil-square"></i> Edit Truck Owner
+                    </a>
+                </div>
                 <!-- Shared Details for all LRs -->
                 <div class="card mb-4 p-3 bg-light">
                     <div class="row">
@@ -1713,11 +1739,63 @@ lrItemsContainer.addEventListener('blur', function(e) {
         function showTdsPercentage(transporterId) {
             const tdsDisplay = document.getElementById('tdsRateDisplay');
             const tdsValue = document.getElementById('tdsPercentageValue');
+            const declarationWarning = document.getElementById('declarationWarning');
+            const editTruckOwnerLink = document.getElementById('editTruckOwnerLink');
+            const transporterSelect = document.getElementById('transporter_id');
+            const transporterSelect2 = $('#transporter_id');
+
+            // Function to remove highlighting
+            function removeHighlight() {
+                if (transporterSelect) {
+                    transporterSelect.classList.remove('declaration-warning');
+                }
+                let select2Container = transporterSelect2.next('.select2-container');
+                if (!select2Container.length) {
+                    select2Container = $('.select2-container').has('#transporter_id');
+                }
+                if (!select2Container.length) {
+                    select2Container = transporterSelect2.closest('.select2-container');
+                }
+                if (select2Container.length) {
+                    select2Container.removeClass('declaration-warning');
+                } else if (transporterSelect && transporterSelect.parentElement) {
+                    const container = transporterSelect.parentElement.querySelector('.select2-container');
+                    if (container) {
+                        container.classList.remove('declaration-warning');
+                    }
+                }
+            }
+
+            // Function to add highlighting
+            function addHighlight() {
+                if (transporterSelect) {
+                    transporterSelect.classList.add('declaration-warning');
+                }
+                let select2Container = transporterSelect2.next('.select2-container');
+                if (!select2Container.length) {
+                    select2Container = $('.select2-container').has('#transporter_id');
+                }
+                if (!select2Container.length) {
+                    select2Container = transporterSelect2.closest('.select2-container');
+                }
+                if (select2Container.length) {
+                    select2Container.addClass('declaration-warning');
+                } else if (transporterSelect && transporterSelect.parentElement) {
+                    const container = transporterSelect.parentElement.querySelector('.select2-container');
+                    if (container) {
+                        container.classList.add('declaration-warning');
+                    }
+                }
+            }
 
             if (transporterId) {
                 // Show loading state
                 tdsDisplay.style.display = 'block';
                 tdsValue.textContent = 'Loading...';
+                if (declarationWarning) {
+                    declarationWarning.style.display = 'none';
+                }
+                removeHighlight();
 
                 // Fetch transporter details to get TDS percentage
                 fetch(`/api/transporters/${transporterId}`)
@@ -1728,14 +1806,38 @@ lrItemsContainer.addEventListener('blur', function(e) {
                         } else {
                             tdsValue.textContent = 'Not Set';
                         }
+
+                        // Check if truck owner and declaration not submitted
+                        if (data.is_owner && !data.declaration_given) {
+                            if (declarationWarning) {
+                                declarationWarning.style.display = 'block';
+                            }
+                            if (editTruckOwnerLink) {
+                                editTruckOwnerLink.href = `/truck_owners/${transporterId}/edit`;
+                            }
+                            addHighlight();
+                        } else {
+                            if (declarationWarning) {
+                                declarationWarning.style.display = 'none';
+                            }
+                            removeHighlight();
+                        }
                     })
                     .catch(error => {
                         console.error('Error fetching transporter TDS percentage:', error);
                         tdsValue.textContent = 'Error';
+                        if (declarationWarning) {
+                            declarationWarning.style.display = 'none';
+                        }
+                        removeHighlight();
                     });
             } else {
-                // Hide TDS display when no transporter selected
+                // Hide TDS display and warning when no transporter selected
                 tdsDisplay.style.display = 'none';
+                if (declarationWarning) {
+                    declarationWarning.style.display = 'none';
+                }
+                removeHighlight();
             }
         }
     </script>
