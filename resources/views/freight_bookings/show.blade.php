@@ -100,16 +100,19 @@
             </div>
             <div class="card-toolbar">
                 @if (!$freightBooking->is_cancelled)
-                    @if ($freightBooking->balance_amount > 0)
-                        @if (!$freightBooking->linked_lr_id)
-                            <button type="button" class="btn btn-sm btn-success me-2"
-                                onclick="openVoucherPaymentModal({{ $freightBooking->id }})">
-                                <i class="bi bi-credit-card"></i> Voucher Payment
-                            </button>
-                        @endif
+                    @if ($freightBooking->linked_lr_id && isset($combinedTotalBalance) && $combinedTotalBalance > 0 && $linkedFreightBookings->isNotEmpty())
+                        <button type="button" class="btn btn-sm btn-success me-2" data-bs-toggle="modal"
+                            data-bs-target="#combinedPaymentModal">
+                            <i class="bi bi-wallet2"></i> Combined Payment
+                        </button>
+                    @elseif ($freightBooking->balance_amount > 0 && !$freightBooking->linked_lr_id)
+                        <button type="button" class="btn btn-sm btn-success me-2"
+                            onclick="openVoucherPaymentModal({{ $freightBooking->id }})">
+                            <i class="bi bi-credit-card"></i> Voucher Payment
+                        </button>
                     @else
                         <button type="button" class="btn btn-sm btn-secondary me-2" disabled
-                            title="No balance amount to pay">
+                            title="{{ $freightBooking->linked_lr_id ? 'Use Combined Payment for linked bookings' : 'No balance amount to pay' }}">
                             <i class="bi bi-credit-card"></i> Voucher Payment
                         </button>
                     @endif
@@ -967,6 +970,240 @@
         });
     </script>
 
+    @if ($freightBooking->linked_lr_id && $linkedFreightBookings->isNotEmpty())
+    <!-- Combined Payment Modal -->
+    <div class="modal fade" id="combinedPaymentModal" tabindex="-1" aria-labelledby="combinedPaymentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="combinedPaymentModalLabel">
+                        <i class="bi bi-wallet2"></i> Combined Payment - Linked Bookings
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="combinedPaymentForm" method="POST" action="{{ route('freight_bookings.store_combined_payment') }}">
+                        @csrf
+                        <div class="alert alert-secondary mb-3">
+                            <h6><i class="fas fa-truck"></i> Transporter Details</h6>
+                            @php
+                                $firstLinked = $linkedFreightBookings->first();
+                                $firstLr = $firstLinked->lr ?? null;
+                            @endphp
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <strong>Transporter:</strong><br>
+                                    <span>{{ $firstLr && $firstLr->transporter ? $firstLr->transporter->name : ($firstLinked->transporter_name ?? 'N/A') }}</span>
+                                </div>
+                                <div class="col-md-2">
+                                    <strong>TDS %:</strong><br>
+                                    <span>{{ $firstLinked->transporter_tds_percentage ?? 0 }}%</span>
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Truck:</strong><br>
+                                    <span>{{ $firstLr && $firstLr->truck ? $firstLr->truck->truck_number : 'N/A' }}</span>
+                                </div>
+                                <div class="col-md-4 d-flex align-items-center gap-2">
+                                    <strong>Total Balance:</strong>
+                                    <span class="fw-bold">₹{{ number_format($combinedTotalBalance, 2) }}</span>
+                                    <label class="form-label mb-0 ms-2">Combined Amount *</label>
+                                    <input type="number" class="form-control" id="combinedAmountInput" name="combined_amount"
+                                        step="0.01" min="0.01" max="{{ $combinedTotalBalance }}"
+                                        value="{{ $combinedTotalBalance }}" required style="max-width: 150px;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-responsive mb-3">
+                            <table class="table table-sm table-bordered">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>LR Number</th>
+                                        <th>Shortage Amount</th>
+                                        <th>Damage Amount</th>
+                                        <th>Balance</th>
+                                        <th>Allocated</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($linkedFreightBookings as $fb)
+                                        <tr>
+                                            <td>{{ $fb->lr ? $fb->lr->lr_number : 'N/A' }}</td>
+                                            <td>₹{{ number_format($fb->shortage_amount ?? 0, 2) }}</td>
+                                            <td>₹{{ number_format($fb->damage_amount ?? 0, 2) }}</td>
+                                            <td>₹{{ number_format($fb->balance_amount ?? 0, 2) }}</td>
+                                            <td>
+                                                <input type="number" class="form-control form-control-sm allocated-input"
+                                                    name="payment_amounts[]" data-fb-id="{{ $fb->id }}"
+                                                    data-balance="{{ $fb->balance_amount ?? 0 }}"
+                                                    step="0.01" min="0" max="{{ $fb->balance_amount ?? 0 }}"
+                                                    value="{{ $fb->balance_amount ?? 0 }}">
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                        @foreach ($linkedFreightBookings as $fb)
+                            <input type="hidden" name="booking_ids[]" value="{{ $fb->id }}">
+                        @endforeach
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="combinedPaymentType" class="form-label">Payment Type *</label>
+                                <select class="form-select" id="combinedPaymentType" name="payment_type" required>
+                                    <option value="">Select Payment Type</option>
+                                    @foreach ($paymentTypes as $type)
+                                        <option value="{{ $type->id }}">{{ $type->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="combinedPaymentMode" class="form-label">Payment Mode *</label>
+                                <select class="form-select" id="combinedPaymentMode" name="payment_mode" required>
+                                    <option value="">Select Payment Mode</option>
+                                    @foreach ($paymentModes as $mode)
+                                        <option value="{{ $mode->id }}">{{ $mode->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-4" id="combinedPumpContainer" style="display: none;">
+                                <label for="combinedPumpName" class="form-label">Pump Name *</label>
+                                <select class="form-select" id="combinedPumpName" name="pump_id">
+                                    <option value="">Select Pump</option>
+                                    @foreach ($pumps as $pump)
+                                        <option value="{{ $pump->id }}">{{ $pump->pump_name }} ({{ $pump->contact_name }})</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="combinedPaymentDate" class="form-label">Payment Date</label>
+                                <input type="date" class="form-control" id="combinedPaymentDate" name="payment_date"
+                                    value="{{ date('Y-m-d') }}">
+                            </div>
+                            <div class="col-md-8">
+                                <label for="combinedNotes" class="form-label">Notes</label>
+                                <textarea class="form-control" id="combinedNotes" name="notes" rows="2" placeholder="Enter notes..."></textarea>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" id="combinedPaymentSubmitBtn">
+                        <i class="fas fa-save"></i> Submit Combined Payment
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        (function() {
+            const totalBalance = {{ $combinedTotalBalance }};
+            const amountInput = document.getElementById('combinedAmountInput');
+            const allocatedInputs = document.querySelectorAll('#combinedPaymentForm .allocated-input');
+
+            function allocateCombinedAmount() {
+                const totalAmount = parseFloat(amountInput?.value) || 0;
+                if (totalAmount <= 0 || totalBalance <= 0) return;
+
+                let totalAlloc = 0;
+                const allocs = [];
+                allocatedInputs.forEach(input => {
+                    const bal = parseFloat(input.dataset.balance) || 0;
+                    const pct = totalBalance > 0 ? (bal / totalBalance) : 0;
+                    let a = Math.min(totalAmount * pct, bal);
+                    allocs.push({ input, a });
+                    totalAlloc += a;
+                });
+                const diff = totalAmount - totalAlloc;
+                if (Math.abs(diff) > 0.01 && allocs.length > 0) {
+                    for (const item of allocs) {
+                        const bal = parseFloat(item.input.dataset.balance) || 0;
+                        if (bal - item.a > 0 && diff > 0) {
+                            item.a += Math.min(bal - item.a, diff);
+                            break;
+                        }
+                    }
+                }
+                allocs.forEach(({ input, a }) => { input.value = a.toFixed(2); });
+            }
+
+            if (amountInput) {
+                amountInput.addEventListener('input', allocateCombinedAmount);
+            }
+
+            function toggleCombinedPump() {
+                const sel = document.getElementById('combinedPaymentMode');
+                const pump = document.getElementById('combinedPumpContainer');
+                if (!sel || !pump) return;
+                const txt = sel.options[sel.selectedIndex]?.text?.toLowerCase() || '';
+                pump.style.display = txt.includes('fuel') ? 'block' : 'none';
+                if (!txt.includes('fuel')) document.getElementById('combinedPumpName').value = '';
+            }
+            document.getElementById('combinedPaymentMode')?.addEventListener('change', toggleCombinedPump);
+            document.getElementById('combinedPaymentModal')?.addEventListener('shown.bs.modal', toggleCombinedPump);
+
+            document.getElementById('combinedPaymentSubmitBtn')?.addEventListener('click', function() {
+                const btn = this;
+                const form = document.getElementById('combinedPaymentForm');
+                if (!form) return;
+                if (!confirm('Please review all payment details carefully before proceeding. Once the voucher status is marked as PAID, it cannot be edited or changed.')) return;
+
+                const originalText = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Submitting...';
+
+                const formData = new FormData(form);
+                fetch(form.action, {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+                    body: formData
+                })
+                .then(async res => {
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok || data.success === false) {
+                        if (data.warning && data.duplicate_details) {
+                            const d = data.duplicate_details;
+                            return (typeof Swal !== 'undefined' ? Swal.fire({
+                                icon: 'warning',
+                                title: 'Duplicate Payment Detected',
+                                html: `<p>A similar payment already exists:</p><ul><li>Date: ${d.date}</li><li>Amount: ₹${d.amount}</li><li>Payment Type: ${d.payment_type}</li><li>Payment Mode: ${d.payment_mode}</li></ul><p>Proceed anyway?</p>`,
+                                showCancelButton: true,
+                                confirmButtonText: 'Yes, Proceed',
+                                cancelButtonText: 'Cancel'
+                            }) : Promise.resolve({ isConfirmed: confirm('Duplicate payment detected. Proceed?') })).then(r => {
+                                if (r?.isConfirmed) {
+                                    formData.append('confirm_duplicate', '1');
+                                    return fetch(form.action, { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' }, body: formData });
+                                }
+                                throw new Error('Cancelled');
+                            }).then(r => r.json());
+                        }
+                        throw new Error(data.message || 'Failed to process combined payment');
+                    }
+                    return data;
+                })
+                .then(data => {
+                    bootstrap.Modal.getInstance(document.getElementById('combinedPaymentModal'))?.hide();
+                    (typeof Swal !== 'undefined' ? Swal.fire({ icon: 'success', title: 'Success', text: data.message || 'Combined payment processed successfully' }) : Promise.resolve())
+                        .then(() => { window.location.reload(); });
+                })
+                .catch(err => {
+                    if (err.message !== 'Cancelled') {
+                        (typeof Swal !== 'undefined' ? Swal.fire({ icon: 'error', title: 'Error', text: err.message }) : alert(err.message));
+                    }
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                });
+            });
+        })();
+    </script>
+    @endif
 
     <!-- Payment History Section -->
     <div class="card mt-4">
@@ -989,7 +1226,13 @@
                     <tbody>
                         @foreach ($payments as $payment)
                             <tr>
-                                <td>{{ $payment->voucher_number ?? 'N/A' }}</td>
+                                <td>
+                                    @if ($payment instanceof \App\Models\VoucherLinked)
+                                        <span class="badge bg-info">Combined</span>
+                                    @else
+                                        {{ $payment->voucher_number ?? 'N/A' }}
+                                    @endif
+                                </td>
                                 <td>₹{{ number_format($payment->amount, 2) }}</td>
                                 <td>{{ $payment->payment_type ?? 'N/A' }}</td>
                                 <td>

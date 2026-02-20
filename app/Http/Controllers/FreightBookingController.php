@@ -804,23 +804,32 @@ class FreightBookingController extends Controller
             $paymentTypes = \App\Models\PaymentType::all();
             $paymentModes = \App\Models\PaymentMode::all();
 
+            $linkedFreightBookings = collect();
+            $combinedTotalBalance = 0;
+
             if ($freightBooking->linked_lr_id) {
                 $freightBookingIds = \App\Models\FreightBooking::where('linked_lr_id', $freightBooking->linked_lr_id)
-                ->where('company_id', auth()->user()->company_id)
-                ->pluck('id')->toArray();
+                    ->where('company_id', auth()->user()->company_id)
+                    ->pluck('id')->toArray();
                 $payments = \App\Models\VoucherLinked::with('pump')
-                ->whereIn('freight_booking_id', $freightBookingIds)
-                ->where('company_id', auth()->user()->company_id)
-                ->orderBy('created_at', 'desc')
-                ->get();
+                    ->whereIn('freight_booking_id', $freightBookingIds)
+                    ->where('company_id', auth()->user()->company_id)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+                $linkedFreightBookings = \App\Models\FreightBooking::where('linked_lr_id', $freightBooking->linked_lr_id)
+                    ->where('company_id', auth()->user()->company_id)
+                    ->with('lr.truck', 'lr.transporter.transporterMaster')
+                    ->orderBy('id')
+                    ->get();
+                $combinedTotalBalance = $linkedFreightBookings->sum('balance_amount');
             } else {
                 $payments = \App\Models\VoucherPayment::with('pump')
-                ->where('freight_booking_id', $id)
-                ->orderBy('created_at', 'desc')
-                ->get();
+                    ->where('freight_booking_id', $id)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
             }
 
-            return view('freight_bookings.show', compact('freightBooking', 'paymentTypes', 'paymentModes', 'pumps', 'payments'));
+            return view('freight_bookings.show', compact('freightBooking', 'paymentTypes', 'paymentModes', 'pumps', 'payments', 'linkedFreightBookings', 'combinedTotalBalance'));
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return redirect()->route('freight_bookings.index')
                 ->with('error', 'Freight booking not found.');

@@ -388,5 +388,119 @@ class FreightBookingTest extends TestCase
         // amount = actual_amount - damage - shortage = 10000 - 70 - 10 = 9920
         $this->assertEquals(9920.0, (float) $lr->amount);
     }
+
+    public function test_show_page_displays_combined_payment_button_for_linked_bookings(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr1 = $this->makeLorryReceipt($admin);
+        $lr2 = $this->makeLorryReceipt($admin);
+
+        $linkedId = 999;
+        $fb1 = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr1), [
+            'linked_lr_id' => $linkedId,
+            'balance_amount' => 5000,
+            'voucher_number' => 6001,
+        ]));
+        FreightBooking::create(array_merge($this->bookingPayload($admin, $lr2), [
+            'linked_lr_id' => $linkedId,
+            'balance_amount' => 3000,
+            'voucher_number' => 6002,
+        ]));
+        $lr1->update(['freight_booking_id' => $fb1->id]);
+
+        $response = $this->actingAs($admin)->get("/freight_bookings/{$fb1->id}");
+
+        $response->assertOk()
+            ->assertSee('Combined Payment')
+            ->assertSee('combinedPaymentModal');
+    }
+
+    public function test_show_page_displays_voucher_payment_button_for_non_linked_booking(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        $fb = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'linked_lr_id' => null,
+            'balance_amount' => 5000,
+            'voucher_number' => 6003,
+        ]));
+        $lr->update(['freight_booking_id' => $fb->id]);
+
+        $response = $this->actingAs($admin)->get("/freight_bookings/{$fb->id}");
+
+        $response->assertOk()
+            ->assertSee('Voucher Payment')
+            ->assertSee('openVoucherPaymentModal');
+    }
+
+    public function test_show_page_displays_combined_payment_modal_for_linked_bookings(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr1 = $this->makeLorryReceipt($admin);
+        $lr2 = $this->makeLorryReceipt($admin);
+
+        $linkedId = 998;
+        $fb1 = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr1), [
+            'linked_lr_id' => $linkedId,
+            'balance_amount' => 4000,
+            'shortage_amount' => 100,
+            'damage_amount' => 50,
+            'voucher_number' => 6004,
+        ]));
+        FreightBooking::create(array_merge($this->bookingPayload($admin, $lr2), [
+            'linked_lr_id' => $linkedId,
+            'balance_amount' => 2000,
+            'voucher_number' => 6005,
+        ]));
+        $lr1->update(['freight_booking_id' => $fb1->id]);
+
+        $response = $this->actingAs($admin)->get("/freight_bookings/{$fb1->id}");
+
+        $response->assertOk()
+            ->assertSee('combinedPaymentModal')
+            ->assertSee('Combined Amount')
+            ->assertSee('Shortage Amount')
+            ->assertSee('Damage Amount')
+            ->assertSee('Submit Combined Payment');
+    }
+
+    public function test_show_page_payment_history_shows_combined_badge_for_voucher_linked(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr1 = $this->makeLorryReceipt($admin);
+        $lr2 = $this->makeLorryReceipt($admin);
+
+        $linkedId = 997;
+        $fb1 = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr1), [
+            'linked_lr_id' => $linkedId,
+            'balance_amount' => 1000,
+            'voucher_number' => 6006,
+        ]));
+        $fb2 = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr2), [
+            'linked_lr_id' => $linkedId,
+            'balance_amount' => 500,
+            'voucher_number' => 6007,
+        ]));
+        $lr1->update(['freight_booking_id' => $fb1->id]);
+
+        \App\Models\VoucherLinked::create([
+            'freight_booking_id' => $fb1->id,
+            'company_id' => $admin->company_id,
+            'payment_type' => 'final',
+            'payment_mode' => 'cash',
+            'payment_type_id' => \App\Models\PaymentType::first()?->id,
+            'payment_mode_id' => \App\Models\PaymentMode::first()?->id,
+            'amount' => 1500,
+            'date' => now()->toDateString(),
+            'payment_status' => 'paid',
+            'voucher_ids' => json_encode([]),
+        ]);
+
+        $response = $this->actingAs($admin)->get("/freight_bookings/{$fb1->id}");
+
+        $response->assertOk()
+            ->assertSee('Combined', false)
+            ->assertSee('Payment History');
+    }
 }
 
