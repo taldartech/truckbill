@@ -3,13 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Models\Consignee;
-use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class ConsigneeController extends Controller
 {
+    private function ensureCompanyContext(): void
+    {
+        if (Auth::user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
+            abort(403, 'Please enter a company first.');
+        }
+    }
+
     public function index(Request $request)
     {
+        $this->ensureCompanyContext();
         // Handle DataTables AJAX request
         if ($request->ajax()) {
             return $this->getConsigneesData($request);
@@ -166,6 +175,7 @@ class ConsigneeController extends Controller
 
     public function create()
     {
+        $this->ensureCompanyContext();
         $countries = \App\Models\Country::all();
         $states = [];
         $cities = [];
@@ -183,7 +193,7 @@ class ConsigneeController extends Controller
 
     public function store(Request $request)
     {
-        // dd($request->all());
+        $this->ensureCompanyContext();
         \Log::info('Current user company_id: ' . auth()->user()->company_id);
 
         $validated = $request->validate([
@@ -294,6 +304,10 @@ class ConsigneeController extends Controller
 
     public function edit(Consignee $consignee)
     {
+        $this->ensureCompanyContext();
+        if (Auth::user()->company_id && $consignee->company_id !== Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this consignee.');
+        }
         $countries = \App\Models\Country::all();
         $states = $consignee->country_id ? \App\Models\State::where('country_id', $consignee->country_id)->get() : collect();
         $cities = $consignee->state_id ? \App\Models\City::where('state_id', $consignee->state_id)->get() : collect();
@@ -302,6 +316,10 @@ class ConsigneeController extends Controller
 
     public function update(Request $request, Consignee $consignee)
     {
+        $this->ensureCompanyContext();
+        if (Auth::user()->company_id && $consignee->company_id !== Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this consignee.');
+        }
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'nullable|string',
@@ -419,6 +437,10 @@ class ConsigneeController extends Controller
 
     public function destroy(Consignee $consignee)
     {
+        $this->ensureCompanyContext();
+        if (Auth::user()->company_id && $consignee->company_id !== Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this consignee.');
+        }
         $consignee->delete();
         return redirect()->route('consignees.index')
             ->with('success', 'Consignee deleted successfully!');
@@ -431,12 +453,12 @@ class ConsigneeController extends Controller
      */
     public function getConsigneeApi($id)
     {
+        $this->ensureCompanyContext();
         try {
             $query = Consignee::with(['city', 'state', 'country', 'company']);
 
-            // Apply company filter for non-super admin users
-            if (auth()->user()->userRole->name !== 'super_admin') {
-                $query->where('company_id', auth()->user()->company_id);
+            if (Auth::user()->company_id) {
+                $query->where('company_id', Auth::user()->company_id);
             }
 
             $consignee = $query->findOrFail($id);

@@ -197,7 +197,7 @@
                                             data-bs-placement="top" title="View PDF">
                                             <i class="bi bi-eye"></i>
                                         </a>
-                                        @if (auth()->user()->userRole->name === 'admin')
+                                        @if (auth()->user()->canActAsAdmin())
                                             @if ($invoice->payment_status !== 'paid')
                                                 <a href="{{ route('invoices.edit', $invoice->id) }}"
                                                     class="btn btn-sm btn-edit" data-bs-toggle="tooltip"
@@ -219,7 +219,7 @@
                                                 </form>
                                             @endif
                                         @endif
-                                        @if (in_array(auth()->user()->userRole->name, ['admin']) && $invoice->remaining_amount > 0)
+                                        @if (auth()->user()->canActAsAdmin() && $invoice->remaining_amount > 0)
                                             <button type="button" class="btn btn-sm btn-view add-payment-btn"
                                                 data-bs-toggle="tooltip" data-bs-placement="top" title="Add Payment"
                                                 data-invoice-id="{{ $invoice->id }}"

@@ -358,13 +358,22 @@
                             @endauth
                         </a>
                     </li>
+                    @auth
+                        @if (Auth::user()->userRole->name === 'super_admin' && session('super_admin_company_id'))
+                            <li class="nav-item">
+                                <a href="{{ route('company.exit') }}" class="nav-link text-warning" title="Exit company context">
+                                    <i class="bi bi-box-arrow-left me-1"></i>Exit Company
+                                </a>
+                            </li>
+                        @endif
+                    @endauth
 
                 </ul>
                 <!--end::Start Navbar Links-->
                 <!--begin::End Navbar Links-->
                 <ul class="navbar-nav ms-auto">
                     @auth
-                        @if (in_array(Auth::user()->user_role_id, [3, 4, 5]))
+                        @if (in_array(Auth::user()->user_role_id, [3, 4, 5]) || (Auth::user()->userRole->name === 'super_admin' && Auth::user()->canAccessCompanyPanel()))
                             <li class="nav-item d-flex align-items-center me-3">
                                 <div class="credits-container">
                                     <div class="credit-pill" title="Plan Expiry">
@@ -512,7 +521,7 @@
                             </li>
                         @endif
 
-                        @if (auth()->check() && auth()->user()->userRole->name === 'super_admin')
+                        @if (auth()->check() && auth()->user()->userRole->name === 'super_admin' && !session('super_admin_company_id'))
                             <li class="nav-item">
                                 <a class="nav-link{{ Request::is('company') || Request::is('company/create') ? ' active' : '' }}"
                                     href="#companyMenu">
@@ -621,8 +630,8 @@
                             {{-- end master --}}
                         @endif
 
-                        {{-- Master data menus hidden from moderator/accountant/operator users --}}
-                        @if (auth()->check() && in_array(auth()->user()->userRole->name, ['admin', 'moderator']))
+                        {{-- Master data menus: admin, moderator, or super_admin in company context --}}
+                        @if (auth()->check() && auth()->user()->canAccessCompanyPanel())
                             <li class="nav-item">
                                 <a class="nav-link{{ Request::is('transporters*') || Request::is('transporters/create') ? ' active' : '' }}"
                                     href="#transporterMenu">
@@ -701,7 +710,7 @@
                                 </ul>
                             </li>
                         @endif
-                        @if (auth()->check() && in_array(auth()->user()->userRole->name, ['admin', 'moderator']))
+                        @if (auth()->check() && auth()->user()->canAccessCompanyPanel())
                             <li class="nav-item">
                                 <a class="nav-link{{ Request::is('consignees*') || Request::is('consignees/create') ? ' active' : '' }}"
                                     href="#consigneeMenu">
@@ -730,8 +739,8 @@
                             </li>
                         @endif
 
-                        {{-- Operational menus visible to all authenticated users including moderators --}}
-                        @if (auth()->check() && in_array(auth()->user()->userRole->name, ['admin', 'moderator']))
+                        {{-- Operational menus: admin, moderator, or super_admin in company context --}}
+                        @if (auth()->check() && auth()->user()->canAccessCompanyPanel())
                             <li class="nav-item">
                                 <a class="nav-link{{ Request::is('lorry_receipts*') || Request::is('lorry_receipts/create') ? ' active' : '' }}"
                                     href="#lorryReceiptMenu">
@@ -777,7 +786,7 @@
                                     </li>
                                 </ul>
                             </li>
-                            @if (in_array(auth()->user()->userRole->name, ['admin', 'moderator']))
+                            @if (auth()->user()->canAccessCompanyPanel())
                                 <li class="nav-item">
                                     <a class="nav-link{{ Request::is('voucher_payments*') || Request::is('voucher_payments/create') ? ' active' : '' }}"
                                         href="#voucherPaymentMenu">
@@ -877,8 +886,8 @@
 
                         @endif
 
-                        {{-- Reports Section - Visible to all authenticated users --}}
-                        @if (auth()->check() && in_array(auth()->user()->userRole->name, ['accountant', 'admin']))
+                        {{-- Reports Section - admin, accountant, or super_admin in company context --}}
+                        @if (auth()->check() && (in_array(auth()->user()->userRole->name, ['accountant', 'admin']) || (auth()->user()->userRole->name === 'super_admin' && auth()->user()->canAccessCompanyPanel())))
                             <li class="nav-item">
                                 <a class="nav-link{{ Request::is('reports*') ? ' active' : '' }}" href="#reportsMenu"
                                     data-lte-toggle="collapse">

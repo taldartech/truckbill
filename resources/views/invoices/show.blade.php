@@ -283,15 +283,15 @@
                 </div>
             </div>
             <div class="card-footer text-end">
-                @if (in_array(auth()->user()->userRole->name, ['admin', 'moderator']) && $invoice->remaining_amount > 0)
+                @if (auth()->user()->canAccessCompanyPanel() && $invoice->remaining_amount > 0)
                     <button type="button" class="btn btn-brand-primary me-2" data-bs-toggle="modal" data-bs-target="#addPaymentModal">
                         <i class="bi bi-cash-coin"></i> Add Payment
                     </button>
                 @endif
-                @if ($invoice->payment_status != 'paid' && Auth::user()->userRole->name == 'admin')
+                @if ($invoice->payment_status != 'paid' && Auth::user()->canActAsAdmin())
                     <a href="{{ route('invoices.edit', $invoice->id) }}" class="btn btn-warning me-2">Edit</a>
                 @endif
-                @if ($invoice->payment_status == 'pending' && Auth::user()->userRole->name == 'admin')
+                @if ($invoice->payment_status == 'pending' && Auth::user()->canActAsAdmin())
                     <form action="{{ route('invoices.destroy', $invoice->id) }}" method="POST"
                         style="display:inline-block;">
                         @csrf

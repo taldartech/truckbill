@@ -18,13 +18,20 @@ use App\Http\Requests\UpdateTransporterRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 
 class TransporterController extends Controller
 {
+    private function ensureCompanyContext(): void
+    {
+        if (Auth::user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
+            abort(403, 'Please enter a company first.');
+        }
+    }
+
     public function index(Request $request)
     {
-        // Handle DataTables AJAX request
-
+        $this->ensureCompanyContext();
         if ($request->ajax()) {
             return $this->getTransportersData($request);
         }
@@ -41,9 +48,8 @@ class TransporterController extends Controller
             $query = \App\Models\Transporter::with(['company', 'transporterMaster'])
                 ->where('is_owner', 0); // Default to show only Agencies
 
-            // Only apply company_id filter for non-super_admin users
-            if (auth()->user()->userRole->name !== 'super_admin') {
-                $query->where('company_id', auth()->user()->company_id);
+            if (Auth::user()->company_id) {
+                $query->where('company_id', Auth::user()->company_id);
             }
 
             \Log::info('Query built successfully');
@@ -133,8 +139,8 @@ class TransporterController extends Controller
 
             // Get total count before pagination
             $totalQuery = \App\Models\Transporter::where('is_owner', 0);
-            if (auth()->user()->userRole->name !== 'super_admin') {
-                $totalQuery->where('company_id', auth()->user()->company_id);
+            if (Auth::user()->company_id) {
+                $totalQuery->where('company_id', Auth::user()->company_id);
             }
             $totalRecords = $totalQuery->count();
             $filteredRecords = $query->count();
@@ -210,10 +216,10 @@ class TransporterController extends Controller
 
     public function show($id)
     {
+        $this->ensureCompanyContext();
         $transporter = \App\Models\Transporter::with(['company', 'transporterMaster.city.state.country'])->findOrFail($id);
 
-        // Check if user has permission to view this transporter
-        if (auth()->user()->userRole->name !== 'super_admin' && $transporter->company_id !== auth()->user()->company_id) {
+        if (Auth::user()->company_id && $transporter->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this transporter.');
         }
 
@@ -258,6 +264,7 @@ class TransporterController extends Controller
 
     public function create()
     {
+        $this->ensureCompanyContext();
         $companies = \App\Models\Company::all();
 
         // For create, we can't filter trucks as we don't have transporter_id yet
@@ -278,6 +285,7 @@ class TransporterController extends Controller
 
     public function store(StoreTransporterRequest $request)
     {
+        $this->ensureCompanyContext();
         $validated = $request->validated();
 
         $shortName = $validated['short_name'] ?? null;
@@ -371,6 +379,10 @@ class TransporterController extends Controller
 
     public function edit(\App\Models\Transporter $transporter)
     {
+        $this->ensureCompanyContext();
+        if (Auth::user()->company_id && $transporter->company_id !== Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this transporter.');
+        }
         $transporter->load(['transporterMaster.city.state.country']);
         $companies = \App\Models\Company::all();
         // Filter trucks to show only those belonging to this transporter
@@ -394,6 +406,10 @@ class TransporterController extends Controller
 
     public function update(UpdateTransporterRequest $request, \App\Models\Transporter $transporter)
     {
+        $this->ensureCompanyContext();
+        if (Auth::user()->company_id && $transporter->company_id !== Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this transporter.');
+        }
         $validated = $request->validated();
         $updateData = [
             'company_id' => $validated['company_id'],
@@ -500,6 +516,10 @@ class TransporterController extends Controller
 
     public function destroy(\App\Models\Transporter $transporter)
     {
+        $this->ensureCompanyContext();
+        if (Auth::user()->company_id && $transporter->company_id !== Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this transporter.');
+        }
         $transporter->delete();
         return redirect()->route('transporters.index')->with('success', 'Transporter deleted successfully!');
     }
@@ -513,9 +533,8 @@ class TransporterController extends Controller
             $query = \App\Models\Transporter::with('transporterMaster')
                 ->where('is_owner', 1);
 
-            // Apply company filter for non-super admin users
-            if (auth()->user()->userRole->name !== 'super_admin') {
-                $query->where('company_id', auth()->user()->company_id);
+            if (Auth::user()->company_id) {
+                $query->where('company_id', Auth::user()->company_id);
             }
 
             $truckOwners = $query->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
@@ -540,9 +559,8 @@ class TransporterController extends Controller
             $query = \App\Models\Transporter::with('transporterMaster')
                 ->where('is_owner', 0);
 
-            // Apply company filter for non-super admin users
-            if (auth()->user()->userRole->name !== 'super_admin') {
-                $query->where('company_id', auth()->user()->company_id);
+            if (Auth::user()->company_id) {
+                $query->where('company_id', Auth::user()->company_id);
             }
 
             $agencies = $query->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')

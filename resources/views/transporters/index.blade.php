@@ -42,7 +42,7 @@
                             <th>Contact Number</th>
                             <th>Advance Amount</th>
                             {{-- <th>Company</th> --}}
-                            @if (auth()->check() && auth()->user()->userRole->name === 'admin')
+                            @if (auth()->check() && auth()->user()->canActAsAdmin())
                                 <th style="width: 120px;">Actions</th>
                             @endif
                         </tr>
@@ -74,7 +74,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    @if (Auth::user()->userRole->name === 'admin')
+                    @if (Auth::user()->canActAsAdmin())
                         <button type="button" class="btn btn-edit" id="editTransporterBtn" style="display: none;">
                             <i class="bi bi-pencil"></i> Edit Transporter
                         </button>
@@ -192,7 +192,7 @@
                         name: 'advance_amount',
                         className: 'text-end'
                     },
-                    @if (auth()->check() && auth()->user()->userRole->name === 'admin')
+                    @if (auth()->check() && auth()->user()->canActAsAdmin())
                         {
                             data: 'actions',
                             name: 'actions',

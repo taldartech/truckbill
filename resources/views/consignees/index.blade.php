@@ -35,7 +35,7 @@
                         <th>State</th>
                         <th>Country</th>
                         <th>Contact Number</th>
-                        @if(auth()->check() && auth()->user()->userRole->name === 'admin')
+                        @if(auth()->check() && auth()->user()->canActAsAdmin())
                         <th style="width: 120px;">Actions</th>
                         @endif
                     </tr>
@@ -64,7 +64,7 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="bi bi-x-circle"></i> Close
                 </button>
-                @if (Auth::user()->userRole->name === 'admin')
+                @if (Auth::user()->canActAsAdmin())
                   <a href="#" id="editConsigneeBtn" class="btn btn-primary" style="display: none;">
                       <i class="bi bi-pencil-square"></i> Edit Consignee
                   </a>
@@ -129,7 +129,7 @@ $(document).ready(function() {
                 name: 'contact_number',
                 width: '130px'
             },
-            @if(auth()->check() && auth()->user()->userRole->name === 'admin')
+            @if(auth()->check() && auth()->user()->canActAsAdmin())
             {
                 data: 'actions',
                 name: 'actions',

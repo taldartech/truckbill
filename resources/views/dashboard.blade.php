@@ -62,8 +62,8 @@
             @elseif($userRole === 'super_admin' && isset($adminStats))
                 @include('dashboard.roles.super_admin')
 
-            {{-- ADMIN DASHBOARD --}}
-            @elseif($userRole === 'admin' && isset($monthlyStats))
+            {{-- ADMIN DASHBOARD (admin, or super_admin in company context) --}}
+            @elseif((($userRole === 'admin') || ($userRole === 'super_admin' && session('super_admin_company_id'))) && isset($monthlyStats))
                 @include('dashboard.roles.admin')
 
             {{-- MODERATOR DASHBOARD --}}

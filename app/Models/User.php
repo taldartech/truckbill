@@ -28,9 +28,61 @@ class User extends Authenticatable
         return $this->belongsTo(TransporterMaster::class, 'transporter_master_id');
     }
 
+    /**
+     * Effective company_id: for super_admin with null company_id, use session-selected company.
+     */
+    public function getCompanyIdAttribute($value): ?int
+    {
+        $raw = $this->attributes['company_id'] ?? null;
+        if ($raw === null && session()->has('super_admin_company_id')) {
+            $roleName = $this->userRole?->name
+                ?? \Illuminate\Support\Facades\DB::table('user_roles')->where('id', $this->attributes['user_role_id'] ?? 0)->value('name');
+            if ($roleName === 'super_admin') {
+                return (int) session('super_admin_company_id');
+            }
+        }
+        return $raw !== null ? (int) $raw : null;
+    }
+
     public function company()
     {
         return $this->belongsTo(Company::class);
+    }
+
+    /**
+     * Whether the user can access the company panel (operational menus: LR, FB, consignees, etc.).
+     * True for admin, moderator, or super_admin when a company is selected (session).
+     */
+    public function canAccessCompanyPanel(): bool
+    {
+        $name = $this->userRole?->name;
+        if (in_array($name, ['admin', 'moderator'])) {
+            return true;
+        }
+        if ($name === 'super_admin' && session()->has('super_admin_company_id')) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Whether the user can act as admin in the current context (edit/delete/action buttons).
+     * True for role admin, or for super_admin when a company is selected (session).
+     */
+    public function canActAsAdmin(): bool
+    {
+        $name = $this->userRole?->name;
+        if ($name === 'admin') {
+            return true;
+        }
+        if ($name === 'super_admin' && session()->has('super_admin_company_id')) {
+            return true;
+        }
+        if ($name === 'master_admin') {
+            return true;
+        }
+        return false;
     }
 
     public function branch()

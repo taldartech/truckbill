@@ -129,7 +129,7 @@
                 <!--begin::Col-->
                 <!-- Hidden payment_status for operators -->
                 @php
-                $isAdmin = auth()->user()->userRole && auth()->user()->userRole->name === 'admin';
+                $isAdmin = auth()->user()->canActAsAdmin();
             @endphp
                
                 <div class="col-md-4"  @if(!$isAdmin) style="display: none;" @endif>
@@ -208,7 +208,7 @@
             document.addEventListener('DOMContentLoaded', function() {
                 const paymentModeIdSelect = document.getElementById('payment_mode_id');
                 const paymentStatusSelect = document.getElementById('payment_status');
-                const isAdmin = @json(auth()->user()->userRole->name === 'admin');
+                const isAdmin = @json(auth()->user()->canActAsAdmin());
             
                 paymentModeIdSelect.addEventListener('change', function() {
                     const selectedText = this.options[this.selectedIndex]?.text.toLowerCase() || '';

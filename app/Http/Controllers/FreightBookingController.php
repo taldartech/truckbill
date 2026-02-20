@@ -22,9 +22,11 @@ class FreightBookingController extends Controller
 {
     public function index(Request $request)
     {
+        if (auth()->user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
+            abort(403, 'Please enter a company first.');
+        }
 
         $pumps = Pump::where('user_id', Auth::user()->company->user_id)->get();
-        // Handle DataTables AJAX request
         if ($request->ajax()) {
             return $this->getFreightBookingsData($request);
         }
@@ -32,7 +34,7 @@ class FreightBookingController extends Controller
         $baseQuery = FreightBooking::with(['lr.truck', 'linkedFreightBooking', 'company', 'transporter.transporterMaster']);
 
         // Company filter
-        if (auth()->user()->userRole->name !== 'super_admin') {
+        if (auth()->user()->company_id) {
             $baseQuery->where('freight_bookings.company_id', auth()->user()->company_id);
         }
 
@@ -187,16 +189,18 @@ class FreightBookingController extends Controller
 
     public function getFreightBookingsData(Request $request)
     {
+        if (auth()->user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
+            abort(403, 'Please enter a company first.');
+        }
         try {
             \Log::info('FreightBookings DataTables request started');
 
             $query = FreightBooking::with(['lr.truck', 'linkedFreightBooking', 'company', 'transporter.transporterMaster'])
                 ->select('freight_bookings.*');
 
-            // Only apply company_id filter for non-super_admin users
-            if (auth()->user()->userRole->name !== 'super_admin') {
-                $query->where('freight_bookings.company_id', auth()->user()->company_id);
-            }
+      if (auth()->user()->company_id) {
+        $query->where('freight_bookings.company_id', auth()->user()->company_id);
+      }
 
             \Log::info('Query built, processing DataTables');
 
@@ -313,8 +317,8 @@ class FreightBookingController extends Controller
         // $actions .= '<i class="bi bi-eye"></i>';
         // $actions .= '</a>';
 
-        // Edit button
-        if (auth()->check() && auth()->user()->userRole->name === 'admin') {
+    // Edit button
+    if (auth()->check() && auth()->user()->canActAsAdmin()) {
             $actions .= '<a href="' . route('freight_bookings.edit', $freightBooking->id) . '" class="btn btn-sm btn-outline-primary" title="Edit">';
             $actions .= '<i class="bi bi-pencil"></i>';
             $actions .= '</a>';
@@ -333,8 +337,8 @@ class FreightBookingController extends Controller
             $actions .= '</button>';
         }
 
-        // Delete button
-        if (auth()->check() && auth()->user()->userRole->name === 'admin') {
+    // Delete button
+    if (auth()->check() && auth()->user()->canActAsAdmin()) {
             $actions .= '<form method="POST" action="' . route('freight_bookings.destroy', $freightBooking->id) . '" style="display: inline;">';
             $actions .= csrf_field();
             $actions .= method_field('DELETE');
@@ -791,11 +795,7 @@ class FreightBookingController extends Controller
         try {
             $freightBooking = FreightBooking::with(['lr', 'linkedFreightBooking', 'company'])->findOrFail($id);
 
-            // Check if user has access to this freight booking (company-based filtering)
-            if (
-                auth()->user()->userRole->name !== 'super_admin' &&
-                $freightBooking->company_id !== auth()->user()->company_id
-            ) {
+            if (Auth::user()->company_id && $freightBooking->company_id !== Auth::user()->company_id) {
                 abort(403, 'Unauthorized access to freight booking.');
             }
             $pumps = Pump::where('user_id', Auth::user()->company->user_id)->get();
@@ -851,12 +851,8 @@ class FreightBookingController extends Controller
         try {
             $freightBooking = FreightBooking::findOrFail($id);
 
-            $is_admin = Auth::user()->userRole->name === 'admin';
-            // Check if user has access to this freight booking (company-based filtering)
-            if (
-                auth()->user()->userRole->name !== 'super_admin' &&
-                $freightBooking->company_id !== auth()->user()->company_id
-            ) {
+            $is_admin = Auth::user()->canActAsAdmin();
+            if (Auth::user()->company_id && $freightBooking->company_id !== Auth::user()->company_id) {
                 abort(403, 'Unauthorized access to freight booking.');
             }
             $companies = \App\Models\Company::all();

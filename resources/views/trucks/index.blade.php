@@ -29,7 +29,7 @@
                         <th>Registration Date</th>
                         <th>Truck Owner</th>
                         <th>Driver</th>
-                        @if(auth()->check() && auth()->user()->userRole->name === 'admin')
+                        @if(auth()->check() && auth()->user()->canActAsAdmin())
                         <th style="width: 120px;">Actions</th>
                         @endif
                     </tr>
@@ -59,7 +59,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                @if (Auth::user()->userRole->name === 'admin')
+                @if (Auth::user()->canActAsAdmin())
                     <button type="button" class="btn btn-edit" id="editTruckBtn" style="display: none;">
                         <i class="bi bi-pencil"></i> Edit Truck
                     </button>
@@ -286,7 +286,7 @@ $(document).ready(function() {
                 data: 'driver',
                 name: 'driver'
             },
-            @if(auth()->check() && auth()->user()->userRole->name === 'admin')
+            @if(auth()->check() && auth()->user()->canActAsAdmin())
             {
                 data: 'actions',
                 name: 'actions',

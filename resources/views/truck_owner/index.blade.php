@@ -71,7 +71,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    @if (Auth::check() && Auth::user()->userRole->name === 'admin')
+                    @if (Auth::check() && Auth::user()->canActAsAdmin())
                         <button type="button" class="btn btn-primary" id="editTruckOwnerBtn" style="display: none;">
                             <i class="bi bi-pencil"></i> Edit Truck Owner
                         </button>

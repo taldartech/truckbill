@@ -136,7 +136,7 @@
                         <th>Destination</th>
 
 
-                        @if(auth()->check() && auth()->user()->userRole->name === 'admin')
+                        @if(auth()->check() && auth()->user()->canActAsAdmin())
                         <th>Actions</th>
                         @endif
                     </tr>
@@ -203,7 +203,7 @@
                             </td>
 
 
-                            @if(auth()->check() && auth()->user()->userRole->name === 'admin')
+                            @if(auth()->check() && auth()->user()->canActAsAdmin())
                             <td>
                                 <div class="d-flex gap-1">
                                     <a href="{{ route('voucher_payments.show', $payment->voucher_number) }}{{ request()->getQueryString() ? '?' . request()->getQueryString() : '' }}" class="btn btn-sm btn-primary" data-bs-toggle="tooltip"

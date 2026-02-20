@@ -21,9 +21,16 @@ use Illuminate\Validation\Rule;
 
 class TruckOwnerController extends Controller
 {
+    private function ensureCompanyContext(): void
+    {
+        if (Auth::user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
+            abort(403, 'Please enter a company first.');
+        }
+    }
+
     public function index(Request $request)
     {
-        // Handle DataTables AJAX request
+        $this->ensureCompanyContext();
         if ($request->ajax()) {
             return $this->getTruckOwnersData($request);
         }
@@ -37,9 +44,8 @@ class TruckOwnerController extends Controller
         try {
             $query = Transporter::with(['company', 'transporterMaster.city'])->where('is_owner', 1); // Show only truck owners
 
-            // Only apply company_id filter for non-super_admin users
-            if (auth()->user()->userRole->name !== 'super_admin') {
-                $query->where('company_id', auth()->user()->company_id);
+            if (Auth::user()->company_id) {
+                $query->where('company_id', Auth::user()->company_id);
             }
 
             // Handle search
@@ -120,7 +126,11 @@ class TruckOwnerController extends Controller
                 $query->orderBy('transporters.id', 'desc');
             }
 
-            $totalRecords = Transporter::where('is_owner', 1)->count();
+            $totalQuery = Transporter::where('is_owner', 1);
+            if (Auth::user()->company_id) {
+                $totalQuery->where('company_id', Auth::user()->company_id);
+            }
+            $totalRecords = $totalQuery->count();
             $filteredRecords = $query->count();
 
             $start = $request->start ?? 0;
@@ -165,7 +175,7 @@ class TruckOwnerController extends Controller
 
     private function getActionButtons($truckOwner)
     {
-        $is_admin = Auth::user()->userRole->name === 'admin';
+        $is_admin = Auth::user()->canActAsAdmin();
         $buttons = '<div class="d-flex gap-1">';
 
         // Add Truck Button (modal trigger for truck owners)
@@ -193,6 +203,7 @@ class TruckOwnerController extends Controller
 
     public function create()
     {
+        $this->ensureCompanyContext();
         $companies = Company::all();
         $countries = Country::all();
         $states = State::all();
@@ -203,6 +214,7 @@ class TruckOwnerController extends Controller
 
     public function store(StoreTruckOwnerRequest $request)
     {
+        $this->ensureCompanyContext();
         $validated = $request->validated();
 
         $shortName = $validated['short_name'] ?? null;
@@ -330,12 +342,11 @@ class TruckOwnerController extends Controller
 
     public function show(Transporter $truck_owner)
     {
-        $truck_owner->load(['company', 'transporterMaster.city.state.country']);
-
-        // Check if user has permission to view this truck owner
-        if (auth()->user()->userRole->name !== 'super_admin' && $truck_owner->company_id !== auth()->user()->company_id) {
+        $this->ensureCompanyContext();
+        if (Auth::user()->company_id && $truck_owner->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this truck owner.');
         }
+        $truck_owner->load(['company', 'transporterMaster.city.state.country']);
 
         // Ensure this is actually a truck owner (is_owner = 1)
         if (!$truck_owner->is_owner) {
@@ -399,6 +410,10 @@ class TruckOwnerController extends Controller
 
     public function edit(Transporter $truck_owner)
     {
+        $this->ensureCompanyContext();
+        if (Auth::user()->company_id && $truck_owner->company_id !== Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this truck owner.');
+        }
         // Load the trucks relationship with driver information and transporterMaster for name/address accessors
         $truck_owner->load(['trucks.driver', 'transporterMaster.city.state.country']);
 
@@ -413,6 +428,10 @@ class TruckOwnerController extends Controller
 
     public function update(UpdateTruckOwnerRequest $request, Transporter $truck_owner)
     {
+        $this->ensureCompanyContext();
+        if (Auth::user()->company_id && $truck_owner->company_id !== Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this truck owner.');
+        }
         $validated = $request->validated();
 
         $declarationChanged = $truck_owner->declaration_given != $validated['declaration_given'];
@@ -450,6 +469,10 @@ class TruckOwnerController extends Controller
 
     public function destroy(Transporter $truck_owner)
     {
+        $this->ensureCompanyContext();
+        if (Auth::user()->company_id && $truck_owner->company_id !== Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this truck owner.');
+        }
         // Soft delete the truck owner
         $truck_owner->delete();
 

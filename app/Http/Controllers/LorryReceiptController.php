@@ -46,22 +46,34 @@ class LorryReceiptController extends Controller
         return null;
     }
 
+    /**
+     * Abort 403 if super_admin has no company context in session.
+     */
+    private function ensureCompanyContext(): void
+    {
+        if (Auth::user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
+            abort(403, 'Please enter a company first.');
+        }
+    }
+
     public function index(Request $request): \Illuminate\View\View|\Illuminate\Http\JsonResponse
     {
         if ($request->ajax()) {
             return $this->getLorryReceiptsData($request);
         }
 
+        $this->ensureCompanyContext();
+
         return view('lorry_receipts.index');
     }
 
     private function getLorryReceiptsData(Request $request): \Illuminate\Http\JsonResponse
     {
+        $this->ensureCompanyContext();
         try {
             $query = LorryReceipt::with(['truck', 'transporter.transporterMaster', 'consignor', 'consignee', 'company', 'customer']);
 
-            // Only apply company_id filter for non-super_admin users
-            if (Auth::user()->userRole->name !== 'super_admin') {
+            if (Auth::user()->company_id) {
                 $query->where('company_id', Auth::user()->company_id);
             }
             $query->orderBy('gr_date', 'desc')->orderBy('linked_lr_id', 'desc');
@@ -153,13 +165,13 @@ class LorryReceiptController extends Controller
 
         // Edit button
         $editUrl = route('lorry_receipts.edit', $lorryReceipt->id);
-        if ($lorryReceipt->invoice_generated == 0 && Auth::user()->userRole->name === 'admin') {
+        if ($lorryReceipt->invoice_generated == 0 && Auth::user()->canActAsAdmin()) {
             $confirmMsg = $freightBooking ? ' onclick="return confirm(\'A freight booking already exists. Continue?\')"' : '';
             $buttons .= '<a href="'.$editUrl.'" class="btn-action btn-edit" title="Edit" data-bs-toggle="tooltip"'.$confirmMsg.'>';
             $buttons .= '<i class="bi bi-pencil"></i></a>';
         }
 
-        if ($lorryReceipt->delivery_status != 'Delivered' && Auth::user()->userRole->name === 'admin') {
+        if ($lorryReceipt->delivery_status != 'Delivered' && Auth::user()->canActAsAdmin()) {
             $deleteUrl = route('lorry_receipts.destroy', $lorryReceipt->id);
             $buttons .= '<form action="'.$deleteUrl.'" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure?\')">';
             $buttons .= csrf_field().method_field('DELETE');
@@ -178,6 +190,7 @@ class LorryReceiptController extends Controller
 
     public function create(): \Illuminate\View\View|\Illuminate\Http\RedirectResponse
     {
+        $this->ensureCompanyContext();
         if ($redirect = $this->redirectIfPlanExpired()) {
             return $redirect;
         }
@@ -207,6 +220,7 @@ class LorryReceiptController extends Controller
 
     public function createLinked(): \Illuminate\View\View|\Illuminate\Http\RedirectResponse
     {
+        $this->ensureCompanyContext();
         if ($redirect = $this->redirectIfPlanExpired()) {
             return $redirect;
         }
@@ -239,6 +253,7 @@ class LorryReceiptController extends Controller
      */
     public function bulkPayment(Request $request): \Illuminate\Http\JsonResponse
     {
+        $this->ensureCompanyContext();
         try {
             $validated = $request->validate([
                 'memo_id' => 'required|string',
@@ -354,6 +369,7 @@ class LorryReceiptController extends Controller
 
     public function store(Request $request): \Illuminate\Http\RedirectResponse
     {
+        $this->ensureCompanyContext();
         // dd($request->all());
         // If request contains multiple LRs payload, handle batch creation with lr_linked_id
         if ($request->has('lrs') && is_array($request->input('lrs'))) {
@@ -730,6 +746,7 @@ class LorryReceiptController extends Controller
 
     public function edit(LorryReceipt $lorry_receipt): \Illuminate\View\View|\Illuminate\Http\RedirectResponse
     {
+        $this->ensureCompanyContext();
         if ($redirect = $this->redirectIfPlanExpired()) {
             return $redirect;
         }
@@ -828,6 +845,7 @@ class LorryReceiptController extends Controller
 
     public function update(Request $request, LorryReceipt $lorry_receipt): \Illuminate\Http\RedirectResponse
     {
+        $this->ensureCompanyContext();
         // dd($request->all());
         $company = Auth::user()->company;
         $today = now()->startOfDay();
@@ -1193,6 +1211,7 @@ class LorryReceiptController extends Controller
 
     public function destroy(LorryReceipt $lorry_receipt): \Illuminate\Http\RedirectResponse
     {
+        $this->ensureCompanyContext();
         if ($redirect = $this->redirectIfPlanExpired()) {
             return $redirect;
         }

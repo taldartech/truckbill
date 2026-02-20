@@ -3,13 +3,41 @@
 namespace App\Http\Controllers;
 
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
-
-
 use Illuminate\Http\Request;
 
 class CompanyController extends Controller
 {
+    /**
+     * Super admin: enter company context and redirect to dashboard.
+     */
+    public function enter(\App\Models\Company $company)
+    {
+        if (! Auth::check() || Auth::user()->userRole->name !== 'super_admin') {
+            abort(403, 'Unauthorized.');
+        }
+        if ($company->user_id !== Auth::id()) {
+            abort(403, 'You can only enter companies you own.');
+        }
+        session(['super_admin_company_id' => $company->id]);
+
+        return redirect()->route('dashboard');
+    }
+
+    /**
+     * Super admin: exit company context and return to company list.
+     */
+    public function exit()
+    {
+        if (! Auth::check() || Auth::user()->userRole->name !== 'super_admin') {
+            abort(403, 'Unauthorized.');
+        }
+        session()->forget('super_admin_company_id');
+
+        return redirect()->route('company.index');
+    }
+
     public function index(Request $request)
     {
 
@@ -157,6 +185,13 @@ class CompanyController extends Controller
     private function getActionButtons($company)
     {
         $buttons = '<div class="d-flex gap-1">';
+
+        // Enter button (super_admin only) - company listing only, for companies they own
+        if (auth()->check() && auth()->user()->userRole->name === 'super_admin' && $company->user_id === auth()->id()) {
+            $enterUrl = route('company.enter', $company);
+            $buttons .= '<a href="' . $enterUrl . '" class="btn btn-sm btn-success" title="Enter company panel">
+                            <i class="bi bi-box-arrow-in-right"></i></a>';
+        }
 
         // Edit button - always allow edit; GST scheme change restricted in edit form when invoices exist
         if (auth()->user()->userRole->name !== 'master_admin') {

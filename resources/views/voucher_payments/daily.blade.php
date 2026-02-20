@@ -155,7 +155,7 @@
                         <h3 class="card-title mb-0">Voucher Payments -
                             {{ \Carbon\Carbon::parse($selectedDate)->format('d M Y') }}</h3>
                     </div>
-                    @if (auth()->user()->userRole->name === 'admin' || auth()->user()->userRole->name === 'super_admin')
+                    @if (auth()->user()->canActAsAdmin())
                         <div class="d-flex">
                             <button id="bulkActionBtn" class="btn btn-primary d-none">
                                 <i class="bi bi-arrow-up-circle"></i> Update Status
@@ -168,7 +168,7 @@
                 <table class="table table-bordered" id="paymentsTable">
                     <thead>
                         <tr>
-                            @if (auth()->user()->userRole->name === 'admin' || auth()->user()->userRole->name === 'super_admin')
+                            @if (auth()->user()->canActAsAdmin())
                                 <th style="width: 30px">
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" id="selectAll">
@@ -188,7 +188,7 @@
                             <th>Status</th>
                             <th>Created Time</th>
                             <th>Branch</th>
-                            {{-- @if (auth()->user()->userRole->name === 'admin' || auth()->user()->userRole->name === 'super_admin')
+                            {{-- @if (auth()->user()->canActAsAdmin())
                         <th>Action</th>
                         @endif --}}
                         </tr>
@@ -197,7 +197,7 @@
                         @foreach ($payments as $payment)
                             <tr class="align-middle payment-row" data-status="{{ $payment->payment_status }}"
                                 data-id="{{ $payment->id }}">
-                                @if (auth()->user()->userRole->name === 'admin' || auth()->user()->userRole->name === 'super_admin')
+                                @if (auth()->user()->canActAsAdmin())
                                     <td>
                                         <div class="form-check">
                                             <input class="form-check-input payment-checkbox" type="checkbox"
@@ -316,7 +316,7 @@
                                         <span class="text-muted">-</span>
                                     @endif
                                 </td>
-                                {{-- @if (auth()->user()->userRole->name === 'admin' || auth()->user()->userRole->name === 'super_admin')
+                                {{-- @if (auth()->user()->canActAsAdmin())
                                 <td>
                                     <div class="dropdown">
                                         <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="actionDropdown{{ $payment->id }}" data-bs-toggle="dropdown" aria-expanded="false">
@@ -348,7 +348,7 @@
                             @endphp
                             <tr class="align-middle payment-row" data-status="{{ $payment->payment_status }}"
                                 data-id="{{ $payment->id }}">
-                                @if (auth()->user()->userRole->name === 'admin' || auth()->user()->userRole->name === 'super_admin')
+                                @if (auth()->user()->canActAsAdmin())
                                     <td>
                                         <div class="form-check">
                                             <input class="form-check-input multiple-payment-checkbox" type="checkbox"

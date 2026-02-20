@@ -248,7 +248,7 @@ $(document).ready(function() {
 
     // Individual column searching
     $('#driversTable thead tr:eq(1) th').each(function(i) {
-        if (i === 0 || i === {{ auth()->check() && auth()->user()->userRole->name === 'admin' ? '5' : '4' }}) {
+        if (i === 0 || i === {{ auth()->check() && auth()->user()->canActAsAdmin() ? '5' : '4' }}) {
             return; // Skip ID and Actions columns
         }
 

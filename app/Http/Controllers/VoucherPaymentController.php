@@ -21,6 +21,13 @@ use Illuminate\Support\Facades\Log;
 
 class VoucherPaymentController extends Controller
 {
+    private function ensureCompanyContext(): void
+    {
+        if (Auth::user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
+            abort(403, 'Please enter a company first.');
+        }
+    }
+
     /**
      * Display the daily payments report
      *
@@ -29,6 +36,7 @@ class VoucherPaymentController extends Controller
      */
     public function dailyPayments(Request $request)
     {
+        $this->ensureCompanyContext();
         // Get selected date (default to today)
         $selectedDate = $request->get('date', date('Y-m-d'));
 
@@ -55,10 +63,9 @@ class VoucherPaymentController extends Controller
             'creator.branch'
         ])->whereDate('date', $selectedDate);
 
-        // Apply company filter for non-super admin users
-        if (auth()->user()->userRole->name !== 'super_admin') {
-            $query->where('company_id', auth()->user()->company_id);
-            $query1->where('company_id', auth()->user()->company_id);
+        if (Auth::user()->company_id) {
+            $query->where('company_id', Auth::user()->company_id);
+            $query1->where('company_id', Auth::user()->company_id);
         }
 
         // Apply Truck No filter
@@ -138,8 +145,8 @@ class VoucherPaymentController extends Controller
 
         // Get branches for filter dropdown
         $branchesQuery = \App\Models\Branch::orderBy('branch_name');
-        if (auth()->user()->userRole->name !== 'super_admin') {
-            $branchesQuery->where('company_id', auth()->user()->company_id);
+        if (Auth::user()->company_id) {
+            $branchesQuery->where('company_id', Auth::user()->company_id);
         }
         $branches = $branchesQuery->get();
 
@@ -155,6 +162,7 @@ class VoucherPaymentController extends Controller
     }
     public function index(Request $request)
     {
+        $this->ensureCompanyContext();
         // Start with base query
         $baseQuery = \App\Models\VoucherPayment::with([
             // 'voucher',
@@ -167,9 +175,8 @@ class VoucherPaymentController extends Controller
             'pump'
         ]);
 
-        // Only apply company_id filter for non-super_admin users
-        if (auth()->user()->userRole->name !== 'super_admin') {
-            $baseQuery->where('company_id', auth()->user()->company_id);
+        if (Auth::user()->company_id) {
+            $baseQuery->where('company_id', Auth::user()->company_id);
         }
 
         // Apply filters
@@ -255,6 +262,7 @@ class VoucherPaymentController extends Controller
 
     public function create(Request $request)
     {
+        $this->ensureCompanyContext();
         $company = auth()->user()->company;
         $today = now()->startOfDay();
         $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
@@ -303,6 +311,7 @@ class VoucherPaymentController extends Controller
 
     public function store(Request $request)
     {
+        $this->ensureCompanyContext();
         // Validate basic fields
 
         $data = $request->validate([
@@ -423,6 +432,7 @@ class VoucherPaymentController extends Controller
      */
     public function show($voucherNumber)
     {
+        $this->ensureCompanyContext();
         // Get all payments for this voucher number with relationships
         $payments = VoucherPayment::with([
             'freight_booking.lr.customer',
@@ -437,6 +447,12 @@ class VoucherPaymentController extends Controller
 
         if ($payments->isEmpty()) {
             abort(404, 'Voucher not found');
+        }
+        if (Auth::user()->company_id) {
+            $payments = $payments->filter(fn ($p) => $p->company_id === Auth::user()->company_id);
+            if ($payments->isEmpty()) {
+                abort(403, 'Unauthorized access to this voucher.');
+            }
         }
 
         // Get the first payment to get common data
@@ -455,6 +471,10 @@ class VoucherPaymentController extends Controller
 
     public function edit(Request $request, VoucherPayment $voucher_payment)
     {
+        $this->ensureCompanyContext();
+        if (Auth::user()->company_id && $voucher_payment->company_id !== Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this voucher payment.');
+        }
         $company = auth()->user()->company;
         $today = now()->startOfDay();
         $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
@@ -493,6 +513,10 @@ class VoucherPaymentController extends Controller
 
     public function update(Request $request, VoucherPayment $voucher_payment)
     {
+        $this->ensureCompanyContext();
+        if (Auth::user()->company_id && $voucher_payment->company_id !== Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this voucher payment.');
+        }
         $company = auth()->user()->company;
         $today = now()->startOfDay();
         $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
@@ -588,8 +612,7 @@ class VoucherPaymentController extends Controller
 
             // Update payment status if conditions are met (before updating voucher payment)
             if (
-                auth()->user()->userRole &&
-                auth()->user()->userRole->name === 'admin' &&
+                auth()->user()->canActAsAdmin() &&
                 in_array($request->payment_mode, ['bank', 'online', 'fuel']) &&
                 $request->payment_status === 'in-progress' &&
                 $request->filled('reference_transaction_id')
@@ -632,6 +655,7 @@ class VoucherPaymentController extends Controller
 
     public function bulkPayment(Request $request)
     {
+        $this->ensureCompanyContext();
         try {
             // Log the incoming request for debugging
             \Log::info('Bulk payment request received:', [
@@ -868,8 +892,8 @@ class VoucherPaymentController extends Controller
      */
     public function bulkUpdateStatus(Request $request)
     {
-        // Check if user is admin or super_admin
-        if (!in_array(auth()->user()->userRole->name, ['admin', 'super_admin'])) {
+        $this->ensureCompanyContext();
+        if (! auth()->user()->canActAsAdmin()) {
             return redirect()->back()->with('error', 'You do not have permission to update payment status.');
         }
 
@@ -995,6 +1019,10 @@ class VoucherPaymentController extends Controller
      */
     public function destroy(VoucherPayment $voucher_payment)
     {
+        $this->ensureCompanyContext();
+        if (Auth::user()->company_id && $voucher_payment->company_id !== Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this voucher payment.');
+        }
         $company = auth()->user()->company;
         $today = now()->startOfDay();
         $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
@@ -1103,8 +1131,8 @@ class VoucherPaymentController extends Controller
      */
     public function updateStatus(Request $request)
     {
-        // Check if user is admin or super_admin
-        if (!in_array(auth()->user()->userRole->name, ['admin', 'super_admin'])) {
+        $this->ensureCompanyContext();
+        if (! auth()->user()->canActAsAdmin()) {
             return redirect()->back()->with('error', 'You do not have permission to update payment status.');
         }
 

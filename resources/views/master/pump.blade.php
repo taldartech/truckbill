@@ -36,7 +36,7 @@
                         <th>Pump Name</th>
                         <th>Contact Name</th>
                         <th>Contact Number</th>
-                        @if(auth()->user()->userRole->name === 'admin')
+                        @if(auth()->user()->canActAsAdmin())
                         <th>Actions</th>
                         @endif
                     </tr>
@@ -76,7 +76,7 @@ $(document).ready(function() {
             { data: 'pump_name', name: 'pump_name' },
             { data: 'contact_name', name: 'contact_name' },
             { data: 'contact_number', name: 'contact_number' },
-            @if(auth()->user()->userRole->name === 'admin')
+            @if(auth()->user()->canActAsAdmin())
             {
                 data: 'actions',
                 name: 'actions',

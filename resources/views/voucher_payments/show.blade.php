@@ -167,7 +167,7 @@
                             <th>Remark</th>
                             <th>Created By</th>
                             <th>Last Updated By</th>
-                            @if (auth()->check() && auth()->user()->userRole->name === 'admin')
+                            @if (auth()->check() && auth()->user()->canActAsAdmin())
                                 <th>Actions</th>
                             @endif
                         </tr>
@@ -205,7 +205,7 @@
                                         <span class="text-muted">-</span>
                                     @endif
                                 </td>
-                                @if (auth()->check() && auth()->user()->userRole->name === 'admin')
+                                @if (auth()->check() && auth()->user()->canActAsAdmin())
                                     <td>
                                         <div class="d-flex gap-1">
                                             <a href="{{ route('voucher_payments.edit', $payment) }}?lorry_receipt_id={{ $payment->freight_booking ? $payment->freight_booking->lr_id : '' }}&freight_booking_id={{ $payment->freight_booking_id }}"

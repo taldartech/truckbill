@@ -9,7 +9,7 @@ class StoreTransporterRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check() && in_array(auth()->user()->userRole->name ?? '', ['admin', 'moderator', 'super_admin']);
+        return auth()->check() && auth()->user()->canAccessCompanyPanel();
     }
 
     public function rules(): array

@@ -10,8 +10,16 @@ use Illuminate\Validation\Rule;
 
 class TruckController extends Controller
 {
+    private function ensureCompanyContext(): void
+    {
+        if (Auth::user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
+            abort(403, 'Please enter a company first.');
+        }
+    }
+
     public function getTrucksForTransporter($transporterId)
     {
+        $this->ensureCompanyContext();
         $trucks = \App\Models\Truck::with(['transporter.transporterMaster', 'driver'])
             ->where('transporter_id', $transporterId)
             ->whereHas('transporter', function ($q) {
@@ -23,7 +31,7 @@ class TruckController extends Controller
     }
     public function index(Request $request)
     {
-        // Handle DataTables AJAX request
+        $this->ensureCompanyContext();
         if ($request->ajax()) {
             return $this->getTrucksData($request);
         }
@@ -164,7 +172,7 @@ class TruckController extends Controller
                 'transporter' => $truck->transporter ? $truck->transporter->name : '-',
                 'driver' => $truck->driver ? $truck->driver->name : '-',
                 // 'actions' => $this->getActionButtons($truck)
-                'actions' => Auth::user()->userRole->name === 'admin'
+                'actions' => Auth::user()->canActAsAdmin()
                     ? $this->getActionButtons($truck)
                     : ''  // empty string for non-admins
             ];
@@ -219,6 +227,7 @@ class TruckController extends Controller
 
     public function getOwnerTransporters($truckId)
     {
+        $this->ensureCompanyContext();
         $truck = \App\Models\Truck::with('transporter.transporterMaster')
             ->where('id', $truckId)
             ->whereHas('transporter', function ($q) {
@@ -241,6 +250,7 @@ class TruckController extends Controller
 
     public function getAgencyTransporters($truckId)
     {
+        $this->ensureCompanyContext();
         $truck = \App\Models\Truck::with('transporter.transporterMaster')
             ->where('id', $truckId)
             ->whereHas('transporter', function ($q) {
@@ -265,6 +275,7 @@ class TruckController extends Controller
 
     public function create($transporter_id)
     {
+        $this->ensureCompanyContext();
         // Fetch only the specific transporter
         $transporter = \App\Models\Transporter::with('transporterMaster')
             ->where('company_id', Auth::user()->company_id)
@@ -277,6 +288,7 @@ class TruckController extends Controller
 
     public function store(Request $request)
     {
+        $this->ensureCompanyContext();
         // Fetch company_id for the given transporter_id
         $companyId = \App\Models\Transporter::where('id', $request->transporter_id)->value('company_id');
 
@@ -357,7 +369,7 @@ class TruckController extends Controller
     }
     public function checkTruckNumber(Request $request)
     {
-
+        $this->ensureCompanyContext();
         $company_id = Auth::user()->company_id;
         $exists = \App\Models\Truck::where('truck_number', $request->truck_number)
             ->whereHas('transporter', function ($query) use ($company_id) {
@@ -370,6 +382,7 @@ class TruckController extends Controller
 
     public function edit(\App\Models\Truck $truck)
     {
+        $this->ensureCompanyContext();
         $transporters = \App\Models\Transporter::with('transporterMaster')
             ->where('company_id', Auth::user()->company_id)
             ->get();
@@ -379,6 +392,7 @@ class TruckController extends Controller
 
     public function update(Request $request, \App\Models\Truck $truck)
     {
+        $this->ensureCompanyContext();
         // Get company_id from transporter_id in request
         $companyId = \App\Models\Transporter::where('id', $request->transporter_id)->value('company_id');
 
@@ -491,6 +505,10 @@ class TruckController extends Controller
     // }
     public function removeTransporter(\App\Models\Truck $truck)
     {
+        $this->ensureCompanyContext();
+        if ($truck->transporter && $truck->transporter->company_id !== Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this truck.');
+        }
         // Check if this truck has any undelivered Lorry Receipts
         $hasUndeliveredLr = \App\Models\LorryReceipt::where('truck_id', $truck->id)
             ->where('delivery_status', '!=', 'delivered')
@@ -514,6 +532,10 @@ class TruckController extends Controller
 
     public function destroy(\App\Models\Truck $truck)
     {
+        $this->ensureCompanyContext();
+        if ($truck->transporter && $truck->transporter->company_id !== Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this truck.');
+        }
         try {
             // Soft delete the truck
             $truck->delete();
@@ -544,11 +566,10 @@ class TruckController extends Controller
 
     public function show(\App\Models\Truck $truck)
     {
-        // Load relationships
+        $this->ensureCompanyContext();
         $truck->load(['transporter', 'driver']);
 
-        // Check if user has access to this truck (same company)
-        if ($truck->transporter->company_id !== Auth::user()->company_id) {
+        if ($truck->transporter && $truck->transporter->company_id !== Auth::user()->company_id) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -582,6 +603,7 @@ class TruckController extends Controller
 
     public function assignDriver(Request $request, \App\Models\Truck $truck)
     {
+        $this->ensureCompanyContext();
         $validated = $request->validate([
             'driver_id' => 'nullable|exists:drivers,id',
         ]);
@@ -618,6 +640,7 @@ class TruckController extends Controller
 
     public function getTrucksFromLrs($transporterId)
     {
+        $this->ensureCompanyContext();
         $lrs = \App\Models\LorryReceipt::where('transporter_id', $transporterId)->get(['truck_id']);
         $trucks = \App\Models\Truck::with(['transporter.transporterMaster', 'driver'])
             ->whereIn('id', $lrs->pluck('truck_id'))
@@ -633,6 +656,7 @@ class TruckController extends Controller
      */
     public function assignOwner(Request $request)
     {
+        $this->ensureCompanyContext();
         $request->validate([
             'truck_id' => 'required|exists:trucks,id',
             'transporter_id' => 'required|exists:transporters,id,is_owner,1,company_id,' . Auth::user()->company_id,

@@ -295,7 +295,7 @@
                     <!-- Hidden payment_status for operators -->
 
                     @php
-                        $isAdmin = auth()->user()->userRole && auth()->user()->userRole->name === 'admin';
+                        $isAdmin = auth()->user()->canActAsAdmin();
                     @endphp
                     <div class="col-md-4 mb-3" @if (!$isAdmin) style="display: none;" @endif>
                         <label for="payment_status" class="form-label">Payment Status *</label>
@@ -456,7 +456,7 @@
             const referenceBox = document.getElementById('reference_transaction_box');
             const referenceInput = document.getElementById('reference_transaction_id');
 
-            const isAdmin = @json(auth()->user()->userRole->name === 'admin');
+            const isAdmin = @json(auth()->user()->canActAsAdmin());
             const dbStatus = @json($currentStatus); // ← value from DB like 'in-progress'
 
             function updateStatusOptionsAndReferenceBox() {

@@ -20,6 +20,10 @@ class DashboardController extends Controller
     public function index()
     {
         $user = auth()->user();
+        // Super admin in company context: show admin dashboard for that company
+        if ($user->userRole->name === 'super_admin' && session('super_admin_company_id')) {
+            return $this->adminDashboard();
+        }
         $userRole = $user->userRole->name;
 
         $now = Carbon::now();

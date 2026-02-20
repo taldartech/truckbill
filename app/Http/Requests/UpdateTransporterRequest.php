@@ -9,7 +9,7 @@ class UpdateTransporterRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check() && in_array(auth()->user()->userRole->name ?? '', ['admin', 'super_admin']);
+        return auth()->check() && auth()->user()->canActAsAdmin();
     }
 
     public function rules(): array
