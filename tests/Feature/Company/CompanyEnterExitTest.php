@@ -157,7 +157,7 @@ class CompanyEnterExitTest extends TestCase
         $response = $this->actingAs($super)->get(route('dashboard'));
 
         $response->assertOk();
-        $response->assertViewIs('dashboard_global');
+        $response->assertViewIs('dashboard');
         $response->assertSee($company->name);
     }
 
