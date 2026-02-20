@@ -467,6 +467,28 @@ class ReportExportTest extends TestCase
         $this->assertStringContainsString('2700', $content, 'Forward invoice should display net_amount 2700');
     }
 
+    public function test_transporter_report_uses_voucher_payment_for_payment_calculation(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$lr, $booking] = $this->seedLr($admin);
+
+        VoucherPayment::create([
+            'freight_booking_id' => $booking->id,
+            'voucher_number' => 'V-TR-1',
+            'payment_type' => 'cash',
+            'payment_mode' => 'cash',
+            'amount' => 250,
+            'payment_status' => 'paid',
+            'company_id' => $admin->company_id,
+        ]);
+
+        $params = ['start_date' => now()->subDays(7)->toDateString(), 'end_date' => now()->toDateString()];
+
+        $response = $this->actingAs($admin)->get('/reports/transporter-report?' . http_build_query($params));
+        $response->assertOk();
+        $response->assertSee('250.00');
+    }
+
     public function test_export_weight_columns_use_string_format_for_consistency(): void
     {
         $start = Carbon::today()->subDays(7)->toDateString();

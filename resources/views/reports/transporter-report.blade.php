@@ -177,28 +177,16 @@
                             @php
                                 $fr = $lr->freightBookings->last();
                                 $payments = array_fill_keys($paymentNames, 0);
-                                if ($fr->linked_lr_id) {
-                                  $frs = \App\Models\FreightBooking::where('linked_lr_id', $fr->linked_lr_id)->get();
-                                  echo '<script>console.log(' . json_encode($frs) . ');</script>';
-                                  foreach ($frs as $freight) {
-                                    $vouchers = \App\Models\VoucherLinked::where('freight_booking_id', $freight->id)->get();
+                                $total_balance = 0;
+                                if ($fr) {
+                                    $vouchers = \App\Models\VoucherPayment::where('freight_booking_id', $fr->id)->get();
                                     foreach ($vouchers as $voucher) {
                                         $paymentMode = $voucher->payment_mode;
                                         if (isset($payments[$paymentMode])) {
                                             $payments[$paymentMode] += $voucher->amount;
                                         }
                                     }
-                                  }
-                                  $total_balance = $frs->sum('balance_amount');
-                                } else {
-                                  $vouchers = \App\Models\VoucherPayment::where('freight_booking_id', $fr->id)->get();
-                                  foreach ($vouchers as $voucher) {
-                                      $paymentMode = $voucher->payment_mode;
-                                      if (isset($payments[$paymentMode])) {
-                                          $payments[$paymentMode] += $voucher->amount;
-                                      }
-                                  }
-                                  $total_balance = $fr->balance_amount;
+                                    $total_balance = $fr->balance_amount;
                                 }
                             @endphp
                             <tr>
@@ -213,15 +201,15 @@
                                 <td>{{ $lr->no_of_units }}</td>
                                 <td>{{ $lr->consignor_id ? $lr->consignor->name : 'N/A' }}</td>
                                 <td>{{ $lr->consignee_id ? $lr->consignee->name : 'N/A' }}</td>
-                                <td>{{ number_format($fr->tr_fr_rate, 2) }}</td>
-                                <td>{{ number_format($fr->tr_amount, 2) }}</td>
-                                <td>{{ number_format($fr->tds_amount, 2) }}</td>
+                                <td>{{ number_format($fr?->tr_fr_rate ?? 0, 2) }}</td>
+                                <td>{{ number_format($fr?->tr_amount ?? 0, 2) }}</td>
+                                <td>{{ number_format($fr?->tds_amount ?? 0, 2) }}</td>
                                 @foreach ($paymentNames as $paymentName)
                                     <td>{{ number_format($payments[$paymentName], 2) }}</td>
                                 @endforeach
-                                <td>{{ number_format($lr->damage_amount, 2) }}</td>
-                                <td>{{ number_format($lr->shortage_amount, 2) }}</td>
-                                <td>{{ number_format($fr->misc_expense, 2) }}</td>
+                                <td>{{ number_format($lr->damage_amount ?? 0, 2) }}</td>
+                                <td>{{ number_format($lr->shortage_amount ?? 0, 2) }}</td>
+                                <td>{{ number_format($fr?->misc_expense ?? 0, 2) }}</td>
                                 <td>{{ number_format($total_balance, 2) }}</td>
                             </tr>
                         @endforeach

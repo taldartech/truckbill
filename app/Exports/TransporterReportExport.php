@@ -58,19 +58,7 @@ class TransporterReportExport implements FromCollection, WithHeadings, ShouldAut
         foreach ($lorryReceipts as $lr) {
             $fr = $lr->freightBookings->last();
             $payments = array_fill_keys($this->paymentNames, 0);
-            if ($fr->linked_lr_id) {
-                $frs = \App\Models\FreightBooking::where('linked_lr_id', $fr->linked_lr_id)->get();
-                foreach ($frs as $freight) {
-                    $vouchers = \App\Models\VoucherLinked::where('freight_booking_id', $freight->id)->get();
-                    foreach ($vouchers as $voucher) {
-                        $paymentMode = $voucher->payment_mode;
-                        if (isset($payments[$paymentMode])) {
-                            $payments[$paymentMode] += $voucher->amount;
-                        }
-                    }
-                }
-                $total_balance = $frs->sum('balance_amount');
-            } else {
+            if ($fr) {
                 $vouchers = \App\Models\VoucherPayment::where('freight_booking_id', $fr->id)->get();
                 foreach ($vouchers as $voucher) {
                     $paymentMode = $voucher->payment_mode;
@@ -79,6 +67,8 @@ class TransporterReportExport implements FromCollection, WithHeadings, ShouldAut
                     }
                 }
                 $total_balance = $fr->balance_amount;
+            } else {
+                $total_balance = 0;
             }
 
             $row = [
@@ -92,17 +82,17 @@ class TransporterReportExport implements FromCollection, WithHeadings, ShouldAut
                 (float) ($lr->no_of_units ?? 0),
                 $lr->consignor ? $lr->consignor->name : 'N/A',
                 $lr->consignee ? $lr->consignee->name : 'N/A',
-                (float) ($fr->tr_fr_rate ?? 0),
-                (float) ($fr->tr_amount ?? 0),
-                (float) ($fr->tds_amount ?? 0),
+                (float) ($fr?->tr_fr_rate ?? 0),
+                (float) ($fr?->tr_amount ?? 0),
+                (float) ($fr?->tds_amount ?? 0),
             ];
             foreach ($this->paymentNames as $paymentName) {
                 $row[] = (float) ($payments[$paymentName] ?? 0);
             }
             $row = array_merge($row, [
-                (float) ($fr->damage_amount ?? 0),
-                (float) ($fr->short_amount ?? 0),
-                (float) ($fr->misc_expenses ?? 0),
+                (float) ($fr?->damage_amount ?? 0),
+                (float) ($fr?->shortage_amount ?? 0),
+                (float) ($fr?->misc_expense ?? 0),
                 (float) ($total_balance ?? 0),
             ]);
             $data[] = $row;
