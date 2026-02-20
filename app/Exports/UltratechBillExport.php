@@ -21,6 +21,11 @@ class UltratechBillExport implements FromView
   public function view(): View
   {
     $invoice = Invoice::find($this->id);
-    return view('reports.exports.ultratech-bill', compact('invoice'));
+    $customDetails = collect();
+    if ($invoice && $invoice->custom_invoice) {
+      $invoice->load(['customInvoiceDetails.lorryReceipt.truck']);
+      $customDetails = $invoice->customInvoiceDetails->sortBy('sort_order')->values();
+    }
+    return view('reports.exports.ultratech-bill', compact('invoice', 'customDetails'));
   }
 }

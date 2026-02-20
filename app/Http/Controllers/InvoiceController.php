@@ -286,13 +286,22 @@ class InvoiceController extends Controller
     public function show(Request $request, Invoice $invoice)
     {
         $invoice->load(['company', 'consignee', 'payments.creator']);
-        // Get memos directly from invoice table in invoice tabble their is lr_ids in arrays form fetch lr_ids and then use this lr_ids to fetch 'memo_id', 'lr_number', 'source_city as from_location', 'destination_city as to_location', 'fr_rate as rate', 'amount'
-        $lrIds = $invoice->lr_ids;
-        $memos = DB::table('lorry_receipts')
-            ->select('memo_id', 'lr_number', 'source_city as from_location', 'destination_city as to_location', 'fr_rate as rate', 'amount')
-            ->whereIn('id', $lrIds)
-            ->whereNotNull('memo_id')
-            ->get();
+        $customDetails = collect();
+        $memos = collect();
+
+        if ($invoice->custom_invoice) {
+            $invoice->load(['customInvoiceDetails.lorryReceipt.truck']);
+            $customDetails = $invoice->customInvoiceDetails->sortBy('sort_order')->values();
+        } else {
+            $lrIds = $invoice->lr_ids ?? [];
+            if (! empty($lrIds)) {
+                $memos = DB::table('lorry_receipts')
+                    ->select('memo_id', 'lr_number', 'source_city as from_location', 'destination_city as to_location', 'fr_rate as rate', 'amount')
+                    ->whereIn('id', $lrIds)
+                    ->whereNotNull('memo_id')
+                    ->get();
+            }
+        }
 
         if ($request->ajax()) {
             $sgst = $invoice->sgst ?? 0;
@@ -345,7 +354,7 @@ class InvoiceController extends Controller
             ]);
         }
 
-        return view('invoices.show', compact('invoice', 'memos'));
+        return view('invoices.show', compact('invoice', 'memos', 'customDetails'));
     }
 
     public function edit(Invoice $invoice)

@@ -18,6 +18,9 @@
                 onclick="document.getElementById('advanced-search-box').classList.toggle('d-none')">
                 <i class="bi bi-funnel"></i> Search filter
             </button>
+            <a href="{{ route('custom-invoices.create') }}" class="btn btn-warning">
+                <i class="bi bi-file-earmark-plus"></i> Create Custom Invoice
+            </a>
             <a href="{{ route('invoices.create') }}" class="btn btn-brand-primary">
                 <i class="bi bi-plus"></i> Create
             </a>

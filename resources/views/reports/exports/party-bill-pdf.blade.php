@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Party Bill - {{ $invoice->invoice_number }}</title>
+    <title>Party Bill - {{ $invoice->manual_invoice_number }}</title>
     <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="192x192"  href="{{ asset('favicon/android-icon-192x192.png') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('favicon/apple-touch-icon.png') }}">
@@ -83,8 +83,12 @@
     @php
         $company = auth()->user()->company;
         $customer = $invoice->consignee;
-        $totalAmount = 0;
-        $lrs = $lrs ?? []; // Ensure $lrs is defined
+        $totalAmount = $totalAmount ?? 0;
+        $lrs = $lrs ?? collect();
+        $customDetails = $customDetails ?? collect();
+        $cgst = $cgst ?? 0;
+        $sgst = $sgst ?? 0;
+        $igst = $igst ?? 0;
     @endphp
 
 

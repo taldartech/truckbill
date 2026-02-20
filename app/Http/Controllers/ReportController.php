@@ -921,7 +921,12 @@ class ReportController extends Controller
             ->orderByDesc('id')
             ->get();
         $invoice = Invoice::find($id);
-        return view('reports.party-bill', compact('customers', 'customerId', 'id', 'invoices', 'invoice',));
+        $customDetails = collect();
+        if ($invoice && $invoice->custom_invoice) {
+            $invoice->load(['customInvoiceDetails.lorryReceipt.truck']);
+            $customDetails = $invoice->customInvoiceDetails->sortBy('sort_order')->values();
+        }
+        return view('reports.party-bill', compact('customers', 'customerId', 'id', 'invoices', 'invoice', 'customDetails'));
     }
 
     // public function party_bill_export(Request $request)
@@ -944,7 +949,6 @@ class ReportController extends Controller
 
         try {
             if ($exportType === 'pdf') {
-                // Load the invoice with necessary relationships
                 $invoice = Invoice::with([
                     'consignee.city',
                     'consignee.state',
@@ -952,26 +956,49 @@ class ReportController extends Controller
                     'company.state'
                 ])->findOrFail($id);
 
-                // Load LorryReceipts separately since there's no direct relationship
-                $lrs = LorryReceipt::where('invoice_number', $invoice->invoice_number)
-                    ->with(['consignor', 'consignee'])
-                    ->get();
+                $customDetails = collect();
+                $lrs = collect();
 
-
-                if ($lrs->isEmpty()) {
-                    return redirect()->back()->with('error', 'No Lorry Receipts found for this invoice.');
+                if ($invoice->custom_invoice) {
+                    $invoice->load(['customInvoiceDetails.lorryReceipt.truck']);
+                    $customDetails = $invoice->customInvoiceDetails->sortBy('sort_order')->values();
+                } else {
+                    $lrIds = $invoice->lr_ids ?? [];
+                    if (! empty($lrIds)) {
+                        $lrs = LorryReceipt::whereIn('id', $lrIds)
+                            ->with(['consignor', 'consignee', 'truck'])
+                            ->get();
+                    }
+                    if ($lrs->isEmpty()) {
+                        return redirect()->back()->with('error', 'No Lorry Receipts found for this invoice.');
+                    }
                 }
 
-                // Calculate any additional data needed for the view
-                // $totalAmount = $lrs->sum('total_amount');
-                // $cgst = $totalAmount * 0.025; // 2.5% CGST
-                // $sgst = $totalAmount * 0.025; // 2.5% SGST
-                // $igst = $totalAmount * 0.05;  // 5% IGST (if applicable)
+                $baseAmount = $invoice->total_amount ?? 0;
+                if ($baseAmount == 0 && ! $invoice->custom_invoice && $lrs->isNotEmpty()) {
+                    $baseAmount = $lrs->sum('actual_amount');
+                }
+                $cgst = $invoice->cgst ?? 0;
+                $sgst = $invoice->sgst ?? 0;
+                $igst = $invoice->igst ?? 0;
+                if ($cgst == 0 && $sgst == 0 && $igst == 0 && $baseAmount > 0) {
+                    $company = $invoice->company;
+                    $gstSlab = (int) ($company->gst_slab ?? 5);
+                    $gstRate = $gstSlab / 100;
+                    $cgst = $baseAmount * ($gstRate / 2);
+                    $sgst = $baseAmount * ($gstRate / 2);
+                    $igst = 0;
+                }
+                $totalAmount = $baseAmount;
 
-                // Generate PDF
                 $html = view('reports.exports.party-bill-pdf', compact(
                     'invoice',
-                    'lrs'
+                    'lrs',
+                    'customDetails',
+                    'totalAmount',
+                    'cgst',
+                    'sgst',
+                    'igst'
                 ))->render();
 
                 $pdf = \PDF::loadHTML($html)
@@ -979,7 +1006,7 @@ class ReportController extends Controller
                     ->setOption('isHtml5ParserEnabled', true)
                     ->setOption('isRemoteEnabled', true);
 
-                return $pdf->stream("party_bill_{$invoice->invoice_number}.pdf");
+                return $pdf->stream('party_bill_' . ($invoice->manual_invoice_number ?? $invoice->id) . '.pdf');
             } else {
                 // Existing Excel export
                 return Excel::download(new PartyBillExport($id), 'party_bill.xlsx');
@@ -1010,7 +1037,12 @@ class ReportController extends Controller
             ->orderByDesc('id')
             ->get();
         $invoice = Invoice::find($id);
-        return view('reports.ultratech-bill', compact('customers', 'customerId', 'id', 'invoices', 'invoice',));
+        $customDetails = collect();
+        if ($invoice && $invoice->custom_invoice) {
+            $invoice->load(['customInvoiceDetails.lorryReceipt.truck']);
+            $customDetails = $invoice->customInvoiceDetails->sortBy('sort_order')->values();
+        }
+        return view('reports.ultratech-bill', compact('customers', 'customerId', 'id', 'invoices', 'invoice', 'customDetails'));
     }
 
     public function ultratech_bill_export(Request $request)

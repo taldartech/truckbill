@@ -22,6 +22,16 @@
                                     <th>Invoice Type:</th>
                                     <td>{{ ucfirst($invoice->invoice_type) }}</td>
                                 </tr>
+                                @if($invoice->custom_invoice)
+                                <tr>
+                                    <th>Custom invoice:</th>
+                                    <td>
+                                        <span class="badge bg-{{ $invoice->custom_invoice === 'rate_difference' ? 'primary' : 'warning' }}">
+                                            {{ $invoice->custom_invoice === 'rate_difference' ? 'Rate difference' : 'Shortage & damage' }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                @endif
                                 <tr>
                                     <th>Generated Date:</th>
                                     <td>{{ $invoice->generated_date }}</td>
@@ -52,21 +62,74 @@
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <h4>Associated Memos</h4>
-                        <div class="table-responsive">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Memo #</th>
-                                        <th>LR #</th>
-                                        <th>From</th>
-                                        <th>To</th>
-                                        <th>Rate</th>
-                                        <th>Amount</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse($memos as $memo)
+                        @if($invoice->custom_invoice)
+                            <h4>Custom invoice details</h4>
+                            @if($invoice->custom_invoice_remark)
+                                <p class="text-muted small mb-2">{{ $invoice->custom_invoice_remark }}</p>
+                            @endif
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Sr</th>
+                                            <th>LR No</th>
+                                            <th>Truck</th>
+                                            <th>Destination</th>
+                                            @if($invoice->custom_invoice === 'rate_difference')
+                                                <th>Portal rate</th>
+                                                <th>Diff</th>
+                                            @else
+                                                <th>Damage</th>
+                                                <th>Damage rate</th>
+                                                <th>Shortage</th>
+                                            @endif
+                                            <th>Amount</th>
+                                            <th>Remark</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($customDetails ?? [] as $row)
+                                            @php $lr = $row->lorryReceipt; @endphp
+                                            <tr>
+                                                <td>{{ $loop->iteration }}</td>
+                                                <td>{{ $lr ? $lr->lr_number : '—' }}</td>
+                                                <td>{{ $lr && $lr->truck ? $lr->truck->truck_number : '—' }}</td>
+                                                <td>{{ $lr ? ($lr->destination_city ?? '—') : '—' }}</td>
+                                                @if($invoice->custom_invoice === 'rate_difference')
+                                                    <td>{{ $row->portal_rate !== null ? number_format($row->portal_rate, 2) : '—' }}</td>
+                                                    <td>{{ $row->diff !== null ? number_format($row->diff, 2) : '—' }}</td>
+                                                @else
+                                                    <td>{{ $row->damage_qty !== null ? $row->damage_qty : '—' }}</td>
+                                                    <td>{{ $row->damage_rate !== null ? number_format($row->damage_rate, 2) : '—' }}</td>
+                                                    <td>{{ $row->shortage_qty !== null ? $row->shortage_qty : '—' }}</td>
+                                                @endif
+                                                <td>&#8377;{{ number_format($row->amount ?? 0, 2) }}</td>
+                                                <td>{{ $row->remark ?? '—' }}</td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="{{ $invoice->custom_invoice === 'rate_difference' ? 9 : 10 }}" class="text-center text-muted">No line items.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        @else
+                            <h4>Associated Memos</h4>
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Memo #</th>
+                                            <th>LR #</th>
+                                            <th>From</th>
+                                            <th>To</th>
+                                            <th>Rate</th>
+                                            <th>Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($memos as $memo)
                                         <tr>
                                             <td>{{ $memo->memo_id }}</td>
                                             <td>{{ $memo->lr_number }}</td>
@@ -75,15 +138,16 @@
                                             <td>&#8377;{{ number_format($memo->rate, 2) }}</td>
                                             <td>&#8377;{{ number_format($memo->amount, 2) }}</td>
                                         </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="6" class="text-center">No memos associated with this invoice
+                                        @empty
+                                            <tr>
+                                                <td colspan="6" class="text-center">No memos associated with this invoice
                                             </td>
                                         </tr>
                                     @endforelse
                                 </tbody>
                             </table>
                         </div>
+                        @endif
                     </div>
                     <div class="col-md-6">
                         <h4>Tax Breakup</h4>

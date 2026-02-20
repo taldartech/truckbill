@@ -9,6 +9,7 @@ use App\Http\Controllers\TruckController;
 use App\Http\Controllers\LorryReceiptController;
 use App\Http\Controllers\FreightBookingController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\CustomInvoiceController;
 use App\Http\Controllers\VoucherPaymentController;
 use App\Http\Controllers\TransporterBankAccountController;
 use App\Http\Controllers\DriverController;
@@ -158,6 +159,9 @@ Route::middleware(['auth.blocked'])->group(function () {
     Route::middleware(['role:admin,moderator'])->group(function () {
         Route::resource('invoices', InvoiceController::class)
             ->except(['edit', 'update', 'destroy']);
+        Route::get('/custom-invoices/create', [CustomInvoiceController::class, 'create'])->name('custom-invoices.create');
+        Route::post('/custom-invoices', [CustomInvoiceController::class, 'store'])->name('custom-invoices.store');
+        Route::get('/custom-invoices/lr-by-number', [CustomInvoiceController::class, 'lrByNumber'])->name('custom-invoices.lr-by-number');
         Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->name('invoices.lrs');
         Route::get('/invoices/memos/{customerId}', [InvoiceController::class, 'getCustomerMemos']);
         Route::get('/invoices/all-memos/{customerId}', [InvoiceController::class, 'getAllCustomerMemos']);

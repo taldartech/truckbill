@@ -13,6 +13,8 @@ class Invoice extends Model
         'manual_invoice_number',
         'company_id',
         'invoice_type',
+        'custom_invoice',
+        'custom_invoice_remark',
         'generated_date',
         'customer_id',
         'total_amount',
@@ -42,6 +44,11 @@ class Invoice extends Model
     public function payments()
     {
         return $this->hasMany(InvoicePayment::class);
+    }
+
+    public function customInvoiceDetails(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(CustomInvoiceDetail::class)->orderBy('sort_order');
     }
 
     /**

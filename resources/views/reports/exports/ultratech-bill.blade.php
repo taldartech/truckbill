@@ -1,7 +1,8 @@
 @php
     $company = auth()->user()->company;
     $totalAmount = 0;
-    $lrs = $invoice->lr_ids;
+    $lrs = $invoice->custom_invoice ? [] : ($invoice->lr_ids ?? []);
+    $customDetails = $customDetails ?? collect();
 @endphp
 <style>
     td {
@@ -66,6 +67,48 @@
         <td style="font-weight: bold;">SAC Code:</td>
         <td colspan="3">996511</td>
     </tr>
+    @if($invoice->custom_invoice)
+    <tr>
+        <td style="font-weight: bold;">Sr.No.</td>
+        <td style="font-weight: bold;">Gr.no.</td>
+        <td style="font-weight: bold;">Date</td>
+        <td style="font-weight: bold;">Material Name</td>
+        <td style="font-weight: bold;">Loading Qty (MT)</td>
+        <td style="font-weight: bold;">Unloading Qty (MT)</td>
+        <td style="font-weight: bold;">Truck No</td>
+        <td style="font-weight: bold;">LR No</td>
+        <td style="font-weight: bold;">Destination</td>
+        <td style="font-weight: bold;">{{ $invoice->custom_invoice === 'rate_difference' ? 'Portal Rate' : 'Damage Rate' }}</td>
+        <td style="font-weight: bold;">Shortage</td>
+        <td style="font-weight: bold;">{{ $invoice->custom_invoice === 'rate_difference' ? 'Diff' : 'Damage' }}</td>
+        <td style="font-weight: bold;">Amount</td>
+    </tr>
+    @foreach ($customDetails as $index => $row)
+        @php $lr = $row->lorryReceipt; @endphp
+        <tr>
+            <td>{{ $index + 1 }}</td>
+            <td>{{ $lr ? $lr->lr_number : '—' }}</td>
+            <td>{{ $lr && $lr->gr_date ? \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') : '—' }}</td>
+            <td>{{ $lr ? ($lr->good_type ?? '—') : '—' }}</td>
+            <td>{{ $lr ? ($lr->weight ?? '—') : '—' }}</td>
+            <td>{{ $lr ? number_format($lr->unloading_weight ?? $lr->weight ?? 0, 3) : '—' }}</td>
+            <td>{{ $lr && $lr->truck ? $lr->truck->truck_number : 'N/A' }}</td>
+            <td>{{ $lr ? ($lr->lr_number ?? '—') : '—' }}</td>
+            <td>{{ $lr ? ($lr->destination_city ?? '—') : '—' }}</td>
+            @if($invoice->custom_invoice === 'rate_difference')
+            <td>{{ $row->portal_rate !== null ? number_format($row->portal_rate, 2) : '—' }}</td>
+            <td>—</td>
+            <td>{{ $row->diff !== null ? number_format($row->diff, 2) : '—' }}</td>
+            @else
+            <td>{{ $row->damage_rate !== null ? number_format($row->damage_rate, 2) : '—' }}</td>
+            <td>{{ $row->shortage_qty !== null ? $row->shortage_qty : '—' }}</td>
+            <td>{{ $row->damage_qty !== null ? $row->damage_qty : '—' }}</td>
+            @endif
+            <td>{{ number_format($row->amount ?? 0, 2) }}</td>
+        </tr>
+    @endforeach
+    @php $totalAmount = $invoice->total_amount ?? 0; @endphp
+    @else
     <tr>
         <td style="font-weight: bold;">Sr.No.</td>
         <td style="font-weight: bold;">Memo No</td>
@@ -106,22 +149,22 @@
             <td>{{ number_format($amount, 2) }}</td>
         </tr>
     @endforeach
+    @endif
     <tr>
       <td colspan="12"></td>
     </tr>
     @php
-        $cgst = $invoice->cgst;
-        $sgst = $invoice->sgst;
-        $igst = $invoice->igst;
-        // calculate percentages
-        $cgstpercent = ($cgst * 100) / $totalAmount;
-        $sgstpercent = ($sgst * 100) / $totalAmount;
-        $igstpercent = ($igst * 100) / $totalAmount;
+        $cgst = $invoice->cgst ?? 0;
+        $sgst = $invoice->sgst ?? 0;
+        $igst = $invoice->igst ?? 0;
+        $cgstpercent = $totalAmount > 0 ? ($cgst * 100) / $totalAmount : 0;
+        $sgstpercent = $totalAmount > 0 ? ($sgst * 100) / $totalAmount : 0;
+        $igstpercent = $totalAmount > 0 ? ($igst * 100) / $totalAmount : 0;
         $totalgst = $cgst + $sgst + $igst;
     @endphp
     <tr>
         <td style="font-weight: bold;" colspan="10">
-            Remark:
+            Remark: {{ $invoice->custom_invoice ? ($invoice->custom_invoice_remark ?? '') : '' }}
         </td>
         <td style="font-weight: bold;" colspan="2">Amount</td>
         <td>{{ number_format($totalAmount, 2) }}</td>
