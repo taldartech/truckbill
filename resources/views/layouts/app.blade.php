@@ -88,7 +88,7 @@
         }
 
         /* Global AJAX Loader Styles */
-        #globalLoader {
+        /* #globalLoader {
             position: fixed;
             top: 0;
             left: 0;
@@ -118,7 +118,7 @@
 
         .loader-content .spinner-border {
             border-width: 0.3rem;
-        }
+        } */
 
         html,
         body {
@@ -326,7 +326,7 @@
 
 <body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
     <!-- Global AJAX Loader -->
-    <div id="globalLoader" style="display: none;">
+    {{-- <div id="globalLoader" style="display: none;">
         <div class="loader-overlay"></div>
         <div class="loader-content">
             <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
@@ -334,7 +334,7 @@
             </div>
             <p class="mt-3 text-white">Loading...</p>
         </div>
-    </div>
+    </div> --}}
     <!--begin::App Wrapper-->
     <div class="app-wrapper">
         <!--begin::Header-->
@@ -1416,7 +1416,7 @@
     @stack('scripts')
 
     <!-- Global AJAX Loader Script -->
-    <script>
+    {{-- <script>
         (function() {
             let ajaxRequestCount = 0;
             const loader = $('#globalLoader');
@@ -1542,7 +1542,7 @@
                 }
             });
         })();
-    </script>
+    </script> --}}
 </body>
 
 </html>
