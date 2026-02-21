@@ -303,6 +303,7 @@ class ReportExportTest extends TestCase
             'invoice_type' => 'Reverse',
             'generated_date' => '2025-01-03',
             'total_amount' => 1000,
+            'base_amount' => 1000,
             'net_amount' => 1000,
         ]);
         Invoice::create([
@@ -312,6 +313,7 @@ class ReportExportTest extends TestCase
             'invoice_type' => 'Reverse',
             'generated_date' => '2025-01-01',
             'total_amount' => 1000,
+            'base_amount' => 1000,
             'net_amount' => 1000,
         ]);
         Invoice::create([
@@ -321,6 +323,7 @@ class ReportExportTest extends TestCase
             'invoice_type' => 'Reverse',
             'generated_date' => '2025-01-02',
             'total_amount' => 1000,
+            'base_amount' => 1000,
             'net_amount' => 1000,
         ]);
 
@@ -358,6 +361,7 @@ class ReportExportTest extends TestCase
             'invoice_type' => 'Reverse',
             'generated_date' => '2025-01-15',
             'total_amount' => 1000,
+            'base_amount' => 1000,
             'net_amount' => 1000,
         ]);
         Invoice::create([
@@ -367,6 +371,7 @@ class ReportExportTest extends TestCase
             'invoice_type' => 'Reverse',
             'generated_date' => '2025-01-05',
             'total_amount' => 1000,
+            'base_amount' => 1000,
             'net_amount' => 1000,
         ]);
         Invoice::create([
@@ -376,6 +381,7 @@ class ReportExportTest extends TestCase
             'invoice_type' => 'Reverse',
             'generated_date' => '2025-01-10',
             'total_amount' => 1000,
+            'base_amount' => 1000,
             'net_amount' => 1000,
         ]);
 
@@ -402,7 +408,8 @@ class ReportExportTest extends TestCase
             'invoice_type' => 'Reverse',
             'generated_date' => '2025-01-10',
             'total_amount' => 5000,
-            'net_amount' => 4500,
+            'base_amount' => 5000,
+            'net_amount' => 5000,
         ]);
         Invoice::create([
             'company_id' => $admin->company_id,
@@ -410,7 +417,8 @@ class ReportExportTest extends TestCase
             'manual_invoice_number' => 'INV-FORWARD',
             'invoice_type' => 'Forward',
             'generated_date' => '2025-01-11',
-            'total_amount' => 3000,
+            'total_amount' => 2700,
+            'base_amount' => 2700,
             'net_amount' => 2700,
         ]);
 
@@ -423,10 +431,10 @@ class ReportExportTest extends TestCase
 
         $this->assertNotNull($reverseRow);
         $this->assertNotNull($forwardRow);
-        $this->assertSame(5000.0, $reverseRow['Amount'], 'Reverse invoice should display total_amount');
-        $this->assertSame(5000.0, $reverseRow['Taxable Value'], 'Reverse invoice Taxable Value should match Amount');
-        $this->assertSame(2700.0, $forwardRow['Amount'], 'Forward invoice should display net_amount');
-        $this->assertSame(2700.0, $forwardRow['Taxable Value'], 'Forward invoice Taxable Value should match Amount');
+        $this->assertSame(5000.0, $reverseRow['Amount'], 'Reverse invoice should display net_amount (amount to collect)');
+        $this->assertSame(5000.0, $reverseRow['Taxable Value'], 'Reverse invoice Taxable Value should be base_amount');
+        $this->assertSame(2700.0, $forwardRow['Amount'], 'Forward invoice should display net_amount (amount to collect)');
+        $this->assertSame(2700.0, $forwardRow['Taxable Value'], 'Forward invoice Taxable Value should be base_amount');
     }
 
     public function test_invoice_report_displays_total_amount_for_reverse_and_net_amount_for_forward(): void
@@ -447,7 +455,8 @@ class ReportExportTest extends TestCase
             'invoice_type' => 'Reverse',
             'generated_date' => '2025-01-10',
             'total_amount' => 5000,
-            'net_amount' => 4500,
+            'base_amount' => 5000,
+            'net_amount' => 5000,
         ]);
         Invoice::create([
             'company_id' => $admin->company_id,
@@ -455,7 +464,8 @@ class ReportExportTest extends TestCase
             'manual_invoice_number' => 'INV-RPT-FWD',
             'invoice_type' => 'Forward',
             'generated_date' => '2025-01-11',
-            'total_amount' => 3000,
+            'total_amount' => 2700,
+            'base_amount' => 2700,
             'net_amount' => 2700,
         ]);
 
@@ -562,6 +572,7 @@ class ReportExportTest extends TestCase
             'custom_invoice' => 'rate_difference',
             'generated_date' => now()->toDateString(),
             'total_amount' => 100,
+            'base_amount' => 100,
             'net_amount' => 100,
         ]);
         \App\Models\CustomInvoiceDetail::create([
@@ -623,6 +634,7 @@ class ReportExportTest extends TestCase
             'custom_invoice' => 'rate_difference',
             'generated_date' => now()->toDateString(),
             'total_amount' => 100,
+            'base_amount' => 100,
             'net_amount' => 100,
         ]);
         \App\Models\CustomInvoiceDetail::create([

@@ -180,10 +180,17 @@ class CustomInvoiceController extends Controller
                 }
             }
 
+            $data['base_amount'] = round($baseAmount, 2);
             $data['sgst'] = round($sgst, 2);
             $data['cgst'] = round($cgst, 2);
             $data['igst'] = round($igst, 2);
             $data['net_amount'] = round($netAmount, 2);
+
+            if ($data['invoice_type'] === 'Forward') {
+                $data['total_amount'] = round($netAmount, 2);
+            } else {
+                $data['total_amount'] = round($baseAmount + $sgst + $cgst + $igst, 2);
+            }
 
             $invoice = Invoice::create($data);
 

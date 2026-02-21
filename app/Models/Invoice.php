@@ -17,6 +17,7 @@ class Invoice extends Model
         'generated_date',
         'customer_id',
         'total_amount',
+        'base_amount',
         'payment_status',
         'memo_ids',
         'net_amount',
@@ -63,10 +64,12 @@ class Invoice extends Model
     }
 
     /**
-     * Get remaining balance
+     * Get remaining balance (net_amount is amount to collect)
      */
     public function getRemainingAmountAttribute()
     {
-        return max(0, $this->total_amount - $this->paid_amount);
+        $amountToCollect = $this->net_amount ?? $this->total_amount;
+
+        return max(0, $amountToCollect - $this->paid_amount);
     }
 }

@@ -65,8 +65,9 @@ class CompanyGstSchemeRestrictionTest extends TestCase
             'company_id' => $company->id,
             'customer_id' => $customer->id,
             'generated_date' => '2025-05-01',
-            'invoice_type' => 'regular',
+            'invoice_type' => 'Forward',
             'total_amount' => 1000,
+            'base_amount' => 1000,
             'net_amount' => 1000,
         ]);
 
@@ -109,8 +110,9 @@ class CompanyGstSchemeRestrictionTest extends TestCase
             'company_id' => $company->id,
             'customer_id' => $customer->id,
             'generated_date' => '2025-05-01',
-            'invoice_type' => 'regular',
+            'invoice_type' => 'Forward',
             'total_amount' => 1000,
+            'base_amount' => 1000,
             'net_amount' => 1000,
         ]);
 

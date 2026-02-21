@@ -102,7 +102,8 @@ class InvoiceController extends Controller
                 })
                 ->addColumn('remaining_amount_formatted', function ($row) {
                     $paidAmount = $row->payments()->sum('amount');
-                    $remaining = $row->total_amount - $paidAmount;
+                    $amountToCollect = $row->net_amount ?? $row->total_amount;
+                    $remaining = $amountToCollect - $paidAmount;
                     $class = $remaining > 0 ? 'text-danger' : 'text-brand-primary';
                     return '<span class="' . $class . '">₹' . number_format($remaining, 2) . '</span>';
                 })
@@ -196,7 +197,7 @@ class InvoiceController extends Controller
         $company = null;
 
         if ($user && $user->company_id) {
-            $company = Company::find($user->company_id);
+            $company = Company::with('state')->find($user->company_id);
         }
 
         $consignees = Consignee::all()->where('company_id', $user->company_id);
@@ -265,12 +266,23 @@ class InvoiceController extends Controller
             'sgst' => 'nullable|numeric|min:0',
             'cgst' => 'nullable|numeric|min:0',
             'igst' => 'nullable|numeric|min:0',
+            'base_amount' => 'nullable|numeric|min:0',
         ]);
         $data['payment_status'] = 'pending';
         $data['company_id'] = Auth::user()->company_id;
 
+        $sgst = (float) ($data['sgst'] ?? 0);
+        $cgst = (float) ($data['cgst'] ?? 0);
+        $igst = (float) ($data['igst'] ?? 0);
+        $totalGst = $sgst + $cgst + $igst;
 
-
+        if (($data['invoice_type'] ?? '') === 'Reverse') {
+            $data['base_amount'] = $data['base_amount'] ?? (float) $data['total_amount'];
+            $data['total_amount'] = (float) $data['base_amount'] + $totalGst;
+            $data['net_amount'] = (float) $data['base_amount'];
+        } else {
+            $data['base_amount'] = $data['base_amount'] ?? ((float) $data['total_amount'] - $totalGst);
+        }
 
         // Separate memo_ids from the rest of invoice data
         $memoIds = $request->input('memo_ids', []);
@@ -321,7 +333,9 @@ class InvoiceController extends Controller
             $cgst = $invoice->cgst ?? 0;
             $igst = $invoice->igst ?? 0;
             $totalGst = $sgst + $cgst + $igst;
-            $baseAmount = $invoice->net_amount - $totalGst ?? 0;
+            $baseAmount = $invoice->base_amount ?? (($invoice->invoice_type ?? '') === 'Reverse'
+                ? ($invoice->total_amount ?? 0)
+                : (($invoice->net_amount ?? 0) - $totalGst));
             $netAmount = $invoice->net_amount ?? 0;
             $sgstRate = 0;
             $cgstRate = 0;
@@ -344,9 +358,9 @@ class InvoiceController extends Controller
                 'invoice_type' => $invoice->invoice_type,
                 'generated_date' => $invoice->generated_date,
                 'payment_status' => $invoice->payment_status,
-                'total_amount' => $invoice->total_amount - $totalGst,
+                'total_amount' => $baseAmount,
                 'net_amount' => $invoice->net_amount,
-                'base_amount' => $baseAmount,
+                'base_amount' => $invoice->base_amount ?? $baseAmount,
                 'sgst' => $sgst,
                 'cgst' => $cgst,
                 'igst' => $igst,
@@ -574,11 +588,10 @@ class InvoiceController extends Controller
             'payment_date' => 'required|date',
         ]);
 
-        // Calculate remaining balance
+        $amountToCollect = $invoice->net_amount ?? $invoice->total_amount;
         $paidAmount = $invoice->payments()->sum('amount');
-        $remainingAmount = $invoice->total_amount - $paidAmount;
+        $remainingAmount = $amountToCollect - $paidAmount;
 
-        // Validate that payment amount doesn't exceed remaining balance
         if ($validated['amount'] > $remainingAmount) {
             return response()->json([
                 'success' => false,
@@ -586,12 +599,10 @@ class InvoiceController extends Controller
             ], 422);
         }
 
-        // Create payment
         $payment = $invoice->payments()->create($validated);
 
-        // Update invoice payment status
         $newPaidAmount = $invoice->payments()->sum('amount');
-        if ($newPaidAmount >= $invoice->total_amount) {
+        if ($newPaidAmount >= $amountToCollect) {
             $invoice->payment_status = 'paid';
         } elseif ($newPaidAmount > 0) {
             $invoice->payment_status = 'partial';
@@ -605,7 +616,7 @@ class InvoiceController extends Controller
             'message' => 'Payment added successfully',
             'payment' => $payment,
             'paid_amount' => $newPaidAmount,
-            'remaining_amount' => $invoice->total_amount - $newPaidAmount,
+            'remaining_amount' => max(0, $amountToCollect - $newPaidAmount),
             'payment_status' => $invoice->payment_status,
         ]);
     }
@@ -620,14 +631,16 @@ class InvoiceController extends Controller
             abort(403, 'Unauthorized access to this invoice.');
         }
         $payments = $invoice->payments()->orderByRaw('COALESCE(payment_date, created_at) DESC')->get();
+        $amountToCollect = $invoice->net_amount ?? $invoice->total_amount;
         $paidAmount = $invoice->payments()->sum('amount');
-        $remainingAmount = $invoice->total_amount - $paidAmount;
+        $remainingAmount = max(0, $amountToCollect - $paidAmount);
 
         return response()->json([
             'payments' => $payments,
             'paid_amount' => $paidAmount,
             'remaining_amount' => $remainingAmount,
             'total_amount' => $invoice->total_amount,
+            'net_amount' => $invoice->net_amount,
         ]);
     }
 }

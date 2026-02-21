@@ -162,7 +162,9 @@
                                     $cgst = $invoice->cgst ?? 0;
                                     $igst = $invoice->igst ?? 0;
                                     $totalGst = $sgst + $cgst + $igst;
-                                    $baseAmount = $invoice->total_amount - $totalGst ?? 0;
+                                    $baseAmount = $invoice->base_amount ?? (($invoice->invoice_type ?? '') === 'Reverse'
+                                        ? ($invoice->total_amount ?? 0)
+                                        : (($invoice->net_amount ?? 0) - $totalGst));
                                     $netAmount = $invoice->net_amount ?? 0;
 
                                     $sgstRate = 0;

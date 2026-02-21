@@ -42,7 +42,7 @@
             @php
                 $invoice = \App\Models\Invoice::whereJsonContains('lr_ids', $lr->id)->first();
                 // Fetch amount and payment status from the bill if exists
-                if ($invoice->total_amount == $invoice->net_amount) {
+                if (($invoice->invoice_type ?? '') === 'Forward') {
                     $gst = 5;
                 } else {
                     $gst = 0;

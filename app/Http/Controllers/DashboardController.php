@@ -144,8 +144,9 @@ class DashboardController extends Controller
         $outstandingAmount = 0;
         foreach ($allInvoicesForStats as $invoice) {
             $paidAmount = $invoice->paid_amount;
-            $remainingAmount = $invoice->total_amount - $paidAmount;
-            if ($paidAmount < $invoice->total_amount) {
+            $amountToCollect = $invoice->net_amount ?? $invoice->total_amount;
+            $remainingAmount = $amountToCollect - $paidAmount;
+            if ($paidAmount < $amountToCollect) {
                 $outstandingAmount += $remainingAmount;
             }
         }
@@ -227,8 +228,9 @@ class DashboardController extends Controller
 
         foreach ($allInvoicesForStats as $invoice) {
             $paidAmount = $invoice->paid_amount;
-            $remainingAmount = $invoice->total_amount - $paidAmount;
-            if ($paidAmount < $invoice->total_amount) {
+            $amountToCollect = $invoice->net_amount ?? $invoice->total_amount;
+            $remainingAmount = $amountToCollect - $paidAmount;
+            if ($paidAmount < $amountToCollect) {
                 $pendingInvoicesCount++;
                 $pendingInvoiceAmount += $remainingAmount;
                 $outstandingAmount += $remainingAmount;
@@ -343,8 +345,8 @@ class DashboardController extends Controller
             ->with(['consignee', 'payments'])
             ->get()
             ->filter(function ($invoice) {
-                $paidAmount = $invoice->paid_amount;
-                return $paidAmount < $invoice->total_amount; // Pending or partial
+                $amountToCollect = $invoice->net_amount ?? $invoice->total_amount;
+                return $invoice->paid_amount < $amountToCollect;
             })
             ->sortByDesc('generated_date')
             ->take(5)
@@ -363,7 +365,8 @@ class DashboardController extends Controller
 
         foreach ($allInvoices as $invoice) {
             $paidAmount = $invoice->paid_amount;
-            if ($paidAmount >= $invoice->total_amount) {
+            $amountToCollect = $invoice->net_amount ?? $invoice->total_amount;
+            if ($paidAmount >= $amountToCollect) {
                 $invoicePaymentStatuses['paid']++;
             } elseif ($paidAmount > 0) {
                 $invoicePaymentStatuses['partial']++;
@@ -395,8 +398,9 @@ class DashboardController extends Controller
         $outstandingAmount = 0;
         foreach ($allInvoicesForStats as $invoice) {
             $paidAmount = $invoice->paid_amount;
-            $remainingAmount = $invoice->total_amount - $paidAmount;
-            if ($paidAmount < $invoice->total_amount) {
+            $amountToCollect = $invoice->net_amount ?? $invoice->total_amount;
+            $remainingAmount = $amountToCollect - $paidAmount;
+            if ($paidAmount < $amountToCollect) {
                 $outstandingAmount += $remainingAmount;
             }
         }
@@ -556,16 +560,16 @@ class DashboardController extends Controller
 
         foreach ($allInvoicesForStats as $invoice) {
             $paidAmount = $invoice->paid_amount;
-            $remainingAmount = $invoice->total_amount - $paidAmount;
+            $amountToCollect = $invoice->net_amount ?? $invoice->total_amount;
+            $remainingAmount = $amountToCollect - $paidAmount;
 
-            if ($paidAmount < $invoice->total_amount) {
+            if ($paidAmount < $amountToCollect) {
                 $pendingInvoicesCount++;
                 $pendingInvoiceAmount += $remainingAmount;
                 $outstandingAmount += $remainingAmount;
 
-                // Consider overdue if invoice is older than 30 days and not fully paid
                 $invoiceDate = $invoice->generated_date ? \Carbon\Carbon::parse($invoice->generated_date) : $invoice->created_at;
-                if ($invoiceDate->copy()->addDays(30)->isPast() && $paidAmount < $invoice->total_amount) {
+                if ($invoiceDate->copy()->addDays(30)->isPast()) {
                     $overdueInvoicesCount++;
                 }
             }
@@ -618,8 +622,8 @@ class DashboardController extends Controller
             ->with(['consignee', 'payments'])
             ->get()
             ->filter(function ($invoice) {
-                $paidAmount = $invoice->paid_amount;
-                return $paidAmount < $invoice->total_amount; // Pending or partial
+                $amountToCollect = $invoice->net_amount ?? $invoice->total_amount;
+                return $invoice->paid_amount < $amountToCollect;
             })
             ->sortByDesc('generated_date')
             ->take(10)

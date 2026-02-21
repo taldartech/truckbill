@@ -178,6 +178,7 @@
             <input type="hidden" name="cgst" id="cgstInput" value="0">
             <input type="hidden" name="igst" id="igstInput" value="0">
             <input type="hidden" name="net_amount" id="netAmountInput" value="0">
+            <input type="hidden" name="base_amount" id="baseAmountInput" value="0">
 
             <div class="card-footer">
                 <button class="btn btn-brand-primary" type="submit">Generate Invoice</button>
@@ -295,6 +296,7 @@
     <script>
         // Manual Invoice Number uniqueness validation
         const gst_slab = @json($company->gst_slab);
+        const companyState = @json($company->state ? strtolower($company->state->name) : '');
         const manualInvoiceInput = document.getElementById('manual_invoice_number');
         const manualInvoiceFeedback = document.getElementById('manual-invoice-number-feedback');
         let manualInvoiceTimeout;
@@ -577,10 +579,11 @@
                                         console.log("state fetched for tax calculation:", state);
 
                                         if (invoiceTypeInput) {
+                                            document.getElementById('baseAmountInput').value = grandTotalAmount.toFixed(2);
                                             const invoiceType = invoiceTypeInput.value.trim()
                                                 .toLowerCase();
 
-                                            if (state === "rajasthan") {
+                                            if (companyState && state === companyState) {
 
                                                 if (invoiceType === "forward") {
                                                     const sgst = grandTotalAmount * (gst_slab /

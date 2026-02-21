@@ -225,9 +225,10 @@
                             @foreach($pendingInvoices as $invoice)
                                 @php
                                     $paidAmount = $invoice->paid_amount ?? 0;
-                                    $remainingAmount = $invoice->total_amount - $paidAmount;
+                                    $amountToCollect = $invoice->net_amount ?? $invoice->total_amount;
+                                    $remainingAmount = $amountToCollect - $paidAmount;
 
-                                    if ($paidAmount >= $invoice->total_amount) {
+                                    if ($paidAmount >= $amountToCollect) {
                                         $statusClass = 'bg-soft-success text-success';
                                         $statusText = 'Paid';
                                     } elseif ($paidAmount > 0) {
@@ -246,7 +247,7 @@
                                     <td class="text-end">
                                         <div class="d-flex flex-column">
                                             <span class="fw-bold text-danger">₹{{ number_format($remainingAmount, 2) }}</span>
-                                            <small class="text-muted">of ₹{{ number_format($invoice->total_amount, 2) }}</small>
+                                            <small class="text-muted">of ₹{{ number_format($amountToCollect, 2) }}</small>
                                         </div>
                                     </td>
                                     <td>

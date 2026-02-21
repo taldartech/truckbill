@@ -111,7 +111,12 @@
             <td>{{ number_format($row->amount ?? 0, 2) }}</td>
         </tr>
     @endforeach
-    @php $totalAmount = $invoice->total_amount ?? 0; @endphp
+    @php
+        $totalGst = ($invoice->cgst ?? 0) + ($invoice->sgst ?? 0) + ($invoice->igst ?? 0);
+        $totalAmount = $invoice->base_amount ?? (($invoice->invoice_type ?? '') === 'Reverse'
+            ? ($invoice->total_amount ?? 0)
+            : (($invoice->total_amount ?? 0) - $totalGst));
+    @endphp
     @else
     <tr>
         <td style="font-weight: bold;">Sr.No.</td>
@@ -205,7 +210,7 @@
         <td colspan="8">{{ $company->bank ?? '' }}</td>
         <td style="font-weight: bold;" colspan="2">Total Amount</td>
         @php
-            $grandTotal = $invoice->invoice_type == 'Reverse' ? $totalAmount : $totalAmount + $totalgst;
+            $grandTotal = $invoice->total_amount ?? ($invoice->invoice_type == 'Reverse' ? $totalAmount : $totalAmount + $totalgst);
         @endphp
         <td>{{ number_format($grandTotal, 2) }}</td>
     </tr>

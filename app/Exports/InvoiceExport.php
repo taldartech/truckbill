@@ -37,9 +37,12 @@ class InvoiceExport implements FromCollection, WithHeadings, ShouldAutoSize, Wit
         $invoices = $query->orderBy('generated_date', 'asc')->get();
 
         return $invoices->map(function ($invoice, $index) {
-            $displayAmount = ($invoice->invoice_type ?? '') === 'Reverse'
-                ? ($invoice->total_amount ?? 0)
-                : ($invoice->net_amount ?? 0);
+            $taxableValue = $invoice->base_amount ?? (
+                ($invoice->invoice_type ?? '') === 'Reverse'
+                    ? ($invoice->total_amount ?? 0)
+                    : (($invoice->net_amount ?? 0) - (($invoice->sgst ?? 0) + ($invoice->cgst ?? 0) + ($invoice->igst ?? 0)))
+            );
+            $amountToCollect = $invoice->net_amount ?? $invoice->total_amount;
 
             return [
                 'Sr No' => $index + 1,
@@ -47,14 +50,14 @@ class InvoiceExport implements FromCollection, WithHeadings, ShouldAutoSize, Wit
                 'Receiver' => $invoice->consignee->name ?? 'N/A',
                 'Invoice No' => $invoice->manual_invoice_number ?? 'N/A',
                 'Date' => Date::dateTimeToExcel(new Carbon($invoice->generated_date)),
-                'Amount' => (float) $displayAmount,
+                'Amount' => (float) $amountToCollect,
                 'State' => $invoice->consignee->state->name ?? 'N/A',
                 'Reverse Charge' => $invoice->company->gst_scheme == 'reverse charge' ? 'Yes' : 'No',
                 'Applicable % of Tax' => "-",
                 'Invoice Type' => "Regular B2B",
                 'E-Commerce GSTIN' => "",
                 'Rate' => "5.00",
-                'Taxable Value' => (float) $displayAmount,
+                'Taxable Value' => (float) $taxableValue,
                 'Cess Amount' => "",
             ];
         });

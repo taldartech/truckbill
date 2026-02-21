@@ -981,7 +981,7 @@ class ReportController extends Controller
                     }
                 }
 
-                $baseAmount = $invoice->total_amount ?? 0;
+                $baseAmount = $invoice->base_amount ?? $invoice->total_amount ?? 0;
                 if ($baseAmount == 0 && ! $invoice->custom_invoice && $lrs->isNotEmpty()) {
                     $baseAmount = $lrs->sum('actual_amount');
                 }

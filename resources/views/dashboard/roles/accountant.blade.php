@@ -120,8 +120,9 @@
                                     </td>
                                     <td class="text-end">
                                         <div class="d-flex flex-column">
-                                            <span class="fw-bold text-danger">₹{{ number_format($invoice->remaining_amount ?? ($invoice->total_amount - ($invoice->paid_amount ?? 0)), 2) }}</span>
-                                            <small class="text-muted">of ₹{{ number_format($invoice->total_amount, 2) }}</small>
+                                            @php $amountToCollect = $invoice->net_amount ?? $invoice->total_amount; @endphp
+                                            <span class="fw-bold text-danger">₹{{ number_format($invoice->remaining_amount, 2) }}</span>
+                                            <small class="text-muted">of ₹{{ number_format($amountToCollect, 2) }}</small>
                                         </div>
                                     </td>
                                     <td>{{ $invoice->generated_date ? \Carbon\Carbon::parse($invoice->generated_date)->format('d M Y') : '-' }}</td>
