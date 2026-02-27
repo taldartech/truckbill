@@ -45,11 +45,11 @@
                 </div>
                 <div class="form-check form-check-inline">
                     <input class="form-check-input" type="checkbox" value="lr_no" id="filter_lr_no" onchange="toggleField(this)">
-                    <label class="form-check-label" for="filter_lr_no">Lorry Receipt No</label>
+                    <label class="form-check-label" for="filter_lr_no">Good Receipt (Bilty) No</label>
                 </div>
                 <div class="form-check form-check-inline">
                     <input class="form-check-input" type="checkbox" value="freight_booking_no" id="filter_freight_booking_no" onchange="toggleField(this)">
-                    <label class="form-check-label" for="filter_freight_booking_no">Freight Booking No</label>
+                    <label class="form-check-label" for="filter_freight_booking_no">Good Hire (Lorry Hire) No</label>
                 </div>
             </div>
         </div>
@@ -94,11 +94,11 @@
                 </select>
             </div>
             <div class="col-md-3 d-none" id="field_lr_no">
-                <label class="form-label">Lorry Receipt No</label>
+                <label class="form-label">Good Receipt (Bilty) No</label>
                 <input type="text" name="lr_no" class="form-control" value="{{ request('lr_no') }}">
             </div>
             <div class="col-md-3 d-none" id="field_freight_booking_no">
-                <label class="form-label">Freight Booking No</label>
+                <label class="form-label">Good Hire (Lorry Hire) No</label>
                 <input type="text" name="freight_booking_no" class="form-control" value="{{ request('freight_booking_no') }}">
             </div>
         </div>
@@ -128,7 +128,7 @@
                     <tr>
 
                         <th>Voucher #</th>
-                        <th>Lorry Receipt No</th>
+                        <th>Good Receipt (Bilty) No</th>
                         <th>Customer</th>
                         <th>Truck No</th>
                         <th>Transporter</th>

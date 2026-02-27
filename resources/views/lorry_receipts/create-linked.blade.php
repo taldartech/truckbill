@@ -103,7 +103,7 @@
         <!--begin::Header-->
         <div class="card-header">
             <div class="d-flex w-100">
-                <div class="card-title h4">Add Linked Lorry Receipts</div>
+                <div class="card-title h4">Add Linked Good Receipts (Bilty)</div>
                 <div class="ms-auto">
                     <a href="{{ route('consignees.create') }}" class="btn btn-brand-primary">
                         <i class="bi bi-plus"></i> Create Consignee/Consignor/Customer</a>
@@ -385,7 +385,7 @@
                     </div>
                     <div class="row g-2">
                         <div class="col-md-4 offset-md-4">
-                            <button class="btn btn-brand-primary w-100" type="submit">💾 Create Linked Lorry Receipt</button>
+                            <button class="btn btn-brand-primary w-100" type="submit">💾 Create Linked Good Receipt (Bilty)</button>
                         </div>
 
                         <div class="col-md-6">

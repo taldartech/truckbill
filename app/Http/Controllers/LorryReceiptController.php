@@ -148,7 +148,7 @@ class LorryReceiptController extends Controller
         $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
 
         if ($freight_booking_id) {
-            $buttons .= '<a href="'.route('freight_bookings.edit', $freight_booking_id).'" class="btn-action btn-action-warning" title="Edit Freight Booking" data-bs-toggle="tooltip">';
+            $buttons .= '<a href="'.route('freight_bookings.edit', $freight_booking_id).'" class="btn-action btn-action-warning" title="Edit Good Hire (Lorry Hire)" data-bs-toggle="tooltip">';
             $buttons .= '<i class="bi bi-truck"></i></a>';
         } else {
             if ($company->lr_credits <= 0) {
@@ -158,7 +158,7 @@ class LorryReceiptController extends Controller
                 $buttons .= '<button class="btn-action btn-action-muted" title="Plan Expired" data-bs-toggle="tooltip" onclick="alert(\'Plan expired\')">';
                 $buttons .= '<i class="bi bi-truck"></i></button>';
             } else {
-                $buttons .= '<a href="'.route('freight_bookings.create').'?lorry_receipt_id='.$lorryReceipt->id.'" class="btn-action btn-action-success" title="Create Freight Booking" data-bs-toggle="tooltip">';
+                $buttons .= '<a href="'.route('freight_bookings.create').'?lorry_receipt_id='.$lorryReceipt->id.'" class="btn-action btn-action-success" title="Create Good Hire (Lorry Hire)" data-bs-toggle="tooltip">';
                 $buttons .= '<i class="bi bi-truck"></i></a>';
             }
         }
@@ -166,7 +166,7 @@ class LorryReceiptController extends Controller
         // Edit button
         $editUrl = route('lorry_receipts.edit', $lorryReceipt->id);
         if ($lorryReceipt->invoice_generated == 0 && Auth::user()->canActAsAdmin()) {
-            $confirmMsg = $freightBooking ? ' onclick="return confirm(\'A freight booking already exists. Continue?\')"' : '';
+            $confirmMsg = $freightBooking ? ' onclick="return confirm(\'A good hire (lorry hire) already exists. Continue?\')"' : '';
             $buttons .= '<a href="'.$editUrl.'" class="btn-action btn-edit" title="Edit" data-bs-toggle="tooltip"'.$confirmMsg.'>';
             $buttons .= '<i class="bi bi-pencil"></i></a>';
         }
@@ -294,7 +294,7 @@ class LorryReceiptController extends Controller
             if (!empty($noFreightBooking)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'The following LR numbers do not have a freight booking: '.implode(', ', $noFreightBooking),
+                    'message' => 'The following LR numbers do not have a good hire (lorry hire): '.implode(', ', $noFreightBooking),
                 ], 422);
             }
 
@@ -347,7 +347,7 @@ class LorryReceiptController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Memo ID updated successfully for selected lorry receipts',
+                'message' => 'Memo ID updated successfully for selected good receipts (bilty)',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
@@ -489,7 +489,7 @@ class LorryReceiptController extends Controller
 
                 DB::commit();
 
-                return redirect()->route('lorry_receipts.index')->with('success', 'Created '.count($created).' linked Lorry Receipts (Linked ID: '.$nextLinkedId.').');
+                return redirect()->route('lorry_receipts.index')->with('success', 'Created '.count($created).' linked Good Receipts (Bilty) (Linked ID: '.$nextLinkedId.').');
             } catch (\Throwable $e) {
                 DB::rollBack();
                 throw $e;
@@ -628,10 +628,10 @@ class LorryReceiptController extends Controller
         // Check if user clicked "Save & Create FR"
         if ($request->has('redirect_to_fr')) {
             return redirect()->route('freight_bookings.create', ['lorry_receipt_id' => $lorryReceipt->id])
-                ->with('success', 'Lorry Receipt saved! Now create Freight Booking.');
+                ->with('success', 'Good Receipt (Bilty) saved! Now create Good Hire (Lorry Hire).');
         }
 
-        return redirect()->route('lorry_receipts.index')->with('success', 'Lorry Receipt created successfully!');
+        return redirect()->route('lorry_receipts.index')->with('success', 'Good Receipt (Bilty) created successfully!');
     }
 
     /**
@@ -870,7 +870,7 @@ class LorryReceiptController extends Controller
         }
 
         if ($lorry_receipt->invoice_generated == 1) {
-            return redirect()->route('lorry_receipts.index')->with('error', 'Cannot edit Lorry Receipt as invoice has already been generated.');
+            return redirect()->route('lorry_receipts.index')->with('error', 'Cannot edit Good Receipt (Bilty) as invoice has already been generated.');
         }
         if ($lorry_receipt->delivery_status == 'Delivered') {
             // only allow updating memo_id if already delivered
@@ -894,7 +894,7 @@ class LorryReceiptController extends Controller
 
             $lorry_receipt->update($validated);
 
-            return redirect()->route('lorry_receipts.index')->with('success', 'Lorry Receipt updated successfully! Only Memo ID could be updated as the LR is already delivered.');
+            return redirect()->route('lorry_receipts.index')->with('success', 'Good Receipt (Bilty) updated successfully! Only Memo ID could be updated as the LR is already delivered.');
         }
 
         $validated = $request->validate([
@@ -1023,7 +1023,7 @@ class LorryReceiptController extends Controller
             foreach ($freightBookings as $freightBooking) {
                 if (! $freightBooking->canChangeTdsAmount()) {
                     return redirect()->back()->withErrors([
-                        'transporter_id' => 'Transporter cannot be changed because TDS has already been submitted for this freight booking.',
+                        'transporter_id' => 'Transporter cannot be changed because TDS has already been submitted for this good hire (lorry hire).',
                     ])->withInput();
                 }
             }
@@ -1163,7 +1163,7 @@ class LorryReceiptController extends Controller
             }
         }
 
-        return redirect()->route('lorry_receipts.index')->with('success', 'Lorry Receipt updated successfully!');
+        return redirect()->route('lorry_receipts.index')->with('success', 'Good Receipt (Bilty) updated successfully!');
     }
 
     /**
@@ -1247,12 +1247,12 @@ class LorryReceiptController extends Controller
             });
 
             return redirect()->route('lorry_receipts.index')
-                ->with('success', 'Lorry receipt and all associated data deleted successfully!');
+                ->with('success', 'Good receipt (bilty) and all associated data deleted successfully!');
         } catch (\Exception $e) {
             Log::error('Error deleting lorry receipt: '.$e->getMessage());
 
             return redirect()->back()
-                ->with('error', 'Error deleting lorry receipt. Please try again.');
+                ->with('error', 'Error deleting good receipt (bilty). Please try again.');
         }
     }
 

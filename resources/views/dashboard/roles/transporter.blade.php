@@ -2,7 +2,7 @@
 <div class="row mb-4 align-items-center">
     <div class="col-md-8">
         <h2 class="fw-bold mb-1"><i class="fas fa-truck text-brand-primary"></i> Transporter Dashboard</h2>
-        <p class="text-muted mb-0">Your freight bookings and payments overview.</p>
+        <p class="text-muted mb-0">Your good hires (lorry hire) and payments overview.</p>
     </div>
     <div class="col-md-4 text-md-end">
         <div class="badge bg-brand-active text-brand-primary px-3 py-2 rounded-pill">
@@ -163,13 +163,13 @@
 </div>
 @endif
 
-<!-- Recent Freight Bookings -->
+<!-- Recent Good Hires (Lorry Hire) -->
 @if(isset($recentFreightBookings) && $recentFreightBookings->count() > 0)
 <div class="row mt-4">
     <div class="col-md-12">
         <div class="card glass-card">
             <div class="card-header bg-transparent border-0 py-3 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-bold"><i class="fas fa-truck text-brand-primary me-2"></i> Recent Freight Bookings</h5>
+                <h5 class="mb-0 fw-bold"><i class="fas fa-truck text-brand-primary me-2"></i> Recent Good Hires (Lorry Hire)</h5>
                 <a href="{{ route('transporter.freight_bookings.index') }}" class="btn btn-sm btn-brand-primary">View All</a>
             </div>
             <div class="card-body p-0">

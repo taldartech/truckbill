@@ -87,7 +87,7 @@
         <!--begin::Header-->
         <div class="card-header">
             <div class="d-flex w-100">
-                <div class="card-title h4">Add New Lorry Receipt</div>
+                <div class="card-title h4">Add New Good Receipt (Bilty)</div>
                 <div class="ms-auto">
                     <a href="{{ route('consignees.create') }}" class="btn btn-brand-primary">
                         <i class="bi bi-plus"></i> Create Consignee/Consignor/Customer</a>
@@ -444,7 +444,7 @@
                     </div>
                     <div class="row g-2">
                         <div class="col-md-4 offset-md-4">
-                            <button class="btn btn-brand-primary w-100" type="submit">💾 Create Lorry Receipt</button>
+                            <button class="btn btn-brand-primary w-100" type="submit">💾 Create Good Receipt (Bilty)</button>
                         </div>
 
                         <div class="col-md-4">
@@ -1502,7 +1502,7 @@ grNumberInput.addEventListener('blur', function() {
                 // Show confirmation dialog using SweetAlert2 or Bootstrap modal
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
-                        title: '📋 Confirm Lorry Receipt Details',
+                        title: '📋 Confirm Good Receipt (Bilty) Details',
                         html: confirmationHTML,
                         icon: 'question',
                         showCancelButton: true,
@@ -1535,7 +1535,7 @@ grNumberInput.addEventListener('blur', function() {
                         `Consignee: ${consigneeName}\n` +
                         `Weight: ${formData.get('weight')} tons\n` +
                         `Amount: ₹${formData.get('amount')}\n\n` +
-                        `Do you want to submit this lorry receipt?`;
+                        `Do you want to submit this good receipt (bilty)?`;
 
                     if (confirm(confirmText)) {
                         form.submit();

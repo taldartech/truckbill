@@ -476,7 +476,7 @@
                             <li class="nav-item">
                                 <a href="{{ route('transporter.freight_bookings.index') }}" class="nav-link{{ Request::is('transporter/freight-bookings*') ? ' active' : '' }}">
                                     <i class="fas fa-truck"></i>
-                                    <p>My Freight Bookings</p>
+                                    <p>My Good Hires (Lorry Hire)</p>
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -746,7 +746,7 @@
                                     href="#lorryReceiptMenu">
                                     <i class="fas fa-file-alt"></i>
                                     <p>
-                                        Lorry Receipts
+                                        Good Receipts (Bilty)
                                         <i class="nav-arrow bi bi-chevron-right"></i>
                                     </p>
                                 </a>
@@ -772,7 +772,7 @@
                                     href="#freightBookingMenu">
                                     <i class="fas fa-shipping-fast"></i>
                                     <p>
-                                        Freight Bookings
+                                        Good Hires (Lorry Hire)
                                         <i class="nav-arrow bi bi-chevron-right"></i>
                                     </p>
                                 </a>

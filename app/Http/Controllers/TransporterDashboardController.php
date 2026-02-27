@@ -42,7 +42,7 @@ class TransporterDashboardController extends Controller
     {
         $transporterIds = $this->getTransporterIds();
         if (empty($transporterIds) || ! in_array($freight_booking->transporter_id, $transporterIds)) {
-            abort(403, 'Unauthorized access to this freight booking.');
+            abort(403, 'Unauthorized access to this good hire (lorry hire).');
         }
 
         $freight_booking->load(['lr.consignor', 'lr.consignee', 'lr.truck', 'transporter.transporterMaster', 'payments']);

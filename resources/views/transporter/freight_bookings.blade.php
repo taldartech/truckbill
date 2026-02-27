@@ -1,14 +1,14 @@
 @extends('layouts.app')
 
-@section('title', 'My Freight Bookings')
+@section('title', 'My Good Hires (Lorry Hire)')
 
 @section('content')
 <div class="content">
     <div class="container-fluid">
         <div class="row mb-4">
             <div class="col-12">
-                <h2 class="fw-bold mb-1"><i class="fas fa-truck text-brand-primary"></i> My Freight Bookings</h2>
-                <p class="text-muted mb-0">View your freight bookings across all companies.</p>
+                <h2 class="fw-bold mb-1"><i class="fas fa-truck text-brand-primary"></i> My Good Hires (Lorry Hire)</h2>
+                <p class="text-muted mb-0">View your good hires (lorry hire) across all companies.</p>
             </div>
         </div>
 
@@ -69,7 +69,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="text-center py-4 text-muted">No freight bookings found.</td>
+                                    <td colspan="7" class="text-center py-4 text-muted">No good hires (lorry hire) found.</td>
                                 </tr>
                             @endforelse
                         </tbody>

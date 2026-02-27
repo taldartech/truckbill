@@ -78,7 +78,7 @@
                     <h5 class="alert-heading mb-1">
                         <i class="fas fa-exclamation-triangle"></i> CANCELLED FREIGHT BOOKING
                     </h5>
-                    <p class="mb-0">This freight booking has been cancelled and cannot be modified. Contact administrator
+                    <p class="mb-0">This good hire (lorry hire) has been cancelled and cannot be modified. Contact administrator
                         for any changes.</p>
                 </div>
             </div>
@@ -91,7 +91,7 @@
         <div
             class="card-header d-flex justify-content-between align-items-center {{ $freightBooking->is_cancelled ? 'bg-danger-subtle' : '' }}">
             <div class="card-title h4">
-                Freight Booking Details - #{{ $freightBooking->id }}
+                Good Hire (Lorry Hire) Details - #{{ $freightBooking->id }}
                 @if ($freightBooking->is_cancelled)
                     <span class="badge bg-danger ms-2">
                         <i class="fas fa-times-circle"></i> CANCELLED
@@ -143,7 +143,7 @@
                     <div class="col-12">
                         <div class="info-card card">
                             <div class="card-header">
-                                <h5 class="mb-0">Related Lorry Receipt Information</h5>
+                                <h5 class="mb-0">Related Good Receipt (Bilty) Information</h5>
                             </div>
                             <div class="card-body">
                                 <div class="row">

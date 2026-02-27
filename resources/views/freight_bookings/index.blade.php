@@ -199,7 +199,7 @@
 @section('content')
     <div class="container-fluid py-1 mt-2">
         <div class="d-flex justify-content-between align-items-center mb-2 px-1">
-            <h3 class="mb-0 card-title animate__animated animate__fadeInDown">Freight Bookings</h3>
+            <h3 class="mb-0 card-title animate__animated animate__fadeInDown">Good Hires (Lorry Hire)</h3>
             @if (session('success'))
                 <span class="badge text-bg-dark border animate__animated animate__fadeIn"><i class="bi bi-check-circle-fill text-success me-1"></i> {{ session('success') }}</span>
             @endif
@@ -659,7 +659,7 @@
                 const checkedBoxes = Object.values(selectedRows);
                 console.log(checkedBoxes);
                 if (checkedBoxes.length === 0) {
-                    alert('Please select at least one freight booking.');
+                    alert('Please select at least one good hire (lorry hire).');
                     return;
                 }
 
@@ -811,7 +811,7 @@
                                 const lrNumbers = missingLRs.map(lr => lr.lr_number).join(', ');
 
                                 alert(
-                                    `⚠️ Error: The following linked LRs do not have Freight Bookings:\n\n${lrNumbers}\n\nPlease create FRs for all linked LRs before proceeding with combined payment.`
+                                    `⚠️ Error: The following linked LRs do not have Good Hires (Lorry Hire):\n\n${lrNumbers}\n\nPlease create FRs for all linked LRs before proceeding with combined payment.`
                                 );
                                 console.log('❌ Missing FRs for:', missingLRs);
                                 return;
@@ -1216,7 +1216,7 @@
                 }
 
                 if (checkedBoxes.length === 0) {
-                    alert('Please select at least one freight booking.');
+                    alert('Please select at least one good hire (lorry hire).');
                     return;
                 }
 
@@ -1264,7 +1264,7 @@
                             <div class="col-md-12">
                                 <label class="form-label">Memo ID *</label>
                                 <input type="text" name="memo_id" class="form-control" required placeholder="Enter Memo ID">
-                                <div class="form-text">This memo ID will be assigned to all selected lorry receipts</div>
+                                <div class="form-text">This memo ID will be assigned to all selected good receipts (bilty)</div>
                             </div>
                         </div>
 
@@ -1296,8 +1296,8 @@
                             <i class="bi bi-info-circle"></i>
                             <strong>Note:</strong> Assigning memo ID will:
                             <ul class="mb-0 mt-0">
-                                <li>Set lorry receipt status to "Delivered"</li>
-                                <li>Mark associated freight bookings as delivered</li>
+                                <li>Set good receipt (bilty) status to "Delivered"</li>
+                                <li>Mark associated good hires (lorry hire) as delivered</li>
                                 <li>This action cannot be easily undone</li>
                             </ul>
                         </div>
@@ -1606,7 +1606,7 @@
                 const checkedBoxes = Object.values(selectedRows);
 
                 if (checkedBoxes.length === 0) {
-                    alert('Please select at least one freight booking.');
+                    alert('Please select at least one good hire (lorry hire).');
                     return;
                 }
 
@@ -1718,7 +1718,7 @@
                 const checkedBoxes = Object.values(selectedRows);
 
                 if (checkedBoxes.length === 0) {
-                    alert('Please select freight bookings first.');
+                    alert('Please select good hires (lorry hire) first.');
                     return;
                 }
 
@@ -1819,7 +1819,7 @@
                 language: {
                     emptyTable: `<div class="text-muted">
                                         <i class="bi bi-inbox display-4"></i>
-                                        <p class="mt-2">No freight bookings found</p>
+                                        <p class="mt-2">No good hires (lorry hire) found</p>
                                         @if (request('search'))
                                             <p>Try adjusting your search criteria</p>
                                         @endif
@@ -1882,7 +1882,7 @@
             // Delete confirmation
             $(document).on('click', '.delete-btn', function(e) {
                 e.preventDefault();
-                if (confirm('Are you sure you want to delete this freight booking?')) {
+                if (confirm('Are you sure you want to delete this good hire (lorry hire)?')) {
                     $(this).closest('form').submit();
                 }
             });
@@ -1912,7 +1912,7 @@
             modalBody.innerHTML = '';
 
             if (checkedBoxes.length === 0) {
-                alert("Please select at least one Freight Booking.");
+                alert("Please select at least one Good Hire (Lorry Hire).");
                 return;
             }
             if (planEndDateStr) {
@@ -1930,7 +1930,7 @@
             // Check if any LR has no voucher number
             const hasNoVoucher = checkedBoxes.some(data => data.voucher_number === '0' || !data.voucher_number);
             if (hasNoVoucher) {
-                alert("Please create Freight Booking first for selected Lorry Receipts.");
+                alert("Please create Good Hire (Lorry Hire) first for selected Good Receipts (Bilty).");
                 return;
             }
 
@@ -1941,7 +1941,7 @@
 
             if (zeroBalanceLRs.length > 0) {
                 const message =
-                    `The following Lorry Receipts have zero balance. No payment is required:\n${zeroBalanceLRs.join(', ')}`;
+                    `The following Good Receipts (Bilty) have zero balance. No payment is required:\n${zeroBalanceLRs.join(', ')}`;
                 alert(message);
                 return;
             }
@@ -1952,7 +1952,7 @@
             });
 
             if (allZeroBalance) {
-                alert("All selected freight bookings have zero balance. No payment is required.");
+                alert("All selected good hires (lorry hire) have zero balance. No payment is required.");
                 return;
             }
 
@@ -1963,7 +1963,7 @@
 
             if (!allSameTruck) {
                 alert(
-                    "Selected Freight Bookings belong to different Truck Numbers. Please select bookings with the same truck."
+                    "Selected Good Hires (Lorry Hire) belong to different Truck Numbers. Please select bookings with the same truck."
                 );
                 return;
             }
@@ -1971,7 +1971,7 @@
             // Header: show truck number once at top-right
             modalBody.innerHTML += `
                   <div class="lr-details-section">
-                      <h5>Selected Freight Bookings</h5>
+                      <h5>Selected Good Hires (Lorry Hire)</h5>
                       <div class="lr-details-content">
                           <div class="d-flex justify-content-between align-items-center">
                               <div class="badge bg-info fs-6">Truck Number: ${firstTruck || 'N/A'}</div>
@@ -2251,7 +2251,7 @@
             // Show freight booking details
             modalBody.innerHTML = `
                 <div class="lr-details-section">
-                    <h5>Freight Booking Details</h5>
+                    <h5>Good Hire (Lorry Hire) Details</h5>
                     <div class="lr-details-content">
                         <div class="row">
                             <div class="col-md-6">

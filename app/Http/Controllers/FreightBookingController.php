@@ -342,7 +342,7 @@ class FreightBookingController extends Controller
             $actions .= '<form method="POST" action="' . route('freight_bookings.destroy', $freightBooking->id) . '" style="display: inline;">';
             $actions .= csrf_field();
             $actions .= method_field('DELETE');
-            $actions .= '<button type="submit" class="btn btn-sm btn-outline-danger" title="Delete" onclick="return confirm(\'Are you sure you want to delete this freight booking?\')">';
+            $actions .= '<button type="submit" class="btn btn-sm btn-outline-danger" title="Delete" onclick="return confirm(\'Are you sure you want to delete this good hire (lorry hire)?\')">';
             $actions .= '<i class="bi bi-trash"></i>';
             $actions .= '</button>';
             $actions .= '</form>';
@@ -361,7 +361,7 @@ class FreightBookingController extends Controller
         ])->find($id);
 
         if (!$freightBooking) {
-            return response()->json(['error' => 'Freight Booking not found'], 404);
+            return response()->json(['error' => 'Good Hire (Lorry Hire) not found'], 404);
         }
 
         return response()->json([
@@ -382,7 +382,7 @@ class FreightBookingController extends Controller
         //check for lr credits
         if ($company->lr_credits <= 0) {
             return redirect()->route('freight_bookings.index')
-                ->with('error', 'You do not have enough credits to create a Freight Booking.');
+                ->with('error', 'You do not have enough credits to create a Good Hire (Lorry Hire).');
         }
         $companies = \App\Models\Company::all();
         $lrs = LorryReceipt::all();
@@ -566,7 +566,7 @@ class FreightBookingController extends Controller
         // Check if the form has been confirmed
         if (!$request->has('confirmed')) {
             return redirect()->route('freight_bookings.create')
-                ->with('error', 'Please confirm the freight booking details before submission.');
+                ->with('error', 'Please confirm the good hire (lorry hire) details before submission.');
         }
 
         $data = $request->validate([
@@ -593,11 +593,11 @@ class FreightBookingController extends Controller
         // Get the lorry receipt to get its LR number
         $lorryReceipt = LorryReceipt::find($data['lr_id']);
         if (!$lorryReceipt) {
-            return redirect()->back()->withErrors(['lr_id' => 'Invalid lorry receipt']);
+            return redirect()->back()->withErrors(['lr_id' => 'Invalid good receipt (bilty)']);
         }
 
         if ($lorryReceipt->freight_booking_id) {
-            return redirect()->route('freight_bookings.index')->with('error', 'This Lorry Receipt is already linked to a Freight Booking.');
+            return redirect()->route('freight_bookings.index')->with('error', 'This Good Receipt (Bilty) is already linked to a Good Hire (Lorry Hire).');
         }
 
         // Create freight booking with lorry receipt's LR number
@@ -644,18 +644,18 @@ class FreightBookingController extends Controller
         if ($request->has('action') && $request->action === 'save_and_pay') {
             // Redirect to voucher payment creation page with freight booking ID
             return redirect()->route('voucher_payments.create', ['freight_booking_id' => $freightBooking->id])
-                ->with('success', 'Freight Booking created successfully. Ready to make payment.');
+                ->with('success', 'Good Hire (Lorry Hire) created successfully. Ready to make payment.');
         }
         if ($request->has('action') && $request->action === 'save_and_view') {
             return redirect()->route('freight_bookings.show', $freightBooking->id)
-                ->with('success', 'Freight Booking created successfully. Ready to make payment.');
+                ->with('success', 'Good Hire (Lorry Hire) created successfully. Ready to make payment.');
         }
         //decrease lr credits by one in company table
         $company = Company::find($data['company_id']);
         $company->lr_credits = $company->lr_credits - 1;
         $company->save();
 
-        return redirect()->route('freight_bookings.index')->with('success', 'Freight Booking created successfully.');
+        return redirect()->route('freight_bookings.index')->with('success', 'Good Hire (Lorry Hire) created successfully.');
     }
 
     public function storeCombinedPayment(Request $request)
@@ -798,7 +798,7 @@ class FreightBookingController extends Controller
             $freightBooking = FreightBooking::with(['lr', 'linkedFreightBooking', 'company'])->findOrFail($id);
 
             if (Auth::user()->company_id && $freightBooking->company_id !== Auth::user()->company_id) {
-                abort(403, 'Unauthorized access to freight booking.');
+                abort(403, 'Unauthorized access to good hire (lorry hire).');
             }
             $pumps = Pump::where('user_id', Auth::user()->company->user_id)->get();
 
@@ -837,7 +837,7 @@ class FreightBookingController extends Controller
                 ->with('error', 'Freight booking not found.');
         } catch (\Exception $e) {
             return redirect()->route('freight_bookings.index')
-                ->with('error', 'An error occurred while loading the freight booking.');
+                ->with('error', 'An error occurred while loading the good hire (lorry hire).');
         }
     }
 
@@ -855,7 +855,7 @@ class FreightBookingController extends Controller
 
             $is_admin = Auth::user()->canActAsAdmin();
             if (Auth::user()->company_id && $freightBooking->company_id !== Auth::user()->company_id) {
-                abort(403, 'Unauthorized access to freight booking.');
+                abort(403, 'Unauthorized access to good hire (lorry hire).');
             }
             $companies = \App\Models\Company::all();
             // Get the LorryReceipt details
@@ -998,7 +998,7 @@ class FreightBookingController extends Controller
                 ->with('error', 'Freight booking not found.');
         } catch (\Exception $e) {
             return redirect()->route('freight_bookings.index')
-                ->with('error', 'An error occurred while loading the freight booking for editing.');
+                ->with('error', 'An error occurred while loading the good hire (lorry hire) for editing.');
         }
     }
 
@@ -1041,7 +1041,7 @@ class FreightBookingController extends Controller
 
         // Prevent updates to cancelled freight bookings
         if ($freightBooking->is_cancelled) {
-            return redirect()->back()->withErrors(['general' => 'Cannot update a cancelled freight booking. Please contact administrator if changes are needed.']);
+            return redirect()->back()->withErrors(['general' => 'Cannot update a cancelled good hire (lorry hire). Please contact administrator if changes are needed.']);
         }
 
         // Add debug logging
@@ -1079,7 +1079,7 @@ class FreightBookingController extends Controller
         // Get the lorry receipt to get its LR number
         $lorryReceipt = LorryReceipt::find($data['lr_id']);
         if (!$lorryReceipt) {
-            return redirect()->back()->withErrors(['lr_id' => 'Invalid lorry receipt']);
+            return redirect()->back()->withErrors(['lr_id' => 'Invalid good receipt (bilty)']);
         }
         // Use the new TR amount from form data instead of existing (may be fixed or auto-calculated)
         $newTrAmount = $data['tr_amount'];
@@ -1315,7 +1315,7 @@ class FreightBookingController extends Controller
             ]);
         }
 
-        return redirect()->route('freight_bookings.index')->with('success', 'Freight Booking updated successfully.');
+        return redirect()->route('freight_bookings.index')->with('success', 'Good Hire (Lorry Hire) updated successfully.');
     }
 
     public function destroy(FreightBooking $freight_booking)
@@ -1328,7 +1328,7 @@ class FreightBookingController extends Controller
                 ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
         $freight_booking->delete();
-        return redirect()->route('freight_bookings.index')->with('success', 'Freight Booking deleted.');
+        return redirect()->route('freight_bookings.index')->with('success', 'Good Hire (Lorry Hire) deleted.');
     }
 
     /**
@@ -1711,7 +1711,7 @@ class FreightBookingController extends Controller
             // ❌ If multiple customers found → return with warning
             if ($customers->count() > 1) {
                 return redirect()->back()
-                    ->with('warning', 'Selected Lorry Receipts belong to different customers. Please select LRs of the same customer only.')
+                    ->with('warning', 'Selected Good Receipts (Bilty) belong to different customers. Please select LRs of the same customer only.')
                     ->withInput();
             }
 
@@ -1767,7 +1767,7 @@ class FreightBookingController extends Controller
             });
 
             return redirect()->route('freight_bookings.index')
-                ->with('success', 'Memo ID assigned successfully to ' . count($validated['lr_ids']) . ' lorry receipts and ' . count($validated['freight_booking_ids']) . ' freight bookings updated.');
+                ->with('success', 'Memo ID assigned successfully to ' . count($validated['lr_ids']) . ' good receipts (bilty) and ' . count($validated['freight_booking_ids']) . ' good hires (lorry hire) updated.');
         } catch (\Exception $e) {
             \Log::error('Bulk memo ID assignment error: ' . $e->getMessage());
 

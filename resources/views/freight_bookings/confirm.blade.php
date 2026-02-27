@@ -22,16 +22,16 @@
 
 <div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
     <div class="card-header">
-        <div class="card-title h4">Confirm Freight Booking</div>
+        <div class="card-title h4">Confirm Good Hire (Lorry Hire)</div>
     </div>
     <div class="card-body">
         <div class="alert alert-info">
-            <i class="fas fa-info-circle me-2"></i> Please review the freight booking details below before final submission.
+            <i class="fas fa-info-circle me-2"></i> Please review the good hire (lorry hire) details below before final submission.
         </div>
 
         <!-- LR Information Section -->
         <div class="confirmation-section">
-            <h5 class="mb-3">Lorry Receipt Information</h5>
+            <h5 class="mb-3">Good Receipt (Bilty) Information</h5>
             <div class="row">
                 <div class="col-md-3 mb-3">
                     <div class="confirmation-label">LR Number</div>
@@ -100,9 +100,9 @@
             </div>
         </div>
 
-        <!-- Freight Booking Details Section -->
+        <!-- Good Hire (Lorry Hire) Details Section -->
         <div class="confirmation-section">
-            <h5 class="mb-3">Freight Booking Details</h5>
+            <h5 class="mb-3">Good Hire (Lorry Hire) Details</h5>
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <div class="confirmation-label">TR Freight Rate</div>

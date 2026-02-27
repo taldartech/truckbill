@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Lorry Receipt Copy')
+@section('title', 'Good Receipt (Bilty) Copy')
 
 @push('styles')
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -110,7 +110,7 @@
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h3 class="card-title mb-0">Lorry Receipt Copy</h3>
+                        <h3 class="card-title mb-0">Good Receipt (Bilty) Copy</h3>
                     </div>
                     <div class="d-flex">
                         <a class="btn btn-warning ms-2" target="_blank"

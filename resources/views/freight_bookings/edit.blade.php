@@ -35,7 +35,7 @@
     <!-- LR Information Card -->
     <div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
         <div class="card-header">
-            <div class="card-title h5">Lorry Receipt Information</div>
+            <div class="card-title h5">Good Receipt (Bilty) Information</div>
         </div>
         <div class="card-body">
             <div class="row">
@@ -160,7 +160,7 @@
                     <h5 class="alert-heading mb-1">
                         <i class="fas fa-exclamation-triangle"></i> CANCELLED FREIGHT BOOKING
                     </h5>
-                    <p class="mb-0">This freight booking has been cancelled and cannot be modified. All form fields are
+                    <p class="mb-0">This good hire (lorry hire) has been cancelled and cannot be modified. All form fields are
                         disabled.</p>
                 </div>
             </div>
@@ -173,7 +173,7 @@
         <div class="card-header {{ $freightBooking->is_cancelled ? 'bg-danger-subtle' : '' }}">
             <div class="card-title h4 d-flex justify-content-between align-items-center w-100">
                 <div>
-                    Edit Freight Booking
+                    Edit Good Hire (Lorry Hire)
                     @if ($freightBooking->is_cancelled)
                         <span class="badge bg-danger ms-2">
                             <i class="fas fa-times-circle"></i> CANCELLED
@@ -512,7 +512,7 @@
                             </button>
                         @else
                             <button class="btn btn-brand-primary me-2" type="button" id="showConfirmationBtn">
-                                <i class="bi bi-check-circle"></i> Update Freight Booking
+                                <i class="bi bi-check-circle"></i> Update Good Hire (Lorry Hire)
                             </button>
                         @endif
                         <a href="{{ route('freight_bookings.index') }}" class="btn btn-back">
@@ -524,14 +524,14 @@
         </form>
     </div>
 
-    <!-- Confirmation Modal for Freight Booking Update -->
+    <!-- Confirmation Modal for Good Hire (Lorry Hire) Update -->
     <div class="modal fade" id="updateConfirmationModal" tabindex="-1" aria-labelledby="updateConfirmationModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header bg-info text-white">
                     <h5 class="modal-title" id="updateConfirmationModalLabel">
-                        <i class="fas fa-info-circle me-2"></i> Confirm Freight Booking Update
+                        <i class="fas fa-info-circle me-2"></i> Confirm Good Hire (Lorry Hire) Update
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -543,7 +543,7 @@
 
                     <div class="row mb-3">
                         <div class="col-12">
-                            <h6 class="border-bottom pb-2"><i class="fas fa-truck me-2"></i> Lorry Receipt Information
+                            <h6 class="border-bottom pb-2"><i class="fas fa-truck me-2"></i> Good Receipt (Bilty) Information
                             </h6>
                         </div>
                         <div class="col-md-4">
@@ -662,14 +662,14 @@
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i> A Memo ID is required to mark this freight booking as delivered.
+                        <i class="fas fa-info-circle"></i> A Memo ID is required to mark this good hire (lorry hire) as delivered.
                     </div>
                     <form id="memoIdForm">
                         <div class="mb-3">
                             <label for="deliveryMemoId" class="form-label">Memo ID *</label>
                             <input type="text" class="form-control" id="deliveryMemoId" name="memo_id" required
                                 placeholder="Enter memo ID" pattern="[A-Za-z0-9\-\/]+">
-                            <small class="form-text text-muted">This will be saved to the lorry receipt record.</small>
+                            <small class="form-text text-muted">This will be saved to the good receipt (bilty) record.</small>
                         </div>
                     </form>
                 </div>
@@ -694,7 +694,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-warning text-dark">
                     <h5 class="modal-title" id="viewCancelledModalLabel">
-                        <i class="fas fa-info-circle me-2"></i> Cancelled Freight Booking Details
+                        <i class="fas fa-info-circle me-2"></i> Cancelled Good Hire (Lorry Hire) Details
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -719,7 +719,7 @@
                             <p><strong>Remark:</strong> {{ $cancelledfr->remark ?? 'N/A' }}</p>
                             <p><strong>Cancelled On:</strong> {{ $cancelledfr->updated_at->format('d M Y, h:i A') }}</p>
                         @else
-                            <p>No cancelled freight booking details found.</p>
+                            <p>No cancelled good hire (lorry hire) details found.</p>
                         @endif
                     </div>
                 </div>
@@ -1279,10 +1279,10 @@
                     if (this.checked) {
                         // Show confirmation dialog
                         const confirmed = confirm(
-                            'Are you sure you want to cancel this freight booking?\n\n' +
+                            'Are you sure you want to cancel this good hire (lorry hire)?\n\n' +
                             '⚠️ WARNING: This action will:\n' +
-                            '• Mark the freight booking as cancelled\n' +
-                            '• Move the related Lorry Receipt status back to "Pending"\n' +
+                            '• Mark the good hire (lorry hire) as cancelled\n' +
+                            '• Move the related Good Receipt (Bilty) status back to "Pending"\n' +
                             '• This change cannot be undone easily\n\n' +
                             'Click OK to proceed or Cancel to abort.'
                         );
@@ -1295,8 +1295,8 @@
                     } else {
                         // Unchecking cancelled - show confirmation
                         const confirmed = confirm(
-                            'Are you sure you want to uncancel this freight booking?\n\n' +
-                            'This will restore the freight booking to its previous state.'
+                            'Are you sure you want to uncancel this good hire (lorry hire)?\n\n' +
+                            'This will restore the good hire (lorry hire) to its previous state.'
                         );
 
                         if (!confirmed) {

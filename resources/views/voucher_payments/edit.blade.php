@@ -38,14 +38,14 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
-    <!-- LR and Freight Booking Information Card -->
+    <!-- LR and Good Hire (Lorry Hire) Information Card -->
     <div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
         <div class="card-header">
-            <div class="card-title h5">Lorry Receipt & Freight Booking Information</div>
+            <div class="card-title h5">Good Receipt (Bilty) & Good Hire (Lorry Hire) Information</div>
         </div>
         <div class="card-body">
             <!-- LR Information Section -->
-            <h6 class="border-bottom pb-2 mb-3">Lorry Receipt Details</h6>
+            <h6 class="border-bottom pb-2 mb-3">Good Receipt (Bilty) Details</h6>
             <div class="row">
                 <div class="col-md-3">
                     <div class="mb-2">
@@ -87,9 +87,9 @@
                 </div>
             </div>
 
-            <!-- Freight Booking Information Section -->
+            <!-- Good Hire (Lorry Hire) Information Section -->
             @if ($freightBooking)
-                <h6 class="border-bottom pb-2 mb-3 mt-4">Freight Booking Details</h6>
+                <h6 class="border-bottom pb-2 mb-3 mt-4">Good Hire (Lorry Hire) Details</h6>
                 <div class="row">
                     <div class="col-md-3">
                         <div class="mb-2">

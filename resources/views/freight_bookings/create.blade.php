@@ -42,7 +42,7 @@
     <!-- LR Information Card -->
     <div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
         <div class="card-header">
-            <div class="card-title h5">Lorry Receipt Information</div>
+            <div class="card-title h5">Good Receipt (Bilty) Information</div>
         </div>
         <div class="card-body">
             <div class="row">
@@ -204,7 +204,7 @@
         <!--begin::Header-->
         <div class="card-header">
             <div class="card-title h4 d-flex justify-content-between align-items-center w-100">
-                <span>Add New Freight Booking</span>
+                <span>Add New Good Hire (Lorry Hire)</span>
                 @php
                     $cancelledBookings = \App\Models\FreightBooking::where('is_cancelled', 1)
                         ->where('lr_id', $lorry_receipt->first() ? $lorry_receipt->first()->id : 0)
@@ -424,7 +424,7 @@
                 </div>
                 {{-- <div class="row"> --}}
                 {{-- <div class="col-md-6 mb-3">
-                <label for="linked_freight_booking_id" class="form-label">Linked Freight Booking</label>
+                <label for="linked_freight_booking_id" class="form-label">Linked Good Hire (Lorry Hire)</label>
                 <select name="linked_freight_booking_id" id="linked_freight_booking_id" class="form-select">
                     <option value="">None</option>
                     @foreach ($linkedBookings as $fb)
@@ -462,7 +462,7 @@
                 <div class="modal-content">
                     <div class="modal-header bg-warning text-dark">
                         <h5 class="modal-title" id="cancelBookingModalLabel">
-                            <i class="fas fa-info-circle me-2"></i> Cancelled Freight Booking Details
+                            <i class="fas fa-info-circle me-2"></i> Cancelled Good Hire (Lorry Hire) Details
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>

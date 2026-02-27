@@ -248,7 +248,7 @@
             <div class="card-header py-3">
                 <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
                     <div class="d-flex align-items-center gap-3">
-                        <h4 class="card-title mb-0" style="white-space: nowrap;">Lorry Receipts</h4>
+                        <h4 class="card-title mb-0" style="white-space: nowrap;">Good Receipts (Bilty)</h4>
                         <div class="d-flex gap-2">
                             <a href="{{ route('lorry_receipts.create') }}" class="header-pill-btn btn btn-primary border-0 shadow-sm" style="background: var(--brand-primary);">
                                 <i class="bi bi-plus-circle me-1"></i> Create
@@ -332,13 +332,13 @@
         </div>
     </div>
 
-    <!-- Lorry Receipt Details Modal -->
+    <!-- Good Receipt (Bilty) Details Modal -->
     <div class="modal fade" id="lrDetailsModal" tabindex="-1" aria-labelledby="lrDetailsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title" id="lrDetailsModalLabel">
-                        <i class="bi bi-file-text me-2"></i>Lorry Receipt Details
+                        <i class="bi bi-file-text me-2"></i>Good Receipt (Bilty) Details
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                         aria-label="Close"></button>
@@ -348,7 +348,7 @@
                         <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
-                        <p class="mt-2 text-muted">Loading lorry receipt details...</p>
+                        <p class="mt-2 text-muted">Loading good receipt (bilty) details...</p>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -785,7 +785,7 @@
                         <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
-                        <p class="mt-2 text-muted">Loading lorry receipt details...</p>
+                        <p class="mt-2 text-muted">Loading good receipt (bilty) details...</p>
                     </div>
                 `;
                 modal.show();
@@ -890,7 +890,7 @@
                             </div>
                             <div class="card">
                                 <div class="card-header bg-light">
-                                    <h6 class="mb-0"><i class="bi bi-list"></i> Linked Lorry Receipts</h6>
+                                    <h6 class="mb-0"><i class="bi bi-list"></i> Linked Good Receipts (Bilty)</h6>
                                 </div>
                                 <div class="card-body">
                                     <table class="table table-bordered">

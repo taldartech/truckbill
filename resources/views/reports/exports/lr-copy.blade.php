@@ -88,7 +88,7 @@
                     </td>
                 </tr>
                 <tr>
-                    <td colspan="6" class="text-center fw-bold">LORRY RECEIPT FORM</td>
+                    <td colspan="6" class="text-center fw-bold">GOOD RECEIPT (BILTY) FORM</td>
                     <td colspan="6" class="text-center fw-bold">L.R. No.: <span
                             class="values">{{ $lr->lr_number }}</span>
                     </td>
@@ -108,9 +108,9 @@
                         consignment Policy No. Date Amount Risk.Question is that:
                     </td>
                     <td colspan="6" class="values">
-                        The consignment covered by this set of Special Lorry Receipt form shall be stored under control
+                        The consignment covered by this set of Special Good Receipt (Bilty) form shall be stored under control
                         of the Transport Operator and shall be delivered to the consignee Party, whose name as mentioned
-                        in the Lorry Receipt. It will under no circumstances be delivered to anyone without the written
+                        in the Good Receipt (Bilty). It will under no circumstances be delivered to anyone without the written
                         authority from the Consignee party or its order recorded on the Consignee copy or on separate
                         Letter of Authority.
                     </td>
@@ -216,7 +216,7 @@
                     </td>
                 </tr>
                 <tr>
-                    <td colspan="6" class="text-center fw-bold">LORRY RECEIPT FORM</td>
+                    <td colspan="6" class="text-center fw-bold">GOOD RECEIPT (BILTY) FORM</td>
                     <td colspan="6" class="text-center fw-bold">L.R. No.: <span
                             class="values">{{ $lr->lr_number }}</span>
                     </td>
@@ -236,9 +236,9 @@
                         consignment Policy No. Date Amount Risk.Question is that:
                     </td>
                     <td colspan="6" class="values">
-                        The consignment covered by this set of Special Lorry Receipt form shall be stored under control
+                        The consignment covered by this set of Special Good Receipt (Bilty) form shall be stored under control
                         of the Transport Operator and shall be delivered to the consignee Party, whose name as mentioned
-                        in the Lorry Receipt. It will under no circumstances be delivered to anyone without the written
+                        in the Good Receipt (Bilty). It will under no circumstances be delivered to anyone without the written
                         authority from the Consignee party or its order recorded on the Consignee copy or on separate
                         Letter of Authority.
                     </td>

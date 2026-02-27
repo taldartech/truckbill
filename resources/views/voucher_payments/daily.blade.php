@@ -90,7 +90,7 @@
                                 </select>
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label">Lorry Receipt No</label>
+                                <label class="form-label">Good Receipt (Bilty) No</label>
                                 <input type="text" name="lr_no" class="form-control" value="{{ request('lr_no') }}">
                             </div>
                             <div class="col-md-3">

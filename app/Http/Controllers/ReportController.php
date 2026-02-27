@@ -227,7 +227,7 @@ class ReportController extends Controller
                     'has_freight_bookings' => $lrs[0]->relationLoaded('freightBookings') && $lrs[0]->freightBookings->isNotEmpty(),
                     'freight_booking_count' => $lrs[0]->freightBookings->count(),
                     'voucher_payments' => $lrs[0]->freightBookings->isNotEmpty() ?
-                        $lrs[0]->freightBookings[0]->voucherPayments->toArray() : 'No freight bookings'
+                        $lrs[0]->freightBookings[0]->voucherPayments->toArray() : 'No good hires (lorry hire)'
                 ]);
             }
         } else {
@@ -297,7 +297,7 @@ class ReportController extends Controller
     public function lr_copy_export(Request $request)
     {
         if (!$request->input('lr_id')) {
-            return redirect()->back()->with('error', 'Please select a Lorry Receipt to export.');
+            return redirect()->back()->with('error', 'Please select a Good Receipt (Bilty) to export.');
         }
         $lr = LorryReceipt::find($request->input('lr_id'));
         $html = view('reports.exports.lr-copy', compact('lr'))->render();
@@ -378,7 +378,7 @@ class ReportController extends Controller
                     'has_freight_bookings' => $lrs[0]->relationLoaded('freightBookings') && $lrs[0]->freightBookings->isNotEmpty(),
                     'freight_booking_count' => $lrs[0]->freightBookings->count(),
                     'voucher_payments' => $lrs[0]->freightBookings->isNotEmpty() ?
-                        $lrs[0]->freightBookings[0]->voucherPayments->toArray() : 'No freight bookings'
+                        $lrs[0]->freightBookings[0]->voucherPayments->toArray() : 'No good hires (lorry hire)'
                 ]);
             }
         } else {
@@ -859,7 +859,7 @@ class ReportController extends Controller
     public function voucher_receipt_export(Request $request)
     {
         if (!$request->input('lr_id')) {
-            return redirect()->back()->with('error', 'Please select a Lorry Receipt to export.');
+            return redirect()->back()->with('error', 'Please select a Good Receipt (Bilty) to export.');
         }
         $lr = LorryReceipt::find($request->input('lr_id'));
         if ($lr->linked_lr_id) {
@@ -872,7 +872,7 @@ class ReportController extends Controller
             });
 
             if (!$allHaveFreightBooking) {
-                return redirect()->back()->with('error', 'Create all Freight Bookings for linked Lorry Receipts before exporting the Voucher Receipt.');
+                return redirect()->back()->with('error', 'Create all Good Hires (Lorry Hire) for linked Good Receipts (Bilty) before exporting the Voucher Receipt.');
             }
         } else {
             $lrs = collect([$lr]);
@@ -977,7 +977,7 @@ class ReportController extends Controller
                             ->get();
                     }
                     if ($lrs->isEmpty()) {
-                        return redirect()->back()->with('error', 'No Lorry Receipts found for this invoice.');
+                        return redirect()->back()->with('error', 'No Good Receipts (Bilty) found for this invoice.');
                     }
                 }
 
