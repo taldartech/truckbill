@@ -40,7 +40,7 @@
                             <th>Location</th>
                             <th>Contact Number</th>
                             <th>Declaration Given</th>
-                            <th>Advance Amount</th>
+                            <th>Book Balance</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -104,7 +104,7 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="advance_amount" class="form-label">Advance Amount *</label>
+                            <label for="advance_amount" class="form-label">Book Balance *</label>
                             <div class="input-group">
                                 <span class="input-group-text">₹</span>
                                 <input type="number" step="0.01" class="form-control" id="advance_amount"
@@ -547,7 +547,7 @@
                                             <td class="fw-bold text-info">${data.total_trucks}</td>
                                         </tr>
                                         <tr>
-                                            <td class="fw-bold">Advance Amount:</td>
+                                            <td class="fw-bold">Book Balance:</td>
                                             <td class="fw-bold text-success">${data.advance_amount}</td>
                                         </tr>
                                     </table>

@@ -116,7 +116,7 @@ class TruckOwnerController extends Controller
                     case 5: // Declaration Given
                         $query->orderBy('transporters.declaration_given', $orderDir);
                         break;
-                    case 6: // Advance Amount
+                    case 6: // Book Balance
                         $query->orderBy('transporters.advance_amount', $orderDir);
                         break;
                     default:

@@ -171,7 +171,7 @@
                     @error('mobile_number') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Advance Amount</label>
+                    <label class="form-label">Book Balance</label>
                     <div class="form-control-plaintext bg-light border rounded px-3 py-2">
                         <strong>₹ 0.00</strong>
                         <small class="text-muted d-block">Read-only field</small>
@@ -368,7 +368,7 @@
                         <table class="table table-sm table-borderless">
                             <tr><td class="fw-bold">Is Owner:</td><td id="confirm-is-owner">-</td></tr>
                             <tr><td class="fw-bold">Declaration Given:</td><td id="confirm-declaration">-</td></tr>
-                            <tr><td class="fw-bold">Advance Amount:</td><td id="confirm-advance">-</td></tr>
+                            <tr><td class="fw-bold">Book Balance:</td><td id="confirm-advance">-</td></tr>
                         </table>
                     </div>
                 </div>
@@ -818,7 +818,7 @@
             @error('registered_truck_id') <div class="text-danger">{{ $message }}</div> @enderror
         </div> --}}
         {{-- <div class="mb-3">
-            <label for="advance_amount" class="form-label">Advance Amount</label>
+            <label for="advance_amount" class="form-label">Book Balance</label>
             <input type="number" step="0.01" class="form-control" id="advance_amount" name="advance_amount" value="{{ old('advance_amount', 0) }}">
             @error('advance_amount') <div class="text-danger">{{ $message }}</div> @enderror
         </div>

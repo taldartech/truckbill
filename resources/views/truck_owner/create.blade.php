@@ -180,7 +180,7 @@
                         @error('mobile_number') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Advance Amount</label>
+                        <label class="form-label">Book Balance</label>
                         <div class="form-control-plaintext bg-light border rounded px-3 py-2"><strong>₹ 0.00</strong></div>
                         <input type="hidden" name="advance_amount" value="0">
                     </div>
@@ -391,7 +391,7 @@
                         <table class="table table-sm table-borderless">
                             <tr><td class="fw-bold">Declaration Given:</td><td id="confirm-declaration">-</td></tr>
                             <tr><td class="fw-bold">Total Trucks:</td><td id="confirm-total-trucks">-</td></tr>
-                            <tr><td class="fw-bold">Advance Amount:</td><td id="confirm-advance">-</td></tr>
+                            <tr><td class="fw-bold">Book Balance:</td><td id="confirm-advance">-</td></tr>
                         </table>
                     </div>
                 </div>

@@ -90,7 +90,7 @@ class TransporterController extends Controller
                             case 5: // Contact Number
                                 $query->where('transporters.mobile_number', 'like', "%{$searchValue}%");
                                 break;
-                            case 6: // Advance Amount
+                            case 6: // Book Balance
                                 $searchValue = floatval($searchValue);
                                 $query->where('transporters.advance_amount', $searchValue);
                                 break;
@@ -127,7 +127,7 @@ class TransporterController extends Controller
                     case 5: // Contact Number
                         $query->orderBy('transporters.mobile_number', $orderDirection);
                         break;
-                    case 6: // Advance Amount
+                    case 6: // Book Balance
                         $query->orderBy('transporters.advance_amount', $orderDirection);
                         break;
                     default:

@@ -40,7 +40,7 @@
                             <th>PAN Number</th>
                             <th>Contact Person</th>
                             <th>Contact Number</th>
-                            <th>Advance Amount</th>
+                            <th>Book Balance</th>
                             {{-- <th>Company</th> --}}
                             @if (auth()->check() && auth()->user()->canActAsAdmin())
                                 <th style="width: 120px;">Actions</th>
@@ -107,7 +107,7 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="advance_amount" class="form-label">Advance Amount *</label>
+                            <label for="advance_amount" class="form-label">Book Balance *</label>
                             <div class="input-group">
                                 <span class="input-group-text">₹</span>
                                 <input type="number" step="0.01" class="form-control" id="advance_amount"
@@ -353,7 +353,7 @@
                                             <td><span class="badge bg-warning text-dark">${data.tds_percentage}%</span></td>
                                         </tr>
                                         <tr>
-                                            <td class="fw-bold">Advance Amount:</td>
+                                            <td class="fw-bold">Book Balance:</td>
                                             <td class="fw-bold text-brand-primary">${data.advance_amount}</td>
                                         </tr>
                                     </table>

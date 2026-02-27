@@ -127,7 +127,7 @@
                 </div>
                 <div class="row mb-3">
                     <div class="col-md-4">
-                        <label class="form-label">Advance Amount</label>
+                        <label class="form-label">Book Balance</label>
                         <div class="form-control-plaintext bg-light border rounded px-3 py-2"><strong>₹ {{ number_format($truck_owner->advance_amount, 2) }}</strong></div>
                     </div>
                     <div class="col-md-4">
@@ -468,7 +468,7 @@
                         <table class="table table-sm table-borderless">
                             <tr><td class="fw-bold">Declaration Given:</td><td id="confirm-declaration">-</td></tr>
                             <tr><td class="fw-bold">Total Trucks:</td><td id="confirm-total-trucks">-</td></tr>
-                            <tr><td class="fw-bold">Advance Amount:</td><td id="confirm-advance">-</td></tr>
+                            <tr><td class="fw-bold">Book Balance:</td><td id="confirm-advance">-</td></tr>
                         </table>
                     </div>
                 </div>
