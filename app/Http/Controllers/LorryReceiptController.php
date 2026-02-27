@@ -417,6 +417,7 @@ class LorryReceiptController extends Controller
                 'lrs.*.weight' => 'nullable|numeric|min:0',
                 'lrs.*.no_of_units' => 'nullable|numeric|min:1|max:100000',
                 'lrs.*.fr_rate' => 'nullable|numeric|min:1|max:20000',
+                'lrs.*.is_fixed_amount' => 'nullable|boolean',
                 'lrs.*.amount' => 'nullable|numeric|min:0',
                 'lrs.*.damage_amount' => 'nullable|numeric',
                 'lrs.*.shortage_amount' => 'nullable|numeric',
@@ -441,6 +442,8 @@ class LorryReceiptController extends Controller
                         ]);
                     }
 
+                    $isFixed = (bool) ($item['is_fixed_amount'] ?? false);
+
                     $data = [
                         'lr_number' => $item['lr_number'],
                         'gr_number' => $item['gr_number'],
@@ -460,6 +463,7 @@ class LorryReceiptController extends Controller
                         'weight' => $item['weight'],
                         'no_of_units' => $item['no_of_units'] ?? null,
                         'fr_rate' => $item['fr_rate'],
+                        'is_fixed_amount' => $isFixed,
                         'amount' => $item['amount'],
                         'actual_amount' => $item['amount'],
                         'damage_amount' => $item['damage_amount'] ?? null,
@@ -541,6 +545,7 @@ class LorryReceiptController extends Controller
             'weight' => 'required|numeric|min:0',
             'no_of_units' => 'nullable|numeric|min:1|max:100000',
             'fr_rate' => 'required|numeric|min:1|max:20000',
+            'is_fixed_amount' => 'nullable|boolean',
             'amount' => 'required|numeric|min:0',
             'damage_amount' => 'nullable|numeric',
             'shortage_amount' => 'nullable|numeric',
@@ -581,28 +586,37 @@ class LorryReceiptController extends Controller
             $validated['unloading_weight'] = $validated['weight'];
         }
 
-        // Calculate amount and actual_amount using loose weight (min of loading/unloading weight)
-        $loadingWeight = $validated['weight'];
-        $unloadingWeight = $validated['unloading_weight'];
+        $isFixed = (bool) ($validated['is_fixed_amount'] ?? false);
 
-        // Only recalculate actual_amount if loading_weight != unloading_weight
-        // If weights are equal, use the manually entered actual_amount from form if provided, otherwise calculate it
-        if (abs($loadingWeight - $unloadingWeight) > 0.01) {
-            // Weights are different - always recalculate actual_amount
-            $effectiveWeight = min($loadingWeight, $unloadingWeight);
-            $validated['actual_amount'] = round($effectiveWeight * $validated['fr_rate'], 2);
+        if ($isFixed) {
+            $validated['actual_amount'] = $validated['amount'];
+            $shortageAmount = $validated['shortage_amount'] ?? 0;
+            $damageAmount = $validated['damage_amount'] ?? 0;
+            $validated['amount'] = max(0, round($validated['actual_amount'] - $shortageAmount - $damageAmount, 2));
         } else {
-            // Weights are equal - use manually entered actual_amount from form if provided, otherwise calculate it
-            if (!isset($validated['actual_amount']) || $validated['actual_amount'] === null) {
+            // Calculate amount and actual_amount using loose weight (min of loading/unloading weight)
+            $loadingWeight = $validated['weight'];
+            $unloadingWeight = $validated['unloading_weight'];
+
+            // Only recalculate actual_amount if loading_weight != unloading_weight
+            // If weights are equal, use the manually entered actual_amount from form if provided, otherwise calculate it
+            if (abs($loadingWeight - $unloadingWeight) > 0.01) {
+                // Weights are different - always recalculate actual_amount
                 $effectiveWeight = min($loadingWeight, $unloadingWeight);
                 $validated['actual_amount'] = round($effectiveWeight * $validated['fr_rate'], 2);
+            } else {
+                // Weights are equal - use manually entered actual_amount from form if provided, otherwise calculate it
+                if (!isset($validated['actual_amount']) || $validated['actual_amount'] === null) {
+                    $effectiveWeight = min($loadingWeight, $unloadingWeight);
+                    $validated['actual_amount'] = round($effectiveWeight * $validated['fr_rate'], 2);
+                }
             }
-        }
 
-        // Calculate amount: actual_amount - shortage - damage (if provided)
-        $shortageAmount = $validated['shortage_amount'] ?? 0;
-        $damageAmount = $validated['damage_amount'] ?? 0;
-        $validated['amount'] = max(0, round($validated['actual_amount'] - $shortageAmount - $damageAmount, 2));
+            // Calculate amount: actual_amount - shortage - damage (if provided)
+            $shortageAmount = $validated['shortage_amount'] ?? 0;
+            $damageAmount = $validated['damage_amount'] ?? 0;
+            $validated['amount'] = max(0, round($validated['actual_amount'] - $shortageAmount - $damageAmount, 2));
+        }
 
         // Add company_id to validated data
         $validated['company_id'] = Auth::user()->company_id;
@@ -925,6 +939,7 @@ class LorryReceiptController extends Controller
             'weight' => 'required|numeric|min:0',
             'no_of_units' => 'nullable|numeric|min:1|max:100000',
             'fr_rate' => 'required|numeric|min:1|max:20000',
+            'is_fixed_amount' => 'nullable|boolean',
             'actual_amount' => 'required|numeric|min:0',
             'damage_amount' => 'nullable|numeric',
             'shortage_amount' => 'nullable|numeric',
@@ -960,28 +975,36 @@ class LorryReceiptController extends Controller
             $validated['unloading_weight'] = $validated['weight'];
         }
 
-        // Calculate amount and actual_amount using loose weight (min of loading/unloading weight)
-        $loadingWeight = $validated['weight'];
-        $unloadingWeight = $validated['unloading_weight'];
+        $isFixed = (bool) ($validated['is_fixed_amount'] ?? false);
 
-        // Only recalculate actual_amount if loading_weight != unloading_weight
-        // If weights are equal, use the manually entered actual_amount from form if provided, otherwise calculate it
-        if (abs($loadingWeight - $unloadingWeight) > 0.01) {
-            // Weights are different - always recalculate actual_amount
-            $effectiveWeight = min($loadingWeight, $unloadingWeight);
-            $validated['actual_amount'] = round($effectiveWeight * $validated['fr_rate'], 2);
+        if ($isFixed) {
+            $shortageAmount = $validated['shortage_amount'] ?? 0;
+            $damageAmount = $validated['damage_amount'] ?? 0;
+            $validated['amount'] = max(0, round($validated['actual_amount'] - $shortageAmount - $damageAmount, 2));
         } else {
-            // Weights are equal - use manually entered actual_amount from form if provided, otherwise calculate it
-            if (!isset($validated['actual_amount']) || $validated['actual_amount'] === null) {
+            // Calculate amount and actual_amount using loose weight (min of loading/unloading weight)
+            $loadingWeight = $validated['weight'];
+            $unloadingWeight = $validated['unloading_weight'];
+
+            // Only recalculate actual_amount if loading_weight != unloading_weight
+            // If weights are equal, use the manually entered actual_amount from form if provided, otherwise calculate it
+            if (abs($loadingWeight - $unloadingWeight) > 0.01) {
+                // Weights are different - always recalculate actual_amount
                 $effectiveWeight = min($loadingWeight, $unloadingWeight);
                 $validated['actual_amount'] = round($effectiveWeight * $validated['fr_rate'], 2);
+            } else {
+                // Weights are equal - use manually entered actual_amount from form if provided, otherwise calculate it
+                if (!isset($validated['actual_amount']) || $validated['actual_amount'] === null) {
+                    $effectiveWeight = min($loadingWeight, $unloadingWeight);
+                    $validated['actual_amount'] = round($effectiveWeight * $validated['fr_rate'], 2);
+                }
             }
-        }
 
-        // Calculate amount: actual_amount - shortage - damage
-        $shortageAmount = $validated['shortage_amount'] ?? 0;
-        $damageAmount = $validated['damage_amount'] ?? 0;
-        $validated['amount'] = max(0, round($validated['actual_amount'] - $shortageAmount - $damageAmount, 2));
+            // Calculate amount: actual_amount - shortage - damage
+            $shortageAmount = $validated['shortage_amount'] ?? 0;
+            $damageAmount = $validated['damage_amount'] ?? 0;
+            $validated['amount'] = max(0, round($validated['actual_amount'] - $shortageAmount - $damageAmount, 2));
+        }
 
         // Add company_id to validated data
         $validated['company_id'] = Auth::user()->company_id;

@@ -488,6 +488,14 @@
                             <small class="text-muted">💰 Range: ₹1 - ₹20,000 per ton</small>
                         </div>
                         <div class="col-md-2">
+                            <label class="form-label d-flex justify-content-between align-items-center">
+                                <span>Use Fixed Amount</span>
+                                <span class="form-check form-check-inline mb-0">
+                                    <input class="form-check-input" type="checkbox" id="is_fixed_amount"
+                                        name="is_fixed_amount" value="1"
+                                        {{ old('is_fixed_amount', $lorry_receipt->is_fixed_amount ?? false) ? 'checked' : '' }}>
+                                </span>
+                            </label>
                             <input type="hidden" id="shortage_amount" name="shortage_amount"
                                 value="{{ old('shortage_amount', $lorry_receipt->shortage_amount) }}">
                             <label for="shortage_amount" class="form-label">Shortage Amount</label>
@@ -574,7 +582,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 Lorry Receipt Edit Form initialized');
 
-            // Auto-calculate actual_amount and amount based on weight × freight rate
+            // Auto-calculate actual_amount and amount based on weight × freight rate (when not fixed)
             const weightInput = document.getElementById('weight');
             const frRateInput = document.getElementById('fr_rate');
             const unloadingWeightInput = document.getElementById('unloading_weight');
@@ -582,6 +590,7 @@
             const amountInput = document.getElementById('amount');
             const shortageAmountInput = document.getElementById('shortage_amount');
             const damageAmountInput = document.getElementById('damage_amount');
+            const isFixedAmountInput = document.getElementById('is_fixed_amount');
 
             function calculateAmount() {
                 const weight = parseFloat(weightInput.value) || 0;
@@ -589,9 +598,10 @@
                 const frRate = parseFloat(frRateInput.value) || 0;
                 const shortageAmount = parseFloat(shortageAmountInput.value) || 0;
                 const damageAmount = parseFloat(damageAmountInput.value) || 0;
+                const isFixed = isFixedAmountInput && isFixedAmountInput.checked;
 
-                if (weight > 0 && frRate > 0) {
-                    // When weight or rate changes → ALWAYS recalculate (mandatory, override any manual edit)
+                if (!isFixed && weight > 0 && frRate > 0) {
+                    // When not fixed: recalculate actual_amount from weight / rate
                     const weightsEqual = Math.abs(weight - unloadingWeight) < 0.01;
 
                     if (!weightsEqual) {
@@ -602,19 +612,19 @@
                         const calculatedActualAmount = weight * frRate;
                         actualAmountInput.value = calculatedActualAmount.toFixed(2);
                     }
-
-                    // Always calculate amount = actual_amount - shortage - damage
-                    const actualAmount = parseFloat(actualAmountInput.value) || 0;
-                    const calculatedAmount = actualAmount - shortageAmount - damageAmount;
-                    amountInput.value = Math.max(0, calculatedAmount).toFixed(2);
-
-                    console.log(
-                        `💰 Actual Amount: ${actualAmount.toFixed(2)}, Amount: ${calculatedAmount.toFixed(2)} (${actualAmount.toFixed(2)} - ${shortageAmount} - ${damageAmount})`
-                    );
                 }
+
+                // Always calculate amount = actual_amount - shortage - damage (readonly, user cannot edit)
+                const actualAmount = parseFloat(actualAmountInput.value) || 0;
+                const calculatedAmount = actualAmount - shortageAmount - damageAmount;
+                amountInput.value = Math.max(0, calculatedAmount).toFixed(2);
+
+                console.log(
+                    `💰 Actual Amount: ${actualAmount.toFixed(2)}, Amount: ${calculatedAmount.toFixed(2)} (${actualAmount.toFixed(2)} - ${shortageAmount} - ${damageAmount})`
+                );
             }
 
-            // Auto-calculate on weight, unloading_weight, or freight rate change
+            // Auto-calculate on weight, unloading_weight, freight rate, or fixed toggle change
             weightInput.addEventListener('input', function() {
                 calculateAmount();
             });
@@ -626,6 +636,11 @@
             frRateInput.addEventListener('input', function() {
                 calculateAmount();
             });
+            if (isFixedAmountInput) {
+                isFixedAmountInput.addEventListener('change', function() {
+                    calculateAmount();
+                });
+            }
 
             // Update amount when actual_amount, shortage, or damage changes
             // User can manually edit actual_amount, but if weight/rate changes, it will be recalculated
@@ -1110,8 +1125,11 @@
             const unloadingWeightInput = $('#unloading_weight');
             const hasUnloadingWeight = unloadingWeightInput.length > 0;
 
-            // Auto-calculate actual_amount and amount when weight, unloading_weight, or freight rate changes
+            // Auto-calculate actual_amount and amount when weight, unloading_weight, freight rate, or fixed toggle changes (when not fixed)
             $('#weight, #fr_rate').on('input', function() {
+                calculateAmount();
+            });
+            $('#is_fixed_amount').on('change', function() {
                 calculateAmount();
             });
 
@@ -1132,8 +1150,9 @@
                 const frRate = parseFloat($('#fr_rate').val()) || 0;
                 const shortageAmount = parseFloat($('#shortage_amount').val()) || 0;
                 const damageAmount = parseFloat($('#damage_amount').val()) || 0;
+                const isFixed = $('#is_fixed_amount').is(':checked');
 
-                if (weight > 0 && frRate > 0) {
+                if (!isFixed && weight > 0 && frRate > 0) {
                     // Only recalculate actual_amount if loading_weight != unloading_weight
                     // If weights are equal, use manually entered actual_amount (allow manual editing)
                     const weightsEqual = Math.abs(weight - unloadingWeight) < 0.01;
@@ -1152,12 +1171,12 @@
                             $('#actual_amount').val(calculatedActualAmount.toFixed(2));
                         }
                     }
-
-                    // Always calculate amount = actual_amount - shortage - damage
-                    const actualAmount = parseFloat($('#actual_amount').val()) || 0;
-                    const amount = actualAmount - (shortageAmount + damageAmount);
-                    $('#amount').val(Math.max(0, amount).toFixed(2));
                 }
+
+                // Always calculate amount = actual_amount - shortage - damage
+                const actualAmount = parseFloat($('#actual_amount').val()) || 0;
+                const amount = actualAmount - (shortageAmount + damageAmount);
+                $('#amount').val(Math.max(0, amount).toFixed(2));
             }
 
             // Validate no_of_units field
@@ -1733,7 +1752,7 @@
             });
         })();
 
-        // Auto-calculate actual_amount and amount based on weight × freight rate
+        // Auto-calculate actual_amount and amount based on weight × freight rate (when not fixed)
         const weightInput = document.getElementById('weight');
         const frRateInput = document.getElementById('fr_rate');
         const unloadingWeightInput = document.getElementById('unloading_weight');
@@ -1741,6 +1760,7 @@
         const amountInput = document.getElementById('amount');
         const shortageAmountInput = document.getElementById('shortage_amount');
         const damageAmountInput = document.getElementById('damage_amount');
+        const isFixedAmountInput = document.getElementById('is_fixed_amount');
 
         function calculateAmount() {
             const weight = parseFloat(weightInput.value) || 0;
@@ -1748,8 +1768,9 @@
             const frRate = parseFloat(frRateInput.value) || 0;
             const shortageAmount = parseFloat(shortageAmountInput.value) || 0;
             const damageAmount = parseFloat(damageAmountInput.value) || 0;
+            const isFixed = isFixedAmountInput && isFixedAmountInput.checked;
 
-            if (weight > 0 && frRate > 0) {
+            if (!isFixed && weight > 0 && frRate > 0) {
                 // Only recalculate actual_amount if loading_weight != unloading_weight
                 // If weights are equal, use manually entered actual_amount (allow manual editing)
                 const weightsEqual = Math.abs(weight - unloadingWeight) < 0.01;
@@ -1768,15 +1789,15 @@
                         actualAmountInput.value = calculatedActualAmount.toFixed(2);
                     }
                 }
-
-                // Always calculate amount = actual_amount - shortage - damage
-                const actualAmount = parseFloat(actualAmountInput.value) || 0;
-                const calculatedAmount = actualAmount - (shortageAmount + damageAmount);
-                amountInput.value = Math.max(0, calculatedAmount).toFixed(2);
-
-                console.log(
-                    `💰 Actual Amount: ${actualAmount.toFixed(2)}, Amount: ${calculatedAmount.toFixed(2)}`);
             }
+
+            // Always calculate amount = actual_amount - shortage - damage
+            const actualAmount = parseFloat(actualAmountInput.value) || 0;
+            const calculatedAmount = actualAmount - (shortageAmount + damageAmount);
+            amountInput.value = Math.max(0, calculatedAmount).toFixed(2);
+
+            console.log(
+                `💰 Actual Amount: ${actualAmount.toFixed(2)}, Amount: ${calculatedAmount.toFixed(2)}`);
         }
 
         // Add event listeners for weight and freight rate changes

@@ -414,16 +414,24 @@
                             <small class="text-muted">💰 Range: ₹1 - ₹20,000 per ton</small>
                         </div>
                         <div class="col-md-4">
-                            <label for="amount" class="form-label">Amount * <small
-                                    class="text-muted">(Auto-calculated)</small></label>
+                            <label class="form-label d-flex justify-content-between align-items-center">
+                                <span>Amount *</span>
+                                <span class="form-check form-check-inline mb-0">
+                                    <input class="form-check-input" type="checkbox" id="is_fixed_amount"
+                                        name="is_fixed_amount" value="1" {{ old('is_fixed_amount') ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="is_fixed_amount">Use fixed amount</label>
+                                </span>
+                            </label>
                             <input type="number" step="0.01" class="form-control" id="amount" name="amount"
                                 required value="{{ old('amount') }}"
-                                title="Auto-calculated: Weight × Freight Rate (editable)">
+                                title="Auto-calculated: Weight × Freight Rate (editable, or fixed when enabled)">
                             @error('amount')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
                             <div class="invalid-feedback">Please enter an amount.</div>
-                            <small class="text-muted">💡 Calculated as: Weight × Freight Rate</small>
+                            <small class="text-muted" id="amountHelpText">
+                                💡 Calculated as: Weight × Freight Rate (uncheck \"Use fixed amount\" to auto-calculate).
+                            </small>
                         </div>
                     </div>
                 </div>
@@ -1029,8 +1037,13 @@
             const weightInput = document.getElementById('weight');
             const frRateInput = document.getElementById('fr_rate');
             const amountInput = document.getElementById('amount');
+            const isFixedAmountCheckbox = document.getElementById('is_fixed_amount');
+            const amountHelpText = document.getElementById('amountHelpText');
 
             function calculateAmount() {
+                if (isFixedAmountCheckbox && isFixedAmountCheckbox.checked) {
+                    return; // Do not auto-calculate when using fixed amount
+                }
                 const weight = parseFloat(weightInput.value) || 0;
                 const frRate = parseFloat(frRateInput.value) || 0;
 
@@ -1084,9 +1097,37 @@
             amountInput.addEventListener('input', function() {
                 // Remove auto-calculated styling when user manually edits
                 this.style.backgroundColor = '';
-                this.title = 'Manually edited amount';
+                if (!(isFixedAmountCheckbox && isFixedAmountCheckbox.checked)) {
+                    this.title = 'Manually edited amount';
+                } else {
+                    this.title = 'Fixed amount (manual)';
+                }
                 console.log('✏️ Amount manually edited by user');
             });
+
+            if (isFixedAmountCheckbox) {
+                // Initial state: when unchecked (auto), amount is read-only
+                if (!isFixedAmountCheckbox.checked) {
+                    amountInput.readOnly = true;
+                } else {
+                    amountInput.readOnly = false;
+                }
+
+                isFixedAmountCheckbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        amountHelpText.textContent =
+                            '💡 Fixed amount mode: this value will be used instead of Weight × Freight Rate.';
+                        amountInput.style.backgroundColor = '';
+                        amountInput.title = 'Fixed amount (manual)';
+                        amountInput.readOnly = false;
+                    } else {
+                        amountHelpText.textContent =
+                            '💡 Calculated as: Weight × Freight Rate (uncheck \"Use fixed amount\" to auto-calculate).';
+                        amountInput.readOnly = true;
+                        calculateAmount();
+                    }
+                });
+            }
 
             // Calculate amount on page load if values exist
             if (weightInput.value && frRateInput.value) {

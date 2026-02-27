@@ -99,7 +99,7 @@
             background-color: #fff3cd !important;
         }
     </style>
-    <div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
+    <div class="card card-info card-outline mb-4" style="max-width: 1100px;margin: 0 auto;">
         <!--begin::Header-->
         <div class="card-header">
             <div class="d-flex w-100">
@@ -352,9 +352,16 @@
                                         <small class="text-muted">💰 Range: ₹1 - ₹20,000 per ton</small>
                                     </div>
                                     <div class="col-md-3">
-                                        <label class="form-label">Amount *</label>
+                                        <label class="form-label d-flex justify-content-between align-items-center">
+                                            <span>Amount *</span>
+                                            <span class="form-check form-check-inline mb-0">
+                                                <input class="form-check-input is-fixed-amount" type="checkbox"
+                                                    value="1">
+                                                <label class="form-check-label">Use fixed amount</label>
+                                            </span>
+                                        </label>
                                         <input type="number" step="0.01" class="form-control amount" required>
-                                        <small class="text-muted">Auto: Weight × FR Rate</small>
+                                        <small class="text-muted amount-help-text">Auto: Weight × FR Rate (uncheck to auto-calculate)</small>
                                     </div>
                                 </div>
 
@@ -999,6 +1006,13 @@
                 const weightInput = scope.querySelector('.weight');
                 const frRateInput = scope.querySelector('.fr-rate');
                 const amountInput = scope.querySelector('.amount');
+                const fixedCheckbox = scope.querySelector('.is-fixed-amount');
+                const amountHelp = scope.querySelector('.amount-help-text');
+
+                if (fixedCheckbox && fixedCheckbox.checked) {
+                    return; // Do not auto-calculate when using fixed amount
+                }
+
                 const weight = parseFloat(weightInput.value) || 0;
                 const frRate = parseFloat(frRateInput.value) || 0;
                 if (weight > 0 && frRate > 0) {
@@ -1007,14 +1021,52 @@
                     amountInput.style.backgroundColor = '#e8f5e8';
                     amountInput.title =
                         `Auto-calculated: ${weight} × ${frRate} = ${calculatedAmount.toFixed(2)}`;
+                    if (amountHelp) {
+                        amountHelp.textContent = 'Auto: Weight × FR Rate (uncheck \"Use fixed amount\" to auto-calculate)';
+                    }
                 }
             }
+
+            // Per-row fixed amount toggle
+            lrItemsContainer.addEventListener('change', function(e) {
+                if (e.target.classList.contains('is-fixed-amount')) {
+                    const scope = e.target.closest('.lr-item');
+                    if (!scope) return;
+                    const amountInput = scope.querySelector('.amount');
+                    const amountHelp = scope.querySelector('.amount-help-text');
+
+                    if (e.target.checked) {
+                        if (amountInput) {
+                            amountInput.readOnly = false;
+                            amountInput.style.backgroundColor = '';
+                            amountInput.title = 'Fixed amount (manual)';
+                        }
+                        if (amountHelp) {
+                            amountHelp.textContent = 'Fixed amount mode: this value will be used instead of Weight × FR Rate.';
+                        }
+                    } else {
+                        if (amountInput) {
+                            amountInput.readOnly = true;
+                        }
+                        if (amountHelp) {
+                            amountHelp.textContent = 'Auto: Weight × FR Rate (uncheck to auto-calculate)';
+                        }
+                        calculateAmount(scope);
+                    }
+                }
+            });
 
             // Remove auto-calc styling when manually editing amount
             lrItemsContainer.addEventListener('input', function(e) {
                 if (e.target.classList.contains('amount')) {
                     e.target.style.backgroundColor = '';
-                    e.target.title = 'Manually edited amount';
+                    const scope = e.target.closest('.lr-item');
+                    const fixedCheckbox = scope ? scope.querySelector('.is-fixed-amount') : null;
+                    if (fixedCheckbox && fixedCheckbox.checked) {
+                        e.target.title = 'Fixed amount (manual)';
+                    } else {
+                        e.target.title = 'Manually edited amount';
+                    }
                 }
             });
 
@@ -1450,6 +1502,7 @@ lrItemsContainer.addEventListener('blur', function(e) {
                         no_of_units: item.querySelector('.units').value,
                         weight: item.querySelector('.weight').value,
                         fr_rate: item.querySelector('.fr-rate').value,
+                        is_fixed_amount: item.querySelector('.is-fixed-amount')?.checked ? 1 : 0,
                         amount: item.querySelector('.amount').value,
                     };
                     Object.entries(pairs).forEach(([key, val]) => {
