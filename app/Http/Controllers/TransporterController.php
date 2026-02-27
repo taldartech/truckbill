@@ -416,10 +416,13 @@ class TransporterController extends Controller
             'contact_person_name' => $validated['contact_person_name'] ?? null,
             'mobile_number' => $validated['mobile_number'],
             'advance_amount' => $validated['advance_amount'] ?? 0,
-            'tds_percentage' => $validated['tds_percentage'] ?? null,
             'declaration_given' => $validated['declaration_given'] ?? false,
             'total_trucks' => $validated['total_trucks'] ?? 0,
         ];
+        // Only update tds_percentage when explicitly provided; otherwise preserve existing (edit form does not send it)
+        if (array_key_exists('tds_percentage', $validated)) {
+            $updateData['tds_percentage'] = $validated['tds_percentage'];
+        }
 
         if (auth()->user()->userRole->name === 'super_admin') {
             $updateData['short_name'] = $validated['short_name'] ?? null;
