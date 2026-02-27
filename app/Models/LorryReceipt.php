@@ -31,6 +31,7 @@ class LorryReceipt extends Model
         'unloading_weight',
         'no_of_units',
         'good_type',
+        'goods_value',
         'fr_rate',
         'is_fixed_amount',
         'amount',

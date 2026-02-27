@@ -340,6 +340,11 @@
                                         <small class="text-muted">📦 Max: 100,000 units</small>
                                     </div>
                                     <div class="col-md-2">
+                                        <label class="form-label">Goods Value</label>
+                                        <input type="number" step="0.01" class="form-control goods-value" min="0" placeholder="₹">
+                                        <small class="text-muted">₹</small>
+                                    </div>
+                                    <div class="col-md-2">
                                         <label class="form-label">Weight (Tons) *</label>
                                         <input type="number" step="0.001" class="form-control weight" min="0.1"
                                             max="100" required>
@@ -1500,6 +1505,7 @@ lrItemsContainer.addEventListener('blur', function(e) {
                         lane: item.querySelector('.lane').value || 'Road',
                         good_type: item.querySelector('.goods-type').value,
                         no_of_units: item.querySelector('.units').value,
+                        goods_value: item.querySelector('.goods-value')?.value ?? '',
                         weight: item.querySelector('.weight').value,
                         fr_rate: item.querySelector('.fr-rate').value,
                         is_fixed_amount: item.querySelector('.is-fixed-amount')?.checked ? 1 : 0,

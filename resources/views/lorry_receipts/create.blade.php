@@ -386,6 +386,16 @@
                             <div class="invalid-feedback">Please enter a valid number of units (max 100,000).</div>
                             <small class="text-muted">📦 Max: 100,000 units</small>
                         </div>
+                        <div class="col-md-4">
+                            <label for="goods_value" class="form-label">Goods Value <small
+                                    class="text-muted">(Optional)</small></label>
+                            <input type="number" step="0.01" class="form-control" id="goods_value" name="goods_value"
+                                value="{{ old('goods_value') }}" min="0" placeholder="₹">
+                            @error('goods_value')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                            <small class="text-muted">Value of goods (₹)</small>
+                        </div>
 
                     </div>
                     <div class="row mb-3">

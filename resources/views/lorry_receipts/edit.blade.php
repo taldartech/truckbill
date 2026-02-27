@@ -419,7 +419,7 @@
                     </div>
                     <div class="row mb-3">
                         <input type="hidden" id="lane" name="lane" value="Road">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label for="good_type" class="form-label">Goods Type *</label>
                             <select class="form-select" id="good_type" name="good_type" required>
                                 <option value="">Select Goods Type</option>
@@ -436,7 +436,7 @@
                             <div class="invalid-feedback">Please select a goods type.</div>
                         </div>
 
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label for="no_of_units" class="form-label">No. of Units <small
                                     class="text-muted">(Optional)</small></label>
                             <input type="number" class="form-control" id="no_of_units" name="no_of_units"
@@ -448,7 +448,17 @@
                             <div class="invalid-feedback">Please enter a valid number of units (max 100,000).</div>
                             <small class="text-muted">📦 Max: 100,000 units</small>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
+                            <label for="goods_value" class="form-label">Goods Value <small
+                                    class="text-muted">(Optional)</small></label>
+                            <input type="number" step="0.01" class="form-control" id="goods_value" name="goods_value"
+                                value="{{ old('goods_value', $lorry_receipt->goods_value) }}" min="0" placeholder="₹">
+                            @error('goods_value')
+                                <div class="text-danger">{{ $message }}</div>
+                            @enderror
+                            <small class="text-muted">Value of goods (₹)</small>
+                        </div>
+                        <div class="col-md-3">
                             <label for="unloading_weight" class="form-label">Unloading Weight * <small class="text-muted">(in
                                     Tons)</small></label>
                             <input type="number" step="0.001" class="form-control" id="unloading_weight" name="unloading_weight"
