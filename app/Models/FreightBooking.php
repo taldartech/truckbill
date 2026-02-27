@@ -16,6 +16,7 @@ class FreightBooking extends Model
         'transporter_tds_percentage',
         'truck_id',
         'tr_fr_rate',
+        'is_fixed_amount',
         'tr_amount',
         'advance_amount',
         'balance_amount',

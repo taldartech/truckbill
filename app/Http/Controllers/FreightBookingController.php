@@ -524,6 +524,7 @@ class FreightBookingController extends Controller
             'lr_id' => 'required|exists:lorry_receipts,id',
             'tr_fr_rate' => 'required|numeric|min:1|max:20000',
             'tr_amount' => 'required|numeric',
+            'is_fixed_amount' => 'nullable|boolean',
             'advance_amount' => 'nullable|numeric',
             'balance_amount' => 'required|numeric',
             'tds_amount' => 'nullable|numeric',
@@ -572,6 +573,7 @@ class FreightBookingController extends Controller
             'lr_id' => 'required|exists:lorry_receipts,id',
             'tr_fr_rate' => 'required|numeric',
             'tr_amount' => 'required|numeric',
+            'is_fixed_amount' => 'nullable|boolean',
             'advance_amount' => 'nullable|numeric',
             'balance_amount' => 'required|numeric',
             'tds_amount' => 'nullable|numeric',
@@ -1053,6 +1055,7 @@ class FreightBookingController extends Controller
             'lr_id' => 'required|exists:lorry_receipts,id',
             'tr_fr_rate' => 'required|numeric|min:0|max:20000',
             'tr_amount' => 'required|numeric',
+            'is_fixed_amount' => 'nullable|boolean',
             'advance_amount' => 'required|numeric',
             'balance_amount' => 'required|numeric',
             'tds_amount' => 'nullable|numeric',
@@ -1078,8 +1081,9 @@ class FreightBookingController extends Controller
         if (!$lorryReceipt) {
             return redirect()->back()->withErrors(['lr_id' => 'Invalid lorry receipt']);
         }
-        // Use the new TR amount from form data instead of existing
+        // Use the new TR amount from form data instead of existing (may be fixed or auto-calculated)
         $newTrAmount = $data['tr_amount'];
+        $isFixedAmount = (bool) ($data['is_fixed_amount'] ?? $freightBooking->is_fixed_amount);
 
         // Store old values before update for proper amount calculation
         $oldDamageAmount = $freightBooking->damage_amount ?? 0;

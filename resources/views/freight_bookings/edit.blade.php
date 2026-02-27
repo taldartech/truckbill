@@ -236,6 +236,16 @@
                         @error('tr_amount')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
+                        <div class="form-check mt-1">
+                            <input class="form-check-input" type="checkbox" value="1" id="is_fixed_amount"
+                                name="is_fixed_amount"
+                                {{ old('is_fixed_amount', $freightBooking->is_fixed_amount ?? false) ? 'checked' : '' }}
+                                {{  $is_voucher_created || !$is_admin ? 'disabled' : '' }}
+                                {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
+                            <label class="form-check-label" for="is_fixed_amount">
+                                Use fixed amount (do not auto-calculate)
+                            </label>
+                        </div>
                     </div>
                     <div class="col-md-4">
                         <label for="tds_amount" class="form-label">TDS Amount *</label>
@@ -927,6 +937,7 @@
             const rateInput = document.getElementById('tr_fr_rate');
             const amountInput = document.getElementById('tr_amount');
             const trAmountInput = document.getElementById('tr_amount');
+            const isFixedAmountInput = document.getElementById('is_fixed_amount');
             const balanceAmountInput = document.getElementById('balance_amount');
             const tdsAmountInput = document.getElementById('tds_amount');
 
@@ -1006,22 +1017,26 @@
             }
 
             // Function to calculate TR Amount using loose weight (min of loading and unloading weight)
-            // When weight or rate changes → ALWAYS recalculate (mandatory, override any manual edit)
+            // When weight or rate changes → ALWAYS recalculate (mandatory, override any manual edit),
+            // unless fixed amount is enabled.
             function calculateTrAmount() {
+                const isFixed = isFixedAmountInput && isFixedAmountInput.checked;
                 const rate = parseFloat(rateInput ? rateInput.value : 0) || 0;
                 const loadingWeight = parseFloat(weightElement ? weightElement.value : 0) || 0;
                 const unloadingWeight = parseFloat(unloadingWeightInput ? unloadingWeightInput.value : 0) || loadingWeight;
 
-                if (Math.abs(loadingWeight - unloadingWeight) > 0.01) {
-                    const effectiveWeight = Math.min(loadingWeight, unloadingWeight);
-                    const amount = (effectiveWeight * rate).toFixed(2);
-                    if (amountInput) {
-                        amountInput.value = amount;
-                    }
-                } else {
-                    const amount = (loadingWeight * rate).toFixed(2);
-                    if (amountInput) {
-                        amountInput.value = amount;
+                if (!isFixed) {
+                    if (Math.abs(loadingWeight - unloadingWeight) > 0.01) {
+                        const effectiveWeight = Math.min(loadingWeight, unloadingWeight);
+                        const amount = (effectiveWeight * rate).toFixed(2);
+                        if (amountInput) {
+                            amountInput.value = amount;
+                        }
+                    } else {
+                        const amount = (loadingWeight * rate).toFixed(2);
+                        if (amountInput) {
+                            amountInput.value = amount;
+                        }
                     }
                 }
 
@@ -1067,6 +1082,17 @@
             }
             if (weightElement) {
                 weightElement.addEventListener('input', calculateTrAmount);
+            }
+
+            if (isFixedAmountInput) {
+                isFixedAmountInput.addEventListener('change', function() {
+                    // When switching from fixed to auto, immediately recalculate amount from weight × rate
+                    if (!isFixedAmountInput.checked) {
+                        calculateTrAmount();
+                    }
+                    // TDS and balance depend on TR amount, so recalc them as well
+                    calculateTdsAndBalance();
+                });
             }
 
             // Update TDS and balance when TR Amount changes (manual input)

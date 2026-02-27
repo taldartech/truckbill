@@ -278,6 +278,13 @@
                         @error('tr_amount')
                             <div class="text-danger">{{ $message }}</div>
                         @enderror
+                        <div class="form-check mt-1">
+                            <input class="form-check-input" type="checkbox" value="1" id="is_fixed_amount"
+                                name="is_fixed_amount" {{ old('is_fixed_amount') ? 'checked' : '' }}>
+                            <label class="form-check-label" for="is_fixed_amount">
+                                Use fixed amount (do not auto-calculate)
+                            </label>
+                        </div>
                     </div>
                     <div class="col-md-4">
                         <label for="tds_amount" class="form-label">TDS Amount *</label>
@@ -486,6 +493,7 @@
             const rateInput = document.getElementById('tr_fr_rate');
             const amountInput = document.getElementById('tr_amount');
             const trAmountInput = document.getElementById('tr_amount');
+            const isFixedAmountInput = document.getElementById('is_fixed_amount');
             const advanceAmountInput = document.getElementById('advance_amount');
             const balanceAmountInput = document.getElementById('balance_amount');
             const panVerifiedElement = document.getElementById('pan_verified');
@@ -518,13 +526,27 @@
             if (rateInput) {
                 rateInput.addEventListener('input', function() {
                     const rate = parseFloat(rateInput.value || 0);
-                    const amount = (weight * rate).toFixed(2);
-                    if (amountInput) {
-                        amountInput.value = amount;
+                    if (!isFixedAmountInput || !isFixedAmountInput.checked) {
+                        const amount = (weight * rate).toFixed(2);
+                        if (amountInput) {
+                            amountInput.value = amount;
+                        }
                     }
 
                     // Recalculate TDS and Balance when TR Amount changes
                     calculateTdsAndBalance();
+                });
+            }
+
+            if (isFixedAmountInput) {
+                isFixedAmountInput.addEventListener('change', function() {
+                    // When switching from fixed to auto, immediately recalculate amount from weight × rate
+                    if (!isFixedAmountInput.checked && rateInput && amountInput) {
+                        const rate = parseFloat(rateInput.value || 0);
+                        const amount = (weight * rate).toFixed(2);
+                        amountInput.value = amount;
+                        calculateTdsAndBalance();
+                    }
                 });
             }
 
