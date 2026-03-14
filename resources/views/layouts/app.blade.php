@@ -875,6 +875,12 @@
                                             </a>
                                         </li>
                                         <li class="nav-item">
+                                            <a href="{{ route('master.truck-types.index') }}" class="nav-link">
+                                                <i class="fas fa-truck"></i>
+                                                <p>Truck Types</p>
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
                                             <a href="/master/pumps" class="nav-link">
                                                 <i class="fas fa-plus"></i>
                                                 <p>Pumps</p>

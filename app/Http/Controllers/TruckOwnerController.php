@@ -10,6 +10,7 @@ use App\Models\Country;
 use App\Models\State;
 use App\Models\City;
 use App\Models\Truck;
+use App\Models\TruckType;
 use App\Models\Driver;
 use App\Models\FreightBooking;
 use App\Http\Requests\StoreTruckOwnerRequest;
@@ -36,7 +37,8 @@ class TruckOwnerController extends Controller
         }
 
         $companies = Company::all();
-        return view('truck_owner.index', compact('companies'));
+        $truckTypes = TruckType::orderBy('name')->get();
+        return view('truck_owner.index', compact('companies', 'truckTypes'));
     }
 
     private function getTruckOwnersData(Request $request)
@@ -422,8 +424,9 @@ class TruckOwnerController extends Controller
         $countries = Country::all();
         $states = State::all();
         $cities = City::all();
+        $truckTypes = TruckType::orderBy('name')->get();
 
-        return view('truck_owner.edit', compact('truck_owner', 'companies', 'trucks', 'countries', 'states', 'cities'));
+        return view('truck_owner.edit', compact('truck_owner', 'companies', 'trucks', 'countries', 'states', 'cities', 'truckTypes'));
     }
 
     public function update(UpdateTruckOwnerRequest $request, Transporter $truck_owner)

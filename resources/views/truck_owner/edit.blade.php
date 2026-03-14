@@ -326,15 +326,9 @@
                             <label for="truck_type" class="form-label">Truck Type *</label>
                             <select class="form-select" id="truck_type" name="truck_type" required>
                                 <option value="">Select</option>
-                                <option value="Open">Open</option>
-                                <option value="Closed">Closed</option>
-                                <option value="Container">Container</option>
-                                <option value="Trailer">Trailer</option>
-                                <option value="Tanker">Tanker</option>
-                                <option value="Refrigerated">Refrigerated</option>
-                                <option value="Flatbed">Flatbed</option>
-                                <option value="Tipper">Tipper</option>
-                                <option value="Other">Other</option>
+                                @foreach($truckTypes ?? [] as $type)
+                                    <option value="{{ $type->name }}">{{ $type->name }}</option>
+                                @endforeach
                             </select>
                             <div class="invalid-feedback">Please select a truck type.</div>
                         </div>

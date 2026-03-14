@@ -39,15 +39,9 @@
                     <label for="truck_type" class="form-label">Truck Type *</label>
                     <select class="form-select" id="truck_type" name="truck_type" required>
                         <option value="">Select</option>
-                        <option value="Open" {{ old('truck_type') == 'Open' ? 'selected' : '' }}>Open</option>
-                        <option value="Closed" {{ old('truck_type') == 'Closed' ? 'selected' : '' }}>Closed</option>
-                        <option value="Container" {{ old('truck_type') == 'Container' ? 'selected' : '' }}>Container</option>
-                        <option value="Trailer" {{ old('truck_type') == 'Trailer' ? 'selected' : '' }}>Trailer</option>
-                        <option value="Tanker" {{ old('truck_type') == 'Tanker' ? 'selected' : '' }}>Tanker</option>
-                        <option value="Refrigerated" {{ old('truck_type') == 'Refrigerated' ? 'selected' : '' }}>Refrigerated</option>
-                        <option value="Flatbed" {{ old('truck_type') == 'Flatbed' ? 'selected' : '' }}>Flatbed</option>
-                        <option value="Tipper" {{ old('truck_type') == 'Tipper' ? 'selected' : '' }}>Tipper</option>
-                        <option value="Other" {{ old('truck_type') == 'Other' ? 'selected' : '' }}>Other</option>
+                        @foreach($truckTypes ?? [] as $type)
+                            <option value="{{ $type->name }}" {{ old('truck_type') == $type->name ? 'selected' : '' }}>{{ $type->name }}</option>
+                        @endforeach
                     </select>
                     @error('truck_type') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please select a truck type.</div>

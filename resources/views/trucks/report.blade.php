@@ -7,8 +7,8 @@
         <div class="col-md-2">
             <select name="truck_type" class="form-select">
                 <option value="">All Types</option>
-                @foreach($truckTypes as $type)
-                    <option value="{{ $type }}" {{ request('truck_type') == $type ? 'selected' : '' }}>{{ $type }}</option>
+                @foreach($truckTypes ?? [] as $type)
+                    <option value="{{ $type->name }}" {{ request('truck_type') == $type->name ? 'selected' : '' }}>{{ $type->name }}</option>
                 @endforeach
             </select>
         </div>

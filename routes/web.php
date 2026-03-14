@@ -242,6 +242,14 @@ Route::middleware(['auth.blocked'])->group(function () {
             Route::resource('goods-types', \App\Http\Controllers\GoodsTypeController::class)->only(['edit', 'update', 'destroy']);
         });
 
+        // Truck Types
+        Route::middleware(['role:admin,moderator,super_admin'])->group(function () {
+            Route::resource('truck-types', \App\Http\Controllers\TruckTypeController::class)->only(['index', 'create', 'store']);
+        });
+        Route::middleware(['role:admin,super_admin'])->group(function () {
+            Route::resource('truck-types', \App\Http\Controllers\TruckTypeController::class)->only(['edit', 'update', 'destroy']);
+        });
+
         // Pumps
         Route::middleware(['role:admin,moderator,super_admin'])->group(function () {
             Route::resource('pumps', PumpController::class)->only(['index', 'create', 'store'])->names(['index' => 'pump.index', 'create' => 'pump.create', 'store' => 'pump.store']);

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\TruckType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -283,7 +284,9 @@ class TruckController extends Controller
             ->firstOrFail();
 
         $drivers = \App\Models\Driver::all();
-        return view('trucks.create', compact('transporter', 'drivers'));
+        $truckTypes = TruckType::orderBy('name')->get();
+
+        return view('trucks.create', compact('transporter', 'drivers', 'truckTypes'));
     }
 
     public function store(Request $request)
@@ -387,7 +390,9 @@ class TruckController extends Controller
             ->where('company_id', Auth::user()->company_id)
             ->get();
         $drivers = \App\Models\Driver::all();
-        return view('trucks.edit', compact('truck', 'transporters', 'drivers'));
+        $truckTypes = TruckType::orderBy('name')->get();
+
+        return view('trucks.edit', compact('truck', 'transporters', 'drivers', 'truckTypes'));
     }
 
     public function update(Request $request, \App\Models\Truck $truck)
