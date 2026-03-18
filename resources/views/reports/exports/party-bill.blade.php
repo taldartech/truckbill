@@ -10,7 +10,8 @@
       padding-bottom: 4px!important;
     }
 </style>
-<table class="table table-bordered" style="font-size: 13px!important;">
+
+    <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; font-size: 12px;">
     <tr>
         <td style="font-weight: bold; text-align: center; font-size: 18px!important" colspan="13">{{ $company->name }}</td>
     </tr>
@@ -173,19 +174,19 @@
             Rs: {{ $totalgst }} GST to be depostied by the party under reverse charge
         </td>
         <td style="font-weight: bold;" colspan="2">Amount</td>
-        <td>{{ number_format($totalAmount, 2) }}</td>
+        <td colspan="2">{{ number_format($totalAmount, 2) }}</td>
     </tr>
     <tr>
         <td style="font-weight: bold;" colspan="2">Account No:</td>
         <td colspan="7">{{ $company->account_number ?? '' }}</td>
         @if ($cgst > 0)
             <td style="font-weight: bold;" colspan="2">CGST {{ $cgstpercent }}%</td>
-            <td>{{ number_format($cgst, 2) }}</td>
+            <td colspan="2">{{ number_format($cgst, 2) }}</td>
         @elseif ($igst > 0)
             <td style="font-weight: bold;" colspan="2">IGST {{ $igstpercent }}%</td>
-            <td>{{ number_format($igst, 2) }}</td>
+            <td colspan="2">{{ number_format($igst, 2) }}</td>
         @else
-            <td colspan="3"></td>
+            <td colspan="4"></td>
         @endif
     </tr>
     <tr>
@@ -193,9 +194,9 @@
         <td colspan="7">{{ $company->ifsc ?? '' }}</td>
         @if ($sgst > 0)
             <td style="font-weight: bold;" colspan="2">SGST {{ $sgstpercent }}%</td>
-            <td>{{ number_format($sgst, 2) }}</td>
+            <td colspan="2">{{ number_format($sgst, 2) }}</td>
         @else
-            <td colspan="3"></td>
+            <td colspan="4"></td>
         @endif
     </tr>
     <tr>
@@ -205,7 +206,7 @@
         @php
             $grandTotal = $invoice->total_amount ?? ($invoice->invoice_type == 'Reverse' ? $totalAmount : $totalAmount + $totalgst);
         @endphp
-        <td>{{ number_format($grandTotal, 2) }}</td>
+        <td colspan="2">{{ number_format($grandTotal, 2) }}</td>
     </tr>
     @if (trim($remark))
         <tr>
@@ -215,18 +216,18 @@
     @endif
     <tr>
         <td style="font-weight: bold;" colspan="9">{{ ucfirst(getIndianCurrency($grandTotal)) }} Only</td>
-        <td style="font-weight: bold;" colspan="3">FOR {{ $company->name }}</td>
+        <td style="font-weight: bold;" colspan="4">FOR {{ $company->name }}</td>
     </tr>
     <tr>
         <td colspan="9"></td>
-        <td colspan="3" rowspan="2"></td>
+        <td colspan="4" rowspan="2"></td>
     </tr>
     <tr>
-        <td colspan="9"></td>
+        <td colspan="13"></td>
     </tr>
     <tr>
         <td style="font-weight: bold;" colspan="9">Note :- GST Liability of Debtor:-  {{ $invoice->consignee->name }}  Under Reverse Charge
             Mechanism of GST Act, 2017</td>
-        <td style="font-weight: bold;" colspan="3">Authorized Signature</td>
+        <td style="font-weight: bold;" colspan="4">Authorized Signature</td>
     </tr>
 </table>
