@@ -1530,20 +1530,12 @@ class FreightBookingController extends Controller
                         $freightBooking->balance_amount = $effectivePayableAmount - $freightBooking->advance_amount;
                         $freightBooking->save();
 
-                        // \App\Models\AdvancePayment::create([
-                        //     'company_id'      => $freightBooking->company_id,
-                        //     'transporter_id'  => $transporter->id,
-                        //     'advance_amount'  => -$amount,
-                        //     'payment_date'    => now(), // current date-time
-                        //     'remark'          => "LR#{$freightBooking->lr_number}",
-                        // ]);
-                        // Call AdvancePaymentController@store logic
                         $advanceRequest = new \Illuminate\Http\Request([
                             'company_id' => $freightBooking->company_id,
                             'transporter_id' => $transporter->id,
                             'advance_amount' => -$amount, // NEGATIVE because adjusting
                             'payment_date'   => now()->toDateString(),
-                            'remark'         => "LR#{$freightBooking->lr_number}",
+                            'remark'         => "LR#{$freightBooking->lr->lr_number}",
                         ]);
 
                         // mark request as ajax so it won’t redirect
