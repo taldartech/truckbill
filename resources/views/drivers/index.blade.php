@@ -74,6 +74,7 @@
                         <div class="col-md-6">
                             <label for="modal_license_number" class="form-label">License Number</label>
                             <input type="text" class="form-control" id="modal_license_number" name="license_number" placeholder="e.g., DL-1420110012345">
+                            <div class="invalid-feedback"></div>
                             <small class="form-text text-muted">Optional field</small>
                         </div>
                         <div class="col-md-6">
@@ -126,6 +127,7 @@
                         <div class="col-md-6">
                             <label for="edit_license_number" class="form-label">License Number</label>
                             <input type="text" class="form-control" id="edit_license_number" name="license_number" placeholder="e.g., DL-1420110012345">
+                            <div class="invalid-feedback"></div>
                             <small class="form-text text-muted">Optional field</small>
                         </div>
                         <div class="col-md-6">
@@ -231,14 +233,26 @@ $(document).ready(function() {
 
                 // Wrap existing text in a div to keep it at top
                 $header.html('<div style="margin-bottom: 5px;">' + title + '</div>');
+                let debounceTimer;
 
                 // Create input element
                 var input = $('<input type="text" class="form-control form-control-sm" placeholder="Search ' + title + '" />')
                     .appendTo($header)
-                    .on('keyup change clear', function() {
-                        if (column.search() !== this.value) {
-                            column.search(this.value).draw();
-                        }
+                    // .on('keyup change clear', function() {
+                    //     if (column.search() !== this.value) {
+                    //         column.search(this.value).draw();
+                    //     }
+                    // });
+                    .on('keyup', function() {
+                        clearTimeout(debounceTimer);
+
+                        const value = this.value;
+
+                        debounceTimer = setTimeout(() => {
+                            if (column.search() !== value) {
+                                column.search(value).draw();
+                            }
+                        }, 500);
                     });
             });
         }
@@ -354,7 +368,12 @@ $(document).ready(function() {
                     Object.keys(errors).forEach(function(field) {
                         const input = $(`#modal_${field}`);
                         input.addClass('is-invalid');
-                        input.siblings('.invalid-feedback').text(errors[field][0]).show();
+                         // Find correct feedback div
+                        const feedback = input.closest('.col-md-6').find('.invalid-feedback');
+
+                        if (feedback.length) {
+                            feedback.text(errors[field][0]).show();
+                        }
                     });
                 } else {
                     // Show general error message
@@ -456,7 +475,12 @@ $(document).ready(function() {
                     Object.keys(errors).forEach(function(field) {
                         const input = $(`#edit_${field}`);
                         input.addClass('is-invalid');
-                        input.siblings('.invalid-feedback').text(errors[field][0]).show();
+                         // Find correct feedback div
+                        const feedback = input.closest('.col-md-6').find('.invalid-feedback');
+
+                        if (feedback.length) {
+                            feedback.text(errors[field][0]).show();
+                        }
                     });
                 } else {
                     // Show general error message
