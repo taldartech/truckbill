@@ -330,6 +330,8 @@ class TransporterController extends Controller
             ];
             $master = TransporterMaster::create($masterData);
 
+            
+
             $transporterData = [
                 'transporter_master_id' => $master->id,
                 'company_id' => $validated['company_id'],
@@ -343,6 +345,8 @@ class TransporterController extends Controller
                 'tds_percentage' => $this->calculateTdsFromPan($master->pan_number, $master->pan_active),
             ];
             Transporter::create($transporterData);
+
+           
 
             $transporterRoleId = \DB::table('user_roles')->where('name', 'transporter')->value('id');
             $user = User::create([

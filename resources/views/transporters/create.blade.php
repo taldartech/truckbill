@@ -523,6 +523,10 @@
 @section('scripts')
 @parent
     <script>
+
+        @if($errors->any())
+            document.getElementById('restOfForm').classList.remove('d-none');
+        @endif
       document.addEventListener('DOMContentLoaded', function() {
         const btnPanLookup = document.getElementById('btnPanLookup');
         const panLookup = document.getElementById('pan_lookup');

@@ -248,7 +248,7 @@
                             <td>{{ $truck->truck_type }}</td>
                             <td>{{ $truck->driver->name ?? 'Not Assigned' }}</td>
                             <td>{{ $truck->driver->mobile ?? '-' }}</td>
-                            <td>{{ $truck->registration_date ? \Carbon\Carbon::parse($truck->registration_date)->format('d-m-Y') : '-' }}</td>
+                            <td>{{ formatDate(optional($truck)->registration_date) }}</td>
                             <td>
                                 <div class="btn-group" role="group">
                                     <button type="button" class="btn btn-sm btn-outline-primary edit-truck-btn"

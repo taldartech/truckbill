@@ -180,7 +180,7 @@
                                         </div>
                                     </td>
                                     <td>{{ $ewayBill->lr?->truck?->driver?->mobile ?? '-' }}</td>
-                                    <td><span class="badge {{ $bgClass }} {{ $expiryClass }} px-3 py-2 rounded-pill fw-bold">{{ $ewayBill->eway_bill_expiry }}</span></td>
+                                    <td><span class="badge {{ $bgClass }} {{ $expiryClass }} px-3 py-2 rounded-pill fw-bold"> {{ formatDate(optional($ewayBill)->eway_bill_expiry) }}</span></td>
                                     <td class="text-end pe-4 align-middle">
                                         <a href="{{ route('freight_bookings.show', $ewayBill->id) }}" class="btn btn-icon btn-view rounded-circle">
                                             <i class="fas fa-eye"></i>
@@ -205,7 +205,12 @@
             <div class="card-header bg-white border-0 py-3 mt-1">
                 <div class="d-flex justify-content-between align-items-center">
                     <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-file-invoice-dollar text-primary me-2"></i> Pending Invoices</h5>
-                    <a href="{{ route('invoices.index') }}" class="btn btn-sm btn-brand-secondary rounded-pill px-3">View All</a>
+                    {{-- <a href="{{ route('invoices.index') }}" class="btn btn-sm btn-brand-secondary rounded-pill px-3">View All</a> --}}
+                    <a href="{{ route('invoices.index') }}" 
+                        class="btn btn-sm btn-brand-secondary rounded-pill px-3"
+                        style="background-color:#fff !important; color:#43b32f !important; border:1px solid #43b32f !important;">
+                        View All
+                    </a>
                 </div>
             </div>
             <div class="card-body p-0">

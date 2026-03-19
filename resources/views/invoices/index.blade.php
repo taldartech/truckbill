@@ -180,7 +180,8 @@
                                 <td>{{ is_array($invoice->memo_ids) ? implode(', ', $invoice->memo_ids) : $invoice->memo_ids }}
                                 </td>
                                 <td>{{ $invoice->invoice_type }}</td>
-                                <td>{{ $invoice->generated_date }}</td>
+                                {{-- <td>{{ $invoice->generated_date }}</td> --}}
+                                <td>{{ formatDate(optional($invoice)->generated_date) }}</td>
                                 <td>{{ $invoice->consignee ? $invoice->consignee->name : '-' }}</td>
                                 <td class="text-brand-primary fw-bold">&#8377;{{ number_format($invoice->total_amount, 2) }}
                                 </td>

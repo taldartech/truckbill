@@ -180,7 +180,7 @@
                                         </div>
                                     </td>
                                     <td>{{ $ewayBill->lr?->truck?->driver?->mobile ?? '-' }}</td>
-                                    <td><span class="badge {{ $bgClass }} {{ $expiryClass }} px-3 py-2 rounded-pill fw-bold">{{ $ewayBill->eway_bill_expiry }}</span></td>
+                                    <td><span class="badge {{ $bgClass }} {{ $expiryClass }} px-3 py-2 rounded-pill fw-bold"> {{ formatDate(optional($ewayBill)->eway_bill_expiry) }}</span></td>
                                     <td class="text-end pe-4 align-middle">
                                         <a href="{{ route('freight_bookings.show', $ewayBill->id) }}" class="btn btn-icon btn-view rounded-circle">
                                             <i class="fas fa-eye"></i>

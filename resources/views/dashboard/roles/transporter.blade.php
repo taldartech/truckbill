@@ -148,7 +148,7 @@
                                             <small class="text-muted">{{ $ewayBill->lr->destination_city ?? '-' }}</small>
                                         </div>
                                     </td>
-                                    <td><span class="badge bg-danger text-white px-3 py-2 rounded-pill">{{ $ewayBill->eway_bill_expiry ?? '-' }}</span></td>
+                                    <td><span class="badge bg-danger text-white px-3 py-2 rounded-pill"> {{ formatDate(optional($ewayBill)->eway_bill_expiry) }}</span></td>
                                     <td class="text-end pe-4">
                                         <a href="{{ route('transporter.freight_bookings.show', $ewayBill->id) }}" class="btn btn-sm btn-view"><i class="fas fa-eye"></i></a>
                                     </td>
