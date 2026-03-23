@@ -22,6 +22,8 @@ class DropdownController extends Controller
             ->distinct()
             ->orderBy('name')
             ->get();
+
+          
         return response()->json($states);
     } catch (\Exception $e) {
         return response()->json(['error' => 'Failed to fetch states'], 500);

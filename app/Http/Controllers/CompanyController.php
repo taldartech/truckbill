@@ -392,6 +392,39 @@ class CompanyController extends Controller
         $company->delete();
         return redirect()->route('company.index')->with('success', 'Company deleted successfully!');
     }
+
+    /**
+     * Generate a short company code from the provided name.
+     * Uses initials from the first two words (alphabetic), otherwise falls back to first 5 letters.
+     */
+    private function generateShortNameFromCompanyName(?string $companyName): string
+    {
+        $name = trim((string) $companyName);
+        if ($name === '') {
+            return '';
+        }
+
+        $words = preg_split('/\s+/', $name, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $initials = [];
+
+        foreach ($words as $word) {
+            if (count($initials) >= 2) {
+                break;
+            }
+
+            if (preg_match('/[a-zA-Z]/', $word, $matches) === 1) {
+                $initials[] = strtoupper($matches[0]);
+            }
+        }
+
+        if (count($initials) >= 2) {
+            return implode('', $initials);
+        }
+
+        $lettersOnly = preg_replace('/[^a-zA-Z]/', '', $name) ?: '';
+
+        return strtoupper(substr($lettersOnly, 0, 5));
+    }
     public function create()
     {
 
@@ -402,7 +435,16 @@ class CompanyController extends Controller
 
     public function store(Request $request)
     {
+        $companyName = (string) $request->input('name', '');
+        $incomingShortName = (string) $request->input('short_name', '');
 
+        if (trim($incomingShortName) === '') {
+            $incomingShortName = $this->generateShortNameFromCompanyName($companyName);
+        }
+
+        // Keep DB/invoice-friendly codes: uppercase A-Z0-9 only
+        $normalizedShortName = strtoupper(trim(preg_replace('/[^a-zA-Z0-9]/', '', $incomingShortName)));
+        $request->merge(['short_name' => $normalizedShortName]);
 
         $validated = $request->validate([
 
@@ -412,6 +454,13 @@ class CompanyController extends Controller
                 'string',
                 'max:255',
                 'regex:/[A-Za-z]/', // ✅ ensures at least one alphabet is present
+            ],
+
+            'short_name' => [
+                'required',
+                'string',
+                'max:255',
+                'unique:companies,short_name',
             ],
 
 
@@ -486,6 +535,7 @@ class CompanyController extends Controller
         $validated['lr_credits'] = 250;
         $validated['truck_credits'] = null;
 
+        $validated['short_name'] = $normalizedShortName;
 
         \App\Models\Company::create($validated);
         return redirect()->route('company.index')->with('success', 'Company registered successfully!,You are eligible for 45 days free plan');

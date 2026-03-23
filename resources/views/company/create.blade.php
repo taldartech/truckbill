@@ -28,6 +28,25 @@
                 <!--end::Col-->
                 <!--begin::Col-->
                 <div class="col-md-6">
+                    <label for="short_name" class="form-label">Short Name *</label>
+                    <input type="text"
+                        class="form-control @error('short_name') is-invalid @enderror"
+                        id="short_name"
+                        name="short_name"
+                        required
+                        value="{{ old('short_name') }}">
+                    @error('short_name')
+                        <div class="text-danger">{{ $message }}</div>
+                    @enderror
+                    <div class="valid-feedback">Looks good!</div>
+
+                    <div class="text-muted small mt-2" id="invoice-preview">
+                        Example Invoice Number: <span id="invoicePreviewText"></span>
+                    </div>
+                </div>
+                <!--end::Col-->
+                <!--begin::Col-->
+                <div class="col-md-6">
                     <label for="gst_number" class="form-label">GST Number</label>
                     <input type="text" class="form-control" id="gst_number" name="gst_number"  value="{{ old('gst_number') }}">
                     @error('gst_number') <div class="text-danger">{{ $message }}</div> @enderror
@@ -221,6 +240,96 @@
                 );
             });
         })();
+
+        function normalizeShortName(value) {
+            return (value || '')
+                .toString()
+                .trim()
+                .replace(/[^a-zA-Z0-9]/g, '')
+                .toUpperCase();
+        }
+
+        function generateShortNameFromCompanyName(companyName) {
+            const name = (companyName || '').toString().trim();
+            if (!name) {
+                return '';
+            }
+
+            const words = name.split(/\s+/).filter(Boolean);
+            const initials = [];
+
+            for (const w of words) {
+                const match = w.match(/[a-zA-Z]/);
+                if (match) {
+                    initials.push(match[0].toUpperCase());
+                }
+                if (initials.length >= 2) {
+                    break;
+                }
+            }
+
+            if (initials.length >= 2) {
+                return initials.join('');
+            }
+
+            const lettersOnly = name.replace(/[^a-zA-Z]/g, '').toUpperCase();
+            return lettersOnly.slice(0, 5);
+        }
+
+        function updateInvoicePreview() {
+            const shortNameInput = document.getElementById('short_name');
+            const previewText = document.getElementById('invoicePreviewText');
+            if (!shortNameInput || !previewText) {
+                return;
+            }
+
+            const shortName = normalizeShortName(shortNameInput.value);
+            const year = new Date().getFullYear();
+            previewText.textContent = shortName ? `${shortName}/${year}/0001` : `—/${year}/0001`;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const nameInput = document.getElementById('name');
+            const shortNameInput = document.getElementById('short_name');
+            if (!nameInput || !shortNameInput) {
+                return;
+            }
+
+            let userEditedShortName = !!(shortNameInput.value && shortNameInput.value.trim().length > 0);
+            if (shortNameInput.value && !userEditedShortName) {
+                userEditedShortName = false;
+            }
+
+            // Initial preview
+            shortNameInput.value = normalizeShortName(shortNameInput.value);
+            updateInvoicePreview();
+
+            // If short_name is empty (e.g., first load), generate from company name.
+            if (!shortNameInput.value) {
+                const generated = generateShortNameFromCompanyName(nameInput.value);
+                shortNameInput.value = normalizeShortName(generated);
+                updateInvoicePreview();
+            }
+
+            // Auto-generate when typing company name (until user manually edits short_name)
+            nameInput.addEventListener('input', function() {
+                if (userEditedShortName) {
+                    return;
+                }
+
+                const generated = generateShortNameFromCompanyName(nameInput.value);
+                shortNameInput.value = normalizeShortName(generated);
+                updateInvoicePreview();
+            });
+
+            // When user changes short_name, stop overriding it
+            shortNameInput.addEventListener('input', function() {
+                userEditedShortName = true;
+                shortNameInput.value = normalizeShortName(shortNameInput.value);
+                updateInvoicePreview();
+            });
+        });
+
         function fetchStates(countryId) {
             fetch(`/api/states/${countryId}`)
                 .then(response => response.json())

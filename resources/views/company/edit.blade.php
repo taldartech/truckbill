@@ -30,6 +30,21 @@
                 <!--end::Col-->
                 <!--begin::Col-->
                 <div class="col-md-6">
+                    <label for="short_name" class="form-label">Short Name</label>
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="short_name"
+                        name="short_name"
+                        value="{{ $company->short_name }}"
+                        disabled>
+                    @error('short_name')
+                        <div class="text-danger">{{ $message }}</div>
+                    @enderror
+                </div>
+                <!--end::Col-->
+                <!--begin::Col-->
+                <div class="col-md-6">
                     <label for="gst_number" class="form-label">GST Number</label>
                     <input type="text" class="form-control" id="gst_number" name="gst_number"  value="{{ old('gst_number', $company->gst_number) }}">
                     @error('gst_number') <div class="text-danger">{{ $message }}</div> @enderror
@@ -176,9 +191,9 @@
             <div class="row g-3">
                 <!--begin::Col-->
                 <div class="col-md-6">
-                    <label for="gst_slab" class="form-label">Company Slab</label>
+                    <label for="gst_slab" class="form-label">GST Slab</label>
                     <select class="form-select" id="gst_slab" name="gst_slab" required>
-                        <option value="{{ old('gst_slab', $company->gst_slab) }}">Select Company Slab</option>
+                        <option value="{{ old('gst_slab', $company->gst_slab) }}">Select GST Slab</option>
                         @foreach($companySlabs as $slab)
                             <option value="{{ trim($slab) }}" {{ old('gst_slab', $company->gst_slab) == trim($slab) ? 'selected' : '' }}>
                                 {{ trim($slab) }}%

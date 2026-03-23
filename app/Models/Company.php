@@ -10,6 +10,7 @@ class Company extends Model
   use SoftDeletes;
   protected $fillable = [
     'name',
+    'short_name',
     'gst_number',
     'pan_number',
     'gst_scheme',
@@ -40,6 +41,48 @@ class Company extends Model
   ];
 
   protected $dates = ['deleted_at'];
+
+  protected static function booted(): void
+  {
+      static::creating(function (Company $company): void {
+          if (empty($company->short_name) && !empty($company->name)) {
+              $company->short_name = self::generateShortNameFromCompanyName($company->name);
+          }
+      });
+  }
+
+  /**
+   * Generate a short company code from the provided name.
+   * Uses initials from the first two words (alphabetic), otherwise falls back to first 5 letters.
+   */
+  private static function generateShortNameFromCompanyName(?string $companyName): string
+  {
+      $name = trim((string) $companyName);
+      if ($name === '') {
+          return '';
+      }
+
+      $words = preg_split('/\s+/', $name, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+      $initials = [];
+
+      foreach ($words as $word) {
+          if (count($initials) >= 2) {
+              break;
+          }
+
+          if (preg_match('/[a-zA-Z]/', $word, $matches) === 1) {
+              $initials[] = strtoupper($matches[0]);
+          }
+      }
+
+      if (count($initials) >= 2) {
+          return implode('', $initials);
+      }
+
+      $lettersOnly = preg_replace('/[^a-zA-Z]/', '', $name) ?: '';
+
+      return strtoupper(substr($lettersOnly, 0, 5));
+  }
 
   public function country()
   {
