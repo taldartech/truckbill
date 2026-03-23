@@ -9,34 +9,53 @@ class CitiesSeeder extends Seeder
 {
     public function run(): void
     {
-        // Get country and state IDs
         $india = DB::table('countries')->where('name', 'India')->first();
-        $rajasthan = DB::table('states')->where('name', 'Rajasthan')->first();
-        $gujarat = DB::table('states')->where('name', 'Gujarat')->first();
-        
-        // Define cities with their states
-        $cities = [
-            ['name' => 'Udaipur', 'state_id' => $rajasthan->id],
-            ['name' => 'Jaipur', 'state_id' => $rajasthan->id],
-            ['name' => 'Ajmer', 'state_id' => $rajasthan->id],
-            ['name' => 'Jodhpur', 'state_id' => $rajasthan->id],
-            ['name' => 'Himmatnagar', 'state_id' => $gujarat->id],
-            ['name' => 'Ahmedabad', 'state_id' => $gujarat->id],
-            ['name' => 'Surat', 'state_id' => $gujarat->id],
-        ];
-        
-        // Insert cities only if they don't already exist
-        foreach ($cities as $city) {
-            $existingCity = DB::table('cities')->where('name', $city['name'])->first();
-            
-            if (!$existingCity) {
-                DB::table('cities')->insert([
-                    'state_id' => $city['state_id'],
-                    'country_id' => $india->id,
-                    'name' => $city['name'],
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+        if ($india === null) {
+            $this->command?->warn('India country not found. Run CountriesSeeder first.');
+
+            return;
+        }
+
+        $now = now();
+
+        foreach (IndiaGeoData::statesWithDistricts() as $stateRow) {
+            $state = DB::table('states')
+                ->where('country_id', $india->id)
+                ->where('name', $stateRow['name'])
+                ->first();
+
+            if ($state === null) {
+                $this->command?->warn("State not found, skipping cities: {$stateRow['name']}");
+
+                continue;
+            }
+
+            foreach ($stateRow['districts'] as $districtName) {
+                if ($districtName === '') {
+                    continue;
+                }
+
+                $existing = DB::table('cities')
+                    ->where('state_id', $state->id)
+                    ->where('name', $districtName)
+                    ->first();
+
+                if ($existing) {
+                    DB::table('cities')
+                        ->where('id', $existing->id)
+                        ->update([
+                            'country_id' => $india->id,
+                            'updated_at' => $now,
+                        ]);
+                } else {
+                    DB::table('cities')->insert([
+                        'state_id' => $state->id,
+                        'country_id' => $india->id,
+                        'name' => $districtName,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ]);
+                }
             }
         }
     }
