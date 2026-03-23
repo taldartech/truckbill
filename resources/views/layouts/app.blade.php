@@ -516,6 +516,36 @@
                                     <p>Promo Codes</p>
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link{{ Request::is('master/countries*') || Request::is('master/states*') || Request::is('master/cities*') ? ' active' : '' }}"
+                                    href="#masterLocationMenuMasterAdmin">
+                                    <i class="fas fa-globe"></i>
+                                    <p>
+                                        Locations (Master)
+                                        <i class="nav-arrow bi bi-chevron-right"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="/master/countries" class="nav-link{{ Request::is('master/countries*') ? ' active' : '' }}">
+                                            <i class="fas fa-list"></i>
+                                            <p>Countries</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="/master/states" class="nav-link{{ Request::is('master/states*') ? ' active' : '' }}">
+                                            <i class="fas fa-map"></i>
+                                            <p>States</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="/master/cities" class="nav-link{{ Request::is('master/cities*') ? ' active' : '' }}">
+                                            <i class="fas fa-city"></i>
+                                            <p>Cities</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
                         @endif
 
                         @if (auth()->check() && auth()->user()->userRole->name === 'super_admin' && !session('super_admin_company_id'))
@@ -623,6 +653,36 @@
                                     <i class="fas fa-credit-card"></i>
                                     <p>Payment Management</p>
                                 </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link{{ Request::is('master/countries*') || Request::is('master/states*') || Request::is('master/cities*') ? ' active' : '' }}"
+                                    href="#masterLocationMenuSuperAdmin">
+                                    <i class="fas fa-globe"></i>
+                                    <p>
+                                        Locations (Master)
+                                        <i class="nav-arrow bi bi-chevron-right"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="/master/countries" class="nav-link{{ Request::is('master/countries*') ? ' active' : '' }}">
+                                            <i class="fas fa-list"></i>
+                                            <p>Countries</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="/master/states" class="nav-link{{ Request::is('master/states*') ? ' active' : '' }}">
+                                            <i class="fas fa-map"></i>
+                                            <p>States</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="/master/cities" class="nav-link{{ Request::is('master/cities*') ? ' active' : '' }}">
+                                            <i class="fas fa-city"></i>
+                                            <p>Cities</p>
+                                        </a>
+                                    </li>
+                                </ul>
                             </li>
                             {{-- end master --}}
                         @endif

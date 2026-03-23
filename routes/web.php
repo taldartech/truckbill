@@ -211,26 +211,26 @@ Route::middleware(['auth.blocked'])->group(function () {
     // Master Routes
     Route::prefix('master')->name('master.')->group(function () {
         // Countries
-        Route::middleware(['role:admin,moderator,super_admin'])->group(function () {
+        Route::middleware(['role:admin,moderator,super_admin,master_admin'])->group(function () {
             Route::resource('countries', \App\Http\Controllers\CountryController::class)->only(['index', 'create', 'store']);
         });
-        Route::middleware(['role:admin,super_admin'])->group(function () {
+        Route::middleware(['role:admin,super_admin,master_admin'])->group(function () {
             Route::resource('countries', \App\Http\Controllers\CountryController::class)->only(['edit', 'update', 'destroy']);
         });
 
         // States
-        Route::middleware(['role:admin,moderator,super_admin'])->group(function () {
+        Route::middleware(['role:admin,moderator,super_admin,master_admin'])->group(function () {
             Route::resource('states', \App\Http\Controllers\StateController::class)->only(['index', 'create', 'store']);
         });
-        Route::middleware(['role:admin,super_admin'])->group(function () {
+        Route::middleware(['role:admin,super_admin,master_admin'])->group(function () {
             Route::resource('states', \App\Http\Controllers\StateController::class)->only(['edit', 'update', 'destroy']);
         });
 
         // Cities
-        Route::middleware(['role:admin,moderator,super_admin'])->group(function () {
+        Route::middleware(['role:admin,moderator,super_admin,master_admin'])->group(function () {
             Route::resource('cities', \App\Http\Controllers\CityController::class)->only(['index', 'create', 'store']);
         });
-        Route::middleware(['role:admin,super_admin'])->group(function () {
+        Route::middleware(['role:admin,super_admin,master_admin'])->group(function () {
             Route::resource('cities', \App\Http\Controllers\CityController::class)->only(['edit', 'update', 'destroy']);
         });
 

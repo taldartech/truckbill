@@ -86,6 +86,61 @@ class MasterFieldsTest extends TestCase
         $this->assertDatabaseHas('cities', ['name' => 'Ahmedabad', 'state_id' => $state->id]);
     }
 
+    public function test_master_admin_can_crud_country_state_city(): void
+    {
+        $master = $this->makeUser('master_admin');
+
+        $this->actingAs($master)->post('/master/countries', [
+            'name' => 'India',
+            'code' => 'IN',
+        ])->assertRedirect(route('master.countries.index'));
+        $country = Country::where('code', 'IN')->firstOrFail();
+
+        $this->actingAs($master)->post('/master/states', [
+            'name' => 'Gujarat',
+            'country_id' => $country->id,
+            'code' => 'GJ',
+        ])->assertRedirect(route('master.states.index'));
+        $state = State::where('code', 'GJ')->firstOrFail();
+
+        $this->actingAs($master)->post('/master/cities', [
+            'name' => 'Ahmedabad',
+            'state_id' => $state->id,
+            'country_id' => $country->id,
+        ])->assertRedirect(route('master.cities.index'));
+
+        $this->assertDatabaseHas('countries', ['code' => 'IN']);
+        $this->assertDatabaseHas('states', ['code' => 'GJ']);
+        $this->assertDatabaseHas('cities', ['name' => 'Ahmedabad', 'state_id' => $state->id]);
+    }
+
+    public function test_super_admin_without_company_session_can_crud_country_state_city(): void
+    {
+        $super = $this->makeUser('super_admin');
+        $this->assertFalse($super->canAccessCompanyPanel());
+
+        $this->actingAs($super)->post('/master/countries', [
+            'name' => 'India',
+            'code' => 'IN',
+        ])->assertRedirect(route('master.countries.index'));
+        $country = Country::where('code', 'IN')->firstOrFail();
+
+        $this->actingAs($super)->post('/master/states', [
+            'name' => 'Gujarat',
+            'country_id' => $country->id,
+            'code' => 'GJ',
+        ])->assertRedirect(route('master.states.index'));
+        $state = State::where('code', 'GJ')->firstOrFail();
+
+        $this->actingAs($super)->post('/master/cities', [
+            'name' => 'Ahmedabad',
+            'state_id' => $state->id,
+            'country_id' => $country->id,
+        ])->assertRedirect(route('master.cities.index'));
+
+        $this->assertDatabaseHas('cities', ['name' => 'Ahmedabad', 'state_id' => $state->id]);
+    }
+
     public function test_accountant_can_view_masters_but_not_create(): void
     {
         $accountant = $this->makeUser('accountant');
