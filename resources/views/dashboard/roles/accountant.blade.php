@@ -114,7 +114,9 @@
                         <tbody>
                             @foreach($pendingInvoices as $invoice)
                                 <tr>
-                                    <td class="ps-4"><span class="fw-bold text-dark">#{{ $invoice->manual_invoice_number ?? $invoice->id }}</span></td>
+                                    <td class="ps-4"><span class="fw-bold text-dark">#{{ $invoice->invoice_number
+                                        ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '')
+                                        : ($invoice->manual_invoice_number ?? $invoice->id) }}</span></td>
                                     <td>
                                         <div class="fw-medium text-dark">{{ Str::limit($invoice->consignee->name ?? 'N/A', 25) }}</div>
                                     </td>
@@ -168,7 +170,9 @@
                         <tbody>
                             @foreach($recentInvoicePayments as $payment)
                                 <tr>
-                                    <td class="ps-4">#{{ $payment->invoice->manual_invoice_number ?? $payment->invoice->id }}</td>
+                                    <td class="ps-4">#{{ $payment->invoice->invoice_number
+                                        ? $payment->invoice->invoice_number . ($payment->invoice->manual_invoice_number ? ' (' . $payment->invoice->manual_invoice_number . ')' : '')
+                                        : ($payment->invoice->manual_invoice_number ?? $payment->invoice->id) }}</td>
                                     <td>{{ Str::limit($payment->invoice->consignee->name ?? 'N/A', 25) }}</td>
                                     <td class="text-end fw-bold text-success">₹{{ number_format($payment->amount, 2) }}</td>
                                     <td><span class="badge bg-soft-info text-info rounded-pill px-3">{{ ucfirst($payment->mode) }}</span></td>

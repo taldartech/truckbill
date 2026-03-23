@@ -245,7 +245,9 @@
                                     }
                                 @endphp
                                 <tr>
-                                    <td class="ps-4"><span class="fw-bold text-dark">#{{ $invoice->manual_invoice_number ?? $invoice->id }}</span></td>
+                                    <td class="ps-4"><span class="fw-bold text-dark">#{{ $invoice->invoice_number
+                                        ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '')
+                                        : ($invoice->manual_invoice_number ?? $invoice->id) }}</span></td>
                                     <td>
                                         <div class="fw-medium text-dark">{{ Str::limit($invoice->consignee->name ?? 'N/A', 25) }}</div>
                                     </td>

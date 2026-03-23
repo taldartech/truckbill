@@ -83,11 +83,11 @@
                 <div class="row g-3">
 
                     <div class="col-md-4">
-                        <label class="form-label">Manual Invoice #</label>
+                        <label class="form-label">Reference No (Optional)</label>
                         <input type="text" placeholder="Invoice Number" id="manual_invoice_number"
                             name="manual_invoice_number"
                             class="form-control @error('manual_invoice_number') is-invalid @enderror"
-                            value="{{ old('manual_invoice_number') }}" required>
+                            value="{{ old('manual_invoice_number') }}">
 
                         {{-- Add this feedback div --}}
                         <div id="manual-invoice-number-feedback"></div>
@@ -302,12 +302,12 @@
         let manualInvoiceTimeout;
 
         function checkManualInvoiceUniqueness(manualNumber) {
-            // if (!manualNumber || manualNumber.length < 2) {
-            //     manualInvoiceFeedback.innerHTML = '';
-            //     manualInvoiceInput.classList.remove('is-valid', 'is-invalid');
-            //     manualInvoiceInput.setCustomValidity('');
-            //     return;
-            // }
+            if (!manualNumber) {
+                manualInvoiceFeedback.innerHTML = '<small class="text-muted">Optional field</small>';
+                manualInvoiceInput.classList.remove('is-valid', 'is-invalid');
+                manualInvoiceInput.setCustomValidity('');
+                return;
+            }
 
             manualInvoiceFeedback.innerHTML = '<small class="text-info">🔍 Checking availability...</small>';
             manualInvoiceInput.classList.remove('is-valid', 'is-invalid');

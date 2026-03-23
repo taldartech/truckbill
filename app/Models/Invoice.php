@@ -10,6 +10,7 @@ class Invoice extends Model
     use HasFactory, TracksUser;
 
     protected $fillable = [
+        'invoice_number',
         'manual_invoice_number',
         'company_id',
         'invoice_type',

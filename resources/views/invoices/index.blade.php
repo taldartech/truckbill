@@ -155,7 +155,7 @@
                     <thead>
                         <tr>
                             <th style="width: 10px">ID</th>
-                            <th>Manual Invoice #</th>
+                            <th>Invoice #</th>
                             <th>Memo No.</th>
                             <th>Type</th>
                             <th>Generated Date</th>
@@ -174,7 +174,9 @@
                                 <td>
                                     <a href="#" class="text-primary invoice-details-link"
                                         data-id="{{ $invoice->id }}">
-                                        {{ $invoice->manual_invoice_number }}
+                                        {{ $invoice->invoice_number
+                                            ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '')
+                                            : $invoice->manual_invoice_number }}
                                     </a>
                                 </td>
                                 <td>{{ is_array($invoice->memo_ids) ? implode(', ', $invoice->memo_ids) : $invoice->memo_ids }}
@@ -224,7 +226,9 @@
                                             <button type="button" class="btn btn-sm btn-view add-payment-btn"
                                                 data-bs-toggle="tooltip" data-bs-placement="top" title="Add Payment"
                                                 data-invoice-id="{{ $invoice->id }}"
-                                                data-invoice-number="{{ $invoice->manual_invoice_number }}"
+                                                data-invoice-number="{{ $invoice->invoice_number
+                                                    ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '')
+                                                    : $invoice->manual_invoice_number }}"
                                                 data-total-amount="{{ $invoice->total_amount }}"
                                                 data-paid-amount="{{ $invoice->paid_amount }}"
                                                 data-remaining-amount="{{ $invoice->remaining_amount }}">
@@ -415,7 +419,7 @@
                                 <table class="table table-borderless table-sm">
                                     <tr>
                                         <td class="fw-bold">Invoice #:</td>
-                                        <td>${data.manual_invoice_number || 'N/A'}</td>
+                                        <td>${data.invoice_number ? data.invoice_number + (data.manual_invoice_number ? ' (' + data.manual_invoice_number + ')' : '') : (data.manual_invoice_number || 'N/A')}</td>
                                     </tr>
                                     <tr>
                                         <td class="fw-bold">Type:</td>

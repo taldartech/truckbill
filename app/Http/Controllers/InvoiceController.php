@@ -7,6 +7,7 @@ use App\Models\InvoicePayment;
 use App\Models\Company;
 use App\Models\Consignee;
 use App\Models\LorryReceipt;
+use App\Services\InvoiceNumberService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +17,10 @@ use Illuminate\Validation\Rule;
 
 class InvoiceController extends Controller
 {
+    public function __construct(private InvoiceNumberService $invoiceNumberService)
+    {
+    }
+
     private function ensureCompanyContext(): void
     {
         if (Auth::user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
@@ -246,13 +251,14 @@ class InvoiceController extends Controller
     public function store(Request $request)
     {
         $this->ensureCompanyContext();
+        $companyId = (int) Auth::user()->company_id;
         $data = $request->validate([
             'manual_invoice_number' => [
-                'required',
+                'nullable',
                 'string',
                 Rule::unique('invoices')->where(
                     fn($query) =>
-                    $query->where('company_id', Auth::user()->company_id)
+                    $query->where('company_id', $companyId)
                 ),
             ],
             'invoice_type' => 'required|in:Reverse,Forward',
@@ -269,7 +275,10 @@ class InvoiceController extends Controller
             'base_amount' => 'nullable|numeric|min:0',
         ]);
         $data['payment_status'] = 'pending';
-        $data['company_id'] = Auth::user()->company_id;
+        $data['company_id'] = $companyId;
+        $data['manual_invoice_number'] = $request->filled('manual_invoice_number')
+            ? trim((string) $request->input('manual_invoice_number'))
+            : null;
 
         $sgst = (float) ($data['sgst'] ?? 0);
         $cgst = (float) ($data['cgst'] ?? 0);
@@ -286,19 +295,26 @@ class InvoiceController extends Controller
 
         // Separate memo_ids from the rest of invoice data
         $memoIds = $request->input('memo_ids', []);
-        // unset($data['memo_ids']);
+        $company = Company::query()->findOrFail($companyId);
+        DB::transaction(function () use ($memoIds, $data, $company): void {
+            // Always use auto-generated primary invoice number.
+            $data['invoice_number'] = $this->invoiceNumberService->generate(
+                $company,
+                (string) $data['generated_date']
+            );
 
-        // Update lorry_receipts before invoice creation individually to trigger auditing
-        if (!empty($memoIds)) {
-            $lorryReceipts = \App\Models\LorryReceipt::whereIn('memo_id', $memoIds)->get();
-            foreach ($lorryReceipts as $lr) {
-                $lr->invoice_generated = 1;
-                $lr->save();
+            // Update lorry_receipts before invoice creation individually to trigger auditing
+            if (!empty($memoIds)) {
+                $lorryReceipts = \App\Models\LorryReceipt::whereIn('memo_id', $memoIds)->lockForUpdate()->get();
+                foreach ($lorryReceipts as $lr) {
+                    $lr->invoice_generated = 1;
+                    $lr->save();
+                }
+                $data['lr_ids'] = $lorryReceipts->pluck('id')->toArray();
             }
-            $data['lr_ids'] = $lorryReceipts->pluck('id')->toArray();
-        }
 
-        $invoice = Invoice::create($data);
+            Invoice::create($data);
+        });
 
 
         return redirect()->route('invoices.index')->with('success', 'Invoice created successfully.');
@@ -545,9 +561,16 @@ class InvoiceController extends Controller
     public function checkManualInvoiceNumberUniqueness(Request $request)
     {
         $this->ensureCompanyContext();
-        $manualNumber = $request->input('manual_invoice_number');
+        $manualNumber = trim((string) $request->input('manual_invoice_number', ''));
         $invoiceId = $request->input('invoice_id'); // Get invoice ID if editing
         $companyId = Auth::user()->company_id;
+
+        if ($manualNumber === '') {
+            return response()->json([
+                'valid' => true,
+                'message' => 'Optional field.',
+            ]);
+        }
 
         $query = \App\Models\Invoice::where('manual_invoice_number', $manualNumber)
             ->where('company_id', $companyId);

@@ -15,8 +15,10 @@
                                     <td>{{ $invoice->company->name }}</td>
                                 </tr>
                                 <tr>
-                                    <th>Manual Invoice #:</th>
-                                    <td>{{ $invoice->manual_invoice_number }}</td>
+                                    <th>Invoice #:</th>
+                                    <td>{{ $invoice->invoice_number
+                                        ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '')
+                                        : $invoice->manual_invoice_number }}</td>
                                 </tr>
                                 <tr>
                                     <th>Invoice Type:</th>
@@ -326,7 +328,9 @@
                         <input type="hidden" id="payment_invoice_id" name="invoice_id" value="{{ $invoice->id }}">
                         <div class="mb-3">
                             <label class="form-label fw-bold">Invoice Number</label>
-                            <input type="text" class="form-control" value="{{ $invoice->manual_invoice_number }}" readonly>
+                            <input type="text" class="form-control" value="{{ $invoice->invoice_number
+                                ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '')
+                                : $invoice->manual_invoice_number }}" readonly>
                         </div>
                         <div class="row mb-3">
                             <div class="col-md-6">
