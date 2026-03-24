@@ -37,7 +37,7 @@ class VoucherPaymentTest extends TestCase
     protected function makeUser(string $role): User
     {
         $company = Company::create([
-            'name' => 'Company ' . $role,
+            'name' => 'Company '.$role,
             'user_id' => null,
             'gst_slab' => config('payments.gst_slabs')[0],
             'lr_credits' => 5,
@@ -290,10 +290,10 @@ class VoucherPaymentTest extends TestCase
             'date' => now()->toDateString(),
         ]);
 
-        $response = $this->actingAs($admin)->get('/voucher_payments?date=' . now()->toDateString());
+        $response = $this->actingAs($admin)->get('/voucher_payments?date='.now()->toDateString());
         $response->assertOk()
             ->assertSee('V-QS-001')
-            ->assertSee('voucher_payments/V-QS-001?date=' . now()->toDateString(), false);
+            ->assertSee('voucher_payments/V-QS-001?date='.now()->toDateString(), false);
     }
 
     public function test_voucher_show_page_has_back_and_back_to_list_buttons(): void
@@ -338,11 +338,55 @@ class VoucherPaymentTest extends TestCase
             'date' => now()->toDateString(),
         ]);
 
-        $query = 'date=' . now()->toDateString() . '&transporter=1';
-        $response = $this->actingAs($admin)->get('/voucher_payments/V-QS-SHOW?' . $query);
+        $query = 'date='.now()->toDateString().'&transporter=1';
+        $response = $this->actingAs($admin)->get('/voucher_payments/V-QS-SHOW?'.$query);
         $response->assertOk();
         $this->assertStringContainsString('?date=', $response->getContent());
         $this->assertStringContainsString('transporter=1', $response->getContent());
     }
-}
 
+    public function test_admin_update_recalculates_freight_booking_advance_from_voucher_payments_sum(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$booking, $ptype, $pmode] = $this->seedBaseData($admin);
+
+        $payment = VoucherPayment::create([
+            'freight_booking_id' => $booking->id,
+            'voucher_number' => (string) $booking->voucher_number,
+            'payment_type_id' => $ptype->id,
+            'payment_mode_id' => $pmode->id,
+            'payment_type' => 'Cash',
+            'payment_mode' => 'cash',
+            'amount' => 1000,
+            'payment_status' => 'in-progress',
+            'company_id' => $admin->company_id,
+            'date' => now()->toDateString(),
+        ]);
+
+        $booking->update(['advance_amount' => 0, 'balance_amount' => 10000]);
+
+        $response = $this->actingAs($admin)->from(route('voucher_payments.edit', $payment))->put(
+            route('voucher_payments.update', $payment),
+            [
+                'freight_booking_id' => $booking->id,
+                'voucher_number' => (string) $booking->voucher_number,
+                'payment_type_id' => $ptype->id,
+                'payment_mode_id' => $pmode->id,
+                'payment_type' => 'Cash',
+                'payment_mode' => 'cash',
+                'amount' => 2500,
+                'reference_transaction_id' => null,
+                'remark' => null,
+                'payment_status' => 'in-progress',
+                'company_id' => $admin->company_id,
+                'pump_id' => null,
+                'date' => now()->toDateString(),
+            ]
+        );
+
+        $response->assertRedirect(route('voucher_payments.index'));
+        $booking->refresh();
+        $this->assertEquals(2500.0, (float) $booking->advance_amount);
+        $this->assertEquals(7500.0, (float) $booking->balance_amount);
+    }
+}
