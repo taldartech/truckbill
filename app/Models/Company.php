@@ -7,101 +7,129 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Company extends Model
 {
-  use SoftDeletes;
-  protected $fillable = [
-    'name',
-    'short_name',
-    'gst_number',
-    'pan_number',
-    'gst_scheme',
-    'gst_type',
-    'address',
-    'contact_person',
-    'contact_number',
-    'country_id',
-    'state_id',
-    'city_id',
-    'pin_code',
-    'template_jurisdictional_boundary',
-    'template_header',
-    'template_name',
-    'template_address',
-    'template_note',
-    'bank',
-    'account_number',
-    'ifsc',
-    'user_id',
-    'is_blocked',
-    'company_type',
-    'company_logo',
-    'gst_slab',
-    'plan_end_date',
-    'lr_credits',
-    'truck_credits',
-  ];
+    use SoftDeletes;
 
-  protected $dates = ['deleted_at'];
+    protected $fillable = [
+        'name',
+        'short_name',
+        'gst_number',
+        'pan_number',
+        'gst_scheme',
+        'gst_type',
+        'address',
+        'contact_person',
+        'contact_number',
+        'country_id',
+        'state_id',
+        'city_id',
+        'pin_code',
+        'template_jurisdictional_boundary',
+        'template_header',
+        'template_name',
+        'template_address',
+        'template_note',
+        'bank',
+        'account_number',
+        'ifsc',
+        'user_id',
+        'is_blocked',
+        'company_type',
+        'company_logo',
+        'gst_slab',
+        'plan_end_date',
+        'lr_credits',
+        'truck_credits',
+    ];
 
-  protected static function booted(): void
-  {
-      static::creating(function (Company $company): void {
-          if (empty($company->short_name) && !empty($company->name)) {
-              $company->short_name = self::generateShortNameFromCompanyName($company->name);
-          }
-      });
-  }
+    protected $dates = ['deleted_at'];
 
-  /**
-   * Generate a short company code from the provided name.
-   * Uses initials from the first two words (alphabetic), otherwise falls back to first 5 letters.
-   */
-  private static function generateShortNameFromCompanyName(?string $companyName): string
-  {
-      $name = trim((string) $companyName);
-      if ($name === '') {
-          return '';
-      }
+    protected static function booted(): void
+    {
+        static::creating(function (Company $company): void {
+            if (empty($company->short_name) && ! empty($company->name)) {
+                $base = self::generateShortNameFromCompanyName($company->name);
+                $company->short_name = self::ensureUniqueShortName($base);
+            }
+        });
+    }
 
-      $words = preg_split('/\s+/', $name, -1, PREG_SPLIT_NO_EMPTY) ?: [];
-      $initials = [];
+    /**
+     * Generate a short company code from the provided name.
+     * Uses initials from the first two words (alphabetic), otherwise falls back to first 5 letters.
+     */
+    public static function generateShortNameFromCompanyName(?string $companyName): string
+    {
+        $name = trim((string) $companyName);
+        if ($name === '') {
+            return '';
+        }
 
-      foreach ($words as $word) {
-          if (count($initials) >= 2) {
-              break;
-          }
+        $words = preg_split('/\s+/', $name, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $initials = [];
 
-          if (preg_match('/[a-zA-Z]/', $word, $matches) === 1) {
-              $initials[] = strtoupper($matches[0]);
-          }
-      }
+        foreach ($words as $word) {
+            if (count($initials) >= 2) {
+                break;
+            }
 
-      if (count($initials) >= 2) {
-          return implode('', $initials);
-      }
+            if (preg_match('/[a-zA-Z]/', $word, $matches) === 1) {
+                $initials[] = strtoupper($matches[0]);
+            }
+        }
 
-      $lettersOnly = preg_replace('/[^a-zA-Z]/', '', $name) ?: '';
+        if (count($initials) >= 2) {
+            return implode('', $initials);
+        }
 
-      return strtoupper(substr($lettersOnly, 0, 5));
-  }
+        $lettersOnly = preg_replace('/[^a-zA-Z]/', '', $name) ?: '';
 
-  public function country()
-  {
-    return $this->belongsTo(Country::class);
-  }
+        return strtoupper(substr($lettersOnly, 0, 5));
+    }
 
-  public function state()
-  {
-    return $this->belongsTo(State::class);
-  }
+    private static function ensureUniqueShortName(string $base, ?int $exceptCompanyId = null): string
+    {
+        if ($base === '') {
+            return '';
+        }
 
-  public function city()
-  {
-    return $this->belongsTo(City::class);
-  }
+        $candidate = $base;
+        $suffix = 1;
+        while (self::shortNameIsTaken($candidate, $exceptCompanyId)) {
+            $candidate = $base.$suffix;
+            $suffix++;
+        }
+
+        return $candidate;
+    }
+
+    private static function shortNameIsTaken(string $shortName, ?int $exceptCompanyId = null): bool
+    {
+        return Company::withTrashed()
+            ->where('short_name', $shortName)
+            ->when($exceptCompanyId !== null, fn ($query) => $query->where('id', '!=', $exceptCompanyId))
+            ->exists();
+    }
+
+    public function country()
+    {
+        return $this->belongsTo(Country::class);
+    }
+
+    public function state()
+    {
+        return $this->belongsTo(State::class);
+    }
+
+    public function city()
+    {
+        return $this->belongsTo(City::class);
+    }
+
     public function branches()
-{
-    return $this->hasMany(Branch::class, 'company_id');
-}
+    {
+        return $this->hasMany(Branch::class, 'company_id');
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
