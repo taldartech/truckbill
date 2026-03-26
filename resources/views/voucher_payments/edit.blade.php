@@ -218,7 +218,7 @@
                     <!--begin::Col-->
                     <div class="col-md-4 mb-3">
                         <label for="payment_mode_id" class="form-label">Payment Mode *</label>
-                        @if ($voucher_payment->linked_voucher_id == null)
+                        @if ($voucher_payment->linked_voucher_id == null && !($lockPaymentMode ?? false))
                             <select name="payment_mode_id" id="payment_mode_id" class="form-select" required>
                                 <option value="">Select Payment Mode</option>
                                 @foreach ($paymentModes as $paymentMode)
@@ -229,6 +229,13 @@
                                 @endforeach
                             </select>
 
+                            <input type="hidden" name="payment_mode" id="payment_mode"
+                                value="{{ old('payment_mode', $voucher_payment->payment_mode) }}">
+                        @elseif ($voucher_payment->linked_voucher_id == null)
+                            <input type="text" class="form-control" value="{{ $voucher_payment->payment_mode }}"
+                                readonly>
+                            <input type="hidden" name="payment_mode_id" id="payment_mode_id"
+                                value="{{ old('payment_mode_id', $voucher_payment->payment_mode_id) }}">
                             <input type="hidden" name="payment_mode" id="payment_mode"
                                 value="{{ old('payment_mode', $voucher_payment->payment_mode) }}">
                         @else
@@ -301,7 +308,7 @@
                         <label for="payment_status" class="form-label">Payment Status *</label>
                         @if ($voucher_payment->linked_voucher_id == null)
                             <select name="payment_status" id="payment_status" class="form-select" required>
-                                <option value="pending"
+                                <option value="pending" id="pendingOption"
                                     {{ old('payment_status', $voucher_payment->payment_status) == 'pending' ? 'selected' : '' }}>
                                     Pending</option>
                                 <option value="in-progress"
@@ -390,114 +397,208 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const paymentModeIdSelect = document.getElementById('payment_mode_id');
+            const paymentModeIdEl = document.getElementById('payment_mode_id');
             const paymentModeInput = document.getElementById('payment_mode');
             const paymentTypeIdSelect = document.getElementById('payment_type_id');
             const paymentTypeInput = document.getElementById('payment_type');
             const pumpDropdownContainer = document.getElementById('pumpDropdownContainer');
             const pumpSelect = document.getElementById('pump_id');
+            const paymentStatusSelect = document.getElementById('payment_status');
+            const lockPaymentMode = @json($lockPaymentMode ?? false);
 
-            // Update hidden input with text value when select changes
-            paymentModeIdSelect.addEventListener('change', function() {
-                const selectedOption = this.options[this.selectedIndex];
-                paymentModeInput.value = selectedOption.text;
-                togglePumpDropdown();
-            });
-
-            paymentTypeIdSelect.addEventListener('change', function() {
-                const selectedOption = this.options[this.selectedIndex];
-                paymentTypeInput.value = selectedOption.text;
-            });
-
-            // Set initial values
-            if (paymentModeIdSelect.selectedIndex > 0) {
-                paymentModeInput.value = paymentModeIdSelect.options[paymentModeIdSelect.selectedIndex].text;
+            function defaultPaymentStatusForMode(modeText) {
+                const name = (modeText || '').trim().toLowerCase();
+                if (name === 'cash' || name === 'adjust in advance') {
+                    return 'in-progress';
+                }
+                if (
+                    name === 'bank transfer'
+                    || name === 'fuel'
+                    || name === 'online'
+                    || name.includes('fuel')
+                    || name.includes('pump')
+                    || name.includes('bank')
+                ) {
+                    return 'pending';
+                }
+                return 'pending';
             }
 
-            if (paymentTypeIdSelect.selectedIndex > 0) {
+            function currentPaymentModeText() {
+                if (paymentModeIdEl && paymentModeIdEl.tagName === 'SELECT') {
+                    return (paymentModeIdEl.options[paymentModeIdEl.selectedIndex]?.text || '').trim();
+                }
+                if (paymentModeInput) {
+                    return (paymentModeInput.value || '').trim();
+                }
+                return '';
+            }
+
+            function isCashOrAdjustMode(modeText) {
+                const n = (modeText || '').trim().toLowerCase();
+                return n === 'cash' || n === 'adjust in advance';
+            }
+
+            function isBankOrFuelMode(modeText) {
+                const n = (modeText || '').trim().toLowerCase();
+                return n === 'online'
+                    || n === 'bank transfer'
+                    || n.includes('bank')
+                    || n === 'fuel'
+                    || n.includes('fuel')
+                    || n.includes('pump');
+            }
+
+            if (paymentModeIdEl && paymentModeIdEl.tagName === 'SELECT' && !lockPaymentMode) {
+                paymentModeIdEl.addEventListener('change', function() {
+                    const selectedOption = this.options[this.selectedIndex];
+                    const prevModeText = paymentModeInput ? paymentModeInput.value.trim() : '';
+                    const newModeText = selectedOption ? selectedOption.text.trim() : '';
+                    if (paymentModeInput && selectedOption) {
+                        paymentModeInput.value = newModeText;
+                    }
+                    if (paymentStatusSelect && selectedOption) {
+                        const cur = (paymentStatusSelect.value || '').toLowerCase();
+                        if (isCashOrAdjustMode(prevModeText) && isBankOrFuelMode(newModeText)) {
+                            if (cur === 'in-progress') {
+                                paymentStatusSelect.value = 'pending';
+                            }
+                        } else if (isBankOrFuelMode(prevModeText) && isCashOrAdjustMode(newModeText)) {
+                            if (cur === 'pending') {
+                                paymentStatusSelect.value = 'in-progress';
+                            }
+                        } else {
+                            paymentStatusSelect.value = defaultPaymentStatusForMode(newModeText);
+                        }
+                    }
+                    togglePumpDropdown();
+                });
+            }
+
+            if (paymentTypeIdSelect && paymentTypeInput) {
+                paymentTypeIdSelect.addEventListener('change', function() {
+                    const selectedOption = this.options[this.selectedIndex];
+                    paymentTypeInput.value = selectedOption.text;
+                });
+            }
+
+            if (paymentModeIdEl && paymentModeIdEl.tagName === 'SELECT' && paymentModeInput && paymentModeIdEl.selectedIndex > 0) {
+                paymentModeInput.value = paymentModeIdEl.options[paymentModeIdEl.selectedIndex].text.trim();
+            }
+
+            if (paymentTypeIdSelect && paymentTypeInput && paymentTypeIdSelect.selectedIndex > 0) {
                 paymentTypeInput.value = paymentTypeIdSelect.options[paymentTypeIdSelect.selectedIndex].text;
             }
 
             function togglePumpDropdown() {
-                const selectedText = paymentModeIdSelect.options[paymentModeIdSelect.selectedIndex]?.text
-                    .toLowerCase() || '';
+                if (!pumpDropdownContainer) return;
+                const selectedText = currentPaymentModeText().toLowerCase();
                 const currentPumpId = pumpSelect ? pumpSelect.value : '';
                 const hasExistingPump = @json($voucher_payment->pump_id != null);
 
-                // Show pump dropdown if:
-                // 1. Payment mode contains "fuel" or "pump" (e.g., "fuel", "fuel(paid to pump)"), OR
-                // 2. There's already a pump selected (for editing existing pump)
-                if (selectedText.includes('fuel') || selectedText.includes('pump') || hasExistingPump ||
-                    currentPumpId) {
+                if (selectedText.includes('fuel') || selectedText.includes('pump') || hasExistingPump || currentPumpId) {
                     pumpDropdownContainer.style.display = 'block';
                 } else {
-                    // Only hide if no pump is selected and payment mode doesn't require pump
                     if (!hasExistingPump && !currentPumpId) {
                         pumpDropdownContainer.style.display = 'none';
-                        if (pumpSelect) pumpSelect.value = ''; // Reset pump selection
+                        if (pumpSelect) pumpSelect.value = '';
                     } else {
-                        // Keep visible if there's an existing pump
                         pumpDropdownContainer.style.display = 'block';
                     }
                 }
             }
 
-            // Run on page load (for edit forms or validation errors)
             togglePumpDropdown();
         });
     </script>
 
-
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const paymentModeIdSelect = document.getElementById('payment_mode_id');
+            const paymentModeIdEl = document.getElementById('payment_mode_id');
+            const paymentModeInput = document.getElementById('payment_mode');
             const paymentStatusSelect = document.getElementById('payment_status');
             const paidOption = document.getElementById('paidOption');
+            const pendingOption = document.getElementById('pendingOption');
             const referenceBox = document.getElementById('reference_transaction_box');
             const referenceInput = document.getElementById('reference_transaction_id');
 
             const isAdmin = @json(auth()->user()->canActAsAdmin());
-            const dbStatus = @json($currentStatus); // ← value from DB like 'in-progress'
+            const dbStatus = @json($currentStatus);
+            const lockPaymentMode = @json($lockPaymentMode ?? false);
+
+            function modeLowerFromDom() {
+                if (paymentModeIdEl && paymentModeIdEl.tagName === 'SELECT') {
+                    const opt = paymentModeIdEl.options[paymentModeIdEl.selectedIndex];
+                    return (opt ? opt.text : '').trim().toLowerCase();
+                }
+                if (paymentModeInput) {
+                    return (paymentModeInput.value || '').trim().toLowerCase();
+                }
+                return '';
+            }
+
+            function isBankLikePaymentMode(modeLower) {
+                if (!modeLower) return false;
+                return modeLower === 'online'
+                    || modeLower === 'bank transfer'
+                    || modeLower.includes('bank')
+                    || modeLower.includes('fuel')
+                    || modeLower.includes('pump');
+            }
+
+            function applyPendingOptionRules() {
+                if (!paymentStatusSelect || !pendingOption) return;
+                const modeLower = modeLowerFromDom();
+                const cashOrAdjust = modeLower === 'cash' || modeLower === 'adjust in advance';
+                const statusVal = (paymentStatusSelect.value || '').toLowerCase();
+                const bankFuelCannotUsePending = isBankLikePaymentMode(modeLower)
+                    && (statusVal === 'in-progress' || dbStatus === 'in-progress');
+                const hidePending = cashOrAdjust || bankFuelCannotUsePending;
+                pendingOption.disabled = hidePending;
+                pendingOption.hidden = hidePending;
+                if (hidePending && paymentStatusSelect.value === 'pending') {
+                    paymentStatusSelect.value = 'in-progress';
+                }
+            }
 
             function updateStatusOptionsAndReferenceBox() {
-                const selectedOption = paymentModeIdSelect.options[paymentModeIdSelect.selectedIndex];
-                const selectedMode = selectedOption ? selectedOption.text.toLowerCase() : '';
+                if (!paymentStatusSelect) {
+                    return;
+                }
+                const selectedMode = modeLowerFromDom();
                 const selectedStatus = paymentStatusSelect.value.toLowerCase();
 
-                console.log("Selected Payment Mode:", selectedMode);
-                console.log("Selected Payment Status:", selectedStatus);
-                console.log("DB Status:", dbStatus);
+                applyPendingOptionRules();
 
-                if (['bank', 'online', 'fuel'].includes(selectedMode)) {
-                    // Show Paid only if DB value is in-progress
+                if (isBankLikePaymentMode(selectedMode)) {
                     if (dbStatus === 'in-progress') {
                         if (paidOption) paidOption.style.display = 'block';
                     } else {
                         if (paidOption) paidOption.style.display = 'none';
-
-                        // If currently selected is "paid", but it's hidden, reset
                         if (paymentStatusSelect.value === 'paid') {
                             paymentStatusSelect.value = 'pending';
                         }
                     }
 
-                    // Reference box for in-progress only
-                    if (isAdmin && selectedStatus === 'in-progress' || selectedStatus === 'paid') {
-                        referenceBox.style.display = 'block';
+                    if (isAdmin && (selectedStatus === 'in-progress' || selectedStatus === 'paid')) {
+                        if (referenceBox) referenceBox.style.display = 'block';
                     } else {
-                        referenceBox.style.display = 'none';
+                        if (referenceBox) referenceBox.style.display = 'none';
                         if (referenceInput) referenceInput.value = '';
                     }
-
                 } else {
                     if (paidOption) paidOption.style.display = 'block';
-                    referenceBox.style.display = 'none';
+                    if (referenceBox) referenceBox.style.display = 'none';
                     if (referenceInput) referenceInput.value = '';
                 }
             }
 
-            paymentModeIdSelect.addEventListener('change', updateStatusOptionsAndReferenceBox);
-            paymentStatusSelect.addEventListener('change', updateStatusOptionsAndReferenceBox);
-            updateStatusOptionsAndReferenceBox(); // run once on page load
+            if (paymentModeIdEl && paymentModeIdEl.tagName === 'SELECT' && !lockPaymentMode) {
+                paymentModeIdEl.addEventListener('change', updateStatusOptionsAndReferenceBox);
+            }
+            if (paymentStatusSelect) {
+                paymentStatusSelect.addEventListener('change', updateStatusOptionsAndReferenceBox);
+            }
+            updateStatusOptionsAndReferenceBox();
         });
     </script>

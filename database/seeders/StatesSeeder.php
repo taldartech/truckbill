@@ -10,19 +10,34 @@ class StatesSeeder extends Seeder
     public function run(): void
     {
         $india = DB::table('countries')->where('name', 'India')->first();
-        
-        // Check if states already exist before inserting
-        $states = ['Rajasthan', 'Gujarat'];
-        
-        foreach ($states as $stateName) {
-            $existingState = DB::table('states')->where('name', $stateName)->first();
-            
-            if (!$existingState) {
+        if ($india === null) {
+            $this->command?->warn('India country not found. Run CountriesSeeder first.');
+
+            return;
+        }
+
+        $now = now();
+
+        foreach (IndiaGeoData::statesWithDistricts() as $row) {
+            $existing = DB::table('states')
+                ->where('country_id', $india->id)
+                ->where('name', $row['name'])
+                ->first();
+
+            if ($existing) {
+                DB::table('states')
+                    ->where('id', $existing->id)
+                    ->update([
+                        'code' => $row['code'],
+                        'updated_at' => $now,
+                    ]);
+            } else {
                 DB::table('states')->insert([
                     'country_id' => $india->id,
-                    'name' => $stateName,
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'name' => $row['name'],
+                    'code' => $row['code'],
+                    'created_at' => $now,
+                    'updated_at' => $now,
                 ]);
             }
         }
