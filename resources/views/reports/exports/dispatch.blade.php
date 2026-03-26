@@ -114,7 +114,7 @@
 
                 <td>{{ $diff ?? 0 }}</td>
                 <td>{{ $lr->memo_id ?? '-' }}</td>
-                <td>{{ $invoice->invoice_number ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '') : ($invoice->manual_invoice_number ?? $invoice->id) }}</td>
+                <td>{{ @$invoice->invoice_number ? @$invoice->invoice_number . (@$invoice->manual_invoice_number ? ' (' . @$invoice->manual_invoice_number . ')' : '') : (@$invoice->manual_invoice_number ?? @$invoice->id) }}</td>
                 <td>{{ $lr->truck?->driver?->name ?? '-' }}</td>
                 <td>{{ $lr->transporter->name ?? '-' }}</td>
                 <td>{{ $lr->reference?->name ?? '-' }}</td>
