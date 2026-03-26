@@ -52,6 +52,10 @@ class InvoiceController extends Controller
             $invoices->where('manual_invoice_number', 'like', '%' . $request->manual_invoice_number . '%');
         }
 
+        if ($request->has('invoice_number') && !empty($request->invoice_number)) {
+            $invoices->where('invoice_number', 'like', '%' . $request->invoice_number . '%');
+        }
+
         if ($request->has('customer') && !empty($request->customer)) {
             $invoices->whereHas('consignee', function ($q) use ($request) {
                 $q->where('name', 'like', '%' . $request->customer . '%');
@@ -370,6 +374,7 @@ class InvoiceController extends Controller
 
             return response()->json([
                 'id' => $invoice->id,
+                'invoice_number' => $invoice->invoice_number,
                 'manual_invoice_number' => $invoice->manual_invoice_number,
                 'invoice_type' => $invoice->invoice_type,
                 'generated_date' => $invoice->generated_date,
@@ -542,7 +547,7 @@ class InvoiceController extends Controller
         $this->ensureCompanyContext();
         $invoices = Invoice::where('company_id', Auth::user()->company_id)
             ->orderByDesc('id')
-            ->get(['id', 'manual_invoice_number']);
+            ->get(['id', 'manual_invoice_number', 'invoice_number']);
 
         return response()->json($invoices);
     }
@@ -562,6 +567,7 @@ class InvoiceController extends Controller
     {
         $this->ensureCompanyContext();
         $manualNumber = trim((string) $request->input('manual_invoice_number', ''));
+        $invoiceNumber = trim((string) $request->input('invoice_number', ''));
         $invoiceId = $request->input('invoice_id'); // Get invoice ID if editing
         $companyId = Auth::user()->company_id;
 

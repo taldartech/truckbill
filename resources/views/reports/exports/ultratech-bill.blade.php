@@ -42,7 +42,7 @@
         <td style="font-weight: bold;" colspan="3">{{ $invoice->consignee->address . ', ' . $invoice->consignee->city->name . ', ' . $invoice->consignee->state->name }}</td>
         <td colspan="6"></td>
         <td style="font-weight: bold;">Bill No.:</td>
-        <td style="font-weight: bold;" colspan="3">{{ $invoice->manual_invoice_number }}</td>
+        <td style="font-weight: bold;" colspan="3">{{ $invoice->invoice_number ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '') : ($invoice->manual_invoice_number ?? $invoice->id) }}</td>
     </tr>
     <tr>
         <td colspan="3">GSTIN: {{ $invoice->consignee->gst_number }}</td>

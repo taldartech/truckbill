@@ -48,7 +48,7 @@
                     $gst = 0;
                 }
             @endphp
-            <td>{{ $invoice->manual_invoice_number }}</td>
+            <td>{{ $invoice->invoice_number ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '') : ($invoice->manual_invoice_number ?? $invoice->id) }}</td>
             <td>{{ $invoice->generated_date }}</td>
             <td>{{ $lr->amount + ($lr->amount * $gst) / 100 }}</td>
             <td>{{ $invoice->payment_status }}</td>

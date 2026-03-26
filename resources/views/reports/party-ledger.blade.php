@@ -155,7 +155,7 @@
                                         $gst = 0;
                                     }
                                 @endphp
-                                <td>{{ $invoice->manual_invoice_number }}</td>
+                                <td>{{ $invoice->invoice_number ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '') : ($invoice->manual_invoice_number ?? $invoice->id) }}</td>
                                 <td style="white-space: nowrap;">
                                     {{ $invoice->generated_date ? \Carbon\Carbon::parse($invoice->generated_date)->format('d-m-Y') : 'N/A' }}
                                 </td>

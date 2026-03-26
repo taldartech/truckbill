@@ -1013,7 +1013,18 @@ class ReportController extends Controller
                     ->setOption('isHtml5ParserEnabled', true)
                     ->setOption('isRemoteEnabled', true);
 
-                return $pdf->stream('party_bill_' . ($invoice->manual_invoice_number ?? $invoice->id) . '.pdf');
+                $invoiceIdentifier = $invoice->invoice_number
+                    ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '')
+                    : ($invoice->manual_invoice_number ?? $invoice->id);
+
+                $safeInvoiceIdentifier = preg_replace('/[\\\\\/]+/', '-', (string) $invoiceIdentifier) ?? (string) $invoice->id;
+                $safeInvoiceIdentifier = trim($safeInvoiceIdentifier);
+
+                if ($safeInvoiceIdentifier === '') {
+                    $safeInvoiceIdentifier = (string) $invoice->id;
+                }
+
+                return $pdf->stream('party_bill_' . $safeInvoiceIdentifier . '.pdf');
             } else {
                 // Existing Excel export
                 return Excel::download(new PartyBillExport($id), 'party_bill.xlsx');

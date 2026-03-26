@@ -48,7 +48,7 @@ class InvoiceExport implements FromCollection, WithHeadings, ShouldAutoSize, Wit
                 'Sr No' => $index + 1,
                 'GSTIN/UIN of Recipient' => $invoice->consignee->gst_number ?? 'N/A',
                 'Receiver' => $invoice->consignee->name ?? 'N/A',
-                'Invoice No' => $invoice->manual_invoice_number ?? 'N/A',
+                'Invoice No' =>  $invoice->invoice_number ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '') : ($invoice->manual_invoice_number ?? $invoice->id),
                 'Date' => Date::dateTimeToExcel(new Carbon($invoice->generated_date)),
                 'Amount' => (float) $amountToCollect,
                 'State' => $invoice->consignee->state->name ?? 'N/A',

@@ -2,7 +2,12 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Party Bill - {{ $invoice->manual_invoice_number }}</title>
+    {{-- <title>Party Bill - {{ $invoice->manual_invoice_number }}</title> --}}
+    <title>Party Bill - {{ 
+        $invoice->invoice_number 
+            ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '') 
+            : ($invoice->manual_invoice_number ?? $invoice->id) 
+    }}</title>
     <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="192x192"  href="{{ asset('favicon/android-icon-192x192.png') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('favicon/apple-touch-icon.png') }}">

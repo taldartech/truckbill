@@ -85,7 +85,7 @@
                                 <td>{{ $index + 1 }}</td>
                                 <td>{{ $invoice->consignee->gst_number }}</td>
                                 <td>{{ $invoice->consignee->name }}</td>
-                                <td>{{ $invoice->manual_invoice_number }}</td>
+                                <td>{{ $invoice->invoice_number ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '') : ($invoice->manual_invoice_number ?? $invoice->id) }}</td>
                                 <td style="white-space: nowrap;">
                                     {{ \Carbon\Carbon::parse($invoice->generated_date)->format('d-m-Y') }}
                                 </td>
