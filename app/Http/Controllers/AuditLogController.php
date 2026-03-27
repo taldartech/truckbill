@@ -68,12 +68,80 @@ class AuditLogController extends Controller
                 $lrIdsQuery->where('company_id', $companyId);
             }
             $lrIds = $lrIdsQuery->pluck('id');
+            $freightBookingIds = collect();
+            $voucherPaymentIds = collect();
+            $invoiceIds = collect();
+            $invoicePaymentIds = collect();
 
-            $query->where(function ($q) use ($lrIds, $lrNumber): void {
+            if ($lrIds->isNotEmpty()) {
+                $freightBookingIds = FreightBooking::query()
+                    ->whereIn('lr_id', $lrIds)
+                    ->when(! empty($companyId), function ($q) use ($companyId): void {
+                        $q->where('company_id', $companyId);
+                    })
+                    ->pluck('id');
+
+                if ($freightBookingIds->isNotEmpty()) {
+                    $voucherPaymentIds = VoucherPayment::query()
+                        ->whereIn('freight_booking_id', $freightBookingIds)
+                        ->when(! empty($companyId), function ($q) use ($companyId): void {
+                            $q->where('company_id', $companyId);
+                        })
+                        ->pluck('id');
+                }
+
+                $invoiceIdsQuery = Invoice::query();
+                if (! empty($companyId)) {
+                    $invoiceIdsQuery->where('company_id', $companyId);
+                }
+                $invoiceIdsQuery->where(function ($invoiceQuery) use ($lrIds): void {
+                    foreach ($lrIds as $lrId) {
+                        $invoiceQuery->orWhereJsonContains('lr_ids', (int) $lrId)
+                            ->orWhereJsonContains('lr_ids', (string) $lrId);
+                    }
+                });
+                $invoiceIds = $invoiceIdsQuery->pluck('id');
+
+                if ($invoiceIds->isNotEmpty()) {
+                    $invoicePaymentIds = InvoicePayment::query()
+                        ->whereIn('invoice_id', $invoiceIds)
+                        ->pluck('id');
+                }
+            }
+
+            $query->where(function ($q) use ($lrIds, $freightBookingIds, $voucherPaymentIds, $invoiceIds, $invoicePaymentIds, $lrNumber): void {
                 if ($lrIds->isNotEmpty()) {
                     $q->where(function ($q2) use ($lrIds): void {
                         $q2->where('subject_type', LorryReceipt::class)
                             ->whereIn('subject_id', $lrIds);
+                    });
+                }
+
+                if ($freightBookingIds->isNotEmpty()) {
+                    $q->orWhere(function ($q2) use ($freightBookingIds): void {
+                        $q2->where('subject_type', FreightBooking::class)
+                            ->whereIn('subject_id', $freightBookingIds);
+                    });
+                }
+
+                if ($voucherPaymentIds->isNotEmpty()) {
+                    $q->orWhere(function ($q2) use ($voucherPaymentIds): void {
+                        $q2->where('subject_type', VoucherPayment::class)
+                            ->whereIn('subject_id', $voucherPaymentIds);
+                    });
+                }
+
+                if ($invoiceIds->isNotEmpty()) {
+                    $q->orWhere(function ($q2) use ($invoiceIds): void {
+                        $q2->where('subject_type', Invoice::class)
+                            ->whereIn('subject_id', $invoiceIds);
+                    });
+                }
+
+                if ($invoicePaymentIds->isNotEmpty()) {
+                    $q->orWhere(function ($q2) use ($invoicePaymentIds): void {
+                        $q2->where('subject_type', InvoicePayment::class)
+                            ->whereIn('subject_id', $invoicePaymentIds);
                     });
                 }
 
