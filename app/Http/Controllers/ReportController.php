@@ -953,6 +953,13 @@ class ReportController extends Controller
 
         $id = $request->input('invoice_number');
         $exportType = $request->input('type', 'excel');
+        $templateKey = (string) $request->input('template_key', 'classic');
+        $resolvedTemplateKey = match ($templateKey) {
+            'modern' => 'modern',
+            'compact' => 'compact',
+            'classic' => 'classic',
+            default => 'classic',
+        };
 
         try {
             if ($exportType === 'pdf') {
@@ -998,7 +1005,13 @@ class ReportController extends Controller
                 }
                 $totalAmount = $baseAmount;
 
-                $html = view('reports.exports.party-bill-pdf', compact(
+                $templateView = match ($resolvedTemplateKey) {
+                    'modern' => 'reports.exports.party-bill-pdf-modern',
+                    'compact' => 'reports.exports.party-bill-pdf-compact',
+                    default => 'reports.exports.party-bill-pdf',
+                };
+
+                $html = view($templateView, compact(
                     'invoice',
                     'lrs',
                     'customDetails',
