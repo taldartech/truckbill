@@ -1,13 +1,15 @@
 <?php
 namespace App\Models;
 
+use App\Contracts\Auditable;
+use App\Models\Concerns\HasHybridAuditLog;
 use App\Models\Traits\TracksUser;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Invoice extends Model
+class Invoice extends Model implements Auditable
 {
-    use HasFactory, TracksUser;
+    use HasFactory, HasHybridAuditLog, TracksUser;
 
     protected $fillable = [
         'invoice_number',
@@ -72,5 +74,38 @@ class Invoice extends Model
         $amountToCollect = $this->net_amount ?? $this->total_amount;
 
         return max(0, $amountToCollect - $this->paid_amount);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function auditTrackedAttributes(): array
+    {
+        return [
+            'invoice_number',
+            'manual_invoice_number',
+            'invoice_type',
+            'total_amount',
+            'net_amount',
+            'base_amount',
+            'payment_status',
+            'customer_id',
+            'generated_date',
+            'memo_ids',
+            'lr_ids',
+            'sgst',
+            'cgst',
+            'igst',
+        ];
+    }
+
+    public function auditSubjectLabel(): string
+    {
+        return (string) ($this->invoice_number ?? '#'.$this->id);
+    }
+
+    public function auditSubjectTypeName(): string
+    {
+        return 'Invoice';
     }
 }

@@ -1,15 +1,17 @@
 <?php
 namespace App\Models;
 
+use App\Contracts\Auditable;
+use App\Models\Concerns\HasHybridAuditLog;
 use App\Models\Traits\TracksUser;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Transporter;
 
-class VoucherPayment extends Model
+class VoucherPayment extends Model implements Auditable
 {
-    use HasFactory, SoftDeletes, TracksUser;
+    use HasFactory, HasHybridAuditLog, SoftDeletes, TracksUser;
 
     protected $fillable = [
         'freight_booking_id',
@@ -92,5 +94,31 @@ class VoucherPayment extends Model
         } else {
             return '<span class="badge bg-primary"><i class="bi bi-building"></i> ' . e($name) . '</span>';
         }
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function auditTrackedAttributes(): array
+    {
+        return [
+            'amount',
+            'payment_status',
+            'payment_mode',
+            'payment_type',
+            'remark',
+            'date',
+            'voucher_number',
+        ];
+    }
+
+    public function auditSubjectLabel(): string
+    {
+        return (string) ($this->voucher_number ?? 'Voucher payment #'.$this->id);
+    }
+
+    public function auditSubjectTypeName(): string
+    {
+        return 'Voucher payment';
     }
 }

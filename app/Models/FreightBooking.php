@@ -1,13 +1,15 @@
 <?php
 namespace App\Models;
 
+use App\Contracts\Auditable;
+use App\Models\Concerns\HasHybridAuditLog;
 use App\Models\Traits\TracksUser;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class FreightBooking extends Model
+class FreightBooking extends Model implements Auditable
 {
-    use HasFactory, TracksUser;
+    use HasFactory, HasHybridAuditLog, TracksUser;
 
     protected $fillable = [
         'lr_id',
@@ -132,5 +134,40 @@ class FreightBooking extends Model
 
         // If current date is before submission date, TDS can be changed
         return \Carbon\Carbon::now()->lt($submissionDate);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function auditTrackedAttributes(): array
+    {
+        return [
+            'tr_amount',
+            'advance_amount',
+            'balance_amount',
+            'tds_amount',
+            'is_delivered',
+            'is_cancelled',
+            'voucher_number',
+            'remark',
+            'eway_bill_number',
+            'eway_bill_expiry',
+            'tr_fr_rate',
+            'shortage_amount',
+            'damage_amount',
+        ];
+    }
+
+    public function auditSubjectLabel(): string
+    {
+        $lr = $this->relationLoaded('lr') ? $this->lr : $this->lr()->first();
+        $lrNo = $lr?->lr_number;
+
+        return $lrNo ? "FB for LR {$lrNo}" : 'Freight booking #'.$this->id;
+    }
+
+    public function auditSubjectTypeName(): string
+    {
+        return 'Freight booking';
     }
 }

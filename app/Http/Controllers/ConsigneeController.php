@@ -5,7 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Consignee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Database\QueryException;
 
 class ConsigneeController extends Controller
 {
@@ -194,7 +195,7 @@ class ConsigneeController extends Controller
     public function store(Request $request)
     {
         $this->ensureCompanyContext();
-        \Log::info('Current user company_id: ' . auth()->user()->company_id);
+        Log::info('Current user company_id: ' . auth()->user()->company_id);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -259,19 +260,21 @@ class ConsigneeController extends Controller
             ],
 
         ]);
+        $validated = $this->normalizeConsigneeValues($validated);
         $this->validateConsigneeUniquenessCreate($validated, auth()->user()->company_id);
-
-
-        if (!empty($validated['pan_number'])) {
-            $validated['pan_number'] = strtoupper($validated['pan_number']);
-        }
-        if (!empty($validated['gst_number'])) {
-            $validated['gst_number'] = strtoupper($validated['gst_number']);
-        }
 
         $validated['company_id'] = auth()->user()->company_id;
 
-        $consignee = Consignee::create($validated);
+        try {
+            $consignee = Consignee::create($validated);
+        } catch (QueryException $exception) {
+            if ($this->isConsigneeUniqueConstraintError($exception)) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'pan_number' => 'This PAN number is already used by another consignee in your company.',
+                ]);
+            }
+            throw $exception;
+        }
         return redirect()->route('consignees.index')
             ->with('success', 'Consignee created successfully!');
     }
@@ -294,6 +297,20 @@ class ConsigneeController extends Controller
         if (!empty($data['email'])) {
             if ($query->clone()->where('email', $data['email'])->exists()) {
                 $errors['email'] = 'This email is already used by another consignee in your company.';
+            }
+        }
+
+        // Check GST number
+        if (!empty($data['gst_number'])) {
+            if ($query->clone()->where('gst_number', $data['gst_number'])->exists()) {
+                $errors['gst_number'] = 'This GST number is already used by another consignee in your company.';
+            }
+        }
+
+        // Check PAN number
+        if (!empty($data['pan_number'])) {
+            if ($query->clone()->where('pan_number', $data['pan_number'])->exists()) {
+                $errors['pan_number'] = 'This PAN number is already used by another consignee in your company.';
             }
         }
 
@@ -379,14 +396,8 @@ class ConsigneeController extends Controller
 
             ],
         ]);
+        $validated = $this->normalizeConsigneeValues($validated);
         $this->validateConsigneeUniquenessUpdate($validated, $consignee->company_id, $consignee->id);
-
-        if (!empty($validated['pan_number'])) {
-            $validated['pan_number'] = strtoupper($validated['pan_number']);
-        }
-        if (!empty($validated['gst_number'])) {
-            $validated['gst_number'] = strtoupper($validated['gst_number']);
-        }
 
         $consignee->update($validated);
         return redirect()->route('consignees.index')
@@ -434,6 +445,31 @@ class ConsigneeController extends Controller
         }
     }
 
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function normalizeConsigneeValues(array $data): array
+    {
+        if (!empty($data['pan_number'])) {
+            $data['pan_number'] = strtoupper((string) $data['pan_number']);
+        }
+        if (!empty($data['gst_number'])) {
+            $data['gst_number'] = strtoupper((string) $data['gst_number']);
+        }
+
+        return $data;
+    }
+
+    private function isConsigneeUniqueConstraintError(QueryException $exception): bool
+    {
+        $errorCode = (string) ($exception->errorInfo[1] ?? '');
+        $message = $exception->getMessage();
+
+        return $errorCode === '1062'
+            && str_contains($message, 'consignees_company_pan_unique');
+    }
+
 
     public function destroy(Consignee $consignee)
     {
@@ -479,7 +515,7 @@ class ConsigneeController extends Controller
                 'updated_at' => \Carbon\Carbon::parse($consignee->updated_at)->setTimezone('Asia/Kolkata')->format('d M Y, h:i A') ?: 'Not available'
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error fetching consignee: ' . $e->getMessage());
+            Log::error('Error fetching consignee: ' . $e->getMessage());
             return response()->json(['error' => 'Consignee not found'], 404);
         }
     }

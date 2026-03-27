@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Contracts\Auditable;
+use App\Models\Concerns\HasHybridAuditLog;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Truck;
@@ -10,9 +12,9 @@ use App\Models\Consignee;
 use App\Models\Company;
 use App\Models\Traits\TracksUser;
 
-class LorryReceipt extends Model
+class LorryReceipt extends Model implements Auditable
 {
-    use SoftDeletes, TracksUser;
+    use HasHybridAuditLog, SoftDeletes, TracksUser;
     protected $fillable = [
         'truck_id',
         'transporter_id',
@@ -110,4 +112,36 @@ class LorryReceipt extends Model
     }
     public function customer() { return $this->belongsTo(Consignee::class, 'customer_id')->withTrashed(); }
     public function reference() { return $this->belongsTo(Transporter::class, 'reference_by')->withTrashed(); }
+
+    /**
+     * @return list<string>
+     */
+    public function auditTrackedAttributes(): array
+    {
+        return [
+            'lr_number',
+            'delivery_status',
+            'amount',
+            'actual_amount',
+            'memo_id',
+            'weight',
+            'unloading_weight',
+            'consignee_id',
+            'consignor_id',
+            'transporter_id',
+            'gr_date',
+            'goods_value',
+            'fr_rate',
+        ];
+    }
+
+    public function auditSubjectLabel(): string
+    {
+        return (string) ($this->lr_number ?? 'LR #'.$this->id);
+    }
+
+    public function auditSubjectTypeName(): string
+    {
+        return 'Lorry receipt';
+    }
 }

@@ -24,6 +24,7 @@ use App\Http\Controllers\BranchController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PromoCodeController;
 use App\Http\Controllers\TransporterDashboardController;
+use App\Http\Controllers\AuditLogController;
 
 // Protected Routes
 Route::middleware(['auth.blocked'])->group(function () {
@@ -296,6 +297,11 @@ Route::middleware(['auth.blocked'])->group(function () {
         Route::get('/transporter-master', [ReportController::class, 'transporter_master'])->name('reports.transporter-master');
         Route::get('/transporter-master-export', [ReportController::class, 'transporter_master_export'])->name('reports.transporter-master-export');
     });
+
+    Route::middleware(['role:super_admin'])->group(function () {
+        Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+    });
+
     Route::get('/voucher-receipt-export', [ReportController::class, 'voucher_receipt_export'])->name('reports.voucher-receipt-export');
 });
 

@@ -469,6 +469,15 @@
                             </a>
 
                         </li>
+                        @if (auth()->check() && auth()->user()->userRole->name === 'super_admin')
+                            <li class="nav-item">
+                                <a href="{{ route('audit-logs.index') }}"
+                                    class="nav-link{{ Request::is('audit-logs') ? ' active' : '' }}">
+                                    <i class="nav-icon fas fa-history"></i>
+                                    <p>Audit log</p>
+                                </a>
+                            </li>
+                        @endif
                         @if (auth()->check() && auth()->user()->userRole->name === 'transporter')
                             <li class="nav-item">
                                 <a href="{{ route('transporter.freight_bookings.index') }}" class="nav-link{{ Request::is('transporter/freight-bookings*') ? ' active' : '' }}">
