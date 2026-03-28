@@ -16,6 +16,25 @@
         @endif
         <!--begin::Body-->
         <div class="card-body">
+            <style>
+                .invoice-preview-col {
+                    border-radius: 8px;
+                    padding: 6px;
+                    transition: box-shadow .15s ease, border-color .15s ease;
+                    border: 2px solid transparent;
+                }
+                .invoice-preview-col.is-selected {
+                    border-color: var(--bs-primary);
+                    box-shadow: 0 0 0 1px rgba(13, 110, 253, .2);
+                }
+                .invoice-preview-frame iframe {
+                    display: block;
+                    width: 100%;
+                    height: 420px;
+                    border: 0;
+                    background: #fff;
+                }
+            </style>
             <!--begin::Row-->
             <div class="row g-3">
                 <!--begin::Col-->
@@ -173,6 +192,96 @@
                 </div>
                 <!--end::Col-->
                 <div class="col-md-6">
+                    <label for="invoice_template" class="form-label">Invoice Template</label>
+                    <select class="form-select" id="invoice_template" name="invoice_template" required>
+                        <option value="classic" {{ old('invoice_template', 'classic') == 'classic' ? 'selected' : '' }}>A (Classic)</option>
+                        <option value="modern" {{ old('invoice_template') == 'modern' ? 'selected' : '' }}>B (Modern)</option>
+                        <option value="compact" {{ old('invoice_template') == 'compact' ? 'selected' : '' }}>C (Compact)</option>
+                    </select>
+                    @error('invoice_template') <div class="text-danger">{{ $message }}</div> @enderror
+                    <div class="valid-feedback">Looks good!</div>
+                </div>
+                <!--end::Col-->
+                <div class="col-12">
+                    <div class="border rounded-3 p-3 mb-3 bg-body-secondary bg-opacity-25">
+                        <div class="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-1">
+                            <div>
+                                <span class="fw-semibold text-dark d-block">
+                                    <i class="bi bi-file-earmark-pdf text-danger me-1"></i>
+                                    Party Bill — invoice format (demo preview)
+                                </span>
+                                <p class="small text-muted mb-0 mt-2">
+                                    Demo invoice before you save. <strong>View PDF</strong> uses the same engine as Party Bill export (full PDF in the browser).
+                                    <strong>View full page</strong> opens the HTML preview in a new tab. Company fields above update both links.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3" id="invoiceTemplatePreviewRow">
+                        <div class="col-12 col-lg-4 invoice-preview-col" data-template-key="classic">
+                            <div class="invoice-preview-frame border rounded overflow-hidden bg-light">
+                                <iframe class="invoice-demo-iframe" data-template="classic" title="Classic invoice preview" loading="lazy"
+                                    src="{{ route('invoice.template.demo', ['template' => 'classic', 'name' => old('name', 'Your Company'), 'address' => old('address', 'Sample address'), 'pin_code' => old('pin_code', '314002')]) }}"></iframe>
+                            </div>
+                            <div class="small fw-semibold mt-2">A (Classic)</div>
+                            <a href="{{ route('invoice.template.demo', ['template' => 'classic', 'format' => 'pdf', 'name' => old('name', 'Your Company'), 'address' => old('address', 'Sample address'), 'pin_code' => old('pin_code', '314002')]) }}"
+                               data-template="classic"
+                               target="_blank" rel="noopener noreferrer"
+                               class="btn btn-sm btn-danger w-100 mt-2 invoice-open-pdf-demo">
+                                <i class="bi bi-file-earmark-pdf me-1"></i> View PDF
+                            </a>
+                            {{-- <a href="{{ route('invoice.template.demo', ['template' => 'classic', 'name' => old('name', 'Your Company'), 'address' => old('address', 'Sample address'), 'pin_code' => old('pin_code', '314002')]) }}"
+                               data-template="classic"
+                               target="_blank" rel="noopener noreferrer"
+                               class="btn btn-sm btn-outline-secondary w-100 mt-1 invoice-open-full-demo">
+                                <i class="bi bi-window me-1"></i> View full page
+                            </a> --}}
+                        </div>
+                        <div class="col-12 col-lg-4 invoice-preview-col" data-template-key="modern">
+                            <div class="invoice-preview-frame border rounded overflow-hidden bg-light">
+                                <iframe class="invoice-demo-iframe" data-template="modern" title="Modern invoice preview" loading="lazy"
+                                    src="{{ route('invoice.template.demo', ['template' => 'modern', 'name' => old('name', 'Your Company'), 'address' => old('address', 'Sample address'), 'pin_code' => old('pin_code', '314002')]) }}"></iframe>
+                            </div>
+                            <div class="small fw-semibold mt-2">B (Modern)</div>
+                            <a href="{{ route('invoice.template.demo', ['template' => 'modern', 'format' => 'pdf', 'name' => old('name', 'Your Company'), 'address' => old('address', 'Sample address'), 'pin_code' => old('pin_code', '314002')]) }}"
+                               data-template="modern"
+                               target="_blank" rel="noopener noreferrer"
+                               class="btn btn-sm btn-danger w-100 mt-2 invoice-open-pdf-demo">
+                                <i class="bi bi-file-earmark-pdf me-1"></i> View PDF
+                            </a>
+                            {{-- <a href="{{ route('invoice.template.demo', ['template' => 'modern', 'name' => old('name', 'Your Company'), 'address' => old('address', 'Sample address'), 'pin_code' => old('pin_code', '314002')]) }}"
+                               data-template="modern"
+                               target="_blank" rel="noopener noreferrer"
+                               class="btn btn-sm btn-outline-secondary w-100 mt-1 invoice-open-full-demo">
+                                <i class="bi bi-window me-1"></i> View full page
+                            </a> --}}
+                        </div>
+                        <div class="col-12 col-lg-4 invoice-preview-col" data-template-key="compact">
+                            <div class="invoice-preview-frame border rounded overflow-hidden bg-light">
+                                <iframe class="invoice-demo-iframe" data-template="compact" title="Compact invoice preview" loading="lazy"
+                                    src="{{ route('invoice.template.demo', ['template' => 'compact', 'name' => old('name', 'Your Company'), 'address' => old('address', 'Sample address'), 'pin_code' => old('pin_code', '314002')]) }}"></iframe>
+                            </div>
+                            <div class="small fw-semibold mt-2">C (Compact)</div>
+                            <a href="{{ route('invoice.template.demo', ['template' => 'compact', 'format' => 'pdf', 'name' => old('name', 'Your Company'), 'address' => old('address', 'Sample address'), 'pin_code' => old('pin_code', '314002')]) }}"
+                               data-template="compact"
+                               target="_blank" rel="noopener noreferrer"
+                               class="btn btn-sm btn-danger w-100 mt-2 invoice-open-pdf-demo">
+                                <i class="bi bi-file-earmark-pdf me-1"></i> View PDF
+                            </a>
+                            {{-- <a href="{{ route('invoice.template.demo', ['template' => 'compact', 'name' => old('name', 'Your Company'), 'address' => old('address', 'Sample address'), 'pin_code' => old('pin_code', '314002')]) }}"
+                               data-template="compact"
+                               target="_blank" rel="noopener noreferrer"
+                               class="btn btn-sm btn-outline-secondary w-100 mt-1 invoice-open-full-demo">
+                                <i class="bi bi-window me-1"></i> View full page
+                            </a> --}}
+                        </div>
+                    </div>
+                    <small class="text-muted d-block mt-3">
+                        <strong>Tip:</strong> The selected template highlights the matching column; click a column to select it. The iframe refreshes when you change name, address, or other company fields.
+                    </small>
+                </div>
+                <!--end::Col-->
+                <div class="col-md-6">
                     <label for="company_logo" class="form-label">Company Logo</label>
                     <input type="file" class="form-control" id="company_logo" name="company_logo">
                     @error('company_logo') <div class="text-danger">{{ $message }}</div> @enderror
@@ -291,42 +400,109 @@
         document.addEventListener('DOMContentLoaded', function() {
             const nameInput = document.getElementById('name');
             const shortNameInput = document.getElementById('short_name');
-            if (!nameInput || !shortNameInput) {
-                return;
-            }
-
-            let userEditedShortName = !!(shortNameInput.value && shortNameInput.value.trim().length > 0);
-            if (shortNameInput.value && !userEditedShortName) {
-                userEditedShortName = false;
-            }
-
-            // Initial preview
-            shortNameInput.value = normalizeShortName(shortNameInput.value);
-            updateInvoicePreview();
-
-            // If short_name is empty (e.g., first load), generate from company name.
-            if (!shortNameInput.value) {
-                const generated = generateShortNameFromCompanyName(nameInput.value);
-                shortNameInput.value = normalizeShortName(generated);
-                updateInvoicePreview();
-            }
-
-            // Auto-generate when typing company name (until user manually edits short_name)
-            nameInput.addEventListener('input', function() {
-                if (userEditedShortName) {
-                    return;
+            if (nameInput && shortNameInput) {
+                let userEditedShortName = !!(shortNameInput.value && shortNameInput.value.trim().length > 0);
+                if (shortNameInput.value && !userEditedShortName) {
+                    userEditedShortName = false;
                 }
 
-                const generated = generateShortNameFromCompanyName(nameInput.value);
-                shortNameInput.value = normalizeShortName(generated);
-                updateInvoicePreview();
-            });
-
-            // When user changes short_name, stop overriding it
-            shortNameInput.addEventListener('input', function() {
-                userEditedShortName = true;
                 shortNameInput.value = normalizeShortName(shortNameInput.value);
                 updateInvoicePreview();
+
+                if (!shortNameInput.value) {
+                    const generated = generateShortNameFromCompanyName(nameInput.value);
+                    shortNameInput.value = normalizeShortName(generated);
+                    updateInvoicePreview();
+                }
+
+                nameInput.addEventListener('input', function() {
+                    if (userEditedShortName) {
+                        return;
+                    }
+                    const generated = generateShortNameFromCompanyName(nameInput.value);
+                    shortNameInput.value = normalizeShortName(generated);
+                    updateInvoicePreview();
+                });
+
+                shortNameInput.addEventListener('input', function() {
+                    userEditedShortName = true;
+                    shortNameInput.value = normalizeShortName(shortNameInput.value);
+                    updateInvoicePreview();
+                });
+            }
+
+            const invoiceTemplateSelect = document.getElementById('invoice_template');
+            const previewCols = Array.from(document.querySelectorAll('#invoiceTemplatePreviewRow .invoice-preview-col'));
+            const demoDemoUrl = @json(route('invoice.template.demo'));
+
+            const syncTemplateSelection = (key) => {
+                const selectedKey = key || 'classic';
+                if (invoiceTemplateSelect) {
+                    invoiceTemplateSelect.value = selectedKey;
+                }
+                previewCols.forEach((col) => {
+                    col.classList.toggle('is-selected', col.dataset.templateKey === selectedKey);
+                });
+            };
+
+            const refreshInvoiceDemoIframes = () => {
+                const name = (document.getElementById('name')?.value || '').trim() || 'Your Company';
+                const address = (document.getElementById('address')?.value || '').trim() || 'Sample address';
+                const pin = (document.getElementById('pin_code')?.value || '').trim() || '314002';
+                const gst = (document.getElementById('gst_number')?.value || '').trim() || '29AAACH7409R1ZX';
+                const pan = (document.getElementById('pan_number')?.value || '').trim() || 'AABAD1452A';
+                const buildUrl = (template, asPdf) => {
+                    const params = new URLSearchParams({
+                        template: template,
+                        name: name,
+                        address: address,
+                        pin_code: pin,
+                        gst_number: gst,
+                        pan_number: pan,
+                    });
+                    if (asPdf) {
+                        params.set('format', 'pdf');
+                    }
+                    return `${demoDemoUrl}?${params.toString()}`;
+                };
+                document.querySelectorAll('.invoice-demo-iframe').forEach((iframe) => {
+                    const template = iframe.dataset.template || 'classic';
+                    iframe.src = buildUrl(template, false);
+                });
+                document.querySelectorAll('.invoice-open-full-demo').forEach((link) => {
+                    const template = link.dataset.template || 'classic';
+                    link.href = buildUrl(template, false);
+                });
+                document.querySelectorAll('.invoice-open-pdf-demo').forEach((link) => {
+                    const template = link.dataset.template || 'classic';
+                    link.href = buildUrl(template, true);
+                });
+            };
+
+            if (invoiceTemplateSelect && previewCols.length) {
+                syncTemplateSelection(invoiceTemplateSelect.value);
+                invoiceTemplateSelect.addEventListener('change', function () {
+                    syncTemplateSelection(invoiceTemplateSelect.value);
+                });
+                previewCols.forEach((col) => {
+                    col.style.cursor = 'pointer';
+                    col.addEventListener('click', function () {
+                        syncTemplateSelection(col.dataset.templateKey);
+                    });
+                });
+            }
+
+            let demoTimer;
+            const scheduleDemoRefresh = () => {
+                clearTimeout(demoTimer);
+                demoTimer = setTimeout(refreshInvoiceDemoIframes, 400);
+            };
+
+            ['name', 'address', 'pin_code', 'gst_number', 'pan_number'].forEach((id) => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', scheduleDemoRefresh);
+                }
             });
         });
 

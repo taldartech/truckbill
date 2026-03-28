@@ -2,7 +2,20 @@
 
 @section('content')
     <div class="container mt-4">
-        <h2>Invoice Details</h2>
+        @if (! empty($companyLogoUrl))
+            <div class="d-flex flex-wrap align-items-center gap-3 mb-3 p-3 rounded border bg-light">
+                <div class="bg-white border rounded p-2 shadow-sm" style="max-width: 220px;">
+                    <img src="{{ $companyLogoUrl }}" alt="{{ $invoice->company->name }}" class="d-block mx-auto"
+                        style="max-height: 72px; max-width: 200px; width: auto; height: auto; object-fit: contain;">
+                </div>
+                <div>
+                    <h2 class="h4 mb-1">Invoice Details</h2>
+                    <div class="text-muted small">{{ $invoice->company->name }}</div>
+                </div>
+            </div>
+        @else
+            <h2>Invoice Details</h2>
+        @endif
         <div class="card">
             <div class="card-body">
                 <div class="row">

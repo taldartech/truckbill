@@ -87,7 +87,7 @@
     @endphp
 
     <div class="compact-shell">
-        <div class="compact-top">
+        {{-- <div class="compact-top">
             <div class="compact-note">Official Compact Theme</div>
             <div class="compact-company">{{ $company->name }}</div>
             <div class="compact-sub">
@@ -95,9 +95,9 @@
                 {{ optional($company->city)->name }},
                 {{ optional($company->state)->name }} - {{ $company->pin_code }}
             </div>
-        </div>
+        </div> --}}
         <div class="compact-content">
-            @include('reports.exports.party-bill')
+            @include('reports.exports.party-bill', ['partyBillHeaderCompact' => true])
         </div>
     </div>
 

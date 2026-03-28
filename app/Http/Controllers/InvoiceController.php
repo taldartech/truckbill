@@ -348,6 +348,8 @@ class InvoiceController extends Controller
             }
         }
 
+        $companyLogoUrl = $this->resolveCompanyLogoPublicUrl($invoice->company);
+
         if ($request->ajax()) {
             $sgst = $invoice->sgst ?? 0;
             $cgst = $invoice->cgst ?? 0;
@@ -374,6 +376,7 @@ class InvoiceController extends Controller
 
             return response()->json([
                 'id' => $invoice->id,
+                'company_logo_url' => $companyLogoUrl,
                 'invoice_number' => $invoice->invoice_number,
                 'manual_invoice_number' => $invoice->manual_invoice_number,
                 'invoice_type' => $invoice->invoice_type,
@@ -402,7 +405,7 @@ class InvoiceController extends Controller
             ]);
         }
 
-        return view('invoices.show', compact('invoice', 'memos', 'customDetails'));
+        return view('invoices.show', compact('invoice', 'memos', 'customDetails', 'companyLogoUrl'));
     }
 
     public function edit(Invoice $invoice)
@@ -671,5 +674,17 @@ class InvoiceController extends Controller
             'total_amount' => $invoice->total_amount,
             'net_amount' => $invoice->net_amount,
         ]);
+    }
+
+    /**
+     * Browser URL for the company logo (uses public disk; works even if public/storage symlink is missing for existence checks).
+     */
+    private function resolveCompanyLogoPublicUrl(?Company $company): ?string
+    {
+        if ($company === null) {
+            return null;
+        }
+
+        return $company->logoPublicUrl();
     }
 }

@@ -2,10 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\City;
+use App\Models\Company;
+use App\Models\Consignee;
+use App\Models\CustomInvoiceDetail;
+use App\Models\Invoice;
+use App\Models\LorryReceipt;
+use App\Models\State;
+use App\Models\Truck;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
-use Illuminate\Http\Request;
 
 class CompanyController extends Controller
 {
@@ -332,6 +342,7 @@ class CompanyController extends Controller
             ],
             'company_type' => 'nullable|in:Broker,Agency,Both',
             'company_logo' => 'nullable|image|mimes:jpeg,png,jpg|max:250',
+            'invoice_template' => 'nullable|in:classic,modern,compact',
             'gst_scheme' => 'nullable|in:reverse charge,forward charge',
             'gst_type' => 'nullable|in:composition,regular',
             'address' => 'nullable|string',
@@ -501,6 +512,7 @@ class CompanyController extends Controller
             ],
             'company_type' => 'nullable|in:Broker,Agency,Both',
             'company_logo' => 'nullable|image|mimes:jpeg,png,jpg|max:250',
+            'invoice_template' => 'nullable|in:classic,modern,compact',
             'country_id' => 'nullable|exists:countries,id',
             'state_id' => 'nullable|exists:states,id',
             'city_id' => 'nullable|exists:cities,id',
@@ -527,6 +539,9 @@ class CompanyController extends Controller
         if (!$request->filled('gst_type')) {
             $validated['gst_type'] = 'regular';
         }
+        if (!$request->filled('invoice_template')) {
+            $validated['invoice_template'] = 'classic';
+        }
 
         // ✅ Automatically set plan_end_date = created_at + 45 days
         $validated['plan_end_date'] = Carbon::now()->addDays(44)->toDateString();
@@ -539,5 +554,181 @@ class CompanyController extends Controller
 
         \App\Models\Company::create($validated);
         return redirect()->route('company.index')->with('success', 'Company registered successfully!,You are eligible for 45 days free plan');
+    }
+
+    /**
+     * HTML preview of party-bill PDF templates (same Blade as real PDF) for the given company.
+     */
+    public function invoiceTemplatePreview(Request $request, Company $company)
+    {
+        $this->authorizeCompanyAccess($company);
+
+        $template = (string) $request->query('template', 'classic');
+        $company->loadMissing(['city', 'state']);
+
+        $data = $this->buildDemoPartyBillPreviewData($company);
+        $data['company'] = $company;
+
+        $view = match ($template) {
+            'modern' => 'reports.exports.party-bill-pdf-modern',
+            'compact' => 'reports.exports.party-bill-pdf-compact',
+            default => 'reports.exports.party-bill-pdf',
+        };
+
+        if ($request->query('format') === 'pdf') {
+            return $this->streamPartyBillPreviewPdf($view, $data, 'party_bill_preview_'.$template);
+        }
+
+        $data['partyBillInvoiceUsePdfLogoPath'] = false;
+
+        return response()->view($view, $data);
+    }
+
+    /**
+     * Demo preview for company create form (no saved company yet).
+     */
+    public function invoiceTemplateDemo(Request $request)
+    {
+        $company = $this->buildDemoCompanyFromQuery($request);
+
+        $data = $this->buildDemoPartyBillPreviewData($company);
+        $data['company'] = $company;
+
+        $template = (string) $request->query('template', 'classic');
+        $view = match ($template) {
+            'modern' => 'reports.exports.party-bill-pdf-modern',
+            'compact' => 'reports.exports.party-bill-pdf-compact',
+            default => 'reports.exports.party-bill-pdf',
+        };
+
+        if ($request->query('format') === 'pdf') {
+            return $this->streamPartyBillPreviewPdf($view, $data, 'party_bill_demo_'.$template);
+        }
+
+        $data['partyBillInvoiceUsePdfLogoPath'] = false;
+
+        return response()->view($view, $data);
+    }
+
+    /**
+     * Same PDF engine as Party Bill export (DomPDF).
+     */
+    private function streamPartyBillPreviewPdf(string $view, array $data, string $downloadBaseName): Response
+    {
+        $data['partyBillInvoiceUsePdfLogoPath'] = true;
+        $html = view($view, $data)->render();
+
+        return Pdf::loadHTML($html)
+            ->setPaper('a4', 'portrait')
+            ->setOption('isHtml5ParserEnabled', true)
+            ->setOption('isRemoteEnabled', true)
+            ->stream($downloadBaseName.'.pdf');
+    }
+
+    private function authorizeCompanyAccess(Company $company): void
+    {
+        if (Auth::user()->userRole->name === 'master_admin') {
+            return;
+        }
+
+        if ($company->user_id !== Auth::id()) {
+            abort(403);
+        }
+    }
+
+    private function buildDemoCompanyFromQuery(Request $request): Company
+    {
+        $company = new Company([
+            'name' => $request->query('name', 'Your Company'),
+            'address' => $request->query('address', 'Sample address line'),
+            'pin_code' => $request->query('pin_code', '314002'),
+            'gst_number' => $request->query('gst_number', '29AAACH7409R1ZX'),
+            'pan_number' => $request->query('pan_number', 'AABAD1452A'),
+            'contact_number' => $request->query('contact_number', '9999999999'),
+            'bank' => $request->query('bank', 'KOTAK MAHINDRA BANK'),
+            'account_number' => $request->query('account_number', '5847918143'),
+            'ifsc' => $request->query('ifsc', 'KKBK0003538'),
+        ]);
+
+        $city = new City(['name' => $request->query('city', 'Udaipur')]);
+        $state = new State(['name' => $request->query('state', 'Rajasthan'), 'code' => '08']);
+        $company->setRelation('city', $city);
+        $company->setRelation('state', $state);
+
+        return $company;
+    }
+
+    /**
+     * @return array{invoice: Invoice, customDetails: \Illuminate\Support\Collection, lrs: \Illuminate\Support\Collection, totalAmount: float, cgst: float, sgst: float, igst: float}
+     */
+    private function buildDemoPartyBillPreviewData(Company $company): array
+    {
+        $company->loadMissing(['city', 'state']);
+
+        $city = $company->city ?? new City(['name' => 'Ahmedabad']);
+        $state = $company->state ?? new State(['name' => 'Gujarat', 'code' => '24']);
+
+        $consignee = new Consignee([
+            'name' => 'Sample Customer',
+            'gst_number' => '24AAAAA0000A1Z5',
+            'pan_number' => 'AABCD1234E',
+        ]);
+        $consignee->setRelation('city', $city);
+        $consignee->setRelation('state', $state);
+
+        $truck = new Truck(['truck_number' => 'RJ27AC1234']);
+        $lr = new LorryReceipt([
+            'lr_number' => 'test001',
+            'destination_city' => 'Jaipur',
+            'invoice_number' => '2331231233',
+            'gr_date' => now()->toDateString(),
+            'weight' => 10,
+            'unloading_weight' => 10,
+            'no_of_units' => 100,
+            'fr_rate' => 100,
+            'shortage_amount' => 0,
+            'damage_amount' => 0,
+            'actual_amount' => 50,
+        ]);
+        $lr->setRelation('truck', $truck);
+
+        $detail = new CustomInvoiceDetail([
+            'portal_rate' => 100,
+            'diff' => 10,
+            'amount' => 50,
+            'remark' => 'demo',
+        ]);
+        $detail->setRelation('lorryReceipt', $lr);
+
+        $baseAmount = 50.0;
+        $cgst = 0.0;
+        $sgst = 0.0;
+        $igst = 2.5;
+
+        $invoice = new Invoice([
+            'id' => 0,
+            'manual_invoice_number' => 'PREVIEW123',
+            'invoice_number' => '3212322',
+            'invoice_type' => 'Reverse',
+            'custom_invoice' => 'rate_difference',
+            'generated_date' => now()->toDateString(),
+            'total_amount' => 52.50,
+            'base_amount' => $baseAmount,
+            'cgst' => $cgst,
+            'sgst' => $sgst,
+            'igst' => $igst,
+        ]);
+        $invoice->setRelation('company', $company);
+        $invoice->setRelation('consignee', $consignee);
+
+        return [
+            'invoice' => $invoice,
+            'customDetails' => collect([$detail]),
+            'lrs' => collect(),
+            'totalAmount' => $baseAmount,
+            'cgst' => $cgst,
+            'sgst' => $sgst,
+            'igst' => $igst,
+        ];
     }
 }

@@ -111,6 +111,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h3 class="card-title mb-0">Party Bill</h3>
+                        <small class="text-muted">Selected Invoice Template: {{ $selectedInvoiceTemplateLabel ?? 'A (Classic)' }}</small>
                     </div>
                     <div class="d-flex gap-2">
                         <a class="btn btn-warning"

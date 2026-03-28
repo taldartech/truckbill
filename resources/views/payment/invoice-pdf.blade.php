@@ -30,6 +30,14 @@
             font-size: 24px;
             font-weight: bold;
         }
+        .header .company-logo {
+            margin-bottom: 8px;
+        }
+        .header .company-logo img {
+            max-height: 70px;
+            max-width: 220px;
+            width: auto;
+        }
         .header h2 {
             margin: 0 0 5px 0;
             padding: 0;
@@ -152,6 +160,11 @@
 </head>
 <body>
     <div class="header">
+        @if(!empty($payment->company->company_logo))
+            <div class="company-logo">
+                <img src="{{ public_path('storage/' . $payment->company->company_logo) }}" alt="{{ $payment->company->name }} Logo">
+            </div>
+        @endif
         <h1>TAX INVOICE</h1>
         <h2>{{ $payment->company->name ?? 'Company Name' }}</h2>
         <p>Invoice No: INV-{{ str_pad($payment->id, 6, '0', STR_PAD_LEFT) }}</p>

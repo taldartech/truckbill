@@ -86,7 +86,7 @@
 </head>
 <body style="width: 100%;">
     @php
-        $company = auth()->user()->company;
+        $company = $company ?? ($invoice->company ?? auth()->user()->company);
         $customer = $invoice->consignee;
         $totalAmount = $totalAmount ?? 0;
         $lrs = $lrs ?? collect();

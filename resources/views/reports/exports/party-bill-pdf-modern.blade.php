@@ -112,11 +112,35 @@
         .muted {
             color: #6b7280;
         }
+        .invoice-logo-cell {
+            width: 76px;
+            vertical-align: middle;
+            padding-right: 10px;
+        }
+        .invoice-logo-box {
+            width: 68px;
+            height: 68px;
+            background: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            border-radius: 6px;
+            text-align: center;
+            padding: 4px;
+            line-height: 0;
+        }
+        .invoice-logo-box img {
+            max-width: 60px;
+            max-height: 60px;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            display: inline-block;
+            vertical-align: middle;
+        }
     </style>
 </head>
 <body>
     @php
-        $company = $invoice->company ?? auth()->user()->company;
+        $company = $company ?? ($invoice->company ?? auth()->user()->company);
         $consignee = $invoice->consignee;
         $lrs = $lrs ?? collect();
         $customDetails = $customDetails ?? collect();
@@ -129,18 +153,35 @@
             ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '')
             : ($invoice->manual_invoice_number ?? $invoice->id);
         $totalGst = $cgst + $sgst + $igst;
+        $usePdfLogoPath = ($partyBillInvoiceUsePdfLogoPath ?? false) === true;
+        $invoiceCompanyLogoSrc = $usePdfLogoPath
+            ? $company->logoFilesystemPathForPdf()
+            : $company->logoPublicUrl();
     @endphp
 
     <div class="invoice-card">
         <div class="top-band">
-            <p class="invoice-title">INVOICE</p>
-            <div class="company-name">{{ $company->name }}</div>
-            <div class="company-meta">
-                {{ $company->address }},
-                {{ optional($company->city)->name }},
-                {{ optional($company->state)->name }} - {{ $company->pin_code }}
-            </div>
-            <div class="company-meta">GSTIN: {{ $company->gst_number }} | PAN: {{ $company->pan_number }}</div>
+            <table style="width: 100%; border-collapse: collapse; border: none;">
+                <tr>
+                    @if ($invoiceCompanyLogoSrc)
+                        <td class="invoice-logo-cell" style="border: none;">
+                            <div class="invoice-logo-box">
+                                <img src="{{ $invoiceCompanyLogoSrc }}" alt="{{ $company->name }}">
+                            </div>
+                        </td>
+                    @endif
+                    <td style="border: none; vertical-align: top;">
+                        <p class="invoice-title">INVOICE</p>
+                        <div class="company-name">{{ $company->name }}</div>
+                        <div class="company-meta">
+                            {{ $company->address }},
+                            {{ optional($company->city)->name }},
+                            {{ optional($company->state)->name }} - {{ $company->pin_code }}
+                        </div>
+                        <div class="company-meta">GSTIN: {{ $company->gst_number }} | PAN: {{ $company->pan_number }}</div>
+                    </td>
+                </tr>
+            </table>
         </div>
 
         <div class="section">
