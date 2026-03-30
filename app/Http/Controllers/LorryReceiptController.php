@@ -196,24 +196,44 @@ class LorryReceiptController extends Controller
         }
 
         $companyId = Auth::user()->company_id;
-        $trucks = Truck::with(['transporter.transporterMaster', 'driver'])
-            ->whereHas('transporter', function ($query) use ($companyId) {
-                $query->where('company_id', $companyId);
-            })
-            ->get();
+        $goodsTypes = GoodType::where('user_id', Auth::user()->company->user_id)->get();
 
-        $agencies = Transporter::with('transporterMaster')
-            ->where('is_owner', 0)
-            ->where('company_id', $companyId)
-            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
-            ->orderBy('transporter_masters.name')
-            ->select('transporters.*')
-            ->get();
-        $consignees = Consignee::where('company_id', $companyId)
-            ->orderBy('name')
-            ->get();
-        $goodsTypes = GoodType::where('user_id', Auth::user()->company->user_id)
-            ->get();
+        // Only fetch selected IDs (if any) to avoid loading large dropdown datasets.
+        $selectedConsigneeIds = collect([
+            old('customer_id'),
+            old('consignor_id'),
+            old('consignee_id'),
+        ])->filter()->unique()->values();
+
+        $consignees = $selectedConsigneeIds->isNotEmpty()
+            ? Consignee::withTrashed()
+                ->where('company_id', $companyId)
+                ->whereIn('id', $selectedConsigneeIds)
+                ->orderBy('name')
+                ->get()
+            : collect();
+
+        $selectedTruckId = old('truck_id');
+        $trucks = $selectedTruckId
+            ? Truck::with(['transporter.transporterMaster', 'driver'])
+                ->where('id', $selectedTruckId)
+                ->whereHas('transporter', function ($query) use ($companyId) {
+                    $query->where('company_id', $companyId);
+                })
+                ->get()
+            : collect();
+
+        $selectedReferenceById = old('reference_by');
+        $agencies = $selectedReferenceById
+            ? Transporter::with('transporterMaster')
+                ->where('is_owner', 0)
+                ->where('company_id', $companyId)
+                ->where('id', $selectedReferenceById)
+                ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+                ->orderBy('transporter_masters.name')
+                ->select('transporters.*')
+                ->get()
+            : collect();
 
         return view('lorry_receipts.create', compact('trucks', 'consignees', 'goodsTypes', 'agencies'));
     }
@@ -226,24 +246,44 @@ class LorryReceiptController extends Controller
         }
 
         $companyId = Auth::user()->company_id;
-        $trucks = Truck::with(['transporter.transporterMaster', 'driver'])
-            ->whereHas('transporter', function ($query) use ($companyId) {
-                $query->where('company_id', $companyId);
-            })
-            ->get();
+        $goodsTypes = GoodType::where('user_id', Auth::user()->company->user_id)->get();
 
-        $agencies = Transporter::with('transporterMaster')
-            ->where('is_owner', 0)
-            ->where('company_id', $companyId)
-            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
-            ->orderBy('transporter_masters.name')
-            ->select('transporters.*')
-            ->get();
-        $consignees = Consignee::where('company_id', $companyId)
-            ->orderBy('name')
-            ->get();
-        $goodsTypes = GoodType::where('user_id', Auth::user()->company->user_id)
-            ->get();
+        // Only fetch selected IDs (if any) to avoid loading large dropdown datasets.
+        $selectedConsigneeIds = collect([
+            old('customer_id'),
+            old('consignor_id'),
+            old('consignee_id'),
+        ])->filter()->unique()->values();
+
+        $consignees = $selectedConsigneeIds->isNotEmpty()
+            ? Consignee::withTrashed()
+                ->where('company_id', $companyId)
+                ->whereIn('id', $selectedConsigneeIds)
+                ->orderBy('name')
+                ->get()
+            : collect();
+
+        $selectedTruckId = old('truck_id');
+        $trucks = $selectedTruckId
+            ? Truck::with(['transporter.transporterMaster', 'driver'])
+                ->where('id', $selectedTruckId)
+                ->whereHas('transporter', function ($query) use ($companyId) {
+                    $query->where('company_id', $companyId);
+                })
+                ->get()
+            : collect();
+
+        $selectedReferenceById = old('reference_by');
+        $agencies = $selectedReferenceById
+            ? Transporter::with('transporterMaster')
+                ->where('is_owner', 0)
+                ->where('company_id', $companyId)
+                ->where('id', $selectedReferenceById)
+                ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+                ->orderBy('transporter_masters.name')
+                ->select('transporters.*')
+                ->get()
+            : collect();
 
         return view('lorry_receipts.create-linked', compact('trucks', 'consignees', 'goodsTypes', 'agencies'));
     }
@@ -771,36 +811,63 @@ class LorryReceiptController extends Controller
         $companyId = Auth::user()->company_id;
         $lorry_receipt->load(['truck.transporter.transporterMaster', 'truck.driver', 'customer', 'transporter.transporterMaster', 'consignor', 'consignee']);
 
-        $trucks = Truck::with(['transporter.transporterMaster', 'driver'])
-            ->whereHas('transporter', function ($query) use ($companyId) {
-                $query->withTrashed()->where('company_id', $companyId);
-            })
-            ->get();
+        // Fetch only the selected records needed for initial dropdown rendering.
+        $selectedTruckId = $lorry_receipt->truck_id;
+        $trucks = $selectedTruckId
+            ? Truck::with(['transporter.transporterMaster', 'driver'])
+                ->where('id', $selectedTruckId)
+                ->whereHas('transporter', function ($query) use ($companyId) {
+                    $query->withTrashed()->where('company_id', $companyId);
+                })
+                ->get()
+            : collect();
 
-        $transporters = Transporter::withTrashed()->with('transporterMaster')
-            ->where('company_id', $companyId)
-            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
-            ->orderBy('transporter_masters.name')
-            ->select('transporters.*')
-            ->get();
-        $truckOwners = Transporter::withTrashed()->with('transporterMaster')
-            ->where('company_id', $companyId)
-            ->where('is_owner', 1)
-            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
-            ->orderBy('transporter_masters.name')
-            ->select('transporters.*')
-            ->get();
-        $agencies = Transporter::withTrashed()->with('transporterMaster')
-            ->where('company_id', $companyId)
-            ->where('is_owner', 0)
-            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
-            ->orderBy('transporter_masters.name')
-            ->select('transporters.*')
-            ->get();
-        $consignees = Consignee::withTrashed()
-            ->where('company_id', $companyId)
-            ->orderBy('name')
-            ->get();
+        $selectedTransporterId = $lorry_receipt->transporter_id;
+        $transporters = $selectedTransporterId
+            ? Transporter::withTrashed()->with('transporterMaster')
+                ->where('company_id', $companyId)
+                ->where('id', $selectedTransporterId)
+                ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+                ->orderBy('transporter_masters.name')
+                ->select('transporters.*')
+                ->get()
+            : collect();
+
+        $truckOwners = ($lorry_receipt->transporter_type === 'owner' && $selectedTransporterId)
+            ? Transporter::withTrashed()->with('transporterMaster')
+                ->where('company_id', $companyId)
+                ->where('id', $selectedTransporterId)
+                ->where('is_owner', 1)
+                ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+                ->orderBy('transporter_masters.name')
+                ->select('transporters.*')
+                ->get()
+            : collect();
+
+        $agencies = ($lorry_receipt->reference_by)
+            ? Transporter::withTrashed()->with('transporterMaster')
+                ->where('company_id', $companyId)
+                ->where('id', $lorry_receipt->reference_by)
+                ->where('is_owner', 0)
+                ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+                ->orderBy('transporter_masters.name')
+                ->select('transporters.*')
+                ->get()
+            : collect();
+
+        $selectedConsigneeIds = collect([
+            $lorry_receipt->customer_id,
+            $lorry_receipt->consignor_id,
+            $lorry_receipt->consignee_id,
+        ])->filter()->unique()->values();
+
+        $consignees = $selectedConsigneeIds->isNotEmpty()
+            ? Consignee::withTrashed()
+                ->where('company_id', $companyId)
+                ->whereIn('id', $selectedConsigneeIds)
+                ->orderBy('name')
+                ->get()
+            : collect();
         $goodsTypes = GoodType::where('user_id', Auth::user()->company->user_id)->get();
         $statuses = ['Pending', 'Delivered', 'Cancelled', 'In-Progress'];
         $tdsPercentages = [

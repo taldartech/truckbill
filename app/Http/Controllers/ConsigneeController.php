@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Consignee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
 
 class ConsigneeController extends Controller
 {
@@ -56,7 +55,7 @@ class ConsigneeController extends Controller
         // Handle column-specific search
         if ($request->has('columns')) {
             foreach ($request->columns as $index => $column) {
-                if (!empty($column['search']['value'])) {
+                if (! empty($column['search']['value'])) {
                     $searchValue = $column['search']['value'];
                     switch ($index) {
                         case 1: // Name
@@ -136,12 +135,12 @@ class ConsigneeController extends Controller
             return [
                 'DT_RowIndex' => $start + $index + 1,
                 'id' => $consignee->id,
-                'name' => '<a href="javascript:void(0)" class="text-brand-primary fw-bold consignee-name-link" data-id="' . $consignee->id . '" style="cursor: pointer; text-decoration: none;">' . ($consignee->name ?: '-') . '</a>',
+                'name' => '<a href="javascript:void(0)" class="text-brand-primary fw-bold consignee-name-link" data-id="'.$consignee->id.'" style="cursor: pointer; text-decoration: none;">'.($consignee->name ?: '-').'</a>',
                 'city' => $consignee->city?->name ?? '-',
                 'state' => $consignee->state?->name ?? '-',
                 'country' => $consignee->country?->name ?? '-',
                 'contact_number' => $consignee->contact_number ?: '-',
-                'actions' => $this->getActionButtons($consignee)
+                'actions' => $this->getActionButtons($consignee),
             ];
         });
 
@@ -149,7 +148,7 @@ class ConsigneeController extends Controller
             'draw' => intval($request->draw),
             'recordsTotal' => $totalRecords,
             'recordsFiltered' => $filteredRecords,
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
@@ -159,17 +158,18 @@ class ConsigneeController extends Controller
 
         // Edit button
         $editUrl = route('consignees.edit', $consignee->id);
-        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-edit" title="Edit Consignee">';
+        $buttons .= '<a href="'.$editUrl.'" class="btn btn-sm btn-edit" title="Edit Consignee">';
         $buttons .= '<i class="bi bi-pencil"></i></a>';
 
         // Delete button
         $deleteUrl = route('consignees.destroy', $consignee->id);
-        $buttons .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this consignee?\')">';
-        $buttons .= csrf_field() . method_field('DELETE');
+        $buttons .= '<form action="'.$deleteUrl.'" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this consignee?\')">';
+        $buttons .= csrf_field().method_field('DELETE');
         $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete Consignee">';
         $buttons .= '<i class="bi bi-trash"></i></button></form>';
 
         $buttons .= '</div>';
+
         return $buttons;
     }
 
@@ -194,7 +194,7 @@ class ConsigneeController extends Controller
     public function store(Request $request)
     {
         $this->ensureCompanyContext();
-        \Log::info('Current user company_id: ' . auth()->user()->company_id);
+        \Log::info('Current user company_id: '.auth()->user()->company_id);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -235,14 +235,11 @@ class ConsigneeController extends Controller
 
                 'digits:10',
 
-
             ],
             'gst_number' => [
                 'nullable',
                 'string',
                 'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
-
-
 
             ],
             'pan_number' => [
@@ -261,20 +258,21 @@ class ConsigneeController extends Controller
         ]);
         $this->validateConsigneeUniquenessCreate($validated, auth()->user()->company_id);
 
-
-        if (!empty($validated['pan_number'])) {
+        if (! empty($validated['pan_number'])) {
             $validated['pan_number'] = strtoupper($validated['pan_number']);
         }
-        if (!empty($validated['gst_number'])) {
+        if (! empty($validated['gst_number'])) {
             $validated['gst_number'] = strtoupper($validated['gst_number']);
         }
 
         $validated['company_id'] = auth()->user()->company_id;
 
         $consignee = Consignee::create($validated);
+
         return redirect()->route('consignees.index')
             ->with('success', 'Consignee created successfully!');
     }
+
     private function validateConsigneeUniquenessCreate($data, $companyId)
     {
         $errors = [];
@@ -284,20 +282,20 @@ class ConsigneeController extends Controller
             ->whereNull('deleted_at');
 
         // Check contact_number
-        if (!empty($data['contact_number'])) {
+        if (! empty($data['contact_number'])) {
             if ($query->clone()->where('contact_number', $data['contact_number'])->exists()) {
                 $errors['contact_number'] = 'This contact number is already used by another consignee in your company.';
             }
         }
 
         // Check email
-        if (!empty($data['email'])) {
+        if (! empty($data['email'])) {
             if ($query->clone()->where('email', $data['email'])->exists()) {
                 $errors['email'] = 'This email is already used by another consignee in your company.';
             }
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             throw \Illuminate\Validation\ValidationException::withMessages($errors);
         }
     }
@@ -311,6 +309,7 @@ class ConsigneeController extends Controller
         $countries = \App\Models\Country::all();
         $states = $consignee->country_id ? \App\Models\State::where('country_id', $consignee->country_id)->get() : collect();
         $cities = $consignee->state_id ? \App\Models\City::where('state_id', $consignee->state_id)->get() : collect();
+
         return view('consignees.edit', compact('consignee', 'countries', 'states', 'cities'));
     }
 
@@ -381,17 +380,19 @@ class ConsigneeController extends Controller
         ]);
         $this->validateConsigneeUniquenessUpdate($validated, $consignee->company_id, $consignee->id);
 
-        if (!empty($validated['pan_number'])) {
+        if (! empty($validated['pan_number'])) {
             $validated['pan_number'] = strtoupper($validated['pan_number']);
         }
-        if (!empty($validated['gst_number'])) {
+        if (! empty($validated['gst_number'])) {
             $validated['gst_number'] = strtoupper($validated['gst_number']);
         }
 
         $consignee->update($validated);
+
         return redirect()->route('consignees.index')
             ->with('success', 'Consignee updated successfully!');
     }
+
     private function validateConsigneeUniquenessUpdate($data, $companyId, $excludeId)
     {
         $errors = [];
@@ -402,38 +403,37 @@ class ConsigneeController extends Controller
             ->where('id', '!=', $excludeId);  // ✅ KEY: Exclude self
 
         // Check contact_number
-        if (!empty($data['contact_number'])) {
+        if (! empty($data['contact_number'])) {
             if ($query->clone()->where('contact_number', $data['contact_number'])->exists()) {
                 $errors['contact_number'] = 'This contact number is already used by another consignee in your company.';
             }
         }
 
         // Check email
-        if (!empty($data['email'])) {
+        if (! empty($data['email'])) {
             if ($query->clone()->where('email', $data['email'])->exists()) {
                 $errors['email'] = 'This email is already used by another consignee in your company.';
             }
         }
 
         // Check GST number
-        if (!empty($data['gst_number'])) {
+        if (! empty($data['gst_number'])) {
             if ($query->clone()->where('gst_number', $data['gst_number'])->exists()) {
                 $errors['gst_number'] = 'This GST number is already used by another consignee in your company.';
             }
         }
 
         // Check PAN number
-        if (!empty($data['pan_number'])) {
+        if (! empty($data['pan_number'])) {
             if ($query->clone()->where('pan_number', $data['pan_number'])->exists()) {
                 $errors['pan_number'] = 'This PAN number is already used by another consignee in your company.';
             }
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             throw \Illuminate\Validation\ValidationException::withMessages($errors);
         }
     }
-
 
     public function destroy(Consignee $consignee)
     {
@@ -442,6 +442,7 @@ class ConsigneeController extends Controller
             abort(403, 'Unauthorized access to this consignee.');
         }
         $consignee->delete();
+
         return redirect()->route('consignees.index')
             ->with('success', 'Consignee deleted successfully!');
     }
@@ -476,11 +477,84 @@ class ConsigneeController extends Controller
                 'country' => $consignee->country?->name ?: 'Not provided',
                 'company' => $consignee->company?->name ?: 'Not provided',
                 'created_at' => \Carbon\Carbon::parse($consignee->created_at)->setTimezone('Asia/Kolkata')->format('d M Y, h:i A') ?: 'Not available',
-                'updated_at' => \Carbon\Carbon::parse($consignee->updated_at)->setTimezone('Asia/Kolkata')->format('d M Y, h:i A') ?: 'Not available'
+                'updated_at' => \Carbon\Carbon::parse($consignee->updated_at)->setTimezone('Asia/Kolkata')->format('d M Y, h:i A') ?: 'Not available',
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error fetching consignee: ' . $e->getMessage());
+            \Log::error('Error fetching consignee: '.$e->getMessage());
+
             return response()->json(['error' => 'Consignee not found'], 404);
+        }
+    }
+
+    /**
+     * Search consignees for Select2 AJAX.
+     * Used for: Customer, Consignor, Consignee dropdowns.
+     *
+     * Returns Select2-compatible payload: { results: [{id,text}], pagination: { more } }
+     */
+    public function searchConsigneesApi(Request $request)
+    {
+        try {
+            $this->ensureCompanyContext();
+
+            $companyId = Auth::user()->company_id;
+            $q = trim((string) $request->query('q', ''));
+            $page = (int) $request->query('page', 1);
+            $limit = (int) $request->query('limit', 20);
+            $limit = max(1, min($limit, 50));
+            $page = max(1, $page);
+
+            $query = Consignee::with(['city', 'state', 'country'])
+                ->where('company_id', $companyId);
+
+            if ($q !== '') {
+                $query->where(function ($qq) use ($q) {
+                    $qq->where('name', 'like', "%{$q}%")
+                        ->orWhere('address', 'like', "%{$q}%")
+                        ->orWhere('contact_number', 'like', "%{$q}%")
+                        ->orWhere('gst_number', 'like', "%{$q}%")
+                        ->orWhere('pan_number', 'like', "%{$q}%")
+                        ->orWhereHas('city', function ($c) use ($q) {
+                            $c->where('name', 'like', "%{$q}%");
+                        })
+                        ->orWhereHas('state', function ($s) use ($q) {
+                            $s->where('name', 'like', "%{$q}%");
+                        })
+                        ->orWhereHas('country', function ($co) use ($q) {
+                            $co->where('name', 'like', "%{$q}%");
+                        });
+                });
+            }
+
+            $query->orderBy('name', 'asc');
+
+            $offset = ($page - 1) * $limit;
+            $items = $query->offset($offset)->limit($limit + 1)->get();
+            $more = $items->count() > $limit;
+            $items = $items->take($limit);
+
+            $results = $items->map(function ($c) {
+                return [
+                    'id' => $c->id,
+                    'text' => $c->name ?: 'Not Set',
+                ];
+            })->values();
+
+            return response()->json([
+                'results' => $results,
+                'pagination' => [
+                    'more' => $more,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error searching consignees: '.$e->getMessage());
+
+            return response()->json([
+                'results' => [],
+                'pagination' => [
+                    'more' => false,
+                ],
+            ]);
         }
     }
 }

@@ -142,12 +142,12 @@
                             <select class="form-select" id="customer_id" name="customer_id" required
                                 data-placeholder="Search and select customer...">
                                 <option value="">Select Customer</option>
-                                @foreach ($consignees as $consignee)
-                                    <option value="{{ $consignee->id }}"
-                                        {{ old('customer_id') == $consignee->id ? 'selected' : '' }}>
-                                        {{ $consignee->name }}
+                                @php($selectedCustomer = $consignees->firstWhere('id', old('customer_id')))
+                                @if($selectedCustomer)
+                                    <option value="{{ $selectedCustomer->id }}" selected>
+                                        {{ $selectedCustomer->name }}
                                     </option>
-                                @endforeach
+                                @endif
                             </select>
                             @error('customer_id')
                                 <div class="text-danger">{{ $message }}</div>
@@ -162,18 +162,19 @@
                             <select class="form-select" id="truck_id" name="truck_id" required
                                 data-placeholder="Search and select truck...">
                                 <option value="">Select Trucks</option>
-                                @foreach ($trucks as $truck)
-                                    <option value="{{ $truck->id }}"
-                                        data-transporter-id="{{ $truck->transporter_id }}"
-                                        data-transporter-name="{{ $truck->transporter ? $truck->transporter->name : '' }}"
-                                        {{ old('truck_id') == $truck->id ? 'selected' : '' }}>
-                                        {{ $truck->truck_number }}
-                                        @if ($truck->driver)
-                                            - Driver: {{ $truck->driver->name }}
+                                @php($selectedTruck = $trucks->firstWhere('id', old('truck_id')))
+                                @if($selectedTruck)
+                                    <option value="{{ $selectedTruck->id }}"
+                                        data-transporter-id="{{ $selectedTruck->transporter_id }}"
+                                        data-transporter-name="{{ $selectedTruck->transporter ? $selectedTruck->transporter->name : '' }}"
+                                        selected>
+                                        {{ $selectedTruck->truck_number }}
+                                        @if ($selectedTruck->driver)
+                                            - Driver: {{ $selectedTruck->driver->name }}
                                         @endif
-                                        ({{ $truck->transporter ? $truck->transporter->name : 'No Transporter' }})
+                                        ({{ $selectedTruck->transporter ? $selectedTruck->transporter->name : 'No Transporter' }})
                                     </option>
-                                @endforeach
+                                @endif
                             </select>
                             @error('truck_id')
                                 <div class="text-danger">{{ $message }}</div>
@@ -213,12 +214,12 @@
                             <label for="reference_by" class="form-label">Reference By</label>
                             <select class="form-select" id="reference_by" name="reference_by">
                                 <option value="">Select Reference</option>
-                                @foreach ($agencies as $agency)
-                                    <option value="{{ $agency->id }}"
-                                        {{ old('reference_by') == $agency->id ? 'selected' : '' }}>
-                                        {{ $agency->name }}
+                                @php($selectedAgency = $agencies->firstWhere('id', old('reference_by')))
+                                @if($selectedAgency)
+                                    <option value="{{ $selectedAgency->id }}" selected>
+                                        {{ $selectedAgency->name }}
                                     </option>
-                                @endforeach
+                                @endif
                             </select>
                             @error('reference_by')
                                 <div class="text-danger">{{ $message }}</div>
@@ -263,12 +264,12 @@
                             <select class="form-select" id="consignor_id" name="consignor_id" required
                                 data-placeholder="Search and select consignor...">
                                 <option value="">Select Consignor</option>
-                                @foreach ($consignees as $consignee)
-                                    <option value="{{ $consignee->id }}"
-                                        {{ old('consignee_id') == $consignee->id ? 'selected' : '' }}>
-                                        {{ $consignee->name }}
+                                @php($selectedConsignor = $consignees->firstWhere('id', old('consignor_id')))
+                                @if($selectedConsignor)
+                                    <option value="{{ $selectedConsignor->id }}" selected>
+                                        {{ $selectedConsignor->name }}
                                     </option>
-                                @endforeach
+                                @endif
                             </select>
                             @error('consignor_id')
                                 <div class="text-danger">{{ $message }}</div>
@@ -288,12 +289,12 @@
                             <select class="form-select" id="consignee_id" name="consignee_id" required
                                 data-placeholder="Search and select consignee...">
                                 <option value="">Select Consignee</option>
-                                @foreach ($consignees as $consignee)
-                                    <option value="{{ $consignee->id }}"
-                                        {{ old('consignee_id') == $consignee->id ? 'selected' : '' }}>
-                                        {{ $consignee->name }}
+                                @php($selectedConsignee = $consignees->firstWhere('id', old('consignee_id')))
+                                @if($selectedConsignee)
+                                    <option value="{{ $selectedConsignee->id }}" selected>
+                                        {{ $selectedConsignee->name }}
                                     </option>
-                                @endforeach
+                                @endif
                             </select>
                             @error('consignee_id')
                                 <div class="text-danger">{{ $message }}</div>
@@ -549,11 +550,120 @@
                 console.log('🚀 Lorry Receipt Edit Form initialized');
 
                 // Initialize other dropdowns with Select2
-                $('#truck_id, #transporter_id, #consignor_id, #consignee_id, #good_type, #reference_by').select2({
+                const ajaxConsigneesConfig = {
+                    url: '/api/consignees/search',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            q: params.term || '',
+                            page: params.page || 1,
+                        };
+                    },
+                    processResults: function (data, params) {
+                        return {
+                            results: data.results || [],
+                            pagination: {
+                                more: data.pagination?.more || false,
+                            },
+                        };
+                    },
+                    cache: true
+                };
+
+                const ajaxTrucksConfig = {
+                    url: '/api/trucks/search',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            q: params.term || '',
+                            page: params.page || 1,
+                        };
+                    },
+                    processResults: function (data, params) {
+                        return {
+                            results: data.results || [],
+                            pagination: {
+                                more: data.pagination?.more || false,
+                            },
+                        };
+                    },
+                    cache: true
+                };
+
+                const ajaxAgenciesConfig = {
+                    url: '/api/agencies/search',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            q: params.term || '',
+                            page: params.page || 1,
+                        };
+                    },
+                    processResults: function (data, params) {
+                        return {
+                            results: data.results || [],
+                            pagination: {
+                                more: data.pagination?.more || false,
+                            },
+                        };
+                    },
+                    cache: true
+                };
+
+                // Customer / consignor / consignee
+                $('#customer_id').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    minimumInputLength: 1,
+                    placeholder: 'Search and select customer...',
+                    ajax: ajaxConsigneesConfig
+                });
+                $('#consignor_id').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    minimumInputLength: 1,
+                    placeholder: 'Search and select consignor...',
+                    ajax: ajaxConsigneesConfig
+                });
+                $('#consignee_id').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    minimumInputLength: 1,
+                    placeholder: 'Search and select consignee...',
+                    ajax: ajaxConsigneesConfig
+                });
+
+                // Truck & transporter/reference (truck-owner confirmation flow uses Select2 result data)
+                $('#truck_id').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    minimumInputLength: 1,
+                    placeholder: 'Search and select truck...',
+                    ajax: ajaxTrucksConfig
+                });
+                $('#transporter_id').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    minimumInputLength: 1,
+                    placeholder: 'Search and select transporter...',
+                    ajax: ajaxAgenciesConfig
+                });
+                $('#reference_by').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    minimumInputLength: 1,
+                    placeholder: 'Search and select reference...',
+                    ajax: ajaxAgenciesConfig
+                });
+
+                // Small/static lists
+                $('#good_type').select2({
                     theme: 'bootstrap-5',
                     width: '100%',
                     minimumResultsForSearch: 0
-                    // allowClear: true
                 });
 
 
@@ -566,21 +676,6 @@
                             searchInput.focus();
                         }
                     }, 0);
-                });
-
-                // Access the customer data from the window object
-                console.log('Selected customer data:', {
-                    id: window.selectedCustomerId,
-                    name: window.selectedCustomerName
-                });
-
-                // Initialize customer dropdown with Select2
-                $('#customer_id').select2({
-                    theme: 'bootstrap-5',
-                    width: '100%'
-                }).on('select2:open', function() {
-                    // Log when dropdown is opened
-                    console.log('Customer dropdown opened');
                 });
 
                 // Trigger Select2 to refresh and show selected values

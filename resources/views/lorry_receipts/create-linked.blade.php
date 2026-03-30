@@ -146,18 +146,19 @@
                             <label for="truck_id" class="form-label">Truck *</label>
                             <select class="form-select" id="truck_id" name="truck_id" required>
                                 <option value="">Select Trucks</option>
-                                @foreach ($trucks as $truck)
-                                    <option value="{{ $truck->id }}"
-                                        data-transporter-id="{{ $truck->transporter_id }}"
-                                        data-transporter-name="{{ $truck->transporter ? $truck->transporter->name : '' }}"
-                                        {{ old('truck_id') == $truck->id ? 'selected' : '' }}>
-                                        {{ $truck->truck_number }}
-                                        @if ($truck->driver)
-                                            - Driver: {{ $truck->driver->name }}
+                                @php($selectedTruck = $trucks->firstWhere('id', old('truck_id')))
+                                @if($selectedTruck)
+                                    <option value="{{ $selectedTruck->id }}"
+                                        data-transporter-id="{{ $selectedTruck->transporter_id }}"
+                                        data-transporter-name="{{ $selectedTruck->transporter ? $selectedTruck->transporter->name : '' }}"
+                                        selected>
+                                        {{ $selectedTruck->truck_number }}
+                                        @if ($selectedTruck->driver)
+                                            - Driver: {{ $selectedTruck->driver->name }}
                                         @endif
-                                        ({{ $truck->transporter ? $truck->transporter->name : 'No Transporter' }})
+                                        ({{ $selectedTruck->transporter ? $selectedTruck->transporter->name : 'No Transporter' }})
                                     </option>
-                                @endforeach
+                                @endif
                             </select>
                             @error('truck_id')
                                 <div class="text-danger">{{ $message }}</div>
@@ -199,12 +200,12 @@
                             <label for="reference_by" class="form-label">Reference By</label>
                             <select class="form-select" id="reference_by" name="reference_by">
                                 <option value="">Select Reference</option>
-                                @foreach ($agencies as $agency)
-                                    <option value="{{ $agency->id }}"
-                                        {{ old('reference_by') == $agency->id ? 'selected' : '' }}>
-                                        {{ $agency->name }}
+                                @php($selectedAgency = $agencies->firstWhere('id', old('reference_by')))
+                                @if($selectedAgency)
+                                    <option value="{{ $selectedAgency->id }}" selected>
+                                        {{ $selectedAgency->name }}
                                     </option>
-                                @endforeach
+                                @endif
                             </select>
                             @error('reference_by')
                                 <div class="text-danger">{{ $message }}</div>
@@ -247,9 +248,6 @@
                                         <label class="form-label">Customer *</label>
                                         <select class="form-select select2 customer-select" required>
                                             <option value="">Select Customer</option>
-                                            @foreach ($consignees as $consignee)
-                                                <option value="{{ $consignee->id }}">{{ $consignee->name }}</option>
-                                            @endforeach
                                         </select>
                                         <div class="invalid-feedback">Please select a customer.</div>
                                     </div>
@@ -270,9 +268,6 @@
                                         <label class="form-label">Consignor *</label>
                                         <select class="form-select select2 consignor-select" required>
                                             <option value="">Select Consignor</option>
-                                            @foreach ($consignees as $consignee)
-                                                <option value="{{ $consignee->id }}">{{ $consignee->name }}</option>
-                                            @endforeach
                                         </select>
                                         <small class="form-text text-muted d-block consignor-contact-text"></small>
                                         <small class="form-text text-muted d-block consignor-city-text"></small>
@@ -287,9 +282,6 @@
                                         <label class="form-label">Consignee *</label>
                                         <select class="form-select select2 consignee-select" required>
                                             <option value="">Select Consignee</option>
-                                            @foreach ($consignees as $consignee)
-                                                <option value="{{ $consignee->id }}">{{ $consignee->name }}</option>
-                                            @endforeach
                                         </select>
                                         <small class="form-text text-muted d-block consignee-contact-text"></small>
                                         <small class="form-text text-muted d-block consignee-city-text"></small>
@@ -511,25 +503,126 @@
             });
         }
 
+        const ajaxConsigneesConfig = {
+            url: '/api/consignees/search',
+            dataType: 'json',
+            delay: 250,
+            data: function (params) {
+                return {
+                    q: params.term || '',
+                    page: params.page || 1,
+                };
+            },
+            processResults: function (data, params) {
+                return {
+                    results: data.results || [],
+                    pagination: {
+                        more: data.pagination?.more || false,
+                    },
+                };
+            },
+            cache: true
+        };
+
+        const ajaxTrucksConfig = {
+            url: '/api/trucks/search',
+            dataType: 'json',
+            delay: 250,
+            data: function (params) {
+                return {
+                    q: params.term || '',
+                    page: params.page || 1,
+                };
+            },
+            processResults: function (data, params) {
+                return {
+                    results: data.results || [],
+                    pagination: {
+                        more: data.pagination?.more || false,
+                    },
+                };
+            },
+            cache: true
+        };
+
+        const ajaxAgenciesConfig = {
+            url: '/api/agencies/search',
+            dataType: 'json',
+            delay: 250,
+            data: function (params) {
+                return {
+                    q: params.term || '',
+                    page: params.page || 1,
+                };
+            },
+            processResults: function (data, params) {
+                return {
+                    results: data.results || [],
+                    pagination: {
+                        more: data.pagination?.more || false,
+                    },
+                };
+            },
+            cache: true
+        };
+
         function initSelect2In(scope) {
-            if (typeof $ !== 'undefined' && $(scope).find('.select2').length) {
-                $(scope).find('.select2').select2({
-                    theme: 'bootstrap-5',
-                    width: '100%',
-                    minimumResultsForSearch: 0
-                });
-            }
+            if (typeof $ === 'undefined') return;
+
+            const $scope = $(scope);
+
+            $scope.find('.customer-select').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                minimumInputLength: 1,
+                placeholder: 'Search and select customer...',
+                ajax: ajaxConsigneesConfig
+            });
+
+            $scope.find('.consignor-select').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                minimumInputLength: 1,
+                placeholder: 'Search and select consignor...',
+                ajax: ajaxConsigneesConfig
+            });
+
+            $scope.find('.consignee-select').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                minimumInputLength: 1,
+                placeholder: 'Search and select consignee...',
+                ajax: ajaxConsigneesConfig
+            });
         }
 
         function initializeLorryReceiptForm() {
             $(document).ready(function() {
                 console.log('🚀 Linked Lorry Receipts Form initialized');
 
-                // Initialize shared dropdowns with Select2
-                $('#truck_id, #transporter_id, #reference_by').select2({
+                // Initialize shared dropdowns with Select2 (AJAX-driven for large datasets)
+                $('#truck_id').select2({
                     theme: 'bootstrap-5',
                     width: '100%',
-                    minimumResultsForSearch: 0
+                    minimumInputLength: 1,
+                    placeholder: 'Search and select truck...',
+                    ajax: ajaxTrucksConfig
+                });
+
+                $('#transporter_id').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    minimumInputLength: 1,
+                    placeholder: 'Search and select transporter...',
+                    ajax: ajaxAgenciesConfig
+                });
+
+                $('#reference_by').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    minimumInputLength: 1,
+                    placeholder: 'Search and select reference...',
+                    ajax: ajaxAgenciesConfig
                 });
 
                 // Ensure Select2 search input gets autofocus on open (works for dynamic elements too)

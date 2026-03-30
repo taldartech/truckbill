@@ -490,17 +490,16 @@
       }
 
       const selectedTruckId = e.params.data.id;
+      const data = e.params.data || {};
 
-      const selectedOption = $(this).find('option:selected');
-      const truckText = selectedOption.text().trim();
-      const transporterId = parseInt(selectedOption.data('transporter-id'), 10) || null;
-      const transporterNameFromData = (selectedOption.data('transporter-name') || '').toString().trim();
+      const truckText = (data.text || '').toString().trim() || $(this).find('option:selected').text().trim();
+      const transporterId = data.transporter_id !== undefined && data.transporter_id !== null && data.transporter_id !== ''
+        ? parseInt(data.transporter_id, 10)
+        : null;
 
+      const transporterNameFromData = (data.transporter_name || '').toString().trim();
       const transporterMatch = truckText.match(/\(([^)]+)\)$/);
       const transporterName = transporterNameFromData || (transporterMatch ? transporterMatch[1].trim() : '');
-      if (!transporterId && !transporterName) {
-        return;
-      }
 
       trucksData[selectedTruckId] = {
         transporterId,
@@ -523,15 +522,18 @@
         return;
       }
 
-      const selectedOption = $(this).find('option:selected');
-      const truckText = selectedOption.text().trim();
-      const transporterId = parseInt(selectedOption.data('transporter-id'), 10) || null;
-      const transporterNameFromData = (selectedOption.data('transporter-name') || '').toString().trim();
+      const select2Data = truckSelect2 && typeof truckSelect2.select2 === 'function'
+        ? (truckSelect2.select2('data') || [])[0] || {}
+        : {};
+
+      const truckText = (select2Data.text || '').toString().trim() || $(this).find('option:selected').text().trim();
+      const transporterId = select2Data.transporter_id !== undefined && select2Data.transporter_id !== null && select2Data.transporter_id !== ''
+        ? parseInt(select2Data.transporter_id, 10)
+        : null;
+
+      const transporterNameFromData = (select2Data.transporter_name || '').toString().trim();
       const transporterMatch = truckText.match(/\(([^)]+)\)$/);
       const transporterName = transporterNameFromData || (transporterMatch ? transporterMatch[1].trim() : '');
-      if (!transporterId && !transporterName) {
-        return;
-      }
 
       trucksData[selectedTruckId] = {
         transporterId,
@@ -561,16 +563,8 @@
           autoSelectTruckOwner(selectedTruckId);
         }
       } else if (selectedType === 'agency') {
-        fetch('/api/agencies')
-          .then((response) => response.json())
-          .then((data) => {
-            data.forEach((agency) => {
-              const option = document.createElement('option');
-              option.value = agency.id;
-              option.textContent = agency.name;
-              transporterSelect.appendChild(option);
-            });
-          });
+        // Agencies are loaded via Select2 AJAX (no full list fetch).
+        transporterSelect2.trigger('change.select2');
       }
     });
 

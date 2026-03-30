@@ -213,18 +213,19 @@
                             <select class="form-select" id="truck_id" name="truck_id" required
                                 data-placeholder="Search and select truck...">
                                 <option value="">Select Trucks</option>
-                                @foreach ($trucks as $truck)
-                                    <option value="{{ $truck->id }}"
-                                        data-transporter-id="{{ $truck->transporter_id }}"
-                                        data-transporter-name="{{ $truck->transporter ? $truck->transporter->name : '' }}"
-                                        {{ $truck->id == $lorry_receipt->truck_id ? 'selected' : '' }}>
-                                        {{ $truck->truck_number }}
-                                        @if ($truck->driver)
-                                            - Driver: {{ $truck->driver->name }}
+                                @php($selectedTruck = $trucks->firstWhere('id', $lorry_receipt->truck_id))
+                                @if($selectedTruck)
+                                    <option value="{{ $selectedTruck->id }}"
+                                        data-transporter-id="{{ $selectedTruck->transporter_id }}"
+                                        data-transporter-name="{{ $selectedTruck->transporter ? $selectedTruck->transporter->name : '' }}"
+                                        selected>
+                                        {{ $selectedTruck->truck_number }}
+                                        @if ($selectedTruck->driver)
+                                            - Driver: {{ $selectedTruck->driver->name }}
                                         @endif
-                                        ({{ $truck->transporter ? $truck->transporter->name : 'No Transporter' }})
+                                        ({{ $selectedTruck->transporter ? $selectedTruck->transporter->name : 'No Transporter' }})
                                     </option>
-                                @endforeach
+                                @endif
                             </select>
                             @error('truck_id')
                                 <div class="text-danger">{{ $message }}</div>
@@ -246,12 +247,12 @@
                             <label for="transporter_id" id="transporterLabel" class="form-label">Transporter *</label>
                             <select class="form-select" id="transporter_id" name="transporter_id" required onchange="window.LREntity.showTdsPercentage(this.value)" {{ (!isset($canChangeTransporter) || !$canChangeTransporter) ? 'disabled' : '' }}>
                                 <option value="">Select Transporter</option>
-                                @foreach ($transporters as $transporter)
-                                    <option value="{{ $transporter->id }}"
-                                        {{ $transporter->id == $lorry_receipt->transporter_id ? 'selected' : '' }}>
-                                        {{ $transporter->name }}
+                                @php($selectedTransporter = $transporters->firstWhere('id', $lorry_receipt->transporter_id))
+                                @if($selectedTransporter)
+                                    <option value="{{ $selectedTransporter->id }}" selected>
+                                        {{ $selectedTransporter->name }}
                                     </option>
-                                @endforeach
+                                @endif
                             </select>
                             @if (!isset($canChangeTransporter) || !$canChangeTransporter)
                                 <input type="hidden" name="transporter_id" value="{{ $lorry_receipt->transporter_id }}">
@@ -273,12 +274,12 @@
                             <label for="reference_by" class="form-label">Reference By</label>
                             <select class="form-select" id="reference_by" name="reference_by">
                                 <option value="">Select Reference</option>
-                                @foreach ($agencies as $agency)
-                                    <option value="{{ $agency->id }}"
-                                        {{ $lorry_receipt->reference_by == $agency->id ? 'selected' : '' }}>
-                                        {{ $agency->name }}
+                                @php($selectedAgency = $agencies->firstWhere('id', $lorry_receipt->reference_by))
+                                @if($selectedAgency)
+                                    <option value="{{ $selectedAgency->id }}" selected>
+                                        {{ $selectedAgency->name }}
                                     </option>
-                                @endforeach
+                                @endif
                             </select>
                             @error('reference_by')
                                 <div class="text-danger">{{ $message }}</div>
@@ -326,12 +327,12 @@
                             <select class="form-select" id="consignor_id" name="consignor_id" required
                                 data-placeholder="Search and select consignor...">
                                 <option value="">Select Consignor</option>
-                                @foreach ($consignors as $consignor)
-                                    <option value="{{ $consignor->id }}"
-                                        {{ $consignor->id == $lorry_receipt->consignor_id ? 'selected' : '' }}>
-                                        {{ $consignor->name }}
+                                @php($selectedConsignor = $consignors->firstWhere('id', $lorry_receipt->consignor_id))
+                                @if($selectedConsignor)
+                                    <option value="{{ $selectedConsignor->id }}" selected>
+                                        {{ $selectedConsignor->name }}
                                     </option>
-                                @endforeach
+                                @endif
                             </select>
                             @error('consignor_id')
                                 <div class="text-danger">{{ $message }}</div>
@@ -352,12 +353,12 @@
                             <select class="form-select" id="consignee_id" name="consignee_id" required
                                 data-placeholder="Search and select consignee...">
                                 <option value="">Select Consignee</option>
-                                @foreach ($consignees as $consignee)
-                                    <option value="{{ $consignee->id }}"
-                                        {{ $consignee->id == $lorry_receipt->consignee_id ? 'selected' : '' }}>
-                                        {{ $consignee->name }}
+                                @php($selectedConsignee = $consignees->firstWhere('id', $lorry_receipt->consignee_id))
+                                @if($selectedConsignee)
+                                    <option value="{{ $selectedConsignee->id }}" selected>
+                                        {{ $selectedConsignee->name }}
                                     </option>
-                                @endforeach
+                                @endif
                             </select>
                             @error('consignee_id')
                                 <div class="text-danger">{{ $message }}</div>
@@ -672,11 +673,98 @@
             // Initialize calculation on page load
             calculateAmount();
 
-            // Initialize Select2 for better dropdowns
-            $('#customer_id, #consignor_id, #consignee_id, #transporter_id, #truck_id').select2({
+            // Initialize Select2 with AJAX (optimized dropdown loading)
+            const ajaxConsigneesConfig = {
+                url: '/api/consignees/search',
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return { q: params.term || '', page: params.page || 1 };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.results || [],
+                        pagination: { more: data.pagination?.more || false }
+                    };
+                },
+                cache: true
+            };
+
+            const ajaxTrucksConfig = {
+                url: '/api/trucks/search',
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return { q: params.term || '', page: params.page || 1 };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.results || [],
+                        pagination: { more: data.pagination?.more || false }
+                    };
+                },
+                cache: true
+            };
+
+            const ajaxAgenciesConfig = {
+                url: '/api/agencies/search',
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return { q: params.term || '', page: params.page || 1 };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.results || [],
+                        pagination: { more: data.pagination?.more || false }
+                    };
+                },
+                cache: true
+            };
+
+            $('#customer_id').select2({
                 theme: 'bootstrap-5',
-                placeholder: 'Select an option...',
-                allowClear: true
+                width: '100%',
+                minimumInputLength: 1,
+                allowClear: true,
+                placeholder: 'Search and select customer...',
+                ajax: ajaxConsigneesConfig
+            });
+
+            $('#consignor_id').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                minimumInputLength: 1,
+                allowClear: true,
+                placeholder: 'Search and select consignor...',
+                ajax: ajaxConsigneesConfig
+            });
+
+            $('#consignee_id').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                minimumInputLength: 1,
+                allowClear: true,
+                placeholder: 'Search and select consignee...',
+                ajax: ajaxConsigneesConfig
+            });
+
+            $('#truck_id').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                minimumInputLength: 1,
+                allowClear: true,
+                placeholder: 'Search and select truck...',
+                ajax: ajaxTrucksConfig
+            });
+
+            $('#transporter_id').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                minimumInputLength: 1,
+                allowClear: true,
+                placeholder: 'Search and select transporter...',
+                ajax: ajaxAgenciesConfig
             });
 
             // Bootstrap form validation
@@ -909,11 +997,99 @@
         $(document).ready(function() {
             console.log('🚀 Lorry Receipt Edit Form initialized');
 
-            // Initialize other dropdowns with Select2
-            $('#truck_id, #transporter_id, #consignor_id, #consignee_id, #good_type, #reference_by').select2({
+            // Initialize other dropdowns with Select2 (AJAX driven)
+            const ajaxConsigneesConfig = {
+                url: '/api/consignees/search',
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return { q: params.term || '', page: params.page || 1 };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.results || [],
+                        pagination: { more: data.pagination?.more || false }
+                    };
+                },
+                cache: true
+            };
+
+            const ajaxTrucksConfig = {
+                url: '/api/trucks/search',
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return { q: params.term || '', page: params.page || 1 };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.results || [],
+                        pagination: { more: data.pagination?.more || false }
+                    };
+                },
+                cache: true
+            };
+
+            const ajaxAgenciesConfig = {
+                url: '/api/agencies/search',
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return { q: params.term || '', page: params.page || 1 };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.results || [],
+                        pagination: { more: data.pagination?.more || false }
+                    };
+                },
+                cache: true
+            };
+
+            $('#truck_id').select2({
                 theme: 'bootstrap-5',
                 width: '100%',
-                // allowClear: true
+                minimumInputLength: 1,
+                placeholder: 'Search and select truck...',
+                ajax: ajaxTrucksConfig
+            });
+
+            $('#transporter_id').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                minimumInputLength: 1,
+                placeholder: 'Search and select transporter...',
+                ajax: ajaxAgenciesConfig
+            });
+
+            $('#consignor_id').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                minimumInputLength: 1,
+                placeholder: 'Search and select consignor...',
+                ajax: ajaxConsigneesConfig
+            });
+
+            $('#consignee_id').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                minimumInputLength: 1,
+                placeholder: 'Search and select consignee...',
+                ajax: ajaxConsigneesConfig
+            });
+
+            $('#good_type').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                minimumResultsForSearch: 0
+            });
+
+            $('#reference_by').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                minimumInputLength: 1,
+                placeholder: 'Search and select reference...',
+                ajax: ajaxAgenciesConfig
             });
 
             // Access the customer data from the window object
@@ -925,7 +1101,10 @@
             // Initialize customer dropdown with Select2
             $('#customer_id').select2({
                 theme: 'bootstrap-5',
-                width: '100%'
+                width: '100%',
+                minimumInputLength: 1,
+                placeholder: 'Search and select customer...',
+                ajax: ajaxConsigneesConfig
             }).on('select2:open', function() {
                 // Log when dropdown is opened
                 console.log('Customer dropdown opened');
@@ -2073,6 +2252,111 @@ grNumberInput.addEventListener('blur', function() {
                 errorBox.classList.remove('d-none');
                 errorBox.innerHTML = '⚠️ Error: ' + error.message;
             });
+    });
+
+    // Final "AJAX enforcement" to override any earlier Select2 initializations
+    // that might not include AJAX search.
+    document.addEventListener('DOMContentLoaded', function () {
+        if (!window.jQuery || typeof window.jQuery.fn.select2 === 'undefined') return;
+
+        const $ = window.jQuery;
+
+        const ajaxConsigneesConfig = {
+            url: '/api/consignees/search',
+            dataType: 'json',
+            delay: 250,
+            data: function (params) {
+                return { q: params.term || '', page: params.page || 1 };
+            },
+            processResults: function (data) {
+                return { results: data.results || [], pagination: { more: data.pagination?.more || false } };
+            },
+            cache: true
+        };
+
+        const ajaxTrucksConfig = {
+            url: '/api/trucks/search',
+            dataType: 'json',
+            delay: 250,
+            data: function (params) {
+                return { q: params.term || '', page: params.page || 1 };
+            },
+            processResults: function (data) {
+                return { results: data.results || [], pagination: { more: data.pagination?.more || false } };
+            },
+            cache: true
+        };
+
+        const ajaxAgenciesConfig = {
+            url: '/api/agencies/search',
+            dataType: 'json',
+            delay: 250,
+            data: function (params) {
+                return { q: params.term || '', page: params.page || 1 };
+            },
+            processResults: function (data) {
+                return { results: data.results || [], pagination: { more: data.pagination?.more || false } };
+            },
+            cache: true
+        };
+
+        const initOrReinit = (selector, config) => {
+            const $el = $(selector);
+            if (!$el.length) return;
+            if ($el.hasClass('select2-hidden-accessible')) {
+                $el.select2('destroy');
+            }
+            $el.select2(config);
+        };
+
+        initOrReinit('#customer_id', {
+            theme: 'bootstrap-5',
+            width: '100%',
+            minimumInputLength: 1,
+            allowClear: true,
+            placeholder: 'Search and select customer...',
+            ajax: ajaxConsigneesConfig
+        });
+        initOrReinit('#consignor_id', {
+            theme: 'bootstrap-5',
+            width: '100%',
+            minimumInputLength: 1,
+            allowClear: true,
+            placeholder: 'Search and select consignor...',
+            ajax: ajaxConsigneesConfig
+        });
+        initOrReinit('#consignee_id', {
+            theme: 'bootstrap-5',
+            width: '100%',
+            minimumInputLength: 1,
+            allowClear: true,
+            placeholder: 'Search and select consignee...',
+            ajax: ajaxConsigneesConfig
+        });
+        initOrReinit('#truck_id', {
+            theme: 'bootstrap-5',
+            width: '100%',
+            minimumInputLength: 1,
+            allowClear: true,
+            placeholder: 'Search and select truck...',
+            ajax: ajaxTrucksConfig
+        });
+        initOrReinit('#transporter_id', {
+            theme: 'bootstrap-5',
+            width: '100%',
+            minimumInputLength: 1,
+            allowClear: true,
+            placeholder: 'Search and select transporter...',
+            ajax: ajaxAgenciesConfig
+        });
+        initOrReinit('#reference_by', {
+            theme: 'bootstrap-5',
+            width: '100%',
+            minimumInputLength: 1,
+            allowClear: true,
+            placeholder: 'Search and select reference...',
+            ajax: ajaxAgenciesConfig
+        });
     });
 
 </script>
