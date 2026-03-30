@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
+use App\Models\Company;
 use App\Models\FreightBooking;
 use App\Models\Invoice;
 use App\Models\InvoicePayment;
@@ -11,15 +12,60 @@ use App\Models\User;
 use App\Models\VoucherPayment;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class AuditLogController extends Controller
 {
+    /**
+     * Companies this super admin owns (company list / enter uses the same user_id).
+     *
+     * @return array{0: ?int, 1: \Illuminate\Database\Eloquent\Collection<int, Company>}
+     */
+    private function resolveSuperAdminAuditScope(Request $request, array $validated): array
+    {
+        $ownedCompanies = Company::query()
+            ->where('user_id', Auth::id())
+            ->orderBy('name')
+            ->get(['id', 'name', 'short_name']);
+
+        if ($ownedCompanies->isEmpty()) {
+            session()->forget('super_admin_company_id');
+
+            return [null, $ownedCompanies];
+        }
+
+        $ownedIds = $ownedCompanies->pluck('id')->all();
+
+        if ($ownedCompanies->count() === 1) {
+            return [(int) $ownedIds[0], $ownedCompanies];
+        }
+
+        if (! empty($validated['company_id'])) {
+            return [(int) $validated['company_id'], $ownedCompanies];
+        }
+
+        if (session()->has('super_admin_company_id')) {
+            $sid = (int) session('super_admin_company_id');
+            if (in_array($sid, $ownedIds, true)) {
+                return [$sid, $ownedCompanies];
+            }
+            session()->forget('super_admin_company_id');
+        }
+
+        return [null, $ownedCompanies];
+    }
+
     public function index(Request $request): View
     {
         $validated = $request->validate([
+            'company_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('companies', 'id')->where(fn ($query) => $query->where('user_id', Auth::id())),
+            ],
             'subject_type' => 'nullable|string|max:255',
             'user_id' => 'nullable|integer|exists:users,id',
             'date_from' => 'nullable|date',
@@ -28,24 +74,25 @@ class AuditLogController extends Controller
             'q' => 'nullable|string|max:255',
         ]);
 
-        $companyId = session('super_admin_company_id');
+        [$companyId, $ownedCompanies] = $this->resolveSuperAdminAuditScope($request, $validated);
 
         $query = AuditLog::query()
-            ->with(['user', 'fieldChanges']);
+            ->with(['user', 'company', 'fieldChanges']);
 
-        if (! empty($companyId)) {
+        if ($companyId !== null) {
             $query->where('company_id', $companyId);
+        } else {
+            $query->whereRaw('0 = 1');
         }
 
         if (! empty($validated['subject_type'])) {
             $query->where('subject_type', $validated['subject_type']);
         }
 
-        if (! empty($validated['user_id'])) {
-            $sameCompany = User::query()->whereKey($validated['user_id']);
-            if (! empty($companyId)) {
-                $sameCompany->where('company_id', $companyId);
-            }
+        if (! empty($validated['user_id']) && $companyId !== null) {
+            $sameCompany = User::query()
+                ->whereKey($validated['user_id'])
+                ->where('company_id', $companyId);
 
             if ($sameCompany->exists()) {
                 $query->where('user_id', $validated['user_id']);
@@ -60,14 +107,12 @@ class AuditLogController extends Controller
             $query->whereDate('occurred_at', '<=', $validated['date_to']);
         }
 
-        if (! empty($validated['lr_number'])) {
+        if (! empty($validated['lr_number']) && $companyId !== null) {
             $lrNumber = trim((string) $validated['lr_number']);
-            $lrIdsQuery = LorryReceipt::query()
-                ->where('lr_number', 'like', '%'.$lrNumber.'%');
-            if (! empty($companyId)) {
-                $lrIdsQuery->where('company_id', $companyId);
-            }
-            $lrIds = $lrIdsQuery->pluck('id');
+            $lrIds = LorryReceipt::query()
+                ->where('company_id', $companyId)
+                ->where('lr_number', 'like', '%'.$lrNumber.'%')
+                ->pluck('id');
             $freightBookingIds = collect();
             $voucherPaymentIds = collect();
             $invoiceIds = collect();
@@ -75,31 +120,25 @@ class AuditLogController extends Controller
 
             if ($lrIds->isNotEmpty()) {
                 $freightBookingIds = FreightBooking::query()
+                    ->where('company_id', $companyId)
                     ->whereIn('lr_id', $lrIds)
-                    ->when(! empty($companyId), function ($q) use ($companyId): void {
-                        $q->where('company_id', $companyId);
-                    })
                     ->pluck('id');
 
                 if ($freightBookingIds->isNotEmpty()) {
                     $voucherPaymentIds = VoucherPayment::query()
+                        ->where('company_id', $companyId)
                         ->whereIn('freight_booking_id', $freightBookingIds)
-                        ->when(! empty($companyId), function ($q) use ($companyId): void {
-                            $q->where('company_id', $companyId);
-                        })
                         ->pluck('id');
                 }
 
-                $invoiceIdsQuery = Invoice::query();
-                if (! empty($companyId)) {
-                    $invoiceIdsQuery->where('company_id', $companyId);
-                }
-                $invoiceIdsQuery->where(function ($invoiceQuery) use ($lrIds): void {
-                    foreach ($lrIds as $lrId) {
-                        $invoiceQuery->orWhereJsonContains('lr_ids', (int) $lrId)
-                            ->orWhereJsonContains('lr_ids', (string) $lrId);
-                    }
-                });
+                $invoiceIdsQuery = Invoice::query()
+                    ->where('company_id', $companyId)
+                    ->where(function ($invoiceQuery) use ($lrIds): void {
+                        foreach ($lrIds as $lrId) {
+                            $invoiceQuery->orWhereJsonContains('lr_ids', (int) $lrId)
+                                ->orWhereJsonContains('lr_ids', (string) $lrId);
+                        }
+                    });
                 $invoiceIds = $invoiceIdsQuery->pluck('id');
 
                 if ($invoiceIds->isNotEmpty()) {
@@ -164,7 +203,10 @@ class AuditLogController extends Controller
             });
         }
 
-        $hasActiveFilters = collect($validated)->filter(fn ($value) => ! empty($value))->isNotEmpty();
+        $hasActiveFilters = collect($validated)
+            ->except(['company_id'])
+            ->filter(fn ($value) => ! empty($value))
+            ->isNotEmpty();
 
         if ($hasActiveFilters) {
             $statsQuery = clone $query;
@@ -195,23 +237,27 @@ class AuditLogController extends Controller
             ]);
         }
 
-        $users = User::query()
-            ->when(! empty($companyId), function ($q) use ($companyId): void {
-                $q->where('company_id', $companyId);
-            })
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        $users = $companyId !== null
+            ? User::query()
+                ->where('company_id', $companyId)
+                ->orderBy('name')
+                ->get(['id', 'name', 'email'])
+            : collect();
 
         $subjectTypeOptions = [
             Invoice::class => 'Invoice',
             InvoicePayment::class => 'Invoice payment',
-            LorryReceipt::class => 'Lorry receipt',
-            FreightBooking::class => 'Freight booking',
+            LorryReceipt::class => 'Good Receipts (Bilty)',
+            FreightBooking::class => 'Good Hires (Lorry Hire)',
             VoucherPayment::class => 'Voucher payment',
         ];
 
         return view('audit_logs.index', [
             'logs' => $logs,
+            'auditScopeCompanyId' => $companyId,
+            'ownedCompanies' => $ownedCompanies,
+            'showCompanyPicker' => $ownedCompanies->count() > 1,
+            'currentCompany' => $companyId !== null ? Company::query()->find($companyId) : null,
             'users' => $users,
             'subjectTypeOptions' => $subjectTypeOptions,
             'filters' => $validated,

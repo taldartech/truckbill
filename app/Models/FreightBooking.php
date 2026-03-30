@@ -163,11 +163,11 @@ class FreightBooking extends Model implements Auditable
         $lr = $this->relationLoaded('lr') ? $this->lr : $this->lr()->first();
         $lrNo = $lr?->lr_number;
 
-        return $lrNo ? "FB for LR {$lrNo}" : 'Freight booking #'.$this->id;
+        return $lrNo ? "FB for LR {$lrNo}" : 'Good Hires (Lorry Hire) #'.$this->id;
     }
 
     public function auditSubjectTypeName(): string
     {
-        return 'Freight booking';
+        return 'Good Hires (Lorry Hire)';
     }
 }

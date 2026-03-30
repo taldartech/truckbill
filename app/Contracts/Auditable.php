@@ -17,7 +17,7 @@ interface Auditable
     public function auditSubjectLabel(): string;
 
     /**
-     * Display name for the entity type (e.g. "Invoice", "Lorry receipt").
+     * Display name for the entity type (e.g. "Invoice", "Good Receipts (Bilty)").
      */
     public function auditSubjectTypeName(): string;
 

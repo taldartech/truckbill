@@ -68,14 +68,21 @@
                             @endforeach
                         </select>
                     </div>
+
+          
                     <div class="col-md-3">
                         <label class="form-label">Invoice Number <span class="text-danger">*</span></label>
                         <select name="invoice_number" class="form-select select2" required>
                             <option value="">Select Invoice Number</option>
                             @if (!empty($invoices))
+
+                            
                                 @foreach ($invoices as $inv)
                                     <option @if ($id == $inv->id) selected @endif value="{{ $inv->id }}">
-                                        {{ $inv->manual_invoice_number }}</option>
+                                        {{-- {{ $inv->manual_invoice_number }} --}}
+                                        
+                                        {{ $inv->invoice_number ? $inv->invoice_number . ($inv->manual_invoice_number ? ' (' . $inv->manual_invoice_number . ')' : '') : ($inv->manual_invoice_number ?? $inv->id) }}
+                                    </option>
                                 @endforeach
                             @endif
                         </select>
@@ -188,10 +195,24 @@
         function updateInvoiceDropdown(invoices) {
             let selectedInvoiceId = $('select[name="invoice_number"]').val() || '{{ $id ?? '' }}';
             let options = '<option value="">Select Invoice Number</option>';
+
+            function getInvoiceLabel(invoice) {
+                const invoiceNumber = invoice.invoice_number;
+                const manualInvoiceNumber = invoice.manual_invoice_number;
+
+                if (invoiceNumber) {
+                    return manualInvoiceNumber
+                        ? `${invoiceNumber} (${manualInvoiceNumber})`
+                        : invoiceNumber;
+                }
+
+                return manualInvoiceNumber ?? invoice.id;
+            }
+
             invoices.forEach(function(invoiceNumber) {
                 let selected = selectedInvoiceId == invoiceNumber.id ? 'selected' : '';
                 options +=
-                    `<option value="${invoiceNumber.id}" ${selected}>${invoiceNumber.manual_invoice_number}</option>`;
+                    `<option value="${invoiceNumber.id}" ${selected}>${getInvoiceLabel(invoiceNumber)}</option>`;
             });
             $('select[name="invoice_number"]').html(options);
             // Trigger change event to update Select2

@@ -47,4 +47,28 @@ class AuditLog extends Model
     {
         return $this->hasMany(AuditLogChange::class)->orderBy('sort_order')->orderBy('id');
     }
+
+    /**
+     * User-facing module label (aligned with nav; overrides legacy stored subject_type_name).
+     */
+    public function subjectTypeDisplayName(): string
+    {
+        return match ($this->subject_type) {
+            LorryReceipt::class => 'Good Receipts (Bilty)',
+            FreightBooking::class => 'Good Hires (Lorry Hire)',
+            default => $this->subject_type_name,
+        };
+    }
+
+    /**
+     * Summary text with legacy labels rewritten for display.
+     */
+    public function displaySummary(): string
+    {
+        $s = $this->summary;
+        $s = str_replace('Freight booking', 'Good Hires (Lorry Hire)', $s);
+        $s = str_replace('Lorry receipt', 'Good Receipts (Bilty)', $s);
+
+        return $s;
+    }
 }

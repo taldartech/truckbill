@@ -28,7 +28,7 @@ class AuditAttributeLabels
                 'customer_id' => 'Customer',
                 'generated_date' => 'Generated date',
                 'memo_ids' => 'Memos',
-                'lr_ids' => 'Lorry receipts',
+                'lr_ids' => 'Good Receipts (Bilty)',
                 'sgst' => 'SGST',
                 'cgst' => 'CGST',
                 'igst' => 'IGST',

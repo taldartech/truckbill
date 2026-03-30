@@ -558,7 +558,7 @@ class InvoiceController extends Controller
         $invoices = Invoice::where('customer_id', $customerId)
             ->where('company_id', Auth::user()->company_id)
             ->orderByDesc('id')
-            ->get(['id', 'manual_invoice_number']);
+            ->get(['id', 'manual_invoice_number', 'invoice_number']);
 
         return response()->json($invoices);
     }

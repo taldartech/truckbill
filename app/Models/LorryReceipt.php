@@ -142,6 +142,6 @@ class LorryReceipt extends Model implements Auditable
 
     public function auditSubjectTypeName(): string
     {
-        return 'Lorry receipt';
+        return 'Good Receipts (Bilty)';
     }
 }

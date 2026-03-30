@@ -124,6 +124,15 @@
                 <div class="col-12">
                     <h3 class="mb-1">Audit log</h3>
                     <p class="audit-subtitle mb-0">Detailed timeline of system changes. Filter and inspect each event with old and new values.</p>
+                    @if (! empty($currentCompany))
+                        <p class="small text-muted mt-2 mb-0">
+                            <i class="far fa-building me-1"></i>
+                            <span class="text-dark">{{ $currentCompany->name }}</span>
+                            @if (! empty($currentCompany->short_name))
+                                <span class="badge bg-light text-dark border ms-1">{{ $currentCompany->short_name }}</span>
+                            @endif
+                        </p>
+                    @endif
                 </div>
             </div>
 
@@ -133,6 +142,20 @@
                 </div>
                 <div class="card-body pt-3">
                     <form method="get" action="{{ route('audit-logs.index') }}" class="row g-3 align-items-end">
+                        @if ($showCompanyPicker)
+                            <div class="col-12">
+                                <label class="form-label">Company</label>
+                                <select name="company_id" class="form-select" onchange="this.form.submit()">
+                                    <option value="">— Select company —</option>
+                                    @foreach ($ownedCompanies as $c)
+                                        <option value="{{ $c->id }}" {{ (string) ($auditScopeCompanyId ?? '') === (string) $c->id ? 'selected' : '' }}>
+                                            {{ $c->name }}@if (! empty($c->short_name)) ({{ $c->short_name }})@endif
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <p class="small text-muted mb-0 mt-1">Only your companies are listed. Pick one to load audit for that company.</p>
+                            </div>
+                        @endif
                         <div class="col-lg-3 col-md-6">
                             <label class="form-label">Module</label>
                             <select name="subject_type" class="form-select">
@@ -147,7 +170,7 @@
                             <select name="user_id" class="form-select">
                                 <option value="">All users</option>
                                 @foreach ($users as $u)
-                                    <option value="{{ $u->id }}" {{ (string) ($filters['user_id'] ?? '') === (string) $u->id ? 'selected' : '' }}>{{ $u->name }}</option>
+                                    <option value="{{ $u->id }}" {{ (string) ($filters['user_id'] ?? '') === (string) $u->id ? 'selected' : '' }}>{{ $u->name }} ({{ $u->email }})</option>
                                 @endforeach
                             </select>
                         </div>
@@ -214,7 +237,16 @@
                     <p class="audit-subtitle mb-0">Newest activity on top. Expand each event to see old and new values.</p>
                 </div>
                 <div class="audit-timeline-wrap">
-                    @if (! $hasActiveFilters)
+                    @if ($ownedCompanies->isEmpty())
+                        <div class="alert alert-warning border rounded-3 mb-3">
+                            <strong>No companies found</strong> for your account. Create one under
+                            <a href="{{ route('company.index') }}" class="alert-link">Company Management</a>.
+                        </div>
+                    @elseif ($auditScopeCompanyId === null && $showCompanyPicker)
+                        <div class="alert alert-warning border rounded-3 mb-3">
+                            <strong>Select a company</strong> in the filters above to see that company’s audit log.
+                        </div>
+                    @elseif (! $hasActiveFilters)
                         <div class="alert alert-light border rounded-3 mb-3">
                             <strong>No data by default.</strong> Apply filters (LR Number / date / user / module) to load timeline.
                         </div>
@@ -229,15 +261,25 @@
                             <div class="audit-item">
                                 <div class="d-flex flex-wrap align-items-start gap-2 mb-2">
                                     <span class="badge {{ $badgeClass }} text-uppercase">{{ $action }}</span>
-                                    <span class="badge bg-light text-dark border">{{ $log->subject_type_name }}</span>
+                                    <span class="badge bg-light text-dark border">{{ $log->subjectTypeDisplayName() }}</span>
                                 </div>
 
-                                <div class="audit-item-title mb-1">{{ $log->summary }}</div>
+                                <div class="audit-item-title mb-1">{{ $log->displaySummary() }}</div>
 
                                 <div class="audit-meta mb-2">
                                     <i class="far fa-clock me-1"></i>{{ $log->occurred_at->timezone(config('app.timezone'))->format('d M Y, h:i:s A') }}
+                                    @if ($log->company && ! empty($log->company->short_name))
+                                        <span class="mx-2">|</span>
+                                        <span class="badge bg-light text-dark border">{{ $log->company->short_name }}</span>
+                                    @endif
                                     <span class="mx-2">|</span>
-                                    <i class="far fa-user me-1"></i>{{ $log->user?->name ?? 'System' }}
+                                    <i class="far fa-user me-1"></i>
+                                    @if ($log->user)
+                                        {{ $log->user->name }}
+                                        <span class="text-muted">({{ $log->user->email }})</span>
+                                    @else
+                                        System
+                                    @endif
                                 </div>
 
                                 @if ($log->fieldChanges->isNotEmpty())
@@ -268,7 +310,17 @@
                             </div>
                         @empty
                             <div class="text-center text-muted py-4">
-                                {{ $hasActiveFilters ? 'No activity found for selected filters.' : 'Apply filters to view timeline.' }}
+                                @if ($auditScopeCompanyId === null)
+                                    @if ($showCompanyPicker)
+                                        Select a company above, then apply filters to view the timeline.
+                                    @elseif ($ownedCompanies->isEmpty())
+                                        Add a company first, then apply filters.
+                                    @else
+                                        Apply filters to view the timeline.
+                                    @endif
+                                @else
+                                    {{ $hasActiveFilters ? 'No activity found for selected filters.' : 'Apply filters to view timeline.' }}
+                                @endif
                             </div>
                         @endforelse
                     </div>
