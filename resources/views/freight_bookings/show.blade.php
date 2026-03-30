@@ -521,22 +521,32 @@
                     <div class="alert alert-secondary">
                         <h6><i class="fas fa-truck"></i> Transporter Details</h6>
                         <div class="row">
-                            <div class="col-md-3">
-                                <strong>FB Transporter:</strong><br>
-                                <span
-                                    id="fbTransporter">{{ $freightBooking->transporter_name ?? ($freightBooking->transporter ? $freightBooking->transporter->name : 'N/A') }}</span>
-                            </div>
-                            <div class="col-md-3">
-                                <strong>LR Transporter:</strong><br>
+                            <div class="col-md-4">
+                                <strong>Transporter:</strong><br>
                                 <span
                                     id="lrTransporter">{{ $freightBooking->lr && $freightBooking->lr->transporter ? $freightBooking->lr->transporter->name : 'N/A' }}</span>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
+                                <strong>Mobile:</strong><br>
+                                <span
+                                    id="transporterMobile">{{ $freightBooking->lr && $freightBooking->lr->transporter ? ($freightBooking->lr->transporter->mobile_number ?? 'N/A') : 'N/A' }}</span>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Short Name:</strong><br>
+                                <span
+                                    id="transporterShortName">{{ $freightBooking->lr && $freightBooking->lr->transporter ? ($freightBooking->lr->transporter->short_name ?? 'N/A') : 'N/A' }}</span>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Beneficiary ID:</strong><br>
+                                <span
+                                    id="transporterBeneficiaryId">{{ $freightBooking->lr && $freightBooking->lr->transporter ? ($freightBooking->lr->transporter->beneficiary_id ?? 'N/A') : 'N/A' }}</span>
+                            </div>
+                            <div class="col-md-4">
                                 <strong>TDS Percentage:</strong><br>
                                 <span
                                     id="tdsPercentage">{{ $freightBooking->transporter_tds_percentage ? $freightBooking->transporter_tds_percentage . '%' : 'N/A' }}</span>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <strong>Truck Number:</strong><br>
                                 <span
                                     id="truckNumber">{{ $freightBooking->lr && $freightBooking->lr->truck ? $freightBooking->lr->truck->truck_number : 'N/A' }}</span>

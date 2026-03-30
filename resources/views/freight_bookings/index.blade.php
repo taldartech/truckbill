@@ -335,6 +335,9 @@
                                                 data-is-delivered="{{ $booking->is_delivered ? '1' : '0' }}"
                                                 data-transporter="{{ $booking->transporter ? $booking->transporter->name : '' }}"
                                                 data-lr-transporter="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->name : '' }}"
+                                                data-lr-transporter-mobile-number="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->mobile_number : '' }}"
+                                                data-lr-transporter-short-name="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->short_name : '' }}"
+                                                data-lr-transporter-beneficiary-id="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->beneficiary_id : '' }}"
                                                 data-fb-transporter="{{ $booking->transporter_name ?? ($booking->transporter ? $booking->transporter->name : '') }}"
                                                 data-tds-percentage="{{ $booking->transporter_tds_percentage ?? '' }}"
                                                 data-customer-id="{{ $booking->lr && $booking->lr->customer ? $booking->lr->customer->id : '' }}"
@@ -550,6 +553,9 @@
                     lr_id: $(this).data('lr-id'),
                     transporter: $(this).data('transporter'),
                     lr_transporter: $(this).data('lr-transporter'),
+                        transporter_mobile_number: $(this).data('lr-transporter-mobile-number'),
+                        transporter_short_name: $(this).data('lr-transporter-short-name'),
+                        transporter_beneficiary_id: $(this).data('lr-transporter-beneficiary-id'),
                     fb_transporter: $(this).data('fb-transporter'),
                     tds_percentage: $(this).data('tds-percentage'),
                     amount: $(this).data('amount'),
@@ -586,7 +592,17 @@
                             linkedLrId: $(this).data('linked-lr-id'),
                             voucher_number: $(this).data('voucher_number'),
                             freight_booking_id: $(this).data('freight-booking-id'),
-                            lr_id: $(this).data('lr-id')
+                                    lr_id: $(this).data('lr-id'),
+                                    transporter: $(this).data('transporter'),
+                                    lr_transporter: $(this).data('lr-transporter'),
+                                    transporter_mobile_number: $(this).data('lr-transporter-mobile-number'),
+                                    transporter_short_name: $(this).data('lr-transporter-short-name'),
+                                    transporter_beneficiary_id: $(this).data('lr-transporter-beneficiary-id'),
+                                    fb_transporter: $(this).data('fb-transporter'),
+                                    tds_percentage: $(this).data('tds-percentage'),
+                                    amount: $(this).data('amount'),
+                                    shortage_amount: $(this).data('shortage-amount'),
+                                    damage_amount: $(this).data('damage-amount')
                         };
                     }
                 } else {
@@ -1989,28 +2005,34 @@
 
             // Add transporter details section
             const firstData = checkedBoxes[0];
-            const firstTransporter = firstData.transporter;
-            const firstLrTransporter = firstData.lr_transporter;
-            // Get FB transporter and TDS info from first selected booking
-            const firstFbTransporter = firstData.fb_transporter;
+            const firstTransporterName = firstData.lr_transporter;
+            const firstTransporterMobileNumber = firstData.transporter_mobile_number;
+            const firstTransporterShortName = firstData.transporter_short_name;
+            const firstTransporterBeneficiaryId = firstData.transporter_beneficiary_id;
             const firstTdsPercentage = firstData.tds_percentage;
 
             modalBody.innerHTML += `
                   <div class="alert alert-primary mb-3">
                       <h6 class="mb-2"><i class="fas fa-truck"></i> Transporter Details</h6>
                       <div class="row">
-                          <div class="col-md-3">
-                              <strong>FB Transporter:</strong> ${firstFbTransporter || 'N/A'}
-                          </div>
-                          <div class="col-md-3">
-                              <strong>LR Transporter:</strong> ${firstLrTransporter || 'N/A'}
-                          </div>
-                          <div class="col-md-3">
+                            <div class="col-md-4">
+                                <strong>Transporter:</strong> ${firstTransporterName || 'N/A'}
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Mobile:</strong> ${firstTransporterMobileNumber || 'N/A'}
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Short Name:</strong> ${firstTransporterShortName || 'N/A'}
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Beneficiary ID:</strong> ${firstTransporterBeneficiaryId || 'N/A'}
+                            </div>
+                            <div class="col-md-4">
                               <strong>TDS Percentage:</strong> ${firstTdsPercentage ? firstTdsPercentage + '%' : 'N/A'}
-                          </div>
-                          <div class="col-md-3">
-                              <strong>Truck Number:</strong> ${firstTruck || 'N/A'}
-                          </div>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Truck Number:</strong> ${firstTruck || 'N/A'}
+                            </div>
                       </div>
                   </div>
               `;
