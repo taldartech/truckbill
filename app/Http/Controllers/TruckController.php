@@ -237,16 +237,23 @@ class TruckController extends Controller
             ->first();
 
         if (!$truck) {
-            return response()->json([], 404);
+            // Keep status 200 so frontend can treat "not found" as "no owner"
+            return response()->json([]);
         }
 
-        // Get all transporters that are owners
-        $ownerTransporters = \App\Models\Transporter::with('transporterMaster')
-            ->where('company_id', Auth::user()->company_id)
-            ->where('is_owner', 1)
-            ->get();
+        // Each truck has exactly one transporter assigned.
+        // If that transporter is marked as an owner, return just that owner.
+        $transporter = $truck->transporter;
+        if ($transporter && $transporter->is_owner) {
+            return response()->json([
+                [
+                    'id' => $transporter->id,
+                    'name' => $transporter->name,
+                ],
+            ]);
+        }
 
-        return response()->json($ownerTransporters);
+        return response()->json([]);
     }
 
     public function getAgencyTransporters($truckId)

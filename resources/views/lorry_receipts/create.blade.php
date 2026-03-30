@@ -596,6 +596,7 @@
             const transporterTypeSelect = document.getElementById('transporter_type');
             const truckSelect = document.getElementById('truck_id');
             const transporterSelect = document.getElementById('transporter_id');
+            const transporterSelect2 = $('#transporter_id');
             const transporterLabel = document.getElementById('transporterLabel');
 
             // Store truck data for easy access
@@ -663,7 +664,7 @@
                     // If "Truck Owner" is selected, auto-select the truck owner
                     if (transporterTypeSelect.value === 'owner') {
                         console.log('🎯 Auto-selecting truck owner for:', transporterName, 'ID:', transporterId);
-                        autoSelectTruckOwner(selectedTruckId, transporterName, transporterId);
+                        autoSelectTruckOwner(selectedTruckId);
                     } else {
                         console.log('ℹ️ Transporter type is not "owner", current value:',
                             transporterTypeSelect.value);
@@ -693,7 +694,7 @@
                         };
 
                         if (transporterTypeSelect.value === 'owner') {
-                            autoSelectTruckOwner(selectedTruckId, transporterName, transporterId);
+                            autoSelectTruckOwner(selectedTruckId);
                         }
                     }
                 }
@@ -709,7 +710,7 @@
                 transporterSelect.innerHTML = '<option value="">Select Transporter</option>';
                 transporterSelect.disabled = false; // Reset disabled state
 
-
+                transporterSelect2.trigger('change.select2');
 
                 transporterLabel.textContent = selectedType === 'owner' ? 'Truck Owner *' : 'Agency *';
 
@@ -717,24 +718,8 @@
                     // transporterLabel.textContent = 'Truck Owner *';
 
                     // If a truck is already selected, auto-select its owner
-                    if (selectedTruckId && trucksData[selectedTruckId]) {
-                        autoSelectTruckOwner(
-                            selectedTruckId,
-                            trucksData[selectedTruckId].transporterName,
-                            trucksData[selectedTruckId].transporterId
-                        );
-                    } else {
-                        // Fetch all truck owners
-                        fetch('/api/truck-owners')
-                            .then(response => response.json())
-                            .then(data => {
-                                data.forEach(owner => {
-                                    const option = document.createElement('option');
-                                    option.value = owner.id;
-                                    option.textContent = owner.name;
-                                    transporterSelect.appendChild(option);
-                                });
-                            });
+                    if (selectedTruckId) {
+                        autoSelectTruckOwner(selectedTruckId);
                     }
                 } else if (selectedType === 'agency') {
                     // transporterLabel.textContent = 'Agency *';
@@ -752,12 +737,15 @@
                 }
             });
 
-            // Function to auto-select truck owner
-            function autoSelectTruckOwner(truckId, transporterName, transporterId) {
-                console.log('🔄 Fetching truck owners from API...');
+            // Function to auto-select the truck owner from backend
+            function autoSelectTruckOwner(truckId) {
+                if (!truckId) {
+                    return;
+                }
 
-                // Fetch truck owners and find the matching one
-                fetch('/api/truck-owners')
+                console.log('🔄 Fetching truck owner from API...');
+
+                fetch(`/api/trucks/${truckId}/owner-transporters`)
                     .then(response => {
                         console.log('📡 API response status:', response.status);
                         if (!response.ok) {
@@ -766,82 +754,61 @@
                         return response.json();
                     })
                     .then(data => {
-                        console.log('📊 Truck owners data received:', data);
+                        console.log('📊 Truck owner data received:', data);
 
                         transporterSelect.innerHTML = '<option value="">Select Transporter</option>';
 
-                        let ownerFound = false;
-                        let matchedOwner = null;
+                        const owner = Array.isArray(data) && data.length > 0 ? data[0] : null;
+                        if (!owner || !owner.id) {
+                            console.warn(`⚠️ No owner found for truckId=${truckId}`);
 
-                        data.forEach(owner => {
-                            const option = document.createElement('option');
-                            option.value = owner.id;
-                            option.textContent = owner.name;
-
-                            const byId = transporterId && Number(owner.id) === Number(transporterId);
-                            const byName = !transporterId && owner.name.toLowerCase().trim() ===
-                                (transporterName || '').toLowerCase().trim();
-                            console.log('🔍 Comparing owner:', owner.id, owner.name, 'target:', transporterId,
-                                transporterName);
-
-                            // Use ID first; fallback to name only when ID is not available.
-                            if (byId || byName) {
-                                option.selected = true;
-                                ownerFound = true;
-                                matchedOwner = owner;
-                                console.log('✅ Found matching owner:', owner.name);
-                            }
-
-                            transporterSelect.appendChild(option);
-                        });
-
-                        if (ownerFound) {
-                            // Disable the dropdown since it's auto-selected
-                            // transporterSelect.disabled = true;
-                            // transporterSelect.style.backgroundColor = '#e9ecef';
-                            // transporterSelect.title = 'Automatically selected based on truck owner';
-
-                            // console.log(`✅ Auto-selected truck owner: ${matchedOwner.name} (ID: ${matchedOwner.id})`);
-                            transporterSelect.value = matchedOwner.id;
-                            transporterSelect.disabled = true;
-                            transporterSelect.style.backgroundColor = '#e9ecef';
-                            transporterSelect.title = 'Automatically selected based on truck owner';
-
-                            // Avoid duplicate hidden inputs on repeated selection changes
-                            document.querySelectorAll(
-                                'input[type="hidden"][name="transporter_id"]'
-                            ).forEach(el => el.remove());
-
-                            // Hidden input to ensure value is submitted
-                            let hiddenInput = document.createElement("input");
-                            hiddenInput.type = "hidden";
-                            hiddenInput.name = "transporter_id";
-                            hiddenInput.value = matchedOwner.id;
-                            transporterSelect.form.appendChild(hiddenInput);
-
-                            console.log(
-                                `✅ Auto-selected truck owner: ${matchedOwner.name} (ID: ${matchedOwner.id})`
-                            );
-
-                            // Show TDS percentage for auto-selected truck owner
-                            showTdsPercentage(matchedOwner.id);
-                        } else {
-                            console.warn(`⚠️ No matching truck owner found for: "${transporterName}"`);
-                            console.log('Available owners:', data.map(o => o.name));
-
-                            // Re-enable the dropdown if no match found
                             transporterSelect.disabled = false;
                             transporterSelect.style.backgroundColor = '';
                             transporterSelect.title = '';
+                            transporterSelect2.trigger('change.select2');
+                            return;
                         }
+
+                        const option = document.createElement('option');
+                        option.value = owner.id;
+                        option.textContent = owner.name || '';
+                        option.selected = true;
+                        transporterSelect.appendChild(option);
+
+                        transporterSelect.value = owner.id;
+                        transporterSelect.disabled = true;
+                        transporterSelect.style.backgroundColor = '#e9ecef';
+                        transporterSelect.title = 'Automatically selected based on truck owner';
+
+                        // Avoid duplicate hidden inputs on repeated selection changes
+                        document.querySelectorAll(
+                            'input[type="hidden"][name="transporter_id"]'
+                        ).forEach(el => el.remove());
+
+                        // Hidden input to ensure value is submitted
+                        let hiddenInput = document.createElement("input");
+                        hiddenInput.type = "hidden";
+                        hiddenInput.name = "transporter_id";
+                        hiddenInput.value = owner.id;
+                        transporterSelect.form.appendChild(hiddenInput);
+
+                        console.log(
+                            `✅ Auto-selected truck owner: ${owner.name} (ID: ${owner.id})`
+                        );
+
+                        transporterSelect2.trigger('change.select2');
+
+                        // Show TDS percentage for auto-selected truck owner
+                        showTdsPercentage(owner.id);
                     })
                     .catch(error => {
-                        console.error('❌ Error fetching truck owners:', error);
+                        console.error('❌ Error fetching truck owner:', error);
 
                         // Re-enable the dropdown on error
                         transporterSelect.disabled = false;
                         transporterSelect.style.backgroundColor = '';
                         transporterSelect.title = '';
+                        transporterSelect2.trigger('change.select2');
                     });
             }
 
