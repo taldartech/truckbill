@@ -164,6 +164,8 @@
                                 <option value="">Select Trucks</option>
                                 @foreach ($trucks as $truck)
                                     <option value="{{ $truck->id }}"
+                                        data-transporter-id="{{ $truck->transporter_id }}"
+                                        data-transporter-name="{{ $truck->transporter ? $truck->transporter->name : '' }}"
                                         {{ old('truck_id') == $truck->id ? 'selected' : '' }}>
                                         {{ $truck->truck_number }}
                                         @if ($truck->driver)
@@ -639,32 +641,35 @@
                 // Get truck data from the selected option
                 const selectedOption = $(this).find('option:selected');
                 const truckText = selectedOption.text().trim();
+                const transporterId = parseInt(selectedOption.data('transporter-id'), 10) || null;
+                const transporterNameFromData = (selectedOption.data('transporter-name') || '').toString().trim();
 
                 console.log('📝 Truck text:', truckText);
 
-                // Extract transporter info from truck text (format: "TruckNumber - Driver: DriverName (TransporterName)")
+                // Prefer stable ID mapping; fallback to name extraction only if needed.
                 const transporterMatch = truckText.match(/\(([^)]+)\)$/);
-                if (transporterMatch) {
-                    const transporterName = transporterMatch[1].trim();
+                const transporterName = transporterNameFromData || (transporterMatch ? transporterMatch[1].trim() : '');
+                if (transporterId || transporterName) {
 
                     console.log('🏢 Extracted transporter name:', transporterName);
 
                     // Store truck-transporter relationship
                     trucksData[selectedTruckId] = {
+                        transporterId: transporterId,
                         transporterName: transporterName,
                         truckText: truckText
                     };
 
                     // If "Truck Owner" is selected, auto-select the truck owner
                     if (transporterTypeSelect.value === 'owner') {
-                        console.log('🎯 Auto-selecting truck owner for:', transporterName);
-                        autoSelectTruckOwner(selectedTruckId, transporterName);
+                        console.log('🎯 Auto-selecting truck owner for:', transporterName, 'ID:', transporterId);
+                        autoSelectTruckOwner(selectedTruckId, transporterName, transporterId);
                     } else {
                         console.log('ℹ️ Transporter type is not "owner", current value:',
                             transporterTypeSelect.value);
                     }
                 } else {
-                    console.warn('⚠️ Could not extract transporter name from truck text:', truckText);
+                    console.warn('⚠️ Could not determine transporter from selected truck:', truckText);
                 }
             });
 
@@ -675,18 +680,20 @@
                     // Trigger the same logic as select2:select
                     const selectedOption = $(this).find('option:selected');
                     const truckText = selectedOption.text().trim();
-
+                    const transporterId = parseInt(selectedOption.data('transporter-id'), 10) || null;
+                    const transporterNameFromData = (selectedOption.data('transporter-name') || '').toString().trim();
                     const transporterMatch = truckText.match(/\(([^)]+)\)$/);
-                    if (transporterMatch) {
-                        const transporterName = transporterMatch[1].trim();
+                    const transporterName = transporterNameFromData || (transporterMatch ? transporterMatch[1].trim() : '');
+                    if (transporterId || transporterName) {
 
                         trucksData[selectedTruckId] = {
+                            transporterId: transporterId,
                             transporterName: transporterName,
                             truckText: truckText
                         };
 
                         if (transporterTypeSelect.value === 'owner') {
-                            autoSelectTruckOwner(selectedTruckId, transporterName);
+                            autoSelectTruckOwner(selectedTruckId, transporterName, transporterId);
                         }
                     }
                 }
@@ -711,7 +718,11 @@
 
                     // If a truck is already selected, auto-select its owner
                     if (selectedTruckId && trucksData[selectedTruckId]) {
-                        autoSelectTruckOwner(selectedTruckId, trucksData[selectedTruckId].transporterName);
+                        autoSelectTruckOwner(
+                            selectedTruckId,
+                            trucksData[selectedTruckId].transporterName,
+                            trucksData[selectedTruckId].transporterId
+                        );
                     } else {
                         // Fetch all truck owners
                         fetch('/api/truck-owners')
@@ -742,7 +753,7 @@
             });
 
             // Function to auto-select truck owner
-            function autoSelectTruckOwner(truckId, transporterName) {
+            function autoSelectTruckOwner(truckId, transporterName, transporterId) {
                 console.log('🔄 Fetching truck owners from API...');
 
                 // Fetch truck owners and find the matching one
@@ -767,11 +778,14 @@
                             option.value = owner.id;
                             option.textContent = owner.name;
 
-                            console.log('🔍 Comparing:', owner.name, 'with', transporterName);
+                            const byId = transporterId && Number(owner.id) === Number(transporterId);
+                            const byName = !transporterId && owner.name.toLowerCase().trim() ===
+                                (transporterName || '').toLowerCase().trim();
+                            console.log('🔍 Comparing owner:', owner.id, owner.name, 'target:', transporterId,
+                                transporterName);
 
-                            // Auto-select if this is the truck's owner (case-insensitive comparison)
-                            if (owner.name.toLowerCase().trim() === transporterName.toLowerCase()
-                                .trim()) {
+                            // Use ID first; fallback to name only when ID is not available.
+                            if (byId || byName) {
                                 option.selected = true;
                                 ownerFound = true;
                                 matchedOwner = owner;
@@ -792,6 +806,11 @@
                             transporterSelect.disabled = true;
                             transporterSelect.style.backgroundColor = '#e9ecef';
                             transporterSelect.title = 'Automatically selected based on truck owner';
+
+                            // Avoid duplicate hidden inputs on repeated selection changes
+                            document.querySelectorAll(
+                                'input[type="hidden"][name="transporter_id"]'
+                            ).forEach(el => el.remove());
 
                             // Hidden input to ensure value is submitted
                             let hiddenInput = document.createElement("input");
