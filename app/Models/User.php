@@ -21,6 +21,7 @@ class User extends Authenticatable
         'branch_id',
         'transporter_master_id',
         'session_token',
+        'referral_code',
     ];
 
     public function transporterMaster()

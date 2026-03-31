@@ -1,0 +1,6 @@
+[
+  {
+    "type": "sqlite",
+    "path": "/var/www/html/truckbill/database/database.sqlite"
+  }
+]

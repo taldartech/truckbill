@@ -24,6 +24,7 @@ use App\Http\Controllers\BranchController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PromoCodeController;
 use App\Http\Controllers\TransporterDashboardController;
+use App\Http\Controllers\LeadController;
 
 // Protected Routes
 Route::middleware(['auth.blocked'])->group(function () {
@@ -41,6 +42,10 @@ Route::middleware(['auth.blocked'])->group(function () {
         Route::get('/company/{company}/block', [CompanyController::class, 'block'])->name('company.block');
         Route::get('/company/{company}/unblock', [CompanyController::class, 'unblock'])->name('company.unblock');
         Route::resource('promo_codes', PromoCodeController::class)->except(['show']);
+        Route::resource('leads', LeadController::class)->only(['index', 'store', 'update']);
+        Route::post('leads/{lead}/status', [LeadController::class, 'updateStatus'])->name('leads.status');
+        Route::post('leads/{lead}/reject', [LeadController::class, 'reject'])->name('leads.reject');
+        Route::post('leads/{lead}/generate-onboarding-link', [LeadController::class, 'generateOnboardingLink'])->name('leads.generate-link');
     });
     Route::post('promo_codes/validate', [PaymentController::class, 'applyPromoCode'])->name('promo_codes.validate');
 

@@ -16,6 +16,13 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth.blocked' => \App\Http\Middleware\CheckBlockMiddleware::class
         ]);
 
+        $middleware->validateCsrfTokens(except: [
+            'api/public/leads',
+            'api/onboarding/send-otp',
+            'api/onboarding/verify-otp',
+            'api/onboard',
+        ]);
+
         // Note: Single device login check is now included in CheckBlockMiddleware
         // No need to apply CheckSingleDeviceLogin globally anymore
     })
