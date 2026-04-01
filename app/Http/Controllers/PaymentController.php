@@ -223,7 +223,7 @@ class PaymentController extends Controller
                 'order_id' => $razorpayOrder['id'],
                 'amount' => round($totalAmount * 100),
                 'key' => $razorpayKey,
-                'name' => $company->name,
+                'name' => env('APP_NAME'),
                 'description' => 'Payment for ' . ucfirst($paymentType) . ' - ' . $company->name,
                 'prefill' => [
                     'name' => $company->contact_person ?? $company->name,
