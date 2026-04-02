@@ -30,7 +30,6 @@ class PaymentController extends Controller
             ->orderBy('plan_end_date', 'asc')
             ->get();
 
-
         return view('payment.index', compact('companies'));
     }
 
@@ -45,7 +44,7 @@ class PaymentController extends Controller
         }
 
         $companyId = $request->get('company_id');
-        if (!$companyId) {
+        if (! $companyId) {
             return redirect()->route('payment.index')
                 ->with('error', 'Please select a company.');
         }
@@ -122,7 +121,7 @@ class PaymentController extends Controller
 
         // Determine payment type
         $paymentType = 'renewal';
-        if (!$isExpired && $request->want_to_renew === 'no') {
+        if (! $isExpired && $request->want_to_renew === 'no') {
             $paymentType = 'addon';
         }
 
@@ -140,9 +139,10 @@ class PaymentController extends Controller
                 if ($request->ajax() || $request->wantsJson()) {
                     return response()->json([
                         'success' => false,
-                        'error' => 'Invalid or expired promo code.'
+                        'error' => 'Invalid or expired promo code.',
                     ], 400);
                 }
+
                 return redirect()->back()
                     ->withInput()
                     ->with('error', 'Invalid or expired promo code.');
@@ -170,9 +170,10 @@ class PaymentController extends Controller
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'error' => 'Razorpay configuration is missing. Please contact administrator.'
+                    'error' => 'Razorpay configuration is missing. Please contact administrator.',
                 ], 500);
             }
+
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Razorpay configuration is missing. Please contact administrator.');
@@ -183,7 +184,7 @@ class PaymentController extends Controller
         try {
             // Create Razorpay order
             $orderData = [
-                'receipt' => 'TXN_' . time() . '_' . $company->id,
+                'receipt' => 'TXN_'.time().'_'.$company->id,
                 'amount' => round($totalAmount * 100), // Amount in paise
                 'currency' => 'INR',
                 'notes' => [
@@ -223,8 +224,8 @@ class PaymentController extends Controller
                 'order_id' => $razorpayOrder['id'],
                 'amount' => round($totalAmount * 100),
                 'key' => $razorpayKey,
-                'name' => $company->name,
-                'description' => 'Payment for ' . ucfirst($paymentType) . ' - ' . $company->name,
+                'name' => env('APP_NAME'),
+                'description' => 'Payment for '.ucfirst($paymentType).' - '.$company->name,
                 'prefill' => [
                     'name' => $company->contact_person ?? $company->name,
                     'email' => Auth::user()->email ?? '',
@@ -235,13 +236,14 @@ class PaymentController extends Controller
                 ],
             ]);
         } catch (\Exception $e) {
-            Log::error('Razorpay order creation failed: ' . $e->getMessage());
+            Log::error('Razorpay order creation failed: '.$e->getMessage());
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'error' => 'Failed to create payment order. Please try again.'
+                    'error' => 'Failed to create payment order. Please try again.',
                 ], 500);
             }
+
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Failed to create payment order. Please try again.');
@@ -295,10 +297,12 @@ class PaymentController extends Controller
                         $truckRateSlabs[] = ['min' => (int) $min, 'max' => (int) $max, 'rate' => $rate];
                     }
                 }
-                usort($truckRateSlabs, fn($a, $b) => $a['min'] <=> $b['min']);
+                usort($truckRateSlabs, fn ($a, $b) => $a['min'] <=> $b['min']);
 
                 foreach ($truckRateSlabs as $slab) {
-                    if ($remainingTrucks <= 0) break;
+                    if ($remainingTrucks <= 0) {
+                        break;
+                    }
 
                     $slabSize = $slab['max'] === PHP_INT_MAX ? $remainingTrucks : ($slab['max'] - $slab['min'] + 1);
                     $trucksInThisSlab = min($remainingTrucks, $slabSize);
@@ -375,7 +379,6 @@ class PaymentController extends Controller
         ];
     }
 
-
     /**
      * Handle Razorpay payment callback
      */
@@ -399,8 +402,9 @@ class PaymentController extends Controller
             // Find transaction
             $transaction = PaymentLedger::where('razorpay_order_id', $input['razorpay_order_id'])->first();
 
-            if (!$transaction) {
-                Log::error('Payment transaction not found: ' . $input['razorpay_order_id']);
+            if (! $transaction) {
+                Log::error('Payment transaction not found: '.$input['razorpay_order_id']);
+
                 return redirect()->route('payment.index')
                     ->with('error', 'Payment transaction not found.');
             }
@@ -481,12 +485,13 @@ class PaymentController extends Controller
                     ->with('success', $message);
             } catch (\Exception $e) {
                 DB::rollBack();
-                Log::error('Failed to update company plan: ' . $e->getMessage());
+                Log::error('Failed to update company plan: '.$e->getMessage());
+
                 return redirect()->route('payment.index')
                     ->with('error', 'Payment successful but failed to update plan. Please contact support.');
             }
         } catch (\Exception $e) {
-            Log::error('Payment verification failed: ' . $e->getMessage());
+            Log::error('Payment verification failed: '.$e->getMessage());
 
             // Update transaction status to failed
             if (isset($input['razorpay_order_id'])) {
@@ -519,7 +524,7 @@ class PaymentController extends Controller
                     ->orWhere('end_date', '>=', now());
             })
             ->first();
-        if (!$promoCode) {
+        if (! $promoCode) {
             return response()->json(['error' => 'Invalid or expired promo code.'], 404);
         }
 
@@ -592,14 +597,15 @@ class PaymentController extends Controller
                     'total_amount' => number_format($payment->total_amount, 2),
                     'status' => ucfirst($payment->status),
                     'created_at' => $payment->created_at->format('d-m-Y'),
-                    'actions' => '<a href="' . route('payment.invoice', $payment->id) . '" class="btn btn-sm btn-primary" target="_blank"><i class="fas fa-file-pdf"></i></a>',
+                    'actions' => '<a href="'.route('payment.invoice', $payment->id).'" class="btn btn-sm btn-primary" target="_blank"><i class="fas fa-file-pdf"></i></a>',
                 ];
             });
+
             return response()->json([
                 'draw' => intval($request->draw),
                 'recordsTotal' => $totalRecords,
                 'recordsFiltered' => $filteredRecords,
-                'data' => $data
+                'data' => $data,
             ]);
         } else {
             $companyId = $request->get('company_id') ?? null;
@@ -609,6 +615,7 @@ class PaymentController extends Controller
                     ->where('user_id', Auth::id())
                     ->firstOrFail();
             }
+
             return view('payment.history', compact('company'));
         }
     }
@@ -642,7 +649,8 @@ class PaymentController extends Controller
             ->setOption('isHtml5ParserEnabled', true)
             ->setOption('isRemoteEnabled', true);
 
-        $invoiceNumber = 'INV-' . str_pad($payment->id, 6, '0', STR_PAD_LEFT);
+        $invoiceNumber = 'INV-'.str_pad($payment->id, 6, '0', STR_PAD_LEFT);
+
         return $pdf->stream("invoice_{$invoiceNumber}.pdf");
     }
 }

@@ -1,30 +1,31 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AdvancePaymentController;
+use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\BranchController;
+use App\Http\Controllers\CompanyBankDetailsController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\ConsigneeController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\TransporterController;
-use App\Http\Controllers\TruckController;
-use App\Http\Controllers\LorryReceiptController;
+use App\Http\Controllers\CustomInvoiceController;
+use App\Http\Controllers\DriverController;
 use App\Http\Controllers\FreightBookingController;
 use App\Http\Controllers\InvoiceController;
-use App\Http\Controllers\CustomInvoiceController;
-use App\Http\Controllers\VoucherPaymentController;
-use App\Http\Controllers\TransporterBankAccountController;
-use App\Http\Controllers\DriverController;
-use App\Http\Controllers\TruckOwnerController;
-use App\Http\Controllers\TruckOwnerBankAccountController;
-use App\Http\Controllers\AdvancePaymentController;
-use App\Http\Controllers\PumpController;
-use App\Http\Controllers\ReportController;
-use App\Http\Controllers\VoucherTemplateController;
-use App\Http\Controllers\CompanyBankDetailsController;
-use App\Http\Controllers\BranchController;
+use App\Http\Controllers\LeadController;
+use App\Http\Controllers\LorryReceiptController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PromoCodeController;
+use App\Http\Controllers\PumpController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\TransporterBankAccountController;
+use App\Http\Controllers\TransporterController;
 use App\Http\Controllers\TransporterDashboardController;
-use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\TruckController;
+use App\Http\Controllers\TruckOwnerBankAccountController;
+use App\Http\Controllers\TruckOwnerController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\VoucherPaymentController;
+use App\Http\Controllers\VoucherTemplateController;
+use Illuminate\Support\Facades\Route;
 
 // Protected Routes
 Route::middleware(['auth.blocked'])->group(function () {
@@ -44,6 +45,10 @@ Route::middleware(['auth.blocked'])->group(function () {
         Route::get('/company/{company}/block', [CompanyController::class, 'block'])->name('company.block');
         Route::get('/company/{company}/unblock', [CompanyController::class, 'unblock'])->name('company.unblock');
         Route::resource('promo_codes', PromoCodeController::class)->except(['show']);
+        Route::resource('leads', LeadController::class)->only(['index', 'store', 'update']);
+        Route::post('leads/{lead}/status', [LeadController::class, 'updateStatus'])->name('leads.status');
+        Route::post('leads/{lead}/reject', [LeadController::class, 'reject'])->name('leads.reject');
+        Route::post('leads/{lead}/generate-onboarding-link', [LeadController::class, 'generateOnboardingLink'])->name('leads.generate-link');
     });
     Route::post('promo_codes/validate', [PaymentController::class, 'applyPromoCode'])->name('promo_codes.validate');
 
@@ -105,7 +110,7 @@ Route::middleware(['auth.blocked'])->group(function () {
         Route::resource('transporters', TransporterController::class)->only(['edit', 'update', 'destroy']);
     });
 
-    //Truck Owner Management
+    // Truck Owner Management
     Route::middleware(['role:admin,moderator,super_admin'])->group(function () {
         Route::resource('truck_owners', TruckOwnerController::class)->only(['index', 'create', 'store', 'show']);
     });
@@ -307,5 +312,5 @@ Route::middleware(['auth.blocked'])->group(function () {
     Route::get('/voucher-receipt-export', [ReportController::class, 'voucher_receipt_export'])->name('reports.voucher-receipt-export');
 });
 
-require __DIR__ . '/api-routes.php';
-require __DIR__ . '/auth.php';
+require __DIR__.'/api-routes.php';
+require __DIR__.'/auth.php';

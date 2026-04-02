@@ -2,23 +2,17 @@
 
 namespace App\Http\Controllers;
 
-
-use Illuminate\Http\Request;
-use App\Models\Company;
-use App\Models\Truck;
-use App\Models\Country;
-use App\Models\State;
-use App\Models\City;
-use Illuminate\Validation\Rule;
-use App\Models\Transporter;
-use App\Models\TransporterMaster;
-use App\Models\User;
 use App\Http\Requests\StoreTransporterRequest;
 use App\Http\Requests\UpdateTransporterRequest;
+use App\Models\Company;
+use App\Models\Transporter;
+use App\Models\TransporterMaster;
+use App\Models\Truck;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Auth;
 
 class TransporterController extends Controller
 {
@@ -37,6 +31,7 @@ class TransporterController extends Controller
         }
 
         $companies = \App\Models\Company::all();
+
         return view('transporters.index', compact('companies'));
     }
 
@@ -69,7 +64,7 @@ class TransporterController extends Controller
             // Handle column-specific search
             if ($request->has('columns')) {
                 foreach ($request->columns as $index => $column) {
-                    if (!empty($column['search']['value'])) {
+                    if (! empty($column['search']['value'])) {
                         $searchValue = $column['search']['value'];
                         switch ($index) {
                             case 0: // Name
@@ -154,7 +149,7 @@ class TransporterController extends Controller
             $data = $transporters->map(function ($transporter, $index) use ($start) {
                 return [
                     'sr_no' => $start + $index + 1,
-                    'name' => '<a href="javascript:void(0)" class="text-brand-primary fw-bold transporter-name-link" data-id="' . $transporter->id . '" style="cursor: pointer; text-decoration: none;">' . ($transporter->name ?: '-') . '</a>',
+                    'name' => '<a href="javascript:void(0)" class="text-brand-primary fw-bold transporter-name-link" data-id="'.$transporter->id.'" style="cursor: pointer; text-decoration: none;">'.($transporter->name ?: '-').'</a>',
                     'short_name' => $transporter->short_name ?: '-',
                     'beneficiary_id' => $transporter->beneficiary_id ?: '-',
                     'pan_number' => $transporter->pan_number ?: '-',
@@ -162,9 +157,9 @@ class TransporterController extends Controller
 
                     'contact_number' => $transporter->mobile_number ?: '-',
                     'declaration_given' => $transporter->declaration_given ? 'Yes' : 'No',
-                    'advance_amount' => '₹' . number_format($transporter->advance_amount ?: 0, 2),
+                    'advance_amount' => '₹'.number_format($transporter->advance_amount ?: 0, 2),
                     'company' => optional($transporter->company)->name ?: '-',
-                    'actions' => $this->getActionButtons($transporter)
+                    'actions' => $this->getActionButtons($transporter),
                 ];
             });
 
@@ -172,18 +167,18 @@ class TransporterController extends Controller
                 'draw' => intval($request->draw),
                 'recordsTotal' => $totalRecords,
                 'recordsFiltered' => $filteredRecords,
-                'data' => $data
+                'data' => $data,
             ]);
         } catch (\Exception $e) {
-            \Log::error('DataTables error in transporters: ' . $e->getMessage());
-            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            \Log::error('DataTables error in transporters: '.$e->getMessage());
+            \Log::error('Stack trace: '.$e->getTraceAsString());
 
             return response()->json([
                 'draw' => intval($request->draw ?? 0),
                 'recordsTotal' => 0,
                 'recordsFiltered' => 0,
                 'data' => [],
-                'error' => 'An error occurred while loading data: ' . $e->getMessage()
+                'error' => 'An error occurred while loading data: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -192,25 +187,24 @@ class TransporterController extends Controller
     {
         $buttons = '<div class="d-flex gap-1">';
 
-
-        $buttons .= '<button type="button" class="btn btn-sm btn-view advance-payment-btn " title="Advance Payment" data-bs-toggle="tooltip" data-transporter-id="' . $transporter->id . '" data-transporter-name="' . htmlspecialchars($transporter->name) . '">';
+        $buttons .= '<button type="button" class="btn btn-sm btn-view advance-payment-btn " title="Advance Payment" data-bs-toggle="tooltip" data-transporter-id="'.$transporter->id.'" data-transporter-name="'.htmlspecialchars($transporter->name).'">';
         $buttons .= '<i class="bi bi-currency-rupee "></i>';
         $buttons .= '</button>';
 
-
         // Edit button
         $editUrl = route('transporters.edit', $transporter->id);
-        $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-edit " title="Edit Transporter" data-bs-toggle="tooltip">';
+        $buttons .= '<a href="'.$editUrl.'" class="btn btn-sm btn-edit " title="Edit Transporter" data-bs-toggle="tooltip">';
         $buttons .= '<i class="bi bi-pencil "></i></a>';
 
         // Delete button
         $deleteUrl = route('transporters.destroy', $transporter->id);
-        $buttons .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Delete this transporter?\')">';
-        $buttons .= csrf_field() . method_field('DELETE');
+        $buttons .= '<form action="'.$deleteUrl.'" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Delete this transporter?\')">';
+        $buttons .= csrf_field().method_field('DELETE');
         $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete Transporter" data-bs-toggle="tooltip">';
         $buttons .= '<i class="bi bi-trash"></i></button></form>';
 
         $buttons .= '</div>';
+
         return $buttons;
     }
 
@@ -231,10 +225,10 @@ class TransporterController extends Controller
             ->map(function ($payment) {
                 return [
                     'id' => $payment->id,
-                    'amount' => '₹' . number_format($payment->advance_amount, 2),
+                    'amount' => '₹'.number_format($payment->advance_amount, 2),
                     'payment_date' => $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('d-m-Y') : 'Not specified',
                     'remark' => $payment->remark ?: 'No remarks',
-                    'created_at' => $payment->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i')
+                    'created_at' => $payment->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
                 ];
             });
 
@@ -255,10 +249,10 @@ class TransporterController extends Controller
             'is_owner' => $transporter->is_owner ? 'Truck Owner' : 'Agency',
             'declaration_given' => $transporter->declaration_given ? 'Yes' : 'No',
             'tds_percentage' => $transporter->tds_percentage ?: '0',
-            'advance_amount' => '₹' . number_format($transporter->advance_amount, 2),
+            'advance_amount' => '₹'.number_format($transporter->advance_amount, 2),
             'created_at' => $transporter->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
             'updated_at' => $transporter->updated_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
-            'advance_payments' => $advancePayments
+            'advance_payments' => $advancePayments,
         ]);
     }
 
@@ -280,6 +274,7 @@ class TransporterController extends Controller
         if (old('state_id')) {
             $cities = \App\Models\City::where('state_id', old('state_id'))->get();
         }
+
         return view('transporters.create', compact('companies', 'trucks', 'countries', 'states', 'cities'));
     }
 
@@ -294,7 +289,7 @@ class TransporterController extends Controller
             if ($existing) {
                 $suffix = 1;
                 do {
-                    $shortName = ($validated['short_name'] ?? '') . '-' . $suffix;
+                    $shortName = ($validated['short_name'] ?? '').'-'.$suffix;
                     $existing = Transporter::where('short_name', $shortName)->where('company_id', $validated['company_id'])->exists();
                     $suffix++;
                 } while ($existing);
@@ -312,6 +307,7 @@ class TransporterController extends Controller
             $validated['transporter_master_id'] = $master->id;
             $validated['tds_percentage'] = $this->calculateTdsFromPan($master->pan_number, $master->pan_active);
             Transporter::create($validated);
+
             return redirect()->route('transporters.index')->with('success', 'Transporter created successfully!');
         }
 
@@ -330,8 +326,6 @@ class TransporterController extends Controller
             ];
             $master = TransporterMaster::create($masterData);
 
-            
-
             $transporterData = [
                 'transporter_master_id' => $master->id,
                 'company_id' => $validated['company_id'],
@@ -346,8 +340,6 @@ class TransporterController extends Controller
             ];
             Transporter::create($transporterData);
 
-           
-
             $transporterRoleId = \DB::table('user_roles')->where('name', 'transporter')->value('id');
             $user = User::create([
                 'name' => $master->name,
@@ -360,7 +352,7 @@ class TransporterController extends Controller
 
             Password::sendResetLink(['email' => $master->email]);
 
-            return redirect()->route('transporters.index')->with('success', 'Transporter created successfully! A password setup link has been sent to ' . $master->email);
+            return redirect()->route('transporters.index')->with('success', 'Transporter created successfully! A password setup link has been sent to '.$master->email);
         });
     }
 
@@ -378,6 +370,7 @@ class TransporterController extends Controller
         if (in_array($fourthChar, $nonValidChars)) {
             return 1.00;
         }
+
         return 20.00;
     }
 
@@ -402,6 +395,7 @@ class TransporterController extends Controller
         if (old('state_id')) {
             $cities = \App\Models\City::where('state_id', old('state_id'))->get();
         }
+
         // $countries = \App\Models\Country::all();
         // $states = $transporter->country_id ? \App\Models\State::where('country_id', $transporter->country_id)->get() : collect();
         // $cities = $transporter->state_id ? \App\Models\City::where('state_id', $transporter->state_id)->get() : collect();
@@ -434,6 +428,7 @@ class TransporterController extends Controller
         }
 
         $transporter->update($updateData);
+
         return redirect()->route('transporters.index')->with('success', 'Transporter updated successfully!');
     }
 
@@ -455,7 +450,7 @@ class TransporterController extends Controller
 
             if (in_array($fourthChar, $validChars)) {
                 $tdsPercentage = 2.00;
-            } else if (in_array($fourthChar, $nonValidChars)) {
+            } elseif (in_array($fourthChar, $nonValidChars)) {
                 $tdsPercentage = 1.00;
             } else {
                 $tdsPercentage = 20.00;
@@ -463,7 +458,7 @@ class TransporterController extends Controller
         }
 
         return response()->json([
-            'tds_percentage' => number_format($tdsPercentage, 2)
+            'tds_percentage' => number_format($tdsPercentage, 2),
         ]);
     }
 
@@ -528,6 +523,7 @@ class TransporterController extends Controller
             abort(403, 'Unauthorized access to this transporter.');
         }
         $transporter->delete();
+
         return redirect()->route('transporters.index')->with('success', 'Transporter deleted successfully!');
     }
 
@@ -552,7 +548,8 @@ class TransporterController extends Controller
 
             return response()->json($truckOwners);
         } catch (\Exception $e) {
-            \Log::error('Error fetching truck owners: ' . $e->getMessage());
+            \Log::error('Error fetching truck owners: '.$e->getMessage());
+
             return response()->json(['error' => 'Failed to fetch truck owners'], 500);
         }
     }
@@ -578,8 +575,79 @@ class TransporterController extends Controller
 
             return response()->json($agencies);
         } catch (\Exception $e) {
-            \Log::error('Error fetching agencies: ' . $e->getMessage());
+            \Log::error('Error fetching agencies: '.$e->getMessage());
+
             return response()->json(['error' => 'Failed to fetch agencies'], 500);
+        }
+    }
+
+    /**
+     * Search agencies for Select2 AJAX.
+     * Returns Select2-compatible payload: { results: [{id, text, ...}], pagination: { more } }
+     */
+    public function searchAgenciesApi(Request $request)
+    {
+        try {
+            $this->ensureCompanyContext();
+
+            $companyId = Auth::user()->company_id;
+            $q = trim((string) $request->query('q', ''));
+            $page = (int) $request->query('page', 1);
+            $limit = (int) $request->query('limit', 20);
+            $limit = max(1, min($limit, 50));
+            $page = max(1, $page);
+
+            $query = \App\Models\Transporter::with('transporterMaster')
+                ->where('is_owner', 0);
+
+            if ($companyId) {
+                $query->where('company_id', $companyId);
+            }
+
+            // Join to allow ordering by transporter master name and searching in transporter_masters.
+            $query->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+                ->select('transporters.*');
+
+            if ($q !== '') {
+                $query->where(function ($qq) use ($q) {
+                    $qq->where('transporters.short_name', 'like', "%{$q}%")
+                        ->orWhere('transporters.mobile_number', 'like', "%{$q}%")
+                        ->orWhere('transporters.contact_person_name', 'like', "%{$q}%")
+                        ->orWhere('transporter_masters.name', 'like', "%{$q}%")
+                        ->orWhere('transporter_masters.pan_number', 'like', "%{$q}%")
+                        ->orWhere('transporter_masters.email', 'like', "%{$q}%");
+                });
+            }
+
+            $query->orderBy('transporter_masters.name');
+
+            $offset = ($page - 1) * $limit;
+            $items = $query->offset($offset)->limit($limit + 1)->get();
+            $more = $items->count() > $limit;
+            $items = $items->take($limit);
+
+            $results = $items->map(function ($t) {
+                return [
+                    'id' => $t->id,
+                    'text' => $t->name ?: 'Not Set',
+                ];
+            })->values();
+
+            return response()->json([
+                'results' => $results,
+                'pagination' => [
+                    'more' => $more,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error searching agencies: '.$e->getMessage());
+
+            return response()->json([
+                'results' => [],
+                'pagination' => [
+                    'more' => false,
+                ],
+            ]);
         }
     }
 

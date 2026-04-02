@@ -146,18 +146,19 @@
                             <label for="truck_id" class="form-label">Truck *</label>
                             <select class="form-select" id="truck_id" name="truck_id" required>
                                 <option value="">Select Trucks</option>
-                                @foreach ($trucks as $truck)
-                                    <option value="{{ $truck->id }}"
-                                        data-transporter-id="{{ $truck->transporter_id }}"
-                                        data-transporter-name="{{ $truck->transporter ? $truck->transporter->name : '' }}"
-                                        {{ old('truck_id') == $truck->id ? 'selected' : '' }}>
-                                        {{ $truck->truck_number }}
-                                        @if ($truck->driver)
-                                            - Driver: {{ $truck->driver->name }}
+                                @php($selectedTruck = $trucks->firstWhere('id', old('truck_id')))
+                                @if($selectedTruck)
+                                    <option value="{{ $selectedTruck->id }}"
+                                        data-transporter-id="{{ $selectedTruck->transporter_id }}"
+                                        data-transporter-name="{{ $selectedTruck->transporter ? $selectedTruck->transporter->name : '' }}"
+                                        selected>
+                                        {{ $selectedTruck->truck_number }}
+                                        @if ($selectedTruck->driver)
+                                            - Driver: {{ $selectedTruck->driver->name }}
                                         @endif
-                                        ({{ $truck->transporter ? $truck->transporter->name : 'No Transporter' }})
+                                        ({{ $selectedTruck->transporter ? $selectedTruck->transporter->name : 'No Transporter' }})
                                     </option>
-                                @endforeach
+                                @endif
                             </select>
                             @error('truck_id')
                                 <div class="text-danger">{{ $message }}</div>
@@ -181,7 +182,7 @@
                         <div class="col-md-4">
                             <label for="transporter_id" id="transporterLabel" class="form-label">Transporter *</label>
                             <select class="form-select" id="transporter_id" name="transporter_id" required
-                                onchange="showTdsPercentage(this.value)">
+                                onchange="window.LREntity.showTdsPercentage(this.value)">
                                 <option value="">Select Transporter</option>
                                 {{-- This will be filled via JavaScript --}}
                             </select>
@@ -199,12 +200,12 @@
                             <label for="reference_by" class="form-label">Reference By</label>
                             <select class="form-select" id="reference_by" name="reference_by">
                                 <option value="">Select Reference</option>
-                                @foreach ($agencies as $agency)
-                                    <option value="{{ $agency->id }}"
-                                        {{ old('reference_by') == $agency->id ? 'selected' : '' }}>
-                                        {{ $agency->name }}
+                                @php($selectedAgency = $agencies->firstWhere('id', old('reference_by')))
+                                @if($selectedAgency)
+                                    <option value="{{ $selectedAgency->id }}" selected>
+                                        {{ $selectedAgency->name }}
                                     </option>
-                                @endforeach
+                                @endif
                             </select>
                             @error('reference_by')
                                 <div class="text-danger">{{ $message }}</div>
@@ -247,9 +248,6 @@
                                         <label class="form-label">Customer *</label>
                                         <select class="form-select select2 customer-select" required>
                                             <option value="">Select Customer</option>
-                                            @foreach ($consignees as $consignee)
-                                                <option value="{{ $consignee->id }}">{{ $consignee->name }}</option>
-                                            @endforeach
                                         </select>
                                         <div class="invalid-feedback">Please select a customer.</div>
                                     </div>
@@ -270,9 +268,6 @@
                                         <label class="form-label">Consignor *</label>
                                         <select class="form-select select2 consignor-select" required>
                                             <option value="">Select Consignor</option>
-                                            @foreach ($consignees as $consignee)
-                                                <option value="{{ $consignee->id }}">{{ $consignee->name }}</option>
-                                            @endforeach
                                         </select>
                                         <small class="form-text text-muted d-block consignor-contact-text"></small>
                                         <small class="form-text text-muted d-block consignor-city-text"></small>
@@ -287,9 +282,6 @@
                                         <label class="form-label">Consignee *</label>
                                         <select class="form-select select2 consignee-select" required>
                                             <option value="">Select Consignee</option>
-                                            @foreach ($consignees as $consignee)
-                                                <option value="{{ $consignee->id }}">{{ $consignee->name }}</option>
-                                            @endforeach
                                         </select>
                                         <small class="form-text text-muted d-block consignee-contact-text"></small>
                                         <small class="form-text text-muted d-block consignee-city-text"></small>
@@ -445,6 +437,9 @@
     <!-- Load SweetAlert2 from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+    <!-- Common LR entity confirmation helpers -->
+    <script src="/js/lr-entity.js"></script>
+
     <script>
         // Wait for DOM and jQuery to be ready
         document.addEventListener('DOMContentLoaded', function() {
@@ -508,25 +503,126 @@
             });
         }
 
+        const ajaxConsigneesConfig = {
+            url: '/api/consignees/search',
+            dataType: 'json',
+            delay: 250,
+            data: function (params) {
+                return {
+                    q: params.term || '',
+                    page: params.page || 1,
+                };
+            },
+            processResults: function (data, params) {
+                return {
+                    results: data.results || [],
+                    pagination: {
+                        more: data.pagination?.more || false,
+                    },
+                };
+            },
+            cache: true
+        };
+
+        const ajaxTrucksConfig = {
+            url: '/api/trucks/search',
+            dataType: 'json',
+            delay: 250,
+            data: function (params) {
+                return {
+                    q: params.term || '',
+                    page: params.page || 1,
+                };
+            },
+            processResults: function (data, params) {
+                return {
+                    results: data.results || [],
+                    pagination: {
+                        more: data.pagination?.more || false,
+                    },
+                };
+            },
+            cache: true
+        };
+
+        const ajaxAgenciesConfig = {
+            url: '/api/agencies/search',
+            dataType: 'json',
+            delay: 250,
+            data: function (params) {
+                return {
+                    q: params.term || '',
+                    page: params.page || 1,
+                };
+            },
+            processResults: function (data, params) {
+                return {
+                    results: data.results || [],
+                    pagination: {
+                        more: data.pagination?.more || false,
+                    },
+                };
+            },
+            cache: true
+        };
+
         function initSelect2In(scope) {
-            if (typeof $ !== 'undefined' && $(scope).find('.select2').length) {
-                $(scope).find('.select2').select2({
-                    theme: 'bootstrap-5',
-                    width: '100%',
-                    minimumResultsForSearch: 0
-                });
-            }
+            if (typeof $ === 'undefined') return;
+
+            const $scope = $(scope);
+
+            $scope.find('.customer-select').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                minimumInputLength: 1,
+                placeholder: 'Search and select customer...',
+                ajax: ajaxConsigneesConfig
+            });
+
+            $scope.find('.consignor-select').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                minimumInputLength: 1,
+                placeholder: 'Search and select consignor...',
+                ajax: ajaxConsigneesConfig
+            });
+
+            $scope.find('.consignee-select').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                minimumInputLength: 1,
+                placeholder: 'Search and select consignee...',
+                ajax: ajaxConsigneesConfig
+            });
         }
 
         function initializeLorryReceiptForm() {
             $(document).ready(function() {
                 console.log('🚀 Linked Lorry Receipts Form initialized');
 
-                // Initialize shared dropdowns with Select2
-                $('#truck_id, #transporter_id, #reference_by').select2({
+                // Initialize shared dropdowns with Select2 (AJAX-driven for large datasets)
+                $('#truck_id').select2({
                     theme: 'bootstrap-5',
                     width: '100%',
-                    minimumResultsForSearch: 0
+                    minimumInputLength: 1,
+                    placeholder: 'Search and select truck...',
+                    ajax: ajaxTrucksConfig
+                });
+
+                $('#transporter_id').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    minimumInputLength: 1,
+                    placeholder: 'Search and select transporter...',
+                    ajax: ajaxAgenciesConfig
+                });
+
+                $('#reference_by').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    minimumInputLength: 1,
+                    placeholder: 'Search and select reference...',
+                    ajax: ajaxAgenciesConfig
                 });
 
                 // Ensure Select2 search input gets autofocus on open (works for dynamic elements too)
@@ -570,256 +666,17 @@
             const transporterSelect = document.getElementById('transporter_id');
             const transporterLabel = document.getElementById('transporterLabel');
 
-            // Store truck data for easy access
-            let trucksData = {};
-
-            // Validation helper functions
-            function showValidationError(element, message) {
-                // Remove existing error message
-                clearValidationError(element);
-
-                // Add error styling
-                element.classList.add('is-invalid');
-
-                // Create and add error message
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'invalid-feedback d-block';
-                errorDiv.textContent = message;
-                errorDiv.id = element.id + '_validation_error';
-
-                // Insert after the element
-                element.parentNode.insertBefore(errorDiv, element.nextSibling);
-
-                console.log('🚨 Validation error shown:', message);
-            }
-
-            function clearValidationError(element) {
-                // Remove error styling
-                element.classList.remove('is-invalid');
-
-                // Remove error message
-                const existingError = document.getElementById(element.id + '_validation_error');
-                if (existingError) {
-                    existingError.remove();
-                }
-            }
-
-            // Handle truck selection change
-            $('#truck_id').on('select2:select', function(e) {
-                const selectedTruckId = e.params.data.id;
-
-                console.log('🚛 Truck selected:', selectedTruckId);
-
-                // Get truck data from the selected option
-                const selectedOption = $(this).find('option:selected');
-                const truckText = selectedOption.text().trim();
-                const transporterId = parseInt(selectedOption.data('transporter-id'), 10) || null;
-                const transporterNameFromData = (selectedOption.data('transporter-name') || '').toString().trim();
-
-                console.log('📝 Truck text:', truckText);
-
-                // Prefer stable ID mapping; fallback to name extraction only if needed.
-                const transporterMatch = truckText.match(/\(([^)]+)\)$/);
-                const transporterName = transporterNameFromData || (transporterMatch ? transporterMatch[1].trim() : '');
-                if (transporterId || transporterName) {
-
-                    console.log('🏢 Extracted transporter name:', transporterName);
-
-                    // Store truck-transporter relationship
-                    trucksData[selectedTruckId] = {
-                        transporterId: transporterId,
-                        transporterName: transporterName,
-                        truckText: truckText
-                    };
-
-                    // If "Truck Owner" is selected, auto-select the truck owner
-                    if (transporterTypeSelect.value === 'owner') {
-                        console.log('🎯 Auto-selecting truck owner for:', transporterName, 'ID:', transporterId);
-                        autoSelectTruckOwner(selectedTruckId, transporterName, transporterId);
-                    } else {
-                        console.log('ℹ️ Transporter type is not "owner", current value:',
-                            transporterTypeSelect.value);
-                    }
-                } else {
-                    console.warn('⚠️ Could not determine transporter from selected truck:', truckText);
-                }
+            window.LREntity.initLorryReceiptTransporterSelectionFlow({
+                transporterTypeSelect,
+                truckSelect,
+                transporterSelect,
+                transporterLabel,
+                trucksData: {},
+                mode: 'create',
+                allowTransporterChanges: true,
             });
 
-            // Also handle regular change event as fallback
-            $('#truck_id').on('change', function() {
-                const selectedTruckId = $(this).val();
-                if (selectedTruckId && !trucksData[selectedTruckId]) {
-                    // Trigger the same logic as select2:select
-                    const selectedOption = $(this).find('option:selected');
-                    const truckText = selectedOption.text().trim();
-                    const transporterId = parseInt(selectedOption.data('transporter-id'), 10) || null;
-                    const transporterNameFromData = (selectedOption.data('transporter-name') || '').toString().trim();
-                    const transporterMatch = truckText.match(/\(([^)]+)\)$/);
-                    const transporterName = transporterNameFromData || (transporterMatch ? transporterMatch[1].trim() : '');
-                    if (transporterId || transporterName) {
-
-                        trucksData[selectedTruckId] = {
-                            transporterId: transporterId,
-                            transporterName: transporterName,
-                            truckText: truckText
-                        };
-
-                        if (transporterTypeSelect.value === 'owner') {
-                            autoSelectTruckOwner(selectedTruckId, transporterName, transporterId);
-                        }
-                    }
-                }
-            });
-
-            // Handle transporter type change
-            transporterTypeSelect.addEventListener('change', function() {
-                const selectedType = this.value;
-                const selectedTruckId = truckSelect.value;
-                document.querySelectorAll('input[type="hidden"][name="transporter_id"]').forEach(el => el.remove());
-
-                transporterSelect.innerHTML = '<option value="">Select Transporter</option>';
-                transporterSelect.disabled = false; // Reset disabled state
-
-
-                transporterLabel.textContent = selectedType === 'owner' ? 'Truck Owner *' : 'Agency *';
-
-                if (selectedType === 'owner') {
-                    // transporterLabel.textContent = 'Truck Owner *';
-
-                    // If a truck is already selected, auto-select its owner
-                    if (selectedTruckId && trucksData[selectedTruckId]) {
-                        autoSelectTruckOwner(
-                            selectedTruckId,
-                            trucksData[selectedTruckId].transporterName,
-                            trucksData[selectedTruckId].transporterId
-                        );
-                    } else {
-                        // Fetch all truck owners
-                        fetch('/api/truck-owners')
-                            .then(response => response.json())
-                            .then(data => {
-                                data.forEach(owner => {
-                                    const option = document.createElement('option');
-                                    option.value = owner.id;
-                                    option.textContent = owner.name;
-                                    transporterSelect.appendChild(option);
-                                });
-                            });
-                    }
-                } else if (selectedType === 'agency') {
-                    // transporterLabel.textContent = 'Agency *';
-                    // Fetch agencies
-                    fetch('/api/agencies')
-                        .then(response => response.json())
-                        .then(data => {
-                            data.forEach(agency => {
-                                const option = document.createElement('option');
-                                option.value = agency.id;
-                                option.textContent = agency.name;
-                                transporterSelect.appendChild(option);
-                            });
-                        });
-                }
-            });
-
-            // Function to auto-select truck owner
-            function autoSelectTruckOwner(truckId, transporterName, transporterId) {
-                console.log('🔄 Fetching truck owners from API...');
-
-                // Fetch truck owners and find the matching one
-                fetch('/api/truck-owners')
-                    .then(response => {
-                        console.log('📡 API response status:', response.status);
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        console.log('📊 Truck owners data received:', data);
-
-                        transporterSelect.innerHTML = '<option value="">Select Transporter</option>';
-
-                        let ownerFound = false;
-                        let matchedOwner = null;
-
-                        data.forEach(owner => {
-                            const option = document.createElement('option');
-                            option.value = owner.id;
-                            option.textContent = owner.name;
-
-                            const byId = transporterId && Number(owner.id) === Number(transporterId);
-                            const byName = !transporterId && owner.name.toLowerCase().trim() ===
-                                (transporterName || '').toLowerCase().trim();
-                            console.log('🔍 Comparing owner:', owner.id, owner.name, 'target:', transporterId,
-                                transporterName);
-
-                            // Use ID first; fallback to name only when ID is not available.
-                            if (byId || byName) {
-                                option.selected = true;
-                                ownerFound = true;
-                                matchedOwner = owner;
-                                console.log('✅ Found matching owner:', owner.name);
-                            }
-
-                            transporterSelect.appendChild(option);
-                        });
-
-                        if (ownerFound) {
-                            // Disable the dropdown since it's auto-selected
-                            // transporterSelect.disabled = true;
-                            // transporterSelect.style.backgroundColor = '#e9ecef';
-                            // transporterSelect.title = 'Automatically selected based on truck owner';
-
-                            // console.log(`✅ Auto-selected truck owner: ${matchedOwner.name} (ID: ${matchedOwner.id})`);
-                            transporterSelect.value = matchedOwner.id;
-                            transporterSelect.disabled = true;
-                            transporterSelect.style.backgroundColor = '#e9ecef';
-                            transporterSelect.title = 'Automatically selected based on truck owner';
-
-                            // Avoid duplicate hidden inputs on repeated selection changes
-                            document.querySelectorAll(
-                                'input[type="hidden"][name="transporter_id"]'
-                            ).forEach(el => el.remove());
-
-                            // Hidden input to ensure value is submitted
-                            let hiddenInput = document.createElement("input");
-                            hiddenInput.type = "hidden";
-                            hiddenInput.name = "transporter_id";
-                            hiddenInput.value = matchedOwner.id;
-                            transporterSelect.form.appendChild(hiddenInput);
-
-                            console.log(
-                                `✅ Auto-selected truck owner: ${matchedOwner.name} (ID: ${matchedOwner.id})`
-                            );
-
-                            // Show TDS percentage for auto-selected truck owner
-                            showTdsPercentage(matchedOwner.id);
-                        } else {
-                            console.warn(`⚠️ No matching truck owner found for: "${transporterName}"`);
-                            console.log('Available owners:', data.map(o => o.name));
-
-                            // Re-enable the dropdown if no match found
-                            transporterSelect.disabled = false;
-                            transporterSelect.style.backgroundColor = '';
-                            transporterSelect.title = '';
-                        }
-                    })
-                    .catch(error => {
-                        console.error('❌ Error fetching truck owners:', error);
-
-                        // Re-enable the dropdown on error
-                        transporterSelect.disabled = false;
-                        transporterSelect.style.backgroundColor = '';
-                        transporterSelect.title = '';
-                    });
-            }
-
-            // Handle transporter selection to show TDS percentage
-            transporterSelect.addEventListener('change', function() {
-                const transporterId = this.value;
-                showTdsPercentage(transporterId);
-            });
+            const { showValidationError, clearValidationError } = window.LREntity;
 
             // Dynamic LR items handling
             const lrItemsContainer = document.getElementById('lr-items-container');
@@ -1813,110 +1670,5 @@ lrItemsContainer.addEventListener('blur', function(e) {
             handleConsigneeSelection(e.params.data.id, scope);
         });
 
-        // Function to show TDS percentage for a transporter
-        function showTdsPercentage(transporterId) {
-            const tdsDisplay = document.getElementById('tdsRateDisplay');
-            const tdsValue = document.getElementById('tdsPercentageValue');
-            const declarationWarning = document.getElementById('declarationWarning');
-            const editTruckOwnerLink = document.getElementById('editTruckOwnerLink');
-            const transporterSelect = document.getElementById('transporter_id');
-            const transporterSelect2 = $('#transporter_id');
-
-            // Function to remove highlighting
-            function removeHighlight() {
-                if (transporterSelect) {
-                    transporterSelect.classList.remove('declaration-warning');
-                }
-                let select2Container = transporterSelect2.next('.select2-container');
-                if (!select2Container.length) {
-                    select2Container = $('.select2-container').has('#transporter_id');
-                }
-                if (!select2Container.length) {
-                    select2Container = transporterSelect2.closest('.select2-container');
-                }
-                if (select2Container.length) {
-                    select2Container.removeClass('declaration-warning');
-                } else if (transporterSelect && transporterSelect.parentElement) {
-                    const container = transporterSelect.parentElement.querySelector('.select2-container');
-                    if (container) {
-                        container.classList.remove('declaration-warning');
-                    }
-                }
-            }
-
-            // Function to add highlighting
-            function addHighlight() {
-                if (transporterSelect) {
-                    transporterSelect.classList.add('declaration-warning');
-                }
-                let select2Container = transporterSelect2.next('.select2-container');
-                if (!select2Container.length) {
-                    select2Container = $('.select2-container').has('#transporter_id');
-                }
-                if (!select2Container.length) {
-                    select2Container = transporterSelect2.closest('.select2-container');
-                }
-                if (select2Container.length) {
-                    select2Container.addClass('declaration-warning');
-                } else if (transporterSelect && transporterSelect.parentElement) {
-                    const container = transporterSelect.parentElement.querySelector('.select2-container');
-                    if (container) {
-                        container.classList.add('declaration-warning');
-                    }
-                }
-            }
-
-            if (transporterId) {
-                // Show loading state
-                tdsDisplay.style.display = 'block';
-                tdsValue.textContent = 'Loading...';
-                if (declarationWarning) {
-                    declarationWarning.style.display = 'none';
-                }
-                removeHighlight();
-
-                // Fetch transporter details to get TDS percentage
-                fetch(`/api/transporters/${transporterId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.tds_percentage !== null && data.tds_percentage !== undefined) {
-                            tdsValue.textContent = `${parseFloat(data.tds_percentage).toFixed(2)}%`;
-                        } else {
-                            tdsValue.textContent = 'Not Set';
-                        }
-
-                        // Check if truck owner and declaration not submitted
-                        if (data.is_owner && !data.declaration_given) {
-                            if (declarationWarning) {
-                                declarationWarning.style.display = 'block';
-                            }
-                            if (editTruckOwnerLink) {
-                                editTruckOwnerLink.href = `/truck_owners/${transporterId}/edit`;
-                            }
-                            addHighlight();
-                        } else {
-                            if (declarationWarning) {
-                                declarationWarning.style.display = 'none';
-                            }
-                            removeHighlight();
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error fetching transporter TDS percentage:', error);
-                        tdsValue.textContent = 'Error';
-                        if (declarationWarning) {
-                            declarationWarning.style.display = 'none';
-                        }
-                        removeHighlight();
-                    });
-            } else {
-                // Hide TDS display and warning when no transporter selected
-                tdsDisplay.style.display = 'none';
-                if (declarationWarning) {
-                    declarationWarning.style.display = 'none';
-                }
-                removeHighlight();
-            }
-        }
     </script>
 @endsection

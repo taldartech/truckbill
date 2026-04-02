@@ -3,15 +3,16 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Notifications\ResetPasswordNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Notifications\ResetPasswordNotification;
 
 class User extends Authenticatable
 {
     use SoftDeletes;
+
     protected $fillable = [
         'name',
         'email',
@@ -21,6 +22,7 @@ class User extends Authenticatable
         'branch_id',
         'transporter_master_id',
         'session_token',
+        'referral_code',
     ];
 
     public function transporterMaster()
@@ -41,6 +43,7 @@ class User extends Authenticatable
                 return (int) session('super_admin_company_id');
             }
         }
+
         return $raw !== null ? (int) $raw : null;
     }
 
@@ -82,6 +85,7 @@ class User extends Authenticatable
         if ($name === 'master_admin') {
             return true;
         }
+
         return false;
     }
 
@@ -114,7 +118,6 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
-
 
     /**
      * The attributes that should be hidden for serialization.

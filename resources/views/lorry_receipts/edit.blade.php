@@ -213,18 +213,19 @@
                             <select class="form-select" id="truck_id" name="truck_id" required
                                 data-placeholder="Search and select truck...">
                                 <option value="">Select Trucks</option>
-                                @foreach ($trucks as $truck)
-                                    <option value="{{ $truck->id }}"
-                                        data-transporter-id="{{ $truck->transporter_id }}"
-                                        data-transporter-name="{{ $truck->transporter ? $truck->transporter->name : '' }}"
-                                        {{ $truck->id == $lorry_receipt->truck_id ? 'selected' : '' }}>
-                                        {{ $truck->truck_number }}
-                                        @if ($truck->driver)
-                                            - Driver: {{ $truck->driver->name }}
+                                @php($selectedTruck = $trucks->firstWhere('id', $lorry_receipt->truck_id))
+                                @if($selectedTruck)
+                                    <option value="{{ $selectedTruck->id }}"
+                                        data-transporter-id="{{ $selectedTruck->transporter_id }}"
+                                        data-transporter-name="{{ $selectedTruck->transporter ? $selectedTruck->transporter->name : '' }}"
+                                        selected>
+                                        {{ $selectedTruck->truck_number }}
+                                        @if ($selectedTruck->driver)
+                                            - Driver: {{ $selectedTruck->driver->name }}
                                         @endif
-                                        ({{ $truck->transporter ? $truck->transporter->name : 'No Transporter' }})
+                                        ({{ $selectedTruck->transporter ? $selectedTruck->transporter->name : 'No Transporter' }})
                                     </option>
-                                @endforeach
+                                @endif
                             </select>
                             @error('truck_id')
                                 <div class="text-danger">{{ $message }}</div>
@@ -244,14 +245,14 @@
                         </div>
                         <div class="col-md-4">
                             <label for="transporter_id" id="transporterLabel" class="form-label">Transporter *</label>
-                            <select class="form-select" id="transporter_id" name="transporter_id" required onchange="showTdsPercentage(this.value)" {{ (!isset($canChangeTransporter) || !$canChangeTransporter) ? 'disabled' : '' }}>
+                            <select class="form-select" id="transporter_id" name="transporter_id" required onchange="window.LREntity.showTdsPercentage(this.value)" {{ (!isset($canChangeTransporter) || !$canChangeTransporter) ? 'disabled' : '' }}>
                                 <option value="">Select Transporter</option>
-                                @foreach ($transporters as $transporter)
-                                    <option value="{{ $transporter->id }}"
-                                        {{ $transporter->id == $lorry_receipt->transporter_id ? 'selected' : '' }}>
-                                        {{ $transporter->name }}
+                                @php($selectedTransporter = $transporters->firstWhere('id', $lorry_receipt->transporter_id))
+                                @if($selectedTransporter)
+                                    <option value="{{ $selectedTransporter->id }}" selected>
+                                        {{ $selectedTransporter->name }}
                                     </option>
-                                @endforeach
+                                @endif
                             </select>
                             @if (!isset($canChangeTransporter) || !$canChangeTransporter)
                                 <input type="hidden" name="transporter_id" value="{{ $lorry_receipt->transporter_id }}">
@@ -273,12 +274,12 @@
                             <label for="reference_by" class="form-label">Reference By</label>
                             <select class="form-select" id="reference_by" name="reference_by">
                                 <option value="">Select Reference</option>
-                                @foreach ($agencies as $agency)
-                                    <option value="{{ $agency->id }}"
-                                        {{ $lorry_receipt->reference_by == $agency->id ? 'selected' : '' }}>
-                                        {{ $agency->name }}
+                                @php($selectedAgency = $agencies->firstWhere('id', $lorry_receipt->reference_by))
+                                @if($selectedAgency)
+                                    <option value="{{ $selectedAgency->id }}" selected>
+                                        {{ $selectedAgency->name }}
                                     </option>
-                                @endforeach
+                                @endif
                             </select>
                             @error('reference_by')
                                 <div class="text-danger">{{ $message }}</div>
@@ -326,12 +327,12 @@
                             <select class="form-select" id="consignor_id" name="consignor_id" required
                                 data-placeholder="Search and select consignor...">
                                 <option value="">Select Consignor</option>
-                                @foreach ($consignors as $consignor)
-                                    <option value="{{ $consignor->id }}"
-                                        {{ $consignor->id == $lorry_receipt->consignor_id ? 'selected' : '' }}>
-                                        {{ $consignor->name }}
+                                @php($selectedConsignor = $consignors->firstWhere('id', $lorry_receipt->consignor_id))
+                                @if($selectedConsignor)
+                                    <option value="{{ $selectedConsignor->id }}" selected>
+                                        {{ $selectedConsignor->name }}
                                     </option>
-                                @endforeach
+                                @endif
                             </select>
                             @error('consignor_id')
                                 <div class="text-danger">{{ $message }}</div>
@@ -352,12 +353,12 @@
                             <select class="form-select" id="consignee_id" name="consignee_id" required
                                 data-placeholder="Search and select consignee...">
                                 <option value="">Select Consignee</option>
-                                @foreach ($consignees as $consignee)
-                                    <option value="{{ $consignee->id }}"
-                                        {{ $consignee->id == $lorry_receipt->consignee_id ? 'selected' : '' }}>
-                                        {{ $consignee->name }}
+                                @php($selectedConsignee = $consignees->firstWhere('id', $lorry_receipt->consignee_id))
+                                @if($selectedConsignee)
+                                    <option value="{{ $selectedConsignee->id }}" selected>
+                                        {{ $selectedConsignee->name }}
                                     </option>
-                                @endforeach
+                                @endif
                             </select>
                             @error('consignee_id')
                                 <div class="text-danger">{{ $message }}</div>
@@ -590,6 +591,9 @@
     <!-- Load SweetAlert2 from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+    <!-- Common LR entity confirmation helpers -->
+    <script src="/js/lr-entity.js"></script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 Lorry Receipt Edit Form initialized');
@@ -669,11 +673,98 @@
             // Initialize calculation on page load
             calculateAmount();
 
-            // Initialize Select2 for better dropdowns
-            $('#customer_id, #consignor_id, #consignee_id, #transporter_id, #truck_id').select2({
+            // Initialize Select2 with AJAX (optimized dropdown loading)
+            const ajaxConsigneesConfig = {
+                url: '/api/consignees/search',
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return { q: params.term || '', page: params.page || 1 };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.results || [],
+                        pagination: { more: data.pagination?.more || false }
+                    };
+                },
+                cache: true
+            };
+
+            const ajaxTrucksConfig = {
+                url: '/api/trucks/search',
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return { q: params.term || '', page: params.page || 1 };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.results || [],
+                        pagination: { more: data.pagination?.more || false }
+                    };
+                },
+                cache: true
+            };
+
+            const ajaxAgenciesConfig = {
+                url: '/api/agencies/search',
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return { q: params.term || '', page: params.page || 1 };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.results || [],
+                        pagination: { more: data.pagination?.more || false }
+                    };
+                },
+                cache: true
+            };
+
+            $('#customer_id').select2({
                 theme: 'bootstrap-5',
-                placeholder: 'Select an option...',
-                allowClear: true
+                width: '100%',
+                minimumInputLength: 1,
+                allowClear: true,
+                placeholder: 'Search and select customer...',
+                ajax: ajaxConsigneesConfig
+            });
+
+            $('#consignor_id').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                minimumInputLength: 1,
+                allowClear: true,
+                placeholder: 'Search and select consignor...',
+                ajax: ajaxConsigneesConfig
+            });
+
+            $('#consignee_id').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                minimumInputLength: 1,
+                allowClear: true,
+                placeholder: 'Search and select consignee...',
+                ajax: ajaxConsigneesConfig
+            });
+
+            $('#truck_id').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                minimumInputLength: 1,
+                allowClear: true,
+                placeholder: 'Search and select truck...',
+                ajax: ajaxTrucksConfig
+            });
+
+            $('#transporter_id').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                minimumInputLength: 1,
+                allowClear: true,
+                placeholder: 'Search and select transporter...',
+                ajax: ajaxAgenciesConfig
             });
 
             // Bootstrap form validation
@@ -906,11 +997,99 @@
         $(document).ready(function() {
             console.log('🚀 Lorry Receipt Edit Form initialized');
 
-            // Initialize other dropdowns with Select2
-            $('#truck_id, #transporter_id, #consignor_id, #consignee_id, #good_type, #reference_by').select2({
+            // Initialize other dropdowns with Select2 (AJAX driven)
+            const ajaxConsigneesConfig = {
+                url: '/api/consignees/search',
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return { q: params.term || '', page: params.page || 1 };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.results || [],
+                        pagination: { more: data.pagination?.more || false }
+                    };
+                },
+                cache: true
+            };
+
+            const ajaxTrucksConfig = {
+                url: '/api/trucks/search',
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return { q: params.term || '', page: params.page || 1 };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.results || [],
+                        pagination: { more: data.pagination?.more || false }
+                    };
+                },
+                cache: true
+            };
+
+            const ajaxAgenciesConfig = {
+                url: '/api/agencies/search',
+                dataType: 'json',
+                delay: 250,
+                data: function (params) {
+                    return { q: params.term || '', page: params.page || 1 };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.results || [],
+                        pagination: { more: data.pagination?.more || false }
+                    };
+                },
+                cache: true
+            };
+
+            $('#truck_id').select2({
                 theme: 'bootstrap-5',
                 width: '100%',
-                // allowClear: true
+                minimumInputLength: 1,
+                placeholder: 'Search and select truck...',
+                ajax: ajaxTrucksConfig
+            });
+
+            $('#transporter_id').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                minimumInputLength: 1,
+                placeholder: 'Search and select transporter...',
+                ajax: ajaxAgenciesConfig
+            });
+
+            $('#consignor_id').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                minimumInputLength: 1,
+                placeholder: 'Search and select consignor...',
+                ajax: ajaxConsigneesConfig
+            });
+
+            $('#consignee_id').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                minimumInputLength: 1,
+                placeholder: 'Search and select consignee...',
+                ajax: ajaxConsigneesConfig
+            });
+
+            $('#good_type').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                minimumResultsForSearch: 0
+            });
+
+            $('#reference_by').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                minimumInputLength: 1,
+                placeholder: 'Search and select reference...',
+                ajax: ajaxAgenciesConfig
             });
 
             // Access the customer data from the window object
@@ -922,7 +1101,10 @@
             // Initialize customer dropdown with Select2
             $('#customer_id').select2({
                 theme: 'bootstrap-5',
-                width: '100%'
+                width: '100%',
+                minimumInputLength: 1,
+                placeholder: 'Search and select customer...',
+                ajax: ajaxConsigneesConfig
             }).on('select2:open', function() {
                 // Log when dropdown is opened
                 console.log('Customer dropdown opened');
@@ -1312,8 +1494,7 @@
         const transporterSelect = document.getElementById('transporter_id');
         const transporterLabel = document.getElementById('transporterLabel');
 
-        // Store truck data for easy access
-        let trucksData = {
+        const initialTrucksData = {
           @foreach ($trucks as $truck)
             {{ $truck->id }}: {
                 transporterId: {{ $truck->transporter_id ?? 'null' }},
@@ -1323,253 +1504,19 @@
           @endforeach
         };
 
-        // Validation helper functions
-        function showValidationError(element, message) {
-            // Remove existing error message
-            clearValidationError(element);
+        const allowTransporterChanges = @json(!isset($canChangeTransporter) || $canChangeTransporter);
 
-            // Add error styling
-            element.classList.add('is-invalid');
-
-            // Create and add error message
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'invalid-feedback d-block';
-            errorDiv.textContent = message;
-            errorDiv.id = element.id + '_validation_error';
-
-            // Insert after the element
-            element.parentNode.insertBefore(errorDiv, element.nextSibling);
-
-            console.log('🚨 Validation error shown:', message);
-        }
-
-        function clearValidationError(element) {
-            // Remove error styling
-            element.classList.remove('is-invalid');
-
-            // Remove error message
-            const existingError = document.getElementById(element.id + '_validation_error');
-            if (existingError) {
-                existingError.remove();
-            }
-        }
-
-        // Handle truck selection change
-        $('#truck_id').on('select2:select', function(e) {
-            const selectedTruckId = e.params.data.id;
-
-            console.log('🚛 Truck selected:', selectedTruckId);
-
-            // Get truck data from the selected option
-            const selectedOption = $(this).find('option:selected');
-            const truckText = selectedOption.text().trim();
-            const transporterId = parseInt(selectedOption.data('transporter-id'), 10) || null;
-            const transporterNameFromData = (selectedOption.data('transporter-name') || '').toString().trim();
-
-            console.log('📝 Truck text:', truckText);
-
-            // Prefer stable ID mapping; fallback to name extraction only if needed.
-            const transporterMatch = truckText.match(/\(([^)]+)\)$/);
-            const transporterName = transporterNameFromData || (transporterMatch ? transporterMatch[1].trim() : '');
-            if (transporterId || transporterName) {
-
-                console.log('🏢 Extracted transporter name:', transporterName);
-
-                // Store truck-transporter relationship
-                trucksData[selectedTruckId] = {
-                    transporterId: transporterId,
-                    transporterName: transporterName,
-                    truckText: truckText
-                };
-
-                // If "Truck Owner" is selected, auto-select the truck owner
-                if (transporterTypeSelect.value === 'owner') {
-                    console.log('🎯 Auto-selecting truck owner for:', transporterName, 'ID:', transporterId);
-                    autoSelectTruckOwner(selectedTruckId, transporterName, transporterId);
-                } else {
-                    console.log('ℹ️ Transporter type is not "owner", current value:',
-                        transporterTypeSelect.value);
-                }
-            } else {
-                console.warn('⚠️ Could not determine transporter from selected truck:', truckText);
-            }
+        window.LREntity.initLorryReceiptTransporterSelectionFlow({
+            transporterTypeSelect,
+            truckSelect,
+            transporterSelect,
+            transporterLabel,
+            trucksData: initialTrucksData,
+            mode: 'edit',
+            allowTransporterChanges,
         });
 
-        // Also handle regular change event as fallback
-        $('#truck_id').on('change', function() {
-            const selectedTruckId = $(this).val();
-            if (selectedTruckId && !trucksData[selectedTruckId]) {
-                // Trigger the same logic as select2:select
-                const selectedOption = $(this).find('option:selected');
-                const truckText = selectedOption.text().trim();
-                const transporterId = parseInt(selectedOption.data('transporter-id'), 10) || null;
-                const transporterNameFromData = (selectedOption.data('transporter-name') || '').toString().trim();
-                const transporterMatch = truckText.match(/\(([^)]+)\)$/);
-                const transporterName = transporterNameFromData || (transporterMatch ? transporterMatch[1].trim() : '');
-                if (transporterId || transporterName) {
-
-                    trucksData[selectedTruckId] = {
-                        transporterId: transporterId,
-                        transporterName: transporterName,
-                        truckText: truckText
-                    };
-
-                    if (transporterTypeSelect.value === 'owner') {
-                        autoSelectTruckOwner(selectedTruckId, transporterName, transporterId);
-                    }
-                }
-            }
-        });
-
-        // Handle transporter type change
-        transporterTypeSelect.addEventListener('change', function() {
-            const selectedType = this.value;
-            const selectedTruckId = truckSelect.value;
-
-            document.querySelectorAll('input[type="hidden"][name="transporter_id"]').forEach(el => el.remove());
-
-            transporterSelect.innerHTML = '<option value="">Select Transporter</option>';
-            transporterSelect.disabled = false; // Reset disabled state
-
-            transporterLabel.textContent = selectedType === 'owner' ? 'Truck Owner *' : 'Agency *';
-
-            if (selectedType === 'owner') {
-                // transporterLabel.textContent = 'Truck Owner *';
-
-                // If a truck is already selected, auto-select its owner
-                if (selectedTruckId && trucksData[selectedTruckId]) {
-                    autoSelectTruckOwner(
-                        selectedTruckId,
-                        trucksData[selectedTruckId].transporterName,
-                        trucksData[selectedTruckId].transporterId
-                    );
-                } else {
-                    // Fetch all truck owners
-                    fetch('/api/truck-owners')
-                        .then(response => response.json())
-                        .then(data => {
-                            data.forEach(owner => {
-                                const option = document.createElement('option');
-                                option.value = owner.id;
-                                option.textContent = owner.name;
-                                transporterSelect.appendChild(option);
-                            });
-                        });
-                }
-            } else if (selectedType === 'agency') {
-                // transporterLabel.textContent = 'Agency *';
-                // Fetch agencies
-                fetch('/api/agencies')
-                    .then(response => response.json())
-                    .then(data => {
-                        data.forEach(agency => {
-                            const option = document.createElement('option');
-                            option.value = agency.id;
-                            option.textContent = agency.name;
-                            transporterSelect.appendChild(option);
-                        });
-                    });
-            }
-        });
-
-        // Function to auto-select truck owner
-        function autoSelectTruckOwner(truckId, transporterName, transporterId) {
-            console.log('🔄 Fetching truck owners from API...');
-
-            // Fetch truck owners and find the matching one
-            fetch('/api/truck-owners')
-                .then(response => {
-                    console.log('📡 API response status:', response.status);
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('📊 Truck owners data received:', data);
-
-                    transporterSelect.innerHTML = '<option value="">Select Transporter</option>';
-
-                    let ownerFound = false;
-                    let matchedOwner = null;
-
-                    data.forEach(owner => {
-                        const option = document.createElement('option');
-                        option.value = owner.id;
-                        option.textContent = owner.name;
-
-                        const byId = transporterId && Number(owner.id) === Number(transporterId);
-                        const byName = !transporterId && owner.name.toLowerCase().trim() ===
-                            (transporterName || '').toLowerCase().trim();
-                        console.log('🔍 Comparing owner:', owner.id, owner.name, 'target:', transporterId,
-                            transporterName);
-
-                        // Use ID first; fallback to name only when ID is not available.
-                        if (byId || byName) {
-                            option.selected = true;
-                            ownerFound = true;
-                            matchedOwner = owner;
-                            console.log('✅ Found matching owner:', owner.name);
-                        }
-
-                        transporterSelect.appendChild(option);
-                    });
-
-                    if (ownerFound) {
-                        // Disable the dropdown since it's auto-selected
-                        // transporterSelect.disabled = true;
-                        // transporterSelect.style.backgroundColor = '#e9ecef';
-                        // transporterSelect.title = 'Automatically selected based on truck owner';
-
-                        // console.log(`✅ Auto-selected truck owner: ${matchedOwner.name} (ID: ${matchedOwner.id})`);
-                        transporterSelect.value = matchedOwner.id;
-                        transporterSelect.disabled = true;
-                        transporterSelect.style.backgroundColor = '#e9ecef';
-                        transporterSelect.title = 'Automatically selected based on truck owner';
-
-                        // Avoid duplicate hidden inputs on repeated selection changes
-                        document.querySelectorAll(
-                            'input[type="hidden"][name="transporter_id"]'
-                        ).forEach(el => el.remove());
-
-                        // Hidden input to ensure value is submitted
-                        let hiddenInput = document.createElement("input");
-                        hiddenInput.type = "hidden";
-                        hiddenInput.name = "transporter_id";
-                        hiddenInput.value = matchedOwner.id;
-                        transporterSelect.form.appendChild(hiddenInput);
-
-                        console.log(
-                            `✅ Auto-selected truck owner: ${matchedOwner.name} (ID: ${matchedOwner.id})`
-                        );
-
-                        // Show TDS percentage for auto-selected truck owner
-                        showTdsPercentage(matchedOwner.id);
-                    } else {
-                        console.warn(`⚠️ No matching truck owner found for: "${transporterName}"`);
-                        console.log('Available owners:', data.map(o => o.name));
-
-                        // Re-enable the dropdown if no match found
-                        transporterSelect.disabled = false;
-                        transporterSelect.style.backgroundColor = '';
-                        transporterSelect.title = '';
-                    }
-                })
-                .catch(error => {
-                    console.error('❌ Error fetching truck owners:', error);
-
-                    // Re-enable the dropdown on error
-                    transporterSelect.disabled = false;
-                    transporterSelect.style.backgroundColor = '';
-                    transporterSelect.title = '';
-                });
-        }
-
-        // Handle transporter selection to show TDS percentage
-        transporterSelect.addEventListener('change', function() {
-            const transporterId = this.value;
-            showTdsPercentage(transporterId);
-        });
+        const { showValidationError, clearValidationError } = window.LREntity;
 
         // Handle consignor contact number and location details
         const consignorSelect = document.getElementById('consignor_id');
@@ -2307,109 +2254,109 @@ grNumberInput.addEventListener('blur', function() {
             });
     });
 
-    // Function to show TDS percentage for a transporter
-    function showTdsPercentage(transporterId) {
-        const tdsDisplay = document.getElementById('tdsRateDisplay');
-        const tdsValue = document.getElementById('tdsPercentageValue');
-        const declarationWarning = document.getElementById('declarationWarning');
-        const editTruckOwnerLink = document.getElementById('editTruckOwnerLink');
-        const transporterSelect = document.getElementById('transporter_id');
-        const transporterSelect2 = $('#transporter_id');
+    // Final "AJAX enforcement" to override any earlier Select2 initializations
+    // that might not include AJAX search.
+    document.addEventListener('DOMContentLoaded', function () {
+        if (!window.jQuery || typeof window.jQuery.fn.select2 === 'undefined') return;
 
-        // Function to remove highlighting
-        function removeHighlight() {
-            if (transporterSelect) {
-                transporterSelect.classList.remove('declaration-warning');
-            }
-            let select2Container = transporterSelect2.next('.select2-container');
-            if (!select2Container.length) {
-                select2Container = $('.select2-container').has('#transporter_id');
-            }
-            if (!select2Container.length) {
-                select2Container = transporterSelect2.closest('.select2-container');
-            }
-            if (select2Container.length) {
-                select2Container.removeClass('declaration-warning');
-            } else if (transporterSelect && transporterSelect.parentElement) {
-                const container = transporterSelect.parentElement.querySelector('.select2-container');
-                if (container) {
-                    container.classList.remove('declaration-warning');
-                }
-            }
-        }
+        const $ = window.jQuery;
 
-        // Function to add highlighting
-        function addHighlight() {
-            if (transporterSelect) {
-                transporterSelect.classList.add('declaration-warning');
-            }
-            let select2Container = transporterSelect2.next('.select2-container');
-            if (!select2Container.length) {
-                select2Container = $('.select2-container').has('#transporter_id');
-            }
-            if (!select2Container.length) {
-                select2Container = transporterSelect2.closest('.select2-container');
-            }
-            if (select2Container.length) {
-                select2Container.addClass('declaration-warning');
-            } else if (transporterSelect && transporterSelect.parentElement) {
-                const container = transporterSelect.parentElement.querySelector('.select2-container');
-                if (container) {
-                    container.classList.add('declaration-warning');
-                }
-            }
-        }
+        const ajaxConsigneesConfig = {
+            url: '/api/consignees/search',
+            dataType: 'json',
+            delay: 250,
+            data: function (params) {
+                return { q: params.term || '', page: params.page || 1 };
+            },
+            processResults: function (data) {
+                return { results: data.results || [], pagination: { more: data.pagination?.more || false } };
+            },
+            cache: true
+        };
 
-        if (transporterId) {
-            // Show loading state
-            tdsDisplay.style.display = 'block';
-            tdsValue.textContent = 'Loading...';
-            if (declarationWarning) {
-                declarationWarning.style.display = 'none';
-            }
-            removeHighlight();
+        const ajaxTrucksConfig = {
+            url: '/api/trucks/search',
+            dataType: 'json',
+            delay: 250,
+            data: function (params) {
+                return { q: params.term || '', page: params.page || 1 };
+            },
+            processResults: function (data) {
+                return { results: data.results || [], pagination: { more: data.pagination?.more || false } };
+            },
+            cache: true
+        };
 
-            // Fetch transporter details to get TDS percentage
-            fetch(`/api/transporters/${transporterId}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.tds_percentage !== null && data.tds_percentage !== undefined) {
-                        tdsValue.textContent = `${parseFloat(data.tds_percentage).toFixed(2)}%`;
-                    } else {
-                        tdsValue.textContent = 'Not Set';
-                    }
+        const ajaxAgenciesConfig = {
+            url: '/api/agencies/search',
+            dataType: 'json',
+            delay: 250,
+            data: function (params) {
+                return { q: params.term || '', page: params.page || 1 };
+            },
+            processResults: function (data) {
+                return { results: data.results || [], pagination: { more: data.pagination?.more || false } };
+            },
+            cache: true
+        };
 
-                    // Check if truck owner and declaration not submitted
-                    if (data.is_owner && !data.declaration_given) {
-                        if (declarationWarning) {
-                            declarationWarning.style.display = 'block';
-                        }
-                        if (editTruckOwnerLink) {
-                            editTruckOwnerLink.href = `/truck_owners/${transporterId}/edit`;
-                        }
-                        addHighlight();
-                    } else {
-                        if (declarationWarning) {
-                            declarationWarning.style.display = 'none';
-                        }
-                        removeHighlight();
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching transporter TDS percentage:', error);
-                    tdsValue.textContent = 'Error';
-                    if (declarationWarning) {
-                        declarationWarning.style.display = 'none';
-                    }
-                    removeHighlight();
-                });
-        } else {
-            // Hide TDS display and warning when no transporter selected
-            tdsDisplay.style.display = 'none';
-            if (declarationWarning) {
-                declarationWarning.style.display = 'none';
+        const initOrReinit = (selector, config) => {
+            const $el = $(selector);
+            if (!$el.length) return;
+            if ($el.hasClass('select2-hidden-accessible')) {
+                $el.select2('destroy');
             }
-            removeHighlight();
-        }
-    }
+            $el.select2(config);
+        };
+
+        initOrReinit('#customer_id', {
+            theme: 'bootstrap-5',
+            width: '100%',
+            minimumInputLength: 1,
+            allowClear: true,
+            placeholder: 'Search and select customer...',
+            ajax: ajaxConsigneesConfig
+        });
+        initOrReinit('#consignor_id', {
+            theme: 'bootstrap-5',
+            width: '100%',
+            minimumInputLength: 1,
+            allowClear: true,
+            placeholder: 'Search and select consignor...',
+            ajax: ajaxConsigneesConfig
+        });
+        initOrReinit('#consignee_id', {
+            theme: 'bootstrap-5',
+            width: '100%',
+            minimumInputLength: 1,
+            allowClear: true,
+            placeholder: 'Search and select consignee...',
+            ajax: ajaxConsigneesConfig
+        });
+        initOrReinit('#truck_id', {
+            theme: 'bootstrap-5',
+            width: '100%',
+            minimumInputLength: 1,
+            allowClear: true,
+            placeholder: 'Search and select truck...',
+            ajax: ajaxTrucksConfig
+        });
+        initOrReinit('#transporter_id', {
+            theme: 'bootstrap-5',
+            width: '100%',
+            minimumInputLength: 1,
+            allowClear: true,
+            placeholder: 'Search and select transporter...',
+            ajax: ajaxAgenciesConfig
+        });
+        initOrReinit('#reference_by', {
+            theme: 'bootstrap-5',
+            width: '100%',
+            minimumInputLength: 1,
+            allowClear: true,
+            placeholder: 'Search and select reference...',
+            ajax: ajaxAgenciesConfig
+        });
+    });
+
 </script>

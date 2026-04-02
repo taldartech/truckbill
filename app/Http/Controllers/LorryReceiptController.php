@@ -23,7 +23,7 @@ class LorryReceiptController extends Controller
     private function isPlanExpired(): bool
     {
         $company = Auth::user()->company;
-        if (!$company->plan_end_date) {
+        if (! $company->plan_end_date) {
             return false;
         }
 
@@ -196,24 +196,44 @@ class LorryReceiptController extends Controller
         }
 
         $companyId = Auth::user()->company_id;
-        $trucks = Truck::with(['transporter.transporterMaster', 'driver'])
-            ->whereHas('transporter', function ($query) use ($companyId) {
-                $query->where('company_id', $companyId);
-            })
-            ->get();
+        $goodsTypes = GoodType::where('user_id', Auth::user()->company->user_id)->get();
 
-        $agencies = Transporter::with('transporterMaster')
-            ->where('is_owner', 0)
-            ->where('company_id', $companyId)
-            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
-            ->orderBy('transporter_masters.name')
-            ->select('transporters.*')
-            ->get();
-        $consignees = Consignee::where('company_id', $companyId)
-            ->orderBy('name')
-            ->get();
-        $goodsTypes = GoodType::where('user_id', Auth::user()->company->user_id)
-            ->get();
+        // Only fetch selected IDs (if any) to avoid loading large dropdown datasets.
+        $selectedConsigneeIds = collect([
+            old('customer_id'),
+            old('consignor_id'),
+            old('consignee_id'),
+        ])->filter()->unique()->values();
+
+        $consignees = $selectedConsigneeIds->isNotEmpty()
+            ? Consignee::withTrashed()
+                ->where('company_id', $companyId)
+                ->whereIn('id', $selectedConsigneeIds)
+                ->orderBy('name')
+                ->get()
+            : collect();
+
+        $selectedTruckId = old('truck_id');
+        $trucks = $selectedTruckId
+            ? Truck::with(['transporter.transporterMaster', 'driver'])
+                ->where('id', $selectedTruckId)
+                ->whereHas('transporter', function ($query) use ($companyId) {
+                    $query->where('company_id', $companyId);
+                })
+                ->get()
+            : collect();
+
+        $selectedReferenceById = old('reference_by');
+        $agencies = $selectedReferenceById
+            ? Transporter::with('transporterMaster')
+                ->where('is_owner', 0)
+                ->where('company_id', $companyId)
+                ->where('id', $selectedReferenceById)
+                ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+                ->orderBy('transporter_masters.name')
+                ->select('transporters.*')
+                ->get()
+            : collect();
 
         return view('lorry_receipts.create', compact('trucks', 'consignees', 'goodsTypes', 'agencies'));
     }
@@ -226,24 +246,44 @@ class LorryReceiptController extends Controller
         }
 
         $companyId = Auth::user()->company_id;
-        $trucks = Truck::with(['transporter.transporterMaster', 'driver'])
-            ->whereHas('transporter', function ($query) use ($companyId) {
-                $query->where('company_id', $companyId);
-            })
-            ->get();
+        $goodsTypes = GoodType::where('user_id', Auth::user()->company->user_id)->get();
 
-        $agencies = Transporter::with('transporterMaster')
-            ->where('is_owner', 0)
-            ->where('company_id', $companyId)
-            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
-            ->orderBy('transporter_masters.name')
-            ->select('transporters.*')
-            ->get();
-        $consignees = Consignee::where('company_id', $companyId)
-            ->orderBy('name')
-            ->get();
-        $goodsTypes = GoodType::where('user_id', Auth::user()->company->user_id)
-            ->get();
+        // Only fetch selected IDs (if any) to avoid loading large dropdown datasets.
+        $selectedConsigneeIds = collect([
+            old('customer_id'),
+            old('consignor_id'),
+            old('consignee_id'),
+        ])->filter()->unique()->values();
+
+        $consignees = $selectedConsigneeIds->isNotEmpty()
+            ? Consignee::withTrashed()
+                ->where('company_id', $companyId)
+                ->whereIn('id', $selectedConsigneeIds)
+                ->orderBy('name')
+                ->get()
+            : collect();
+
+        $selectedTruckId = old('truck_id');
+        $trucks = $selectedTruckId
+            ? Truck::with(['transporter.transporterMaster', 'driver'])
+                ->where('id', $selectedTruckId)
+                ->whereHas('transporter', function ($query) use ($companyId) {
+                    $query->where('company_id', $companyId);
+                })
+                ->get()
+            : collect();
+
+        $selectedReferenceById = old('reference_by');
+        $agencies = $selectedReferenceById
+            ? Transporter::with('transporterMaster')
+                ->where('is_owner', 0)
+                ->where('company_id', $companyId)
+                ->where('id', $selectedReferenceById)
+                ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+                ->orderBy('transporter_masters.name')
+                ->select('transporters.*')
+                ->get()
+            : collect();
 
         return view('lorry_receipts.create-linked', compact('trucks', 'consignees', 'goodsTypes', 'agencies'));
     }
@@ -279,7 +319,7 @@ class LorryReceiptController extends Controller
                 ->pluck('lr_number')
                 ->toArray();
 
-            if (!empty($existingMemoIds)) {
+            if (! empty($existingMemoIds)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'The following LR numbers already have memo_id: '.implode(', ', $existingMemoIds),
@@ -291,7 +331,7 @@ class LorryReceiptController extends Controller
                 ->pluck('lr_number')
                 ->toArray();
 
-            if (!empty($noFreightBooking)) {
+            if (! empty($noFreightBooking)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'The following LR numbers do not have a good hire (lorry hire): '.implode(', ', $noFreightBooking),
@@ -585,7 +625,7 @@ class LorryReceiptController extends Controller
         }
 
         // Set unloading_weight = weight initially (for loose weight mode)
-        if (!isset($validated['unloading_weight']) || $validated['unloading_weight'] === null) {
+        if (! isset($validated['unloading_weight']) || $validated['unloading_weight'] === null) {
             $validated['unloading_weight'] = $validated['weight'];
         }
 
@@ -609,7 +649,7 @@ class LorryReceiptController extends Controller
                 $validated['actual_amount'] = round($effectiveWeight * $validated['fr_rate'], 2);
             } else {
                 // Weights are equal - use manually entered actual_amount from form if provided, otherwise calculate it
-                if (!isset($validated['actual_amount']) || $validated['actual_amount'] === null) {
+                if (! isset($validated['actual_amount']) || $validated['actual_amount'] === null) {
                     $effectiveWeight = min($loadingWeight, $unloadingWeight);
                     $validated['actual_amount'] = round($effectiveWeight * $validated['fr_rate'], 2);
                 }
@@ -653,16 +693,16 @@ class LorryReceiptController extends Controller
         $invoiceNumbers = array_filter(array_column($lrs, 'invoice_number'));
 
         // Check LR_NUMBER uniqueness (Company-wise)
-        if (!empty($lrNumbers)) {
+        if (! empty($lrNumbers)) {
             $duplicateLrs = LorryReceipt::where('company_id', $companyId)
                 ->whereNull('deleted_at')
                 ->whereIn('lr_number', $lrNumbers)
                 ->pluck('lr_number')
                 ->toArray();
 
-            if (!empty($duplicateLrs)) {
+            if (! empty($duplicateLrs)) {
                 foreach ($lrs as $index => $lr) {
-                    if (!empty($lr['lr_number']) && in_array($lr['lr_number'], $duplicateLrs)) {
+                    if (! empty($lr['lr_number']) && in_array($lr['lr_number'], $duplicateLrs)) {
                         $errors["lrs.{$index}.lr_number"] = "LR Number '{$lr['lr_number']}' already exists in your company.";
                     }
                 }
@@ -670,16 +710,16 @@ class LorryReceiptController extends Controller
         }
 
         // Check GR_NUMBER uniqueness (Company-wise)
-        if (!empty($grNumbers)) {
+        if (! empty($grNumbers)) {
             $duplicateGrs = LorryReceipt::where('company_id', $companyId)
                 ->whereNull('deleted_at')
                 ->whereIn('gr_number', $grNumbers)
                 ->pluck('gr_number')
                 ->toArray();
 
-            if (!empty($duplicateGrs)) {
+            if (! empty($duplicateGrs)) {
                 foreach ($lrs as $index => $lr) {
-                    if (!empty($lr['gr_number']) && in_array($lr['gr_number'], $duplicateGrs)) {
+                    if (! empty($lr['gr_number']) && in_array($lr['gr_number'], $duplicateGrs)) {
                         $errors["lrs.{$index}.gr_number"] = "GR Number '{$lr['gr_number']}' already exists in your company.";
                     }
                 }
@@ -687,23 +727,23 @@ class LorryReceiptController extends Controller
         }
 
         // Check INVOICE_NUMBER uniqueness (Company-wise)
-        if (!empty($invoiceNumbers)) {
+        if (! empty($invoiceNumbers)) {
             $duplicateInvoices = LorryReceipt::where('company_id', $companyId)
                 ->whereNull('deleted_at')
                 ->whereIn('invoice_number', $invoiceNumbers)
                 ->pluck('invoice_number')
                 ->toArray();
 
-            if (!empty($duplicateInvoices)) {
+            if (! empty($duplicateInvoices)) {
                 foreach ($lrs as $index => $lr) {
-                    if (!empty($lr['invoice_number']) && in_array($lr['invoice_number'], $duplicateInvoices)) {
+                    if (! empty($lr['invoice_number']) && in_array($lr['invoice_number'], $duplicateInvoices)) {
                         $errors["lrs.{$index}.invoice_number"] = "Invoice Number '{$lr['invoice_number']}' already exists in your company.";
                     }
                 }
             }
         }
 
-        if (!empty($errors)) {
+        if (! empty($errors)) {
             throw \Illuminate\Validation\ValidationException::withMessages($errors);
         }
     }
@@ -717,11 +757,11 @@ class LorryReceiptController extends Controller
 
         $exists = LorryReceipt::where('lr_number', $request->lr_number)
             ->where('company_id', Auth::user()->company_id)
-            ->when($request->exclude_id, fn($query) => $query->where('id', '!=', $request->exclude_id))
+            ->when($request->exclude_id, fn ($query) => $query->where('id', '!=', $request->exclude_id))
             ->exists();
 
         return response()->json([
-            'valid' => !$exists,
+            'valid' => ! $exists,
             'message' => $exists
                 ? 'LR Number already exists. Please use a unique LR Number.'
                 : 'LR Number is available',
@@ -737,11 +777,11 @@ class LorryReceiptController extends Controller
 
         $exists = LorryReceipt::where('invoice_number', $request->invoice_number)
             ->where('company_id', Auth::user()->company_id)
-            ->when($request->exclude_id, fn($query) => $query->where('id', '!=', $request->exclude_id))
+            ->when($request->exclude_id, fn ($query) => $query->where('id', '!=', $request->exclude_id))
             ->exists();
 
         return response()->json([
-            'valid' => !$exists,
+            'valid' => ! $exists,
             'message' => $exists
                 ? 'Invoice Number already exists. Please use a unique Invoice Number.'
                 : 'Invoice Number is available',
@@ -758,7 +798,7 @@ class LorryReceiptController extends Controller
             ->where('company_id', Auth::user()->company_id)
             ->exists();
 
-        return response()->json(['available' => !$exists]);
+        return response()->json(['available' => ! $exists]);
     }
 
     public function edit(LorryReceipt $lorry_receipt): \Illuminate\View\View|\Illuminate\Http\RedirectResponse
@@ -771,36 +811,63 @@ class LorryReceiptController extends Controller
         $companyId = Auth::user()->company_id;
         $lorry_receipt->load(['truck.transporter.transporterMaster', 'truck.driver', 'customer', 'transporter.transporterMaster', 'consignor', 'consignee']);
 
-        $trucks = Truck::with(['transporter.transporterMaster', 'driver'])
-            ->whereHas('transporter', function ($query) use ($companyId) {
-                $query->withTrashed()->where('company_id', $companyId);
-            })
-            ->get();
+        // Fetch only the selected records needed for initial dropdown rendering.
+        $selectedTruckId = $lorry_receipt->truck_id;
+        $trucks = $selectedTruckId
+            ? Truck::with(['transporter.transporterMaster', 'driver'])
+                ->where('id', $selectedTruckId)
+                ->whereHas('transporter', function ($query) use ($companyId) {
+                    $query->withTrashed()->where('company_id', $companyId);
+                })
+                ->get()
+            : collect();
 
-        $transporters = Transporter::withTrashed()->with('transporterMaster')
-            ->where('company_id', $companyId)
-            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
-            ->orderBy('transporter_masters.name')
-            ->select('transporters.*')
-            ->get();
-        $truckOwners = Transporter::withTrashed()->with('transporterMaster')
-            ->where('company_id', $companyId)
-            ->where('is_owner', 1)
-            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
-            ->orderBy('transporter_masters.name')
-            ->select('transporters.*')
-            ->get();
-        $agencies = Transporter::withTrashed()->with('transporterMaster')
-            ->where('company_id', $companyId)
-            ->where('is_owner', 0)
-            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
-            ->orderBy('transporter_masters.name')
-            ->select('transporters.*')
-            ->get();
-        $consignees = Consignee::withTrashed()
-            ->where('company_id', $companyId)
-            ->orderBy('name')
-            ->get();
+        $selectedTransporterId = $lorry_receipt->transporter_id;
+        $transporters = $selectedTransporterId
+            ? Transporter::withTrashed()->with('transporterMaster')
+                ->where('company_id', $companyId)
+                ->where('id', $selectedTransporterId)
+                ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+                ->orderBy('transporter_masters.name')
+                ->select('transporters.*')
+                ->get()
+            : collect();
+
+        $truckOwners = ($lorry_receipt->transporter_type === 'owner' && $selectedTransporterId)
+            ? Transporter::withTrashed()->with('transporterMaster')
+                ->where('company_id', $companyId)
+                ->where('id', $selectedTransporterId)
+                ->where('is_owner', 1)
+                ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+                ->orderBy('transporter_masters.name')
+                ->select('transporters.*')
+                ->get()
+            : collect();
+
+        $agencies = ($lorry_receipt->reference_by)
+            ? Transporter::withTrashed()->with('transporterMaster')
+                ->where('company_id', $companyId)
+                ->where('id', $lorry_receipt->reference_by)
+                ->where('is_owner', 0)
+                ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+                ->orderBy('transporter_masters.name')
+                ->select('transporters.*')
+                ->get()
+            : collect();
+
+        $selectedConsigneeIds = collect([
+            $lorry_receipt->customer_id,
+            $lorry_receipt->consignor_id,
+            $lorry_receipt->consignee_id,
+        ])->filter()->unique()->values();
+
+        $consignees = $selectedConsigneeIds->isNotEmpty()
+            ? Consignee::withTrashed()
+                ->where('company_id', $companyId)
+                ->whereIn('id', $selectedConsigneeIds)
+                ->orderBy('name')
+                ->get()
+            : collect();
         $goodsTypes = GoodType::where('user_id', Auth::user()->company->user_id)->get();
         $statuses = ['Pending', 'Delivered', 'Cancelled', 'In-Progress'];
         $tdsPercentages = [
@@ -975,7 +1042,7 @@ class LorryReceiptController extends Controller
         // unset($validated['delivery_status']);
 
         // Set unloading_weight = weight initially if not set (for loose weight mode)
-        if (!isset($validated['unloading_weight']) || $validated['unloading_weight'] === null) {
+        if (! isset($validated['unloading_weight']) || $validated['unloading_weight'] === null) {
             $validated['unloading_weight'] = $validated['weight'];
         }
 
@@ -998,7 +1065,7 @@ class LorryReceiptController extends Controller
                 $validated['actual_amount'] = round($effectiveWeight * $validated['fr_rate'], 2);
             } else {
                 // Weights are equal - use manually entered actual_amount from form if provided, otherwise calculate it
-                if (!isset($validated['actual_amount']) || $validated['actual_amount'] === null) {
+                if (! isset($validated['actual_amount']) || $validated['actual_amount'] === null) {
                     $effectiveWeight = min($loadingWeight, $unloadingWeight);
                     $validated['actual_amount'] = round($effectiveWeight * $validated['fr_rate'], 2);
                 }
@@ -1136,7 +1203,7 @@ class LorryReceiptController extends Controller
             }
 
             // Recalculate balance_amount if tds_amount changed (but tr_amount didn't)
-            if (isset($updateData['tds_amount']) && !isset($updateData['tr_amount'])) {
+            if (isset($updateData['tds_amount']) && ! isset($updateData['tr_amount'])) {
                 $trAmount = $freightBooking->tr_amount;
                 $damageAmount = $freightBooking->damage_amount ?? 0;
                 $shortageAmount = $freightBooking->shortage_amount ?? 0;
@@ -1335,7 +1402,6 @@ class LorryReceiptController extends Controller
         return $values->count() === 1 ? $values->first() : null;
     }
 
-
     public function getLorryReceiptsForCustomer(int $customerId): \Illuminate\Http\JsonResponse
     {
         $lorryReceipts = LorryReceipt::where('customer_id', $customerId)
@@ -1377,7 +1443,7 @@ class LorryReceiptController extends Controller
                         'lr_number' => $lr->lr_number,
                         'truck_number' => $lr->truck?->truck_number ?? '',
                         'freight_booking_id' => $lr->freight_booking_id,
-                        'balance_amount' => $lastFreight ? (float)$lastFreight->balance_amount : 0,
+                        'balance_amount' => $lastFreight ? (float) $lastFreight->balance_amount : 0,
                     ];
                 })
                 ->sortBy('balance_amount')

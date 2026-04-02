@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'onboarding' => [
+        'frontend_base_url' => env('ONBOARDING_FRONTEND_BASE_URL', 'https://truckbill.in'),
+    ],
+
 ];

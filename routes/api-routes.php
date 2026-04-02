@@ -19,9 +19,12 @@ Route::middleware('auth.blocked')->group(function () {
     Route::get('/api/trucks/{transporter}/lrs', [TruckController::class, 'getTrucksFromLrs']);
     Route::get('/api/drivers', [DriverController::class, 'getDriversApi']);
     Route::get('/api/transporters/{id}', [FreightBookingController::class, 'getTransporter']);
+    Route::get('/api/trucks/search', [TruckController::class, 'searchTrucksApi']);
     Route::get('/api/trucks/{id}', [FreightBookingController::class, 'getTruck']);
     Route::get('/api/truck-owners', [TransporterController::class, 'getTruckOwnersApi']);
     Route::get('/api/agencies', [TransporterController::class, 'getAgenciesApi']);
+    Route::get('/api/agencies/search', [TransporterController::class, 'searchAgenciesApi']);
+    Route::get('/api/consignees/search', [ConsigneeController::class, 'searchConsigneesApi']);
     Route::get('/api/consignees/{id}', [ConsigneeController::class, 'getConsigneeApi']);
     Route::get('/api/transporter-master-by-pan', [TransporterController::class, 'getTransporterMasterByPan']);
     Route::post('/api/calculate-tds-percentage', [TransporterController::class, 'calculateTdsPercentage']);
@@ -47,6 +50,7 @@ Route::middleware('auth.blocked')->group(function () {
     Route::post('/api/check-manual-invoice-number-uniqueness', [InvoiceController::class, 'checkManualInvoiceNumberUniqueness']);
     Route::get('/check-truck-number', function (Illuminate\Http\Request $request) {
         $exists = \App\Models\Truck::where('truck_number', $request->truck_number)->exists();
+
         return response()->json(['exists' => $exists]);
     });
     Route::get('/get-transporter-name/{truck}', function ($truckId) {
