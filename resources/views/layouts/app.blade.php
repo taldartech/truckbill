@@ -320,6 +320,49 @@
                 margin-right: 5px !important;
             }
         }
+
+        /* Fix sidebar icon and text vertical misalignment */
+        .sidebar-menu .nav-link {
+            display: flex !important;
+            align-items: center;
+            gap: 0.75rem; /* Fixed space between icon and text */
+            position: relative;
+            padding-right: 2rem !important; /* Space for the right chevron */
+            padding-left: 0.1rem !important;
+        }
+
+        .sidebar-menu .nav-link p {
+            margin-bottom: 0 !important;
+            margin-top: 0 !important;
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-left: 0!important;
+        }
+
+        .sidebar-menu .nav-icon,
+        .sidebar-menu .nav-link > i:first-child {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.5rem !important; /* Fixed width so all texts start at the same offset */
+            flex-shrink: 0;
+            font-size: 1.2rem;
+        }
+
+        .sidebar-menu .nav-link .nav-arrow {
+            position: absolute;
+            right: 0.8rem;
+            top: 50%;
+            transform: translateY(-50%);
+            margin: 0 !important;
+            display: block !important;
+        }
+        
+        .sidebar-wrapper {
+            height: calc(100vh - calc(7.5rem + 1px)) !important;
+        }
     </style>
     @stack('styles')
 </head>
