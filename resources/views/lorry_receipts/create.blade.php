@@ -1329,58 +1329,125 @@ grNumberInput.addEventListener('blur', function() {
 
                 // Build confirmation message
                 const confirmationHTML = `
-            <div class="confirmation-details">
-                <h5 class="text-primary mb-3">📋 Please verify the following details:</h5>
-
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card mb-3">
-                            <div class="card-header bg-light"><strong>📄 Basic Information</strong></div>
-                            <div class="card-body">
-                                <p><strong>LR Number:</strong> ${formData.get('lr_number') || 'Not entered'}</p>
-                                <p><strong>GR Date:</strong> ${formattedGrDate}</p>
-                                <p><strong>Creation Date & Time:</strong> ${currentDateTime}</p>
-                                <p><strong>Customer:</strong> ${customerName}</p>
-                                <p><strong>Invoice Number:</strong> ${formData.get('invoice_number') || 'Not entered'}</p>
-                            </div>
-                        </div>
-
-                        <div class="card mb-3">
-                            <div class="card-header bg-light"><strong>🚛 Transport Details</strong></div>
-                            <div class="card-body">
-                                <p><strong>Truck:</strong> ${truckNumber}</p>
-                                <p><strong>Transporter:</strong> ${transporterName}</p>
-                                <p><strong>Reference By:</strong> ${referenceBy}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-6">
-                        <div class="card mb-3">
-                            <div class="card-header bg-light"><strong>👥 Consignor & Consignee</strong></div>
-                            <div class="card-body">
-                                <p><strong>Consignor:</strong> ${consignorName}</p>
-                                <p><strong>Consignee:</strong> ${consigneeName}</p>
-                                <p><strong>Source:</strong> ${formData.get('source_city') || 'Not entered'}, ${formData.get('source_state') || 'Not entered'}</p>
-                                <p><strong>Destination:</strong> ${formData.get('destination_city') || 'Not entered'}, ${formData.get('destination_state') || 'Not entered'}</p>
-                            </div>
-                        </div>
-
-                        <div class="card mb-3">
-                            <div class="card-header bg-light"><strong>📦 Goods & Charges</strong></div>
-                            <div class="card-body">
-                                <p><strong>Goods Type:</strong> ${formData.get('good_type') || 'Not selected'}</p>
-                                <p><strong>Weight:</strong> ${formData.get('weight') || 'Not entered'} tons</p>
-                                <p><strong>No. of Units:</strong> ${formData.get('no_of_units') || 'Not entered'}</p>
-                                <p><strong>Freight Rate:</strong> ₹${formData.get('fr_rate') || 'Not entered'}</p>
-                                <p><strong>Amount:</strong> ₹${formData.get('amount') || 'Not entered'}</p>
-                            </div>
-                        </div>
-                    </div>
+            <div class="confirmation-details text-start">
+                <div class="alert alert-soft-primary bg-primary bg-opacity-10 border-0 mb-3 py-2 px-3 d-flex align-items-center rounded-3">
+                    <i class="fas fa-info-circle text-primary me-2"></i>
+                    <h6 class="mb-0 text-primary fw-bold" style="font-size:0.9rem;">Review Lorry Receipt Details</h6>
                 </div>
 
-                <div class="alert alert-info mt-3">
-                    <i class="fas fa-info-circle"></i> Please review all details carefully before confirming submission.
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <div class="card h-100 border-0 shadow-sm rounded-3 border-top border-3 border-primary">
+                            <div class="card-header bg-transparent border-bottom-0 pt-2 pb-0">
+                                <h6 class="fw-bold text-dark mb-0" style="font-size:0.9rem;"><i class="fas fa-file-invoice text-primary me-1"></i> Basic Info</h6>
+                            </div>
+                            <div class="card-body p-2">
+                                <div class="d-flex justify-content-between mb-1 pb-1 border-bottom border-light">
+                                    <span class="text-muted small">LR No.</span>
+                                    <span class="badge bg-primary bg-opacity-10 text-primary rounded px-2 py-0">${formData.get('lr_number') || 'Not entered'}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-1 pb-1 border-bottom border-light">
+                                    <span class="text-muted small">GR Date</span>
+                                    <span class="fw-bold text-dark small">${formattedGrDate}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-1 pb-1 border-bottom border-light">
+                                    <span class="text-muted small">Created</span>
+                                    <span class="fw-medium text-dark small">${currentDateTime}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-1 pb-1 border-bottom border-light">
+                                    <span class="text-muted small">Customer</span>
+                                    <span class="fw-bold text-dark text-truncate ms-2 text-end small" style="max-width: 180px;" title="${customerName}">${customerName}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-1 pb-1 border-bottom border-light">
+                                    <span class="text-muted small">Invoice</span>
+                                    <span class="fw-medium text-dark small">${formData.get('invoice_number') || '<span class="text-muted fst-italic">N/A</span>'}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-1 pb-1 border-bottom border-light">
+                                    <span class="text-muted small">Ref By</span>
+                                    <span class="fw-medium text-dark text-truncate ms-2 text-end small" style="max-width: 180px;">${referenceBy}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="row g-2">
+                            <div class="col-12">
+                                <div class="card border-0 shadow-sm rounded-3 border-top border-3 border-info">
+                                    <div class="card-header bg-transparent border-bottom-0 pt-2 pb-0">
+                                        <h6 class="fw-bold text-dark mb-0" style="font-size:0.9rem;"><i class="fas fa-users text-info me-1"></i> Parties & Route</h6>
+                                    </div>
+                                    <div class="card-body p-2">
+                                        <div class="d-flex justify-content-between mb-1 pb-1 border-bottom border-light">
+                                            <span class="text-muted small">Consignor</span>
+                                            <span class="fw-medium text-dark text-truncate ms-2 text-end small" style="max-width: 180px;" title="${consignorName}">${consignorName}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-1 pb-1 border-bottom border-light">
+                                            <span class="text-muted small">Consignee</span>
+                                            <span class="fw-medium text-dark text-truncate ms-2 text-end small" style="max-width: 180px;" title="${consigneeName}">${consigneeName}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mt-1 text-center bg-light rounded p-1 align-items-center">
+                                            <div class="w-100 small fw-bold text-dark text-truncate px-1">${formData.get('source_city') || '-'}</div>
+                                            <i class="fas fa-arrow-right text-muted mx-1" style="font-size:0.7rem;"></i>
+                                            <div class="w-100 small fw-bold text-dark text-truncate px-1">${formData.get('destination_city') || '-'}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="card border-0 shadow-sm rounded-3 border-top border-3 border-warning">
+                                    <div class="card-header bg-transparent border-bottom-0 pt-2 pb-0">
+                                        <h6 class="fw-bold text-dark mb-0" style="font-size:0.9rem;"><i class="fas fa-truck text-warning me-1"></i> Transport Info</h6>
+                                    </div>
+                                    <div class="card-body p-2">
+                                        <div class="d-flex justify-content-between mb-1 pb-1 border-bottom border-light">
+                                            <span class="text-muted small">Truck</span>
+                                            <span class="badge bg-dark bg-opacity-10 text-dark fw-bold rounded px-2 py-0">${truckNumber}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span class="text-muted small">Transporter</span>
+                                            <span class="fw-medium text-dark text-truncate ms-2 text-end small" style="max-width: 180px;" title="${transporterName}">${transporterName}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="card border-0 shadow-sm rounded-3 bg-light border-top border-3 border-success mb-2">
+                            <div class="card-body p-2">
+                                <div class="row align-items-center g-2">
+                                    <div class="col-md-7">
+                                        <div class="d-flex align-items-center mb-1">
+                                            <div class="bg-success bg-opacity-10 rounded p-1 me-2">
+                                                <i class="fas fa-box-open text-success" style="font-size:0.9rem;"></i>
+                                            </div>
+                                            <span class="fw-bold text-dark" style="font-size:0.9rem;">${formData.get('good_type') || 'Not selected'}</span>
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            <span class="badge bg-white border border-secondary border-opacity-25 text-dark fw-medium" style="font-size:0.75rem;">
+                                                Wt: ${formData.get('weight') || '-'} t
+                                            </span>
+                                            <span class="badge bg-white border border-secondary border-opacity-25 text-dark fw-medium" style="font-size:0.75rem;">
+                                                Qty: ${formData.get('no_of_units') || '-'}
+                                            </span>
+                                            <span class="badge bg-white border border-secondary border-opacity-25 text-dark fw-medium" style="font-size:0.75rem;">
+                                                Rate: ₹${formData.get('fr_rate') || '-'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-5 d-flex justify-content-md-end align-items-center">
+                                        <div class="bg-success bg-opacity-10 px-3 py-1 rounded-3 border border-success border-opacity-25 text-end w-100">
+                                            <span class="text-success fw-bold text-uppercase d-block mb-0" style="font-size: 0.7rem;">Total Amount</span>
+                                            <h5 class="mb-0 text-success fw-bold">₹${formData.get('amount') || '0.00'}</h5>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
