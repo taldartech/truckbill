@@ -372,6 +372,81 @@
                     </div>
                 </div>
                 <!--end::Col-->
+                <input type="hidden" id="lr_copy_template" name="lr_copy_template" value="{{ old('lr_copy_template', $company->lr_copy_template ?? 'classic') }}">
+                <div class="col-12">
+                    <div class="invoice-layout-shell">
+                        <div class="invoice-layout-topbar">
+                            <span class="fw-semibold text-dark">
+                                <i class="bi bi-truck text-primary me-1"></i>
+                                Good Receipt (Bilty) LR Copy Layout
+                            </span>
+                            <span class="invoice-layout-selected">
+                                <i class="bi bi-stars"></i>
+                                Selected: <span id="selectedLrTemplateLabelEdit">A (Classic)</span>
+                            </span>
+                        </div>
+                        <p class="small text-muted mb-3">
+                            Template used for LR copy PDF from the Good Receipt list and LR copy report.
+                        </p>
+                        <div class="invoice-preview-frame rounded overflow-hidden bg-light mb-3 is-empty" id="lrPreviewContainerEdit">
+                            <div class="invoice-preview-placeholder" id="lrPreviewPlaceholderEdit">
+                                Select a template card (A / B / C) to load the live preview.
+                            </div>
+                            <iframe id="selectedLrTemplateIframe" title="Selected LR copy preview" loading="lazy"
+                                src="about:blank"></iframe>
+                        </div>
+                        <a href="#"
+                           target="_blank" rel="noopener noreferrer"
+                           class="btn btn-danger w-100 mb-3" id="selectedLrPdfButton" style="pointer-events:none; opacity:.6;">
+                            <i class="bi bi-file-earmark-pdf me-1"></i> View Selected Template PDF
+                        </a>
+                        <div class="row g-3" id="lrTemplatePreviewRow">
+                            <div class="col-12 col-lg-4 lr-preview-col invoice-preview-col"
+                                data-template-key="classic"
+                                data-template-label="A (Classic)"
+                                data-preview-url="{{ route('company.lr-copy-template-preview', ['company' => $company->id, 'template' => 'classic']) }}"
+                                data-pdf-url="{{ route('company.lr-copy-template-preview', ['company' => $company->id, 'template' => 'classic', 'format' => 'pdf']) }}">
+                                <div class="invoice-template-meta">
+                                    <div>
+                                        <div class="invoice-template-name"><span class="invoice-option-letter me-1">A</span> Classic</div>
+                                        <div class="invoice-template-use">Default — original table bilty layout</div>
+                                    </div>
+                                    <span class="badge text-bg-primary invoice-selected-badge">Selected</span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-4 lr-preview-col invoice-preview-col"
+                                data-template-key="modern"
+                                data-template-label="B (Modern)"
+                                data-preview-url="{{ route('company.lr-copy-template-preview', ['company' => $company->id, 'template' => 'modern']) }}"
+                                data-pdf-url="{{ route('company.lr-copy-template-preview', ['company' => $company->id, 'template' => 'modern', 'format' => 'pdf']) }}">
+                                <div class="invoice-template-meta">
+                                    <div>
+                                        <div class="invoice-template-name"><span class="invoice-option-letter me-1">B</span> Modern</div>
+                                        <div class="invoice-template-use">Form A — green card layout</div>
+                                    </div>
+                                    <span class="badge text-bg-primary invoice-selected-badge">Selected</span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-4 lr-preview-col invoice-preview-col"
+                                data-template-key="compact"
+                                data-template-label="C (Compact)"
+                                data-preview-url="{{ route('company.lr-copy-template-preview', ['company' => $company->id, 'template' => 'compact']) }}"
+                                data-pdf-url="{{ route('company.lr-copy-template-preview', ['company' => $company->id, 'template' => 'compact', 'format' => 'pdf']) }}">
+                                <div class="invoice-template-meta">
+                                    <div>
+                                        <div class="invoice-template-name"><span class="invoice-option-letter me-1">C</span> Compact</div>
+                                        <div class="invoice-template-use">Form C — compact amber</div>
+                                    </div>
+                                    <span class="badge text-bg-primary invoice-selected-badge">Selected</span>
+                                </div>
+                            </div>
+                        </div>
+                        <small class="text-muted d-block mt-3">
+                            <strong>Tip:</strong> Click a card to select; LR copy downloads use this template unless the report overrides it.
+                        </small>
+                    </div>
+                </div>
+                <!--end::Col-->
                 <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="company_logo" class="form-label">Company Logo</label>
@@ -521,6 +596,50 @@
                     }
                 });
             });
+
+            const lrTemplateSelect = document.getElementById('lr_copy_template');
+            const lrPreviewCols = Array.from(document.querySelectorAll('#lrTemplatePreviewRow .lr-preview-col'));
+            const selectedLrIframe = document.getElementById('selectedLrTemplateIframe');
+            const selectedLrPdfButton = document.getElementById('selectedLrPdfButton');
+            const selectedLrTemplateLabel = document.getElementById('selectedLrTemplateLabelEdit');
+            const lrPreviewContainerEdit = document.getElementById('lrPreviewContainerEdit');
+
+            if (lrTemplateSelect && lrPreviewCols.length) {
+                const syncLrTemplateSelection = (key, shouldLoadPreview = false) => {
+                    const selectedKey = key || 'classic';
+                    lrTemplateSelect.value = selectedKey;
+                    lrPreviewCols.forEach((col) => {
+                        col.classList.toggle('is-selected', col.dataset.templateKey === selectedKey);
+                    });
+                    const selectedCol = lrPreviewCols.find((col) => col.dataset.templateKey === selectedKey);
+                    if (selectedLrTemplateLabel && selectedCol?.dataset.templateLabel) {
+                        selectedLrTemplateLabel.textContent = selectedCol.dataset.templateLabel;
+                    }
+                    if (shouldLoadPreview && selectedLrIframe) {
+                        selectedLrIframe.src = selectedCol?.dataset.previewUrl
+                            || `{{ route('company.lr-copy-template-preview', ['company' => $company->id, 'template' => 'classic']) }}`;
+                    }
+                    if (shouldLoadPreview && selectedLrPdfButton) {
+                        selectedLrPdfButton.href = selectedCol?.dataset.pdfUrl
+                            || `{{ route('company.lr-copy-template-preview', ['company' => $company->id, 'template' => 'classic', 'format' => 'pdf']) }}`;
+                    }
+                };
+
+                syncLrTemplateSelection(lrTemplateSelect.value);
+
+                lrPreviewCols.forEach((col) => {
+                    col.addEventListener('click', function () {
+                        syncLrTemplateSelection(col.dataset.templateKey, true);
+                        if (lrPreviewContainerEdit) {
+                            lrPreviewContainerEdit.classList.remove('is-empty');
+                        }
+                        if (selectedLrPdfButton) {
+                            selectedLrPdfButton.style.pointerEvents = 'auto';
+                            selectedLrPdfButton.style.opacity = '1';
+                        }
+                    });
+                });
+            }
         });
     </script>
     <!--end::JavaScript-->

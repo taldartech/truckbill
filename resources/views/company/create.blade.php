@@ -293,6 +293,7 @@
                 
                 <!--end::Col-->
                 <input type="hidden" id="invoice_template" name="invoice_template" value="{{ old('invoice_template', 'classic') }}">
+                <input type="hidden" id="lr_copy_template" name="lr_copy_template" value="{{ old('lr_copy_template', 'classic') }}">
                 <div class="col-12">
                     <div class="invoice-layout-shell">
                         <div class="invoice-layout-topbar">
@@ -352,6 +353,69 @@
                         </div>
                         <small class="text-muted d-block mt-3">
                             <strong>Tip:</strong> Click any card to set it as selected. Demo previews auto-refresh when company fields are updated.
+                        </small>
+                    </div>
+                </div>
+                <!--end::Col-->
+                <div class="col-12">
+                    <div class="invoice-layout-shell">
+                        <div class="invoice-layout-topbar">
+                            <span class="fw-semibold text-dark">
+                                <i class="bi bi-truck text-primary me-1"></i>
+                                Good Receipt (Bilty) LR Copy Layout
+                            </span>
+                            <span class="invoice-layout-selected">
+                                <i class="bi bi-stars"></i>
+                                Selected: <span id="selectedLrTemplateLabelCreate">A (Classic)</span>
+                            </span>
+                        </div>
+                        <p class="small text-muted mb-3">
+                            Template for LR copy PDFs. Demo uses sample data until the company is saved.
+                        </p>
+                        <div class="invoice-preview-frame rounded overflow-hidden bg-light mb-3 is-empty" id="lrPreviewContainerCreate">
+                            <div class="invoice-preview-placeholder" id="lrPreviewPlaceholderCreate">
+                                Select a template card (A / B / C) to load the live preview.
+                            </div>
+                            <iframe class="lr-demo-iframe" id="selectedLrDemoIframe" data-template="classic" title="Selected LR copy preview" loading="lazy"
+                                src="about:blank"></iframe>
+                        </div>
+                        <a href="#"
+                            data-template="classic"
+                            target="_blank" rel="noopener noreferrer"
+                            class="btn btn-danger w-100 mb-3 lr-open-pdf-demo" id="selectedLrPdfButton" style="pointer-events:none; opacity:.6;">
+                            <i class="bi bi-file-earmark-pdf me-1"></i> View Selected Template PDF
+                        </a>
+                        <div class="row g-3" id="lrTemplatePreviewRowCreate">
+                            <div class="col-12 col-lg-4 lr-preview-col-create invoice-preview-col" data-template-key="classic" data-template-label="A (Classic)">
+                                <div class="invoice-template-meta">
+                                    <div>
+                                        <div class="invoice-template-name"><span class="invoice-option-letter me-1">A</span> Classic</div>
+                                        <div class="invoice-template-use">Default — original table bilty layout</div>
+                                    </div>
+                                    <span class="badge text-bg-primary invoice-selected-badge">Selected</span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-4 lr-preview-col-create invoice-preview-col" data-template-key="modern" data-template-label="B (Modern)">
+                                <div class="invoice-template-meta">
+                                    <div>
+                                        <div class="invoice-template-name"><span class="invoice-option-letter me-1">B</span> Modern</div>
+                                        <div class="invoice-template-use">Form A — green card layout</div>
+                                    </div>
+                                    <span class="badge text-bg-primary invoice-selected-badge">Selected</span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-4 lr-preview-col-create invoice-preview-col" data-template-key="compact" data-template-label="C (Compact)">
+                                <div class="invoice-template-meta">
+                                    <div>
+                                        <div class="invoice-template-name"><span class="invoice-option-letter me-1">C</span> Compact</div>
+                                        <div class="invoice-template-use">Form C — compact amber</div>
+                                    </div>
+                                    <span class="badge text-bg-primary invoice-selected-badge">Selected</span>
+                                </div>
+                            </div>
+                        </div>
+                        <small class="text-muted d-block mt-3">
+                            <strong>Tip:</strong> Same A/B/C keys as Party Bill; LR copy uses separate layout files.
                         </small>
                     </div>
                 </div>
@@ -509,10 +573,17 @@
             const invoiceTemplateSelect = document.getElementById('invoice_template');
             const previewCols = Array.from(document.querySelectorAll('#invoiceTemplatePreviewRow .invoice-preview-col'));
             const demoDemoUrl = @json(route('invoice.template.demo'));
+            const lrDemoUrl = @json(route('lr-copy.template.demo'));
             const selectedTemplateLabel = document.getElementById('selectedTemplateLabelCreate');
             let hasLoadedInvoicePreview = false;
+            let hasLoadedLrPreview = false;
             const invoicePreviewContainerCreate = document.getElementById('invoicePreviewContainerCreate');
             const selectedPdfButton = document.getElementById('selectedInvoicePdfButton');
+            const lrTemplateSelectCreate = document.getElementById('lr_copy_template');
+            const lrPreviewColsCreate = Array.from(document.querySelectorAll('#lrTemplatePreviewRowCreate .lr-preview-col-create'));
+            const selectedLrTemplateLabelCreate = document.getElementById('selectedLrTemplateLabelCreate');
+            const lrPreviewContainerCreate = document.getElementById('lrPreviewContainerCreate');
+            const selectedLrPdfButton = document.getElementById('selectedLrPdfButton');
 
             const syncTemplateSelection = (key) => {
                 const selectedKey = key || 'classic';
@@ -565,6 +636,56 @@
                 }
             };
 
+            const syncLrTemplateSelectionCreate = (key) => {
+                const selectedKey = key || 'classic';
+                if (lrTemplateSelectCreate) {
+                    lrTemplateSelectCreate.value = selectedKey;
+                }
+                lrPreviewColsCreate.forEach((col) => {
+                    col.classList.toggle('is-selected', col.dataset.templateKey === selectedKey);
+                });
+                const selectedCol = lrPreviewColsCreate.find((col) => col.dataset.templateKey === selectedKey);
+                if (selectedLrTemplateLabelCreate && selectedCol?.dataset.templateLabel) {
+                    selectedLrTemplateLabelCreate.textContent = selectedCol.dataset.templateLabel;
+                }
+            };
+
+            const refreshLrDemoIframes = () => {
+                if (!hasLoadedLrPreview) {
+                    return;
+                }
+                const name = (document.getElementById('name')?.value || '').trim() || 'Your Company';
+                const address = (document.getElementById('address')?.value || '').trim() || 'Sample address';
+                const pin = (document.getElementById('pin_code')?.value || '').trim() || '314002';
+                const gst = (document.getElementById('gst_number')?.value || '').trim() || '29AAACH7409R1ZX';
+                const pan = (document.getElementById('pan_number')?.value || '').trim() || 'AABAD1452A';
+                const buildUrl = (template, asPdf) => {
+                    const params = new URLSearchParams({
+                        template: template,
+                        name: name,
+                        address: address,
+                        pin_code: pin,
+                        gst_number: gst,
+                        pan_number: pan,
+                    });
+                    if (asPdf) {
+                        params.set('format', 'pdf');
+                    }
+                    return `${lrDemoUrl}?${params.toString()}`;
+                };
+                const selectedTemplate = lrTemplateSelectCreate?.value || 'classic';
+                const selectedIframe = document.getElementById('selectedLrDemoIframe');
+
+                if (selectedIframe) {
+                    selectedIframe.dataset.template = selectedTemplate;
+                    selectedIframe.src = buildUrl(selectedTemplate, false);
+                }
+                if (selectedLrPdfButton) {
+                    selectedLrPdfButton.dataset.template = selectedTemplate;
+                    selectedLrPdfButton.href = buildUrl(selectedTemplate, true);
+                }
+            };
+
             if (invoiceTemplateSelect && previewCols.length) {
                 syncTemplateSelection(invoiceTemplateSelect.value);
                 previewCols.forEach((col) => {
@@ -583,17 +704,38 @@
                 });
             }
 
+            if (lrTemplateSelectCreate && lrPreviewColsCreate.length) {
+                syncLrTemplateSelectionCreate(lrTemplateSelectCreate.value);
+                lrPreviewColsCreate.forEach((col) => {
+                    col.addEventListener('click', function () {
+                        syncLrTemplateSelectionCreate(col.dataset.templateKey);
+                        hasLoadedLrPreview = true;
+                        if (lrPreviewContainerCreate) {
+                            lrPreviewContainerCreate.classList.remove('is-empty');
+                        }
+                        if (selectedLrPdfButton) {
+                            selectedLrPdfButton.style.pointerEvents = 'auto';
+                            selectedLrPdfButton.style.opacity = '1';
+                        }
+                        refreshLrDemoIframes();
+                    });
+                });
+            }
+
             let demoTimer;
             const scheduleDemoRefresh = () => {
                 clearTimeout(demoTimer);
-                demoTimer = setTimeout(refreshInvoiceDemoIframes, 400);
+                demoTimer = setTimeout(() => {
+                    refreshInvoiceDemoIframes();
+                    refreshLrDemoIframes();
+                }, 400);
             };
 
             ['name', 'address', 'pin_code', 'gst_number', 'pan_number'].forEach((id) => {
                 const el = document.getElementById(id);
                 if (el) {
                     el.addEventListener('input', function () {
-                        if (!hasLoadedInvoicePreview) {
+                        if (!hasLoadedInvoicePreview && !hasLoadedLrPreview) {
                             return;
                         }
                         scheduleDemoRefresh();

@@ -30,6 +30,7 @@ use App\Exports\TransporterReportExport;
 use App\Exports\TransporterMasterExport;
 use App\Exports\UltratechBillExport;
 use App\Models\Company;
+use App\Support\LrCopyPdfTemplate;
 use App\Models\Transporter;
 use App\Models\VoucherLinked;
 use App\Exports\PendingMemoExport;
@@ -291,7 +292,11 @@ class ReportController extends Controller
         if ($lr_id) {
             $lr = LorryReceipt::find($request->input('lr_id'));
         }
-        return view('reports.lr-copy', compact('lr', 'customers', 'customerId', 'lr_id', 'lrs'));
+        $companyDefaultTemplate = LrCopyPdfTemplate::normalizeKey(
+            Auth::user()->company?->lr_copy_template ?? 'classic'
+        );
+
+        return view('reports.lr-copy', compact('lr', 'customers', 'customerId', 'lr_id', 'lrs', 'companyDefaultTemplate'));
     }
 
     public function lr_copy_export(Request $request)
@@ -299,10 +304,34 @@ class ReportController extends Controller
         if (!$request->input('lr_id')) {
             return redirect()->back()->with('error', 'Please select a Good Receipt (Bilty) to export.');
         }
-        $lr = LorryReceipt::find($request->input('lr_id'));
-        $html = view('reports.exports.lr-copy', compact('lr'))->render();
 
-        $pdf = Pdf::loadHTML($html)->setPaper('a4', 'portrait');
+        $companyId = Auth::user()->company_id;
+        $lr = LorryReceipt::query()
+            ->with(['truck.transporter', 'consignor', 'consignee', 'company.city', 'company.state', 'company.country'])
+            ->where('company_id', $companyId)
+            ->find($request->input('lr_id'));
+
+        if (!$lr) {
+            return redirect()->back()->with('error', 'Good Receipt (Bilty) not found or access denied.');
+        }
+
+        $companyTemplate = LrCopyPdfTemplate::normalizeKey(
+            Auth::user()->company?->lr_copy_template ?? 'classic'
+        );
+        $requested = $request->filled('template')
+            ? LrCopyPdfTemplate::normalizeKey($request->input('template'))
+            : $companyTemplate;
+
+        $view = LrCopyPdfTemplate::viewName($requested);
+        $company = $lr->company ?? Auth::user()->company;
+        $company?->loadMissing(['city', 'state', 'country']);
+
+        $html = view($view, ['lr' => $lr, 'company' => $company])->render();
+
+        $pdf = Pdf::loadHTML($html)
+            ->setPaper('a4', 'portrait')
+            ->setOption('isHtml5ParserEnabled', true)
+            ->setOption('isRemoteEnabled', true);
 
         return $pdf->stream('lr_copy.pdf');
     }

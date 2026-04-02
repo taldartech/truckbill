@@ -10,7 +10,9 @@ use App\Models\CustomInvoiceDetail;
 use App\Models\Invoice;
 use App\Models\LorryReceipt;
 use App\Models\State;
+use App\Models\Transporter;
 use App\Models\Truck;
+use App\Support\LrCopyPdfTemplate;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -343,6 +345,7 @@ class CompanyController extends Controller
             'company_type' => 'nullable|in:Broker,Agency,Both',
             'company_logo' => 'nullable|image|mimes:jpeg,png,jpg|max:250',
             'invoice_template' => 'nullable|in:classic,modern,compact',
+            'lr_copy_template' => 'nullable|in:classic,modern,compact',
             'gst_scheme' => 'nullable|in:reverse charge,forward charge',
             'gst_type' => 'nullable|in:composition,regular',
             'address' => 'nullable|string',
@@ -392,6 +395,9 @@ class CompanyController extends Controller
         // ✅ Default values if not set
         $validated['lr_credits'] = $request->input('lr_credits', $company->lr_credits ?? 0);
         $validated['truck_credits'] = $request->input('truck_credits', $company->truck_credits ?? 0);
+        if (! $request->filled('lr_copy_template')) {
+            $validated['lr_copy_template'] = $company->lr_copy_template ?? 'classic';
+        }
 
         $company->update($validated);
         return redirect()->route('company.index')->with('success', 'Company updated successfully!');
@@ -513,6 +519,7 @@ class CompanyController extends Controller
             'company_type' => 'nullable|in:Broker,Agency,Both',
             'company_logo' => 'nullable|image|mimes:jpeg,png,jpg|max:250',
             'invoice_template' => 'nullable|in:classic,modern,compact',
+            'lr_copy_template' => 'nullable|in:classic,modern,compact',
             'country_id' => 'nullable|exists:countries,id',
             'state_id' => 'nullable|exists:states,id',
             'city_id' => 'nullable|exists:cities,id',
@@ -541,6 +548,9 @@ class CompanyController extends Controller
         }
         if (!$request->filled('invoice_template')) {
             $validated['invoice_template'] = 'classic';
+        }
+        if (!$request->filled('lr_copy_template')) {
+            $validated['lr_copy_template'] = 'classic';
         }
 
         // ✅ Automatically set plan_end_date = created_at + 45 days
@@ -730,5 +740,106 @@ class CompanyController extends Controller
             'sgst' => $sgst,
             'igst' => $igst,
         ];
+    }
+
+    /**
+     * HTML/PDF preview of Good Receipt (Bilty) LR copy templates for the given company.
+     */
+    public function lrCopyTemplatePreview(Request $request, Company $company)
+    {
+        $this->authorizeCompanyAccess($company);
+
+        $template = LrCopyPdfTemplate::normalizeKey((string) $request->query('template', 'classic'));
+        $company->loadMissing(['city', 'state', 'country']);
+        $lr = $this->buildDemoLrCopyPreviewLorryReceipt($company);
+
+        $view = LrCopyPdfTemplate::viewName($template);
+
+        if ($request->query('format') === 'pdf') {
+            return $this->streamLrCopyPreviewPdf($view, $lr, $company, 'lr_copy_preview_'.$template);
+        }
+
+        return response()->view($view, ['lr' => $lr, 'company' => $company]);
+    }
+
+    /**
+     * Demo preview for company create form (no saved company yet).
+     */
+    public function lrCopyTemplateDemo(Request $request)
+    {
+        $company = $this->buildDemoCompanyFromQuery($request);
+        $company->loadMissing(['city', 'state', 'country']);
+        $lr = $this->buildDemoLrCopyPreviewLorryReceipt($company);
+
+        $template = LrCopyPdfTemplate::normalizeKey((string) $request->query('template', 'classic'));
+        $view = LrCopyPdfTemplate::viewName($template);
+
+        if ($request->query('format') === 'pdf') {
+            return $this->streamLrCopyPreviewPdf($view, $lr, $company, 'lr_copy_demo_'.$template);
+        }
+
+        return response()->view($view, ['lr' => $lr, 'company' => $company]);
+    }
+
+    /**
+     * Same PDF engine as LR copy export (DomPDF).
+     */
+    private function streamLrCopyPreviewPdf(string $view, LorryReceipt $lr, Company $company, string $downloadBaseName): Response
+    {
+        $html = view($view, ['lr' => $lr, 'company' => $company])->render();
+
+        return Pdf::loadHTML($html)
+            ->setPaper('a4', 'portrait')
+            ->setOption('isHtml5ParserEnabled', true)
+            ->setOption('isRemoteEnabled', true)
+            ->stream($downloadBaseName.'.pdf');
+    }
+
+    private function buildDemoLrCopyPreviewLorryReceipt(Company $company): LorryReceipt
+    {
+        $company->loadMissing(['city', 'state', 'country']);
+
+        $city = $company->city ?? new City(['name' => 'Ahmedabad']);
+        $state = $company->state ?? new State(['name' => 'Gujarat', 'code' => '24']);
+
+        $consignor = new Consignee([
+            'name' => 'Sample Consignor',
+            'gst_number' => '24AAAAA0000A1Z5',
+            'pan_number' => 'AABCD1234E',
+        ]);
+        $consignee = new Consignee([
+            'name' => 'Sample Consignee',
+            'gst_number' => '24BBBBB0000B1Z5',
+            'pan_number' => 'AABCD5678E',
+        ]);
+        $consignor->setRelation('city', $city);
+        $consignor->setRelation('state', $state);
+        $consignee->setRelation('city', $city);
+        $consignee->setRelation('state', $state);
+
+        $transporter = new Transporter(['pan_number' => 'AABCD9999E']);
+        $truck = new Truck(['truck_number' => 'RJ27AC1234']);
+        $truck->setRelation('transporter', $transporter);
+
+        $lr = new LorryReceipt([
+            'lr_number' => 'SAMPLE-001',
+            'gr_date' => now()->toDateString(),
+            'weight' => 10.5,
+            'no_of_units' => 100,
+            'good_type' => 'Sample goods description',
+            'amount' => 5000.00,
+            'source_city' => 'Udaipur',
+            'source_state' => 'Rajasthan',
+            'destination_city' => 'Jaipur',
+            'destination_state' => 'Rajasthan',
+            'invoice_number' => 'INV-2024-001',
+            'linked_lr_id' => null,
+        ]);
+        $lr->setRelation('truck', $truck);
+        $lr->setRelation('consignor', $consignor);
+        $lr->setRelation('consignee', $consignee);
+        $lr->setRelation('company', $company);
+
+        return $lr;
     }
 }
