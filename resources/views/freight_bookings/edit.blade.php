@@ -559,7 +559,7 @@
 
                     <div class="row mb-3">
                         <div class="col-12">
-                            <h6 class="border-bottom pb-2"><i class="fas fa-money-bill-wave me-2"></i> Financial Details
+                            <h6 class="border-bottom pb-2"><i class="fas fa-indian-rupee-sign me-2"></i> Financial Details
                             </h6>
                         </div>
                         <div class="col-md-3">

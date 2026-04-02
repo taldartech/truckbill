@@ -232,7 +232,7 @@
                                                 data-total-amount="{{ $invoice->total_amount }}"
                                                 data-paid-amount="{{ $invoice->paid_amount }}"
                                                 data-remaining-amount="{{ $invoice->remaining_amount }}">
-                                                <i class="bi bi-cash-coin"></i>
+                                                <i class="bi bi-currency-rupee"></i>
                                             </button>
                                         @endif
                                     </div>
@@ -262,7 +262,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-brand-primary text-white">
                     <h5 class="modal-title" id="addPaymentModalLabel">
-                        <i class="bi bi-cash-coin"></i> Add Payment
+                        <i class="bi bi-currency-rupee"></i> Add Payment
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
                         aria-label="Close"></button>

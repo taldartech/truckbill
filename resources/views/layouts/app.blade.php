@@ -487,7 +487,7 @@
                             </li>
                             <li class="nav-item">
                                 <a href="{{ route('transporter.payments.index') }}" class="nav-link{{ Request::is('transporter/payments*') ? ' active' : '' }}">
-                                    <i class="fas fa-money-bill-wave"></i>
+                                    <i class="fas fa-indian-rupee-sign"></i>
                                     <p>My Payments</p>
                                 </a>
                             </li>
@@ -507,7 +507,7 @@
                             <li class="nav-item">
                                 <a class="nav-link{{ Request::is('company') || Request::is('company/create') ? ' active' : '' }}"
                                     href="#companyMenu">
-                                    <i class="fas fa-money-check-alt"></i>
+                                    <i class="fas fa-building"></i>
                                     <p>
                                         Company
                                         <i class="nav-arrow bi bi-chevron-right"></i>
@@ -567,7 +567,7 @@
                             <li class="nav-item">
                                 <a class="nav-link{{ Request::is('company') || Request::is('company/create') ? ' active' : '' }}"
                                     href="#companyMenu">
-                                    <i class="fas fa-money-check-alt"></i>
+                                    <i class="fas fa-building"></i>
                                     <p>
                                         Company
                                         <i class="nav-arrow bi bi-chevron-right"></i>
@@ -593,7 +593,7 @@
                             <li class="nav-item">
                                 <a class="nav-link{{ Request::is('branches*') || Request::is('branches/create') ? ' active' : '' }}"
                                     href="#branchesMenu">
-                                    <i class="fas fa-money-check-alt"></i>
+                                    <i class="fas fa-sitemap"></i>
                                     <p>
                                         Branch
                                         <i class="nav-arrow bi bi-chevron-right"></i>
@@ -862,7 +862,7 @@
                                 <li class="nav-item">
                                     <a class="nav-link{{ Request::is('voucher_payments*') || Request::is('voucher_payments/create') ? ' active' : '' }}"
                                         href="#voucherPaymentMenu">
-                                        <i class="fas fa-money-bill-wave"></i>
+                                        <i class="fas fa-indian-rupee-sign"></i>
                                         <p>
                                             Voucher Payments
                                             <i class="nav-arrow bi bi-chevron-right"></i>
@@ -889,7 +889,7 @@
                             <li class="nav-item">
                                 <a class="nav-link{{ Request::is('invoices*') || Request::is('invoices/create') ? ' active' : '' }}"
                                     href="#invoiceMenu">
-                                    <i class="fas fa-file-invoice-dollar"></i>
+                                    <i class="fas fa-file-invoice"></i>
                                     <p>
                                         Invoices
                                         <i class="nav-arrow bi bi-chevron-right"></i>
@@ -915,10 +915,9 @@
                             @if (auth()->check() && in_array(auth()->user()->userRole->name, ['super_admin', 'moderator', 'admin']))
                                 <li class="nav-item">
                                     <a class="nav-link " href="#masterMenu">
-                                        <i class="fas fa-money-check-alt"></i>
+                                        <i class="fas fa-database"></i>
                                         <p>
-                                            Master
-                                            <i class="nav-arrow bi bi-chevron-right"></i>
+                                            Master <i class="nav-arrow bi bi-chevron-right"></i>
                                         </p>
                                     </a>
                                     <ul class="nav nav-treeview">
