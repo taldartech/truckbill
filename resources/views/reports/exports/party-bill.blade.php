@@ -1,8 +1,13 @@
 @php
-    $company = auth()->user()->company;
+    $company = $company ?? auth()->user()->company;
     $totalAmount = 0;
     $lrs = $invoice->custom_invoice ? [] : ($invoice->lr_ids ?? []);
     $customDetails = $customDetails ?? collect();
+    $usePdfLogoPath = ($partyBillInvoiceUsePdfLogoPath ?? false) === true;
+    $invoiceCompanyLogoSrc = $usePdfLogoPath
+        ? $company->logoFilesystemPathForPdf()
+        : $company->logoPublicUrl();
+    $partyBillHeaderCompact = ($partyBillHeaderCompact ?? false) === true;
 @endphp
 <style>
     td {
@@ -12,6 +17,37 @@
 </style>
 
     <table width="100%" border="1" cellspacing="0" cellpadding="6" style="border-collapse: collapse; font-size: 12px;">
+    @if ($invoiceCompanyLogoSrc)
+        @php
+            $hName = $partyBillHeaderCompact ? '13px' : '17px';
+            $hAddr = $partyBillHeaderCompact ? '10px' : '13px';
+            $hMeta = $partyBillHeaderCompact ? '8.5px' : '12px';
+            $logoMax = $partyBillHeaderCompact ? '64px' : '88px';
+            $logoPad = $partyBillHeaderCompact ? '5px' : '8px';
+            $cellW = $partyBillHeaderCompact ? '72px' : '100px';
+        @endphp
+        <tr>
+            <td colspan="13" style="padding: 0; border: 1px solid #000; vertical-align: top;">
+                <table width="100%" cellspacing="0" cellpadding="0" style="border-collapse: collapse; background: linear-gradient(90deg, #ecfdf5 0%, #ffffff 65%);">
+                    <tr>
+                        <td style="width: {{ $cellW }}; padding: {{ $partyBillHeaderCompact ? '6px 8px' : '10px 12px' }}; text-align: center; vertical-align: middle; border-right: 1px solid #bbf7d0;">
+                            <div style="display: inline-block; background: #ffffff; border: 1px solid #d1fae5; border-radius: 8px; padding: {{ $logoPad }}; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);">
+                                <img src="{{ $invoiceCompanyLogoSrc }}" alt="{{ $company->name }}" style="max-width: {{ $logoMax }}; max-height: {{ $logoMax }}; width: auto; height: auto; object-fit: contain; display: block;">
+                            </div>
+                        </td>
+                        <td style="padding: {{ $partyBillHeaderCompact ? '6px 10px' : '10px 14px' }}; vertical-align: middle; text-align: left;">
+                            <div style="font-weight: bold; font-size: {{ $hName }}; color: #14532d; line-height: 1.2;">{{ $company->name }}</div>
+                            <div style="font-weight: bold; font-size: {{ $hAddr }}; color: #166534; margin-top: 3px; line-height: 1.35;">{{ $company->address }}</div>
+                            <div style="font-size: {{ $hMeta }}; color: #374151; margin-top: 3px;">
+                                {{ optional($company->city)->name . ', ' . optional($company->state)->name . ' - ' . $company->pin_code ?? '' }}
+                                &nbsp;|&nbsp; Phone: {{ $company->contact_number }}
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    @else
     <tr>
         <td style="font-weight: bold; text-align: center; font-size: 18px!important" colspan="13">{{ $company->name }}</td>
     </tr>
@@ -23,6 +59,7 @@
             {{ optional($company->city)->name . ', ' . optional($company->state)->name . ' - ' . $company->pin_code ?? '' . ' Phone No ' . $company->contact_number }}
         </td>
     </tr>
+    @endif
     <tr>
         <td colspan="13"></td>
     </tr>

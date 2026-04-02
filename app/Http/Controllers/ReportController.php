@@ -918,6 +918,13 @@ class ReportController extends Controller
     public function party_bill(Request $request)
     {
         $customers = Consignee::where('company_id', Auth::user()->company_id)->get();
+        $selectedCompany = Company::find(Auth::user()->company_id);
+        $selectedInvoiceTemplate = (string) ($selectedCompany->invoice_template ?? 'classic');
+        $selectedInvoiceTemplateLabel = match ($selectedInvoiceTemplate) {
+            'modern' => 'B (Modern)',
+            'compact' => 'C (Compact)',
+            default => 'A (Classic)',
+        };
         $customerId = $request->input('customer_id') ?? null;
         $id = $request->input('invoice_number') ?? null;
         // Load all invoices initially, filter by customer if selected
@@ -933,7 +940,15 @@ class ReportController extends Controller
             $invoice->load(['customInvoiceDetails.lorryReceipt.truck']);
             $customDetails = $invoice->customInvoiceDetails->sortBy('sort_order')->values();
         }
-        return view('reports.party-bill', compact('customers', 'customerId', 'id', 'invoices', 'invoice', 'customDetails'));
+        return view('reports.party-bill', compact(
+            'customers',
+            'customerId',
+            'id',
+            'invoices',
+            'invoice',
+            'customDetails',
+            'selectedInvoiceTemplateLabel'
+        ));
     }
 
     // public function party_bill_export(Request $request)
@@ -953,6 +968,26 @@ class ReportController extends Controller
 
         $id = $request->input('invoice_number');
         $exportType = $request->input('type', 'excel');
+        $resolvedTemplateKey = 'classic';
+
+        if ($exportType === 'pdf') {
+            $selectedCompany = \App\Models\Company::find(Auth::user()->company_id);
+            $companyTemplate = (string) ($selectedCompany->invoice_template ?? 'classic');
+
+            $resolvedTemplateKey = match ($companyTemplate) {
+                'modern' => 'modern',
+                'compact' => 'compact',
+                'classic' => 'classic',
+                default => 'classic',
+            };
+        }
+
+        $resolvedTemplateKey = match ($resolvedTemplateKey) {
+            'modern' => 'modern',
+            'compact' => 'compact',
+            'classic' => 'classic',
+            default => 'classic',
+        };
 
         try {
             if ($exportType === 'pdf') {
@@ -998,7 +1033,13 @@ class ReportController extends Controller
                 }
                 $totalAmount = $baseAmount;
 
-                $html = view('reports.exports.party-bill-pdf', compact(
+                $templateView = match ($resolvedTemplateKey) {
+                    'modern' => 'reports.exports.party-bill-pdf-modern',
+                    'compact' => 'reports.exports.party-bill-pdf-compact',
+                    default => 'reports.exports.party-bill-pdf',
+                };
+
+                $html = view($templateView, array_merge(compact(
                     'invoice',
                     'lrs',
                     'customDetails',
@@ -1006,7 +1047,9 @@ class ReportController extends Controller
                     'cgst',
                     'sgst',
                     'igst'
-                ))->render();
+                ), [
+                    'partyBillInvoiceUsePdfLogoPath' => true,
+                ]))->render();
 
                 $pdf = \PDF::loadHTML($html)
                     ->setPaper('a4', 'portrait')

@@ -16,6 +16,126 @@
         @endif
         <!--begin::Body-->
         <div class="card-body">
+            <style>
+                .invoice-preview-col {
+                    border-radius: 12px;
+                    padding: 10px;
+                    transition: box-shadow .15s ease, border-color .15s ease, transform .15s ease;
+                    border: 2px solid #dee2e6;
+                    background: #fff;
+                    position: relative;
+                    cursor: pointer;
+                    height: 100%;
+                }
+                .invoice-preview-col.is-selected {
+                    border-color: var(--bs-primary);
+                    box-shadow: 0 12px 22px rgba(13, 110, 253, .18);
+                    transform: translateY(-2px);
+                }
+                .invoice-layout-shell {
+                    border: 1px solid #dbeafe;
+                    border-radius: 14px;
+                    padding: 14px;
+                    background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+                }
+                .invoice-layout-topbar {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 10px;
+                    margin-bottom: 12px;
+                }
+                .invoice-layout-selected {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: #1d4ed8;
+                    background: #eaf2ff;
+                    border: 1px solid #bfdbfe;
+                    border-radius: 999px;
+                    padding: 5px 10px;
+                }
+                .invoice-template-meta {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 8px;
+                    margin-top: 10px;
+                }
+                .invoice-template-name {
+                    font-weight: 600;
+                    color: #212529;
+                }
+                .invoice-template-use {
+                    font-size: 12px;
+                    color: #6c757d;
+                    margin-top: 2px;
+                }
+                .invoice-selected-badge {
+                    display: none;
+                }
+                .invoice-preview-col.is-selected .invoice-selected-badge {
+                    display: inline-flex;
+                }
+                .invoice-preview-frame {
+                    height: 55vh;
+                    max-height: 470px;
+                    min-height: 320px;
+                    background: #fff;
+                    border: 1px solid #cbd5e1;
+                    box-shadow: 0 8px 20px rgba(15, 23, 42, .08);
+                    position: relative;
+                }
+                .invoice-preview-frame.is-empty {
+                    height: auto;
+                    min-height: 140px;
+                }
+                .invoice-preview-placeholder {
+                    display: none;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100%;
+                    padding: 14px;
+                    color: #6c757d;
+                    font-weight: 600;
+                    text-align: center;
+                    background: #fff;
+                    z-index: 2;
+                }
+                .invoice-preview-frame.is-empty .invoice-preview-placeholder {
+                    display: flex;
+                }
+                .invoice-preview-frame iframe {
+                    display: block;
+                    width: 100%;
+                    height: 100%;
+                    border: 0;
+                    background: #fff;
+                }
+                .invoice-preview-frame.is-empty iframe {
+                    display: none;
+                }
+                .invoice-option-letter {
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 999px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: #f1f3f5;
+                    font-weight: 700;
+                    color: #495057;
+                }
+                .invoice-preview-col.is-selected .invoice-option-letter {
+                    background: var(--bs-primary);
+                    color: #fff;
+                }
+                .invoice-preview-col:hover {
+                    border-color: #93c5fd;
+                }
+            </style>
             <!--begin::Row-->
             <div class="row g-3">
                 <!--begin::Col-->
@@ -154,12 +274,6 @@
                     <div class="valid-feedback">Looks good!</div>
                 </div>
                 <!--end::Col-->
-
-
-            </div>
-            <!--end::Row-->
-            <!--begin::Row-->
-            <div class="row g-3">
                 <div class="col-md-6">
                     <label for="company_type" class="form-label">Company Type</label>
                     <select class="form-select" id="company_type" name="company_type" required>
@@ -170,6 +284,76 @@
                     </select>
                     @error('company_type') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="valid-feedback">Looks good!</div>
+                </div>
+
+            </div>
+            <!--end::Row-->
+            <!--begin::Row-->
+            <div class="row g-3">
+                
+                <!--end::Col-->
+                <input type="hidden" id="invoice_template" name="invoice_template" value="{{ old('invoice_template', 'classic') }}">
+                <div class="col-12">
+                    <div class="invoice-layout-shell">
+                        <div class="invoice-layout-topbar">
+                            <span class="fw-semibold text-dark">
+                                <i class="bi bi-file-earmark-pdf text-danger me-1"></i>
+                                Party Bill Layout Studio
+                            </span>
+                            <span class="invoice-layout-selected">
+                                <i class="bi bi-stars"></i>
+                                Selected: <span id="selectedTemplateLabelCreate">A (Classic)</span>
+                            </span>
+                        </div>
+                        <p class="small text-muted mb-3">
+                            Select a card to load live preview. Preview starts only after selection for faster form load.
+                        </p>
+                        <div class="invoice-preview-frame rounded overflow-hidden bg-light mb-3 is-empty" id="invoicePreviewContainerCreate">
+                            <div class="invoice-preview-placeholder" id="invoicePreviewPlaceholderCreate">
+                                Select a template card (A / B / C) to load the live preview.
+                            </div>
+                            <iframe class="invoice-demo-iframe" id="selectedInvoiceDemoIframe" data-template="classic" title="Selected invoice preview" loading="lazy"
+                                src="about:blank"></iframe>
+                        </div>
+                        <a href="#"
+                            data-template="classic"
+                            target="_blank" rel="noopener noreferrer"
+                            class="btn btn-danger w-100 mb-3 invoice-open-pdf-demo" id="selectedInvoicePdfButton" style="pointer-events:none; opacity:.6;">
+                            <i class="bi bi-file-earmark-pdf me-1"></i> View Selected Template PDF
+                        </a>
+                        <div class="row g-3" id="invoiceTemplatePreviewRow">
+                            <div class="col-12 col-lg-4 invoice-preview-col" data-template-key="classic" data-template-label="A (Classic)">
+                                <div class="invoice-template-meta">
+                                    <div>
+                                        <div class="invoice-template-name"><span class="invoice-option-letter me-1">A</span> Classic</div>
+                                        <div class="invoice-template-use">Balanced layout with clear sections</div>
+                                    </div>
+                                    <span class="badge text-bg-primary invoice-selected-badge">Selected</span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-4 invoice-preview-col" data-template-key="modern" data-template-label="B (Modern)">
+                                <div class="invoice-template-meta">
+                                    <div>
+                                        <div class="invoice-template-name"><span class="invoice-option-letter me-1">B</span> Modern</div>
+                                        <div class="invoice-template-use">Prominent heading and visual emphasis</div>
+                                    </div>
+                                    <span class="badge text-bg-primary invoice-selected-badge">Selected</span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-4 invoice-preview-col" data-template-key="compact" data-template-label="C (Compact)">
+                                <div class="invoice-template-meta">
+                                    <div>
+                                        <div class="invoice-template-name"><span class="invoice-option-letter me-1">C</span> Compact</div>
+                                        <div class="invoice-template-use">Dense layout to fit more details</div>
+                                    </div>
+                                    <span class="badge text-bg-primary invoice-selected-badge">Selected</span>
+                                </div>
+                            </div>
+                        </div>
+                        <small class="text-muted d-block mt-3">
+                            <strong>Tip:</strong> Click any card to set it as selected. Demo previews auto-refresh when company fields are updated.
+                        </small>
+                    </div>
                 </div>
                 <!--end::Col-->
                 <div class="col-md-6">
@@ -291,42 +475,130 @@
         document.addEventListener('DOMContentLoaded', function() {
             const nameInput = document.getElementById('name');
             const shortNameInput = document.getElementById('short_name');
-            if (!nameInput || !shortNameInput) {
-                return;
-            }
-
-            let userEditedShortName = !!(shortNameInput.value && shortNameInput.value.trim().length > 0);
-            if (shortNameInput.value && !userEditedShortName) {
-                userEditedShortName = false;
-            }
-
-            // Initial preview
-            shortNameInput.value = normalizeShortName(shortNameInput.value);
-            updateInvoicePreview();
-
-            // If short_name is empty (e.g., first load), generate from company name.
-            if (!shortNameInput.value) {
-                const generated = generateShortNameFromCompanyName(nameInput.value);
-                shortNameInput.value = normalizeShortName(generated);
-                updateInvoicePreview();
-            }
-
-            // Auto-generate when typing company name (until user manually edits short_name)
-            nameInput.addEventListener('input', function() {
-                if (userEditedShortName) {
-                    return;
+            if (nameInput && shortNameInput) {
+                let userEditedShortName = !!(shortNameInput.value && shortNameInput.value.trim().length > 0);
+                if (shortNameInput.value && !userEditedShortName) {
+                    userEditedShortName = false;
                 }
 
-                const generated = generateShortNameFromCompanyName(nameInput.value);
-                shortNameInput.value = normalizeShortName(generated);
-                updateInvoicePreview();
-            });
-
-            // When user changes short_name, stop overriding it
-            shortNameInput.addEventListener('input', function() {
-                userEditedShortName = true;
                 shortNameInput.value = normalizeShortName(shortNameInput.value);
                 updateInvoicePreview();
+
+                if (!shortNameInput.value) {
+                    const generated = generateShortNameFromCompanyName(nameInput.value);
+                    shortNameInput.value = normalizeShortName(generated);
+                    updateInvoicePreview();
+                }
+
+                nameInput.addEventListener('input', function() {
+                    if (userEditedShortName) {
+                        return;
+                    }
+                    const generated = generateShortNameFromCompanyName(nameInput.value);
+                    shortNameInput.value = normalizeShortName(generated);
+                    updateInvoicePreview();
+                });
+
+                shortNameInput.addEventListener('input', function() {
+                    userEditedShortName = true;
+                    shortNameInput.value = normalizeShortName(shortNameInput.value);
+                    updateInvoicePreview();
+                });
+            }
+
+            const invoiceTemplateSelect = document.getElementById('invoice_template');
+            const previewCols = Array.from(document.querySelectorAll('#invoiceTemplatePreviewRow .invoice-preview-col'));
+            const demoDemoUrl = @json(route('invoice.template.demo'));
+            const selectedTemplateLabel = document.getElementById('selectedTemplateLabelCreate');
+            let hasLoadedInvoicePreview = false;
+            const invoicePreviewContainerCreate = document.getElementById('invoicePreviewContainerCreate');
+            const selectedPdfButton = document.getElementById('selectedInvoicePdfButton');
+
+            const syncTemplateSelection = (key) => {
+                const selectedKey = key || 'classic';
+                if (invoiceTemplateSelect) {
+                    invoiceTemplateSelect.value = selectedKey;
+                }
+                previewCols.forEach((col) => {
+                    col.classList.toggle('is-selected', col.dataset.templateKey === selectedKey);
+                });
+                const selectedCol = previewCols.find((col) => col.dataset.templateKey === selectedKey);
+                if (selectedTemplateLabel && selectedCol?.dataset.templateLabel) {
+                    selectedTemplateLabel.textContent = selectedCol.dataset.templateLabel;
+                }
+            };
+
+            const refreshInvoiceDemoIframes = () => {
+                if (!hasLoadedInvoicePreview) {
+                    return;
+                }
+                const name = (document.getElementById('name')?.value || '').trim() || 'Your Company';
+                const address = (document.getElementById('address')?.value || '').trim() || 'Sample address';
+                const pin = (document.getElementById('pin_code')?.value || '').trim() || '314002';
+                const gst = (document.getElementById('gst_number')?.value || '').trim() || '29AAACH7409R1ZX';
+                const pan = (document.getElementById('pan_number')?.value || '').trim() || 'AABAD1452A';
+                const buildUrl = (template, asPdf) => {
+                    const params = new URLSearchParams({
+                        template: template,
+                        name: name,
+                        address: address,
+                        pin_code: pin,
+                        gst_number: gst,
+                        pan_number: pan,
+                    });
+                    if (asPdf) {
+                        params.set('format', 'pdf');
+                    }
+                    return `${demoDemoUrl}?${params.toString()}`;
+                };
+                const selectedTemplate = invoiceTemplateSelect?.value || 'classic';
+                const selectedIframe = document.getElementById('selectedInvoiceDemoIframe');
+                const selectedPdfButton = document.getElementById('selectedInvoicePdfButton');
+
+                if (selectedIframe) {
+                    selectedIframe.dataset.template = selectedTemplate;
+                    selectedIframe.src = buildUrl(selectedTemplate, false);
+                }
+                if (selectedPdfButton) {
+                    selectedPdfButton.dataset.template = selectedTemplate;
+                    selectedPdfButton.href = buildUrl(selectedTemplate, true);
+                }
+            };
+
+            if (invoiceTemplateSelect && previewCols.length) {
+                syncTemplateSelection(invoiceTemplateSelect.value);
+                previewCols.forEach((col) => {
+                    col.addEventListener('click', function () {
+                        syncTemplateSelection(col.dataset.templateKey);
+                        hasLoadedInvoicePreview = true;
+                        if (invoicePreviewContainerCreate) {
+                            invoicePreviewContainerCreate.classList.remove('is-empty');
+                        }
+                        if (selectedPdfButton) {
+                            selectedPdfButton.style.pointerEvents = 'auto';
+                            selectedPdfButton.style.opacity = '1';
+                        }
+                        refreshInvoiceDemoIframes();
+                    });
+                });
+            }
+
+            let demoTimer;
+            const scheduleDemoRefresh = () => {
+                clearTimeout(demoTimer);
+                demoTimer = setTimeout(refreshInvoiceDemoIframes, 400);
+            };
+
+            ['name', 'address', 'pin_code', 'gst_number', 'pan_number'].forEach((id) => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', function () {
+                        if (!hasLoadedInvoicePreview) {
+                            return;
+                        }
+                        scheduleDemoRefresh();
+                    });
+                }
             });
         });
 

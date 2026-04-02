@@ -18,6 +18,126 @@
         @endif
         <!--begin::Body-->
         <div class="card-body">
+            <style>
+                .invoice-preview-col {
+                    border-radius: 12px;
+                    padding: 10px;
+                    transition: box-shadow .15s ease, border-color .15s ease, transform .15s ease;
+                    border: 2px solid #dee2e6;
+                    background: #fff;
+                    position: relative;
+                    cursor: pointer;
+                    height: 100%;
+                }
+                .invoice-preview-col.is-selected {
+                    border-color: var(--bs-primary);
+                    box-shadow: 0 12px 22px rgba(13, 110, 253, .18);
+                    transform: translateY(-2px);
+                }
+                .invoice-layout-shell {
+                    border: 1px solid #dbeafe;
+                    border-radius: 14px;
+                    padding: 14px;
+                    background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
+                }
+                .invoice-layout-topbar {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 10px;
+                    margin-bottom: 12px;
+                }
+                .invoice-layout-selected {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: #1d4ed8;
+                    background: #eaf2ff;
+                    border: 1px solid #bfdbfe;
+                    border-radius: 999px;
+                    padding: 5px 10px;
+                }
+                .invoice-template-meta {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 8px;
+                    margin-top: 10px;
+                }
+                .invoice-template-name {
+                    font-weight: 600;
+                    color: #212529;
+                }
+                .invoice-template-use {
+                    font-size: 12px;
+                    color: #6c757d;
+                    margin-top: 2px;
+                }
+                .invoice-selected-badge {
+                    display: none;
+                }
+                .invoice-preview-col.is-selected .invoice-selected-badge {
+                    display: inline-flex;
+                }
+                .invoice-preview-frame {
+                    height: 55vh;
+                    max-height: 470px;
+                    min-height: 320px;
+                    background: #fff;
+                    border: 1px solid #cbd5e1;
+                    box-shadow: 0 8px 20px rgba(15, 23, 42, .08);
+                    position: relative;
+                }
+                .invoice-preview-frame.is-empty {
+                    height: auto;
+                    min-height: 140px;
+                }
+                .invoice-preview-placeholder {
+                    display: none;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100%;
+                    padding: 14px;
+                    color: #6c757d;
+                    font-weight: 600;
+                    text-align: center;
+                    background: #fff;
+                    z-index: 2;
+                }
+                .invoice-preview-frame.is-empty .invoice-preview-placeholder {
+                    display: flex;
+                }
+                .invoice-preview-frame iframe {
+                    display: block;
+                    width: 100%;
+                    height: 100%;
+                    border: 0;
+                    background: #fff;
+                }
+                .invoice-preview-frame.is-empty iframe {
+                    display: none;
+                }
+                .invoice-option-letter {
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 999px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: #f1f3f5;
+                    font-weight: 700;
+                    color: #495057;
+                }
+                .invoice-preview-col.is-selected .invoice-option-letter {
+                    background: var(--bs-primary);
+                    color: #fff;
+                }
+                .invoice-preview-col:hover {
+                    border-color: #93c5fd;
+                }
+            </style>
             <!--begin::Row-->
             <div class="row g-3">
                 <!--begin::Col-->
@@ -158,12 +278,8 @@
                     <div class="valid-feedback">Looks good!</div>
                 </div>
                 <!--end::Col-->
-            </div>
-            <!--end::Row-->
-            <!--begin::Row-->
-            <div class="row g-3">
-                <!--begin::Col-->
-                <div class="col-md-6">
+                  <!--begin::Col-->
+                  <div class="col-md-6">
                     <label for="company_type" class="form-label">Company Type</label>
                     <select class="form-select" id="company_type" name="company_type" required>
                         <option value="">Select Company Type</option>
@@ -174,6 +290,86 @@
                     @error('company_type') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="valid-feedback">Looks good!</div>
 
+                </div>
+                <!--end::Col-->
+            </div>
+            <!--end::Row-->
+            <!--begin::Row-->
+            <div class="row g-3">
+              
+                <input type="hidden" id="invoice_template" name="invoice_template" value="{{ old('invoice_template', $company->invoice_template ?? 'classic') }}">
+                <div class="col-12">
+                    <div class="invoice-layout-shell">
+                        <div class="invoice-layout-topbar">
+                            <span class="fw-semibold text-dark">
+                                <i class="bi bi-file-earmark-pdf text-danger me-1"></i>
+                                Party Bill Layout Studio
+                            </span>
+                            <span class="invoice-layout-selected">
+                                <i class="bi bi-stars"></i>
+                                Selected: <span id="selectedTemplateLabelEdit">A (Classic)</span>
+                            </span>
+                        </div>
+                        <p class="small text-muted mb-3">
+                            Select a card to load live preview. Preview starts only after selection for faster page load.
+                        </p>
+                        <div class="invoice-preview-frame rounded overflow-hidden bg-light mb-3 is-empty" id="invoicePreviewContainerEdit">
+                            <div class="invoice-preview-placeholder" id="invoicePreviewPlaceholderEdit">
+                                Select a template card (A / B / C) to load the live preview.
+                            </div>
+                            <iframe id="selectedInvoiceTemplateIframe" title="Selected invoice preview" loading="lazy"
+                                src="about:blank"></iframe>
+                        </div>
+                        <a href="#"
+                           target="_blank" rel="noopener noreferrer"
+                           class="btn btn-danger w-100 mb-3" id="selectedInvoicePdfButton" style="pointer-events:none; opacity:.6;">
+                            <i class="bi bi-file-earmark-pdf me-1"></i> View Selected Template PDF
+                        </a>
+                        <div class="row g-3" id="invoiceTemplatePreviewRow">
+                            <div class="col-12 col-lg-4 invoice-preview-col"
+                                data-template-key="classic"
+                                data-template-label="A (Classic)"
+                                data-preview-url="{{ route('company.invoice-template-preview', ['company' => $company->id, 'template' => 'classic']) }}"
+                                data-pdf-url="{{ route('company.invoice-template-preview', ['company' => $company->id, 'template' => 'classic', 'format' => 'pdf']) }}">
+                                <div class="invoice-template-meta">
+                                    <div>
+                                        <div class="invoice-template-name"><span class="invoice-option-letter me-1">A</span> Classic</div>
+                                        <div class="invoice-template-use">Balanced layout with clear sections</div>
+                                    </div>
+                                    <span class="badge text-bg-primary invoice-selected-badge">Selected</span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-4 invoice-preview-col"
+                                data-template-key="modern"
+                                data-template-label="B (Modern)"
+                                data-preview-url="{{ route('company.invoice-template-preview', ['company' => $company->id, 'template' => 'modern']) }}"
+                                data-pdf-url="{{ route('company.invoice-template-preview', ['company' => $company->id, 'template' => 'modern', 'format' => 'pdf']) }}">
+                                <div class="invoice-template-meta">
+                                    <div>
+                                        <div class="invoice-template-name"><span class="invoice-option-letter me-1">B</span> Modern</div>
+                                        <div class="invoice-template-use">Prominent heading and visual emphasis</div>
+                                    </div>
+                                    <span class="badge text-bg-primary invoice-selected-badge">Selected</span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-4 invoice-preview-col"
+                                data-template-key="compact"
+                                data-template-label="C (Compact)"
+                                data-preview-url="{{ route('company.invoice-template-preview', ['company' => $company->id, 'template' => 'compact']) }}"
+                                data-pdf-url="{{ route('company.invoice-template-preview', ['company' => $company->id, 'template' => 'compact', 'format' => 'pdf']) }}">
+                                <div class="invoice-template-meta">
+                                    <div>
+                                        <div class="invoice-template-name"><span class="invoice-option-letter me-1">C</span> Compact</div>
+                                        <div class="invoice-template-use">Dense layout to fit more details</div>
+                                    </div>
+                                    <span class="badge text-bg-primary invoice-selected-badge">Selected</span>
+                                </div>
+                            </div>
+                        </div>
+                        <small class="text-muted d-block mt-3">
+                            <strong>Tip:</strong> Click any card to set it as selected. You can also change template from dropdown.
+                        </small>
+                    </div>
                 </div>
                 <!--end::Col-->
                 <!--begin::Col-->
@@ -277,6 +473,55 @@
                 })
                 .catch(error => console.error('Error fetching cities:', error));
         }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const invoiceTemplateSelect = document.getElementById('invoice_template');
+            const previewCols = Array.from(document.querySelectorAll('#invoiceTemplatePreviewRow .invoice-preview-col'));
+            const selectedIframe = document.getElementById('selectedInvoiceTemplateIframe');
+            const selectedPdfButton = document.getElementById('selectedInvoicePdfButton');
+            const selectedTemplateLabel = document.getElementById('selectedTemplateLabelEdit');
+            const invoicePreviewContainerEdit = document.getElementById('invoicePreviewContainerEdit');
+
+            if (!invoiceTemplateSelect || !previewCols.length) {
+                return;
+            }
+
+            const syncTemplateSelection = (key, shouldLoadPreview = false) => {
+                const selectedKey = key || 'classic';
+                invoiceTemplateSelect.value = selectedKey;
+                previewCols.forEach((col) => {
+                    col.classList.toggle('is-selected', col.dataset.templateKey === selectedKey);
+                });
+
+                const selectedCol = previewCols.find((col) => col.dataset.templateKey === selectedKey);
+                if (selectedTemplateLabel && selectedCol?.dataset.templateLabel) {
+                    selectedTemplateLabel.textContent = selectedCol.dataset.templateLabel;
+                }
+                if (shouldLoadPreview && selectedIframe) {
+                    selectedIframe.src = selectedCol?.dataset.previewUrl
+                        || `{{ route('company.invoice-template-preview', ['company' => $company->id, 'template' => 'classic']) }}`;
+                }
+                if (shouldLoadPreview && selectedPdfButton) {
+                    selectedPdfButton.href = selectedCol?.dataset.pdfUrl
+                        || `{{ route('company.invoice-template-preview', ['company' => $company->id, 'template' => 'classic', 'format' => 'pdf']) }}`;
+                }
+            };
+
+            syncTemplateSelection(invoiceTemplateSelect.value);
+
+            previewCols.forEach((col) => {
+                col.addEventListener('click', function () {
+                    syncTemplateSelection(col.dataset.templateKey, true);
+                    if (invoicePreviewContainerEdit) {
+                        invoicePreviewContainerEdit.classList.remove('is-empty');
+                    }
+                    if (selectedPdfButton) {
+                        selectedPdfButton.style.pointerEvents = 'auto';
+                        selectedPdfButton.style.opacity = '1';
+                    }
+                });
+            });
+        });
     </script>
     <!--end::JavaScript-->
         </div>

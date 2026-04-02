@@ -35,6 +35,8 @@ Route::middleware(['auth.blocked'])->group(function () {
         // Company Registration
         Route::get('/company/enter/{company}', [CompanyController::class, 'enter'])->name('company.enter');
         Route::get('/company/exit', [CompanyController::class, 'exit'])->name('company.exit');
+        Route::get('company/{company}/invoice-template-preview', [CompanyController::class, 'invoiceTemplatePreview'])->name('company.invoice-template-preview');
+        Route::get('invoice-template-demo', [CompanyController::class, 'invoiceTemplateDemo'])->name('invoice.template.demo');
         Route::resource('company', CompanyController::class)->except(['show']);
     });
     // Master Admin only routes

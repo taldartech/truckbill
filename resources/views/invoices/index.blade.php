@@ -408,7 +408,16 @@
                     url: '/invoices/' + invoiceId,
                     type: 'GET',
                     success: function(data) {
-                        var detailsHtml = `
+                        var logoBlock = '';
+                        if (data.company_logo_url) {
+                            logoBlock = `
+                <div class="text-center mb-3">
+                    <div class="d-inline-block bg-white border rounded p-2 shadow-sm" style="max-width: 240px;">
+                        <img src="${data.company_logo_url}" alt="" class="img-fluid" style="max-height: 64px; max-width: 220px; object-fit: contain;">
+                    </div>
+                </div>`;
+                        }
+                        var detailsHtml = logoBlock + `
                 <div class="row">
                     <div class="col-md-6">
                         <div class="card h-100">

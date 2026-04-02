@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 
 class Company extends Model
 {
@@ -35,6 +36,7 @@ class Company extends Model
         'is_blocked',
         'company_type',
         'company_logo',
+        'invoice_template',
         'gst_slab',
         'plan_end_date',
         'lr_credits',
@@ -138,5 +140,37 @@ class Company extends Model
     public function invoices()
     {
         return $this->hasMany(Invoice::class);
+    }
+
+    /**
+     * Public URL for the uploaded logo (file lives on the public disk under storage/app/public).
+     */
+    public function logoPublicUrl(): ?string
+    {
+        if (empty($this->company_logo)) {
+            return null;
+        }
+
+        if (! Storage::disk('public')->exists($this->company_logo)) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($this->company_logo);
+    }
+
+    /**
+     * Absolute path for DomPDF / local image embedding (does not rely on the public/storage symlink).
+     */
+    public function logoFilesystemPathForPdf(): ?string
+    {
+        if (empty($this->company_logo)) {
+            return null;
+        }
+
+        if (! Storage::disk('public')->exists($this->company_logo)) {
+            return null;
+        }
+
+        return Storage::disk('public')->path($this->company_logo);
     }
 }
