@@ -72,13 +72,13 @@
         }
 
         .btn-action i {
-            color: white !important;
+            color: inherit;
             font-size: 14px;
         }
 
-        .btn-action-info    { background: var(--brand-info) !important; }
-        .btn-action-primary { background: var(--brand-primary) !important; }
-        .btn-action-success { background: var(--brand-success) !important; }
+        .btn-action-info    { background: var(--brand-info) !important; color: white !important; }
+        .btn-action-primary { background: var(--brand-primary) !important; color: white !important; }
+        .btn-action-success { background: var(--brand-success) !important; color: white !important; }
 
         .header-pill-btn {
             border-radius: 50px !important;
