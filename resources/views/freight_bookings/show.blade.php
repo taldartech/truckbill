@@ -556,7 +556,7 @@
 
                     <!-- Payment Allocation Section -->
                     <div class="alert alert-warning">
-                        <h6><i class="fas fa-money-bill-wave"></i> Payment Allocation</h6>
+                        <h6><i class="fas fa-indian-rupee-sign"></i> Payment Allocation</h6>
                         <div class="table-responsive">
                             <table class="table table-sm table-bordered">
                                 <thead class="table-light">

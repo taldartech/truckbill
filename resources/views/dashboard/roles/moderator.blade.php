@@ -118,7 +118,7 @@
         <div class="card glass-card info-box">
             <div class="card-body p-0 d-flex align-items-center">
                 <div class="icon-circle bg-soft-warning me-3 shadow-sm">
-                    <i class="fas fa-money-bill-wave text-warning"></i>
+                    <i class="fas fa-indian-rupee-sign text-warning"></i>
                 </div>
                 <div>
                     <h6 class="text-muted fw-semi-bold mb-1">Outstanding Amount</h6>

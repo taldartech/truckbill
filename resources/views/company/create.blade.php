@@ -502,9 +502,9 @@
             <!--begin::Row-->
             <div class="row g-3">
                 <div class="col-md-6">
-                    <label for="gst_slab" class="form-label">Company Slab</label>
+                    <label for="gst_slab" class="form-label">GST Slab</label>
                     <select class="form-select" id="gst_slab" name="gst_slab" required>
-                        <option value="">Select Company Slab</option>
+                        <option value="">Select GST Slab</option>
                         @foreach($companySlabs as $slab)
                             <option value="{{ trim($slab) }}" {{ old('gst_slab') == trim($slab) ? 'selected' : '' }}>
                                 {{ trim($slab) }}%

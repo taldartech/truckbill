@@ -7,7 +7,7 @@
     <div class="container-fluid">
         <div class="row mb-4">
             <div class="col-12">
-                <h2 class="fw-bold mb-1"><i class="fas fa-money-bill-wave text-brand-primary"></i> My Payments</h2>
+                <h2 class="fw-bold mb-1"><i class="fas fa-indian-rupee-sign text-brand-primary"></i> My Payments</h2>
                 <p class="text-muted mb-0">View your freight and advance payments.</p>
             </div>
         </div>

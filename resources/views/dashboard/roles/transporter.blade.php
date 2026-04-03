@@ -76,7 +76,7 @@
         <div class="card glass-card info-box">
             <div class="card-body p-0 d-flex align-items-center">
                 <div class="icon-circle bg-soft-success me-3 shadow-sm">
-                    <i class="fas fa-money-bill-wave text-success"></i>
+                    <i class="fas fa-indian-rupee-sign text-success"></i>
                 </div>
                 <div>
                     <h6 class="text-muted fw-semi-bold mb-1">Freight Received</h6>
@@ -224,7 +224,7 @@
     <div class="col-md-12">
         <div class="card glass-card">
             <div class="card-header bg-transparent border-0 py-3 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-bold"><i class="fas fa-money-bill-wave text-brand-primary me-2"></i> Recent Payments</h5>
+                <h5 class="mb-0 fw-bold"><i class="fas fa-indian-rupee-sign text-brand-primary me-2"></i> Recent Payments</h5>
                 <a href="{{ route('transporter.payments.index') }}" class="btn btn-sm btn-brand-primary">View All</a>
             </div>
             <div class="card-body p-0">

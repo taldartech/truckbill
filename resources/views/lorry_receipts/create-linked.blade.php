@@ -1289,39 +1289,93 @@ lrItemsContainer.addEventListener('blur', function(e) {
                         ?.textContent || 'Not selected';
 
                     const confirmationHTML = `
-                                  <div class="confirmation-details">
-                                      <h5 class="text-primary mb-3">📋 Verify details</h5>
-                                      <div class="row">
-                                        <div class="col-md-3"></div>
-                                          <div class="col-md-6">
-                                            <div class="card mb-3"><div class="card-header bg-light"><strong>Shared</strong></div>
-                                            <div class="card-body">
-                                              <p><strong>GR Date:</strong> ${formatDate(grDate)}</p>
-                                              <p><strong>Truck:</strong> ${truckNumber}</p>
-                                              <p><strong>Transporter:</strong> ${transporterName}</p>
-                                              <p><strong>Reference By:</strong> ${referenceBy}</p>
-                                            </div></div>
-                                          </div>
-                                          <div class="col-md-3"></div>
+            <div class="confirmation-details text-start">
+                <div class="alert alert-soft-primary bg-primary bg-opacity-10 border-0 mb-3 py-2 px-3 d-flex align-items-center rounded-3">
+                    <i class="fas fa-info-circle text-primary me-2"></i>
+                    <h6 class="mb-0 text-primary fw-bold" style="font-size:0.9rem;">Review Linked Lorry Receipts</h6>
+                </div>
 
-                                              ${items.map((it, i) => `
-                                                                <div class="col-md-6">
-                                                            <div class="card mb-3"><div class="card-header bg-light"><strong> ${i+1}. LR:</strong> ${it.lr_number}</strong></div>
-                                                            <div class="card-body">
-                                                              <div class='mb-2'>
-                                                                <strong>Invoice Number:</strong> ${it.invoice_number} | <strong>Customer:</strong> ${it.customer}<br/>
-                                                                <strong>Consignor:</strong> ${it.consignor} | <strong>Consignee:</strong> ${it.consignee}<br/>
-                                                                <strong>Route:</strong> ${it.source} → ${it.destination}<br/>
-                                                                <strong>Goods:</strong> ${it.good_type} | <strong>No. of Units:</strong> ${it.no_of_units} <br/>
-                                                                <strong>Weight:</strong> ${it.weight} | <strong>FR:</strong> ₹${it.fr_rate} | <strong>Amount:</strong> ₹${it.amount}
-                                                              </div>
-                                                                </div></div>
-                                                                </div>
-                                                            `).join('')}
+                <div class="row g-2 mb-3">
+                    <div class="col-12">
+                        <div class="card border-0 shadow-sm rounded-3 border-top border-3 border-primary">
+                            <div class="card-header bg-transparent border-bottom-0 pt-2 pb-0">
+                                <h6 class="fw-bold text-dark mb-0" style="font-size:0.9rem;"><i class="fas fa-truck text-primary me-1"></i> Shared Transport Info</h6>
+                            </div>
+                            <div class="card-body p-2">
+                                <div class="row g-2">
+                                    <div class="col-md-3 col-sm-6">
+                                        <span class="text-muted small d-block">GR Date</span>
+                                        <span class="fw-bold text-dark small">${formatDate(grDate)}</span>
+                                    </div>
+                                    <div class="col-md-3 col-sm-6">
+                                        <span class="text-muted small d-block">Truck No</span>
+                                        <span class="badge bg-dark bg-opacity-10 text-dark fw-bold px-2 py-0 rounded">${truckNumber}</span>
+                                    </div>
+                                    <div class="col-md-3 col-sm-6">
+                                        <span class="text-muted small d-block">Transporter</span>
+                                        <span class="fw-medium text-dark text-truncate d-block small" title="${transporterName}">${transporterName}</span>
+                                    </div>
+                                    <div class="col-md-3 col-sm-6">
+                                        <span class="text-muted small d-block">Reference</span>
+                                        <span class="fw-medium text-dark small">${referenceBy}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-
-                                      </div>
-                                  </div>`;
+                <h6 class="fw-bold text-dark mb-2" style="font-size:0.9rem;"><i class="fas fa-list-ul text-info me-1"></i> Lorry Receipt Items (${items.length})</h6>
+                <div class="row g-2">
+                    ${items.map((it, i) => `
+                        <div class="col-md-6">
+                            <div class="card h-100 border-0 shadow-sm rounded-3 border-top border-3 border-success mb-2">
+                                <div class="card-header bg-light border-bottom border-light pt-2 pb-1 rounded-top-3 d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold text-dark small"><span class="badge bg-primary px-1 py-0 me-1">${i+1}</span> LR: ${it.lr_number}</span>
+                                    <span class="text-success fw-bold small">₹${it.amount}</span>
+                                </div>
+                                <div class="card-body p-2" style="font-size:0.85rem;">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span class="text-muted">Invoice</span>
+                                        <span class="fw-medium text-dark">${it.invoice_number}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span class="text-muted">Customer</span>
+                                        <span class="fw-medium text-dark text-truncate ms-2 text-end" style="max-width:130px;" title="${it.customer}">${it.customer}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span class="text-muted">Consignor</span>
+                                        <span class="fw-medium text-dark text-truncate ms-2 text-end" style="max-width:130px;" title="${it.consignor}">${it.consignor}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span class="text-muted">Consignee</span>
+                                        <span class="fw-medium text-dark text-truncate ms-2 text-end" style="max-width:130px;" title="${it.consignee}">${it.consignee}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mt-1 mb-1 text-center bg-light rounded p-1">
+                                        <div class="w-100 text-truncate px-1 fw-bold text-dark">${it.source}</div>
+                                        <i class="fas fa-arrow-right text-muted" style="font-size:0.7rem; align-self:center;"></i>
+                                        <div class="w-100 text-truncate px-1 fw-bold text-dark">${it.destination}</div>
+                                    </div>
+                                    <div class="row g-1 mt-1 pt-1 border-top border-light">
+                                        <div class="col-6">
+                                            <span class="text-muted">Goods:</span> <span class="fw-medium text-dark line-clamp-1">${it.good_type}</span>
+                                        </div>
+                                        <div class="col-6 text-end">
+                                            <span class="text-muted">Units:</span> <span class="fw-medium text-dark">${it.no_of_units}</span>
+                                        </div>
+                                        <div class="col-6">
+                                            <span class="text-muted">Wt:</span> <span class="fw-medium text-dark">${it.weight} t</span>
+                                        </div>
+                                        <div class="col-6 text-end">
+                                            <span class="text-muted">Rate:</span> <span class="fw-medium text-dark">₹${it.fr_rate}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>`;
 
                     if (typeof Swal !== 'undefined') {
                         Swal.fire({

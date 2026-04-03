@@ -306,7 +306,7 @@
             <div class="card-footer text-end">
                 @if (auth()->user()->canAccessCompanyPanel() && $invoice->remaining_amount > 0)
                     <button type="button" class="btn btn-brand-primary me-2" data-bs-toggle="modal" data-bs-target="#addPaymentModal">
-                        <i class="bi bi-cash-coin"></i> Add Payment
+                        <i class="bi bi-currency-rupee"></i> Add Payment
                     </button>
                 @endif
                 @if ($invoice->payment_status != 'paid' && Auth::user()->canActAsAdmin())
@@ -332,7 +332,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-brand-primary text-white">
                     <h5 class="modal-title" id="addPaymentModalLabel">
-                        <i class="bi bi-cash-coin"></i> Add Payment
+                        <i class="bi bi-currency-rupee"></i> Add Payment
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>

@@ -31,7 +31,7 @@
         <div class="card glass-card info-box">
             <div class="card-body p-0 d-flex align-items-center">
                 <div class="icon-circle bg-soft-primary me-3 shadow-sm">
-                    <i class="fas fa-file-invoice-dollar text-primary"></i>
+                    <i class="fas fa-file-invoice text-primary"></i>
                 </div>
                 <div>
                     <h6 class="text-muted fw-semi-bold mb-1">Total Invoiced</h6>
@@ -59,7 +59,7 @@
         <div class="card glass-card info-box">
             <div class="card-body p-0 d-flex align-items-center">
                 <div class="icon-circle bg-soft-info me-3 shadow-sm">
-                    <i class="fas fa-hand-holding-usd text-info"></i>
+                    <i class="fas fa-indian-rupee-sign text-info"></i>
                 </div>
                 <div>
                     <h6 class="text-muted fw-semi-bold mb-1">Total Paid</h6>
@@ -151,7 +151,7 @@
         <div class="card border-0 shadow-sm" style="border-radius: 16px;">
             <div class="card-header bg-white border-0 py-3 mt-1">
                 <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-money-bill-wave text-success me-2"></i> Recent Payment Ledger Entries</h5>
+                    <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-indian-rupee-sign text-success me-2"></i> Recent Payment Ledger Entries</h5>
                     <a href="{{ route('invoices.index') }}" class="btn btn-sm btn-brand-secondary rounded-pill px-3">View All Invoices</a>
                 </div>
             </div>
