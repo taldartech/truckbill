@@ -11,10 +11,13 @@
     <table class="lr-pdf-header__table">
         <tr>
             @if (!empty($logoSrc))
-                <td class="lr-pdf-header__logo-cell">
-                    <div class="lr-pdf-header__logo-box">
-                        <img src="{{ $logoSrc }}" alt="{{ $company->name }}">
-                    </div>
+                <td class="lr-pdf-header__logo-cell" style="width: 48px; padding: 2px 6px 2px 0 !important; vertical-align: middle;">
+                    @include('reports.exports.partials.pdf-company-logo-slot', [
+                        'logoSrc' => $logoSrc,
+                        'companyName' => $company->name,
+                        'slotWidthPx' => 44,
+                        'slotHeightPx' => 44,
+                    ])
                 </td>
             @endif
             <td class="lr-pdf-header__text-cell">

@@ -122,10 +122,15 @@
             padding: 0 5px;
             min-width: 100px;
         }
+
+        /* Logo: compact slot for voucher header */
     </style>
 </head>
 
 <body>
+    @php
+        $voucherLogoSrc = $company->logoFilesystemPathForPdf() ?: $company->logoPublicUrl();
+    @endphp
     <div class="container">
 
         <!-- Top Line (Replaced Flex with Table) -->
@@ -138,6 +143,16 @@
                     <span style="font-size: 18px"><b>(भाड़ा-चालान)</b></span>
                 </td>
                 <td style="width:48%; text-align:center;">
+                    @if (!empty($voucherLogoSrc))
+                        <div style="margin: 0 auto 3px;">
+                            @include('reports.exports.partials.pdf-company-logo-slot', [
+                                'logoSrc' => $voucherLogoSrc,
+                                'companyName' => $company->name,
+                                'slotWidthPx' => 64,
+                                'slotHeightPx' => 28,
+                            ])
+                        </div>
+                    @endif
                     @if (!empty($company->template_header))
                     <b>{{ $company->template_header }}<br>
                     @endif

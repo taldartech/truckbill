@@ -38,6 +38,7 @@ class Company extends Model
         'company_logo',
         'invoice_template',
         'lr_copy_template',
+        'freight_challan_template',
         'gst_slab',
         'plan_end_date',
         'lr_credits',

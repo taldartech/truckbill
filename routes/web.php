@@ -38,8 +38,10 @@ Route::middleware(['auth.blocked'])->group(function () {
         Route::get('/company/exit', [CompanyController::class, 'exit'])->name('company.exit');
         Route::get('company/{company}/invoice-template-preview', [CompanyController::class, 'invoiceTemplatePreview'])->name('company.invoice-template-preview');
         Route::get('company/{company}/lr-copy-template-preview', [CompanyController::class, 'lrCopyTemplatePreview'])->name('company.lr-copy-template-preview');
+        Route::get('company/{company}/freight-challan-template-preview', [CompanyController::class, 'freightChallanTemplatePreview'])->name('company.freight-challan-template-preview');
         Route::get('invoice-template-demo', [CompanyController::class, 'invoiceTemplateDemo'])->name('invoice.template.demo');
         Route::get('lr-copy-template-demo', [CompanyController::class, 'lrCopyTemplateDemo'])->name('lr-copy.template.demo');
+        Route::get('freight-challan-template-demo', [CompanyController::class, 'freightChallanTemplateDemo'])->name('freight-challan.template.demo');
         Route::resource('company', CompanyController::class)->except(['show']);
     });
     // Master Admin only routes

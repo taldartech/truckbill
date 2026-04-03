@@ -48,27 +48,8 @@
             padding: 0;
         }
         .lr-pdf-header__logo-cell {
-            width: 56px;
-            padding: 2px 6px 2px 0 !important;
-        }
-        .lr-pdf-header__logo-box {
             width: 48px;
-            height: 48px;
-            background: #ffffff;
-            border: 1px solid #fcd34d;
-            border-radius: 4px;
-            text-align: center;
-            padding: 2px;
-            line-height: 0;
-        }
-        .lr-pdf-header__logo-box img {
-            max-width: 42px;
-            max-height: 42px;
-            width: auto;
-            height: auto;
-            object-fit: contain;
-            display: inline-block;
-            vertical-align: middle;
+            padding: 2px 6px 2px 0 !important;
         }
         .lr-pdf-header__doc-title {
             font-size: 13px;
