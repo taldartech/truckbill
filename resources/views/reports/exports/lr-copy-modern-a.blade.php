@@ -71,6 +71,7 @@
         $lrs = \App\Models\LorryReceipt::query()
             ->with(['truck.transporter', 'consignor', 'consignee'])
             ->where('linked_lr_id', $lr->linked_lr_id)
+            ->where('company_id', $company->id)
             ->get();
     } else {
         $lrs = [$lr];

@@ -60,7 +60,8 @@
 <body>
     @php
         if ($lr->linked_lr_id) {
-            $lrs = \App\Models\LorryReceipt::where('linked_lr_id', $lr->linked_lr_id)->get();
+            $lrs = \App\Models\LorryReceipt::where('linked_lr_id', $lr->linked_lr_id)
+            ->where('company_id', $company->id)->get();
         } else {
             $lrs = [$lr];
         }
