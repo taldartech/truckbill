@@ -273,7 +273,7 @@
                     <label for="country_id" class="form-label">Country</label>
                     <select class="form-select" id="country_id" name="country_id" required onchange="fetchStates(this.value)">
                         <option value="">Select Country</option>
-                        @foreach(\App\Models\Country::all() as $country)
+                        @foreach($countries as $country)
                             <option value="{{ $country->id }}" {{ old('country_id') == $country->id ? 'selected' : '' }}>{{ $country->name }}</option>
                         @endforeach
                     </select>
@@ -286,6 +286,9 @@
                     <label for="state_id" class="form-label">State</label>
                     <select class="form-select" id="state_id" name="state_id" required onchange="fetchCities(this.value)">
                         <option value="">Select State</option>
+                        @foreach($states as $state)
+                            <option value="{{ $state->id }}" {{ (string) old('state_id') === (string) $state->id ? 'selected' : '' }}>{{ $state->name }}</option>
+                        @endforeach
                     </select>
                     @error('state_id') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="valid-feedback">Looks good!</div>
@@ -296,6 +299,9 @@
                     <label for="city_id" class="form-label">City</label>
                     <select class="form-select" id="city_id" name="city_id" required>
                         <option value="">Select City</option>
+                        @foreach($cities as $city)
+                            <option value="{{ $city->id }}" {{ (string) old('city_id') === (string) $city->id ? 'selected' : '' }}>{{ $city->name }}</option>
+                        @endforeach
                     </select>
                     @error('city_id') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>

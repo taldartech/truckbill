@@ -264,8 +264,10 @@ class CompanyController extends Controller
     {
         $company = \App\Models\Company::findOrFail($id);
         $countries = \App\Models\Country::all();
-        $states = \App\Models\State::where('country_id', $company->country_id)->get();
-        $cities = \App\Models\City::where('state_id', $company->state_id)->get();
+        $countryId = old('country_id', $company->country_id);
+        $stateId = old('state_id', $company->state_id);
+        $states = \App\Models\State::where('country_id', $countryId)->get();
+        $cities = \App\Models\City::where('state_id', $stateId)->get();
         $companySlabs = config('payments.gst_slabs');
 
         $now = Carbon::now();
@@ -453,10 +455,21 @@ class CompanyController extends Controller
     }
     public function create()
     {
-
         $companySlabs = config('payments.gst_slabs');
+        $countries = \App\Models\Country::query()->orderBy('name')->get();
 
-        return view('company.create', compact('companySlabs'));
+        $states = collect();
+        $cities = collect();
+        $countryId = old('country_id');
+        if ($countryId) {
+            $states = \App\Models\State::query()->where('country_id', $countryId)->orderBy('name')->get();
+        }
+        $stateId = old('state_id');
+        if ($stateId) {
+            $cities = \App\Models\City::query()->where('state_id', $stateId)->orderBy('name')->get();
+        }
+
+        return view('company.create', compact('companySlabs', 'countries', 'states', 'cities'));
     }
 
     public function store(Request $request)
@@ -863,8 +876,15 @@ class CompanyController extends Controller
     {
         $this->authorizeCompanyAccess($company);
 
-        if (! $company->template_name || ! $company->template_address) {
-            return redirect()->back()->with('error', 'Please set Voucher template name and address first (Party Bill / voucher fields).');
+        // Preview should never hard-fail if template fields are empty.
+        // When the company is newly created, template_name/template_address may be blank,
+        // so we fallback to company name/address for a consistent UI + PDF output.
+        if (! $company->template_name) {
+            $company->template_name = $company->name;
+        }
+
+        if (! $company->template_address) {
+            $company->template_address = $company->address ?? 'Sample registered office address';
         }
 
         $template = FreightChallanTemplate::normalizeKey((string) $request->query('template', 'classic'));

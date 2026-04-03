@@ -293,7 +293,7 @@
                     <select class="form-select" id="state_id" name="state_id" required onchange="fetchCities(this.value)">
                         <option value="">Select State</option>
                         @foreach($states as $state)
-                            <option {{ old('state_id', $company->state_id) == $state->id ? 'selected' : '' }} value="{{ $state->id }}">{{ $state->name }}</option>
+                            <option {{ (string) old('state_id', $company->state_id) === (string) $state->id ? 'selected' : '' }} value="{{ $state->id }}">{{ $state->name }}</option>
                         @endforeach
                     </select>
                     @error('state_id') <div class="text-danger">{{ $message }}</div> @enderror
@@ -306,7 +306,7 @@
                     <select class="form-select" id="city_id" name="city_id" required>
                         <option value="">Select City</option>
                         @foreach($cities as $city)
-                            <option {{ old('city_id', $company->city_id) == $city->id ? 'selected' : '' }} value="{{ $city->id }}">{{ $city->name }}</option>
+                            <option {{ (string) old('city_id', $company->city_id) === (string) $city->id ? 'selected' : '' }} value="{{ $city->id }}">{{ $city->name }}</option>
                         @endforeach
                     </select>
                     @error('city_id') <div class="text-danger">{{ $message }}</div> @enderror
@@ -510,7 +510,7 @@
                         </div>
 
                         <small class="text-muted d-block mt-2">
-                            Cards and the variant dropdown stay in sync. For freight challan preview, set voucher / party-bill name &amp; address (company or voucher template fields).
+                            Cards and the variant dropdown stay in sync. Freight challan preview uses voucher / party-bill name &amp; address; if they are empty, it falls back to company name/address.
                         </small>
                     </div>
                 </div>

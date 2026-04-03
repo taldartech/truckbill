@@ -926,8 +926,14 @@ class ReportController extends Controller
         }
 
         $company = Company::find($companyId);
-        if (! $company->template_name || ! $company->template_address) {
-            return redirect()->back()->with('error', 'Please set the Voucher template before exporting the Voucher Receipt.');
+        // Export should not hard-fail if voucher template fields are empty.
+        // Use fallback values to keep PDF generation + UI flow working.
+        if (! $company->template_name) {
+            $company->template_name = $company->name;
+        }
+
+        if (! $company->template_address) {
+            $company->template_address = $company->address ?? 'Sample registered office address';
         }
 
         $templateKey = FreightChallanTemplate::normalizeKey(

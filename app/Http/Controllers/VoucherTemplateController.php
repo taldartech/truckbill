@@ -50,6 +50,8 @@ class VoucherTemplateController extends Controller
         // Form Request validation already passed, now add controller-level validation
         $validated = $request->validated();
 
+        (dd($validated));
+
         // Additional controller-level validation for voucher template constraints
         $this->validateVoucherTemplateConstraints($validated, $voucher_template);
 

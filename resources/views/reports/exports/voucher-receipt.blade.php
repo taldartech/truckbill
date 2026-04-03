@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>भाड़ा-चालान - {{ $company->template_name }}</title>
+    <title>भाड़ा-चालान - {{ $company->template_name ?? $company->name ?? '' }}</title>
     <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="192x192"  href="{{ asset('favicon/android-icon-192x192.png') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('favicon/apple-touch-icon.png') }}">
@@ -130,6 +130,8 @@
 <body>
     @php
         $voucherLogoSrc = $company->logoFilesystemPathForPdf() ?: $company->logoPublicUrl();
+        $templateName = $company->template_name ?? $company->name ?? '';
+        $templateAddress = $company->template_address ?? $company->address ?? '';
     @endphp
     <div class="container">
 
@@ -156,12 +158,12 @@
                     @if (!empty($company->template_header))
                     <b>{{ $company->template_header }}<br>
                     @endif
-                        <span style="font-size: 27px">{{ $company->template_name }}</span>
+                        <span style="font-size: 27px">{{ $templateName }}</span>
                     </b><br>
-                    {{ $company->template_address }}
+                    {{ $templateAddress }}
                 </td>
                 <td style="width:26%; text-align:right;">
-                    <b>Tel.:</b> {{ $company->contact_number }}<br>
+                    <b>Tel.:</b> {{ $company->contact_number ?? '—' }}<br>
                     <br>
                     <br>
                     चालान नं. ............................
