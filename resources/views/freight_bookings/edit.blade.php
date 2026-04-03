@@ -283,7 +283,7 @@
                                 placeholder="Enter E-way bill number"
                                 {{ $is_delivered ? 'readonly style=background-color:#e9ecef;' : '' }}
                                 {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
-                            <a href="https://ewaybillgst.gov.in/Login.aspx" target="_blank" class="btn btn-outline-info"
+                            <a href="https://ewaybillgst.gov.in/Login.aspx" target="_blank" class="btn btn-info"
                                 title="Check E-way Bill Status">
                                 <i class="fas fa-external-link-alt"></i> Check Status
                             </a>

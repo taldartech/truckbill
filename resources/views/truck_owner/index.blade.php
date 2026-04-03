@@ -185,7 +185,7 @@
                                     <select class="form-select" id="modal_driver_id" name="driver_id">
                                         <option value="">Select Driver</option>
                                     </select>
-                                    <button type="button" class="btn btn-outline-primary" id="showAddDriverFormModal">
+                                    <button type="button" class="btn btn-primary" id="showAddDriverFormModal">
                                         <i class="bi bi-plus-circle"></i> Add New
                                     </button>
                                 </div>

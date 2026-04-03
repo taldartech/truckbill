@@ -25,7 +25,7 @@
                     </div>
                     <div class="col-md-4">
                         <button type="submit" class="btn btn-brand-primary">Filter</button>
-                        <a href="{{ route('transporter.freight_bookings.index') }}" class="btn btn-outline-secondary">Reset</a>
+                        <a href="{{ route('transporter.freight_bookings.index') }}" class="btn btn-secondary">Reset</a>
                     </div>
                 </form>
             </div>

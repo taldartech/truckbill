@@ -156,7 +156,9 @@
         icon: 'question',
         showCancelButton: true,
         confirmButtonText: '✅ Confirm',
+        confirmButtonColor: '#16a34a',
         cancelButtonText: '❌ Cancel',
+        cancelButtonColor: '#dc2626',
         focusCancel: true,
         allowOutsideClick: false,
         didOpen: () => {

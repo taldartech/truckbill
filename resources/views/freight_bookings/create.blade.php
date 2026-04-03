@@ -318,7 +318,7 @@
                         <div class="input-group">
                             <input type="text" class="form-control" name="eway_bill_number" id="eway_bill_number"
                                 value="{{ old('eway_bill_number') }}" placeholder="Enter E-way bill number">
-                            <a href="https://ewaybillgst.gov.in/Login.aspx" target="_blank" class="btn btn-outline-info"
+                            <a href="https://ewaybillgst.gov.in/Login.aspx" target="_blank" class="btn btn-info"
                                 title="Check E-way Bill Status">
                                 <i class="fas fa-external-link-alt"></i> Check Status
                             </a>

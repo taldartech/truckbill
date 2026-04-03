@@ -40,7 +40,7 @@
                 <option value="{{ $driver->id }}" {{ old('driver_id', $truck->driver_id) == $driver->id ? 'selected' : '' }}>{{ $driver->name }} ({{ $driver->mobile }})</option>
             @endforeach
         </select>
-        <a href="{{ route('drivers.create') }}" class="btn btn-outline-secondary" target="_blank">Add New Driver</a>
+        <a href="{{ route('drivers.create') }}" class="btn btn-secondary" target="_blank">Add New Driver</a>
     </div>
     @error('driver_id') <div class="text-danger">{{ $message }}</div> @enderror
 </div>

@@ -26,7 +26,7 @@
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Search & Filter</h5>
-                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="toggleAdvancedSearch()">
+                <button type="button" class="btn btn-sm btn-secondary" onclick="toggleAdvancedSearch()">
                     <i class="bi bi-funnel"></i> Toggle Filters
                 </button>
             </div>
@@ -138,7 +138,7 @@
                                 <i class="bi bi-search"></i> Search
                             </button>
                             <a href="{{ route('voucher_payments.daily') }}?date={{ $selectedDate }}"
-                                class="btn btn-outline-secondary">
+                                class="btn btn-secondary">
                                 <i class="bi bi-arrow-clockwise"></i> Reset
                             </a>
                         </div>
@@ -319,7 +319,7 @@
                                 {{-- @if (auth()->user()->canActAsAdmin())
                                 <td>
                                     <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="actionDropdown{{ $payment->id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="actionDropdown{{ $payment->id }}" data-bs-toggle="dropdown" aria-expanded="false">
                                             <i class="bi bi-gear"></i>
                                         </button>
                                         <ul class="dropdown-menu" aria-labelledby="actionDropdown{{ $payment->id }}">

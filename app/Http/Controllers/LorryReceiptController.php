@@ -148,17 +148,17 @@ class LorryReceiptController extends Controller
         $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
 
         if ($freight_booking_id) {
-            $buttons .= '<a href="'.route('freight_bookings.edit', $freight_booking_id).'" class="btn-action btn-action-warning" title="Edit Good Hire (Lorry Hire)" data-bs-toggle="tooltip">';
+            $buttons .= '<a href="'.route('freight_bookings.edit', $freight_booking_id).'" class="btn btn-sm btn-warning" title="Edit Good Hire (Lorry Hire)" data-bs-toggle="tooltip">';
             $buttons .= '<i class="bi bi-truck"></i></a>';
         } else {
             if ($company->lr_credits <= 0) {
-                $buttons .= '<button class="btn-action btn-action-muted" title="Insufficient Credits" data-bs-toggle="tooltip" onclick="alert(\'Insufficient credits\')">';
+                $buttons .= '<button class="btn btn-sm btn-secondary" title="Insufficient Credits" data-bs-toggle="tooltip" onclick="alert(\'Insufficient credits\')">';
                 $buttons .= '<i class="bi bi-truck"></i></button>';
             } elseif ($company->plan_end_date && $today->gt($planEndDate)) {
-                $buttons .= '<button class="btn-action btn-action-muted" title="Plan Expired" data-bs-toggle="tooltip" onclick="alert(\'Plan expired\')">';
+                $buttons .= '<button class="btn btn-sm btn-secondary" title="Plan Expired" data-bs-toggle="tooltip" onclick="alert(\'Plan expired\')">';
                 $buttons .= '<i class="bi bi-truck"></i></button>';
             } else {
-                $buttons .= '<a href="'.route('freight_bookings.create').'?lorry_receipt_id='.$lorryReceipt->id.'" class="btn-action btn-action-success" title="Create Good Hire (Lorry Hire)" data-bs-toggle="tooltip">';
+                $buttons .= '<a href="'.route('freight_bookings.create').'?lorry_receipt_id='.$lorryReceipt->id.'" class="btn btn-sm btn-success" title="Create Good Hire (Lorry Hire)" data-bs-toggle="tooltip">';
                 $buttons .= '<i class="bi bi-truck"></i></a>';
             }
         }
@@ -175,12 +175,12 @@ class LorryReceiptController extends Controller
             $deleteUrl = route('lorry_receipts.destroy', $lorryReceipt->id);
             $buttons .= '<form action="'.$deleteUrl.'" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure?\')">';
             $buttons .= csrf_field().method_field('DELETE');
-            $buttons .= '<button type="submit" class="btn-action btn-action-danger" title="Delete" data-bs-toggle="tooltip">';
+            $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete" data-bs-toggle="tooltip">';
             $buttons .= '<i class="bi bi-trash"></i></button></form>';
         }
 
         // LR Copy button
-        $buttons .= '<button type="button" class="btn-action btn-action-info lr-copy-btn" title="LR Copy" data-bs-toggle="modal" data-bs-target="#lrCopyModal" data-lr-id="'.$lorryReceipt->id.'">';
+        $buttons .= '<button type="button" class="btn btn-sm btn-info lr-copy-btn" title="LR Copy" data-bs-toggle="modal" data-bs-target="#lrCopyModal" data-lr-id="'.$lorryReceipt->id.'">';
         $buttons .= '<i class="bi bi-file-earmark-text"></i></button>';
 
         $buttons .= '</div>';

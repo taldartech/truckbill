@@ -6,7 +6,7 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h4 class="mb-0"><i class="bi bi-file-earmark-plus me-2"></i>Create Custom Invoice</h4>
-                <a href="{{ route('invoices.index') }}" class="btn btn-outline-secondary btn-sm">
+                <a href="{{ route('invoices.index') }}" class="btn btn-secondary btn-sm">
                     <i class="bi bi-arrow-left me-1"></i>Back to Invoices
                 </a>
             </div>
@@ -244,7 +244,7 @@
             <div class="col-12">
                 <div class="card card-outline card-default">
                     <div class="card-footer d-flex justify-content-between py-3" id="formFooter">
-                        <a href="{{ route('invoices.index') }}" class="btn btn-outline-secondary">Cancel</a>
+                        <a href="{{ route('invoices.index') }}" class="btn btn-secondary">Cancel</a>
                         <button type="submit" class="btn btn-success px-4" id="submitBtn" style="display: none;">
                             <i class="bi bi-check2-circle me-1"></i>Create invoice
                         </button>

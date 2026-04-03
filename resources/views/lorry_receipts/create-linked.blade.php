@@ -225,7 +225,7 @@
                             <div class="d-flex align-items-center mb-2">
                                 <h6 class="mb-0">LR <span class="lr-index">#1</span></h6>
                                 <button type="button"
-                                    class="btn btn-sm btn-outline-danger ms-auto remove-lr-item">Remove</button>
+                                    class="btn btn-sm btn-danger ms-auto remove-lr-item">Remove</button>
                             </div>
                             <input type="hidden" class="lane-input" value="Road">
                             <div class="card mb-4 p-3 bg-light">
@@ -322,7 +322,7 @@
                                                     </option>
                                                 @endforeach
                                             </select>
-                                            <button type="button" class="btn btn-outline-primary"
+                                            <button type="button" class="btn btn-primary"
                                                 onclick="displayGoodAdd(this)" title="Add New Goods Type">
                                                 <i class="bi bi-plus"></i>
                                             </button>

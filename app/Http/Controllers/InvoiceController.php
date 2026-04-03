@@ -181,7 +181,7 @@ class InvoiceController extends Controller
         $actions .= '<form method="POST" action="' . route('invoices.destroy', $invoice->id) . '" style="display: inline;">';
         $actions .= csrf_field();
         $actions .= method_field('DELETE');
-        $actions .= '<button type="submit" class="btn btn-sm btn-outline-danger" title="Delete" onclick="return confirm(\'Are you sure you want to delete this invoice?\')">';
+        $actions .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete" onclick="return confirm(\'Are you sure you want to delete this invoice?\')">';
         $actions .= '<i class="bi bi-trash"></i>';
         $actions .= '</button>';
         $actions .= '</form>';

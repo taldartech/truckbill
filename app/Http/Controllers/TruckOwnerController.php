@@ -181,7 +181,7 @@ class TruckOwnerController extends Controller
         $buttons = '<div class="d-flex gap-1">';
 
         // Add Truck Button (modal trigger for truck owners)
-        $buttons .= '<button type="button" class="btn btn-sm btn-outline-primary add-truck-btn" aria-label="Add Truck" title="Add Truck" data-bs-placement="top" data-bs-toggle="tooltip" data-transporter-id="' . $truckOwner->id . '" data-transporter-name="' . htmlspecialchars($truckOwner->name) . '">';
+        $buttons .= '<button type="button" class="btn btn-sm btn-view add-truck-btn" aria-label="Add Truck" title="Add Truck" data-bs-placement="top" data-bs-toggle="tooltip" data-transporter-id="' . $truckOwner->id . '" data-transporter-name="' . htmlspecialchars($truckOwner->name) . '">';
         $buttons .= '<i class="bi bi-truck"></i></button>';
 
         if ($is_admin) {

@@ -116,7 +116,7 @@
                         <div class="col-md-4">
                             <label class="form-label">&nbsp;</label>
                             <div>
-                                <button type="button" class="btn btn-outline-primary" id="showAddDriverForm">
+                                <button type="button" class="btn btn-primary" id="showAddDriverForm">
                                     <i class="bi bi-plus-circle"></i> Add New Driver
                                 </button>
                             </div>

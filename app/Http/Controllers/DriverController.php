@@ -113,7 +113,7 @@ class DriverController extends Controller
         $buttons = '<div class="d-flex gap-1">';
         
        
-            $buttons .= '<button type="button" class="btn btn-sm btn-outline-primary edit-driver-btn" title="Edit Driver" ';
+            $buttons .= '<button type="button" class="btn btn-sm btn-edit edit-driver-btn" title="Edit Driver" ';
             $buttons .= 'data-driver-id="' . $driver->id . '" ';
             $buttons .= 'data-driver-name="' . htmlspecialchars($driver->name) . '" ';
             $buttons .= 'data-driver-mobile="' . htmlspecialchars($driver->mobile ?? '') . '" ';

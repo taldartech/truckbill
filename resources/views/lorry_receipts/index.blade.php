@@ -323,7 +323,7 @@
                         <button type="button" class="btn btn-primary btn-lg" onclick="generateLrCopy(true)">
                             <i class="bi bi-truck"></i> With Freight
                         </button>
-                        <button type="button" class="btn btn-outline-primary btn-lg" onclick="generateLrCopy(false)">
+                        <button type="button" class="btn btn-primary btn-lg" onclick="generateLrCopy(false)">
                             <i class="bi bi-file-text"></i> Without Freight
                         </button>
                     </div>

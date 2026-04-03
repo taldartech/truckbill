@@ -129,7 +129,7 @@
                         <i class="bi bi-pencil"></i> Edit
                     </button>
                 @endif
-                <a href="{{ route('freight_bookings.index') }}" class="btn btn-sm btn-outline-dark">
+                <a href="{{ route('freight_bookings.index') }}" class="btn btn-sm btn-back">
                     <i class="bi bi-arrow-left"></i> Back to List
                 </a>
             </div>

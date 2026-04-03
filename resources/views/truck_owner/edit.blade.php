@@ -251,7 +251,7 @@
                             <td>{{ formatDate(optional($truck)->registration_date) }}</td>
                             <td>
                                 <div class="btn-group" role="group">
-                                    <button type="button" class="btn btn-sm btn-outline-primary edit-truck-btn"
+                                    <button type="button" class="btn btn-sm btn-primary edit-truck-btn"
                                             title="Edit Truck"
                                             data-truck-id="{{ $truck->id }}"
                                             data-truck-number="{{ $truck->truck_number }}"
@@ -260,14 +260,14 @@
                                             data-registration-date="{{ $truck->registration_date }}">
                                         <i class="bi bi-pencil"></i>
                                     </button>
-                                    <button type="button" class="btn btn-sm btn-outline-danger delete-truck-btn"
+                                    <button type="button" class="btn btn-sm btn-danger delete-truck-btn"
                                             title="Delete Truck"
                                             data-truck-id="{{ $truck->id }}"
                                             data-truck-number="{{ $truck->truck_number }}">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                     {{-- add remove icon here --}}
-                                    <button type="button" class="btn btn-sm btn-outline-danger remove-truck-btn"
+                                    <button type="button" class="btn btn-sm btn-danger remove-truck-btn"
                                             title="Remove Truck"
                                             data-truck-id="{{ $truck->id }}"
                                             data-truck-number="{{ $truck->truck_number }}">
@@ -338,7 +338,7 @@
                                 <select class="form-select" id="driver_id" name="driver_id">
                                     <option value="">Select Driver</option>
                                 </select>
-                                <button type="button" class="btn btn-outline-primary" id="showAddDriverFormTruck">
+                                <button type="button" class="btn btn-primary" id="showAddDriverFormTruck">
                                     <i class="bi bi-plus-circle"></i> Add New
                                 </button>
                             </div>

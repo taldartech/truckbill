@@ -8,7 +8,7 @@
                 <a href="{{ route('voucher_payments.index') }}{{ request()->getQueryString() ? '?' . request()->getQueryString() : '' }}" class="btn btn-secondary">
                     <i class="bi bi-arrow-left"></i> Back
                 </a>
-                <a href="{{ route('voucher_payments.index') }}" class="btn btn-outline-secondary">
+                <a href="{{ route('voucher_payments.index') }}" class="btn btn-secondary">
                     <i class="bi bi-list-ul"></i> Back to List
                 </a>
             </div>

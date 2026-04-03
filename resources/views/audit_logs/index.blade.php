@@ -194,7 +194,7 @@
                             <button type="submit" class="btn btn-primary">Apply Filters</button>
                         </div>
                         <div class="col-lg-3 col-md-4 d-grid">
-                            <a href="{{ route('audit-logs.index') }}" class="btn btn-outline-secondary">Reset</a>
+                            <a href="{{ route('audit-logs.index') }}" class="btn btn-secondary">Reset</a>
                         </div>
                     </form>
                 </div>

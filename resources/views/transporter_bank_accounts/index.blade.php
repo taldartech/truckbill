@@ -52,7 +52,7 @@
                     </div>
                     <div class="col-md-4">
                         @if($search)
-                            <a href="{{ route('transporter_bank_accounts.index', ['company_id' => $selectedCompanyId]) }}" class="btn btn-outline-secondary">
+                            <a href="{{ route('transporter_bank_accounts.index', ['company_id' => $selectedCompanyId]) }}" class="btn btn-secondary">
                                 <i class="bi bi-x-circle"></i> Clear Search
                             </a>
                         @endif

@@ -21,7 +21,7 @@
                         <label class="form-label">Memo ID</label>
                         <div class="input-group">
                             {{-- <input type="text" id="preMemoId" class="form-control" placeholder="Optional"> --}}
-                            <button class="btn btn-outline-secondary" type="button" id="showMemoOptions">Show
+                            <button class="btn btn-secondary" type="button" id="showMemoOptions">Show
                                 Memos</button>
                         </div>
                     </div>

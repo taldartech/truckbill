@@ -318,14 +318,14 @@ class FreightBookingController extends Controller
 
         // Edit button
         if (auth()->check() && auth()->user()->canActAsAdmin()) {
-            $actions .= '<a href="'.route('freight_bookings.edit', $freightBooking->id).'" class="btn btn-sm btn-outline-primary" title="Edit">';
+            $actions .= '<a href="'.route('freight_bookings.edit', $freightBooking->id).'" class="btn btn-sm btn-edit" title="Edit">';
             $actions .= '<i class="bi bi-pencil"></i>';
             $actions .= '</a>';
         }
 
         // Individual Voucher Payment button
         if ($freightBooking->voucher_number && $freightBooking->balance_amount > 0) {
-            $actions .= '<button type="button" class="btn btn-sm btn-outline-success individual-payment-btn" ';
+            $actions .= '<button type="button" class="btn btn-sm btn-success individual-payment-btn" ';
             $actions .= 'data-id="'.$freightBooking->id.'" ';
             $actions .= 'data-lr="'.($freightBooking->lr ? $freightBooking->lr->lr_number : 'N/A').'" ';
             $actions .= 'data-voucher_number="'.$freightBooking->voucher_number.'" ';
@@ -341,7 +341,7 @@ class FreightBookingController extends Controller
             $actions .= '<form method="POST" action="'.route('freight_bookings.destroy', $freightBooking->id).'" style="display: inline;">';
             $actions .= csrf_field();
             $actions .= method_field('DELETE');
-            $actions .= '<button type="submit" class="btn btn-sm btn-outline-danger" title="Delete" onclick="return confirm(\'Are you sure you want to delete this good hire (lorry hire)?\')">';
+            $actions .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete" onclick="return confirm(\'Are you sure you want to delete this good hire (lorry hire)?\')">';
             $actions .= '<i class="bi bi-trash"></i>';
             $actions .= '</button>';
             $actions .= '</form>';

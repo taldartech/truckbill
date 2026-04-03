@@ -194,7 +194,7 @@ class TruckController extends Controller
         $buttons = '<div class="d-flex gap-1">';
 
         // Assign Driver button
-        $buttons .= '<button type="button" class="btn btn-sm btn-outline-success assign-driver-btn" title="Assign Driver" data-bs-toggle="tooltip" ';
+        $buttons .= '<button type="button" class="btn btn-sm btn-success assign-driver-btn" title="Assign Driver" data-bs-toggle="tooltip" ';
         $buttons .= 'data-truck-id="'.$truck->id.'" ';
         $buttons .= 'data-truck-number="'.htmlspecialchars($truck->truck_number).'" ';
         $buttons .= 'data-truck-type="'.htmlspecialchars($truck->truck_type).'" ';
@@ -214,7 +214,7 @@ class TruckController extends Controller
 
         // show button to assign truck owner for those whose transporter_id is null
         if ($truck->transporter_id == null) {
-            $buttons .= '<button type="button" class="btn btn-sm btn-outline-primary assign-owner-btn" title="Assign Truck Owner" data-bs-toggle="tooltip" ';
+            $buttons .= '<button type="button" class="btn btn-sm btn-view assign-owner-btn" title="Assign Truck Owner" data-bs-toggle="tooltip" ';
             $buttons .= 'data-truck-id="'.$truck->id.'" ';
             $buttons .= 'data-truck-number="'.htmlspecialchars($truck->truck_number).'" ';
             $buttons .= 'data-truck-type="'.htmlspecialchars($truck->truck_type).'" ';

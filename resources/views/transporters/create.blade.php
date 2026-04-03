@@ -196,7 +196,7 @@
                                         </option>
                                     @endforeach
                                 </select>
-                                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addCountryModal" title="Add New Country">
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCountryModal" title="Add New Country">
                                     <i class="bi bi-plus"></i>
                                 </button>
                             </div>
@@ -215,7 +215,7 @@
                                         @endforeach
                                     @endif
                                 </select>
-                                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addStateModal" title="Add New State">
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStateModal" title="Add New State">
                                     <i class="bi bi-plus"></i>
                                 </button>
                             </div>
@@ -234,7 +234,7 @@
                                         @endforeach
                                     @endif
                                 </select>
-                                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addCityModal" title="Add New City">
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCityModal" title="Add New City">
                                     <i class="bi bi-plus"></i>
                                 </button>
                             </div>
@@ -251,7 +251,7 @@
                                 </option>
                             @endforeach
                         </select>
-                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addCountryModal" title="Add New Country">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCountryModal" title="Add New Country">
                             <i class="bi bi-plus"></i>
                         </button>
                         @error('country_id') <div class="text-danger">{{ $message }}</div> @enderror
@@ -268,7 +268,7 @@
                                 @endforeach
                             @endif
                         </select>
-                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addStateModal" title="Add New State">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStateModal" title="Add New State">
                             <i class="bi bi-plus"></i>
                         </button>
                         @error('state_id') <div class="text-danger">{{ $message }}</div> @enderror
@@ -285,7 +285,7 @@
                                 @endforeach
                             @endif
                         </select>
-                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addCityModal" title="Add New City">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCityModal" title="Add New City">
                             <i class="bi bi-plus"></i>
                         </button>
                         @error('city_id') <div class="text-danger">{{ $message }}</div> @enderror
