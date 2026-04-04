@@ -208,7 +208,9 @@
     @endphp
     <tr>
         <td style="font-weight: bold;" colspan="9">
-            Rs: {{ $totalgst }} GST to be depostied by the party under reverse charge
+            @if ($invoice->invoice_type == 'Reverse')
+                Rs: {{ $totalgst }} GST to be deposited by the party under reverse charge.
+            @endif
         </td>
         <td style="font-weight: bold;" colspan="2">Amount</td>
         <td colspan="2">{{ number_format($totalAmount, 2) }}</td>
