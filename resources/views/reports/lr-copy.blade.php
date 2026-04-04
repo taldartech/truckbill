@@ -54,6 +54,11 @@
 @endpush
 
 @section('content')
+    @php
+        $rawTemplate = request()->input('template', $companyDefaultTemplate ?? 'classic');
+        $template = \App\Support\LrCopyPdfTemplate::normalizeKey($rawTemplate);
+    @endphp
+
     <div class="card mb-4">
         <div class="card-body">
             <form method="GET" action="{{ route('reports.lr-copy') }}" id="searchForm">
@@ -87,6 +92,14 @@
                             </label>
                         </div>
                     </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Format</label>
+                        <select name="template" class="form-select">
+                            <option value="classic" @selected($template === 'classic')>A — default table</option>
+                            <option value="modern" @selected($template === 'modern')>B — green Form A</option>
+                            <option value="compact" @selected($template === 'compact')>C — compact amber</option>
+                        </select>
+                    </div>
                     <div class="col-md-3 text-end d-flex align-items-end justify-content-end gap-2">
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-search"></i> Search
@@ -114,14 +127,14 @@
                     </div>
                     <div class="d-flex">
                         <a class="btn btn-warning ms-2" target="_blank"
-                            href="{{ route('reports.lr-copy-export', ['lr_id' => $lr_id, 'show_freight' => request()->has('show_freight') ? 1 : 0]) }}">
+                            href="{{ route('reports.lr-copy-export', ['lr_id' => $lr_id, 'show_freight' => request()->has('show_freight') ? 1 : 0, 'template' => $template]) }}">
                             <i class="bi bi-file-earmark-spreadsheet"></i> Export
                         </a>
                     </div>
                 </div>
             </div>
             <div class="card-body" style="overflow-x: auto;">
-                <iframe src="{{ route('reports.lr-copy-export', ['customer_id' => $customerId, 'lr_id' => $lr_id, 'show_freight' => request()->has('show_freight') ? 1 : 0]) }}"
+                <iframe src="{{ route('reports.lr-copy-export', ['customer_id' => $customerId, 'lr_id' => $lr_id, 'show_freight' => request()->has('show_freight') ? 1 : 0, 'template' => $template]) }}"
                     style="width: 100%; height: 600px; border: none;"></iframe>
             </div>
         </div>

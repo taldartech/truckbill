@@ -30,6 +30,8 @@ use App\Exports\TransporterReportExport;
 use App\Exports\TransporterMasterExport;
 use App\Exports\UltratechBillExport;
 use App\Models\Company;
+use App\Support\FreightChallanTemplate;
+use App\Support\LrCopyPdfTemplate;
 use App\Models\Transporter;
 use App\Models\VoucherLinked;
 use App\Exports\PendingMemoExport;
@@ -291,7 +293,11 @@ class ReportController extends Controller
         if ($lr_id) {
             $lr = LorryReceipt::find($request->input('lr_id'));
         }
-        return view('reports.lr-copy', compact('lr', 'customers', 'customerId', 'lr_id', 'lrs'));
+        $companyDefaultTemplate = LrCopyPdfTemplate::normalizeKey(
+            Auth::user()->company?->lr_copy_template ?? 'classic'
+        );
+
+        return view('reports.lr-copy', compact('lr', 'customers', 'customerId', 'lr_id', 'lrs', 'companyDefaultTemplate'));
     }
 
     public function lr_copy_export(Request $request)
@@ -299,10 +305,34 @@ class ReportController extends Controller
         if (!$request->input('lr_id')) {
             return redirect()->back()->with('error', 'Please select a Good Receipt (Bilty) to export.');
         }
-        $lr = LorryReceipt::find($request->input('lr_id'));
-        $html = view('reports.exports.lr-copy', compact('lr'))->render();
 
-        $pdf = Pdf::loadHTML($html)->setPaper('a4', 'portrait');
+        $companyId = Auth::user()->company_id;
+        $lr = LorryReceipt::query()
+            ->with(['truck.transporter', 'consignor', 'consignee', 'company.city', 'company.state', 'company.country'])
+            ->where('company_id', $companyId)
+            ->find($request->input('lr_id'));
+
+        if (!$lr) {
+            return redirect()->back()->with('error', 'Good Receipt (Bilty) not found or access denied.');
+        }
+
+        $companyTemplate = LrCopyPdfTemplate::normalizeKey(
+            Auth::user()->company?->lr_copy_template ?? 'classic'
+        );
+        $requested = $request->filled('template')
+            ? LrCopyPdfTemplate::normalizeKey($request->input('template'))
+            : $companyTemplate;
+
+        $view = LrCopyPdfTemplate::viewName($requested);
+        $company = $lr->company ?? Auth::user()->company;
+        $company?->loadMissing(['city', 'state', 'country']);
+
+        $html = view($view, ['lr' => $lr, 'company' => $company])->render();
+
+        $pdf = Pdf::loadHTML($html)
+            ->setPaper('a4', 'portrait')
+            ->setOption('isHtml5ParserEnabled', true)
+            ->setOption('isRemoteEnabled', true);
 
         return $pdf->stream('lr_copy.pdf');
     }
@@ -861,30 +891,57 @@ class ReportController extends Controller
         if (!$request->input('lr_id')) {
             return redirect()->back()->with('error', 'Please select a Good Receipt (Bilty) to export.');
         }
-        $lr = LorryReceipt::find($request->input('lr_id'));
+
+        $companyId = Auth::user()->company_id;
+        $lrRelations = [
+            'truck.driver',
+            'transporter.transporterMaster',
+            'consignor',
+            'consignee',
+            'freightBookings',
+        ];
+
+        $lr = LorryReceipt::with($lrRelations)
+            ->where('company_id', $companyId)
+            ->find($request->input('lr_id'));
+
+        if (! $lr) {
+            return redirect()->back()->with('error', 'Good Receipt (Bilty) not found or access denied.');
+        }
+
         if ($lr->linked_lr_id) {
-            $lrs = LorryReceipt::where('linked_lr_id', $lr->linked_lr_id)
-                ->where('company_id', Auth::user()->company_id)
+            $lrs = LorryReceipt::with($lrRelations)
+                ->where('linked_lr_id', $lr->linked_lr_id)
+                ->where('company_id', $companyId)
                 ->get();
-            // check if any lr does not have null freight_booking_id
             $allHaveFreightBooking = $lrs->every(function ($item) {
-                return !is_null($item->freight_booking_id);
+                return ! is_null($item->freight_booking_id);
             });
 
-            if (!$allHaveFreightBooking) {
+            if (! $allHaveFreightBooking) {
                 return redirect()->back()->with('error', 'Create all Good Hires (Lorry Hire) for linked Good Receipts (Bilty) before exporting the Voucher Receipt.');
             }
         } else {
             $lrs = collect([$lr]);
         }
 
-        $company = Company::find(Auth::user()->company_id);
-        if (!$company->template_name || !$company->template_address) {
-            return redirect()->back()->with('error', 'Please set the Voucher template before exporting the Voucher Receipt.');
+        $company = Company::find($companyId);
+        // Export should not hard-fail if voucher template fields are empty.
+        // Use fallback values to keep PDF generation + UI flow working.
+        if (! $company->template_name) {
+            $company->template_name = $company->name;
         }
 
-        // Set the font configuration for the PDF
-        $html = view('reports.exports.voucher-receipt', compact('lrs', 'company'))->render();
+        if (! $company->template_address) {
+            $company->template_address = $company->address ?? 'Sample registered office address';
+        }
+
+        $templateKey = FreightChallanTemplate::normalizeKey(
+            $request->input('template') ?? ($company->freight_challan_template ?? 'classic')
+        );
+        $view = FreightChallanTemplate::viewName($templateKey);
+
+        $html = view($view, compact('lrs', 'company'))->render();
 
         // Render with mPDF for proper Devanagari shaping
         $defaultConfig = (new \Mpdf\Config\ConfigVariables())->getDefaults();

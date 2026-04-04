@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>भाड़ा-चालान - {{ $company->template_name }}</title>
+    <title>भाड़ा-चालान - {{ $company->template_name ?? $company->name ?? '' }}</title>
     <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="192x192"  href="{{ asset('favicon/android-icon-192x192.png') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('favicon/apple-touch-icon.png') }}">
@@ -122,10 +122,17 @@
             padding: 0 5px;
             min-width: 100px;
         }
+
+        /* Logo: compact slot for voucher header */
     </style>
 </head>
 
 <body>
+    @php
+        $voucherLogoSrc = $company->logoFilesystemPathForPdf() ?: $company->logoPublicUrl();
+        $templateName = $company->template_name ?? $company->name ?? '';
+        $templateAddress = $company->template_address ?? $company->address ?? '';
+    @endphp
     <div class="container">
 
         <!-- Top Line (Replaced Flex with Table) -->
@@ -138,15 +145,25 @@
                     <span style="font-size: 18px"><b>(भाड़ा-चालान)</b></span>
                 </td>
                 <td style="width:48%; text-align:center;">
+                    @if (!empty($voucherLogoSrc))
+                        <div style="margin: 0 auto 3px;">
+                            @include('reports.exports.partials.pdf-company-logo-slot', [
+                                'logoSrc' => $voucherLogoSrc,
+                                'companyName' => $company->name,
+                                'slotWidthPx' => 64,
+                                'slotHeightPx' => 28,
+                            ])
+                        </div>
+                    @endif
                     @if (!empty($company->template_header))
                     <b>{{ $company->template_header }}<br>
                     @endif
-                        <span style="font-size: 27px">{{ $company->template_name }}</span>
+                        <span style="font-size: 27px">{{ $templateName }}</span>
                     </b><br>
-                    {{ $company->template_address }}
+                    {{ $templateAddress }}
                 </td>
                 <td style="width:26%; text-align:right;">
-                    <b>Tel.:</b> {{ $company->contact_number }}<br>
+                    <b>Tel.:</b> {{ $company->contact_number ?? '—' }}<br>
                     <br>
                     <br>
                     चालान नं. ............................

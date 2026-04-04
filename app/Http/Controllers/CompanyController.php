@@ -7,10 +7,17 @@ use App\Models\City;
 use App\Models\Company;
 use App\Models\Consignee;
 use App\Models\CustomInvoiceDetail;
+use App\Models\Driver;
+use App\Models\FreightBooking;
 use App\Models\Invoice;
 use App\Models\LorryReceipt;
 use App\Models\State;
+use App\Models\Transporter;
+use App\Models\TransporterMaster;
 use App\Models\Truck;
+use App\Support\FreightChallanTemplate;
+use App\Support\LrCopyPdfTemplate;
+use Illuminate\Support\Collection;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -257,8 +264,10 @@ class CompanyController extends Controller
     {
         $company = \App\Models\Company::findOrFail($id);
         $countries = \App\Models\Country::all();
-        $states = \App\Models\State::where('country_id', $company->country_id)->get();
-        $cities = \App\Models\City::where('state_id', $company->state_id)->get();
+        $countryId = old('country_id', $company->country_id);
+        $stateId = old('state_id', $company->state_id);
+        $states = \App\Models\State::where('country_id', $countryId)->get();
+        $cities = \App\Models\City::where('state_id', $stateId)->get();
         $companySlabs = config('payments.gst_slabs');
 
         $now = Carbon::now();
@@ -343,6 +352,8 @@ class CompanyController extends Controller
             'company_type' => 'nullable|in:Broker,Agency,Both',
             'company_logo' => 'nullable|image|mimes:jpeg,png,jpg|max:250',
             'invoice_template' => 'nullable|in:classic,modern,compact',
+            'lr_copy_template' => 'nullable|in:classic,modern,compact',
+            'freight_challan_template' => 'nullable|in:classic,modern',
             'gst_scheme' => 'nullable|in:reverse charge,forward charge',
             'gst_type' => 'nullable|in:composition,regular',
             'address' => 'nullable|string',
@@ -392,6 +403,12 @@ class CompanyController extends Controller
         // ✅ Default values if not set
         $validated['lr_credits'] = $request->input('lr_credits', $company->lr_credits ?? 0);
         $validated['truck_credits'] = $request->input('truck_credits', $company->truck_credits ?? 0);
+        if (! $request->filled('lr_copy_template')) {
+            $validated['lr_copy_template'] = $company->lr_copy_template ?? 'classic';
+        }
+        if (! $request->filled('freight_challan_template')) {
+            $validated['freight_challan_template'] = $company->freight_challan_template ?? 'classic';
+        }
 
         $company->update($validated);
         return redirect()->route('company.index')->with('success', 'Company updated successfully!');
@@ -438,10 +455,21 @@ class CompanyController extends Controller
     }
     public function create()
     {
-
         $companySlabs = config('payments.gst_slabs');
+        $countries = \App\Models\Country::query()->orderBy('name')->get();
 
-        return view('company.create', compact('companySlabs'));
+        $states = collect();
+        $cities = collect();
+        $countryId = old('country_id');
+        if ($countryId) {
+            $states = \App\Models\State::query()->where('country_id', $countryId)->orderBy('name')->get();
+        }
+        $stateId = old('state_id');
+        if ($stateId) {
+            $cities = \App\Models\City::query()->where('state_id', $stateId)->orderBy('name')->get();
+        }
+
+        return view('company.create', compact('companySlabs', 'countries', 'states', 'cities'));
     }
 
     public function store(Request $request)
@@ -513,6 +541,8 @@ class CompanyController extends Controller
             'company_type' => 'nullable|in:Broker,Agency,Both',
             'company_logo' => 'nullable|image|mimes:jpeg,png,jpg|max:250',
             'invoice_template' => 'nullable|in:classic,modern,compact',
+            'lr_copy_template' => 'nullable|in:classic,modern,compact',
+            'freight_challan_template' => 'nullable|in:classic,modern',
             'country_id' => 'nullable|exists:countries,id',
             'state_id' => 'nullable|exists:states,id',
             'city_id' => 'nullable|exists:cities,id',
@@ -541,6 +571,12 @@ class CompanyController extends Controller
         }
         if (!$request->filled('invoice_template')) {
             $validated['invoice_template'] = 'classic';
+        }
+        if (!$request->filled('lr_copy_template')) {
+            $validated['lr_copy_template'] = 'classic';
+        }
+        if (!$request->filled('freight_challan_template')) {
+            $validated['freight_challan_template'] = 'classic';
         }
 
         // ✅ Automatically set plan_end_date = created_at + 45 days
@@ -730,5 +766,273 @@ class CompanyController extends Controller
             'sgst' => $sgst,
             'igst' => $igst,
         ];
+    }
+
+    /**
+     * HTML/PDF preview of Good Receipt (Bilty) LR copy templates for the given company.
+     */
+    public function lrCopyTemplatePreview(Request $request, Company $company)
+    {
+        $this->authorizeCompanyAccess($company);
+
+        $template = LrCopyPdfTemplate::normalizeKey((string) $request->query('template', 'classic'));
+        $company->loadMissing(['city', 'state', 'country']);
+        $lr = $this->buildDemoLrCopyPreviewLorryReceipt($company);
+
+        $view = LrCopyPdfTemplate::viewName($template);
+
+        if ($request->query('format') === 'pdf') {
+            return $this->streamLrCopyPreviewPdf($view, $lr, $company, 'lr_copy_preview_'.$template);
+        }
+
+        return response()->view($view, ['lr' => $lr, 'company' => $company]);
+    }
+
+    /**
+     * Demo preview for company create form (no saved company yet).
+     */
+    public function lrCopyTemplateDemo(Request $request)
+    {
+        $company = $this->buildDemoCompanyFromQuery($request);
+        $company->loadMissing(['city', 'state', 'country']);
+        $lr = $this->buildDemoLrCopyPreviewLorryReceipt($company);
+
+        $template = LrCopyPdfTemplate::normalizeKey((string) $request->query('template', 'classic'));
+        $view = LrCopyPdfTemplate::viewName($template);
+
+        if ($request->query('format') === 'pdf') {
+            return $this->streamLrCopyPreviewPdf($view, $lr, $company, 'lr_copy_demo_'.$template);
+        }
+
+        return response()->view($view, ['lr' => $lr, 'company' => $company]);
+    }
+
+    /**
+     * Same PDF engine as LR copy export (DomPDF).
+     */
+    private function streamLrCopyPreviewPdf(string $view, LorryReceipt $lr, Company $company, string $downloadBaseName): Response
+    {
+        $html = view($view, ['lr' => $lr, 'company' => $company])->render();
+
+        return Pdf::loadHTML($html)
+            ->setPaper('a4', 'portrait')
+            ->setOption('isHtml5ParserEnabled', true)
+            ->setOption('isRemoteEnabled', true)
+            ->stream($downloadBaseName.'.pdf');
+    }
+
+    private function buildDemoLrCopyPreviewLorryReceipt(Company $company): LorryReceipt
+    {
+        $company->loadMissing(['city', 'state', 'country']);
+
+        $city = $company->city ?? new City(['name' => 'Ahmedabad']);
+        $state = $company->state ?? new State(['name' => 'Gujarat', 'code' => '24']);
+
+        $consignor = new Consignee([
+            'name' => 'Sample Consignor',
+            'gst_number' => '24AAAAA0000A1Z5',
+            'pan_number' => 'AABCD1234E',
+        ]);
+        $consignee = new Consignee([
+            'name' => 'Sample Consignee',
+            'gst_number' => '24BBBBB0000B1Z5',
+            'pan_number' => 'AABCD5678E',
+        ]);
+        $consignor->setRelation('city', $city);
+        $consignor->setRelation('state', $state);
+        $consignee->setRelation('city', $city);
+        $consignee->setRelation('state', $state);
+
+        $transporter = new Transporter(['pan_number' => 'AABCD9999E']);
+        $truck = new Truck(['truck_number' => 'RJ27AC1234']);
+        $truck->setRelation('transporter', $transporter);
+
+        $lr = new LorryReceipt([
+            'lr_number' => 'SAMPLE-001',
+            'gr_date' => now()->toDateString(),
+            'weight' => 10.5,
+            'no_of_units' => 100,
+            'good_type' => 'Sample goods description',
+            'amount' => 5000.00,
+            'source_city' => 'Udaipur',
+            'source_state' => 'Rajasthan',
+            'destination_city' => 'Jaipur',
+            'destination_state' => 'Rajasthan',
+            'invoice_number' => 'INV-2024-001',
+            'linked_lr_id' => null,
+        ]);
+        $lr->setRelation('truck', $truck);
+        $lr->setRelation('consignor', $consignor);
+        $lr->setRelation('consignee', $consignee);
+        $lr->setRelation('company', $company);
+
+        return $lr;
+    }
+
+    /**
+     * HTML/PDF preview of freight (भाड़ा) challan — classic voucher vs detailed Form B.
+     */
+    public function freightChallanTemplatePreview(Request $request, Company $company)
+    {
+        $this->authorizeCompanyAccess($company);
+
+        // Preview should never hard-fail if template fields are empty.
+        // When the company is newly created, template_name/template_address may be blank,
+        // so we fallback to company name/address for a consistent UI + PDF output.
+        if (! $company->template_name) {
+            $company->template_name = $company->name;
+        }
+
+        if (! $company->template_address) {
+            $company->template_address = $company->address ?? 'Sample registered office address';
+        }
+
+        $template = FreightChallanTemplate::normalizeKey((string) $request->query('template', 'classic'));
+        $company->loadMissing(['city', 'state', 'country']);
+        $lrs = $this->buildDemoFreightChallanPreviewLrs($company);
+
+        $view = FreightChallanTemplate::viewName($template);
+        $html = view($view, ['lrs' => $lrs, 'company' => $company])->render();
+
+        if ($request->query('format') === 'pdf') {
+            return $this->streamMpdfFreightChallan($html, 'freight_challan_preview_'.$template);
+        }
+
+        return response()->view($view, ['lrs' => $lrs, 'company' => $company]);
+    }
+
+    public function freightChallanTemplateDemo(Request $request)
+    {
+        $company = $this->buildDemoCompanyFromQuery($request);
+        $company->template_name = $company->name;
+        $company->template_address = $company->address ?? 'Sample registered office address';
+        $company->loadMissing(['city', 'state', 'country']);
+
+        $template = FreightChallanTemplate::normalizeKey((string) $request->query('template', 'classic'));
+        $lrs = $this->buildDemoFreightChallanPreviewLrs($company);
+
+        $view = FreightChallanTemplate::viewName($template);
+        $html = view($view, ['lrs' => $lrs, 'company' => $company])->render();
+
+        if ($request->query('format') === 'pdf') {
+            return $this->streamMpdfFreightChallan($html, 'freight_challan_demo_'.$template);
+        }
+
+        return response()->view($view, ['lrs' => $lrs, 'company' => $company]);
+    }
+
+    private function streamMpdfFreightChallan(string $html, string $downloadBaseName): Response
+    {
+        $defaultConfig = (new \Mpdf\Config\ConfigVariables())->getDefaults();
+        $fontDirs = $defaultConfig['fontDir'];
+
+        $defaultFontConfig = (new \Mpdf\Config\FontVariables())->getDefaults();
+        $fontData = $defaultFontConfig['fontdata'];
+
+        $mpdf = new \Mpdf\Mpdf([
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'orientation' => 'P',
+            'fontDir' => array_merge($fontDirs, [storage_path('fonts')]),
+            'fontdata' => $fontData + [
+                'notosansdevanagari' => [
+                    'R' => 'NotoSansDevanagari-Regular.ttf',
+                    'B' => 'NotoSansDevanagari-Bold.ttf',
+                ],
+            ],
+            'default_font' => 'notosansdevanagari',
+            'useOTL' => 0xFF,
+            'useKerning' => true,
+            'autoScriptToLang' => true,
+            'autoLangToFont' => true,
+        ]);
+
+        $mpdf->WriteHTML($html);
+
+        return response($mpdf->Output($downloadBaseName.'.pdf', 'S'), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="'.$downloadBaseName.'.pdf"',
+        ]);
+    }
+
+    /**
+     * @return Collection<int, LorryReceipt>
+     */
+    private function buildDemoFreightChallanPreviewLrs(Company $company): Collection
+    {
+        $company->loadMissing(['city', 'state', 'country']);
+
+        $city = $company->city ?? new City(['name' => 'Ajmer']);
+        $state = $company->state ?? new State(['name' => 'Rajasthan', 'code' => '08']);
+
+        $consignor = new Consignee([
+            'name' => 'Sample Consignor',
+            'gst_number' => '24AAAAA0000A1Z5',
+        ]);
+        $consignee = new Consignee([
+            'name' => 'Sample Consignee',
+            'gst_number' => '24BBBBB0000B1Z5',
+        ]);
+        $consignor->setRelation('city', $city);
+        $consignor->setRelation('state', $state);
+        $consignee->setRelation('city', $city);
+        $consignee->setRelation('state', $state);
+
+        $master = new TransporterMaster([
+            'name' => 'Sample Vehicle Owner',
+            'pan_number' => 'AABCD1234E',
+            'address' => 'Transporter registered address',
+        ]);
+        $transporter = new Transporter(['company_id' => $company->id]);
+        $transporter->setRelation('transporterMaster', $master);
+
+        $driver = new Driver([
+            'name' => 'Sample Driver',
+            'mobile' => '9352777711',
+            'address' => 'Driver address',
+            'license_number' => 'DL-1234567890',
+        ]);
+
+        $truck = new Truck([
+            'truck_number' => 'RJ14AB1234',
+            'truck_type' => 'Container',
+        ]);
+        $truck->setRelation('driver', $driver);
+        $truck->setRelation('transporter', $transporter);
+
+        $lr = new LorryReceipt([
+            'lr_number' => 'DEMO-FB-001',
+            'gr_date' => now()->toDateString(),
+            'source_city' => 'Jaipur',
+            'destination_city' => 'Ajmer',
+            'good_type' => 'Household goods',
+            'weight' => 12.5,
+            'no_of_units' => 120,
+            'shortage_amount' => 0,
+            'damage_amount' => 0,
+            'unloading_station' => 'Ajmer',
+        ]);
+        $lr->setRelation('truck', $truck);
+        $lr->setRelation('transporter', $transporter);
+        $lr->setRelation('consignor', $consignor);
+        $lr->setRelation('consignee', $consignee);
+        $lr->setRelation('company', $company);
+
+        $fb = new FreightBooking([
+            'tr_amount' => 25000,
+            'tr_fr_rate' => 2000,
+            'advance_amount' => 5000,
+            'balance_amount' => 17500,
+            'tds_amount' => 500,
+            'detention' => 0,
+            'deviation' => 0,
+            'misc_expense' => 0,
+            'eway_bill_number' => 'EWB123456789',
+            'eway_bill_expiry' => now()->addDays(5)->toDateString(),
+        ]);
+
+        $lr->setRelation('freightBookings', collect([$fb]));
+
+        return collect([$lr]);
     }
 }

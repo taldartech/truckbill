@@ -4,10 +4,10 @@
 @section('content')
 <div class="container mt-4">
     <div class="row justify-content-center">
-        <div class="col-12 col-lg-10 col-xl-8">
+        <div class="col-12 col-xl-10">
 <div class="card card-info card-outline mb-4">
     <!--begin::Header-->
-    <div class="card-header"><div class="card-title">Register Company</div></div>
+    <div class="card-header"><div class="card-title">Edit company</div></div>
     <!--end::Header-->
     <!--begin::Form-->
     <form action="{{ route('company.update', $company->id) }}" method="POST" enctype="multipart/form-data" class="needs-validation" novalidate="">
@@ -137,7 +137,65 @@
                 .invoice-preview-col:hover {
                     border-color: #93c5fd;
                 }
+                .pdf-template-studio .pdf-studio-toolbar {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 12px;
+                    align-items: flex-end;
+                    margin-bottom: 12px;
+                }
+                .pdf-template-studio .pdf-studio-toolbar .form-label {
+                    margin-bottom: 4px;
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: #495057;
+                }
+                .pdf-template-studio .pdf-studio-help {
+                    font-size: 13px;
+                    line-height: 1.45;
+                    color: #495057;
+                    background: #f8fafc;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 10px;
+                    padding: 10px 12px;
+                    margin-bottom: 12px;
+                }
+                .pdf-template-studio .invoice-preview-frame {
+                    height: 62vh;
+                    min-height: 520px;
+                    max-height: 720px;
+                }
+                .pdf-template-studio .pdf-studio-preview-wrap {
+                    position: relative;
+                    border-radius: 0.375rem;
+                    overflow: hidden;
+                    background: #f1f5f9;
+                }
+                .pdf-template-studio .pdf-studio-loading {
+                    position: absolute;
+                    inset: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: rgba(255, 255, 255, 0.85);
+                    font-size: 13px;
+                    font-weight: 600;
+                    color: #475569;
+                    z-index: 2;
+                    pointer-events: none;
+                }
+                .pdf-template-studio .pdf-studio-loading.d-none {
+                    display: none !important;
+                }
             </style>
+            @php
+                $pdfStudioInvoiceKey = old('invoice_template', $company->invoice_template ?? 'classic');
+                if (! in_array($pdfStudioInvoiceKey, ['classic', 'modern', 'compact'], true)) {
+                    $pdfStudioInvoiceKey = 'classic';
+                }
+                $pdfStudioInitialPreviewUrl = route('company.invoice-template-preview', ['company' => $company->id, 'template' => $pdfStudioInvoiceKey]);
+                $pdfStudioInitialPdfUrl = route('company.invoice-template-preview', ['company' => $company->id, 'template' => $pdfStudioInvoiceKey, 'format' => 'pdf']);
+            @endphp
             <!--begin::Row-->
             <div class="row g-3">
                 <!--begin::Col-->
@@ -235,7 +293,7 @@
                     <select class="form-select" id="state_id" name="state_id" required onchange="fetchCities(this.value)">
                         <option value="">Select State</option>
                         @foreach($states as $state)
-                            <option {{ old('state_id', $company->state_id) == $state->id ? 'selected' : '' }} value="{{ $state->id }}">{{ $state->name }}</option>
+                            <option {{ (string) old('state_id', $company->state_id) === (string) $state->id ? 'selected' : '' }} value="{{ $state->id }}">{{ $state->name }}</option>
                         @endforeach
                     </select>
                     @error('state_id') <div class="text-danger">{{ $message }}</div> @enderror
@@ -248,7 +306,7 @@
                     <select class="form-select" id="city_id" name="city_id" required>
                         <option value="">Select City</option>
                         @foreach($cities as $city)
-                            <option {{ old('city_id', $company->city_id) == $city->id ? 'selected' : '' }} value="{{ $city->id }}">{{ $city->name }}</option>
+                            <option {{ (string) old('city_id', $company->city_id) === (string) $city->id ? 'selected' : '' }} value="{{ $city->id }}">{{ $city->name }}</option>
                         @endforeach
                     </select>
                     @error('city_id') <div class="text-danger">{{ $message }}</div> @enderror
@@ -296,37 +354,50 @@
             <!--end::Row-->
             <!--begin::Row-->
             <div class="row g-3">
-              
                 <input type="hidden" id="invoice_template" name="invoice_template" value="{{ old('invoice_template', $company->invoice_template ?? 'classic') }}">
+                <input type="hidden" id="lr_copy_template" name="lr_copy_template" value="{{ old('lr_copy_template', $company->lr_copy_template ?? 'classic') }}">
+                <input type="hidden" id="freight_challan_template" name="freight_challan_template" value="{{ old('freight_challan_template', $company->freight_challan_template ?? 'classic') }}">
+
                 <div class="col-12">
-                    <div class="invoice-layout-shell">
-                        <div class="invoice-layout-topbar">
+                    <div class="invoice-layout-shell pdf-template-studio">
+                        <div class="invoice-layout-topbar flex-wrap gap-2">
                             <span class="fw-semibold text-dark">
-                                <i class="bi bi-file-earmark-pdf text-danger me-1"></i>
-                                Party Bill Layout Studio
+                                <i class="bi bi-layout-three-columns text-primary me-1"></i>
+                                PDF &amp; print templates
                             </span>
-                            <span class="invoice-layout-selected">
+                            <span class="invoice-layout-selected ms-auto">
                                 <i class="bi bi-stars"></i>
-                                Selected: <span id="selectedTemplateLabelEdit">A (Classic)</span>
+                                <span id="pdfStudioSelectedSummary">Party bill · @if ($pdfStudioInvoiceKey === 'modern') B (Modern) @elseif ($pdfStudioInvoiceKey === 'compact') C (Compact) @else A (Classic) @endif</span>
                             </span>
                         </div>
-                        <p class="small text-muted mb-3">
-                            Select a card to load live preview. Preview starts only after selection for faster page load.
+                        <p class="small text-muted mb-2">
+                            Choose the <strong>document</strong> first, then the <strong>variant</strong> (A / B / C). The preview below always matches that pair — one studio instead of three stacked blocks.
                         </p>
-                        <div class="invoice-preview-frame rounded overflow-hidden bg-light mb-3 is-empty" id="invoicePreviewContainerEdit">
-                            <div class="invoice-preview-placeholder" id="invoicePreviewPlaceholderEdit">
-                                Select a template card (A / B / C) to load the live preview.
+                        <div class="pdf-studio-toolbar row g-2">
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="pdfStudioDocumentType">Document</label>
+                                <select class="form-select" id="pdfStudioDocumentType" autocomplete="off">
+                                    <option value="invoice">Party bill (invoice PDF)</option>
+                                    <option value="lr">Good Receipt (Bilty) LR copy</option>
+                                    <option value="freight">Freight challan (Good Hires / भाड़ा-चालान)</option>
+                                </select>
                             </div>
-                            <iframe id="selectedInvoiceTemplateIframe" title="Selected invoice preview" loading="lazy"
-                                src="about:blank"></iframe>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label" for="pdfStudioVariant">Template variant</label>
+                                <select class="form-select" id="pdfStudioVariant" autocomplete="off"></select>
+                            </div>
                         </div>
-                        <a href="#"
-                           target="_blank" rel="noopener noreferrer"
-                           class="btn btn-danger w-100 mb-3" id="selectedInvoicePdfButton" style="pointer-events:none; opacity:.6;">
-                            <i class="bi bi-file-earmark-pdf me-1"></i> View Selected Template PDF
+                        <div class="pdf-studio-help mb-3" id="pdfStudioHelpText">Party bill / invoice: used for invoice PDFs and party-bill downloads. A = classic, B = modern, C = compact.</div>
+                        <div class="invoice-preview-frame rounded overflow-hidden bg-light mb-3 pdf-studio-preview-wrap" id="pdfStudioPreviewContainer">
+                            <div class="pdf-studio-loading" id="pdfStudioLoading">Loading preview…</div>
+                            <iframe id="pdfStudioPreviewIframe" title="Template preview" src="{{ $pdfStudioInitialPreviewUrl }}"></iframe>
+                        </div>
+                        <a href="{{ $pdfStudioInitialPdfUrl }}" target="_blank" rel="noopener noreferrer" class="btn btn-danger w-100 mb-3" id="pdfStudioPdfButton">
+                            <i class="bi bi-file-earmark-pdf me-1"></i> Open current template as PDF
                         </a>
-                        <div class="row g-3" id="invoiceTemplatePreviewRow">
-                            <div class="col-12 col-lg-4 invoice-preview-col"
+
+                        <div id="pdfStudioCardsInvoice" class="pdf-studio-card-panel row g-3" data-studio-doc="invoice">
+                            <div class="col-12 col-lg-4 invoice-preview-col pdf-studio-card"
                                 data-template-key="classic"
                                 data-template-label="A (Classic)"
                                 data-preview-url="{{ route('company.invoice-template-preview', ['company' => $company->id, 'template' => 'classic']) }}"
@@ -339,7 +410,7 @@
                                     <span class="badge text-bg-primary invoice-selected-badge">Selected</span>
                                 </div>
                             </div>
-                            <div class="col-12 col-lg-4 invoice-preview-col"
+                            <div class="col-12 col-lg-4 invoice-preview-col pdf-studio-card"
                                 data-template-key="modern"
                                 data-template-label="B (Modern)"
                                 data-preview-url="{{ route('company.invoice-template-preview', ['company' => $company->id, 'template' => 'modern']) }}"
@@ -352,7 +423,7 @@
                                     <span class="badge text-bg-primary invoice-selected-badge">Selected</span>
                                 </div>
                             </div>
-                            <div class="col-12 col-lg-4 invoice-preview-col"
+                            <div class="col-12 col-lg-4 invoice-preview-col pdf-studio-card"
                                 data-template-key="compact"
                                 data-template-label="C (Compact)"
                                 data-preview-url="{{ route('company.invoice-template-preview', ['company' => $company->id, 'template' => 'compact']) }}"
@@ -366,8 +437,80 @@
                                 </div>
                             </div>
                         </div>
-                        <small class="text-muted d-block mt-3">
-                            <strong>Tip:</strong> Click any card to set it as selected. You can also change template from dropdown.
+
+                        <div id="pdfStudioCardsLr" class="pdf-studio-card-panel row g-3 d-none" data-studio-doc="lr">
+                            <div class="col-12 col-lg-4 lr-preview-col invoice-preview-col pdf-studio-card"
+                                data-template-key="classic"
+                                data-template-label="A (Classic)"
+                                data-preview-url="{{ route('company.lr-copy-template-preview', ['company' => $company->id, 'template' => 'classic']) }}"
+                                data-pdf-url="{{ route('company.lr-copy-template-preview', ['company' => $company->id, 'template' => 'classic', 'format' => 'pdf']) }}">
+                                <div class="invoice-template-meta">
+                                    <div>
+                                        <div class="invoice-template-name"><span class="invoice-option-letter me-1">A</span> Classic</div>
+                                        <div class="invoice-template-use">Default — original table bilty layout</div>
+                                    </div>
+                                    <span class="badge text-bg-primary invoice-selected-badge">Selected</span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-4 lr-preview-col invoice-preview-col pdf-studio-card"
+                                data-template-key="modern"
+                                data-template-label="B (Modern)"
+                                data-preview-url="{{ route('company.lr-copy-template-preview', ['company' => $company->id, 'template' => 'modern']) }}"
+                                data-pdf-url="{{ route('company.lr-copy-template-preview', ['company' => $company->id, 'template' => 'modern', 'format' => 'pdf']) }}">
+                                <div class="invoice-template-meta">
+                                    <div>
+                                        <div class="invoice-template-name"><span class="invoice-option-letter me-1">B</span> Modern</div>
+                                        <div class="invoice-template-use">Form A — green card layout</div>
+                                    </div>
+                                    <span class="badge text-bg-primary invoice-selected-badge">Selected</span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-4 lr-preview-col invoice-preview-col pdf-studio-card"
+                                data-template-key="compact"
+                                data-template-label="C (Compact)"
+                                data-preview-url="{{ route('company.lr-copy-template-preview', ['company' => $company->id, 'template' => 'compact']) }}"
+                                data-pdf-url="{{ route('company.lr-copy-template-preview', ['company' => $company->id, 'template' => 'compact', 'format' => 'pdf']) }}">
+                                <div class="invoice-template-meta">
+                                    <div>
+                                        <div class="invoice-template-name"><span class="invoice-option-letter me-1">C</span> Compact</div>
+                                        <div class="invoice-template-use">Form C — compact amber</div>
+                                    </div>
+                                    <span class="badge text-bg-primary invoice-selected-badge">Selected</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="pdfStudioCardsFreight" class="pdf-studio-card-panel row g-3 d-none" data-studio-doc="freight">
+                            <div class="col-12 col-lg-6 fr-challan-preview-col invoice-preview-col pdf-studio-card"
+                                data-template-key="classic"
+                                data-template-label="A (Classic voucher)"
+                                data-preview-url="{{ route('company.freight-challan-template-preview', ['company' => $company->id, 'template' => 'classic']) }}"
+                                data-pdf-url="{{ route('company.freight-challan-template-preview', ['company' => $company->id, 'template' => 'classic', 'format' => 'pdf']) }}">
+                                <div class="invoice-template-meta">
+                                    <div>
+                                        <div class="invoice-template-name"><span class="invoice-option-letter me-1">A</span> Classic</div>
+                                        <div class="invoice-template-use">Current भाड़ा-चालान (Hindi / voucher)</div>
+                                    </div>
+                                    <span class="badge text-bg-primary invoice-selected-badge">Selected</span>
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-6 fr-challan-preview-col invoice-preview-col pdf-studio-card"
+                                data-template-key="modern"
+                                data-template-label="B (Detailed challan)"
+                                data-preview-url="{{ route('company.freight-challan-template-preview', ['company' => $company->id, 'template' => 'modern']) }}"
+                                data-pdf-url="{{ route('company.freight-challan-template-preview', ['company' => $company->id, 'template' => 'modern', 'format' => 'pdf']) }}">
+                                <div class="invoice-template-meta">
+                                    <div>
+                                        <div class="invoice-template-name"><span class="invoice-option-letter me-1">B</span> Detailed</div>
+                                        <div class="invoice-template-use">English challan — system data only</div>
+                                    </div>
+                                    <span class="badge text-bg-primary invoice-selected-badge">Selected</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <small class="text-muted d-block mt-2">
+                            Cards and the variant dropdown stay in sync. Freight challan preview uses voucher / party-bill name &amp; address; if they are empty, it falls back to company name/address.
                         </small>
                     </div>
                 </div>
@@ -475,52 +618,192 @@
         }
 
         document.addEventListener('DOMContentLoaded', function () {
-            const invoiceTemplateSelect = document.getElementById('invoice_template');
-            const previewCols = Array.from(document.querySelectorAll('#invoiceTemplatePreviewRow .invoice-preview-col'));
-            const selectedIframe = document.getElementById('selectedInvoiceTemplateIframe');
-            const selectedPdfButton = document.getElementById('selectedInvoicePdfButton');
-            const selectedTemplateLabel = document.getElementById('selectedTemplateLabelEdit');
-            const invoicePreviewContainerEdit = document.getElementById('invoicePreviewContainerEdit');
+            const docSelect = document.getElementById('pdfStudioDocumentType');
+            const variantSelect = document.getElementById('pdfStudioVariant');
+            const helpEl = document.getElementById('pdfStudioHelpText');
+            const summaryEl = document.getElementById('pdfStudioSelectedSummary');
+            const iframeEl = document.getElementById('pdfStudioPreviewIframe');
+            const pdfBtn = document.getElementById('pdfStudioPdfButton');
+            const hiddenInvoice = document.getElementById('invoice_template');
+            const hiddenLr = document.getElementById('lr_copy_template');
+            const hiddenFreight = document.getElementById('freight_challan_template');
+            const panelInvoice = document.getElementById('pdfStudioCardsInvoice');
+            const panelLr = document.getElementById('pdfStudioCardsLr');
+            const panelFreight = document.getElementById('pdfStudioCardsFreight');
+            const loadingEl = document.getElementById('pdfStudioLoading');
 
-            if (!invoiceTemplateSelect || !previewCols.length) {
+            if (!docSelect || !variantSelect || !iframeEl || !hiddenInvoice || !hiddenLr || !hiddenFreight || !pdfBtn) {
                 return;
             }
 
-            const syncTemplateSelection = (key, shouldLoadPreview = false) => {
-                const selectedKey = key || 'classic';
-                invoiceTemplateSelect.value = selectedKey;
-                previewCols.forEach((col) => {
-                    col.classList.toggle('is-selected', col.dataset.templateKey === selectedKey);
-                });
+            const cacheBust = (url) => {
+                if (!url || url === '#') {
+                    return url;
+                }
+                const sep = url.includes('?') ? '&' : '?';
 
-                const selectedCol = previewCols.find((col) => col.dataset.templateKey === selectedKey);
-                if (selectedTemplateLabel && selectedCol?.dataset.templateLabel) {
-                    selectedTemplateLabel.textContent = selectedCol.dataset.templateLabel;
+                return `${url}${sep}_=${Date.now()}`;
+            };
+
+            if (iframeEl && loadingEl) {
+                iframeEl.addEventListener('load', () => {
+                    loadingEl.classList.add('d-none');
+                });
+            }
+
+            const DOC_HELP = {
+                invoice: 'Party bill / invoice: used for invoice PDFs and party-bill downloads. A = classic, B = modern, C = compact.',
+                lr: 'Good Receipt (Bilty) LR copy: layout for LR copy PDFs from the Good Receipt list and LR copy report. The report screen can still override the template.',
+                freight: 'Freight challan: downloads from Good Hires (Lorry Hire). A = Hindi voucher style, B = detailed English. Uses your company / voucher data.',
+            };
+
+            const DOC_LABEL = {
+                invoice: 'Party bill',
+                lr: 'LR copy',
+                freight: 'Freight challan',
+            };
+
+            const VARIANT_OPTIONS = {
+                invoice: [
+                    { value: 'classic', text: 'A — Classic' },
+                    { value: 'modern', text: 'B — Modern' },
+                    { value: 'compact', text: 'C — Compact' },
+                ],
+                lr: [
+                    { value: 'classic', text: 'A — Classic' },
+                    { value: 'modern', text: 'B — Modern' },
+                    { value: 'compact', text: 'C — Compact' },
+                ],
+                freight: [
+                    { value: 'classic', text: 'A — Classic (Hindi voucher)' },
+                    { value: 'modern', text: 'B — Detailed (English)' },
+                ],
+            };
+
+            const getHiddenForDoc = (doc) => {
+                if (doc === 'lr') {
+                    return hiddenLr;
                 }
-                if (shouldLoadPreview && selectedIframe) {
-                    selectedIframe.src = selectedCol?.dataset.previewUrl
-                        || `{{ route('company.invoice-template-preview', ['company' => $company->id, 'template' => 'classic']) }}`;
+                if (doc === 'freight') {
+                    return hiddenFreight;
                 }
-                if (shouldLoadPreview && selectedPdfButton) {
-                    selectedPdfButton.href = selectedCol?.dataset.pdfUrl
-                        || `{{ route('company.invoice-template-preview', ['company' => $company->id, 'template' => 'classic', 'format' => 'pdf']) }}`;
+
+                return hiddenInvoice;
+            };
+
+            const getPanelForDoc = (doc) => {
+                if (doc === 'lr') {
+                    return panelLr;
+                }
+                if (doc === 'freight') {
+                    return panelFreight;
+                }
+
+                return panelInvoice;
+            };
+
+            const findCard = (doc, key) => {
+                const panel = getPanelForDoc(doc);
+                if (!panel) {
+                    return null;
+                }
+
+                return panel.querySelector(`.pdf-studio-card[data-template-key="${key}"]`);
+            };
+
+            const coerceKeyForDoc = (doc, key) => {
+                const allowed = VARIANT_OPTIONS[doc].map((o) => o.value);
+                if (allowed.includes(key)) {
+                    return key;
+                }
+
+                return allowed[0] || 'classic';
+            };
+
+            const applySelection = (doc, key, loadPreview) => {
+                const k = coerceKeyForDoc(doc, key);
+                const hidden = getHiddenForDoc(doc);
+                hidden.value = k;
+
+                const panel = getPanelForDoc(doc);
+                if (panel) {
+                    panel.querySelectorAll('.pdf-studio-card').forEach((el) => {
+                        el.classList.toggle('is-selected', el.dataset.templateKey === k);
+                    });
+                }
+
+                const card = findCard(doc, k);
+                const label = card?.dataset?.templateLabel || k;
+
+                if (helpEl) {
+                    helpEl.textContent = DOC_HELP[doc] || '';
+                }
+                if (summaryEl) {
+                    summaryEl.textContent = `${DOC_LABEL[doc] || doc} · ${label}`;
+                }
+
+                if (loadPreview && iframeEl && pdfBtn && card?.dataset?.previewUrl) {
+                    if (loadingEl) {
+                        loadingEl.classList.remove('d-none');
+                    }
+                    iframeEl.src = cacheBust(card.dataset.previewUrl);
+                    pdfBtn.href = cacheBust(card.dataset.pdfUrl || '#');
                 }
             };
 
-            syncTemplateSelection(invoiceTemplateSelect.value);
+            const rebuildVariantDropdown = (doc) => {
+                const current = getHiddenForDoc(doc).value;
+                const k = coerceKeyForDoc(doc, current);
+                variantSelect.innerHTML = '';
+                VARIANT_OPTIONS[doc].forEach((opt) => {
+                    const o = document.createElement('option');
+                    o.value = opt.value;
+                    o.textContent = opt.text;
+                    variantSelect.appendChild(o);
+                });
+                variantSelect.value = k;
+            };
 
-            previewCols.forEach((col) => {
-                col.addEventListener('click', function () {
-                    syncTemplateSelection(col.dataset.templateKey, true);
-                    if (invoicePreviewContainerEdit) {
-                        invoicePreviewContainerEdit.classList.remove('is-empty');
-                    }
-                    if (selectedPdfButton) {
-                        selectedPdfButton.style.pointerEvents = 'auto';
-                        selectedPdfButton.style.opacity = '1';
+            const showPanelForDoc = (doc) => {
+                [panelInvoice, panelLr, panelFreight].forEach((p) => {
+                    if (p) {
+                        p.classList.toggle('d-none', p !== getPanelForDoc(doc));
                     }
                 });
+            };
+
+            docSelect.addEventListener('change', () => {
+                const doc = docSelect.value;
+                showPanelForDoc(doc);
+                rebuildVariantDropdown(doc);
+                applySelection(doc, getHiddenForDoc(doc).value, true);
             });
+
+            variantSelect.addEventListener('change', () => {
+                const doc = docSelect.value;
+                applySelection(doc, variantSelect.value, true);
+            });
+
+            document.querySelectorAll('.pdf-studio-card').forEach((card) => {
+                card.addEventListener('click', () => {
+                    const panel = card.closest('.pdf-studio-card-panel');
+                    const doc = panel?.dataset?.studioDoc || docSelect.value;
+                    if (!doc) {
+                        return;
+                    }
+                    docSelect.value = doc;
+                    showPanelForDoc(doc);
+                    rebuildVariantDropdown(doc);
+                    applySelection(doc, card.dataset.templateKey, true);
+                    variantSelect.value = coerceKeyForDoc(doc, card.dataset.templateKey);
+                });
+            });
+
+            const initialDoc = 'invoice';
+            docSelect.value = initialDoc;
+            showPanelForDoc(initialDoc);
+            rebuildVariantDropdown(initialDoc);
+            applySelection(initialDoc, hiddenInvoice.value, false);
         });
     </script>
     <!--end::JavaScript-->

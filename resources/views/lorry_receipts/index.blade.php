@@ -318,6 +318,9 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body text-center">
+                    <p class="mb-2 small text-muted">
+                        PDF layout (A / B / C) uses the Good Receipt LR copy template saved in Company settings.
+                    </p>
                     <p class="mb-4">Select the type of LR copy you want to generate:</p>
                     <div class="d-flex gap-3 justify-content-center">
                         <button type="button" class="btn btn-primary btn-lg" onclick="generateLrCopy(true)">
