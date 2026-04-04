@@ -218,7 +218,7 @@ class AuditLogTest extends TestCase
         $response->assertOk();
         $response->assertSee('Co A');
         $response->assertSee('Shared term log - Co A');
-        $response->assertSee('Shared term log - Co B', false);
+        $response->assertDontSee('Shared term log - Co B', false);
     }
 
     public function test_audit_log_rejects_session_company_not_owned_by_super_admin(): void
@@ -249,7 +249,7 @@ class AuditLogTest extends TestCase
             ->get(route('audit-logs.index'));
 
         $response->assertOk();
-        $response->assertSee('Enter a company first', false);
+        $response->assertSee('No companies found', false);
         $response->assertSessionMissing('super_admin_company_id');
     }
 
