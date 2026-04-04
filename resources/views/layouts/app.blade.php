@@ -359,7 +359,7 @@
             margin: 0 !important;
             display: block !important;
         }
-        
+
         .sidebar-wrapper {
             height: calc(100vh - calc(7.5rem + 1px)) !important;
         }
@@ -1096,13 +1096,6 @@
                                             <p>Party Bill</p>
                                         </a>
                                     </li>
-                                    {{-- <li class="nav-item">
-                                        <a href="{{ route('reports.ultratech-bill') }}"
-                                            class="nav-link{{ Request::is('reports/ultratech-bill') ? ' active' : '' }}">
-                                            <i class="fas fa-file-alt"></i>
-                                            <p>Ultratech Bill</p>
-                                        </a>
-                                    </li> --}}
                                     <li class="nav-item">
                                         <a href="{{ route('reports.memo-copy') }}"
                                             class="nav-link{{ Request::is('reports/memo-copy') ? ' active' : '' }}">
