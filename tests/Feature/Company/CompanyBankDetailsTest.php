@@ -28,17 +28,22 @@ class CompanyBankDetailsTest extends TestCase
 
     protected function makeSuperAdmin(): User
     {
+        $super = User::factory()->create([
+            'user_role_id' => 2,
+            'company_id' => null,
+        ]);
+
         $company = Company::create([
             'name' => 'Super Co',
             'gst_slab' => config('payments.gst_slabs')[0],
-            'user_id' => null,
+            'user_id' => $super->id,
+            'lr_credits' => 5,
             'is_blocked' => false,
         ]);
 
-        return User::factory()->create([
-            'user_role_id' => 2,
-            'company_id' => $company->id,
-        ]);
+        $super->update(['company_id' => $company->id]);
+
+        return $super->fresh();
     }
 
     public function test_super_admin_can_view_company_bank_details_index(): void
@@ -103,6 +108,31 @@ class CompanyBankDetailsTest extends TestCase
         $response->assertSessionHasErrors('ifsc');
         $company->refresh();
         $this->assertNull($company->bank);
+    }
+
+    public function test_super_admin_cannot_edit_bank_details_for_company_they_do_not_own(): void
+    {
+        $super = $this->makeSuperAdmin();
+
+        $otherOwner = User::factory()->create([
+            'user_role_id' => 2,
+            'company_id' => null,
+        ]);
+
+        $foreignCompany = Company::create([
+            'name' => 'Other Owner Co',
+            'gst_slab' => config('payments.gst_slabs')[0],
+            'user_id' => $otherOwner->id,
+            'lr_credits' => 5,
+            'is_blocked' => false,
+        ]);
+
+        $this->actingAs($super)->get(route('company_bank_details.edit', $foreignCompany->id))->assertForbidden();
+        $this->actingAs($super)->put(route('company_bank_details.update', $foreignCompany->id), [
+            'bank' => 'Test Bank',
+            'account_number' => '12345',
+            'ifsc' => 'SBIN0001234',
+        ])->assertForbidden();
     }
 
     public function test_admin_forbidden_from_company_bank_details(): void

@@ -124,7 +124,13 @@
                 <div class="col-12">
                     <h3 class="mb-1">Audit log</h3>
                     <p class="audit-subtitle mb-0">Detailed timeline of system changes. Filter and inspect each event with old and new values.</p>
-                    @if (! empty($currentCompany))
+                    @if (! empty($auditScopeAllCompanies))
+                        <p class="small text-muted mt-2 mb-0">
+                            <i class="far fa-building me-1"></i>
+                            <span class="text-dark">All your companies</span>
+                            <span class="badge bg-light text-dark border ms-1">combined view</span>
+                        </p>
+                    @elseif (! empty($currentCompany))
                         <p class="small text-muted mt-2 mb-0">
                             <i class="far fa-building me-1"></i>
                             <span class="text-dark">{{ $currentCompany->name }}</span>
@@ -143,17 +149,17 @@
                 <div class="card-body pt-3">
                     <form method="get" action="{{ route('audit-logs.index') }}" class="row g-3 align-items-end">
                         @if ($showCompanyPicker)
-                            <div class="col-12">
+                            <div class="col-lg-3 col-md-6">
                                 <label class="form-label">Company</label>
                                 <select name="company_id" class="form-select" onchange="this.form.submit()">
-                                    <option value="">— Select company —</option>
+                                    <option value="">— All companies —</option>
                                     @foreach ($ownedCompanies as $c)
                                         <option value="{{ $c->id }}" {{ (string) ($auditScopeCompanyId ?? '') === (string) $c->id ? 'selected' : '' }}>
                                             {{ $c->name }}@if (! empty($c->short_name)) ({{ $c->short_name }})@endif
                                         </option>
                                     @endforeach
                                 </select>
-                                <p class="small text-muted mb-0 mt-1">Only your companies are listed. Pick one to load audit for that company.</p>
+                                {{-- <p class="small text-muted mb-0 mt-1">Only your companies are listed. Pick one to load audit for that company.</p> --}}
                             </div>
                         @endif
                         <div class="col-lg-3 col-md-6">
@@ -186,14 +192,14 @@
                             <label class="form-label">LR Number</label>
                             <input type="text" name="lr_number" class="form-control" placeholder="Ex: LR-1024" value="{{ $filters['lr_number'] ?? '' }}">
                         </div>
-                        <div class="col-lg-6 col-md-8">
+                        <div class="col-lg-4 col-md-6">
                             <label class="form-label">Search</label>
                             <input type="text" name="q" class="form-control" placeholder="Search by summary or reference" value="{{ $filters['q'] ?? '' }}">
                         </div>
-                        <div class="col-lg-3 col-md-4 d-grid">
+                        <div class="col-lg-2 col-md-6 d-grid">
                             <button type="submit" class="btn btn-primary">Apply Filters</button>
                         </div>
-                        <div class="col-lg-3 col-md-4 d-grid">
+                        <div class="col-lg-2 col-md-6 d-grid">
                             <a href="{{ route('audit-logs.index') }}" class="btn btn-secondary">Reset</a>
                         </div>
                     </form>
@@ -241,10 +247,6 @@
                         <div class="alert alert-warning border rounded-3 mb-3">
                             <strong>No companies found</strong> for your account. Create one under
                             <a href="{{ route('company.index') }}" class="alert-link">Company Management</a>.
-                        </div>
-                    @elseif ($auditScopeCompanyId === null && $showCompanyPicker)
-                        <div class="alert alert-warning border rounded-3 mb-3">
-                            <strong>Select a company</strong> in the filters above to see that company’s audit log.
                         </div>
                     @elseif (! $hasActiveFilters)
                         <div class="alert alert-light border rounded-3 mb-3">
@@ -310,16 +312,10 @@
                             </div>
                         @empty
                             <div class="text-center text-muted py-4">
-                                @if ($auditScopeCompanyId === null)
-                                    @if ($showCompanyPicker)
-                                        Select a company above, then apply filters to view the timeline.
-                                    @elseif ($ownedCompanies->isEmpty())
-                                        Add a company first, then apply filters.
-                                    @else
-                                        Apply filters to view the timeline.
-                                    @endif
+                                @if ($ownedCompanies->isEmpty())
+                                    Add a company first, then apply filters.
                                 @else
-                                    {{ $hasActiveFilters ? 'No activity found for selected filters.' : 'Apply filters to view timeline.' }}
+                                    {{ $hasActiveFilters ? 'No activity found for selected filters.' : 'Apply filters to view the timeline.' }}
                                 @endif
                             </div>
                         @endforelse

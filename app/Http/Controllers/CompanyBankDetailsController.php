@@ -4,12 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Company;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CompanyBankDetailsController extends Controller
 {
     public function index()
     {
-        $companies = Company::all();
+        $companies = Company::query()
+            ->where('user_id', Auth::id())
+            ->orderBy('name')
+            ->get();
 
         return view('company_bank_details.index', compact('companies'));
     }
@@ -17,6 +21,7 @@ class CompanyBankDetailsController extends Controller
     public function edit(string $id)
     {
         $company = Company::findOrFail($id);
+        $this->ensureSuperAdminOwnsCompany($company);
 
         return view('company_bank_details.edit', compact('company'));
     }
@@ -36,8 +41,16 @@ class CompanyBankDetailsController extends Controller
         }
 
         $company = Company::findOrFail($id);
+        $this->ensureSuperAdminOwnsCompany($company);
         $company->update($data);
 
         return redirect()->route('company_bank_details.index')->with('success', 'Company bank details updated successfully.');
+    }
+
+    private function ensureSuperAdminOwnsCompany(Company $company): void
+    {
+        if ((int) $company->user_id !== (int) Auth::id()) {
+            abort(403, 'You can only manage bank details for your companies.');
+        }
     }
 }

@@ -112,7 +112,7 @@ class AuditLogTest extends TestCase
         $response->assertSee('Audit Super Co', false);
     }
 
-    public function test_audit_log_multi_company_requires_selection(): void
+    public function test_audit_log_multi_company_defaults_to_all_companies(): void
     {
         $this->seedRoles();
 
@@ -141,7 +141,7 @@ class AuditLogTest extends TestCase
 
         $response = $this->get(route('audit-logs.index'));
         $response->assertOk();
-        $response->assertSee('Select a company');
+        $response->assertSee('All your companies', false);
 
         $coA = Company::query()->where('name', 'Co A')->firstOrFail();
         $response = $this->get(route('audit-logs.index', ['company_id' => $coA->id]));
@@ -219,6 +219,76 @@ class AuditLogTest extends TestCase
         $response->assertSee('Co A');
         $response->assertSee('Shared term log - Co A');
         $response->assertDontSee('Shared term log - Co B', false);
+    }
+
+    public function test_audit_log_without_company_filter_searches_all_owned_companies(): void
+    {
+        $this->seedRoles();
+
+        $superAdmin = User::factory()->create([
+            'user_role_id' => 2,
+            'company_id' => null,
+        ]);
+
+        $coA = Company::create([
+            'name' => 'Co A',
+            'user_id' => $superAdmin->id,
+            'gst_slab' => config('payments.gst_slabs')[0],
+            'lr_credits' => 5,
+            'is_blocked' => false,
+        ]);
+
+        $coB = Company::create([
+            'name' => 'Co B',
+            'user_id' => $superAdmin->id,
+            'gst_slab' => config('payments.gst_slabs')[0],
+            'lr_credits' => 5,
+            'is_blocked' => false,
+        ]);
+
+        $userA = User::factory()->create([
+            'user_role_id' => 3,
+            'company_id' => $coA->id,
+        ]);
+
+        $userB = User::factory()->create([
+            'user_role_id' => 3,
+            'company_id' => $coB->id,
+        ]);
+
+        AuditLog::query()->create([
+            'company_id' => $coA->id,
+            'user_id' => $userA->id,
+            'action' => 'updated',
+            'subject_type' => Invoice::class,
+            'subject_id' => 1,
+            'subject_label' => 'INV-A',
+            'subject_type_name' => 'Invoice',
+            'summary' => 'Shared term log - Co A',
+            'occurred_at' => now(),
+        ]);
+
+        AuditLog::query()->create([
+            'company_id' => $coB->id,
+            'user_id' => $userB->id,
+            'action' => 'updated',
+            'subject_type' => Invoice::class,
+            'subject_id' => 2,
+            'subject_label' => 'INV-B',
+            'subject_type_name' => 'Invoice',
+            'summary' => 'Shared term log - Co B',
+            'occurred_at' => now(),
+        ]);
+
+        $this->actingAs($superAdmin);
+
+        $response = $this->get(route('audit-logs.index', [
+            'q' => 'Shared term',
+        ]));
+
+        $response->assertOk();
+        $response->assertSee('Shared term log - Co A', false);
+        $response->assertSee('Shared term log - Co B', false);
     }
 
     public function test_audit_log_rejects_session_company_not_owned_by_super_admin(): void
