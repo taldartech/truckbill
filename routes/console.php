@@ -14,3 +14,10 @@ Schedule::command('truck-owners:reset-declarations --apply --no-interaction')
     ->withoutOverlapping()
     ->onOneServer()
     ->description('Reset all truck owner declarations to "not given" and recalculate TDS at the start of financial year');
+
+Schedule::command('backup:email-daily-database --no-interaction')
+    ->dailyAt('01:00')
+    ->timezone((string) config('database_backup.schedule_timezone'))
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->description('Email the latest daily database backup to configured recipients');
