@@ -265,8 +265,11 @@
         <td colspan="13"></td>
     </tr>
     <tr>
-        <td style="font-weight: bold;" colspan="9">Note :- GST Liability of Debtor:-  {{ $invoice->consignee->name }}  Under Reverse Charge
-            Mechanism of GST Act, 2017</td>
+        <td style="font-weight: bold;" colspan="9">
+            @if ($invoice->invoice_type == 'Reverse')
+                Note :- GST Liability of Debtor:-  {{ $invoice->consignee->name }}  Under Reverse Charge Mechanism of GST Act, 2017
+            @endif
+        </td>
         <td style="font-weight: bold;" colspan="4">Authorized Signature</td>
     </tr>
 </table>

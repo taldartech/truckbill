@@ -192,7 +192,9 @@
                     <td colspan="8">
                         <p>Declaration: We hereby declare that we have not availed input credit on capital goods and
                             forproviding services.</p>
-                        <p>Under RCM (Reverse Charge Mechanism) GST will be paid by service recipient only.</p>
+                        @if ($company->gst_scheme == 'reverse charge')
+                            <p>Under RCM (Reverse Charge Mechanism) GST will be paid by service recipient only.</p>
+                        @endif
                         <p>CONSIGNOR COPY</p>
                     </td>
                     <td colspan="4" style="vertical-align: bottom">For {{ $company?->name }}</td>
@@ -320,7 +322,9 @@
                     <td colspan="8">
                         <p>Declaration: We hereby declare that we have not availed input credit on capital goods and
                             forproviding services.</p>
-                        <p>Under RCM (Reverse Charge Mechanism) GST will be paid by service recipient only.</p>
+                        @if ($company->gst_scheme == 'reverse charge')
+                            <p>Under RCM (Reverse Charge Mechanism) GST will be paid by service recipient only.</p>
+                        @endif
                         <p>DRIVER COPY</p>
                     </td>
                     <td colspan="4" style="vertical-align: bottom">For {{ $company?->name }}</td>
