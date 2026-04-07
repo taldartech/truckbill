@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Transporter;
 use App\Models\AdvancePayment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class AdvancePaymentController extends Controller
 {
@@ -17,13 +19,21 @@ class AdvancePaymentController extends Controller
             'remark' => 'nullable|string|max:1000',
         ]);
 
-        $validated['company_id'] = auth()->user()->company_id;
+        $validated['company_id'] = Auth::user()->company_id;
+
+        $transporter = Transporter::findOrFail($validated['transporter_id']);
+        $newBalance = (float) $transporter->advance_amount + (float) $validated['advance_amount'];
+
+        if ($newBalance < 0) {
+            throw ValidationException::withMessages([
+                'advance_amount' => 'Deduction exceeds available book balance of ₹'.number_format((float) $transporter->advance_amount, 2).'.',
+            ]);
+        }
 
         $advancePayment = AdvancePayment::create($validated);
 
         // Update transporter's advance amount
-        $transporter = Transporter::find($validated['transporter_id']);
-        $transporter->advance_amount += $validated['advance_amount'];
+        $transporter->advance_amount = $newBalance;
         $transporter->save();
 
         // Handle AJAX request
