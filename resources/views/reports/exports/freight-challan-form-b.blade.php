@@ -173,7 +173,7 @@
             <td colspan="2">
                 {{ optional($firstLr->transporter)->name ?? '—' }}
                 @if(optional($firstLr->transporter)->pan_number)
-                    &nbsp;PAN: {{ $firstLr->transporter->pan_number }}
+                    &nbsp;PAN: {{ optional($firstLr->transporter)->pan_number }}
                 @endif
                 <br>
                 <span class="muted">{{ optional($firstLr->transporter)->address ?? '' }}</span>

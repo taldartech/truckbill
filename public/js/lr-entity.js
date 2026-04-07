@@ -486,6 +486,31 @@
       }
     };
 
+    const setOwnerOptionAvailability = (isOwnerAvailable) => {
+      const ownerOption = transporterTypeSelect.querySelector('option[value="owner"]');
+      if (!ownerOption) {
+        return;
+      }
+
+      ownerOption.disabled = !isOwnerAvailable;
+      if (!isOwnerAvailable && transporterTypeSelect.value === 'owner') {
+        transporterTypeSelect.value = 'agency';
+      }
+    };
+
+    const enforceAgencyForOwnerlessTruck = (truckId) => {
+      const transporterId = trucksData[truckId]?.transporterId ?? trucksData[truckId]?.transporter_id ?? null;
+      const ownerAvailable = transporterId !== null && transporterId !== undefined && transporterId !== '';
+      setOwnerOptionAvailability(ownerAvailable);
+
+      if (!ownerAvailable) {
+        transporterTypeSelect.value = 'agency';
+        transporterLabel.textContent = 'Agency *';
+      }
+
+      return ownerAvailable;
+    };
+
     $('#truck_id').on('select2:select', function (e) {
       if (clearingDueToCancel) {
         return;
@@ -509,7 +534,9 @@
         truckText,
       };
 
-      if (transporterTypeSelect.value === 'owner') {
+      const ownerAvailable = enforceAgencyForOwnerlessTruck(selectedTruckId);
+
+      if (transporterTypeSelect.value === 'owner' && ownerAvailable) {
         autoSelectTruckOwner(selectedTruckId);
       }
     });
@@ -543,7 +570,9 @@
         truckText,
       };
 
-      if (transporterTypeSelect.value === 'owner') {
+      const ownerAvailable = enforceAgencyForOwnerlessTruck(selectedTruckId);
+
+      if (transporterTypeSelect.value === 'owner' && ownerAvailable) {
         autoSelectTruckOwner(selectedTruckId);
       }
     });
@@ -561,6 +590,12 @@
       transporterLabel.textContent = selectedType === 'owner' ? 'Truck Owner *' : 'Agency *';
 
       if (selectedType === 'owner') {
+        const ownerAvailable = enforceAgencyForOwnerlessTruck(selectedTruckId);
+        if (!ownerAvailable) {
+          transporterSelect2.trigger('change.select2');
+          return;
+        }
+
         if (selectedTruckId) {
           autoSelectTruckOwner(selectedTruckId);
         }
@@ -824,6 +859,11 @@
     });
 
     // Edit page previously also confirmed agency on native change even with Select2; behavior is unified to Select2 primary + native fallback when Select2 is absent.
+    if (truckSelect.value) {
+      enforceAgencyForOwnerlessTruck(truckSelect.value);
+    } else {
+      setOwnerOptionAvailability(true);
+    }
   }
 
   function showValidationError(element, message) {

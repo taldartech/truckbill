@@ -129,7 +129,7 @@ Route::middleware(['auth.blocked'])->group(function () {
     // Truck Management
     Route::middleware(['role:admin,moderator,super_admin'])->group(function () {
         Route::get('/trucks', [TruckController::class, 'index'])->name('trucks.index');
-        Route::get('/trucks/create/{transporter_id}', [TruckController::class, 'create'])->name('trucks.create');
+        Route::get('/trucks/create/{transporter_id?}', [TruckController::class, 'create'])->name('trucks.create');
         Route::post('/trucks', [TruckController::class, 'store'])->name('trucks.store');
         Route::get('/trucks/{truck}', [TruckController::class, 'show'])->name('trucks.show');
     });

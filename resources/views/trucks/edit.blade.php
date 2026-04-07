@@ -7,9 +7,9 @@
         @csrf
         @method('PUT')
         <div class="mb-3">
-            <label for="transporter_id" class="form-label">Truck Owner *</label>
-            <select class="form-select" id="transporter_id" name="transporter_id" required>
-                <option value="">Select</option>
+            <label for="transporter_id" class="form-label">Truck Owner</label>
+            <select class="form-select" id="transporter_id" name="transporter_id">
+                <option value="">No Truck Owner</option>
                 @foreach($transporters as $transporter)
                     <option value="{{ $transporter->id }}" {{ old('transporter_id', $truck->transporter_id) == $transporter->id ? 'selected' : '' }}>{{ $transporter->name }}</option>
                 @endforeach

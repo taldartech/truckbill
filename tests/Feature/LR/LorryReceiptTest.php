@@ -89,6 +89,16 @@ class LorryReceiptTest extends TestCase
         return [$transporter, $truck];
     }
 
+    protected function makeOwnerlessTruck(User $admin): Truck
+    {
+        return Truck::create([
+            'company_id' => $admin->company_id,
+            'transporter_id' => null,
+            'truck_number' => 'MH10AA1234',
+            'truck_type' => 'Flatbed',
+        ]);
+    }
+
     protected function validPayload(User $admin): array
     {
         [$customer, $consignor, $consignee] = $this->seedConsignees($admin);
@@ -258,6 +268,54 @@ class LorryReceiptTest extends TestCase
 
         $response->assertRedirect('/lorry_receipts/create');
         $response->assertSessionHasErrors(['gr_number', 'invoice_number']);
+    }
+
+    public function test_store_forces_agency_payment_type_for_truck_without_owner(): void
+    {
+        $admin = $this->makeAdmin();
+        [$customer, $consignor, $consignee] = $this->seedConsignees($admin);
+        $truck = $this->makeOwnerlessTruck($admin);
+        [$agency] = $this->makeTruck($admin);
+
+        $payload = [
+            'customer_id' => $customer->id,
+            'lr_number' => 'LR-AGENCY-001',
+            'gr_number' => 'GR-AGENCY-001',
+            'invoice_number' => 'INV-AGENCY-001',
+            'memo_id' => null,
+            'truck_id' => $truck->id,
+            'transporter_id' => $agency->id,
+            'reference_by' => $agency->id,
+            'consignor_id' => $consignor->id,
+            'consignee_id' => $consignee->id,
+            'gr_date' => now()->toDateString(),
+            'company_id' => $admin->company_id,
+            'delivery_status' => 'Pending',
+            'source_city' => 'Ahmedabad',
+            'source_state' => 'Gujarat',
+            'destination_city' => 'Mumbai',
+            'destination_state' => 'Maharashtra',
+            'unloading_station' => 'Station A',
+            'lane' => 'Lane 1',
+            'good_type' => 'Cement',
+            'weight' => 10,
+            'no_of_units' => 1,
+            'fr_rate' => 1000,
+            'actual_amount' => 10000,
+            'amount' => 10000,
+            'damage_amount' => 0,
+            'shortage_amount' => 0,
+            'transporter_type' => 'owner',
+        ];
+
+        $response = $this->actingAs($admin)->post('/lorry_receipts', $payload);
+
+        $response->assertRedirect(route('lorry_receipts.index'));
+        $this->assertDatabaseHas('lorry_receipts', [
+            'lr_number' => 'LR-AGENCY-001',
+            'truck_id' => $truck->id,
+            'transporter_type' => 'agency',
+        ]);
     }
 
     public function test_check_lr_invoice_gr_uniqueness_endpoints(): void
