@@ -466,11 +466,9 @@
                             <!--end::User Image-->
                             <!--begin::Menu Footer-->
                             <div class="user-footer d-flex justify-content-center p-3">
-                                <a href="#" class="btn btn-danger text-white  btn-sm rounded-3 me-2"
-                                    id="logout-link">Sign out</a>
-                                <form id="logout-form" action="{{ route('logout') }}" method="POST"
-                                    style="display: none;">
+                                <form action="{{ route('logout') }}" method="POST" class="me-2">
                                     @csrf
+                                    <button type="submit" class="btn btn-danger text-white btn-sm rounded-3">Sign out</button>
                                 </form>
                                 <a href="{{ route('password.change') }}"
                                     class="btn btn-primary text-white  btn-sm rounded-3">Change Password</a>
@@ -563,6 +561,13 @@
                                     class="nav-link{{ Request::is('promo_codes*') ? ' active' : '' }}">
                                     <i class="fas fa-tag"></i>
                                     <p>Promo Codes</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('email_templates.index') }}"
+                                    class="nav-link{{ Request::is('email_templates*') ? ' active' : '' }}">
+                                    <i class="fas fa-envelope"></i>
+                                    <p>Email Templates</p>
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -1212,8 +1217,6 @@
             }
         });
     </script>
-    <!-- jQuery (required for AdminLTE) -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <!-- AdminLTE JS -->
     <script src="/theme/dist/js/adminlte.min.js"></script>
     <script>
@@ -1264,18 +1267,6 @@
             });
         });
     </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var logoutLink = document.getElementById('logout-link');
-            if (logoutLink) {
-                logoutLink.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    document.getElementById('logout-form').submit();
-                });
-            }
-        });
-    </script>
-
     <script>
         // Clear DataTable localStorage state on page load to reset filters
         (function() {

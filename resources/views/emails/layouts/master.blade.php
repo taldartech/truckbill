@@ -1,222 +1,61 @@
+@php
+    $brandGreen = $brandGreen ?? '#4CAF50';
+    $brandBlue = $brandBlue ?? '#2196F3';
+    $supportEmail = $supportEmail ?? 'support@truckbill.in';
+    $unsubscribeUrl = $unsubscribeUrl ?? 'https://www.truckbill.in/';
+@endphp
 <!DOCTYPE html>
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="x-apple-disable-message-reformatting">
-    <title>@yield('title', 'Notification')</title>
-
-    <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700" rel="stylesheet">
-
-    <style>
-        /* CSS Reset */
-        html, body {
-            margin: 0 auto !important;
-            padding: 0 !important;
-            height: 100% !important;
-            width: 100% !important;
-            background: #f1f2f6; /* Modern light gray background */
-            font-family: 'Open Sans', 'Lato', sans-serif;
-        }
-
-        * {
-            -ms-text-size-adjust: 100%;
-            -webkit-text-size-adjust: 100%;
-        }
-
-        div[style*="margin: 16px 0"] {
-            margin: 0 !important;
-        }
-
-        table, td {
-            mso-table-lspace: 0pt !important;
-            mso-table-rspace: 0pt !important;
-        }
-
-        table {
-            border-spacing: 0 !important;
-            border-collapse: collapse !important;
-            table-layout: fixed !important;
-            margin: 0 auto !important;
-        }
-
-        img {
-            -ms-interpolation-mode: bicubic;
-        }
-
-        a {
-            text-decoration: none;
-        }
-
-        /* Custom Styles */
-        .primary {
-            background: #007bff; /* Standard primary blue, widely accepted */
-        }
-
-        .bg_white {
-            background: #ffffff;
-        }
-
-        /* Card Container */
-        .email-container {
-            max-width: 600px;
-            margin: 40px auto; /* More vertical breathing room */
-            background: #ffffff;
-            border-radius: 8px; /* Rounded corners for card look */
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); /* Subtle shadow for depth */
-            overflow: hidden; /* Clips children to border radius */
-        }
-
-        /* Header */
-        .header {
-            padding: 40px 0 20px 0;
-            text-align: center;
-            background-color: #ffffff;
-        }
-
-        .logo h1 {
-            margin: 0;
-        }
-
-        .logo h1 a {
-            color: #2d3436;
-            font-size: 28px;
-            font-weight: 700;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        /* Content Body */
-        .content-body {
-            padding: 0 40px 40px 40px;
-            text-align: left;
-            color: #636e72;
-            font-size: 16px;
-            line-height: 1.6;
-        }
-
-        h1, h2, h3 {
-            color: #2d3436;
-            font-weight: 600;
-            margin-top: 0;
-        }
-
-        h2 {
-            font-size: 24px;
-            margin-bottom: 20px;
-        }
-
-        p {
-            margin-bottom: 20px;
-        }
-
-        /* Button */
-        .btn {
-            display: inline-block;
-            padding: 12px 30px;
-            border-radius: 6px;
-            font-weight: 600;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary {
-            background: #4a69bd; /* Nice refined blue */
-            color: #ffffff !important;
-            box-shadow: 0 4px 6px rgba(74, 105, 189, 0.3);
-        }
-
-        .btn-primary:hover {
-            background: #3c5aa6;
-        }
-
-        /* Footer */
-        .footer {
-            background-color: #f1f2f6;
-            padding: 30px 40px;
-            text-align: center;
-            border-top: 1px solid #dfe6e9;
-        }
-
-        .footer p {
-            color: #b2bec3;
-            font-size: 13px;
-            margin: 5px 0;
-        }
-
-        .footer a {
-            color: #636e72;
-            margin: 0 10px;
-            font-size: 13px;
-        }
-
-        /* Unsubscribe / Legal */
-        .legal-text {
-            font-size: 11px;
-            color: #dcdde1;
-            margin-top: 20px;
-        }
-
-        @media only screen and (max-width: 600px) {
-            .email-container {
-                width: 100% !important;
-                margin: 0 !important;
-                border-radius: 0 !important;
-                box-shadow: none !important;
-            }
-            .content-body {
-                padding: 30px 20px !important;
-            }
-            .header {
-                padding: 30px 0 10px 0 !important;
-            }
-        }
-    </style>
+    <title>@yield('title', 'TruckBill Notification')</title>
 </head>
+<body style="margin:0;padding:0;background-color:#f5f8fb;font-family:Arial,Helvetica,sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#f5f8fb;">
+        <tr>
+            <td align="center" style="padding:28px 12px;">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:640px;background-color:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e1eef5;">
+                    <tr>
+                        <td style="padding:0;background:linear-gradient(90deg,{{ $brandGreen }} 0%,{{ $brandBlue }} 100%);background-color:{{ $brandGreen }};">
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                                <tr><td style="height:18px;line-height:18px;font-size:0;">&nbsp;</td></tr>
+                                <tr>
+                                    <td align="center">
+                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="background-color:#ffffff;border-radius:36px;">
+                                            <tr>
+                                                <td style="padding:10px 24px;white-space:nowrap;">
+                                                    <img src="https://www.truckbill.in/images/logo.png" alt="" width="48" style="width:48px;height:auto;display:inline-block;vertical-align:middle;border:0;" role="presentation">
+                                                    <span style="display:inline-block;padding-left:10px;vertical-align:middle;font-size:40px;line-height:1;font-weight:800;letter-spacing:-0.8px;">
+                                                        <span style="color:{{ $brandGreen }};">Truck</span><span style="color:{{ $brandBlue }};">Bill</span>
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                                <tr><td style="height:18px;line-height:18px;font-size:0;">&nbsp;</td></tr>
+                            </table>
+                        </td>
+                    </tr>
 
-<body width="100%" style="margin: 0; padding: 0 !important; mso-line-height-rule: exactly; background-color: #f1f2f6;">
-    <center style="width: 100%; background-color: #f1f2f6;">
-        <div style="display: none; font-size: 1px; max-height: 0px; max-width: 0px; opacity: 0; overflow: hidden; mso-hide: all; font-family: sans-serif;">
-            @yield('preheader', '')
-        </div>
+                    @yield('content')
 
-        <!-- Main Card Container -->
-        <div class="email-container">
-
-            <!-- Header Section -->
-            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                <tr>
-                    <td class="header">
-                        <div class="logo">
-                            <a href="#">
-                                <img src="{{ asset('images/logo.png') }}" alt="TRUCKBILL" width="200" style="width: 200px; max-width: 200px; height: auto; display: block; margin: 0 auto; border: 0;">
-                            </a>
-                            <h1 style="margin-top: 15px;"><a href="#">TRUCKBILL</a></h1>
-                        </div>
-                    </td>
-                </tr>
-            </table>
-
-            <!-- Content Section -->
-            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-                <tr>
-                    <td class="content-body bg_white">
-                        @yield('content')
-                    </td>
-                </tr>
-            </table>
-        </div>
-        <!-- End Email Container -->
-
-        <!-- Spacer for bottom padding in some clients -->
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
-            <tr>
-                <td height="40" style="font-size: 0; line-height: 0;">&nbsp;</td>
-            </tr>
-        </table>
-
-    </center>
+                    <tr>
+                        <td style="padding:20px 30px 28px 30px;border-top:1px solid #e2e8f0;background-color:#fafcfe;text-align:center;">
+                            <p style="margin:0 0 16px 0;font-size:16px;line-height:1.5;color:#4a5d72;">
+                                Need assistance? <a href="mailto:{{ $supportEmail }}" style="color:{{ $brandBlue }};text-decoration:none;font-weight:700;">{{ $supportEmail }}</a>
+                            </p>
+                            <p style="margin:0;font-size:13px;line-height:1.6;color:#8a97a5;">
+                                You&apos;re receiving this email because you use TruckBill. If you no longer wish to receive emails
+                                <a href="{{ $unsubscribeUrl }}" style="color:{{ $brandBlue }};text-decoration:underline;">unsubscribe here</a>.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>

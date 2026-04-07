@@ -9,6 +9,8 @@ use App\Models\Pump;
 use App\Models\Transporter;
 use App\Models\Truck;
 use App\Models\VoucherPayment;
+use App\Services\Notifications\FreightBookingNotificationService;
+use App\Services\Notifications\LorryReceiptNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +20,11 @@ use Yajra\DataTables\Facades\DataTables;
 
 class FreightBookingController extends Controller
 {
+    public function __construct(
+        private readonly LorryReceiptNotificationService $lrNotificationService,
+        private readonly FreightBookingNotificationService $frNotificationService
+    ) {}
+
     public function index(Request $request)
     {
         if (auth()->user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
@@ -620,8 +627,14 @@ class FreightBookingController extends Controller
             'linked_lr_id' => $linkedLrId,
         ], $transporterInfo));
 
+        if (! empty($data['is_cancelled'])) {
+            $freightBooking->loadMissing(['company', 'lr.truck', 'transporter.transporterMaster']);
+            $this->frNotificationService->notifyCancelled($freightBooking, auth()->user());
+        }
+
         // Update lorry receipt status and damage amount
         if ($lorryReceipt) {
+            $oldDeliveryStatus = $lorryReceipt->delivery_status;
             $deliveryStatus = 'Pending';
             if ($data['is_cancelled'] === '1') {
                 $deliveryStatus = 'Cancelled';
@@ -633,6 +646,11 @@ class FreightBookingController extends Controller
             $lorryReceipt->delivery_status = $deliveryStatus;
             $lorryReceipt->freight_booking_id = $freightBooking->id;
             $lorryReceipt->save();
+
+            if ($deliveryStatus !== $oldDeliveryStatus) {
+                $lorryReceipt->loadMissing(['company', 'truck', 'transporter.transporterMaster', 'customer']);
+                $this->lrNotificationService->notifyStatusChange($lorryReceipt, $deliveryStatus, auth()->user());
+            }
         }
 
         if ($request->has('action') && $request->action === 'save_and_pay') {
@@ -1109,6 +1127,8 @@ class FreightBookingController extends Controller
 
         $linkedLrId = $lorryReceipt->linked_lr_id ?? null;
 
+        $wasFreightBookingCancelled = (bool) $freightBooking->is_cancelled;
+
         // Update freight booking with lorry receipt's LR number
         $freightBooking->update(array_merge($data, [
             'lr_number' => $lorryReceipt->lr_number,
@@ -1118,10 +1138,13 @@ class FreightBookingController extends Controller
         // Refresh freight booking to get updated values
         $freightBooking->refresh();
 
+        $justCancelledFreightBooking = ! $wasFreightBookingCancelled && (bool) $freightBooking->is_cancelled;
+
         // Update lorry receipt status
         if ($lorryReceipt) {
             // Refresh the lorry receipt to get latest data (in case memo_id was updated via AJAX)
             $lorryReceipt->refresh();
+            $oldDeliveryStatus = $lorryReceipt->delivery_status;
 
             \Log::info('FREIGHT BOOKING UPDATE: Starting LR status update', [
                 'freight_booking_id' => $freightBooking->id,
@@ -1303,12 +1326,22 @@ class FreightBookingController extends Controller
             $lorryReceipt->delivery_status = $deliveryStatus;
             $lorryReceipt->save();
 
+            if ($deliveryStatus !== $oldDeliveryStatus) {
+                $lorryReceipt->loadMissing(['company', 'truck', 'transporter.transporterMaster', 'customer']);
+                $this->lrNotificationService->notifyStatusChange($lorryReceipt, $deliveryStatus, auth()->user());
+            }
+
             \Log::info('FREIGHT BOOKING UPDATE: Final LR state after save', [
                 'lr_id' => $lorryReceipt->id,
                 'lr_number' => $lorryReceipt->lr_number,
                 'memo_id' => $lorryReceipt->memo_id,
                 'delivery_status' => $lorryReceipt->delivery_status,
             ]);
+        }
+
+        if ($justCancelledFreightBooking) {
+            $freightBooking->loadMissing(['company', 'lr.truck', 'transporter.transporterMaster']);
+            $this->frNotificationService->notifyCancelled($freightBooking, auth()->user());
         }
 
         return redirect()->route('freight_bookings.index')->with('success', 'Good Hire (Lorry Hire) updated successfully.');
@@ -1735,9 +1768,15 @@ class FreightBookingController extends Controller
                 // Update memo_id and delivery_status for lorry receipts individually to trigger auditing
                 $lorryReceipts = \App\Models\LorryReceipt::whereIn('id', $validated['lr_ids'])->get();
                 foreach ($lorryReceipts as $lr) {
+                    $oldDeliveryStatus = $lr->delivery_status;
                     $lr->memo_id = $validated['memo_id'];
                     $lr->delivery_status = 'Delivered';
                     $lr->save();
+
+                    if ($oldDeliveryStatus !== 'Delivered') {
+                        $lr->loadMissing(['company', 'truck', 'transporter.transporterMaster', 'customer']);
+                        $this->lrNotificationService->notifyStatusChange($lr, 'Delivered', auth()->user());
+                    }
                 }
 
                 // Update is_delivered for freight bookings individually to trigger auditing

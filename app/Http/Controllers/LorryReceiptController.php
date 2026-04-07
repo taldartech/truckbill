@@ -8,6 +8,7 @@ use App\Models\GoodType;
 use App\Models\LorryReceipt;
 use App\Models\Transporter;
 use App\Models\Truck;
+use App\Services\Notifications\LorryReceiptNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +18,10 @@ use Yajra\DataTables\Facades\DataTables;
 
 class LorryReceiptController extends Controller
 {
+    public function __construct(
+        private readonly LorryReceiptNotificationService $lrNotificationService
+    ) {}
+
     /**
      * Check if user's subscription plan is expired
      */
@@ -373,9 +378,15 @@ class LorryReceiptController extends Controller
 
                 // Update lorry receipts
                 foreach ($lorryReceipts as $lr) {
+                    $oldDeliveryStatus = $lr->delivery_status;
                     $lr->memo_id = $validated['memo_id'];
                     $lr->delivery_status = 'Delivered';
                     $lr->save();
+
+                    if ($oldDeliveryStatus !== 'Delivered') {
+                        $lr->loadMissing(['company', 'truck', 'transporter.transporterMaster', 'customer']);
+                        $this->lrNotificationService->notifyStatusChange($lr, 'Delivered', auth()->user());
+                    }
                 }
 
                 Log::info('Bulk Payment: Updated successfully', [
@@ -1232,6 +1243,11 @@ class LorryReceiptController extends Controller
                     'updated_fields' => array_keys($updateData),
                 ]);
             }
+        }
+
+        if (isset($validated['delivery_status']) && $validated['delivery_status'] !== $oldDeliveryStatus) {
+            $lorry_receipt->loadMissing(['company', 'truck', 'transporter.transporterMaster', 'customer']);
+            $this->lrNotificationService->notifyStatusChange($lorry_receipt, $validated['delivery_status'], auth()->user());
         }
 
         return redirect()->route('lorry_receipts.index')->with('success', 'Good Receipt (Bilty) updated successfully!');
