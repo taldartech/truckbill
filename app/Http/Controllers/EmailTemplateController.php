@@ -182,6 +182,16 @@ class EmailTemplateController extends Controller
             'paymentMode',
             'paymentDate',
             'paymentStatus',
+            'invoiceNumber',
+            'manualInvoiceNumber',
+            'customerName',
+            'dueAmount',
+            'paidAmount',
+            'paymentAmount',
+            'dueInDays',
+            'ewayBillNumber',
+            'ewayBillExpiryDate',
+            'expiryInDays',
         ];
     }
 

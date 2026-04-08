@@ -66,6 +66,17 @@ class EmailTemplateSeeder extends Seeder
                 'is_active' => true,
             ],
             [
+                'key' => 'EWAY_EXPIRY_1D',
+                'name' => 'E-Way Bill Expiry Reminder',
+                'subject' => '{{companyName}} | E-Way bill expiring in {{expiryInDays}} day(s)',
+                'body_html' => '<p>Hello {{name}},</p><p>An E-Way bill is approaching expiry.</p><p><strong>Company:</strong> {{companyName}}<br><strong>LR No:</strong> {{lrNumber}}<br><strong>Truck No:</strong> {{truckNumber}}<br><strong>E-Way Bill No:</strong> {{ewayBillNumber}}<br><strong>Expiry Date:</strong> {{ewayBillExpiryDate}}<br><strong>Reminder:</strong> expires in {{expiryInDays}} day(s)</p>',
+                'allowed_variables' => ['name', 'companyName', 'lrNumber', 'truckNumber', 'ewayBillNumber', 'ewayBillExpiryDate', 'expiryInDays', 'dateTime', 'downloadUrl'],
+                'allowed_roles' => ['super_admin', 'admin', 'moderator'],
+                'send_to_transporter' => false,
+                'send_to_customer' => false,
+                'is_active' => true,
+            ],
+            [
                 'key' => 'VOUCHER_PAYMENT_PENDING',
                 'name' => 'Voucher Payment Pending',
                 'subject' => '{{companyName}} | Voucher pending ₹{{amount}} (LR {{lrNumber}})',

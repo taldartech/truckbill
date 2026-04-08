@@ -21,3 +21,17 @@ Schedule::command('backup:email-daily-database --no-interaction')
     ->withoutOverlapping()
     ->onOneServer()
     ->description('Email the latest daily database backup to configured recipients');
+
+Schedule::command('invoice:send-due-reminders --days=3,1 --due-days=7 --no-interaction')
+    ->dailyAt('09:00')
+    ->timezone('Asia/Kolkata')
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->description('Send invoice due reminders (3d, 1d before due date) to customers');
+
+Schedule::command('eway:send-expiry-reminders --days=1 --no-interaction')
+    ->dailyAt('09:10')
+    ->timezone('Asia/Kolkata')
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->description('Send E-Way expiry reminders to office roles');
