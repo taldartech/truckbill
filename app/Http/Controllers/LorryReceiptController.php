@@ -420,6 +420,7 @@ class LorryReceiptController extends Controller
 
     public function store(Request $request): \Illuminate\Http\RedirectResponse
     {
+
         $this->ensureCompanyContext();
         // dd($request->all());
         // If request contains multiple LRs payload, handle batch creation with lr_linked_id

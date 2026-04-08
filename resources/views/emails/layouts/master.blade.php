@@ -25,11 +25,9 @@
                                     <td align="center">
                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="background-color:#ffffff;border-radius:36px;">
                                             <tr>
-                                                <td style="padding:10px 24px;white-space:nowrap;">
-                                                    <img src="https://www.truckbill.in/images/logo.png" alt="" width="48" style="width:48px;height:auto;display:inline-block;vertical-align:middle;border:0;" role="presentation">
-                                                    <span style="display:inline-block;padding-left:10px;vertical-align:middle;font-size:40px;line-height:1;font-weight:800;letter-spacing:-0.8px;">
-                                                        <span style="color:{{ $brandGreen }};">Truck</span><span style="color:{{ $brandBlue }};">Bill</span>
-                                                    </span>
+                                                <td style="padding:8px 18px;white-space:nowrap;">
+                                                    <img src="https://www.truckbill.in/images/truckbill_side_logo.png" alt="" width="220" style="width:220px;max-width:100%;height:auto;display:inline-block;vertical-align:middle;border:0;" role="presentation">
+                                                   
                                                 </td>
                                             </tr>
                                         </table>

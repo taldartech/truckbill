@@ -9,6 +9,7 @@ use App\Models\Transporter;
 use App\Models\TransporterMaster;
 use App\Models\Truck;
 use App\Models\User;
+use App\Services\Notifications\TransporterOnboardingNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +17,10 @@ use Illuminate\Support\Facades\Password;
 
 class TransporterController extends Controller
 {
+    public function __construct(
+        private readonly TransporterOnboardingNotificationService $transporterOnboardingNotificationService
+    ) {}
+
     private function ensureCompanyContext(): void
     {
         if (Auth::user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
@@ -351,6 +356,7 @@ class TransporterController extends Controller
             ]);
 
             Password::sendResetLink(['email' => $master->email]);
+            $this->transporterOnboardingNotificationService->sendAccountCreated($master->email, $master->name);
 
             return redirect()->route('transporters.index')->with('success', 'Transporter created successfully! A password setup link has been sent to '.$master->email);
         });

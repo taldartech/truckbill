@@ -6,7 +6,7 @@ use App\Models\Lead;
 use App\Models\Referral;
 use App\Models\User;
 use App\Models\UserRole;
-use App\Notifications\OnboardingWelcomeNotification;
+use App\Services\Notifications\OnboardingNotificationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -17,7 +17,8 @@ class LeadOnboardingService
 {
     public function __construct(
         private readonly OnboardingTokenService $tokenService,
-        private readonly OnboardingOtpService $otpService
+        private readonly OnboardingOtpService $otpService,
+        private readonly OnboardingNotificationService $onboardingNotificationService
     ) {}
 
     public function complete(array $payload): array
@@ -89,7 +90,10 @@ class LeadOnboardingService
         });
 
         try {
-            $result['user']->notify(new OnboardingWelcomeNotification($result['user']->name));
+            $this->onboardingNotificationService->sendUserOnboardingWelcome(
+                $result['user']->email,
+                $result['user']->name
+            );
         } catch (\Throwable $exception) {
             Log::error('Welcome email notification failed after onboarding', [
                 'user_id' => $result['user']->id,

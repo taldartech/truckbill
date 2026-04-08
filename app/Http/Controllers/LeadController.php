@@ -8,14 +8,13 @@ use App\Http\Requests\RejectLeadRequest;
 use App\Http\Requests\StoreLeadRequest;
 use App\Http\Requests\UpdateLeadRequest;
 use App\Models\Lead;
-use App\Notifications\OnboardingLinkNotification;
 use App\Services\LeadLifecycleService;
+use App\Services\Notifications\OnboardingNotificationService;
 use App\Services\OnboardingTokenService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -23,7 +22,8 @@ class LeadController extends Controller
 {
     public function __construct(
         private readonly LeadLifecycleService $lifecycleService,
-        private readonly OnboardingTokenService $tokenService
+        private readonly OnboardingTokenService $tokenService,
+        private readonly OnboardingNotificationService $onboardingNotificationService
     ) {}
 
     public function index(Request $request): View|JsonResponse
@@ -101,7 +101,7 @@ class LeadController extends Controller
         $tokenPayload = $this->tokenService->generateForLead($lead, (int) Auth::id());
         $frontendBaseUrl = rtrim((string) config('services.onboarding.frontend_base_url'), '/');
         $link = $frontendBaseUrl.'/onboard/'.$tokenPayload['plain_token'];
-        Notification::route('mail', $lead->email)->notify(new OnboardingLinkNotification($lead->name, $link));
+        $this->onboardingNotificationService->sendLeadOnboardingLink($lead->email, $lead->name, $link);
 
         Log::info('Onboarding link generated', [
             'lead_id' => $lead->id,

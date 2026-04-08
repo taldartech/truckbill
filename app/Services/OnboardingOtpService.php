@@ -3,12 +3,15 @@
 namespace App\Services;
 
 use App\Models\EmailOtp;
-use App\Notifications\OnboardingOtpNotification;
-use Illuminate\Support\Facades\Notification;
+use App\Services\Notifications\OnboardingNotificationService;
 use Illuminate\Validation\ValidationException;
 
 class OnboardingOtpService
 {
+    public function __construct(
+        private readonly OnboardingNotificationService $onboardingNotificationService
+    ) {}
+
     public function send(string $email): void
     {
         $otp = (string) random_int(100000, 999999);
@@ -25,7 +28,7 @@ class OnboardingOtpService
             'expires_at' => $expiresAt,
         ]);
 
-        Notification::route('mail', $email)->notify(new OnboardingOtpNotification($otp, 10));
+        $this->onboardingNotificationService->sendLeadOnboardingOtp($email, $otp, 10);
     }
 
     public function verify(string $email, string $otp): void
