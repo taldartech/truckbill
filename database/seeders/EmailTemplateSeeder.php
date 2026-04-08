@@ -54,6 +54,17 @@ class EmailTemplateSeeder extends Seeder
                 'send_to_customer' => false,
                 'is_active' => true,
             ],
+            [
+                'key' => 'ADVANCE_PAYMENT_PAID',
+                'name' => 'Advance Payment Disbursed',
+                'subject' => '{{companyName}} | Advance disbursed: ₹{{amount}} ({{transporterName}})',
+                'body_html' => '<p>Hello {{name}},</p><p>An <strong>advance payment</strong> has been recorded for <strong>{{companyName}}</strong>.</p><p><strong>Transporter:</strong> {{transporterName}}<br><strong>Amount:</strong> ₹{{amount}}<br><strong>Payment date:</strong> {{paymentDate}}<br><strong>Recorded at:</strong> {{dateTime}}</p><p><strong>Remark:</strong> {{remark}}</p>',
+                'allowed_variables' => ['name', 'companyName', 'amount', 'paymentDate', 'transporterName', 'remark', 'dateTime', 'downloadUrl'],
+                'allowed_roles' => ['super_admin', 'admin'],
+                'send_to_transporter' => true,
+                'send_to_customer' => false,
+                'is_active' => true,
+            ],
         ];
 
         foreach ($templates as $template) {

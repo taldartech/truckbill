@@ -174,6 +174,10 @@ class EmailTemplateController extends Controller
             'welcomeLink',
             'resetLink',
             'voucherNumber',
+            'amount',
+            'paymentDate',
+            'transporterName',
+            'remark',
         ];
     }
 
