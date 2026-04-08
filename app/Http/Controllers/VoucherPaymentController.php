@@ -10,6 +10,7 @@ use App\Models\Transporter;
 use App\Models\Truck;
 use App\Models\VoucherLinked;
 use App\Models\VoucherPayment;
+use App\Services\Notifications\VoucherPaymentNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +18,10 @@ use Illuminate\Support\Facades\Log;
 
 class VoucherPaymentController extends Controller
 {
+    public function __construct(
+        private readonly VoucherPaymentNotificationService $voucherPaymentNotificationService
+    ) {}
+
     private function ensureCompanyContext(): void
     {
         if (Auth::user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
@@ -407,6 +412,9 @@ class VoucherPaymentController extends Controller
 
             \DB::commit();
 
+            $voucherPayment->loadMissing(['company', 'freight_booking.lr', 'freight_booking.transporter.transporterMaster']);
+            $this->voucherPaymentNotificationService->notifyForCurrentStatus($voucherPayment, auth()->user());
+
             // Redirect back to lorry receipts page with success message
             return redirect()->route('lorry_receipts.index')
                 ->with('success', 'Payment allocated successfully.');
@@ -582,6 +590,8 @@ class VoucherPaymentController extends Controller
         DB::beginTransaction();
 
         try {
+            $previousPaymentStatus = $voucher_payment->payment_status;
+
             $idsToLock = collect([$oldFreightBookingId, $newFreightBookingId])->unique()->sort()->values()->all();
             foreach ($idsToLock as $id) {
                 FreightBooking::lockForUpdate()->findOrFail($id);
@@ -747,6 +757,12 @@ class VoucherPaymentController extends Controller
             }
 
             DB::commit();
+
+            $voucher_payment->refresh();
+            if ($previousPaymentStatus !== $voucher_payment->payment_status) {
+                $voucher_payment->loadMissing(['company', 'freight_booking.lr', 'freight_booking.transporter.transporterMaster']);
+                $this->voucherPaymentNotificationService->notifyForCurrentStatus($voucher_payment, auth()->user());
+            }
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error updating voucher payment', [
@@ -1060,6 +1076,12 @@ class VoucherPaymentController extends Controller
                 $payment->save();
             }
 
+            foreach ($voucherPayments as $payment) {
+                $payment->refresh();
+                $payment->loadMissing(['company', 'freight_booking.lr', 'freight_booking.transporter.transporterMaster']);
+                $this->voucherPaymentNotificationService->notifyForCurrentStatus($payment, auth()->user());
+            }
+
             $linkedPayments = VoucherLinked::whereIn('id', $multiple_payment_ids)->get();
             foreach ($linkedPayments as $linkedPayment) {
                 $linkedPayment->payment_status = $validated['new_status'];
@@ -1269,14 +1291,21 @@ class VoucherPaymentController extends Controller
                 return redirect()->back()->with('error', 'Invalid status transition. Paid cannot revert; bank/fuel in progress cannot go to pending; cash and adjust in advance cannot use pending.');
             }
 
+            $oldPaymentStatus = $payment->payment_status;
+
             $payment->payment_status = $validated['status'];
             $payment->save();
+
+            if ($oldPaymentStatus !== $validated['status']) {
+                $payment->loadMissing(['company', 'freight_booking.lr', 'freight_booking.transporter.transporterMaster']);
+                $this->voucherPaymentNotificationService->notifyForCurrentStatus($payment, auth()->user());
+            }
 
             // Log the status change
             \Log::info('Payment status updated', [
                 'payment_id' => $payment->id,
                 'voucher_number' => $payment->voucher_number,
-                'old_status' => $payment->getOriginal('payment_status'),
+                'old_status' => $oldPaymentStatus,
                 'new_status' => $validated['status'],
                 'updated_by' => auth()->id(),
             ]);

@@ -178,6 +178,10 @@ class EmailTemplateController extends Controller
             'paymentDate',
             'transporterName',
             'remark',
+            'paymentType',
+            'paymentMode',
+            'paymentDate',
+            'paymentStatus',
         ];
     }
 
