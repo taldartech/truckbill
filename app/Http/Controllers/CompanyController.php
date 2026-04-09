@@ -17,6 +17,7 @@ use App\Models\TransporterMaster;
 use App\Models\Truck;
 use App\Support\FreightChallanTemplate;
 use App\Support\LrCopyPdfTemplate;
+use App\Services\Notifications\CompanyLifecycleNotificationService;
 use Illuminate\Support\Collection;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -26,6 +27,10 @@ use Illuminate\Validation\Rule;
 
 class CompanyController extends Controller
 {
+    public function __construct(
+        private readonly CompanyLifecycleNotificationService $companyLifecycleNotificationService
+    ) {}
+
     /**
      * Super admin: enter company context and redirect to dashboard.
      */
@@ -588,7 +593,9 @@ class CompanyController extends Controller
 
         $validated['short_name'] = $normalizedShortName;
 
-        \App\Models\Company::create($validated);
+        $company = \App\Models\Company::create($validated);
+        $this->companyLifecycleNotificationService->notifyCompanyRegistered($company, auth()->user());
+
         return redirect()->route('company.index')->with('success', 'Company registered successfully!,You are eligible for 45 days free plan');
     }
 

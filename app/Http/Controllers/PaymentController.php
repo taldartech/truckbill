@@ -6,6 +6,7 @@ use App\Models\Company;
 use App\Models\PaymentLedger;
 use App\Models\PromoCode;
 use App\Models\UpcomingPlan;
+use App\Services\Notifications\CompanyLifecycleNotificationService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -16,6 +17,10 @@ use Razorpay\Api\Api;
 
 class PaymentController extends Controller
 {
+    public function __construct(
+        private readonly CompanyLifecycleNotificationService $companyLifecycleNotificationService
+    ) {}
+
     /**
      * Display a listing of companies for payment management (superadmin only)
      */
@@ -476,6 +481,14 @@ class PaymentController extends Controller
 
                 $company->save();
                 DB::commit();
+
+                if ($transaction->payment_type === 'renewal') {
+                    $this->companyLifecycleNotificationService->notifySubscriptionRenewed(
+                        $company->fresh(),
+                        $transaction->fresh(),
+                        Auth::user()
+                    );
+                }
 
                 $message = $hasExistingPlan && $transaction->payment_type === 'renewal'
                     ? 'Payment successful! Plan will be activated after your current plan ends.'
