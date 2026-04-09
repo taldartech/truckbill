@@ -8,35 +8,39 @@
     @endphp
 
     <tr>
-        <td style="padding:24px 24px 10px 24px;">
-            <p style="margin:0 0 12px;font-size:18px;line-height:1.4;font-weight:700;color:#1f2d3d;">Hello,</p>
-            <p style="margin:0 0 18px;font-size:14px;line-height:1.7;color:#374151;">
-                You are receiving this email because we received a password reset request for your account.
+        <td style="padding:40px;text-align:center;">
+            
+            <div style="margin-bottom:24px;">
+                <span style="font-size:48px;">🔒</span>
+            </div>
+            
+            <h1 style="margin:0 0 16px;font-size:24px;line-height:1.3;font-weight:800;color:#183A41;">Reset your password</h1>
+            
+            <p style="margin:0 auto 32px;font-size:16px;line-height:1.6;color:#546875;max-width:400px;">
+                We received a request to reset the password for your TruckBill account.
             </p>
 
-            <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:0 auto 18px auto;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:0 auto 32px auto;">
                 <tr>
-                    <td align="center" style="border-radius:10px;background-color:{{ $brandBlue ?? '#2196F3' }};">
-                        <a href="{{ $resetUrl }}" target="_blank" style="display:inline-block;padding:12px 22px;font-size:14px;line-height:1.2;font-weight:700;color:#ffffff;text-decoration:none;border-radius:10px;">
+                    <td align="center" style="border-radius:12px;background-color:#419B88;box-shadow:0 4px 12px rgba(65,155,136,0.3);">
+                        <a href="{{ $resetUrl }}" target="_blank" style="display:inline-block;padding:16px 36px;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;border-radius:12px;">
                             Reset Password
                         </a>
                     </td>
                 </tr>
             </table>
 
-            <p style="margin:0 0 12px;font-size:14px;line-height:1.7;color:#374151;">
-                This password reset link will expire in {{ $count }} minutes.
-            </p>
-            <p style="margin:0 0 16px;font-size:14px;line-height:1.7;color:#374151;">
-                If you did not request a password reset, no further action is required.
+            <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#8B9BA7;">
+                This link will expire in {{ $count }} minutes.<br>
+                If you did not request this, please ignore this email.
             </p>
 
-            <hr style="border:none;border-top:1px solid #e5e7eb;margin:18px 0;">
-
-            <p style="margin:0;font-size:12px;line-height:1.6;color:#8a97a5;">
-                If you're having trouble clicking the "Reset Password" button, copy and paste this URL into your browser:<br>
-                <a href="{{ $resetUrl }}" style="color:{{ $brandBlue ?? '#2196F3' }};text-decoration:underline;">{{ $resetUrl }}</a>
-            </p>
+            <div style="border-top:1px solid #EBEFF2;padding-top:24px;margin-top:16px;">
+                <p style="margin:0;font-size:13px;line-height:1.6;color:#8B9BA7;">
+                    Having trouble? Copy and paste this URL into your browser:<br>
+                    <a href="{{ $resetUrl }}" style="color:#3B82F6;text-decoration:underline;word-break:break-all;margin-top:8px;display:inline-block;">{{ $resetUrl }}</a>
+                </p>
+            </div>
         </td>
     </tr>
 @endsection
