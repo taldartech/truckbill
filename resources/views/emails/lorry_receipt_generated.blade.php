@@ -1,13 +1,14 @@
 @php
+    $websiteUrl = rtrim((string) config('app.website_url', 'https://www.truckbill.in'), '/');
     $brandGreen = '#2FB36F';
     $brandBlue = '#2D8CFF';
     $recipientName = $recipientName ?? 'Customer';
     $lrNumber = $lrNumber ?? 'LR-56789';
     $truckNumber = $truckNumber ?? 'RJ14 AB 1234';
     $lrDate = $lrDate ?? 'April 20, 2024';
-    $downloadUrl = $downloadUrl ?? 'https://www.truckbill.in/';
+    $downloadUrl = $downloadUrl ?? ($websiteUrl.'/');
     $supportEmail = $supportEmail ?? 'support@truckbill.in';
-    $unsubscribeUrl = $unsubscribeUrl ?? 'https://www.truckbill.in/';
+    $unsubscribeUrl = $unsubscribeUrl ?? ($websiteUrl.'/');
 @endphp
 
 @extends('emails.layouts.master')

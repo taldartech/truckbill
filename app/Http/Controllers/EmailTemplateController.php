@@ -196,6 +196,11 @@ class EmailTemplateController extends Controller
             'ewayBillNumber',
             'ewayBillExpiryDate',
             'expiryInDays',
+            'planEndDate',
+            'tenure',
+            'daysLeft',
+            'creditThreshold',
+            'lrCredits',
         ];
     }
 

@@ -2,7 +2,9 @@
     $brandGreen = $brandGreen ?? '#4CAF50';
     $brandBlue = $brandBlue ?? '#2196F3';
     $supportEmail = $supportEmail ?? 'support@truckbill.in';
-    $unsubscribeUrl = $unsubscribeUrl ?? 'https://www.truckbill.in/';
+    $websiteUrl = rtrim((string) config('app.website_url', 'https://www.truckbill.in'), '/');
+    $unsubscribeUrl = $unsubscribeUrl ?? ($websiteUrl.'/');
+    $logoUrl = $logoUrl ?? ($websiteUrl.'/images/truckbill_side_logo.png');
 @endphp
 <!DOCTYPE html>
 <html lang="en">
@@ -26,7 +28,7 @@
                                         <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="background-color:#ffffff;border-radius:36px;">
                                             <tr>
                                                 <td style="padding:8px 18px;white-space:nowrap;">
-                                                    <img src="https://www.truckbill.in/images/truckbill_side_logo.png" alt="" width="220" style="width:220px;max-width:100%;height:auto;display:inline-block;vertical-align:middle;border:0;" role="presentation">
+                                                    <img src="{{ $logoUrl }}" alt="" width="220" style="width:220px;max-width:100%;height:auto;display:inline-block;vertical-align:middle;border:0;" role="presentation">
                                                    
                                                 </td>
                                             </tr>
@@ -46,8 +48,8 @@
                                 Need assistance? <a href="mailto:{{ $supportEmail }}" style="color:{{ $brandBlue }};text-decoration:none;font-weight:700;">{{ $supportEmail }}</a>
                             </p>
                             <p style="margin:0;font-size:13px;line-height:1.6;color:#8a97a5;">
-                                You&apos;re receiving this email because you use TruckBill. If you no longer wish to receive emails
-                                <a href="{{ $unsubscribeUrl }}" style="color:{{ $brandBlue }};text-decoration:underline;">unsubscribe here</a>.
+                                Visit our website:
+                                <a href="{{ $unsubscribeUrl }}" style="color:{{ $brandBlue }};text-decoration:underline;">{{ $unsubscribeUrl }}</a>
                             </p>
                         </td>
                     </tr>

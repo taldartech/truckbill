@@ -43,6 +43,16 @@ class SendEwayExpiryReminders extends Command
         $bookings = FreightBooking::query()
             ->whereNotNull('eway_bill_number')
             ->whereNotNull('eway_bill_expiry')
+            ->where(function ($query): void {
+                $query->whereNull('is_cancelled')
+                    ->orWhere('is_cancelled', 0)
+                    ->orWhere('is_cancelled', '0');
+            })
+            ->where(function ($query): void {
+                $query->whereNull('is_delivered')
+                    ->orWhere('is_delivered', 0)
+                    ->orWhere('is_delivered', '0');
+            })
             ->whereDate('eway_bill_expiry', $targetDate)
             ->get();
 

@@ -28,6 +28,7 @@ class EmailTemplateMailSender
         }
 
         $subject = $this->renderer->render($template->subject, $filteredVariables);
+        $subject = $this->withSubjectBrandSuffix($subject);
         $renderedBody = $this->renderer->render($template->body_html, $filteredVariables);
         $recipients = is_array($to) ? $to : [$to];
 
@@ -56,6 +57,39 @@ class EmailTemplateMailSender
 
             SendTemplateEmailJob::dispatch($log->id, $recipient, $subject, $renderedBody);
         }
+    }
+
+    /**
+     * Append " || {AppName}" when the subject is not already branded, so we avoid
+     * duplicates like "Welcome to TruckBill || TruckBill".
+     */
+    private function withSubjectBrandSuffix(string $subject): string
+    {
+        $brand = trim((string) config('app.name', 'TruckBill'));
+        if ($brand === '') {
+            $brand = 'TruckBill';
+        }
+
+        $normalized = trim($subject);
+        $suffix = ' || '.$brand;
+        if ($normalized === '') {
+            return $brand;
+        }
+
+        $lower = mb_strtolower($normalized);
+        $brandLower = mb_strtolower($brand);
+        $suffixLower = mb_strtolower($suffix);
+
+        if (str_ends_with($lower, $suffixLower)) {
+            return $normalized;
+        }
+
+        $withoutTrailingPunct = rtrim($normalized, " \t\n\r\0\x0B.!?");
+        if (str_ends_with(mb_strtolower($withoutTrailingPunct), $brandLower)) {
+            return $normalized;
+        }
+
+        return $normalized.$suffix;
     }
 
     public function sendByKey(string $templateKey, array|string $to, array $variables = [], array $meta = []): void

@@ -112,6 +112,17 @@ class EwayBillNotificationService
             ];
         }
 
+        if ($template->send_to_transporter) {
+            $transporterEmail = $freightBooking->transporter?->transporterMaster?->email;
+            if (is_string($transporterEmail) && filter_var($transporterEmail, FILTER_VALIDATE_EMAIL) !== false) {
+                $key = strtolower(trim($transporterEmail));
+                $byKey[$key] = [
+                    'email' => $transporterEmail,
+                    'name' => $freightBooking->transporter?->transporterMaster?->name ?? 'Transporter',
+                ];
+            }
+        }
+
         return collect($byKey)->values();
     }
 }
