@@ -32,6 +32,18 @@ class CheckBlockMiddleware
 
         $user = Auth::user();
 
+        if ($user->is_blocked) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            $reasonText = $user->block_reason ? ' Reason: '.$user->block_reason : '';
+
+            return redirect()->route('login')
+                ->withErrors([
+                    'email' => 'Your account is locked.'.$reasonText,
+                ]);
+        }
+
         // 2. Check single device login
         $sessionToken = Session::get('session_token');
 
@@ -55,9 +67,19 @@ class CheckBlockMiddleware
         $company_id = $user->company_id;
         $company = \App\Models\Company::find($company_id);
 
-        // If is_blocked is true (1), block access
         if ($company && $company->is_blocked) {
-            abort(403, 'Unauthorized action.');
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            $companyReason = '';
+            if (! empty($company->block_reason)) {
+                $companyReason = ' Reason: '.$company->block_reason;
+            }
+
+            return redirect()->route('login')
+                ->withErrors([
+                    'email' => 'Your account is locked.'.$companyReason,
+                ]);
         }
 
         return $next($request);

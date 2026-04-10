@@ -14,6 +14,12 @@
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
+    @if(session('error'))
+        <div class="alert alert-danger">{{ session('error') }}</div>
+    @endif
+    @if ($errors->any())
+        <div class="alert alert-danger">{{ $errors->first() }}</div>
+    @endif
 
     <div class="d-flex justify-content-end gap-2 mb-3">
         <a href="{{ route('users.create') }}" class="btn btn-brand-primary">
@@ -159,5 +165,33 @@ $(document).ready(function() {
         }
     });
 });
+
+function handleUserStatusAction(form, actionType) {
+    var promptLabel = actionType === 'block' ? 'Enter block reason:' : 'Enter unblock reason:';
+    var reason = prompt(promptLabel);
+
+    if (reason === null) {
+        return false;
+    }
+
+    reason = reason.trim();
+    if (!reason) {
+        alert('Reason is required.');
+        return false;
+    }
+
+    var reasonInput = form.querySelector('input[name="reason"]');
+    if (!reasonInput) {
+        return false;
+    }
+
+    reasonInput.value = reason;
+
+    var message = actionType === 'block'
+        ? 'Are you sure you want to block this user?'
+        : 'Are you sure you want to unblock this user?';
+
+    return confirm(message);
+}
 </script>
 @endpush

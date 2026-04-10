@@ -5,6 +5,10 @@
 @section('content')
     <h2 class="page-title">Welcome back! Please sign in to continue.</h2>
 
+    @error('email')
+        <div class="alert alert-danger" role="alert">{{ $message }}</div>
+    @enderror
+
     @if (session('status'))
         <div class="alert alert-success">
             {{ session('status') }}
@@ -26,9 +30,6 @@
                        autofocus
                        placeholder="name@company.com">
             </div>
-            @error('email')
-                <div class="invalid-feedback">{{ $message }}</div>
-            @enderror
         </div>
 
         <div class="form-group">

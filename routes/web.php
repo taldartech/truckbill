@@ -47,8 +47,10 @@ Route::middleware(['auth.blocked'])->group(function () {
     });
     // Master Admin only routes
     Route::group(['middleware' => 'role:master_admin'], function () {
-        Route::get('/company/{company}/block', [CompanyController::class, 'block'])->name('company.block');
-        Route::get('/company/{company}/unblock', [CompanyController::class, 'unblock'])->name('company.unblock');
+        Route::post('/company/{company}/block', [CompanyController::class, 'block'])->name('company.block');
+        Route::post('/company/{company}/unblock', [CompanyController::class, 'unblock'])->name('company.unblock');
+        Route::post('/users/{user}/block', [UserController::class, 'block'])->name('users.block');
+        Route::post('/users/{user}/unblock', [UserController::class, 'unblock'])->name('users.unblock');
         Route::resource('promo_codes', PromoCodeController::class)->except(['show']);
         Route::resource('leads', LeadController::class)->only(['index', 'store', 'update']);
         Route::resource('email_templates', EmailTemplateController::class)->except(['show', 'destroy']);

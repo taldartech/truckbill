@@ -34,6 +34,15 @@ class LoginController extends Controller
             ])->withInput();
         }
         if (Auth::attempt($credentials, $remember)) {
+            $authenticatedUser = Auth::user();
+            if ($authenticatedUser && $authenticatedUser->is_blocked) {
+                Auth::logout();
+                $reasonText = $authenticatedUser->block_reason ? ' Reason: '.$authenticatedUser->block_reason : '';
+                return back()->withErrors([
+                    'email' => 'Your account is locked.'.$reasonText,
+                ])->withInput();
+            }
+
             // Fetch the company related to the logged-in user
             $company_id = Auth::user()->company_id;
             $company = \App\Models\Company::find($company_id);
@@ -41,8 +50,12 @@ class LoginController extends Controller
             // If is_blocked is true (1), block login
             if ($company && $company->is_blocked) {
                 Auth::logout();
+                $companyReason = '';
+                if (! empty($company->block_reason)) {
+                    $companyReason = ' Reason: '.$company->block_reason;
+                }
                 return back()->withErrors([
-                    'email' => 'Your account is blocked.',
+                    'email' => 'Your account is locked.'.$companyReason,
                 ])->withInput();
             }
 

@@ -283,5 +283,45 @@ class UserManagementTest extends TestCase
         $this->assertSame(2, $target->user_role_id); // super_admin role_id
         $this->assertTrue(Hash::check('newsecret', $target->password));
     }
+
+    public function test_master_admin_block_cascades_to_linked_companies_and_users(): void
+    {
+        $master = $this->makeMasterAdmin();
+        $targetSuperAdmin = $this->makeSuperAdmin(['email' => 'target-super@example.com']);
+        $company = $this->createCompanyFor($targetSuperAdmin, ['name' => 'Linked Company']);
+        $branch = $this->createBranch($company);
+        $linkedUser = User::factory()->create([
+            'user_role_id' => 3,
+            'company_id' => $company->id,
+            'branch_id' => $branch->id,
+            'email' => 'linked-user@example.com',
+        ]);
+
+        $blockResponse = $this->actingAs($master)->post(route('users.block', $targetSuperAdmin), [
+            'reason' => 'Master block reason',
+        ]);
+
+        $blockResponse->assertRedirect(route('users.index'));
+        $targetSuperAdmin->refresh();
+        $linkedUser->refresh();
+        $company->refresh();
+
+        $this->assertTrue((bool) $targetSuperAdmin->is_blocked);
+        $this->assertTrue((bool) $linkedUser->is_blocked);
+        $this->assertTrue((bool) $company->is_blocked);
+
+        $unblockResponse = $this->actingAs($master)->post(route('users.unblock', $targetSuperAdmin), [
+            'reason' => 'Master unblock reason',
+        ]);
+
+        $unblockResponse->assertRedirect(route('users.index'));
+        $targetSuperAdmin->refresh();
+        $linkedUser->refresh();
+        $company->refresh();
+
+        $this->assertFalse((bool) $targetSuperAdmin->is_blocked);
+        $this->assertFalse((bool) $linkedUser->is_blocked);
+        $this->assertFalse((bool) $company->is_blocked);
+    }
 }
 

@@ -6,9 +6,12 @@ use App\Models\Branch;
 use App\Models\Company;
 use App\Models\User;
 use App\Models\UserRole;
+use App\Mail\UserBlockedMail;
+use App\Mail\UserUnblockedMail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 class UserController extends Controller
 {
@@ -184,8 +187,127 @@ class UserController extends Controller
         $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete User">';
         $buttons .= '<i class="bi bi-trash"></i></button></form>';
 
+        if ($this->isMasterAdmin(Auth::user())) {
+            if ($user->is_blocked) {
+                $unblockUrl = route('users.unblock', $user->id);
+                $buttons .= '<form action="' . $unblockUrl . '" method="POST" style="display:inline-block;" onsubmit="return handleUserStatusAction(this, \'unblock\')">';
+                $buttons .= csrf_field();
+                $buttons .= '<input type="hidden" name="reason" value="">';
+                $buttons .= '<button type="submit" class="btn btn-sm btn-warning" title="Unblock User"><i class="bi bi-unlock"></i></button></form>';
+            } else {
+                $blockUrl = route('users.block', $user->id);
+                $buttons .= '<form action="' . $blockUrl . '" method="POST" style="display:inline-block;" onsubmit="return handleUserStatusAction(this, \'block\')">';
+                $buttons .= csrf_field();
+                $buttons .= '<input type="hidden" name="reason" value="">';
+                $buttons .= '<button type="submit" class="btn btn-sm btn-secondary" title="Block User"><i class="bi bi-lock"></i></button></form>';
+            }
+        }
+
         $buttons .= '</div>';
         return $buttons;
+    }
+
+    public function block(Request $request, User $user)
+    {
+        $authUser = Auth::user();
+        if (! $this->isMasterAdmin($authUser) || ! $this->canManageUser($authUser, $user)) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $validated = $request->validate([
+            'reason' => 'required|string|max:1000',
+        ]);
+
+        $linkedCompanyIds = Company::query()
+            ->where('user_id', $user->id)
+            ->pluck('id')
+            ->all();
+
+        $linkedUserIds = User::query()
+            ->whereIn('company_id', $linkedCompanyIds)
+            ->pluck('id')
+            ->all();
+
+        $allImpactedUserIds = array_values(array_unique(array_merge([$user->id], $linkedUserIds)));
+
+        Company::query()
+            ->whereIn('id', $linkedCompanyIds)
+            ->update([
+                'is_blocked' => true,
+                'updated_at' => now(),
+            ]);
+
+        User::query()
+            ->whereIn('id', $allImpactedUserIds)
+            ->update([
+                'is_blocked' => true,
+                'block_reason' => $validated['reason'],
+                'blocked_by' => $authUser->id,
+                'session_token' => \Illuminate\Support\Str::random(60),
+                'updated_at' => now(),
+            ]);
+
+        DB::table('sessions')->whereIn('user_id', $allImpactedUserIds)->delete();
+
+        if (! empty($user->email)) {
+            Mail::to($user->email)->send(new UserBlockedMail(
+                userName: $user->name,
+                blockedByName: $authUser->name,
+                reason: $validated['reason'],
+            ));
+        }
+
+        return redirect()->route('users.index')->with('success', 'User and all linked company users blocked successfully. All active sessions were logged out.');
+    }
+
+    public function unblock(Request $request, User $user)
+    {
+        $authUser = Auth::user();
+        if (! $this->isMasterAdmin($authUser) || ! $this->canManageUser($authUser, $user)) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $validated = $request->validate([
+            'reason' => 'required|string|max:1000',
+        ]);
+
+        $linkedCompanyIds = Company::query()
+            ->where('user_id', $user->id)
+            ->pluck('id')
+            ->all();
+
+        $linkedUserIds = User::query()
+            ->whereIn('company_id', $linkedCompanyIds)
+            ->pluck('id')
+            ->all();
+
+        $allImpactedUserIds = array_values(array_unique(array_merge([$user->id], $linkedUserIds)));
+
+        Company::query()
+            ->whereIn('id', $linkedCompanyIds)
+            ->update([
+                'is_blocked' => false,
+                'updated_at' => now(),
+            ]);
+
+        User::query()
+            ->whereIn('id', $allImpactedUserIds)
+            ->update([
+                'is_blocked' => false,
+                'block_reason' => null,
+                'blocked_by' => null,
+                'updated_at' => now(),
+            ]);
+
+        if (! empty($user->email)) {
+            Mail::to($user->email)->send(new UserUnblockedMail(
+                userName: $user->name,
+                unblockedByName: $authUser->name,
+                reason: $validated['reason'],
+            ));
+        }
+
+        return redirect()->route('users.index')->with('success', 'User and all linked company users unblocked successfully.');
     }
 
     /**

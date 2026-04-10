@@ -23,6 +23,9 @@ class User extends Authenticatable
         'transporter_master_id',
         'session_token',
         'referral_code',
+        'is_blocked',
+        'block_reason',
+        'blocked_by',
     ];
 
     public function transporterMaster()
@@ -139,6 +142,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_blocked' => 'boolean',
         ];
     }
 }
