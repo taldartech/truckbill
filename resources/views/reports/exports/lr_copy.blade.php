@@ -118,7 +118,7 @@
                 </tr>
                 <tr>
                     <td colspan="3" class="fw-bold">Trk.Ownr PAN: <span
-                            class="values">{{ $lr->truck->transporter->pan_number }}</span></td>
+                            class="values">{{ optional(optional($lr->truck)->transporter)->pan_number ?? '-' }}</span></td>
                     <td colspan="3" class="fw-bold">Lr Dt: <span
                             class="values">{{ \Carbon\Carbon::parse($lr->gr_date)->format('d.m.Y') }}</span></td>
                     <td colspan="2" class="fw-bold">Truck No: <span
@@ -193,7 +193,9 @@
                     <td colspan="8">
                         <p>Declaration: We hereby declare that we have not availed input credit on capital goods and
                             forproviding services.</p>
-                        <p>Under RCM (Reverse Charge Mechanism) GST will be paid by service recipient only.</p>
+                        @if ($company->gst_scheme == 'reverse charge')
+                            <p>Under RCM (Reverse Charge Mechanism) GST will be paid by service recipient only.</p>
+                        @endif
                         <p>CONSIGNOR COPY</p>
                     </td>
                     <td colspan="4" style="vertical-align: bottom">For {{ $company?->name }}</td>
@@ -246,7 +248,7 @@
                 </tr>
                 <tr>
                     <td colspan="3" class="fw-bold">Trk.Ownr PAN: <span
-                            class="values">{{ $lr->truck->transporter->pan_number }}</span></td>
+                            class="values">{{ optional(optional($lr->truck)->transporter)->pan_number ?? '-' }}</span></td>
                     <td colspan="3" class="fw-bold">Lr Dt: <span
                             class="values">{{ \Carbon\Carbon::parse($lr->gr_date)->format('d.m.Y') }}</span></td>
                     <td colspan="2" class="fw-bold">Truck No: <span
@@ -321,7 +323,9 @@
                     <td colspan="8">
                         <p>Declaration: We hereby declare that we have not availed input credit on capital goods and
                             forproviding services.</p>
-                        <p>Under RCM (Reverse Charge Mechanism) GST will be paid by service recipient only.</p>
+                        @if ($company->gst_scheme == 'reverse charge')
+                            <p>Under RCM (Reverse Charge Mechanism) GST will be paid by service recipient only.</p>
+                        @endif
                         <p>DRIVER COPY</p>
                     </td>
                     <td colspan="4" style="vertical-align: bottom">For {{ $company?->name }}</td>

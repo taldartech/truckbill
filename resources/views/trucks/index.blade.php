@@ -10,7 +10,14 @@
 
 @section('content')
 <div class="container mt-4">
-    <div class="col-sm-6"><h3 class="mb-0">Truck Management</h3></div>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h3 class="mb-0">Truck Management</h3>
+        @if(auth()->check() && in_array(auth()->user()->userRole->name, ['admin', 'moderator', 'super_admin']))
+            <a href="{{ route('trucks.create') }}" class="btn btn-brand-primary">
+                <i class="bi bi-plus-circle"></i> Add Truck
+            </a>
+        @endif
+    </div>
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
@@ -116,7 +123,7 @@
                         <div class="col-md-4">
                             <label class="form-label">&nbsp;</label>
                             <div>
-                                <button type="button" class="btn btn-outline-primary" id="showAddDriverForm">
+                                <button type="button" class="btn btn-primary" id="showAddDriverForm">
                                     <i class="bi bi-plus-circle"></i> Add New Driver
                                 </button>
                             </div>

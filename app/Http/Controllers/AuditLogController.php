@@ -47,6 +47,10 @@ class AuditLogController extends Controller
             return [(int) $validated['company_id'], $ownedCompanies];
         }
 
+        if ($request->has('company_id') && ! $request->filled('company_id')) {
+            return [null, $ownedCompanies];
+        }
+
         if (session()->has('super_admin_company_id')) {
             $sid = (int) session('super_admin_company_id');
             if (in_array($sid, $ownedIds, true)) {
@@ -76,23 +80,29 @@ class AuditLogController extends Controller
 
         [$companyId, $ownedCompanies] = $this->resolveSuperAdminAuditScope($request, $validated);
 
+        $scopeCompanyIds = $companyId !== null
+            ? [(int) $companyId]
+            : $ownedCompanies->pluck('id')->all();
+
         $query = AuditLog::query()
             ->with(['user', 'company', 'fieldChanges']);
 
-        if ($companyId !== null) {
-            $query->where('company_id', $companyId);
-        } else {
+        if ($scopeCompanyIds === []) {
             $query->whereRaw('0 = 1');
+        } elseif (count($scopeCompanyIds) === 1) {
+            $query->where('company_id', $scopeCompanyIds[0]);
+        } else {
+            $query->whereIn('company_id', $scopeCompanyIds);
         }
 
         if (! empty($validated['subject_type'])) {
             $query->where('subject_type', $validated['subject_type']);
         }
 
-        if (! empty($validated['user_id']) && $companyId !== null) {
+        if (! empty($validated['user_id']) && $scopeCompanyIds !== []) {
             $sameCompany = User::query()
                 ->whereKey($validated['user_id'])
-                ->where('company_id', $companyId);
+                ->whereIn('company_id', $scopeCompanyIds);
 
             if ($sameCompany->exists()) {
                 $query->where('user_id', $validated['user_id']);
@@ -107,10 +117,10 @@ class AuditLogController extends Controller
             $query->whereDate('occurred_at', '<=', $validated['date_to']);
         }
 
-        if (! empty($validated['lr_number']) && $companyId !== null) {
+        if (! empty($validated['lr_number']) && $scopeCompanyIds !== []) {
             $lrNumber = trim((string) $validated['lr_number']);
             $lrIds = LorryReceipt::query()
-                ->where('company_id', $companyId)
+                ->whereIn('company_id', $scopeCompanyIds)
                 ->where('lr_number', 'like', '%'.$lrNumber.'%')
                 ->pluck('id');
             $freightBookingIds = collect();
@@ -120,19 +130,19 @@ class AuditLogController extends Controller
 
             if ($lrIds->isNotEmpty()) {
                 $freightBookingIds = FreightBooking::query()
-                    ->where('company_id', $companyId)
+                    ->whereIn('company_id', $scopeCompanyIds)
                     ->whereIn('lr_id', $lrIds)
                     ->pluck('id');
 
                 if ($freightBookingIds->isNotEmpty()) {
                     $voucherPaymentIds = VoucherPayment::query()
-                        ->where('company_id', $companyId)
+                        ->whereIn('company_id', $scopeCompanyIds)
                         ->whereIn('freight_booking_id', $freightBookingIds)
                         ->pluck('id');
                 }
 
                 $invoiceIdsQuery = Invoice::query()
-                    ->where('company_id', $companyId)
+                    ->whereIn('company_id', $scopeCompanyIds)
                     ->where(function ($invoiceQuery) use ($lrIds): void {
                         foreach ($lrIds as $lrId) {
                             $invoiceQuery->orWhereJsonContains('lr_ids', (int) $lrId)
@@ -237,9 +247,9 @@ class AuditLogController extends Controller
             ]);
         }
 
-        $users = $companyId !== null
+        $users = $scopeCompanyIds !== []
             ? User::query()
-                ->where('company_id', $companyId)
+                ->whereIn('company_id', $scopeCompanyIds)
                 ->orderBy('name')
                 ->get(['id', 'name', 'email'])
             : collect();
@@ -252,9 +262,12 @@ class AuditLogController extends Controller
             VoucherPayment::class => 'Voucher payment',
         ];
 
+        $auditScopeAllCompanies = $companyId === null && $ownedCompanies->count() > 1;
+
         return view('audit_logs.index', [
             'logs' => $logs,
             'auditScopeCompanyId' => $companyId,
+            'auditScopeAllCompanies' => $auditScopeAllCompanies,
             'ownedCompanies' => $ownedCompanies,
             'showCompanyPicker' => $ownedCompanies->count() > 1,
             'currentCompany' => $companyId !== null ? Company::query()->find($companyId) : null,

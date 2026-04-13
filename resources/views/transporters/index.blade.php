@@ -111,8 +111,9 @@
                             <div class="input-group">
                                 <span class="input-group-text">₹</span>
                                 <input type="number" step="0.01" class="form-control" id="advance_amount"
-                                    name="advance_amount" required min="0.01" placeholder="Enter amount">
+                                    name="advance_amount" required placeholder="Use + to add, - to deduct">
                             </div>
+                            <small class="text-muted">Enter positive amount to add balance, negative amount to deduct balance.</small>
                             <div class="invalid-feedback"></div>
                         </div>
 
@@ -436,9 +437,11 @@
                     `;
 
                             data.advance_payments.forEach(function(payment) {
+                                const parsedAmount = parseFloat(String(payment.amount).replace(/[^0-9.-]/g, ''));
+                                const amountClass = !isNaN(parsedAmount) && parsedAmount < 0 ? 'text-danger' : 'text-brand-primary';
                                 detailsHtml += `
                             <tr>
-                                <td class="fw-bold text-brand-primary">${payment.amount}</td>
+                                <td class="fw-bold ${amountClass}">${payment.amount}</td>
                                 <td>${payment.payment_date}</td>
                                 <td class="text-muted">${payment.remark}</td>
                                 <td class="text-muted small">${payment.created_at}</td>
@@ -518,7 +521,7 @@
                 e.preventDefault();
                 //  confirm before submitting
                 let advanceAmount = $('#advance_amount').val();
-                if (!confirm('Are you sure you want to add an advance payment of ₹' + advanceAmount +
+                if (!confirm('Are you sure you want to submit a book balance entry of ₹' + advanceAmount +
                         '?')) {
                     return false;
                 }
@@ -548,7 +551,7 @@
                         $('body').prepend(`
                     <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
                         <i class="bi bi-check-circle"></i>
-                        <strong>Success!</strong> Advance payment of ₹${$('#advance_amount').val()} has been added successfully.
+                        <strong>Success!</strong> Book balance entry of ₹${$('#advance_amount').val()} has been saved successfully.
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 `);

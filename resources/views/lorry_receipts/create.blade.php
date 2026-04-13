@@ -366,7 +366,7 @@
                                         </option>
                                     @endforeach
                                 </select>
-                                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal"
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal"
                                     data-bs-target="#addGoodsTypeModal" title="Add New Goods Type">
                                     <i class="bi bi-plus"></i>
                                 </button>

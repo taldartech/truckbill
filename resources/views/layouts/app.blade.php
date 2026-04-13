@@ -359,7 +359,7 @@
             margin: 0 !important;
             display: block !important;
         }
-        
+
         .sidebar-wrapper {
             height: calc(100vh - calc(7.5rem + 1px)) !important;
         }
@@ -512,15 +512,6 @@
                             </a>
 
                         </li>
-                        @if (auth()->check() && auth()->user()->userRole->name === 'super_admin')
-                            <li class="nav-item">
-                                <a href="{{ route('audit-logs.index') }}"
-                                    class="nav-link{{ Request::is('audit-logs') ? ' active' : '' }}">
-                                    <i class="nav-icon fas fa-history"></i>
-                                    <p>Audit log</p>
-                                </a>
-                            </li>
-                        @endif
                         @if (auth()->check() && auth()->user()->userRole->name === 'transporter')
                             <li class="nav-item">
                                 <a href="{{ route('transporter.freight_bookings.index') }}" class="nav-link{{ Request::is('transporter/freight-bookings*') ? ' active' : '' }}">
@@ -607,6 +598,13 @@
                         @endif
 
                         @if (auth()->check() && auth()->user()->userRole->name === 'super_admin' && !session('super_admin_company_id'))
+                            <li class="nav-item">
+                                <a href="{{ route('audit-logs.index') }}"
+                                    class="nav-link{{ Request::is('audit-logs') ? ' active' : '' }}">
+                                    <i class="nav-icon fas fa-history"></i>
+                                    <p>Audit log</p>
+                                </a>
+                            </li>
                             <li class="nav-item">
                                 <a class="nav-link{{ Request::is('company') || Request::is('company/create') ? ' active' : '' }}"
                                     href="#companyMenu">
@@ -1096,13 +1094,6 @@
                                             <p>Party Bill</p>
                                         </a>
                                     </li>
-                                    {{-- <li class="nav-item">
-                                        <a href="{{ route('reports.ultratech-bill') }}"
-                                            class="nav-link{{ Request::is('reports/ultratech-bill') ? ' active' : '' }}">
-                                            <i class="fas fa-file-alt"></i>
-                                            <p>Ultratech Bill</p>
-                                        </a>
-                                    </li> --}}
                                     <li class="nav-item">
                                         <a href="{{ route('reports.memo-copy') }}"
                                             class="nav-link{{ Request::is('reports/memo-copy') ? ' active' : '' }}">

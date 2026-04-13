@@ -48,25 +48,7 @@
             <div class="text-danger">{{ $message }}</div>
         @enderror
         <div class="card-body">
-            {{-- Company field hidden as requested --}}
-            @if($canEditCompany)
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label for="company_id" class="form-label">Company *</label>
-                        <select class="form-select @error('company_id') is-invalid @enderror" id="company_id" name="company_id" required>
-                            <option value="">Select Company</option>
-                            @foreach($companies as $company)
-                                <option value="{{ $company->id }}" {{ old('company_id', $transporter->company_id) == $company->id ? 'selected' : '' }}>
-                                    {{ $company->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('company_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                </div>
-            @else
-                <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
-            @endif
+            <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
 
             @php $master = $transporter->transporterMaster; @endphp
             <div class="card mb-4 p-3 bg-light">

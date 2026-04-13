@@ -86,7 +86,7 @@
                             <i class="bi bi-search"></i> Search
                         </button>
                         <a href="{{ route('voucher_payments.daily') }}?date={{ date('Y-m-d') }}"
-                            class="btn btn-outline-secondary">
+                            class="btn btn-secondary">
                             <i class="bi bi-arrow-clockwise"></i> Reset
                         </a>
                     </div>

@@ -7,9 +7,9 @@
         @csrf
         @method('PUT')
         <div class="mb-3">
-            <label for="transporter_id" class="form-label">Truck Owner *</label>
-            <select class="form-select" id="transporter_id" name="transporter_id" required>
-                <option value="">Select</option>
+            <label for="transporter_id" class="form-label">Truck Owner</label>
+            <select class="form-select" id="transporter_id" name="transporter_id">
+                <option value="">No Truck Owner</option>
                 @foreach($transporters as $transporter)
                     <option value="{{ $transporter->id }}" {{ old('transporter_id', $truck->transporter_id) == $transporter->id ? 'selected' : '' }}>{{ $transporter->name }}</option>
                 @endforeach
@@ -40,7 +40,7 @@
                 <option value="{{ $driver->id }}" {{ old('driver_id', $truck->driver_id) == $driver->id ? 'selected' : '' }}>{{ $driver->name }} ({{ $driver->mobile }})</option>
             @endforeach
         </select>
-        <a href="{{ route('drivers.create') }}" class="btn btn-outline-secondary" target="_blank">Add New Driver</a>
+        <a href="{{ route('drivers.create') }}" class="btn btn-secondary" target="_blank">Add New Driver</a>
     </div>
     @error('driver_id') <div class="text-danger">{{ $message }}</div> @enderror
 </div>

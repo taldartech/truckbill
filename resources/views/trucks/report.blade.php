@@ -36,7 +36,7 @@
         </div>
         <div class="col-md-2">
             <button type="submit" class="btn btn-secondary">Filter</button>
-            <a href="{{ route('trucks.report') }}" class="btn btn-outline-secondary ms-2">Reset</a>
+            <a href="{{ route('trucks.report') }}" class="btn btn-secondary ms-2">Reset</a>
         </div>
     </form>
     <div class="mb-3">

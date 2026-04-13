@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\TruckType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
@@ -18,13 +17,51 @@ class TruckController extends Controller
         }
     }
 
+    private function getCurrentCompanyId(): ?int
+    {
+        if (Auth::user()->userRole->name === 'super_admin') {
+            return session('super_admin_company_id');
+        }
+
+        return Auth::user()->company_id;
+    }
+
+    private function isTruckNumberTakenInCompany(string $truckNumber, int $companyId, ?int $ignoreTruckId = null): bool
+    {
+        return \App\Models\Truck::query()
+            ->where('truck_number', $truckNumber)
+            ->whereNull('deleted_at')
+            ->where(function ($query) use ($companyId) {
+                $query->where('company_id', $companyId)
+                    ->orWhereHas('transporter', function ($transporterQuery) use ($companyId) {
+                        $transporterQuery->where('company_id', $companyId);
+                    });
+            })
+            ->when($ignoreTruckId, function ($query) use ($ignoreTruckId) {
+                $query->where('id', '!=', $ignoreTruckId);
+            })
+            ->exists();
+    }
+
+    private function isTruckAccessibleToCurrentCompany(\App\Models\Truck $truck): bool
+    {
+        $companyId = $this->getCurrentCompanyId();
+
+        if ($truck->transporter) {
+            return $truck->transporter->company_id === $companyId;
+        }
+
+        return (int) $truck->company_id === (int) $companyId;
+    }
+
     public function getTrucksForTransporter($transporterId)
     {
         $this->ensureCompanyContext();
+        $companyId = $this->getCurrentCompanyId();
         $trucks = \App\Models\Truck::with(['transporter.transporterMaster', 'driver'])
             ->where('transporter_id', $transporterId)
-            ->whereHas('transporter', function ($q) {
-                $q->where('company_id', Auth::user()->company_id);
+            ->whereHas('transporter', function ($q) use ($companyId) {
+                $q->where('company_id', $companyId);
             })
             ->get();
 
@@ -34,17 +71,18 @@ class TruckController extends Controller
     public function index(Request $request)
     {
         $this->ensureCompanyContext();
+        $companyId = $this->getCurrentCompanyId();
         if ($request->ajax()) {
             return $this->getTrucksData($request);
         }
         // Get only transporters who are owners
         $owners = \App\Models\Transporter::with('transporterMaster')
             ->where('is_owner', 1)
-            ->where('company_id', Auth::user()->company_id)
+            ->where('company_id', $companyId)
             ->get();
 
         $transporters = \App\Models\Transporter::with('transporterMaster')
-            ->where('company_id', Auth::user()->company_id)
+            ->where('company_id', $companyId)
             ->get();
         $drivers = \App\Models\Driver::all();
 
@@ -53,16 +91,20 @@ class TruckController extends Controller
 
     private function getTrucksData(Request $request)
     {
+        $companyId = $this->getCurrentCompanyId();
         // $query = \App\Models\Truck::with(['transporter', 'driver'])->whereHas('transporter', function($q) {
         //     $q->where('company_id', Auth::user()->company_id);
 
         // });
         $query = \App\Models\Truck::with(['transporter.transporterMaster', 'driver'])
-            ->where(function ($q) {
-                $q->whereHas('transporter', function ($subQuery) {
-                    $subQuery->where('company_id', Auth::user()->company_id);
+            ->where(function ($q) use ($companyId) {
+                $q->whereHas('transporter', function ($subQuery) use ($companyId) {
+                    $subQuery->where('company_id', $companyId);
                 })
-                    ->orWhereNull('transporter_id');  // Include trucks with no transporter
+                    ->orWhere(function ($orphanQuery) use ($companyId) {
+                        $orphanQuery->whereNull('transporter_id')
+                            ->where('company_id', $companyId);
+                    });
             });
 
         // Handle search
@@ -151,11 +193,14 @@ class TruckController extends Controller
         // $totalQuery = \App\Models\Truck::whereHas('transporter', function($q) {
         //     $q->where('company_id', Auth::user()->company_id);
         // });
-        $totalQuery = \App\Models\Truck::where(function ($q) {
-            $q->whereHas('transporter', function ($subQuery) {
-                $subQuery->where('company_id', Auth::user()->company_id);
+        $totalQuery = \App\Models\Truck::where(function ($q) use ($companyId) {
+            $q->whereHas('transporter', function ($subQuery) use ($companyId) {
+                $subQuery->where('company_id', $companyId);
             })
-                ->orWhereNull('transporter_id');
+                ->orWhere(function ($orphanQuery) use ($companyId) {
+                    $orphanQuery->whereNull('transporter_id')
+                        ->where('company_id', $companyId);
+                });
         });
         $totalRecords = $totalQuery->count();
         $filteredRecords = $query->count();
@@ -194,7 +239,7 @@ class TruckController extends Controller
         $buttons = '<div class="d-flex gap-1">';
 
         // Assign Driver button
-        $buttons .= '<button type="button" class="btn btn-sm btn-outline-success assign-driver-btn" title="Assign Driver" data-bs-toggle="tooltip" ';
+        $buttons .= '<button type="button" class="btn btn-sm btn-success assign-driver-btn" title="Assign Driver" data-bs-toggle="tooltip" ';
         $buttons .= 'data-truck-id="'.$truck->id.'" ';
         $buttons .= 'data-truck-number="'.htmlspecialchars($truck->truck_number).'" ';
         $buttons .= 'data-truck-type="'.htmlspecialchars($truck->truck_type).'" ';
@@ -214,7 +259,7 @@ class TruckController extends Controller
 
         // show button to assign truck owner for those whose transporter_id is null
         if ($truck->transporter_id == null) {
-            $buttons .= '<button type="button" class="btn btn-sm btn-outline-primary assign-owner-btn" title="Assign Truck Owner" data-bs-toggle="tooltip" ';
+            $buttons .= '<button type="button" class="btn btn-sm btn-view assign-owner-btn" title="Assign Truck Owner" data-bs-toggle="tooltip" ';
             $buttons .= 'data-truck-id="'.$truck->id.'" ';
             $buttons .= 'data-truck-number="'.htmlspecialchars($truck->truck_number).'" ';
             $buttons .= 'data-truck-type="'.htmlspecialchars($truck->truck_type).'" ';
@@ -232,10 +277,16 @@ class TruckController extends Controller
     public function getOwnerTransporters($truckId)
     {
         $this->ensureCompanyContext();
+        $companyId = $this->getCurrentCompanyId();
         $truck = \App\Models\Truck::with('transporter.transporterMaster')
             ->where('id', $truckId)
-            ->whereHas('transporter', function ($q) {
-                $q->where('company_id', Auth::user()->company_id);
+            ->where(function ($query) use ($companyId) {
+                $query->whereHas('transporter', function ($q) use ($companyId) {
+                    $q->where('company_id', $companyId);
+                })->orWhere(function ($orphanQuery) use ($companyId) {
+                    $orphanQuery->whereNull('transporter_id')
+                        ->where('company_id', $companyId);
+                });
             })
             ->first();
 
@@ -262,10 +313,16 @@ class TruckController extends Controller
     public function getAgencyTransporters($truckId)
     {
         $this->ensureCompanyContext();
+        $companyId = $this->getCurrentCompanyId();
         $truck = \App\Models\Truck::with('transporter.transporterMaster')
             ->where('id', $truckId)
-            ->whereHas('transporter', function ($q) {
-                $q->where('company_id', Auth::user()->company_id);
+            ->where(function ($query) use ($companyId) {
+                $query->whereHas('transporter', function ($q) use ($companyId) {
+                    $q->where('company_id', $companyId);
+                })->orWhere(function ($orphanQuery) use ($companyId) {
+                    $orphanQuery->whereNull('transporter_id')
+                        ->where('company_id', $companyId);
+                });
             })
             ->first();
 
@@ -275,42 +332,59 @@ class TruckController extends Controller
 
         // Get all transporters that are agencies
         $agencyTransporters = \App\Models\Transporter::with('transporterMaster')
-            ->where('company_id', Auth::user()->company_id)
+            ->where('company_id', $companyId)
             ->where('is_owner', 0)
             ->get();
 
         return response()->json($agencyTransporters);
     }
 
-    public function create($transporter_id)
+    public function create($transporter_id = null)
     {
         $this->ensureCompanyContext();
-        // Fetch only the specific transporter
-        $transporter = \App\Models\Transporter::with('transporterMaster')
-            ->where('company_id', Auth::user()->company_id)
-            ->where('id', $transporter_id)
-            ->firstOrFail();
+        $companyId = $this->getCurrentCompanyId();
+        $transporter = null;
+
+        if ($transporter_id) {
+            $transporter = \App\Models\Transporter::with('transporterMaster')
+                ->where('company_id', $companyId)
+                ->where('id', $transporter_id)
+                ->firstOrFail();
+        }
+
+        $transporters = \App\Models\Transporter::with('transporterMaster')
+            ->where('company_id', $companyId)
+            ->orderBy('id')
+            ->get();
 
         $drivers = \App\Models\Driver::all();
         $truckTypes = TruckType::orderBy('name')->get();
 
-        return view('trucks.create', compact('transporter', 'drivers', 'truckTypes'));
+        return view('trucks.create', compact('transporter', 'transporters', 'drivers', 'truckTypes'));
     }
 
     public function store(Request $request)
     {
         $this->ensureCompanyContext();
-        // Fetch company_id for the given transporter_id
-        $companyId = \App\Models\Transporter::where('id', $request->transporter_id)->value('company_id');
+        $companyId = $this->getCurrentCompanyId();
+        $validated = $request->validate([
+            'transporter_id' => [
+                'nullable',
+                Rule::exists('transporters', 'id')->where(function ($query) use ($companyId) {
+                    $query->where('company_id', $companyId);
+                }),
+            ],
+            'truck_number' => [
+                'required',
+                'string',
+                'regex:/^[A-Z]{2}[A-Z0-9]{1,2}[A-Z0-9]{1,3}[0-9]{4}$/',
+            ],
+            'truck_type' => 'required|string|max:50',
+            'driver_id' => 'nullable|exists:drivers,id',
+            'registration_date' => 'nullable|date',
+        ]);
 
-        // Perform manual uniqueness check scoped by company_id
-        $exists = DB::table('trucks')
-            ->join('transporters', 'trucks.transporter_id', '=', 'transporters.id')
-            ->where('trucks.truck_number', $request->truck_number)
-            ->where('transporters.company_id', $companyId)
-            ->whereNull('trucks.deleted_at') // exclude soft-deleted records
-            ->exists();
-
+        $exists = $this->isTruckNumberTakenInCompany($validated['truck_number'], $companyId);
         if ($exists) {
             $errorMessage = 'The truck number must be unique within the company.';
             if ($request->expectsJson() || $request->ajax()) {
@@ -324,19 +398,7 @@ class TruckController extends Controller
             return redirect()->back()->withErrors(['truck_number' => $errorMessage])->withInput();
         }
 
-        // Proceed with validation of other fields except unique rule on truck_number
-        $validated = $request->validate([
-            'transporter_id' => 'required|exists:transporters,id',
-            'truck_number' => [
-                'required',
-                'string',
-                'regex:/^[A-Z]{2}[A-Z0-9]{1,2}[A-Z0-9]{1,3}[0-9]{4}$/',
-                // No unique rule here since handled above
-            ],
-            'truck_type' => 'required|string|max:50',
-            'driver_id' => 'nullable|exists:drivers,id',
-            'registration_date' => 'nullable|date',
-        ]);
+        $validated['company_id'] = $companyId;
         try {
             $truck = \App\Models\Truck::create($validated);
 
@@ -383,12 +445,14 @@ class TruckController extends Controller
     public function checkTruckNumber(Request $request)
     {
         $this->ensureCompanyContext();
-        $company_id = Auth::user()->company_id;
+        $company_id = $this->getCurrentCompanyId();
         $exists = \App\Models\Truck::where('truck_number', $request->truck_number)
-            ->whereHas('transporter', function ($query) use ($company_id) {
-                $query->where('company_id', $company_id);
+            ->where(function ($query) use ($company_id) {
+                $query->where('company_id', $company_id)
+                    ->orWhereHas('transporter', function ($transporters) use ($company_id) {
+                        $transporters->where('company_id', $company_id);
+                    });
             })
-
             ->exists();
 
         return response()->json(['exists' => $exists]);
@@ -397,8 +461,9 @@ class TruckController extends Controller
     public function edit(\App\Models\Truck $truck)
     {
         $this->ensureCompanyContext();
+        $companyId = $this->getCurrentCompanyId();
         $transporters = \App\Models\Transporter::with('transporterMaster')
-            ->where('company_id', Auth::user()->company_id)
+            ->where('company_id', $companyId)
             ->get();
         $drivers = \App\Models\Driver::all();
         $truckTypes = TruckType::orderBy('name')->get();
@@ -409,18 +474,25 @@ class TruckController extends Controller
     public function update(Request $request, \App\Models\Truck $truck)
     {
         $this->ensureCompanyContext();
-        // Get company_id from transporter_id in request
-        $companyId = \App\Models\Transporter::where('id', $request->transporter_id)->value('company_id');
+        $companyId = $this->getCurrentCompanyId();
+        $validated = $request->validate([
+            'transporter_id' => [
+                'nullable',
+                Rule::exists('transporters', 'id')->where(function ($query) use ($companyId) {
+                    $query->where('company_id', $companyId);
+                }),
+            ],
+            'truck_number' => [
+                'required',
+                'string',
+                'regex:/^[A-Z]{2}[A-Z0-9]{1,2}[A-Z0-9]{1,3}[0-9]{4}$/',
+            ],
+            'truck_type' => 'required|string|max:50',
+            'driver_id' => 'nullable|exists:drivers,id',
+            'registration_date' => 'nullable|date',
+        ]);
 
-        // Manual uniqueness check ignoring the current truck ID
-        $exists = DB::table('trucks')
-            ->join('transporters', 'trucks.transporter_id', '=', 'transporters.id')
-            ->where('trucks.truck_number', $request->truck_number)
-            ->where('transporters.company_id', $companyId)
-            ->where('trucks.id', '<>', $truck->id) // exclude current truck id
-            ->whereNull('trucks.deleted_at') // exclude soft-deleted records
-            ->exists();
-
+        $exists = $this->isTruckNumberTakenInCompany($validated['truck_number'], $companyId, $truck->id);
         if ($exists) {
             $errorMessage = 'The truck number must be unique within the company.';
             if ($request->expectsJson() || $request->ajax()) {
@@ -434,19 +506,7 @@ class TruckController extends Controller
             return redirect()->back()->withErrors(['truck_number' => $errorMessage])->withInput();
         }
 
-        // Validation excluding unique rule on truck_number because handled manually
-        $validated = $request->validate([
-            'transporter_id' => 'required|exists:transporters,id',
-            'truck_number' => [
-                'required',
-                'string',
-                'regex:/^[A-Z]{2}[A-Z0-9]{1,2}[A-Z0-9]{1,3}[0-9]{4}$/',
-                // no unique rule here
-            ],
-            'truck_type' => 'required|string|max:50',
-            'driver_id' => 'nullable|exists:drivers,id',
-            'registration_date' => 'nullable|date',
-        ]);
+        $validated['company_id'] = $companyId;
 
         try {
             $truck->update($validated);
@@ -523,7 +583,7 @@ class TruckController extends Controller
     public function removeTransporter(\App\Models\Truck $truck)
     {
         $this->ensureCompanyContext();
-        if ($truck->transporter && $truck->transporter->company_id !== Auth::user()->company_id) {
+        if (! $this->isTruckAccessibleToCurrentCompany($truck)) {
             abort(403, 'Unauthorized access to this truck.');
         }
         // Check if this truck has any undelivered Lorry Receipts
@@ -549,7 +609,7 @@ class TruckController extends Controller
     public function destroy(\App\Models\Truck $truck)
     {
         $this->ensureCompanyContext();
-        if ($truck->transporter && $truck->transporter->company_id !== Auth::user()->company_id) {
+        if (! $this->isTruckAccessibleToCurrentCompany($truck)) {
             abort(403, 'Unauthorized access to this truck.');
         }
         try {
@@ -585,7 +645,7 @@ class TruckController extends Controller
         $this->ensureCompanyContext();
         $truck->load(['transporter', 'driver']);
 
-        if ($truck->transporter && $truck->transporter->company_id !== Auth::user()->company_id) {
+        if (! $this->isTruckAccessibleToCurrentCompany($truck)) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -595,7 +655,7 @@ class TruckController extends Controller
             'truck_number' => $truck->truck_number,
             'truck_type' => $truck->truck_type,
             'registration_date' => $truck->registration_date ? \Carbon\Carbon::parse($truck->registration_date)->format('d-m-Y') : null,
-            'transporter' => [
+            'transporter' => $truck->transporter ? [
                 'id' => $truck->transporter->id,
                 'name' => $truck->transporter->name,
                 'short_name' => $truck->transporter->short_name,
@@ -603,7 +663,7 @@ class TruckController extends Controller
                 'gst_number' => $truck->transporter->gst_number,
                 'pan_number' => $truck->transporter->pan_number,
                 'address' => $truck->transporter->address,
-            ],
+            ] : null,
             'driver' => $truck->driver ? [
                 'id' => $truck->driver->id,
                 'name' => $truck->driver->name,
@@ -625,7 +685,7 @@ class TruckController extends Controller
         ]);
 
         // Check if user has access to this truck (same company)
-        if ($truck->transporter->company_id !== Auth::user()->company_id) {
+        if (! $this->isTruckAccessibleToCurrentCompany($truck)) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -674,7 +734,7 @@ class TruckController extends Controller
         try {
             $this->ensureCompanyContext();
 
-            $companyId = Auth::user()->company_id;
+            $companyId = $this->getCurrentCompanyId();
             $q = trim((string) $request->query('q', ''));
             $page = (int) $request->query('page', 1);
             $limit = (int) $request->query('limit', 20);
@@ -685,7 +745,10 @@ class TruckController extends Controller
                 ->where(function ($qq) use ($companyId) {
                     $qq->whereHas('transporter', function ($sub) use ($companyId) {
                         $sub->where('company_id', $companyId);
-                    })->orWhereNull('transporter_id');
+                    })->orWhere(function ($orphanQuery) use ($companyId) {
+                        $orphanQuery->whereNull('transporter_id')
+                            ->where('company_id', $companyId);
+                    });
                 });
 
             if ($q !== '') {
@@ -735,7 +798,7 @@ class TruckController extends Controller
                 ],
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error searching trucks: '.$e->getMessage());
+            Log::error('Error searching trucks: '.$e->getMessage());
 
             return response()->json([
                 'results' => [],

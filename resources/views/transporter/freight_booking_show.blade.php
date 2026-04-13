@@ -7,7 +7,7 @@
     <div class="container-fluid">
         <div class="row mb-4">
             <div class="col-12">
-                <a href="{{ route('transporter.freight_bookings.index') }}" class="btn btn-outline-secondary mb-2"><i class="fas fa-arrow-left me-1"></i> Back to List</a>
+                <a href="{{ route('transporter.freight_bookings.index') }}" class="btn btn-secondary mb-2"><i class="fas fa-arrow-left me-1"></i> Back to List</a>
                 <h2 class="fw-bold mb-1"><i class="fas fa-truck text-brand-primary"></i> Good Hire (Lorry Hire) #{{ $freightBooking->id }}</h2>
                 @if ($freightBooking->is_cancelled)
                     <span class="badge bg-danger">Cancelled</span>

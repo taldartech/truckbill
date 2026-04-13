@@ -108,7 +108,7 @@
             <button type="submit" class="btn btn-secondary">
                 <i class="bi bi-search"></i> Search
             </button>
-            <a href="{{ route('voucher_payments.index') }}" class="btn btn-outline-secondary ms-2">
+            <a href="{{ route('voucher_payments.index') }}" class="btn btn-secondary ms-2">
                 <i class="bi bi-arrow-clockwise"></i> Reset
             </a>
         </div>
@@ -116,7 +116,7 @@
 
     {{-- Main content card --}}
     <div class="d-flex justify-content-end gap-2 mb-3">
-        <a href="{{ route('voucher_payments.daily') }}" class="btn btn-outline-secondary">
+        <a href="{{ route('voucher_payments.daily') }}" class="btn btn-secondary">
             <i class="bi bi-calendar-day"></i> Daily Report
         </a>
     </div>

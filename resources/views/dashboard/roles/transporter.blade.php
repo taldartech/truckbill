@@ -124,7 +124,7 @@
             <div class="card-header bg-soft-danger text-danger border-0 py-3">
                 <div class="d-flex justify-content-between align-items-center">
                     <h5 class="mb-0 fw-bold"><i class="fas fa-exclamation-triangle me-2"></i> Expired Eway Bills (Urgent)</h5>
-                    <a href="{{ route('transporter.freight_bookings.index') }}" class="btn btn-sm btn-outline-danger">View All</a>
+                    <a href="{{ route('transporter.freight_bookings.index') }}" class="btn btn-sm btn-danger">View All</a>
                 </div>
             </div>
             <div class="card-body p-0">

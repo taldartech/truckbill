@@ -17,11 +17,17 @@
             <div class="row mb-3">
                 <!--begin::Col-->
                 <div class="col-md-6">
-                    <label for="transporter_id" class="form-label">Truck Owner *</label>
-                    <input type="text" class="form-control" value="{{ $transporter->name }}" disabled>
-                    <input type="hidden" id="transporter_id" name="transporter_id" value="{{ $transporter->id }}">
+                    <label for="transporter_id" class="form-label">Truck Owner</label>
+                    <select class="form-select" id="transporter_id" name="transporter_id">
+                        <option value="">No Truck Owner</option>
+                        @foreach($transporters as $owner)
+                            <option value="{{ $owner->id }}"
+                                {{ (string) old('transporter_id', $transporter?->id) === (string) $owner->id ? 'selected' : '' }}>
+                                {{ $owner->name }}
+                            </option>
+                        @endforeach
+                    </select>
                     @error('transporter_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please select a transporter.</div>
                 </div>
                 <!--end::Col-->
                 <!--begin::Col-->
@@ -57,7 +63,7 @@
                                 <option value="{{ $driver->id }}" {{ old('driver_id') == $driver->id ? 'selected' : '' }}>{{ $driver->name }} ({{ $driver->mobile }})</option>
                             @endforeach
                         </select>
-                        <a href="{{ route('drivers.create') }}" class="btn btn-outline-secondary" target="_blank">Add New Driver</a>
+                        <a href="{{ route('drivers.create') }}" class="btn btn-secondary" target="_blank">Add New Driver</a>
                     </div>
                     @error('driver_id') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
@@ -81,7 +87,7 @@
                         <button class="btn btn-brand-primary w-100 mb-2" type="submit">💾 Create Truck</button>
                     </div>
                     <div class="col-md-4">
-                        <a href="{{ route('transporters.index') }}" class="btn btn-back w-100 mb-2">📄 Back to List</a>
+                        <a href="{{ route('trucks.index') }}" class="btn btn-back w-100 mb-2">📄 Back to List</a>
                     </div>
                 </div>
             </div>

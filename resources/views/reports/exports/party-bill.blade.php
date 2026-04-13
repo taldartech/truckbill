@@ -208,7 +208,9 @@
     @endphp
     <tr>
         <td style="font-weight: bold;" colspan="9">
-            Rs: {{ $totalgst }} GST to be depostied by the party under reverse charge
+            @if ($invoice->invoice_type == 'Reverse')
+                Rs: {{ $totalgst }} GST to be deposited by the party under reverse charge.
+            @endif
         </td>
         <td style="font-weight: bold;" colspan="2">Amount</td>
         <td colspan="2">{{ number_format($totalAmount, 2) }}</td>
@@ -263,8 +265,11 @@
         <td colspan="13"></td>
     </tr>
     <tr>
-        <td style="font-weight: bold;" colspan="9">Note :- GST Liability of Debtor:-  {{ $invoice->consignee->name }}  Under Reverse Charge
-            Mechanism of GST Act, 2017</td>
+        <td style="font-weight: bold;" colspan="9">
+            @if ($invoice->invoice_type == 'Reverse')
+                Note :- GST Liability of Debtor:-  {{ $invoice->consignee->name }}  Under Reverse Charge Mechanism of GST Act, 2017
+            @endif
+        </td>
         <td style="font-weight: bold;" colspan="4">Authorized Signature</td>
     </tr>
 </table>

@@ -81,7 +81,7 @@
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-search"></i> Search
                         </button>
-                        <a href="{{ route('reports.pending-invoice') }}" class="btn btn-outline-secondary">
+                        <a href="{{ route('reports.pending-invoice') }}" class="btn btn-secondary">
                             <i class="bi bi-arrow-clockwise"></i> Reset
                         </a>
                     </div>

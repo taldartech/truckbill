@@ -129,7 +129,7 @@ Route::middleware(['auth.blocked'])->group(function () {
     // Truck Management
     Route::middleware(['role:admin,moderator,super_admin'])->group(function () {
         Route::get('/trucks', [TruckController::class, 'index'])->name('trucks.index');
-        Route::get('/trucks/create/{transporter_id}', [TruckController::class, 'create'])->name('trucks.create');
+        Route::get('/trucks/create/{transporter_id?}', [TruckController::class, 'create'])->name('trucks.create');
         Route::post('/trucks', [TruckController::class, 'store'])->name('trucks.store');
         Route::get('/trucks/{truck}', [TruckController::class, 'show'])->name('trucks.show');
     });
@@ -293,8 +293,6 @@ Route::middleware(['auth.blocked'])->group(function () {
         Route::get('/pump-export', [ReportController::class, 'pump_export'])->name('reports.pump-export');
         Route::get('/party-bill', [ReportController::class, 'party_bill'])->name('reports.party-bill');
         Route::get('/party-bill-export', [ReportController::class, 'party_bill_export'])->name('reports.party-bill-export');
-        Route::get('/ultratech-bill', [ReportController::class, 'ultratech_bill'])->name('reports.ultratech-bill');
-        Route::get('/ultratech-bill-export', [ReportController::class, 'ultratech_bill_export'])->name('reports.ultratech-bill-export');
         Route::get('/memo-copy', [ReportController::class, 'memo_copy'])->name('reports.memo-copy');
         Route::get('/memo-copy-export', [ReportController::class, 'memo_copy_export'])->name('reports.memo-copy-export');
         Route::get('/pending-memo', [ReportController::class, 'pending_memo'])->name('reports.pending-memo');

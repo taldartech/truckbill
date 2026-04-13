@@ -33,7 +33,7 @@
                                 <td>{{ Str::limit($company->template_address ?? 'N/A', 50) }}</td>
                                 <td>
                                     <a href="{{ route('voucher_templates.edit', $company) }}"
-                                        class="btn btn-outline-primary btn-sm" title="Edit Template">
+                                        class="btn btn-primary btn-sm" title="Edit Template">
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                 </td>

@@ -208,7 +208,7 @@
                                                     <i class="bi bi-pencil"></i>
                                                 </a>
                                             @endif
-                                            @if ($invoice->payment_status === 'pending')
+                                            @if ($invoice->payment_status === 'pending' && (int) $invoice->id === (int) $lastInvoiceId)
                                                 <form action="{{ route('invoices.destroy', $invoice->id) }}"
                                                     method="POST" style="display:inline-block;">
                                                     @csrf

@@ -35,7 +35,7 @@
                                 <td>{{ $company->ifsc ?? '-' }}</td>
                                 <td>
                                     <a href="{{ route('company_bank_details.edit', $company->id) }}"
-                                        class="btn btn-outline-primary btn-sm">
+                                        class="btn btn-primary btn-sm">
                                         <i class="bi bi-pencil-square"></i>
                                     </a>
                                 </td>

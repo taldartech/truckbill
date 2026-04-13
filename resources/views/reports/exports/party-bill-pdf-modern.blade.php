@@ -309,8 +309,10 @@
                             <strong>Bank:</strong> {{ $company->bank ?? '' }}<br>
                             <strong>A/C:</strong> {{ $company->account_number ?? '' }}<br>
                             <strong>IFSC:</strong> {{ $company->ifsc ?? '' }}<br>
+                            @if ($invoice->invoice_type == 'Reverse')
                             <strong>Note:</strong> GST Liability of Debtor:
                             {{ $consignee->name }} under Reverse Charge Mechanism of GST Act, 2017.
+                            @endif
                         </div>
                     </td>
                     <td width="38%">

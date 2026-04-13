@@ -270,32 +270,48 @@ a:hover {
     background-color: var(--brand-active-bg) !important;
 }
 
-/* Eye Icon / View Button Utility */
-.btn-view {
+/* Eye Icon / View Button Utility (Green variant) */
+.btn-view,
+button.btn-view,
+a.btn-view {
     background-color: var(--brand-primary) !important;
-    border-color: var(--brand-primary) !important;
+    border: 1px solid var(--brand-primary) !important;
     color: #FFFFFF !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.btn-view:hover {
+.btn-view:hover,
+button.btn-view:hover,
+a.btn-view:hover {
     background-color: var(--brand-primary-dark) !important;
     border-color: var(--brand-primary-dark) !important;
+    color: #FFFFFF !important;
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(47, 179, 111, 0.2);
 }
 
 /* Edit Icon / Button Utility (Blue variant) */
-.btn-edit {
+.btn-edit,
+button.btn-edit,
+a.btn-edit {
     background-color: var(--brand-accent-blue) !important;
-    border-color: var(--brand-accent-blue) !important;
+    border: 1px solid var(--brand-accent-blue) !important;
     color: #FFFFFF !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.btn-edit:hover {
+.btn-edit:hover,
+button.btn-edit:hover,
+a.btn-edit:hover {
     background-color: var(--brand-accent-blue-dark) !important;
     border-color: var(--brand-accent-blue-dark) !important;
+    color: #FFFFFF !important;
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 }
 
 /* Back / Cancel Button Utility (Grey variant) */
@@ -322,31 +338,54 @@ a:hover {
     border-color: var(--brand-primary-dark) !important;
 }
 
-.btn-outline-primary {
+.btn-outline-primary,
+button.btn-outline-primary,
+a.btn-outline-primary {
+    background-color: transparent !important;
     color: var(--brand-primary) !important;
     border-color: var(--brand-primary) !important;
 }
 
-.btn-outline-primary:hover {
+.btn-outline-primary:hover,
+button.btn-outline-primary:hover,
+a.btn-outline-primary:hover {
     background-color: var(--brand-active-bg) !important;
     color: var(--brand-primary) !important;
 }
 
 .btn-success {
     background-color: var(--brand-success) !important;
-    border-color: var(--brand-success) !important;
+    border: 1px solid var(--brand-success) !important;
+    color: #FFFFFF !important;
+}
+
+.btn-success:hover {
+    background-color: #16a34a !important;
+    border-color: #16a34a !important;
     color: #FFFFFF !important;
 }
 
 .btn-warning {
     background-color: var(--brand-warning) !important;
-    border-color: var(--brand-warning) !important;
-    color: #111827 !important;
+    border: 1px solid var(--brand-warning) !important;
+    color: #000000 !important; /* High contrast black for yellow/orange background */
+}
+
+.btn-warning:hover {
+    background-color: #d97706 !important;
+    border-color: #d97706 !important;
+    color: #000000 !important;
 }
 
 .btn-danger {
     background-color: var(--brand-danger) !important;
-    border-color: var(--brand-danger) !important;
+    border: 1px solid var(--brand-danger) !important;
+    color: #FFFFFF !important;
+}
+
+.btn-danger:hover {
+    background-color: #dc2626 !important;
+    border-color: #dc2626 !important;
     color: #FFFFFF !important;
 }
 
@@ -363,7 +402,13 @@ a:hover {
 
 .btn-info {
     background-color: var(--brand-info) !important;
-    border-color: var(--brand-info) !important;
+    border: 1px solid var(--brand-info) !important;
+    color: #FFFFFF !important;
+}
+
+.btn-info:hover {
+    background-color: #0891b2 !important;
+    border-color: #0891b2 !important;
     color: #FFFFFF !important;
 }
 

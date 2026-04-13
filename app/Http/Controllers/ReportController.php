@@ -28,7 +28,6 @@ use App\Models\VoucherPayment;
 use App\Exports\BankExport;
 use App\Exports\TransporterReportExport;
 use App\Exports\TransporterMasterExport;
-use App\Exports\UltratechBillExport;
 use App\Models\Company;
 use App\Support\FreightChallanTemplate;
 use App\Support\LrCopyPdfTemplate;
@@ -1140,37 +1139,6 @@ class ReportController extends Controller
             return redirect()->back()
                 ->with('error', 'Error generating export: ' . $e->getMessage());
         }
-    }
-
-    public function ultratech_bill(Request $request)
-    {
-        $customers = Consignee::where('company_id', Auth::user()->company_id)->get();
-        $customerId = $request->input('customer_id') ?? null;
-        $id = $request->input('invoice_number') ?? null;
-        // Load all invoices initially, filter by customer if selected
-        $invoices = Invoice::where('company_id', Auth::user()->company_id)
-            ->when($customerId, function ($query) use ($customerId) {
-                return $query->where('customer_id', $customerId);
-            })
-            ->orderByDesc('id')
-            ->get();
-        $invoice = Invoice::find($id);
-        $customDetails = collect();
-        if ($invoice && $invoice->custom_invoice) {
-            $invoice->load(['customInvoiceDetails.lorryReceipt.truck']);
-            $customDetails = $invoice->customInvoiceDetails->sortBy('sort_order')->values();
-        }
-        return view('reports.ultratech-bill', compact('customers', 'customerId', 'id', 'invoices', 'invoice', 'customDetails'));
-    }
-
-    public function ultratech_bill_export(Request $request)
-    {
-        if (!$request->input('invoice_number')) {
-            return redirect()->back()->with('error', 'Please select an Invoice to export.');
-        }
-        $id = $request->input('invoice_number');
-        $export = Excel::download(new UltratechBillExport($id), 'ultratech_bill.xlsx');
-        return $export;
     }
 
     public function transporter_report(Request $request)

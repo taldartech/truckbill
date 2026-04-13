@@ -6,10 +6,11 @@ use App\Models\Concerns\HasHybridAuditLog;
 use App\Models\Traits\TracksUser;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Invoice extends Model implements Auditable
 {
-    use HasFactory, HasHybridAuditLog, TracksUser;
+    use HasFactory, HasHybridAuditLog, TracksUser, SoftDeletes;
 
     protected $fillable = [
         'invoice_number',
