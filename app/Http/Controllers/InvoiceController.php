@@ -79,8 +79,11 @@ class InvoiceController extends Controller
         }
         $invoices = $invoices->orderBy('generated_date', 'desc');
         $invoices = $invoices->paginate(20);
+        $lastInvoiceId = Invoice::query()
+            ->when(Auth::user()->company_id, fn ($query) => $query->where('company_id', Auth::user()->company_id))
+            ->max('id');
 
-        return view('invoices.index', compact('invoices'));
+        return view('invoices.index', compact('invoices', 'lastInvoiceId'));
     }
 
     public function getInvoicesData(Request $request)
@@ -185,14 +188,16 @@ class InvoiceController extends Controller
         $actions .= '<i class="bi bi-printer"></i>';
         $actions .= '</a>';
 
-        // Delete button
-        $actions .= '<form method="POST" action="'.route('invoices.destroy', $invoice->id).'" style="display: inline;">';
-        $actions .= csrf_field();
-        $actions .= method_field('DELETE');
-        $actions .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete" onclick="return confirm(\'Are you sure you want to delete this invoice?\')">';
-        $actions .= '<i class="bi bi-trash"></i>';
-        $actions .= '</button>';
-        $actions .= '</form>';
+        if ($invoice->payment_status === 'pending' && $this->isLastInvoiceForCompany($invoice)) {
+            // Delete button
+            $actions .= '<form method="POST" action="' . route('invoices.destroy', $invoice->id) . '" style="display: inline;">';
+            $actions .= csrf_field();
+            $actions .= method_field('DELETE');
+            $actions .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete" onclick="return confirm(\'Are you sure you want to delete this invoice?\')">';
+            $actions .= '<i class="bi bi-trash"></i>';
+            $actions .= '</button>';
+            $actions .= '</form>';
+        }
 
         $actions .= '</div>';
 
@@ -503,6 +508,9 @@ class InvoiceController extends Controller
         if ($invoice->payment_status !== 'pending') {
             return redirect()->back()->with('error', 'Cannot delete invoice.');
         }
+        if (! $this->isLastInvoiceForCompany($invoice)) {
+            return redirect()->back()->with('error', 'Only the latest invoice can be deleted.');
+        }
         $lr_ids = $invoice->lr_ids ?? [];
         if (! empty($lr_ids)) {
             // Update individually to trigger auditing
@@ -515,6 +523,15 @@ class InvoiceController extends Controller
         $invoice->delete();
 
         return redirect()->route('invoices.index')->with('success', 'Invoice deleted.');
+    }
+
+    private function isLastInvoiceForCompany(Invoice $invoice): bool
+    {
+        $lastInvoiceId = Invoice::query()
+            ->where('company_id', $invoice->company_id)
+            ->max('id');
+
+        return (int) $lastInvoiceId === (int) $invoice->id;
     }
 
     public function getLrs($memoIds)

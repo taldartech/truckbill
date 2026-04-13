@@ -60,7 +60,8 @@
 <body>
     @php
         if ($lr->linked_lr_id) {
-            $lrs = \App\Models\LorryReceipt::where('linked_lr_id', $lr->linked_lr_id)->get();
+            $lrs = \App\Models\LorryReceipt::where('linked_lr_id', $lr->linked_lr_id)
+            ->where('company_id', $company->id)->get();
         } else {
             $lrs = [$lr];
         }
@@ -117,7 +118,7 @@
                 </tr>
                 <tr>
                     <td colspan="3" class="fw-bold">Trk.Ownr PAN: <span
-                            class="values">{{ $lr->truck->transporter->pan_number }}</span></td>
+                            class="values">{{ optional(optional($lr->truck)->transporter)->pan_number ?? '-' }}</span></td>
                     <td colspan="3" class="fw-bold">Lr Dt: <span
                             class="values">{{ \Carbon\Carbon::parse($lr->gr_date)->format('d.m.Y') }}</span></td>
                     <td colspan="2" class="fw-bold">Truck No: <span
@@ -247,7 +248,7 @@
                 </tr>
                 <tr>
                     <td colspan="3" class="fw-bold">Trk.Ownr PAN: <span
-                            class="values">{{ $lr->truck->transporter->pan_number }}</span></td>
+                            class="values">{{ optional(optional($lr->truck)->transporter)->pan_number ?? '-' }}</span></td>
                     <td colspan="3" class="fw-bold">Lr Dt: <span
                             class="values">{{ \Carbon\Carbon::parse($lr->gr_date)->format('d.m.Y') }}</span></td>
                     <td colspan="2" class="fw-bold">Truck No: <span

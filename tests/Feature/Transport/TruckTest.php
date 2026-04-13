@@ -122,6 +122,25 @@ class TruckTest extends TestCase
         $response->assertSessionHasErrors(['truck_number']);
     }
 
+    public function test_store_allows_creating_truck_without_owner(): void
+    {
+        $admin = $this->makeAdmin();
+
+        $response = $this->actingAs($admin)->post('/trucks', [
+            'transporter_id' => null,
+            'truck_number' => 'GJ02CD5678',
+            'truck_type' => 'Container',
+            'registration_date' => now()->toDateString(),
+        ]);
+
+        $response->assertRedirect(route('trucks.index'));
+        $this->assertDatabaseHas('trucks', [
+            'truck_number' => 'GJ02CD5678',
+            'transporter_id' => null,
+            'company_id' => $admin->company_id,
+        ]);
+    }
+
     public function test_update_changes_truck_and_enforces_uniqueness(): void
     {
         $admin = $this->makeAdmin();

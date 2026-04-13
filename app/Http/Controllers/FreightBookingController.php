@@ -1042,6 +1042,10 @@ class FreightBookingController extends Controller
             return response()->json(['error' => 'Truck not found'], 404);
         }
 
+        if (! $truck->transporter) {
+            $truck->setRelation('transporter', null);
+        }
+
         return response()->json($truck);
     }
 

@@ -11,6 +11,7 @@ use App\Http\Controllers\TruckController;
 use App\Http\Controllers\TruckOwnerController;
 use App\Http\Controllers\ValidationController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 
 Route::middleware('auth.blocked')->group(function () {
     Route::get('/api/transporters/{transporter}/trucks', [TruckController::class, 'getTrucksForTransporter']);
@@ -49,7 +50,18 @@ Route::middleware('auth.blocked')->group(function () {
 
     Route::post('/api/check-manual-invoice-number-uniqueness', [InvoiceController::class, 'checkManualInvoiceNumberUniqueness']);
     Route::get('/check-truck-number', function (Illuminate\Http\Request $request) {
-        $exists = \App\Models\Truck::where('truck_number', $request->truck_number)->exists();
+        $companyId = Auth::user()->userRole->name === 'super_admin'
+            ? session('super_admin_company_id')
+            : Auth::user()->company_id;
+
+        $exists = \App\Models\Truck::where('truck_number', $request->truck_number)
+            ->where(function ($query) use ($companyId) {
+                $query->where('company_id', $companyId)
+                    ->orWhereHas('transporter', function ($transporters) use ($companyId) {
+                        $transporters->where('company_id', $companyId);
+                    });
+            })
+            ->exists();
 
         return response()->json(['exists' => $exists]);
     });

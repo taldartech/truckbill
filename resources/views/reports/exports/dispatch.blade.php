@@ -116,9 +116,9 @@
                 <td>{{ $lr->memo_id ?? '-' }}</td>
                 <td>{{ @$invoice->invoice_number ? @$invoice->invoice_number . (@$invoice->manual_invoice_number ? ' (' . @$invoice->manual_invoice_number . ')' : '') : (@$invoice->manual_invoice_number ?? @$invoice->id) }}</td>
                 <td>{{ $lr->truck?->driver?->name ?? '-' }}</td>
-                <td>{{ $lr->transporter->name ?? '-' }}</td>
+                <td>{{ optional($lr->transporter)->name ?? '-' }}</td>
                 <td>{{ $lr->reference?->name ?? '-' }}</td>
-                <td>{{ $lr->transporter->is_owner ? 'owner' : 'agency' }}</td>
+                <td>{{ optional($lr->transporter)->is_owner ? 'owner' : 'agency' }}</td>
                 <td>{{ ($freight?->tds_amount ?? 0) > 0 ? 'Yes' : 'No' }}</td>
                 <td>
                     @if ($forExcel)
@@ -140,7 +140,7 @@
                     @endif
                 </td>
                 <td>{{ $lr->delivery_status ?? '-' }}</td>
-                <td>{{ $lr->transporter->pan_number ?? '-' }}</td>
+                <td>{{ optional($lr->transporter)->pan_number ?? '-' }}</td>
             </tr>
         @endforeach
     </tbody>

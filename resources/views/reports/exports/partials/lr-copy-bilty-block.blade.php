@@ -47,7 +47,7 @@
         </td>
     </tr>
     <tr>
-        <td colspan="3" class="fw-bold">Trk.Ownr PAN: <span class="values">{{ $lr->truck->transporter->pan_number }}</span></td>
+        <td colspan="3" class="fw-bold">Trk.Ownr PAN: <span class="values">{{ optional(optional($lr->truck)->transporter)->pan_number ?? '-' }}</span></td>
         <td colspan="3" class="fw-bold">Lr Dt: <span class="values">{{ \Carbon\Carbon::parse($lr->gr_date)->format('d.m.Y') }}</span></td>
         <td colspan="2" class="fw-bold">Truck No: <span class="values">{{ $lr->truck->truck_number }}</span></td>
         <td colspan="2" class="fw-bold">Shipment No: <span class="values">{{ $lr->invoice_number ?? '' }}</span></td>

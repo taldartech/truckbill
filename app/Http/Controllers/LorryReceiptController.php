@@ -61,6 +61,42 @@ class LorryReceiptController extends Controller
         }
     }
 
+    private function getCurrentCompanyId(): ?int
+    {
+        if (Auth::user()->userRole->name === 'super_admin') {
+            return session('super_admin_company_id');
+        }
+
+        return Auth::user()->company_id;
+    }
+
+    private function applyCompanyTruckScope($query, int $companyId)
+    {
+        return $query->where(function ($truckQuery) use ($companyId) {
+            $truckQuery->whereHas('transporter', function ($transporterQuery) use ($companyId) {
+                $transporterQuery->where('company_id', $companyId);
+            })->orWhere(function ($orphanQuery) use ($companyId) {
+                $orphanQuery->whereNull('transporter_id')
+                    ->where('company_id', $companyId);
+            });
+        });
+    }
+
+    private function forceAgencyForOrphanTruck(array &$validated, int $companyId): void
+    {
+        if (empty($validated['truck_id'])) {
+            return;
+        }
+
+        $truck = $this->applyCompanyTruckScope(Truck::query(), $companyId)
+            ->where('id', $validated['truck_id'])
+            ->firstOrFail();
+
+        if (! $truck->transporter_id) {
+            $validated['transporter_type'] = 'agency';
+        }
+    }
+
     public function index(Request $request): \Illuminate\View\View|\Illuminate\Http\JsonResponse
     {
         if ($request->ajax()) {
@@ -200,7 +236,7 @@ class LorryReceiptController extends Controller
             return $redirect;
         }
 
-        $companyId = Auth::user()->company_id;
+        $companyId = $this->getCurrentCompanyId();
         $goodsTypes = GoodType::where('user_id', Auth::user()->company->user_id)->get();
 
         // Only fetch selected IDs (if any) to avoid loading large dropdown datasets.
@@ -222,8 +258,13 @@ class LorryReceiptController extends Controller
         $trucks = $selectedTruckId
             ? Truck::with(['transporter.transporterMaster', 'driver'])
                 ->where('id', $selectedTruckId)
-                ->whereHas('transporter', function ($query) use ($companyId) {
-                    $query->where('company_id', $companyId);
+                ->where(function ($query) use ($companyId) {
+                    $query->whereHas('transporter', function ($transporterQuery) use ($companyId) {
+                        $transporterQuery->where('company_id', $companyId);
+                    })->orWhere(function ($orphanQuery) use ($companyId) {
+                        $orphanQuery->whereNull('transporter_id')
+                            ->where('company_id', $companyId);
+                    });
                 })
                 ->get()
             : collect();
@@ -250,7 +291,7 @@ class LorryReceiptController extends Controller
             return $redirect;
         }
 
-        $companyId = Auth::user()->company_id;
+        $companyId = $this->getCurrentCompanyId();
         $goodsTypes = GoodType::where('user_id', Auth::user()->company->user_id)->get();
 
         // Only fetch selected IDs (if any) to avoid loading large dropdown datasets.
@@ -272,8 +313,13 @@ class LorryReceiptController extends Controller
         $trucks = $selectedTruckId
             ? Truck::with(['transporter.transporterMaster', 'driver'])
                 ->where('id', $selectedTruckId)
-                ->whereHas('transporter', function ($query) use ($companyId) {
-                    $query->where('company_id', $companyId);
+                ->where(function ($query) use ($companyId) {
+                    $query->whereHas('transporter', function ($transporterQuery) use ($companyId) {
+                        $transporterQuery->where('company_id', $companyId);
+                    })->orWhere(function ($orphanQuery) use ($companyId) {
+                        $orphanQuery->whereNull('transporter_id')
+                            ->where('company_id', $companyId);
+                    });
                 })
                 ->get()
             : collect();
@@ -422,6 +468,7 @@ class LorryReceiptController extends Controller
     {
 
         $this->ensureCompanyContext();
+        $companyId = $this->getCurrentCompanyId();
         // dd($request->all());
         // If request contains multiple LRs payload, handle batch creation with lr_linked_id
         if ($request->has('lrs') && is_array($request->input('lrs'))) {
@@ -475,16 +522,17 @@ class LorryReceiptController extends Controller
                 'lrs.*.damage_amount' => 'nullable|numeric',
                 'lrs.*.shortage_amount' => 'nullable|numeric',
             ];
-            $this->validateLorryReceiptsUniqueness($request->lrs, Auth::user()->company_id);
+            $this->validateLorryReceiptsUniqueness($request->lrs, $companyId);
 
             $validated = $request->validate(array_merge($sharedRules, $perItemRules));
+            $this->forceAgencyForOrphanTruck($validated, $companyId);
 
             // Start DB transaction
             DB::beginTransaction();
             try {
                 // Next linked_lr_id (increment previous)
                 // $nextLinkedId = (\App\Models\LorryReceipt::max('linked_lr_id') ?? 0) + 1;
-                $nextLinkedId = (\App\Models\LorryReceipt::where('company_id', Auth::user()->company_id)->max('linked_lr_id') ?? 0) + 1;
+                $nextLinkedId = (\App\Models\LorryReceipt::where('company_id', $companyId)->max('linked_lr_id') ?? 0) + 1;
 
                 $created = [];
                 foreach ($validated['lrs'] as $item) {
@@ -528,7 +576,7 @@ class LorryReceiptController extends Controller
                         'transporter_type' => $validated['transporter_type'] ?? null,
                         'transporter_id' => $validated['transporter_id'] ?? null,
                         'reference_by' => $validated['reference_by'] ?? null,
-                        'company_id' => Auth::user()->company_id,
+                        'company_id' => $companyId,
                         'delivery_status' => 'Pending',
                         'linked_lr_id' => $nextLinkedId,
                     ];
@@ -558,7 +606,7 @@ class LorryReceiptController extends Controller
                 'string',
                 'max:100',
                 Rule::unique('lorry_receipts', 'lr_number')->where(function ($query) {
-                    return $query->where('company_id', Auth::user()->company_id);
+                    return $query->where('company_id', $this->getCurrentCompanyId());
                 }),
             ],
             'gr_number' => [
@@ -566,7 +614,7 @@ class LorryReceiptController extends Controller
                 'string',
                 'max:100',
                 Rule::unique('lorry_receipts', 'gr_number')->where(function ($query) {
-                    return $query->where('company_id', Auth::user()->company_id);
+                    return $query->where('company_id', $this->getCurrentCompanyId());
                 }),
             ],
             'invoice_number' => [
@@ -574,7 +622,7 @@ class LorryReceiptController extends Controller
                 'string',
                 'max:256',
                 Rule::unique('lorry_receipts', 'invoice_number')->where(function ($query) {
-                    return $query->where('company_id', Auth::user()->company_id);
+                    return $query->where('company_id', $this->getCurrentCompanyId());
                 }),
             ],
             'memo_id' => 'nullable|integer',
@@ -618,6 +666,7 @@ class LorryReceiptController extends Controller
 
         // Set truck_id to null if not provided
         $validated['truck_id'] = $validated['truck_id'] ?? null;
+        $this->forceAgencyForOrphanTruck($validated, $companyId);
         // dd($validated);
 
         // Set default delivery_status
@@ -630,7 +679,7 @@ class LorryReceiptController extends Controller
             $validated['gr_number'] = ltrim(str_ireplace('LR', '', $validated['lr_number']), '0');
         }
         if (\App\Models\LorryReceipt::where('lr_number', $validated['lr_number'])
-            ->where('company_id', Auth::user()->company_id)
+            ->where('company_id', $companyId)
             ->exists()
         ) {
             return redirect()->back()->withErrors(['lr_number' => 'LR Number already exists. Please use a unique LR Number.']);
@@ -674,7 +723,7 @@ class LorryReceiptController extends Controller
         }
 
         // Add company_id to validated data
-        $validated['company_id'] = Auth::user()->company_id;
+        $validated['company_id'] = $companyId;
         // dd($validated);
 
         $lorryReceipt = \App\Models\LorryReceipt::create($validated);
@@ -820,7 +869,7 @@ class LorryReceiptController extends Controller
             return $redirect;
         }
 
-        $companyId = Auth::user()->company_id;
+        $companyId = $this->getCurrentCompanyId();
         $lorry_receipt->load(['truck.transporter.transporterMaster', 'truck.driver', 'customer', 'transporter.transporterMaster', 'consignor', 'consignee']);
 
         // Fetch only the selected records needed for initial dropdown rendering.
@@ -828,8 +877,13 @@ class LorryReceiptController extends Controller
         $trucks = $selectedTruckId
             ? Truck::with(['transporter.transporterMaster', 'driver'])
                 ->where('id', $selectedTruckId)
-                ->whereHas('transporter', function ($query) use ($companyId) {
-                    $query->withTrashed()->where('company_id', $companyId);
+                ->where(function ($query) use ($companyId) {
+                    $query->whereHas('transporter', function ($transporterQuery) use ($companyId) {
+                        $transporterQuery->withTrashed()->where('company_id', $companyId);
+                    })->orWhere(function ($orphanQuery) use ($companyId) {
+                        $orphanQuery->whereNull('transporter_id')
+                            ->where('company_id', $companyId);
+                    });
                 })
                 ->get()
             : collect();
@@ -942,6 +996,7 @@ class LorryReceiptController extends Controller
     public function update(Request $request, LorryReceipt $lorry_receipt): \Illuminate\Http\RedirectResponse
     {
         $this->ensureCompanyContext();
+        $companyId = $this->getCurrentCompanyId();
         // dd($request->all());
         $company = Auth::user()->company;
         $today = now()->startOfDay();
@@ -1029,7 +1084,7 @@ class LorryReceiptController extends Controller
             'transporter_type' => 'nullable|in:owner,agency',
 
         ]);
-        $this->validateLorryReceiptUniquenessUpdate($validated, $lorry_receipt->id, Auth::user()->company_id);
+        $this->validateLorryReceiptUniquenessUpdate($validated, $lorry_receipt->id, $companyId);
         // if mamo_id is null and freight booking id exist for that lr than delivery status to be in-progress
 
         // Check if consignor and consignee are the same
@@ -1048,6 +1103,7 @@ class LorryReceiptController extends Controller
 
         // Set truck_id to null if not provided
         $validated['truck_id'] = $validated['truck_id'] ?? null;
+        $this->forceAgencyForOrphanTruck($validated, $companyId);
 
         // Preserve existing delivery_status - don't override it
         // Remove delivery_status from validated data to keep existing value
@@ -1090,7 +1146,7 @@ class LorryReceiptController extends Controller
         }
 
         // Add company_id to validated data
-        $validated['company_id'] = Auth::user()->company_id;
+        $validated['company_id'] = $companyId;
 
         // Store old values before update to detect changes
         $oldGoodType = $lorry_receipt->good_type;
