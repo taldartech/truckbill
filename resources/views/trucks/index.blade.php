@@ -409,11 +409,13 @@ $(document).ready(function() {
                                     <h6 class="mb-0"><i class="bi bi-person-badge"></i> Truck Owner Information</h6>
                                 </div>
                                 <div class="card-body">
+                                    ${data.transporter ? `
                                     <p class="mb-2"><strong>Name:</strong> ${data.transporter.name}</p>
                                     <p class="mb-2"><strong>Short Name:</strong> ${data.transporter.short_name || 'N/A'}</p>
                                     <p class="mb-2"><strong>Mobile:</strong> ${data.transporter.mobile_number}</p>
                                     <p class="mb-2"><strong>GST Number:</strong> ${data.transporter.gst_number || 'N/A'}</p>
                                     <p class="mb-2"><strong>PAN Number:</strong> ${data.transporter.pan_number || 'N/A'}</p>
+                                    ` : '<p class="text-muted">No truck owner assigned</p>'}
                                 </div>
                             </div>
                         </div>
@@ -439,7 +441,7 @@ $(document).ready(function() {
                                     <h6 class="mb-0"><i class="bi bi-geo-alt"></i> Address Information</h6>
                                 </div>
                                 <div class="card-body">
-                                    <p class="mb-2"><strong>Address:</strong> ${data.transporter.address || 'Not specified'}</p>
+                                    <p class="mb-2"><strong>Address:</strong> ${data.transporter ? data.transporter.address : 'Not specified'}</p>
                                 </div>
                             </div>
                         </div>

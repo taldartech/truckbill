@@ -349,11 +349,13 @@ class TruckController extends Controller
             $transporter = \App\Models\Transporter::with('transporterMaster')
                 ->where('company_id', $companyId)
                 ->where('id', $transporter_id)
+                ->where('is_owner', 1)
                 ->firstOrFail();
         }
 
         $transporters = \App\Models\Transporter::with('transporterMaster')
             ->where('company_id', $companyId)
+            ->where('is_owner', 1)
             ->orderBy('id')
             ->get();
 
