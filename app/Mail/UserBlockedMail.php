@@ -16,13 +16,12 @@ class UserBlockedMail extends Mailable
         public string $userName,
         public string $blockedByName,
         public string $reason,
-    ) {
-    }
+    ) {}
 
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: config('app.name').': Your account has been locked',
+            subject: config('app.name').': Your account is currently deactivated',
         );
     }
 
