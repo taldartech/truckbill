@@ -1275,6 +1275,20 @@
         });
     </script>
     <script>
+        // Prevent accidental wheel-based step changes in number inputs.
+        document.addEventListener('wheel', function(event) {
+            const numberInput = event.target.closest('input[type="number"]');
+            if (!numberInput || numberInput.disabled || numberInput.readOnly) {
+                return;
+            }
+
+            event.preventDefault();
+            numberInput.blur();
+        }, {
+            passive: false
+        });
+    </script>
+    <script>
         // Clear DataTable localStorage state on page load to reset filters
         (function() {
             // Get current page path
