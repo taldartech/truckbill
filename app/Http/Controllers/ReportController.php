@@ -1344,43 +1344,187 @@ class ReportController extends Controller
 
     public function transporter_report(Request $request)
     {
-        $endDate = $request->input('end_date') ?? date('Y-m-d');
-        $startDate = max($request->input('start_date') ?? date('Y-m-d', strtotime('-3 months')), date('Y-m-d', strtotime('-3 months', strtotime($endDate))));
+        [$startDate, $endDate, $hasRange] = $this->normalizeDateRange($request);
 
-        $transporters = Transporter::with('transporterMaster')->where('company_id', Auth::user()->company_id)->get();
-        $transporterId = $request->input('transporter_id') ?? null;
-        $trucks = [];
-        $truckId = $request->input('truck_id') ?? null;
-        $references = [];
-        $referenceId = $request->input('reference_by') ?? null;
-        if ($request->input('end_date') || $request->input('start_date')) {
-            $query = LorryReceipt::whereBetween('gr_date', [$startDate, $endDate]);
-            $query->whereNotNull('freight_booking_id');
-            if (Auth::user()->company_id) {
-                $query->where('company_id', Auth::user()->company_id);
+        $transporterId = $request->filled('transporter_id') ? (int) $request->input('transporter_id') : null;
+        $truckId = $request->filled('truck_id') ? (int) $request->input('truck_id') : null;
+        $referenceId = $request->filled('reference_by') ? (int) $request->input('reference_by') : null;
+
+        $transporters = collect();
+        $trucks = collect();
+        $references = collect();
+
+        if ($hasRange) {
+            $options = $this->getTransporterReportFilterOptions($startDate, $endDate, $transporterId, $truckId, $referenceId);
+            $transporters = $options['transporters'];
+            $trucks = $options['trucks'];
+            $references = $options['references'];
+
+            if ($transporterId && ! $transporters->pluck('id')->contains($transporterId)) {
+                $transporterId = null;
             }
-            if ($transporterId) {
-                $trucks = LorryReceipt::where('transporter_id', $transporterId)
-                    ->get(['truck_id']);
-                $trucks = Truck::whereIn('id', $trucks->pluck('truck_id'))->get();
-                $query->where('transporter_id', $transporterId);
+            if ($truckId && ! $trucks->pluck('id')->contains($truckId)) {
+                $truckId = null;
             }
-            if ($truckId) {
-                $query->where('truck_id', $truckId);
-                $references = LorryReceipt::where('truck_id', $truckId)
-                    ->get(['reference_by']);
-                $references = Transporter::with('transporterMaster')->whereIn('id', $references->pluck('reference_by'))->get();
+            if ($referenceId && ! $references->pluck('id')->contains($referenceId)) {
+                $referenceId = null;
             }
-            if ($referenceId) {
-                $query->where('reference_by', $referenceId);
-            }
-            $query->orderBy('gr_date', 'asc');
-            $lrs = $query->get();
+
+            $lrs = $this->buildTransporterReportBaseQuery($startDate, $endDate)
+                ->when($transporterId, function ($query) use ($transporterId) {
+                    $query->where('transporter_id', $transporterId);
+                })
+                ->when($truckId, function ($query) use ($truckId) {
+                    $query->where('truck_id', $truckId);
+                })
+                ->when($referenceId, function ($query) use ($referenceId) {
+                    $query->where('reference_by', $referenceId);
+                })
+                ->orderBy('gr_date', 'asc')
+                ->get();
         } else {
             $lrs = [];
         }
 
-        return view('reports.transporter-report', compact('transporters', 'transporterId', 'startDate', 'endDate', 'trucks', 'truckId', 'lrs', 'references', 'referenceId'));
+        return view('reports.transporter-report', compact(
+            'transporters',
+            'transporterId',
+            'startDate',
+            'endDate',
+            'trucks',
+            'truckId',
+            'lrs',
+            'references',
+            'referenceId'
+        ));
+    }
+
+    private function buildTransporterReportBaseQuery(?string $startDate, ?string $endDate)
+    {
+        $query = LorryReceipt::query()
+            ->whereNotNull('freight_booking_id');
+
+        if (Auth::user()->company_id) {
+            $query->where('company_id', Auth::user()->company_id);
+        }
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('gr_date', [$startDate, $endDate]);
+        }
+
+        return $query;
+    }
+
+    private function getTransporterReportFilterOptions(
+        string $startDate,
+        string $endDate,
+        ?int $transporterId,
+        ?int $truckId,
+        ?int $referenceId
+    ): array {
+        $baseQuery = $this->buildTransporterReportBaseQuery($startDate, $endDate);
+
+        $transporterIds = (clone $baseQuery)
+            ->when($truckId, function ($query) use ($truckId) {
+                $query->where('truck_id', $truckId);
+            })
+            ->when($referenceId, function ($query) use ($referenceId) {
+                $query->where('reference_by', $referenceId);
+            })
+            ->whereNotNull('transporter_id')
+            ->distinct()
+            ->pluck('transporter_id');
+
+        $truckIds = (clone $baseQuery)
+            ->when($transporterId, function ($query) use ($transporterId) {
+                $query->where('transporter_id', $transporterId);
+            })
+            ->when($referenceId, function ($query) use ($referenceId) {
+                $query->where('reference_by', $referenceId);
+            })
+            ->whereNotNull('truck_id')
+            ->distinct()
+            ->pluck('truck_id');
+
+        $referenceIds = (clone $baseQuery)
+            ->when($transporterId, function ($query) use ($transporterId) {
+                $query->where('transporter_id', $transporterId);
+            })
+            ->when($truckId, function ($query) use ($truckId) {
+                $query->where('truck_id', $truckId);
+            })
+            ->whereNotNull('reference_by')
+            ->distinct()
+            ->pluck('reference_by');
+
+        $transporters = Transporter::query()
+            ->with('transporterMaster')
+            ->whereIn('id', $transporterIds)
+            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+            ->orderBy('transporter_masters.name')
+            ->select('transporters.*')
+            ->get();
+
+        $trucks = Truck::query()
+            ->whereIn('id', $truckIds)
+            ->orderBy('truck_number')
+            ->get(['id', 'truck_number']);
+
+        $references = Transporter::query()
+            ->with('transporterMaster')
+            ->whereIn('id', $referenceIds)
+            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+            ->orderBy('transporter_masters.name')
+            ->select('transporters.*')
+            ->get();
+
+        return [
+            'transporters' => $transporters,
+            'trucks' => $trucks,
+            'references' => $references,
+        ];
+    }
+
+    public function transporter_report_filter_options(Request $request)
+    {
+        $validated = $request->validate([
+            'start_date' => ['required', 'date'],
+            'end_date' => ['required', 'date', 'after_or_equal:start_date'],
+            'transporter_id' => ['nullable', 'integer'],
+            'truck_id' => ['nullable', 'integer'],
+            'reference_by' => ['nullable', 'integer'],
+        ]);
+
+        $startDate = Carbon::parse($validated['start_date']);
+        $endDate = Carbon::parse($validated['end_date']);
+        $maxStart = $endDate->copy()->subMonths(3);
+
+        if ($startDate->lt($maxStart)) {
+            return response()->json([
+                'message' => 'The selected date range cannot exceed 3 months.',
+                'errors' => [
+                    'start_date' => ['Maximum allowed date range is 3 months.'],
+                ],
+            ], 422);
+        }
+
+        $transporterId = isset($validated['transporter_id']) ? (int) $validated['transporter_id'] : null;
+        $truckId = isset($validated['truck_id']) ? (int) $validated['truck_id'] : null;
+        $referenceId = isset($validated['reference_by']) ? (int) $validated['reference_by'] : null;
+
+        $options = $this->getTransporterReportFilterOptions(
+            $startDate->toDateString(),
+            $endDate->toDateString(),
+            $transporterId,
+            $truckId,
+            $referenceId
+        );
+
+        return response()->json([
+            'transporters' => $options['transporters'],
+            'trucks' => $options['trucks'],
+            'references' => $options['references'],
+        ]);
     }
 
     public function transporter_report_export(Request $request)

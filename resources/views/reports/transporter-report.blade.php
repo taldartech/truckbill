@@ -68,7 +68,7 @@
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Transporter/Truck Owner</label>
-                        <select name="transporter_id" class="form-select select2" onchange="fetchTruck()">
+                        <select name="transporter_id" id="transporterFilter" class="form-select select2">
                             <option value="">Select Transporter/Truck Owner</option>
                             @foreach ($transporters as $transporter)
                                 <option @if ($transporterId == $transporter->id) selected @endif value="{{ $transporter->id }}">
@@ -83,7 +83,7 @@
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Truck No</label>
-                        <select name="truck_id" class="form-select select2" onchange="fetchReference()">
+                        <select name="truck_id" id="truckFilter" class="form-select select2">
                             <option value="">Select Truck No</option>
                             @foreach ($trucks as $truck)
                                 <option @if ($truckId == $truck->id) selected @endif value="{{ $truck->id }}">
@@ -94,7 +94,7 @@
                     </div>
                     <div class="col-md-3">
                         <label class="form-label">Reference By</label>
-                        <select name="reference_by" class="form-select select2">
+                        <select name="reference_by" id="referenceFilter" class="form-select select2">
                             <option value="">Select Reference By</option>
                             @foreach ($references as $reference)
                                 <option @if ($referenceId == $reference->id) selected @endif value="{{ $reference->id }}">
@@ -102,6 +102,12 @@
                                 </option>
                             @endforeach
                         </select>
+                    </div>
+                </div>
+
+                <div class="row mb-2">
+                    <div class="col-12">
+                        <div id="filterValidationMessage" class="alert alert-warning d-none py-2 mb-0"></div>
                     </div>
                 </div>
 
@@ -230,69 +236,137 @@
                     width: '100%'
                 });
             });
+            const $startDate = $('input[name="start_date"]');
+            const $endDate = $('input[name="end_date"]');
+            const $transporter = $('select[name="transporter_id"]');
+            const $truck = $('select[name="truck_id"]');
+            const $reference = $('select[name="reference_by"]');
+            const $validation = $('#filterValidationMessage');
+
+            function showValidation(message) {
+                $validation.text(message).removeClass('d-none');
+            }
+
+            function hideValidation() {
+                $validation.addClass('d-none').text('');
+            }
+
+            function rangeExceedsThreeMonths(startDate, endDate) {
+                const start = new Date(startDate + 'T00:00:00');
+                const end = new Date(endDate + 'T00:00:00');
+
+                if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+                    return false;
+                }
+
+                const minAllowedStart = new Date(end);
+                minAllowedStart.setMonth(minAllowedStart.getMonth() - 3);
+
+                return start < minAllowedStart;
+            }
+
+            function rebuildSelect($select, options, placeholder, selectedValue, labelKey) {
+                const previousValue = selectedValue || '';
+                $select.empty().append(new Option(placeholder, ''));
+
+                (options || []).forEach(function(item) {
+                    const label = labelKey(item);
+                    $select.append(new Option(label, String(item.id), false, false));
+                });
+
+                const isStillAvailable = (options || []).some(function(item) {
+                    return String(item.id) === String(previousValue);
+                });
+
+                $select.val(isStillAvailable ? String(previousValue) : '');
+                $select.trigger('change.select2');
+            }
+
+            function refreshFilterOptions() {
+                const startDate = $startDate.val();
+                const endDate = $endDate.val();
+
+                if (!startDate || !endDate) {
+                    showValidation('Start Date and End Date are required for transporter filter options.');
+                    return;
+                }
+
+                if (rangeExceedsThreeMonths(startDate, endDate)) {
+                    showValidation('Maximum allowed date range is 3 months.');
+                    return;
+                }
+
+                hideValidation();
+
+                const currentSelections = {
+                    transporter: $transporter.val(),
+                    truck: $truck.val(),
+                    reference: $reference.val()
+                };
+
+                $.ajax({
+                    url: '/api/reports/transporter-filter-options',
+                    type: 'GET',
+                    data: {
+                        start_date: startDate,
+                        end_date: endDate,
+                        transporter_id: currentSelections.transporter || '',
+                        truck_id: currentSelections.truck || '',
+                        reference_by: currentSelections.reference || ''
+                    },
+                    success: function(response) {
+                        const transporters = response.transporters || [];
+                        const trucks = response.trucks || [];
+                        const references = response.references || [];
+
+                        rebuildSelect(
+                            $transporter,
+                            transporters,
+                            'Select Transporter/Truck Owner',
+                            currentSelections.transporter,
+                            function(item) {
+                                return item.name + (item.is_owner ? ' (Owner)' : ' (Transporter)');
+                            }
+                        );
+
+                        rebuildSelect($truck, trucks, 'Select Truck No', currentSelections.truck, function(item) {
+                            return item.truck_number;
+                        });
+
+                        rebuildSelect(
+                            $reference,
+                            references,
+                            'Select Reference By',
+                            currentSelections.reference,
+                            function(item) {
+                                return item.name;
+                            }
+                        );
+                    },
+                    error: function(xhr) {
+                        let message = 'Error fetching filter options. Please try again.';
+                        if (xhr.responseJSON && xhr.responseJSON.errors) {
+                            const firstErrorKey = Object.keys(xhr.responseJSON.errors)[0];
+                            if (firstErrorKey && xhr.responseJSON.errors[firstErrorKey].length) {
+                                message = xhr.responseJSON.errors[firstErrorKey][0];
+                            }
+                        } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                            message = xhr.responseJSON.message;
+                        }
+                        showValidation(message);
+                    }
+                });
+            }
+
+            $transporter.on('change', refreshFilterOptions);
+            $truck.on('change', refreshFilterOptions);
+            $reference.on('change', refreshFilterOptions);
+            $startDate.on('change', refreshFilterOptions);
+            $endDate.on('change', refreshFilterOptions);
+
+            if ($startDate.val() && $endDate.val()) {
+                refreshFilterOptions();
+            }
         });
-    </script>
-    <script>
-        function fetchTruck() {
-            var transporterId = $('select[name="transporter_id"]').val();
-            if (transporterId) {
-                $.ajax({
-                    url: '/api/trucks/' + transporterId + '/lrs',
-                    type: 'GET',
-                    success: function(response) {
-                        var truckSelect = $('select[name="truck_id"]');
-                        truckSelect.empty();
-                        truckSelect.append('<option value="">Select Truck No</option>');
-                        response.forEach(function(truck) {
-                            truckSelect.append('<option value="' + truck.id + '">' + truck
-                                .truck_number + '</option>');
-                        });
-                        truckSelect.trigger('change');
-                    },
-                    error: function() {
-                        alert('Error fetching trucks. Please try again.');
-                    }
-                });
-            } else {
-                var truckSelect = $('select[name="truck_id"]');
-                truckSelect.empty();
-                truckSelect.append('<option value="">Select Truck No</option>');
-                truckSelect.trigger('change');
-            }
-            var referenceSelect = $('select[name="reference_by"]');
-            referenceSelect.empty();
-            referenceSelect.append('<option value="">Select Reference By</option>');
-            referenceSelect.trigger('change');
-        }
-
-        function fetchReference() {
-            var transporterId = $('select[name="transporter_id"]').val();
-            var truckId = $('select[name="truck_id"]').val();
-
-            if (truckId) {
-                $.ajax({
-                    url: '/api/references/' + transporterId + '/' + truckId + '/lrs',
-                    type: 'GET',
-                    success: function(response) {
-                        var referenceSelect = $('select[name="reference_by"]');
-                        referenceSelect.empty();
-                        referenceSelect.append('<option value="">Select Reference By</option>');
-                        response.forEach(function(lr) {
-                            referenceSelect.append('<option value="' + lr.id + '">' + lr
-                                .name + '</option>');
-                        });
-                        referenceSelect.trigger('change');
-                    },
-                    error: function() {
-                        alert('Error fetching references. Please try again.');
-                    }
-                });
-            } else {
-                var referenceSelect = $('select[name="reference_by"]');
-                referenceSelect.empty();
-                referenceSelect.append('<option value="">Select Reference By</option>');
-                referenceSelect.trigger('change');
-            }
-        }
     </script>
 @endpush

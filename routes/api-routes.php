@@ -6,6 +6,7 @@ use App\Http\Controllers\DriverController;
 use App\Http\Controllers\FreightBookingController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\LorryReceiptController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\TransporterController;
 use App\Http\Controllers\TruckController;
 use App\Http\Controllers\TruckOwnerController;
@@ -37,6 +38,7 @@ Route::middleware('auth.blocked')->group(function () {
     Route::get('/api/invoice-numbers', [InvoiceController::class, 'getAllInvoiceNumbers']);
     Route::get('/api/invoice-numbers/{customerId}', [InvoiceController::class, 'getInvoiceNumbersForCustomer']);
     Route::get('/api/references/{transporterId}/{truckId}/lrs', [LorryReceiptController::class, 'getReferencesForTransporterTruck']);
+    Route::get('/api/reports/transporter-filter-options', [ReportController::class, 'transporter_report_filter_options']);
     Route::get('/api/lorry-receipts/{id}/details', [LorryReceiptController::class, 'details'])->name('lorry_receipts.details');
     Route::get('/api/freight-bookings/{id}/details', [FreightBookingController::class, 'getFreightBookingDetails'])->name('api.freight_bookings.details');
 
