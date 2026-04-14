@@ -1348,7 +1348,7 @@ class FreightBookingController extends Controller
             $this->frNotificationService->notifyCancelled($freightBooking, auth()->user());
         }
 
-        return redirect()->route('freight_bookings.index')->with('success', 'Good Hire (Lorry Hire) updated successfully.');
+        return redirect()->route('freight_bookings.index', $request->query())->with('success', 'Good Hire (Lorry Hire) updated successfully.');
     }
 
     public function destroy(FreightBooking $freight_booking)

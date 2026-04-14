@@ -191,7 +191,9 @@
         </div>
         <!--end::Header-->
         <!--begin::Form-->
-        <form action="{{ route('freight_bookings.update', $freightBooking->id) }}" method="POST"
+        <form
+            action="{{ route('freight_bookings.update', $freightBooking->id) . (request()->query() ? '?' . http_build_query(request()->query()) : '') }}"
+            method="POST"
             {{ $freightBooking->is_cancelled ? 'onsubmit="return false;"' : '' }}>
             @csrf
             @php
