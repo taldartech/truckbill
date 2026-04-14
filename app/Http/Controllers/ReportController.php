@@ -1131,6 +1131,47 @@ class ReportController extends Controller
         return $mpdf->Output('voucher_receipt.pdf', 'I');
     }
 
+    public function markVoucherReceiptPrinted(Request $request)
+    {
+        $validated = $request->validate([
+            'freight_booking_id' => ['required', 'integer', 'exists:freight_bookings,id'],
+        ]);
+
+        $freightBooking = FreightBooking::find($validated['freight_booking_id']);
+        if (! $freightBooking) {
+            return response()->json(['message' => 'Freight Booking not found.'], 404);
+        }
+
+        if (Auth::user()->company_id && $freightBooking->company_id !== Auth::user()->company_id) {
+            return response()->json(['message' => 'Unauthorized access to this freight booking.'], 403);
+        }
+
+        $printTime = now();
+        $query = FreightBooking::query();
+
+        if (Auth::user()->company_id) {
+            $query->where('company_id', Auth::user()->company_id);
+        }
+
+        if ($freightBooking->linked_lr_id) {
+            $query->where('linked_lr_id', $freightBooking->linked_lr_id);
+        } else {
+            $query->where('id', $freightBooking->id);
+        }
+
+        $query->update([
+            'voucher_printed' => true,
+            'voucher_last_printed_at' => $printTime,
+            'updated_at' => $printTime,
+        ]);
+
+        return response()->json([
+            'message' => 'Voucher print status updated.',
+            'voucher_printed' => true,
+            'voucher_last_printed_at' => $printTime->format('d-m-Y h:i A'),
+        ]);
+    }
+
     public function party_bill(Request $request)
     {
         $customers = Consignee::where('company_id', Auth::user()->company_id)->get();

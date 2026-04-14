@@ -320,6 +320,7 @@ Route::middleware(['auth.blocked'])->group(function () {
     });
 
     Route::get('/voucher-receipt-export', [ReportController::class, 'voucher_receipt_export'])->name('reports.voucher-receipt-export');
+    Route::post('/voucher-receipt-mark-printed', [ReportController::class, 'markVoucherReceiptPrinted'])->name('reports.voucher-receipt-mark-printed');
 });
 
 require __DIR__.'/api-routes.php';

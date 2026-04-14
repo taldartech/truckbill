@@ -79,6 +79,11 @@
         .btn-action-info    { background: var(--brand-info) !important; color: white !important; }
         .btn-action-primary { background: var(--brand-primary) !important; color: white !important; }
         .btn-action-success { background: var(--brand-success) !important; color: white !important; }
+        .btn-action-outline-success {
+            background: white !important;
+            color: var(--brand-success) !important;
+            border: 1px solid var(--brand-success) !important;
+        }
 
         .header-pill-btn {
             border-radius: 50px !important;
@@ -353,7 +358,7 @@
                                         @if ($booking->lr)
                                             <span class="fw-bold text-primary">{{ $booking->lr->lr_number }}</span>
                                             @if ($booking->linked_lr_id)
-                                                <span class="badge text-bg-dark border-secondary">[{{ $booking->linked_lr_id }}]</span>
+                                                <span class="badge text-bg-success border-secondary">[{{ $booking->linked_lr_id }}]</span>
                                             @endif
                                         @else
                                             -
@@ -363,7 +368,7 @@
                                         @if ($booking->lr)
                                             {{ $booking->lr->customer->name }}
                                             @if ($booking->lr->memo_id)
-                                                <span class="badge text-bg-dark border-secondary ms-1">[{{ $booking->lr->memo_id }}]</span>
+                                                <span class="badge text-bg-success border-secondary ms-1">[{{ $booking->lr->memo_id }}]</span>
                                             @endif
                                         @else
                                             -
@@ -374,7 +379,7 @@
                                             $transporterName = $booking->transporter_name ?? ($booking->transporter ? $booking->transporter->name : '-');
                                             $badge = '';
                                             if ($booking->transporter && $booking->transporter->is_owner) {
-                                                $badge = '<span class="badge text-bg-dark border-secondary ms-1" title="Owner"><i class="bi bi-truck"></i></span>';
+                                                $badge = '<span class="badge text-bg-success border-secondary ms-1" title="Owner"><i class="bi bi-truck"></i></span>';
                                             } else {
                                                 $badge = '<span class="badge bg-info ms-1" title="Agency"><i class="bi bi-building"></i></span>';
                                             }
@@ -406,7 +411,10 @@
                                                 <i class="bi bi-pencil"></i>
                                             </a>
                                             <a href="{{ route('reports.voucher-receipt-export', ['lr_id' => $booking->lr->id]) }}"
-                                                target="_blank" class="btn-action btn-action-success" title="Export">
+                                                class="btn-action voucher-print-btn {{ $booking->voucher_printed ? 'btn-action-success' : 'btn-action-outline-success' }}"
+                                                data-freight-booking-id="{{ $booking->id }}"
+                                                data-mark-url="{{ route('reports.voucher-receipt-mark-printed') }}"
+                                                title="{{ $booking->voucher_last_printed_at ? 'Last printed: ' . $booking->voucher_last_printed_at->format('d-m-Y h:i A') : 'Print voucher challan' }}">
                                                 <i class="bi bi-file-earmark-text"></i>
                                             </a>
                                         </div>
@@ -2797,6 +2805,66 @@
                     document.getElementById("pumpName").value = ""; // reset
                 }
             }
+        });
+    </script>
+    <script>
+        document.addEventListener('click', function(event) {
+            const printButton = event.target.closest('.voucher-print-btn');
+            if (!printButton) {
+                return;
+            }
+
+            event.preventDefault();
+            const printUrl = printButton.getAttribute('href');
+            window.open(printUrl, '_blank');
+
+            Swal.fire({
+                icon: 'question',
+                title: 'Print Confirmation',
+                text: 'Did you print voucher challan successfully?',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, Printed',
+                cancelButtonText: 'No',
+                confirmButtonColor: '#198754',
+            }).then((result) => {
+                if (!result.isConfirmed) {
+                    return;
+                }
+
+                fetch(printButton.dataset.markUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                                'content'),
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            freight_booking_id: printButton.dataset.freightBookingId
+                        }),
+                    })
+                    .then(async (response) => {
+                        const data = await response.json();
+                        if (!response.ok) {
+                            throw new Error(data.message || 'Failed to update print status.');
+                        }
+                        return data;
+                    })
+                    .then((data) => {
+                        printButton.classList.remove('btn-action-outline-success');
+                        printButton.classList.add('btn-action-success');
+                        printButton.setAttribute('title',
+                            `Last printed: ${data.voucher_last_printed_at}`);
+                    })
+                    .catch((error) => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Update Failed',
+                            text: error.message || 'Could not update print status.',
+                        });
+                    });
+            });
         });
     </script>
 @endpush
