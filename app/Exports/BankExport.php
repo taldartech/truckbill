@@ -8,7 +8,6 @@ use Maatwebsite\Excel\Concerns\WithTitle;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use Illuminate\Support\Collection;
 use App\Models\VoucherPayment;
 use App\Models\VoucherLinked;
 use Illuminate\Support\Facades\Auth;
@@ -62,17 +61,21 @@ class BankExport implements FromCollection, WithHeadings, WithTitle, ShouldAutoS
 
         // Process unlinked voucher payments
         foreach ($payments as $payment) {
-            $tds_deducted = $payment->freight_booking->tds_amount == 0 ? 'No' : 'Yes';
+            $freightBooking = $payment->freight_booking;
+            $lr = $freightBooking?->lr;
+            $transporter = $lr?->transporter;
+            $truck = $lr?->truck;
+            $tds_deducted = ($freightBooking?->tds_amount ?? 0) == 0 ? 'No' : 'Yes';
             $status = ucfirst(str_replace('-', ' ', $payment->payment_status ?? 'N/A'));
             $allPayments[] = [
                 'Date' => Date::dateTimeToExcel(\Carbon\Carbon::parse($payment->date)),
-                'LR Number' => $payment->freight_booking->lr->lr_number ?? '-',
-                'Truck Number' => $payment->freight_booking->lr->truck->truck_number ?? '-',
-                'Transporter Name' => $payment->freight_booking->lr->transporter->name ?? '-',
-                'Short Name' => $payment->freight_booking->lr->transporter->short_name ?? '-',
-                'Beneficiary ID' => $payment->freight_booking->lr->transporter->beneficiary_id ?? '-',
+                'LR Number' => $lr?->lr_number ?? '-',
+                'Truck Number' => $truck?->truck_number ?? '-',
+                'Transporter Name' => $transporter?->name ?? '-',
+                'Short Name' => $transporter?->short_name ?? '-',
+                'Beneficiary ID' => $transporter?->beneficiary_id ?? '-',
                 'Amount' => $payment['amount'] ?? 0,
-                'Narration' => 'GR NO ' . $payment->freight_booking->lr->gr_number ?? '-',
+                'Narration' => 'GR NO ' . ($lr?->gr_number ?? '-'),
                 'TDS Deducted' => $tds_deducted,
                 'Status' => $status,
             ];
@@ -80,17 +83,21 @@ class BankExport implements FromCollection, WithHeadings, WithTitle, ShouldAutoS
 
         // Process linked voucher payments
         foreach ($linked_payments as $linked_payment) {
-            $tds_deducted = $linked_payment->freight_booking->tds_amount == 0 ? 'No' : 'Yes';
+            $freightBooking = $linked_payment->freight_booking;
+            $lr = $freightBooking?->lr;
+            $transporter = $lr?->transporter;
+            $truck = $lr?->truck;
+            $tds_deducted = ($freightBooking?->tds_amount ?? 0) == 0 ? 'No' : 'Yes';
             $status = ucfirst(str_replace('-', ' ', $linked_payment->payment_status ?? 'N/A'));
             $allPayments[] = [
                 'Date' => Date::dateTimeToExcel(\Carbon\Carbon::parse($linked_payment->date)),
-                'LR Number' => $linked_payment->freight_booking->lr->lr_number ?? '-',
-                'Truck Number' => $linked_payment->freight_booking->lr->truck->truck_number ?? '-',
-                'Transporter Name' => $linked_payment->freight_booking->lr->transporter->name ?? '-',
-                'Short Name' => $linked_payment->freight_booking->lr->transporter->short_name ?? '-',
-                'Beneficiary ID' => $linked_payment->freight_booking->lr->transporter->beneficiary_id ?? '-',
+                'LR Number' => $lr?->lr_number ?? '-',
+                'Truck Number' => $truck?->truck_number ?? '-',
+                'Transporter Name' => $transporter?->name ?? '-',
+                'Short Name' => $transporter?->short_name ?? '-',
+                'Beneficiary ID' => $transporter?->beneficiary_id ?? '-',
                 'Amount' => $linked_payment['amount'] ?? 0,
-                'Narration' => 'GR NO ' . $linked_payment->freight_booking->lr->gr_number ?? '-',
+                'Narration' => 'GR NO ' . ($lr?->gr_number ?? '-'),
                 'TDS Deducted' => $tds_deducted,
                 'Status' => $status,
             ];

@@ -305,6 +305,8 @@ Route::middleware(['auth.blocked'])->group(function () {
         Route::get('/pending-memo-export', [ReportController::class, 'pendingMemoExport'])->name('reports.pending-memo-export');
         Route::get('/bank', [ReportController::class, 'bank'])->name('reports.bank');
         Route::get('/bank-export', [ReportController::class, 'bank_export'])->name('reports.bank-export');
+        Route::get('/cash', [ReportController::class, 'cash'])->name('reports.cash');
+        Route::get('/cash-export', [ReportController::class, 'cash_export'])->name('reports.cash-export');
         Route::get('/transporter-report', [ReportController::class, 'transporter_report'])->name('reports.transporter-report');
         Route::get('/transporter-report-export', [ReportController::class, 'transporter_report_export'])->name('reports.transporter-report-export');
         Route::get('/pending-invoice', [ReportController::class, 'pending_invoice'])->name('reports.pending-invoice');

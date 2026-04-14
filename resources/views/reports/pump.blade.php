@@ -156,11 +156,7 @@
 
                                     <td>{{ $lr->lr_number ?? 'N/A' }}</td>
                                     <td>{{ $item['date'] ?? 'N/A' }}</td>
-                                    {{-- in lr table their is truck_id from that fetch truck number --}}
-                                    @php
-                                        $truck = App\Models\Truck::find($lr->truck_id);
-                                    @endphp
-                                    <td>{{ $truck->truck_number ?? 'N/A' }}</td>
+                                    <td>{{ $lr->truck->truck_number ?? 'N/A' }}</td>
 
                                     <td>{{ $lr->destination_city }}, {{ $lr->destination_state ?? 'N/A' }}</td>
 

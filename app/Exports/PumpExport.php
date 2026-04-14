@@ -2,6 +2,9 @@
 
 namespace App\Exports;
 
+use App\Models\Pump;
+use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithEvents;
@@ -10,38 +13,39 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 
 class PumpExport implements FromCollection, ShouldAutoSize, WithEvents
 {
-    private $startDate;
-    private $endDate;
-    private $pumpId;
-    private $pumpName;
-    private $paymentStatus;
+    /** @var Collection<int, array<string, mixed>> */
+    private Collection $pumpData;
 
-    public function __construct($startDate, $endDate, $pumpId, $paymentStatus = null)
+    private string $startDate;
+    private string $endDate;
+
+    /** @var string|int */
+    private $pumpId;
+
+    private string $pumpName;
+
+    public function __construct(Collection $pumpData, string $startDate, string $endDate, string|int $pumpId)
     {
+        $this->pumpData = $pumpData;
         $this->startDate = $startDate;
         $this->endDate = $endDate;
         $this->pumpId = $pumpId;
-        $this->paymentStatus = $paymentStatus;
-        $this->pumpName = \App\Models\Pump::find($pumpId)->pump_name ?? 'Pump Report';
+        $this->pumpName = Pump::find($pumpId)->pump_name ?? 'Pump Report';
     }
 
     public function collection()
     {
         $data = collect();
-        $companyId = auth()->user()->company_id;
 
-        // Get the pump name
-        $pump = \App\Models\Pump::find($this->pumpId);
+        $pump = Pump::find($this->pumpId);
         if (!$pump) {
             return $data;
         }
 
-        // Add the pump name and date range as the first rows
         $data->push(['Pump:', $pump->pump_name]);
         $data->push(['Date Range:', $this->startDate . ' to ' . $this->endDate]);
-        $data->push([]); // Empty row
+        $data->push([]);
 
-        // Add headers
         $data->push([
             'LR Number',
             'Date',
@@ -51,107 +55,33 @@ class PumpExport implements FromCollection, ShouldAutoSize, WithEvents
             'Status',
         ]);
 
-        // Step 1: Fetch records from voucher_payments where linked_voucher_id is null
-        $voucherPaymentsQuery = \App\Models\VoucherPayment::with(['freight_booking.lr', 'pump', 'freight_booking'])
-            ->where('pump_id', $this->pumpId)
-            ->where('company_id', $companyId)
-            ->whereNull('linked_voucher_id')
-            ->whereBetween('date', [$this->startDate, $this->endDate]);
+        $grandTotal = 0;
 
-        if ($this->paymentStatus) {
-            $voucherPaymentsQuery->where('payment_status', $this->paymentStatus);
-        }
+        foreach ($this->pumpData as $item) {
+            $grandTotal += (float) ($item['amount'] ?? 0);
 
-        $voucherPayments = $voucherPaymentsQuery->get();
+            $dateStr = $item['date'] instanceof Carbon
+                ? $item['date']->format('d-m-Y')
+                : (string) $item['date'];
 
-        // Step 2: Fetch all records from voucher_linked table
-        $linkedPaymentsQuery = \App\Models\VoucherLinked::with(['freight_booking.lr', 'freight_booking'])
-            ->where('pump_id', $this->pumpId)
-            ->where('company_id', $companyId)
-            ->whereBetween('date', [$this->startDate, $this->endDate]);
+            $status = ucfirst(str_replace('-', ' ', $item['payment_status'] ?? 'N/A'));
 
-        if ($this->paymentStatus) {
-            $linkedPaymentsQuery->where('payment_status', $this->paymentStatus);
-        }
+            $lrs = $item['lrs'] ?? collect();
+            foreach ($lrs as $lr) {
+                $destination = trim(($lr->destination_city ?? '') . ', ' . ($lr->destination_state ?? 'N/A'), ' ,');
 
-        $linkedPayments = $linkedPaymentsQuery->get();
-
-        $allPayments = collect();
-        $processedFreightBookingIds = [];
-        $totalAmount = 0;
-
-        // Process unlinked voucher payments
-        foreach ($voucherPayments as $payment) {
-            // Skip if we've already processed this freight booking
-            if (in_array($payment->freight_booking_id, $processedFreightBookingIds)) {
-                continue;
-            }
-
-            $lrDetails = \App\Models\LorryReceipt::where('freight_booking_id', $payment->freight_booking_id)
-                ->select('freight_booking_id', 'lr_number', 'destination_state', 'truck_id', 'destination_city')
-                ->with('truck')
-                ->first();
-
-            if ($lrDetails) {
-                $allPayments->push([
-                    'date' => \Carbon\Carbon::parse($payment->date),
-                    'lr_number' => $lrDetails->lr_number ?? 'N/A',
-                    'truck_number' => $lrDetails->truck->truck_number ?? 'N/A',
-                    'destination' => $lrDetails->destination_city . ', ' . $lrDetails->destination_state,
-                    'amount' => $payment->amount,
-                    'payment_status' => $payment->payment_status ?? 'N/A',
+                $data->push([
+                    $lr->lr_number ?? 'N/A',
+                    $dateStr,
+                    $lr->truck->truck_number ?? 'N/A',
+                    $destination,
+                    $item['amount'],
+                    $status,
                 ]);
-
-                $totalAmount += $payment->amount;
-                $processedFreightBookingIds[] = $payment->freight_booking_id;
             }
         }
 
-        // Process linked voucher payments
-        foreach ($linkedPayments as $linked) {
-            // Skip if we've already processed this freight booking
-            if (in_array($linked->freight_booking_id, $processedFreightBookingIds)) {
-                continue;
-            }
-
-            $lrDetails = \App\Models\LorryReceipt::where('freight_booking_id', $linked->freight_booking_id)
-                ->select('freight_booking_id', 'lr_number', 'destination_state', 'truck_id', 'destination_city')
-                ->with('truck')
-                ->first();
-
-            if ($lrDetails) {
-                $allPayments->push([
-                    'date' => \Carbon\Carbon::parse($linked->date),
-                    'lr_number' => $lrDetails->lr_number ?? 'N/A',
-                    'truck_number' => $lrDetails->truck->truck_number ?? 'N/A',
-                    'destination' => $lrDetails->destination_city . ', ' . $lrDetails->destination_state,
-                    'amount' => $linked->amount,
-                    'payment_status' => $linked->payment_status ?? 'N/A',
-                ]);
-
-                $totalAmount += $linked->amount;
-                $processedFreightBookingIds[] = $linked->freight_booking_id;
-            }
-        }
-
-        // Step 3: Sort by date
-        $allPayments = $allPayments->sortBy('date')->values();
-
-        // Add rows to data collection
-        foreach ($allPayments as $payment) {
-            $status = ucfirst(str_replace('-', ' ', $payment['payment_status'] ?? 'N/A'));
-            $data->push([
-                $payment['lr_number'],
-                $payment['date']->format('d-m-Y'),
-                $payment['truck_number'],
-                $payment['destination'],
-                $payment['amount'],
-                $status,
-            ]);
-        }
-
-        // Add total row
-        $data->push(['', '', '', 'Total:', $totalAmount, '']);
+        $data->push(['', '', '', 'Total:', $grandTotal, '']);
 
         return $data;
     }
@@ -160,7 +90,6 @@ class PumpExport implements FromCollection, ShouldAutoSize, WithEvents
     {
         return [
             AfterSheet::class => function (AfterSheet $event) {
-                // Style the total row
                 $lastRow = $event->sheet->getHighestRow();
                 $event->sheet->getStyle("D{$lastRow}:E{$lastRow}")->applyFromArray([
                     'font' => [
@@ -170,10 +99,9 @@ class PumpExport implements FromCollection, ShouldAutoSize, WithEvents
                         'top' => [
                             'borderStyle' => Border::BORDER_THIN,
                         ],
-                    ]
+                    ],
                 ]);
 
-                // Format amount column (starts from row 1)
                 $event->sheet->getStyle("E1:E{$lastRow}")
                     ->getNumberFormat()
                     ->setFormatCode('#,##0.00');

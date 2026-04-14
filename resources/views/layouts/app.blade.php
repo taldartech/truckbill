@@ -1093,6 +1093,13 @@
                                         </a>
                                     </li>
                                     <li class="nav-item">
+                                        <a href="{{ route('reports.cash') }}"
+                                            class="nav-link{{ Request::is('reports/cash') ? ' active' : '' }}">
+                                            <i class="fas fa-file-alt"></i>
+                                            <p>Cash</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
                                         <a href="{{ route('reports.party-bill') }}"
                                             class="nav-link{{ Request::is('reports/party-bill') ? ' active' : '' }}">
                                             <i class="fas fa-file-alt"></i>
