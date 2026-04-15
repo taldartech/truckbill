@@ -1177,7 +1177,7 @@
             <!--end::To the end-->
             <!--begin::Copyright-->
             <strong>
-                Copyright All Rights Reserved © 2025
+                Copyright All Rights Reserved © {{ date('Y') }}
 
             </strong>
 

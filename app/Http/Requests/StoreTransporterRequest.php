@@ -54,7 +54,7 @@ class StoreTransporterRequest extends FormRequest
 
         return array_merge($baseRules, [
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:transporter_masters,email',
+            'email' => ['required', 'email', 'unique:transporter_masters,email', 'unique:users,email'],
             'pan_number' => [
                 'required',
                 'string',
