@@ -35,9 +35,7 @@ class TransporterController extends Controller
             return $this->getTransportersData($request);
         }
 
-        $companies = \App\Models\Company::all();
-
-        return view('transporters.index', compact('companies'));
+        return view('transporters.index');
     }
 
     private function getTransportersData(Request $request)
@@ -289,18 +287,6 @@ class TransporterController extends Controller
         $validated = $request->validated();
 
         $shortName = $validated['short_name'] ?? null;
-        if ($shortName) {
-            $existing = Transporter::where('short_name', $shortName)->where('company_id', $validated['company_id'])->exists();
-            if ($existing) {
-                $suffix = 1;
-                do {
-                    $shortName = ($validated['short_name'] ?? '').'-'.$suffix;
-                    $existing = Transporter::where('short_name', $shortName)->where('company_id', $validated['company_id'])->exists();
-                    $suffix++;
-                } while ($existing);
-            }
-            $validated['short_name'] = $shortName;
-        }
 
         $validated['advance_amount'] = $validated['advance_amount'] ?? 0;
         $validated['is_owner'] = 0;
