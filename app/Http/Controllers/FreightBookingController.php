@@ -25,6 +25,22 @@ class FreightBookingController extends Controller
         private readonly FreightBookingNotificationService $frNotificationService
     ) {}
 
+    private function getActiveCompanyId(): ?int
+    {
+        $user = Auth::user();
+
+        if ($user->userRole->name === 'super_admin') {
+            $companyId = session('super_admin_company_id');
+            if (! $companyId) {
+                abort(403, 'Please enter a company first.');
+            }
+
+            return (int) $companyId;
+        }
+
+        return $user->company_id ? (int) $user->company_id : null;
+    }
+
     public function index(Request $request)
     {
         if (auth()->user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
@@ -1023,11 +1039,17 @@ class FreightBookingController extends Controller
 
     public function getTransporter($id)
     {
+        $companyId = $this->getActiveCompanyId();
         $transporter = \App\Models\Transporter::with([
             'transporterMaster.city',
             'transporterMaster.state',
             'transporterMaster.country',
-        ])->find($id);
+        ])
+            ->where('id', $id)
+            ->when($companyId, function ($query) use ($companyId) {
+                $query->where('company_id', $companyId);
+            })
+            ->first();
         if (! $transporter) {
             return response()->json(['error' => 'Transporter not found'], 404);
         }
@@ -1037,7 +1059,18 @@ class FreightBookingController extends Controller
 
     public function getTruck($id)
     {
-        $truck = \App\Models\Truck::with(['transporter.transporterMaster', 'driver'])->find($id);
+        $companyId = $this->getActiveCompanyId();
+        $truck = \App\Models\Truck::with(['transporter.transporterMaster', 'driver'])
+            ->where('id', $id)
+            ->when($companyId, function ($query) use ($companyId) {
+                $query->where(function ($innerQuery) use ($companyId) {
+                    $innerQuery->where('company_id', $companyId)
+                        ->orWhereHas('transporter', function ($transporterQuery) use ($companyId) {
+                            $transporterQuery->where('company_id', $companyId);
+                        });
+                });
+            })
+            ->first();
         if (! $truck) {
             return response()->json(['error' => 'Truck not found'], 404);
         }
