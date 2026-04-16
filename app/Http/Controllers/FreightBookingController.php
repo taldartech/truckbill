@@ -41,6 +41,35 @@ class FreightBookingController extends Controller
         return $user->company_id ? (int) $user->company_id : null;
     }
 
+    private function paymentRequestLogContext(Request $request): array
+    {
+        return [
+            'payment_type_id' => $request->input('payment_type_id'),
+            'payment_mode_id' => $request->input('payment_mode_id'),
+            'payment_type' => $request->input('payment_type'),
+            'payment_mode' => $request->input('payment_mode'),
+            'pump_id' => $request->input('pump_id'),
+            'date' => $request->input('date'),
+            'confirm_duplicate' => $request->input('confirm_duplicate'),
+            'booking_ids_count' => count($request->input('booking_ids', [])),
+            'payment_amounts_count' => count($request->input('payment_amounts', [])),
+            'has_reference_number' => $request->filled('reference_number'),
+            'has_notes' => $request->filled('notes'),
+        ];
+    }
+
+    private function freightBookingUpdateLogContext(Request $request): array
+    {
+        return [
+            'lr_id' => $request->input('lr_id'),
+            'linked_freight_booking_id' => $request->input('linked_freight_booking_id'),
+            'eway_bill_number_present' => $request->filled('eway_bill_number'),
+            'is_fixed_amount' => $request->boolean('is_fixed_amount'),
+            'is_delivered' => $request->boolean('is_delivered'),
+            'is_cancelled' => $request->boolean('is_cancelled'),
+        ];
+    }
+
     public function index(Request $request)
     {
         if (auth()->user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
@@ -213,16 +242,12 @@ class FreightBookingController extends Controller
             abort(403, 'Please enter a company first.');
         }
         try {
-            \Log::info('FreightBookings DataTables request started');
-
             $query = FreightBooking::with(['lr.truck', 'linkedFreightBooking', 'company', 'transporter.transporterMaster'])
                 ->select('freight_bookings.*');
 
             if (auth()->user()->company_id) {
                 $query->where('freight_bookings.company_id', auth()->user()->company_id);
             }
-
-            \Log::info('Query built, processing DataTables');
 
             $dataTable = DataTables::of($query)
                 ->addIndexColumn()
@@ -312,8 +337,6 @@ class FreightBookingController extends Controller
                     });
                 })
                 ->rawColumns(['checkbox', 'actions', 'transporter']);
-
-            \Log::info('DataTables processing complete');
 
             return $dataTable->make(true);
         } catch (\Exception $e) {
@@ -778,12 +801,6 @@ class FreightBookingController extends Controller
 
                 \DB::commit();
 
-                \Log::info('Combined payment created successfully', [
-                    'voucher_linked_id' => $VoucherLinked->id,
-                    'voucher_payments' => $voucherPayments,
-                    'total_amount' => $data['total_amount'],
-                ]);
-
                 return response()->json($response);
             } catch (\Exception $e) {
                 \DB::rollBack();
@@ -808,7 +825,7 @@ class FreightBookingController extends Controller
             \Log::error('Error in storeCombinedPayment', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'request_data' => $request->all(),
+                'request_context' => $this->paymentRequestLogContext($request),
             ]);
 
             return response()->json([
@@ -1097,12 +1114,6 @@ class FreightBookingController extends Controller
             return redirect()->back()->withErrors(['general' => 'Cannot update a cancelled good hire (lorry hire). Please contact administrator if changes are needed.']);
         }
 
-        // Add debug logging
-        \Log::info('Freight booking update started', [
-            'freight_booking_id' => $freightBooking->id,
-            'request_data' => $request->all(),
-        ]);
-
         $data = $request->validate([
             'lr_id' => 'required|exists:lorry_receipts,id',
             'tr_fr_rate' => 'required|numeric|min:0|max:20000',
@@ -1183,33 +1194,17 @@ class FreightBookingController extends Controller
             $lorryReceipt->refresh();
             $oldDeliveryStatus = $lorryReceipt->delivery_status;
 
-            \Log::info('FREIGHT BOOKING UPDATE: Starting LR status update', [
-                'freight_booking_id' => $freightBooking->id,
-                'lr_id' => $lorryReceipt->id,
-                'lr_number' => $lorryReceipt->lr_number,
-                'current_memo_id' => $lorryReceipt->memo_id,
-                'current_delivery_status' => $lorryReceipt->delivery_status,
-                'is_delivered_from_form' => $data['is_delivered'] ?? 'not_set',
-                'is_cancelled_from_form' => $data['is_cancelled'] ?? 'not_set',
-                'old_damage' => $oldDamageAmount,
-                'old_shortage' => $oldShortageAmount,
-                'new_damage' => $newDamageAmount,
-                'new_shortage' => $newShortageAmount,
-            ]);
-
             $deliveryStatus = 'Pending';
             if (isset($data['is_cancelled']) && $data['is_cancelled'] === '1') {
                 // When freight booking is cancelled, lorry receipt goes back to Pending
                 $deliveryStatus = 'Pending';
                 $lorryReceipt->freight_booking_id = null; // Unlink freight booking
-                \Log::info('FREIGHT BOOKING UPDATE: Setting status to Pending (cancelled)');
             } elseif (isset($data['is_delivered']) && $data['is_delivered'] === '1') {
                 // Only set to 'Delivered' if memo_id exists on the lorry receipt
                 $deliveryStatus = 'Delivered';
             } else {
                 // If not delivered and not cancelled, set to In-Progress
                 $deliveryStatus = 'In-Progress';
-                \Log::info('FREIGHT BOOKING UPDATE: Setting status to In-Progress (default)');
             }
 
             // Update damage and shortage amounts on lorry receipt
@@ -1367,13 +1362,6 @@ class FreightBookingController extends Controller
                 $lorryReceipt->loadMissing(['company', 'truck', 'transporter.transporterMaster', 'customer']);
                 $this->lrNotificationService->notifyStatusChange($lorryReceipt, $deliveryStatus, auth()->user());
             }
-
-            \Log::info('FREIGHT BOOKING UPDATE: Final LR state after save', [
-                'lr_id' => $lorryReceipt->id,
-                'lr_number' => $lorryReceipt->lr_number,
-                'memo_id' => $lorryReceipt->memo_id,
-                'delivery_status' => $lorryReceipt->delivery_status,
-            ]);
         }
 
         if ($justCancelledFreightBooking) {
@@ -1407,7 +1395,6 @@ class FreightBookingController extends Controller
     {
         try {
             // dd($request->all());
-            \Log::info('Voucher payment request received', $request->all());
 
             // Validate the request
             $validated = $request->validate([
@@ -1425,8 +1412,6 @@ class FreightBookingController extends Controller
                 'pump_id' => 'nullable|exists:pumps,id',
                 'date' => 'nullable|date',
             ]);
-
-            \Log::info('Validation passed', $validated);
 
             // Begin transaction
             \DB::beginTransaction();
@@ -1545,11 +1530,6 @@ class FreightBookingController extends Controller
                         'date' => $validated['date'] ?? now()->toDateString(),
                     ]);
 
-                    \Log::info('Payment status set based on payment mode', [
-                        'payment_mode' => $paymentMode->name,
-                        'payment_status' => $paymentStatus,
-                    ]);
-
                     // Update freight booking balance
                     // $newadvance_amount = $freightBooking->advance_amount + $amount;
                     // $newBalance = max(0, $freightBooking->balance_amount - $amount);
@@ -1612,15 +1592,7 @@ class FreightBookingController extends Controller
 
                         app(\App\Http\Controllers\AdvancePaymentController::class)->store($advanceRequest);
 
-                        \Log::info('Adjusted from transporter advance', [
-
-                            'transporter_id' => $transporter->id,
-                            'old_advance' => $transporter->getOriginal('advance_amount'),
-                            'deducted' => $amount,
-                            'new_advance' => $transporter->advance_amount,
-                            'booking_id' => $bookingId,
-                            'new_balance' => $freightBooking->balance_amount,
-                        ]);
+                        // No success logging (log only on error paths)
                     }
                     // normal payment flow (cash, bank, fuel, etc.)
                     // Calculate effective payable amount (considering all deductions)
@@ -1640,22 +1612,11 @@ class FreightBookingController extends Controller
 
                     $freightBooking->save();
 
-                    \Log::info('Processed normal payment for booking', [
-                        'booking_id' => $bookingId,
-                        'amount' => $amount,
-                        'new_balance' => $freightBooking->balance_amount,
-                        'new_advance_amount' => $newAdvanceAmount,
-                    ]);
-
                     $processedPayments[] = $voucherPayment->id;
                 }
             }
 
             \DB::commit();
-
-            \Log::info('Voucher payment completed successfully', [
-                'processed_payments' => $processedPayments,
-            ]);
 
             $payload = [
                 'success' => true,
@@ -1682,7 +1643,7 @@ class FreightBookingController extends Controller
         } catch (\Illuminate\Validation\ValidationException $e) {
             \Log::error('Validation error in voucher payment', [
                 'errors' => $e->errors(),
-                'request_data' => $request->all(),
+                'request_context' => $this->paymentRequestLogContext($request),
             ]);
 
             return response()->json([
@@ -1695,7 +1656,7 @@ class FreightBookingController extends Controller
             \Log::error('Voucher payment error', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'request_data' => $request->all(),
+                'request_context' => $this->paymentRequestLogContext($request),
             ]);
 
             return response()->json([
@@ -1726,12 +1687,6 @@ class FreightBookingController extends Controller
                 ->whereIn('freight_booking_id', $validated['freight_booking_ids'])
                 ->orderBy('created_at', 'desc')
                 ->get();
-
-            \Log::info('Payment history query result:', [
-                'freight_booking_ids' => $validated['freight_booking_ids'],
-                'payments_count' => $payments->count(),
-                'payments' => $payments->toArray(),
-            ]);
 
             return response()->json([
                 'success' => true,
@@ -1822,12 +1777,6 @@ class FreightBookingController extends Controller
                     $fb->is_delivered = 1;
                     $fb->save();
                 }
-
-                \Log::info('Bulk memo ID assignment completed', [
-                    'memo_id' => $validated['memo_id'],
-                    'lr_ids' => $validated['lr_ids'],
-                    'freight_booking_ids' => $validated['freight_booking_ids'],
-                ]);
             });
 
             return redirect()->route('freight_bookings.index')

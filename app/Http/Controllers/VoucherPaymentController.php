@@ -29,6 +29,26 @@ class VoucherPaymentController extends Controller
         }
     }
 
+    private function bulkPaymentRequestLogContext(Request $request): array
+    {
+        $lorryReceipts = $request->input('lorry_receipts', []);
+        $freightBookings = $request->input('freight_bookings', []);
+        $amounts = $request->input('amounts', []);
+
+        return [
+            'payment_type' => $request->input('payment_type'),
+            'payment_mode' => $request->input('payment_mode'),
+            'company_id' => $request->input('company_id'),
+            'pump_id' => $request->input('pump_id'),
+            'date' => $request->input('date'),
+            'lorry_receipts_count' => is_array($lorryReceipts) ? count($lorryReceipts) : 0,
+            'freight_bookings_count' => is_array($freightBookings) ? count($freightBookings) : 0,
+            'amounts_count' => is_array($amounts) ? count($amounts) : 0,
+            'has_reference_transaction_id' => $request->filled('reference_transaction_id'),
+            'has_remark' => $request->filled('remark'),
+        ];
+    }
+
     /**
      * Display the daily payments report
      *
@@ -785,16 +805,6 @@ class VoucherPaymentController extends Controller
     {
         $this->ensureCompanyContext();
         try {
-            // Log the incoming request for debugging
-            \Log::info('Bulk payment request received:', [
-                'all_data' => $request->all(),
-                'payment_type' => $request->payment_type,
-                'payment_mode' => $request->payment_mode,
-                'lorry_receipts' => $request->lorry_receipts,
-                'freight_bookings' => $request->freight_bookings,
-                'amounts' => $request->amounts,
-            ]);
-
             // Validate the request
             $validated = $request->validate([
                 'payment_type' => 'required|string',
@@ -826,12 +836,6 @@ class VoucherPaymentController extends Controller
             $lorryReceipts = $validated['lorry_receipts'];
             $freightBookings = $validated['freight_bookings'];
             $amounts = $validated['amounts'];
-
-            \Log::info('Starting to process voucher payments:', [
-                'lorry_receipts' => $lorryReceipts,
-                'freight_bookings' => $freightBookings,
-                'amounts' => $amounts,
-            ]);
 
             // foreach ($lorryReceipts as $index => $lorryReceiptId) {
             //     \Log::info('Processing voucher payment for LR:', [
@@ -954,8 +958,6 @@ class VoucherPaymentController extends Controller
                 $amount = $amounts[$lorryReceiptId] ?? 0;
 
                 if (! $freightBookingId || $amount <= 0) {
-                    \Log::warning('Skipping due to invalid data', compact('lorryReceiptId', 'freightBookingId', 'amount'));
-
                     continue;
                 }
 
@@ -997,19 +999,13 @@ class VoucherPaymentController extends Controller
                 $freightBooking->advance_amount += $amount;
                 $freightBooking->balance_amount = $freightBooking->tr_amount - $freightBooking->advance_amount;
                 $freightBooking->save();
-
-                \Log::info('Voucher payment processed', [
-                    'lorry_receipt_id' => $lorryReceiptId,
-                    'amount' => $amount,
-                    'voucher_payment_id' => $voucherPayment->id,
-                ]);
             }
 
             return redirect()->route('voucher_payments.index')
                 ->with('success', 'Bulk voucher payments created successfully.');
         } catch (\Exception $e) {
             \Log::error('Bulk voucher payment error: '.$e->getMessage(), [
-                'request' => $request->all(),
+                'request_context' => $this->bulkPaymentRequestLogContext($request),
             ]);
 
             return redirect()->back()
@@ -1300,15 +1296,6 @@ class VoucherPaymentController extends Controller
                 $payment->loadMissing(['company', 'freight_booking.lr', 'freight_booking.transporter.transporterMaster']);
                 $this->voucherPaymentNotificationService->notifyForCurrentStatus($payment, auth()->user());
             }
-
-            // Log the status change
-            \Log::info('Payment status updated', [
-                'payment_id' => $payment->id,
-                'voucher_number' => $payment->voucher_number,
-                'old_status' => $oldPaymentStatus,
-                'new_status' => $validated['status'],
-                'updated_by' => auth()->id(),
-            ]);
 
             // Redirect to the specified URL or back to the previous page
             if (! empty($validated['redirect'])) {

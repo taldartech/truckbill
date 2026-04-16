@@ -12,7 +12,10 @@ Date: 2026-04-15
 - **Issue**
   - ID-based fetches could return records outside the active company context.
 - **Status**
-  - Mitigated: company scoping was added using active company resolution logic (`super_admin_company_id` for super admin, `Auth::user()->company_id` otherwise).
+  - Mitigated and verified.
+- **Implementation note**
+  - `getTransporter()` now resolves active company with `getActiveCompanyId()` and enforces `where('company_id', $companyId)` for `GET /api/transporters/{id}`.
+  - `getTruck()` now resolves active company with `getActiveCompanyId()` and enforces company ownership via truck `company_id` or related transporter `company_id` for `GET /api/trucks/{id}`.
 
 ## 2) Medium - Sensitive request payload logging
 
@@ -21,8 +24,12 @@ Date: 2026-04-15
   - `app/Http/Controllers/VoucherPaymentController.php`
 - **Issue**
   - Multiple paths log `$request->all()` (normal and exception paths), which can expose sensitive/financial data.
-- **Recommended**
-  - Replace with strict allowlist logging.
+- **Status**
+  - Mitigated and verified.
+- **Implementation note**
+  - Replaced `$request->all()` logging in `FreightBookingController` voucher/update/combined-payment paths with strict allowlist metadata (`request_context`) using dedicated helper methods.
+  - Replaced `$request->all()` logging in `VoucherPaymentController::bulkPayment()` request/exception paths with strict allowlist metadata (`request_context`).
+  - Removed `info`/`warning` success logs so request metadata is only logged on error paths.
 
 ## 3) Medium - Company context mismatch risk for super admin
 
