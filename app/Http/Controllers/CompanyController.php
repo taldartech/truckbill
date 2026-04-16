@@ -584,11 +584,11 @@ class CompanyController extends Controller
             $validated['freight_challan_template'] = 'classic';
         }
 
-        // ✅ Automatically set plan_end_date = created_at + 45 days
-        $validated['plan_end_date'] = Carbon::now()->addDays(44)->toDateString();
+        // ✅ Automatically set plan_end_date = created_at + 15 days
+        $validated['plan_end_date'] = Carbon::now()->addDays(14)->toDateString();
 
         // ✅ Optional: Set default credits
-        $validated['lr_credits'] = 250;
+        $validated['lr_credits'] = 150;
         $validated['truck_credits'] = null;
 
         $validated['short_name'] = $normalizedShortName;
@@ -596,7 +596,7 @@ class CompanyController extends Controller
         $company = \App\Models\Company::create($validated);
         $this->companyLifecycleNotificationService->notifyCompanyRegistered($company, auth()->user());
 
-        return redirect()->route('company.index')->with('success', 'Company registered successfully!,You are eligible for 45 days free plan');
+        return redirect()->route('company.index')->with('success', 'Company registered successfully!,You are eligible for 15 days free plan');
     }
 
     /**
