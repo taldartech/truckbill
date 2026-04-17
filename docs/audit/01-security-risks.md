@@ -54,5 +54,11 @@ Date: 2026-04-15
   - `app/Http/Controllers/PaymentController.php`
 - **Issue**
   - Direct `env(...)` in application code can become inconsistent under config cache.
-- **Recommended**
-  - Move to config files and read through `config(...)`.
+- **Status**
+  - Mitigated and verified.
+- **Implementation note**
+  - Added `payments.tds_percentages` in `config/payments.php` backed by env values.
+  - Replaced `env('TDS_PERCENTAGE_*')` reads with `config('payments.tds_percentages.*')` in:
+    - `FreightBookingController`
+    - `LorryReceiptController`
+  - Replaced `env('APP_NAME')` with `config('app.name')` in `PaymentController`.

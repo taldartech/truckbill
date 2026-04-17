@@ -426,9 +426,9 @@ class FreightBookingController extends Controller
 
         // Get TDS percentages from config
         $tdsPercentages = [
-            'default' => env('TDS_PERCENTAGE_DEFAULT', 20),
-            'agency' => env('TDS_PERCENTAGE_AGENCY', 2),
-            'owner' => env('TDS_PERCENTAGE_OWNER', 1),
+            'default' => config('payments.tds_percentages.default', 20),
+            'agency' => config('payments.tds_percentages.agency', 2),
+            'owner' => config('payments.tds_percentages.owner', 1),
         ];
 
         $lorry_receipt = \App\Models\LorryReceipt::with([
@@ -911,9 +911,9 @@ class FreightBookingController extends Controller
             $lorryReceipt = LorryReceipt::find($freightBooking->lr_id);
             // Get TDS percentages from config
             $tdsPercentages = [
-                'default' => env('TDS_PERCENTAGE_DEFAULT', 20),
-                'agency' => env('TDS_PERCENTAGE_AGENCY', 2),
-                'owner' => env('TDS_PERCENTAGE_OWNER', 1),
+                'default' => config('payments.tds_percentages.default', 20),
+                'agency' => config('payments.tds_percentages.agency', 2),
+                'owner' => config('payments.tds_percentages.owner', 1),
             ];
 
             // Get the transporter details

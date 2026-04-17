@@ -924,9 +924,9 @@ class LorryReceiptController extends Controller
         $goodsTypes = GoodType::where('user_id', Auth::user()->company->user_id)->get();
         $statuses = ['Pending', 'Delivered', 'Cancelled', 'In-Progress'];
         $tdsPercentages = [
-            'default' => env('TDS_PERCENTAGE_DEFAULT', 20),
-            'agency' => env('TDS_PERCENTAGE_AGENCY', 2),
-            'owner' => env('TDS_PERCENTAGE_OWNER', 1),
+            'default' => config('payments.tds_percentages.default', 20),
+            'agency' => config('payments.tds_percentages.agency', 2),
+            'owner' => config('payments.tds_percentages.owner', 1),
         ];
 
         // Check if transporter can be changed (TDS not submitted)
