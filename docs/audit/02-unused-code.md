@@ -34,10 +34,10 @@ Status: Implemented (removed).
 
 ## D) Duplicate JS source (drift risk)
 
-- `resources/js/dynamic-dropdowns.js`
-- `public/js/dynamic-dropdowns.js`
+Status: Implemented (consolidated to one source).
 
-Two copies with diverging logic increase stale behavior risk.
+- Removed duplicate: `resources/js/dynamic-dropdowns.js`
+- Kept active source: `public/js/dynamic-dropdowns.js` (the file currently loaded by Blade screens via `/js/dynamic-dropdowns.js`)
 
 ## E) Debug leftovers
 
@@ -47,7 +47,6 @@ Heavy `console.log(...)` usage in user-facing flows, including:
 - `resources/views/lorry_receipts/edit.blade.php`
 - `resources/views/lorry_receipts/create-linked.blade.php`
 - `resources/views/invoices/create.blade.php`
-- `resources/js/dynamic-dropdowns.js`
 - `public/js/dynamic-dropdowns.js`
 
 ## F) Large commented-out legacy blocks
