@@ -26,6 +26,8 @@ Status: Implemented (removed after full reference scan).
 
 ## C) Stale view artifact (high confidence)
 
+Status: Implemented (removed).
+
 - `resources/views/trucks/report.blade.php`
   - references `route('trucks.report')`, but no such route is defined.
   - no render path found in route/controller scans.
