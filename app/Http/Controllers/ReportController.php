@@ -43,9 +43,7 @@ class ReportController extends Controller
 {
     public function __construct()
     {
-        if (Auth::check() && Auth::user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
-            abort(403, 'Please enter a company first.');
-        }
+        // Company context is enforced by `company.context` route middleware.
     }
 
     /**

@@ -31,10 +31,6 @@ class FreightBookingController extends Controller
 
         if ($user->userRole->name === 'super_admin') {
             $companyId = session('super_admin_company_id');
-            if (! $companyId) {
-                abort(403, 'Please enter a company first.');
-            }
-
             return (int) $companyId;
         }
 
@@ -72,10 +68,6 @@ class FreightBookingController extends Controller
 
     public function index(Request $request)
     {
-        if (auth()->user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
-            abort(403, 'Please enter a company first.');
-        }
-
         $pumps = Pump::where('user_id', Auth::user()->company->user_id)->get();
         if ($request->ajax()) {
             return $this->getFreightBookingsData($request);
@@ -238,9 +230,6 @@ class FreightBookingController extends Controller
 
     public function getFreightBookingsData(Request $request)
     {
-        if (auth()->user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
-            abort(403, 'Please enter a company first.');
-        }
         try {
             $query = FreightBooking::with(['lr.truck', 'linkedFreightBooking', 'company', 'transporter.transporterMaster'])
                 ->select('freight_bookings.*');
@@ -561,6 +550,8 @@ class FreightBookingController extends Controller
      */
     public function confirm(Request $request)
     {
+        $activeCompanyId = auth()->user()->company_id;
+
         // Validate the form data
         $validator = Validator::make($request->all(), [
             'lr_id' => 'required|exists:lorry_receipts,id',
@@ -588,6 +579,12 @@ class FreightBookingController extends Controller
 
         // Get the validated form data
         $formData = $validator->validated();
+        if ((int) $formData['company_id'] !== (int) $activeCompanyId) {
+            return redirect()->back()
+                ->withErrors(['company_id' => 'Invalid company context for this request.'])
+                ->withInput();
+        }
+        $formData['company_id'] = (int) $activeCompanyId;
 
         // Get the lorry receipt with its relationships
         $lorry_receipt = LorryReceipt::with(['transporter.transporterMaster', 'truck', 'customer', 'consignor', 'consignee', 'reference.transporterMaster'])
@@ -604,6 +601,8 @@ class FreightBookingController extends Controller
      */
     public function store(Request $request)
     {
+        $activeCompanyId = auth()->user()->company_id;
+
         // Check if the form has been confirmed
         if (! $request->has('confirmed')) {
             return redirect()->route('freight_bookings.create')
@@ -629,6 +628,12 @@ class FreightBookingController extends Controller
             'company_id' => 'required|exists:companies,id',
 
         ]);
+        if ((int) $data['company_id'] !== (int) $activeCompanyId) {
+            return redirect()->back()
+                ->withErrors(['company_id' => 'Invalid company context for this request.'])
+                ->withInput();
+        }
+        $data['company_id'] = (int) $activeCompanyId;
 
         // Get the lorry receipt to get its LR number
         $lorryReceipt = LorryReceipt::find($data['lr_id']);

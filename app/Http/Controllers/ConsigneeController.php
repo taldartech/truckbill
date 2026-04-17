@@ -10,16 +10,9 @@ use Illuminate\Support\Facades\Log;
 
 class ConsigneeController extends Controller
 {
-    private function ensureCompanyContext(): void
-    {
-        if (Auth::user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
-            abort(403, 'Please enter a company first.');
-        }
-    }
 
     public function index(Request $request)
     {
-        $this->ensureCompanyContext();
         // Handle DataTables AJAX request
         if ($request->ajax()) {
             return $this->getConsigneesData($request);
@@ -177,7 +170,6 @@ class ConsigneeController extends Controller
 
     public function create()
     {
-        $this->ensureCompanyContext();
         $countries = \App\Models\Country::all();
         $states = [];
         $cities = [];
@@ -195,7 +187,6 @@ class ConsigneeController extends Controller
 
     public function store(Request $request)
     {
-        $this->ensureCompanyContext();
         Log::info('Current user company_id: '.auth()->user()->company_id);
 
         $validated = $request->validate([
@@ -321,7 +312,6 @@ class ConsigneeController extends Controller
 
     public function edit(Consignee $consignee)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $consignee->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this consignee.');
         }
@@ -334,7 +324,6 @@ class ConsigneeController extends Controller
 
     public function update(Request $request, Consignee $consignee)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $consignee->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this consignee.');
         }
@@ -475,7 +464,6 @@ class ConsigneeController extends Controller
 
     public function destroy(Consignee $consignee)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $consignee->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this consignee.');
         }
@@ -492,7 +480,6 @@ class ConsigneeController extends Controller
      */
     public function getConsigneeApi($id)
     {
-        $this->ensureCompanyContext();
         try {
             $query = Consignee::with(['city', 'state', 'country', 'company']);
 
@@ -533,7 +520,6 @@ class ConsigneeController extends Controller
     public function searchConsigneesApi(Request $request)
     {
         try {
-            $this->ensureCompanyContext();
 
             $companyId = Auth::user()->company_id;
             $q = trim((string) $request->query('q', ''));

@@ -22,16 +22,9 @@ use Illuminate\Validation\Rule;
 
 class TruckOwnerController extends Controller
 {
-    private function ensureCompanyContext(): void
-    {
-        if (Auth::user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
-            abort(403, 'Please enter a company first.');
-        }
-    }
 
     public function index(Request $request)
     {
-        $this->ensureCompanyContext();
         if ($request->ajax()) {
             return $this->getTruckOwnersData($request);
         }
@@ -205,7 +198,6 @@ class TruckOwnerController extends Controller
 
     public function create()
     {
-        $this->ensureCompanyContext();
         $companies = Company::all();
         $countries = Country::all();
         $states = State::all();
@@ -216,7 +208,6 @@ class TruckOwnerController extends Controller
 
     public function store(StoreTruckOwnerRequest $request)
     {
-        $this->ensureCompanyContext();
         $validated = $request->validated();
 
         $shortName = $validated['short_name'] ?? null;
@@ -344,7 +335,6 @@ class TruckOwnerController extends Controller
 
     public function show(Transporter $truck_owner)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $truck_owner->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this truck owner.');
         }
@@ -412,7 +402,6 @@ class TruckOwnerController extends Controller
 
     public function edit(Transporter $truck_owner)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $truck_owner->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this truck owner.');
         }
@@ -431,7 +420,6 @@ class TruckOwnerController extends Controller
 
     public function update(UpdateTruckOwnerRequest $request, Transporter $truck_owner)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $truck_owner->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this truck owner.');
         }
@@ -472,7 +460,6 @@ class TruckOwnerController extends Controller
 
     public function destroy(Transporter $truck_owner)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $truck_owner->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this truck owner.');
         }

@@ -37,8 +37,14 @@ Date: 2026-04-15
   - Several forms submit hidden `company_id` from `Auth::user()->company_id`; super-admin workflows are usually session-company driven.
 - **Risk**
   - Wrong/null company context in submission and cross-tenant inconsistencies.
-- **Recommended**
-  - Standardize active company source and validate submitted `company_id` against allowed context.
+- **Status**
+  - Mitigated and partially verified.
+- **Implementation note**
+  - Added route-level `company.context` middleware (`app/Http/Middleware/EnsureCompanyContextMiddleware.php`) to block `super_admin` until `session('super_admin_company_id')` is set.
+  - Standardized the “active company” for super-admin by enforcing `auth()->user()->company_id` (now backed by `User::getCompanyIdAttribute`) for tenant write flows.
+  - Added request-level guards that reject mismatched submitted `company_id` for:
+    - `FreightBookingController@confirm` and `FreightBookingController@store`
+    - `VoucherPaymentController@update` and `VoucherPaymentController@bulkPayment`
 
 ## 4) Low - `env()` usage in controllers
 

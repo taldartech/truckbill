@@ -21,16 +21,8 @@ class TransporterController extends Controller
         private readonly TransporterOnboardingNotificationService $transporterOnboardingNotificationService
     ) {}
 
-    private function ensureCompanyContext(): void
-    {
-        if (Auth::user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
-            abort(403, 'Please enter a company first.');
-        }
-    }
-
     public function index(Request $request)
     {
-        $this->ensureCompanyContext();
         if ($request->ajax()) {
             return $this->getTransportersData($request);
         }
@@ -213,7 +205,6 @@ class TransporterController extends Controller
 
     public function show($id)
     {
-        $this->ensureCompanyContext();
         $transporter = \App\Models\Transporter::with(['company', 'transporterMaster.city.state.country'])->findOrFail($id);
 
         if (Auth::user()->company_id && $transporter->company_id !== Auth::user()->company_id) {
@@ -261,7 +252,6 @@ class TransporterController extends Controller
 
     public function create()
     {
-        $this->ensureCompanyContext();
         $companies = \App\Models\Company::all();
 
         // For create, we can't filter trucks as we don't have transporter_id yet
@@ -283,7 +273,6 @@ class TransporterController extends Controller
 
     public function store(StoreTransporterRequest $request)
     {
-        $this->ensureCompanyContext();
         $validated = $request->validated();
 
         $shortName = $validated['short_name'] ?? null;
@@ -368,7 +357,6 @@ class TransporterController extends Controller
 
     public function edit(\App\Models\Transporter $transporter)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $transporter->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this transporter.');
         }
@@ -396,7 +384,6 @@ class TransporterController extends Controller
 
     public function update(UpdateTransporterRequest $request, \App\Models\Transporter $transporter)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $transporter->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this transporter.');
         }
@@ -510,7 +497,6 @@ class TransporterController extends Controller
 
     public function destroy(\App\Models\Transporter $transporter)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $transporter->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this transporter.');
         }
@@ -580,8 +566,6 @@ class TransporterController extends Controller
     public function searchAgenciesApi(Request $request)
     {
         try {
-            $this->ensureCompanyContext();
-
             $companyId = Auth::user()->company_id;
             $q = trim((string) $request->query('q', ''));
             $page = (int) $request->query('page', 1);

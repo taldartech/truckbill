@@ -23,16 +23,8 @@ class InvoiceController extends Controller
         private InvoiceNotificationService $invoiceNotificationService
     ) {}
 
-    private function ensureCompanyContext(): void
-    {
-        if (Auth::user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
-            abort(403, 'Please enter a company first.');
-        }
-    }
-
     public function index(Request $request)
     {
-        $this->ensureCompanyContext();
         // Handle DataTables AJAX request
         if ($request->ajax()) {
             return $this->getInvoicesData($request);
@@ -206,7 +198,6 @@ class InvoiceController extends Controller
 
     public function create()
     {
-        $this->ensureCompanyContext();
         $company = Auth::user()->company;
         $today = now()->startOfDay();
         $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
@@ -228,7 +219,6 @@ class InvoiceController extends Controller
 
     public function getCustomerMemos($customerId)
     {
-        $this->ensureCompanyContext();
         $memos = DB::table('lorry_receipts')
             ->select('memo_id')
             ->where('company_id', Auth::user()->company_id)
@@ -252,7 +242,6 @@ class InvoiceController extends Controller
 
     public function getAllCustomerMemos($customerId)
     {
-        $this->ensureCompanyContext();
         $memos = LorryReceipt::where('company_id', Auth::user()->company_id)
             ->where('customer_id', $customerId)
             ->whereNotNull('memo_id')
@@ -264,7 +253,6 @@ class InvoiceController extends Controller
 
     public function store(Request $request)
     {
-        $this->ensureCompanyContext();
         $companyId = (int) Auth::user()->company_id;
         $data = $request->validate([
             'manual_invoice_number' => [
@@ -339,7 +327,6 @@ class InvoiceController extends Controller
 
     public function show(Request $request, Invoice $invoice)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $invoice->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this invoice.');
         }
@@ -423,7 +410,6 @@ class InvoiceController extends Controller
 
     public function edit(Invoice $invoice)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $invoice->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this invoice.');
         }
@@ -462,7 +448,6 @@ class InvoiceController extends Controller
 
     public function update(Request $request, Invoice $invoice)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $invoice->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this invoice.');
         }
@@ -494,7 +479,6 @@ class InvoiceController extends Controller
 
     public function destroy(Invoice $invoice)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $invoice->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this invoice.');
         }
@@ -536,7 +520,6 @@ class InvoiceController extends Controller
 
     public function getLrs($memoIds)
     {
-        $this->ensureCompanyContext();
         $memoIds = explode(',', $memoIds);
         Log::info('Fetching LR numbers for memos:', ['memo_ids' => $memoIds]);
 
@@ -571,7 +554,6 @@ class InvoiceController extends Controller
 
     public function getAllInvoiceNumbers()
     {
-        $this->ensureCompanyContext();
         $invoices = Invoice::where('company_id', Auth::user()->company_id)
             ->orderByDesc('id')
             ->get(['id', 'manual_invoice_number', 'invoice_number']);
@@ -581,7 +563,6 @@ class InvoiceController extends Controller
 
     public function getInvoiceNumbersForCustomer($customerId)
     {
-        $this->ensureCompanyContext();
         $invoices = Invoice::where('customer_id', $customerId)
             ->where('company_id', Auth::user()->company_id)
             ->orderByDesc('id')
@@ -592,7 +573,6 @@ class InvoiceController extends Controller
 
     public function checkManualInvoiceNumberUniqueness(Request $request)
     {
-        $this->ensureCompanyContext();
         $manualNumber = trim((string) $request->input('manual_invoice_number', ''));
         $invoiceNumber = trim((string) $request->input('invoice_number', ''));
         $invoiceId = $request->input('invoice_id'); // Get invoice ID if editing
@@ -633,7 +613,6 @@ class InvoiceController extends Controller
      */
     public function storePayment(Request $request, Invoice $invoice)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $invoice->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this invoice.');
         }
@@ -687,7 +666,6 @@ class InvoiceController extends Controller
      */
     public function getPayments(Invoice $invoice)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $invoice->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this invoice.');
         }

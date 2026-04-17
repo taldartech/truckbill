@@ -105,41 +105,41 @@ Route::middleware(['auth.blocked'])->group(function () {
         ->name('dashboard');
 
     // Consignee Management
-    Route::middleware(['role:admin,moderator,super_admin'])->group(function () {
+    Route::middleware(['role:admin,moderator,super_admin', 'company.context'])->group(function () {
         Route::resource('consignees', ConsigneeController::class)->only(['index', 'create', 'store']);
     });
-    Route::middleware(['role:admin,super_admin'])->group(function () {
+    Route::middleware(['role:admin,super_admin', 'company.context'])->group(function () {
         Route::resource('consignees', ConsigneeController::class)->only(['edit', 'update', 'destroy']);
     });
 
     // Transporters CRUD
-    Route::middleware(['role:admin,moderator,super_admin'])->group(function () {
+    Route::middleware(['role:admin,moderator,super_admin', 'company.context'])->group(function () {
         Route::resource('transporters', TransporterController::class)->only(['index', 'create', 'store', 'show']);
     });
-    Route::middleware(['role:admin,super_admin'])->group(function () {
+    Route::middleware(['role:admin,super_admin', 'company.context'])->group(function () {
         Route::resource('transporters', TransporterController::class)->only(['edit', 'update', 'destroy']);
     });
 
     // Truck Owner Management
-    Route::middleware(['role:admin,moderator,super_admin'])->group(function () {
+    Route::middleware(['role:admin,moderator,super_admin', 'company.context'])->group(function () {
         Route::resource('truck_owners', TruckOwnerController::class)->only(['index', 'create', 'store', 'show']);
     });
-    Route::middleware(['role:admin,super_admin'])->group(function () {
+    Route::middleware(['role:admin,super_admin', 'company.context'])->group(function () {
         Route::resource('truck_owners', TruckOwnerController::class)->only(['edit', 'update', 'destroy']);
     });
 
     // Advance Payment Management
     Route::post('/advance-payments', [AdvancePaymentController::class, 'store'])->name('advance-payments.store')
-        ->middleware(['role:admin,super_admin']);
+        ->middleware(['role:admin,super_admin', 'company.context']);
 
     // Truck Management
-    Route::middleware(['role:admin,moderator,super_admin'])->group(function () {
+    Route::middleware(['role:admin,moderator,super_admin', 'company.context'])->group(function () {
         Route::get('/trucks', [TruckController::class, 'index'])->name('trucks.index');
         Route::get('/trucks/create/{transporter_id?}', [TruckController::class, 'create'])->name('trucks.create');
         Route::post('/trucks', [TruckController::class, 'store'])->name('trucks.store');
         Route::get('/trucks/{truck}', [TruckController::class, 'show'])->name('trucks.show');
     });
-    Route::middleware(['role:admin,super_admin'])->group(function () {
+    Route::middleware(['role:admin,super_admin', 'company.context'])->group(function () {
         Route::get('/trucks/{truck}/edit', [TruckController::class, 'edit'])->name('trucks.edit');
         Route::put('/trucks/{truck}', [TruckController::class, 'update'])->name('trucks.update');
         Route::put('/trucks/{truck}/assign-driver', [TruckController::class, 'assignDriver'])->name('trucks.assign-driver');
@@ -150,7 +150,7 @@ Route::middleware(['auth.blocked'])->group(function () {
     });
 
     // Lorry Receipt CRUD
-    Route::middleware(['role:admin,moderator,super_admin'])->group(function () {
+    Route::middleware(['role:admin,moderator,super_admin', 'company.context'])->group(function () {
         Route::get('lorry_receipts/create-linked', [LorryReceiptController::class, 'createLinked'])->name('lorry_receipts.createLinked');
         Route::resource('lorry_receipts', LorryReceiptController::class)
             ->except(['edit', 'update', 'destroy', 'show']);
@@ -158,14 +158,14 @@ Route::middleware(['auth.blocked'])->group(function () {
         Route::get('/lorryreceipts/by-linked/{linkedId}', [LorryReceiptController::class, 'getByLinkedId'])
             ->name('lorryreceipts.by_linked');
     });
-    Route::middleware(['role:admin,super_admin'])->group(function () {
+    Route::middleware(['role:admin,super_admin', 'company.context'])->group(function () {
         Route::get('/lorry_receipts/{lorry_receipt}/edit', [LorryReceiptController::class, 'edit'])->name('lorry_receipts.edit');
         Route::put('/lorry_receipts/{lorry_receipt}', [LorryReceiptController::class, 'update'])->name('lorry_receipts.update');
         Route::delete('/lorry_receipts/{lorry_receipt}', [LorryReceiptController::class, 'destroy'])->name('lorry_receipts.destroy');
     });
 
     // Freight Bookings
-    Route::middleware(['role:admin,moderator,super_admin'])->group(function () {
+    Route::middleware(['role:admin,moderator,super_admin', 'company.context'])->group(function () {
         Route::post('/freight_bookings/store_combined_payment', [FreightBookingController::class, 'storeCombinedPayment'])->name('freight_bookings.store_combined_payment');
         Route::get('/freight_bookings/data', [FreightBookingController::class, 'getFreightBookingsData'])->name('freight_bookings.datatable');
         Route::post('/freight_bookings/confirm', [FreightBookingController::class, 'confirm'])->name('freight_bookings.confirm');
@@ -176,7 +176,7 @@ Route::middleware(['auth.blocked'])->group(function () {
     });
 
     // Invoices
-    Route::middleware(['role:admin,moderator,super_admin'])->group(function () {
+    Route::middleware(['role:admin,moderator,super_admin', 'company.context'])->group(function () {
         Route::resource('invoices', InvoiceController::class)
             ->except(['edit', 'update', 'destroy']);
         Route::get('/custom-invoices/create', [CustomInvoiceController::class, 'create'])->name('custom-invoices.create');
@@ -187,19 +187,19 @@ Route::middleware(['auth.blocked'])->group(function () {
         Route::get('/invoices/all-memos/{customerId}', [InvoiceController::class, 'getAllCustomerMemos']);
         Route::get('/invoices/pending-memo/{customerId}', [InvoiceController::class, 'getPendingMemo']);
     });
-    Route::middleware(['role:admin,super_admin'])->group(function () {
+    Route::middleware(['role:admin,super_admin', 'company.context'])->group(function () {
         Route::get('/invoices/{invoice}/edit', [InvoiceController::class, 'edit'])->name('invoices.edit');
         Route::put('/invoices/{invoice}', [InvoiceController::class, 'update'])->name('invoices.update');
         Route::delete('/invoices/{invoice}', [InvoiceController::class, 'destroy'])->name('invoices.destroy');
     });
-    Route::middleware(['role:admin,moderator,super_admin'])->group(function () {
+    Route::middleware(['role:admin,moderator,super_admin', 'company.context'])->group(function () {
         Route::post('/invoices/{invoice}/payments', [InvoiceController::class, 'storePayment'])->name('invoices.payments.store');
         Route::get('/invoices/{invoice}/payments', [InvoiceController::class, 'getPayments'])->name('invoices.payments.index');
     });
 
     // Voucher Payments
     // Admin: full CRUD + bulk actions
-    Route::middleware(['role:admin,super_admin'])->group(function () {
+    Route::middleware(['role:admin,super_admin', 'company.context'])->group(function () {
         // Create / Store
         Route::get('voucher_payments/create', [VoucherPaymentController::class, 'create'])->name('voucher_payments.create');
         Route::post('voucher_payments', [VoucherPaymentController::class, 'store'])->name('voucher_payments.store');
@@ -216,7 +216,7 @@ Route::middleware(['auth.blocked'])->group(function () {
     });
 
     // Admin + Moderator: read-only access (index, show, daily report)
-    Route::middleware(['role:admin,moderator,super_admin'])->group(function () {
+    Route::middleware(['role:admin,moderator,super_admin', 'company.context'])->group(function () {
         Route::get('voucher_payments', [VoucherPaymentController::class, 'index'])->name('voucher_payments.index');
         Route::get('voucher_payments/{voucherNumber}', [VoucherPaymentController::class, 'show'])->name('voucher_payments.show');
         Route::get('daily-payments', [VoucherPaymentController::class, 'dailyPayments'])->name('voucher_payments.daily');
@@ -277,7 +277,7 @@ Route::middleware(['auth.blocked'])->group(function () {
         });
     });
 
-    Route::group(['prefix' => 'reports', 'middleware' => 'role:admin,accountant,super_admin'], function () {
+    Route::group(['prefix' => 'reports', 'middleware' => ['role:admin,accountant,super_admin', 'company.context']], function () {
         Route::get('/consignor-consignee', [ReportController::class, 'consignor_consignee'])->name('reports.consignor-consignee');
         Route::get('/consignor-consignee-export', [ReportController::class, 'consignor_consignee_export'])->name('reports.consignor-consignee-export');
         Route::get('/tds', [ReportController::class, 'tds'])->name('reports.tds');

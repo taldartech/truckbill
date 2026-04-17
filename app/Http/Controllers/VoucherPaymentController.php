@@ -22,13 +22,6 @@ class VoucherPaymentController extends Controller
         private readonly VoucherPaymentNotificationService $voucherPaymentNotificationService
     ) {}
 
-    private function ensureCompanyContext(): void
-    {
-        if (Auth::user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
-            abort(403, 'Please enter a company first.');
-        }
-    }
-
     private function bulkPaymentRequestLogContext(Request $request): array
     {
         $lorryReceipts = $request->input('lorry_receipts', []);
@@ -56,7 +49,6 @@ class VoucherPaymentController extends Controller
      */
     public function dailyPayments(Request $request)
     {
-        $this->ensureCompanyContext();
         // Get selected date (default to today)
         $selectedDate = $request->get('date', date('Y-m-d'));
 
@@ -183,7 +175,6 @@ class VoucherPaymentController extends Controller
 
     public function index(Request $request)
     {
-        $this->ensureCompanyContext();
         // Start with base query
         $baseQuery = \App\Models\VoucherPayment::with([
             // 'voucher',
@@ -284,7 +275,6 @@ class VoucherPaymentController extends Controller
 
     public function create(Request $request)
     {
-        $this->ensureCompanyContext();
         $company = auth()->user()->company;
         $today = now()->startOfDay();
         $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
@@ -333,7 +323,6 @@ class VoucherPaymentController extends Controller
 
     public function store(Request $request)
     {
-        $this->ensureCompanyContext();
         // Validate basic fields
 
         $data = $request->validate([
@@ -460,7 +449,6 @@ class VoucherPaymentController extends Controller
      */
     public function show($voucherNumber)
     {
-        $this->ensureCompanyContext();
         // Get all payments for this voucher number with relationships
         $payments = VoucherPayment::with([
             'freight_booking.lr.customer',
@@ -499,7 +487,6 @@ class VoucherPaymentController extends Controller
 
     public function edit(Request $request, VoucherPayment $voucher_payment)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $voucher_payment->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this voucher payment.');
         }
@@ -559,7 +546,7 @@ class VoucherPaymentController extends Controller
 
     public function update(Request $request, VoucherPayment $voucher_payment)
     {
-        $this->ensureCompanyContext();
+        $activeCompanyId = auth()->user()->company_id;
         if (Auth::user()->company_id && $voucher_payment->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this voucher payment.');
         }
@@ -589,6 +576,12 @@ class VoucherPaymentController extends Controller
             'pump_id' => 'nullable|exists:pumps,id',
             'date' => 'nullable|date',
         ]);
+        if ((int) $data['company_id'] !== (int) $activeCompanyId) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Invalid company context for this request.');
+        }
+        $data['company_id'] = (int) $activeCompanyId;
 
         if (empty($data['date'])) {
             $data['date'] = now()->toDateString();
@@ -803,7 +796,7 @@ class VoucherPaymentController extends Controller
 
     public function bulkPayment(Request $request)
     {
-        $this->ensureCompanyContext();
+        $activeCompanyId = auth()->user()->company_id;
         try {
             // Validate the request
             $validated = $request->validate([
@@ -818,6 +811,11 @@ class VoucherPaymentController extends Controller
                 'pump_id' => 'nullable|exists:pumps,id',
                 'date' => 'nullable|date',
             ]);
+            if ((int) $validated['company_id'] !== (int) $activeCompanyId) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Invalid company context for this request.');
+            }
 
             // Get payment type and mode
             $paymentType = PaymentType::where('name', $validated['payment_type'])->first();
@@ -830,7 +828,7 @@ class VoucherPaymentController extends Controller
             $reference_transaction_id = $validated['reference_transaction_id'] ?? null;
             $remark = $validated['remark'] ?? null;
             $payment_status = $paymentMode->name === 'cash' || $paymentMode->name === 'adjust in advance' ? 'in-progress' : 'pending';
-            $company_id = $validated['company_id'];
+            $company_id = (int) $activeCompanyId;
 
             // Process each voucher payment
             $lorryReceipts = $validated['lorry_receipts'];
@@ -1018,7 +1016,6 @@ class VoucherPaymentController extends Controller
      */
     public function bulkUpdateStatus(Request $request)
     {
-        $this->ensureCompanyContext();
         if (! auth()->user()->canActAsAdmin()) {
             return redirect()->back()->with('error', 'You do not have permission to update payment status.');
         }
@@ -1153,7 +1150,6 @@ class VoucherPaymentController extends Controller
      */
     public function destroy(VoucherPayment $voucher_payment)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $voucher_payment->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this voucher payment.');
         }
@@ -1264,7 +1260,6 @@ class VoucherPaymentController extends Controller
      */
     public function updateStatus(Request $request)
     {
-        $this->ensureCompanyContext();
         if (! auth()->user()->canActAsAdmin()) {
             return redirect()->back()->with('error', 'You do not have permission to update payment status.');
         }

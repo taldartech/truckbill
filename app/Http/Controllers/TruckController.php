@@ -10,12 +10,6 @@ use Illuminate\Validation\Rule;
 
 class TruckController extends Controller
 {
-    private function ensureCompanyContext(): void
-    {
-        if (Auth::user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
-            abort(403, 'Please enter a company first.');
-        }
-    }
 
     private function getCurrentCompanyId(): ?int
     {
@@ -56,7 +50,6 @@ class TruckController extends Controller
 
     public function getTrucksForTransporter($transporterId)
     {
-        $this->ensureCompanyContext();
         $companyId = $this->getCurrentCompanyId();
         $trucks = \App\Models\Truck::with(['transporter.transporterMaster', 'driver'])
             ->where('transporter_id', $transporterId)
@@ -70,7 +63,6 @@ class TruckController extends Controller
 
     public function index(Request $request)
     {
-        $this->ensureCompanyContext();
         $companyId = $this->getCurrentCompanyId();
         if ($request->ajax()) {
             return $this->getTrucksData($request);
@@ -276,7 +268,6 @@ class TruckController extends Controller
 
     public function getOwnerTransporters($truckId)
     {
-        $this->ensureCompanyContext();
         $companyId = $this->getCurrentCompanyId();
         $truck = \App\Models\Truck::with('transporter.transporterMaster')
             ->where('id', $truckId)
@@ -312,7 +303,6 @@ class TruckController extends Controller
 
     public function getAgencyTransporters($truckId)
     {
-        $this->ensureCompanyContext();
         $companyId = $this->getCurrentCompanyId();
         $truck = \App\Models\Truck::with('transporter.transporterMaster')
             ->where('id', $truckId)
@@ -341,7 +331,6 @@ class TruckController extends Controller
 
     public function create($transporter_id = null)
     {
-        $this->ensureCompanyContext();
         $companyId = $this->getCurrentCompanyId();
         $transporter = null;
 
@@ -367,7 +356,6 @@ class TruckController extends Controller
 
     public function store(Request $request)
     {
-        $this->ensureCompanyContext();
         $companyId = $this->getCurrentCompanyId();
         $validated = $request->validate([
             'transporter_id' => [
@@ -446,7 +434,6 @@ class TruckController extends Controller
 
     public function checkTruckNumber(Request $request)
     {
-        $this->ensureCompanyContext();
         $company_id = $this->getCurrentCompanyId();
         $exists = \App\Models\Truck::where('truck_number', $request->truck_number)
             ->where(function ($query) use ($company_id) {
@@ -462,7 +449,6 @@ class TruckController extends Controller
 
     public function edit(\App\Models\Truck $truck)
     {
-        $this->ensureCompanyContext();
         $companyId = $this->getCurrentCompanyId();
         $transporters = \App\Models\Transporter::with('transporterMaster')
             ->where('company_id', $companyId)
@@ -475,7 +461,6 @@ class TruckController extends Controller
 
     public function update(Request $request, \App\Models\Truck $truck)
     {
-        $this->ensureCompanyContext();
         $companyId = $this->getCurrentCompanyId();
         $validated = $request->validate([
             'transporter_id' => [
@@ -584,7 +569,6 @@ class TruckController extends Controller
     // }
     public function removeTransporter(\App\Models\Truck $truck)
     {
-        $this->ensureCompanyContext();
         if (! $this->isTruckAccessibleToCurrentCompany($truck)) {
             abort(403, 'Unauthorized access to this truck.');
         }
@@ -610,7 +594,6 @@ class TruckController extends Controller
 
     public function destroy(\App\Models\Truck $truck)
     {
-        $this->ensureCompanyContext();
         if (! $this->isTruckAccessibleToCurrentCompany($truck)) {
             abort(403, 'Unauthorized access to this truck.');
         }
@@ -644,7 +627,6 @@ class TruckController extends Controller
 
     public function show(\App\Models\Truck $truck)
     {
-        $this->ensureCompanyContext();
         $truck->load(['transporter', 'driver']);
 
         if (! $this->isTruckAccessibleToCurrentCompany($truck)) {
@@ -681,7 +663,6 @@ class TruckController extends Controller
 
     public function assignDriver(Request $request, \App\Models\Truck $truck)
     {
-        $this->ensureCompanyContext();
         $validated = $request->validate([
             'driver_id' => 'nullable|exists:drivers,id',
         ]);
@@ -718,7 +699,6 @@ class TruckController extends Controller
 
     public function getTrucksFromLrs($transporterId)
     {
-        $this->ensureCompanyContext();
         $lrs = \App\Models\LorryReceipt::where('transporter_id', $transporterId)->get(['truck_id']);
         $trucks = \App\Models\Truck::with(['transporter.transporterMaster', 'driver'])
             ->whereIn('id', $lrs->pluck('truck_id'))
@@ -734,8 +714,6 @@ class TruckController extends Controller
     public function searchTrucksApi(Request $request)
     {
         try {
-            $this->ensureCompanyContext();
-
             $companyId = $this->getCurrentCompanyId();
             $q = trim((string) $request->query('q', ''));
             $page = (int) $request->query('page', 1);
@@ -818,7 +796,6 @@ class TruckController extends Controller
      */
     public function assignOwner(Request $request)
     {
-        $this->ensureCompanyContext();
         $request->validate([
             'truck_id' => 'required|exists:trucks,id',
             'transporter_id' => 'required|exists:transporters,id,is_owner,1,company_id,'.Auth::user()->company_id,
