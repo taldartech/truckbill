@@ -29,9 +29,8 @@ class TruckOwnerController extends Controller
             return $this->getTruckOwnersData($request);
         }
 
-        $companies = Company::all();
         $truckTypes = TruckType::orderBy('name')->get();
-        return view('truck_owner.index', compact('companies', 'truckTypes'));
+        return view('truck_owner.index', compact('truckTypes'));
     }
 
     private function getTruckOwnersData(Request $request)
@@ -198,12 +197,11 @@ class TruckOwnerController extends Controller
 
     public function create()
     {
-        $companies = Company::all();
         $countries = Country::all();
         $states = State::all();
         $cities = City::all();
 
-        return view('truck_owner.create', compact('companies', 'countries', 'states', 'cities'));
+        return view('truck_owner.create', compact('countries', 'states', 'cities'));
     }
 
     public function store(StoreTruckOwnerRequest $request)
@@ -408,14 +406,13 @@ class TruckOwnerController extends Controller
         // Load the trucks relationship with driver information and transporterMaster for name/address accessors
         $truck_owner->load(['trucks.driver', 'transporterMaster.city.state.country']);
 
-        $companies = Company::all();
         $trucks = Truck::where('transporter_id', $truck_owner->id)->get();
         $countries = Country::all();
         $states = State::all();
         $cities = City::all();
         $truckTypes = TruckType::orderBy('name')->get();
 
-        return view('truck_owner.edit', compact('truck_owner', 'companies', 'trucks', 'countries', 'states', 'cities', 'truckTypes'));
+        return view('truck_owner.edit', compact('truck_owner', 'trucks', 'countries', 'states', 'cities', 'truckTypes'));
     }
 
     public function update(UpdateTruckOwnerRequest $request, Transporter $truck_owner)

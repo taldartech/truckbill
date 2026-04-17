@@ -420,7 +420,6 @@ class InvoiceController extends Controller
             return redirect()->route('invoices.index')
                 ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
-        $companies = Company::all();
         $consignees = Consignee::all();
 
         // Get all memos for this customer
@@ -443,7 +442,7 @@ class InvoiceController extends Controller
                 ];
             });
 
-        return view('invoices.edit', compact('invoice', 'companies', 'consignees', 'memos'));
+        return view('invoices.edit', compact('invoice', 'consignees', 'memos'));
     }
 
     public function update(Request $request, Invoice $invoice)

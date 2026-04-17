@@ -252,8 +252,6 @@ class TransporterController extends Controller
 
     public function create()
     {
-        $companies = \App\Models\Company::all();
-
         // For create, we can't filter trucks as we don't have transporter_id yet
         $trucks = \App\Models\Truck::all();
         $countries = \App\Models\Country::all();
@@ -268,7 +266,7 @@ class TransporterController extends Controller
             $cities = \App\Models\City::where('state_id', old('state_id'))->get();
         }
 
-        return view('transporters.create', compact('companies', 'trucks', 'countries', 'states', 'cities'));
+        return view('transporters.create', compact('trucks', 'countries', 'states', 'cities'));
     }
 
     public function store(StoreTransporterRequest $request)
@@ -361,7 +359,6 @@ class TransporterController extends Controller
             abort(403, 'Unauthorized access to this transporter.');
         }
         $transporter->load(['transporterMaster.city.state.country']);
-        $companies = \App\Models\Company::all();
         // Filter trucks to show only those belonging to this transporter
         $trucks = \App\Models\Truck::where('transporter_id', $transporter->id)->get();
         $countries = \App\Models\Country::all();
@@ -379,7 +376,7 @@ class TransporterController extends Controller
         // $countries = \App\Models\Country::all();
         // $states = $transporter->country_id ? \App\Models\State::where('country_id', $transporter->country_id)->get() : collect();
         // $cities = $transporter->state_id ? \App\Models\City::where('state_id', $transporter->state_id)->get() : collect();
-        return view('transporters.edit', compact('transporter', 'companies', 'trucks', 'countries', 'states', 'cities'));
+        return view('transporters.edit', compact('transporter', 'trucks', 'countries', 'states', 'cities'));
     }
 
     public function update(UpdateTransporterRequest $request, \App\Models\Transporter $transporter)

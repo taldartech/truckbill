@@ -268,9 +268,7 @@ class VoucherPaymentController extends Controller
             $totalAmounts[$group->voucher_number] = $group->total_amount;
         }
 
-        $companies = \App\Models\Company::all();
-
-        return view('voucher_payments.index', compact('payments', 'voucherGroups', 'totalAmounts', 'companies'));
+        return view('voucher_payments.index', compact('payments', 'voucherGroups', 'totalAmounts'));
     }
 
     public function create(Request $request)
@@ -282,7 +280,6 @@ class VoucherPaymentController extends Controller
             return redirect()->route('freight_bookings.index')
                 ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
-        $companies = \App\Models\Company::all();
         $freight_booking_id = $request->freight_booking_id;
         $lorry_receipt_id = $request->lorry_receipt_id;
         // $lorry_receipt = \App\Models\LorryReceipt::select('id', 'lr_number','transporter_id','truck_id')
@@ -318,7 +315,7 @@ class VoucherPaymentController extends Controller
         $paymentModes = PaymentMode::all();
         $pumps = Pump::where('user_id', Auth::user()->company->user_id)->get();
 
-        return view('voucher_payments.create', compact('voucher_number', 'paymentTypes', 'paymentModes', 'freight_booking_id', 'lorry_receipt', 'companies', 'balanceAmount', 'pumps'));
+        return view('voucher_payments.create', compact('voucher_number', 'paymentTypes', 'paymentModes', 'freight_booking_id', 'lorry_receipt', 'balanceAmount', 'pumps'));
     }
 
     public function store(Request $request)
@@ -500,7 +497,6 @@ class VoucherPaymentController extends Controller
         $vouchers = \App\Models\FreightBooking::select('id', 'voucher_number')->get();
         $paymentTypes = PaymentType::all();
         $paymentModes = PaymentMode::all();
-        $companies = \App\Models\Company::all();
         $pumps = Pump::where('user_id', Auth::user()->company->user_id)->get();
 
         // Get lorry receipt and freight booking from request parameters
@@ -536,7 +532,6 @@ class VoucherPaymentController extends Controller
             'paymentModes',
             'lorry_receipt',
             'freight_booking_id',
-            'companies',
             'balanceAmount',
             'pumps',
             'freightBooking',

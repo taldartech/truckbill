@@ -4,18 +4,15 @@ Date: 2026-04-15
 
 ## A) Confirmed unused company payload fetches
 
-Controllers fetch `$companies` and pass to views that do not consume it:
+Status: Implemented.
 
-- `app/Http/Controllers/TruckOwnerController.php`
-  - `index()`, `create()`, `edit()`
-- `app/Http/Controllers/TransporterController.php`
-  - `create()`, `edit()`
-- `app/Http/Controllers/FreightBookingController.php`
-  - `create()`, `edit()`
-- `app/Http/Controllers/VoucherPaymentController.php`
-  - `index()`, `create()`, `edit()`
-- `app/Http/Controllers/InvoiceController.php`
-  - `edit()`
+Removed unused `$companies` payload fetches from:
+
+- `app/Http/Controllers/TruckOwnerController.php` (`index()`, `create()`, `edit()`)
+- `app/Http/Controllers/TransporterController.php` (`create()`, `edit()`)
+- `app/Http/Controllers/FreightBookingController.php` (`create()`, `edit()`)
+- `app/Http/Controllers/VoucherPaymentController.php` (`index()`, `create()`, `edit()`)
+- `app/Http/Controllers/InvoiceController.php` (`edit()`)
 
 ## B) Likely dead/unreferenced views
 

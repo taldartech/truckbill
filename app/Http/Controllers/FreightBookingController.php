@@ -418,7 +418,6 @@ class FreightBookingController extends Controller
             return redirect()->route('freight_bookings.index')
                 ->with('error', 'You do not have enough credits to create a Good Hire (Lorry Hire).');
         }
-        $companies = \App\Models\Company::all();
         $lrs = LorryReceipt::all();
         $linkedBookings = FreightBooking::all();
         $goodsTypes = \App\Models\GoodType::where('user_id', Auth::user()->company->user_id)->get();
@@ -502,7 +501,6 @@ class FreightBookingController extends Controller
                 // $tdsAmount = $trAmount * ($tdsPercentage / 100);
 
                 return view('freight_bookings.create', [
-                    'companies' => $companies,
                     'lrs' => $lrs,
                     'linkedBookings' => $linkedBookings,
                     'goodsTypes' => $goodsTypes,
@@ -532,7 +530,6 @@ class FreightBookingController extends Controller
         }
 
         return view('freight_bookings.create', [
-            'companies' => $companies,
             'lrs' => $lrs,
             'linkedBookings' => $linkedBookings,
             'goodsTypes' => $goodsTypes,
@@ -906,7 +903,6 @@ class FreightBookingController extends Controller
             if (Auth::user()->company_id && $freightBooking->company_id !== Auth::user()->company_id) {
                 abort(403, 'Unauthorized access to good hire (lorry hire).');
             }
-            $companies = \App\Models\Company::all();
             // Get the LorryReceipt details
             $lorryReceipt = LorryReceipt::find($freightBooking->lr_id);
             // Get TDS percentages from config
@@ -992,7 +988,6 @@ class FreightBookingController extends Controller
 
                     return view('freight_bookings.edit', [
                         'freightBooking' => $freightBooking,
-                        'companies' => $companies,
                         'lrs' => $lrs,
                         'linkedBookings' => $linkedBookings,
                         'goodsTypes' => $goodsTypes,
