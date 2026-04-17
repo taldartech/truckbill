@@ -41,13 +41,17 @@ Status: Implemented (consolidated to one source).
 
 ## E) Debug leftovers
 
-Heavy `console.log(...)` usage in user-facing flows, including:
+Status: Implemented (removed non-error logs; retained error logging only).
+
+Removed debug/informational logs (`console.log(...)`, `Log::info(...)`, `Log::warning(...)`) across modules and kept error-path logging only (`console.error(...)` / `Log::error(...)`), including:
 
 - `resources/views/lorry_receipts/create.blade.php`
 - `resources/views/lorry_receipts/edit.blade.php`
 - `resources/views/lorry_receipts/create-linked.blade.php`
 - `resources/views/invoices/create.blade.php`
 - `public/js/dynamic-dropdowns.js`
+
+For legacy LR scripts that still contain historical `console.log(...)` calls, runtime output is explicitly suppressed so only error logs emit in browser consoles.
 
 ## F) Large commented-out legacy blocks
 
@@ -80,7 +84,7 @@ Recommended: remove commented-out dead logic and rely on git history.
 
 - **E) Debug leftovers**
   - **Commit message:** `chore: strip production console logs from user flows`
-  - **Description:** Remove `console.log(...)` leftovers from LR/invoice and dropdown scripts while preserving functional behavior.
+  - **Description:** Remove debug/info/warning logs across frontend/backend modules and keep only error-path logging.
 
 - **F) Large commented-out legacy blocks**
   - **Commit message:** `cleanup: remove commented legacy code blocks`

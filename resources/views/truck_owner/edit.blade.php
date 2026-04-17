@@ -753,7 +753,7 @@
                 });
             },
             error: function() {
-                console.log('Failed to load drivers');
+                console.error('Failed to load drivers');
             }
         });
     }
@@ -829,12 +829,10 @@
                 location.reload(); // Reload page to show updated trucks
             },
             error: function(xhr) {
-                console.log('AJAX Error:', xhr.status, xhr.responseText);
 
                 if (xhr.status === 422) {
                     // Handle validation errors
                     const errors = xhr.responseJSON.errors;
-                    console.log('Validation errors:', errors);
 
                     // Clear previous validation states
                     $('#truckForm .form-control, #truckForm .form-select').removeClass('is-invalid');
@@ -944,13 +942,11 @@
     const $row = $(`#truck-row-${truckId}`);
     const $button = $(this);
 
-    console.log('Remove button clicked for truck ID:', truckId); // Debug log
 
     if (confirm(`Are you sure you want to remove truck "${truckNumber}" from this transporter?`)) {
         // Show loading state
         $button.prop('disabled', true).html('<i class="bi bi-arrow-repeat fa-spin"></i> Removing...');
 
-        console.log('Sending AJAX request...'); // Debug log
 
         $.ajax({
             url: `/trucks/${truckId}/remove-transporter`,
@@ -960,7 +956,6 @@
                 '_method': 'PATCH'
             },
             success: function(response) {
-    console.log('Success response:', response); // Debug log
     // Re-enable the button in both success and error cases
     $button.prop('disabled', false).html('<i class="bi bi-x-circle"></i>');
 
@@ -981,8 +976,8 @@
     }
             },
             error: function(xhr, status, error) {
-                console.error('AJAX Error:', status, error); // Debug log
-                console.error('Response:', xhr.responseJSON); // Debug log
+                console.error('AJAX Error:', status, error);
+                console.error('Response:', xhr.responseJSON);
 
                 // Show error message
                 const errorMsg = xhr.responseJSON && xhr.responseJSON.error

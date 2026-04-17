@@ -14,7 +14,6 @@ use App\Services\OnboardingTokenService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -57,12 +56,6 @@ class LeadController extends Controller
     {
         $updated = $this->lifecycleService->transition($lead, $request->validated('status'));
 
-        Log::info('Lead status changed', [
-            'lead_id' => $updated->id,
-            'status' => $updated->status,
-            'changed_by' => Auth::id(),
-        ]);
-
         return response()->json([
             'message' => 'Lead status updated successfully.',
             'status' => $updated->status,
@@ -76,11 +69,6 @@ class LeadController extends Controller
             Lead::STATUS_REJECTED,
             $request->validated('rejection_reason')
         );
-
-        Log::info('Lead rejected', [
-            'lead_id' => $updated->id,
-            'changed_by' => Auth::id(),
-        ]);
 
         return response()->json([
             'message' => 'Lead rejected successfully.',
@@ -102,13 +90,6 @@ class LeadController extends Controller
         $frontendBaseUrl = rtrim((string) config('services.onboarding.frontend_base_url'), '/');
         $link = $frontendBaseUrl.'/onboard/'.$tokenPayload['plain_token'];
         $this->onboardingNotificationService->sendLeadOnboardingLink($lead->email, $lead->name, $link);
-
-        Log::info('Onboarding link generated', [
-            'lead_id' => $lead->id,
-            'token_id' => $tokenPayload['record']->id,
-            'created_by' => Auth::id(),
-            'email' => $lead->email,
-        ]);
 
         return response()->json([
             'message' => 'Onboarding link generated and sent to lead email successfully.',

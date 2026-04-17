@@ -596,7 +596,6 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 Lorry Receipt Edit Form initialized');
 
             // Auto-calculate actual_amount and amount based on weight × freight rate (when not fixed)
             const weightInput = document.getElementById('weight');
@@ -635,7 +634,6 @@
                 const calculatedAmount = actualAmount - shortageAmount - damageAmount;
                 amountInput.value = Math.max(0, calculatedAmount).toFixed(2);
 
-                console.log(
                     `💰 Actual Amount: ${actualAmount.toFixed(2)}, Amount: ${calculatedAmount.toFixed(2)} (${actualAmount.toFixed(2)} - ${shortageAmount} - ${damageAmount})`
                 );
             }
@@ -966,24 +964,19 @@
         // Wait for jQuery to be available
         function waitForJQuery() {
             if (typeof $ !== 'undefined' && typeof $.fn !== 'undefined') {
-                console.log('✅ jQuery is available');
                 checkSelect2();
             } else {
-                console.log('⏳ Waiting for jQuery...');
                 setTimeout(waitForJQuery, 100);
             }
         }
 
         function checkSelect2() {
             if (typeof $.fn.select2 !== 'undefined') {
-                console.log('✅ Select2 is available');
                 initializeLorryReceiptForm();
             } else {
-                console.log('Loading Select2...');
                 var script = document.createElement('script');
                 script.src = 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js';
                 script.onload = function() {
-                    console.log('✅ Select2 loaded successfully');
                     initializeLorryReceiptForm();
                 };
                 document.head.appendChild(script);
@@ -995,7 +988,6 @@
 
     function initializeLorryReceiptForm() {
         $(document).ready(function() {
-            console.log('🚀 Lorry Receipt Edit Form initialized');
 
             // Initialize other dropdowns with Select2 (AJAX driven)
             const ajaxConsigneesConfig = {
@@ -1093,7 +1085,6 @@
             });
 
             // Access the customer data from the window object
-            console.log('Selected customer data:', {
                 id: window.selectedCustomerId,
                 name: window.selectedCustomerName
             });
@@ -1107,7 +1098,6 @@
                 ajax: ajaxConsigneesConfig
             }).on('select2:open', function() {
                 // Log when dropdown is opened
-                console.log('Customer dropdown opened');
             });
 
             // Create a function to ensure the customer is selected
@@ -1122,7 +1112,6 @@
                         const newOption = new Option(window.selectedCustomerName, window.selectedCustomerId,
                             true, true);
                         $('#customer_id').append(newOption);
-                        console.log('Created missing option for customer:', window.selectedCustomerName);
                     }
 
                     // Set the value and trigger change
@@ -1130,12 +1119,9 @@
 
                     // Verify the selection
                     const currentVal = $('#customer_id').val();
-                    console.log('Customer dropdown value after setting:', currentVal);
 
                     if (currentVal == window.selectedCustomerId) {
-                        console.log('✅ Customer dropdown set successfully');
                     } else {
-                        console.log('⚠️ Failed to set customer dropdown value');
                     }
                 }
             }
@@ -1146,11 +1132,6 @@
             // And also after a short delay to ensure Select2 is fully initialized
             setTimeout(ensureCustomerSelected, 300);
 
-            console.log('✅ All dropdowns initialized successfully');
-            console.log('Truck ID:', $('#truck_id').val());
-            console.log('Transporter ID:', $('#transporter_id').val());
-            console.log('Transporter Type:', $('#transporter_type').val());
-            console.log('Lorry Receipt Data:', {
                 customer_id: {{ $lorry_receipt->customer_id ?? 'null' }},
                 truck_id: {{ $lorry_receipt->truck_id ?? 'null' }},
                 transporter_id: {{ $lorry_receipt->transporter_id ?? 'null' }},
@@ -1164,10 +1145,8 @@
                 const customerId = {{ $lorry_receipt->customer_id ?? 'null' }};
                 if (customerId) {
                     customerSelect.val(customerId).trigger('change');
-                    console.log('✅ Customer dropdown initialized with ID:', customerId);
                 }
             }
-            console.log('Route field values:', {
                 source_city: $('#source_city').val(),
                 source_state: $('#source_state').val(),
                 destination_city: $('#destination_city').val(),
@@ -1191,13 +1170,11 @@
 
             if (dbTransporterType) {
                 $('#transporter_type').val(dbTransporterType);
-                console.log('Restored DB transporter_type:', dbTransporterType);
             } else {
                 const currentTruckId = $('#truck_id').val();
                 if (currentTruckId && trucks[currentTruckId]) {
                     const transporterType = trucks[currentTruckId].transporter_type;
                     $('#transporter_type').val(transporterType);
-                    console.log('Set transporter type to:', transporterType);
                 }
             }
 
@@ -1205,7 +1182,6 @@
             setTimeout(function() {
                 $('#customer_id, #truck_id, #transporter_id, #consignor_id, #consignee_id, #good_type')
                     .trigger('change.select2');
-                console.log('🔄 Select2 dropdowns refreshed');
             }, 500);
 
             // Handle consignor selection change
@@ -1256,7 +1232,6 @@
                 // Check if fields are already filled (from DB in edit form)
                 if ($('#source_city').val() || $('#destination_city').val()) {
                     // Do nothing, keep DB values
-                    console.log('Keeping DB values for truck details.');
                     return;
                 }
 
@@ -1420,7 +1395,6 @@
             const checkSelect2 = setInterval(() => {
                 if (typeof $.fn.select2 !== 'undefined') {
                     clearInterval(checkSelect2);
-                    console.log('✅ Select2 loaded successfully');
                     resolve();
                 }
             }, 100);
@@ -1439,7 +1413,6 @@
                         allowClear: true,
                         width: '100%'
                     });
-                    console.log('✅ Select2 initialized successfully for truck dropdown');
                 } else {
                     console.error('❌ Truck element not found');
                 }
@@ -1451,7 +1424,6 @@
                         allowClear: true,
                         width: '100%'
                     });
-                    console.log('✅ Select2 initialized successfully for customer dropdown');
                 } else {
                     console.error('❌ Customer element not found');
                 }
@@ -1463,7 +1435,6 @@
                         allowClear: true,
                         width: '100%'
                     });
-                    console.log('✅ Select2 initialized successfully for consignor dropdown');
                 } else {
                     console.error('❌ Consignor element not found');
                 }
@@ -1475,7 +1446,6 @@
                         allowClear: true,
                         width: '100%'
                     });
-                    console.log('✅ Select2 initialized successfully for consignee dropdown');
                 } else {
                     console.error('❌ Consignee element not found');
                 }
@@ -1526,7 +1496,6 @@
 
         // Handle consignor selection with Select2 support
         function handleConsignorSelection(consignorId) {
-            console.log('👤 Consignor selected:', consignorId);
 
             // Check if consignor and consignee are the same
             const consigneeId = consigneeSelect.value;
@@ -1545,18 +1514,14 @@
             }
 
             if (consignorId) {
-                console.log('🔄 Fetching consignor data from API...');
                 fetch(`/api/consignees/${consignorId}`)
                     .then(response => {
-                        console.log('📡 Consignor API response status:', response.status);
                         if (!response.ok) {
                             throw new Error(`HTTP error! status: ${response.status}`);
                         }
                         return response.json();
                     })
                     .then(data => {
-                        console.log('📊 Consignor data received:', data);
-                        console.log('📊 Consignor data keys:', Object.keys(data));
 
                         // Auto-populate consignor fields
                         consignorContactInput.value = data.contact_number || '';
@@ -1564,16 +1529,11 @@
                         sourceCityInput.value = data.city || '';
                         sourceStateInput.value = data.state || '';
 
-                        console.log('✅ Auto-populated consignor fields:');
-                        console.log('  📞 Contact:', data.contact_number || 'N/A');
-                        console.log('  🏙️ City:', data.city || 'N/A');
-                        console.log('  🗺️ State:', data.state || 'N/A');
                     })
                     .catch(error => {
                         console.error('❌ Error fetching consignor data:', error);
                     });
             } else {
-                console.log('🧹 Clearing consignor fields...');
                 consignorContactInput.value = '';
                 sourceCityInput.value = '';
                 sourceStateInput.value = '';
@@ -1600,7 +1560,6 @@
 
         // Handle consignee selection with Select2 support
         function handleConsigneeSelection(consigneeId) {
-            console.log('🏢 Consignee selected:', consigneeId);
 
             // Check if consignor and consignee are the same
             const consignorId = consignorSelect.value;
@@ -1619,18 +1578,14 @@
             }
 
             if (consigneeId) {
-                console.log('🔄 Fetching consignee data from API...');
                 fetch(`/api/consignees/${consigneeId}`)
                     .then(response => {
-                        console.log('📡 Consignee API response status:', response.status);
                         if (!response.ok) {
                             throw new Error(`HTTP error! status: ${response.status}`);
                         }
                         return response.json();
                     })
                     .then(data => {
-                        console.log('📊 Consignee data received:', data);
-                        console.log('📊 Consignee data keys:', Object.keys(data));
 
                         // Auto-populate consignee fields
                         consigneeContactInput.value = data.contact_number || '';
@@ -1638,16 +1593,11 @@
                         destinationCityInput.value = data.city || '';
                         destinationStateInput.value = data.state || '';
 
-                        console.log('✅ Auto-populated consignee fields:');
-                        console.log('  📞 Contact:', data.contact_number || 'N/A');
-                        console.log('  🏙️ Destination City:', data.city || 'N/A');
-                        console.log('  🗺️ Destination State:', data.state || 'N/A');
                     })
                     .catch(error => {
                         console.error('❌ Error fetching consignee data:', error);
                     });
             } else {
-                console.log('🧹 Clearing consignee fields...');
                 consigneeContactInput.value = '';
                 destinationCityInput.value = '';
                 destinationStateInput.value = '';
@@ -1773,7 +1723,6 @@
             const calculatedAmount = actualAmount - (shortageAmount + damageAmount);
             amountInput.value = Math.max(0, calculatedAmount).toFixed(2);
 
-            console.log(
                 `💰 Actual Amount: ${actualAmount.toFixed(2)}, Amount: ${calculatedAmount.toFixed(2)}`);
         }
 
@@ -1811,7 +1760,6 @@
             } else {
                 weightInput.setCustomValidity('');
                 weightInput.classList.remove('is-invalid');
-                console.log('✅ Valid weight:', weight, 'tons');
             }
         }
 

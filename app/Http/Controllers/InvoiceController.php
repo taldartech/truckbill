@@ -235,8 +235,6 @@ class InvoiceController extends Controller
                 ];
             });
 
-        Log::info('Found memos for customer:', ['count' => count($memos)]);
-
         return response()->json($memos);
     }
 
@@ -520,8 +518,6 @@ class InvoiceController extends Controller
     public function getLrs($memoIds)
     {
         $memoIds = explode(',', $memoIds);
-        Log::info('Fetching LR numbers for memos:', ['memo_ids' => $memoIds]);
-
         $lrs = LorryReceipt::whereIn('memo_id', $memoIds)
             ->when(Auth::user()->company_id, fn ($q) => $q->where('company_id', Auth::user()->company_id))
             ->with(['transporter.transporterMaster', 'consignor', 'consignee', 'truck'])

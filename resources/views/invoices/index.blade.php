@@ -628,7 +628,6 @@
             // Add Payment Modal Handler
             $(document).on('click', '.add-payment-btn', function(e) {
                 e.preventDefault();
-                console.log('Add payment button clicked'); // Debug
 
                 var invoiceId = $(this).data('invoice-id');
                 var invoiceNumber = $(this).data('invoice-number');
@@ -636,13 +635,6 @@
                 var paidAmount = parseFloat($(this).data('paid-amount')) || 0;
                 var remainingAmount = parseFloat($(this).data('remaining-amount')) || 0;
 
-                console.log('Invoice data:', {
-                    invoiceId,
-                    invoiceNumber,
-                    totalAmount,
-                    paidAmount,
-                    remainingAmount
-                }); // Debug
 
                 // Validate data
                 if (!invoiceId) {

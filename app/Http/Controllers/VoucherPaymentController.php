@@ -831,7 +831,6 @@ class VoucherPaymentController extends Controller
             $amounts = $validated['amounts'];
 
             // foreach ($lorryReceipts as $index => $lorryReceiptId) {
-            //     \Log::info('Processing voucher payment for LR:', [
             //         'lorry_receipt_id' => $lorryReceiptId,
             //         'freight_booking_id' => $freightBookings[$lorryReceiptId] ?? null,
             //         'amount' => $amounts[$lorryReceiptId] ?? null
@@ -841,7 +840,6 @@ class VoucherPaymentController extends Controller
             //     $amount = $amounts[$lorryReceiptId] ?? 0;
 
             //     if (!$freightBookingId || $amount <= 0) {
-            //         \Log::warning('Skipping voucher payment due to invalid data:', [
             //             'lorry_receipt_id' => $lorryReceiptId,
             //             'freight_booking_id' => $freightBookingId,
             //             'amount' => $amount
@@ -870,7 +868,6 @@ class VoucherPaymentController extends Controller
             //         'company_id' => $company_id
             //     ];
 
-            //     \Log::info('Creating voucher payment with data:', $paymentData);
 
             //     // Explicitly specify the fields to create
             //     $voucherPayment = VoucherPayment::create([
@@ -885,7 +882,6 @@ class VoucherPaymentController extends Controller
             //     ]);
 
             //     if ($voucherPayment) {
-            //         \Log::info('Successfully created voucher payment:', [
             //             'id' => $voucherPayment->id,
             //             'voucher_id' => $voucherPayment->voucher_id,
             //             'amount' => $voucherPayment->amount
@@ -911,7 +907,6 @@ class VoucherPaymentController extends Controller
             //         // Save the freight booking
             //         $freightBooking->save();
 
-            //         \Log::info('Successfully updated freight booking:', [
             //             'freight_booking_id' => $freightBooking->id,
             //             'new_advance_amount' => $freightBooking->advance_amount,
             //             'new_balance_amount' => $freightBooking->balance_amount
@@ -938,7 +933,6 @@ class VoucherPaymentController extends Controller
             //     ]);
 
             //     // Log the creation
-            //     \Log::info('Created voucher payment:', [
             //         'voucher_id' => $freightBooking->voucher_id,
             //         'amount' => $amount,
             //         'freight_booking_id' => $freightBooking->id,
@@ -1102,7 +1096,6 @@ class VoucherPaymentController extends Controller
     //         // Save the freight booking
     //         $freightBooking->save();
 
-    //         \Log::info('Successfully updated freight booking:', [
     //             'freight_booking_id' => $freightBooking->id,
     //             'new_advance_amount' => $freightBooking->advance_amount,
     //             'new_balance_amount' => $freightBooking->balance_amount
@@ -1129,7 +1122,6 @@ class VoucherPaymentController extends Controller
     //     ]);
 
     //     // Log the creation
-    //     \Log::info('Created voucher payment:', [
     //         'voucher_id' => $freightBooking->voucher_id,
     //         'amount' => $amount,
     //         'freight_booking_id' => $freightBooking->id,

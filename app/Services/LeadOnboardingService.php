@@ -9,7 +9,6 @@ use App\Models\UserRole;
 use App\Services\Notifications\OnboardingNotificationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -78,11 +77,6 @@ class LeadOnboardingService
             $this->tokenService->markUsed($tokenRecord);
             $this->otpService->consumeVerified($payload['email']);
 
-            Log::info('Lead onboarding completed', [
-                'lead_id' => $lead->id,
-                'user_id' => $user->id,
-            ]);
-
             return [
                 'user' => $user,
                 'lead' => $lead,
@@ -95,7 +89,7 @@ class LeadOnboardingService
                 $result['user']->name
             );
         } catch (\Throwable $exception) {
-            Log::error('Welcome email notification failed after onboarding', [
+            \Log::error('Welcome email notification failed after onboarding', [
                 'user_id' => $result['user']->id,
                 'lead_id' => $result['lead']->id,
                 'message' => $exception->getMessage(),

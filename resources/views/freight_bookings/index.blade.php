@@ -681,7 +681,6 @@
             // Voucher Payment Modal
             $('#voucher-payment-btn').on('click', function() {
                 const checkedBoxes = Object.values(selectedRows);
-                console.log(checkedBoxes);
                 if (checkedBoxes.length === 0) {
                     alert('Please select at least one good hire (lorry hire).');
                     return;
@@ -807,7 +806,6 @@
                 // If there's a linked LR ID, fetch all related LRs
                 if (linkedLrId) {
                     $.get(`/lorryreceipts/by-linked/${linkedLrId}`, function(response) {
-                        console.log('📦 Full response:', response);
                         const lrsArray = response.lrs || response;
 
                         if (lrsArray && lrsArray.length > 0) {
@@ -818,11 +816,6 @@
                                 lr.freight_booking_id !== ''
                             );
 
-                            console.log('✅ All have freight booking?', allHaveFreightBooking);
-                            console.log('Freight booking IDs:', lrsArray.map(lr => ({
-                                lr_number: lr.lr_number,
-                                freight_booking_id: lr.freight_booking_id
-                            })));
 
                             if (!allHaveFreightBooking) {
                                 // Find which LRs are missing freight bookings
@@ -837,7 +830,6 @@
                                 alert(
                                     `⚠️ Error: The following linked LRs do not have Good Hires (Lorry Hire):\n\n${lrNumbers}\n\nPlease create FRs for all linked LRs before proceeding with combined payment.`
                                 );
-                                console.log('❌ Missing FRs for:', missingLRs);
                                 return;
                             }
 

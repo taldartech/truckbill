@@ -518,24 +518,19 @@
             // Wait for jQuery to be available
             function waitForJQuery() {
                 if (typeof $ !== 'undefined' && typeof $.fn !== 'undefined') {
-                    console.log('✅ jQuery is available');
                     checkSelect2();
                 } else {
-                    console.log('⏳ Waiting for jQuery...');
                     setTimeout(waitForJQuery, 100);
                 }
             }
 
             function checkSelect2() {
                 if (typeof $.fn.select2 !== 'undefined') {
-                    console.log('✅ Select2 is available');
                     initializeLorryReceiptForm();
                 } else {
-                    console.log('Loading Select2...');
                     var script = document.createElement('script');
                     script.src = 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js';
                     script.onload = function() {
-                        console.log('✅ Select2 loaded successfully');
                         initializeLorryReceiptForm();
                     };
                     document.head.appendChild(script);
@@ -547,8 +542,6 @@
 
         function initializeLorryReceiptForm() {
             $(document).ready(function() {
-                console.log('🚀 Lorry Receipt Edit Form initialized');
-
                 // Initialize other dropdowns with Select2
                 const ajaxConsigneesConfig = {
                     url: '/api/consignees/search',
@@ -682,7 +675,6 @@
                 setTimeout(function() {
                     $('#customer_id, #truck_id, #transporter_id, #consignor_id, #consignee_id, #good_type')
                         .trigger('change.select2');
-                    console.log('🔄 Select2 dropdowns refreshed');
                 }, 500);
             });
         }
@@ -716,8 +708,6 @@
 
             // Handle consignor selection with Select2 support
             function handleConsignorSelection(consignorId) {
-                console.log('👤 Consignor selected:', consignorId);
-
                 // Check if consignor and consignee are the same
                 const consigneeId = consigneeSelect.value;
                 if (consignorId && consigneeId && consignorId === consigneeId) {
@@ -735,35 +725,24 @@
                 }
 
                 if (consignorId) {
-                    console.log('🔄 Fetching consignor data from API...');
                     fetch(`/api/consignees/${consignorId}`)
                         .then(response => {
-                            console.log('📡 Consignor API response status:', response.status);
                             if (!response.ok) {
                                 throw new Error(`HTTP error! status: ${response.status}`);
                             }
                             return response.json();
                         })
                         .then(data => {
-                            console.log('📊 Consignor data received:', data);
-                            console.log('📊 Consignor data keys:', Object.keys(data));
-
                             // Auto-populate consignor fields
                             consignorContactInput.value = data.contact_number || '';
                             // Use city and state names from the API response
                             sourceCityInput.value = data.city || '';
                             sourceStateInput.value = data.state || '';
-
-                            console.log('✅ Auto-populated consignor fields:');
-                            console.log('  📞 Contact:', data.contact_number || 'N/A');
-                            console.log('  🏙️ City:', data.city || 'N/A');
-                            console.log('  🗺️ State:', data.state || 'N/A');
                         })
                         .catch(error => {
                             console.error('❌ Error fetching consignor data:', error);
                         });
                 } else {
-                    console.log('🧹 Clearing consignor fields...');
                     consignorContactInput.value = '';
                     sourceCityInput.value = '';
                     sourceStateInput.value = '';
@@ -790,8 +769,6 @@
 
             // Handle consignee selection with Select2 support
             function handleConsigneeSelection(consigneeId) {
-                console.log('🏢 Consignee selected:', consigneeId);
-
                 // Check if consignor and consignee are the same
                 const consignorId = consignorSelect.value;
                 if (consigneeId && consignorId && consigneeId === consignorId) {
@@ -809,35 +786,24 @@
                 }
 
                 if (consigneeId) {
-                    console.log('🔄 Fetching consignee data from API...');
                     fetch(`/api/consignees/${consigneeId}`)
                         .then(response => {
-                            console.log('📡 Consignee API response status:', response.status);
                             if (!response.ok) {
                                 throw new Error(`HTTP error! status: ${response.status}`);
                             }
                             return response.json();
                         })
                         .then(data => {
-                            console.log('📊 Consignee data received:', data);
-                            console.log('📊 Consignee data keys:', Object.keys(data));
-
                             // Auto-populate consignee fields
                             consigneeContactInput.value = data.contact_number || '';
                             // Use city and state names from the API response
                             destinationCityInput.value = data.city || '';
                             destinationStateInput.value = data.state || '';
-
-                            console.log('✅ Auto-populated consignee fields:');
-                            console.log('  📞 Contact:', data.contact_number || 'N/A');
-                            console.log('  🏙️ Destination City:', data.city || 'N/A');
-                            console.log('  🗺️ Destination State:', data.state || 'N/A');
                         })
                         .catch(error => {
                             console.error('❌ Error fetching consignee data:', error);
                         });
                 } else {
-                    console.log('🧹 Clearing consignee fields...');
                     consigneeContactInput.value = '';
                     destinationCityInput.value = '';
                     destinationStateInput.value = '';
@@ -941,8 +907,6 @@
                     amountInput.style.backgroundColor = '#e8f5e8';
                     amountInput.title = `Auto-calculated: ${weight} × ${frRate} = ${calculatedAmount.toFixed(2)}`;
 
-                    console.log(
-                        `💰 Amount auto-calculated: ${weight} × ${frRate} = ${calculatedAmount.toFixed(2)}`);
                 }
             }
 
@@ -972,7 +936,6 @@
                 } else {
                     weightInput.setCustomValidity('');
                     weightInput.classList.remove('is-invalid');
-                    console.log('✅ Valid weight:', weight, 'tons');
                 }
             }
 
@@ -988,7 +951,6 @@
                 } else {
                     this.title = 'Fixed amount (manual)';
                 }
-                console.log('✏️ Amount manually edited by user');
             });
 
             if (isFixedAmountCheckbox) {
@@ -1195,7 +1157,6 @@ function checkGRNumberUniqueness(grNumber) {
         })
         .then(response => response.json())
         .then(data => {
-            console.log("data",data);
             if (data.available) {
                 grNumberFeedback.innerHTML = '<small class="text-success">✅ ' + data.message + '</small>';
                 grNumberInput.classList.remove('is-invalid');

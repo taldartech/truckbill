@@ -236,47 +236,7 @@
                 paymentModeIdSelect.dispatchEvent(new Event('change'));
             });
             </script>
-{{-- 
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const paymentModeSelect = document.getElementById('payment_mode');
-                const paymentStatusSelect = document.getElementById('payment_status');
-                const isAdmin = auth()->user()->role === 'admin';
-
-                paymentModeSelect.addEventListener('change', function() {
-                    // Get the selected option value (which is the payment mode name)
-                    const selectedValue = this.value;
-                    console.log('Selected payment mode:', selectedValue);
-                    
-                    if (isAdmin) {
-                        if (selectedValue.toLowerCase() === 'cash' || selectedValue.toLowerCase() === 'adjust in advance') {
-                            console.log('Cash selected, setting status to in-progress');
-                            paymentStatusSelect.value = 'in-progress';
-                            // paymentStatusSelect.disabled = true;
-                        } else if (selectedValue.toLowerCase() === 'bank' || 
-                                   selectedValue.toLowerCase() === 'online' || 
-                                   selectedValue.toLowerCase() === 'fuel') {
-                            console.log('Bank/Online/Fuel selected, setting status to pending');
-                            paymentStatusSelect.value = 'pending';
-                            paymentStatusSelect.disabled = false;
-                        } else {
-                            console.log('Other payment mode selected, enabling status');
-                            paymentStatusSelect.disabled = false;
-                        }
-                    } else {
-                        // For operators, set payment status based on payment mode
-                        if (selectedValue.toLowerCase() === 'cash' || selectedValue.toLowerCase() === 'adjust in advance') {
-                            paymentStatusSelect.value = 'in-progress';
-                        } else if (selectedValue.toLowerCase() === 'bank' || 
-                                   selectedValue.toLowerCase() === 'online' || 
-                                   selectedValue.toLowerCase() === 'fuel') {
-                            paymentStatusSelect.value = 'pending';
-                        }
-                    }
-                });
-            });
-        </script>
-        <!--end::Body--> --}}
+        <!--end::Body-->
         @if (session('warning') && session('duplicate_payment_id'))
             <div class="card-body border-top">
                 <div class="form-check">

@@ -446,24 +446,19 @@
             // Wait for jQuery to be available
             function waitForJQuery() {
                 if (typeof $ !== 'undefined' && typeof $.fn !== 'undefined') {
-                    console.log('✅ jQuery is available');
                     checkSelect2();
                 } else {
-                    console.log('⏳ Waiting for jQuery...');
                     setTimeout(waitForJQuery, 100);
                 }
             }
 
             function checkSelect2() {
                 if (typeof $.fn.select2 !== 'undefined') {
-                    console.log('✅ Select2 is available');
                     initializeLorryReceiptForm();
                 } else {
-                    console.log('Loading Select2...');
                     var script = document.createElement('script');
                     script.src = 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js';
                     script.onload = function() {
-                        console.log('✅ Select2 loaded successfully');
                         initializeLorryReceiptForm();
                     };
                     document.head.appendChild(script);
@@ -598,7 +593,6 @@
 
         function initializeLorryReceiptForm() {
             $(document).ready(function() {
-                console.log('🚀 Linked Lorry Receipts Form initialized');
 
                 // Initialize shared dropdowns with Select2 (AJAX-driven for large datasets)
                 $('#truck_id').select2({
@@ -643,11 +637,9 @@
     </script>
 
     <script>
-        console.log('🚀 Linked  Receipts Form initialized');
         // For consignor
 
         $(document).on('change', '.consignor-select', function() {
-            console.log('🔥 Change event fired', $(this).val());
         });
         $(document).on('select2:select', '.consignor-select', function(e) {
             const scope = this.closest('.lr-item');
@@ -698,7 +690,6 @@
 
             // Fetch consignor details
             function handleConsignorSelection(consignorId, scope) {
-                console.log('👤 Consignor selected:', consignorId);
 
                 const consigneeId = scope.querySelector('.consignee-select')?.value;
                 if (consignorId && consigneeId && String(consignorId) === String(consigneeId)) {
@@ -724,7 +715,6 @@
                             return res.json();
                         })
                         .then(data => {
-                            console.log('📊 Consignor data received:', data);
 
                             // Update contact number
                             scope.querySelector('.consignor-contact').value = data.contact_number || '';
@@ -742,7 +732,6 @@
                             scope.querySelector('.source-city').value = cityValue;
                             scope.querySelector('.source-state').value = stateValue;
 
-                            console.log('Updated consignor fields:', {
                                 contact: data.contact_number,
                                 city: cityValue,
                                 state: stateValue
@@ -771,7 +760,6 @@
 
             // Fetch consignee details
             function handleConsigneeSelection(consigneeId, scope) {
-                console.log('🏢 Consignee selected:', consigneeId);
 
                 const consignorId = scope.querySelector('.consignor-select')?.value;
                 if (consigneeId && consignorId && String(consigneeId) === String(consignorId)) {
@@ -797,7 +785,6 @@
                             return res.json();
                         })
                         .then(data => {
-                            console.log('📊 Consignee data received:', data);
 
                             // Update contact number
                             scope.querySelector('.consignee-contact').value = data.contact_number || '';
@@ -815,7 +802,6 @@
                             scope.querySelector('.destination-city').value = cityValue;
                             scope.querySelector('.destination-state').value = stateValue;
 
-                            console.log('Updated consignee fields:', {
                                 contact: data.contact_number,
                                 city: cityValue,
                                 state: stateValue
@@ -1512,7 +1498,6 @@ lrItemsContainer.addEventListener('blur', function(e) {
                     submitBtn.disabled = false;
 
                     if (data.success) {
-                        console.log(data);
                         // Add new option to Goods Type dropdown
                         let selects = document.querySelectorAll('.goods-type');
                         let newOption = new Option(data.goodsType.name, data.goodsType.name);
@@ -1589,7 +1574,6 @@ lrItemsContainer.addEventListener('blur', function(e) {
     <script>
         // Fetch consignor details
         function handleConsignorSelection(consignorId, scope) {
-            console.log('👤 Consignor selected:', consignorId);
 
             const consigneeId = scope.querySelector('.consignee-select')?.value;
             if (consignorId && consigneeId && String(consignorId) === String(consigneeId)) {
@@ -1612,7 +1596,6 @@ lrItemsContainer.addEventListener('blur', function(e) {
                         return res.json();
                     })
                     .then(data => {
-                        console.log('📊 Consignor data received:', data);
 
                         // Update contact number
                         scope.querySelector('.consignor-contact').value = data.contact_number || '';
@@ -1624,7 +1607,6 @@ lrItemsContainer.addEventListener('blur', function(e) {
                         scope.querySelector('.source-city').value = cityValue;
                         scope.querySelector('.source-state').value = stateValue;
 
-                        console.log('Updated consignor fields:', {
                             contact: data.contact_number,
                             city: cityValue,
                             state: stateValue
@@ -1647,7 +1629,6 @@ lrItemsContainer.addEventListener('blur', function(e) {
 
         // Fetch consignee details
         function handleConsigneeSelection(consigneeId, scope) {
-            console.log('🏢 Consignee selected:', consigneeId);
 
             const consignorId = scope.querySelector('.consignor-select')?.value;
             if (consigneeId && consignorId && String(consigneeId) === String(consignorId)) {
@@ -1670,7 +1651,6 @@ lrItemsContainer.addEventListener('blur', function(e) {
                         return res.json();
                     })
                     .then(data => {
-                        console.log('📊 Consignee data received:', data);
 
                         // Update contact number
                         scope.querySelector('.consignee-contact').value = data.contact_number || '';
@@ -1682,7 +1662,6 @@ lrItemsContainer.addEventListener('blur', function(e) {
                         scope.querySelector('.destination-city').value = cityValue;
                         scope.querySelector('.destination-state').value = stateValue;
 
-                        console.log('Updated consignee fields:', {
                             contact: data.contact_number,
                             city: cityValue,
                             state: stateValue

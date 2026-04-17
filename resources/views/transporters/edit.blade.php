@@ -572,7 +572,6 @@ $(document).ready(function() {
                     'Accept': 'application/json'
                 },
                 success: function(data) {
-                    console.log('Country creation response:', data);
                     if (data && data.success && data.country) {
                         // Add new country to the main dropdown
                         $('#country_id').append(`<option value="${data.country.id}">${data.country.name}</option>`);
@@ -645,7 +644,6 @@ $(document).ready(function() {
                     'Accept': 'application/json'
                 },
                 success: function(data) {
-                    console.log('State creation response:', data);
                     if (data && data.success && data.state) {
                         // Add new state to the main dropdown
                         $('#state_id').append(`<option value="${data.state.id}">${data.state.name}</option>`);
@@ -691,7 +689,6 @@ $(document).ready(function() {
             const stateId = $('#modal_city_state_id').val();
 
             const csrfToken = $('meta[name="csrf-token"]').attr('content');
-            console.log(cityName, stateId, csrfToken);
             // Show loading state
             submitBtn.prop('disabled', true);
             spinner.removeClass('d-none');
@@ -718,7 +715,6 @@ $(document).ready(function() {
                     'Accept': 'application/json'
                 },
                 success: function(data) {
-                    console.log('City creation response:', data);
                     if (data && data.success && data.city) {
                         // Add new city to the main dropdown
                         $('#city_id').append(`<option value="${data.city.id}">${data.city.name}</option>`);

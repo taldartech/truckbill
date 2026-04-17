@@ -240,14 +240,12 @@
 
         // Memo loading script
         document.addEventListener('DOMContentLoaded', function() {
-            console.log("🚀 Script loaded");
             const customerSelect = document.querySelector('select[name="customer_id"]');
             const memoDiv = document.getElementById('memoDiv');
             const memoSelect = document.getElementById('memoSelect');
 
             customerSelect.addEventListener('change', function() {
                 const customerId = this.value;
-                console.log("📦 Customer selected:", customerId);
                 memoDiv.style.display = customerId ? 'block' : 'none';
                 memoSelect.innerHTML = ''; // clear old options
 
@@ -265,7 +263,6 @@
                             return response.json();
                         })
                         .then(data => {
-                            console.log("✅ AJAX response:", data);
                             memoSelect.innerHTML = ''; // Clear existing options
 
                             if (Array.isArray(data) && data.length > 0) {
@@ -576,7 +573,6 @@
                                         const state = data.state?.toLowerCase() || 'n/a';
                                         document.getElementById('selectedLocation').textContent =
                                             data.state || 'N/A';
-                                        console.log("state fetched for tax calculation:", state);
 
                                         if (invoiceTypeInput) {
                                             document.getElementById('baseAmountInput').value = grandTotalAmount.toFixed(2);

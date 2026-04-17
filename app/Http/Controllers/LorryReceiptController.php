@@ -424,11 +424,6 @@ class LorryReceiptController extends Controller
                     }
                 }
 
-                Log::info('Bulk Payment: Updated successfully', [
-                    'memo_id' => $validated['memo_id'],
-                    'lr_count' => $lorryReceipts->count(),
-                    'freight_booking_count' => count($freightBookingIds),
-                ]);
             });
 
             return response()->json([
@@ -1280,11 +1275,6 @@ class LorryReceiptController extends Controller
             if (! empty($updateData)) {
                 $freightBooking->update($updateData);
 
-                Log::info('Freight Booking synced from Lorry Receipt update', [
-                    'freight_booking_id' => $freightBooking->id,
-                    'lr_id' => $lorry_receipt->id,
-                    'updated_fields' => array_keys($updateData),
-                ]);
             }
         }
 

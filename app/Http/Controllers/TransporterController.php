@@ -33,16 +33,12 @@ class TransporterController extends Controller
     private function getTransportersData(Request $request)
     {
         try {
-            \Log::info('DataTables request started for transporters');
-
             $query = \App\Models\Transporter::with(['company', 'transporterMaster'])
                 ->where('is_owner', 0); // Default to show only Agencies
 
             if (Auth::user()->company_id) {
                 $query->where('company_id', Auth::user()->company_id);
             }
-
-            \Log::info('Query built successfully');
 
             // Handle global search
             if ($request->has('search') && $request->search['value']) {

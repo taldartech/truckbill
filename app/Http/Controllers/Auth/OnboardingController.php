@@ -12,7 +12,6 @@ use App\Services\LeadOnboardingService;
 use App\Services\OnboardingOtpService;
 use App\Services\OnboardingTokenService;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class OnboardingController extends Controller
@@ -96,11 +95,6 @@ class OnboardingController extends Controller
     public function onboard(CompleteOnboardingRequest $request): JsonResponse
     {
         $result = $this->leadOnboardingService->complete($request->validated());
-
-        Log::info('Onboarding completion acknowledged', [
-            'lead_id' => $result['lead']->id,
-            'user_id' => $result['user']->id,
-        ]);
 
         return response()->json([
             'success' => true,

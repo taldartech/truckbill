@@ -187,8 +187,6 @@ class ConsigneeController extends Controller
 
     public function store(Request $request)
     {
-        Log::info('Current user company_id: '.auth()->user()->company_id);
-
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'nullable|string',

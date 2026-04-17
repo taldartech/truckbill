@@ -829,7 +829,6 @@
                 $(this).find('.form-control, .form-select').removeClass('is-invalid is-valid');
                 $(this).find('.invalid-feedback').hide();
 
-                console.log($(this).serialize());
 
                 $.ajax({
                     url: $(this).attr('action'),
@@ -1082,7 +1081,7 @@
                     });
                 },
                 error: function() {
-                    console.log('Failed to load drivers');
+                    console.error('Failed to load drivers');
                 }
             });
         }
