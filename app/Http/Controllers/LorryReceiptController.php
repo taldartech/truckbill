@@ -54,7 +54,6 @@ class LorryReceiptController extends Controller
     /**
      * Abort 403 if super_admin has no company context in session.
      */
-
     private function getCurrentCompanyId(): ?int
     {
         if (Auth::user()->userRole->name === 'super_admin') {
@@ -96,7 +95,6 @@ class LorryReceiptController extends Controller
         if ($request->ajax()) {
             return $this->getLorryReceiptsData($request);
         }
-
 
         return view('lorry_receipts.index');
     }
@@ -1455,22 +1453,6 @@ class LorryReceiptController extends Controller
             ->get(['id', 'lr_number']);
 
         return response()->json($lorryReceipts);
-    }
-
-    public function getReferencesForTransporterTruck(int $transporterId, int $truckId): \Illuminate\Http\JsonResponse
-    {
-        $lrs = LorryReceipt::where('transporter_id', $transporterId)
-            ->where('truck_id', $truckId)
-            ->where('company_id', Auth::user()->company_id)
-            ->get(['reference_by']);
-
-        $references = $lrs->pluck('reference_by')->unique()->filter();
-        $references = Transporter::with('transporterMaster')
-            ->whereIn('id', $references)
-            ->get()
-            ->map(fn ($t) => ['id' => $t->id, 'name' => $t->name]);
-
-        return response()->json($references);
     }
 
     public function getByLinkedId(int $linkedId): \Illuminate\Http\JsonResponse

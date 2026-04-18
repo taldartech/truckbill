@@ -31,6 +31,7 @@ class FreightBookingController extends Controller
 
         if ($user->userRole->name === 'super_admin') {
             $companyId = session('super_admin_company_id');
+
             return (int) $companyId;
         }
 
@@ -367,24 +368,6 @@ class FreightBookingController extends Controller
         $actions .= '</div>';
 
         return $actions;
-    }
-
-    public function getFreightBookingDetails($id)
-    {
-        $freightBooking = FreightBooking::with([
-            'lr' => function ($query) {
-                $query->with(['transporter.transporterMaster', 'truck', 'consignor', 'consignee']);
-            },
-        ])->find($id);
-
-        if (! $freightBooking) {
-            return response()->json(['error' => 'Good Hire (Lorry Hire) not found'], 404);
-        }
-
-        return response()->json([
-            'freight_booking' => $freightBooking,
-            'lr' => $freightBooking->lr,
-        ]);
     }
 
     public function create(Request $request)

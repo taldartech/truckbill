@@ -11,15 +11,13 @@ use App\Http\Controllers\TransporterController;
 use App\Http\Controllers\TruckController;
 use App\Http\Controllers\TruckOwnerController;
 use App\Http\Controllers\ValidationController;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth.blocked')->group(function () {
     Route::middleware('company.context')->group(function () {
         Route::get('/api/transporters/{transporter}/trucks', [TruckController::class, 'getTrucksForTransporter']);
         Route::get('/api/trucks/{truck}/owner-transporters', [TruckController::class, 'getOwnerTransporters']);
-        Route::get('/api/trucks/{truck}/agency-transporters', [TruckController::class, 'getAgencyTransporters']);
-        Route::get('/api/trucks/{transporter}/lrs', [TruckController::class, 'getTrucksFromLrs']);
         Route::get('/api/drivers', [DriverController::class, 'getDriversApi']);
         Route::get('/api/transporters/{id}', [FreightBookingController::class, 'getTransporter']);
         Route::get('/api/trucks/search', [TruckController::class, 'searchTrucksApi']);
@@ -38,10 +36,8 @@ Route::middleware('auth.blocked')->group(function () {
         Route::get('/api/lorry-receipts/customer/{customerId}', [LorryReceiptController::class, 'getLorryReceiptsForCustomer']);
         Route::get('/api/invoice-numbers', [InvoiceController::class, 'getAllInvoiceNumbers']);
         Route::get('/api/invoice-numbers/{customerId}', [InvoiceController::class, 'getInvoiceNumbersForCustomer']);
-        Route::get('/api/references/{transporterId}/{truckId}/lrs', [LorryReceiptController::class, 'getReferencesForTransporterTruck']);
         Route::get('/api/reports/transporter-filter-options', [ReportController::class, 'transporter_report_filter_options']);
         Route::get('/api/lorry-receipts/{id}/details', [LorryReceiptController::class, 'details'])->name('lorry_receipts.details');
-        Route::get('/api/freight-bookings/{id}/details', [FreightBookingController::class, 'getFreightBookingDetails'])->name('api.freight_bookings.details');
     });
 
     // API routes for dynamic dropdowns
@@ -49,35 +45,35 @@ Route::middleware('auth.blocked')->group(function () {
     Route::get('/api/cities/{stateId}', [DropdownController::class, 'cities']);
 
     Route::middleware('company.context')->group(function () {
-    // Validation routes
-    Route::post('/api/validate/gst-number', [ValidationController::class, 'checkGstNumber']);
-    Route::post('/api/validate/pan-number', [ValidationController::class, 'checkPanNumber']);
+        // Validation routes
+        Route::post('/api/validate/gst-number', [ValidationController::class, 'checkGstNumber']);
+        Route::post('/api/validate/pan-number', [ValidationController::class, 'checkPanNumber']);
 
-    Route::post('/api/check-manual-invoice-number-uniqueness', [InvoiceController::class, 'checkManualInvoiceNumberUniqueness']);
-    Route::get('/check-truck-number', function (Illuminate\Http\Request $request) {
-        $companyId = Auth::user()->userRole->name === 'super_admin'
-            ? session('super_admin_company_id')
-            : Auth::user()->company_id;
+        Route::post('/api/check-manual-invoice-number-uniqueness', [InvoiceController::class, 'checkManualInvoiceNumberUniqueness']);
+        Route::get('/check-truck-number', function (Illuminate\Http\Request $request) {
+            $companyId = Auth::user()->userRole->name === 'super_admin'
+                ? session('super_admin_company_id')
+                : Auth::user()->company_id;
 
-        $exists = \App\Models\Truck::where('truck_number', $request->truck_number)
-            ->where(function ($query) use ($companyId) {
-                $query->where('company_id', $companyId)
-                    ->orWhereHas('transporter', function ($transporters) use ($companyId) {
-                        $transporters->where('company_id', $companyId);
-                    });
-            })
-            ->exists();
+            $exists = \App\Models\Truck::where('truck_number', $request->truck_number)
+                ->where(function ($query) use ($companyId) {
+                    $query->where('company_id', $companyId)
+                        ->orWhereHas('transporter', function ($transporters) use ($companyId) {
+                            $transporters->where('company_id', $companyId);
+                        });
+                })
+                ->exists();
 
-        return response()->json(['exists' => $exists]);
-    });
-    Route::get('/get-transporter-name/{truck}', function ($truckId) {
-        $truck = \App\Models\Truck::with('transporter.transporterMaster')->find($truckId);
+            return response()->json(['exists' => $exists]);
+        });
+        Route::get('/get-transporter-name/{truck}', function ($truckId) {
+            $truck = \App\Models\Truck::with('transporter.transporterMaster')->find($truckId);
 
-        if ($truck && $truck->transporter) {
-            return response()->json(['transporter_name' => $truck->transporter->name]);
-        }
+            if ($truck && $truck->transporter) {
+                return response()->json(['transporter_name' => $truck->transporter->name]);
+            }
 
-        return response()->json(['transporter_name' => null]);
-    });
+            return response()->json(['transporter_name' => null]);
+        });
     });
 });

@@ -1,6 +1,7 @@
 # Unused Routes Audit
 
 Date: 2026-04-15  
+Last updated: 2026-04-18 (section A removed; onboarding + public lead routes unchanged)  
 Method: `php artisan route:list --json` + repository-wide static reference scan (`route('name')`, `->route(...)`, direct URI usage patterns).
 
 ## Scope and confidence
@@ -11,12 +12,16 @@ Method: `php artisan route:list --json` + repository-wide static reference scan 
 
 ## A) High-confidence likely unused routes
 
-These currently have no static references in repository scans and no manual hit during cross-check:
+**Status: removed (2026-04-18).** Routes and dedicated controller methods deleted after repo-wide search (no Blade/JS/tests references). **Onboarding and lead-generation routes were not modified** (see section C).
 
-1. `GET /api/freight-bookings/{id}/details` (`api.freight_bookings.details`)
-2. `GET /api/references/{transporterId}/{truckId}/lrs` (unnamed)
-3. `GET /api/trucks/{transporter}/lrs` (unnamed)
-4. `GET /api/trucks/{truck}/agency-transporters` (unnamed)
+Removed endpoints:
+
+| Method | URI | Route name (if any) | Controller method removed |
+|--------|-----|---------------------|---------------------------|
+| GET | `/api/freight-bookings/{id}/details` | `api.freight_bookings.details` | `FreightBookingController::getFreightBookingDetails` |
+| GET | `/api/references/{transporterId}/{truckId}/lrs` | _(none)_ | `LorryReceiptController::getReferencesForTransporterTruck` |
+| GET | `/api/trucks/{transporter}/lrs` | _(none)_ | `TruckController::getTrucksFromLrs` |
+| GET | `/api/trucks/{truck}/agency-transporters` | _(none)_ | `TruckController::getAgencyTransporters` |
 
 ## B) Candidate routes with no static route-helper references
 

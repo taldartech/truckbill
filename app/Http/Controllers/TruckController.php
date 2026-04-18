@@ -10,7 +10,6 @@ use Illuminate\Validation\Rule;
 
 class TruckController extends Controller
 {
-
     private function getCurrentCompanyId(): ?int
     {
         if (Auth::user()->userRole->name === 'super_admin') {
@@ -301,34 +300,6 @@ class TruckController extends Controller
         return response()->json([]);
     }
 
-    public function getAgencyTransporters($truckId)
-    {
-        $companyId = $this->getCurrentCompanyId();
-        $truck = \App\Models\Truck::with('transporter.transporterMaster')
-            ->where('id', $truckId)
-            ->where(function ($query) use ($companyId) {
-                $query->whereHas('transporter', function ($q) use ($companyId) {
-                    $q->where('company_id', $companyId);
-                })->orWhere(function ($orphanQuery) use ($companyId) {
-                    $orphanQuery->whereNull('transporter_id')
-                        ->where('company_id', $companyId);
-                });
-            })
-            ->first();
-
-        if (! $truck) {
-            return response()->json([], 404);
-        }
-
-        // Get all transporters that are agencies
-        $agencyTransporters = \App\Models\Transporter::with('transporterMaster')
-            ->where('company_id', $companyId)
-            ->where('is_owner', 0)
-            ->get();
-
-        return response()->json($agencyTransporters);
-    }
-
     public function create($transporter_id = null)
     {
         $companyId = $this->getCurrentCompanyId();
@@ -537,6 +508,7 @@ class TruckController extends Controller
             return redirect()->back()->withErrors(['general' => $genericError])->withInput();
         }
     }
+
     public function removeTransporter(\App\Models\Truck $truck)
     {
         if (! $this->isTruckAccessibleToCurrentCompany($truck)) {
@@ -665,16 +637,6 @@ class TruckController extends Controller
         }
 
         return redirect()->back()->with('success', $message);
-    }
-
-    public function getTrucksFromLrs($transporterId)
-    {
-        $lrs = \App\Models\LorryReceipt::where('transporter_id', $transporterId)->get(['truck_id']);
-        $trucks = \App\Models\Truck::with(['transporter.transporterMaster', 'driver'])
-            ->whereIn('id', $lrs->pluck('truck_id'))
-            ->get();
-
-        return response()->json($trucks);
     }
 
     /**
