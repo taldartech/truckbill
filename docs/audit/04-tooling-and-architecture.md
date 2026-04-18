@@ -1,7 +1,7 @@
 # Tooling and Architecture Audit
 
 Date: 2026-04-15  
-Last updated: 2026-04-18 (section 2 layout deduplication; statuses + suggested commits for all points)
+Last updated: 2026-04-18 (sections 2–3; tooling scripts and dependency alignment)
 
 ## 1) Frontend asset pipeline ambiguity
 
@@ -34,15 +34,22 @@ Previously duplicated:
 
 ## 3) Tooling execution gaps
 
-**Status:** Open (not implemented; environment / dependency alignment pending).
+**Status:** Implemented (scripts + declared deps; local env may still need PHP/SQLite/Composer flags).
 
-- `composer test` may fail under root restrictions in this environment.
-- `npm run -s lint` failed because `npm-run-all` was missing at runtime.
+### What we did
 
-### Recommendation
+- **`package.json`**
+  - Declared **Laravel Vite stack** so `vite.config.js` matches installable packages: `vite`, `laravel-vite-plugin`, `tailwindcss`, `@tailwindcss/vite`.
+  - Added scripts: `vite`, `dev:laravel`, `build:laravel` (AdminLTE theme scripts unchanged: `dev`, `compile`, etc.).
+  - **`lint`** no longer requires `npm-run-all` for the default path: it runs `js-lint`, `css-lint`, `docs-lint`, and `lockfile-lint` sequentially. Use **`lint:parallel`** for the old `npm-run-all` behavior (faster, needs devDependencies installed).
+- **`composer.json`**
+  - Added `scripts`: `post-autoload-dump` (discover packages), `test` → `@php artisan test`, `pint` / `pint:test` for Laravel Pint.
 
-- Align `package.json` scripts and actual dependencies.
-- Ensure local/CI commands are reproducible from clean checkout.
+### Follow-up on your machine
+
+- Run **`npm install`** after pulling so `package-lock.json` picks up the new npm packages (required for reproducible `npm ci` in CI).
+- **`composer test` as root:** Composer may refuse plugins unless `COMPOSER_ALLOW_SUPERUSER=1` is set; prefer a non-root user for local/CI.
+- **PHPUnit / `artisan test`:** Needs a working DB driver (e.g. SQLite extension for in-memory tests per `phpunit.xml`) and valid env; failures from missing `pdo_sqlite` or MySQL in `.env` are environment-specific.
 
 ## 4) General cleanup sequencing
 
@@ -65,9 +72,9 @@ Previously duplicated:
   - **Commit message:** `fix(layout): dedupe app layout CSS and Bootstrap JS includes`  
   - **Description:** Remove duplicate Bootstrap Icons, OverlayScrollbars, and AdminLTE CSS in `resources/views/layouts/app.blade.php`; load Bootstrap 5 once via `bootstrap.bundle.min.js` and drop redundant Popper + `bootstrap.min.js`; preserve `buttons.css` / `brand.css` after AdminLTE for override order.
 
-- **3) Tooling execution gaps** — **Status:** Open  
-  - **Commit message:** `chore: align npm scripts with declared dependencies`  
-  - **Description:** Add missing dev dependencies (e.g. `npm-run-all` if scripts require it), fix `npm run lint` / test scripts, and document any composer test constraints for CI or local runs.
+- **3) Tooling execution gaps** — **Status:** Implemented  
+  - **Commit message:** `chore: align composer and npm tooling scripts with dependencies`  
+  - **Description:** Declare Vite/Tailwind/Laravel plugin in `package.json` to match `vite.config.js`; make default `npm run lint` work without `npm-run-all`; add `lint:parallel` for the previous behavior; add Composer `test` / `pint` / `post-autoload-dump` scripts. Regenerate `package-lock.json` with `npm install` after merge.
 
 - **4) General cleanup sequencing** — **Status:** Guidance  
   - **Commit message:** _(no standalone commit; use as PR / runbook checklist)_  
