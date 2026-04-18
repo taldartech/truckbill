@@ -87,7 +87,6 @@
 
     <div class="card {{ $freightBooking->is_cancelled ? 'border-danger' : 'card-info' }} card-outline mb-4"
         style="max-width: 1200px; margin: 0 auto; {{ $freightBooking->is_cancelled ? 'opacity: 0.8;' : '' }}">
-        <!--begin::Header-->
         <div
             class="card-header d-flex justify-content-between align-items-center {{ $freightBooking->is_cancelled ? 'bg-danger-subtle' : '' }}">
             <div class="card-title h4">
@@ -134,9 +133,7 @@
                 </a>
             </div>
         </div>
-        <!--end::Header-->
 
-        <!--begin::Body-->
         <div class="card-body">
             @if ($freightBooking->lr)
                 <div class="row">
@@ -488,9 +485,7 @@
                 </div>
             @endif
 
-
         </div>
-        <!--end::Body-->
     </div>
 
     <!-- Voucher Payment Modal -->
@@ -853,7 +848,6 @@
             const paymentTypeId = paymentTypeSelect.options[paymentTypeSelect.selectedIndex].dataset.id;
             const paymentModeId = paymentModeSelect.options[paymentModeSelect.selectedIndex].dataset.id;
 
-
             // Get freight booking ID and allocated amount
             const allocatedInput = document.querySelector('.allocated-input');
             if (!allocatedInput) {
@@ -914,7 +908,6 @@
             const originalText = submitBtn.innerHTML;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
             submitBtn.disabled = true;
-
 
             // Submit payment
             fetch('/freight_bookings/voucher-payment', {

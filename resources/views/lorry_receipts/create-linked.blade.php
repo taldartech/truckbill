@@ -366,7 +366,6 @@
 
                                 <div class="row mb-3">
 
-
                                     <input type="hidden" class="form-control lane" value="Road" readonly>
                                 </div>
                             </div>
@@ -430,7 +429,6 @@
             </div>
         </div>
     </div>
-
 
     <!-- Load Select2 from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -994,7 +992,6 @@
                 }
             });
 
-
             // LR number uniqueness per row
             let lrNumberTimeout;
 
@@ -1076,7 +1073,6 @@
                     }
                 }
             }, true);
-
 
             // Invoice number uniqueness per row
             let invoiceNumberTimeout;
@@ -1160,7 +1156,6 @@
                     }
                 }
             }, true);
-
 
             // Add GR number timeout variable
 let grNumberTimeout;

@@ -31,13 +31,9 @@
 }
 </style>
 <div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
-    <!--begin::Header-->
     <div class="card-header">
         <div class="card-title h4">Edit Truck Owner</div>
     </div>
-    <!--end::Header-->
-
-
 
     <!--begin::Form-->
     <form action="{{ route('truck_owners.update', $truck_owner) }}" method="POST" class="needs-validation" novalidate="">
@@ -149,42 +145,6 @@
                 </div>
             </div>
             <!-- Registered Trucks Section -->
-{{-- <div class="card mb-4 p-3 bg-light">
-    <div class="row">
-        <div class="col">
-            <h5 class="mb-3">Registered Trucks</h5>
-        </div>
-    </div>
-    <div class="table-responsive">
-        <table class="table table-bordered table-striped">
-            <thead class="table-light">
-                <tr>
-                    <th>S.No</th>
-                    <th>Truck Number</th>
-                    <th>Truck Type</th>
-                    <th>Driver Name</th>
-                    <th>Driver Mobile Number</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($trucks as $index => $truck)
-                    <tr>
-                        <td>{{ $index + 1 }}</td>
-                        <td>{{ $truck->truck_number }}</td>
-                        <td>{{ $truck->truck_type }}</td>
-                        <td>{{ $truck->driver->name ?? 'N/A' }}</td>
-                        <td>{{ $truck->driver->mobile ?? 'N/A' }}</td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="5" class="text-center text-muted">No trucks registered for this transporter.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-</div> --}}
-
             <!-- Form Actions -->
             <div class="d-flex justify-content-between align-items-center mt-4">
                 <a href="{{ route('truck_owners.index') }}" class="btn btn-back">
@@ -942,11 +902,9 @@
     const $row = $(`#truck-row-${truckId}`);
     const $button = $(this);
 
-
     if (confirm(`Are you sure you want to remove truck "${truckNumber}" from this transporter?`)) {
         // Show loading state
         $button.prop('disabled', true).html('<i class="bi bi-arrow-repeat fa-spin"></i> Removing...');
-
 
         $.ajax({
             url: `/trucks/${truckId}/remove-transporter`,
@@ -1014,7 +972,6 @@ function showAlert(type, message) {
         $alert.alert('close');
     }, 5000);
 }
-
 
     // Reset truck modal when hidden
     $('#truckModal').on('hidden.bs.modal', function() {
@@ -1140,9 +1097,6 @@ function showAlert(type, message) {
             }
         });
     });
-
-
-
 
     // Fresh approach using fetch API for modal submissions
     document.addEventListener('DOMContentLoaded', function() {

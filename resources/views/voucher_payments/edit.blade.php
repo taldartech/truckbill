@@ -281,14 +281,6 @@
                         @enderror
                     </div>
                     <!--begin::Col-->
-                    {{-- <div class="col-md-6">
-                    <label for="transaction_id" class="form-label">Transaction ID *</label>
-                    <input type="text" name="transaction_id" id="transaction_id" class="form-control" value="{{ old('transaction_id', $voucher_payment->transaction_id) }}" required>
-                    @error('transaction_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please enter a transaction ID.</div>
-                </div> --}}
-                    <!--end::Col-->
-                    <!--begin::Col-->
                     <div class="col-md-6 mb-3">
                         <label for="remark" class="form-label">Remark</label>
                         <textarea {{ $voucher_payment->linked_voucher_id != null ? 'readonly' : '' }} name="remark" id="remark"
@@ -298,7 +290,6 @@
                         @enderror
                     </div>
                     <!--end::Col-->
-                    <!--begin::Col-->
                     <!-- Hidden payment_status for operators -->
 
                     @php
@@ -328,14 +319,6 @@
                         @enderror
                         <div class="invalid-feedback">Please select a payment status.</div>
                     </div>
-                    <!--end::Col-->
-                    {{-- <!--begin::Col-->
-                <div class="col-md-6">
-                    <label for="transaction_id" class="form-label">Transaction ID *</label>
-                    <input type="text" name="transaction_id" id="transaction_id" class="form-control" value="{{ old('transaction_id', $voucher_payment->transaction_id) }}" required>
-                    @error('transaction_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please enter a transaction ID.</div>
-                </div> --}}
                     <!--end::Col-->
                     <!--begin::Col-->
                     <div class="col-md-4 mb-3">

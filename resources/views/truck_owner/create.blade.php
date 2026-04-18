@@ -271,47 +271,6 @@
                         @error('city_id') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
                 </div>
-                {{-- <div class="row mb-3"> --}}
-                    {{-- <div class="col-md-4">
-                        <label for="country_id" class="form-label">Country *</label>
-                        <select class="form-select @error('country_id') is-invalid @enderror" id="country_id" name="country_id" required>
-                            <option value="">Select Country</option>
-                            @foreach($countries as $country)
-                                <option value="{{ $country->id }}" {{ old('country_id') == $country->id ? 'selected' : '' }}>
-                                    {{ $country->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('country_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="state_id" class="form-label">State *</label>
-                        <select class="form-select @error('state_id') is-invalid @enderror" id="state_id" name="state_id" required>
-                            <option value="">Select State</option>
-                            @if(old('country_id'))
-                                @foreach($states as $state)
-                                    <option value="{{ $state->id }}" {{ old('state_id') == $state->id ? 'selected' : '' }}>
-                                        {{ $state->name }}
-                                    </option>
-                                @endforeach
-                            @endif
-                        </select>
-                        @error('state_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="city_id" class="form-label">City *</label>
-                        <select class="form-select @error('city_id') is-invalid @enderror" id="city_id" name="city_id" required>
-                            <option value="">Select City</option>
-                            @if(old('state_id'))
-                                @foreach($cities as $city)
-                                    <option value="{{ $city->id }}" {{ old('city_id') == $city->id ? 'selected' : '' }}>
-                                        {{ $city->name }}
-                                    </option>
-                                @endforeach
-                            @endif
-                        </select>
-                        @error('city_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div> --}}
                 {{-- </div> --}}
                 <div class="row mb-3">
                     <div class="col-md-12">
@@ -914,7 +873,6 @@
             const formData = new FormData();
             formData.append('name', cityName);
             formData.append('state_id', stateId);
-
 
             formData.append('from_modal', '1');
             formData.append('_token', csrfToken);

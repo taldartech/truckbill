@@ -85,10 +85,7 @@
         $customer = $lrs->first() ? $lrs->first()->customer : null;
     @endphp
 
-
-
     @include('reports.exports.memo-copy')
-
 
 </body>
 </html>

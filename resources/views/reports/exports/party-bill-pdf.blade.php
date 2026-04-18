@@ -96,11 +96,7 @@
         $igst = $igst ?? 0;
     @endphp
 
-
-
     @include('reports.exports.party-bill')
-
-
 
     <script type="text/php">
         if (isset($pdf)) {

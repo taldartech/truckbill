@@ -213,7 +213,6 @@
             @endif
         </div>
 
-
         <!-- Search & Operations Section -->
         <div class="glass-card mb-2 animate__animated animate__fadeInDown">
             <div class="card-header py-1 d-flex justify-content-between align-items-center" style="background-color: rgba(0, 0, 0, 0.1) !important;">
@@ -534,8 +533,6 @@
     </div>
 @endsection
 
-
-
 @push('scripts')
     <script>
         const paymentTypes = @json($paymentTypes);
@@ -676,8 +673,6 @@
                 }
             });
 
-
-
             // Voucher Payment Modal
             $('#voucher-payment-btn').on('click', function() {
                 const checkedBoxes = Object.values(selectedRows);
@@ -685,8 +680,6 @@
                     alert('Please select at least one good hire (lorry hire).');
                     return;
                 }
-
-
 
                 let tableBody = '';
                 let totalAmount = 0;
@@ -815,7 +808,6 @@
                                 lr.freight_booking_id !== undefined &&
                                 lr.freight_booking_id !== ''
                             );
-
 
                             if (!allHaveFreightBooking) {
                                 // Find which LRs are missing freight bookings
@@ -1610,7 +1602,6 @@
     }
 </style>
 
-
 @push('scripts')
     <script>
         $(document).ready(function() {
@@ -1894,7 +1885,6 @@
                 updatePaymentButtonsVisibility();
             });
 
-
             // Delete confirmation
             $(document).on('click', '.delete-btn', function(e) {
                 e.preventDefault();
@@ -1941,7 +1931,6 @@
                     return false; // or just return
                 }
             }
-
 
             // Check if any LR has no voucher number
             const hasNoVoucher = checkedBoxes.some(data => data.voucher_number === '0' || !data.voucher_number);
@@ -2166,7 +2155,6 @@
                              <label style="display: block; margin-bottom: 5px; font-weight: bold;">Remarks</label>
                           <textarea id="paymentRemarks" style="width: 100%; height: 60px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Enter any remarks..."></textarea>
                           </div>
-
 
                       </div>
 
@@ -2625,8 +2613,6 @@
             // Calculate total amount
             const totalAmount = paymentAmounts.reduce((sum, amount) => sum + amount, 0);
 
-
-
             if (totalAmount <= 0) {
                 alert('Please enter valid payment amounts');
                 return;
@@ -2640,10 +2626,6 @@
 
             // Create form data
             const formData = new FormData();
-            //     if (pumpId) {
-            //     formData.append('pump_id', pumpId);
-            // }
-            // formData.append('pump_id', pumpId || null);
             formData.append('pump_id', pumpId || '');
             // Append payment type and mode IDs for backend processing
             formData.append('payment_type_id', paymentTypeValue);
@@ -2653,7 +2635,6 @@
             formData.append('payment_mode', paymentMode);
 
             formData.append('total_amount', totalAmount.toFixed(2));
-            // formData.append('payment_date', new Date().toISOString().split('T')[0]);
             formData.append('date', paymentDate);
 
             if (referenceId) formData.append('reference_number', referenceId);
@@ -2674,8 +2655,6 @@
             submitBtn.innerHTML =
                 '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
             submitBtn.disabled = true;
-
-
 
             // Submit the form via AJAX
             fetch('{{ route('freight_bookings.voucher_payment') }}', {

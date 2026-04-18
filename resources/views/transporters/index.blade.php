@@ -526,7 +526,6 @@
                     return false;
                 }
 
-
                 var form = $(this);
                 var submitBtn = form.find('button[type="submit"]');
                 var originalBtnText = submitBtn.html();

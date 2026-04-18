@@ -107,17 +107,6 @@
                     <div class="invalid-feedback">Please select a payment mode.</div>
                 </div>
                 <!--end::Col-->
-
-              
-                
-                <!--begin::Col-->
-                {{-- <div class="col-md-6">
-                    <label for="transaction_id" class="form-label">Transaction ID *</label>
-                    <input type="text" name="transaction_id" id="transaction_id" class="form-control" value="{{ old('transaction_id') }}" required>
-                    @error('transaction_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please enter a transaction ID.</div>
-                </div> --}}
-                <!--end::Col-->
                 <!--begin::Col-->
                 <div class="col-md-4">
                     <label for="amount" class="form-label">Amount *</label>

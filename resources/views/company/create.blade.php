@@ -5,16 +5,13 @@
     <div class="row justify-content-center">
         <div class="col-12 col-xl-10">
 <div class="card card-info card-outline mb-4">
-    <!--begin::Header-->
     <div class="card-header"><div class="card-title">Register Company</div></div>
-    <!--end::Header-->
     <!--begin::Form-->
     <form action="{{ route('company.store') }}" method="POST" enctype="multipart/form-data" class="needs-validation" novalidate="">
         @csrf
         @if(session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>
         @endif
-        <!--begin::Body-->
         <div class="card-body">
             <style>
                 .invoice-preview-col {
@@ -186,17 +183,13 @@
                     display: none !important;
                 }
             </style>
-            <!--begin::Row-->
             <div class="row g-3">
-                <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="name" class="form-label">Company Name *</label>
                     <input type="text" class="form-control" id="name" name="name" required value="{{ old('name') }}">
                     @error('name') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="valid-feedback">Looks good!</div>
                 </div>
-                <!--end::Col-->
-                <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="short_name" class="form-label">Short Name *</label>
                     <input type="text"
@@ -214,24 +207,18 @@
                         Example Invoice Number: <span id="invoicePreviewText"></span>
                     </div>
                 </div>
-                <!--end::Col-->
-                <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="gst_number" class="form-label">GST Number</label>
                     <input type="text" class="form-control" id="gst_number" name="gst_number"  value="{{ old('gst_number') }}">
                     @error('gst_number') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="valid-feedback">Looks good!</div>
                 </div>
-                <!--end::Col-->
-                <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="pan_number" class="form-label">PAN Number</label>
                     <input type="text" class="form-control" id="pan_number" name="pan_number" required value="{{ old('pan_number') }}">
                     @error('pan_number') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="valid-feedback">Looks good!</div>
                 </div>
-                <!--end::Col-->
-                <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="gst_scheme" class="form-label">GST Scheme</label>
                     <select class="form-select" id="gst_scheme" name="gst_scheme" required>
@@ -242,13 +229,6 @@
                     @error('gst_scheme') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="valid-feedback">Looks good!</div>
                 </div>
-                <!--end::Col-->
-                <!--begin::Col-->
-                 {{-- <div class="col-md-6">
-                    <label for="gst_type" class="form-label">GST Type *</label>
-                    <input type="text" class="form-control" id="gst_type" name="gst_type" value="Regular" disabled>
-                    @error('gst_type') <div class="text-danger">{{ $message }}</div> @enderror
-                </div> --}}
                 <div class="col-md-6">
                     <label for="gst_type" class="form-label">GST Type</label>
                     <select class="form-select" id="gst_type" name="gst_type" required>
@@ -259,16 +239,12 @@
                     @error('gst_type') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="valid-feedback">Looks good!</div>
                 </div>
-                <!--end::Col-->
-                <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="address" class="form-label">Address</label>
                     <textarea class="form-control" id="address" name="address" required>{{ old('address') }}</textarea>
                     @error('address') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="valid-feedback">Looks good!</div>
                 </div>
-                <!--end::Col-->
-                <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="country_id" class="form-label">Country</label>
                     <select class="form-select" id="country_id" name="country_id" required onchange="fetchStates(this.value)">
@@ -280,8 +256,6 @@
                     @error('country_id') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="valid-feedback">Looks good!</div>
                 </div>
-                <!--end::Col-->
-                <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="state_id" class="form-label">State</label>
                     <select class="form-select" id="state_id" name="state_id" required onchange="fetchCities(this.value)">
@@ -293,8 +267,6 @@
                     @error('state_id') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="valid-feedback">Looks good!</div>
                 </div>
-                <!--end::Col-->
-                <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="city_id" class="form-label">City</label>
                     <select class="form-select" id="city_id" name="city_id" required>
@@ -305,31 +277,24 @@
                     </select>
                     @error('city_id') <div class="text-danger">{{ $message }}</div> @enderror
                 </div>
-                <!--end::Col-->
-                <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="pin_code" class="form-label">Pin Code</label>
                     <input type="text" class="form-control" id="pin_code" name="pin_code" required value="{{ old('pin_code') }}">
                     @error('pin_code') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="valid-feedback">Looks good!</div>
                 </div>
-                <!--end::Col-->
-                <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="contact_person" class="form-label">Contact Person</label>
                     <input type="text" class="form-control" id="contact_person" name="contact_person" required value="{{ old('contact_person') }}">
                     @error('contact_person') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="valid-feedback">Looks good!</div>
                 </div>
-                <!--end::Col-->
-                <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="contact_number" class="form-label">Contact Number</label>
                     <input type="text" class="form-control" id="contact_number" name="contact_number" required   value="{{ old('contact_number') }}">
                     @error('contact_number') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="valid-feedback">Looks good!</div>
                 </div>
-                <!--end::Col-->
                 <div class="col-md-6">
                     <label for="company_type" class="form-label">Company Type</label>
                     <select class="form-select" id="company_type" name="company_type" required>
@@ -343,8 +308,6 @@
                 </div>
 
             </div>
-            <!--end::Row-->
-            <!--begin::Row-->
             <div class="row g-3">
                 @php
                     $createPdfInvoiceKey = old('invoice_template', 'classic');
@@ -489,17 +452,13 @@
                         </small>
                     </div>
                 </div>
-                <!--end::Col-->
                 <div class="col-md-6">
                     <label for="company_logo" class="form-label">Company Logo</label>
                     <input type="file" class="form-control" id="company_logo" name="company_logo">
                     @error('company_logo') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="valid-feedback">Looks good!</div>
                 </div>
-                <!--end::Col-->
             </div>
-            <!--end::Row-->
-            <!--begin::Row-->
             <div class="row g-3">
                 <div class="col-md-6">
                     <label for="gst_slab" class="form-label">GST Slab</label>
@@ -517,19 +476,13 @@
                     @enderror
                     <div class="valid-feedback">Looks good!</div>
                 </div>
-                <!--end::Col-->
             </div>
-            <!--end::Row-->
-
 
         </div>
-        <!--end::Body-->
-        <!--begin::Footer-->
         <div class="card-footer">
             <button class="btn btn-brand-primary" type="submit">Register Company</button>
             <a href="/dashboard" class="btn btn-brand-primary">Back to Dashboard</a>
         </div>
-        <!--end::Footer-->
     </form>
     <!--end::Form-->
     <!--begin::JavaScript-->

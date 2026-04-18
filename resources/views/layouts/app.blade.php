@@ -34,7 +34,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 
-
     <!-- Include Select2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
@@ -87,38 +86,6 @@
             text-align: left;
         }
 
-        /* Global AJAX Loader Styles */
-        /* #globalLoader {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .loader-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(2px);
-        }
-
-        .loader-content {
-            position: relative;
-            z-index: 10000;
-            text-align: center;
-        }
-
-        .loader-content .spinner-border {
-            border-width: 0.3rem;
-        } */
 
         html,
         body {
@@ -249,7 +216,6 @@
             font-weight: 700;
         }
 
-
         /* Credits Display Premium Design */
         .credits-container {
             display: flex;
@@ -368,19 +334,8 @@
 </head>
 
 <body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
-    <!-- Global AJAX Loader -->
-    {{-- <div id="globalLoader" style="display: none;">
-        <div class="loader-overlay"></div>
-        <div class="loader-content">
-            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <p class="mt-3 text-white">Loading...</p>
-        </div>
-    </div> --}}
     <!--begin::App Wrapper-->
     <div class="app-wrapper">
-        <!--begin::Header-->
         <nav class="app-header navbar navbar-expand bg-body">
             <!--begin::Container-->
             <div class="container-fluid">
@@ -434,10 +389,6 @@
                             </li>
                         @endif
                     @endauth
-
-
-
-
 
                     <!--begin::User Menu Dropdown-->
                     <!--begin::User Menu Dropdown-->
@@ -1156,7 +1107,6 @@
             <div class="app-content-header">
                 <!--begin::Container-->
                 <div class="container-fluid">
-                    <!--begin::Row-->
                     @yield('content')
 
                     <!-- /.row (main row) -->
@@ -1166,7 +1116,6 @@
             <!--end::App Content-->
         </main>
 
-        <!--begin::Footer-->
         <footer class="app-footer">
             <!--begin::To the end-->
             <div class="float-end d-none d-sm-inline">
@@ -1183,16 +1132,10 @@
 
             <!--end::Copyright-->
         </footer>
-        <!--end::Footer-->
 
     </div>
 
-
-
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-
 
     <script src="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.10.1/browser/overlayscrollbars.browser.es6.min.js"
         integrity="sha256-dghWARbRe2eLlIJ56wNB+b760ywulqK3DzZYEpsg2fQ=" crossorigin="anonymous"></script>
@@ -1538,134 +1481,6 @@
     @yield('scripts')
     @stack('scripts')
 
-    <!-- Global AJAX Loader Script -->
-    {{-- <script>
-        (function() {
-            let ajaxRequestCount = 0;
-            const loader = $('#globalLoader');
-
-            function showLoader() {
-                ajaxRequestCount++;
-                if (ajaxRequestCount === 1) {
-                    loader.fadeIn(200);
-                }
-            }
-
-            function hideLoader() {
-                ajaxRequestCount--;
-                if (ajaxRequestCount <= 0) {
-                    ajaxRequestCount = 0;
-                    loader.fadeOut(200);
-                }
-            }
-
-            // jQuery AJAX global handlers
-            $(document).ajaxStart(function() {
-                showLoader();
-            }).ajaxStop(function() {
-                hideLoader();
-            }).ajaxError(function() {
-                hideLoader();
-            }).ajaxComplete(function() {
-                hideLoader();
-            });
-
-            // Handle DataTables AJAX events
-            $(document).on('preInit.dt', function(e, settings) {
-                // Hook into DataTable AJAX before initialization
-                if (settings.ajax) {
-                    const originalAjax = settings.ajax;
-                    if (typeof originalAjax === 'string' || originalAjax.url) {
-                        const originalBeforeSend = settings.ajax.beforeSend;
-                        const originalComplete = settings.ajax.complete;
-
-                        if (typeof settings.ajax === 'object') {
-                            settings.ajax.beforeSend = function(xhr, settings) {
-                                showLoader();
-                                if (originalBeforeSend) {
-                                    return originalBeforeSend.call(this, xhr, settings);
-                                }
-                            };
-
-                            settings.ajax.complete = function(xhr, status) {
-                                hideLoader();
-                                if (originalComplete) {
-                                    return originalComplete.call(this, xhr, status);
-                                }
-                            };
-                        }
-                    }
-                }
-            });
-
-            // Handle DataTables processing events
-            $(document).on('processing.dt', function(e, settings, processing) {
-                if (processing) {
-                    showLoader();
-                } else {
-                    hideLoader();
-                }
-            });
-
-            // Handle DataTables AJAX events - more reliable approach
-            $(document).on('preXhr.dt', function(e, settings, data) {
-                showLoader();
-            });
-
-            $(document).on('xhr.dt', function(e, settings, json, xhr) {
-                hideLoader();
-            });
-
-            $(document).on('error.dt', function(e, settings, techNote, message) {
-                hideLoader();
-            });
-
-            // Handle fetch API calls
-            const originalFetch = window.fetch;
-            window.fetch = function(...args) {
-                showLoader();
-                return originalFetch.apply(this, args)
-                    .then(response => {
-                        hideLoader();
-                        return response;
-                    })
-                    .catch(error => {
-                        hideLoader();
-                        throw error;
-                    });
-            };
-
-            // Handle form submissions with AJAX
-            $(document).on('submit', 'form[data-ajax="true"]', function() {
-                showLoader();
-            });
-
-            // Ensure loader is hidden on page load
-            $(document).ready(function() {
-                ajaxRequestCount = 0;
-                loader.hide();
-
-                // Also handle DataTables that are already initialized
-                if ($.fn.dataTable && $.fn.DataTable) {
-                    $('.dataTable').each(function() {
-                        const table = $(this).DataTable();
-                        if (table && table.ajax) {
-                            const api = table;
-                            api.on('preXhr.dt', function() {
-                                showLoader();
-                            });
-                            api.on('xhr.dt', function() {
-                                hideLoader();
-                            });
-                            api.on('error.dt', function() {
-                                hideLoader();
-                            });
-                        }
-                    });
-                }
-            });
-        })();
-    </script> --}}
 </body>
 
 </html>

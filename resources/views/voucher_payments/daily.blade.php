@@ -176,7 +176,6 @@
                                 </th>
                             @endif
 
-
                             <th>LR No</th>
                             <th>Transporter</th>
                             <th>Truck No</th>
@@ -188,9 +187,6 @@
                             <th>Status</th>
                             <th>Created Time</th>
                             <th>Branch</th>
-                            {{-- @if (auth()->user()->canActAsAdmin())
-                        <th>Action</th>
-                        @endif --}}
                         </tr>
                     </thead>
                     <tbody>
@@ -206,7 +202,6 @@
                                         </div>
                                     </td>
                                 @endif
-
 
                                 <td>
                                     @if ($payment->freight_booking && $payment->freight_booking->lr)
@@ -316,26 +311,6 @@
                                         <span class="text-muted">-</span>
                                     @endif
                                 </td>
-                                {{-- @if (auth()->user()->canActAsAdmin())
-                                <td>
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="actionDropdown{{ $payment->id }}" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <i class="bi bi-gear"></i>
-                                        </button>
-                                        <ul class="dropdown-menu" aria-labelledby="actionDropdown{{ $payment->id }}">
-                                            @if ($payment->payment_status !== 'pending')
-                                            <li><a class="dropdown-item {{ $payment->payment_status === 'paid' ? 'disabled' : '' }}" href="#" onclick="{{ $payment->payment_status === 'paid' ? 'return false' : "updateStatus($payment->id, 'pending')" }}"><i class="bi bi-hourglass text-warning"></i> Mark as Pending</a></li>
-                                            @endif
-                                            @if ($payment->payment_status === 'pending')
-                                            <li><a class="dropdown-item" href="#" onclick="updateStatus({{ $payment->id }}, 'in-progress')"><i class="bi bi-arrow-repeat text-info"></i> Mark as In Progress</a></li>
-                                            @endif
-                                            @if ($payment->payment_status === 'in-progress')
-                                            <li><a class="dropdown-item" href="#" onclick="updateStatus({{ $payment->id }}, 'paid')"><i class="bi bi-check-circle text-success"></i> Mark as Paid</a></li>
-                                            @endif
-                                        </ul>
-                                    </div>
-                                </td>
-                                @endif --}}
                             </tr>
                         @endforeach
                         @foreach ($payments1 as $payment)

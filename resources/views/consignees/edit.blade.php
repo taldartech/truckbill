@@ -38,11 +38,9 @@
 @endif
 
 <div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
-    <!--begin::Header-->
     <div class="card-header">
         <div class="card-title h4">Edit Consignee/Consignor/Customer</div>
     </div>
-    <!--end::Header-->
     <!--begin::Form-->
     <form method="POST" action="{{ route('consignees.update', $consignee->id) }}" class="needs-validation" novalidate="">
         @csrf
@@ -154,7 +152,6 @@
             </div>
         </div>
         
-        <!--begin::Footer-->
         <div class="card-footer">
             <button class="btn btn-success" type="submit">
                 <i class="bi bi-check-circle"></i> Update Consignee
@@ -163,13 +160,11 @@
                 <i class="bi bi-arrow-left"></i> Back to List
             </a>
         </div>
-        <!--end::Footer-->
             </form>
         </div>
     </div>
 </div>
 @endsection
-
 
 @section('scripts')
 <script src="/js/dynamic-dropdowns.js"></script>

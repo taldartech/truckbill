@@ -84,7 +84,6 @@
         }
     </style>
     <div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
-        <!--begin::Header-->
         <div class="card-header">
             <div class="d-flex w-100">
                 <div class="card-title h4">Add New Good Receipt (Bilty)</div>
@@ -94,7 +93,6 @@
                 </div>
             </div>
         </div>
-        <!--end::Header-->
         <!--begin::Form-->
         <form method="POST" action="{{ route('lorry_receipts.store') }}" id="lorryReceiptForm" class="needs-validation"
             novalidate="">
@@ -503,7 +501,6 @@
         </div>
     </div>
 
-
     <!-- Load Select2 from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <!-- Load SweetAlert2 from CDN -->
@@ -658,7 +655,6 @@
                     width: '100%',
                     minimumResultsForSearch: 0
                 });
-
 
                 // Ensure Select2 search input gets autofocus on open (works for dynamic elements too)
                 $(document).off('select2:open.autofocus').on('select2:open.autofocus', function() {
@@ -982,8 +978,6 @@
                 calculateAmount();
             }
 
-
-
             // LR Number uniqueness validation
             const lrNumberInput = document.getElementById('lr_number');
             const lrNumberFeedback = document.getElementById('lr-number-feedback');
@@ -1194,7 +1188,6 @@ grNumberInput.addEventListener('blur', function() {
         checkGRNumberUniqueness(grNumber);
     }
 });
-
 
             // No. of Units validation
             const noOfUnitsInput = document.getElementById('no_of_units');

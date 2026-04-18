@@ -31,11 +31,9 @@
 }
 </style>
 <div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
-    <!--begin::Header-->
     <div class="card-header">
         <div class="card-title h4">Edit Transporter</div>
     </div>
-    <!--end::Header-->
     <!--begin::Form-->
     <form action="{{ route('transporters.update', $transporter->id) }}" method="POST" class="needs-validation" novalidate="">
         @csrf
@@ -506,7 +504,6 @@ $(document).ready(function() {
     }
 });
 
-
 </script>
 <script>
     // Example starter JavaScript for disabling form submissions if there are invalid fields
@@ -532,7 +529,6 @@ $(document).ready(function() {
             );
         });
     })();
-
 
     // Modal form submissions with AJAX
     $(document).ready(function() {
@@ -698,7 +694,6 @@ $(document).ready(function() {
             const formData = new FormData();
             formData.append('name', cityName);
             formData.append('state_id', stateId);
-
 
             formData.append('from_modal', '1');
             formData.append('_token', csrfToken);
@@ -1146,7 +1141,6 @@ if (countrySelect && stateSelect && citySelect) {
     }
 
 </script>
-
 
 <script src="/js/dynamic-dropdowns.js"></script>
 

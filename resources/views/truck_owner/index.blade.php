@@ -829,7 +829,6 @@
                 $(this).find('.form-control, .form-select').removeClass('is-invalid is-valid');
                 $(this).find('.invalid-feedback').hide();
 
-
                 $.ajax({
                     url: $(this).attr('action'),
                     type: 'POST',

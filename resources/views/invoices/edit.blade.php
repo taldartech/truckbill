@@ -41,12 +41,6 @@
                 </div>
             </div>
             <div class="row">
-                {{-- <div class="col-md-4 mb-3">
-                    <label for="manual_invoice_number" class="form-label">Manual Invoice #</label>
-                    <input type="text" name="manual_invoice_number" class="form-control" id="manual_invoice_number"
-                        @if ($invoice->payment_status != 'pending') disabled @endif
-                        value="{{ old('manual_invoice_number', $invoice->manual_invoice_number) }}">
-                </div> --}}
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Manual Invoice #</label>
                     <input type="text" placeholder="Invoice Number" id="manual_invoice_number" name="manual_invoice_number"
@@ -91,13 +85,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function checkManualInvoiceUniqueness(manualNumber, invoiceId) {
-        // if (!manualNumber || manualNumber.length < 2) {
-        //     manualInvoiceFeedback.innerHTML = '';
-        //     manualInvoiceInput.classList.remove('is-valid', 'is-invalid');
-        //     manualInvoiceInput.setCustomValidity('');
-        //     return;
-        // }
-
         manualInvoiceFeedback.innerHTML = '<small class="text-info">🔍 Checking availability...</small>';
         manualInvoiceInput.classList.remove('is-valid', 'is-invalid');
 
@@ -157,6 +144,5 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endsection
-
 
 </script>

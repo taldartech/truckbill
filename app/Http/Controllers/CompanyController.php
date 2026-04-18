@@ -74,7 +74,7 @@ class CompanyController extends Controller
     private function getCompaniesData(Request $request)
     {
 
-        //if user is master admin than show all companies
+        // Master admin can access all companies; others see only owned records.
         if (auth()->user()->userRole->name === 'master_admin') {
             $query = \App\Models\Company::query();
         } else {

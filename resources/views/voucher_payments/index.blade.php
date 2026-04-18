@@ -135,7 +135,6 @@
                         <th>Source</th>
                         <th>Destination</th>
 
-
                         @if(auth()->check() && auth()->user()->canActAsAdmin())
                         <th>Actions</th>
                         @endif
@@ -201,7 +200,6 @@
                                     <span class="text-muted">-</span>
                                 @endif
                             </td>
-
 
                             @if(auth()->check() && auth()->user()->canActAsAdmin())
                             <td>

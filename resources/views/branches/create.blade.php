@@ -5,22 +5,17 @@
     <div class="row justify-content-center">
         <div class="col-12 col-lg-10 col-xl-8">
 <div class="card card-info card-outline mb-4">
-    <!--begin::Header-->
     <div class="card-header"><div class="card-title">Register New Branch</div></div>
-    <!--end::Header-->
     <!--begin::Form-->
     <form action="{{ route('branches.store') }}" method="POST" class="needs-validation" novalidate="">
         @csrf
         @if(session('success'))
             <div class="alert alert-success">{{ session('success') }}</div>
         @endif
-        <!--begin::Body-->
         <div class="card-body">
-            <!--begin::Row-->
             <div class="row g-3">
               
                 
-                <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="company_id" class="form-label">Company *</label>
                     <select class="form-select" id="company_id" name="company_id" required>
@@ -34,26 +29,20 @@
                     @error('company_id') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="valid-feedback">Looks good!</div>
                 </div>
-                <!--end::Col-->
-                  <!--begin::Col-->
                   <div class="col-md-6">
                     <label for="branch_name" class="form-label">Branch Name *</label>
                     <input type="text" class="form-control" id="branch_name" name="branch_name" required value="{{ old('branch_name') }}">
                     @error('branch_name') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="valid-feedback">Looks good!</div>
                 </div>
-                <!--end::Col-->
 
-                <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="branch_contact_number" class="form-label">Contact Number</label>
                     <input type="text" class="form-control" id="branch_contact_number" name="branch_contact_number" value="{{ old('branch_contact_number') }}">
                     @error('branch_contact_number') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="valid-feedback">Looks good!</div>
                 </div>
-                <!--end::Col-->
 
-                <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="head_office" class="form-label">Head Office</label>
                     <select class="form-select" id="head_office" name="head_office">
@@ -63,26 +52,19 @@
                     @error('head_office') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="valid-feedback">Looks good!</div>
                 </div>
-                <!--end::Col-->
 
-                <!--begin::Col-->
                 <div class="col-12">
                     <label for="branch_address" class="form-label">Address</label>
                     <textarea class="form-control" id="branch_address" name="branch_address" rows="3">{{ old('branch_address') }}</textarea>
                     @error('branch_address') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="valid-feedback">Looks good!</div>
                 </div>
-                <!--end::Col-->
             </div>
-            <!--end::Row-->
         </div>
-        <!--end::Body-->
-        <!--begin::Footer-->
         <div class="card-footer">
             <button type="submit" class="btn btn-brand-primary">Save Branch</button>
             <a href="{{ route('branches.index') }}" class="btn btn-brand-primary">Back to Branches</a>
         </div>
-        <!--end::Footer-->
     </form>
     <!--end::Form-->
     <!--begin::JavaScript-->

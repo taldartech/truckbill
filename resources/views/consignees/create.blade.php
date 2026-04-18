@@ -38,11 +38,9 @@
 @endif
 
 <div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
-    <!--begin::Header-->
     <div class="card-header">
         <div class="card-title h4">Add New Consignee/Consignor/Customer</div>
     </div>
-    <!--end::Header-->
     <!--begin::Form-->
     <form method="POST" action="{{ route('consignees.store') }}" class="needs-validation" novalidate="">
         @csrf
@@ -159,7 +157,6 @@
                 <i class="bi bi-arrow-left"></i> Back to List
             </a>
         </div>
-        <!--end::Footer-->
     </form>
     <!--end::Form-->
 </div>
@@ -494,51 +491,6 @@
             panValid = true; // Default to valid on error to not block submission
         });
     }
-
-
-
-
-    // countrySelect.addEventListener('change', function() {
-    //     const countryId = this.value;
-    //     if (countryId) {
-    //         fetch(`/api/states/${countryId}`)
-    //             .then(response => response.json())
-    //             .then(states => {
-    //                 stateSelect.innerHTML = '<option value="">Select State</option>';
-    //                 states.forEach(state => {
-    //                     const option = document.createElement('option');
-    //                     option.value = state.id;
-    //                     option.textContent = state.name;
-    //                     stateSelect.appendChild(option);
-    //                 });
-    //                 stateSelect.required = true;
-    //             });
-    //     } else {
-    //         stateSelect.innerHTML = '<option value="">Select State</option>';
-    //         stateSelect.required = false;
-    //     }
-    // });
-
-    // stateSelect.addEventListener('change', function() {
-    //     const stateId = this.value;
-    //     if (stateId) {
-    //         fetch(`/api/cities/${stateId}`)
-    //             .then(response => response.json())
-    //             .then(cities => {
-    //                 citySelect.innerHTML = '<option value="">Select City</option>';
-    //                 cities.forEach(city => {
-    //                     const option = document.createElement('option');
-    //                     option.value = city.id;
-    //                     option.textContent = city.name;
-    //                     citySelect.appendChild(option);
-    //                 });
-    //                 citySelect.required = true;
-    //             });
-    //     } else {
-    //         citySelect.innerHTML = '<option value="">Select City</option>';
-    //         citySelect.required = false;
-    //     }
-    // });
 
     // Modal form submissions with AJAX
     $(document).ready(function() {

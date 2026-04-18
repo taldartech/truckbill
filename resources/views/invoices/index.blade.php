@@ -550,17 +550,7 @@
                 }
             });
 
-            // function toggleField(checkbox) {
-            //     const fieldId = 'field_' + checkbox.value;
-            //     const field = document.getElementById(fieldId);
-            //     if (checkbox.checked) {
-            //         field.classList.remove('d-none');
-            //     } else {
-            //         field.classList.add('d-none');
-            //         const input = field.querySelector('input, select');
-            //         if (input) input.value = '';
-            //     }
-            // }
+            // Toggle filter inputs when corresponding checkbox is enabled.
             function toggleField(checkbox) {
                 if (checkbox.value === 'generated_date') {
                     // Toggle both from and to date fields
@@ -587,25 +577,7 @@
                 }
             }
 
-
-            // Initialize filter fields based on URL parameters
-            // document.addEventListener('DOMContentLoaded', function() {
-            //     // Get all filter checkboxes
-            //     const checkboxes = document.querySelectorAll('.form-check-input');
-
-            //     // Check each checkbox based on URL parameters
-            //     checkboxes.forEach(checkbox => {
-            //         const value = checkbox.value;
-            //         const fieldId = 'field_' + value;
-            //         const field = document.getElementById(fieldId);
-            //         const urlValue = new URLSearchParams(window.location.search).get(value);
-
-            //         if (urlValue) {
-            //             checkbox.checked = true;
-            //             field.classList.remove('d-none');
-            //         }
-            //     });
-            // });
+            // Restore selected filter fields from current query parameters.
             document.addEventListener('DOMContentLoaded', function() {
                 const checkboxes = document.querySelectorAll('.form-check-input');
                 checkboxes.forEach(checkbox => {
@@ -634,7 +606,6 @@
                 var totalAmount = parseFloat($(this).data('total-amount')) || 0;
                 var paidAmount = parseFloat($(this).data('paid-amount')) || 0;
                 var remainingAmount = parseFloat($(this).data('remaining-amount')) || 0;
-
 
                 // Validate data
                 if (!invoiceId) {

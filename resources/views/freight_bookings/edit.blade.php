@@ -169,7 +169,6 @@
 
     <div class="card {{ $freightBooking->is_cancelled ? 'border-danger' : 'card-info' }} card-outline mb-4"
         style="max-width: 1000px; margin: 0 auto; {{ $freightBooking->is_cancelled ? 'opacity: 0.8;' : '' }}">
-        <!--begin::Header-->
         <div class="card-header {{ $freightBooking->is_cancelled ? 'bg-danger-subtle' : '' }}">
             <div class="card-title h4 d-flex justify-content-between align-items-center w-100">
                 <div>
@@ -189,7 +188,6 @@
                 @endif
             </div>
         </div>
-        <!--end::Header-->
         <!--begin::Form-->
         <form
             action="{{ route('freight_bookings.update', $freightBooking->id) . (request()->query() ? '?' . http_build_query(request()->query()) : '') }}"
@@ -488,10 +486,6 @@
                         value="{{ old('good_type', $freightBooking->good_type) }}">
                     <input type="hidden" name="lr_id" value="{{ $freightBooking->lr_id }}">
 
-
-
-
-
                     <div class="row mb-3">
                         <div class="col-md-12">
                             <label for="remark" class="form-label">Remark</label>
@@ -505,7 +499,6 @@
 
                 </div>
 
-                <!--end::Footer-->
                 <div class="card-footer">
                     <div>
                         @if ($freightBooking->is_cancelled)
@@ -772,7 +765,6 @@
             });
         });
 
-
         // Function to save memo ID for delivery
         window.saveMemoId = function() {
             const memoId = document.getElementById('deliveryMemoId').value.trim();
@@ -836,7 +828,6 @@
                     spinner.style.display = 'none';
                 });
         };
-
 
         document.addEventListener('DOMContentLoaded', function() {
             // Handle the confirmation modal for form submission

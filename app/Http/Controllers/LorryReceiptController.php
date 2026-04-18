@@ -564,7 +564,7 @@ class LorryReceiptController extends Controller
                         'linked_lr_id' => $nextLinkedId,
                     ];
 
-                    // if gr number is null than trim lr number from left side till 0 when 0 finishes stop trim method and take that value
+                    // Fallback: derive GR number from LR number when not supplied.
                     if ($data['gr_number'] == null) {
                         // Remove "LR" prefix, then trim leading zeros
                         $data['gr_number'] = ltrim(str_ireplace('LR', '', $data['lr_number']), '0');
@@ -639,7 +639,7 @@ class LorryReceiptController extends Controller
         ]);
         // dd($validated);
 
-        // Check if consignor and consignee are the same
+        // Prevent selecting the same party for consignor and consignee.
         if ($validated['consignor_id'] === $validated['consignee_id']) {
             return redirect()->back()->withErrors([
                 'consignor_id' => 'Consignor and Consignee cannot be the same.',
@@ -1066,8 +1066,6 @@ class LorryReceiptController extends Controller
 
         ]);
         $this->validateLorryReceiptUniquenessUpdate($validated, $lorry_receipt->id, $companyId);
-        // if mamo_id is null and freight booking id exist for that lr than delivery status to be in-progress
-
         // Check if consignor and consignee are the same
         if ($validated['consignor_id'] === $validated['consignee_id']) {
             return redirect()->back()->withErrors([

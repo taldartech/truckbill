@@ -171,30 +171,6 @@ class ReportController extends Controller
         $export = Excel::download(new TDSExport($startDate, $endDate), 'tds_report.xlsx');
         return $export;
     }
-    // public function dispatch(Request $request)
-    // {
-    //   $endDate = $request->input('end_date') ?? date('Y-m-d');
-    //   $startDate = max($request->input('start_date') ?? date('Y-m-d', strtotime('-3 months')), date('Y-m-d', strtotime('-3 months', strtotime($endDate))));
-
-    //   $user = Auth::user()->company_id;
-    //   if ($request->input('end_date') || $request->input('start_date')) {
-
-
-    //     $query = FreightBooking::with('voucherPayments')->whereHas('lr', function($query) use ($startDate, $endDate) {
-    //       $query->whereBetween('gr_date', [$startDate, $endDate]);
-    //     });
-    //     if ($user) {
-    //       $query->where('company_id', $user);
-    //     }
-    //     // $query->where('tds_amount', '>', 0);
-    //     $lrs = $query->get();
-    //     $generated = true;
-    //   } else {
-    //     $lrs = [];
-    //     $generated = false;
-    //   }
-    //   return view('reports.dispatch', compact('lrs', 'startDate', 'endDate', 'generated'));
-    // }
     public function dispatch(Request $request)
     {
         [$startDate, $endDate, $generated] = $this->normalizeDateRange($request);
@@ -606,24 +582,6 @@ class ReportController extends Controller
         }
         return view('reports.memo-copy', compact('customers', 'customerId', 'memo_id', 'memo_ids', 'lrs'));
     }
-
-
-
-    // public function memo_copy_export(Request $request)
-    // {
-    //   if (!$request->input('memo_id')) {
-    //     return redirect()->back()->with('error', 'Please select a Memo to export.');
-    //   }
-    //   $memo_id = $request->input('memo_id');
-
-    //   try {
-    //     $export = Excel::download(new MemoCopyExport($memo_id), 'memo_copy.xlsx');
-    //   } catch (\Exception $e) {
-    //     dd($e);
-    //   }
-
-    //   return $export;
-    // }
 
     public function memo_copy_export(Request $request)
     {
@@ -1184,15 +1142,6 @@ class ReportController extends Controller
         ));
     }
 
-    // public function party_bill_export(Request $request)
-    // {
-    //   if (!$request->input('invoice_number')) {
-    //     return redirect()->back()->with('error', 'Please select an Invoice to export.');
-    //   }
-    //   $id = $request->input('invoice_number');
-    //   $export = Excel::download(new PartyBillExport($id), 'party_bill.xlsx');
-    //   return $export;
-    // }
     public function party_bill_export(Request $request)
     {
         if (!$request->input('invoice_number')) {

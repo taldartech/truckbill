@@ -108,7 +108,6 @@
         }
     </style>
     <div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
-        <!--begin::Header-->
         <div class="card-header">
             <div class="d-flex w-100">
                 <div class="card-title h4">📝 Edit Good Receipt (Bilty)</div>
@@ -118,7 +117,6 @@
                 </div>
             </div>
         </div>
-        <!--end::Header-->
         <!--begin::Form-->
         <form method="POST" action="{{ route('lorry_receipts.update', $lorry_receipt->id) }}" id="lorryReceiptForm"
             class="needs-validation" novalidate="">
@@ -552,9 +550,6 @@
                         <div class="col-md-4">
                             <button class="btn btn-brand-primary w-100" type="submit">💾 Update Good Receipt (Bilty)</button>
                         </div>
-                        {{-- <div class="col-md-4">
-                        <a href="{{ route('lorry_receipts.show', $lorry_receipt->id) }}" class="btn btn-brand-primary w-100">👁️ View Details</a>
-                    </div> --}}
                         <div class="col-md-4">
                             <a href="{{ route('lorry_receipts.index') }}" class="btn btn-back w-100">📄 Back to List</a>
                         </div>
@@ -1770,8 +1765,6 @@
         if (weightInput.value && frRateInput.value) {
             calculateAmount();
         }
-
-
 
         // LR Number uniqueness validation
         const lrNumberInput = document.getElementById('lr_number');

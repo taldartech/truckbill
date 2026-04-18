@@ -149,19 +149,6 @@
                     </div>
                     <input type="hidden" name="payment_status" value="pending">
 
-                    {{-- <div class="col-md-4">
-                        <label class="form-label">Payment Status *</label>
-                        <select name="payment_status" class="form-select" required>
-                            <option value="">Select</option>
-                            <option value="pending" {{ old('payment_status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                            <option value="partial" {{ old('payment_status') == 'partial' ? 'selected' : '' }}>Partial</option>
-                            <option value="paid" {{ old('payment_status') == 'paid' ? 'selected' : '' }}>Paid</option>
-                        </select>
-                        @error('payment_status')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                        <div class="invalid-feedback">Please select a payment status.</div>
-                    </div> --}}
                     <div class="col-md-8" id="memoDiv" style="display: none;">
                         <label class="form-label">Memos</label>
                         <select name="memo_ids[]" class="form-select" id="memoSelect" multiple>
@@ -369,7 +356,6 @@
             const showMemoOptionsBtn = document.getElementById('showMemoOptions');
             const memoOptionsContainer = document.getElementById('memoOptionsContainer');
             const memoCheckboxes = document.getElementById('memoCheckboxes');
-            // const nextBtn = document.getElementById('showInvoiceFormBtn'); // Next button
 
             // Load memos when customer is selected
             preCustomerSelect.addEventListener('change', function() {

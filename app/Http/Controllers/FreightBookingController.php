@@ -287,9 +287,6 @@ class FreightBookingController extends Controller
                 ->addColumn('tr_rate_formatted', function ($row) {
                     return $row->tr_fr_rate ? '₹'.number_format($row->tr_fr_rate, 2) : '₹0.00';
                 })
-                // ->addColumn('tr_amount_formatted', function ($row) {
-                //     return $row->tr_amount ? '₹' . number_format($row->tr_amount, 2) : '₹0.00';
-                // })
                 ->addColumn('advance_formatted', function ($row) {
                     return $row->advance_amount ? '₹'.number_format($row->advance_amount, 2) : '₹0.00';
                 })
@@ -303,20 +300,6 @@ class FreightBookingController extends Controller
                 ->addColumn('truck_number', function ($row) {
                     return $row->lr && $row->lr->truck ? $row->lr->truck->truck_number : '-';
                 })
-                // ->addColumn('is_delivered_badge', function ($row) {
-                //     if ($row->is_delivered == '1') {
-                //         return '<span class="badge bg-success">Yes</span>';
-                //     } else {
-                //         return '<span class="badge bg-warning">No</span>';
-                //     }
-                // })
-                // ->addColumn('is_cancelled_badge', function ($row) {
-                //     if ($row->is_cancelled == '1') {
-                //         return '<span class="badge bg-danger">Yes</span>';
-                //     } else {
-                //         return '<span class="badge bg-secondary">No</span>';
-                //     }
-                // })
                 ->addColumn('actions', function ($row) {
                     return $this->getActionButtons($row);
                 })

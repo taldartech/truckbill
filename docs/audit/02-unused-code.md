@@ -1,6 +1,7 @@
 # Unused Code Audit
 
-Date: 2026-04-15
+Date: 2026-04-15  
+Last updated: 2026-04-18 (sections E–F and follow-up cleanup)
 
 ## A) Confirmed unused company payload fetches
 
@@ -51,18 +52,24 @@ Removed debug/informational logs (`console.log(...)`, `Log::info(...)`, `Log::wa
 - `resources/views/invoices/create.blade.php`
 - `public/js/dynamic-dropdowns.js`
 
-For legacy LR scripts that still contain historical `console.log(...)` calls, runtime output is explicitly suppressed so only error logs emit in browser consoles.
+LR and other heavy views were cleaned so debug calls are removed rather than suppressed at runtime.
 
 ## F) Large commented-out legacy blocks
 
-Examples:
+Status: Implemented.
 
-- `app/Http/Controllers/ReportController.php`
-- `app/Http/Controllers/VoucherPaymentController.php`
-- `app/Http/Controllers/TruckController.php`
-- `resources/views/transporters/create.blade.php`
+Removed commented-out dead logic from controllers and views (large legacy `//` blocks, duplicate old methods, stale jQuery/AJAX blocks, Blade-commented UI chunks). Restored short **explanatory** comments where they clarify behavior (e.g. date fallback, GR derivation, company scope, invoice filter UX); those are not dead code.
 
-Recommended: remove commented-out dead logic and rely on git history.
+Follow-up cleanup in the same effort:
+
+- Removed orphan AdminLTE-style structural markers (`<!--begin::Row-->`, `<!--end::Col-->`, etc.) across `resources/views` where they no longer wrapped real markup.
+- Removed commented global AJAX loader CSS from `resources/views/layouts/app.blade.php` after loader markup/script removal.
+- Normalized excessive blank lines in Blade views (format-only).
+
+Representative files touched earlier in this track:
+
+- `app/Http/Controllers/ReportController.php`, `VoucherPaymentController.php`, `TruckController.php`, `FreightBookingController.php`, `InvoiceController.php`, `Api/DropdownController.php`
+- `resources/views/transporters/create.blade.php`, `freight_bookings/create.blade.php`, `voucher_payments/edit.blade.php`, `invoices/index.blade.php`, `trucks/create.blade.php`, `layouts/app.blade.php`
 
 ## Suggested Git Commits (Per Point)
 
@@ -88,4 +95,4 @@ Recommended: remove commented-out dead logic and rely on git history.
 
 - **F) Large commented-out legacy blocks**
   - **Commit message:** `cleanup: remove commented legacy code blocks`
-  - **Description:** Delete dead commented sections in controllers/views and rely on git history for recovery.
+  - **Description:** Remove dead commented sections in controllers and Blade/JS; strip orphan structural markers and unused loader CSS in layouts; keep brief explanatory comments only; normalize view whitespace.

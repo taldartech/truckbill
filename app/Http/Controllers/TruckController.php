@@ -537,36 +537,6 @@ class TruckController extends Controller
             return redirect()->back()->withErrors(['general' => $genericError])->withInput();
         }
     }
-    //     public function removeTransporter(\App\Models\Truck $truck)
-    // {
-
-    //     $truck->update(['transporter_id' => null]);
-
-    //     return response()->json([
-    //         'message' => 'Truck has been removed from the transporter successfully'
-    //     ]);
-    // }
-    // public function removeTransporter(\App\Models\Truck $truck)
-    // {
-    //     // Check if this truck has any delivered Lorry Receipts
-    //     $lorryReceipt = \App\Models\LorryReceipt::where('truck_id', $truck->id)
-    //         ->where('delivery_status', 'delivered')
-    //         ->first();
-
-    //     if ($lorryReceipt) {
-    //         // If delivered Lorry Receipt exists, allow transporter removal
-    //         $truck->update(['transporter_id' => null]);
-
-    //         return response()->json([
-    //             'success' => 'Truck has been removed from the transporter successfully.'
-    //         ]);
-    //     } else {
-    //         // If not delivered (in use), show error
-    //         return response()->json([
-    //             'error' => 'Truck cannot be removed from the transporter (it is in use)!!'
-    //         ]);
-    //     }
-    // }
     public function removeTransporter(\App\Models\Truck $truck)
     {
         if (! $this->isTruckAccessibleToCurrentCompany($truck)) {
