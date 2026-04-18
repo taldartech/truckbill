@@ -1173,13 +1173,12 @@
                 }
             }
 
-            // Initialize all dropdowns
-            $('.dropdown-toggle').dropdown();
-
-            // Add click handler for dropdowns
-            $('.dropdown-toggle').on('click', function(e) {
-                e.preventDefault();
-                $(this).dropdown('toggle');
+            // Bootstrap 5 no longer exposes jQuery dropdown plugins by default.
+            // Initialize dropdowns via native API and avoid broad click overrides
+            // that can interfere with sidebar/treeview links.
+            const dropdownToggles = document.querySelectorAll('.dropdown-toggle[data-bs-toggle="dropdown"]');
+            dropdownToggles.forEach(function(toggleEl) {
+                bootstrap.Dropdown.getOrCreateInstance(toggleEl);
             });
 
             // Initialize tooltips and popovers
