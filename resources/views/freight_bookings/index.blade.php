@@ -2088,7 +2088,7 @@
                                 <input type="number" step="0.01" min="0" max="${balance}"
                                       style="width: 80px; text-align: right; border: 1px solid #ccc; padding: 2px;"
                                       class="allocated-input" data-lr="${lrNumber}"
-                                      onchange="updateTotalPayment()" value="${balance.toFixed(2)}">
+                                      onchange="updateTotalPayment()">
                             </td>
                         </tr>
                     `;
@@ -2182,7 +2182,7 @@
                                 <input type="number" step="0.01" min="0" max="${balance}"
                                       style="width: 80px; text-align: right; border: 1px solid #ccc; padding: 2px;"
                                       class="allocated-input" data-lr="${lrNumber}"
-                                      onchange="updateTotalPayment()" value="${balance.toFixed(2)}">
+                                      onchange="updateTotalPayment()">
                             </td>
                         </tr>
                     `;

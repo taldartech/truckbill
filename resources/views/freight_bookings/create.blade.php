@@ -522,7 +522,7 @@
     </script>
 
     <script>
-        const IS_OWNER = {{ $preFilled['is_owner'] ?? 0 }};
+        const IS_OWNER = {{ (int) ($preFilled['is_owner'] ?? 0) }};
 
         document.addEventListener('DOMContentLoaded', function() {
             // Get all required elements with null checks
