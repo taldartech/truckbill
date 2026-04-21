@@ -101,11 +101,9 @@
                     </thead>
                     <tbody>
                         @php
-                            $grandTotal = 0;
                             $count = 1;
                         @endphp
                         @foreach ($allPayments as $payment)
-                            @php $grandTotal += $payment['amount']; @endphp
                             <tr>
                                 <td>{{ $count++ }}</td>
                                 <td>{{ \Carbon\Carbon::parse($payment['date'])->format('d-m-Y') }}</td>
@@ -134,11 +132,14 @@
                     <tfoot>
                         <tr>
                             <th colspan="7" class="text-end">Grand Total:</th>
-                            <th class="text-end">₹{{ number_format($grandTotal, 2) }}</th>
+                            <th class="text-end">₹{{ number_format($grandTotalAmount ?? 0, 2) }}</th>
                             <th colspan="3"></th>
                         </tr>
                     </tfoot>
                 </table>
+            </div>
+            <div class="mt-3 d-flex justify-content-end">
+                {{ $allPayments->links() }}
             </div>
         </div>
     @endif

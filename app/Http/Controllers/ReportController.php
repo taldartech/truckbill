@@ -36,11 +36,15 @@ use App\Models\Transporter;
 use App\Models\VoucherLinked;
 use App\Exports\PendingMemoExport;
 use App\Exports\PendingInvoiceExport;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 
 use Carbon\Carbon;
 
 class ReportController extends Controller
 {
+    private const REPORTS_PER_PAGE = 50;
+
     public function __construct()
     {
         // Company context is enforced by `company.context` route middleware.
@@ -94,6 +98,27 @@ class ReportController extends Controller
         return [$start->toDateString(), $end->toDateString(), true];
     }
 
+    private function paginateCollection($items, Request $request, int $perPage = self::REPORTS_PER_PAGE, string $pageName = 'page'): LengthAwarePaginator
+    {
+        $collection = collect($items)->values();
+        $currentPage = (int) $request->input($pageName, Paginator::resolveCurrentPage($pageName));
+        $currentPage = $currentPage > 0 ? $currentPage : 1;
+        $offset = ($currentPage - 1) * $perPage;
+        $sliced = $collection->slice($offset, $perPage)->values();
+
+        return new LengthAwarePaginator(
+            $sliced,
+            $collection->count(),
+            $perPage,
+            $currentPage,
+            [
+                'path' => $request->url(),
+                'pageName' => $pageName,
+                'query' => $request->query(),
+            ]
+        );
+    }
+
     public function consignor_consignee(Request $request)
     {
         $consignees = Consignee::where('company_id', Auth::user()->company_id)->get();
@@ -117,9 +142,9 @@ class ReportController extends Controller
                 $query->where('consignor_id', $consignorId);
             }
             $query->orderBy('gr_date', 'asc');
-            $lrs = $query->get();
+            $lrs = $query->paginate(self::REPORTS_PER_PAGE)->appends($request->query());
         } else {
-            $lrs = [];
+            $lrs = collect();
         }
 
         return view('reports.consignor-consignee', compact('lrs', 'consignees', 'startDate', 'endDate', 'consignorId', 'consigneeId'));
@@ -155,10 +180,10 @@ class ReportController extends Controller
                     ->whereColumn('lorry_receipts.id', 'freight_bookings.lr_id')
                     ->limit(1);
             }, 'asc');
-            $lrs = $query->get();
+            $lrs = $query->paginate(self::REPORTS_PER_PAGE)->appends($request->query());
             $generated = true;
         } else {
-            $lrs = [];
+            $lrs = collect();
         }
         return view('reports.tds', compact('lrs', 'startDate', 'endDate', 'generated'));
     }
@@ -193,10 +218,10 @@ class ReportController extends Controller
                 $query->where('company_id', $user);
             }
             $query->orderBy('gr_date', 'asc');
-            $lrs = $query->get();
+            $lrs = $query->paginate(self::REPORTS_PER_PAGE)->appends($request->query());
 
         } else {
-            $lrs = [];
+            $lrs = collect();
         }
 
         return view('reports.dispatch', compact('lrs', 'startDate', 'endDate', 'generated'));
@@ -229,9 +254,9 @@ class ReportController extends Controller
                 $query->where('customer_id', $customerId);
             }
 
-            $lrs = $query->get();
+            $lrs = $query->paginate(self::REPORTS_PER_PAGE)->appends($request->query());
         } else {
-            $lrs = [];
+            $lrs = collect();
         }
         return view('reports.party-ledger', compact('lrs', 'consignees', 'startDate', 'endDate', 'customerId'));
     }
@@ -304,7 +329,7 @@ class ReportController extends Controller
         [$startDate, $endDate, $generated] = $this->normalizeDateRange($request);
 
         $user = Auth::user()->company_id;
-        $invoices = [];
+        $invoices = collect();
         if ($generated) {
             $query = Invoice::with(['consignee', 'consignee.state', 'company'])
                 ->whereBetween('generated_date', [$startDate, $endDate]);
@@ -313,7 +338,7 @@ class ReportController extends Controller
                 $query->where('company_id', $user);
             }
             $query->orderBy('generated_date', 'asc');
-            $invoices = $query->get();
+            $invoices = $query->paginate(self::REPORTS_PER_PAGE)->appends($request->query());
         }
 
         return view('reports.invoice', compact('invoices', 'startDate', 'endDate', 'generated'));
@@ -361,10 +386,10 @@ class ReportController extends Controller
                 $query->where('company_id', $user);
             }
             $query->orderBy('gr_date', 'asc');
-            $lrs = $query->get();
+            $lrs = $query->paginate(self::REPORTS_PER_PAGE)->appends($request->query());
 
         } else {
-            $lrs = [];
+            $lrs = collect();
         }
 
         return view('reports.shortage-damage', compact('lrs', 'startDate', 'endDate', 'generated'));
@@ -393,9 +418,9 @@ class ReportController extends Controller
                 $query->where('company_id', $user);
             }
             $query->orderBy('eway_bill_expiry', 'asc');
-            $frs = $query->get();
+            $frs = $query->paginate(self::REPORTS_PER_PAGE)->appends($request->query());
         } else {
-            $frs = [];
+            $frs = collect();
         }
 
         return view('reports.eway-bill', compact('frs', 'startDate', 'endDate', 'generated'));
@@ -420,6 +445,7 @@ class ReportController extends Controller
 
         $pumpData = collect(); // default empty collection
 
+        $grandTotalAmount = 0;
         if ($pumpId && $hasRange) {
             // --- Step 1: Fetch records from voucher_payments where linked_voucher_id is null ---
             $voucherPaymentsQuery = \App\Models\VoucherPayment::with(['freight_booking.lr'])
@@ -488,10 +514,13 @@ class ReportController extends Controller
                     return $item;
                 })
                 ->values();
+            $grandTotalAmount = (float) $pumpData->sum('amount');
         }
 
+        $pumpData = $this->paginateCollection($pumpData, $request);
+
         // --- Step 3: Return view ---
-        return view('reports.pump', compact('pumpData', 'startDate', 'endDate', 'pumpId', 'pumps', 'paymentStatus'));
+        return view('reports.pump', compact('pumpData', 'startDate', 'endDate', 'pumpId', 'pumps', 'paymentStatus', 'grandTotalAmount'));
     }
 
     public function pump_export(Request $request)
@@ -602,14 +631,14 @@ class ReportController extends Controller
 
                 // Generate PDF
                 $html = view('reports.exports.memo-copy-pdf', compact('lrs', 'memo_id'))->render();
-                $pdf = PDF::loadHTML($html)->setPaper('a4', 'portrait');
+                $pdf = Pdf::loadHTML($html)->setPaper('a4', 'portrait');
                 return $pdf->stream("memo_copy_{$memo_id}.pdf");
             } else {
                 // Existing Excel export
                 return Excel::download(new MemoCopyExport($memo_id), 'memo_copy.xlsx');
             }
         } catch (\Exception $e) {
-            \Log::error('Error exporting memo copy: ' . $e->getMessage());
+            Log::error('Error exporting memo copy: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Error generating export: ' . $e->getMessage());
         }
     }
@@ -654,7 +683,9 @@ class ReportController extends Controller
                         $lrsQuery->whereIn('delivery_status', ['In-Progress', 'Delivered']);
                     }
 
-                    $lrs = $lrsQuery->orderBy('gr_date', 'desc')->get();
+                    $lrs = $lrsQuery->orderBy('gr_date', 'desc')
+                        ->paginate(self::REPORTS_PER_PAGE)
+                        ->appends($request->query());
                 }
             } else {
                 // Show pending memos for **all customers**
@@ -681,7 +712,9 @@ class ReportController extends Controller
                         $lrsQuery->whereIn('delivery_status', ['In-Progress', 'Delivered']);
                     }
 
-                    $lrs = $lrsQuery->orderBy('gr_date', 'desc')->get();
+                    $lrs = $lrsQuery->orderBy('gr_date', 'desc')
+                        ->paginate(self::REPORTS_PER_PAGE)
+                        ->appends($request->query());
                 }
             }
 
@@ -749,7 +782,8 @@ class ReportController extends Controller
                         ->where('delivery_status', 'Delivered')
                         ->where('company_id', Auth::user()->company_id)
                         ->orderBy('gr_date', 'desc')
-                        ->get();
+                        ->paginate(self::REPORTS_PER_PAGE)
+                        ->appends($request->query());
                 }
             } else {
                 // Show pending memos for **all customers**
@@ -769,7 +803,8 @@ class ReportController extends Controller
                         ->where('delivery_status', 'Delivered')
                         ->where('company_id', Auth::user()->company_id)
                         ->orderBy('gr_date', 'desc')
-                        ->get();
+                        ->paginate(self::REPORTS_PER_PAGE)
+                        ->appends($request->query());
                 }
             }
 
@@ -877,8 +912,10 @@ class ReportController extends Controller
             }
         }
         $allPayments = collect($allPayments)->sortBy('date')->values();
+        $grandTotalAmount = (float) $allPayments->sum('amount');
+        $allPayments = $this->paginateCollection($allPayments, $request);
 
-        return view('reports.bank', compact('startDate', 'endDate', 'allPayments', 'paymentStatus'));
+        return view('reports.bank', compact('startDate', 'endDate', 'allPayments', 'paymentStatus', 'grandTotalAmount'));
     }
 
     public function bank_export(Request $request)
@@ -965,8 +1002,10 @@ class ReportController extends Controller
             }
         }
         $allPayments = collect($allPayments)->sortBy('date')->values();
+        $grandTotalAmount = (float) $allPayments->sum('amount');
+        $allPayments = $this->paginateCollection($allPayments, $request);
 
-        return view('reports.cash', compact('startDate', 'endDate', 'allPayments', 'paymentStatus'));
+        return view('reports.cash', compact('startDate', 'endDate', 'allPayments', 'paymentStatus', 'grandTotalAmount'));
     }
 
     public function cash_export(Request $request)
@@ -1233,7 +1272,7 @@ class ReportController extends Controller
                     'partyBillInvoiceUsePdfLogoPath' => true,
                 ]))->render();
 
-                $pdf = \PDF::loadHTML($html)
+                $pdf = Pdf::loadHTML($html)
                     ->setPaper('a4', 'portrait')
                     ->setOption('isHtml5ParserEnabled', true)
                     ->setOption('isRemoteEnabled', true);
@@ -1255,7 +1294,7 @@ class ReportController extends Controller
                 return Excel::download(new PartyBillExport($id), 'party_bill.xlsx');
             }
         } catch (\Exception $e) {
-            \Log::error('Error in party_bill_export:', [
+            Log::error('Error in party_bill_export:', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'invoice_id' => $id,
@@ -1306,9 +1345,10 @@ class ReportController extends Controller
                     $query->where('reference_by', $referenceId);
                 })
                 ->orderBy('gr_date', 'asc')
-                ->get();
+                ->paginate(self::REPORTS_PER_PAGE)
+                ->appends($request->query());
         } else {
-            $lrs = [];
+            $lrs = collect();
         }
 
         return view('reports.transporter-report', compact(
@@ -1484,7 +1524,8 @@ class ReportController extends Controller
         $transporters = $query->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
             ->orderBy('transporter_masters.name')
             ->select('transporters.*')
-            ->get();
+            ->paginate(self::REPORTS_PER_PAGE)
+            ->appends($request->query());
 
         return view('reports.transporter-master', [
             'transporters' => $transporters,

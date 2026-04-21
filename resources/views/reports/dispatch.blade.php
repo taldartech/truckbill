@@ -104,6 +104,9 @@
             <div class="card-body table-sticky">
                 @include('reports.exports.dispatch')
             </div>
+            <div class="card-body pt-0 d-flex justify-content-end">
+                {{ $lrs->links() }}
+            </div>
         </div>
     @endif
 @endsection

@@ -165,6 +165,9 @@
                         </tbody>
                     </table>
                 </div>
+                <div class="mt-3 d-flex justify-content-end">
+                    {{ $lrs->links() }}
+                </div>
             @else
                 <div class="alert alert-info">No records found for the selected criteria.</div>
             @endif
