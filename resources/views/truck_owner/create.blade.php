@@ -54,6 +54,7 @@
                 <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
             @endif
             <input type="hidden" name="transporter_master_id" id="transporter_master_id" value="{{ old('transporter_master_id') }}">
+            <input type="hidden" id="pan_verified" value="0">
 
             <!-- PAN Check Section - must complete before rest of form -->
             <div class="card mb-4 p-3 bg-light" id="panLookupSection">
@@ -503,6 +504,8 @@
     document.addEventListener('DOMContentLoaded', function() {
         const btnPanLookup = document.getElementById('btnPanLookup');
         const panLookup = document.getElementById('pan_lookup');
+        const panField = document.getElementById('pan_number');
+        const panVerifiedInput = document.getElementById('pan_verified');
         const panLookupMessage = document.getElementById('panLookupMessage');
         const masterDataSection = document.getElementById('masterDataSection');
         const newMasterFormSection = document.getElementById('newMasterFormSection');
@@ -510,6 +513,18 @@
         const locationDetailsSection = document.getElementById('locationDetailsSection');
         const restOfForm = document.getElementById('restOfForm');
         const panAlreadyRegisteredSection = document.getElementById('panAlreadyRegisteredSection');
+        let lastCheckedPan = '';
+
+        function invalidatePanVerification(changedPan) {
+            if (!panVerifiedInput) return;
+            if (panVerifiedInput.value !== '1') return;
+            if ((changedPan || '').toUpperCase() === (lastCheckedPan || '').toUpperCase()) return;
+            panVerifiedInput.value = '0';
+            if (restOfForm) restOfForm.classList.add('d-none');
+            if (panAlreadyRegisteredSection) panAlreadyRegisteredSection.classList.add('d-none');
+            panLookupMessage.textContent = 'PAN changed. Please click Check PAN again.';
+            panLookupMessage.className = 'mt-2 small text-warning';
+        }
 
         if (btnPanLookup && panLookup) {
             btnPanLookup.addEventListener('click', function() {
@@ -536,6 +551,7 @@
                 .then(r => r.ok ? r.json() : r.json().then(d => { throw new Error(d.error || 'Request failed'); }))
                 .then(data => {
                     if (data.already_registered) {
+                        if (panVerifiedInput) panVerifiedInput.value = '0';
                         panLookupMessage.textContent = 'This PAN is already registered as a truck owner for this company.';
                         panLookupMessage.className = 'mt-2 small text-danger';
                         if (panAlreadyRegisteredSection) panAlreadyRegisteredSection.classList.remove('d-none');
@@ -584,20 +600,48 @@
                         panLookupMessage.textContent = 'PAN not in system. Please fill in all master details below.';
                         panLookupMessage.className = 'mt-2 small text-info';
                     }
+                    if (panVerifiedInput) panVerifiedInput.value = '1';
+                    lastCheckedPan = pan;
                 })
                 .catch((err) => {
+                    if (panVerifiedInput) panVerifiedInput.value = '0';
                     panLookupMessage.textContent = err.message || 'Check failed. Please try again.';
                     panLookupMessage.className = 'mt-2 small text-danger';
                 })
                 .finally(() => { btnPanLookup.disabled = false; });
             });
-            panLookup.addEventListener('input', function() { this.value = this.value.toUpperCase(); });
+            panLookup.addEventListener('input', function() {
+                this.value = this.value.toUpperCase();
+                invalidatePanVerification(this.value);
+                if (panField) {
+                    panField.value = this.value;
+                }
+            });
+        }
+        if (panField) {
+            panField.addEventListener('input', function() {
+                this.value = this.value.toUpperCase();
+                if (panLookup && panLookup.value !== this.value) {
+                    panLookup.value = this.value;
+                }
+                invalidatePanVerification(this.value);
+            });
         }
     });
 </script>
 <script>
     // Function to show confirmation modal with form data
     function showConfirmationModal() {
+        const panVerifiedInput = document.getElementById('pan_verified');
+        if (!panVerifiedInput || panVerifiedInput.value !== '1') {
+            const panLookupMessage = document.getElementById('panLookupMessage');
+            if (panLookupMessage) {
+                panLookupMessage.textContent = 'Please check PAN again before submitting.';
+                panLookupMessage.className = 'mt-2 small text-danger';
+            }
+            return;
+        }
+
         // First validate the form
         const form = document.querySelector('.needs-validation');
         if (!form.checkValidity()) {
