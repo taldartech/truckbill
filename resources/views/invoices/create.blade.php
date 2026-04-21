@@ -231,6 +231,12 @@
             const memoDiv = document.getElementById('memoDiv');
             const memoSelect = document.getElementById('memoSelect');
 
+            // Legacy guard: this page now uses hidden #prefilledCustomerId instead of
+            // a visible select[name="customer_id"] in the main form.
+            if (!customerSelect || !memoDiv || !memoSelect) {
+                return;
+            }
+
             customerSelect.addEventListener('change', function() {
                 const customerId = this.value;
                 memoDiv.style.display = customerId ? 'block' : 'none';
