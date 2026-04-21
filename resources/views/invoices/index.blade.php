@@ -1,5 +1,56 @@
 @extends('layouts.app')
 
+@push('styles')
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        /* Select2 custom styling for truck dropdown */
+        .select2-container--bootstrap-5 .select2-selection {
+            min-height: 38px;
+        }
+
+        .select2-result-truck {
+            padding: 4px 0;
+        }
+
+        .truck-info {
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+            padding-left: 12px;
+            padding-right: 20px;
+            color: var(--brand-text-primary);
+            line-height: 36px;
+            background: var(--brand-card-bg);
+            border: 1px solid var(--brand-border);
+            border-radius: 0.375rem;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single:focus-visible {
+            border-color: var(--brand-primary);
+            box-shadow: 0 0 0 0.25rem var(--brand-primary-light);
+            outline: 0;
+            border-radius: 0.375rem;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+            height: 36px;
+            right: 12px;
+        }
+
+        .select2-dropdown {
+            border: 1px solid var(--brand-border);
+            border-radius: 0.375rem;
+        }
+
+        .select2-results__option--highlighted {
+            background-color: var(--brand-primary);
+            color: white;
+        }
+    </style>
+@endpush
+
 @section('content')
     <div class="container mt-4">
         <div class="col-sm-6">
@@ -74,11 +125,6 @@
                         <label class="form-check-label" for="filter_customer">Customer</label>
                     </div>
                     <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="checkbox" value="company" id="filter_company"
-                            onchange="toggleField(this)">
-                        <label class="form-check-label" for="filter_company">Company</label>
-                    </div>
-                    <div class="form-check form-check-inline">
                         <input class="form-check-input" type="checkbox" value="payment_status" id="filter_status"
                             onchange="toggleField(this)">
                         <label class="form-check-label" for="filter_status">Status</label>
@@ -88,21 +134,21 @@
                             onchange="toggleField(this)">
                         <label class="form-check-label" for="filter_date">Date</label>
                     </div>
-                    <div class="col-md-3 d-none" id="field_generated_date_from">
-                        <label class="form-label">From Date</label>
-                        <input type="date" name="generated_date_from" class="form-control"
-                            value="{{ request('generated_date_from') }}">
-                    </div>
-                    <div class="col-md-3 d-none" id="field_generated_date_to">
-                        <label class="form-label">To Date</label>
-                        <input type="date" name="generated_date_to" class="form-control"
-                            value="{{ request('generated_date_to') }}">
-                    </div>
                 </div>
             </div>
-
+            
             {{-- Conditionally visible filter fields --}}
             <div class="row g-3 mt-2" id="filter-fields">
+                <div class="col-md-3 d-none" id="field_generated_date_from">
+                    <label class="form-label">From Date</label>
+                    <input type="date" name="generated_date_from" class="form-control"
+                        value="{{ request('generated_date_from') }}">
+                </div>
+                <div class="col-md-3 d-none" id="field_generated_date_to">
+                    <label class="form-label">To Date</label>
+                    <input type="date" name="generated_date_to" class="form-control"
+                        value="{{ request('generated_date_to') }}">
+                </div>
                 <div class="col-md-3 d-none" id="field_manual_invoice_number">
                     <label class="form-label">Invoice #</label>
                     <input type="text" name="manual_invoice_number" class="form-control"
@@ -110,11 +156,15 @@
                 </div>
                 <div class="col-md-3 d-none" id="field_customer">
                     <label class="form-label">Customer</label>
-                    <input type="text" name="customer" class="form-control" value="{{ request('customer') }}">
-                </div>
-                <div class="col-md-3 d-none" id="field_company">
-                    <label class="form-label">Company</label>
-                    <input type="text" name="company" class="form-control" value="{{ request('company') }}">
+                    <select name="customer" id="filter_customer_select" class="form-select select2">
+                        <option value="">All</option>
+                        @foreach ($consignees as $consignee)
+                            <option value="{{ $consignee->name }}"
+                                {{ request('customer') === $consignee->name ? 'selected' : '' }}>
+                                {{ $consignee->name }}
+                            </option>
+                        @endforeach
+                    </select>
                 </div>
                 <div class="col-md-3 d-none" id="field_payment_status">
                     <label class="form-label">Status</label>
@@ -551,7 +601,7 @@
             });
 
             // Toggle filter inputs when corresponding checkbox is enabled.
-            function toggleField(checkbox) {
+            window.toggleField = function(checkbox) {
                 if (checkbox.value === 'generated_date') {
                     // Toggle both from and to date fields
                     ['field_generated_date_from', 'field_generated_date_to'].forEach(id => {
@@ -575,17 +625,27 @@
                         if (input) input.value = '';
                     }
                 }
-            }
+            };
 
             // Restore selected filter fields from current query parameters.
             document.addEventListener('DOMContentLoaded', function() {
+                const params = new URLSearchParams(window.location.search);
                 const checkboxes = document.querySelectorAll('.form-check-input');
+                let hasActiveFilter = false;
+
                 checkboxes.forEach(checkbox => {
                     const value = checkbox.value;
-                    const urlValue = new URLSearchParams(window.location.search).get(value);
+                    let hasValue = false;
 
-                    if (urlValue) {
+                    if (value === 'generated_date') {
+                        hasValue = Boolean(params.get('generated_date_from') || params.get('generated_date_to'));
+                    } else {
+                        hasValue = Boolean(params.get(value));
+                    }
+
+                    if (hasValue) {
                         checkbox.checked = true;
+                        hasActiveFilter = true;
                         if (value === 'generated_date') {
                             ['field_generated_date_from', 'field_generated_date_to'].forEach(id => {
                                 document.getElementById(id).classList.remove('d-none');
@@ -595,6 +655,12 @@
                         }
                     }
                 });
+
+                // Auto-open filter panel when filters are active
+                const advancedSearchBox = document.getElementById('advanced-search-box');
+                if (advancedSearchBox && hasActiveFilter) {
+                    advancedSearchBox.classList.remove('d-none');
+                }
             });
 
             // Add Payment Modal Handler
@@ -700,6 +766,20 @@
                     }
                 });
             });
+
+            // Select2 init (same pattern as other pages)
+            $('.select2').each(function() {
+                $(this).select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    placeholder: 'All',
+                    allowClear: true
+                });
+            });
         }); // End of document ready
     </script>
 @endsection
+
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+@endpush

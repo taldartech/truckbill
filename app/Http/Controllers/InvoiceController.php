@@ -33,20 +33,31 @@ class InvoiceController extends Controller
         $invoices = Invoice::with(['company', 'consignee', 'payments'])->orderByDesc('id');
 
         // Apply filters
-        if ($request->has('generated_date_from') && ! empty($request->generated_date_from) && $request->has('generated_date_to') && ! empty($request->generated_date_to)) {
-            $invoices->whereBetween('generated_date', [$request->generated_date_from, $request->generated_date_to]);
+        $generatedDateFrom = trim((string) $request->input('generated_date_from', ''));
+        $generatedDateTo = trim((string) $request->input('generated_date_to', ''));
+        if ($generatedDateFrom !== '' && $generatedDateTo !== '') {
+            $invoices->whereBetween('generated_date', [$generatedDateFrom, $generatedDateTo]);
+        } elseif ($generatedDateFrom !== '') {
+            $invoices->whereDate('generated_date', '>=', $generatedDateFrom);
+        } elseif ($generatedDateTo !== '') {
+            $invoices->whereDate('generated_date', '<=', $generatedDateTo);
         }
 
         // Add other existing filters here if needed
-        if ($request->has('manual_invoice_number') && ! empty($request->manual_invoice_number)) {
-            $invoices->where('manual_invoice_number', 'like', '%'.$request->manual_invoice_number.'%');
+        $manualInvoiceNumber = trim((string) $request->input('manual_invoice_number', ''));
+        if ($manualInvoiceNumber !== '') {
+            $invoices->where(function ($query) use ($manualInvoiceNumber) {
+                $query->where('manual_invoice_number', 'like', '%'.$manualInvoiceNumber.'%')
+                    ->orWhere('invoice_number', 'like', '%'.$manualInvoiceNumber.'%');
+            });
         }
 
-        if ($request->has('invoice_number') && ! empty($request->invoice_number)) {
-            $invoices->where('invoice_number', 'like', '%'.$request->invoice_number.'%');
+        $invoiceNumber = trim((string) $request->input('invoice_number', ''));
+        if ($invoiceNumber !== '') {
+            $invoices->where('invoice_number', 'like', '%'.$invoiceNumber.'%');
         }
 
-        if ($request->has('customer') && ! empty($request->customer)) {
+        if ($request->filled('customer')) {
             $invoices->whereHas('consignee', function ($q) use ($request) {
                 $q->where('name', 'like', '%'.$request->customer.'%');
             });
@@ -58,7 +69,7 @@ class InvoiceController extends Controller
             });
         }
 
-        if ($request->has('payment_status') && ! empty($request->payment_status)) {
+        if ($request->filled('payment_status')) {
             $invoices->where('payment_status', $request->payment_status);
         }
 
@@ -66,12 +77,16 @@ class InvoiceController extends Controller
             $invoices = $invoices->where('company_id', Auth::user()->company_id);
         }
         $invoices = $invoices->orderBy('generated_date', 'desc');
-        $invoices = $invoices->paginate(20);
+        $invoices = $invoices->paginate(20)->appends($request->query());
+        $consignees = Consignee::query()
+            ->when(Auth::user()->company_id, fn ($query) => $query->where('company_id', Auth::user()->company_id))
+            ->orderBy('name')
+            ->get(['id', 'name']);
         $lastInvoiceId = Invoice::query()
             ->when(Auth::user()->company_id, fn ($query) => $query->where('company_id', Auth::user()->company_id))
             ->max('id');
 
-        return view('invoices.index', compact('invoices', 'lastInvoiceId'));
+        return view('invoices.index', compact('invoices', 'lastInvoiceId', 'consignees'));
     }
 
     public function getInvoicesData(Request $request)
