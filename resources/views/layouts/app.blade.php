@@ -1200,8 +1200,6 @@
             if (!numberInput || numberInput.disabled || numberInput.readOnly) {
                 return;
             }
-
-            event.preventDefault();
             numberInput.blur();
         }, {
             passive: false
