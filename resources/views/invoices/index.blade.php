@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @push('styles')
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
         /* Select2 custom styling for truck dropdown */
@@ -78,12 +79,6 @@
         </div>
 
         {{-- Quick Stats --}}
-        @php
-            $totalInvoices = $invoices->total();
-            $totalAmount = $invoices->sum('total_amount');
-            $paidCount = $invoices->where('payment_status', 'paid')->count();
-            $unpaidCount = $invoices->where('payment_status', 'pending')->count();
-        @endphp
         <div class="row mb-3">
             <div class="col-md-3">
                 <div class="card text-bg-primary mb-2">
@@ -201,7 +196,7 @@
                 <h3 class="card-title">Invoices List</h3>
             </div>
             <div class="card-body" style="overflow-x: auto;">
-                <table class="table table-bordered">
+                <table id="invoicesTable" class="table table-bordered">
                     <thead>
                         <tr>
                             <th style="width: 10px">ID</th>
@@ -217,90 +212,7 @@
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        @forelse($invoices as $invoice)
-                            <tr class="align-middle">
-                                <td>{{ $invoice->id }}</td>
-                                <td>
-                                    <a href="#" class="text-primary invoice-details-link"
-                                        data-id="{{ $invoice->id }}">
-                                        {{ $invoice->invoice_number
-                                            ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '')
-                                            : $invoice->manual_invoice_number }}
-                                    </a>
-                                </td>
-                                <td>{{ is_array($invoice->memo_ids) ? implode(', ', $invoice->memo_ids) : $invoice->memo_ids }}
-                                </td>
-                                <td>{{ $invoice->invoice_type }}</td>
-                                {{-- <td>{{ $invoice->generated_date }}</td> --}}
-                                <td>{{ formatDate(optional($invoice)->generated_date) }}</td>
-                                <td>{{ $invoice->consignee ? $invoice->consignee->name : '-' }}</td>
-                                <td class="text-brand-primary fw-bold">&#8377;{{ number_format($invoice->total_amount, 2) }}
-                                </td>
-                                <td class="text-brand-accent fw-bold">&#8377;{{ number_format($invoice->paid_amount, 2) }}
-                                </td>
-                                <td class="fw-bold {{ $invoice->remaining_amount > 0 ? 'text-danger' : 'text-brand-primary' }}">
-                                    &#8377;{{ number_format($invoice->remaining_amount, 2) }}
-                                </td>
-                                <td>{{ ucfirst($invoice->payment_status) }}</td>
-                                <td>
-                                    <div class="d-flex gap-1">
-                                        <a href="{{ route('reports.party-bill-export', ['invoice_number' => $invoice->id, 'type' => 'pdf']) }}"
-                                            class="btn btn-sm btn-primary" data-bs-toggle="tooltip" target="_blank"
-                                            data-bs-placement="top" title="View PDF">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                        @if (auth()->user()->canActAsAdmin())
-                                            @if ($invoice->payment_status !== 'paid')
-                                                <a href="{{ route('invoices.edit', $invoice->id) }}"
-                                                    class="btn btn-sm btn-edit" data-bs-toggle="tooltip"
-                                                    data-bs-placement="top" title="Edit Invoice">
-                                                    <i class="bi bi-pencil"></i>
-                                                </a>
-                                            @endif
-                                            @if ($invoice->payment_status === 'pending' && (int) $invoice->id === (int) $lastInvoiceId)
-                                                <form action="{{ route('invoices.destroy', $invoice->id) }}"
-                                                    method="POST" style="display:inline-block;">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger"
-                                                        data-bs-toggle="tooltip" data-bs-placement="top"
-                                                        title="Delete Invoice"
-                                                        onclick="return confirm('Delete this invoice?')">
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
-                                                </form>
-                                            @endif
-                                        @endif
-                                        @if (auth()->user()->canActAsAdmin() && $invoice->remaining_amount > 0)
-                                            <button type="button" class="btn btn-sm btn-view add-payment-btn"
-                                                data-bs-toggle="tooltip" data-bs-placement="top" title="Add Payment"
-                                                data-invoice-id="{{ $invoice->id }}"
-                                                data-invoice-number="{{ $invoice->invoice_number
-                                                    ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '')
-                                                    : $invoice->manual_invoice_number }}"
-                                                data-total-amount="{{ $invoice->total_amount }}"
-                                                data-paid-amount="{{ $invoice->paid_amount }}"
-                                                data-remaining-amount="{{ $invoice->remaining_amount }}">
-                                                <i class="bi bi-currency-rupee"></i>
-                                            </button>
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="11" class="text-center">
-                                    <div class="empty-state">
-                                        <i class="bi bi-box"></i>
-                                        <p class="mt-2">No invoices found.</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
                 </table>
-                {{ $invoices->links() }}
             </div>
         </div>
     </div>
@@ -407,13 +319,91 @@
     <script>
         // Wait for both jQuery and Bootstrap to be loaded
         $(document).ready(function() {
-            // Initialize tooltips - ensure Bootstrap is loaded
-            if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
-                var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-                var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
-                    return new bootstrap.Tooltip(tooltipTriggerEl);
+            const initTooltips = function() {
+                if (typeof bootstrap === 'undefined' || !bootstrap.Tooltip) {
+                    return;
+                }
+                document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
+                    bootstrap.Tooltip.getOrCreateInstance(el);
                 });
-            }
+            };
+            initTooltips();
+
+            const invoiceTable = $('#invoicesTable').DataTable({
+                processing: true,
+                serverSide: true,
+                responsive: true,
+                ajax: {
+                    url: '{{ route('invoices.index') }}',
+                    data: function(d) {
+                        d.manual_invoice_number = $('input[name="manual_invoice_number"]').val();
+                        d.customer = $('select[name="customer"]').val();
+                        d.payment_status = $('select[name="payment_status"]').val();
+                        d.generated_date_from = $('input[name="generated_date_from"]').val();
+                        d.generated_date_to = $('input[name="generated_date_to"]').val();
+                    }
+                },
+                columns: [{
+                        data: 'id',
+                        name: 'invoices.id'
+                    },
+                    {
+                        data: 'invoice_link',
+                        name: 'invoice_link',
+                        orderable: true,
+                        searchable: true
+                    },
+                    {
+                        data: 'memo_numbers',
+                        name: 'invoices.memo_ids',
+                        orderable: false
+                    },
+                    {
+                        data: 'invoice_type',
+                        name: 'invoices.invoice_type'
+                    },
+                    {
+                        data: 'generated_date_formatted',
+                        name: 'invoices.generated_date'
+                    },
+                    {
+                        data: 'consignee_name',
+                        name: 'consignees.name'
+                    },
+                    {
+                        data: 'total_amount_formatted',
+                        name: 'invoices.total_amount',
+                        searchable: false
+                    },
+                    {
+                        data: 'paid_amount_formatted',
+                        name: 'paid_amount_formatted',
+                        searchable: true,
+                        orderable: true
+                    },
+                    {
+                        data: 'remaining_amount_formatted',
+                        name: 'remaining_amount_formatted',
+                        searchable: true,
+                        orderable: true
+                    },
+                    {
+                        data: 'payment_status_badge',
+                        name: 'invoices.payment_status'
+                    },
+                    {
+                        data: 'actions',
+                        orderable: false,
+                        searchable: false
+                    }
+                ],
+                order: [
+                    [0, 'desc']
+                ],
+                drawCallback: function() {
+                    initTooltips();
+                }
+            });
 
             function showInvoiceModal(modalElement) {
                 if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
@@ -663,6 +653,29 @@
                 }
             });
 
+            $('#advanced-search-box').on('submit', function(e) {
+                e.preventDefault();
+                invoiceTable.ajax.reload();
+            });
+
+            $('#advanced-search-box').on('click', 'a[href="{{ route('invoices.index') }}"]', function(e) {
+                e.preventDefault();
+                const form = document.getElementById('advanced-search-box');
+                if (form) {
+                    form.reset();
+                }
+                $('.form-check-input').prop('checked', false);
+                ['field_generated_date_from', 'field_generated_date_to', 'field_manual_invoice_number', 'field_customer', 'field_payment_status', 'field_generated_date']
+                    .forEach(function(id) {
+                        const el = document.getElementById(id);
+                        if (el) {
+                            el.classList.add('d-none');
+                        }
+                    });
+                $('#filter_customer_select').val(null).trigger('change');
+                invoiceTable.ajax.reload();
+            });
+
             // Add Payment Modal Handler
             $(document).on('click', '.add-payment-btn', function(e) {
                 e.preventDefault();
@@ -773,7 +786,7 @@
                     theme: 'bootstrap-5',
                     width: '100%',
                     placeholder: 'All',
-                    allowClear: true
+                    allowClear: false
                 });
             });
         }); // End of document ready
@@ -781,5 +794,7 @@
 @endsection
 
 @push('scripts')
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 @endpush
