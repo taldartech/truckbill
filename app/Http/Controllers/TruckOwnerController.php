@@ -2,27 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AdvancePayment;
-use App\Models\Transporter;
-use App\Models\TransporterMaster;
-use App\Models\Company;
-use App\Models\Country;
-use App\Models\State;
-use App\Models\City;
-use App\Models\Truck;
-use App\Models\TruckType;
-use App\Models\Driver;
-use App\Models\FreightBooking;
 use App\Http\Requests\StoreTruckOwnerRequest;
 use App\Http\Requests\UpdateTruckOwnerRequest;
+use App\Models\AdvancePayment;
+use App\Models\City;
+use App\Models\Country;
+use App\Models\Driver;
+use App\Models\FreightBooking;
+use App\Models\State;
+use App\Models\Transporter;
+use App\Models\TransporterMaster;
+use App\Models\Truck;
+use App\Models\TruckType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class TruckOwnerController extends Controller
 {
-
     public function index(Request $request)
     {
         if ($request->ajax()) {
@@ -30,6 +27,7 @@ class TruckOwnerController extends Controller
         }
 
         $truckTypes = TruckType::orderBy('name')->get();
+
         return view('truck_owner.index', compact('truckTypes'));
     }
 
@@ -47,7 +45,7 @@ class TruckOwnerController extends Controller
                 $searchValue = $request->search['value'];
                 $query->where(function ($q) use ($searchValue) {
                     $q->whereHas('transporterMaster', fn ($m) => $m->where('name', 'like', "%{$searchValue}%")
-                            ->orWhere('pan_number', 'like', "%{$searchValue}%"))
+                        ->orWhere('pan_number', 'like', "%{$searchValue}%"))
                         ->orWhere('transporters.mobile_number', 'like', "%{$searchValue}%")
                         ->orWhereHas('transporterMaster', fn ($m) => $m->whereHas('city', fn ($c) => $c->where('name', 'like', "%{$searchValue}%")));
                 });
@@ -56,7 +54,7 @@ class TruckOwnerController extends Controller
             // Handle individual column searches
             if ($request->has('columns')) {
                 foreach ($request->columns as $index => $column) {
-                    if (!empty($column['search']['value'])) {
+                    if (! empty($column['search']['value'])) {
                         $searchValue = $column['search']['value'];
                         switch ($index) {
                             case 0: // Name
@@ -138,14 +136,14 @@ class TruckOwnerController extends Controller
                 $truckNumbers = $trucks->pluck('truck_number')->toArray();
                 $truckList = implode(', ', $truckNumbers);
                 $data[] = [
-                    'name' => '<a href="#" class="truck-owner-name-link text-brand-primary fw-bold" data-bs-toggle="tooltip" title="Trucks: ' . htmlspecialchars($truckList) . '" data-id="' . $truckOwner->id . '" style="text-decoration: none;">' . ($truckOwner->name ?? 'N/A') . '</a>',
+                    'name' => '<a href="#" class="truck-owner-name-link text-brand-primary fw-bold" data-bs-toggle="tooltip" title="Trucks: '.htmlspecialchars($truckList).'" data-id="'.$truckOwner->id.'" style="text-decoration: none;">'.($truckOwner->name ?? 'N/A').'</a>',
                     'short_name' => $truckOwner->short_name ?? 'N/A',
                     'pan_number' => $truckOwner->pan_number ?? 'N/A',
                     'location' => $truckOwner->city->name ?? 'N/A',
                     'contact_number' => $truckOwner->mobile_number ?? 'N/A',
                     'declaration_given' => $truckOwner->declaration_given ? 'Yes' : 'No',
-                    'advance_amount' => '₹' . number_format($truckOwner->advance_amount, 2),
-                    'actions' => $this->getActionButtons($truckOwner)
+                    'advance_amount' => '₹'.number_format($truckOwner->advance_amount, 2),
+                    'actions' => $this->getActionButtons($truckOwner),
                 ];
             }
 
@@ -153,16 +151,17 @@ class TruckOwnerController extends Controller
                 'draw' => intval($request->draw),
                 'recordsTotal' => $totalRecords,
                 'recordsFiltered' => $filteredRecords,
-                'data' => $data
+                'data' => $data,
             ]);
         } catch (\Exception $e) {
-            \Log::error('TruckOwner DataTables Error: ' . $e->getMessage());
+            \Log::error('TruckOwner DataTables Error: '.$e->getMessage());
+
             return response()->json([
                 'draw' => intval($request->draw ?? 0),
                 'recordsTotal' => 0,
                 'recordsFiltered' => 0,
                 'data' => [],
-                'error' => 'An error occurred while loading data.'
+                'error' => 'An error occurred while loading data.',
             ]);
         }
     }
@@ -173,33 +172,46 @@ class TruckOwnerController extends Controller
         $buttons = '<div class="d-flex gap-1">';
 
         // Add Truck Button (modal trigger for truck owners)
-        $buttons .= '<button type="button" class="btn btn-sm btn-view add-truck-btn" aria-label="Add Truck" title="Add Truck" data-bs-placement="top" data-bs-toggle="tooltip" data-transporter-id="' . $truckOwner->id . '" data-transporter-name="' . htmlspecialchars($truckOwner->name) . '">';
+        $buttons .= '<button type="button" class="btn btn-sm btn-view add-truck-btn" aria-label="Add Truck" title="Add Truck" data-bs-placement="top" data-bs-toggle="tooltip" data-transporter-id="'.$truckOwner->id.'" data-transporter-name="'.htmlspecialchars($truckOwner->name).'">';
         $buttons .= '<i class="bi bi-truck"></i></button>';
 
         if ($is_admin) {
             // Advance Payment Button (same as transporters)
-            $buttons .= '<button type="button" class="btn btn-sm btn-view advance-payment-btn" aria-label="Advance Payment" title="Advance Payment" data-bs-placement="top" data-bs-toggle="tooltip" data-transporter-id="' . $truckOwner->id . '" data-transporter-name="' . htmlspecialchars($truckOwner->name) . '">';
+            $buttons .= '<button type="button" class="btn btn-sm btn-view advance-payment-btn" aria-label="Advance Payment" title="Advance Payment" data-bs-placement="top" data-bs-toggle="tooltip" data-transporter-id="'.$truckOwner->id.'" data-transporter-name="'.htmlspecialchars($truckOwner->name).'">';
             $buttons .= '<i class="bi bi-currency-rupee"></i>';
             $buttons .= '</button>';
 
             // Edit Button (same as transporters)
             $editUrl = route('truck_owners.edit', $truckOwner->id);
-            $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-edit" title="Edit Truck Owner" aria-label="Edit Truck Owner" data-bs-placement="top" data-bs-toggle="tooltip">';
+            $buttons .= '<a href="'.$editUrl.'" class="btn btn-sm btn-edit" title="Edit Truck Owner" aria-label="Edit Truck Owner" data-bs-placement="top" data-bs-toggle="tooltip">';
             $buttons .= '<i class="bi bi-pencil"></i></a>';
 
             // Delete Button (AJAX-based)
-            $buttons .= '<button type="button" class="btn btn-sm btn-danger delete-truck-owner-btn" aria-label="Delete Truck Owner" title="Delete Truck Owner" data-bs-placement="top" data-bs-toggle="tooltip" data-truck-owner-id="' . $truckOwner->id . '" data-truck-owner-name="' . htmlspecialchars($truckOwner->name) . '">';
+            $buttons .= '<button type="button" class="btn btn-sm btn-danger delete-truck-owner-btn" aria-label="Delete Truck Owner" title="Delete Truck Owner" data-bs-placement="top" data-bs-toggle="tooltip" data-truck-owner-id="'.$truckOwner->id.'" data-truck-owner-name="'.htmlspecialchars($truckOwner->name).'">';
             $buttons .= '<i class="bi bi-trash"></i></button>';
         }
         $buttons .= '</div>';
+
         return $buttons;
     }
 
     public function create()
     {
         $countries = Country::all();
-        $states = State::all();
-        $cities = City::all();
+        $states = collect();
+        $cities = collect();
+
+        if (old('country_id')) {
+            $states = State::where('country_id', old('country_id'))
+                ->orderBy('name')
+                ->get();
+        }
+
+        if (old('state_id')) {
+            $cities = City::where('state_id', old('state_id'))
+                ->orderBy('name')
+                ->get();
+        }
 
         return view('truck_owner.create', compact('countries', 'states', 'cities'));
     }
@@ -214,7 +226,7 @@ class TruckOwnerController extends Controller
             if ($existing) {
                 $suffix = 1;
                 do {
-                    $shortName = ($validated['short_name'] ?? '') . '-' . $suffix;
+                    $shortName = ($validated['short_name'] ?? '').'-'.$suffix;
                     $existing = Transporter::where('short_name', $shortName)->where('company_id', $validated['company_id'])->where('is_owner', 1)->exists();
                     $suffix++;
                 } while ($existing);
@@ -241,6 +253,7 @@ class TruckOwnerController extends Controller
                 'advance_amount' => $validated['advance_amount'],
                 'tds_percentage' => $validated['tds_percentage'],
             ]);
+
             return redirect()->route('truck_owners.index')->with('success', 'Truck Owner created successfully!');
         }
 
@@ -251,7 +264,7 @@ class TruckOwnerController extends Controller
 
         $masterData = [
             'name' => $validated['name'],
-            'email' => $validated['pan_number'] . '@truckowner.placeholder',
+            'email' => $validated['pan_number'].'@truckowner.placeholder',
             'pan_number' => $validated['pan_number'],
             'gst_number' => $validated['gst_number'],
             'gst_type' => null,
@@ -294,6 +307,7 @@ class TruckOwnerController extends Controller
         if (in_array($fourthChar, ['C', 'F', 'A', 'B', 'J', 'L', 'T'])) {
             return 2.00;
         }
+
         return 20.00;
     }
 
@@ -318,7 +332,7 @@ class TruckOwnerController extends Controller
                 $fourthChar = strtoupper(substr($panNumber, 3, 1));
                 if (in_array($fourthChar, ['P', 'H'])) {
                     $tdsPercentage = 1.00;
-                } else if (in_array($fourthChar, ['C', 'F', 'A', 'B', 'J', 'L', 'T'])) {
+                } elseif (in_array($fourthChar, ['C', 'F', 'A', 'B', 'J', 'L', 'T'])) {
                     $tdsPercentage = 2.00;
                 } else {
                     $tdsPercentage = 20.00; // Changed from null to 0.00 for display consistency
@@ -327,7 +341,7 @@ class TruckOwnerController extends Controller
         }
 
         return response()->json([
-            'tds_percentage' => number_format($tdsPercentage, 2)
+            'tds_percentage' => number_format($tdsPercentage, 2),
         ]);
     }
 
@@ -339,7 +353,7 @@ class TruckOwnerController extends Controller
         $truck_owner->load(['company', 'transporterMaster.city.state.country']);
 
         // Ensure this is actually a truck owner (is_owner = 1)
-        if (!$truck_owner->is_owner) {
+        if (! $truck_owner->is_owner) {
             abort(404, 'Truck owner not found.');
         }
 
@@ -351,10 +365,10 @@ class TruckOwnerController extends Controller
             ->map(function ($payment) {
                 return [
                     'id' => $payment->id,
-                    'amount' => '₹' . number_format($payment->advance_amount, 2),
+                    'amount' => '₹'.number_format($payment->advance_amount, 2),
                     'payment_date' => $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('d-m-Y') : 'Not specified',
                     'remark' => $payment->remark ?: 'No remarks',
-                    'created_at' => $payment->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i')
+                    'created_at' => $payment->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
                 ];
             });
 
@@ -368,7 +382,7 @@ class TruckOwnerController extends Controller
                     'truck_number' => $truck->truck_number,
                     'truck_type' => $truck->truck_type,
                     'driver_name' => optional($truck->driver)->name ?: 'Not assigned',
-                    'driver_mobile' => optional($truck->driver)->mobile ?: 'Not provided'
+                    'driver_mobile' => optional($truck->driver)->mobile ?: 'Not provided',
                 ];
             });
 
@@ -390,11 +404,11 @@ class TruckOwnerController extends Controller
             'declaration_given' => $truck_owner->declaration_given ? 'Yes' : 'No',
             'tds_percentage' => $truck_owner->tds_percentage ?: '0',
             'total_trucks' => $truck_owner->total_trucks,
-            'advance_amount' => '₹' . number_format($truck_owner->advance_amount, 2),
+            'advance_amount' => '₹'.number_format($truck_owner->advance_amount, 2),
             'created_at' => $truck_owner->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
             'updated_at' => $truck_owner->updated_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
             'advance_payments' => $advancePayments,
-            'trucks' => $trucks
+            'trucks' => $trucks,
         ]);
     }
 
@@ -408,8 +422,15 @@ class TruckOwnerController extends Controller
 
         $trucks = Truck::where('transporter_id', $truck_owner->id)->get();
         $countries = Country::all();
-        $states = State::all();
-        $cities = City::all();
+        $selectedCountryId = old('country_id', $truck_owner->country_id);
+        $selectedStateId = old('state_id', $truck_owner->state_id);
+
+        $states = $selectedCountryId
+            ? State::where('country_id', $selectedCountryId)->orderBy('name')->get()
+            : collect();
+        $cities = $selectedStateId
+            ? City::where('state_id', $selectedStateId)->orderBy('name')->get()
+            : collect();
         $truckTypes = TruckType::orderBy('name')->get();
 
         return view('truck_owner.edit', compact('truck_owner', 'trucks', 'countries', 'states', 'cities', 'truckTypes'));
@@ -465,7 +486,7 @@ class TruckOwnerController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Truck Owner deleted successfully!'
+            'message' => 'Truck Owner deleted successfully!',
         ]);
     }
 

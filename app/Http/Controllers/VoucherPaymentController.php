@@ -268,7 +268,14 @@ class VoucherPaymentController extends Controller
             $totalAmounts[$group->voucher_number] = $group->total_amount;
         }
 
-        return view('voucher_payments.index', compact('payments', 'voucherGroups', 'totalAmounts'));
+        $transporters = \App\Models\Transporter::with('transporterMaster')
+            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+            ->orderBy('transporter_masters.name')
+            ->select('transporters.*')
+            ->get();
+        $cities = \App\Models\City::orderBy('name')->get();
+
+        return view('voucher_payments.index', compact('payments', 'voucherGroups', 'totalAmounts', 'transporters', 'cities'));
     }
 
     public function create(Request $request)

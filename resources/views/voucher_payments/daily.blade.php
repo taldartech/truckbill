@@ -57,7 +57,7 @@
                                 <label class="form-label">Transporter</label>
                                 <select name="transporter" class="form-select">
                                     <option value="">All Transporters</option>
-                                    @foreach (\App\Models\Transporter::all() as $transporter)
+                                    @foreach ($transporters as $transporter)
                                         <option value="{{ $transporter->id }}"
                                             {{ request('transporter') == $transporter->id ? 'selected' : '' }}>
                                             {{ $transporter->name }}
@@ -69,7 +69,7 @@
                                 <label class="form-label">Source</label>
                                 <select name="source" class="form-select">
                                     <option value="">All Sources</option>
-                                    @foreach (\App\Models\City::orderBy('name')->get() as $city)
+                                    @foreach ($cities as $city)
                                         <option value="{{ $city->id }}"
                                             {{ request('source') == $city->id ? 'selected' : '' }}>
                                             {{ $city->name }}
@@ -81,7 +81,7 @@
                                 <label class="form-label">Destination</label>
                                 <select name="destination" class="form-select">
                                     <option value="">All Destinations</option>
-                                    @foreach (\App\Models\City::orderBy('name')->get() as $city)
+                                    @foreach ($cities as $city)
                                         <option value="{{ $city->id }}"
                                             {{ request('destination') == $city->id ? 'selected' : '' }}>
                                             {{ $city->name }}
