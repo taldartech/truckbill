@@ -9,7 +9,9 @@ use App\Models\Transporter;
 use App\Models\TransporterMaster;
 use App\Models\Truck;
 use App\Models\User;
+use App\Services\FreightBookingTdsSync;
 use App\Services\Notifications\TransporterOnboardingNotificationService;
+use App\Services\TransporterTdsCalculator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +20,9 @@ use Illuminate\Support\Facades\Password;
 class TransporterController extends Controller
 {
     public function __construct(
-        private readonly TransporterOnboardingNotificationService $transporterOnboardingNotificationService
+        private readonly TransporterOnboardingNotificationService $transporterOnboardingNotificationService,
+        private readonly TransporterTdsCalculator $tdsCalculator,
+        private readonly FreightBookingTdsSync $freightBookingTdsSync,
     ) {}
 
     private function ensureCompanyContext(): void
@@ -254,6 +258,7 @@ class TransporterController extends Controller
             'is_owner' => $transporter->is_owner ? 'Truck Owner' : 'Agency',
             'declaration_given' => $transporter->declaration_given ? 'Yes' : 'No',
             'tds_percentage' => $transporter->tds_percentage ?: '0',
+            'tds_adjustment_remark' => $transporter->tds_adjustment_remark ?: '',
             'advance_amount' => '₹'.number_format($transporter->advance_amount, 2),
             'created_at' => $transporter->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
             'updated_at' => $transporter->updated_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
@@ -304,19 +309,26 @@ class TransporterController extends Controller
 
         $validated['advance_amount'] = $validated['advance_amount'] ?? 0;
         $validated['is_owner'] = 0;
-        $validated['declaration_given'] = false;
+        $declarationGiven = (bool) $validated['declaration_given'];
         $validated['total_trucks'] = 0;
 
         if ($request->filled('transporter_master_id')) {
             $master = TransporterMaster::findOrFail($request->transporter_master_id);
             $validated['transporter_master_id'] = $master->id;
-            $validated['tds_percentage'] = $this->calculateTdsFromPan($master->pan_number, $master->pan_active);
+            $submittedTds = round((float) $validated['tds_percentage'], 2);
+            $calculated = $this->tdsCalculator->calculate($declarationGiven, (string) $master->pan_number, (bool) $master->pan_active);
+            $remark = abs($submittedTds - round($calculated, 2)) > 0.01
+                ? trim((string) ($validated['tds_adjustment_remark'] ?? ''))
+                : null;
+            $validated['declaration_given'] = $declarationGiven;
+            $validated['tds_percentage'] = $submittedTds;
+            $validated['tds_adjustment_remark'] = $remark;
             Transporter::create($validated);
 
             return redirect()->route('transporters.index')->with('success', 'Transporter created successfully!');
         }
 
-        return DB::transaction(function () use ($validated) {
+        return DB::transaction(function () use ($validated, $declarationGiven) {
             $masterData = [
                 'name' => $validated['name'],
                 'email' => $validated['email'],
@@ -331,6 +343,12 @@ class TransporterController extends Controller
             ];
             $master = TransporterMaster::create($masterData);
 
+            $submittedTds = round((float) $validated['tds_percentage'], 2);
+            $calculated = $this->tdsCalculator->calculate($declarationGiven, (string) $master->pan_number, (bool) $master->pan_active);
+            $remark = abs($submittedTds - round($calculated, 2)) > 0.01
+                ? trim((string) ($validated['tds_adjustment_remark'] ?? ''))
+                : null;
+
             $transporterData = [
                 'transporter_master_id' => $master->id,
                 'company_id' => $validated['company_id'],
@@ -339,9 +357,10 @@ class TransporterController extends Controller
                 'mobile_number' => $validated['mobile_number'],
                 'short_name' => $validated['short_name'] ?? null,
                 'advance_amount' => $validated['advance_amount'] ?? 0,
-                'declaration_given' => false,
+                'declaration_given' => $declarationGiven,
                 'total_trucks' => 0,
-                'tds_percentage' => $this->calculateTdsFromPan($master->pan_number, $master->pan_active),
+                'tds_percentage' => $submittedTds,
+                'tds_adjustment_remark' => $remark,
             ];
             Transporter::create($transporterData);
 
@@ -360,24 +379,6 @@ class TransporterController extends Controller
 
             return redirect()->route('transporters.index')->with('success', 'Transporter created successfully! A password setup link has been sent to '.$master->email);
         });
-    }
-
-    private function calculateTdsFromPan(string $panNumber, bool $panActive): float
-    {
-        if (! $panActive) {
-            return 20.00;
-        }
-        $fourthChar = strtoupper(substr($panNumber, 3, 1));
-        $validChars = ['C', 'F', 'A', 'B', 'J', 'L', 'T'];
-        $nonValidChars = ['P', 'H'];
-        if (in_array($fourthChar, $validChars)) {
-            return 2.00;
-        }
-        if (in_array($fourthChar, $nonValidChars)) {
-            return 1.00;
-        }
-
-        return 20.00;
     }
 
     public function edit(\App\Models\Transporter $transporter)
@@ -415,18 +416,28 @@ class TransporterController extends Controller
             abort(403, 'Unauthorized access to this transporter.');
         }
         $validated = $request->validated();
+        $master = $transporter->transporterMaster;
+        $previousTds = round((float) $transporter->tds_percentage, 2);
+        $submittedTds = round((float) $validated['tds_percentage'], 2);
+        $calculated = $this->tdsCalculator->calculate(
+            (bool) $validated['declaration_given'],
+            (string) $master->pan_number,
+            (bool) $master->pan_active
+        );
+        $tdsRemark = abs($submittedTds - round($calculated, 2)) > 0.01
+            ? trim((string) ($validated['tds_adjustment_remark'] ?? ''))
+            : null;
+
         $updateData = [
             'company_id' => $validated['company_id'],
             'contact_person_name' => $validated['contact_person_name'] ?? null,
             'mobile_number' => $validated['mobile_number'],
             'advance_amount' => $validated['advance_amount'] ?? 0,
-            'declaration_given' => $validated['declaration_given'] ?? false,
+            'declaration_given' => $validated['declaration_given'],
             'total_trucks' => $validated['total_trucks'] ?? 0,
+            'tds_percentage' => $submittedTds,
+            'tds_adjustment_remark' => $tdsRemark,
         ];
-        // Only update tds_percentage when explicitly provided; otherwise preserve existing (edit form does not send it)
-        if (array_key_exists('tds_percentage', $validated)) {
-            $updateData['tds_percentage'] = $validated['tds_percentage'];
-        }
 
         if (auth()->user()->userRole->name === 'super_admin') {
             $updateData['short_name'] = $validated['short_name'] ?? null;
@@ -435,33 +446,20 @@ class TransporterController extends Controller
 
         $transporter->update($updateData);
 
+        if (abs($previousTds - $submittedTds) > 0.01) {
+            $this->freightBookingTdsSync->syncForTransporter($transporter, $submittedTds);
+        }
+
         return redirect()->route('transporters.index')->with('success', 'Transporter updated successfully!');
     }
 
     public function calculateTdsPercentage(Request $request)
     {
-        $panNumber = $request->input('pan_number');
-        $panActive = $request->input('pan_active');
+        $panNumber = (string) $request->input('pan_number', '');
+        $panActive = filter_var($request->input('pan_active'), FILTER_VALIDATE_BOOLEAN);
+        $declarationGiven = $request->input('declaration_given') == '1';
 
-        $tdsPercentage = 0.00;
-
-        if ($panActive == '0') {
-            // PAN not active
-            $tdsPercentage = 20.00;
-        } elseif ($panNumber && strlen($panNumber) >= 4) {
-            // PAN is active, check 4th character
-            $fourthChar = strtoupper(substr($panNumber, 3, 1));
-            $validChars = ['C', 'F', 'A', 'B', 'J', 'L', 'T'];
-            $nonValidChars = ['P', 'H'];
-
-            if (in_array($fourthChar, $validChars)) {
-                $tdsPercentage = 2.00;
-            } elseif (in_array($fourthChar, $nonValidChars)) {
-                $tdsPercentage = 1.00;
-            } else {
-                $tdsPercentage = 20.00;
-            }
-        }
+        $tdsPercentage = $this->tdsCalculator->calculate($declarationGiven, $panNumber, $panActive);
 
         return response()->json([
             'tds_percentage' => number_format($tdsPercentage, 2),

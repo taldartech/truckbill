@@ -55,6 +55,7 @@ class TransporterOwnerTest extends TestCase
         $country = Country::create(['name' => 'India', 'code' => 'IN']);
         $state = State::create(['name' => 'Gujarat', 'country_id' => $country->id]);
         $city = City::create(['name' => 'Ahmedabad', 'state_id' => $state->id, 'country_id' => $country->id]);
+
         return [$country, $state, $city];
     }
 
@@ -87,6 +88,8 @@ class TransporterOwnerTest extends TestCase
             'mobile_number' => '9876543210',
             'short_name' => 'FAST',
             'contact_person_name' => 'John Doe',
+            'declaration_given' => false,
+            'tds_percentage' => 20,
         ];
 
         $response = $this->actingAs($admin)->post('/transporters', $payload);
@@ -119,9 +122,17 @@ class TransporterOwnerTest extends TestCase
         $response = $this->actingAs($admin)->from('/transporters/create')->post('/transporters', [
             'company_id' => $admin->company_id,
             'name' => 'New One',
+            'email' => 'newone@example.com',
+            'gst_number' => '12ABCDE1234F1Z5',
             'pan_number' => 'ABCDE1234F',
             'mobile_number' => '8888888888',
             'pan_active' => true,
+            'address' => 'Addr',
+            'country_id' => $country->id,
+            'state_id' => $state->id,
+            'city_id' => $city->id,
+            'declaration_given' => false,
+            'tds_percentage' => 20,
         ]);
 
         $response->assertRedirect('/transporters/create');
@@ -154,6 +165,7 @@ class TransporterOwnerTest extends TestCase
             'state_id' => $state->id,
             'city_id' => $city->id,
             'mobile_number' => '7777777777',
+            'tds_percentage' => 1,
         ]);
 
         $response->assertRedirect(route('truck_owners.index'));
@@ -206,9 +218,9 @@ class TransporterOwnerTest extends TestCase
             'truck_id' => $truck->id,
             'transporter_id' => $truckOwner->id,
             'reference_by' => $truckOwner->id,
-            'lr_number' => 'LR-TO-' . uniqid(),
-            'gr_number' => 'GR-TO-' . uniqid(),
-            'invoice_number' => 'INV-TO-' . uniqid(),
+            'lr_number' => 'LR-TO-'.uniqid(),
+            'gr_number' => 'GR-TO-'.uniqid(),
+            'invoice_number' => 'INV-TO-'.uniqid(),
             'gr_date' => now()->toDateString(),
             'source_city' => 'A',
             'source_state' => 'B',
@@ -244,6 +256,7 @@ class TransporterOwnerTest extends TestCase
             'advance_amount' => 0,
             'declaration_given' => true,
             'total_trucks' => 2,
+            'tds_percentage' => 0,
         ]);
 
         $response->assertRedirect(route('truck_owners.index'));
@@ -251,5 +264,57 @@ class TransporterOwnerTest extends TestCase
         $fb->refresh();
         $this->assertEquals(5.0, (float) $fb->tds_amount);
     }
-}
 
+    public function test_truck_owner_store_requires_remark_when_tds_overridden(): void
+    {
+        $admin = $this->makeAdmin();
+        [$country, $state, $city] = $this->seedGeo();
+
+        $response = $this->actingAs($admin)->post('/truck_owners', [
+            'company_id' => $admin->company_id,
+            'name' => 'Owner Two',
+            'pan_number' => 'ABCPD1234Q',
+            'pan_active' => true,
+            'declaration_given' => false,
+            'total_trucks' => 1,
+            'country_id' => $country->id,
+            'state_id' => $state->id,
+            'city_id' => $city->id,
+            'mobile_number' => '7666666666',
+            'tds_percentage' => 5,
+        ]);
+
+        $response->assertSessionHasErrors(['tds_adjustment_remark']);
+    }
+
+    public function test_transporter_store_accepts_declaration_and_zero_tds(): void
+    {
+        $admin = $this->makeAdmin();
+        [$country, $state, $city] = $this->seedGeo();
+
+        $response = $this->actingAs($admin)->post('/transporters', [
+            'company_id' => $admin->company_id,
+            'name' => 'Declared Agency',
+            'email' => 'declared@example.com',
+            'gst_number' => '12ABCDE1234F1Z5',
+            'pan_number' => 'ABCDE1234F',
+            'advance_amount' => 0,
+            'pan_active' => true,
+            'address' => 'Addr',
+            'country_id' => $country->id,
+            'state_id' => $state->id,
+            'city_id' => $city->id,
+            'mobile_number' => '7555555555',
+            'declaration_given' => true,
+            'tds_percentage' => 0,
+        ]);
+
+        $response->assertRedirect(route('transporters.index'));
+        $this->assertDatabaseHas('transporters', [
+            'company_id' => $admin->company_id,
+            'is_owner' => 0,
+            'declaration_given' => 1,
+            'tds_percentage' => 0,
+        ]);
+    }
+}

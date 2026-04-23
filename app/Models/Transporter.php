@@ -25,6 +25,7 @@ class Transporter extends Model
         'short_name',
         'beneficiary_id',
         'tds_percentage',
+        'tds_adjustment_remark',
     ];
 
     protected function casts(): array

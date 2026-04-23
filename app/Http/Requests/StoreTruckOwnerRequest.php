@@ -2,11 +2,14 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Concerns\ValidatesTransporterTdsOverride;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class StoreTruckOwnerRequest extends FormRequest
 {
+    use ValidatesTransporterTdsOverride;
+
     public function authorize(): bool
     {
         return auth()->check() && auth()->user()->canAccessCompanyPanel();
@@ -15,7 +18,7 @@ class StoreTruckOwnerRequest extends FormRequest
     public function rules(): array
     {
         $companyId = $this->input('company_id');
-        $baseRules = [
+        $baseRules = array_merge([
             'company_id' => 'required|exists:companies,id',
             'contact_person_name' => 'nullable|string|max:255',
             'mobile_number' => [
@@ -34,7 +37,7 @@ class StoreTruckOwnerRequest extends FormRequest
             'advance_amount' => 'nullable|numeric|min:0',
             'declaration_given' => 'required|boolean',
             'total_trucks' => 'required|integer|min:0|max:10000',
-        ];
+        ], $this->tdsOverrideFieldRules());
 
         if ($this->filled('transporter_master_id')) {
             return array_merge($baseRules, [
@@ -96,6 +99,30 @@ class StoreTruckOwnerRequest extends FormRequest
                 },
             ],
         ]);
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $declaration = filter_var($this->input('declaration_given'), FILTER_VALIDATE_BOOLEAN);
+            if ($this->filled('transporter_master_id')) {
+                $master = \App\Models\TransporterMaster::find($this->input('transporter_master_id'));
+                if (! $master) {
+                    return;
+                }
+                $this->validateTdsOverrideAgainstCalculated(
+                    $validator,
+                    $declaration,
+                    (string) $master->pan_number,
+                    (bool) $master->pan_active
+                );
+
+                return;
+            }
+            $pan = strtoupper((string) $this->input('pan_number', ''));
+            $panActive = filter_var($this->input('pan_active'), FILTER_VALIDATE_BOOLEAN);
+            $this->validateTdsOverrideAgainstCalculated($validator, $declaration, $pan, $panActive);
+        });
     }
 
     public function messages(): array

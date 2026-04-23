@@ -2,11 +2,14 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Concerns\ValidatesTransporterTdsOverride;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class UpdateTruckOwnerRequest extends FormRequest
 {
+    use ValidatesTransporterTdsOverride;
+
     public function authorize(): bool
     {
         return auth()->check() && auth()->user()->canActAsAdmin();
@@ -18,7 +21,7 @@ class UpdateTruckOwnerRequest extends FormRequest
         $companyId = $this->input('company_id', $truckOwner->company_id);
         $isSuperAdmin = auth()->user()->userRole->name === 'super_admin';
 
-        $rules = [
+        $rules = array_merge([
             'company_id' => 'required|exists:companies,id',
             'contact_person_name' => 'nullable|string|max:255',
             'mobile_number' => [
@@ -31,7 +34,7 @@ class UpdateTruckOwnerRequest extends FormRequest
             'advance_amount' => 'nullable|numeric|min:0',
             'declaration_given' => 'required|boolean',
             'total_trucks' => 'required|integer|min:0|max:10000',
-        ];
+        ], $this->tdsOverrideFieldRules());
 
         if ($isSuperAdmin) {
             $rules['short_name'] = [
@@ -46,6 +49,24 @@ class UpdateTruckOwnerRequest extends FormRequest
         }
 
         return $rules;
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $truckOwner = $this->route('truck_owner');
+            $master = $truckOwner->transporterMaster;
+            if (! $master) {
+                return;
+            }
+            $declaration = filter_var($this->input('declaration_given'), FILTER_VALIDATE_BOOLEAN);
+            $this->validateTdsOverrideAgainstCalculated(
+                $validator,
+                $declaration,
+                (string) $master->pan_number,
+                (bool) $master->pan_active
+            );
+        });
     }
 
     public function messages(): array

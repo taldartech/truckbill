@@ -2,26 +2,30 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AdvancePayment;
-use App\Models\Transporter;
-use App\Models\TransporterMaster;
-use App\Models\Company;
-use App\Models\Country;
-use App\Models\State;
-use App\Models\City;
-use App\Models\Truck;
-use App\Models\TruckType;
-use App\Models\Driver;
-use App\Models\FreightBooking;
 use App\Http\Requests\StoreTruckOwnerRequest;
 use App\Http\Requests\UpdateTruckOwnerRequest;
+use App\Models\AdvancePayment;
+use App\Models\City;
+use App\Models\Company;
+use App\Models\Country;
+use App\Models\Driver;
+use App\Models\State;
+use App\Models\Transporter;
+use App\Models\TransporterMaster;
+use App\Models\Truck;
+use App\Models\TruckType;
+use App\Services\FreightBookingTdsSync;
+use App\Services\TransporterTdsCalculator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 
 class TruckOwnerController extends Controller
 {
+    public function __construct(
+        private readonly TransporterTdsCalculator $tdsCalculator,
+        private readonly FreightBookingTdsSync $freightBookingTdsSync,
+    ) {}
+
     private function ensureCompanyContext(): void
     {
         if (Auth::user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
@@ -38,6 +42,7 @@ class TruckOwnerController extends Controller
 
         $companies = Company::all();
         $truckTypes = TruckType::orderBy('name')->get();
+
         return view('truck_owner.index', compact('companies', 'truckTypes'));
     }
 
@@ -55,7 +60,7 @@ class TruckOwnerController extends Controller
                 $searchValue = $request->search['value'];
                 $query->where(function ($q) use ($searchValue) {
                     $q->whereHas('transporterMaster', fn ($m) => $m->where('name', 'like', "%{$searchValue}%")
-                            ->orWhere('pan_number', 'like', "%{$searchValue}%"))
+                        ->orWhere('pan_number', 'like', "%{$searchValue}%"))
                         ->orWhere('transporters.mobile_number', 'like', "%{$searchValue}%")
                         ->orWhereHas('transporterMaster', fn ($m) => $m->whereHas('city', fn ($c) => $c->where('name', 'like', "%{$searchValue}%")));
                 });
@@ -64,7 +69,7 @@ class TruckOwnerController extends Controller
             // Handle individual column searches
             if ($request->has('columns')) {
                 foreach ($request->columns as $index => $column) {
-                    if (!empty($column['search']['value'])) {
+                    if (! empty($column['search']['value'])) {
                         $searchValue = $column['search']['value'];
                         switch ($index) {
                             case 0: // Name
@@ -146,14 +151,14 @@ class TruckOwnerController extends Controller
                 $truckNumbers = $trucks->pluck('truck_number')->toArray();
                 $truckList = implode(', ', $truckNumbers);
                 $data[] = [
-                    'name' => '<a href="#" class="truck-owner-name-link text-brand-primary fw-bold" data-bs-toggle="tooltip" title="Trucks: ' . htmlspecialchars($truckList) . '" data-id="' . $truckOwner->id . '" style="text-decoration: none;">' . ($truckOwner->name ?? 'N/A') . '</a>',
+                    'name' => '<a href="#" class="truck-owner-name-link text-brand-primary fw-bold" data-bs-toggle="tooltip" title="Trucks: '.htmlspecialchars($truckList).'" data-id="'.$truckOwner->id.'" style="text-decoration: none;">'.($truckOwner->name ?? 'N/A').'</a>',
                     'short_name' => $truckOwner->short_name ?? 'N/A',
                     'pan_number' => $truckOwner->pan_number ?? 'N/A',
                     'location' => $truckOwner->city->name ?? 'N/A',
                     'contact_number' => $truckOwner->mobile_number ?? 'N/A',
                     'declaration_given' => $truckOwner->declaration_given ? 'Yes' : 'No',
-                    'advance_amount' => '₹' . number_format($truckOwner->advance_amount, 2),
-                    'actions' => $this->getActionButtons($truckOwner)
+                    'advance_amount' => '₹'.number_format($truckOwner->advance_amount, 2),
+                    'actions' => $this->getActionButtons($truckOwner),
                 ];
             }
 
@@ -161,16 +166,17 @@ class TruckOwnerController extends Controller
                 'draw' => intval($request->draw),
                 'recordsTotal' => $totalRecords,
                 'recordsFiltered' => $filteredRecords,
-                'data' => $data
+                'data' => $data,
             ]);
         } catch (\Exception $e) {
-            \Log::error('TruckOwner DataTables Error: ' . $e->getMessage());
+            \Log::error('TruckOwner DataTables Error: '.$e->getMessage());
+
             return response()->json([
                 'draw' => intval($request->draw ?? 0),
                 'recordsTotal' => 0,
                 'recordsFiltered' => 0,
                 'data' => [],
-                'error' => 'An error occurred while loading data.'
+                'error' => 'An error occurred while loading data.',
             ]);
         }
     }
@@ -181,25 +187,26 @@ class TruckOwnerController extends Controller
         $buttons = '<div class="d-flex gap-1">';
 
         // Add Truck Button (modal trigger for truck owners)
-        $buttons .= '<button type="button" class="btn btn-sm btn-view add-truck-btn" aria-label="Add Truck" title="Add Truck" data-bs-placement="top" data-bs-toggle="tooltip" data-transporter-id="' . $truckOwner->id . '" data-transporter-name="' . htmlspecialchars($truckOwner->name) . '">';
+        $buttons .= '<button type="button" class="btn btn-sm btn-view add-truck-btn" aria-label="Add Truck" title="Add Truck" data-bs-placement="top" data-bs-toggle="tooltip" data-transporter-id="'.$truckOwner->id.'" data-transporter-name="'.htmlspecialchars($truckOwner->name).'">';
         $buttons .= '<i class="bi bi-truck"></i></button>';
 
         if ($is_admin) {
             // Advance Payment Button (same as transporters)
-            $buttons .= '<button type="button" class="btn btn-sm btn-view advance-payment-btn" aria-label="Advance Payment" title="Advance Payment" data-bs-placement="top" data-bs-toggle="tooltip" data-transporter-id="' . $truckOwner->id . '" data-transporter-name="' . htmlspecialchars($truckOwner->name) . '">';
+            $buttons .= '<button type="button" class="btn btn-sm btn-view advance-payment-btn" aria-label="Advance Payment" title="Advance Payment" data-bs-placement="top" data-bs-toggle="tooltip" data-transporter-id="'.$truckOwner->id.'" data-transporter-name="'.htmlspecialchars($truckOwner->name).'">';
             $buttons .= '<i class="bi bi-currency-rupee"></i>';
             $buttons .= '</button>';
 
             // Edit Button (same as transporters)
             $editUrl = route('truck_owners.edit', $truckOwner->id);
-            $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-edit" title="Edit Truck Owner" aria-label="Edit Truck Owner" data-bs-placement="top" data-bs-toggle="tooltip">';
+            $buttons .= '<a href="'.$editUrl.'" class="btn btn-sm btn-edit" title="Edit Truck Owner" aria-label="Edit Truck Owner" data-bs-placement="top" data-bs-toggle="tooltip">';
             $buttons .= '<i class="bi bi-pencil"></i></a>';
 
             // Delete Button (AJAX-based)
-            $buttons .= '<button type="button" class="btn btn-sm btn-danger delete-truck-owner-btn" aria-label="Delete Truck Owner" title="Delete Truck Owner" data-bs-placement="top" data-bs-toggle="tooltip" data-truck-owner-id="' . $truckOwner->id . '" data-truck-owner-name="' . htmlspecialchars($truckOwner->name) . '">';
+            $buttons .= '<button type="button" class="btn btn-sm btn-danger delete-truck-owner-btn" aria-label="Delete Truck Owner" title="Delete Truck Owner" data-bs-placement="top" data-bs-toggle="tooltip" data-truck-owner-id="'.$truckOwner->id.'" data-truck-owner-name="'.htmlspecialchars($truckOwner->name).'">';
             $buttons .= '<i class="bi bi-trash"></i></button>';
         }
         $buttons .= '</div>';
+
         return $buttons;
     }
 
@@ -225,7 +232,7 @@ class TruckOwnerController extends Controller
             if ($existing) {
                 $suffix = 1;
                 do {
-                    $shortName = ($validated['short_name'] ?? '') . '-' . $suffix;
+                    $shortName = ($validated['short_name'] ?? '').'-'.$suffix;
                     $existing = Transporter::where('short_name', $shortName)->where('company_id', $validated['company_id'])->where('is_owner', 1)->exists();
                     $suffix++;
                 } while ($existing);
@@ -239,7 +246,11 @@ class TruckOwnerController extends Controller
         if ($request->filled('transporter_master_id')) {
             $master = TransporterMaster::findOrFail($request->transporter_master_id);
             $validated['transporter_master_id'] = $master->id;
-            $validated['tds_percentage'] = $this->calculateTruckOwnerTdsFromPan($master->pan_number, $master->pan_active, $validated['declaration_given']);
+            $calculatedTds = $this->tdsCalculator->calculate((bool) $validated['declaration_given'], (string) $master->pan_number, (bool) $master->pan_active);
+            $submittedTds = round((float) $validated['tds_percentage'], 2);
+            $remark = abs($submittedTds - round($calculatedTds, 2)) > 0.01
+                ? trim((string) ($validated['tds_adjustment_remark'] ?? ''))
+                : null;
             Transporter::create([
                 'transporter_master_id' => $validated['transporter_master_id'],
                 'company_id' => $validated['company_id'],
@@ -250,19 +261,25 @@ class TruckOwnerController extends Controller
                 'declaration_given' => $validated['declaration_given'],
                 'total_trucks' => $validated['total_trucks'],
                 'advance_amount' => $validated['advance_amount'],
-                'tds_percentage' => $validated['tds_percentage'],
+                'tds_percentage' => $submittedTds,
+                'tds_adjustment_remark' => $remark,
             ]);
+
             return redirect()->route('truck_owners.index')->with('success', 'Truck Owner created successfully!');
         }
 
         $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
         $validated['pan_number'] = strtoupper($validated['pan_number']);
         $validated['gst_number'] = ! empty($validated['gst_number']) ? strtoupper($validated['gst_number']) : null;
-        $validated['tds_percentage'] = $this->calculateTruckOwnerTdsFromPan($validated['pan_number'], $validated['pan_active'], $validated['declaration_given']);
+        $calculatedTds = $this->tdsCalculator->calculate((bool) $validated['declaration_given'], $validated['pan_number'], $validated['pan_active']);
+        $submittedTds = round((float) $validated['tds_percentage'], 2);
+        $tdsRemark = abs($submittedTds - round($calculatedTds, 2)) > 0.01
+            ? trim((string) ($validated['tds_adjustment_remark'] ?? ''))
+            : null;
 
         $masterData = [
             'name' => $validated['name'],
-            'email' => $validated['pan_number'] . '@truckowner.placeholder',
+            'email' => $validated['pan_number'].'@truckowner.placeholder',
             'pan_number' => $validated['pan_number'],
             'gst_number' => $validated['gst_number'],
             'gst_type' => null,
@@ -284,61 +301,23 @@ class TruckOwnerController extends Controller
             'declaration_given' => $validated['declaration_given'],
             'total_trucks' => $validated['total_trucks'],
             'advance_amount' => $validated['advance_amount'],
-            'tds_percentage' => $validated['tds_percentage'],
+            'tds_percentage' => $submittedTds,
+            'tds_adjustment_remark' => $tdsRemark,
         ]);
 
         return redirect()->route('truck_owners.index')->with('success', 'Truck Owner created successfully!');
     }
 
-    private function calculateTruckOwnerTdsFromPan(string $panNumber, bool $panActive, bool $declarationGiven): float
-    {
-        if ($declarationGiven) {
-            return 0.00;
-        }
-        if (! $panActive) {
-            return 20.00;
-        }
-        $fourthChar = strtoupper(substr($panNumber, 3, 1));
-        if (in_array($fourthChar, ['P', 'H'])) {
-            return 1.00;
-        }
-        if (in_array($fourthChar, ['C', 'F', 'A', 'B', 'J', 'L', 'T'])) {
-            return 2.00;
-        }
-        return 20.00;
-    }
-
     public function calculateTruckOwnerTdsPercentage(Request $request)
     {
-        $panNumber = $request->input('pan_number');
-        $panActive = $request->input('pan_active');
-        $declarationGiven = $request->input('declaration_given');
+        $panNumber = (string) $request->input('pan_number', '');
+        $panActive = filter_var($request->input('pan_active'), FILTER_VALIDATE_BOOLEAN);
+        $declarationGiven = $request->input('declaration_given') == '1';
 
-        $tdsPercentage = 0.00;
-
-        if ($declarationGiven == '1') {
-            // Rule 1: Declaration given → TDS = 0%
-            $tdsPercentage = 0.00;
-        } else {
-            // Rule 2: Declaration not given
-            if ($panActive == '0') {
-                // PAN not active → 20%
-                $tdsPercentage = 20.00;
-            } elseif ($panNumber && strlen($panNumber) >= 4) {
-                // PAN active → check 4th character
-                $fourthChar = strtoupper(substr($panNumber, 3, 1));
-                if (in_array($fourthChar, ['P', 'H'])) {
-                    $tdsPercentage = 1.00;
-                } else if (in_array($fourthChar, ['C', 'F', 'A', 'B', 'J', 'L', 'T'])) {
-                    $tdsPercentage = 2.00;
-                } else {
-                    $tdsPercentage = 20.00; // Changed from null to 0.00 for display consistency
-                }
-            }
-        }
+        $tdsPercentage = $this->tdsCalculator->calculate($declarationGiven, $panNumber, $panActive);
 
         return response()->json([
-            'tds_percentage' => number_format($tdsPercentage, 2)
+            'tds_percentage' => number_format($tdsPercentage, 2),
         ]);
     }
 
@@ -351,7 +330,7 @@ class TruckOwnerController extends Controller
         $truck_owner->load(['company', 'transporterMaster.city.state.country']);
 
         // Ensure this is actually a truck owner (is_owner = 1)
-        if (!$truck_owner->is_owner) {
+        if (! $truck_owner->is_owner) {
             abort(404, 'Truck owner not found.');
         }
 
@@ -363,10 +342,10 @@ class TruckOwnerController extends Controller
             ->map(function ($payment) {
                 return [
                     'id' => $payment->id,
-                    'amount' => '₹' . number_format($payment->advance_amount, 2),
+                    'amount' => '₹'.number_format($payment->advance_amount, 2),
                     'payment_date' => $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('d-m-Y') : 'Not specified',
                     'remark' => $payment->remark ?: 'No remarks',
-                    'created_at' => $payment->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i')
+                    'created_at' => $payment->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
                 ];
             });
 
@@ -380,7 +359,7 @@ class TruckOwnerController extends Controller
                     'truck_number' => $truck->truck_number,
                     'truck_type' => $truck->truck_type,
                     'driver_name' => optional($truck->driver)->name ?: 'Not assigned',
-                    'driver_mobile' => optional($truck->driver)->mobile ?: 'Not provided'
+                    'driver_mobile' => optional($truck->driver)->mobile ?: 'Not provided',
                 ];
             });
 
@@ -401,12 +380,13 @@ class TruckOwnerController extends Controller
             'is_owner' => 'Truck Owner',
             'declaration_given' => $truck_owner->declaration_given ? 'Yes' : 'No',
             'tds_percentage' => $truck_owner->tds_percentage ?: '0',
+            'tds_adjustment_remark' => $truck_owner->tds_adjustment_remark ?: '',
             'total_trucks' => $truck_owner->total_trucks,
-            'advance_amount' => '₹' . number_format($truck_owner->advance_amount, 2),
+            'advance_amount' => '₹'.number_format($truck_owner->advance_amount, 2),
             'created_at' => $truck_owner->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
             'updated_at' => $truck_owner->updated_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
             'advance_payments' => $advancePayments,
-            'trucks' => $trucks
+            'trucks' => $trucks,
         ]);
     }
 
@@ -437,14 +417,17 @@ class TruckOwnerController extends Controller
         }
         $validated = $request->validated();
 
-        $declarationChanged = $truck_owner->declaration_given != $validated['declaration_given'];
-
         $master = $truck_owner->transporterMaster;
-        $validated['tds_percentage'] = $this->calculateTruckOwnerTdsFromPan(
-            $master->pan_number,
-            $master->pan_active,
-            $validated['declaration_given']
+        $previousTds = round((float) $truck_owner->tds_percentage, 2);
+        $submittedTds = round((float) $validated['tds_percentage'], 2);
+        $calculatedTds = $this->tdsCalculator->calculate(
+            (bool) $validated['declaration_given'],
+            (string) $master->pan_number,
+            (bool) $master->pan_active
         );
+        $tdsRemark = abs($submittedTds - round($calculatedTds, 2)) > 0.01
+            ? trim((string) ($validated['tds_adjustment_remark'] ?? ''))
+            : null;
 
         $updateData = [
             'company_id' => $validated['company_id'],
@@ -453,7 +436,8 @@ class TruckOwnerController extends Controller
             'declaration_given' => $validated['declaration_given'],
             'total_trucks' => $validated['total_trucks'],
             'advance_amount' => $validated['advance_amount'] ?? 0,
-            'tds_percentage' => $validated['tds_percentage'],
+            'tds_percentage' => $submittedTds,
+            'tds_adjustment_remark' => $tdsRemark,
         ];
 
         if (auth()->user()->userRole->name === 'super_admin') {
@@ -463,8 +447,8 @@ class TruckOwnerController extends Controller
 
         $truck_owner->update($updateData);
 
-        if ($declarationChanged) {
-            $this->updateFreightBookingsTds($truck_owner, $validated['tds_percentage']);
+        if (abs($previousTds - $submittedTds) > 0.01) {
+            $this->freightBookingTdsSync->syncForTransporter($truck_owner, $submittedTds);
         }
 
         return redirect()->route('truck_owners.index')->with('success', 'Truck Owner updated successfully!');
@@ -481,59 +465,7 @@ class TruckOwnerController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Truck Owner deleted successfully!'
+            'message' => 'Truck Owner deleted successfully!',
         ]);
-    }
-
-    /**
-     * Update TDS amount for freight bookings when declaration_given changes
-     * TDS can only be changed if:
-     * 1. TDS is not submitted (submission date hasn't passed)
-     * 2. OR complete payment is done to the transporter (balance_amount <= 0.01)
-     */
-    private function updateFreightBookingsTds($transporter, $newTdsPercentage): void
-    {
-        $freightBookings = FreightBooking::where('transporter_id', $transporter->id)
-            ->get();
-
-        foreach ($freightBookings as $freightBooking) {
-            if (! $freightBooking->canChangeTdsAmount()) {
-                continue;
-            }
-
-            // Get loading weight from LR (TDS is calculated from loading_weight * rate, not tr_amount)
-            $loadingWeight = $freightBooking->lr ? $freightBooking->lr->weight : 0;
-            if ($loadingWeight <= 0) {
-                continue;
-            }
-
-            // Calculate new TDS amount based on loading_weight * rate (not tr_amount)
-            $tdsBaseAmount = round($freightBooking->tr_fr_rate * $loadingWeight, 2);
-            $newTdsAmount = round($tdsBaseAmount * ($newTdsPercentage / 100), 2);
-
-            // Do not proceed if new TDS amount is greater than balance amount
-            if ($newTdsAmount > $freightBooking->balance_amount) {
-                continue;
-            }
-
-            $freightBooking->tds_amount = $newTdsAmount;
-            $freightBooking->transporter_tds_percentage = $newTdsPercentage;
-
-            // Recalculate balance_amount using full formula to ensure accuracy
-            $freightBooking->balance_amount = $freightBooking->tr_amount
-                - $freightBooking->advance_amount
-                - $newTdsAmount
-                - ($freightBooking->damage_amount ?? 0)
-                - ($freightBooking->shortage_amount ?? 0)
-                + ($freightBooking->detention ?? 0)
-                + ($freightBooking->deviation ?? 0)
-                - ($freightBooking->misc_expense ?? 0);
-
-            if ($freightBooking->balance_amount < 0) {
-                $freightBooking->balance_amount = 0;
-            }
-
-            $freightBooking->save();
-        }
     }
 }

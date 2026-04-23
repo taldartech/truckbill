@@ -3,12 +3,19 @@
 namespace App\Console\Commands;
 
 use App\Models\Transporter;
+use App\Services\TransporterTdsCalculator;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
 class ResetTruckOwnerDeclarations extends Command
 {
+    public function __construct(
+        private readonly TransporterTdsCalculator $tdsCalculator
+    ) {
+        parent::__construct();
+    }
+
     protected $signature = 'truck-owners:reset-declarations
                             {--apply : Apply changes to database (default is dry run)}
                             {--force : Force execution even if not April 1st}';
@@ -66,6 +73,7 @@ class ResetTruckOwnerDeclarations extends Command
                     if (! $truckOwner->declaration_given) {
                         $skipped++;
                         $bar->advance();
+
                         continue;
                     }
 
@@ -74,6 +82,7 @@ class ResetTruckOwnerDeclarations extends Command
                     if (! $dryRun) {
                         $truckOwner->declaration_given = false;
                         $truckOwner->tds_percentage = $newTdsPercentage;
+                        $truckOwner->tds_adjustment_remark = null;
                         $truckOwner->save();
                     }
                     $updated++;
@@ -125,21 +134,10 @@ class ResetTruckOwnerDeclarations extends Command
 
     private function calculateTdsPercentage(Transporter $truckOwner): float
     {
-        if (! $truckOwner->pan_active) {
-            return 20.00;
-        }
-
-        $panNumber = $truckOwner->pan_number ?? '';
-        if (strlen($panNumber) >= 4) {
-            $fourthChar = strtoupper(substr($panNumber, 3, 1));
-            if (in_array($fourthChar, ['P', 'H'])) {
-                return 1.00;
-            }
-            if (in_array($fourthChar, ['C', 'F', 'A', 'B', 'J', 'L', 'T'])) {
-                return 2.00;
-            }
-        }
-
-        return 20.00;
+        return $this->tdsCalculator->calculate(
+            false,
+            (string) ($truckOwner->pan_number ?? ''),
+            (bool) $truckOwner->pan_active
+        );
     }
 }

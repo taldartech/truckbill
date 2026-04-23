@@ -49,8 +49,10 @@
         @enderror
         <div class="card-body">
             <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
+            <input type="hidden" name="total_trucks" value="{{ old('total_trucks', $transporter->total_trucks ?? 0) }}">
 
             @php $master = $transporter->transporterMaster; @endphp
+            <div id="transporterEditMeta" class="d-none" data-transport-name="{{ $master->name ?? '' }}" data-pan="{{ $master->pan_number ?? '' }}" data-pan-active="{{ ($master->pan_active ?? false) ? '1' : '0' }}" data-gst="{{ $master->gst_number ?? '' }}"></div>
             <div class="card mb-4 p-3 bg-light">
                 <div class="row"><div class="col"><h5 class="mb-3 text-muted"><i class="fas fa-lock me-2"></i> Master Data (Read-only)</h5></div></div>
                 <div class="row mb-3">
@@ -124,8 +126,29 @@
                         @error('beneficiary_id') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">TDS %</label>
-                        <div class="form-control-plaintext bg-light border rounded px-3 py-2">{{ number_format($transporter->tds_percentage ?? 0, 2) }}%</div>
+                        <label class="form-label">Declaration given? *</label><br>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="declaration_given" id="decl_yes" value="1" {{ old('declaration_given', $transporter->declaration_given) == 1 ? 'checked' : '' }} required>
+                            <label class="form-check-label" for="decl_yes">Yes</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="declaration_given" id="decl_no" value="0" {{ old('declaration_given', $transporter->declaration_given) != 1 ? 'checked' : '' }} required>
+                            <label class="form-check-label" for="decl_no">No</label>
+                        </div>
+                        @error('declaration_given') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label for="tds_percentage" class="form-label">TDS % *</label>
+                        <input type="hidden" id="tds_calculated_baseline" value="{{ number_format(old('tds_percentage', $transporter->tds_percentage ?? 0), 2, '.', '') }}">
+                        <input type="number" step="0.01" min="0" max="100" class="form-control @error('tds_percentage') is-invalid @enderror" name="tds_percentage" id="tds_percentage" value="{{ old('tds_percentage', $transporter->tds_percentage) }}" required>
+                        @error('tds_percentage') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="tds_adjustment_remark" class="form-label">TDS adjustment remark</label>
+                        <textarea class="form-control @error('tds_adjustment_remark') is-invalid @enderror" id="tds_adjustment_remark" name="tds_adjustment_remark" rows="2" placeholder="Required when TDS % differs from the calculated rate">{{ old('tds_adjustment_remark', $transporter->tds_adjustment_remark) }}</textarea>
+                        @error('tds_adjustment_remark') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
                 </div>
             </div>
@@ -348,6 +371,54 @@
   </div>
 
 <script>
+function transporterEditCalculateTdsApi(panNumber, panActiveYesNo, onDone) {
+    const declarationGiven = document.querySelector('input[name="declaration_given"]:checked')?.value === '1';
+    fetch('/api/calculate-tds-percentage', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({
+            pan_number: panNumber === '-' ? '' : panNumber,
+            pan_active: panActiveYesNo === 'Yes' ? '1' : '0',
+            declaration_given: declarationGiven ? '1' : '0',
+        })
+    })
+    .then(r => r.json())
+    .then(data => { if (typeof onDone === 'function') onDone(data.tds_percentage); })
+    .catch(() => {});
+}
+
+function refreshTransporterEditTdsBaseline() {
+    const meta = document.getElementById('transporterEditMeta');
+    if (!meta) return;
+    const pan = meta.dataset.pan || '';
+    const panActive = meta.dataset.panActive === '1' ? 'Yes' : 'No';
+    transporterEditCalculateTdsApi(pan, panActive, function (calculatedStr) {
+        const calculated = parseFloat(calculatedStr);
+        if (isNaN(calculated)) return;
+        document.getElementById('tds_calculated_baseline').value = calculated.toFixed(2);
+        if (!window.__transporterEditTdsUserEdited) {
+            document.getElementById('tds_percentage').value = calculated.toFixed(2);
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    window.__transporterEditTdsUserEdited = false;
+    document.querySelectorAll('input[name="declaration_given"]').forEach(function (el) {
+        el.addEventListener('change', function () {
+            window.__transporterEditTdsUserEdited = false;
+            refreshTransporterEditTdsBaseline();
+        });
+    });
+    const tdsEl = document.getElementById('tds_percentage');
+    if (tdsEl) {
+        tdsEl.addEventListener('input', function () { window.__transporterEditTdsUserEdited = true; });
+    }
+});
+
 // Function to show confirmation modal with form data
 function showConfirmationModal() {
     // First validate the form
@@ -357,29 +428,34 @@ function showConfirmationModal() {
         return;
     }
 
-    // Get form values with safe access
-    const name = document.getElementById('name')?.value || '-';
+    const meta = document.getElementById('transporterEditMeta');
+    const name = meta?.dataset?.transportName || '-';
     const contactPerson = document.getElementById('contact_person_name')?.value || '-';
     const mobile = document.getElementById('mobile_number')?.value || '-';
 
-    const gstNumber = document.getElementById('gst_number')?.value || '-';
-    const panNumber = document.getElementById('pan_number')?.value || '-';
-    const panActive = document.querySelector('input[name="pan_active"]:checked')?.value === '1' ? 'Yes' : 'No';
+    const gstNumber = meta?.dataset?.gst || '-';
+    const panNumber = meta?.dataset?.pan || '-';
+    const panActive = meta?.dataset?.panActive === '1' ? 'Yes' : 'No';
 
-    const address = document.getElementById('address')?.value || '-';
-    const countrySelect = document.getElementById('country_id');
-    const country = countrySelect?.options[countrySelect.selectedIndex]?.text || '-';
-    const stateSelect = document.getElementById('state_id');
-    const state = stateSelect?.options[stateSelect.selectedIndex]?.text || '-';
-    const citySelect = document.getElementById('city_id');
-    const city = citySelect?.options[citySelect.selectedIndex]?.text || '-';
+    const address = '-';
+    const country = '-';
+    const state = '-';
+    const city = '-';
 
-    const isOwner = document.querySelector('input[name="is_owner"]:checked')?.value === '1' ? 'Yes' : 'No';
+    const isOwner = 'No';
     const declaration = document.querySelector('input[name="declaration_given"]:checked')?.value === '1' ? 'Yes' : 'No';
     const advance = document.querySelector('input[name="advance_amount"]')?.value || '0';
 
-    // Use TDS percentage from database
-    const tdsPercentage = '{{ number_format($transporter->tds_percentage ?? 0, 2) }}%';
+    const tdsField = document.getElementById('tds_percentage');
+    transporterEditCalculateTdsApi(panNumber, panActive, function (calculatedStr) {
+        const submitted = parseFloat(tdsField?.value || '0');
+        const calculated = parseFloat(calculatedStr);
+        let text = (isNaN(submitted) ? '0' : submitted.toFixed(2)) + '%';
+        if (!isNaN(calculated) && Math.abs(submitted - calculated) > 0.01) {
+            text += ' (calculated ' + calculated.toFixed(2) + '%)';
+        }
+        document.getElementById('confirm-tds-percentage').textContent = text;
+    });
 
     // Populate modal with values
     document.getElementById('confirm-name').textContent = name;
@@ -389,7 +465,6 @@ function showConfirmationModal() {
     document.getElementById('confirm-gst-number').textContent = gstNumber;
     document.getElementById('confirm-pan-number').textContent = panNumber;
     document.getElementById('confirm-pan-active').textContent = panActive;
-    document.getElementById('confirm-tds-percentage').textContent = tdsPercentage;
 
     document.getElementById('confirm-address').textContent = address;
     document.getElementById('confirm-country').textContent = country;
@@ -436,10 +511,13 @@ function submitForm() {
     }, false);
 })();
 
-// PAN number uppercase conversion
-document.getElementById('pan_number').addEventListener('input', function() {
-    this.value = this.value.toUpperCase();
-});
+// PAN number uppercase conversion (if field exists)
+const panNumEl = document.getElementById('pan_number');
+if (panNumEl) {
+    panNumEl.addEventListener('input', function() {
+        this.value = this.value.toUpperCase();
+    });
+}
 
 // Mobile number validation (10 digits only)
 document.getElementById('mobile_number').addEventListener('input', function() {

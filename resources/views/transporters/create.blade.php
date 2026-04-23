@@ -299,6 +299,38 @@
                     </div>
                 </div>
             </div>
+
+            <div class="card mb-4 p-3 bg-light">
+                <div class="row"><div class="col"><h5 class="mb-3">Declaration &amp; TDS</h5></div></div>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Declaration given? *</label><br>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="declaration_given" id="decl_yes" value="1" {{ old('declaration_given', 0) == 1 ? 'checked' : '' }} required>
+                            <label class="form-check-label" for="decl_yes">Yes</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="declaration_given" id="decl_no" value="0" {{ old('declaration_given', 0) != 1 ? 'checked' : '' }} required>
+                            <label class="form-check-label" for="decl_no">No</label>
+                        </div>
+                        @error('declaration_given') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-4">
+                        <label for="tds_percentage" class="form-label">TDS % *</label>
+                        <input type="hidden" id="tds_calculated_baseline" value="{{ old('tds_percentage', '0') }}">
+                        <input type="number" step="0.01" min="0" max="100" class="form-control @error('tds_percentage') is-invalid @enderror" id="tds_percentage" name="tds_percentage" value="{{ old('tds_percentage', '0') }}" required>
+                        @error('tds_percentage') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="tds_adjustment_remark" class="form-label">TDS adjustment remark</label>
+                        <textarea class="form-control @error('tds_adjustment_remark') is-invalid @enderror" id="tds_adjustment_remark" name="tds_adjustment_remark" rows="2" placeholder="Required when TDS % differs from the calculated rate">{{ old('tds_adjustment_remark') }}</textarea>
+                        @error('tds_adjustment_remark') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+            </div>
+
             <!-- Quick Actions Section -->
             <div class="card p-3 bg-light">
                 <div class="row"><div class="col"><h5 class="mb-3">Quick Actions</h5></div></div>
@@ -603,6 +635,10 @@
                 panLookupMessage.textContent = 'PAN not in system. Please fill in all master details below.';
                 panLookupMessage.className = 'mt-2 small text-info';
               }
+              window.__agencyTdsUserEdited = false;
+              if (typeof refreshAgencyTdsBaseline === 'function') {
+                refreshAgencyTdsBaseline();
+              }
             })
             .catch((err) => {
               panLookupMessage.textContent = err.message || 'Check failed. Please try again.';
@@ -613,6 +649,36 @@
         }
         if (panLookup) {
           panLookup.addEventListener('input', function() { this.value = this.value.toUpperCase(); });
+        }
+        document.querySelectorAll('input[name="declaration_given"]').forEach(function (el) {
+          el.addEventListener('change', function () {
+            window.__agencyTdsUserEdited = false;
+            if (typeof refreshAgencyTdsBaseline === 'function') {
+              refreshAgencyTdsBaseline();
+            }
+          });
+        });
+        document.querySelectorAll('input[name="pan_active"]').forEach(function (el) {
+          el.addEventListener('change', function () {
+            window.__agencyTdsUserEdited = false;
+            if (typeof refreshAgencyTdsBaseline === 'function') {
+              refreshAgencyTdsBaseline();
+            }
+          });
+        });
+        const panNumInput = document.getElementById('pan_number');
+        if (panNumInput) {
+          panNumInput.addEventListener('input', function () {
+            window.__agencyTdsUserEdited = false;
+            if (document.getElementById('transporter_master_id')?.value) return;
+            if (typeof refreshAgencyTdsBaseline === 'function') {
+              refreshAgencyTdsBaseline();
+            }
+          });
+        }
+        const tdsPctInput = document.getElementById('tds_percentage');
+        if (tdsPctInput) {
+          tdsPctInput.addEventListener('input', function () { window.__agencyTdsUserEdited = true; });
         }
       });
     </script>
@@ -644,7 +710,7 @@
           const citySelect = document.getElementById('city_id');
           const city = masterId ? '-' : (citySelect?.options[citySelect.selectedIndex]?.text || '-');
 
-          const isOwner = document.querySelector('input[name="is_owner"]:checked')?.value === '1' ? 'Yes' : 'No';
+          const isOwner = 'No';
           const declaration = document.querySelector('input[name="declaration_given"]:checked')?.value === '1' ? 'Yes' : 'No';
           const advance = document.querySelector('input[name="advance_amount"]')?.value || '0';
 
@@ -658,8 +724,16 @@
           document.getElementById('confirm-pan-number').textContent = panNumber;
           document.getElementById('confirm-pan-active').textContent = panActive;
 
-          // Calculate TDS percentage using API
-          calculateTdsPercentageFromApi(panNumber, panActive);
+          const tdsField = document.getElementById('tds_percentage');
+          calculateTdsPercentageFromApi(panNumber, panActive, function (calculatedStr) {
+            const submitted = parseFloat(tdsField?.value || '0');
+            const calculated = parseFloat(calculatedStr);
+            let text = (isNaN(submitted) ? '0' : submitted.toFixed(2)) + '%';
+            if (!isNaN(calculated) && Math.abs(submitted - calculated) > 0.01) {
+              text += ' (calculated ' + calculated.toFixed(2) + '%)';
+            }
+            document.getElementById('confirm-tds-percentage').textContent = text;
+          });
 
           document.getElementById('confirm-address').textContent = address;
           document.getElementById('confirm-country').textContent = country;
@@ -676,8 +750,9 @@
       }
 
       // Function to calculate TDS percentage from API
-      function calculateTdsPercentageFromApi(panNumber, panActive) {
+      function calculateTdsPercentageFromApi(panNumber, panActive, onDone) {
           const panActiveValue = panActive === 'Yes' ? '1' : '0';
+          const declarationGiven = document.querySelector('input[name="declaration_given"]:checked')?.value === '1';
 
           fetch('/api/calculate-tds-percentage', {
               method: 'POST',
@@ -686,18 +761,46 @@
                   'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
               },
               body: JSON.stringify({
-                  pan_number: panNumber,
-                  pan_active: panActiveValue
+                  pan_number: panNumber === '-' ? '' : panNumber,
+                  pan_active: panActiveValue,
+                  declaration_given: declarationGiven ? '1' : '0',
               })
           })
           .then(response => response.json())
           .then(data => {
-              document.getElementById('confirm-tds-percentage').textContent = data.tds_percentage + '%';
+              if (typeof onDone === 'function') {
+                onDone(data.tds_percentage);
+              } else {
+                document.getElementById('confirm-tds-percentage').textContent = data.tds_percentage + '%';
+              }
           })
           .catch(error => {
               console.error('Error calculating TDS percentage:', error);
               document.getElementById('confirm-tds-percentage').textContent = '-';
           });
+      }
+
+      window.__agencyTdsUserEdited = false;
+      function refreshAgencyTdsBaseline() {
+        const masterId = document.getElementById('transporter_master_id')?.value;
+        let panNumber = '';
+        let panActiveLabel = 'No';
+        if (masterId) {
+          panNumber = document.getElementById('display_pan')?.textContent?.trim() || '';
+          panActiveLabel = document.getElementById('display_pan_active')?.textContent?.trim() === 'Yes' ? 'Yes' : 'No';
+        } else {
+          panNumber = document.getElementById('pan_number')?.value?.trim() || '';
+          panActiveLabel = document.querySelector('input[name="pan_active"]:checked')?.value === '1' ? 'Yes' : 'No';
+        }
+        if (!panNumber || panNumber === '-') return;
+        calculateTdsPercentageFromApi(panNumber, panActiveLabel, function (calculatedStr) {
+          const calculated = parseFloat(calculatedStr);
+          if (isNaN(calculated)) return;
+          document.getElementById('tds_calculated_baseline').value = calculated.toFixed(2);
+          if (!window.__agencyTdsUserEdited) {
+            document.getElementById('tds_percentage').value = calculated.toFixed(2);
+          }
+        });
       }
 
       // Function to submit the form after confirmation
