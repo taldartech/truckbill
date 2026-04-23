@@ -28,6 +28,15 @@ use App\Http\Controllers\VoucherPaymentController;
 use App\Http\Controllers\VoucherTemplateController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/robots.txt', function () {
+    $content = config('app.block_search_indexing')
+        ? "User-agent: *\nDisallow: /\n"
+        : "User-agent: *\nDisallow:\n";
+
+    return response($content, 200)
+        ->header('Content-Type', 'text/plain; charset=UTF-8');
+});
+
 // Protected Routes
 Route::middleware(['auth.blocked'])->group(function () {
     Route::group(['middleware' => 'role:super_admin,master_admin'], function () {

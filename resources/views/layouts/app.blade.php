@@ -2,10 +2,24 @@
 <html lang="en">
 
 <head>
+    @php
+        $canonicalBaseUrl = rtrim((string) config('app.website_url', config('app.url')), '/');
+        $canonicalPath = request()->path() === '/' ? '' : '/'.ltrim(request()->path(), '/');
+        $canonicalUrl = $canonicalBaseUrl.$canonicalPath;
+        $canonicalQuery = request()->getQueryString();
+
+        if (! empty($canonicalQuery)) {
+            $canonicalUrl .= '?'.$canonicalQuery;
+        }
+    @endphp
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Invoice & Transport Management System')</title>
+    @if (config('app.block_search_indexing'))
+        <meta name="robots" content="noindex, nofollow, noarchive">
+        <link rel="canonical" href="{{ $canonicalUrl }}">
+    @endif
     <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="192x192"  href="{{ asset('favicon/android-icon-192x192.png') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('favicon/apple-touch-icon.png') }}">
