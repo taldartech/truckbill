@@ -185,7 +185,7 @@
                                 $payments = array_fill_keys($paymentNames, 0);
                                 $total_balance = 0;
                                 if ($fr) {
-                                    $vouchers = \App\Models\VoucherPayment::where('freight_booking_id', $fr->id)->get();
+                                    $vouchers = $fr->voucherPayments ?? collect();
                                     foreach ($vouchers as $voucher) {
                                         $paymentMode = $voucher->payment_mode;
                                         if (isset($payments[$paymentMode])) {

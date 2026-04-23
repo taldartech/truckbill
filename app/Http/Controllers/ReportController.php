@@ -1335,6 +1335,12 @@ class ReportController extends Controller
             }
 
             $lrs = $this->buildTransporterReportBaseQuery($startDate, $endDate)
+                ->with([
+                    'truck:id,truck_number',
+                    'consignor:id,name',
+                    'consignee:id,name',
+                    'freightBookings.voucherPayments:id,freight_booking_id,payment_mode,amount',
+                ])
                 ->when($transporterId, function ($query) use ($transporterId) {
                     $query->where('transporter_id', $transporterId);
                 })

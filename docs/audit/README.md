@@ -11,6 +11,7 @@ This folder contains the split version of the original consolidated audit.
 - `docs/audit/02-unused-code.md` - Unused/unwanted code inventory (controllers, views, assets, debug leftovers).
 - `docs/audit/03-unused-routes.md` - Unused route analysis (confirmed and candidate lists).
 - `docs/audit/04-tooling-and-architecture.md` - Tooling/build/config issues and cleanup direction.
+- `docs/audit/05-n-plus-one-query-risks.md` - Likely N+1 query hotspots and optimization checklist.
 
 ## Important Notes
 

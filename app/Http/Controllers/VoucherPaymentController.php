@@ -146,6 +146,25 @@ class VoucherPaymentController extends Controller
             ->get();
         $payments1 = $query1->orderBy('created_at', 'desc')
             ->get();
+
+        $linkedLrIds = $payments1->pluck('freight_booking.linked_lr_id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        $linkedLorryReceiptsByLinkedId = collect();
+        if ($linkedLrIds->isNotEmpty()) {
+            $linkedLorryReceiptsByLinkedId = \App\Models\LorryReceipt::with([
+                'consignor.city',
+                'consignee.city',
+            ])
+                ->whereIn('linked_lr_id', $linkedLrIds)
+                ->whereNotNull('linked_lr_id')
+                ->where('company_id', auth()->user()->company_id)
+                ->get()
+                ->groupBy('linked_lr_id');
+        }
+
         // Get filter data for dropdowns
         $transporters = \App\Models\Transporter::with('transporterMaster')
             ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
@@ -170,6 +189,7 @@ class VoucherPaymentController extends Controller
             'cities' => $cities,
             'paymentModes' => $paymentModes,
             'branches' => $branches,
+            'linkedLorryReceiptsByLinkedId' => $linkedLorryReceiptsByLinkedId,
         ]);
     }
 
