@@ -34,7 +34,11 @@ class TruckOwnerController extends Controller
     private function getTruckOwnersData(Request $request)
     {
         try {
-            $query = Transporter::with(['company', 'transporterMaster.city'])->where('is_owner', 1); // Show only truck owners
+            $query = Transporter::with([
+                'company',
+                'transporterMaster.city',
+                'trucks:id,transporter_id,truck_number',
+            ])->where('is_owner', 1); // Show only truck owners
 
             if (Auth::user()->company_id) {
                 $query->where('company_id', Auth::user()->company_id);
@@ -132,8 +136,7 @@ class TruckOwnerController extends Controller
 
             $data = [];
             foreach ($truckOwners as $index => $truckOwner) {
-                $trucks = $truckOwner->trucks();
-                $truckNumbers = $trucks->pluck('truck_number')->toArray();
+                $truckNumbers = $truckOwner->trucks->pluck('truck_number')->toArray();
                 $truckList = implode(', ', $truckNumbers);
                 $data[] = [
                     'name' => '<a href="#" class="truck-owner-name-link text-brand-primary fw-bold" data-bs-toggle="tooltip" title="Trucks: '.htmlspecialchars($truckList).'" data-id="'.$truckOwner->id.'" style="text-decoration: none;">'.($truckOwner->name ?? 'N/A').'</a>',
