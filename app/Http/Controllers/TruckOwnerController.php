@@ -501,7 +501,8 @@ class TruckOwnerController extends Controller
      */
     private function updateFreightBookingsTds($transporter, $newTdsPercentage): void
     {
-        $freightBookings = FreightBooking::where('transporter_id', $transporter->id)
+        $freightBookings = FreightBooking::with(['lr:id,weight,gr_date'])
+            ->where('transporter_id', $transporter->id)
             ->get();
 
         foreach ($freightBookings as $freightBooking) {
