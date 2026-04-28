@@ -3,6 +3,14 @@
     $totalAmount = 0;
     $lrs = $invoice->custom_invoice ? [] : ($invoice->lr_ids ?? []);
     $customDetails = $customDetails ?? collect();
+    $forExcel = $forExcel ?? false;
+    $accountNumberDisplay = '-';
+    if (($company->account_number ?? null) !== null && $company->account_number !== '') {
+        $accountNumberDisplay = (string) $company->account_number;
+        if (stripos($accountNumberDisplay, 'e') !== false) {
+            $accountNumberDisplay = sprintf('%.0f', (float) $company->account_number);
+        }
+    }
     $usePdfLogoPath = ($partyBillInvoiceUsePdfLogoPath ?? false) === true;
     $invoiceCompanyLogoSrc = $usePdfLogoPath
         ? $company->logoFilesystemPathForPdf()
@@ -217,7 +225,7 @@
     </tr>
     <tr>
         <td style="font-weight: bold;" colspan="2">Account No:</td>
-        <td colspan="7">{{ $company->account_number ?? '' }}</td>
+        <td colspan="7" style="text-align: left; {{ $forExcel ? "mso-number-format:'\\@';" : '' }}">{{ $accountNumberDisplay }}</td>
         @if ($cgst > 0)
             <td style="font-weight: bold;" colspan="2">CGST {{ $cgstpercent }}%</td>
             <td colspan="2">{{ number_format($cgst, 2) }}</td>
