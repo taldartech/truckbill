@@ -334,6 +334,7 @@
                                                 data-transporter-id="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->id : '' }}"
                                                 data-balance="{{ $booking->balance_amount ?? 0 }}"
                                                 data-voucher_number="{{ $booking->voucher_number ?? '' }}"
+                                                data-freight-rate="{{ $booking->tr_fr_rate ?? 0 }}"
                                                 data-freight-booking-id="{{ $booking->id }}"
                                                 data-is-cancelled="{{ $booking->is_cancelled ? '1' : '0' }}"
                                                 data-is-delivered="{{ $booking->is_delivered ? '1' : '0' }}"
@@ -554,6 +555,7 @@
                     memoId: $(this).data('memo-id'),
                     linkedLrId: $(this).data('linked-lr-id'),
                     voucher_number: $(this).data('voucher_number'),
+                    freight_rate: parseFloat($(this).data('freight-rate') || 0),
                     freight_booking_id: $(this).data('freight-booking-id'),
                     lr_id: $(this).data('lr-id'),
                     transporter: $(this).data('transporter'),
@@ -596,6 +598,7 @@
                             memoId: $(this).data('memo-id'),
                             linkedLrId: $(this).data('linked-lr-id'),
                             voucher_number: $(this).data('voucher_number'),
+                            freight_rate: parseFloat($(this).data('freight-rate') || 0),
                             freight_booking_id: $(this).data('freight-booking-id'),
                                     lr_id: $(this).data('lr-id'),
                                     transporter: $(this).data('transporter'),
@@ -1237,7 +1240,7 @@
                     const lrNumber = data.lr;
                     const truckNumber = data.truck;
                     const amount = parseFloat(data.amount) || 0;
-                    const voucherNumber = data.voucher_number || '-';
+                    const freightRate = parseFloat(data.freight_rate || 0);
                     const freightBookingId = data.freight_booking_id;
                     const shortageAmount = parseFloat(data.shortage_amount) || 0;
                     const damageAmount = parseFloat(data.damage_amount) || 0;
@@ -1255,7 +1258,7 @@
                         <tr>
                             <td>${lrNumber}</td>
                             <td>${truckNumber}</td>
-                            <td>${voucherNumber}</td>
+                            <td class="text-end">${freightRate.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                             <td class="text-end">₹${amount + shortageAmount + damageAmount}</td>
                             <td class="text-end">₹${shortageAmount}</td>
                             <td class="text-end">₹${damageAmount}</td>
@@ -1282,7 +1285,7 @@
                                     <tr>
                                         <th>LR Number</th>
                                         <th>Truck Number</th>
-                                        <th>Voucher Number</th>
+                                        <th class="text-end">Freight Rate</th>
                                         <th class="text-end">LR Amount</th>
                                         <th class="text-end">Shortage</th>
                                         <th class="text-end">Damage</th>
@@ -1852,6 +1855,7 @@
                                 memoId: $(this).data('memo-id'),
                                 linkedLrId: $(this).data('linked-lr-id'),
                                 voucher_number: $(this).data('voucher_number'),
+                                freight_rate: parseFloat($(this).data('freight-rate') || 0),
                                 freight_booking_id: $(this).data('freight-booking-id'),
                                 lr_id: $(this).data('lr-id')
                             };
