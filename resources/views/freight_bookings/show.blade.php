@@ -293,28 +293,13 @@
                                 </div>
                             @else
                                 @php
-                                    $freightBookingIds = \App\Models\FreightBooking::where(
-                                        'linked_lr_id',
-                                        $freightBooking->linked_lr_id,
-                                    )
-                                        ->where('is_cancelled', false)
-                                        ->where('company_id', auth()->user()->company_id)
-                                        ->pluck('id')
-                                        ->toArray();
-                                    $frs = [];
-                                    foreach ($freightBookingIds as $freightBookingId) {
-                                        $frs[] = \App\Models\FreightBooking::find($freightBookingId);
-                                    }
-                                    $total_tr_amount = 0;
-                                    $total_advance = 0;
-                                    $total_tds_amount = 0;
-                                    $total_balance = 0;
-                                    foreach ($frs as $fr) {
-                                        $total_tr_amount += $fr->tr_amount;
-                                        $total_advance += $fr->advance_amount;
-                                        $total_tds_amount += $fr->tds_amount;
-                                        $total_balance += $fr->balance_amount;
-                                    }
+                                    $frs = $linkedFreightBookings
+                                        ->filter(fn($fr) => ! $fr->is_cancelled)
+                                        ->values();
+                                    $total_tr_amount = $frs->sum('tr_amount');
+                                    $total_advance = $frs->sum('advance_amount');
+                                    $total_tds_amount = $frs->sum('tds_amount');
+                                    $total_balance = $frs->sum('balance_amount');
                                 @endphp
                                 <table class="table combined-table">
                                     <thead>
