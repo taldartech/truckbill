@@ -147,22 +147,21 @@
                                 <td style="text-align: right;">{{ number_format($lr->fr_rate, 2) }}</td>
                                 <td style="text-align: right;">{{ number_format($lr->amount, 2) }}</td>
                                 @php
-                                    $invoice = \App\Models\Invoice::whereJsonContains('lr_ids', $lr->id)->first();
-                                    // Fetch amount and payment status from the bill if exists
+                                    $invoice = $invoiceByLrId[$lr->id] ?? null;
                                     if (($invoice->invoice_type ?? '') === 'Forward') {
                                         $gst = 5;
                                     } else {
                                         $gst = 0;
                                     }
                                 @endphp
-                                <td>{{ $invoice->invoice_number ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '') : ($invoice->manual_invoice_number ?? $invoice->id) }}</td>
+                                <td>{{ $invoice ? ($invoice->invoice_number ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '') : ($invoice->manual_invoice_number ?? $invoice->id)) : 'N/A' }}</td>
                                 <td style="white-space: nowrap;">
-                                    {{ $invoice->generated_date ? \Carbon\Carbon::parse($invoice->generated_date)->format('d-m-Y') : 'N/A' }}
+                                    {{ $invoice && $invoice->generated_date ? \Carbon\Carbon::parse($invoice->generated_date)->format('d-m-Y') : 'N/A' }}
                                 </td>
                                 <td style="text-align: right;">
                                     {{ number_format($lr->amount + ($lr->amount * $gst) / 100, 2) }}
                                 </td>
-                                <td>{{ $invoice->payment_status }}</td>
+                                <td>{{ $invoice->payment_status ?? 'N/A' }}</td>
                             </tr>
                         @endforeach
                     </tbody>

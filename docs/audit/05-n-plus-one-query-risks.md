@@ -33,6 +33,9 @@ This document lists likely N+1 query risks discovered via static code review. Th
 - **Risk pattern:** `Invoice::whereJsonContains('lr_ids', $lr->id)->first()` inside LR loop.
 - **Why it is N+1-prone:** Per-row query during rendering.
 - **Recommended fix:** Build an invoice map once in controller for all LR IDs and pass lookup data to the view.
+- **Status:** Resolved on 2026-04-28.
+- **Implemented in:** `app/Http/Controllers/ReportController.php` (`party_ledger`) and `resources/views/reports/party-ledger.blade.php`.
+- **Implementation notes:** Added one batched invoice fetch for all LR IDs on the current page (single `where(...orWhereJsonContains...)` query), transformed into an `$invoiceByLrId` map, and replaced in-loop invoice query with map access.
 
 ### 4) Repeated `find()` and lazy relation access in freight booking show view (High)
 

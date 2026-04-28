@@ -241,6 +241,7 @@ class ReportController extends Controller
         [$startDate, $endDate, $hasRange] = $this->normalizeDateRange($request);
 
         $customerId = $request->input('customer_id') ?? null;
+        $invoiceByLrId = collect();
 
         if ($customerId && $hasRange) {
             $user = Auth::user()->company_id;
@@ -255,10 +256,37 @@ class ReportController extends Controller
             }
 
             $lrs = $query->paginate(self::REPORTS_PER_PAGE)->appends($request->query());
+
+            $currentPageLrIds = collect($lrs->items())->pluck('id')->all();
+            if (! empty($currentPageLrIds)) {
+                $invoices = Invoice::query()
+                    ->where('company_id', Auth::user()->company_id)
+                    ->where(function ($invoiceQuery) use ($currentPageLrIds) {
+                        foreach ($currentPageLrIds as $lrId) {
+                            $invoiceQuery->orWhereJsonContains('lr_ids', (int) $lrId);
+                        }
+                    })
+                    ->get([
+                        'id',
+                        'invoice_number',
+                        'manual_invoice_number',
+                        'generated_date',
+                        'payment_status',
+                        'invoice_type',
+                        'lr_ids',
+                    ]);
+
+                $invoiceByLrId = $invoices
+                    ->flatMap(function ($invoice) {
+                        return collect($invoice->lr_ids ?? [])->mapWithKeys(function ($lrId) use ($invoice) {
+                            return [(int) $lrId => $invoice];
+                        });
+                    });
+            }
         } else {
             $lrs = collect();
         }
-        return view('reports.party-ledger', compact('lrs', 'consignees', 'startDate', 'endDate', 'customerId'));
+        return view('reports.party-ledger', compact('lrs', 'consignees', 'startDate', 'endDate', 'customerId', 'invoiceByLrId'));
     }
 
     public function party_ledger_export(Request $request)
