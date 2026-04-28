@@ -956,10 +956,14 @@ class VoucherPaymentController extends Controller
             if ($currentStatus === 'paid') {
                 return redirect()->back()->with('error', 'Paid payments cannot be updated.');
             }
-            $voucher_ids = [];
-            foreach ($multiple_payment_ids as $id) {
-                $voucher_ids = array_merge($voucher_ids, json_decode(VoucherLinked::find($id)->voucher_ids));
-            }
+            $voucher_ids = $linkedPayments
+                ->pluck('voucher_ids')
+                ->flatMap(function ($voucherIds) {
+                    $decoded = json_decode($voucherIds, true);
+
+                    return is_array($decoded) ? $decoded : [];
+                })
+                ->all();
             $voucher_ids = array_merge($payment_ids, $voucher_ids);
             $voucherPayments = VoucherPayment::whereIn('id', $voucher_ids)->get();
             foreach ($voucherPayments as $payment) {
