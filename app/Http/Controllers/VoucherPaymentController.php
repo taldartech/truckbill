@@ -10,6 +10,7 @@ use App\Models\Transporter;
 use App\Models\Truck;
 use App\Models\VoucherLinked;
 use App\Models\VoucherPayment;
+use App\Services\FreightBookingBalanceAdjustmentService;
 use App\Services\Notifications\VoucherPaymentNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -442,6 +443,8 @@ class VoucherPaymentController extends Controller
 
             // Save the freight booking
             $freightBooking->save();
+            app(FreightBookingBalanceAdjustmentService::class)
+                ->adjustNegativeBalanceToAdvance($freightBooking);
 
             \DB::commit();
 
@@ -903,6 +906,8 @@ class VoucherPaymentController extends Controller
                 $freightBooking->advance_amount += $amount;
                 $freightBooking->balance_amount = $freightBooking->tr_amount - $freightBooking->advance_amount;
                 $freightBooking->save();
+                app(FreightBookingBalanceAdjustmentService::class)
+                    ->adjustNegativeBalanceToAdvance($freightBooking);
             }
 
             return redirect()->route('voucher_payments.index')
@@ -1068,6 +1073,8 @@ class VoucherPaymentController extends Controller
 
                     // Save the freight booking
                     $freightBooking->save();
+                    app(FreightBookingBalanceAdjustmentService::class)
+                        ->adjustNegativeBalanceToAdvance($freightBooking);
 
                     // Delete the voucher payment
                     $voucher->delete();
@@ -1100,6 +1107,8 @@ class VoucherPaymentController extends Controller
 
                 // Save the freight booking
                 $freightBooking->save();
+                app(FreightBookingBalanceAdjustmentService::class)
+                    ->adjustNegativeBalanceToAdvance($freightBooking);
 
                 // Delete the voucher payment
                 $voucher_payment->delete();

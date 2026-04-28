@@ -67,8 +67,10 @@ class TransporterReportExport implements FromCollection, WithHeadings, ShouldAut
                     }
                 }
                 $total_balance = $fr->balance_amount;
+                $negativeAdjusted = (float) ($fr->negative_adjusted_amount ?? 0);
             } else {
                 $total_balance = 0;
+                $negativeAdjusted = 0;
             }
 
             $row = [
@@ -94,6 +96,7 @@ class TransporterReportExport implements FromCollection, WithHeadings, ShouldAut
                 (float) ($fr?->shortage_amount ?? 0),
                 (float) ($fr?->misc_expense ?? 0),
                 (float) ($total_balance ?? 0),
+                $negativeAdjusted,
             ]);
             $data[] = $row;
         }
@@ -127,6 +130,7 @@ class TransporterReportExport implements FromCollection, WithHeadings, ShouldAut
             'Short Amount',
             'Misc Expenses',
             'Balance',
+            'Negative Adjusted',
         ]);
 
         return $headers;
@@ -149,7 +153,7 @@ class TransporterReportExport implements FromCollection, WithHeadings, ShouldAut
             $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(14 + $i);
             $formats[$col] = $numFormat;
         }
-        for ($idx = 0; $idx < 4; $idx++) {
+        for ($idx = 0; $idx < 5; $idx++) {
             $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(14 + $paymentCount + $idx);
             $formats[$col] = $numFormat;
         }

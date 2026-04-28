@@ -176,6 +176,7 @@
                             <th>Short Amount</th>
                             <th>Misc Expenses</th>
                             <th>Balance</th>
+                            <th>Negative Adjusted</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -217,6 +218,7 @@
                                 <td>{{ number_format($lr->shortage_amount ?? 0, 2) }}</td>
                                 <td>{{ number_format($fr?->misc_expense ?? 0, 2) }}</td>
                                 <td>{{ number_format($total_balance, 2) }}</td>
+                                <td>{{ number_format($fr?->negative_adjusted_amount ?? 0, 2) }}</td>
                             </tr>
                         @endforeach
                     </tbody>

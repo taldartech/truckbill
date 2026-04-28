@@ -85,8 +85,8 @@ class DispatchExport implements FromView, ShouldAutoSize, WithColumnFormatting
             'AF' => $numFormat,
             'AG' => $numFormat,
             'AH' => $numFormat,
-            'AP' => NumberFormat::FORMAT_NUMBER,
-            'AQ' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'AQ' => NumberFormat::FORMAT_NUMBER,
+            'AR' => NumberFormat::FORMAT_DATE_DDMMYYYY,
         ];
     }
 }

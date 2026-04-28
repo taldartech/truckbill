@@ -9,6 +9,7 @@ use App\Models\Pump;
 use App\Models\Transporter;
 use App\Models\Truck;
 use App\Models\VoucherPayment;
+use App\Services\FreightBookingBalanceAdjustmentService;
 use App\Services\Notifications\FreightBookingNotificationService;
 use App\Services\Notifications\LorryReceiptNotificationService;
 use Illuminate\Http\Request;
@@ -1109,6 +1110,8 @@ class FreightBookingController extends Controller
         if (! $lorryReceipt) {
             return redirect()->back()->withErrors(['lr_id' => 'Invalid good receipt (bilty)']);
         }
+        DB::beginTransaction();
+        try {
         // Use the new TR amount from form data instead of existing (may be fixed or auto-calculated)
         $newTrAmount = $data['tr_amount'];
         $isFixedAmount = (bool) ($data['is_fixed_amount'] ?? $freightBooking->is_fixed_amount);
@@ -1335,7 +1338,21 @@ class FreightBookingController extends Controller
             $this->frNotificationService->notifyCancelled($freightBooking, auth()->user());
         }
 
+        $freightBooking->refresh();
+        app(FreightBookingBalanceAdjustmentService::class)
+            ->adjustNegativeBalanceToAdvance($freightBooking, $lorryReceipt?->lr_number);
+
+        DB::commit();
         return redirect()->route('freight_bookings.index', $request->query())->with('success', 'Good Hire (Lorry Hire) updated successfully.');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            \Log::error('Freight booking update failed', [
+                'freight_booking_id' => $freightBooking->id ?? null,
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()->back()->withErrors(['general' => 'Unable to update freight booking. Please try again.'])->withInput();
+        }
     }
 
     public function destroy(FreightBooking $freight_booking)

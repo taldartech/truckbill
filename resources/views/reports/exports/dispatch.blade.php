@@ -40,6 +40,7 @@
             <th>Deviation</th>
             <th>Misc</th>
             <th>Balance</th>
+            <th>Negative Adjusted</th>
             <th>Diff</th>
             <th>Memo No</th>
             <th>Bill No</th>
@@ -111,6 +112,7 @@
                 <td>{{ $freight?->misc_expense ?? 0 }}</td>
 
                 <td>{{ $freight?->balance_amount ?? 0 }}</td>
+                <td>{{ $freight?->negative_adjusted_amount ?? 0 }}</td>
 
                 <td>{{ $diff ?? 0 }}</td>
                 <td>{{ $lr->memo_id ?? '-' }}</td>
