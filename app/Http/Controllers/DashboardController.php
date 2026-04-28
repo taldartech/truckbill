@@ -325,7 +325,7 @@ class DashboardController extends Controller
             ->get(['name', 'lorry_receipts_count']);
 
         // Expired Eway bills
-        $expiredEwayBills = FreightBooking::with('lr')
+        $expiredEwayBills = FreightBooking::with('lr.truck.driver')
             ->where('company_id', $companyId)
             ->where('is_delivered', 0)
             ->where('is_cancelled', 0)
@@ -511,7 +511,7 @@ class DashboardController extends Controller
             ->get();
 
         // Expired Eway bills
-        $expiredEwayBills = FreightBooking::with('lr')
+        $expiredEwayBills = FreightBooking::with('lr.truck.driver')
             ->where('company_id', $companyId)
             ->where('is_delivered', 0)
             ->where('is_cancelled', 0)
@@ -698,7 +698,7 @@ class DashboardController extends Controller
             ->take(10)
             ->get();
 
-        $expiredEwayBills = FreightBooking::with('lr')
+        $expiredEwayBills = FreightBooking::with('lr.truck.driver')
             ->whereIn('transporter_id', $transporterIds)
             ->where('is_delivered', 0)
             ->where('is_cancelled', 0)
