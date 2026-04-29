@@ -11,6 +11,7 @@ use App\Models\Truck;
 use App\Models\VoucherLinked;
 use App\Models\VoucherPayment;
 use App\Services\FreightBookingBalanceAdjustmentService;
+use App\Services\TransporterAdvanceLedgerService;
 use App\Services\Notifications\VoucherPaymentNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -1257,15 +1258,16 @@ class VoucherPaymentController extends Controller
     private function recordAdvancePaymentForTransporter(int $transporterId, float $signedAmount, FreightBooking $freightBooking, string $remarkNote): void
     {
         $lrNumber = $freightBooking->lr?->lr_number ?? (string) $freightBooking->id;
-        $advanceRequest = new Request([
-            'transporter_id' => $transporterId,
-            'advance_amount' => $signedAmount,
-            'payment_date' => now()->toDateString(),
-            'remark' => 'LR#'.$lrNumber.' – '.$remarkNote,
-        ]);
-        $advanceRequest->headers->set('X-Requested-With', 'XMLHttpRequest');
 
-        app(AdvancePaymentController::class)->store($advanceRequest);
+        app(TransporterAdvanceLedgerService::class)->recordAdvancePayment(
+            companyId: (int) $freightBooking->company_id,
+            transporterId: $transporterId,
+            advanceAmount: $signedAmount,
+            paymentDate: now()->toDateString(),
+            remark: 'LR#'.$lrNumber.' – '.$remarkNote,
+            actor: auth()->user(),
+            notifyCredit: false
+        );
     }
 
     private function effectivePayableAmount(FreightBooking $freightBooking): float

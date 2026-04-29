@@ -10,6 +10,7 @@ use App\Models\Transporter;
 use App\Models\Truck;
 use App\Models\VoucherPayment;
 use App\Services\FreightBookingBalanceAdjustmentService;
+use App\Services\TransporterAdvanceLedgerService;
 use App\Services\Notifications\FreightBookingNotificationService;
 use App\Services\Notifications\LorryReceiptNotificationService;
 use Illuminate\Http\Request;
@@ -1619,18 +1620,16 @@ class FreightBookingController extends Controller
                         $freightBooking->balance_amount = $effectivePayableAmount - $freightBooking->advance_amount;
                         $freightBooking->save();
 
-                        $advanceRequest = new \Illuminate\Http\Request([
-                            'company_id' => $freightBooking->company_id,
-                            'transporter_id' => $transporter->id,
-                            'advance_amount' => -$amount, // NEGATIVE because adjusting
-                            'payment_date' => now()->toDateString(),
-                            'remark' => "LR#{$freightBooking->lr->lr_number}",
-                        ]);
-
-                        // mark request as ajax so it won’t redirect
-                        $advanceRequest->headers->set('X-Requested-With', 'XMLHttpRequest');
-
-                        app(\App\Http\Controllers\AdvancePaymentController::class)->store($advanceRequest);
+                        $lrNumber = $freightBooking->lr?->lr_number ?? (string) $freightBooking->id;
+                        app(TransporterAdvanceLedgerService::class)->recordAdvancePayment(
+                            companyId: (int) $freightBooking->company_id,
+                            transporterId: (int) $transporter->id,
+                            advanceAmount: -(float) $amount,
+                            paymentDate: now()->toDateString(),
+                            remark: "LR#{$lrNumber}",
+                            actor: auth()->user(),
+                            notifyCredit: false
+                        );
 
                         // No success logging (log only on error paths)
                     }
