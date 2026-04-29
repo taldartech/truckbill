@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\Invoice;
+use App\Models\LorryReceipt;
 use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
@@ -26,15 +27,30 @@ class PartyBillExport implements FromView, ShouldAutoSize, WithEvents
    */
   public function view(): View
   {
-    $invoice = Invoice::find($this->id);
+    $invoice = Invoice::with([
+      'consignee.city',
+      'consignee.state',
+      'company.city',
+      'company.state',
+    ])->find($this->id);
     $customDetails = collect();
+    $lorryReceiptsById = collect();
     if ($invoice && $invoice->custom_invoice) {
       $invoice->load(['customInvoiceDetails.lorryReceipt.truck']);
       $customDetails = $invoice->customInvoiceDetails->sortBy('sort_order')->values();
+    } elseif ($invoice) {
+      $lrIds = collect($invoice->lr_ids ?? [])->filter()->values();
+      if ($lrIds->isNotEmpty()) {
+        $lorryReceiptsById = LorryReceipt::with(['truck'])
+          ->whereIn('id', $lrIds)
+          ->get()
+          ->keyBy('id');
+      }
     }
     return view('reports.exports.party-bill', [
       'invoice' => $invoice,
       'customDetails' => $customDetails,
+      'lorryReceiptsById' => $lorryReceiptsById,
       'forExcel' => true,
     ]);
   }

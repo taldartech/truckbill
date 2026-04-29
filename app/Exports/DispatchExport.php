@@ -28,6 +28,7 @@ class DispatchExport implements FromView, ShouldAutoSize, WithColumnFormatting
     public function view(): \Illuminate\Contracts\View\View
     {
         $user = Auth::user()->company_id;
+        $invoiceByLrId = collect();
         if ($this->startDate || $this->endDate) {
             $query = LorryReceipt::with([
                 'freightBookings' => function ($q) {
@@ -45,6 +46,23 @@ class DispatchExport implements FromView, ShouldAutoSize, WithColumnFormatting
             }
 
             $lrs = $query->get();
+            $lrIds = $lrs->pluck('id')->all();
+            if (! empty($lrIds)) {
+                $invoices = Invoice::query()
+                    ->where('company_id', $user)
+                    ->where(function ($invoiceQuery) use ($lrIds) {
+                        foreach ($lrIds as $lrId) {
+                            $invoiceQuery->orWhereJsonContains('lr_ids', (int) $lrId);
+                        }
+                    })
+                    ->get(['id', 'invoice_number', 'manual_invoice_number', 'lr_ids']);
+
+                $invoiceByLrId = $invoices->flatMap(function ($invoice) {
+                    return collect($invoice->lr_ids ?? [])->mapWithKeys(function ($lrId) use ($invoice) {
+                        return [(int) $lrId => $invoice];
+                    });
+                });
+            }
         } else {
             $lrs = [];
         }
@@ -52,6 +70,7 @@ class DispatchExport implements FromView, ShouldAutoSize, WithColumnFormatting
         // When exporting, let the view know it's being rendered for Excel
         return view('reports.exports.dispatch', [
             'lrs'      => $lrs,
+            'invoiceByLrId' => $invoiceByLrId,
             'forExcel' => true,
         ]);
     }

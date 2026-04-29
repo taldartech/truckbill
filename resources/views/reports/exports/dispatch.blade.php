@@ -2,6 +2,7 @@
     // Flag that tells this view whether it's being rendered for Excel export
     // Default to false when included from a normal Blade view
     $forExcel = $forExcel ?? false;
+    $invoiceByLrId = $invoiceByLrId ?? collect();
 @endphp
 
 <table class="table table-bordered table-striped" style="font-size: 12px !important;">
@@ -67,7 +68,7 @@
                     $fuel = $vouchers?->where('payment_mode', 'fuel(paid to pump)')->sum('amount');
                     $advance = $vouchers?->where('payment_mode', 'adjust in advance')->sum('amount');
                     $diff = $lr->fr_rate - ($freight?->tr_fr_rate);
-                    $invoice = \App\Models\Invoice::whereJsonContains('lr_ids', $lr->id)->first();
+                    $invoice = $invoiceByLrId[$lr->id] ?? null;
                 @endphp
                 <td>{{ $loop->iteration }}</td>
                 <td>
@@ -116,7 +117,7 @@
 
                 <td>{{ $diff ?? 0 }}</td>
                 <td>{{ $lr->memo_id ?? '-' }}</td>
-                <td>{{ @$invoice->invoice_number ? @$invoice->invoice_number . (@$invoice->manual_invoice_number ? ' (' . @$invoice->manual_invoice_number . ')' : '') : (@$invoice->manual_invoice_number ?? @$invoice->id) }}</td>
+                <td>{{ $invoice ? ($invoice->invoice_number ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '') : ($invoice->manual_invoice_number ?? $invoice->id)) : '-' }}</td>
                 <td>{{ $lr->truck?->driver?->name ?? '-' }}</td>
                 <td>{{ optional($lr->transporter)->name ?? '-' }}</td>
                 <td>{{ $lr->reference?->name ?? '-' }}</td>
