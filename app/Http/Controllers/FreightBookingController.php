@@ -600,49 +600,45 @@ class FreightBookingController extends Controller
         }
         $data['company_id'] = (int) $activeCompanyId;
 
-        // Get the lorry receipt to get its LR number
-        $lorryReceipt = LorryReceipt::find($data['lr_id']);
-        if (! $lorryReceipt) {
-            return redirect()->back()->withErrors(['lr_id' => 'Invalid good receipt (bilty)']);
-        }
+        try {
+            DB::beginTransaction();
 
-        if ($lorryReceipt->freight_booking_id) {
-            return redirect()->route('freight_bookings.index')->with('error', 'This Good Receipt (Bilty) is already linked to a Good Hire (Lorry Hire).');
-        }
+            $lorryReceipt = LorryReceipt::lockForUpdate()->find($data['lr_id']);
+            if (! $lorryReceipt) {
+                DB::rollBack();
 
-        // Create freight booking with lorry receipt's LR number
-        // Get the next voucher number
-        $nextVoucherNumber = FreightBooking::max('voucher_number') + 1;
+                return redirect()->back()->withErrors(['lr_id' => 'Invalid good receipt (bilty)']);
+            }
 
-        // Get transporter information from lorry receipt
-        $transporterInfo = [];
-        if ($lorryReceipt->transporter) {
-            $transporterInfo = [
-                'transporter_id' => $lorryReceipt->transporter_id,
-                'transporter_name' => $lorryReceipt->transporter->name,
-                'transporter_tds_percentage' => $lorryReceipt->transporter->tds_percentage,
-            ];
-        }
+            if ($lorryReceipt->freight_booking_id) {
+                DB::rollBack();
 
-        $linkedLrId = $lorryReceipt->linked_lr_id ?? null;
-        $linked_freight_booking_id = FreightBooking::where('lr_id', $lorryReceipt->id)->orderBy('id', 'desc')->first()->id ?? null;
+                return redirect()->route('freight_bookings.index')->with('error', 'This Good Receipt (Bilty) is already linked to a Good Hire (Lorry Hire).');
+            }
 
-        $freightBooking = FreightBooking::create(array_merge($data, [
-            'lr_number' => $lorryReceipt->lr_number,
-            'linked_freight_booking_id' => $linked_freight_booking_id,
-            'voucher_number' => $nextVoucherNumber,
-            'pan_verified' => (bool) $data['pan_verified'],
-            'company_id' => $data['company_id'],
-            'linked_lr_id' => $linkedLrId,
-        ], $transporterInfo));
+            $nextVoucherNumber = FreightBooking::max('voucher_number') + 1;
 
-        if (! empty($data['is_cancelled'])) {
-            $freightBooking->loadMissing(['company', 'lr.truck', 'transporter.transporterMaster']);
-            $this->frNotificationService->notifyCancelled($freightBooking, auth()->user());
-        }
+            $transporterInfo = [];
+            if ($lorryReceipt->transporter) {
+                $transporterInfo = [
+                    'transporter_id' => $lorryReceipt->transporter_id,
+                    'transporter_name' => $lorryReceipt->transporter->name,
+                    'transporter_tds_percentage' => $lorryReceipt->transporter->tds_percentage,
+                ];
+            }
 
-        // Update lorry receipt status and damage amount
-        if ($lorryReceipt) {
+            $linkedLrId = $lorryReceipt->linked_lr_id ?? null;
+            $linked_freight_booking_id = FreightBooking::where('lr_id', $lorryReceipt->id)->orderBy('id', 'desc')->first()->id ?? null;
+
+            $freightBooking = FreightBooking::create(array_merge($data, [
+                'lr_number' => $lorryReceipt->lr_number,
+                'linked_freight_booking_id' => $linked_freight_booking_id,
+                'voucher_number' => $nextVoucherNumber,
+                'pan_verified' => (bool) $data['pan_verified'],
+                'company_id' => $data['company_id'],
+                'linked_lr_id' => $linkedLrId,
+            ], $transporterInfo));
+
             $oldDeliveryStatus = $lorryReceipt->delivery_status;
             $deliveryStatus = 'Pending';
             if ($data['is_cancelled'] === '1') {
@@ -656,10 +652,41 @@ class FreightBookingController extends Controller
             $lorryReceipt->freight_booking_id = $freightBooking->id;
             $lorryReceipt->save();
 
-            if ($deliveryStatus !== $oldDeliveryStatus) {
-                $lorryReceipt->loadMissing(['company', 'truck', 'transporter.transporterMaster', 'customer']);
-                $this->lrNotificationService->notifyStatusChange($lorryReceipt, $deliveryStatus, auth()->user());
+            $company = Company::lockForUpdate()->find($data['company_id']);
+            if (! $company) {
+                DB::rollBack();
+
+                return redirect()->back()->withErrors(['company_id' => 'Invalid company context for this request.']);
             }
+            $company->lr_credits = $company->lr_credits - 1;
+            $company->save();
+
+            $notifyCancelled = ! empty($data['is_cancelled']);
+            $notifyLrStatusChange = $deliveryStatus !== $oldDeliveryStatus;
+
+            DB::afterCommit(function () use ($notifyCancelled, $notifyLrStatusChange, $freightBooking, $lorryReceipt, $deliveryStatus): void {
+                if ($notifyCancelled) {
+                    $freightBooking->loadMissing(['company', 'lr.truck', 'transporter.transporterMaster']);
+                    $this->frNotificationService->notifyCancelled($freightBooking, auth()->user());
+                }
+
+                if ($notifyLrStatusChange) {
+                    $lorryReceipt->loadMissing(['company', 'truck', 'transporter.transporterMaster', 'customer']);
+                    $this->lrNotificationService->notifyStatusChange($lorryReceipt, $deliveryStatus, auth()->user());
+                }
+            });
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            \Log::error('Freight booking create failed', [
+                'error' => $e->getMessage(),
+                'request_context' => $this->freightBookingUpdateLogContext($request),
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['general' => 'Unable to create Good Hire (Lorry Hire). Please try again.']);
         }
 
         if ($request->has('action') && $request->action === 'save_and_pay') {
@@ -671,10 +698,6 @@ class FreightBookingController extends Controller
             return redirect()->route('freight_bookings.show', $freightBooking->id)
                 ->with('success', 'Good Hire (Lorry Hire) created successfully. Ready to make payment.');
         }
-        // decrease lr credits by one in company table
-        $company = Company::find($data['company_id']);
-        $company->lr_credits = $company->lr_credits - 1;
-        $company->save();
 
         return redirect()->route('freight_bookings.index')->with('success', 'Good Hire (Lorry Hire) created successfully.');
     }
