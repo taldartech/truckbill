@@ -347,7 +347,8 @@
                                                 data-tds-percentage="{{ $booking->transporter_tds_percentage ?? '' }}"
                                                 data-customer-id="{{ $booking->lr && $booking->lr->customer ? $booking->lr->customer->id : '' }}"
                                                 data-shortage-amount="{{ $booking->shortage_amount ?? 0 }}"
-                                                data-damage-amount="{{ $booking->damage_amount ?? 0 }}">
+                                                data-damage-amount="{{ $booking->damage_amount ?? 0 }}"
+                                                data-advance-amount="{{ $booking->lr->transporter->advance_amount ?? 0 }}">
                                         @endif
                                     </td>
                                     <td class="text-center"
@@ -567,7 +568,8 @@
                     tds_percentage: $(this).data('tds-percentage'),
                     amount: $(this).data('amount'),
                     shortage_amount: $(this).data('shortage-amount'),
-                    damage_amount: $(this).data('damage-amount')
+                    damage_amount: $(this).data('damage-amount'),
+                    advance_amount: $(this).data('advance-amount')
                 };
                 if (!selectedBookingIds.includes(id)) {
                     selectedBookingIds.push(id);
@@ -610,7 +612,8 @@
                                     tds_percentage: $(this).data('tds-percentage'),
                                     amount: $(this).data('amount'),
                                     shortage_amount: $(this).data('shortage-amount'),
-                                    damage_amount: $(this).data('damage-amount')
+                                    damage_amount: $(this).data('damage-amount'),
+                                    advance_amount: $(this).data('advance-amount')
                         };
                     }
                 } else {
@@ -2003,6 +2006,7 @@
             const firstTransporterShortName = firstData.transporter_short_name;
             const firstTransporterBeneficiaryId = firstData.transporter_beneficiary_id;
             const firstTdsPercentage = firstData.tds_percentage;
+            const firstAdvanceAmount = firstData.advance_amount;
 
             modalBody.innerHTML += `
                   <div class="alert alert-primary mb-3">
@@ -2025,6 +2029,9 @@
                             </div>
                             <div class="col-md-4">
                                 <strong>Truck Number:</strong> ${firstTruck || 'N/A'}
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Advance Amount:</strong> ${firstAdvanceAmount || 'N/A'}
                             </div>
                       </div>
                   </div>
@@ -2338,7 +2345,7 @@
                                 <label for="individualTotalAmountInput" class="form-label">Payment Amount *</label>
                                 <div class="input-group">
                                     <span class="input-group-text">₹</span>
-                                    <input type="number" step="0.01" class="form-control" name="total_amount" id="individualTotalAmountInput" value="${balance.toFixed(2)}" min="0.01" max="${balance}" required>
+                                    <input type="number" step="0.01" class="form-control" name="total_amount" id="individualTotalAmountInput" min="0.01" max="${balance}" required>
                                 </div>
                                 <div class="invalid-feedback">Please enter a valid payment amount.</div>
                                 <small class="text-muted">Amount must be greater than zero and not exceed ₹${balance.toFixed(2)}</small>

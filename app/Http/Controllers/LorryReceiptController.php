@@ -1459,7 +1459,7 @@ class LorryReceiptController extends Controller
     {
         try {
 
-            $lrs = LorryReceipt::with(['truck', 'freightBookings'])
+            $lrs = LorryReceipt::with(['truck', 'freightBookings', 'transporter'])
                 ->where('company_id', Auth::user()->company_id)
                 ->where('linked_lr_id', $linkedId)
                 ->get()
@@ -1472,6 +1472,7 @@ class LorryReceiptController extends Controller
                         'truck_number' => $lr->truck?->truck_number ?? '',
                         'freight_booking_id' => $lr->freight_booking_id,
                         'balance_amount' => $lastFreight ? (float) $lastFreight->balance_amount : 0,
+                        'advance_amount' => $lr->transporter ? ($lr->transporter->advance_amount ?? 0) : 0,
                     ];
                 })
                 ->sortBy('balance_amount')
