@@ -95,7 +95,23 @@ class FreightBookingBalanceAdjustmentService
         }
 
         $groupTotalBalance = round((float) $groupBookings->sum('balance_amount'), 2);
-        if ($groupTotalBalance >= -0.01) {
+        $hasNegativeRow = $groupBookings->contains(function ($row) {
+            return ((float) ($row->balance_amount ?? 0)) < -0.01;
+        });
+
+        // For linked group, if there is no negative row, nothing to adjust.
+        if (!$hasNegativeRow) {
+            return;
+        }
+
+        // If linked balances offset each other (e.g. +586.05 and -586.05), normalize rows to zero
+        // but do not post any transporter advance adjustment entry.
+        if (abs($groupTotalBalance) <= 0.01) {
+            foreach ($groupBookings as $groupBooking) {
+                $groupBooking->negative_adjusted_amount = round(-(float) ($groupBooking->balance_amount ?? 0), 2);
+                $groupBooking->balance_amount = 0;
+                $groupBooking->save();
+            }
             return;
         }
 

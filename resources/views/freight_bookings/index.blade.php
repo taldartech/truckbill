@@ -889,7 +889,7 @@
                                     name="payment_amounts[]"
                                     data-fb-id="${fbId}"
                                     data-balance="${balance}"
-                                    min="0" max="${balance}"
+                                    min="${Math.min(balance, 0)}" max="${Math.max(balance, 0)}"
                                     step="0.01"
                                     value="${balance.toFixed(2)}">
                         </tr>
@@ -1654,7 +1654,7 @@
                           <td>
                               <input type="number" class="form-control form-control-sm payment-amount"
                                     name="payments[${freightBookingId}]"
-                                    min="0" max="${balance}" step="0.01"
+                                    min="${Math.min(balance, 0)}" max="${Math.max(balance, 0)}" step="0.01"
                                     value="${balance.toFixed(2)}"
                                     data-max="${balance}">
                           </td>
@@ -2589,18 +2589,12 @@
             allocatedInputs.forEach(input => {
                 const amount = parseFloat(input.value) || 0;
                 const maxAmount = parseFloat(input.getAttribute('max')) || 0;
+                const minAmount = parseFloat(input.getAttribute('min')) || 0;
                 const lrNumber = input.getAttribute('data-lr') || 'Unknown';
 
-                if (amount <= 0) {
-                    alert(`Error: Payment amount for LR ${lrNumber} must be greater than zero.`);
-                    input.focus();
-                    hasValidationError = true;
-                    return;
-                }
-
-                if (amount > maxAmount) {
+                if (amount < minAmount || amount > maxAmount) {
                     alert(
-                        `Error: Payment amount for LR ${lrNumber} (₹${amount.toFixed(2)}) exceeds the balance amount (₹${maxAmount.toFixed(2)}).`
+                        `Error: Payment amount for LR ${lrNumber} (₹${amount.toFixed(2)}) must be between ₹${minAmount.toFixed(2)} and ₹${maxAmount.toFixed(2)}.`
                     );
                     input.focus();
                     hasValidationError = true;

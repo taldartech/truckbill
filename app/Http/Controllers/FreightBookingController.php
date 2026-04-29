@@ -711,7 +711,14 @@ class FreightBookingController extends Controller
             $data['total_amount'] = $request->input('combined_amount');
             $data['date'] = $request->input('payment_date') ?? date('Y-m-d');
             $data['booking_ids'] = $request->input('booking_ids');
-            $data['payment_amounts'] = $request->input('payment_amounts');
+            // Keep signed split values as submitted (e.g. 1586.55 and -586.05 for linked offsets).
+            $data['payment_amounts'] = array_map(static fn ($v) => (float) $v, (array) $request->input('payment_amounts', []));
+            if (array_sum($data['payment_amounts']) <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Combined payment amount is not allocatable against selected bookings. Please review balances.',
+                ], 422);
+            }
             $data['reference_number'] = $request->input('reference_number');
             $data['notes'] = $request->input('notes').'   Combined Payment: '.($request->input('combined_amount'))
                 .'. [LR IDs: '.implode(', ', $lrs).'], Date: '.$data['date'];
@@ -732,7 +739,7 @@ class FreightBookingController extends Controller
 
             // If voucherPayment returned an error or warning, return it as JSON response
             if ($response['success'] !== true) {
-                return response()->json($response, $response['warning'] ? 422 : 422);
+                return response()->json($response, 422);
             }
 
             $voucherPayments = $response['processed_payments'] ?? [];
@@ -1388,7 +1395,7 @@ class FreightBookingController extends Controller
                 'booking_ids' => 'required|array',
                 'booking_ids.*' => 'required|integer|exists:freight_bookings,id',
                 'payment_amounts' => 'required|array',
-                'payment_amounts.*' => 'required|numeric|min:0',
+                'payment_amounts.*' => 'required|numeric',
                 'total_amount' => 'required|numeric|min:0',
                 'reference_number' => 'nullable|string',
                 'notes' => 'nullable|string',
@@ -1405,20 +1412,70 @@ class FreightBookingController extends Controller
             foreach ($validated['booking_ids'] as $index => $bookingId) {
                 $amount = $validated['payment_amounts'][$index] ?? 0;
 
-                if ($amount > 0) {
+                if (abs((float) $amount) > 0.01) {
                     // Use row-level locking to prevent race conditions
                     // This ensures only one payment can be processed at a time for this booking
                     $freightBooking = FreightBooking::lockForUpdate()->findOrFail($bookingId);
 
-                    // Validate payment amount doesn't exceed balance
-                    if ($amount > $freightBooking->balance_amount) {
+                    $currentBalance = (float) ($freightBooking->balance_amount ?? 0);
+
+                    // Sign-direction validation by balance direction.
+                    if ($currentBalance > 0.01 && $amount < -0.01) {
                         \DB::rollBack();
 
                         return response()->json([
                             'success' => false,
-                            'message' => "Payment amount ₹{$amount} cannot exceed balance amount ₹{$freightBooking->balance_amount} for booking ID {$bookingId}.",
+                            'message' => "Booking ID {$bookingId} has positive balance ({$currentBalance}). Negative payment is not allowed for this row.",
                             'errors' => [
-                                'payment_amounts.'.$index => ["Payment amount cannot exceed balance amount ₹{$freightBooking->balance_amount}"],
+                                'payment_amounts.'.$index => ['Positive balance row cannot accept negative payment.'],
+                            ],
+                        ], 422);
+                    }
+
+                    if ($currentBalance < -0.01 && $amount > 0.01) {
+                        \DB::rollBack();
+
+                        return response()->json([
+                            'success' => false,
+                            'message' => "Booking ID {$bookingId} has negative balance ({$currentBalance}). Positive payment is not allowed for this row.",
+                            'errors' => [
+                                'payment_amounts.'.$index => ['Negative balance row cannot accept positive payment.'],
+                            ],
+                        ], 422);
+                    }
+
+                    if (abs($currentBalance) <= 0.01) {
+                        \DB::rollBack();
+
+                        return response()->json([
+                            'success' => false,
+                            'message' => "Booking ID {$bookingId} has zero balance. Payment must be 0 for this row.",
+                            'errors' => [
+                                'payment_amounts.'.$index => ['Zero balance row cannot accept non-zero payment.'],
+                            ],
+                        ], 422);
+                    }
+
+                    // Range validation by sign.
+                    if ($currentBalance > 0.01 && $amount > $currentBalance) {
+                        \DB::rollBack();
+
+                        return response()->json([
+                            'success' => false,
+                            'message' => "Payment amount ₹{$amount} cannot exceed balance amount ₹{$currentBalance} for booking ID {$bookingId}.",
+                            'errors' => [
+                                'payment_amounts.'.$index => ["Payment amount cannot exceed balance amount ₹{$currentBalance}"],
+                            ],
+                        ], 422);
+                    }
+                    if ($currentBalance < -0.01 && $amount < $currentBalance) {
+                        \DB::rollBack();
+
+                        return response()->json([
+                            'success' => false,
+                            'message' => "Negative payment ₹{$amount} cannot be less than balance ₹{$currentBalance} for booking ID {$bookingId}.",
+                            'errors' => [
+                                'payment_amounts.'.$index => ["Negative payment magnitude cannot exceed negative balance ₹{$currentBalance}"],
                             ],
                         ], 422);
                     }
