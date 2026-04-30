@@ -581,8 +581,6 @@
         })();
     </script>
 
-    <!-- Load Select2 from CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <!-- Load SweetAlert2 from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -628,23 +626,24 @@
                 const actualAmount = parseFloat(actualAmountInput.value) || 0;
                 const calculatedAmount = actualAmount - shortageAmount - damageAmount;
                 amountInput.value = Math.max(0, calculatedAmount).toFixed(2);
-
-                    `💰 Actual Amount: ${actualAmount.toFixed(2)}, Amount: ${calculatedAmount.toFixed(2)} (${actualAmount.toFixed(2)} - ${shortageAmount} - ${damageAmount})`
-                );
             }
 
             // Auto-calculate on weight, unloading_weight, freight rate, or fixed toggle change
-            weightInput.addEventListener('input', function() {
-                calculateAmount();
-            });
+            if (weightInput) {
+                weightInput.addEventListener('input', function() {
+                    calculateAmount();
+                });
+            }
             if (unloadingWeightInput) {
                 unloadingWeightInput.addEventListener('input', function() {
                     calculateAmount();
                 });
             }
-            frRateInput.addEventListener('input', function() {
-                calculateAmount();
-            });
+            if (frRateInput) {
+                frRateInput.addEventListener('input', function() {
+                    calculateAmount();
+                });
+            }
             if (isFixedAmountInput) {
                 isFixedAmountInput.addEventListener('change', function() {
                     calculateAmount();
@@ -653,15 +652,21 @@
 
             // Update amount when actual_amount, shortage, or damage changes
             // User can manually edit actual_amount, but if weight/rate changes, it will be recalculated
-            actualAmountInput.addEventListener('input', function() {
-                const actualAmount = parseFloat(actualAmountInput.value) || 0;
-                const shortageAmount = parseFloat(shortageAmountInput.value) || 0;
-                const damageAmount = parseFloat(damageAmountInput.value) || 0;
-                const calculatedAmount = actualAmount - shortageAmount - damageAmount;
-                amountInput.value = Math.max(0, calculatedAmount).toFixed(2);
-            });
-            shortageAmountInput.addEventListener('input', calculateAmount);
-            damageAmountInput.addEventListener('input', calculateAmount);
+            if (actualAmountInput && amountInput) {
+                actualAmountInput.addEventListener('input', function() {
+                    const actualAmount = parseFloat(actualAmountInput.value) || 0;
+                    const shortageAmount = parseFloat(shortageAmountInput.value) || 0;
+                    const damageAmount = parseFloat(damageAmountInput.value) || 0;
+                    const calculatedAmount = actualAmount - shortageAmount - damageAmount;
+                    amountInput.value = Math.max(0, calculatedAmount).toFixed(2);
+                });
+            }
+            if (shortageAmountInput) {
+                shortageAmountInput.addEventListener('input', calculateAmount);
+            }
+            if (damageAmountInput) {
+                damageAmountInput.addEventListener('input', calculateAmount);
+            }
 
             // Initialize calculation on page load
             calculateAmount();
@@ -715,50 +720,52 @@
                 cache: true
             };
 
-            $('#customer_id').select2({
-                theme: 'bootstrap-5',
-                width: '100%',
-                minimumInputLength: 1,
-                allowClear: true,
-                placeholder: 'Search and select customer...',
-                ajax: ajaxConsigneesConfig
-            });
+            if (window.jQuery && window.jQuery.fn && typeof window.jQuery.fn.select2 !== 'undefined') {
+                $('#customer_id').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    minimumInputLength: 1,
+                    allowClear: true,
+                    placeholder: 'Search and select customer...',
+                    ajax: ajaxConsigneesConfig
+                });
 
-            $('#consignor_id').select2({
-                theme: 'bootstrap-5',
-                width: '100%',
-                minimumInputLength: 1,
-                allowClear: true,
-                placeholder: 'Search and select consignor...',
-                ajax: ajaxConsigneesConfig
-            });
+                $('#consignor_id').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    minimumInputLength: 1,
+                    allowClear: true,
+                    placeholder: 'Search and select consignor...',
+                    ajax: ajaxConsigneesConfig
+                });
 
-            $('#consignee_id').select2({
-                theme: 'bootstrap-5',
-                width: '100%',
-                minimumInputLength: 1,
-                allowClear: true,
-                placeholder: 'Search and select consignee...',
-                ajax: ajaxConsigneesConfig
-            });
+                $('#consignee_id').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    minimumInputLength: 1,
+                    allowClear: true,
+                    placeholder: 'Search and select consignee...',
+                    ajax: ajaxConsigneesConfig
+                });
 
-            $('#truck_id').select2({
-                theme: 'bootstrap-5',
-                width: '100%',
-                minimumInputLength: 1,
-                allowClear: true,
-                placeholder: 'Search and select truck...',
-                ajax: ajaxTrucksConfig
-            });
+                $('#truck_id').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    minimumInputLength: 1,
+                    allowClear: true,
+                    placeholder: 'Search and select truck...',
+                    ajax: ajaxTrucksConfig
+                });
 
-            $('#transporter_id').select2({
-                theme: 'bootstrap-5',
-                width: '100%',
-                minimumInputLength: 1,
-                allowClear: true,
-                placeholder: 'Search and select transporter...',
-                ajax: ajaxAgenciesConfig
-            });
+                $('#transporter_id').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    minimumInputLength: 1,
+                    allowClear: true,
+                    placeholder: 'Search and select transporter...',
+                    ajax: ajaxAgenciesConfig
+                });
+            }
 
             // Bootstrap form validation
             const forms = document.querySelectorAll('.needs-validation');
@@ -828,125 +835,46 @@
                     .catch(error => console.error('Error:', error));
             }
 
-            consignorSelect.addEventListener('change', updateConsignorDetails);
-            consigneeSelect.addEventListener('change', updateConsigneeDetails);
+            if (consignorSelect) {
+                consignorSelect.addEventListener('change', updateConsignorDetails);
+            }
+            if (consigneeSelect) {
+                consigneeSelect.addEventListener('change', updateConsigneeDetails);
+            }
         });
     </script>
 
     <script>
         // Handle truck selection and transporter details
-        document.getElementById('truck_id').addEventListener('change', function() {
-            let truckId = this.value;
+        const truckSelectEl = document.getElementById('truck_id');
+        if (truckSelectEl) {
+            truckSelectEl.addEventListener('change', function() {
+                let truckId = this.value;
 
-            if (truckId) {
-                fetch(`/get-transporter-name/${truckId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.transporter_name) {
-                            document.getElementById('transporter_name').value = data.transporter_name;
-                            if (data.transporter.is_owner == 1) {
-                                document.getElementById('ownerTransporterSelect').style.display = 'block';
+                if (truckId) {
+                    fetch(`/get-transporter-name/${truckId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.transporter_name) {
+                                document.getElementById('transporter_name').value = data.transporter_name;
+                                if (data.transporter.is_owner == 1) {
+                                    document.getElementById('ownerTransporterSelect').style.display = 'block';
+                                }
+                            } else {
+                                document.getElementById('ownerTransporterSelect').style.display = 'none';
                             }
-                        } else {
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
                             document.getElementById('ownerTransporterSelect').style.display = 'none';
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        document.getElementById('ownerTransporterSelect').style.display = 'none';
-                    });
-            } else {
-                document.getElementById('ownerTransporterSelect').style.display = 'none';
-            }
-        });
-    </script>
-
-    <script>
-        // Handle consignor and consignee contact number and location details
-        document.addEventListener('DOMContentLoaded', function() {
-            const consignorSelect = document.getElementById('consignor_id');
-            const consignorContact = document.getElementById('consignor_contact_number');
-            const consignorLocation = document.getElementById('consignor_location');
-            const consigneeSelect = document.getElementById('consignee_id');
-            const consigneeContact = document.getElementById('consignee_contact_number');
-            const consigneeLocation = document.getElementById('consignee_location');
-
-            function updateConsignorDetails() {
-                const selectedConsignor = consignorSelect.value;
-                if (!selectedConsignor) {
-                    consignorContact.value = '';
-                    consignorLocation.value = '';
-                    return;
+                        });
+                } else {
+                    document.getElementById('ownerTransporterSelect').style.display = 'none';
                 }
-
-                fetch(`/api/consignors/${selectedConsignor}`, {
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                            'Content-Type': 'application/json'
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(consignor => {
-                        consignorContact.value = consignor.contact_number;
-                        consignorLocation.value = `${consignor.city}, ${consignor.state}`;
-                    })
-                    .catch(error => console.error('Error:', error));
-            }
-
-            function updateConsigneeDetails() {
-                const selectedConsignee = consigneeSelect.value;
-                if (!selectedConsignee) {
-                    consigneeContact.value = '';
-                    consigneeLocation.value = '';
-                    return;
-                }
-
-                fetch(`/api/consignees/${selectedConsignee}`, {
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                            'Content-Type': 'application/json'
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(consignee => {
-                        consigneeContact.value = consignee.contact_number;
-                        consigneeLocation.value = `${consignee.city}, ${consignee.state}`;
-                    })
-                    .catch(error => console.error('Error:', error));
-            }
-
-            consignorSelect.addEventListener('change', updateConsignorDetails);
-            consigneeSelect.addEventListener('change', updateConsigneeDetails);
-        });
+            });
+        }
     </script>
 
-    <script>
-        // Handle truck selection and transporter details
-        document.getElementById('truck_id').addEventListener('change', function() {
-            let truckId = this.value;
-
-            if (truckId) {
-                fetch(`/get-transporter-name/${truckId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.transporter_name) {
-                            document.getElementById('transporter_name').value = data.transporter_name;
-                            if (data.transporter.is_owner == 1) {
-                                document.getElementById('ownerTransporterSelect').style.display = 'block';
-                            }
-                        } else {
-                            document.getElementById('ownerTransporterSelect').style.display = 'none';
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        document.getElementById('ownerTransporterSelect').style.display = 'none';
-                    });
-            } else {
-                document.getElementById('ownerTransporterSelect').style.display = 'none';
-            }
-        });
-    </script>
 @endsection
 
 <!-- SweetAlert2 JS -->
@@ -956,11 +884,20 @@
 <script>
     // Wait for DOM and jQuery to be ready
     document.addEventListener('DOMContentLoaded', function() {
+        let jqueryLoadStarted = false;
+
         // Wait for jQuery to be available
         function waitForJQuery() {
             if (typeof $ !== 'undefined' && typeof $.fn !== 'undefined') {
                 checkSelect2();
             } else {
+                if (!jqueryLoadStarted) {
+                    jqueryLoadStarted = true;
+                    var jqueryScript = document.createElement('script');
+                    jqueryScript.src = 'https://code.jquery.com/jquery-3.7.1.min.js';
+                    jqueryScript.defer = true;
+                    document.head.appendChild(jqueryScript);
+                }
                 setTimeout(waitForJQuery, 100);
             }
         }
@@ -1079,11 +1016,6 @@
                 ajax: ajaxAgenciesConfig
             });
 
-            // Access the customer data from the window object
-                id: window.selectedCustomerId,
-                name: window.selectedCustomerName
-            });
-
             // Initialize customer dropdown with Select2
             $('#customer_id').select2({
                 theme: 'bootstrap-5',
@@ -1127,13 +1059,6 @@
             // And also after a short delay to ensure Select2 is fully initialized
             setTimeout(ensureCustomerSelected, 300);
 
-                customer_id: {{ $lorry_receipt->customer_id ?? 'null' }},
-                truck_id: {{ $lorry_receipt->truck_id ?? 'null' }},
-                transporter_id: {{ $lorry_receipt->transporter_id ?? 'null' }},
-                source: '{{ $lorry_receipt->source ?? '' }}',
-                destination: '{{ $lorry_receipt->destination ?? '' }}'
-            });
-
             // Ensure customer dropdown is properly initialized with the correct value
             const customerSelect = $('#customer_id');
             if (customerSelect.length) {
@@ -1142,11 +1067,6 @@
                     customerSelect.val(customerId).trigger('change');
                 }
             }
-                source_city: $('#source_city').val(),
-                source_state: $('#source_state').val(),
-                destination_city: $('#destination_city').val(),
-                destination_state: $('#destination_state').val()
-            });
 
             // Store consignor and consignee data for contact number population
             const consignors = @json($consignors->keyBy('id'));
@@ -1373,83 +1293,8 @@
 </script>
 
 <!-- Load Select2 from CDN -->
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <!-- Load SweetAlert2 from CDN -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-<script>
-    // Function to check if Select2 is loaded
-    function waitForSelect2() {
-        return new Promise((resolve) => {
-            if (typeof $.fn.select2 !== 'undefined') {
-                resolve();
-                return;
-            }
-
-            // Wait for Select2 to load
-            const checkSelect2 = setInterval(() => {
-                if (typeof $.fn.select2 !== 'undefined') {
-                    clearInterval(checkSelect2);
-                    resolve();
-                }
-            }, 100);
-        });
-    }
-
-    // Initialize Select2 after ensuring it's loaded
-    $(document).ready(function() {
-        waitForSelect2().then(() => {
-            // Wait a bit more to ensure Select2 is fully initialized
-            setTimeout(() => {
-                // Initialize truck dropdown
-                if ($('#truck_id').length > 0) {
-                    $('#truck_id').select2({
-                        placeholder: 'Search and select truck...',
-                        allowClear: true,
-                        width: '100%'
-                    });
-                } else {
-                    console.error('❌ Truck element not found');
-                }
-
-                // Initialize customer dropdown
-                if ($('#customer_id').length > 0) {
-                    $('#customer_id').select2({
-                        placeholder: 'Search and select customer...',
-                        allowClear: true,
-                        width: '100%'
-                    });
-                } else {
-                    console.error('❌ Customer element not found');
-                }
-
-                // Initialize consignor dropdown
-                if ($('#consignor_id').length > 0) {
-                    $('#consignor_id').select2({
-                        placeholder: 'Search and select consignor...',
-                        allowClear: true,
-                        width: '100%'
-                    });
-                } else {
-                    console.error('❌ Consignor element not found');
-                }
-
-                // Initialize consignee dropdown
-                if ($('#consignee_id').length > 0) {
-                    $('#consignee_id').select2({
-                        placeholder: 'Search and select consignee...',
-                        allowClear: true,
-                        width: '100%'
-                    });
-                } else {
-                    console.error('❌ Consignee element not found');
-                }
-            }, 100);
-        }).catch(() => {
-            console.error('❌ Failed to initialize Select2 - library could not be loaded');
-        });
-    });
-</script>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -1542,10 +1387,12 @@
         });
 
         // Handle regular consignor selection (fallback)
-        consignorSelect.addEventListener('change', function() {
-            const consignorId = this.value;
-            handleConsignorSelection(consignorId);
-        });
+        if (consignorSelect) {
+            consignorSelect.addEventListener('change', function() {
+                const consignorId = this.value;
+                handleConsignorSelection(consignorId);
+            });
+        }
 
         // Handle consignee contact number and location details
         const consigneeSelect = document.getElementById('consignee_id');
@@ -1606,27 +1453,34 @@
         });
 
         // Handle regular consignee selection (fallback)
-        consigneeSelect.addEventListener('change', function() {
-            const consigneeId = this.value;
-            handleConsigneeSelection(consigneeId);
-        });
+        if (consigneeSelect) {
+            consigneeSelect.addEventListener('change', function() {
+                const consigneeId = this.value;
+                handleConsigneeSelection(consigneeId);
+            });
+        }
 
         // Handle truck selection for transporter info
-        truckSelect.addEventListener('change', function() {
-            const truckId = this.value;
-            if (truckId) {
-                fetch(`/api/trucks/${truckId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.transporter) {
-                            document.getElementById('tdsRateDisplay').textContent =
-                                `TDS Rate: ${data.transporter.tds_rate || 'N/A'}%`;
-                        }
-                    });
-            } else {
-                document.getElementById('tdsRateDisplay').textContent = '--';
-            }
-        });
+        if (truckSelect) {
+            truckSelect.addEventListener('change', function() {
+                const truckId = this.value;
+                if (truckId) {
+                    fetch(`/api/trucks/${truckId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const tdsRateDisplay = document.getElementById('tdsRateDisplay');
+                            if (data.transporter && tdsRateDisplay) {
+                                tdsRateDisplay.textContent = `TDS Rate: ${data.transporter.tds_rate || 'N/A'}%`;
+                            }
+                        });
+                } else {
+                    const tdsRateDisplay = document.getElementById('tdsRateDisplay');
+                    if (tdsRateDisplay) {
+                        tdsRateDisplay.textContent = '--';
+                    }
+                }
+            });
+        }
 
         // Custom form validation function
         function validateConsignorConsignee() {
@@ -1717,24 +1571,32 @@
             const actualAmount = parseFloat(actualAmountInput.value) || 0;
             const calculatedAmount = actualAmount - (shortageAmount + damageAmount);
             amountInput.value = Math.max(0, calculatedAmount).toFixed(2);
-
-                `💰 Actual Amount: ${actualAmount.toFixed(2)}, Amount: ${calculatedAmount.toFixed(2)}`);
         }
 
         // Add event listeners for weight and freight rate changes
-        weightInput.addEventListener('input', function() {
-            validateWeight();
-            calculateAmount();
-        });
-        frRateInput.addEventListener('input', calculateAmount);
+        if (weightInput) {
+            weightInput.addEventListener('input', function() {
+                validateWeight();
+                calculateAmount();
+            });
+        }
+        if (frRateInput) {
+            frRateInput.addEventListener('input', calculateAmount);
+        }
 
         // Update amount when actual_amount, unloading_weight, shortage, or damage changes
         if (unloadingWeightInput) {
             unloadingWeightInput.addEventListener('input', calculateAmount);
         }
-        actualAmountInput.addEventListener('input', calculateAmount);
-        shortageAmountInput.addEventListener('input', calculateAmount);
-        damageAmountInput.addEventListener('input', calculateAmount);
+        if (actualAmountInput) {
+            actualAmountInput.addEventListener('input', calculateAmount);
+        }
+        if (shortageAmountInput) {
+            shortageAmountInput.addEventListener('input', calculateAmount);
+        }
+        if (damageAmountInput) {
+            damageAmountInput.addEventListener('input', calculateAmount);
+        }
 
         // Weight validation function
         function validateWeight() {
@@ -1759,7 +1621,9 @@
         }
 
         // Add blur validation for weight
-        weightInput.addEventListener('blur', validateWeight);
+        if (weightInput) {
+            weightInput.addEventListener('blur', validateWeight);
+        }
 
         // Calculate amount on page load if values exist
         if (weightInput.value && frRateInput.value) {
@@ -1819,26 +1683,28 @@
         }
 
         // Add debounced input listener for LR Number
-        lrNumberInput.addEventListener('input', function() {
-            const lrNumber = this.value.trim();
+        if (lrNumberInput) {
+            lrNumberInput.addEventListener('input', function() {
+                const lrNumber = this.value.trim();
 
-            // Clear previous timeout
-            clearTimeout(lrNumberTimeout);
-
-            // Set new timeout for debounced checking
-            lrNumberTimeout = setTimeout(() => {
-                checkLrNumberUniqueness(lrNumber);
-            }, 500); // 500ms delay
-        });
-
-        // Check on blur as well
-        lrNumberInput.addEventListener('blur', function() {
-            const lrNumber = this.value.trim();
-            if (lrNumber) {
+                // Clear previous timeout
                 clearTimeout(lrNumberTimeout);
-                checkLrNumberUniqueness(lrNumber);
-            }
-        });
+
+                // Set new timeout for debounced checking
+                lrNumberTimeout = setTimeout(() => {
+                    checkLrNumberUniqueness(lrNumber);
+                }, 500); // 500ms delay
+            });
+
+            // Check on blur as well
+            lrNumberInput.addEventListener('blur', function() {
+                const lrNumber = this.value.trim();
+                if (lrNumber) {
+                    clearTimeout(lrNumberTimeout);
+                    checkLrNumberUniqueness(lrNumber);
+                }
+            });
+        }
 
         // Invoice Number uniqueness validation
         const invoiceNumberInput = document.getElementById('invoice_number');
@@ -1893,28 +1759,33 @@
         }
 
         // Add debounced input listener for Invoice Number
-        invoiceNumberInput.addEventListener('input', function() {
-            const invoiceNumber = this.value.trim();
+        if (invoiceNumberInput) {
+            invoiceNumberInput.addEventListener('input', function() {
+                const invoiceNumber = this.value.trim();
 
-            // Clear previous timeout
-            clearTimeout(invoiceNumberTimeout);
-
-            // Set new timeout for debounced checking
-            invoiceNumberTimeout = setTimeout(() => {
-                checkInvoiceNumberUniqueness(invoiceNumber);
-            }, 500); // 500ms delay
-        });
-
-        // Check on blur as well
-        invoiceNumberInput.addEventListener('blur', function() {
-            const invoiceNumber = this.value.trim();
-            if (invoiceNumber) {
+                // Clear previous timeout
                 clearTimeout(invoiceNumberTimeout);
-                checkInvoiceNumberUniqueness(invoiceNumber);
-            }
-        });
 
-                // Add this function for GR number validation
+                // Set new timeout for debounced checking
+                invoiceNumberTimeout = setTimeout(() => {
+                    checkInvoiceNumberUniqueness(invoiceNumber);
+                }, 500); // 500ms delay
+            });
+
+            // Check on blur as well
+            invoiceNumberInput.addEventListener('blur', function() {
+                const invoiceNumber = this.value.trim();
+                if (invoiceNumber) {
+                    clearTimeout(invoiceNumberTimeout);
+                    checkInvoiceNumberUniqueness(invoiceNumber);
+                }
+            });
+        }
+
+        const grNumberInput = document.getElementById('gr_number');
+        const grNumberFeedback = document.getElementById('gr-number-feedback');
+
+        // Add this function for GR number validation
 function checkGRNumberUniqueness(grNumber) {
     if (!grNumber) {
         grNumberFeedback.innerHTML = '';
@@ -1959,22 +1830,24 @@ function checkGRNumberUniqueness(grNumber) {
 
 // Add debounced input listener for GR Number
 let grNumberTimeout;
-grNumberInput.addEventListener('input', function() {
-    const grNumber = this.value.trim();
-    clearTimeout(grNumberTimeout);
-    grNumberTimeout = setTimeout(() => {
-        checkGRNumberUniqueness(grNumber);
-    }, 500);
-});
-
-// Check on blur as well
-grNumberInput.addEventListener('blur', function() {
-    const grNumber = this.value.trim();
-    if (grNumber) {
+if (grNumberInput) {
+    grNumberInput.addEventListener('input', function() {
+        const grNumber = this.value.trim();
         clearTimeout(grNumberTimeout);
-        checkGRNumberUniqueness(grNumber);
-    }
-});
+        grNumberTimeout = setTimeout(() => {
+            checkGRNumberUniqueness(grNumber);
+        }, 500);
+    });
+
+    // Check on blur as well
+    grNumberInput.addEventListener('blur', function() {
+        const grNumber = this.value.trim();
+        if (grNumber) {
+            clearTimeout(grNumberTimeout);
+            checkGRNumberUniqueness(grNumber);
+        }
+    });
+}
 
         // No. of Units validation
         const noOfUnitsInput = document.getElementById('no_of_units');
@@ -1998,8 +1871,10 @@ grNumberInput.addEventListener('blur', function() {
         }
 
         // Add event listeners for No. of Units validation
-        noOfUnitsInput.addEventListener('input', validateNoOfUnits);
-        noOfUnitsInput.addEventListener('blur', validateNoOfUnits);
+        if (noOfUnitsInput) {
+            noOfUnitsInput.addEventListener('input', validateNoOfUnits);
+            noOfUnitsInput.addEventListener('blur', validateNoOfUnits);
+        }
 
         // Freight Rate validation (using existing frRateInput variable)
         function validateFreightRate() {
@@ -2020,8 +1895,10 @@ grNumberInput.addEventListener('blur', function() {
         }
 
         // Add event listeners for Freight Rate validation
-        frRateInput.addEventListener('input', validateFreightRate);
-        frRateInput.addEventListener('blur', validateFreightRate);
+        if (frRateInput) {
+            frRateInput.addEventListener('input', validateFreightRate);
+            frRateInput.addEventListener('blur', validateFreightRate);
+        }
 
         // Function to show confirmation dialog with form details
         function showConfirmationDialog(form) {
@@ -2201,7 +2078,9 @@ grNumberInput.addEventListener('blur', function() {
         }
     });
     // Handle Add Goods Type Form Submission
-    document.getElementById('addGoodsTypeForm').addEventListener('submit', function(e) {
+    const addGoodsTypeForm = document.getElementById('addGoodsTypeForm');
+    if (addGoodsTypeForm) {
+    addGoodsTypeForm.addEventListener('submit', function(e) {
         e.preventDefault();
 
         let form = this;
@@ -2258,6 +2137,7 @@ grNumberInput.addEventListener('blur', function() {
                 errorBox.innerHTML = '⚠️ Error: ' + error.message;
             });
     });
+    }
 
     // Final "AJAX enforcement" to override any earlier Select2 initializations
     // that might not include AJAX search.
