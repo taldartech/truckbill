@@ -491,7 +491,7 @@ class ConsigneeController extends Controller
 
         $user = User::query()->where('email', $consignee->email)->first();
         if (! $user) {
-            $generatedPassword = Str::random(12);
+            $generatedPassword = '12345678';
             $user = User::query()->create([
                 'name' => $consignee->name,
                 'email' => $consignee->email,
