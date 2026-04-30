@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Company;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -43,9 +44,24 @@ class LoginController extends Controller
                 ])->withInput();
             }
 
-            // Fetch the company related to the logged-in user
-            $company_id = Auth::user()->company_id;
-            $company = \App\Models\Company::find($company_id);
+            $company = null;
+            if ($authenticatedUser->userRole?->name === 'customer') {
+                $defaultConsignee = $authenticatedUser->consignees()
+                    ->orderBy('consignees.id')
+                    ->first();
+
+                if (! $defaultConsignee) {
+                    Auth::logout();
+                    return back()->withErrors([
+                        'email' => 'Your account has no customer access assigned. Please contact support.',
+                    ])->withInput();
+                }
+
+                $request->session()->put('portal_consignee_id', $defaultConsignee->id);
+                $company = Company::find($defaultConsignee->company_id);
+            } else {
+                $company = Company::find($authenticatedUser->company_id);
+            }
 
             // If is_blocked is true (1), block login
             if ($company && $company->is_blocked) {

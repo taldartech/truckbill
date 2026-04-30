@@ -78,6 +78,10 @@
             @elseif($userRole === 'transporter' && isset($transporterStats))
                 @include('dashboard.roles.transporter')
 
+            {{-- CUSTOMER DASHBOARD --}}
+            @elseif($userRole === 'customer' && isset($customerStats))
+                @include('dashboard.roles.customer')
+
             {{-- DEFAULT FALLBACK --}}
             @else
                 <div class="row">

@@ -91,10 +91,10 @@
                                 @endif
                                 <!--end::Col-->
 
-                                <!-- Company and Branch (only for super_admin editing company users) -->
+                                <!-- Company and Branch (only for non-customer company users) -->
                                 @if (!$isMasterAdmin && !$userIsSuperAdmin)
                                     <!--begin::Col-->
-                                    <div class="col-md-6">
+                                    <div class="col-md-6 company-branch-field">
                                         <label for="company_id" class="form-label">Company *</label>
                                         <select class="form-select" id="company_id" name="company_id" required>
                                             <option value="">Select</option>
@@ -113,7 +113,7 @@
                                     <!--end::Col-->
 
                                     <!--begin::Col-->
-                                    <div class="col-md-6">
+                                    <div class="col-md-6 company-branch-field">
                                         <label for="branch_id" class="form-label">Branch *</label>
                                         <select class="form-select" id="branch_id" name="branch_id" required>
                                             <option value="">Select Branch</option>
@@ -133,6 +133,7 @@
                                     </div>
                                     <!--end::Col-->
                                 @endif
+
                             </div>
                             <!--end::Row-->
                         </div>
@@ -203,6 +204,7 @@
                             } else if ("{{ old('company_id') }}") {
                                 filterBranches("{{ old('company_id') }}");
                             }
+
                         });
                     </script>
 

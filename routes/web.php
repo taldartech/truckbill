@@ -6,6 +6,7 @@ use App\Http\Controllers\BranchController;
 use App\Http\Controllers\CompanyBankDetailsController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\ConsigneeController;
+use App\Http\Controllers\CustomerPortalController;
 use App\Http\Controllers\CustomInvoiceController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\EmailTemplateController;
@@ -98,6 +99,15 @@ Route::middleware(['auth.blocked'])->group(function () {
         Route::get('/freight-bookings', [TransporterDashboardController::class, 'freightBookings'])->name('freight_bookings.index');
         Route::get('/freight-bookings/{freight_booking}', [TransporterDashboardController::class, 'showFreightBooking'])->name('freight_bookings.show');
         Route::get('/payments', [TransporterDashboardController::class, 'payments'])->name('payments.index');
+    });
+
+    Route::prefix('customer')->name('customer.')->middleware(['role:customer', 'customer.consignee'])->group(function () {
+        Route::get('/lorry-receipts', [CustomerPortalController::class, 'lorryReceipts'])->name('lorry-receipts.index');
+        Route::get('/lorry-receipts/{lorryReceipt}', [CustomerPortalController::class, 'showLorryReceipt'])->name('lorry-receipts.show');
+        Route::get('/invoices', [CustomerPortalController::class, 'invoices'])->name('invoices.index');
+        Route::get('/invoices/{invoice}', [CustomerPortalController::class, 'showInvoice'])->name('invoices.show');
+        Route::get('/payments', [CustomerPortalController::class, 'payments'])->name('payments.index');
+        Route::get('/transporters', [CustomerPortalController::class, 'transporters'])->name('transporters.index');
     });
 
     Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])

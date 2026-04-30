@@ -2,11 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\CustomerPortalAccessMail;
 use App\Models\Consignee;
+use App\Models\User;
+use App\Models\UserRole;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class ConsigneeController extends Controller
 {
@@ -265,6 +270,7 @@ class ConsigneeController extends Controller
 
         try {
             $consignee = Consignee::create($validated);
+            $customerEmailResult = $this->createOrAttachCustomerPortalUser($consignee);
         } catch (QueryException $exception) {
             if ($this->isConsigneeUniqueConstraintError($exception)) {
                 throw \Illuminate\Validation\ValidationException::withMessages([
@@ -275,7 +281,7 @@ class ConsigneeController extends Controller
         }
 
         return redirect()->route('consignees.index')
-            ->with('success', 'Consignee created successfully!');
+            ->with('success', 'Consignee created successfully! '.$customerEmailResult);
     }
 
     private function validateConsigneeUniquenessCreate($data, $companyId)
@@ -471,6 +477,54 @@ class ConsigneeController extends Controller
 
         return $errorCode === '1062'
             && str_contains($message, 'consignees_company_pan_unique');
+    }
+
+    private function createOrAttachCustomerPortalUser(Consignee $consignee): string
+    {
+        if (empty($consignee->email)) {
+            return 'Customer login not created because email is empty.';
+        }
+
+        $customerRole = UserRole::query()->firstOrCreate(['name' => 'customer']);
+        $generatedPassword = null;
+        $isNewUser = false;
+
+        $user = User::query()->where('email', $consignee->email)->first();
+        if (! $user) {
+            $generatedPassword = Str::random(12);
+            $user = User::query()->create([
+                'name' => $consignee->name,
+                'email' => $consignee->email,
+                'password' => bcrypt($generatedPassword),
+                'user_role_id' => $customerRole->id,
+                'company_id' => null,
+                'branch_id' => null,
+            ]);
+            $isNewUser = true;
+        } else {
+            if ($user->userRole?->name !== 'customer') {
+                return 'Consignee created. Login not auto-created because email is linked to a non-customer user.';
+            }
+            if ((int) $user->user_role_id !== (int) $customerRole->id) {
+                $user->update(['user_role_id' => $customerRole->id, 'company_id' => null, 'branch_id' => null]);
+            }
+        }
+
+        $user->consignees()->syncWithoutDetaching([$consignee->id]);
+
+        Mail::to($user->email)->send(new CustomerPortalAccessMail(
+            userName: $user->name,
+            consigneeName: $consignee->name,
+            email: $user->email,
+            plainPassword: $generatedPassword,
+            isNewUser: $isNewUser,
+        ));
+
+        if ($isNewUser) {
+            return 'Customer login created and email sent.';
+        }
+
+        return 'Existing customer login linked and email sent.';
     }
 
     public function destroy(Consignee $consignee)

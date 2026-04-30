@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use App\Models\AdvancePayment;
 use App\Models\FreightBooking;
+use App\Models\LorryReceipt;
 use App\Models\VoucherPayment;
 
 class DashboardController extends Controller
@@ -49,6 +50,9 @@ class DashboardController extends Controller
 
             case 'transporter':
                 return $this->transporterDashboard();
+
+            case 'customer':
+                return $this->customerDashboard();
 
             default:
                 return $this->defaultDashboard();
@@ -711,6 +715,80 @@ class DashboardController extends Controller
             'recentFreightBookings',
             'recentPayments',
             'expiredEwayBills'
+        ));
+    }
+
+    private function customerDashboard()
+    {
+        $user = auth()->user();
+        $consigneeOptions = $user->consignees()->with('company')->orderBy('name')->get();
+        $activeConsigneeIds = $consigneeOptions
+            ->filter(fn ($consignee) => ! ($consignee->company?->is_blocked ?? false))
+            ->pluck('id')
+            ->all();
+
+        if ($activeConsigneeIds === []) {
+            return view('dashboard');
+        }
+
+        $startOfMonth = now()->startOfMonth();
+        $endOfMonth = now()->endOfMonth();
+
+        $recentLorryReceipts = LorryReceipt::query()
+            ->with(['transporter', 'truck', 'consignee'])
+            ->whereIn('customer_id', $activeConsigneeIds)
+            ->orderByDesc('gr_date')
+            ->orderByDesc('id')
+            ->take(10)
+            ->get();
+
+        $recentInvoicePayments = InvoicePayment::query()
+            ->with(['invoice'])
+            ->whereHas('invoice', function ($query) use ($activeConsigneeIds) {
+                $query->whereIn('customer_id', $activeConsigneeIds);
+            })
+            ->orderByDesc('payment_date')
+            ->orderByDesc('id')
+            ->take(10)
+            ->get();
+
+        $allInvoices = Invoice::query()
+            ->with('payments')
+            ->whereIn('customer_id', $activeConsigneeIds)
+            ->get();
+
+        $outstandingAmount = 0.0;
+        $pendingInvoicesCount = 0;
+        foreach ($allInvoices as $invoice) {
+            $amountToCollect = $invoice->net_amount ?? $invoice->total_amount;
+            if ($invoice->paid_amount < $amountToCollect) {
+                $pendingInvoicesCount++;
+                $outstandingAmount += max(0, $amountToCollect - $invoice->paid_amount);
+            }
+        }
+
+        $customerStats = [
+            'total_lorry_receipts' => LorryReceipt::query()
+                ->whereIn('customer_id', $activeConsigneeIds)
+                ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+                ->count(),
+            'pending_lorry_receipts' => LorryReceipt::query()
+                ->whereIn('customer_id', $activeConsigneeIds)
+                ->where('delivery_status', 'Pending')
+                ->count(),
+            'delivered_lorry_receipts' => LorryReceipt::query()
+                ->whereIn('customer_id', $activeConsigneeIds)
+                ->where('delivery_status', 'Delivered')
+                ->count(),
+            'pending_invoices' => $pendingInvoicesCount,
+            'outstanding_amount' => $outstandingAmount,
+        ];
+
+        return view('dashboard', compact(
+            'customerStats',
+            'recentLorryReceipts',
+            'recentInvoicePayments',
+            'consigneeOptions'
         ));
     }
 
