@@ -237,7 +237,10 @@ class InvoiceController extends Controller
             $company = Company::with('state')->find($user->company_id);
         }
 
-        $consignees = Consignee::all()->where('company_id', $user->company_id);
+        $consignees = Consignee::query()
+            ->where('company_id', $user->company_id)
+            ->orderBy('name')
+            ->get();
 
         return view('invoices.create', compact('company', 'consignees'));
     }
@@ -443,7 +446,10 @@ class InvoiceController extends Controller
             return redirect()->route('invoices.index')
                 ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
-        $consignees = Consignee::all();
+        $consignees = Consignee::query()
+            ->when(Auth::user()->company_id, fn ($query) => $query->where('company_id', Auth::user()->company_id))
+            ->orderBy('name')
+            ->get();
 
         // Get all memos for this customer
         $memos = DB::table('lorry_receipts')
