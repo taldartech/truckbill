@@ -419,54 +419,7 @@ class FreightBookingController extends Controller
                 // Fetch transporter and truck details directly from their models
                 $transporter = \App\Models\Transporter::find($lr->transporter_id);
                 $truck = \App\Models\Truck::find($lr->truck_id);
-                // Prepare values for TDS calculation
-                $isOwner = $transporter ? $transporter->is_owner : 0;
-                $declarationGiven = $transporter ? $transporter->declaration_given : 0;
-                $panActive = $transporter ? $transporter->pan_active : 0;
-                $panNumber = $transporter ? $transporter->pan_number : '';
-                $trAmount = $lr->freight_amount ?? 0; // adjust this field if amount is stored differently
-
-                // =============================
-                // TDS CALCULATION LOGIC
-                // =============================
-                $tdsPercentage = 0;
-
-                // CASE 1: is_owner = 0, declaration_given = 1 → 0% TDS
-                if (($isOwner == 1 && $declarationGiven == 1) && ($panActive == 1 || $panActive == 0)) {
-                    $tdsPercentage = 0;
-                }
-                // // CASE 2: is_owner = 0, declaration_given = 0, pan_active = 0 → 20% TDS
-                elseif ($isOwner == 1 && $declarationGiven == 0 && $panActive == 0) {
-                    $tdsPercentage = 20;
-                }
-                // CASE 3: is_owner = 0, declaration_given = 0, pan_active = 1 → check PAN letter
-                elseif ($isOwner == 1 && $declarationGiven == 0 && $panActive == 1) {
-                    if (strlen($panNumber) >= 4) {
-                        $fourthChar = strtoupper($panNumber[3]);
-                        if ($fourthChar == 'P' || $fourthChar == 'H') {
-                            $tdsPercentage = 1;
-                        } else {
-                            $tdsPercentage = 2;
-                        }
-                    } else {
-                        $tdsPercentage = 2; // fallback if PAN invalid
-                    }
-                }
-                // // CASE 4: is_owner = 1, pan_active = 0 → 20% TDS
-                elseif ($isOwner == 0 && $panActive == 0) {
-                    $tdsPercentage = 20;
-                }
-                // CASE 5: is_owner = 1, pan_active = 1 → 2% TDS
-                elseif ($isOwner == 0 && $panActive == 1) {
-                    $fourthChar = strtoupper($panNumber[3]);
-                    if ($fourthChar === 'C' || $fourthChar === 'F' || $fourthChar === 'A' || $fourthChar === 'B' || $fourthChar === 'J' || $fourthChar === 'L' || $fourthChar === 'T') {
-                        $tdsPercentage = 2;
-                    } else {
-                        $tdsPercentage = 1;
-                    }
-                }
-
-                // $tdsAmount = $trAmount * ($tdsPercentage / 100);
+                $tdsPercentage = $transporter ? (float) $transporter->tds_percentage : 0.0;
 
                 return view('freight_bookings.create', [
                     'lrs' => $lrs,
@@ -504,6 +457,7 @@ class FreightBookingController extends Controller
             'lorry_receipt' => $lorry_receipt,
             'transporter' => null,
             'tdsPercentages' => $tdsPercentages,
+            'tdsPercentage' => 0,
             'preFilled' => [],
         ]);
     }
@@ -937,52 +891,7 @@ class FreightBookingController extends Controller
                     // Fetch transporter and truck details directly from their models
                     $transporter = \App\Models\Transporter::find($lr->transporter_id);
                     $truck = \App\Models\Truck::find($lr->truck_id);
-
-                    $isOwner = $transporter ? $transporter->is_owner : 0;
-                    $declarationGiven = $transporter ? $transporter->declaration_given : 0;
-                    $panActive = $transporter ? $transporter->pan_active : 0;
-                    $panNumber = $transporter ? $transporter->pan_number : '';
-                    $trAmount = $lr->freight_amount ?? 0; // adjust this field if amount is stored differently
-
-                    // =============================
-                    // TDS CALCULATION LOGIC
-                    // =============================
-                    $tdsPercentage = 0;
-
-                    // CASE 1: is_owner = 0, declaration_given = 1 → 0% TDS
-                    if (($isOwner == 1 && $declarationGiven == 1) && ($panActive == 1 || $panActive == 0)) {
-                        $tdsPercentage = 0;
-                    }
-                    // // CASE 2: is_owner = 0, declaration_given = 0, pan_active = 0 → 20% TDS
-                    elseif ($isOwner == 1 && $declarationGiven == 0 && $panActive == 0) {
-                        $tdsPercentage = 20;
-                    }
-                    // CASE 3: is_owner = 0, declaration_given = 0, pan_active = 1 → check PAN letter
-                    elseif ($isOwner == 1 && $declarationGiven == 0 && $panActive == 1) {
-                        if (strlen($panNumber) >= 4) {
-                            $fourthChar = strtoupper($panNumber[3]);
-                            if ($fourthChar == 'P' || $fourthChar == 'H') {
-                                $tdsPercentage = 1;
-                            } else {
-                                $tdsPercentage = 2;
-                            }
-                        } else {
-                            $tdsPercentage = 2; // fallback if PAN invalid
-                        }
-                    }
-                    // // CASE 4: is_owner = 1, pan_active = 0 → 20% TDS
-                    elseif ($isOwner == 0 && $panActive == 0) {
-                        $tdsPercentage = 20;
-                    }
-                    // CASE 5: is_owner = 1, pan_active = 1 → 2% TDS
-                    elseif ($isOwner == 0 && $panActive == 1) {
-                        $fourthChar = strtoupper($panNumber[3]);
-                        if ($fourthChar === 'C' || $fourthChar === 'F' || $fourthChar === 'A' || $fourthChar === 'B' || $fourthChar === 'J' || $fourthChar === 'L' || $fourthChar === 'T') {
-                            $tdsPercentage = 2;
-                        } else {
-                            $tdsPercentage = 1;
-                        }
-                    }
+                    $tdsPercentage = $transporter ? (float) $transporter->tds_percentage : 0.0;
 
                     return view('freight_bookings.edit', [
                         'freightBooking' => $freightBooking,
@@ -1020,6 +929,8 @@ class FreightBookingController extends Controller
                 'goods_type' => $goodsTypes,
                 'transporter' => $transporter,
                 'truck' => $truck,
+                'tdsPercentages' => $tdsPercentages,
+                'tdsPercentage' => $transporter ? (float) $transporter->tds_percentage : (float) ($freightBooking->transporter_tds_percentage ?? 0),
                 'canChangeTds' => $freightBooking->canChangeTdsAmount(),
                 'preFilled' => [
                     'lr_number' => $freightBooking->lr ? $freightBooking->lr->lr_number : '',

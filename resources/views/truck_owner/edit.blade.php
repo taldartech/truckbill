@@ -120,8 +120,17 @@
                         @error('beneficiary_id') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">TDS %</label>
-                        <div class="form-control-plaintext bg-light border rounded px-3 py-2">{{ number_format($truck_owner->tds_percentage ?? 0, 2) }}%</div>
+                        <label for="tds_percentage" class="form-label">TDS % *</label>
+                        <input type="hidden" id="tds_calculated_baseline" value="{{ number_format(old('tds_percentage', $truck_owner->tds_percentage ?? 0), 2, '.', '') }}">
+                        <input type="number" step="0.01" min="0" max="100" class="form-control @error('tds_percentage') is-invalid @enderror" name="tds_percentage" id="tds_percentage" value="{{ old('tds_percentage', $truck_owner->tds_percentage) }}" required>
+                        @error('tds_percentage') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <label for="tds_adjustment_remark" class="form-label">TDS adjustment remark</label>
+                        <textarea class="form-control @error('tds_adjustment_remark') is-invalid @enderror" id="tds_adjustment_remark" name="tds_adjustment_remark" rows="2" placeholder="Required when TDS % differs from the calculated rate">{{ old('tds_adjustment_remark', $truck_owner->tds_adjustment_remark) }}</textarea>
+                        @error('tds_adjustment_remark') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
                 </div>
                 <div class="row mb-3">
@@ -567,6 +576,47 @@
         location: {!! json_encode((optional($master->city)->name ?? '-') . ' / ' . (optional($master->state)->name ?? '-') . ' / ' . (optional($master->country)->name ?? '-')) !!}
     };
 
+    window.__truckOwnerEditTdsUserEdited = false;
+    function refreshTruckOwnerEditTdsBaseline() {
+        fetch('/api/calculate-truck-owner-tds-percentage', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+                pan_number: masterData.panNumber,
+                pan_active: masterData.panActive ? '1' : '0',
+                declaration_given: document.querySelector('input[name="declaration_given"]:checked')?.value === '1' ? '1' : '0'
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+            const calculated = parseFloat(data.tds_percentage);
+            if (isNaN(calculated)) return;
+            const b = document.getElementById('tds_calculated_baseline');
+            if (b) b.value = calculated.toFixed(2);
+            if (!window.__truckOwnerEditTdsUserEdited) {
+                const inp = document.getElementById('tds_percentage');
+                if (inp) inp.value = calculated.toFixed(2);
+            }
+        })
+        .catch(() => {});
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('input[name="declaration_given"]').forEach(function (el) {
+            el.addEventListener('change', function () {
+                window.__truckOwnerEditTdsUserEdited = false;
+                refreshTruckOwnerEditTdsBaseline();
+            });
+        });
+        const te = document.getElementById('tds_percentage');
+        if (te) {
+            te.addEventListener('input', function () { window.__truckOwnerEditTdsUserEdited = true; });
+        }
+    });
+
     // Function to show confirmation modal with form data
     function showConfirmationModal() {
         // First validate the form
@@ -601,7 +651,7 @@
         document.getElementById('confirm-total-trucks').textContent = totalTrucks;
         document.getElementById('confirm-advance').textContent = '₹' + parseFloat(advance || 0).toFixed(2);
 
-        // Recalculate TDS when declaration changes (call truck owner TDS API)
+        const tdsField = document.getElementById('tds_percentage');
         fetch('/api/calculate-truck-owner-tds-percentage', {
             method: 'POST',
             headers: {
@@ -616,10 +666,16 @@
         })
         .then(r => r.json())
         .then(data => {
-            document.getElementById('confirm-tds-percentage').textContent = (data.tds_percentage || '0.00') + '%';
+            const submitted = parseFloat(tdsField?.value || '0');
+            const calculated = parseFloat(data.tds_percentage);
+            let text = (isNaN(submitted) ? '0' : submitted.toFixed(2)) + '%';
+            if (!isNaN(calculated) && Math.abs(submitted - calculated) > 0.01) {
+                text += ' (calculated ' + calculated.toFixed(2) + '%)';
+            }
+            document.getElementById('confirm-tds-percentage').textContent = text;
         })
         .catch(() => {
-            document.getElementById('confirm-tds-percentage').textContent = '{{ number_format($truck_owner->tds_percentage ?? 0, 2) }}%';
+            document.getElementById('confirm-tds-percentage').textContent = (tdsField?.value || '0') + '%';
         });
 
         // Show the modal

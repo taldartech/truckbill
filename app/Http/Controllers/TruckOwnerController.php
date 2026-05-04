@@ -8,18 +8,30 @@ use App\Models\AdvancePayment;
 use App\Models\City;
 use App\Models\Country;
 use App\Models\Driver;
-use App\Models\FreightBooking;
 use App\Models\State;
 use App\Models\Transporter;
 use App\Models\TransporterMaster;
 use App\Models\Truck;
 use App\Models\TruckType;
+use App\Services\FreightBookingTdsSync;
+use App\Services\TransporterTdsCalculator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
 
 class TruckOwnerController extends Controller
 {
+    public function __construct(
+        private readonly TransporterTdsCalculator $tdsCalculator,
+        private readonly FreightBookingTdsSync $freightBookingTdsSync,
+    ) {}
+
+    private function ensureCompanyContext(): void
+    {
+        if (Auth::user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
+            abort(403, 'Please enter a company first.');
+        }
+    }
+
     public function index(Request $request)
     {
         if ($request->ajax()) {
@@ -243,7 +255,11 @@ class TruckOwnerController extends Controller
         if ($request->filled('transporter_master_id')) {
             $master = TransporterMaster::findOrFail($request->transporter_master_id);
             $validated['transporter_master_id'] = $master->id;
-            $validated['tds_percentage'] = $this->calculateTruckOwnerTdsFromPan($master->pan_number, $master->pan_active, $validated['declaration_given']);
+            $calculatedTds = $this->tdsCalculator->calculate((bool) $validated['declaration_given'], (string) $master->pan_number, (bool) $master->pan_active);
+            $submittedTds = round((float) $validated['tds_percentage'], 2);
+            $remark = abs($submittedTds - round($calculatedTds, 2)) > 0.01
+                ? trim((string) ($validated['tds_adjustment_remark'] ?? ''))
+                : null;
             Transporter::create([
                 'transporter_master_id' => $validated['transporter_master_id'],
                 'company_id' => $validated['company_id'],
@@ -254,7 +270,8 @@ class TruckOwnerController extends Controller
                 'declaration_given' => $validated['declaration_given'],
                 'total_trucks' => $validated['total_trucks'],
                 'advance_amount' => $validated['advance_amount'],
-                'tds_percentage' => $validated['tds_percentage'],
+                'tds_percentage' => $submittedTds,
+                'tds_adjustment_remark' => $remark,
             ]);
 
             return redirect()->route('truck_owners.index')->with('success', 'Truck Owner created successfully!');
@@ -263,7 +280,11 @@ class TruckOwnerController extends Controller
         $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
         $validated['pan_number'] = strtoupper($validated['pan_number']);
         $validated['gst_number'] = ! empty($validated['gst_number']) ? strtoupper($validated['gst_number']) : null;
-        $validated['tds_percentage'] = $this->calculateTruckOwnerTdsFromPan($validated['pan_number'], $validated['pan_active'], $validated['declaration_given']);
+        $calculatedTds = $this->tdsCalculator->calculate((bool) $validated['declaration_given'], $validated['pan_number'], $validated['pan_active']);
+        $submittedTds = round((float) $validated['tds_percentage'], 2);
+        $tdsRemark = abs($submittedTds - round($calculatedTds, 2)) > 0.01
+            ? trim((string) ($validated['tds_adjustment_remark'] ?? ''))
+            : null;
 
         $masterData = [
             'name' => $validated['name'],
@@ -289,59 +310,20 @@ class TruckOwnerController extends Controller
             'declaration_given' => $validated['declaration_given'],
             'total_trucks' => $validated['total_trucks'],
             'advance_amount' => $validated['advance_amount'],
-            'tds_percentage' => $validated['tds_percentage'],
+            'tds_percentage' => $submittedTds,
+            'tds_adjustment_remark' => $tdsRemark,
         ]);
 
         return redirect()->route('truck_owners.index')->with('success', 'Truck Owner created successfully!');
     }
 
-    private function calculateTruckOwnerTdsFromPan(string $panNumber, bool $panActive, bool $declarationGiven): float
-    {
-        if ($declarationGiven) {
-            return 0.00;
-        }
-        if (! $panActive) {
-            return 20.00;
-        }
-        $fourthChar = strtoupper(substr($panNumber, 3, 1));
-        if (in_array($fourthChar, ['P', 'H'])) {
-            return 1.00;
-        }
-        if (in_array($fourthChar, ['C', 'F', 'A', 'B', 'J', 'L', 'T'])) {
-            return 2.00;
-        }
-
-        return 20.00;
-    }
-
     public function calculateTruckOwnerTdsPercentage(Request $request)
     {
-        $panNumber = $request->input('pan_number');
-        $panActive = $request->input('pan_active');
-        $declarationGiven = $request->input('declaration_given');
+        $panNumber = (string) $request->input('pan_number', '');
+        $panActive = filter_var($request->input('pan_active'), FILTER_VALIDATE_BOOLEAN);
+        $declarationGiven = $request->input('declaration_given') == '1';
 
-        $tdsPercentage = 0.00;
-
-        if ($declarationGiven == '1') {
-            // Rule 1: Declaration given → TDS = 0%
-            $tdsPercentage = 0.00;
-        } else {
-            // Rule 2: Declaration not given
-            if ($panActive == '0') {
-                // PAN not active → 20%
-                $tdsPercentage = 20.00;
-            } elseif ($panNumber && strlen($panNumber) >= 4) {
-                // PAN active → check 4th character
-                $fourthChar = strtoupper(substr($panNumber, 3, 1));
-                if (in_array($fourthChar, ['P', 'H'])) {
-                    $tdsPercentage = 1.00;
-                } elseif (in_array($fourthChar, ['C', 'F', 'A', 'B', 'J', 'L', 'T'])) {
-                    $tdsPercentage = 2.00;
-                } else {
-                    $tdsPercentage = 20.00; // Changed from null to 0.00 for display consistency
-                }
-            }
-        }
+        $tdsPercentage = $this->tdsCalculator->calculate($declarationGiven, $panNumber, $panActive);
 
         return response()->json([
             'tds_percentage' => number_format($tdsPercentage, 2),
@@ -406,6 +388,7 @@ class TruckOwnerController extends Controller
             'is_owner' => 'Truck Owner',
             'declaration_given' => $truck_owner->declaration_given ? 'Yes' : 'No',
             'tds_percentage' => $truck_owner->tds_percentage ?: '0',
+            'tds_adjustment_remark' => $truck_owner->tds_adjustment_remark ?: '',
             'total_trucks' => $truck_owner->total_trucks,
             'advance_amount' => '₹'.number_format($truck_owner->advance_amount, 2),
             'created_at' => $truck_owner->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
@@ -446,14 +429,17 @@ class TruckOwnerController extends Controller
         }
         $validated = $request->validated();
 
-        $declarationChanged = $truck_owner->declaration_given != $validated['declaration_given'];
-
         $master = $truck_owner->transporterMaster;
-        $validated['tds_percentage'] = $this->calculateTruckOwnerTdsFromPan(
-            $master->pan_number,
-            $master->pan_active,
-            $validated['declaration_given']
+        $previousTds = round((float) $truck_owner->tds_percentage, 2);
+        $submittedTds = round((float) $validated['tds_percentage'], 2);
+        $calculatedTds = $this->tdsCalculator->calculate(
+            (bool) $validated['declaration_given'],
+            (string) $master->pan_number,
+            (bool) $master->pan_active
         );
+        $tdsRemark = abs($submittedTds - round($calculatedTds, 2)) > 0.01
+            ? trim((string) ($validated['tds_adjustment_remark'] ?? ''))
+            : null;
 
         $updateData = [
             'company_id' => $validated['company_id'],
@@ -462,7 +448,8 @@ class TruckOwnerController extends Controller
             'declaration_given' => $validated['declaration_given'],
             'total_trucks' => $validated['total_trucks'],
             'advance_amount' => $validated['advance_amount'] ?? 0,
-            'tds_percentage' => $validated['tds_percentage'],
+            'tds_percentage' => $submittedTds,
+            'tds_adjustment_remark' => $tdsRemark,
         ];
 
         if (auth()->user()->userRole->name === 'super_admin') {
@@ -472,8 +459,8 @@ class TruckOwnerController extends Controller
 
         $truck_owner->update($updateData);
 
-        if ($declarationChanged) {
-            $this->updateFreightBookingsTds($truck_owner, $validated['tds_percentage']);
+        if (abs($previousTds - $submittedTds) > 0.01) {
+            $this->freightBookingTdsSync->syncForTransporter($truck_owner, $submittedTds);
         }
 
         return redirect()->route('truck_owners.index')->with('success', 'Truck Owner updated successfully!');
@@ -491,58 +478,5 @@ class TruckOwnerController extends Controller
             'success' => true,
             'message' => 'Truck Owner deleted successfully!',
         ]);
-    }
-
-    /**
-     * Update TDS amount for freight bookings when declaration_given changes
-     * TDS can only be changed if:
-     * 1. TDS is not submitted (submission date hasn't passed)
-     * 2. OR complete payment is done to the transporter (balance_amount <= 0.01)
-     */
-    private function updateFreightBookingsTds($transporter, $newTdsPercentage): void
-    {
-        $freightBookings = FreightBooking::with(['lr:id,weight,gr_date'])
-            ->where('transporter_id', $transporter->id)
-            ->get();
-
-        foreach ($freightBookings as $freightBooking) {
-            if (! $freightBooking->canChangeTdsAmount()) {
-                continue;
-            }
-
-            // Get loading weight from LR (TDS is calculated from loading_weight * rate, not tr_amount)
-            $loadingWeight = $freightBooking->lr ? $freightBooking->lr->weight : 0;
-            if ($loadingWeight <= 0) {
-                continue;
-            }
-
-            // Calculate new TDS amount based on loading_weight * rate (not tr_amount)
-            $tdsBaseAmount = round($freightBooking->tr_fr_rate * $loadingWeight, 2);
-            $newTdsAmount = round($tdsBaseAmount * ($newTdsPercentage / 100), 2);
-
-            // Do not proceed if new TDS amount is greater than balance amount
-            if ($newTdsAmount > $freightBooking->balance_amount) {
-                continue;
-            }
-
-            $freightBooking->tds_amount = $newTdsAmount;
-            $freightBooking->transporter_tds_percentage = $newTdsPercentage;
-
-            // Recalculate balance_amount using full formula to ensure accuracy
-            $freightBooking->balance_amount = $freightBooking->tr_amount
-                - $freightBooking->advance_amount
-                - $newTdsAmount
-                - ($freightBooking->damage_amount ?? 0)
-                - ($freightBooking->shortage_amount ?? 0)
-                + ($freightBooking->detention ?? 0)
-                + ($freightBooking->deviation ?? 0)
-                - ($freightBooking->misc_expense ?? 0);
-
-            if ($freightBooking->balance_amount < 0) {
-                $freightBooking->balance_amount = 0;
-            }
-
-            $freightBooking->save();
-        }
     }
 }

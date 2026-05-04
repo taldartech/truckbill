@@ -2,10 +2,24 @@
 <html lang="en">
 
 <head>
+    @php
+        $canonicalBaseUrl = rtrim((string) config('app.website_url', config('app.url')), '/');
+        $canonicalPath = request()->path() === '/' ? '' : '/'.ltrim(request()->path(), '/');
+        $canonicalUrl = $canonicalBaseUrl.$canonicalPath;
+        $canonicalQuery = request()->getQueryString();
+
+        if (! empty($canonicalQuery)) {
+            $canonicalUrl .= '?'.$canonicalQuery;
+        }
+    @endphp
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Invoice & Transport Management System')</title>
+    @if (config('app.block_search_indexing'))
+        <meta name="robots" content="noindex, nofollow, noarchive">
+        <link rel="canonical" href="{{ $canonicalUrl }}">
+    @endif
     <!-- Favicon -->
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('favicon/apple-touch-icon.png') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon/favicon-32x32.png') }}">
@@ -456,6 +470,31 @@
                                 <a href="{{ route('transporter.payments.index') }}" class="nav-link{{ Request::is('transporter/payments*') ? ' active' : '' }}">
                                     <i class="fas fa-indian-rupee-sign"></i>
                                     <p>My Payments</p>
+                                </a>
+                            </li>
+                        @elseif (auth()->check() && auth()->user()->userRole->name === 'customer')
+                            <li class="nav-item">
+                                <a href="{{ route('customer.lorry-receipts.index') }}" class="nav-link{{ Request::is('customer/lorry-receipts*') ? ' active' : '' }}">
+                                    <i class="fas fa-file-invoice"></i>
+                                    <p>My Lorry Receipts</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('customer.invoices.index') }}" class="nav-link{{ Request::is('customer/invoices*') ? ' active' : '' }}">
+                                    <i class="fas fa-file-invoice-dollar"></i>
+                                    <p>My Invoices</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('customer.payments.index') }}" class="nav-link{{ Request::is('customer/payments*') ? ' active' : '' }}">
+                                    <i class="fas fa-wallet"></i>
+                                    <p>Invoice Payments</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('customer.transporters.index') }}" class="nav-link{{ Request::is('customer/transporters*') ? ' active' : '' }}">
+                                    <i class="fas fa-building"></i>
+                                    <p>Associated Companies</p>
                                 </a>
                             </li>
                         @elseif (auth()->check() && auth()->user()->userRole->name === 'master_admin')
