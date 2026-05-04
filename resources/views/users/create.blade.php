@@ -78,9 +78,9 @@
                                     </div>
                                 @endif
 
-                                <!-- Company and Branch Inputs (only for super_admin creating company users) -->
+                                <!-- Company and Branch Inputs (only for non-customer company users) -->
                                 @if (!$isMasterAdmin)
-                                    <div class="col-md-6">
+                                    <div class="col-md-6 company-branch-field">
                                         <label for="company_id" class="form-label">Company *</label>
                                         <select class="form-select" id="company_id" name="company_id" required>
                                             <option value="">Select</option>
@@ -96,7 +96,7 @@
                                         @enderror
                                     </div>
 
-                                    <div class="col-md-6">
+                                    <div class="col-md-6 company-branch-field">
                                         <label for="branch_id" class="form-label">Branch *</label>
                                         <select class="form-select" id="branch_id" name="branch_id" required>
                                             <option value="">Select Branch</option>
@@ -113,6 +113,7 @@
                                             <div class="text-danger">{{ $message }}</div>
                                         @enderror
                                     </div>
+
                                 @endif
 
                             </div>
@@ -189,6 +190,7 @@
                         } else if ("{{ old('company_id') }}") {
                             filterBranches("{{ old('company_id') }}");
                         }
+
                     });
                 </script>
 

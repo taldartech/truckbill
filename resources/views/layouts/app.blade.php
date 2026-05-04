@@ -537,6 +537,31 @@
                                     <p>My Payments</p>
                                 </a>
                             </li>
+                        @elseif (auth()->check() && auth()->user()->userRole->name === 'customer')
+                            <li class="nav-item">
+                                <a href="{{ route('customer.lorry-receipts.index') }}" class="nav-link{{ Request::is('customer/lorry-receipts*') ? ' active' : '' }}">
+                                    <i class="fas fa-file-invoice"></i>
+                                    <p>My Lorry Receipts</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('customer.invoices.index') }}" class="nav-link{{ Request::is('customer/invoices*') ? ' active' : '' }}">
+                                    <i class="fas fa-file-invoice-dollar"></i>
+                                    <p>My Invoices</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('customer.payments.index') }}" class="nav-link{{ Request::is('customer/payments*') ? ' active' : '' }}">
+                                    <i class="fas fa-wallet"></i>
+                                    <p>Invoice Payments</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="{{ route('customer.transporters.index') }}" class="nav-link{{ Request::is('customer/transporters*') ? ' active' : '' }}">
+                                    <i class="fas fa-building"></i>
+                                    <p>Associated Companies</p>
+                                </a>
+                            </li>
                         @elseif (auth()->check() && auth()->user()->userRole->name === 'master_admin')
                             <li class="nav-item">
                                 <a href="/users" class="nav-link{{ Request::is('users*') ? ' active' : '' }}">
