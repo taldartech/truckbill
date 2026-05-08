@@ -37,22 +37,32 @@ class TransporterController extends Controller
     private function getTransportersData(Request $request)
     {
         try {
-            $query = \App\Models\Transporter::with(['company', 'transporterMaster'])
-                ->where('is_owner', 0); // Default to show only Agencies
+            $query = \App\Models\Transporter::query()
+                ->leftJoin('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+                ->leftJoin('companies', 'transporters.company_id', '=', 'companies.id')
+                ->leftJoin('cities', 'transporter_masters.city_id', '=', 'cities.id')
+                ->where('transporters.is_owner', 0)
+                ->select([
+                    'transporters.*',
+                    'transporter_masters.name as transporter_name',
+                    'transporter_masters.pan_number as transporter_pan_number',
+                    'companies.name as company_name',
+                    'cities.name as city_name',
+                ]); // Default to show only Agencies
 
             if (Auth::user()->company_id) {
-                $query->where('company_id', Auth::user()->company_id);
+                $query->where('transporters.company_id', Auth::user()->company_id);
             }
 
             // Handle global search
             if ($request->has('search') && $request->search['value']) {
                 $searchValue = $request->search['value'];
                 $query->where(function ($q) use ($searchValue) {
-                    $q->whereHas('transporterMaster', fn ($m) => $m->where('name', 'like', "%{$searchValue}%")
-                        ->orWhere('pan_number', 'like', "%{$searchValue}%"))
+                    $q->where('transporter_masters.name', 'like', "%{$searchValue}%")
+                        ->orWhere('transporter_masters.pan_number', 'like', "%{$searchValue}%")
                         ->orWhere('transporters.mobile_number', 'like', "%{$searchValue}%")
-                        ->orWhereHas('company', fn ($companyQuery) => $companyQuery->where('name', 'like', "%{$searchValue}%"))
-                        ->orWhereHas('transporterMaster.city', fn ($cityQuery) => $cityQuery->where('name', 'like', "%{$searchValue}%"));
+                        ->orWhere('companies.name', 'like', "%{$searchValue}%")
+                        ->orWhere('cities.name', 'like', "%{$searchValue}%");
                 });
             }
 
@@ -63,7 +73,7 @@ class TransporterController extends Controller
                         $searchValue = $column['search']['value'];
                         switch ($index) {
                             case 0: // Name
-                                $query->whereHas('transporterMaster', fn ($m) => $m->where('name', 'like', "%{$searchValue}%"));
+                                $query->where('transporter_masters.name', 'like', "%{$searchValue}%");
                                 break;
                             case 1: // Short Name
                                 $query->where('transporters.short_name', 'like', "%{$searchValue}%");
@@ -72,7 +82,7 @@ class TransporterController extends Controller
                                 $query->where('transporters.beneficiary_id', 'like', "%{$searchValue}%");
                                 break;
                             case 3: // PAN Number
-                                $query->whereHas('transporterMaster', fn ($m) => $m->where('pan_number', 'like', "%{$searchValue}%"));
+                                $query->where('transporter_masters.pan_number', 'like', "%{$searchValue}%");
                                 break;
                             case 4: // Contact Person
                                 $query->where('transporters.contact_person_name', 'like', "%{$searchValue}%");
@@ -96,9 +106,7 @@ class TransporterController extends Controller
 
                 switch ($orderColumn) {
                     case 0: // Name
-                        $query->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
-                            ->orderBy('transporter_masters.name', $orderDirection)
-                            ->select('transporters.*');
+                        $query->orderBy('transporter_masters.name', $orderDirection);
                         break;
                     case 1: // Short Number
                         $query->orderBy('transporters.short_name', $orderDirection);
@@ -107,9 +115,7 @@ class TransporterController extends Controller
                         $query->orderBy('transporters.beneficiary_id', $orderDirection);
                         break;
                     case 3: // PAN Number
-                        $query->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
-                            ->orderBy('transporter_masters.pan_number', $orderDirection)
-                            ->select('transporters.*');
+                        $query->orderBy('transporter_masters.pan_number', $orderDirection);
                         break;
                     case 4: // Contact Person
                         $query->orderBy('transporters.contact_person_name', $orderDirection);
@@ -133,7 +139,7 @@ class TransporterController extends Controller
                 $totalQuery->where('company_id', Auth::user()->company_id);
             }
             $totalRecords = $totalQuery->count();
-            $filteredRecords = $query->count();
+            $filteredRecords = (clone $query)->distinct('transporters.id')->count('transporters.id');
 
             // Handle pagination
             $start = $request->start ?? 0;
@@ -144,16 +150,16 @@ class TransporterController extends Controller
             $data = $transporters->map(function ($transporter, $index) use ($start) {
                 return [
                     'sr_no' => $start + $index + 1,
-                    'name' => '<a href="javascript:void(0)" class="text-brand-primary fw-bold transporter-name-link" data-id="'.$transporter->id.'" style="cursor: pointer; text-decoration: none;">'.($transporter->name ?: '-').'</a>',
+                    'name' => '<a href="javascript:void(0)" class="text-brand-primary fw-bold transporter-name-link" data-id="'.$transporter->id.'" style="cursor: pointer; text-decoration: none;">'.($transporter->transporter_name ?: '-').'</a>',
                     'short_name' => $transporter->short_name ?: '-',
                     'beneficiary_id' => $transporter->beneficiary_id ?: '-',
-                    'pan_number' => $transporter->pan_number ?: '-',
+                    'pan_number' => $transporter->transporter_pan_number ?: '-',
                     'contact_person' => $transporter->contact_person_name ?: '-',
 
                     'contact_number' => $transporter->mobile_number ?: '-',
                     'declaration_given' => $transporter->declaration_given ? 'Yes' : 'No',
                     'advance_amount' => '₹'.number_format($transporter->advance_amount ?: 0, 2),
-                    'company' => optional($transporter->company)->name ?: '-',
+                    'company' => $transporter->company_name ?: '-',
                     'actions' => $this->getActionButtons($transporter),
                 ];
             });
@@ -181,8 +187,9 @@ class TransporterController extends Controller
     private function getActionButtons($transporter)
     {
         $buttons = '<div class="d-flex gap-1">';
+        $transporterName = $transporter->transporter_name ?? $transporter->name;
 
-        $buttons .= '<button type="button" class="btn btn-sm btn-view advance-payment-btn " title="Advance Payment" data-bs-toggle="tooltip" data-transporter-id="'.$transporter->id.'" data-transporter-name="'.htmlspecialchars($transporter->name).'">';
+        $buttons .= '<button type="button" class="btn btn-sm btn-view advance-payment-btn " title="Advance Payment" data-bs-toggle="tooltip" data-transporter-id="'.$transporter->id.'" data-transporter-name="'.htmlspecialchars((string) $transporterName).'">';
         $buttons .= '<i class="bi bi-currency-rupee "></i>';
         $buttons .= '</button>';
 
