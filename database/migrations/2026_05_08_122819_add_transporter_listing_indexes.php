@@ -13,18 +13,15 @@ return new class extends Migration
     {
         Schema::table('transporters', function (Blueprint $table) {
             $table->index(['company_id', 'is_owner', 'deleted_at'], 'transporters_company_owner_deleted_idx');
-            $table->index('transporter_master_id', 'transporters_master_id_idx');
-            $table->index('mobile_number', 'transporters_mobile_number_idx');
-            $table->index('short_name', 'transporters_short_name_idx');
-            $table->index('beneficiary_id', 'transporters_beneficiary_id_idx');
-            $table->index('created_at', 'transporters_created_at_idx');
+            $table->index(['company_id', 'is_owner', 'created_at', 'deleted_at'], 'transporters_company_owner_created_deleted_idx');
+            $table->index(['transporter_master_id', 'company_id', 'is_owner'], 'transporters_master_company_owner_idx');
+            $table->index(['company_id', 'is_owner', 'mobile_number', 'deleted_at'], 'transporters_company_owner_mobile_deleted_idx');
+            $table->index(['company_id', 'is_owner', 'short_name', 'deleted_at'], 'transporters_company_owner_short_name_deleted_idx');
         });
 
         Schema::table('transporter_masters', function (Blueprint $table) {
-            $table->index('name', 'transporter_masters_name_idx');
             $table->index('pan_number', 'transporter_masters_pan_number_idx');
-            $table->index('city_id', 'transporter_masters_city_id_idx');
-            $table->index('deleted_at', 'transporter_masters_deleted_at_idx');
+            $table->index('name', 'transporter_masters_name_idx');
         });
     }
 
@@ -35,18 +32,15 @@ return new class extends Migration
     {
         Schema::table('transporters', function (Blueprint $table) {
             $table->dropIndex('transporters_company_owner_deleted_idx');
-            $table->dropIndex('transporters_master_id_idx');
-            $table->dropIndex('transporters_mobile_number_idx');
-            $table->dropIndex('transporters_short_name_idx');
-            $table->dropIndex('transporters_beneficiary_id_idx');
-            $table->dropIndex('transporters_created_at_idx');
+            $table->dropIndex('transporters_company_owner_created_deleted_idx');
+            $table->dropIndex('transporters_master_company_owner_idx');
+            $table->dropIndex('transporters_company_owner_mobile_deleted_idx');
+            $table->dropIndex('transporters_company_owner_short_name_deleted_idx');
         });
 
         Schema::table('transporter_masters', function (Blueprint $table) {
-            $table->dropIndex('transporter_masters_name_idx');
             $table->dropIndex('transporter_masters_pan_number_idx');
-            $table->dropIndex('transporter_masters_city_id_idx');
-            $table->dropIndex('transporter_masters_deleted_at_idx');
+            $table->dropIndex('transporter_masters_name_idx');
         });
     }
 };

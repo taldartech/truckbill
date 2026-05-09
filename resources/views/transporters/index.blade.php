@@ -203,9 +203,7 @@
                         }
                     @endif
                 ],
-                order: [
-                    [0, 'asc']
-                ],
+                order: [],
                 pageLength: 10,
                 lengthMenu: [
                     [10, 25, 50, 100],
@@ -238,6 +236,9 @@
                 responsive: true,
                 autoWidth: false,
                 stateSave: true,
+                stateLoadParams: function(settings, data) {
+                    data.order = [];
+                },
                 searchDelay: 500,
                 initComplete: function() {
                     // Add individual column search

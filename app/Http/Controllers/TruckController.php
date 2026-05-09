@@ -66,37 +66,49 @@ class TruckController extends Controller
         if ($request->ajax()) {
             return $this->getTrucksData($request);
         }
-        // Get only transporters who are owners
-        $owners = \App\Models\Transporter::with('transporterMaster')
-            ->where('is_owner', 1)
-            ->where('company_id', $companyId)
-            ->get();
+        // $transportersBaseQuery = \App\Models\Transporter::query()
+        //     ->leftJoin('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+        //     ->select([
+        //         'transporters.id',
+        //         'transporters.company_id',
+        //         'transporters.is_owner',
+        //         'transporters.mobile_number',
+        //         'transporter_masters.name',
+        //         'transporter_masters.pan_number',
+        //     ])
+        //     ->where('transporters.company_id', $companyId);
 
-        $transporters = \App\Models\Transporter::with('transporterMaster')
-            ->where('company_id', $companyId)
-            ->get();
-        $drivers = \App\Models\Driver::all();
+        // $owners = (clone $transportersBaseQuery)
+        //     ->where('transporters.is_owner', 1)
+        //     ->get();
 
-        return view('trucks.index', compact('transporters', 'drivers', 'owners'));
+        // $transporters = (clone $transportersBaseQuery)->get();
+
+
+           $transporters = [];
+           $owners = [];
+        return view('trucks.index', compact('transporters', 'owners'));
     }
 
     private function getTrucksData(Request $request)
     {
         $companyId = $this->getCurrentCompanyId();
-        // $query = \App\Models\Truck::with(['transporter', 'driver'])->whereHas('transporter', function($q) {
-        //     $q->where('company_id', Auth::user()->company_id);
-
-        // });
-        $query = \App\Models\Truck::with(['transporter.transporterMaster', 'driver'])
+        $query = \App\Models\Truck::query()
+            ->leftJoin('transporters', 'trucks.transporter_id', '=', 'transporters.id')
+            ->leftJoin('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+            ->leftJoin('drivers', 'trucks.driver_id', '=', 'drivers.id')
             ->where(function ($q) use ($companyId) {
-                $q->whereHas('transporter', function ($subQuery) use ($companyId) {
-                    $subQuery->where('company_id', $companyId);
-                })
+                $q->where('transporters.company_id', $companyId)
                     ->orWhere(function ($orphanQuery) use ($companyId) {
-                        $orphanQuery->whereNull('transporter_id')
-                            ->where('company_id', $companyId);
+                        $orphanQuery->whereNull('trucks.transporter_id')
+                            ->where('trucks.company_id', $companyId);
                     });
-            });
+            })
+            ->select([
+                'trucks.*',
+                'transporter_masters.name as transporter_name',
+                'drivers.name as driver_name',
+            ]);
 
         // Handle search
         if ($request->has('search') && $request->search['value']) {
@@ -105,12 +117,8 @@ class TruckController extends Controller
                 $q->where('truck_number', 'like', "%{$searchValue}%")
                     ->orWhere('truck_type', 'like', "%{$searchValue}%")
                     ->orWhere('registration_date', 'like', "%{$searchValue}%")
-                    ->orWhereHas('transporter.transporterMaster', function ($transporterQuery) use ($searchValue) {
-                        $transporterQuery->where('name', 'like', "%{$searchValue}%");
-                    })
-                    ->orWhereHas('driver', function ($driverQuery) use ($searchValue) {
-                        $driverQuery->where('name', 'like', "%{$searchValue}%");
-                    });
+                    ->orWhere('transporter_masters.name', 'like', "%{$searchValue}%")
+                    ->orWhere('drivers.name', 'like', "%{$searchValue}%");
             });
         }
 
@@ -130,14 +138,10 @@ class TruckController extends Controller
                             $query->where('registration_date', 'like', "%{$searchValue}%");
                             break;
                         case 4: // Transporter
-                            $query->whereHas('transporter.transporterMaster', function ($transporterQuery) use ($searchValue) {
-                                $transporterQuery->where('name', 'like', "%{$searchValue}%");
-                            });
+                            $query->where('transporter_masters.name', 'like', "%{$searchValue}%");
                             break;
                         case 5: // Driver
-                            $query->whereHas('driver', function ($driverQuery) use ($searchValue) {
-                                $driverQuery->where('name', 'like', "%{$searchValue}%");
-                            });
+                            $query->where('drivers.name', 'like', "%{$searchValue}%");
                             break;
                     }
                 }
@@ -163,15 +167,10 @@ class TruckController extends Controller
                     $query->orderBy('registration_date', $orderDirection);
                     break;
                 case 4: // Transporter
-                    $query->join('transporters', 'trucks.transporter_id', '=', 'transporters.id')
-                        ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
-                        ->orderBy('transporter_masters.name', $orderDirection)
-                        ->select('trucks.*');
+                    $query->orderBy('transporter_masters.name', $orderDirection);
                     break;
                 case 5: // Driver
-                    $query->leftJoin('drivers', 'trucks.driver_id', '=', 'drivers.id')
-                        ->orderBy('drivers.name', $orderDirection)
-                        ->select('trucks.*');
+                    $query->orderBy('drivers.name', $orderDirection);
                     break;
                 default:
                     $query->orderBy('created_at', 'desc');
@@ -194,7 +193,7 @@ class TruckController extends Controller
                 });
         });
         $totalRecords = $totalQuery->count();
-        $filteredRecords = $query->count();
+        $filteredRecords = (clone $query)->count('trucks.id');
 
         // Handle pagination
         $start = $request->start ?? 0;
@@ -208,8 +207,8 @@ class TruckController extends Controller
                 'truck_number' => '<a href="#" class="truck-number-link text-brand-primary fw-bold" data-id="'.$truck->id.'" style="text-decoration: none; cursor: pointer;">'.$truck->truck_number.'</a>',
                 'truck_type' => $truck->truck_type ?: '-',
                 'registration_date' => $truck->registration_date ? date('Y-m-d', strtotime($truck->registration_date)) : '-',
-                'transporter' => $truck->transporter ? $truck->transporter->name : '-',
-                'driver' => $truck->driver ? $truck->driver->name : '-',
+                'transporter' => $truck->transporter_name ?: '-',
+                'driver' => $truck->driver_name ?: '-',
                 // 'actions' => $this->getActionButtons($truck)
                 'actions' => Auth::user()->canActAsAdmin()
                     ? $this->getActionButtons($truck)
@@ -235,10 +234,10 @@ class TruckController extends Controller
         $buttons .= 'data-truck-number="'.htmlspecialchars($truck->truck_number).'" ';
         $buttons .= 'data-truck-type="'.htmlspecialchars($truck->truck_type).'" ';
         // $buttons .= 'data-transporter-name="' . htmlspecialchars($truck->transporter->name) . '":"-" ';
-        $buttons .= 'data-transporter-name="'.htmlspecialchars($truck->transporter ? $truck->transporter->name : '-').'" ';
+        $buttons .= 'data-transporter-name="'.htmlspecialchars($truck->transporter_name ?? '-').'" ';
 
         $buttons .= 'data-current-driver-id="'.($truck->driver_id ?: '').'" ';
-        $buttons .= 'data-current-driver-name="'.htmlspecialchars($truck->driver->name ?? '').'">';
+        $buttons .= 'data-current-driver-name="'.htmlspecialchars($truck->driver_name ?? '').'">';
         $buttons .= '<i class="bi bi-person-plus"></i></button>';
 
         // Delete button
@@ -254,9 +253,9 @@ class TruckController extends Controller
             $buttons .= 'data-truck-id="'.$truck->id.'" ';
             $buttons .= 'data-truck-number="'.htmlspecialchars($truck->truck_number).'" ';
             $buttons .= 'data-truck-type="'.htmlspecialchars($truck->truck_type).'" ';
-            $buttons .= 'data-transporter-name="'.htmlspecialchars($truck->transporter ? $truck->transporter->name : '-').'" ';
+            $buttons .= 'data-transporter-name="'.htmlspecialchars($truck->transporter_name ?? '-').'" ';
             $buttons .= 'data-current-driver-id="'.($truck->driver_id ?: '').'" ';
-            $buttons .= 'data-current-driver-name="'.htmlspecialchars($truck->driver->name ?? '').'">';
+            $buttons .= 'data-current-driver-name="'.htmlspecialchars($truck->driver_name ?? '').'">';
             $buttons .= '<i class="bi bi-truck"></i></button>';
         }
 
@@ -313,13 +312,34 @@ class TruckController extends Controller
                 ->firstOrFail();
         }
 
-        $transporters = \App\Models\Transporter::with('transporterMaster')
-            ->where('company_id', $companyId)
-            ->where('is_owner', 1)
-            ->orderBy('id')
-            ->get();
+        $selectedTransporterId = old('transporter_id', $transporter?->id);
+        $selectedDriverId = old('driver_id');
 
-        $drivers = \App\Models\Driver::all();
+        $transporters = collect();
+        if ($selectedTransporterId) {
+            $selectedTransporter = \App\Models\Transporter::with('transporterMaster')
+                ->where('company_id', $companyId)
+                ->where('is_owner', 1)
+                ->where('id', $selectedTransporterId)
+                ->first();
+
+            if ($selectedTransporter) {
+                $transporters = collect([$selectedTransporter]);
+            }
+        }
+
+        $drivers = collect();
+        if ($selectedDriverId) {
+            $selectedDriver = \App\Models\Driver::query()
+                ->where('company_id', $companyId)
+                ->where('id', $selectedDriverId)
+                ->first();
+
+            if ($selectedDriver) {
+                $drivers = collect([$selectedDriver]);
+            }
+        }
+
         $truckTypes = TruckType::orderBy('name')->get();
 
         return view('trucks.create', compact('transporter', 'transporters', 'drivers', 'truckTypes'));
@@ -421,10 +441,40 @@ class TruckController extends Controller
     public function edit(\App\Models\Truck $truck)
     {
         $companyId = $this->getCurrentCompanyId();
-        $transporters = \App\Models\Transporter::with('transporterMaster')
-            ->where('company_id', $companyId)
-            ->get();
-        $drivers = \App\Models\Driver::all();
+        $selectedTransporterId = old('transporter_id', $truck->transporter_id);
+        $selectedDriverId = old('driver_id', $truck->driver_id);
+
+        $transporters = collect();
+        if ($selectedTransporterId) {
+            $selectedTransporter = \App\Models\Transporter::with('transporterMaster')
+                ->where('company_id', $companyId)
+                ->where(function ($query) use ($selectedTransporterId) {
+                    $query->where('is_owner', 1)
+                        ->orWhere('id', $selectedTransporterId);
+                })
+                ->where('id', $selectedTransporterId)
+                ->first();
+
+            if ($selectedTransporter) {
+                $transporters = collect([$selectedTransporter]);
+            }
+        }
+
+        $drivers = collect();
+        if ($selectedDriverId) {
+            $selectedDriver = \App\Models\Driver::withTrashed()
+                ->where(function ($query) use ($companyId, $selectedDriverId) {
+                    $query->where('company_id', $companyId)
+                        ->orWhere('id', $selectedDriverId);
+                })
+                ->where('id', $selectedDriverId)
+                ->first();
+
+            if ($selectedDriver) {
+                $drivers = collect([$selectedDriver]);
+            }
+        }
+
         $truckTypes = TruckType::orderBy('name')->get();
 
         return view('trucks.edit', compact('truck', 'transporters', 'drivers', 'truckTypes'));
@@ -637,88 +687,6 @@ class TruckController extends Controller
         }
 
         return redirect()->back()->with('success', $message);
-    }
-
-    /**
-     * Search trucks for Select2 AJAX.
-     * Returns Select2-compatible payload: { results: [{id,text,transporter_id,transporter_name,driver_name}], pagination: { more } }
-     */
-    public function searchTrucksApi(Request $request)
-    {
-        try {
-            $companyId = $this->getCurrentCompanyId();
-            $q = trim((string) $request->query('q', ''));
-            $page = (int) $request->query('page', 1);
-            $limit = (int) $request->query('limit', 20);
-            $limit = max(1, min($limit, 50));
-            $page = max(1, $page);
-
-            $query = \App\Models\Truck::with(['transporter.transporterMaster', 'driver'])
-                ->where(function ($qq) use ($companyId) {
-                    $qq->whereHas('transporter', function ($sub) use ($companyId) {
-                        $sub->where('company_id', $companyId);
-                    })->orWhere(function ($orphanQuery) use ($companyId) {
-                        $orphanQuery->whereNull('transporter_id')
-                            ->where('company_id', $companyId);
-                    });
-                });
-
-            if ($q !== '') {
-                $query->where(function ($qq) use ($q) {
-                    $qq->where('truck_number', 'like', "%{$q}%")
-                        ->orWhere('truck_type', 'like', "%{$q}%")
-                        ->orWhereHas('transporter.transporterMaster', function ($tm) use ($q) {
-                            $tm->where('name', 'like', "%{$q}%")
-                                ->orWhere('pan_number', 'like', "%{$q}%");
-                        })
-                        ->orWhereHas('driver', function ($d) use ($q) {
-                            $d->where('name', 'like', "%{$q}%");
-                        });
-                });
-            }
-
-            $query->orderBy('truck_number', 'asc');
-
-            $offset = ($page - 1) * $limit;
-            $items = $query->offset($offset)->limit($limit + 1)->get();
-            $more = $items->count() > $limit;
-            $items = $items->take($limit);
-
-            $results = $items->map(function ($truck) {
-                $transporterName = $truck->transporter ? ($truck->transporter->name ?: 'No Transporter') : 'No Transporter';
-                $driverName = $truck->driver ? $truck->driver->name : null;
-
-                $text = $truck->truck_number ?: '';
-                if ($driverName) {
-                    $text .= ' - Driver: '.$driverName;
-                }
-                $text .= ' ('.$transporterName.')';
-
-                return [
-                    'id' => $truck->id,
-                    'text' => $text,
-                    'transporter_id' => $truck->transporter_id,
-                    'transporter_name' => $transporterName,
-                    'driver_name' => $driverName,
-                ];
-            })->values();
-
-            return response()->json([
-                'results' => $results,
-                'pagination' => [
-                    'more' => $more,
-                ],
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Error searching trucks: '.$e->getMessage());
-
-            return response()->json([
-                'results' => [],
-                'pagination' => [
-                    'more' => false,
-                ],
-            ]);
-        }
     }
 
     /**

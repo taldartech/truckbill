@@ -71,7 +71,11 @@ class FreightBookingController extends Controller
 
     public function index(Request $request)
     {
-        $pumps = Pump::where('user_id', Auth::user()->company->user_id)->get();
+        $pumps = Pump::query()
+            ->where('user_id', Auth::user()->company->user_id)
+            ->select(['id', 'pump_name'])
+            ->orderBy('pump_name')
+            ->get();
         if ($request->ajax()) {
             return $this->getFreightBookingsData($request);
         }
@@ -204,30 +208,42 @@ class FreightBookingController extends Controller
             ->where('is_owner', 0)
             ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
             ->orderBy('transporter_masters.name')
-            ->select('transporters.*')
+            ->select([
+                'transporters.id',
+                'transporters.transporter_master_id',
+                'transporters.company_id',
+                'transporters.is_owner',
+            ])
             ->get();
         $truckOwners = Transporter::with('transporterMaster')
             ->where('is_owner', 1)
             ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
             ->orderBy('transporter_masters.name')
-            ->select('transporters.*')
+            ->select([
+                'transporters.id',
+                'transporters.transporter_master_id',
+                'transporters.company_id',
+                'transporters.is_owner',
+            ])
             ->get();
-        $lrs = LorryReceipt::all();
-        $paymentTypes = \App\Models\PaymentType::all();
-        $paymentModes = \App\Models\PaymentMode::all();
-        $customers = \App\Models\Consignee::all();
+        $paymentTypes = \App\Models\PaymentType::query()
+            ->select(['id', 'name'])
+            ->orderBy('name')
+            ->get();
+        $paymentModes = \App\Models\PaymentMode::query()
+            ->select(['id', 'name'])
+            ->orderBy('name')
+            ->get();
 
         return view('freight_bookings.index', compact(
             'bookings',
-            'lrs',
             'paymentTypes',
             'paymentModes',
             'transporters',
             'truckOwners',
             'startDate',
             'endDate',
-            'pumps',
-            'customers'
+            'pumps'
         ));
     }
 
@@ -386,8 +402,6 @@ class FreightBookingController extends Controller
             return redirect()->route('freight_bookings.index')
                 ->with('error', 'You do not have enough credits to create a Good Hire (Lorry Hire).');
         }
-        $lrs = LorryReceipt::all();
-        $linkedBookings = FreightBooking::all();
         $goodsTypes = \App\Models\GoodType::where('user_id', Auth::user()->company->user_id)->get();
         $lorry_receipt_id = $request->lorry_receipt_id;
 
@@ -422,8 +436,6 @@ class FreightBookingController extends Controller
                 $tdsPercentage = $transporter ? (float) $transporter->tds_percentage : 0.0;
 
                 return view('freight_bookings.create', [
-                    'lrs' => $lrs,
-                    'linkedBookings' => $linkedBookings,
                     'goodsTypes' => $goodsTypes,
                     'lorry_receipt' => $lorry_receipt,
                     'weight' => $lr->weight,
@@ -451,8 +463,6 @@ class FreightBookingController extends Controller
         }
 
         return view('freight_bookings.create', [
-            'lrs' => $lrs,
-            'linkedBookings' => $linkedBookings,
             'goodsTypes' => $goodsTypes,
             'lorry_receipt' => $lorry_receipt,
             'transporter' => null,
@@ -870,9 +880,6 @@ class FreightBookingController extends Controller
             // Get the truck details
             $truck = \App\Models\Truck::find($lorryReceipt->truck_id);
 
-            // Get all LRs
-            $lrs = LorryReceipt::all();
-
             // Get goods types
             $goodsTypes = \App\Models\GoodType::where('user_id', Auth::user()->company->user_id)->get();
             $lorry_receipt = \App\Models\LorryReceipt::with(['transporter.transporterMaster', 'truck:id,truck_number'])
@@ -895,7 +902,6 @@ class FreightBookingController extends Controller
 
                     return view('freight_bookings.edit', [
                         'freightBooking' => $freightBooking,
-                        'lrs' => $lrs,
                         'linkedBookings' => $linkedBookings,
                         'goodsTypes' => $goodsTypes,
                         'lorry_receipt' => $lorry_receipt,
@@ -924,9 +930,9 @@ class FreightBookingController extends Controller
 
             return view('freight_bookings.edit', [
                 'freightBooking' => $freightBooking,
-                'lorry_receipt' => $lrs,
+                'lorry_receipt' => $lorry_receipt,
                 'linkedBookings' => $linkedBookings,
-                'goods_type' => $goodsTypes,
+                'goodsTypes' => $goodsTypes,
                 'transporter' => $transporter,
                 'truck' => $truck,
                 'tdsPercentages' => $tdsPercentages,

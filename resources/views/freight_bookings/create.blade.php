@@ -193,11 +193,6 @@
         </div>
     </div>
 
-    @php
-        $lrs = \App\Models\LorryReceipt::all();
-        $transporters = \App\Models\Transporter::where('company_id', auth()->user()->company_id)->get();
-    @endphp
-
     <div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
         <div class="card-header">
             <div class="card-title h4 d-flex justify-content-between align-items-center w-100">

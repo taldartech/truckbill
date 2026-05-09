@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\DropdownController;
+use App\Http\Controllers\Api\Select2SearchController;
 use App\Http\Controllers\ConsigneeController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\FreightBookingController;
@@ -19,13 +20,15 @@ Route::middleware('auth.blocked')->group(function () {
         Route::get('/api/transporters/{transporter}/trucks', [TruckController::class, 'getTrucksForTransporter']);
         Route::get('/api/trucks/{truck}/owner-transporters', [TruckController::class, 'getOwnerTransporters']);
         Route::get('/api/drivers', [DriverController::class, 'getDriversApi']);
+        Route::get('/api/drivers/search', [Select2SearchController::class, 'drivers']);
         Route::get('/api/transporters/{id}', [FreightBookingController::class, 'getTransporter']);
-        Route::get('/api/trucks/search', [TruckController::class, 'searchTrucksApi']);
+        Route::get('/api/trucks/search', [Select2SearchController::class, 'trucks']);
         Route::get('/api/trucks/{id}', [FreightBookingController::class, 'getTruck']);
         Route::get('/api/truck-owners', [TransporterController::class, 'getTruckOwnersApi']);
+        Route::get('/api/truck-owners/search', [Select2SearchController::class, 'truckOwners']);
         Route::get('/api/agencies', [TransporterController::class, 'getAgenciesApi']);
-        Route::get('/api/agencies/search', [TransporterController::class, 'searchAgenciesApi']);
-        Route::get('/api/consignees/search', [ConsigneeController::class, 'searchConsigneesApi']);
+        Route::get('/api/agencies/search', [Select2SearchController::class, 'agencies']);
+        Route::get('/api/consignees/search', [Select2SearchController::class, 'consignees']);
         Route::get('/api/consignees/{id}', [ConsigneeController::class, 'getConsigneeApi']);
         Route::get('/api/transporter-master-by-pan', [TransporterController::class, 'getTransporterMasterByPan']);
         Route::post('/api/calculate-tds-percentage', [TransporterController::class, 'calculateTdsPercentage']);
