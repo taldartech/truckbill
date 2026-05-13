@@ -232,6 +232,10 @@
                     const opt = new Option(invoiceCustomerPrefill.text, String(invoiceCustomerPrefill.id), true,
                         true);
                     $sel.append(opt).trigger('change');
+                    window.invoiceCreatePendingCustomerId = String(invoiceCustomerPrefill.id);
+                    if (typeof window.invoiceCreateLoadCustomerMemos === 'function') {
+                        window.invoiceCreateLoadCustomerMemos(window.invoiceCreatePendingCustomerId);
+                    }
                 }
             }
 
@@ -397,17 +401,34 @@
             const mainFormContainer = document.getElementById('mainInvoiceForm');
             const preFormContainer = document.getElementById('preFormContainer');
             const preCustomerSelect = document.getElementById('preCustomerSelect');
-            const preMemoId = document.getElementById('preMemoId');
             const showMemoOptionsBtn = document.getElementById('showMemoOptions');
             const memoOptionsContainer = document.getElementById('memoOptionsContainer');
             const memoCheckboxes = document.getElementById('memoCheckboxes');
 
-            // Load memos when customer is selected
-            preCustomerSelect.addEventListener('change', function() {
-                const customerId = this.value;
+            if (!showInvoiceFormBtn || !mainFormContainer || !preFormContainer || !preCustomerSelect ||
+                !showMemoOptionsBtn || !memoOptionsContainer || !memoCheckboxes) {
+                return;
+            }
+
+            function resetMemoSelection() {
+                memoCheckboxes.innerHTML = '';
+                memoOptionsContainer.style.display = 'none';
+                showInvoiceFormBtn.disabled = true;
+            }
+
+            function bindMemoCheckboxState() {
+                memoCheckboxes.querySelectorAll('.memo-checkbox').forEach(cb => {
+                    cb.addEventListener('change', function() {
+                        const anyChecked = memoCheckboxes.querySelectorAll('.memo-checkbox:checked').length > 0;
+                        showInvoiceFormBtn.disabled = !anyChecked;
+                    });
+                });
+            }
+
+            function loadCustomerMemos(customerId) {
                 if (!customerId) {
-                    memoOptionsContainer.style.display = 'none';
-                    showInvoiceFormBtn.disabled = true;
+                    resetMemoSelection();
+
                     return;
                 }
 
@@ -417,9 +438,16 @@
                             'X-Requested-With': 'XMLHttpRequest'
                         }
                     })
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+
+                        return response.json();
+                    })
                     .then(data => {
                         memoCheckboxes.innerHTML = '';
+
                         if (data && data.length > 0) {
                             data.forEach(memo => {
                                 const checkbox = document.createElement('div');
@@ -432,28 +460,38 @@
                         `;
                                 memoCheckboxes.appendChild(checkbox);
                             });
-                            // memoOptionsContainer.style.display = 'block';
                             showInvoiceFormBtn.disabled = true; // keep disabled until user selects
-
-                            // Add change listener to each checkbox
-                            memoCheckboxes.querySelectorAll('.memo-checkbox').forEach(cb => {
-                                cb.addEventListener('change', function() {
-                                    const anyChecked = memoCheckboxes.querySelectorAll(
-                                        '.memo-checkbox:checked').length > 0;
-                                    showInvoiceFormBtn.disabled = !
-                                        anyChecked; // enable only if at least one checked
-                                });
-                            });
+                            bindMemoCheckboxState();
                         } else {
-                            memoOptionsContainer.style.display = 'none';
-                            showInvoiceFormBtn.disabled = true;
+                            resetMemoSelection();
                         }
                     })
                     .catch(error => {
                         console.error("Error loading memos:", error);
-                        memoOptionsContainer.style.display = 'none';
+                        resetMemoSelection();
                     });
-            });
+            }
+
+            window.invoiceCreateLoadCustomerMemos = loadCustomerMemos;
+
+            // Load memos when customer is selected
+            if (typeof $ !== 'undefined') {
+                $('#preCustomerSelect')
+                    .off('.invoiceCreateMemos')
+                    .on('change.invoiceCreateMemos select2:select.invoiceCreateMemos', function() {
+                        loadCustomerMemos($(this).val());
+                    });
+            } else {
+                preCustomerSelect.addEventListener('change', function() {
+                    loadCustomerMemos(this.value);
+                });
+            }
+
+            const initialCustomerId = window.invoiceCreatePendingCustomerId || preCustomerSelect.value ||
+                (typeof $ !== 'undefined' ? $('#preCustomerSelect').val() : '');
+            if (initialCustomerId) {
+                loadCustomerMemos(initialCustomerId);
+            }
 
             // Show/Hide memo options when button is clicked
             showMemoOptionsBtn.addEventListener('click', function() {
