@@ -11,7 +11,7 @@ use App\Models\Transporter;
 use App\Models\Truck;
 use App\Models\VoucherLinked;
 use App\Models\VoucherPayment;
-use App\Services\FreightBookingBalanceAdjustmentService;
+use App\Services\FreightBookingCalculationService;
 use App\Services\Notifications\VoucherPaymentNotificationService;
 use App\Services\TransporterAdvanceLedgerService;
 use Illuminate\Http\Request;
@@ -22,7 +22,8 @@ use Illuminate\Support\Facades\Log;
 class VoucherPaymentController extends Controller
 {
     public function __construct(
-        private readonly VoucherPaymentNotificationService $voucherPaymentNotificationService
+        private readonly VoucherPaymentNotificationService $voucherPaymentNotificationService,
+        private readonly FreightBookingCalculationService $freightBookingCalculationService,
     ) {}
 
     private function bulkPaymentRequestLogContext(Request $request): array
@@ -250,7 +251,7 @@ class VoucherPaymentController extends Controller
             ->selectRaw('SUM(amount) as total_amount')
             ->groupBy('voucher_number')
             ->orderByDesc('latest_payment_id')
-            ->simplePaginate(20)
+            ->paginate(20)
             ->appends($request->except('page'));
 
         $latestPaymentIds = $voucherGroups->pluck('latest_payment_id')->filter()->values()->all();
@@ -414,8 +415,11 @@ class VoucherPaymentController extends Controller
 
                 // Save the freight booking
                 $freightBooking->save();
-                app(FreightBookingBalanceAdjustmentService::class)
-                    ->adjustNegativeBalanceToAdvance($freightBooking);
+                if (! empty($freightBooking->linked_lr_id)) {
+                    $this->freightBookingCalculationService->applyNegativeAdjustmentForLinkedBookings($freightBooking);
+                } else {
+                    $this->freightBookingCalculationService->applyNegativeAdjustmentForSingleBooking($freightBooking);
+                }
 
                 return $voucherPayment;
             });
@@ -879,8 +883,11 @@ class VoucherPaymentController extends Controller
                 $freightBooking->advance_amount += $amount;
                 $freightBooking->balance_amount = $freightBooking->tr_amount - $freightBooking->advance_amount;
                 $freightBooking->save();
-                app(FreightBookingBalanceAdjustmentService::class)
-                    ->adjustNegativeBalanceToAdvance($freightBooking);
+                if (! empty($freightBooking->linked_lr_id)) {
+                    $this->freightBookingCalculationService->applyNegativeAdjustmentForLinkedBookings($freightBooking);
+                } else {
+                    $this->freightBookingCalculationService->applyNegativeAdjustmentForSingleBooking($freightBooking);
+                }
             }
 
             return redirect()->route('voucher_payments.index')
@@ -1044,8 +1051,11 @@ class VoucherPaymentController extends Controller
 
                         // Save the freight booking
                         $freightBooking->save();
-                        app(FreightBookingBalanceAdjustmentService::class)
-                            ->adjustNegativeBalanceToAdvance($freightBooking);
+                        if (! empty($freightBooking->linked_lr_id)) {
+                            $this->freightBookingCalculationService->applyNegativeAdjustmentForLinkedBookings($freightBooking);
+                        } else {
+                            $this->freightBookingCalculationService->applyNegativeAdjustmentForSingleBooking($freightBooking);
+                        }
 
                         // Delete the voucher payment
                         $voucher->delete();
@@ -1078,8 +1088,11 @@ class VoucherPaymentController extends Controller
 
                     // Save the freight booking
                     $freightBooking->save();
-                    app(FreightBookingBalanceAdjustmentService::class)
-                        ->adjustNegativeBalanceToAdvance($freightBooking);
+                    if (! empty($freightBooking->linked_lr_id)) {
+                        $this->freightBookingCalculationService->applyNegativeAdjustmentForLinkedBookings($freightBooking);
+                    } else {
+                        $this->freightBookingCalculationService->applyNegativeAdjustmentForSingleBooking($freightBooking);
+                    }
 
                     // Delete the voucher payment
                     $voucher_payment->delete();

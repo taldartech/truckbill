@@ -11,7 +11,7 @@ use App\Models\Pump;
 use App\Models\Transporter;
 use App\Models\Truck;
 use App\Models\VoucherPayment;
-use App\Services\FreightBookingBalanceAdjustmentService;
+use App\Services\FreightBookingCalculationService;
 use App\Services\Notifications\FreightBookingNotificationService;
 use App\Services\Notifications\LorryReceiptNotificationService;
 use App\Services\TransporterAdvanceLedgerService;
@@ -27,7 +27,8 @@ class FreightBookingController extends Controller
 {
     public function __construct(
         private readonly LorryReceiptNotificationService $lrNotificationService,
-        private readonly FreightBookingNotificationService $frNotificationService
+        private readonly FreightBookingNotificationService $frNotificationService,
+        private readonly FreightBookingCalculationService $freightBookingCalculationService,
     ) {}
 
     private function getActiveCompanyId(): ?int
@@ -634,10 +635,18 @@ class FreightBookingController extends Controller
                 ];
             }
 
+            $calculatedAmounts = $this->freightBookingCalculationService->calculateForStore(
+                (bool) ($data['is_fixed_amount'] ?? false),
+                (float) $data['tr_fr_rate'],
+                (float) ($lorryReceipt->weight ?? 0),
+                (float) $data['tr_amount'],
+                (float) ($transporterInfo['transporter_tds_percentage'] ?? 0)
+            );
+
             $linkedLrId = $lorryReceipt->linked_lr_id ?? null;
             $linked_freight_booking_id = FreightBooking::where('lr_id', $lorryReceipt->id)->orderBy('id', 'desc')->first()->id ?? null;
 
-            $freightBooking = FreightBooking::create(array_merge($data, [
+            $freightBooking = FreightBooking::create(array_merge($data, $calculatedAmounts, [
                 'lr_number' => $lorryReceipt->lr_number,
                 'linked_freight_booking_id' => $linked_freight_booking_id,
                 'voucher_number' => $nextVoucherNumber,
@@ -1088,35 +1097,33 @@ class FreightBookingController extends Controller
         }
         DB::beginTransaction();
         try {
-            // Use the new TR amount from form data instead of existing (may be fixed or auto-calculated)
-            $newTrAmount = $data['tr_amount'];
             $isFixedAmount = (bool) ($data['is_fixed_amount'] ?? $freightBooking->is_fixed_amount);
+            $newDamageAmount = (float) ($data['damage_amount'] ?? 0);
+            $newShortageAmount = (float) ($data['shortage_amount'] ?? 0);
+            $unloadingWeight = isset($data['unloading_weight'])
+                ? (float) $data['unloading_weight']
+                : (float) ($lorryReceipt->unloading_weight ?? $lorryReceipt->weight ?? 0);
+            $voucherPaymentsTotal = (float) $freightBooking->voucherPayments()->sum('amount');
 
-            // Store old values before update for proper amount calculation
-            $oldDamageAmount = $freightBooking->damage_amount ?? 0;
-            $oldShortageAmount = $freightBooking->shortage_amount ?? 0;
-            $newDamageAmount = $data['damage_amount'] ?? 0;
-            $newShortageAmount = $data['shortage_amount'] ?? 0;
+            $calculatedAmounts = $this->freightBookingCalculationService->calculateForUpdate(
+                $isFixedAmount,
+                (float) $data['tr_fr_rate'],
+                (float) ($lorryReceipt->weight ?? 0),
+                $unloadingWeight,
+                (float) $data['tr_amount'],
+                $voucherPaymentsTotal,
+                (float) ($data['detention'] ?? 0),
+                (float) ($data['deviation'] ?? 0),
+                (float) ($data['misc_expense'] ?? 0),
+                $newDamageAmount,
+                $newShortageAmount,
+                (float) ($freightBooking->transporter_tds_percentage ?? 0),
+                $freightBooking->canChangeTdsAmount(),
+                (float) ($freightBooking->tds_amount ?? 0),
+                (float) ($freightBooking->negative_adjusted_amount ?? 0),
+            );
 
-            // Store old loading_weight and rate to detect changes for TDS calculation
-            $oldLoadingWeight = $lorryReceipt->weight ?? 0;
-            $oldTrFrRate = $freightBooking->tr_fr_rate ?? 0;
-            $newTrFrRate = $data['tr_fr_rate'] ?? 0;
-            $isDelivered = ($lorryReceipt->delivery_status === 'Delivered') || (isset($data['is_delivered']) && $data['is_delivered'] === '1');
-
-            // Recalculate balance on the server side to ensure consistency
-            // This ensures balance is always correct when TDS, TR amount, or other fields change
-            $calculatedBalance = $newTrAmount
-                - $data['advance_amount']
-                - ($data['tds_amount'] ?? 0)
-                + ($data['detention'] ?? 0)
-                + ($data['deviation'] ?? 0)
-                - ($data['misc_expense'] ?? 0)
-                - $newDamageAmount
-                - $newShortageAmount;
-
-            // Update balance_amount with calculated value
-            $data['balance_amount'] = $calculatedBalance;
+            $data = array_merge($data, $calculatedAmounts);
 
             $linkedLrId = $lorryReceipt->linked_lr_id ?? null;
 
@@ -1133,179 +1140,20 @@ class FreightBookingController extends Controller
 
             $justCancelledFreightBooking = ! $wasFreightBookingCancelled && (bool) $freightBooking->is_cancelled;
 
+            $lorryReceiptUpdate = null;
+
             // Update lorry receipt status
             if ($lorryReceipt) {
-                // Refresh the lorry receipt to get latest data (in case memo_id was updated via AJAX)
-                $lorryReceipt->refresh();
-                $oldDeliveryStatus = $lorryReceipt->delivery_status;
+                $lorryReceiptUpdate = $this->freightBookingCalculationService->updateLorryReceiptForFreightBookingUpdate(
+                    $lorryReceipt,
+                    $data,
+                    $newDamageAmount,
+                    $newShortageAmount,
+                );
 
-                $deliveryStatus = 'Pending';
-                if (isset($data['is_cancelled']) && $data['is_cancelled'] === '1') {
-                    // When freight booking is cancelled, lorry receipt goes back to Pending
-                    $deliveryStatus = 'Pending';
-                    $lorryReceipt->freight_booking_id = null; // Unlink freight booking
-                } elseif (isset($data['is_delivered']) && $data['is_delivered'] === '1') {
-                    // Only set to 'Delivered' if memo_id exists on the lorry receipt
-                    $deliveryStatus = 'Delivered';
-                } else {
-                    // If not delivered and not cancelled, set to In-Progress
-                    $deliveryStatus = 'In-Progress';
-                }
-
-                // Update damage and shortage amounts on lorry receipt
-                $lorryReceipt->damage_amount = $newDamageAmount;
-                $lorryReceipt->shortage_amount = $newShortageAmount;
-
-                // Update unloading_weight if provided (for loose weight mode)
-                if (isset($data['unloading_weight'])) {
-                    $lorryReceipt->unloading_weight = $data['unloading_weight'];
-
-                    $loadingWeight = $lorryReceipt->weight;
-                    $unloadingWeight = $data['unloading_weight'];
-
-                    // Only recalculate tr_amount if loading_weight != unloading_weight
-                    // If weights are equal, use the manually entered tr_amount from form
-                    if (abs($loadingWeight - $unloadingWeight) > 0.01) {
-                        // Weights are different - always recalculate tr_amount
-                        $effectiveWeight = min($loadingWeight, $unloadingWeight);
-                        $newTrAmount = round($freightBooking->tr_fr_rate * $effectiveWeight, 2);
-                    } else {
-                        // Weights are equal - use manually entered tr_amount from form
-                        $newTrAmount = $data['tr_amount'];
-                    }
-
-                    // TDS calculation logic:
-                    // Before delivery: TDS is calculated from freight amount (TR amount)
-                    // After delivery: TDS from loading_weight * rate; only change if loading_weight or rate changed
-                    $loadingWeightChanged = abs($oldLoadingWeight - $loadingWeight) > 0.01;
-                    $rateChanged = abs($oldTrFrRate - $newTrFrRate) > 0.01;
-
-                    $shouldRecalculateTds = false;
-                    if ($isDelivered) {
-                        // After delivery: only recalculate TDS if loading_weight or rate changed
-                        $shouldRecalculateTds = $loadingWeightChanged || $rateChanged;
-                    } else {
-                        // Before delivery: always recalculate TDS (from freight amount)
-                        $shouldRecalculateTds = true;
-                    }
-
-                    if ($shouldRecalculateTds) {
-                        $tdsPercentage = $freightBooking->transporter_tds_percentage ?? 0;
-                        if (! $isDelivered) {
-                            // Before delivery: TDS = freight amount (TR amount) * tds_percentage
-                            $newTdsAmount = round($newTrAmount * ($tdsPercentage / 100), 2);
-                        } else {
-                            // After delivery: TDS = loading_weight * rate * tds_percentage
-                            $tdsBaseAmount = round($newTrFrRate * $loadingWeight, 2);
-                            $newTdsAmount = round($tdsBaseAmount * ($tdsPercentage / 100), 2);
-                        }
-                    } else {
-                        // Keep existing TDS amount (loading_weight and rate didn't change)
-                        $newTdsAmount = $freightBooking->tds_amount ?? 0;
-                    }
-
-                    // Update tr_amount and tds_amount if they differ from calculated values
-                    $trAmountChanged = abs($freightBooking->tr_amount - $newTrAmount) > 0.01;
-                    $tdsAmountChanged = abs(($freightBooking->tds_amount ?? 0) - $newTdsAmount) > 0.01;
-
-                    // Check if TDS can be changed before updating
-                    $canChangeTds = $freightBooking->canChangeTdsAmount();
-
-                    if ($trAmountChanged || ($tdsAmountChanged && $canChangeTds)) {
-                        $freightBooking->tr_amount = $newTrAmount;
-                        // Only update TDS if it can be changed and should be recalculated
-                        if ($tdsAmountChanged && $canChangeTds && $shouldRecalculateTds) {
-                            $freightBooking->tds_amount = $newTdsAmount;
-                        }
-
-                        // Recalculate balance_amount using current TDS amount (may be old if TDS cannot be changed)
-                        $currentTdsAmount = $freightBooking->tds_amount ?? 0;
-                        $freightBooking->balance_amount = $newTrAmount
-                            - $freightBooking->advance_amount
-                            - $currentTdsAmount
-                            - ($freightBooking->damage_amount ?? 0)
-                            - ($freightBooking->shortage_amount ?? 0)
-                            + ($freightBooking->detention ?? 0)
-                            + ($freightBooking->deviation ?? 0)
-                            - ($freightBooking->misc_expense ?? 0);
-
-                        $freightBooking->save();
-                    }
-                } else {
-                    // If unloading_weight is not being updated, check if rate or loading_weight changed
-                    // and recalculate TDS accordingly
-                    $loadingWeight = $lorryReceipt->weight ?? 0;
-                    $loadingWeightChanged = abs($oldLoadingWeight - $loadingWeight) > 0.01;
-                    $rateChanged = abs($oldTrFrRate - $newTrFrRate) > 0.01;
-
-                    $shouldRecalculateTds = false;
-                    if ($isDelivered) {
-                        // After delivery: only recalculate TDS if loading_weight or rate changed
-                        $shouldRecalculateTds = $loadingWeightChanged || $rateChanged;
-                    } else {
-                        // Before delivery: always recalculate TDS from freight amount
-                        $shouldRecalculateTds = $loadingWeightChanged || $rateChanged;
-                    }
-
-                    if ($shouldRecalculateTds) {
-                        $tdsPercentage = $freightBooking->transporter_tds_percentage ?? 0;
-                        if (! $isDelivered) {
-                            // Before delivery: TDS = freight amount (TR amount) * tds_percentage
-                            $newTdsAmount = round($freightBooking->tr_amount * ($tdsPercentage / 100), 2);
-                        } else {
-                            // After delivery: TDS = loading_weight * rate * tds_percentage
-                            $tdsBaseAmount = round($newTrFrRate * $loadingWeight, 2);
-                            $newTdsAmount = round($tdsBaseAmount * ($tdsPercentage / 100), 2);
-                        }
-
-                        $tdsAmountChanged = abs(($freightBooking->tds_amount ?? 0) - $newTdsAmount) > 0.01;
-                        $canChangeTds = $freightBooking->canChangeTdsAmount();
-
-                        if ($tdsAmountChanged && $canChangeTds) {
-                            $freightBooking->tds_amount = $newTdsAmount;
-
-                            // Recalculate balance_amount with new TDS
-                            $freightBooking->balance_amount = $freightBooking->tr_amount
-                                - $freightBooking->advance_amount
-                                - $newTdsAmount
-                                - ($freightBooking->damage_amount ?? 0)
-                                - ($freightBooking->shortage_amount ?? 0)
-                                + ($freightBooking->detention ?? 0)
-                                + ($freightBooking->deviation ?? 0)
-                                - ($freightBooking->misc_expense ?? 0);
-
-                            $freightBooking->save();
-                        }
-                    }
-                }
-
-                // Recalculate LR amount and actual_amount using loose weight
-                $loadingWeight = $lorryReceipt->weight;
-                $unloadingWeight = $lorryReceipt->unloading_weight ?? $loadingWeight;
-
-                // Only recalculate actual_amount if loading_weight != unloading_weight
-                // If weights are equal, use the manually entered actual_amount from LR form (if available)
-                if (abs($loadingWeight - $unloadingWeight) > 0.01) {
-                    // Weights are different - always recalculate actual_amount
-                    $effectiveWeight = min($loadingWeight, $unloadingWeight);
-                    $lorryReceipt->actual_amount = round($effectiveWeight * $lorryReceipt->fr_rate, 2);
-                } else {
-                    // Weights are equal - actual_amount should be set from LR edit form
-                    // If not set, calculate it (for backward compatibility)
-                    if (! isset($lorryReceipt->actual_amount) || $lorryReceipt->actual_amount === null) {
-                        $lorryReceipt->actual_amount = round($loadingWeight * $lorryReceipt->fr_rate, 2);
-                    }
-                }
-
-                // Calculate amount: actual_amount - damage - shortage
-                $lorryReceipt->amount = max(0, round($lorryReceipt->actual_amount - $newDamageAmount - $newShortageAmount, 2));
-
-                $lorryReceipt->delivery_status = $deliveryStatus;
-                $lorryReceipt->save();
-
-                if ($deliveryStatus !== $oldDeliveryStatus) {
+                if ($lorryReceiptUpdate['delivery_status'] !== $lorryReceiptUpdate['old_delivery_status']) {
                     $lorryReceipt->loadMissing(['company', 'truck', 'transporter.transporterMaster', 'customer']);
-                    $this->lrNotificationService->notifyStatusChange($lorryReceipt, $deliveryStatus, auth()->user());
+                    $this->lrNotificationService->notifyStatusChange($lorryReceipt, $lorryReceiptUpdate['delivery_status'], auth()->user());
                 }
             }
 
@@ -1315,8 +1163,11 @@ class FreightBookingController extends Controller
             }
 
             $freightBooking->refresh();
-            app(FreightBookingBalanceAdjustmentService::class)
-                ->adjustNegativeBalanceToAdvance($freightBooking, $lorryReceipt?->lr_number);
+            if (! empty($freightBooking->linked_lr_id)) {
+                $this->freightBookingCalculationService->applyNegativeAdjustmentForLinkedBookings($freightBooking, $lorryReceipt?->lr_number);
+            } else {
+                $this->freightBookingCalculationService->applyNegativeAdjustmentForSingleBooking($freightBooking, $lorryReceipt?->lr_number);
+            }
 
             DB::commit();
 
