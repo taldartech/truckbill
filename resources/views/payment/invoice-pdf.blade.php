@@ -361,6 +361,7 @@
         <p style="margin-top: 20px; text-align: center;">
             <strong>Thank you for your business!</strong>
         </p>
+        <p style="margin-top: 16px; font-size: 7px; text-align: right;">Powered by TruckBill (www.truckbill.in)</p>
     </div>
 </body>
 </html>

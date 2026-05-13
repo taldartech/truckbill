@@ -332,6 +332,9 @@
                 </tr>
             </table>
         </div>
+        <div class="section">
+            <div class="footer-note" style="font-size: 7px; text-align: right;">Powered by TruckBill (www.truckbill.in)</div>
+        </div>
     </div>
 
     <script type="text/php">
