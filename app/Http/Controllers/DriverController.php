@@ -10,6 +10,7 @@ class DriverController extends Controller
     public function index(Request $request)
     {
         $company_id = auth()->user()->company_id;
+
         return view('drivers.index', compact('company_id'));
     }
 
@@ -19,33 +20,33 @@ class DriverController extends Controller
         $company_id = auth()->user()->company_id;
         $query->where('company_id', $company_id);
         // Handle search
-        if ($request->has('search') && !empty($request->search['value'])) {
+        if ($request->has('search') && ! empty($request->search['value'])) {
             $searchValue = $request->search['value'];
-            $query->where(function($q) use ($searchValue) {
-                $q->where('name', 'LIKE', '%' . $searchValue . '%')
-                  ->orWhere('mobile', 'LIKE', '%' . $searchValue . '%')
-                  ->orWhere('license_number', 'LIKE', '%' . $searchValue . '%')
-                  ->orWhere('address', 'LIKE', '%' . $searchValue . '%');
+            $query->where(function ($q) use ($searchValue) {
+                $q->where('name', 'LIKE', '%'.$searchValue.'%')
+                    ->orWhere('mobile', 'LIKE', '%'.$searchValue.'%')
+                    ->orWhere('license_number', 'LIKE', '%'.$searchValue.'%')
+                    ->orWhere('address', 'LIKE', '%'.$searchValue.'%');
             });
         }
 
         // Handle individual column search
         if ($request->has('columns')) {
             foreach ($request->columns as $index => $column) {
-                if (!empty($column['search']['value'])) {
+                if (! empty($column['search']['value'])) {
                     $searchValue = $column['search']['value'];
                     switch ($index) {
                         case 1: // Name
-                            $query->where('name', 'LIKE', '%' . $searchValue . '%');
+                            $query->where('name', 'LIKE', '%'.$searchValue.'%');
                             break;
                         case 2: // Mobile
-                            $query->where('mobile', 'LIKE', '%' . $searchValue . '%');
+                            $query->where('mobile', 'LIKE', '%'.$searchValue.'%');
                             break;
                         case 3: // License Number
-                            $query->where('license_number', 'LIKE', '%' . $searchValue . '%');
+                            $query->where('license_number', 'LIKE', '%'.$searchValue.'%');
                             break;
                         case 4: // Address
-                            $query->where('address', 'LIKE', '%' . $searchValue . '%');
+                            $query->where('address', 'LIKE', '%'.$searchValue.'%');
                             break;
                     }
                 }
@@ -56,10 +57,10 @@ class DriverController extends Controller
         if ($request->has('order')) {
             $orderColumn = $request->order[0]['column'];
             $orderDirection = $request->order[0]['dir'];
-            
+
             switch ($orderColumn) {
-                case 0: // Sr. No
-                    // No sorting for serial number column
+                case 0: // Sr. No (not a DB column; list by name A-Z)
+                    $query->orderBy('name', 'asc');
                     break;
                 case 1: // Name
                     $query->orderBy('name', $orderDirection);
@@ -74,18 +75,18 @@ class DriverController extends Controller
                     $query->orderBy('address', $orderDirection);
                     break;
                 default:
-                    $query->orderBy('created_at', 'desc');
+                    $query->orderBy('name', 'asc');
             }
         } else {
-            $query->orderBy('created_at', 'desc');
+            $query->orderBy('name', 'asc');
         }
 
         $totalRecords = \App\Models\Driver::count();
         $filteredRecords = $query->count();
 
         $drivers = $query->skip($request->start ?? 0)
-                        ->take($request->length ?? 10)
-                        ->get();
+            ->take($request->length ?? 10)
+            ->get();
 
         $data = [];
         foreach ($drivers as $index => $driver) {
@@ -96,7 +97,7 @@ class DriverController extends Controller
                 'mobile' => $driver->mobile ?? '-',
                 'license_number' => $driver->license_number ?? '-',
                 'address' => $driver->address ?? '-',
-                'actions' => $this->getActionButtons($driver)
+                'actions' => $this->getActionButtons($driver),
             ];
         }
 
@@ -104,40 +105,39 @@ class DriverController extends Controller
             'draw' => intval($request->draw),
             'recordsTotal' => $totalRecords,
             'recordsFiltered' => $filteredRecords,
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
     private function getActionButtons($driver)
     {
         $buttons = '<div class="d-flex gap-1">';
-        
-       
-            $buttons .= '<button type="button" class="btn btn-sm btn-edit edit-driver-btn" title="Edit Driver" ';
-            $buttons .= 'data-driver-id="' . $driver->id . '" ';
-            $buttons .= 'data-driver-name="' . htmlspecialchars($driver->name) . '" ';
-            $buttons .= 'data-driver-mobile="' . htmlspecialchars($driver->mobile ?? '') . '" ';
-            $buttons .= 'data-driver-license="' . htmlspecialchars($driver->license_number ?? '') . '" ';
-            $buttons .= 'data-driver-address="' . htmlspecialchars($driver->address ?? '') . '">';
-            $buttons .= '<i class="bi bi-pencil"></i></button>';
-            
-            $buttons .= '<form action="' . route('drivers.destroy', $driver->id) . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this driver?\')">';
-            $buttons .= csrf_field() . method_field('DELETE');
-            $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete Driver">';
-            $buttons .= '<i class="bi bi-trash"></i></button></form>';
-        
-        
+
+        $buttons .= '<button type="button" class="btn btn-sm btn-edit edit-driver-btn" title="Edit Driver" ';
+        $buttons .= 'data-driver-id="'.$driver->id.'" ';
+        $buttons .= 'data-driver-name="'.htmlspecialchars($driver->name).'" ';
+        $buttons .= 'data-driver-mobile="'.htmlspecialchars($driver->mobile ?? '').'" ';
+        $buttons .= 'data-driver-license="'.htmlspecialchars($driver->license_number ?? '').'" ';
+        $buttons .= 'data-driver-address="'.htmlspecialchars($driver->address ?? '').'">';
+        $buttons .= '<i class="bi bi-pencil"></i></button>';
+
+        $buttons .= '<form action="'.route('drivers.destroy', $driver->id).'" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this driver?\')">';
+        $buttons .= csrf_field().method_field('DELETE');
+        $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete Driver">';
+        $buttons .= '<i class="bi bi-trash"></i></button></form>';
+
         $buttons .= '</div>';
+
         return $buttons;
     }
 
     public function getDriversApi()
     {
         $drivers = \App\Models\Driver::select('id', 'name', 'mobile')
-        ->where('company_id', auth()->user()->company_id) // ✅ filter by company
-        ->orderBy('name')
-        ->get();
-        
+            ->where('company_id', auth()->user()->company_id) // ✅ filter by company
+            ->orderBy('name', 'asc')
+            ->get();
+
         return response()->json($drivers);
     }
 
@@ -149,7 +149,7 @@ class DriverController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-           
+
             'name' => 'required|string|max:100',
             'mobile' => [
                 'required',
@@ -164,18 +164,18 @@ class DriverController extends Controller
             'address' => 'nullable|string|max:255',
         ]);
         $validated['company_id'] = auth()->user()->company_id;
-        
+
         $driver = \App\Models\Driver::create($validated);
-        
+
         // Return JSON response for AJAX requests
         if ($request->expectsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
                 'message' => 'Driver created successfully!',
-                'driver' => $driver
+                'driver' => $driver,
             ]);
         }
-        
+
         return redirect()->route('drivers.index')->with('success', 'Driver created successfully!');
     }
 
@@ -201,24 +201,25 @@ class DriverController extends Controller
             ],
             'address' => 'nullable|string|max:255',
         ]);
-        
+
         $driver->update($validated);
-        
+
         // Return JSON response for AJAX requests
         if ($request->expectsJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
                 'message' => 'Driver updated successfully!',
-                'driver' => $driver->fresh()
+                'driver' => $driver->fresh(),
             ]);
         }
-        
+
         return redirect()->route('drivers.index')->with('success', 'Driver updated successfully!');
     }
 
     public function destroy(\App\Models\Driver $driver)
     {
         $driver->delete();
+
         return redirect()->route('drivers.index')->with('success', 'Driver deleted successfully!');
     }
 

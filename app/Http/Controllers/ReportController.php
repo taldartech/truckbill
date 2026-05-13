@@ -2,44 +2,44 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\BankExport;
+use App\Exports\CashExport;
 use App\Exports\ConsignorConsigneeExport;
+use App\Exports\DispatchExport;
+use App\Exports\EwayBillExport;
+use App\Exports\InvoiceExport;
+use App\Exports\MemoCopyExport;
+use App\Exports\PartyBillExport;
+use App\Exports\PartyLedgerExport;
+use App\Exports\PendingInvoiceExport;
+use App\Exports\PendingMemoExport;
+use App\Exports\PumpExport;
+use App\Exports\ShortageDamageExport;
 use App\Exports\TDSExport;
+use App\Exports\TransporterMasterExport;
+use App\Exports\TransporterReportExport;
+use App\Models\Company;
 use App\Models\Consignee;
 use App\Models\FreightBooking;
+use App\Models\Invoice;
 use App\Models\LorryReceipt;
+use App\Models\PaymentMode;
+use App\Models\Pump;
+use App\Models\Transporter;
 use App\Models\Truck;
+use App\Models\VoucherLinked;
+use App\Models\VoucherPayment;
+use App\Support\FreightChallanTemplate;
+use App\Support\LrCopyPdfTemplate;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\DispatchExport;
-use App\Exports\PartyLedgerExport;
-use Barryvdh\DomPDF\Facade\Pdf;
-use App\Models\Invoice;
-use App\Exports\InvoiceExport;
-use App\Exports\PartyBillExport;
-use App\Models\Consignees;
-use App\Exports\ShortageDamageExport;
-use App\Exports\EwayBillExport;
-use App\Exports\MemoCopyExport;
-use App\Models\Pump;
-use App\Exports\PumpExport;
-use App\Models\VoucherPayment;
-use App\Exports\BankExport;
-use App\Exports\CashExport;
-use App\Exports\TransporterReportExport;
-use App\Exports\TransporterMasterExport;
-use App\Models\Company;
-use App\Support\FreightChallanTemplate;
-use App\Support\LrCopyPdfTemplate;
-use App\Models\Transporter;
-use App\Models\VoucherLinked;
-use App\Exports\PendingMemoExport;
-use App\Exports\PendingInvoiceExport;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Pagination\Paginator;
-
-use Carbon\Carbon;
 
 class ReportController extends Controller
 {
@@ -69,7 +69,7 @@ class ReportController extends Controller
         $endDateForView = $endInput ?? date('Y-m-d');
 
         // Require both dates for an actionable range
-        if (!$startInput || !$endInput) {
+        if (! $startInput || ! $endInput) {
             return [null, $endDateForView, false];
         }
 
@@ -121,17 +121,41 @@ class ReportController extends Controller
 
     public function consignor_consignee(Request $request)
     {
-        $consignees = Consignee::where('company_id', Auth::user()->company_id)->get();
+        $companyId = Auth::user()->company_id;
         [$startDate, $endDate, $hasRange] = $this->normalizeDateRange($request);
 
         $consignorId = $request->input('consignor_id') ?? null;
         $consigneeId = $request->input('consignee_id') ?? null;
 
+        $presetIds = array_values(array_unique(array_filter([
+            $consignorId !== null && $consignorId !== '' ? (int) $consignorId : null,
+            $consigneeId !== null && $consigneeId !== '' ? (int) $consigneeId : null,
+        ])));
+
+        $presetParties = collect();
+        if ($presetIds !== [] && $companyId) {
+            $presetParties = Consignee::query()
+                ->where('company_id', $companyId)
+                ->whereIn('id', $presetIds)
+                ->orderBy('name')
+                ->get(['id', 'name'])
+                ->keyBy('id');
+        }
+
+        $presetConsignor = ($consignorId !== null && $consignorId !== '')
+            ? $presetParties->get((int) $consignorId)
+            : null;
+        $presetConsignee = ($consigneeId !== null && $consigneeId !== '')
+            ? $presetParties->get((int) $consigneeId)
+            : null;
+
         if (($consignorId || $consigneeId) && $hasRange) {
-            $user = Auth::user()->company_id;
-            $query = LorryReceipt::whereBetween('gr_date', [$startDate, $endDate]);
-            if ($user) {
-                $query->where('company_id', $user);
+            $query = LorryReceipt::query()
+                ->with(['truck', 'consignor', 'consignee', 'transporter'])
+                ->whereBetween('gr_date', [$startDate, $endDate]);
+
+            if ($companyId) {
+                $query->where('company_id', $companyId);
             }
 
             if ($consigneeId) {
@@ -147,7 +171,15 @@ class ReportController extends Controller
             $lrs = collect();
         }
 
-        return view('reports.consignor-consignee', compact('lrs', 'consignees', 'startDate', 'endDate', 'consignorId', 'consigneeId'));
+        return view('reports.consignor-consignee', compact(
+            'lrs',
+            'startDate',
+            'endDate',
+            'consignorId',
+            'consigneeId',
+            'presetConsignor',
+            'presetConsignee'
+        ));
     }
 
     public function consignor_consignee_export(Request $request)
@@ -158,6 +190,7 @@ class ReportController extends Controller
         $consigneeId = $request->input('consignee_id');
 
         $export = Excel::download(new ConsignorConsigneeExport($startDate, $endDate, $consignorId, $consigneeId), 'consignor_consignee_report.xlsx');
+
         return $export;
     }
 
@@ -185,6 +218,7 @@ class ReportController extends Controller
         } else {
             $lrs = collect();
         }
+
         return view('reports.tds', compact('lrs', 'startDate', 'endDate', 'generated'));
     }
 
@@ -194,8 +228,10 @@ class ReportController extends Controller
         $endDate = $request->input('end_date');
 
         $export = Excel::download(new TDSExport($startDate, $endDate), 'tds_report.xlsx');
+
         return $export;
     }
+
     public function dispatch(Request $request)
     {
         [$startDate, $endDate, $generated] = $this->normalizeDateRange($request);
@@ -211,7 +247,7 @@ class ReportController extends Controller
                 'consignor',
                 'consignee',
                 'customer',
-                'truck'
+                'truck',
             ])->whereBetween('gr_date', [$startDate, $endDate]);
 
             if ($user) {
@@ -226,29 +262,41 @@ class ReportController extends Controller
 
         return view('reports.dispatch', compact('lrs', 'startDate', 'endDate', 'generated'));
     }
+
     public function dispatch_export(Request $request)
     {
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
 
         $export = Excel::download(new DispatchExport($startDate, $endDate), 'dispatch_report.xlsx');
+
         return $export;
     }
 
     public function party_ledger(Request $request)
     {
-        $consignees = Consignee::where('company_id', Auth::user()->company_id)->get();
+        $companyId = Auth::user()->company_id;
         [$startDate, $endDate, $hasRange] = $this->normalizeDateRange($request);
 
         $customerId = $request->input('customer_id') ?? null;
+
+        $presetCustomer = null;
+        if ($customerId !== null && $customerId !== '' && $companyId) {
+            $presetCustomer = Consignee::query()
+                ->where('company_id', $companyId)
+                ->whereKey((int) $customerId)
+                ->first(['id', 'name']);
+        }
+
         $invoiceByLrId = collect();
 
         if ($customerId && $hasRange) {
-            $user = Auth::user()->company_id;
-            $query = LorryReceipt::whereBetween('gr_date', [$startDate, $endDate]);
+            $query = LorryReceipt::query()
+                ->with('truck')
+                ->whereBetween('gr_date', [$startDate, $endDate]);
             $query->where('invoice_generated', 1);
-            if ($user) {
-                $query->where('company_id', $user);
+            if ($companyId) {
+                $query->where('company_id', $companyId);
             }
             $query->orderBy('gr_date', 'asc');
             if ($customerId) {
@@ -260,7 +308,7 @@ class ReportController extends Controller
             $currentPageLrIds = collect($lrs->items())->pluck('id')->all();
             if (! empty($currentPageLrIds)) {
                 $invoices = Invoice::query()
-                    ->where('company_id', Auth::user()->company_id)
+                    ->where('company_id', $companyId)
                     ->where(function ($invoiceQuery) use ($currentPageLrIds) {
                         foreach ($currentPageLrIds as $lrId) {
                             $invoiceQuery->orWhereJsonContains('lr_ids', (int) $lrId);
@@ -286,7 +334,8 @@ class ReportController extends Controller
         } else {
             $lrs = collect();
         }
-        return view('reports.party-ledger', compact('lrs', 'consignees', 'startDate', 'endDate', 'customerId', 'invoiceByLrId'));
+
+        return view('reports.party-ledger', compact('lrs', 'startDate', 'endDate', 'customerId', 'invoiceByLrId', 'presetCustomer'));
     }
 
     public function party_ledger_export(Request $request)
@@ -296,29 +345,41 @@ class ReportController extends Controller
         $customerId = $request->input('customer_id');
 
         $export = Excel::download(new PartyLedgerExport($startDate, $endDate, $customerId), 'party_ledger_report.xlsx');
+
         return $export;
     }
 
     public function lr_copy(Request $request)
     {
-        $customers = Consignee::where('company_id', Auth::user()->company_id)->get();
+        $companyId = Auth::user()->company_id;
+        $customerIdInput = $request->input('customer_id');
+
+        $selectedCustomer = null;
+        if ($customerIdInput !== null && $customerIdInput !== '') {
+            $selectedCustomer = Consignee::query()
+                ->where('company_id', $companyId)
+                ->whereKey((int) $customerIdInput)
+                ->first(['id', 'name']);
+        }
+
+        $customerId = $selectedCustomer?->id;
         $lr = null;
-        $customerId = $request->input('customer_id') ?? null;
-        $lrs = LorryReceipt::where('customer_id', $customerId)->get();
-        $lr_id = $request->input('lr_id') ?? null;
+        $lr_id = $request->input('lr_id');
         if ($lr_id) {
-            $lr = LorryReceipt::find($request->input('lr_id'));
+            $lr = LorryReceipt::query()
+                ->where('company_id', $companyId)
+                ->find((int) $lr_id);
         }
         $companyDefaultTemplate = LrCopyPdfTemplate::normalizeKey(
             Auth::user()->company?->lr_copy_template ?? 'classic'
         );
 
-        return view('reports.lr-copy', compact('lr', 'customers', 'customerId', 'lr_id', 'lrs', 'companyDefaultTemplate'));
+        return view('reports.lr-copy', compact('lr', 'selectedCustomer', 'customerId', 'lr_id', 'companyDefaultTemplate'));
     }
 
     public function lr_copy_export(Request $request)
     {
-        if (!$request->input('lr_id')) {
+        if (! $request->input('lr_id')) {
             return redirect()->back()->with('error', 'Please select a Good Receipt (Bilty) to export.');
         }
 
@@ -328,7 +389,7 @@ class ReportController extends Controller
             ->where('company_id', $companyId)
             ->find($request->input('lr_id'));
 
-        if (!$lr) {
+        if (! $lr) {
             return redirect()->back()->with('error', 'Good Receipt (Bilty) not found or access denied.');
         }
 
@@ -352,6 +413,7 @@ class ReportController extends Controller
 
         return $pdf->stream('lr_copy.pdf');
     }
+
     public function invoice(Request $request)
     {
         [$startDate, $endDate, $generated] = $this->normalizeDateRange($request);
@@ -371,12 +433,14 @@ class ReportController extends Controller
 
         return view('reports.invoice', compact('invoices', 'startDate', 'endDate', 'generated'));
     }
+
     public function invoice_export(Request $request)
     {
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
 
         $export = Excel::download(new InvoiceExport($startDate, $endDate), 'GSTR1.xlsx');
+
         return $export;
     }
 
@@ -400,7 +464,7 @@ class ReportController extends Controller
                 'consignor',
                 'consignee',
                 'customer',
-                'truck'
+                'truck',
             ])
                 ->whereBetween('gr_date', [$startDate, $endDate])
                 ->whereHas('freightBookings', function ($q) {
@@ -429,6 +493,7 @@ class ReportController extends Controller
         $endDate = $request->input('end_date');
 
         $export = Excel::download(new ShortageDamageExport($startDate, $endDate), 'shortage_damage_report.xlsx');
+
         return $export;
     }
 
@@ -453,12 +518,14 @@ class ReportController extends Controller
 
         return view('reports.eway-bill', compact('frs', 'startDate', 'endDate', 'generated'));
     }
+
     public function eway_bill_export(Request $request)
     {
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
 
         $export = Excel::download(new EwayBillExport($startDate, $endDate), 'eway_bill_report.xlsx');
+
         return $export;
     }
 
@@ -509,11 +576,11 @@ class ReportController extends Controller
 
                 return [
                     'freight_booking_id' => $payment->freight_booking_id,
-                    'amount'             => $payment->amount,
-                    'lrs'                => $lrDetails,
-                    'date'               => \Carbon\Carbon::parse($payment->date),
-                    'type'               => 'Unlinked',
-                    'payment_status'     => $payment->payment_status ?? 'N/A',
+                    'amount' => $payment->amount,
+                    'lrs' => $lrDetails,
+                    'date' => \Carbon\Carbon::parse($payment->date),
+                    'type' => 'Unlinked',
+                    'payment_status' => $payment->payment_status ?? 'N/A',
                 ];
             });
 
@@ -526,11 +593,11 @@ class ReportController extends Controller
 
                 return [
                     'freight_booking_id' => $linked->freight_booking_id,
-                    'amount'             => $linked->amount,
-                    'lrs'                => $lrDetails,
-                    'date'               => \Carbon\Carbon::parse($linked->date),
-                    'type'               => 'Linked',
-                    'payment_status'     => $linked->payment_status ?? 'N/A',
+                    'amount' => $linked->amount,
+                    'lrs' => $lrDetails,
+                    'date' => \Carbon\Carbon::parse($linked->date),
+                    'type' => 'Linked',
+                    'payment_status' => $linked->payment_status ?? 'N/A',
                 ];
             });
 
@@ -539,6 +606,7 @@ class ReportController extends Controller
                 ->sortBy('date')
                 ->map(function ($item) {
                     $item['date'] = $item['date']->format('d-m-Y');
+
                     return $item;
                 })
                 ->values();
@@ -558,7 +626,7 @@ class ReportController extends Controller
         $paymentStatus = $request->input('payment_status');
         $companyId = Auth::user()->company_id;
 
-        if (!$pumpId || !$hasRange) {
+        if (! $pumpId || ! $hasRange) {
             return redirect()->route('reports.pump')
                 ->with('error', 'Please select a pump and date range to export.');
         }
@@ -594,11 +662,11 @@ class ReportController extends Controller
 
             return [
                 'freight_booking_id' => $payment->freight_booking_id,
-                'amount'             => $payment->amount,
-                'lrs'                => $lrDetails,
-                'date'               => \Carbon\Carbon::parse($payment->date),
-                'type'               => 'Unlinked',
-                'payment_status'     => $payment->payment_status ?? 'N/A',
+                'amount' => $payment->amount,
+                'lrs' => $lrDetails,
+                'date' => \Carbon\Carbon::parse($payment->date),
+                'type' => 'Unlinked',
+                'payment_status' => $payment->payment_status ?? 'N/A',
             ];
         });
 
@@ -610,11 +678,11 @@ class ReportController extends Controller
 
             return [
                 'freight_booking_id' => $linked->freight_booking_id,
-                'amount'             => $linked->amount,
-                'lrs'                => $lrDetails,
-                'date'               => \Carbon\Carbon::parse($linked->date),
-                'type'               => 'Linked',
-                'payment_status'     => $linked->payment_status ?? 'N/A',
+                'amount' => $linked->amount,
+                'lrs' => $lrDetails,
+                'date' => \Carbon\Carbon::parse($linked->date),
+                'type' => 'Linked',
+                'payment_status' => $linked->payment_status ?? 'N/A',
             ];
         });
 
@@ -623,11 +691,34 @@ class ReportController extends Controller
         return Excel::download(new PumpExport($rawPumpData, $startDate, $endDate, $pumpId), 'pump_report.xlsx');
     }
 
+    /**
+     * Memo IDs for the memo-copy report customer filter (same data as invoices all-memos, but allowed for report roles including accountant).
+     */
+    public function customer_memos_json(int $customerId): JsonResponse
+    {
+        $memos = LorryReceipt::query()
+            ->where('company_id', Auth::user()->company_id)
+            ->where('customer_id', $customerId)
+            ->whereNotNull('memo_id')
+            ->distinct()
+            ->pluck('memo_id');
+
+        return response()->json($memos);
+    }
+
     public function memo_copy(Request $request)
     {
-        $customers = Consignee::where('company_id', Auth::user()->company_id)->get();
+        $companyId = Auth::user()->company_id;
         $customerId = $request->input('customer_id') ?? null;
         $memo_id = $request->input('memo_id') ?? null;
+
+        $presetCustomer = null;
+        if ($customerId !== null && $customerId !== '' && $companyId) {
+            $presetCustomer = Consignee::query()
+                ->where('company_id', $companyId)
+                ->whereKey((int) $customerId)
+                ->first(['id', 'name']);
+        }
 
         $memo_ids = [];
         $lrs = [];
@@ -637,12 +728,13 @@ class ReportController extends Controller
                 ->pluck('memo_id')->unique();
             $lrs = LorryReceipt::where('memo_id', $memo_id)->get();
         }
-        return view('reports.memo-copy', compact('customers', 'customerId', 'memo_id', 'memo_ids', 'lrs'));
+
+        return view('reports.memo-copy', compact('presetCustomer', 'customerId', 'memo_id', 'memo_ids', 'lrs'));
     }
 
     public function memo_copy_export(Request $request)
     {
-        if (!$request->input('memo_id')) {
+        if (! $request->input('memo_id')) {
             return redirect()->back()->with('error', 'Please select a Memo to export.');
         }
 
@@ -660,102 +752,71 @@ class ReportController extends Controller
                 // Generate PDF
                 $html = view('reports.exports.memo-copy-pdf', compact('lrs', 'memo_id'))->render();
                 $pdf = Pdf::loadHTML($html)->setPaper('a4', 'portrait');
+
                 return $pdf->stream("memo_copy_{$memo_id}.pdf");
             } else {
                 // Existing Excel export
                 return Excel::download(new MemoCopyExport($memo_id), 'memo_copy.xlsx');
             }
         } catch (\Exception $e) {
-            Log::error('Error exporting memo copy: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Error generating export: ' . $e->getMessage());
+            Log::error('Error exporting memo copy: '.$e->getMessage());
+
+            return redirect()->back()->with('error', 'Error generating export: '.$e->getMessage());
         }
     }
 
     public function pending_memo(Request $request)
     {
         try {
-            // Get all customers for the dropdown
-            $customers = Consignee::where('company_id', Auth::user()->company_id)
-                ->orderBy('name')
-                ->get();
-
+            $companyId = Auth::user()->company_id;
             $customerId = $request->input('customer_id');
+
+            $presetCustomer = null;
+            if ($customerId !== null && $customerId !== '' && $companyId) {
+                $presetCustomer = Consignee::query()
+                    ->where('company_id', $companyId)
+                    ->whereKey((int) $customerId)
+                    ->first(['id', 'name']);
+            }
             $status = $request->input('status', 'delivered'); // in-progress, delivered, both
             [$startDate, $endDate, $hasRange] = $this->normalizeDateRange($request);
 
-            $lrs = collect();
+            $lrsQuery = LorryReceipt::with(['truck:id,truck_number', 'customer:id,name'])
+                ->where('company_id', $companyId)
+                ->whereNull('memo_id');
 
             if ($customerId) {
-                // Only pending memos for selected customer
-                $idsQuery = LorryReceipt::where('customer_id', $customerId)
-                    ->where('company_id', Auth::user()->company_id)
-                    ->whereNull('memo_id');
-
-                if ($hasRange) {
-                    $idsQuery->whereBetween('gr_date', [$startDate, $endDate]);
-                }
-
-                $ids = $idsQuery->pluck('id')->unique()->values();
-
-                if ($ids->count() > 0) {
-                    $lrsQuery = LorryReceipt::with(['truck:id,truck_number', 'customer:id,name'])
-                        ->whereIn('id', $ids)
-                        ->where('company_id', Auth::user()->company_id);
-
-                    $normalizedStatus = strtolower($status);
-                    if ($normalizedStatus === 'in-progress') {
-                        $lrsQuery->where('delivery_status', 'In-Progress');
-                    } elseif ($normalizedStatus === 'delivered') {
-                        $lrsQuery->where('delivery_status', 'Delivered');
-                    } elseif ($normalizedStatus === 'both') {
-                        $lrsQuery->whereIn('delivery_status', ['In-Progress', 'Delivered']);
-                    }
-
-                    $lrs = $lrsQuery->orderBy('gr_date', 'desc')
-                        ->paginate(self::REPORTS_PER_PAGE)
-                        ->appends($request->query());
-                }
-            } else {
-                // Show pending memos for **all customers**
-                $idsQuery = LorryReceipt::where('company_id', Auth::user()->company_id)
-                    ->whereNull('memo_id');
-
-                if ($hasRange) {
-                    $idsQuery->whereBetween('gr_date', [$startDate, $endDate]);
-                }
-
-                $ids = $idsQuery->pluck('id')->unique()->values();
-
-                if ($ids->count() > 0) {
-                    $lrsQuery = LorryReceipt::with(['truck:id,truck_number', 'customer:id,name'])
-                        ->whereIn('id', $ids)
-                        ->where('company_id', Auth::user()->company_id);
-
-                    $normalizedStatus = strtolower($status);
-                    if ($normalizedStatus === 'in-progress') {
-                        $lrsQuery->where('delivery_status', 'In-Progress');
-                    } elseif ($normalizedStatus === 'delivered') {
-                        $lrsQuery->where('delivery_status', 'Delivered');
-                    } elseif ($normalizedStatus === 'both') {
-                        $lrsQuery->whereIn('delivery_status', ['In-Progress', 'Delivered']);
-                    }
-
-                    $lrs = $lrsQuery->orderBy('gr_date', 'desc')
-                        ->paginate(self::REPORTS_PER_PAGE)
-                        ->appends($request->query());
-                }
+                $lrsQuery->where('customer_id', $customerId);
             }
 
+            if ($hasRange) {
+                $lrsQuery->whereBetween('gr_date', [$startDate, $endDate]);
+            }
+
+            $normalizedStatus = strtolower($status);
+            if ($normalizedStatus === 'in-progress') {
+                $lrsQuery->where('delivery_status', 'In-Progress');
+            } elseif ($normalizedStatus === 'delivered') {
+                $lrsQuery->where('delivery_status', 'Delivered');
+            } elseif ($normalizedStatus === 'both') {
+                $lrsQuery->whereIn('delivery_status', ['In-Progress', 'Delivered']);
+            }
+
+            $lrs = $lrsQuery->orderBy('gr_date', 'desc')
+                ->paginate(self::REPORTS_PER_PAGE)
+                ->appends($request->query());
+
             return view('reports.pending-memo', [
-                'customers' => $customers,
                 'customerId' => $customerId,
+                'presetCustomer' => $presetCustomer,
                 'lrs' => $lrs,
                 'startDate' => $startDate,
                 'endDate' => $endDate,
                 'status' => $status,
             ]);
         } catch (\Exception $e) {
-            Log::error('Error in pending_memo: ' . $e->getMessage());
+            Log::error('Error in pending_memo: '.$e->getMessage());
+
             return redirect()->back()->with('error', 'An error occurred while processing your request.');
         }
     }
@@ -778,73 +839,50 @@ class ReportController extends Controller
             'pending-memo.xlsx'
         );
     }
+
     public function pending_invoice(Request $request)
     {
         try {
-            // Get all customers for the dropdown
-            $customers = Consignee::where('company_id', Auth::user()->company_id)
-                ->orderBy('name')
-                ->get();
-
+            $companyId = Auth::user()->company_id;
             $customerId = $request->input('customer_id');
+
+            $presetCustomer = null;
+            if ($customerId !== null && $customerId !== '' && $companyId) {
+                $presetCustomer = Consignee::query()
+                    ->where('company_id', $companyId)
+                    ->whereKey((int) $customerId)
+                    ->first(['id', 'name']);
+            }
             [$startDate, $endDate, $hasRange] = $this->normalizeDateRange($request);
 
-            $lrs = collect();
+            $lrsQuery = LorryReceipt::with(['truck:id,truck_number', 'customer:id,name'])
+                ->where('company_id', $companyId)
+                ->whereNotNull('memo_id')
+                ->where('invoice_generated', 0)
+                ->where('delivery_status', 'Delivered');
 
             if ($customerId) {
-                // Only pending memos for selected customer
-                $idsQuery = LorryReceipt::where('customer_id', $customerId)
-                    ->where('company_id', Auth::user()->company_id)
-                    ->whereNotNull('memo_id')
-                    ->where('invoice_generated', 0);
-
-                if ($hasRange) {
-                    $idsQuery->whereBetween('gr_date', [$startDate, $endDate]);
-                }
-
-                $ids = $idsQuery->pluck('id')->unique()->values();
-
-                if ($ids->count() > 0) {
-                    $lrs = LorryReceipt::with(['truck:id,truck_number', 'customer:id,name'])
-                        ->whereIn('id', $ids)
-                        ->where('delivery_status', 'Delivered')
-                        ->where('company_id', Auth::user()->company_id)
-                        ->orderBy('gr_date', 'desc')
-                        ->paginate(self::REPORTS_PER_PAGE)
-                        ->appends($request->query());
-                }
-            } else {
-                // Show pending memos for **all customers**
-                $idsQuery = LorryReceipt::where('company_id', Auth::user()->company_id)
-                    ->whereNotNull('memo_id')
-                    ->where('invoice_generated', 0);
-
-                if ($hasRange) {
-                    $idsQuery->whereBetween('gr_date', [$startDate, $endDate]);
-                }
-
-                $ids = $idsQuery->pluck('id')->unique()->values();
-
-                if ($ids->count() > 0) {
-                    $lrs = LorryReceipt::with(['truck:id,truck_number', 'customer:id,name'])
-                        ->whereIn('id', $ids)
-                        ->where('delivery_status', 'Delivered')
-                        ->where('company_id', Auth::user()->company_id)
-                        ->orderBy('gr_date', 'desc')
-                        ->paginate(self::REPORTS_PER_PAGE)
-                        ->appends($request->query());
-                }
+                $lrsQuery->where('customer_id', $customerId);
             }
 
+            if ($hasRange) {
+                $lrsQuery->whereBetween('gr_date', [$startDate, $endDate]);
+            }
+
+            $lrs = $lrsQuery->orderBy('gr_date', 'desc')
+                ->paginate(self::REPORTS_PER_PAGE)
+                ->appends($request->query());
+
             return view('reports.pending-invoice', [
-                'customers' => $customers,
                 'customerId' => $customerId,
+                'presetCustomer' => $presetCustomer,
                 'lrs' => $lrs,
                 'startDate' => $startDate,
                 'endDate' => $endDate,
             ]);
         } catch (\Exception $e) {
-            Log::error('Error in pending_invoice: ' . $e->getMessage());
+            Log::error('Error in pending_invoice: '.$e->getMessage());
+
             return redirect()->back()->with('error', 'An error occurred while processing your request.');
         }
     }
@@ -953,6 +991,7 @@ class ReportController extends Controller
         $paymentStatus = $request->input('payment_status');
 
         $export = Excel::download(new BankExport($startDate, $endDate, $paymentStatus), 'bank_report.xlsx');
+
         return $export;
     }
 
@@ -1043,12 +1082,13 @@ class ReportController extends Controller
         $paymentStatus = $request->input('payment_status');
 
         $export = Excel::download(new CashExport($startDate, $endDate, $paymentStatus), 'cash_report.xlsx');
+
         return $export;
     }
 
     public function voucher_receipt_export(Request $request)
     {
-        if (!$request->input('lr_id')) {
+        if (! $request->input('lr_id')) {
             return redirect()->back()->with('error', 'Please select a Good Receipt (Bilty) to export.');
         }
 
@@ -1104,10 +1144,10 @@ class ReportController extends Controller
         $html = view($view, compact('lrs', 'company'))->render();
 
         // Render with mPDF for proper Devanagari shaping
-        $defaultConfig = (new \Mpdf\Config\ConfigVariables())->getDefaults();
+        $defaultConfig = (new \Mpdf\Config\ConfigVariables)->getDefaults();
         $fontDirs = $defaultConfig['fontDir'];
 
-        $defaultFontConfig = (new \Mpdf\Config\FontVariables())->getDefaults();
+        $defaultFontConfig = (new \Mpdf\Config\FontVariables)->getDefaults();
         $fontData = $defaultFontConfig['fontdata'];
 
         $mpdf = new \Mpdf\Mpdf([
@@ -1129,6 +1169,7 @@ class ReportController extends Controller
         ]);
 
         $mpdf->WriteHTML($html);
+
         return $mpdf->Output('voucher_receipt.pdf', 'I');
     }
 
@@ -1175,31 +1216,57 @@ class ReportController extends Controller
 
     public function party_bill(Request $request)
     {
-        $customers = Consignee::where('company_id', Auth::user()->company_id)->get();
-        $selectedCompany = Company::find(Auth::user()->company_id);
+        $companyId = Auth::user()->company_id;
+        $requestCustomerId = $request->input('customer_id');
+        $requestCustomerId = ($requestCustomerId !== null && $requestCustomerId !== '') ? $requestCustomerId : null;
+
+        $id = $request->input('invoice_number') ?? null;
+        $invoice = null;
+        if ($id !== null && $id !== '' && $companyId) {
+            $invoice = Invoice::query()
+                ->where('company_id', $companyId)
+                ->whereKey($id)
+                ->first();
+        }
+
+        $customerId = $requestCustomerId;
+        if ($customerId === null && $invoice?->customer_id) {
+            $customerId = (string) $invoice->customer_id;
+        }
+
+        $presetCustomer = null;
+        if ($customerId !== null && $customerId !== '' && $companyId) {
+            $presetCustomer = Consignee::query()
+                ->where('company_id', $companyId)
+                ->whereKey((int) $customerId)
+                ->first(['id', 'name']);
+        }
+
+        $selectedCompany = Company::find($companyId);
         $selectedInvoiceTemplate = (string) ($selectedCompany->invoice_template ?? 'classic');
         $selectedInvoiceTemplateLabel = match ($selectedInvoiceTemplate) {
             'modern' => 'B (Modern)',
             'compact' => 'C (Compact)',
             default => 'A (Classic)',
         };
-        $customerId = $request->input('customer_id') ?? null;
-        $id = $request->input('invoice_number') ?? null;
-        // Load all invoices initially, filter by customer if selected
-        $invoices = Invoice::where('company_id', Auth::user()->company_id)
-            ->when($customerId, function ($query) use ($customerId) {
-                return $query->where('customer_id', $customerId);
-            })
-            ->orderByDesc('id')
-            ->get();
-        $invoice = Invoice::find($id);
+
+        $invoices = collect();
+        if ($customerId !== null && $customerId !== '' && $companyId) {
+            $invoices = Invoice::query()
+                ->where('company_id', $companyId)
+                ->where('customer_id', (int) $customerId)
+                ->orderByDesc('id')
+                ->limit(5000)
+                ->get(['id', 'manual_invoice_number', 'invoice_number']);
+        }
         $customDetails = collect();
         if ($invoice && $invoice->custom_invoice) {
             $invoice->load(['customInvoiceDetails.lorryReceipt.truck']);
             $customDetails = $invoice->customInvoiceDetails->sortBy('sort_order')->values();
         }
+
         return view('reports.party-bill', compact(
-            'customers',
+            'presetCustomer',
             'customerId',
             'id',
             'invoices',
@@ -1211,7 +1278,7 @@ class ReportController extends Controller
 
     public function party_bill_export(Request $request)
     {
-        if (!$request->input('invoice_number')) {
+        if (! $request->input('invoice_number')) {
             return redirect()->back()->with('error', 'Please select an Invoice to export.');
         }
 
@@ -1244,7 +1311,7 @@ class ReportController extends Controller
                     'consignee.city',
                     'consignee.state',
                     'company.city',
-                    'company.state'
+                    'company.state',
                 ])->findOrFail($id);
 
                 $customDetails = collect();
@@ -1306,7 +1373,7 @@ class ReportController extends Controller
                     ->setOption('isRemoteEnabled', true);
 
                 $invoiceIdentifier = $invoice->invoice_number
-                    ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '')
+                    ? $invoice->invoice_number.($invoice->manual_invoice_number ? ' ('.$invoice->manual_invoice_number.')' : '')
                     : ($invoice->manual_invoice_number ?? $invoice->id);
 
                 $safeInvoiceIdentifier = preg_replace('/[\\\\\/]+/', '-', (string) $invoiceIdentifier) ?? (string) $invoice->id;
@@ -1316,7 +1383,7 @@ class ReportController extends Controller
                     $safeInvoiceIdentifier = (string) $invoice->id;
                 }
 
-                return $pdf->stream('party_bill_' . $safeInvoiceIdentifier . '.pdf');
+                return $pdf->stream('party_bill_'.$safeInvoiceIdentifier.'.pdf');
             } else {
                 // Existing Excel export
                 return Excel::download(new PartyBillExport($id), 'party_bill.xlsx');
@@ -1326,11 +1393,11 @@ class ReportController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'invoice_id' => $id,
-                'type' => $exportType ?? 'unknown'
+                'type' => $exportType ?? 'unknown',
             ]);
 
             return redirect()->back()
-                ->with('error', 'Error generating export: ' . $e->getMessage());
+                ->with('error', 'Error generating export: '.$e->getMessage());
         }
     }
 
@@ -1367,7 +1434,7 @@ class ReportController extends Controller
                     'truck:id,truck_number',
                     'consignor:id,name',
                     'consignee:id,name',
-                    'freightBookings.voucherPayments:id,freight_booking_id,payment_mode,amount',
+                    'freightBooking.voucherPayments:id,freight_booking_id,payment_mode,amount',
                 ])
                 ->when($transporterId, function ($query) use ($transporterId) {
                     $query->where('transporter_id', $transporterId);
@@ -1385,6 +1452,8 @@ class ReportController extends Controller
             $lrs = collect();
         }
 
+        $paymentNames = PaymentMode::query()->orderBy('id')->pluck('name')->all();
+
         return view('reports.transporter-report', compact(
             'transporters',
             'transporterId',
@@ -1394,7 +1463,8 @@ class ReportController extends Controller
             'truckId',
             'lrs',
             'references',
-            'referenceId'
+            'referenceId',
+            'paymentNames'
         ));
     }
 
@@ -1423,7 +1493,7 @@ class ReportController extends Controller
     ): array {
         $baseQuery = $this->buildTransporterReportBaseQuery($startDate, $endDate);
 
-        $transporterIds = (clone $baseQuery)
+        $transporterIdSubquery = (clone $baseQuery)
             ->when($truckId, function ($query) use ($truckId) {
                 $query->where('truck_id', $truckId);
             })
@@ -1431,10 +1501,10 @@ class ReportController extends Controller
                 $query->where('reference_by', $referenceId);
             })
             ->whereNotNull('transporter_id')
-            ->distinct()
-            ->pluck('transporter_id');
+            ->select('transporter_id')
+            ->distinct();
 
-        $truckIds = (clone $baseQuery)
+        $truckIdSubquery = (clone $baseQuery)
             ->when($transporterId, function ($query) use ($transporterId) {
                 $query->where('transporter_id', $transporterId);
             })
@@ -1442,10 +1512,10 @@ class ReportController extends Controller
                 $query->where('reference_by', $referenceId);
             })
             ->whereNotNull('truck_id')
-            ->distinct()
-            ->pluck('truck_id');
+            ->select('truck_id')
+            ->distinct();
 
-        $referenceIds = (clone $baseQuery)
+        $referenceIdSubquery = (clone $baseQuery)
             ->when($transporterId, function ($query) use ($transporterId) {
                 $query->where('transporter_id', $transporterId);
             })
@@ -1453,25 +1523,25 @@ class ReportController extends Controller
                 $query->where('truck_id', $truckId);
             })
             ->whereNotNull('reference_by')
-            ->distinct()
-            ->pluck('reference_by');
+            ->select('reference_by')
+            ->distinct();
 
         $transporters = Transporter::query()
             ->with('transporterMaster')
-            ->whereIn('id', $transporterIds)
+            ->whereIn('transporters.id', $transporterIdSubquery)
             ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
             ->orderBy('transporter_masters.name')
             ->select('transporters.*')
             ->get();
 
         $trucks = Truck::query()
-            ->whereIn('id', $truckIds)
+            ->whereIn('id', $truckIdSubquery)
             ->orderBy('truck_number')
             ->get(['id', 'truck_number']);
 
         $references = Transporter::query()
             ->with('transporterMaster')
-            ->whereIn('id', $referenceIds)
+            ->whereIn('transporters.id', $referenceIdSubquery)
             ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
             ->orderBy('transporter_masters.name')
             ->select('transporters.*')
@@ -1535,6 +1605,7 @@ class ReportController extends Controller
         $referenceId = $request->input('reference_by') ?? null;
 
         $export = Excel::download(new TransporterReportExport($startDate, $endDate, $transporterId, $truckId, $referenceId), 'transporter_report.xlsx');
+
         return $export;
     }
 

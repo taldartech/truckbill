@@ -315,113 +315,6 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($bookings as $index => $booking)
-                                <tr class="@if ($booking->is_cancelled) table-danger @elseif($booking->is_delivered) table-success @endif">
-                                    <td class="text-center">
-                                        @if ($booking->lr && $booking->lr->memo_id && $booking->balance_amount <= 0)
-                                            <span class="text-muted"><i class="bi bi-dash-circle"></i></span>
-                                        @elseif($booking->is_cancelled)
-                                            <span class="text-muted"><i class="bi bi-dash-circle"></i></span>
-                                        @else
-                                            <input type="checkbox" class="row-checkbox" value="{{ $booking->id }}"
-                                                data-lr="{{ $booking->lr ? $booking->lr->lr_number : '' }}"
-                                                data-amount="{{ $booking->lr ? $booking->lr->amount : '' }}"
-                                                data-linked-lr-id="{{ $booking->lr ? $booking->lr->linked_lr_id : '' }}"
-                                                data-memo-id="{{ $booking->lr ? $booking->lr->memo_id : '' }}"
-                                                data-lr-id="{{ $booking->lr ? $booking->lr->id : '' }}"
-                                                data-truck="{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->truck_number : '' }}"
-                                                data-truck-id="{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->id : '' }}"
-                                                data-transporter-id="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->id : '' }}"
-                                                data-balance="{{ $booking->balance_amount ?? 0 }}"
-                                                data-voucher_number="{{ $booking->voucher_number ?? '' }}"
-                                                data-freight-rate="{{ $booking->tr_fr_rate ?? 0 }}"
-                                                data-freight-booking-id="{{ $booking->id }}"
-                                                data-is-cancelled="{{ $booking->is_cancelled ? '1' : '0' }}"
-                                                data-is-delivered="{{ $booking->is_delivered ? '1' : '0' }}"
-                                                data-transporter="{{ $booking->transporter ? $booking->transporter->name : '' }}"
-                                                data-lr-transporter="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->name : '' }}"
-                                                data-lr-transporter-mobile-number="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->mobile_number : '' }}"
-                                                data-lr-transporter-short-name="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->short_name : '' }}"
-                                                data-lr-transporter-beneficiary-id="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->beneficiary_id : '' }}"
-                                                data-fb-transporter="{{ $booking->transporter_name ?? ($booking->transporter ? $booking->transporter->name : '') }}"
-                                                data-tds-percentage="{{ $booking->transporter_tds_percentage ?? '' }}"
-                                                data-customer-id="{{ $booking->lr && $booking->lr->customer ? $booking->lr->customer->id : '' }}"
-                                                data-shortage-amount="{{ $booking->shortage_amount ?? 0 }}"
-                                                data-damage-amount="{{ $booking->damage_amount ?? 0 }}"
-                                                data-advance-amount="{{ $booking->lr->transporter->advance_amount ?? 0 }}">
-                                        @endif
-                                    </td>
-                                    <td class="text-center"
-                                        data-order="{{ $booking->lr && $booking->lr->gr_date ? date('Y-m-d', strtotime($booking->lr->gr_date)) : '' }}">
-                                        {{ $booking->lr && $booking->lr->gr_date ? date('d-m-Y', strtotime($booking->lr->gr_date)) : '-' }}
-                                    </td>
-                                    <td data-order="{{ $booking->lr->lr_number }}">
-                                        @if ($booking->lr)
-                                            <span class="fw-bold text-primary">{{ $booking->lr->lr_number }}</span>
-                                            @if ($booking->linked_lr_id)
-                                                <span class="badge text-bg-success border-secondary">[{{ $booking->linked_lr_id }}]</span>
-                                            @endif
-                                        @else
-                                            -
-                                        @endif
-                                    </td>
-                                    <td data-order="{{ $booking?->lr?->customer?->name }}">
-                                        @if ($booking->lr)
-                                            {{ $booking->lr->customer->name }}
-                                            @if ($booking->lr->memo_id)
-                                                <span class="badge text-bg-success border-secondary ms-1">[{{ $booking->lr->memo_id }}]</span>
-                                            @endif
-                                        @else
-                                            -
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @php
-                                            $transporterName = $booking->transporter_name ?? ($booking->transporter ? $booking->transporter->name : '-');
-                                            $badge = '';
-                                            if ($booking->transporter && $booking->transporter->is_owner) {
-                                                $badge = '<span class="badge text-bg-success border-secondary ms-1" title="Owner"><i class="bi bi-truck"></i></span>';
-                                            } else {
-                                                $badge = '<span class="badge bg-info ms-1" title="Agency"><i class="bi bi-building"></i></span>';
-                                            }
-                                        @endphp
-                                        {!! $transporterName . ' ' . $badge !!}
-                                    </td>
-                                    <td>{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->truck_number : '-' }}</td>
-                                    <td>
-                                        <div class="small">
-                                            <span class="text-muted">{{ $booking->lr && $booking->lr->source_city ? $booking->lr->source_city : '-' }}</span>
-                                            <i class="bi bi-arrow-right mx-1 text-muted"></i>
-                                            <span class="text-muted">{{ $booking->lr && $booking->lr->destination_city ? $booking->lr->destination_city : '-' }}</span>
-                                        </div>
-                                    </td>
-                                    <td>{{ $booking->lr && $booking->lr->weight ? $booking->lr->weight : '-' }}</td>
-                                    <td class="text-muted">{{ $booking->lr && $booking->tr_fr_rate ? $booking->tr_fr_rate : '-' }}</td>
-                                    <td class="fw-bold">{{ $booking->lr && $booking->tr_fr_rate ? $booking->tr_amount : '-' }}</td>
-                                    <td data-order="{{ $booking->balance_amount ?? 0 }}" class="text-end fw-bold text-brand-primary">
-                                        ₹{{ number_format($booking->balance_amount ?? 0, 2) }}
-                                    </td>
-                                    <td class="text-center">
-                                        <div class="d-flex justify-content-center gap-1">
-                                            <a href="{{ route('freight_bookings.show', $booking->id) }}"
-                                                class="btn-action btn-action-info" title="View">
-                                                <i class="bi bi-eye"></i>
-                                            </a>
-                                            <a href="{{ route('freight_bookings.edit', $booking->id) }}"
-                                                class="btn-action btn-action-primary" title="Edit">
-                                                <i class="bi bi-pencil"></i>
-                                            </a>
-                                            <a href="{{ route('reports.voucher-receipt-export', ['lr_id' => $booking->lr->id]) }}"
-                                                class="btn-action voucher-print-btn {{ $booking->voucher_printed ? 'btn-action-success' : 'btn-action-outline-success' }}"
-                                                data-freight-booking-id="{{ $booking->id }}"
-                                                data-mark-url="{{ route('reports.voucher-receipt-mark-printed') }}"
-                                                title="{{ $booking->voucher_last_printed_at ? 'Last printed: ' . $booking->voucher_last_printed_at->format('d-m-Y h:i A') : 'Print voucher challan' }}">
-                                                <i class="bi bi-file-earmark-text"></i>
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
                         </tbody>
                     </table>
                 </div>
@@ -1811,23 +1704,97 @@
             // Initialize tooltips
             $('[data-bs-toggle="tooltip"]').tooltip();
 
-            // DataTable initialization
+            // DataTable initialization (server-side; rows load via AJAX)
             var table = $('#freightBookingsTable').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: "{{ route('freight_bookings.datatable') }}",
+                    data: function(d) {
+                        $('#searchForm').serializeArray().forEach(function(field) {
+                            d[field.name] = field.value;
+                        });
+                    }
+                },
+                columns: [{
+                        data: 'checkbox',
+                        name: 'checkbox',
+                        orderable: false,
+                        searchable: false,
+                        className: 'text-center'
+                    },
+                    {
+                        data: 'gr_date',
+                        name: 'gr_date',
+                        className: 'text-center'
+                    },
+                    {
+                        data: 'lr_number',
+                        name: 'lr_number'
+                    },
+                    {
+                        data: 'customer',
+                        name: 'customer',
+                        orderable: false
+                    },
+                    {
+                        data: 'transporter',
+                        name: 'transporter',
+                        orderable: false
+                    },
+                    {
+                        data: 'truck_number',
+                        name: 'truck_number',
+                        orderable: false
+                    },
+                    {
+                        data: 'route',
+                        name: 'route',
+                        orderable: false
+                    },
+                    {
+                        data: 'weight',
+                        name: 'weight'
+                    },
+                    {
+                        data: 'rate',
+                        name: 'rate'
+                    },
+                    {
+                        data: 'total',
+                        name: 'total'
+                    },
+                    {
+                        data: 'balance',
+                        name: 'balance',
+                        className: 'text-end'
+                    },
+                    {
+                        data: 'actions',
+                        name: 'actions',
+                        orderable: false,
+                        searchable: false,
+                        className: 'text-center'
+                    }
+                ],
+                pageLength: 25,
                 paging: true,
                 info: true,
                 searching: false,
                 ordering: true,
                 theme: 'bootstrap-5',
                 responsive: true,
-                lengthChange: false,
-                // Default sort by GR Date (newest to oldest). GR Date is column index 1.
+                lengthChange: true,
+                lengthMenu: [
+                    [10, 25, 50, 100],
+                    [10, 25, 50, 100]
+                ],
                 order: [
                     [1, 'desc']
                 ],
-                // Disable sorting for checkbox (first) and actions (last) columns
                 columnDefs: [{
                     orderable: false,
-                    targets: [0, -1]
+                    targets: [0, 3, 4, 5, 6, -1]
                 }],
                 language: {
                     emptyTable: `<div class="text-muted">

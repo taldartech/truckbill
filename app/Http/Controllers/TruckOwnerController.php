@@ -128,10 +128,14 @@ class TruckOwnerController extends Controller
                         $query->orderBy('transporters.advance_amount', $orderDir);
                         break;
                     default:
-                        $query->orderBy('transporters.id', 'desc');
+                        $query->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+                            ->orderBy('transporter_masters.name', 'asc')
+                            ->select('transporters.*');
                 }
             } else {
-                $query->orderBy('transporters.id', 'desc');
+                $query->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+                    ->orderBy('transporter_masters.name', 'asc')
+                    ->select('transporters.*');
             }
 
             $totalQuery = Transporter::where('is_owner', 1);
@@ -408,18 +412,9 @@ class TruckOwnerController extends Controller
 
         $trucks = Truck::where('transporter_id', $truck_owner->id)->get();
         $countries = Country::all();
-        $selectedCountryId = old('country_id', $truck_owner->country_id);
-        $selectedStateId = old('state_id', $truck_owner->state_id);
-
-        $states = $selectedCountryId
-            ? State::where('country_id', $selectedCountryId)->orderBy('name')->get()
-            : collect();
-        $cities = $selectedStateId
-            ? City::where('state_id', $selectedStateId)->orderBy('name')->get()
-            : collect();
         $truckTypes = TruckType::orderBy('name')->get();
 
-        return view('truck_owner.edit', compact('truck_owner', 'trucks', 'countries', 'states', 'cities', 'truckTypes'));
+        return view('truck_owner.edit', compact('truck_owner', 'trucks', 'countries', 'truckTypes'));
     }
 
     public function update(UpdateTruckOwnerRequest $request, Transporter $truck_owner)

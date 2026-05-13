@@ -42,6 +42,7 @@
         @php
             $canEditCompany = auth()->check() && auth()->user()->userRole->name === 'super_admin';
             $userCompanyId = auth()->user()->company_id ?? null;
+            $shouldRestoreAfterValidation = $errors->any() && (old('pan_number') || old('transporter_master_id'));
         @endphp
         @error('registered_truck_id')
             <div class="text-danger">{{ $message }}</div>
@@ -54,7 +55,7 @@
                 <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
             @endif
             <input type="hidden" name="transporter_master_id" id="transporter_master_id" value="{{ old('transporter_master_id') }}">
-            <input type="hidden" id="pan_verified" value="0">
+            <input type="hidden" id="pan_verified" value="{{ $shouldRestoreAfterValidation ? '1' : '0' }}">
 
             <!-- PAN Check Section - must complete before rest of form -->
             <div class="card mb-4 p-3 bg-light" id="panLookupSection">
@@ -64,7 +65,7 @@
                     <div class="col-md-6">
                         <label for="pan_lookup" class="form-label">PAN Number *</label>
                         <div class="input-group">
-                            <input type="text" class="form-control" id="pan_lookup" placeholder="Enter 10-digit PAN" maxlength="10" style="text-transform: uppercase;">
+                            <input type="text" class="form-control" id="pan_lookup" value="{{ old('pan_number') }}" placeholder="Enter 10-digit PAN" maxlength="10" style="text-transform: uppercase;">
                             <button type="button" class="btn btn-brand-primary" id="btnPanLookup">
                                 <i class="fas fa-check me-1"></i> Check PAN
                             </button>
@@ -81,7 +82,7 @@
             </div>
 
             <!-- Rest of form (shown only after PAN check and not already registered) -->
-            <div id="restOfForm" class="d-none">
+            <div id="restOfForm" class="{{ $shouldRestoreAfterValidation ? '' : 'd-none' }}">
             <!-- Master Data (Read-only when found via PAN) -->
             <div id="masterDataSection" class="d-none">
                 <div class="card mb-4 p-3 bg-light">
@@ -527,6 +528,7 @@
         const restOfForm = document.getElementById('restOfForm');
         const panAlreadyRegisteredSection = document.getElementById('panAlreadyRegisteredSection');
         let lastCheckedPan = '';
+        const shouldRestoreAfterValidation = @json($shouldRestoreAfterValidation);
 
         function invalidatePanVerification(changedPan) {
             if (!panVerifiedInput) return;
@@ -635,6 +637,23 @@
                 }
             });
         }
+
+        if (shouldRestoreAfterValidation) {
+            if (restOfForm) {
+                restOfForm.classList.remove('d-none');
+            }
+            if (panAlreadyRegisteredSection) {
+                panAlreadyRegisteredSection.classList.add('d-none');
+            }
+            if (panLookupMessage) {
+                panLookupMessage.textContent = 'Validation errors found. Please correct the fields below.';
+                panLookupMessage.className = 'mt-2 small text-warning';
+            }
+            if (panLookup && panLookup.value && panLookup.value.length === 10 && btnPanLookup) {
+                btnPanLookup.click();
+            }
+        }
+
         if (panField) {
             panField.addEventListener('input', function() {
                 this.value = this.value.toUpperCase();

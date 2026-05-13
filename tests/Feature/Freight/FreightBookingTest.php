@@ -6,12 +6,12 @@ use App\Models\Company;
 use App\Models\Consignee;
 use App\Models\FreightBooking;
 use App\Models\LorryReceipt;
-use Carbon\Carbon;
 use App\Models\Pump;
 use App\Models\Transporter;
 use App\Models\Truck;
 use App\Models\User;
 use App\Models\UserRole;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -36,7 +36,7 @@ class FreightBookingTest extends TestCase
     protected function makeUser(string $role): User
     {
         $company = Company::create([
-            'name' => 'Company ' . $role,
+            'name' => 'Company '.$role,
             'user_id' => null,
             'gst_slab' => config('payments.gst_slabs')[0],
             'lr_credits' => 5,
@@ -169,14 +169,14 @@ class FreightBookingTest extends TestCase
             ->assertOk();
     }
 
-    public function test_super_admin_forbidden_and_guest_redirected(): void
+    public function test_super_admin_redirected_without_company_and_guest_redirected(): void
     {
         $super = $this->makeUser('super_admin');
-        $this->actingAs($super)->get('/freight_bookings')->assertForbidden();
+        $this->actingAs($super)->get('/freight_bookings')->assertRedirect(route('company.index'));
         $this->actingAs($super)
             ->withHeader('X-Requested-With', 'XMLHttpRequest')
             ->get('/freight_bookings/data')
-            ->assertForbidden();
+            ->assertRedirect(route('company.index'));
 
         $this->post(route('logout'));
         $this->get('/freight_bookings')->assertRedirect(route('login'));
@@ -541,4 +541,3 @@ class FreightBookingTest extends TestCase
         $this->assertGreaterThanOrEqual(0, $remaining);
     }
 }
-

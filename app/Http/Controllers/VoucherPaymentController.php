@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\City;
 use App\Models\FreightBooking;
 use App\Models\PaymentMode;
 use App\Models\PaymentType;
@@ -11,8 +12,8 @@ use App\Models\Truck;
 use App\Models\VoucherLinked;
 use App\Models\VoucherPayment;
 use App\Services\FreightBookingBalanceAdjustmentService;
-use App\Services\TransporterAdvanceLedgerService;
 use App\Services\Notifications\VoucherPaymentNotificationService;
+use App\Services\TransporterAdvanceLedgerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -167,13 +168,6 @@ class VoucherPaymentController extends Controller
                 ->groupBy('linked_lr_id');
         }
 
-        // Get filter data for dropdowns
-        $transporters = \App\Models\Transporter::with('transporterMaster')
-            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
-            ->orderBy('transporter_masters.name')
-            ->select('transporters.*')
-            ->get();
-        $cities = \App\Models\City::orderBy('name')->get();
         $paymentModes = \App\Models\PaymentMode::select('name')->get();
 
         // Get branches for filter dropdown
@@ -187,8 +181,9 @@ class VoucherPaymentController extends Controller
             'payments' => $payments,
             'payments1' => $payments1,
             'selectedDate' => $selectedDate,
-            'transporters' => $transporters,
-            'cities' => $cities,
+            'selectedVoucherPaymentTransporter' => $this->selectedTransporterFilterOptionForRequest($request),
+            'selectedVoucherPaymentSourceCity' => $this->selectedCityFilterOptionForRequest($request, 'source'),
+            'selectedVoucherPaymentDestinationCity' => $this->selectedCityFilterOptionForRequest($request, 'destination'),
             'paymentModes' => $paymentModes,
             'branches' => $branches,
             'linkedLorryReceiptsByLinkedId' => $linkedLorryReceiptsByLinkedId,
@@ -197,17 +192,7 @@ class VoucherPaymentController extends Controller
 
     public function index(Request $request)
     {
-        // Start with base query
-        $baseQuery = \App\Models\VoucherPayment::with([
-            // 'voucher',
-            'company',
-            'freight_booking.lr.customer',
-            'freight_booking.lr.truck',
-            'freight_booking.lr.consignor.city',
-            'freight_booking.lr.consignee.city',
-            'freight_booking.transporter.transporterMaster', // Add transporter relationship
-            'pump',
-        ]);
+        $baseQuery = VoucherPayment::query();
 
         if (Auth::user()->company_id) {
             $baseQuery->where('company_id', Auth::user()->company_id);
@@ -260,44 +245,39 @@ class VoucherPaymentController extends Controller
             });
         }
 
-        // Get unique voucher numbers with their latest payment and total amount
-        $voucherGroups = $baseQuery->select('voucher_number')
+        $voucherGroups = (clone $baseQuery)->select('voucher_number')
             ->selectRaw('MAX(id) as latest_payment_id')
             ->selectRaw('SUM(amount) as total_amount')
             ->groupBy('voucher_number')
             ->orderByDesc('latest_payment_id')
-            ->paginate(20)
+            ->simplePaginate(20)
             ->appends($request->except('page'));
 
-        // Get the actual payment records with all relationships
-        $voucherNumbers = $voucherGroups->pluck('voucher_number')->toArray();
-        $latestPaymentIds = $voucherGroups->pluck('latest_payment_id')->toArray();
+        $latestPaymentIds = $voucherGroups->pluck('latest_payment_id')->filter()->values()->all();
 
-        // Get the latest payment for each voucher number to display representative data
-        $payments = \App\Models\VoucherPayment::with([
-            // 'voucher',
-            'company',
-            'freight_booking.lr.customer',
-            'freight_booking.lr.truck',
-            'freight_booking.lr.consignor.city',
-            'freight_booking.lr.consignee.city',
-            'freight_booking.transporter.transporterMaster', // Add transporter relationship
-        ])->whereIn('id', $latestPaymentIds)->get()->keyBy('voucher_number');
-
-        // Get total amounts for each voucher
-        $totalAmounts = [];
-        foreach ($voucherGroups as $group) {
-            $totalAmounts[$group->voucher_number] = $group->total_amount;
+        $payments = collect();
+        if ($latestPaymentIds !== []) {
+            $payments = VoucherPayment::query()
+                ->with([
+                    'company',
+                    'freight_booking.lr.customer',
+                    'freight_booking.lr.truck',
+                    'freight_booking.lr.consignor.city',
+                    'freight_booking.lr.consignee.city',
+                    'freight_booking.transporter.transporterMaster',
+                ])
+                ->whereIn('id', $latestPaymentIds)
+                ->get()
+                ->keyBy(fn (VoucherPayment $payment): string => (string) $payment->voucher_number);
         }
 
-        $transporters = \App\Models\Transporter::with('transporterMaster')
-            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
-            ->orderBy('transporter_masters.name')
-            ->select('transporters.*')
-            ->get();
-        $cities = \App\Models\City::orderBy('name')->get();
-
-        return view('voucher_payments.index', compact('payments', 'voucherGroups', 'totalAmounts', 'transporters', 'cities'));
+        return view('voucher_payments.index', [
+            'payments' => $payments,
+            'voucherGroups' => $voucherGroups,
+            'selectedVoucherPaymentTransporter' => $this->selectedTransporterFilterOptionForRequest($request),
+            'selectedVoucherPaymentSourceCity' => $this->selectedCityFilterOptionForRequest($request, 'source'),
+            'selectedVoucherPaymentDestinationCity' => $this->selectedCityFilterOptionForRequest($request, 'destination'),
+        ]);
     }
 
     public function create(Request $request)
@@ -519,7 +499,6 @@ class VoucherPaymentController extends Controller
             return redirect()->route('voucher_payments.index')
                 ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
-        $vouchers = \App\Models\FreightBooking::select('id', 'voucher_number')->get();
         $paymentTypes = PaymentType::all();
         $paymentModes = PaymentMode::all();
         $pumps = Pump::where('user_id', Auth::user()->company->user_id)->get();
@@ -552,7 +531,6 @@ class VoucherPaymentController extends Controller
 
         return view('voucher_payments.edit', compact(
             'voucher_payment',
-            'vouchers',
             'paymentTypes',
             'paymentModes',
             'lorry_receipt',
@@ -1180,6 +1158,65 @@ class VoucherPaymentController extends Controller
             return redirect()->back()
                 ->with('error', 'An error occurred while updating the payment status. Please try again.');
         }
+    }
+
+    /**
+     * @return array{id: int, text: string}|null
+     */
+    private function selectedTransporterFilterOptionForRequest(Request $request): ?array
+    {
+        if (! $request->filled('transporter')) {
+            return null;
+        }
+
+        $companyId = Auth::user()?->company_id;
+        if (! $companyId) {
+            return null;
+        }
+
+        $id = (int) $request->input('transporter');
+        $row = Transporter::query()
+            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+            ->where('transporters.company_id', $companyId)
+            ->where('transporters.id', $id)
+            ->select('transporters.id', 'transporters.is_owner')
+            ->addSelect('transporter_masters.name as master_name')
+            ->first();
+
+        if ($row === null) {
+            return null;
+        }
+
+        $name = (string) ($row->getAttribute('master_name') ?? '');
+        $text = $name !== '' ? $name : 'Not Set';
+        $text .= $row->is_owner ? ' (Owner)' : ' (Agency)';
+
+        return [
+            'id' => (int) $row->id,
+            'text' => $text,
+        ];
+    }
+
+    /**
+     * @return array{id: int, text: string}|null
+     */
+    private function selectedCityFilterOptionForRequest(Request $request, string $requestKey): ?array
+    {
+        if (! $request->filled($requestKey)) {
+            return null;
+        }
+
+        $id = (int) $request->input($requestKey);
+        $row = City::query()->where('id', $id)->select(['id', 'name'])->first();
+
+        if ($row === null) {
+            return null;
+        }
+
+        return [
+            'id' => (int) $row->id,
+            'text' => (string) $row->name,
+        ];
     }
 
     private function isBankOrFuelPaymentModeName(?string $paymentMode): bool

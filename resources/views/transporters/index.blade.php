@@ -238,6 +238,11 @@
                 responsive: true,
                 autoWidth: false,
                 stateSave: true,
+                stateLoadParams: function(settings, data) {
+                    data.order = [
+                        [0, 'asc']
+                    ];
+                },
                 searchDelay: 500,
                 initComplete: function() {
                     // Add individual column search

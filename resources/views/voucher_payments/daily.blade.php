@@ -1,5 +1,10 @@
 @extends('layouts.app')
 
+@push('styles')
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+@endpush
+
 @section('content')
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
@@ -55,38 +60,29 @@
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label">Transporter</label>
-                                <select name="transporter" class="form-select">
+                                <select name="transporter" id="voucherPaymentsDailyTransporterFilter" class="form-select">
                                     <option value="">All Transporters</option>
-                                    @foreach ($transporters as $transporter)
-                                        <option value="{{ $transporter->id }}"
-                                            {{ request('transporter') == $transporter->id ? 'selected' : '' }}>
-                                            {{ $transporter->name }}
-                                        </option>
-                                    @endforeach
+                                    @if (! empty($selectedVoucherPaymentTransporter))
+                                        <option value="{{ $selectedVoucherPaymentTransporter['id'] }}" selected>{{ $selectedVoucherPaymentTransporter['text'] }}</option>
+                                    @endif
                                 </select>
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label">Source</label>
-                                <select name="source" class="form-select">
+                                <select name="source" id="voucherPaymentsDailySourceCityFilter" class="form-select">
                                     <option value="">All Sources</option>
-                                    @foreach ($cities as $city)
-                                        <option value="{{ $city->id }}"
-                                            {{ request('source') == $city->id ? 'selected' : '' }}>
-                                            {{ $city->name }}
-                                        </option>
-                                    @endforeach
+                                    @if (! empty($selectedVoucherPaymentSourceCity))
+                                        <option value="{{ $selectedVoucherPaymentSourceCity['id'] }}" selected>{{ $selectedVoucherPaymentSourceCity['text'] }}</option>
+                                    @endif
                                 </select>
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label">Destination</label>
-                                <select name="destination" class="form-select">
+                                <select name="destination" id="voucherPaymentsDailyDestinationCityFilter" class="form-select">
                                     <option value="">All Destinations</option>
-                                    @foreach ($cities as $city)
-                                        <option value="{{ $city->id }}"
-                                            {{ request('destination') == $city->id ? 'selected' : '' }}>
-                                            {{ $city->name }}
-                                        </option>
-                                    @endforeach
+                                    @if (! empty($selectedVoucherPaymentDestinationCity))
+                                        <option value="{{ $selectedVoucherPaymentDestinationCity['id'] }}" selected>{{ $selectedVoucherPaymentDestinationCity['text'] }}</option>
+                                    @endif
                                 </select>
                             </div>
                             <div class="col-md-3">
@@ -797,6 +793,74 @@
                     }
                 });
             }
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(function () {
+            const $t = $('#voucherPaymentsDailyTransporterFilter');
+            if (!$t.length || typeof $.fn.select2 !== 'function') {
+                return;
+            }
+            $t.select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: 'Search transporters…',
+                allowClear: true,
+                minimumInputLength: 0,
+                ajax: {
+                    url: '/api/transporters/search',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            q: params.term || '',
+                            page: params.page || 1,
+                        };
+                    },
+                    processResults: function (data, params) {
+                        params.page = params.page || 1;
+                        return {
+                            results: data.results,
+                            pagination: data.pagination,
+                        };
+                    },
+                },
+            });
+
+            function initDailyCitySelect2(selector, placeholder) {
+                const $c = $(selector);
+                if (!$c.length || typeof $.fn.select2 !== 'function') {
+                    return;
+                }
+                $c.select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    placeholder: placeholder,
+                    allowClear: true,
+                    minimumInputLength: 0,
+                    ajax: {
+                        url: '/api/cities/search',
+                        dataType: 'json',
+                        delay: 200,
+                        data: function (params) {
+                            return {
+                                q: params.term || '',
+                                page: params.page || 1,
+                            };
+                        },
+                        processResults: function (data, params) {
+                            params.page = params.page || 1;
+                            return {
+                                results: data.results,
+                                pagination: data.pagination,
+                            };
+                        },
+                    },
+                });
+            }
+            initDailyCitySelect2('#voucherPaymentsDailySourceCityFilter', 'Search source city…');
+            initDailyCitySelect2('#voucherPaymentsDailyDestinationCityFilter', 'Search destination city…');
         });
     </script>
 @endpush

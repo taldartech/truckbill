@@ -37,7 +37,7 @@
                 <div class="col-md-4 mb-3">
                     <label for="memos" class="form-label">Memos</label>
                     <input type="text" id="memos" class="form-control" disabled
-                        value="{{ implode(',', $invoice->memo_ids) }}">
+                        value="{{ implode(',', is_array($invoice->memo_ids) ? $invoice->memo_ids : []) }}">
                 </div>
             </div>
             <div class="row">

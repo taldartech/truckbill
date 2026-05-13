@@ -4,17 +4,15 @@ namespace App\Models;
 
 use App\Contracts\Auditable;
 use App\Models\Concerns\HasHybridAuditLog;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\Truck;
-use App\Models\Transporter;
-use App\Models\Consignee;
-use App\Models\Company;
 use App\Models\Traits\TracksUser;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class LorryReceipt extends Model implements Auditable
 {
     use HasHybridAuditLog, SoftDeletes, TracksUser;
+
     protected $fillable = [
         'truck_id',
         'transporter_id',
@@ -70,7 +68,7 @@ class LorryReceipt extends Model implements Auditable
     {
         $freightBooking = \App\Models\FreightBooking::where('lr_id', $this->id)->first();
 
-        if (!$freightBooking) {
+        if (! $freightBooking) {
             return false;
         }
 
@@ -83,24 +81,40 @@ class LorryReceipt extends Model implements Auditable
 
         $this->delivery_status = $deliveryStatus;
         $this->save();
+
         return true;
     }
 
-    public function transporter() { return $this->belongsTo(Transporter::class)->withTrashed(); }
-    public function consignor() { return $this->belongsTo(Consignee::class, 'consignor_id')->withTrashed(); }
-    public function consignee() { return $this->belongsTo(Consignee::class)->withTrashed(); }
+    public function transporter()
+    {
+        return $this->belongsTo(Transporter::class)->withTrashed();
+    }
 
+    public function consignor()
+    {
+        return $this->belongsTo(Consignee::class, 'consignor_id')->withTrashed();
+    }
+
+    public function consignee()
+    {
+        return $this->belongsTo(Consignee::class)->withTrashed();
+    }
 
     public function freightBookings()
     {
         return $this->hasMany(FreightBooking::class, 'lr_id');
     }
 
+    public function freightBooking(): BelongsTo
+    {
+        return $this->belongsTo(FreightBooking::class, 'freight_booking_id');
+    }
+
     protected static function booted()
     {
-        static::deleting(function($lorryReceipt) {
+        static::deleting(function ($lorryReceipt) {
             // Delete related freight bookings and their associated voucher payments
-            $lorryReceipt->freightBookings->each(function($freightBooking) {
+            $lorryReceipt->freightBookings->each(function ($freightBooking) {
                 // Delete associated voucher payments
                 if ($freightBooking->voucherPayments) {
                     $freightBooking->voucherPayments()->delete();
@@ -110,8 +124,16 @@ class LorryReceipt extends Model implements Auditable
             });
         });
     }
-    public function customer() { return $this->belongsTo(Consignee::class, 'customer_id')->withTrashed(); }
-    public function reference() { return $this->belongsTo(Transporter::class, 'reference_by')->withTrashed(); }
+
+    public function customer()
+    {
+        return $this->belongsTo(Consignee::class, 'customer_id')->withTrashed();
+    }
+
+    public function reference()
+    {
+        return $this->belongsTo(Transporter::class, 'reference_by')->withTrashed();
+    }
 
     /**
      * @return list<string>
