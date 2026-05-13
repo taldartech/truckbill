@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Company;
 use App\Models\Consignee;
-use App\Models\FreightBooking;
 use App\Models\GoodType;
 use App\Models\LorryReceipt;
 use App\Models\Transporter;
 use App\Models\Truck;
 use App\Services\Notifications\LorryReceiptNotificationService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -102,33 +103,100 @@ class LorryReceiptController extends Controller
     private function getLorryReceiptsData(Request $request): \Illuminate\Http\JsonResponse
     {
         try {
-            $query = LorryReceipt::with(['truck', 'transporter.transporterMaster', 'consignor', 'consignee', 'company', 'customer']);
+            $user = Auth::user();
+            $user->loadMissing('userRole');
+            $canActAsAdmin = $user->canActAsAdmin();
 
-            if (Auth::user()->company_id) {
-                $query->where('company_id', Auth::user()->company_id);
+            $company = $user->company;
+            $today = now()->startOfDay();
+            $planEndDate = $company->plan_end_date
+                ? Carbon::parse($company->plan_end_date)->startOfDay()
+                : null;
+
+            // Join consignees + truck once with aliases so DataTables never hydrates duplicate Consignee
+            // models per row (customer / consignor / consignee are the same table).
+            $query = LorryReceipt::query()
+                ->from('lorry_receipts')
+                ->leftJoin('consignees as lr_dt_customer', 'lr_dt_customer.id', '=', 'lorry_receipts.customer_id')
+                ->leftJoin('consignees as lr_dt_consignor', 'lr_dt_consignor.id', '=', 'lorry_receipts.consignor_id')
+                ->leftJoin('consignees as lr_dt_consignee', 'lr_dt_consignee.id', '=', 'lorry_receipts.consignee_id')
+                ->leftJoin('trucks as lr_dt_truck', 'lr_dt_truck.id', '=', 'lorry_receipts.truck_id')
+                ->select([
+                    'lorry_receipts.*',
+                    'lr_dt_customer.name as dt_customer_name',
+                    'lr_dt_consignor.name as dt_consignor_name',
+                    'lr_dt_consignee.name as dt_consignee_name',
+                    'lr_dt_truck.truck_number as dt_truck_number',
+                ])
+                ->with([
+                    'freightBooking',
+                ]);
+
+            if ($user->company_id) {
+                $query->where('lorry_receipts.company_id', $user->company_id);
             }
-            $query->orderBy('gr_date', 'desc')->orderBy('linked_lr_id', 'desc');
+            $query->orderBy('lorry_receipts.gr_date', 'desc')->orderBy('lorry_receipts.linked_lr_id', 'desc');
             $query->when($request->has('gr_date_from') && $request->has('gr_date_to'), function ($query) use ($request) {
-                $query->whereBetween('gr_date', [$request->gr_date_from, $request->gr_date_to]);
+                $query->whereBetween('lorry_receipts.gr_date', [$request->gr_date_from, $request->gr_date_to]);
             });
 
             return DataTables::of($query)
+                ->orderColumn('customer_name', 'lr_dt_customer.name $1')
+                ->orderColumn('consignor_name', 'lr_dt_consignor.name $1')
+                ->orderColumn('consignee_name', 'lr_dt_consignee.name $1')
+                ->orderColumn('truck_number', 'lr_dt_truck.truck_number $1')
+                ->filterColumn('customer_name', function ($query, $keyword): void {
+                    if ($keyword === '' || $keyword === null) {
+                        return;
+                    }
+                    $query->where('lr_dt_customer.name', 'like', '%'.$keyword.'%');
+                })
+                ->filterColumn('consignor_name', function ($query, $keyword): void {
+                    if ($keyword === '' || $keyword === null) {
+                        return;
+                    }
+                    $query->where('lr_dt_consignor.name', 'like', '%'.$keyword.'%');
+                })
+                ->filterColumn('consignee_name', function ($query, $keyword): void {
+                    if ($keyword === '' || $keyword === null) {
+                        return;
+                    }
+                    $query->where('lr_dt_consignee.name', 'like', '%'.$keyword.'%');
+                })
+                ->filterColumn('truck_number', function ($query, $keyword): void {
+                    if ($keyword === '' || $keyword === null) {
+                        return;
+                    }
+                    $query->where('lr_dt_truck.truck_number', 'like', '%'.$keyword.'%');
+                })
+                ->filterColumn('lr_number', function ($query, $keyword): void {
+                    if ($keyword === '' || $keyword === null) {
+                        return;
+                    }
+                    $query->where('lorry_receipts.lr_number', 'like', '%'.$keyword.'%');
+                })
+                ->orderColumn('gr_date', 'lorry_receipts.gr_date $1')
+                ->orderColumn('lr_number', 'lorry_receipts.lr_number $1')
+                ->orderColumn('weight', 'lorry_receipts.weight $1')
+                ->orderColumn('fr_rate', 'lorry_receipts.fr_rate $1')
+                ->orderColumn('amount', 'lorry_receipts.amount $1')
+                ->orderColumn('delivery_status', 'lorry_receipts.delivery_status $1')
                 ->addColumn('sr_no', function ($row) {
                     static $counter = 0;
 
                     return ++$counter;
                 })
                 ->addColumn('customer_name', function ($row) {
-                    return $row->customer ? $row->customer->name : '-';
+                    return $row->dt_customer_name ?: '-';
                 })
                 ->addColumn('consignor_name', function ($row) {
-                    return $row->consignor ? $row->consignor->name : '-';
+                    return $row->dt_consignor_name ?: '-';
                 })
                 ->addColumn('consignee_name', function ($row) {
-                    return $row->consignee ? $row->consignee->name : '-';
+                    return $row->dt_consignee_name ?: '-';
                 })
                 ->addColumn('truck_number', function ($row) {
-                    return $row->truck ? $row->truck->truck_number : '-';
+                    return $row->dt_truck_number ?: '-';
                 })
                 ->addColumn('gr_date_formatted', function ($row) {
                     return $row->gr_date ? date('d-m-Y', strtotime($row->gr_date)) : '-';
@@ -154,8 +222,8 @@ class LorryReceiptController extends Controller
                     return '<span class="badge bg-'.$statusClass.'">'.$statusText.'</span>';
                 })
 
-                ->addColumn('actions', function ($row) {
-                    return $this->getActionButtons($row);
+                ->addColumn('actions', function ($row) use ($company, $today, $planEndDate, $canActAsAdmin) {
+                    return $this->getActionButtons($row, $company, $today, $planEndDate, $canActAsAdmin);
                 })
                 ->rawColumns(['sr_no', 'lr_number', 'customer_name', 'consignor_name', 'consignee_name', 'truck_number', 'gr_date_formatted', 'amount_formatted', 'status_badge', 'actions', 'row_class'])
                 ->make(true);
@@ -167,16 +235,13 @@ class LorryReceiptController extends Controller
         }
     }
 
-    private function getActionButtons(LorryReceipt $lorryReceipt): string
+    private function getActionButtons(LorryReceipt $lorryReceipt, Company $company, Carbon $today, ?Carbon $planEndDate, bool $canActAsAdmin): string
     {
         $buttons = '<div class="d-flex gap-1 justify-content-center">';
 
-        // Freight booking button
         $freight_booking_id = $lorryReceipt->freight_booking_id;
-        $freightBooking = FreightBooking::find($freight_booking_id);
-        $company = Auth::user()->company;
-        $today = now()->startOfDay();
-        $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
+        $freightBooking = $lorryReceipt->freightBooking;
+        $planExpired = $planEndDate !== null && $today->gt($planEndDate);
 
         if ($freight_booking_id) {
             $buttons .= '<a href="'.route('freight_bookings.edit', $freight_booking_id).'" class="btn btn-sm btn-warning" title="Edit Good Hire (Lorry Hire)" data-bs-toggle="tooltip">';
@@ -185,7 +250,7 @@ class LorryReceiptController extends Controller
             if ($company->lr_credits <= 0) {
                 $buttons .= '<button class="btn btn-sm btn-secondary" title="Insufficient Credits" data-bs-toggle="tooltip" onclick="alert(\'Insufficient credits\')">';
                 $buttons .= '<i class="bi bi-truck"></i></button>';
-            } elseif ($company->plan_end_date && $today->gt($planEndDate)) {
+            } elseif ($planExpired) {
                 $buttons .= '<button class="btn btn-sm btn-secondary" title="Plan Expired" data-bs-toggle="tooltip" onclick="alert(\'Plan expired\')">';
                 $buttons .= '<i class="bi bi-truck"></i></button>';
             } else {
@@ -196,13 +261,13 @@ class LorryReceiptController extends Controller
 
         // Edit button
         $editUrl = route('lorry_receipts.edit', $lorryReceipt->id);
-        if ($lorryReceipt->invoice_generated == 0 && Auth::user()->canActAsAdmin()) {
+        if ($lorryReceipt->invoice_generated == 0 && $canActAsAdmin) {
             $confirmMsg = $freightBooking ? ' onclick="return confirm(\'A good hire (lorry hire) already exists. Continue?\')"' : '';
             $buttons .= '<a href="'.$editUrl.'" class="btn-action btn-edit" title="Edit" data-bs-toggle="tooltip"'.$confirmMsg.'>';
             $buttons .= '<i class="bi bi-pencil"></i></a>';
         }
 
-        if ($lorryReceipt->delivery_status != 'Delivered' && Auth::user()->canActAsAdmin()) {
+        if ($lorryReceipt->delivery_status != 'Delivered' && $canActAsAdmin) {
             $deleteUrl = route('lorry_receipts.destroy', $lorryReceipt->id);
             $buttons .= '<form action="'.$deleteUrl.'" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure?\')">';
             $buttons .= csrf_field().method_field('DELETE');
@@ -260,7 +325,8 @@ class LorryReceiptController extends Controller
 
         $selectedReferenceById = old('reference_by');
         $agencies = $selectedReferenceById
-            ? Transporter::with('transporterMaster')
+            ? Transporter::withTrashed()
+                ->with('transporterMaster')
                 ->where('is_owner', 0)
                 ->where('company_id', $companyId)
                 ->where('transporters.id', $selectedReferenceById)
@@ -270,7 +336,16 @@ class LorryReceiptController extends Controller
                 ->get()
             : collect();
 
-        return view('lorry_receipts.create', compact('trucks', 'consignees', 'goodsTypes', 'agencies'));
+        $selectedTransporterId = old('transporter_id');
+        $payeeTransporter = $selectedTransporterId
+            ? Transporter::withTrashed()
+                ->with('transporterMaster')
+                ->where('company_id', $companyId)
+                ->where('id', $selectedTransporterId)
+                ->first()
+            : null;
+
+        return view('lorry_receipts.create', compact('trucks', 'consignees', 'goodsTypes', 'agencies', 'payeeTransporter'));
     }
 
     public function createLinked(): \Illuminate\View\View|\Illuminate\Http\RedirectResponse
@@ -314,7 +389,8 @@ class LorryReceiptController extends Controller
 
         $selectedReferenceById = old('reference_by');
         $agencies = $selectedReferenceById
-            ? Transporter::with('transporterMaster')
+            ? Transporter::withTrashed()
+                ->with('transporterMaster')
                 ->where('is_owner', 0)
                 ->where('company_id', $companyId)
                 ->where('transporters.id', $selectedReferenceById)
@@ -324,7 +400,16 @@ class LorryReceiptController extends Controller
                 ->get()
             : collect();
 
-        return view('lorry_receipts.create-linked', compact('trucks', 'consignees', 'goodsTypes', 'agencies'));
+        $selectedTransporterId = old('transporter_id');
+        $payeeTransporter = $selectedTransporterId
+            ? Transporter::withTrashed()
+                ->with('transporterMaster')
+                ->where('company_id', $companyId)
+                ->where('id', $selectedTransporterId)
+                ->first()
+            : null;
+
+        return view('lorry_receipts.create-linked', compact('trucks', 'consignees', 'goodsTypes', 'agencies', 'payeeTransporter'));
     }
 
     /**
@@ -853,7 +938,7 @@ class LorryReceiptController extends Controller
         $lorry_receipt->load(['truck.transporter.transporterMaster', 'truck.driver', 'customer', 'transporter.transporterMaster', 'consignor', 'consignee']);
 
         // Fetch only the selected records needed for initial dropdown rendering.
-        $selectedTruckId = $lorry_receipt->truck_id;
+        $selectedTruckId = old('truck_id', $lorry_receipt->truck_id);
         $trucks = $selectedTruckId
             ? Truck::with(['transporter.transporterMaster', 'driver'])
                 ->where('id', $selectedTruckId)
@@ -868,7 +953,7 @@ class LorryReceiptController extends Controller
                 ->get()
             : collect();
 
-        $selectedTransporterId = $lorry_receipt->transporter_id;
+        $selectedTransporterId = old('transporter_id', $lorry_receipt->transporter_id);
         $transporters = $selectedTransporterId
             ? Transporter::withTrashed()->with('transporterMaster')
                 ->where('company_id', $companyId)
@@ -879,7 +964,8 @@ class LorryReceiptController extends Controller
                 ->get()
             : collect();
 
-        $truckOwners = ($lorry_receipt->transporter_type === 'owner' && $selectedTransporterId)
+        $effectiveTransporterType = old('transporter_type', $lorry_receipt->transporter_type);
+        $truckOwners = ($effectiveTransporterType === 'owner' && $selectedTransporterId)
             ? Transporter::withTrashed()->with('transporterMaster')
                 ->where('company_id', $companyId)
                 ->where('transporters.id', $selectedTransporterId)
@@ -890,10 +976,11 @@ class LorryReceiptController extends Controller
                 ->get()
             : collect();
 
-        $agencies = ($lorry_receipt->reference_by)
+        $referenceById = old('reference_by', $lorry_receipt->reference_by);
+        $agencies = $referenceById
             ? Transporter::withTrashed()->with('transporterMaster')
                 ->where('company_id', $companyId)
-                ->where('transporters.id', $lorry_receipt->reference_by)
+                ->where('transporters.id', $referenceById)
                 ->where('is_owner', 0)
                 ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
                 ->orderBy('transporter_masters.name')
@@ -902,9 +989,9 @@ class LorryReceiptController extends Controller
             : collect();
 
         $selectedConsigneeIds = collect([
-            $lorry_receipt->customer_id,
-            $lorry_receipt->consignor_id,
-            $lorry_receipt->consignee_id,
+            old('customer_id', $lorry_receipt->customer_id),
+            old('consignor_id', $lorry_receipt->consignor_id),
+            old('consignee_id', $lorry_receipt->consignee_id),
         ])->filter()->unique()->values();
 
         $consignees = $selectedConsigneeIds->isNotEmpty()

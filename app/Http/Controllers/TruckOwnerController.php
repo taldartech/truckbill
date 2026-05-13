@@ -128,10 +128,14 @@ class TruckOwnerController extends Controller
                         $query->orderBy('transporters.advance_amount', $orderDir);
                         break;
                     default:
-                        $query->orderBy('transporters.id', 'desc');
+                        $query->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+                            ->orderBy('transporter_masters.name', 'asc')
+                            ->select('transporters.*');
                 }
             } else {
-                $query->orderBy('transporters.id', 'desc');
+                $query->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+                    ->orderBy('transporter_masters.name', 'asc')
+                    ->select('transporters.*');
             }
 
             $totalQuery = Transporter::where('is_owner', 1);

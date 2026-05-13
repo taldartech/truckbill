@@ -149,7 +149,6 @@
                 </div>
             </div>
             @php
-                $paymentNames = \App\Models\PaymentMode::pluck('name')->toArray();
                 $payments = array_fill_keys($paymentNames, 0);
             @endphp
             <div class="card-body" style="overflow-x: auto;">
@@ -182,7 +181,7 @@
                     <tbody>
                         @foreach ($lrs as $index => $lr)
                             @php
-                                $fr = $lr->freightBookings->last();
+                                $fr = $lr->freightBooking;
                                 $payments = array_fill_keys($paymentNames, 0);
                                 $total_balance = 0;
                                 if ($fr) {

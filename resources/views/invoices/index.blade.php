@@ -151,14 +151,8 @@
                 </div>
                 <div class="col-md-3 d-none" id="field_customer">
                     <label class="form-label">Customer</label>
-                    <select name="customer" id="filter_customer_select" class="form-select select2">
+                    <select name="customer" id="filter_customer_select" class="form-select">
                         <option value="">All</option>
-                        @foreach ($consignees as $consignee)
-                            <option value="{{ $consignee->name }}"
-                                {{ request('customer') === $consignee->name ? 'selected' : '' }}>
-                                {{ $consignee->name }}
-                            </option>
-                        @endforeach
                     </select>
                 </div>
                 <div class="col-md-3 d-none" id="field_payment_status">
@@ -780,15 +774,45 @@
                 });
             });
 
-            // Select2 init (same pattern as other pages)
-            $('.select2').each(function() {
-                $(this).select2({
-                    theme: 'bootstrap-5',
-                    width: '100%',
-                    placeholder: 'All',
-                    allowClear: false
-                });
+            const customerFilterFromRequest = @json(request('customer', ''));
+
+            $('#filter_customer_select').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: 'Search customer…',
+                allowClear: true,
+                minimumInputLength: 0,
+                ajax: {
+                    url: '/api/consignees/search',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            q: params.term || '',
+                            page: params.page || 1,
+                        };
+                    },
+                    processResults: function(data) {
+                        return {
+                            results: (data.results || []).map(function(item) {
+                                return {
+                                    id: item.text,
+                                    text: item.text,
+                                };
+                            }),
+                            pagination: {
+                                more: Boolean(data.pagination && data.pagination.more),
+                            },
+                        };
+                    },
+                    cache: true,
+                },
             });
+
+            if (customerFilterFromRequest) {
+                const opt = new Option(customerFilterFromRequest, customerFilterFromRequest, true, true);
+                $('#filter_customer_select').append(opt).trigger('change');
+            }
         }); // End of document ready
     </script>
 @endsection

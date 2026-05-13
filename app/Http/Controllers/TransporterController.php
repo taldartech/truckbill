@@ -39,7 +39,7 @@ class TransporterController extends Controller
         try {
             $companyId = Auth::user()->company_id;
             $orderColumn = (int) data_get($request->order, '0.column', 0);
-            $orderDirection = strtolower((string) data_get($request->order, '0.dir', 'desc')) === 'asc' ? 'asc' : 'desc';
+            $orderDirection = strtolower((string) data_get($request->order, '0.dir', 'asc')) === 'desc' ? 'desc' : 'asc';
 
             $hasGlobalSearch = $request->has('search') && ! empty($request->search['value']);
             $hasColumnSearch = false;

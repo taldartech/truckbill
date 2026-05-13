@@ -203,7 +203,9 @@
                         }
                     @endif
                 ],
-                order: [],
+                order: [
+                    [0, 'asc']
+                ],
                 pageLength: 10,
                 lengthMenu: [
                     [10, 25, 50, 100],
@@ -237,7 +239,9 @@
                 autoWidth: false,
                 stateSave: true,
                 stateLoadParams: function(settings, data) {
-                    data.order = [];
+                    data.order = [
+                        [0, 'asc']
+                    ];
                 },
                 searchDelay: 500,
                 initComplete: function() {

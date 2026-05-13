@@ -1,5 +1,10 @@
 @extends('layouts.app')
 
+@push('styles')
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css"
+        rel="stylesheet" />
+@endpush
+
 @section('content')
     <div class="container mt-4" id="preFormContainer">
         <div class="card card-warning card-outline" style="width: 50%; margin: auto;">
@@ -11,10 +16,7 @@
                     <div class="col-md-6">
                         <label class="form-label">Customer *</label>
                         <select id="preCustomerSelect" style="width:100%" required>
-                            <option value="">Select</option>
-                            @foreach ($consignees as $consignee)
-                                <option value="{{ $consignee->id }}">{{ $consignee->name }}</option>
-                            @endforeach
+                            <option value=""></option>
                         </select>
                     </div>
                     <div class="col-md-6">
@@ -185,18 +187,55 @@
         </div>
     </div>
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            new Choices('#preCustomerSelect', {
-                searchEnabled: true, // enable search box
-                itemSelectText: '', // hide "press to select" text
-                shouldSort: false, // keep original order
-                placeholderValue: 'Select Customer',
-                searchPlaceholderValue: 'Type to search...',
-            });
+            const invoiceCustomerPrefill = @json($invoiceCustomerSelectPrefill);
+            const consigneeSearchUrl = @json(route('api.consignees.search'));
+
+            function initPreCustomerSelect2() {
+                if (typeof $ === 'undefined' || typeof $.fn.select2 === 'undefined') {
+                    setTimeout(initPreCustomerSelect2, 50);
+
+                    return;
+                }
+
+                const $sel = $('#preCustomerSelect');
+                $sel.select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    placeholder: 'Search customer…',
+                    allowClear: true,
+                    minimumInputLength: 0,
+                    ajax: {
+                        url: consigneeSearchUrl,
+                        dataType: 'json',
+                        delay: 250,
+                        data: function(params) {
+                            return {
+                                q: params.term || '',
+                                page: params.page || 1,
+                            };
+                        },
+                        processResults: function(data) {
+                            return {
+                                results: data.results || [],
+                                pagination: {
+                                    more: Boolean(data.pagination && data.pagination.more),
+                                },
+                            };
+                        },
+                        cache: true,
+                    },
+                });
+
+                if (invoiceCustomerPrefill && invoiceCustomerPrefill.id) {
+                    const opt = new Option(invoiceCustomerPrefill.text, String(invoiceCustomerPrefill.id), true,
+                        true);
+                    $sel.append(opt).trigger('change');
+                }
+            }
+
+            initPreCustomerSelect2();
         });
     </script>
 

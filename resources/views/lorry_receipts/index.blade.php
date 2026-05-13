@@ -691,11 +691,11 @@
                         },
                         {
                             data: 'customer_name',
-                            name: 'customer.name'
+                            name: 'customer_name'
                         },
                         {
                             data: 'consignor_name',
-                            name: 'consignor.name',
+                            name: 'consignor_name',
                             render: function(data, type, row) {
                                 if (row.source_city) {
                                     return data + '<br><span class="city-label">' + row.source_city + '</span>';
@@ -705,7 +705,7 @@
                         },
                         {
                             data: 'consignee_name',
-                            name: 'consignee.name',
+                            name: 'consignee_name',
                             render: function(data, type, row) {
                                 if (row.destination_city) {
                                     return data + '<br><span class="city-label">' + row.destination_city + '</span>';
@@ -720,7 +720,7 @@
 
                         {
                             data: 'truck_number',
-                            name: 'truck.truck_number'
+                            name: 'truck_number'
                         },
                         {
                             data: 'weight',

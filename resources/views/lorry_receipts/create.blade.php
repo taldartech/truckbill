@@ -3,6 +3,7 @@
 @section('content')
     <!-- Select2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <!-- SweetAlert2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet" />
     <style>
@@ -19,9 +20,43 @@
             word-wrap: break-word;
         }
 
-        /* Select2 custom styling for truck dropdown */
+        /* Select2: theme draws border on .select2-selection — never put border/background on __rendered (nested box bug) */
+        .card-body .select2-container {
+            width: 100% !important;
+            max-width: 100%;
+        }
+
         .select2-container--bootstrap-5 .select2-selection {
             min-height: 38px;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single {
+            min-height: 38px;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+            display: block;
+            padding-left: 0.75rem;
+            padding-right: 2rem;
+            padding-top: 0.375rem;
+            padding-bottom: 0.375rem;
+            line-height: 1.35;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .select2-container--bootstrap-5.select2-container--focus .select2-selection--single,
+        .select2-container--bootstrap-5.select2-container--open .select2-selection--single {
+            border-color: var(--bs-primary);
+            box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+            height: auto;
+            min-height: 36px;
+            top: 0;
+            right: 0.5rem;
         }
 
         .select2-result-truck {
@@ -31,28 +66,6 @@
         .truck-info {
             font-size: 14px;
             line-height: 1.4;
-        }
-
-        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
-            padding-left: 12px;
-            padding-right: 20px;
-            color: #212529;
-            line-height: 36px;
-            background: var(--bs-body-bg);
-            border: var(--bs-border-width) solid var(--bs-border-color);
-            border-radius: 0.375rem;
-        }
-
-        .select2-container--bootstrap-5 .select2-selection--single:focus-visible {
-            border-color: var(--bs-primary);
-            box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
-            outline: 0;
-            border-radius: 0.375rem;
-        }
-
-        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
-            height: 36px;
-            right: 12px;
         }
 
         .select2-dropdown {
@@ -81,6 +94,23 @@
 
         .select2-container.declaration-warning .select2-selection__rendered {
             background-color: #fff3cd !important;
+        }
+
+        .lr-payee-select-wrap .select2-container {
+            width: 100% !important;
+            max-width: 100%;
+        }
+
+        .lr-payee-select-wrap .select2-container .select2-selection--single {
+            min-height: 38px;
+            height: auto;
+        }
+
+        .lr-payee-select-wrap .select2-selection--single .select2-selection__rendered {
+            white-space: normal;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            text-overflow: clip;
         }
     </style>
     <div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
@@ -184,18 +214,25 @@
                                 *</label>
                             <select class="form-select" id="transporter_type" name="transporter_type" required>
                                 <option value="">Select Type</option>
-                                <option value="owner">Truck Owner</option>
-                                <option value="agency">Agency</option>
+                                <option value="owner" {{ old('transporter_type') === 'owner' ? 'selected' : '' }}>Truck Owner</option>
+                                <option value="agency" {{ old('transporter_type') === 'agency' ? 'selected' : '' }}>Agency</option>
                             </select>
                             <div class="invalid-feedback">Please select transporter type.</div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-4 min-w-0">
                             <label for="transporter_id" id="transporterLabel" class="form-label">Transporter *</label>
-                            <select class="form-select" id="transporter_id" name="transporter_id" required
-                                onchange="window.LREntity.showTdsPercentage(this.value)">
-                                <option value="">Select Transporter</option>
-                                {{-- This will be filled via JavaScript --}}
-                            </select>
+                            <div class="lr-payee-select-wrap">
+                                <select class="form-select" id="transporter_id" name="transporter_id" required
+                                    onchange="window.LREntity.showTdsPercentage(this.value)">
+                                    <option value="">Select Transporter</option>
+                                    @if (! empty($payeeTransporter))
+                                        <option value="{{ $payeeTransporter->id }}" selected>
+                                            {{ $payeeTransporter->name }}
+                                        </option>
+                                    @endif
+                                </select>
+                            </div>
+                           
                             @error('transporter_id')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
@@ -208,17 +245,19 @@
                         </div>
                     </div>
                     <div class="row mb-3">
-                        <div class="col-md-4">
+                        <div class="col-md-4 min-w-0">
                             <label for="reference_by" class="form-label">Reference By</label>
-                            <select class="form-select" id="reference_by" name="reference_by">
-                                <option value="">Select Reference</option>
-                                @php($selectedAgency = $agencies->firstWhere('id', old('reference_by')))
-                                @if($selectedAgency)
-                                    <option value="{{ $selectedAgency->id }}" selected>
-                                        {{ $selectedAgency->name }}
-                                    </option>
-                                @endif
-                            </select>
+                            <div class="lr-payee-select-wrap">
+                                <select class="form-select" id="reference_by" name="reference_by">
+                                    <option value="">Select Reference</option>
+                                    @php($selectedAgency = $agencies->firstWhere('id', old('reference_by')))
+                                    @if($selectedAgency)
+                                        <option value="{{ $selectedAgency->id }}" selected>
+                                            {{ $selectedAgency->name }}
+                                        </option>
+                                    @endif
+                                </select>
+                            </div>
                             @error('reference_by')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
@@ -277,7 +316,7 @@
                         <div class="col-md-4">
                             <label for="consignor_contact_number" class="form-label">Consignor Contact Number</label>
                             <input type="text" class="form-control" id="consignor_contact_number"
-                                name="consignor_contact_number" readonly>
+                                name="consignor_contact_number" readonly value="{{ old('consignor_contact_number') }}">
                         </div>
 
                     </div>
@@ -302,7 +341,7 @@
                         <div class="col-md-4">
                             <label for="consignee_contact_number" class="form-label">Consignee Contact Number</label>
                             <input type="text" class="form-control" id="consignee_contact_number"
-                                name="consignee_contact_number" readonly>
+                                name="consignee_contact_number" readonly value="{{ old('consignee_contact_number') }}">
                         </div>
                     </div>
                 </div>
@@ -603,6 +642,122 @@
                     cache: true
                 };
 
+                const select2AjaxTransport = function (params, success, failure) {
+                    const $element = $(params.element);
+                    const previousRequest = $element.data('select2ActiveRequest');
+                    if (previousRequest && typeof previousRequest.abort === 'function') {
+                        previousRequest.abort();
+                    }
+                    const request = $.ajax(params);
+                    $element.data('select2ActiveRequest', request);
+                    request.then(success);
+                    request.fail(failure);
+                    request.always(function () {
+                        $element.removeData('select2ActiveRequest');
+                    });
+                    return request;
+                };
+
+                const ajaxTruckOwnersConfig = {
+                    url: '/api/truck-owners/search',
+                    dataType: 'json',
+                    delay: 700,
+                    data: function (params) {
+                        return {
+                            q: params.term || '',
+                            limit: 20
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data.results || [],
+                            pagination: { more: false }
+                        };
+                    },
+                    transport: select2AjaxTransport,
+                    cache: true
+                };
+
+                const lrAddTransporterBtn = document.getElementById('lr-add-transporter-btn');
+                const lrAddTransporterWrap = document.getElementById('lr-add-transporter-wrap');
+
+                function syncLrTransporterAddButton(paymentType) {
+                    if (lrAddTransporterWrap) {
+                        if (paymentType === 'owner') {
+                            lrAddTransporterWrap.classList.remove('d-none');
+                        } else {
+                            lrAddTransporterWrap.classList.add('d-none');
+                        }
+                    }
+                    if (lrAddTransporterBtn) {
+                        lrAddTransporterBtn.href = lrAddTransporterBtn.getAttribute('data-href-owner') || lrAddTransporterBtn.href;
+                    }
+                }
+
+                function bindTransporterSelect2Title($t) {
+                    function setTitleFromSelection() {
+                        const inst = $t.select2('data');
+                        const fromInst = inst && inst[0] && inst[0].text ? String(inst[0].text) : '';
+                        const fromOpt = ($t.find('option:selected').text() || '').trim();
+                        const text = (fromInst || fromOpt).trim();
+                        $t.next('.select2-container').find('.select2-selection__rendered').attr('title', text);
+                    }
+                    $t.off('select2:select.lrPayeeTitle select2:clear.lrPayeeTitle change.lrPayeeTitle')
+                        .on('select2:select.lrPayeeTitle', function (e) {
+                            const t = e.params && e.params.data && e.params.data.text ? String(e.params.data.text) : '';
+                            $(this).next('.select2-container').find('.select2-selection__rendered').attr('title', t);
+                        })
+                        .on('select2:clear.lrPayeeTitle', function () {
+                            $(this).next('.select2-container').find('.select2-selection__rendered').attr('title', '');
+                        })
+                        .on('change.lrPayeeTitle', function () {
+                            setTimeout(setTitleFromSelection, 0);
+                        });
+                }
+
+                function rebindLrTransporterSelect2(paymentType) {
+                    const $t = $('#transporter_id');
+                    if (!$t.length || typeof $t.select2 !== 'function') {
+                        return;
+                    }
+                    if ($t.hasClass('select2-hidden-accessible')) {
+                        $t.select2('destroy');
+                    }
+                    const mode = paymentType === 'owner' ? 'owner' : 'agency';
+                    syncLrTransporterAddButton(mode);
+                    if (mode === 'owner') {
+                        $t.select2({
+                            theme: 'bootstrap-5',
+                            width: '100%',
+                            allowClear: true,
+                            minimumInputLength: 1,
+                            placeholder: 'Search truck owner (type first letter)...',
+                            language: {
+                                inputTooShort: function () {
+                                    return 'Please type at least 1 character to search';
+                                },
+                                searching: function () {
+                                    return 'Searching...';
+                                }
+                            },
+                            ajax: ajaxTruckOwnersConfig
+                        });
+                    } else {
+                        $t.select2({
+                            theme: 'bootstrap-5',
+                            width: '100%',
+                            allowClear: true,
+                            minimumInputLength: 0,
+                            placeholder: 'Search agency...',
+                            ajax: ajaxAgenciesConfig
+                        });
+                    }
+                    bindTransporterSelect2Title($t);
+                    $t.trigger('change.select2');
+                }
+
+                window.lrCreateRebindTransporterSelect2 = rebindLrTransporterSelect2;
+
                 // Customer / consignor / consignee
                 $('#customer_id').select2({
                     theme: 'bootstrap-5',
@@ -634,20 +789,18 @@
                     placeholder: 'Search and select truck...',
                     ajax: ajaxTrucksConfig
                 });
-                $('#transporter_id').select2({
-                    theme: 'bootstrap-5',
-                    width: '100%',
-                    minimumInputLength: 1,
-                    placeholder: 'Search and select transporter...',
-                    ajax: ajaxAgenciesConfig
-                });
+                const initialPayeeMode = document.getElementById('transporter_type')?.value === 'owner' ? 'owner' : 'agency';
+                rebindLrTransporterSelect2(initialPayeeMode);
+
                 $('#reference_by').select2({
                     theme: 'bootstrap-5',
                     width: '100%',
-                    minimumInputLength: 1,
-                    placeholder: 'Search and select reference...',
+                    allowClear: true,
+                    minimumInputLength: 0,
+                    placeholder: 'Search reference agency...',
                     ajax: ajaxAgenciesConfig
                 });
+                bindTransporterSelect2Title($('#reference_by'));
 
                 // Small/static lists
                 $('#good_type').select2({
@@ -667,10 +820,36 @@
                     }, 0);
                 });
 
+                const transporterTypeSelectEl = document.getElementById('transporter_type');
+                const truckSelectEl = document.getElementById('truck_id');
+                const transporterSelectEl = document.getElementById('transporter_id');
+                const transporterLabelEl = document.getElementById('transporterLabel');
+                if (transporterTypeSelectEl && truckSelectEl && transporterSelectEl && transporterLabelEl) {
+                    window.LREntity.initLorryReceiptTransporterSelectionFlow({
+                        transporterTypeSelect: transporterTypeSelectEl,
+                        truckSelect: truckSelectEl,
+                        transporterSelect: transporterSelectEl,
+                        transporterLabel: transporterLabelEl,
+                        trucksData: {},
+                        mode: 'create',
+                        allowTransporterChanges: true,
+                        afterTransporterTypeChange: function (selectedType) {
+                            const mode = selectedType === 'owner' ? 'owner' : 'agency';
+                            if (typeof window.lrCreateRebindTransporterSelect2 === 'function') {
+                                window.lrCreateRebindTransporterSelect2(mode);
+                            }
+                        },
+                    });
+                }
+
                 // Trigger Select2 to refresh and show selected values
                 setTimeout(function() {
-                    $('#customer_id, #truck_id, #transporter_id, #consignor_id, #consignee_id, #good_type')
+                    $('#customer_id, #truck_id, #transporter_id, #reference_by, #consignor_id, #consignee_id, #good_type')
                         .trigger('change.select2');
+                    const payeeId = $('#transporter_id').val();
+                    if (payeeId && typeof window.LREntity.showTdsPercentage === 'function') {
+                        window.LREntity.showTdsPercentage(payeeId);
+                    }
                 }, 500);
             });
         }
@@ -678,21 +857,6 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-
-            const transporterTypeSelect = document.getElementById('transporter_type');
-            const truckSelect = document.getElementById('truck_id');
-            const transporterSelect = document.getElementById('transporter_id');
-            const transporterLabel = document.getElementById('transporterLabel');
-
-            window.LREntity.initLorryReceiptTransporterSelectionFlow({
-                transporterTypeSelect,
-                truckSelect,
-                transporterSelect,
-                transporterLabel,
-                trucksData: {},
-                mode: 'create',
-                allowTransporterChanges: true,
-            });
 
             const { showValidationError, clearValidationError } = window.LREntity;
 
@@ -1274,8 +1438,8 @@ grNumberInput.addEventListener('blur', function() {
                     'Not selected';
                 const transporterName = document.querySelector('#transporter_id option:checked')?.textContent ||
                     'Not selected';
-                const referenceBy = document.querySelector('#reference_by option:checked')?.textContent ||
-                    'Not selected';
+                const referenceBy = document.querySelector('#reference_by option:checked')?.textContent?.trim() ||
+                    '—';
 
                 // Format dates
                 const formattedGrDate = formatDate(formData.get('gr_date'));
@@ -1317,8 +1481,8 @@ grNumberInput.addEventListener('blur', function() {
                                     <span class="fw-medium text-dark small">${formData.get('invoice_number') || '<span class="text-muted fst-italic">N/A</span>'}</span>
                                 </div>
                                 <div class="d-flex justify-content-between mb-1 pb-1 border-bottom border-light">
-                                    <span class="text-muted small">Ref By</span>
-                                    <span class="fw-medium text-dark text-truncate ms-2 text-end small" style="max-width: 180px;">${referenceBy}</span>
+                                    <span class="text-muted small">Reference By</span>
+                                    <span class="fw-medium text-dark text-truncate ms-2 text-end small" style="max-width: 180px;" title="${referenceBy}">${referenceBy}</span>
                                 </div>
                             </div>
                         </div>

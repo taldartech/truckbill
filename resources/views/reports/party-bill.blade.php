@@ -4,83 +4,34 @@
 
 @push('styles')
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <style>
-        /* Select2 custom styling for truck dropdown */
-        .select2-container--bootstrap-5 .select2-selection {
-            min-height: 38px;
-        }
-
-        .select2-result-truck {
-            padding: 4px 0;
-        }
-
-        .truck-info {
-            font-size: 14px;
-            line-height: 1.4;
-        }
-
-        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
-            padding-left: 12px;
-            padding-right: 20px;
-            color: var(--brand-text-primary);
-            line-height: 36px;
-            background: var(--brand-card-bg);
-            border: 1px solid var(--brand-border);
-            border-radius: 0.375rem;
-        }
-
-        .select2-container--bootstrap-5 .select2-selection--single:focus-visible {
-            border-color: var(--brand-primary);
-            box-shadow: 0 0 0 0.25rem var(--brand-primary-light);
-            outline: 0;
-            border-radius: 0.375rem;
-        }
-
-        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
-            height: 36px;
-            right: 12px;
-        }
-
-        .select2-dropdown {
-            border: 1px solid var(--brand-border);
-            border-radius: 0.375rem;
-        }
-
-        .select2-results__option--highlighted {
-            background-color: var(--brand-primary);
-            color: white;
-        }
-    </style>
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css"
+        rel="stylesheet" />
+    @include('reports.partials.select2-customer-brand')
 @endpush
 
 @section('content')
     <div class="card mb-4">
         <div class="card-body">
-            <form method="GET" action="{{ route('reports.party-bill') }}" id="searchForm" onsubmit="validateForm(event)">
+            <form method="GET" action="{{ route('reports.party-bill') }}" id="searchForm" onsubmit="return validatePartyBillForm(event)"
+                class="tb-report-customer-select2-form">
                 <div class="row mb-2">
                     <div class="col-md-3">
-                        <label class="form-label">Customer</label>
-                        <select name="customer_id" class="form-select select2" onchange="filterInvoiceNumbers(this.value)">
-                            <option value="">Select Customer</option>
-                            @foreach ($customers as $customer)
-                                <option @if ($customerId == $customer->id) selected @endif value="{{ $customer->id }}">
-                                    {{ $customer->name }}</option>
-                            @endforeach
+                        <label class="form-label">Customer <span class="text-danger">*</span></label>
+                        <select name="customer_id" id="party_bill_customer_id" class="form-select" required>
+                            <option value=""></option>
+                            @if ($presetCustomer)
+                                <option value="{{ $presetCustomer->id }}" selected>{{ $presetCustomer->name }}</option>
+                            @endif
                         </select>
                     </div>
 
-          
                     <div class="col-md-3">
                         <label class="form-label">Invoice Number <span class="text-danger">*</span></label>
-                        <select name="invoice_number" class="form-select select2" required>
+                        <select name="invoice_number" id="party_bill_invoice_number" class="form-select" required>
                             <option value="">Select Invoice Number</option>
-                            @if (!empty($invoices))
-
-                            
+                            @if (! empty($invoices))
                                 @foreach ($invoices as $inv)
                                     <option @if ($id == $inv->id) selected @endif value="{{ $inv->id }}">
-                                        {{-- {{ $inv->manual_invoice_number }} --}}
-                                        
                                         {{ $inv->invoice_number ? $inv->invoice_number . ($inv->manual_invoice_number ? ' (' . $inv->manual_invoice_number . ')' : '') : ($inv->manual_invoice_number ?? $inv->id) }}
                                     </option>
                                 @endforeach
@@ -88,7 +39,7 @@
                         </select>
                     </div>
                     <div class="col-md-3 text-end d-flex align-items-end justify-content-end gap-2">
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-brand-primary">
                             <i class="bi bi-search"></i> Search
                         </button>
                         <a href="{{ route('reports.party-bill') }}" class="btn btn-secondary">
@@ -142,60 +93,83 @@
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
-        $(document).ready(function() {
-            $('.select2').each(function() {
-                $(this).select2({
-                    theme: 'bootstrap-5',
-                    width: '100%'
-                });
-            });
-        });
-    </script>
-    <script>
-        let allInvoices = [];
+        const partyBillInvoiceNumbersUrl = @json(route('api.invoice-numbers'));
 
-        // Load all invoices on page load
-        $(document).ready(function() {
-            loadAllInvoices();
-        });
+        function validatePartyBillForm(event) {
+            const customerId = $('#party_bill_customer_id').val();
+            const invoiceId = $('#party_bill_invoice_number').val();
 
-        function loadAllInvoices() {
-            $.ajax({
-                url: '/api/invoice-numbers',
-                method: 'GET',
-                success: function(data) {
-                    allInvoices = data;
-                    updateInvoiceDropdown(data);
-                },
-                error: function() {
-                    alert('Failed to fetch invoice numbers. Please try again.');
-                }
-            });
+            if (!customerId) {
+                event.preventDefault();
+                alert('Please select a customer.');
+
+                return false;
+            }
+
+            if (!invoiceId) {
+                event.preventDefault();
+                alert('Please select an invoice number.');
+
+                return false;
+            }
+
+            return true;
         }
 
-        function filterInvoiceNumbers(customerId) {
+        let partyBillInvoiceListXhr = null;
+        let partyBillCustomerInvoiceReloadTimer = null;
+
+        function filterInvoiceNumbers(customerId, options) {
+            options = options || {};
+            const clearInvoiceSelection = options.clearInvoiceSelection === true;
+
+            if (partyBillInvoiceListXhr && partyBillInvoiceListXhr.readyState !== 4) {
+                partyBillInvoiceListXhr.abort();
+            }
+
             if (!customerId) {
-                // If no customer selected, show all invoices
-                updateInvoiceDropdown(allInvoices);
+                updateInvoiceDropdown([], { clearInvoiceSelection: true });
+
                 return;
             }
 
-            // Filter invoices by customer
-            $.ajax({
-                url: '/api/invoice-numbers/' + customerId,
+            partyBillInvoiceListXhr = $.ajax({
+                url: partyBillInvoiceNumbersUrl + '/' + encodeURIComponent(customerId),
                 method: 'GET',
-                success: function(data) {
-                    updateInvoiceDropdown(data);
+                dataType: 'json',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
                 },
-                error: function() {
+                success: function(data) {
+                    updateInvoiceDropdown(data, {
+                        clearInvoiceSelection: clearInvoiceSelection,
+                    });
+                },
+                error: function(jqXHR, textStatus) {
+                    if (textStatus === 'abort') {
+                        return;
+                    }
                     alert('Failed to fetch invoice numbers. Please try again.');
-                }
+                },
             });
         }
 
-        function updateInvoiceDropdown(invoices) {
-            let selectedInvoiceId = $('select[name="invoice_number"]').val() || '{{ $id ?? '' }}';
-            let options = '<option value="">Select Invoice Number</option>';
+        function updateInvoiceDropdown(invoices, options) {
+            options = options || {};
+            const clearInvoiceSelection = options.clearInvoiceSelection === true;
+
+            const list = Array.isArray(invoices) ? invoices : [];
+
+            const $invoice = $('#party_bill_invoice_number');
+            if ($invoice.hasClass('select2-hidden-accessible')) {
+                $invoice.select2('destroy');
+            }
+
+            let selectedInvoiceId = '';
+            if (!clearInvoiceSelection) {
+                selectedInvoiceId = $invoice.val() || @json($id ?? '');
+            }
+            let optionsHtml = '<option value="">Select Invoice Number</option>';
 
             function getInvoiceLabel(invoice) {
                 const invoiceNumber = invoice.invoice_number;
@@ -210,14 +184,95 @@
                 return manualInvoiceNumber ?? invoice.id;
             }
 
-            invoices.forEach(function(invoiceNumber) {
+            list.forEach(function(invoiceNumber) {
                 let selected = selectedInvoiceId == invoiceNumber.id ? 'selected' : '';
-                options +=
+                optionsHtml +=
                     `<option value="${invoiceNumber.id}" ${selected}>${getInvoiceLabel(invoiceNumber)}</option>`;
             });
-            $('select[name="invoice_number"]').html(options);
-            // Trigger change event to update Select2
-            $('select[name="invoice_number"]').trigger('change');
+            $invoice.html(optionsHtml);
+            $invoice.select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: 'Search invoice number…',
+                allowClear: false,
+                minimumInputLength: 0,
+                containerCssClass: 'tb-select2-container-brand',
+                dropdownCssClass: 'tb-select2-dropdown-brand',
+                dropdownParent: $('#searchForm').closest('.card-body'),
+                matcher: function(params, data) {
+                    if ($.trim(params.term) === '') {
+                        return data;
+                    }
+                    if (data.id === '') {
+                        return null;
+                    }
+                    const term = params.term.toLowerCase();
+                    const text = (data.text || '').toLowerCase();
+                    const idStr = String(data.id ?? '');
+                    if (text.indexOf(term) > -1 || idStr.indexOf(term) > -1) {
+                        return data;
+                    }
+
+                    return null;
+                },
+            });
         }
+
+        $(document).ready(function() {
+            const partiesAjax = {
+                url: @json(route('api.consignees.search')),
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term || '',
+                        page: params.page || 1,
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: data.results || [],
+                        pagination: {
+                            more: Boolean(data.pagination && data.pagination.more),
+                        },
+                    };
+                },
+                cache: true,
+            };
+
+            const $customer = $('#party_bill_customer_id');
+
+            $customer.select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                allowClear: true,
+                placeholder: 'Search customer…',
+                minimumInputLength: 0,
+                containerCssClass: 'tb-select2-container-brand',
+                dropdownCssClass: 'tb-select2-dropdown-brand',
+                dropdownParent: $('#searchForm').closest('.card-body'),
+                ajax: partiesAjax,
+            });
+
+            function schedulePartyBillInvoiceReloadForCustomer(clearInvoiceSelection) {
+                clearTimeout(partyBillCustomerInvoiceReloadTimer);
+                partyBillCustomerInvoiceReloadTimer = setTimeout(function() {
+                    const raw = $customer.val();
+                    const id = raw === null || raw === undefined || raw === '' ? '' : String(raw);
+                    filterInvoiceNumbers(id, { clearInvoiceSelection: clearInvoiceSelection });
+                }, 30);
+            }
+
+            $customer.on('change select2:clear', function() {
+                schedulePartyBillInvoiceReloadForCustomer(true);
+            });
+
+            const serverCustomerId = @json($customerId ?? null);
+            if (serverCustomerId) {
+                filterInvoiceNumbers(String(serverCustomerId), { clearInvoiceSelection: false });
+            } else {
+                updateInvoiceDropdown([], { clearInvoiceSelection: true });
+            }
+        });
     </script>
 @endpush

@@ -318,6 +318,7 @@ Route::middleware(['auth.blocked'])->group(function () {
         Route::get('/pump-export', [ReportController::class, 'pump_export'])->name('reports.pump-export');
         Route::get('/party-bill', [ReportController::class, 'party_bill'])->name('reports.party-bill');
         Route::get('/party-bill-export', [ReportController::class, 'party_bill_export'])->name('reports.party-bill-export');
+        Route::get('/customer-memos/{customerId}', [ReportController::class, 'customer_memos_json'])->name('reports.customer-memos');
         Route::get('/memo-copy', [ReportController::class, 'memo_copy'])->name('reports.memo-copy');
         Route::get('/memo-copy-export', [ReportController::class, 'memo_copy_export'])->name('reports.memo-copy-export');
         Route::get('/pending-memo', [ReportController::class, 'pending_memo'])->name('reports.pending-memo');

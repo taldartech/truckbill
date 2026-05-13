@@ -431,7 +431,7 @@
                     }
                 ],
                 order: [
-                    [0, 'desc']
+                    [0, 'asc']
                 ],
                 pageLength: 10,
                 lengthMenu: [
