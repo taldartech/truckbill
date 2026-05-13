@@ -309,6 +309,12 @@ class UserManagementTest extends TestCase
         $this->assertTrue((bool) $targetSuperAdmin->is_blocked);
         $this->assertTrue((bool) $linkedUser->is_blocked);
         $this->assertTrue((bool) $company->is_blocked);
+        $this->assertSame('Master block reason', $targetSuperAdmin->block_reason);
+        $this->assertSame($master->id, $targetSuperAdmin->blocked_by);
+        $this->assertNotNull($targetSuperAdmin->session_token);
+        $this->assertSame('Master block reason', $linkedUser->block_reason);
+        $this->assertSame($master->id, $linkedUser->blocked_by);
+        $this->assertNotNull($linkedUser->session_token);
 
         $unblockResponse = $this->actingAs($master)->post(route('users.unblock', $targetSuperAdmin), [
             'reason' => 'Master unblock reason',
@@ -322,6 +328,12 @@ class UserManagementTest extends TestCase
         $this->assertFalse((bool) $targetSuperAdmin->is_blocked);
         $this->assertFalse((bool) $linkedUser->is_blocked);
         $this->assertFalse((bool) $company->is_blocked);
+        $this->assertNull($targetSuperAdmin->block_reason);
+        $this->assertNull($targetSuperAdmin->blocked_by);
+        $this->assertNull($targetSuperAdmin->session_token);
+        $this->assertNull($linkedUser->block_reason);
+        $this->assertNull($linkedUser->blocked_by);
+        $this->assertNull($linkedUser->session_token);
     }
 }
 
