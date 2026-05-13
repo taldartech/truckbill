@@ -44,8 +44,8 @@ class LorryReceiptCalculationService
         float $unloadingWeight,
         float $frRate,
         float $actualAmountWhenFixed,
-        float $shortageAmount,
-        float $damageAmount,
+        ?float $shortageAmount,
+        ?float $damageAmount,
     ): array {
         if ($isFixedAmount) {
             $actual = $actualAmountWhenFixed;
@@ -55,7 +55,7 @@ class LorryReceiptCalculationService
 
         return [
             'actual_amount' => $actual,
-            'amount' => $actual - $shortageAmount - $damageAmount,
+            'amount' => $actual - ($shortageAmount ?? 0.0) - ($damageAmount ?? 0.0),
         ];
     }
 
@@ -78,7 +78,7 @@ class LorryReceiptCalculationService
             $updateData['transporter_tds_percentage'] = $freightBooking->transporter_tds_percentage;
         }
 
-        if (!$freightBooking->is_fixed_amount) {
+        if (! $freightBooking->is_fixed_amount) {
             $updateData['tr_amount'] = $freightBooking->tr_fr_rate * min($lorryReceipt->weight, $lorryReceipt->unloading_weight);
             if ($freightBooking->canChangeTdsAmount()) {
                 $updateData['tds_amount'] = round($freightBooking->tr_fr_rate * $lorryReceipt->weight * ($updateData['transporter_tds_percentage'] / 100), 2);
