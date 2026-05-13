@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Company;
 use App\Models\Consignee;
+use App\Models\FreightBooking;
 use App\Models\GoodType;
 use App\Models\LorryReceipt;
-use App\Models\FreightBooking;
 use App\Models\Transporter;
 use App\Models\Truck;
 use App\Services\LorryReceiptCalculationService;
@@ -1164,7 +1164,7 @@ class LorryReceiptController extends Controller
         // Add company_id to validated data
         $validated['company_id'] = $companyId;
 
-        $freightBooking = FreightBooking::find($lorryReceipt->freight_booking_id);
+        $freightBooking = FreightBooking::find($lorry_receipt->freight_booking_id);
         if ($freightBooking) {
             if (! $freightBooking->canChangeTdsAmount() && isset($validated['transporter_id']) && $validated['transporter_id'] != $lorry_receipt->transporter_id) {
                 return redirect()->back()->withErrors([
