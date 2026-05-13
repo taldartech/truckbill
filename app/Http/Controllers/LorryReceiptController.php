@@ -1163,35 +1163,21 @@ class LorryReceiptController extends Controller
         // Add company_id to validated data
         $validated['company_id'] = $companyId;
 
-        // Store old values before update to detect changes
-        $oldGoodType = $lorry_receipt->good_type;
-        $oldTransporterId = $lorry_receipt->transporter_id;
-        $oldLinkedLrId = $lorry_receipt->linked_lr_id;
-        $oldDeliveryStatus = $lorry_receipt->delivery_status;
-        $oldWeight = $lorry_receipt->weight;
-
-        // Check if transporter is being changed and if TDS is submitted
-        if (isset($validated['transporter_id']) && $validated['transporter_id'] != $oldTransporterId) {
-            $freightBookings = \App\Models\FreightBooking::where('lr_id', $lorry_receipt->id)->get();
-
-            foreach ($freightBookings as $freightBooking) {
-                if (! $freightBooking->canChangeTdsAmount()) {
-                    return redirect()->back()->withErrors([
-                        'transporter_id' => 'Transporter cannot be changed because TDS has already been submitted for this good hire (lorry hire).',
-                    ])->withInput();
-                }
+        $freightBooking = FreightBooking::find($lorryReceipt->freight_booking_id);
+        if ($freightBooking) {
+            if (! $freightBooking->canChangeTdsAmount() && isset($validated['transporter_id']) && $validated['transporter_id'] != $lorry_receipt->transporter_id) {
+                return redirect()->back()->withErrors([
+                    'transporter_id' => 'Transporter cannot be changed because TDS has already been submitted for this good hire (lorry hire).',
+                ])->withInput();
             }
+            $this->lrCalculationService->syncFreightBookingsForUpdatedLorryReceipt(
+                $lorry_receipt,
+                $freightBooking,
+                $validated
+            );
         }
 
         $lorry_receipt->update($validated);
-        $this->lrCalculationService->syncFreightBookingsForUpdatedLorryReceipt(
-            $lorry_receipt,
-            $validated,
-            $oldTransporterId,
-            $oldLinkedLrId,
-            $oldDeliveryStatus,
-            (float) $oldWeight,
-        );
 
         if (isset($validated['delivery_status']) && $validated['delivery_status'] !== $oldDeliveryStatus) {
             $lorry_receipt->loadMissing(['company', 'truck', 'transporter.transporterMaster', 'customer']);
