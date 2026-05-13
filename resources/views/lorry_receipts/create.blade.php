@@ -983,21 +983,26 @@
             });
 
             // Handle truck selection for transporter info
-            truckSelect.addEventListener('change', function() {
-                const truckId = this.value;
-                if (truckId) {
-                    fetch(`/api/trucks/${truckId}`)
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.transporter) {
-                                document.getElementById('tdsRateDisplay').textContent =
-                                    `TDS Rate: ${data.transporter.tds_rate || 'N/A'}%`;
-                            }
-                        });
-                } else {
-                    document.getElementById('tdsRateDisplay').textContent = '--';
-                }
-            });
+            const truckSelect = document.getElementById('truck_id');
+            if (truckSelect) {
+                truckSelect.addEventListener('change', function() {
+                    const truckId = this.value;
+                    const tdsRateDisplay = document.getElementById('tdsRateDisplay');
+
+                    if (truckId) {
+                        fetch(`/api/trucks/${truckId}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.transporter && tdsRateDisplay) {
+                                    tdsRateDisplay.textContent =
+                                        `TDS Rate: ${data.transporter.tds_rate || 'N/A'}%`;
+                                }
+                            });
+                    } else if (tdsRateDisplay) {
+                        tdsRateDisplay.textContent = '--';
+                    }
+                });
+            }
 
             // Custom form validation function
             function validateConsignorConsignee() {
