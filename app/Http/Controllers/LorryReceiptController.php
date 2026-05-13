@@ -6,6 +6,7 @@ use App\Models\Company;
 use App\Models\Consignee;
 use App\Models\GoodType;
 use App\Models\LorryReceipt;
+use App\Models\FreightBooking;
 use App\Models\Transporter;
 use App\Models\Truck;
 use App\Services\LorryReceiptCalculationService;
