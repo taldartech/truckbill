@@ -8,8 +8,8 @@ use App\Models\FreightBooking;
 use App\Models\Transporter;
 use App\Models\Truck;
 use App\Models\User;
-use Carbon\Carbon;
 use App\Models\UserRole;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -152,9 +152,9 @@ class LorryReceiptTest extends TestCase
             'customer_id' => $customer->id,
             'consignor_id' => $consignor->id,
             'consignee_id' => $consignee->id,
-            'lr_number' => 'LR-BULK-' . uniqid(),
-            'gr_number' => 'GR-BULK-' . uniqid(),
-            'invoice_number' => 'INV-BULK-' . uniqid(),
+            'lr_number' => 'LR-BULK-'.uniqid(),
+            'gr_number' => 'GR-BULK-'.uniqid(),
+            'invoice_number' => 'INV-BULK-'.uniqid(),
             'truck_id' => $truck->id,
             'transporter_id' => $truck->transporter_id,
             'reference_by' => $truck->transporter_id,
@@ -585,6 +585,97 @@ class LorryReceiptTest extends TestCase
         Carbon::setTestNow();
     }
 
+    public function test_update_syncs_related_freight_booking_when_lr_weight_changes(): void
+    {
+        $admin = $this->makeAdmin();
+        [$customer, $consignor, $consignee] = $this->seedConsignees($admin);
+        [$transporter, $truck] = $this->makeTruck($admin);
+
+        $lr = \App\Models\LorryReceipt::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'consignor_id' => $consignor->id,
+            'consignee_id' => $consignee->id,
+            'lr_number' => 'LR-SYNC-001',
+            'gr_number' => 'GR-SYNC-001',
+            'invoice_number' => 'INV-SYNC-001',
+            'truck_id' => $truck->id,
+            'transporter_id' => $transporter->id,
+            'reference_by' => $transporter->id,
+            'gr_date' => now()->toDateString(),
+            'source_city' => 'A',
+            'source_state' => 'B',
+            'destination_city' => 'C',
+            'destination_state' => 'D',
+            'lane' => 'Lane',
+            'good_type' => 'Steel',
+            'weight' => 10,
+            'unloading_weight' => 10,
+            'fr_rate' => 100,
+            'actual_amount' => 1000,
+            'amount' => 1000,
+            'damage_amount' => 0,
+            'shortage_amount' => 0,
+            'delivery_status' => 'Pending',
+        ]);
+
+        $freightBooking = FreightBooking::create([
+            'lr_id' => $lr->id,
+            'transporter_id' => $transporter->id,
+            'transporter_name' => $transporter->name,
+            'transporter_tds_percentage' => 2,
+            'tr_fr_rate' => 100,
+            'tr_amount' => 1000,
+            'advance_amount' => 0,
+            'balance_amount' => 980,
+            'tds_amount' => 20,
+            'company_id' => $admin->company_id,
+            'voucher_number' => 'VB-SYNC-001',
+        ]);
+
+        $payload = [
+            'customer_id' => $customer->id,
+            'lr_number' => 'LR-SYNC-001',
+            'gr_number' => 'GR-SYNC-001',
+            'invoice_number' => 'INV-SYNC-001',
+            'memo_id' => null,
+            'truck_id' => $truck->id,
+            'transporter_id' => $transporter->id,
+            'reference_by' => $transporter->id,
+            'consignor_id' => $consignor->id,
+            'consignee_id' => $consignee->id,
+            'gr_date' => now()->toDateString(),
+            'company_id' => $admin->company_id,
+            'delivery_status' => 'Pending',
+            'source_city' => 'A',
+            'source_state' => 'B',
+            'destination_city' => 'C',
+            'destination_state' => 'D',
+            'unloading_station' => null,
+            'lane' => 'Lane',
+            'good_type' => 'Steel',
+            'goods_value' => null,
+            'weight' => 8,
+            'no_of_units' => 1,
+            'fr_rate' => 100,
+            'is_fixed_amount' => false,
+            'actual_amount' => 1000,
+            'damage_amount' => 0,
+            'shortage_amount' => 0,
+            'transporter_type' => 'agency',
+        ];
+
+        $this->actingAs($admin)
+            ->put("/lorry_receipts/{$lr->id}", $payload)
+            ->assertRedirect(route('lorry_receipts.index'));
+
+        $freightBooking->refresh();
+
+        $this->assertSame(800.0, (float) $freightBooking->tr_amount);
+        $this->assertSame(16.0, (float) $freightBooking->tds_amount);
+        $this->assertSame(784.0, (float) $freightBooking->balance_amount);
+    }
+
     public function test_lorry_receipt_views_contain_declaration_warning_markup(): void
     {
         $admin = $this->makeAdmin();
@@ -650,4 +741,3 @@ class LorryReceiptTest extends TestCase
         $guest->assertRedirect(route('login'));
     }
 }
-

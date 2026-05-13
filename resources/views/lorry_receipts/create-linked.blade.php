@@ -729,11 +729,6 @@
 
                             scope.querySelector('.source-city').value = cityValue;
                             scope.querySelector('.source-state').value = stateValue;
-
-                                contact: data.contact_number,
-                                city: cityValue,
-                                state: stateValue
-                            });
                         })
                         .catch(err => {
                             console.error('❌ Consignor fetch error:', err);
@@ -799,11 +794,6 @@
 
                             scope.querySelector('.destination-city').value = cityValue;
                             scope.querySelector('.destination-state').value = stateValue;
-
-                                contact: data.contact_number,
-                                city: cityValue,
-                                state: stateValue
-                            });
                         })
                         .catch(err => {
                             console.error('❌ Consignee fetch error:', err);
@@ -1601,11 +1591,6 @@ lrItemsContainer.addEventListener('blur', function(e) {
 
                         scope.querySelector('.source-city').value = cityValue;
                         scope.querySelector('.source-state').value = stateValue;
-
-                            contact: data.contact_number,
-                            city: cityValue,
-                            state: stateValue
-                        });
                     })
                     .catch(err => {
                         console.error('❌ Consignor fetch error:', err);
@@ -1656,11 +1641,6 @@ lrItemsContainer.addEventListener('blur', function(e) {
 
                         scope.querySelector('.destination-city').value = cityValue;
                         scope.querySelector('.destination-state').value = stateValue;
-
-                            contact: data.contact_number,
-                            city: cityValue,
-                            state: stateValue
-                        });
                     })
                     .catch(err => {
                         console.error('❌ Consignee fetch error:', err);

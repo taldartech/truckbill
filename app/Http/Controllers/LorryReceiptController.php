@@ -8,6 +8,7 @@ use App\Models\GoodType;
 use App\Models\LorryReceipt;
 use App\Models\Transporter;
 use App\Models\Truck;
+use App\Services\LorryReceiptCalculationService;
 use App\Services\Notifications\LorryReceiptNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,7 +20,8 @@ use Yajra\DataTables\Facades\DataTables;
 class LorryReceiptController extends Controller
 {
     public function __construct(
-        private readonly LorryReceiptNotificationService $lrNotificationService
+        private readonly LorryReceiptNotificationService $lrNotificationService,
+        private readonly LorryReceiptCalculationService $lrCalculationService,
     ) {}
 
     /**
@@ -450,7 +452,6 @@ class LorryReceiptController extends Controller
     {
 
         $companyId = $this->getCurrentCompanyId();
-        // dd($request->all());
         // If request contains multiple LRs payload, handle batch creation with lr_linked_id
         if ($request->has('lrs') && is_array($request->input('lrs'))) {
             $sharedRules = [
@@ -500,8 +501,6 @@ class LorryReceiptController extends Controller
                 'lrs.*.fr_rate' => 'nullable|numeric|min:1|max:20000',
                 'lrs.*.is_fixed_amount' => 'nullable|boolean',
                 'lrs.*.amount' => 'nullable|numeric|min:0',
-                'lrs.*.damage_amount' => 'nullable|numeric',
-                'lrs.*.shortage_amount' => 'nullable|numeric',
             ];
             $this->validateLorryReceiptsUniqueness($request->lrs, $companyId);
 
@@ -525,6 +524,16 @@ class LorryReceiptController extends Controller
                     }
 
                     $isFixed = (bool) ($item['is_fixed_amount'] ?? false);
+                    $itemWeight = isset($item['weight']) && $item['weight'] !== null ? (float) $item['weight'] : 0.0;
+                    $itemFrRate = isset($item['fr_rate']) && $item['fr_rate'] !== null ? (float) $item['fr_rate'] : 0.0;
+                    $amountInput = isset($item['amount']) && $item['amount'] !== null ? (float) $item['amount'] : 0.0;
+
+                    $amounts = $this->lrCalculationService->resolveForStore(
+                        $isFixed,
+                        $itemWeight,
+                        $itemFrRate,
+                        $amountInput
+                    );
 
                     $data = [
                         'lr_number' => $item['lr_number'],
@@ -532,25 +541,26 @@ class LorryReceiptController extends Controller
                         'invoice_number' => $item['invoice_number'],
                         'customer_id' => $item['customer_id'],
                         'consignor_id' => $item['consignor_id'],
-                        'consignor_contact_number' => $item['consignor_contact_number'] ?? '1234567890',
+                        'consignor_contact_number' => $item['consignor_contact_number'],
                         'consignee_id' => $item['consignee_id'],
-                        'consignee_contact_number' => $item['consignee_contact_number'] ?? '0987654321',
-                        'source_city' => $item['source_city'] ?? 'Jaipur',
-                        'source_state' => $item['source_state'] ?? 'Rajasthan',
-                        'destination_city' => $item['destination_city'] ?? 'Delhi',
-                        'destination_state' => $item['destination_state'] ?? 'Delhi',
+                        'consignee_contact_number' => $item['consignee_contact_number'],
+                        'source_city' => $item['source_city'],
+                        'source_state' => $item['source_state'],
+                        'destination_city' => $item['destination_city'],
+                        'destination_state' => $item['destination_state'],
                         'unloading_station' => $item['unloading_station'] ?? null,
                         'lane' => $item['lane'],
                         'good_type' => $item['good_type'],
                         'goods_value' => $item['goods_value'] ?? null,
                         'weight' => $item['weight'],
+                        'unloading_weight' => $itemWeight,
                         'no_of_units' => $item['no_of_units'] ?? null,
                         'fr_rate' => $item['fr_rate'],
                         'is_fixed_amount' => $isFixed,
-                        'amount' => $item['amount'],
-                        'actual_amount' => $item['amount'],
-                        'damage_amount' => $item['damage_amount'] ?? null,
-                        'shortage_amount' => $item['shortage_amount'] ?? null,
+                        'amount' => $amounts['amount'],
+                        'actual_amount' => $amounts['actual_amount'],
+                        'damage_amount' => 0,
+                        'shortage_amount' => 0,
                         // Shared
                         'gr_date' => $validated['gr_date'],
                         'truck_id' => $validated['truck_id'] ?? null,
@@ -579,7 +589,6 @@ class LorryReceiptController extends Controller
             }
         }
 
-        // dd($request->all());
         $validated = $request->validate([
             'customer_id' => 'required|exists:consignees,id',
             'lr_number' => [
@@ -606,7 +615,6 @@ class LorryReceiptController extends Controller
                     return $query->where('company_id', $this->getCurrentCompanyId());
                 }),
             ],
-            'memo_id' => 'nullable|integer',
             'truck_id' => 'nullable|exists:trucks,id',
             'transporter_id' => 'nullable|exists:transporters,id',
             'reference_by' => 'nullable|exists:transporters,id',
@@ -615,9 +623,7 @@ class LorryReceiptController extends Controller
             'consignee_id' => 'required|exists:consignees,id',
             'consignee_contact_number' => 'nullable|string|max:20',
             'gr_date' => 'required|date',
-            'company_id' => 'required|exists:companies,id',
 
-            'delivery_status' => 'nullable|in:Pending,Delivered,Cancelled,In-Progress',
             'source_city' => 'required|string|max:100',
             'source_state' => 'required|string|max:100',
             'destination_city' => 'required|string|max:100',
@@ -631,11 +637,8 @@ class LorryReceiptController extends Controller
             'fr_rate' => 'required|numeric|min:1|max:20000',
             'is_fixed_amount' => 'nullable|boolean',
             'amount' => 'required|numeric|min:0',
-            'damage_amount' => 'nullable|numeric',
-            'shortage_amount' => 'nullable|numeric',
             'transporter_type' => 'nullable|in:owner,agency',
         ]);
-        // dd($validated);
 
         // Prevent selecting the same party for consignor and consignee.
         if ($validated['consignor_id'] === $validated['consignee_id']) {
@@ -648,11 +651,12 @@ class LorryReceiptController extends Controller
         // Set truck_id to null if not provided
         $validated['truck_id'] = $validated['truck_id'] ?? null;
         $this->forceAgencyForOrphanTruck($validated, $companyId);
-        // dd($validated);
 
         // Set default delivery_status
         $validated['delivery_status'] = 'Pending';
-        // dd($validated);
+        $validated['company_id'] = $companyId;
+        $validated['damage_amount'] = 0;
+        $validated['shortage_amount'] = 0;
 
         // Check if lr_number already exists
         if ($validated['gr_number'] == null) {
@@ -673,42 +677,16 @@ class LorryReceiptController extends Controller
 
         $isFixed = (bool) ($validated['is_fixed_amount'] ?? false);
 
-        if ($isFixed) {
-            $validated['actual_amount'] = $validated['amount'];
-            $shortageAmount = $validated['shortage_amount'] ?? 0;
-            $damageAmount = $validated['damage_amount'] ?? 0;
-            $validated['amount'] = max(0, round($validated['actual_amount'] - $shortageAmount - $damageAmount, 2));
-        } else {
-            // Calculate amount and actual_amount using loose weight (min of loading/unloading weight)
-            $loadingWeight = $validated['weight'];
-            $unloadingWeight = $validated['unloading_weight'];
-
-            // Only recalculate actual_amount if loading_weight != unloading_weight
-            // If weights are equal, use the manually entered actual_amount from form if provided, otherwise calculate it
-            if (abs($loadingWeight - $unloadingWeight) > 0.01) {
-                // Weights are different - always recalculate actual_amount
-                $effectiveWeight = min($loadingWeight, $unloadingWeight);
-                $validated['actual_amount'] = round($effectiveWeight * $validated['fr_rate'], 2);
-            } else {
-                // Weights are equal - use manually entered actual_amount from form if provided, otherwise calculate it
-                if (! isset($validated['actual_amount']) || $validated['actual_amount'] === null) {
-                    $effectiveWeight = min($loadingWeight, $unloadingWeight);
-                    $validated['actual_amount'] = round($effectiveWeight * $validated['fr_rate'], 2);
-                }
-            }
-
-            // Calculate amount: actual_amount - shortage - damage (if provided)
-            $shortageAmount = $validated['shortage_amount'] ?? 0;
-            $damageAmount = $validated['damage_amount'] ?? 0;
-            $validated['amount'] = max(0, round($validated['actual_amount'] - $shortageAmount - $damageAmount, 2));
-        }
-
-        // Add company_id to validated data
-        $validated['company_id'] = $companyId;
-        // dd($validated);
+        $resolved = $this->lrCalculationService->resolveForStore(
+            $isFixed,
+            (float) $validated['weight'],
+            (float) $validated['fr_rate'],
+            (float) $validated['amount'],
+        );
+        $validated['actual_amount'] = $resolved['actual_amount'];
+        $validated['amount'] = $resolved['amount'];
 
         $lorryReceipt = \App\Models\LorryReceipt::create($validated);
-        // dd($validated);
 
         // Check if user clicked "Save & Create FR"
         if ($request->has('redirect_to_fr')) {
@@ -798,7 +776,7 @@ class LorryReceiptController extends Controller
         ]);
 
         $exists = LorryReceipt::where('lr_number', $request->lr_number)
-            ->where('company_id', Auth::user()->company_id)
+            ->where('company_id', $this->getCurrentCompanyId())
             ->when($request->exclude_id, fn ($query) => $query->where('id', '!=', $request->exclude_id))
             ->exists();
 
@@ -818,7 +796,7 @@ class LorryReceiptController extends Controller
         ]);
 
         $exists = LorryReceipt::where('invoice_number', $request->invoice_number)
-            ->where('company_id', Auth::user()->company_id)
+            ->where('company_id', $this->getCurrentCompanyId())
             ->when($request->exclude_id, fn ($query) => $query->where('id', '!=', $request->exclude_id))
             ->exists();
 
@@ -837,7 +815,7 @@ class LorryReceiptController extends Controller
         ]);
 
         $exists = LorryReceipt::where('gr_number', $request->gr_number)
-            ->where('company_id', Auth::user()->company_id)
+            ->where('company_id', $this->getCurrentCompanyId())
             ->exists();
 
         return response()->json(['available' => ! $exists]);
@@ -976,7 +954,6 @@ class LorryReceiptController extends Controller
     public function update(Request $request, LorryReceipt $lorry_receipt): \Illuminate\Http\RedirectResponse
     {
         $companyId = $this->getCurrentCompanyId();
-        // dd($request->all());
         $company = Auth::user()->company;
         $today = now()->startOfDay();
         $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
@@ -1031,6 +1008,10 @@ class LorryReceiptController extends Controller
                         if ($exists && $exists->customer_id != $request->customer_id) {
                             $fail("Memo ID $value is already used by another customer.");
                         }
+
+                        if ($exists && $exists->invoice_generated == 1) {
+                            $fail("Memo ID $value have a invoice generated.");
+                        }
                     }
                 },
             ],
@@ -1042,9 +1023,6 @@ class LorryReceiptController extends Controller
             'consignee_id' => 'required|exists:consignees,id',
             'consignee_contact_number' => 'nullable|string|max:20',
             'gr_date' => 'required|date',
-            'company_id' => 'required|exists:companies,id',
-
-            'delivery_status' => 'nullable|in:Pending,Delivered,Cancelled,In-Progress',
             'source_city' => 'required|string|max:100',
             'source_state' => 'required|string|max:100',
             'destination_city' => 'required|string|max:100',
@@ -1058,8 +1036,6 @@ class LorryReceiptController extends Controller
             'fr_rate' => 'required|numeric|min:1|max:20000',
             'is_fixed_amount' => 'nullable|boolean',
             'actual_amount' => 'required|numeric|min:0',
-            'damage_amount' => 'nullable|numeric',
-            'shortage_amount' => 'nullable|numeric',
             'transporter_type' => 'nullable|in:owner,agency',
 
         ]);
@@ -1076,51 +1052,26 @@ class LorryReceiptController extends Controller
             $validated['gr_number'] = ltrim(str_ireplace('LR', '', $validated['lr_number']), '0');
         }
 
-        // dd($validated['gr_number']);
-
         // Set truck_id to null if not provided
         $validated['truck_id'] = $validated['truck_id'] ?? null;
         $this->forceAgencyForOrphanTruck($validated, $companyId);
 
-        // Preserve existing delivery_status - don't override it
-        // Remove delivery_status from validated data to keep existing value
-        // unset($validated['delivery_status']);
-
-        // Set unloading_weight = weight initially if not set (for loose weight mode)
-        if (! isset($validated['unloading_weight']) || $validated['unloading_weight'] === null) {
-            $validated['unloading_weight'] = $validated['weight'];
-        }
-
         $isFixed = (bool) ($validated['is_fixed_amount'] ?? false);
+        $validated['unloading_weight'] = $lorry_receipt->unloading_weight;
+        $validated['shortage_amount'] = $lorry_receipt->shortage_amount;
+        $validated['damage_amount'] = $lorry_receipt->damage_amount;
+        $resolved = $this->lrCalculationService->resolveForUpdate(
+            $isFixed,
+            (float) $validated['weight'],
+            (float) $validated['unloading_weight'],
+            (float) $validated['fr_rate'],
+            (float) $validated['actual_amount'],
 
-        if ($isFixed) {
-            $shortageAmount = $validated['shortage_amount'] ?? 0;
-            $damageAmount = $validated['damage_amount'] ?? 0;
-            $validated['amount'] = max(0, round($validated['actual_amount'] - $shortageAmount - $damageAmount, 2));
-        } else {
-            // Calculate amount and actual_amount using loose weight (min of loading/unloading weight)
-            $loadingWeight = $validated['weight'];
-            $unloadingWeight = $validated['unloading_weight'];
-
-            // Only recalculate actual_amount if loading_weight != unloading_weight
-            // If weights are equal, use the manually entered actual_amount from form if provided, otherwise calculate it
-            if (abs($loadingWeight - $unloadingWeight) > 0.01) {
-                // Weights are different - always recalculate actual_amount
-                $effectiveWeight = min($loadingWeight, $unloadingWeight);
-                $validated['actual_amount'] = round($effectiveWeight * $validated['fr_rate'], 2);
-            } else {
-                // Weights are equal - use manually entered actual_amount from form if provided, otherwise calculate it
-                if (! isset($validated['actual_amount']) || $validated['actual_amount'] === null) {
-                    $effectiveWeight = min($loadingWeight, $unloadingWeight);
-                    $validated['actual_amount'] = round($effectiveWeight * $validated['fr_rate'], 2);
-                }
-            }
-
-            // Calculate amount: actual_amount - shortage - damage
-            $shortageAmount = $validated['shortage_amount'] ?? 0;
-            $damageAmount = $validated['damage_amount'] ?? 0;
-            $validated['amount'] = max(0, round($validated['actual_amount'] - $shortageAmount - $damageAmount, 2));
-        }
+            $validated['shortage_amount'],
+            $validated['damage_amount']
+        );
+        $validated['actual_amount'] = $resolved['actual_amount'];
+        $validated['amount'] = $resolved['amount'];
 
         // Add company_id to validated data
         $validated['company_id'] = $companyId;
@@ -1146,133 +1097,14 @@ class LorryReceiptController extends Controller
         }
 
         $lorry_receipt->update($validated);
-
-        // Sync changes to related FreightBookings
-        $freightBookings = \App\Models\FreightBooking::where('lr_id', $lorry_receipt->id)->get();
-
-        foreach ($freightBookings as $freightBooking) {
-            $updateData = [];
-
-            // Sync good_type from LR to FB
-            if (isset($validated['good_type']) && $validated['good_type'] != $oldGoodType) {
-                $updateData['good_type'] = $validated['good_type'];
-            }
-
-            // Sync linked_lr_id from LR to FB
-            if (isset($validated['linked_lr_id']) && $validated['linked_lr_id'] != $oldLinkedLrId) {
-                $updateData['linked_lr_id'] = $validated['linked_lr_id'];
-            }
-
-            // Sync transporter info if transporter_id changed
-            if (isset($validated['transporter_id']) && $validated['transporter_id'] != $oldTransporterId) {
-                $transporter = \App\Models\Transporter::find($validated['transporter_id']);
-                if ($transporter) {
-                    $updateData['transporter_id'] = $transporter->id;
-                    $updateData['transporter_name'] = $transporter->name;
-                    $updateData['transporter_tds_percentage'] = $transporter->tds_percentage;
-
-                    // Recalculate tds_amount based on loading_weight (not loose weight) and transporter TDS percentage
-                    // Check if TDS can be changed before updating
-                    if ($freightBooking->canChangeTdsAmount()) {
-                        $loadingWeight = $lorry_receipt->weight;
-                        $tdsBaseAmount = round($freightBooking->tr_fr_rate * $loadingWeight, 2);
-                        $newTdsAmount = round($tdsBaseAmount * ($transporter->tds_percentage / 100), 2);
-                        $updateData['tds_amount'] = $newTdsAmount;
-                    }
-                }
-            }
-
-            // Update delivery status in FB based on LR delivery_status
-            if (isset($validated['delivery_status']) && $validated['delivery_status'] != $oldDeliveryStatus) {
-                if ($validated['delivery_status'] === 'Delivered') {
-                    $updateData['is_delivered'] = 1;
-                } elseif ($validated['delivery_status'] === 'Cancelled') {
-                    $updateData['is_cancelled'] = 1;
-                } elseif ($validated['delivery_status'] === 'Pending' || $validated['delivery_status'] === 'In-Progress') {
-                    // Reset delivery flags if status goes back to pending/in-progress
-                    $updateData['is_delivered'] = 0;
-                    $updateData['is_cancelled'] = 0;
-                }
-            }
-
-            // Handle weight changes - recalculate tr_amount and tds_amount
-            $weightChanged = isset($validated['weight']) && $validated['weight'] != $oldWeight;
-            $unloadingWeightChanged = isset($validated['unloading_weight']) &&
-                ($lorry_receipt->unloading_weight != $validated['unloading_weight']);
-
-            if ($weightChanged || $unloadingWeightChanged) {
-                // Refresh to get updated weight value after the update
-                $lorry_receipt->refresh();
-                $loadingWeight = $lorry_receipt->weight;
-                $unloadingWeight = $lorry_receipt->unloading_weight ?? $loadingWeight;
-
-                // Only recalculate tr_amount if loading_weight != unloading_weight
-                // If weights are equal, keep the existing tr_amount (user may have manually edited it)
-                if (abs($loadingWeight - $unloadingWeight) > 0.01) {
-                    // Weights are different - always recalculate tr_amount
-                    $effectiveWeight = min($loadingWeight, $unloadingWeight);
-                    $newTrAmount = round($freightBooking->tr_fr_rate * $effectiveWeight, 2);
-                    $updateData['tr_amount'] = $newTrAmount;
-                }
-                // If weights are equal, don't update tr_amount - use existing value (may be manually edited)
-
-                // Recalculate TDS based on loading_weight (not loose weight) if loading weight changed
-                if ($weightChanged && $freightBooking->canChangeTdsAmount()) {
-                    $tdsBaseAmount = round($freightBooking->tr_fr_rate * $loadingWeight, 2);
-                    $tdsPercentage = $freightBooking->transporter_tds_percentage ?? 0;
-                    $newTdsAmount = round($tdsBaseAmount * ($tdsPercentage / 100), 2);
-                    $updateData['tds_amount'] = $newTdsAmount;
-                }
-            }
-
-            // Recalculate balance_amount if tr_amount changed
-            if (isset($updateData['tr_amount'])) {
-                $trAmount = $updateData['tr_amount'];
-                $damageAmount = $freightBooking->damage_amount ?? 0;
-                $shortageAmount = $freightBooking->shortage_amount ?? 0;
-
-                // Use new tds_amount if it's being updated, otherwise use existing
-                $tdsAmount = isset($updateData['tds_amount']) ? $updateData['tds_amount'] : ($freightBooking->tds_amount ?? 0);
-
-                // Recalculate balance: tr_amount - advance_amount - tds_amount - damage_amount - shortage_amount + detention + deviation - misc_expense
-                $newBalance = $trAmount
-                    - $freightBooking->advance_amount
-                    - $tdsAmount
-                    - $damageAmount
-                    - $shortageAmount
-                    + ($freightBooking->detention ?? 0)
-                    + ($freightBooking->deviation ?? 0)
-                    - ($freightBooking->misc_expense ?? 0);
-
-                $updateData['balance_amount'] = $newBalance;
-            }
-
-            // Recalculate balance_amount if tds_amount changed (but tr_amount didn't)
-            if (isset($updateData['tds_amount']) && ! isset($updateData['tr_amount'])) {
-                $trAmount = $freightBooking->tr_amount;
-                $damageAmount = $freightBooking->damage_amount ?? 0;
-                $shortageAmount = $freightBooking->shortage_amount ?? 0;
-                $newTdsAmount = $updateData['tds_amount'];
-
-                // Recalculate balance: tr_amount - advance_amount - tds_amount - damage_amount - shortage_amount + detention + deviation - misc_expense
-                $newBalance = $trAmount
-                    - $freightBooking->advance_amount
-                    - $newTdsAmount
-                    - $damageAmount
-                    - $shortageAmount
-                    + ($freightBooking->detention ?? 0)
-                    + ($freightBooking->deviation ?? 0)
-                    - ($freightBooking->misc_expense ?? 0);
-
-                $updateData['balance_amount'] = $newBalance;
-            }
-
-            // Update freight booking if there are changes
-            if (! empty($updateData)) {
-                $freightBooking->update($updateData);
-
-            }
-        }
+        $this->lrCalculationService->syncFreightBookingsForUpdatedLorryReceipt(
+            $lorry_receipt,
+            $validated,
+            $oldTransporterId,
+            $oldLinkedLrId,
+            $oldDeliveryStatus,
+            (float) $oldWeight,
+        );
 
         if (isset($validated['delivery_status']) && $validated['delivery_status'] !== $oldDeliveryStatus) {
             $lorry_receipt->loadMissing(['company', 'truck', 'transporter.transporterMaster', 'customer']);
