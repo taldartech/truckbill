@@ -89,9 +89,9 @@
                     <div class="card-body">
                         <div class="row g-3">
                             <div class="col-md-4">
-                                <label class="form-label">Bill no. <span class="text-danger">*</span></label>
+                                <label class="form-label">Reference no. (optional)</label>
                                 <input type="text" name="manual_invoice_number" class="form-control"
-                                    value="{{ old('manual_invoice_number') }}" placeholder="e.g. 2025-26/382" required>
+                                    value="{{ old('manual_invoice_number') }}" placeholder="Your reference / printed bill no.">
                                 @error('manual_invoice_number')
                                     <div class="text-danger small">{{ $message }}</div>
                                 @enderror
@@ -201,7 +201,8 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label">Total amount (base)</label>
-                                <input type="number" name="total_amount" id="total_amount_input" class="form-control bg-light" step="0.01" min="0" required readonly>
+                                <input type="number" name="total_amount" id="total_amount_input" class="form-control bg-light" step="0.01" min="0" required readonly
+                                    value="{{ old('total_amount') }}">
                                 @error('total_amount')
                                     <div class="text-danger small">{{ $message }}</div>
                                 @enderror
@@ -220,20 +221,20 @@
                     <div class="card-body">
                         <div class="mb-2">
                             <label class="form-label small text-muted mb-0">SGST</label>
-                            <input type="number" name="sgst" id="sgst_input" class="form-control form-control-sm bg-light" step="0.01" min="0" value="0" readonly>
+                            <input type="number" name="sgst" id="sgst_input" class="form-control form-control-sm bg-light" step="0.01" min="0" value="{{ old('sgst', '0') }}" readonly>
                         </div>
                         <div class="mb-2">
                             <label class="form-label small text-muted mb-0">CGST</label>
-                            <input type="number" name="cgst" id="cgst_input" class="form-control form-control-sm bg-light" step="0.01" min="0" value="0" readonly>
+                            <input type="number" name="cgst" id="cgst_input" class="form-control form-control-sm bg-light" step="0.01" min="0" value="{{ old('cgst', '0') }}" readonly>
                         </div>
                         <div class="mb-2">
                             <label class="form-label small text-muted mb-0">IGST</label>
-                            <input type="number" name="igst" id="igst_input" class="form-control form-control-sm bg-light" step="0.01" min="0" value="0" readonly>
+                            <input type="number" name="igst" id="igst_input" class="form-control form-control-sm bg-light" step="0.01" min="0" value="{{ old('igst', '0') }}" readonly>
                         </div>
                         <hr>
                         <div>
                             <label class="form-label small text-muted mb-0">Net amount</label>
-                            <input type="number" name="net_amount" id="net_amount_input" class="form-control fw-bold" step="0.01" min="0" readonly>
+                            <input type="number" name="net_amount" id="net_amount_input" class="form-control fw-bold" step="0.01" min="0" value="{{ old('net_amount') }}" readonly>
                         </div>
                     </div>
                 </div>
@@ -270,6 +271,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const submitBtn = document.getElementById('submitBtn');
 
     const gstRate = @json($gstSlab ?? 5) / 100;
+    const hadValidationErrors = @json($errors->any());
     let customerData = null;
     let companyState = '';
     let customerState = '';
@@ -327,10 +329,11 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Please enter LR number');
             return;
         }
-        fetchLRDetails(lrNumber);
+        fetchLRDetails(lrNumber, { restoreFromValidation: false });
     });
 
-    function fetchLRDetails(lrNumber) {
+    function fetchLRDetails(lrNumber, options = {}) {
+        const { restoreFromValidation = false } = options;
         const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
         fetchLrBtn.disabled = true;
         fetchLrBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Fetching...';
@@ -346,7 +349,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 customerData = data.customer;
                 displayCustomerInfo(data.customer);
-                displayLRDetails(data.lr_details, lrNumber);
+                displayLRDetails(data.lr_details, lrNumber, restoreFromValidation);
                 customerState = data.customer.state_name || '';
                 invoiceHeaderSection.style.display = 'block';
                 lrDetailsSection.style.display = 'block';
@@ -356,7 +359,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 submitBtn.style.display = 'inline-block';
                 document.getElementById('customer_id_input').value = data.customer.id;
                 const amountInput = document.getElementById('amount_input');
-                if (amountInput.value) calculateGST();
+                if (amountInput.value) {
+                    calculateGST();
+                }
             } else {
                 alert(data.message || 'LR number not found');
             }
@@ -377,7 +382,7 @@ document.addEventListener('DOMContentLoaded', function() {
         customerInfoSection.style.display = 'block';
     }
 
-    function displayLRDetails(lrDetails, lrNumber) {
+    function displayLRDetails(lrDetails, lrNumber, restoreFromValidation = false) {
         document.getElementById('display_lr_number').textContent = lrNumber;
         document.getElementById('display_truck_number').textContent = lrDetails.truck_number || '—';
         document.getElementById('display_destination').textContent = lrDetails.destination_city || '—';
@@ -385,10 +390,16 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('display_invoice_date').textContent = lrDetails.gr_date || lrDetails.memo_date || '—';
         document.getElementById('display_weight').textContent = lrDetails.weight ?? '—';
         const type = customInvoiceType.value;
-        if (type === 'shortage_damage') {
-            if (lrDetails.damage_qty) document.getElementById('damage_qty_input').value = lrDetails.damage_qty;
-            if (lrDetails.damage_rate) document.getElementById('damage_rate_input').value = lrDetails.damage_rate;
-            if (lrDetails.shortage_qty) document.getElementById('shortage_qty_input').value = lrDetails.shortage_qty;
+        if (type === 'shortage_damage' && ! restoreFromValidation) {
+            if (lrDetails.damage_qty) {
+                document.getElementById('damage_qty_input').value = lrDetails.damage_qty;
+            }
+            if (lrDetails.damage_rate) {
+                document.getElementById('damage_rate_input').value = lrDetails.damage_rate;
+            }
+            if (lrDetails.shortage_qty) {
+                document.getElementById('shortage_qty_input').value = lrDetails.shortage_qty;
+            }
         }
     }
 
@@ -427,17 +438,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.key === 'Enter') { e.preventDefault(); fetchLrBtn.click(); }
     });
 
-    const customerIdInput = document.getElementById('customer_id_input');
-    if (customerIdInput && customerIdInput.value) {
+    if (customInvoiceType.value) {
         lrInputSection.style.display = 'block';
-        if (customInvoiceType.value) toggleTypeFields(customInvoiceType.value);
-        customerInfoSection.style.display = 'block';
-        invoiceHeaderSection.style.display = 'block';
-        lrDetailsSection.style.display = 'block';
-        amountSection.style.display = 'block';
-        summarySection.style.display = 'block';
-        taxSection.style.display = 'block';
-        if (submitBtn) submitBtn.style.display = 'inline-block';
+        toggleTypeFields(customInvoiceType.value);
+    }
+
+    const lrNumForRestore = lrNumberInput.value.trim();
+    if (lrNumForRestore !== '' && customInvoiceType.value) {
+        fetchLRDetails(lrNumForRestore, { restoreFromValidation: hadValidationErrors });
     }
 });
 </script>

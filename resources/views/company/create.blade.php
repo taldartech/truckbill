@@ -527,23 +527,27 @@
             }
 
             const words = name.split(/\s+/).filter(Boolean);
-            const initials = [];
+            const lettersOnly = name.replace(/[^a-zA-Z]/g, '').toUpperCase();
 
+            if (words.length <= 1) {
+                return lettersOnly.slice(0, 5);
+            }
+
+            let initials = '';
             for (const w of words) {
-                const match = w.match(/[a-zA-Z]/);
-                if (match) {
-                    initials.push(match[0].toUpperCase());
-                }
-                if (initials.length >= 2) {
+                if (initials.length >= 5) {
                     break;
                 }
+                const match = w.match(/[a-zA-Z]/);
+                if (match) {
+                    initials += match[0].toUpperCase();
+                }
             }
 
-            if (initials.length >= 2) {
-                return initials.join('');
+            if (initials.length > 0) {
+                return initials;
             }
 
-            const lettersOnly = name.replace(/[^a-zA-Z]/g, '').toUpperCase();
             return lettersOnly.slice(0, 5);
         }
 

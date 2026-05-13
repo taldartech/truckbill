@@ -169,6 +169,71 @@ class FreightBookingTest extends TestCase
             ->assertOk();
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    private function freightBookingsDataTableRequestPayload(array $overrides = []): array
+    {
+        $columnDefs = [
+            ['data' => 'checkbox', 'name' => 'checkbox', 'searchable' => false, 'orderable' => false],
+            ['data' => 'gr_date', 'name' => 'gr_date'],
+            ['data' => 'lr_number', 'name' => 'lr_number'],
+            ['data' => 'customer', 'name' => 'customer', 'searchable' => true, 'orderable' => false],
+            ['data' => 'transporter', 'name' => 'transporter', 'searchable' => true, 'orderable' => false],
+            ['data' => 'truck_number', 'name' => 'truck_number', 'searchable' => true, 'orderable' => false],
+            ['data' => 'route', 'name' => 'route', 'searchable' => true, 'orderable' => false],
+            ['data' => 'weight', 'name' => 'weight'],
+            ['data' => 'rate', 'name' => 'rate'],
+            ['data' => 'total', 'name' => 'total'],
+            ['data' => 'balance', 'name' => 'balance'],
+            ['data' => 'actions', 'name' => 'actions', 'searchable' => false, 'orderable' => false],
+        ];
+        $columns = [];
+        foreach ($columnDefs as $def) {
+            $columns[] = [
+                'data' => $def['data'],
+                'name' => $def['name'],
+                'searchable' => ($def['searchable'] ?? true) ? 'true' : 'false',
+                'orderable' => ($def['orderable'] ?? true) ? 'true' : 'false',
+                'search' => ['value' => '', 'regex' => 'false'],
+            ];
+        }
+
+        return array_merge([
+            'draw' => 1,
+            'start' => 0,
+            'length' => 10,
+            'start_date' => now()->subDays(7)->toDateString(),
+            'end_date' => now()->addDays(14)->toDateString(),
+            'search' => ['value' => '', 'regex' => 'false'],
+            'order' => [['column' => 1, 'dir' => 'desc']],
+            'columns' => $columns,
+        ], $overrides);
+    }
+
+    public function test_datatable_list_search_with_joined_lr_does_not_error(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'voucher_number' => 'V-343233',
+            'linked_lr_id' => 5,
+        ]));
+
+        $payload = $this->freightBookingsDataTableRequestPayload([
+            'filter_search' => '343233',
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->get('/freight_bookings/data', $payload);
+
+        $response->assertOk();
+        $json = $response->json();
+        $this->assertArrayNotHasKey('error', $json);
+        $this->assertSame(1, (int) ($json['recordsFiltered'] ?? 0));
+    }
+
     public function test_super_admin_redirected_without_company_and_guest_redirected(): void
     {
         $super = $this->makeUser('super_admin');

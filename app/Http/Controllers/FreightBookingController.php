@@ -180,8 +180,8 @@ class FreightBookingController extends Controller
 
             if ($request->filled('transporter_id')) {
                 $query->where(function ($q) use ($request) {
-                    $q->where('transporter_id', $request->transporter_id)
-                        ->orWhere('transporter_name', 'LIKE', "%{$request->transporter_id}%");
+                    $q->where('freight_bookings.transporter_id', $request->transporter_id)
+                        ->orWhere('freight_bookings.transporter_name', 'LIKE', "%{$request->transporter_id}%");
                 });
             }
 
@@ -196,11 +196,12 @@ class FreightBookingController extends Controller
                     ->where('freight_bookings.is_cancelled', 0);
             }
 
-            if ($request->filled('search')) {
-                $search = $request->search;
+            $listSearch = trim((string) $request->input('filter_search', $request->input('search', '')));
+            if ($listSearch !== '') {
+                $search = $listSearch;
                 $searchQuery = clone $query;
                 $searchQuery->where(function ($q) use ($search) {
-                    $q->where('voucher_number', 'LIKE', "%{$search}%")
+                    $q->where('freight_bookings.voucher_number', 'LIKE', "%{$search}%")
                         ->orWhereHas('lr', function ($lrQuery) use ($search) {
                             $lrQuery->where('lr_number', 'LIKE', "%{$search}%")
                                 ->orWhere('source_city', 'LIKE', "%{$search}%")
@@ -220,11 +221,11 @@ class FreightBookingController extends Controller
                         });
                 });
 
-                $searchResultIds = (clone $searchQuery)->pluck('id')->toArray();
+                $searchResultIds = (clone $searchQuery)->pluck('freight_bookings.id')->toArray();
 
                 $linkedIds = (clone $searchQuery)
-                    ->whereNotNull('linked_lr_id')
-                    ->pluck('linked_lr_id')
+                    ->whereNotNull('freight_bookings.linked_lr_id')
+                    ->pluck('freight_bookings.linked_lr_id')
                     ->unique()
                     ->toArray();
 

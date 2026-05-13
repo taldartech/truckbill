@@ -35,7 +35,7 @@ class CustomInvoiceTest extends TestCase
     protected function makeUser(string $role): User
     {
         $company = Company::create([
-            'name' => 'Company ' . $role,
+            'name' => 'Company '.$role,
             'user_id' => null,
             'gst_slab' => config('payments.gst_slabs')[0],
             'gst_scheme' => 'reverse charge',
@@ -177,6 +177,8 @@ class CustomInvoiceTest extends TestCase
 
         $invoice = Invoice::where('manual_invoice_number', 'CINV-RD-001')->first();
         $this->assertNotNull($invoice);
+        $this->assertNotNull($invoice->invoice_number);
+        $this->assertMatchesRegularExpression('/^[A-Z0-9]+\/\d{4}\/\d{4}$/', $invoice->invoice_number);
         $detail = CustomInvoiceDetail::where('invoice_id', $invoice->id)->first();
         $this->assertNotNull($detail);
         $this->assertSame(45.0, (float) $detail->portal_rate);
@@ -249,6 +251,30 @@ class CustomInvoiceTest extends TestCase
         $this->assertSame(1.0, (float) $detail->shortage_qty);
     }
 
+    public function test_admin_can_store_custom_invoice_without_manual_reference_and_gets_auto_invoice_number(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsigneeWithState($admin);
+        $this->seedLr($admin, $customer);
+
+        $payload = [
+            'custom_invoice' => 'rate_difference',
+            'invoice_type' => 'Reverse',
+            'generated_date' => now()->toDateString(),
+            'customer_id' => $customer->id,
+            'total_amount' => 100,
+            'lr_number' => 'LR-CUSTOM-001',
+            'amount' => 100,
+        ];
+
+        $response = $this->actingAs($admin)->post(route('custom-invoices.store'), $payload);
+
+        $response->assertRedirect(route('invoices.index'));
+        $invoice = Invoice::query()->where('company_id', $admin->company_id)->whereNull('manual_invoice_number')->first();
+        $this->assertNotNull($invoice);
+        $this->assertMatchesRegularExpression('/^[A-Z0-9]+\/\d{4}\/\d{4}$/', (string) $invoice->invoice_number);
+    }
+
     public function test_store_rejects_duplicate_manual_invoice_number(): void
     {
         $admin = $this->makeUser('admin');
@@ -302,5 +328,33 @@ class CustomInvoiceTest extends TestCase
         $response->assertOk();
         $response->assertSee('Create Custom Invoice');
         $response->assertSee(route('custom-invoices.create'));
+    }
+
+    public function test_create_form_preserves_old_input_after_validation_error(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsigneeWithState($admin);
+        $this->seedLr($admin, $customer);
+
+        $this->actingAs($admin)
+            ->from(route('custom-invoices.create'))
+            ->post(route('custom-invoices.store'), [
+                'custom_invoice' => 'rate_difference',
+                'invoice_type' => 'Reverse',
+                'generated_date' => now()->toDateString(),
+                'customer_id' => $customer->id,
+                'lr_number' => 'LR-CUSTOM-001',
+                'portal_rate' => 11.5,
+                'diff' => 2.25,
+                'remark' => 'Keep this remark after error',
+            ]);
+
+        $response = $this->actingAs($admin)->get(route('custom-invoices.create'));
+
+        $response->assertOk();
+        $response->assertSee('LR-CUSTOM-001', false);
+        $response->assertSee('Keep this remark after error', false);
+        $response->assertSee('11.5', false);
+        $response->assertSee('2.25', false);
     }
 }

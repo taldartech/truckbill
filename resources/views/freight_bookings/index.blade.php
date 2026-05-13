@@ -1712,7 +1712,11 @@
                     url: "{{ route('freight_bookings.datatable') }}",
                     data: function(d) {
                         $('#searchForm').serializeArray().forEach(function(field) {
-                            d[field.name] = field.value;
+                            if (field.name === 'search') {
+                                d.filter_search = field.value;
+                            } else {
+                                d[field.name] = field.value;
+                            }
                         });
                     }
                 },

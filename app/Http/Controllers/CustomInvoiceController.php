@@ -2,16 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Company;
+use App\Models\CustomInvoiceDetail;
 use App\Models\Invoice;
 use App\Models\LorryReceipt;
-use App\Models\CustomInvoiceDetail;
-use App\Models\Company;
+use App\Services\InvoiceNumberService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class CustomInvoiceController extends Controller
 {
+    public function __construct(
+        private InvoiceNumberService $invoiceNumberService
+    ) {}
+
     public function create()
     {
         $user = auth()->user();
@@ -91,21 +97,23 @@ class CustomInvoiceController extends Controller
     public function store(Request $request)
     {
         try {
+            $companyId = (int) auth()->user()->company_id;
+
             $data = $request->validate([
                 'custom_invoice' => 'required|in:rate_difference,shortage_damage',
                 'manual_invoice_number' => [
-                    'required',
+                    'nullable',
                     'string',
-                    Rule::unique('invoices')->where(fn ($query) =>
-                        $query->where('company_id', auth()->user()->company_id)
+                    Rule::unique('invoices')->where(
+                        fn ($query) => $query->where('company_id', $companyId)
                     ),
                 ],
                 'invoice_type' => 'required|in:Reverse,Forward',
                 'generated_date' => [
                     'required',
                     'date',
-                    'after_or_equal:' . Carbon::today()->subMonth()->toDateString(),
-                    'before_or_equal:' . Carbon::today()->addMonth()->toDateString(),
+                    'after_or_equal:'.Carbon::today()->subMonth()->toDateString(),
+                    'before_or_equal:'.Carbon::today()->addMonth()->toDateString(),
                 ],
                 'customer_id' => 'required|exists:consignees,id',
                 'total_amount' => 'required|numeric|min:0',
@@ -132,10 +140,13 @@ class CustomInvoiceController extends Controller
             }
 
             $data['payment_status'] = 'pending';
-            $data['company_id'] = auth()->user()->company_id;
+            $data['company_id'] = $companyId;
+            $data['manual_invoice_number'] = $request->filled('manual_invoice_number')
+                ? trim((string) $request->input('manual_invoice_number'))
+                : null;
 
             $lrNumber = $request->input('lr_number');
-            $lr = LorryReceipt::where('company_id', auth()->user()->company_id)
+            $lr = LorryReceipt::where('company_id', $companyId)
                 ->where('lr_number', $lrNumber)
                 ->first();
 
@@ -147,7 +158,7 @@ class CustomInvoiceController extends Controller
 
             $data['lr_ids'] = [$lr->id];
 
-            $company = Company::find(auth()->user()->company_id);
+            $company = Company::query()->findOrFail($companyId);
             $customer = \App\Models\Consignee::find($data['customer_id']);
             $gstRate = ((int) ($company->gst_slab ?? 5)) / 100;
             $baseAmount = $data['total_amount'];
@@ -192,38 +203,46 @@ class CustomInvoiceController extends Controller
                 $data['total_amount'] = round($baseAmount + $sgst + $cgst + $igst, 2);
             }
 
-            $invoice = Invoice::create($data);
+            $invoice = null;
+            DB::transaction(function () use ($data, $company, $lr, $request, &$invoice): void {
+                $data['invoice_number'] = $this->invoiceNumberService->generate(
+                    $company,
+                    (string) $data['generated_date']
+                );
 
-            $detailData = [
-                'invoice_id' => $invoice->id,
-                'lr_id' => $lr->id,
-                'amount' => $request->input('amount'),
-                'remark' => $request->input('remark') ?? null,
-                'sort_order' => 1,
-            ];
+                $invoice = Invoice::create($data);
 
-            if ($data['custom_invoice'] === 'rate_difference') {
-                $detailData['portal_rate'] = $request->input('portal_rate') ?? null;
-                $detailData['diff'] = $request->input('diff') ?? null;
-            } else {
-                $detailData['damage_qty'] = $request->input('damage_qty') ?? null;
-                $detailData['damage_rate'] = $request->input('damage_rate') ?? null;
-                $detailData['shortage_qty'] = $request->input('shortage_qty') ?? null;
-            }
+                $detailData = [
+                    'invoice_id' => $invoice->id,
+                    'lr_id' => $lr->id,
+                    'amount' => $request->input('amount'),
+                    'remark' => $request->input('remark') ?? null,
+                    'sort_order' => 1,
+                ];
 
-            CustomInvoiceDetail::create($detailData);
+                if ($data['custom_invoice'] === 'rate_difference') {
+                    $detailData['portal_rate'] = $request->input('portal_rate') ?? null;
+                    $detailData['diff'] = $request->input('diff') ?? null;
+                } else {
+                    $detailData['damage_qty'] = $request->input('damage_qty') ?? null;
+                    $detailData['damage_rate'] = $request->input('damage_rate') ?? null;
+                    $detailData['shortage_qty'] = $request->input('shortage_qty') ?? null;
+                }
+
+                CustomInvoiceDetail::create($detailData);
+            });
 
             return redirect()->route('invoices.index')->with('success', 'Custom invoice created successfully.');
         } catch (\Illuminate\Validation\ValidationException $e) {
             throw $e;
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Custom invoice store error: ' . $e->getMessage(), [
+            \Illuminate\Support\Facades\Log::error('Custom invoice store error: '.$e->getMessage(), [
                 'trace' => $e->getTraceAsString(),
             ]);
 
             return redirect()->back()
                 ->withInput()
-                ->withErrors(['save' => 'Failed to save custom invoice. Please try again. Error: ' . $e->getMessage()]);
+                ->withErrors(['save' => 'Failed to save custom invoice. Please try again. Error: '.$e->getMessage()]);
         }
     }
 }
