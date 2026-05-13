@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\AdvancePayment;
 use App\Models\FreightBooking;
 use App\Models\LorryReceipt;
 use App\Models\Transporter;
