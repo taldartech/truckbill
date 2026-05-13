@@ -61,101 +61,56 @@ class LorryReceiptCalculationService
 
     public function syncFreightBookingsForUpdatedLorryReceipt(
         LorryReceipt $lorryReceipt,
+        FreightBooking $freightBooking,
         array $validated,
-        ?int $oldTransporterId,
-        ?int $oldLinkedLrId,
-        ?string $oldDeliveryStatus,
-        float $oldWeight,
     ): void {
-        $freightBookings = FreightBooking::where('lr_id', $lorryReceipt->id)->get();
+        $updateData = [];
+        $updateData['good_type'] = $validated['good_type'];
 
-        foreach ($freightBookings as $freightBooking) {
-            $updateData = [];
-            $updateData['good_type'] = $validated['good_type'];
+        if ($freightBooking->canChangeTdsAmount()) {
+            $transporter = Transporter::find($validated['transporter_id']);
+            $updateData['transporter_id'] = $transporter->id;
+            $updateData['transporter_name'] = $transporter->name;
+            $updateData['transporter_tds_percentage'] = $transporter->tds_percentage;
+        } else {
+            $updateData['transporter_id'] = $freightBooking->transporter_id;
+            $updateData['transporter_name'] = $freightBooking->transporter->name;
+            $updateData['transporter_tds_percentage'] = $freightBooking->transporter_tds_percentage;
+        }
 
-            if (isset($validated['transporter_id']) && $validated['transporter_id'] != $oldTransporterId) {
-                $transporter = Transporter::find($validated['transporter_id']);
-
-                if ($transporter) {
-                    $updateData['transporter_id'] = $transporter->id;
-                    $updateData['transporter_name'] = $transporter->name;
-                    $updateData['transporter_tds_percentage'] = $transporter->tds_percentage;
-
-                    if ($freightBooking->canChangeTdsAmount()) {
-                        $loadingWeight = $lorryReceipt->weight;
-                        $tdsBaseAmount = round($freightBooking->tr_fr_rate * $loadingWeight, 2);
-                        $updateData['tds_amount'] = round($tdsBaseAmount * ($transporter->tds_percentage / 100), 2);
-                    }
-                }
-            }
-
-            if (isset($validated['delivery_status']) && $validated['delivery_status'] != $oldDeliveryStatus) {
-                if ($validated['delivery_status'] === 'Delivered') {
-                    $updateData['is_delivered'] = 1;
-                } elseif ($validated['delivery_status'] === 'Cancelled') {
-                    $updateData['is_cancelled'] = 1;
-                } elseif ($validated['delivery_status'] === 'Pending' || $validated['delivery_status'] === 'In-Progress') {
-                    $updateData['is_delivered'] = 0;
-                    $updateData['is_cancelled'] = 0;
-                }
-            }
-
-            $weightChanged = isset($validated['weight']) && $validated['weight'] != $oldWeight;
-            $unloadingWeightChanged = isset($validated['unloading_weight'])
-                && ($lorryReceipt->unloading_weight != $validated['unloading_weight']);
-
-            if ($weightChanged || $unloadingWeightChanged) {
-                $lorryReceipt->refresh();
-                $loadingWeight = $lorryReceipt->weight;
-                $unloadingWeight = $lorryReceipt->unloading_weight ?? $loadingWeight;
-
-                if (abs($loadingWeight - $unloadingWeight) > self::WEIGHT_TOLERANCE) {
-                    $effectiveWeight = min($loadingWeight, $unloadingWeight);
-                    $updateData['tr_amount'] = round($freightBooking->tr_fr_rate * $effectiveWeight, 2);
-                }
-
-                if ($weightChanged && $freightBooking->canChangeTdsAmount()) {
-                    $tdsBaseAmount = round($freightBooking->tr_fr_rate * $loadingWeight, 2);
-                    $tdsPercentage = $freightBooking->transporter_tds_percentage ?? 0;
-                    $updateData['tds_amount'] = round($tdsBaseAmount * ($tdsPercentage / 100), 2);
-                }
-            }
-
-            if (isset($updateData['tr_amount'])) {
-                $tdsAmount = isset($updateData['tds_amount']) ? $updateData['tds_amount'] : ($freightBooking->tds_amount ?? 0);
-                $updateData['balance_amount'] = $this->calculateFreightBookingBalance(
-                    $freightBooking,
-                    $updateData['tr_amount'],
-                    $tdsAmount
-                );
-            }
-
-            if (isset($updateData['tds_amount']) && ! isset($updateData['tr_amount'])) {
-                $updateData['balance_amount'] = $this->calculateFreightBookingBalance(
-                    $freightBooking,
-                    $freightBooking->tr_amount,
-                    $updateData['tds_amount']
-                );
-            }
-
-            if (! empty($updateData)) {
-                $freightBooking->update($updateData);
+        if (!$freightBooking->is_fixed_amount) {
+            $updateData['tr_amount'] = $freightBooking->tr_fr_rate * min($lorryReceipt->weight, $lorryReceipt->unloading_weight);
+            if ($freightBooking->canChangeTdsAmount()) {
+                $updateData['tds_amount'] = round($freightBooking->tr_fr_rate * $lorryReceipt->weight * ($updateData['transporter_tds_percentage'] / 100), 2);
             }
         }
-    }
 
-    private function calculateFreightBookingBalance(
-        FreightBooking $freightBooking,
-        float $trAmount,
-        float $tdsAmount,
-    ): float {
-        return $trAmount
+        $updateData['balance_amount'] =
+            $updateData['tr_amount']
+            - $freightBooking->shortage_amount
+            - $freightBooking->damage_amount
+            - $freightBooking->misc_expense
+            + $freightBooking->detention
+            + $freightBooking->deviation
+            - $updateData['tds_amount']
             - $freightBooking->advance_amount
-            - $tdsAmount
-            - ($freightBooking->damage_amount ?? 0)
-            - ($freightBooking->shortage_amount ?? 0)
-            + ($freightBooking->detention ?? 0)
-            + ($freightBooking->deviation ?? 0)
-            - ($freightBooking->misc_expense ?? 0);
+            + $freightBooking->negative_adjusted_amount;
+
+        if ($updateData['balance_amount'] < 0) {
+            $updateData['negative_adjusted_amount'] = $freightBooking->negative_adjusted_amount - $updateData['balance_amount'];
+            $transporter = Transporter::find($validated['transporter_id']);
+            $transporter->advance_amount = $transporter->advance_amount - $updateData['balance_amount'];
+            $transporter->save();
+            AdvancePayment::create([
+                'company_id' => $freightBooking->company_id,
+                'transporter_id' => $transporter->id,
+                'advance_amount' => $updateData['balance_amount'],
+                'payment_date' => now()->toDateString(),
+                'remark' => "Negative balance adjustment: LR#{$lorryReceipt->lr_number}",
+            ]);
+            $updateData['balance_amount'] = 0;
+        }
+
+        $freightBooking->update($updateData);
     }
 }

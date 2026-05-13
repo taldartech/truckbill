@@ -200,6 +200,9 @@
                     </td>
                     <td colspan="4" style="vertical-align: bottom">For {{ $company?->name }}</td>
                 </tr>
+                <tr>
+                    <td colspan="12" class="fw-bold" style="font-size: 7px; text-align: right;">Powered by TruckBill (www.truckbill.in)</td>
+                </tr>
             </table>
         </div>
         <div class="container" style="margin-top: 20px;">
@@ -329,6 +332,9 @@
                         <p>DRIVER COPY</p>
                     </td>
                     <td colspan="4" style="vertical-align: bottom">For {{ $company?->name }}</td>
+                </tr>
+                <tr>
+                    <td colspan="12" class="fw-bold" style="font-size: 7px; text-align: right;">Powered by TruckBill (www.truckbill.in)</td>
                 </tr>
             </table>
         </div>

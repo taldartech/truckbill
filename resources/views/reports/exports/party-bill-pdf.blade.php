@@ -98,6 +98,8 @@
 
     @include('reports.exports.party-bill')
 
+    <div style="font-size: 7px; text-align: right;">Powered by TruckBill (www.truckbill.in)</div>
+
     <script type="text/php">
         if (isset($pdf)) {
             $text = "Page {PAGE_NUM} of {PAGE_COUNT}";

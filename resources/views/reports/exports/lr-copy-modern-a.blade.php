@@ -89,7 +89,7 @@
                 @include('reports.exports.partials.lr-copy-bilty-block', ['lr' => $lr, 'company' => $company, 'copyLabel' => 'CONSIGNOR COPY'])
             </div>
         </div>
-        <div class="lr-bilty-wrap lr-sheet lr-sheet--a">
+        <div class="lr-bilty-wrap lr-sheet lr-sheet--a" style="margin-top: 35px!important;">
             <div class="lr-sheet__ribbon">FORM A · GOOD RECEIPT (BILTY) · LR COPY</div>
             <div class="lr-sheet__inner">
                 @include('reports.exports.partials.lr-copy-bilty-block', ['lr' => $lr, 'company' => $company, 'copyLabel' => 'DRIVER COPY'])
