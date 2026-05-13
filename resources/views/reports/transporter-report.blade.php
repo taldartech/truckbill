@@ -138,7 +138,7 @@
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h3 class="card-title mb-0">Tranporter/Truck wise Report</h3>
+                        <h3 class="card-title mb-0">Transporter/Truck wise Report</h3>
                     </div>
                     <div class="d-flex">
                         <a class="btn btn-warning ms-2"
@@ -269,6 +269,17 @@
                 return start < minAllowedStart;
             }
 
+            function transporterDisplayName(item) {
+                if (item.name != null && String(item.name).length > 0) {
+                    return String(item.name);
+                }
+                const master = item.transporter_master;
+                if (master && master.name != null && String(master.name).length > 0) {
+                    return String(master.name);
+                }
+                return '';
+            }
+
             function rebuildSelect($select, options, placeholder, selectedValue, labelKey) {
                 const previousValue = selectedValue || '';
                 $select.empty().append(new Option(placeholder, ''));
@@ -329,7 +340,7 @@
                             'Select Transporter/Truck Owner',
                             currentSelections.transporter,
                             function(item) {
-                                return item.name + (item.is_owner ? ' (Owner)' : ' (Transporter)');
+                                return transporterDisplayName(item) + (item.is_owner ? ' (Owner)' : ' (Transporter)');
                             }
                         );
 
@@ -343,7 +354,7 @@
                             'Select Reference By',
                             currentSelections.reference,
                             function(item) {
-                                return item.name;
+                                return transporterDisplayName(item);
                             }
                         );
                     },
