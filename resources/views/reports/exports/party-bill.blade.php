@@ -3,7 +3,6 @@
     $totalAmount = 0;
     $lrs = $invoice->custom_invoice ? [] : ($invoice->lr_ids ?? []);
     $customDetails = $customDetails ?? collect();
-    $lorryReceiptsById = $lorryReceiptsById ?? collect();
     $forExcel = $forExcel ?? false;
     $accountNumberDisplay = '-';
     if (($company->account_number ?? null) !== null && $company->account_number !== '') {
@@ -183,7 +182,7 @@
     @foreach ($lrs as $index => $lr_id)
         <tr>
             @php
-                $lr = $lorryReceiptsById->get($lr_id);
+                $lr = \App\Models\LorryReceipt::find($lr_id);
             @endphp
             <td>{{ $index + 1 }}</td>
             <td>{{ $lr->lr_number ?? '-' }}</td>
