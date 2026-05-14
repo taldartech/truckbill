@@ -252,7 +252,9 @@
         <td colspan="7">{{ $company->bank ?? '' }}</td>
         <td style="font-weight: bold;" colspan="2">Total Amount</td>
         @php
-            $grandTotal = $invoice->total_amount ?? ($invoice->invoice_type == 'Reverse' ? $totalAmount : $totalAmount + $totalgst);
+            $grandTotal = ($invoice->invoice_type ?? '') === 'Reverse'
+                ? (float) ($invoice->net_amount ?? $invoice->base_amount ?? $totalAmount)
+                : (float) ($invoice->total_amount ?? ($totalAmount + $totalgst));
         @endphp
         <td colspan="2">{{ number_format($grandTotal, 2) }}</td>
     </tr>

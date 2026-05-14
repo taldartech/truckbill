@@ -80,7 +80,9 @@
         $sgst = (float) ($sgst ?? 0);
         $igst = (float) ($igst ?? 0);
         $baseAmount = (float) ($totalAmount ?? 0);
-        $grandTotal = (float) ($invoice->total_amount ?? ($invoice->invoice_type === 'Reverse' ? $baseAmount : ($baseAmount + $cgst + $sgst + $igst)));
+        $grandTotal = ($invoice->invoice_type ?? '') === 'Reverse'
+            ? (float) ($invoice->net_amount ?? $invoice->base_amount ?? $baseAmount)
+            : (float) ($invoice->total_amount ?? ($baseAmount + $cgst + $sgst + $igst));
         $billNumber = $invoice->invoice_number
             ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '')
             : ($invoice->manual_invoice_number ?? $invoice->id);

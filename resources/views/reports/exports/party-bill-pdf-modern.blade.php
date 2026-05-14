@@ -148,7 +148,9 @@
         $sgst = (float) ($sgst ?? 0);
         $igst = (float) ($igst ?? 0);
         $baseAmount = (float) ($totalAmount ?? 0);
-        $grandTotal = (float) ($invoice->total_amount ?? ($invoice->invoice_type === 'Reverse' ? $baseAmount : ($baseAmount + $cgst + $sgst + $igst)));
+        $grandTotal = ($invoice->invoice_type ?? '') === 'Reverse'
+            ? (float) ($invoice->net_amount ?? $invoice->base_amount ?? $baseAmount)
+            : (float) ($invoice->total_amount ?? ($baseAmount + $cgst + $sgst + $igst));
         $billNumber = $invoice->invoice_number
             ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '')
             : ($invoice->manual_invoice_number ?? $invoice->id);
@@ -318,10 +320,18 @@
                     <td width="38%">
                         <table class="summary-table">
                             <tr><td>Base Amount</td><td>{{ number_format($baseAmount, 2) }}</td></tr>
-                            <tr><td>CGST</td><td>{{ number_format($cgst, 2) }}</td></tr>
-                            <tr><td>SGST</td><td>{{ number_format($sgst, 2) }}</td></tr>
-                            <tr><td>IGST</td><td>{{ number_format($igst, 2) }}</td></tr>
-                            <tr><td>Total GST</td><td>{{ number_format($totalGst, 2) }}</td></tr>
+                            @if ($cgst > 0)
+                                <tr><td>CGST</td><td>{{ number_format($cgst, 2) }}</td></tr>
+                            @endif
+                            @if ($sgst > 0)
+                                <tr><td>SGST</td><td>{{ number_format($sgst, 2) }}</td></tr>
+                            @endif
+                            @if ($igst > 0)
+                                <tr><td>IGST</td><td>{{ number_format($igst, 2) }}</td></tr>
+                            @endif
+                            @if ($totalGst > 0)
+                                <tr><td>Total GST</td><td>{{ number_format($totalGst, 2) }}</td></tr>
+                            @endif
                             <tr class="grand"><td>Grand Total</td><td>{{ number_format($grandTotal, 2) }}</td></tr>
                         </table>
                     </td>
