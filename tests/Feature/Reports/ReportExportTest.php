@@ -127,10 +127,11 @@ class ReportExportTest extends TestCase
         return [$lr, $booking];
     }
 
-    public function test_admin_and_accountant_can_view_reports(): void
+    public function test_admin_accountant_and_moderator_can_view_reports(): void
     {
         $admin = $this->makeUser('admin');
         $accountant = $this->makeUser('accountant');
+        $moderator = $this->makeUser('moderator');
         $this->seedLr($admin);
 
         $params = ['start_date' => now()->subDays(7)->toDateString(), 'end_date' => now()->toDateString()];
@@ -139,10 +140,14 @@ class ReportExportTest extends TestCase
         $this->actingAs($admin)->get('/reports/tds?'.http_build_query($params))->assertOk();
         $this->actingAs($accountant)->get('/reports/dispatch?'.http_build_query($params))->assertOk();
         $this->actingAs($accountant)->get('/reports/invoice?'.http_build_query($params))->assertOk();
+        $this->actingAs($moderator)->get('/reports/consignor-consignee?'.http_build_query($params))->assertOk();
+        $this->actingAs($moderator)->get('/reports/tds?'.http_build_query($params))->assertOk();
         $this->actingAs($admin)->get('/reports/transporter-master')->assertOk();
         $this->actingAs($accountant)->get('/reports/transporter-master?type=owner')->assertOk();
+        $this->actingAs($moderator)->get('/reports/transporter-master?type=owner')->assertOk();
         $this->actingAs($admin)->get('/reports/party-ledger?'.http_build_query($params))->assertOk();
         $this->actingAs($admin)->get('/reports/transporter-report?'.http_build_query($params))->assertOk();
+        $this->actingAs($moderator)->get('/reports/transporter-report?'.http_build_query($params))->assertOk();
     }
 
     public function test_accountant_can_fetch_memo_copy_customer_memos_json_but_not_invoice_all_memos_route(): void
@@ -160,15 +165,15 @@ class ReportExportTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_moderator_forbidden_from_reports(): void
+    public function test_moderator_can_view_reports(): void
     {
         $mod = $this->makeUser('moderator');
         $params = ['start_date' => now()->subDays(7)->toDateString(), 'end_date' => now()->toDateString()];
 
-        $this->actingAs($mod)->get('/reports/consignor-consignee?'.http_build_query($params))->assertForbidden();
-        $this->actingAs($mod)->get('/reports/tds?'.http_build_query($params))->assertForbidden();
-        $this->actingAs($mod)->get('/reports/transporter-master')->assertForbidden();
-        $this->actingAs($mod)->get('/reports/transporter-report?'.http_build_query($params))->assertForbidden();
+        $this->actingAs($mod)->get('/reports/consignor-consignee?'.http_build_query($params))->assertOk();
+        $this->actingAs($mod)->get('/reports/tds?'.http_build_query($params))->assertOk();
+        $this->actingAs($mod)->get('/reports/transporter-master')->assertOk();
+        $this->actingAs($mod)->get('/reports/transporter-report?'.http_build_query($params))->assertOk();
     }
 
     public function test_exports_succeed_for_admin(): void
@@ -209,15 +214,15 @@ class ReportExportTest extends TestCase
         $this->actingAs($admin)->get('/reports/pump-export?'.http_build_query($params + ['pump_id' => $pump->id]))->assertOk();
     }
 
-    public function test_exports_forbidden_for_moderator(): void
+    public function test_moderator_can_access_report_exports(): void
     {
         $mod = $this->makeUser('moderator');
         $params = ['start_date' => now()->subDays(7)->toDateString(), 'end_date' => now()->toDateString()];
 
-        $this->actingAs($mod)->get('/reports/consignor-consignee-export?'.http_build_query($params))->assertForbidden();
-        $this->actingAs($mod)->get('/reports/tds-export?'.http_build_query($params))->assertForbidden();
-        $this->actingAs($mod)->get('/reports/transporter-report-export?'.http_build_query($params))->assertForbidden();
-        $this->actingAs($mod)->get('/reports/transporter-master-export')->assertForbidden();
+        $this->actingAs($mod)->get('/reports/consignor-consignee-export?'.http_build_query($params))->assertOk();
+        $this->actingAs($mod)->get('/reports/tds-export?'.http_build_query($params))->assertOk();
+        $this->actingAs($mod)->get('/reports/transporter-report-export?'.http_build_query($params))->assertOk();
+        $this->actingAs($mod)->get('/reports/transporter-master-export')->assertOk();
     }
 
     public function test_pump_report_shows_payment_status(): void

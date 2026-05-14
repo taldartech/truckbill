@@ -296,7 +296,7 @@ Route::middleware(['auth.blocked'])->group(function () {
         });
     });
 
-    Route::group(['prefix' => 'reports', 'middleware' => ['role:admin,accountant,super_admin', 'company.context']], function () {
+    Route::group(['prefix' => 'reports', 'middleware' => ['role:admin,accountant,moderator,super_admin', 'company.context']], function () {
         Route::get('/consignor-consignee', [ReportController::class, 'consignor_consignee'])->name('reports.consignor-consignee');
         Route::get('/consignor-consignee-export', [ReportController::class, 'consignor_consignee_export'])->name('reports.consignor-consignee-export');
         Route::get('/tds', [ReportController::class, 'tds'])->name('reports.tds');
