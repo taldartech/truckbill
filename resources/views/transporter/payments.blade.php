@@ -33,7 +33,7 @@
                                 <tr>
                                     <td class="ps-4">{{ $payment->voucher_number ?? '-' }}</td>
                                     <td>#{{ $payment->freight_booking->lr->lr_number ?? '-' }}</td>
-                                    <td>₹{{ number_format($payment->amount ?? 0, 2) }}</td>
+                                    <td>{{ number_format($payment->amount ?? 0, 2) }}</td>
                                     <td><span class="badge bg-{{ $payment->payment_status === 'paid' ? 'success' : 'warning' }}">{{ ucfirst($payment->payment_status ?? '-') }}</span></td>
                                     <td>{{ $payment->date ? \Carbon\Carbon::parse($payment->date)->format('d-m-Y') : '-' }}</td>
                                 </tr>
@@ -71,7 +71,7 @@
                             @forelse($advancePayments ?? [] as $payment)
                                 <tr>
                                     <td class="ps-4">{{ $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('d-m-Y') : '-' }}</td>
-                                    <td>₹{{ number_format($payment->advance_amount ?? 0, 2) }}</td>
+                                    <td>{{ number_format($payment->advance_amount ?? 0, 2) }}</td>
                                     <td>{{ $payment->remark ?? '-' }}</td>
                                 </tr>
                             @empty

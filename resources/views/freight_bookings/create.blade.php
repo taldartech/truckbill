@@ -140,7 +140,7 @@
                     <div class="mb-2">
                         <strong>Amount:</strong><br>
                         <span
-                            class="badge bg-brand-primary text-white fs-6">₹{{ $lorry_receipt->first() ? number_format($lorry_receipt->first()->amount ?? 0, 2) : '0.00' }}</span>
+                            class="badge bg-brand-primary text-white fs-6">{{ $lorry_receipt->first() ? number_format($lorry_receipt->first()->amount ?? 0, 2) : '0.00' }}</span>
                     </div>
 
                 </div>
@@ -151,7 +151,7 @@
                         @php
                             $rate = $lorry_receipt->first() ? $lorry_receipt->first()->fr_rate : 0;
                         @endphp
-                            class="badge bg-brand-primary text-white fs-6">₹{{ number_format($rate, 2) }}</span>
+                            class="badge bg-brand-primary text-white fs-6">{{ number_format($rate, 2) }}</span>
                     </div>
                     </div>
                 @if ($lorry_receipt->first() && $lorry_receipt->first()->freight_booking_id)
@@ -247,9 +247,9 @@
                         <label for="tr_fr_rate" class="form-label">TR Freight Rate *</label>
                         <input type="number" step="0.01" min="1" max="20000" class="form-control"
                             name="tr_fr_rate" id="tr_fr_rate" value="{{ old('tr_fr_rate') }}"
-                            placeholder="Enter freight rate (₹1 - ₹20,000 per ton)" required>
+                            placeholder="Enter freight rate (1 - 20,000 per ton)" required>
                         <small class="form-text text-muted">
-                            <i class="fas fa-info-circle"></i> Rate must be between ₹1 and ₹20,000 per ton
+                            <i class="fas fa-info-circle"></i> Rate must be between 1 and 20,000 per ton
                         </small>
                         @error('tr_fr_rate')
                             <div class="text-danger">{{ $message }}</div>
@@ -263,7 +263,7 @@
                         <small class="form-text text-muted">
                             <i class="fas fa-info-circle"></i> Auto-calculated: TR Freight Rate × Weight
                             ({{ $lorry_receipt->first() ? number_format($lorry_receipt->first()->weight ?? 0, 3) : '0.00' }}
-                            MT). Must be greater than ₹0.
+                            MT). Must be greater than 0.
                         </small>
                         @error('tr_amount')
                             <div class="text-danger">{{ $message }}</div>
@@ -392,11 +392,11 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <p><strong>TR Freight Rate:</strong> ₹{{ number_format($cancelledBookings->tr_fr_rate, 2) }}</p>
-                        <p><strong>TR Amount:</strong> ₹{{ number_format($cancelledBookings->tr_amount, 2) }}</p>
-                        <p><strong>TDS Amount:</strong> ₹{{ number_format($cancelledBookings->tds_amount, 2) }}</p>
-                        <p><strong>Balance Amount:</strong> ₹{{ number_format($cancelledBookings->balance_amount, 2) }}</p>
-                        <p><strong>Advance Amount:</strong> ₹{{ number_format($cancelledBookings->advance_amount, 2) }}</p>
+                        <p><strong>TR Freight Rate:</strong> {{ number_format($cancelledBookings->tr_fr_rate, 2) }}</p>
+                        <p><strong>TR Amount:</strong> {{ number_format($cancelledBookings->tr_amount, 2) }}</p>
+                        <p><strong>TDS Amount:</strong> {{ number_format($cancelledBookings->tds_amount, 2) }}</p>
+                        <p><strong>Balance Amount:</strong> {{ number_format($cancelledBookings->balance_amount, 2) }}</p>
+                        <p><strong>Advance Amount:</strong> {{ number_format($cancelledBookings->advance_amount, 2) }}</p>
                         <p><strong>E-Way Bill Number:</strong> {{ $cancelledBookings->eway_bill_number ?? 'N/A' }}</p>
                         <p><strong>E-Way Bill Expiry Date:</strong>
                             {{ $cancelledBookings->eway_bill_expiry ? \Carbon\Carbon::parse($cancelledBookings->eway_bill_expiry)->format('d M Y') : 'N/A' }}

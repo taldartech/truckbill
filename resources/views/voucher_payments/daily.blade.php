@@ -270,7 +270,7 @@
                                 </td>
                                 <td class="text-end">
                                     @if ($payment->amount)
-                                        <strong>₹{{ number_format($payment->amount, 2) }}</strong>
+                                        <strong>{{ number_format($payment->amount, 2) }}</strong>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif
@@ -400,7 +400,7 @@
                                 </td>
                                 <td class="text-end">
                                     @if ($payment->amount)
-                                        <strong>₹{{ number_format($payment->amount, 2) }}</strong>
+                                        <strong>{{ number_format($payment->amount, 2) }}</strong>
                                     @else
                                         <span class="text-muted">-</span>
                                     @endif

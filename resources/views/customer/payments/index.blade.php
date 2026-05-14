@@ -52,7 +52,7 @@
                                     <td>{{ $payment->invoice->company->name ?? '-' }}</td>
                                     <td>{{ $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('d-m-Y') : '-' }}</td>
                                     <td>{{ ucfirst($payment->mode ?? '-') }}</td>
-                                    <td>₹{{ number_format((float) $payment->amount, 2) }}</td>
+                                    <td>{{ number_format((float) $payment->amount, 2) }}</td>
                                     <td>{{ $payment->remark ?? '-' }}</td>
                                 </tr>
                             @empty

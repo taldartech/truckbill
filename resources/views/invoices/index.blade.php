@@ -131,7 +131,7 @@
                     </div>
                 </div>
             </div>
-            
+
             {{-- Conditionally visible filter fields --}}
             <div class="row g-3 mt-2" id="filter-fields">
                 <div class="col-md-3 d-none" id="field_generated_date_from">
@@ -261,7 +261,7 @@
                                     class="text-danger">*</span></label>
                             <input type="number" class="form-control" id="payment_amount" name="amount"
                                 step="0.01" min="0.01" required placeholder="0.00">
-                            <div class="form-text">Maximum: ₹<span id="max_payment_amount">0.00</span></div>
+                            <div class="form-text">Maximum: <span id="max_payment_amount">0.00</span></div>
                         </div>
                         <div class="mb-3">
                             <label for="payment_remark" class="form-label">Remark</label>
@@ -442,7 +442,7 @@
                     url: '/invoices/' + invoiceId,
                     type: 'GET',
                     success: function(data) {
-                    
+
                         var detailsHtml = `
                 <div class="row">
                     <div class="col-md-6">
@@ -502,31 +502,31 @@
                                 <table class="table table-borderless table-sm mb-0">
                                     <tr>
                                         <th class="fw-bold" style="width: 50%;">Base Amount:</th>
-                                        <td class="text-end">₹${data.total_amount ? parseFloat(data.total_amount).toFixed(2) : '0.00'}</td>
+                                        <td class="text-end">${data.total_amount ? parseFloat(data.total_amount).toFixed(2) : '0.00'}</td>
                                     </tr>
                                     ${(data.sgst > 0 || data.cgst > 0 || data.igst > 0) ? `
                                     ${data.sgst > 0 ? `
                                     <tr>
                                         <th class="fw-bold">SGST (${data.sgst_rate ? parseFloat(data.sgst_rate).toFixed(2) : '0.00'}%):</th>
-                                        <td class="text-end">₹${parseFloat(data.sgst).toFixed(2)}</td>
+                                        <td class="text-end">${parseFloat(data.sgst).toFixed(2)}</td>
                                     </tr>
                                     ` : ''}
                                     ${data.cgst > 0 ? `
                                     <tr>
                                         <th class="fw-bold">CGST (${data.cgst_rate ? parseFloat(data.cgst_rate).toFixed(2) : '0.00'}%):</th>
-                                        <td class="text-end">₹${parseFloat(data.cgst).toFixed(2)}</td>
+                                        <td class="text-end">${parseFloat(data.cgst).toFixed(2)}</td>
                                     </tr>
                                     ` : ''}
                                     ${data.igst > 0 ? `
                                     <tr>
                                         <th class="fw-bold">IGST (${data.igst_rate ? parseFloat(data.igst_rate).toFixed(2) : '0.00'}%):</th>
-                                        <td class="text-end">₹${parseFloat(data.igst).toFixed(2)}</td>
+                                        <td class="text-end">${parseFloat(data.igst).toFixed(2)}</td>
                                     </tr>
                                     ` : ''}
                                     ` : ''}
                                     <tr>
                                         <th class="fw-bold">Net Amount (After GST)${(data.invoice_type === 'Reverse') ? ' Under RCM' : ''}:</th>
-                                        <td class="text-end"><strong>₹${parseFloat(data.invoice_type === 'Reverse' ? (data.total_amount || 0) : (data.net_amount || 0)).toFixed(2)}</strong></td>
+                                        <td class="text-end"><strong>${parseFloat(data.invoice_type === 'Reverse' ? (data.total_amount || 0) : (data.net_amount || 0)).toFixed(2)}</strong></td>
                                     </tr>
                                 </table>
                             </div>
@@ -689,9 +689,9 @@
                 // Set form values
                 $('#payment_invoice_id').val(invoiceId);
                 $('#payment_invoice_number').val(invoiceNumber);
-                $('#payment_total_amount').val('₹' + totalAmount.toFixed(2));
-                $('#payment_paid_amount').val('₹' + paidAmount.toFixed(2));
-                $('#payment_remaining_amount').val('₹' + remainingAmount.toFixed(2));
+                $('#payment_total_amount').val('' + totalAmount.toFixed(2));
+                $('#payment_paid_amount').val('' + paidAmount.toFixed(2));
+                $('#payment_remaining_amount').val('' + remainingAmount.toFixed(2));
                 $('#max_payment_amount').text(remainingAmount.toFixed(2));
                 $('#payment_amount').attr('max', remainingAmount);
             $('#payment_amount').val('');
@@ -730,7 +730,7 @@
                 var remainingAmount = parseFloat($('#max_payment_amount').text());
                 if (formData.amount > remainingAmount) {
                     $('#payment_error').removeClass('d-none').text(
-                        'Payment amount cannot exceed remaining balance of ₹' + remainingAmount.toFixed(
+                        'Payment amount cannot exceed remaining balance of ' + remainingAmount.toFixed(
                             2));
                     return;
                 }

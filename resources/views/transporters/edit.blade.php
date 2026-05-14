@@ -110,7 +110,7 @@
                 <div class="row mb-3">
                     <div class="col-md-4">
                         <label class="form-label">Book Balance</label>
-                        <div class="form-control-plaintext bg-light border rounded px-3 py-2"><strong>₹ {{ number_format($transporter->advance_amount, 2) }}</strong></div>
+                        <div class="form-control-plaintext bg-light border rounded px-3 py-2"><strong> {{ number_format($transporter->advance_amount, 2) }}</strong></div>
                         <input type="hidden" name="advance_amount" value="{{ $transporter->advance_amount }}">
                     </div>
                     <div class="col-md-4">
@@ -471,7 +471,7 @@ function showConfirmationModal() {
 
     document.getElementById('confirm-is-owner').textContent = isOwner;
     document.getElementById('confirm-declaration').textContent = declaration;
-    document.getElementById('confirm-advance').textContent = '₹' + parseFloat(advance).toFixed(2);
+    document.getElementById('confirm-advance').textContent = '' + parseFloat(advance).toFixed(2);
 
     // Show modal
     const modal = new bootstrap.Modal(document.getElementById('confirmationModal'));

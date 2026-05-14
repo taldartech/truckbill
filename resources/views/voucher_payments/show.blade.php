@@ -101,7 +101,7 @@
                             @endif
                             <tr>
                                 <th>Total Amount:</th>
-                                <td class="text-success fw-bold">₹{{ number_format($totalAmount, 2) }}</td>
+                                <td class="text-success fw-bold">{{ number_format($totalAmount, 2) }}</td>
                             </tr>
                             <tr>
                                 <th>Total Payments:</th>
@@ -120,27 +120,27 @@
                                 <div class="me-4 mb-2">
                                     <span class="text-muted">TR Rate:</span>
                                     <span
-                                        class="ms-2">{{ $freightBooking && $freightBooking->tr_fr_rate ? '₹' . number_format($freightBooking->tr_fr_rate, 2) : '₹0.00' }}</span>
+                                        class="ms-2">{{ $freightBooking && $freightBooking->tr_fr_rate ? '' . number_format($freightBooking->tr_fr_rate, 2) : '0.00' }}</span>
                                 </div>
                                 <div class="me-4 mb-2">
                                     <span class="text-muted">TR Amount:</span>
                                     <span
-                                        class="ms-2">{{ $freightBooking && $freightBooking->tr_amount ? '₹' . number_format($freightBooking->tr_amount, 2) : '₹0.00' }}</span>
+                                        class="ms-2">{{ $freightBooking && $freightBooking->tr_amount ? '' . number_format($freightBooking->tr_amount, 2) : '0.00' }}</span>
                                 </div>
                                 <div class="me-4 mb-2">
                                     <span class="text-muted">Advance:</span>
                                     <span
-                                        class="ms-2">{{ $freightBooking && $freightBooking->advance_amount ? '₹' . number_format($freightBooking->advance_amount, 2) : '₹0.00' }}</span>
+                                        class="ms-2">{{ $freightBooking && $freightBooking->advance_amount ? '' . number_format($freightBooking->advance_amount, 2) : '0.00' }}</span>
                                 </div>
                                 <div class="me-4 mb-2">
                                     <span class="text-muted">Balance:</span>
                                     <span
-                                        class="ms-2 fw-bold">{{ $freightBooking && $freightBooking->balance_amount ? '₹' . number_format($freightBooking->balance_amount, 2) : '₹0.00' }}</span>
+                                        class="ms-2 fw-bold">{{ $freightBooking && $freightBooking->balance_amount ? '' . number_format($freightBooking->balance_amount, 2) : '0.00' }}</span>
                                 </div>
                                 <div class="mb-2">
                                     <span class="text-muted">TDS Amount:</span>
                                     <span
-                                        class="ms-2">{{ $freightBooking && $freightBooking->tds_amount ? '₹' . number_format($freightBooking->tds_amount, 2) : '₹0.00' }}</span>
+                                        class="ms-2">{{ $freightBooking && $freightBooking->tds_amount ? '' . number_format($freightBooking->tds_amount, 2) : '0.00' }}</span>
                                 </div>
                             </div>
                         </div>
@@ -184,7 +184,7 @@
                                         <br><small class="text-muted">{{ $payment->pump->pump_name }}</small>
                                     @endif
                                 </td>
-                                <td class="text-success fw-bold">₹{{ number_format($payment->amount, 2) }}</td>
+                                <td class="text-success fw-bold">{{ number_format($payment->amount, 2) }}</td>
                                 <td>{!! $payment->getPaymentStatusBadge() !!}</td>
                                 <td>{!! $payment->remark ?? '-' !!}</td>
                                 <td>

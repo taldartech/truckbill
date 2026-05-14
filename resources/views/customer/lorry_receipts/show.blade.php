@@ -23,7 +23,7 @@
                     <div class="col-md-4"><strong>No. of Units:</strong> {{ $lorryReceipt->no_of_units ?? '-' }}</div>
                     <div class="col-md-4"><strong>Weight:</strong> {{ $lorryReceipt->weight ?? '-' }}</div>
                     <div class="col-md-4"><strong>Goods Type:</strong> {{ $lorryReceipt->good_type ?? '-' }}</div>
-                    <div class="col-md-4"><strong>Amount:</strong> ₹{{ number_format((float) ($lorryReceipt->amount ?? 0), 2) }}</div>
+                    <div class="col-md-4"><strong>Amount:</strong> {{ number_format((float) ($lorryReceipt->amount ?? 0), 2) }}</div>
                 </div>
             </div>
         </div>

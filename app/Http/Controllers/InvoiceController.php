@@ -97,18 +97,18 @@ class InvoiceController extends Controller
                     return $row->generated_date ? date('d-m-Y', strtotime($row->generated_date)) : '-';
                 })
                 ->addColumn('total_amount_formatted', function ($row) {
-                    return $row->total_amount ? '₹'.number_format($row->total_amount, 2) : '₹0.00';
+                    return $row->total_amount ? ''.number_format($row->total_amount, 2) : '0.00';
                 })
                 ->addColumn('paid_amount_formatted', function ($row) {
                     $paidAmount = (float) ($row->paid_amount_sum ?? 0);
 
-                    return '₹'.number_format($paidAmount, 2);
+                    return ''.number_format($paidAmount, 2);
                 })
                 ->addColumn('remaining_amount_formatted', function ($row) {
                     $remaining = (float) ($row->remaining_amount_value ?? 0);
                     $class = $remaining > 0 ? 'text-danger' : 'text-brand-primary';
 
-                    return '<span class="'.$class.'">₹'.number_format($remaining, 2).'</span>';
+                    return '<span class="'.$class.'">'.number_format($remaining, 2).'</span>';
                 })
                 ->addColumn('payment_status_badge', function ($row) {
                     $statusClass = match ($row->payment_status) {
@@ -697,7 +697,7 @@ class InvoiceController extends Controller
         if ($validated['amount'] > $remainingAmount) {
             return response()->json([
                 'success' => false,
-                'message' => 'Payment amount cannot exceed the remaining balance of ₹'.number_format($remainingAmount, 2),
+                'message' => 'Payment amount cannot exceed the remaining balance of '.number_format($remainingAmount, 2),
             ], 422);
         }
 

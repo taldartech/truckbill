@@ -370,7 +370,7 @@ class VoucherPaymentController extends Controller
             return redirect()->back()
                 ->withInput()
                 ->with('warning', 'A similar payment already exists for this booking on '.date('d-m-Y', strtotime($paymentDate)).':
-                    <br><strong>Amount:</strong> ₹'.number_format($duplicatePayment->amount, 2).'
+                    <br><strong>Amount:</strong> '.number_format($duplicatePayment->amount, 2).'
                     <br><strong>Payment Type:</strong> '.$duplicatePayment->payment_type.'
                     <br><strong>Payment Mode:</strong> '.$duplicatePayment->payment_mode.'
                     <br><strong>Created:</strong> '.$duplicatePayment->created_at->format('d-m-Y H:i:s').'
@@ -396,12 +396,12 @@ class VoucherPaymentController extends Controller
                 // Allow small tolerance (0.01) for floating point precision
                 $newAdvanceAmount = $freightBooking->advance_amount + $data['amount'];
                 if ($newAdvanceAmount > $effectivePayableAmount + 0.01) {
-                    throw new \DomainException('Advance amount cannot exceed effective payable amount ₹'.number_format($effectivePayableAmount, 2).'. Maximum allowed: ₹'.number_format($effectivePayableAmount - $freightBooking->advance_amount, 2));
+                    throw new \DomainException('Advance amount cannot exceed effective payable amount '.number_format($effectivePayableAmount, 2).'. Maximum allowed: '.number_format($effectivePayableAmount - $freightBooking->advance_amount, 2));
                 }
 
                 // Validate payment doesn't exceed balance
                 if ($data['amount'] > $freightBooking->balance_amount) {
-                    throw new \DomainException('Payment amount ₹'.number_format($data['amount'], 2).' cannot exceed balance amount ₹'.number_format($freightBooking->balance_amount, 2).'.');
+                    throw new \DomainException('Payment amount '.number_format($data['amount'], 2).' cannot exceed balance amount '.number_format($freightBooking->balance_amount, 2).'.');
                 }
 
                 // Create voucher payment
@@ -626,7 +626,7 @@ class VoucherPaymentController extends Controller
 
                 return redirect()->back()
                     ->withInput()
-                    ->with('error', 'Total payments for this freight booking cannot exceed effective payable amount ₹'.number_format($effectivePayableAmount, 2).'. Maximum for this payment: ₹'.number_format($maxAllowed, 2));
+                    ->with('error', 'Total payments for this freight booking cannot exceed effective payable amount '.number_format($effectivePayableAmount, 2).'. Maximum for this payment: '.number_format($maxAllowed, 2));
             }
 
             if ($projectedAdvanceOnNew < -0.01) {
@@ -682,7 +682,7 @@ class VoucherPaymentController extends Controller
 
                     return redirect()->back()
                         ->withInput()
-                        ->with('error', 'Transporter advance (₹'.number_format((float) $transporter->advance_amount, 2).') is less than payment amount ₹'.number_format((float) $data['amount'], 2).'.');
+                        ->with('error', 'Transporter advance ('.number_format((float) $transporter->advance_amount, 2).') is less than payment amount '.number_format((float) $data['amount'], 2).'.');
                 }
                 $this->recordAdvancePaymentForTransporter(
                     (int) $newFreightBooking->transporter_id,

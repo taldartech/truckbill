@@ -205,7 +205,7 @@ class LorryReceiptController extends Controller
                     return $row->gr_date ? date('d-m-Y', strtotime($row->gr_date)) : '-';
                 })
                 ->addColumn('amount_formatted', function ($row) {
-                    return $row->amount ? '₹'.number_format($row->amount, 2) : '₹0.00';
+                    return $row->amount ? ''.number_format($row->amount, 2) : '0.00';
                 })
                 ->addColumn('status_badge', function ($row) {
                     if ($row->invoice_generated == 1) {

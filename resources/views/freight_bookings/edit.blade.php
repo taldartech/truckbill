@@ -121,14 +121,14 @@
                     <div class="mb-2">
                         <strong>LR Amount:</strong><br>
                         <span
-                            class="badge bg-brand-primary text-white fs-6">₹{{ $freightBooking->lr ? number_format($freightBooking->lr->amount ?? 0, 2) : '0.00' }}</span>
+                            class="badge bg-brand-primary text-white fs-6">{{ $freightBooking->lr ? number_format($freightBooking->lr->amount ?? 0, 2) : '0.00' }}</span>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="mb-2">
                         <strong>Rate:</strong><br>
                         <span
-                            class="badge bg-brand-primary text-white fs-6">₹{{ $freightBooking->lr ? number_format($freightBooking->lr->fr_rate ?? 0, 2) : '0.00' }}</span>
+                            class="badge bg-brand-primary text-white fs-6">{{ $freightBooking->lr ? number_format($freightBooking->lr->fr_rate ?? 0, 2) : '0.00' }}</span>
                     </div>
                 </div>
             </div>
@@ -211,11 +211,11 @@
                         <input type="number" step="0.01" min="1" max="20000"
                             class="form-control @error('tr_fr_rate') is-invalid @enderror" name="tr_fr_rate" id="tr_fr_rate"
                             value="{{ old('tr_fr_rate', $freightBooking->tr_fr_rate) }}"
-                            placeholder="Enter freight rate (₹1 - ₹20,000 per ton)" required
+                            placeholder="Enter freight rate (1 - 20,000 per ton)" required
                             {{  $is_voucher_created || !$is_admin ? 'readonly style=background-color:#e9ecef;' : '' }}
                             {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
                         <small class="form-text text-muted">
-                            <i class="fas fa-info-circle"></i> Rate must be between ₹1 and ₹20,000 per ton
+                            <i class="fas fa-info-circle"></i> Rate must be between 1 and 20,000 per ton
                         </small>
                         @error('tr_fr_rate')
                             <div class="text-danger">{{ $message }}</div>
@@ -702,11 +702,11 @@
                             )->first();
                         @endphp
                         @if ($cancelledfr)
-                            <p><strong>TR Freight Rate:</strong> ₹{{ number_format($cancelledfr->tr_fr_rate, 2) }}</p>
-                            <p><strong>TR Amount:</strong> ₹{{ number_format($cancelledfr->tr_amount, 2) }}</p>
-                            <p><strong>TDS Amount:</strong> ₹{{ number_format($cancelledfr->tds_amount, 2) }}</p>
-                            <p><strong>Balance Amount:</strong> ₹{{ number_format($cancelledfr->balance_amount, 2) }}</p>
-                            <p><strong>Advance Amount:</strong> ₹{{ number_format($cancelledfr->advance_amount, 2) }}</p>
+                            <p><strong>TR Freight Rate:</strong> {{ number_format($cancelledfr->tr_fr_rate, 2) }}</p>
+                            <p><strong>TR Amount:</strong> {{ number_format($cancelledfr->tr_amount, 2) }}</p>
+                            <p><strong>TDS Amount:</strong> {{ number_format($cancelledfr->tds_amount, 2) }}</p>
+                            <p><strong>Balance Amount:</strong> {{ number_format($cancelledfr->balance_amount, 2) }}</p>
+                            <p><strong>Advance Amount:</strong> {{ number_format($cancelledfr->advance_amount, 2) }}</p>
                             <p><strong>E-Way Bill Number:</strong> {{ $cancelledfr->eway_bill_number ?? 'N/A' }}</p>
                             <p><strong>E-Way Bill Expiry Date:</strong>
                               {{ $cancelledfr->eway_bill_expiry ? \Carbon\Carbon::parse($cancelledfr->eway_bill_expiry)->format('d M Y') : 'N/A' }}
@@ -851,13 +851,13 @@
                     const tdsAmount = document.getElementById('tds_amount').value;
                     const balanceAmount = document.getElementById('balance_amount').value;
 
-                    document.getElementById('confirm-tr-rate').textContent = '₹' + parseFloat(trRate)
+                    document.getElementById('confirm-tr-rate').textContent = '' + parseFloat(trRate)
                         .toFixed(2) + ' per ton';
-                    document.getElementById('confirm-tr-amount').textContent = '₹' + parseFloat(trAmount)
+                    document.getElementById('confirm-tr-amount').textContent = '' + parseFloat(trAmount)
                         .toFixed(2);
-                    document.getElementById('confirm-tds-amount').textContent = '₹' + parseFloat(tdsAmount)
+                    document.getElementById('confirm-tds-amount').textContent = '' + parseFloat(tdsAmount)
                         .toFixed(2);
-                    document.getElementById('confirm-balance-amount').textContent = '₹' + parseFloat(
+                    document.getElementById('confirm-balance-amount').textContent = '' + parseFloat(
                         balanceAmount).toFixed(2);
 
                     // Status
@@ -883,15 +883,15 @@
                         const damageAmount = document.getElementById('damage_amount').value || '0.00';
                         const shortageAmount = document.getElementById('shortage_amount').value || '0.00';
 
-                        document.getElementById('confirm-detention').textContent = '₹' + parseFloat(
+                        document.getElementById('confirm-detention').textContent = '' + parseFloat(
                             detention).toFixed(2);
-                        document.getElementById('confirm-deviation').textContent = '₹' + parseFloat(
+                        document.getElementById('confirm-deviation').textContent = '' + parseFloat(
                             deviation).toFixed(2);
-                        document.getElementById('confirm-misc-expense').textContent = '₹' + parseFloat(
+                        document.getElementById('confirm-misc-expense').textContent = '' + parseFloat(
                             miscExpense).toFixed(2);
-                        document.getElementById('confirm-damage-amount').textContent = '₹' + parseFloat(
+                        document.getElementById('confirm-damage-amount').textContent = '' + parseFloat(
                             damageAmount).toFixed(2);
-                        document.getElementById('confirm-shortage-amount').textContent = '₹' + parseFloat(
+                        document.getElementById('confirm-shortage-amount').textContent = '' + parseFloat(
                             shortageAmount).toFixed(2);
                     } else {
                         additionalChargesRow.style.display = 'none';

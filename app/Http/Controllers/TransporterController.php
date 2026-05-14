@@ -105,7 +105,7 @@ class TransporterController extends Controller
                         'contact_person' => $transporter->contact_person_name ?: '-',
                         'contact_number' => $transporter->mobile_number ?: '-',
                         'declaration_given' => $transporter->declaration_given ? 'Yes' : 'No',
-                        'advance_amount' => '₹'.number_format($transporter->advance_amount ?: 0, 2),
+                        'advance_amount' => ''.number_format($transporter->advance_amount ?: 0, 2),
                         'company' => $transporter->company?->name ?: '-',
                         'actions' => $this->getActionButtons((object) [
                             'id' => $transporter->id,
@@ -166,7 +166,7 @@ class TransporterController extends Controller
                         'contact_person' => $transporter->contact_person_name ?: '-',
                         'contact_number' => $transporter->mobile_number ?: '-',
                         'declaration_given' => $transporter->declaration_given ? 'Yes' : 'No',
-                        'advance_amount' => '₹'.number_format($transporter->advance_amount ?: 0, 2),
+                        'advance_amount' => ''.number_format($transporter->advance_amount ?: 0, 2),
                         'company' => $transporter->company?->name ?: '-',
                         'actions' => $this->getActionButtons((object) [
                             'id' => $transporter->id,
@@ -298,7 +298,7 @@ class TransporterController extends Controller
 
                     'contact_number' => $transporter->mobile_number ?: '-',
                     'declaration_given' => $transporter->declaration_given ? 'Yes' : 'No',
-                    'advance_amount' => '₹'.number_format($transporter->advance_amount ?: 0, 2),
+                    'advance_amount' => ''.number_format($transporter->advance_amount ?: 0, 2),
                     'company' => $transporter->company_name ?: '-',
                     'actions' => $this->getActionButtons($transporter),
                 ];
@@ -366,7 +366,7 @@ class TransporterController extends Controller
             ->map(function ($payment) {
                 return [
                     'id' => $payment->id,
-                    'amount' => '₹'.number_format($payment->advance_amount, 2),
+                    'amount' => ''.number_format($payment->advance_amount, 2),
                     'payment_date' => $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('d-m-Y') : 'Not specified',
                     'remark' => $payment->remark ?: 'No remarks',
                     'created_at' => $payment->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
@@ -391,7 +391,7 @@ class TransporterController extends Controller
             'declaration_given' => $transporter->declaration_given ? 'Yes' : 'No',
             'tds_percentage' => $transporter->tds_percentage ?: '0',
             'tds_adjustment_remark' => $transporter->tds_adjustment_remark ?: '',
-            'advance_amount' => '₹'.number_format($transporter->advance_amount, 2),
+            'advance_amount' => ''.number_format($transporter->advance_amount, 2),
             'created_at' => $transporter->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
             'updated_at' => $transporter->updated_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
             'advance_payments' => $advancePayments,

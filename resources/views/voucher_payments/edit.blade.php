@@ -106,13 +106,13 @@
                     <div class="col-md-3">
                         <div class="mb-2">
                             <strong>TR Amount:</strong><br>
-                            <span>₹{{ number_format($freightBooking->tr_amount, 2) }}</span>
+                            <span>{{ number_format($freightBooking->tr_amount, 2) }}</span>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="mb-2">
                             <strong>Advance Amount:</strong><br>
-                            <span>₹{{ number_format($freightBooking->advance_amount, 2) }}</span>
+                            <span>{{ number_format($freightBooking->advance_amount, 2) }}</span>
                         </div>
                     </div>
                 </div>
@@ -120,7 +120,7 @@
                     <div class="col-md-3">
                         <div class="mb-2">
                             <strong>Balance Amount:</strong><br>
-                            <span class="text-success fw-bold">₹{{ number_format($balanceAmount, 2) }}</span>
+                            <span class="text-success fw-bold">{{ number_format($balanceAmount, 2) }}</span>
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -324,7 +324,7 @@
                     <div class="col-md-4 mb-3">
                         <label for="amount" class="form-label">Amount *</label>
                         <div class="input-group">
-                            <span class="input-group-text">₹</span>
+                            <span class="input-group-text"></span>
                             <input type="number" step="0.01" name="amount" id="amount" class="form-control"
                                 value="{{ old('amount', $voucher_payment->amount) }}" required>
                         </div>

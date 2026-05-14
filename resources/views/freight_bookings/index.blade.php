@@ -596,7 +596,7 @@
                             <td>${lrNumber}</td>
                             <td>${truckNumber}</td>
                             <td>${voucherNumber}</td>
-                            <td class="text-end">₹${balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                            <td class="text-end">${balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                             <td>
                                 <input type="number" class="form-control payment-amount allocated-input"
                                       data-id="${data.id}"
@@ -651,7 +651,7 @@
                                 <tfoot>
                                     <tr class="table-info">
                                         <th colspan="4" class="text-end">Total Payment:</th>
-                                        <th class="text-end" id="totalPaymentAmount">₹${totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</th>
+                                        <th class="text-end" id="totalPaymentAmount">${totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</th>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -798,7 +798,7 @@
                         @csrf
                         <div class="alert alert-secondary d-flex align-items-center justify-content-between">
                             <div>
-                                <strong>Total Balance of Selected:</strong> ₹<span id="combinedTotalBalance">${totalBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                                <strong>Total Balance of Selected:</strong> <span id="combinedTotalBalance">${totalBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 <label class="form-label mb-0">Combined Amount *</label>
@@ -814,7 +814,7 @@
                                           value="${totalBalance.toFixed(2)}"
                                           required>
                                     <div class="invalid-feedback">
-                                        Amount must be between 0.01 and ₹${totalBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}
+                                        Amount must be between 0.01 and ${totalBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}
                                     </div>
                                 </div>
                             </div>
@@ -833,7 +833,7 @@
                                 <tfoot class="d-none">
                                     <tr class="table-info">
                                         <th colspan="3" class="text-end">Total Allocated:</th>
-                                        <th class="text-end" id="combinedAllocatedTotal">₹${totalBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</th>
+                                        <th class="text-end" id="combinedAllocatedTotal">${totalBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</th>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -964,7 +964,7 @@
 
                     // Update total allocated display
                     $('#combinedAllocatedTotal').text(
-                        '₹' + totalAmount.toLocaleString('en-IN', {
+                        '' + totalAmount.toLocaleString('en-IN', {
                             minimumFractionDigits: 2
                         })
                     );
@@ -991,7 +991,7 @@
 
                     // Update totals
                     $('#combinedAllocatedTotal').text(
-                        '₹' + allocatedTotal.toLocaleString('en-IN', {
+                        '' + allocatedTotal.toLocaleString('en-IN', {
                             minimumFractionDigits: 2
                         })
                     );
@@ -1027,7 +1027,7 @@
                                 const confirmMessage = `⚠️ DUPLICATE PAYMENT WARNING ⚠️\n\n` +
                                     `A similar payment already exists for booking ID ${data.booking_index || 'N/A'}:\n\n` +
                                     `Date: ${duplicate.date}\n` +
-                                    `Amount: ₹${duplicate.amount}\n` +
+                                    `Amount: ${duplicate.amount}\n` +
                                     `Payment Type: ${duplicate.payment_type}\n` +
                                     `Payment Mode: ${duplicate.payment_mode}\n` +
                                     `Created: ${duplicate.created_at}\n\n` +
@@ -1040,7 +1040,7 @@
                                         <p><strong>A similar payment already exists:</strong></p>
                                         <ul style="text-align: left;">
                                             <li><strong>Date:</strong> ${duplicate.date}</li>
-                                            <li><strong>Amount:</strong> ₹${duplicate.amount}</li>
+                                            <li><strong>Amount:</strong> ${duplicate.amount}</li>
                                             <li><strong>Payment Type:</strong> ${duplicate.payment_type}</li>
                                             <li><strong>Payment Mode:</strong> ${duplicate.payment_mode}</li>
                                             <li><strong>Created:</strong> ${duplicate.created_at}</li>
@@ -1088,7 +1088,7 @@
                         if (data.adjust_in_advance && data.remaining_advance_balance !== undefined) {
                             const name = data.transporter_name || 'Transporter';
                             const bal = parseFloat(data.remaining_advance_balance).toFixed(2);
-                            successText += '\n\nRemaining advance balance (' + name + '): ₹ ' + bal;
+                            successText += '\n\nRemaining advance balance (' + name + '):  ' + bal;
                         }
                         Swal.fire({
                             icon: 'success',
@@ -1155,9 +1155,9 @@
                             <td>${lrNumber}</td>
                             <td>${truckNumber}</td>
                             <td class="text-end">${freightRate.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                            <td class="text-end">₹${amount + shortageAmount + damageAmount}</td>
-                            <td class="text-end">₹${shortageAmount}</td>
-                            <td class="text-end">₹${damageAmount}</td>
+                            <td class="text-end">${amount + shortageAmount + damageAmount}</td>
+                            <td class="text-end">${shortageAmount}</td>
+                            <td class="text-end">${damageAmount}</td>
                             <input type="hidden" name="lr_ids[]" value="${lrId}">
                             <input type="hidden" name="freight_booking_ids[]" value="${freightBookingId}">
                         </tr>
@@ -1193,7 +1193,7 @@
                                 <tfoot>
                                     <tr class="table-info">
                                         <th colspan="5" class="text-end">Net Amount:</th>
-                                        <th class="text-end">₹${netAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</th>
+                                        <th class="text-end">${netAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</th>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -1229,7 +1229,7 @@
                 $('.payment-amount').each(function() {
                     total += parseFloat($(this).val()) || 0;
                 });
-                $('#totalPaymentAmount').text('₹' + total.toLocaleString('en-IN', {
+                $('#totalPaymentAmount').text('' + total.toLocaleString('en-IN', {
                     minimumFractionDigits: 2
                 }));
             });
@@ -1546,7 +1546,7 @@
                       <tr>
                           <td>${lrNumber}</td>
                           <td>${voucherNumber}</td>
-                          <td class="text-end">₹${balance.toFixed(2)}</td>
+                          <td class="text-end">${balance.toFixed(2)}</td>
                           <td>
                               <input type="number" class="form-control form-control-sm payment-amount"
                                     name="payments[${freightBookingId}]"
@@ -1559,7 +1559,7 @@
                     $('#voucherPaymentTableBody').append(row);
                 });
 
-                $('#totalPaymentAmount').text('₹' + totalBalance.toLocaleString('en-IN', {
+                $('#totalPaymentAmount').text('' + totalBalance.toLocaleString('en-IN', {
                     minimumFractionDigits: 2
                 }));
             });
@@ -1584,11 +1584,11 @@
                     input.addClass('is-invalid');
                     if (!input.next('.invalid-feedback').length) {
                         input.after(
-                            `<div class="invalid-feedback">Amount cannot exceed balance (₹${max.toFixed(2)})</div>`
+                            `<div class="invalid-feedback">Amount cannot exceed balance (${max.toFixed(2)})</div>`
                         );
                     } else {
                         input.next('.invalid-feedback').text(
-                            `Amount cannot exceed balance (₹${max.toFixed(2)})`);
+                            `Amount cannot exceed balance (${max.toFixed(2)})`);
                     }
                     input.val(max.toFixed(2)); // Correct the value to maximum allowed
                 }
@@ -1610,7 +1610,7 @@
                     }
                 });
 
-                $('#totalPaymentAmount').text('₹' + total.toLocaleString('en-IN', {
+                $('#totalPaymentAmount').text('' + total.toLocaleString('en-IN', {
                     minimumFractionDigits: 2
                 }));
 
@@ -2024,7 +2024,7 @@
                                 <td>${payment.freight_booking?.lr?.lr_number || 'N/A'}</td>
                                 <td>${payment.payment_type}</td>
                                 <td>${paymentModeDisplay}</td>
-                                <td class="text-end">₹${parseFloat(payment.amount).toFixed(2)}</td>
+                                <td class="text-end">${parseFloat(payment.amount).toFixed(2)}</td>
                             </tr>
                         `;
                     });
@@ -2065,7 +2065,7 @@
                             <td style="text-align: left; padding: 8px; border: 1px solid #ddd;">${lrNumber || 'N/A'}</td>
                             <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${firstTruck || 'N/A'}</td>
                             <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${voucherNumber || 'N/A'}</td>
-                            <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">₹${balance.toFixed(2)}</td>
+                            <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">${balance.toFixed(2)}</td>
                             <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">
                                 <input type="number" step="0.01" min="0" max="${balance}"
                                       style="width: 80px; text-align: right; border: 1px solid #ccc; padding: 2px;"
@@ -2094,7 +2094,7 @@
                   </table>
 
                   <div style="background-color: #e3f2fd; padding: 10px; margin: 10px 0; border-radius: 4px;">
-                      <strong>TOTAL PAYMENT: ₹<span id="totalPaymentAmount">${lrData.reduce((sum, item) => sum + item.balance, 0).toFixed(2)}</span></strong>
+                      <strong>TOTAL PAYMENT: <span id="totalPaymentAmount">${lrData.reduce((sum, item) => sum + item.balance, 0).toFixed(2)}</span></strong>
                   </div>
                   <div style="margin: 15px 0;">
                       <div style="display: flex; gap: 15px; margin-bottom: 15px;">
@@ -2159,7 +2159,7 @@
                             <td style="text-align: left; padding: 8px; border: 1px solid #ddd;">${lrNumber || 'N/A'}</td>
                             <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${firstTruck || 'N/A'}</td>
                             <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${voucherNumber || 'N/A'}</td>
-                            <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">₹${balance.toFixed(2)}</td>
+                            <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">${balance.toFixed(2)}</td>
                             <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">
                                 <input type="number" step="0.01" min="0" max="${balance}"
                                       style="width: 80px; text-align: right; border: 1px solid #ccc; padding: 2px;"
@@ -2188,7 +2188,7 @@
                     </table>
 
                     <div style="background-color: #e3f2fd; padding: 10px; margin: 10px 0; border-radius: 4px;">
-                        <strong>TOTAL PAYMENT: ₹<span id="totalPaymentAmount">${lrData.reduce((sum, item) => sum + item.balance, 0).toFixed(2)}</span></strong>
+                        <strong>TOTAL PAYMENT: <span id="totalPaymentAmount">${lrData.reduce((sum, item) => sum + item.balance, 0).toFixed(2)}</span></strong>
                     </div>
 
                     <div style="margin: 15px 0;">
@@ -2263,7 +2263,7 @@
                                 </div>
                                 <div class="d-flex justify-content-between">
                                     <span><strong>Balance Amount:</strong></span>
-                                    <span class="text-success"><strong>₹${balance.toFixed(2)}</strong></span>
+                                    <span class="text-success"><strong>${balance.toFixed(2)}</strong></span>
                                 </div>
                             </div>
                         </div>
@@ -2315,11 +2315,11 @@
                             <div class="col-md-6">
                                 <label for="individualTotalAmountInput" class="form-label">Payment Amount *</label>
                                 <div class="input-group">
-                                    <span class="input-group-text">₹</span>
+                                    <span class="input-group-text"></span>
                                     <input type="number" step="0.01" class="form-control" name="total_amount" id="individualTotalAmountInput" min="0.01" max="${balance}" required>
                                 </div>
                                 <div class="invalid-feedback">Please enter a valid payment amount.</div>
-                                <small class="text-muted">Amount must be greater than zero and not exceed ₹${balance.toFixed(2)}</small>
+                                <small class="text-muted">Amount must be greater than zero and not exceed ${balance.toFixed(2)}</small>
                             </div>
                         </div>
                     </div>
@@ -2362,7 +2362,7 @@
             // Validate amount doesn't exceed balance
             if (amountValue > maxAmount) {
                 alert(
-                    `Payment amount (₹${amountValue.toFixed(2)}) cannot exceed the balance amount (₹${maxAmount.toFixed(2)}).`
+                    `Payment amount (${amountValue.toFixed(2)}) cannot exceed the balance amount (${maxAmount.toFixed(2)}).`
                 );
                 totalAmountInput.focus();
                 return;
@@ -2404,7 +2404,7 @@
                         if (data.adjust_in_advance && data.remaining_advance_balance !== undefined) {
                             const name = data.transporter_name || 'Transporter';
                             const bal = parseFloat(data.remaining_advance_balance).toFixed(2);
-                            successText += '\n\nRemaining advance balance (' + name + '): ₹ ' + bal;
+                            successText += '\n\nRemaining advance balance (' + name + '):  ' + bal;
                         }
                         Swal.fire({
                             icon: 'success',
@@ -2488,11 +2488,11 @@
                             'invalid-feedback')) {
                         const errorMsg = document.createElement('div');
                         errorMsg.className = 'invalid-feedback';
-                        errorMsg.textContent = `Amount cannot exceed balance (₹${maxValue.toFixed(2)})`;
+                        errorMsg.textContent = `Amount cannot exceed balance (${maxValue.toFixed(2)})`;
                         input.parentNode.insertBefore(errorMsg, input.nextSibling);
                     } else {
                         input.nextElementSibling.textContent =
-                            `Amount cannot exceed balance (₹${maxValue.toFixed(2)})`;
+                            `Amount cannot exceed balance (${maxValue.toFixed(2)})`;
                     }
                     hasError = true;
                 }
@@ -2572,7 +2572,7 @@
 
                 if (amount < minAmount || amount > maxAmount) {
                     alert(
-                        `Error: Payment amount for LR ${lrNumber} (₹${amount.toFixed(2)}) must be between ₹${minAmount.toFixed(2)} and ₹${maxAmount.toFixed(2)}.`
+                        `Error: Payment amount for LR ${lrNumber} (${amount.toFixed(2)}) must be between ${minAmount.toFixed(2)} and ${maxAmount.toFixed(2)}.`
                     );
                     input.focus();
                     hasValidationError = true;
@@ -2648,7 +2648,7 @@
                         if (data.adjust_in_advance && data.remaining_advance_balance !== undefined) {
                             const name = data.transporter_name || 'Transporter';
                             const bal = parseFloat(data.remaining_advance_balance).toFixed(2);
-                            successText += '\n\nRemaining advance balance (' + name + '): ₹ ' + bal;
+                            successText += '\n\nRemaining advance balance (' + name + '):  ' + bal;
                         }
                         Swal.fire({
                             icon: 'success',
@@ -2666,7 +2666,7 @@
                             const confirmMessage = `⚠️ DUPLICATE PAYMENT WARNING ⚠️\n\n` +
                                 `A similar payment already exists for this booking:\n\n` +
                                 `Date: ${duplicate.date}\n` +
-                                `Amount: ₹${duplicate.amount}\n` +
+                                `Amount: ${duplicate.amount}\n` +
                                 `Payment Type: ${duplicate.payment_type}\n` +
                                 `Payment Mode: ${duplicate.payment_mode}\n` +
                                 `Created: ${duplicate.created_at}\n\n` +
@@ -2691,7 +2691,7 @@
                                         if (data.adjust_in_advance && data.remaining_advance_balance !== undefined) {
                                             const name = data.transporter_name || 'Transporter';
                                             const bal = parseFloat(data.remaining_advance_balance).toFixed(2);
-                                            successText += '\n\nRemaining advance balance (' + name + '): ₹ ' + bal;
+                                            successText += '\n\nRemaining advance balance (' + name + '):  ' + bal;
                                         }
                                         Swal.fire({
                                             icon: 'success',

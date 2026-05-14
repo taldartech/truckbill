@@ -174,7 +174,7 @@
                 <div class="col-md-4">
                     <label class="form-label">Book Balance</label>
                     <div class="form-control-plaintext bg-light border rounded px-3 py-2">
-                        <strong>₹ 0.00</strong>
+                        <strong> 0.00</strong>
                         <small class="text-muted d-block">Read-only field</small>
                     </div>
                     <input type="hidden" name="advance_amount" value="0">
@@ -737,7 +737,7 @@
 
           document.getElementById('confirm-is-owner').textContent = isOwner;
           document.getElementById('confirm-declaration').textContent = declaration;
-          document.getElementById('confirm-advance').textContent = '₹' + parseFloat(advance).toFixed(2);
+          document.getElementById('confirm-advance').textContent = '' + parseFloat(advance).toFixed(2);
 
           // Show modal
           const modal = new bootstrap.Modal(document.getElementById('confirmationModal'));

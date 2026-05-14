@@ -406,7 +406,7 @@
                 // Validate amount
                 var remainingAmount = {{ $invoice->remaining_amount }};
                 if (formData.amount > remainingAmount) {
-                    $('#payment_error').removeClass('d-none').text('Payment amount cannot exceed remaining balance of ₹' + remainingAmount.toFixed(2));
+                    $('#payment_error').removeClass('d-none').text('Payment amount cannot exceed remaining balance of ' + remainingAmount.toFixed(2));
                     return;
                 }
 

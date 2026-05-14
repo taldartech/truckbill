@@ -122,7 +122,7 @@
                 </div>
                 <div>
                     <h6 class="text-muted fw-semi-bold mb-1">Outstanding Amount</h6>
-                    <h3 class="fw-bold mb-1">₹{{ number_format($monthlyStats['outstanding_amount'], 2) }}</h3>
+                    <h3 class="fw-bold mb-1">{{ number_format($monthlyStats['outstanding_amount'], 2) }}</h3>
                     <span class="badge bg-soft-warning text-warning rounded-pill">Invoice Balance</span>
                 </div>
             </div>
@@ -206,7 +206,7 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <h5 class="mb-0 fw-bold text-dark"><i class="fas fa-file-invoice text-primary me-2"></i> Pending Invoices</h5>
                     {{-- <a href="{{ route('invoices.index') }}" class="btn btn-sm btn-brand-secondary rounded-pill px-3">View All</a> --}}
-                    <a href="{{ route('invoices.index') }}" 
+                    <a href="{{ route('invoices.index') }}"
                         class="btn btn-sm btn-brand-secondary rounded-pill px-3"
                         style="background-color:#fff !important; color:#43b32f !important; border:1px solid #43b32f !important;">
                         View All
@@ -253,8 +253,8 @@
                                     </td>
                                     <td class="text-end">
                                         <div class="d-flex flex-column">
-                                            <span class="fw-bold text-danger">₹{{ number_format($remainingAmount, 2) }}</span>
-                                            <small class="text-muted">of ₹{{ number_format($amountToCollect, 2) }}</small>
+                                            <span class="fw-bold text-danger">{{ number_format($remainingAmount, 2) }}</span>
+                                            <small class="text-muted">of {{ number_format($amountToCollect, 2) }}</small>
                                         </div>
                                     </td>
                                     <td>

@@ -21,7 +21,7 @@
                 </div>
                 <div>
                     <h6 class="text-muted fw-semi-bold mb-1">System Revenue</h6>
-                    <h3 class="fw-bold mb-1 text-truncate">₹{{ number_format($systemStats['monthly_revenue'], 2) }}</h3>
+                    <h3 class="fw-bold mb-1 text-truncate">{{ number_format($systemStats['monthly_revenue'], 2) }}</h3>
                     <span class="badge bg-soft-success text-success rounded-pill">Monthly Total</span>
                 </div>
             </div>
@@ -175,7 +175,7 @@
                             @foreach($topCompaniesByRevenue->take(5) as $company)
                                 <tr>
                                     <td class="ps-4 fw-medium">{{ Str::limit($company->name, 35) }}</td>
-                                    <td class="text-end pe-4 fw-bold text-success">₹{{ number_format($company->monthly_revenue ?? 0, 2) }}</td>
+                                    <td class="text-end pe-4 fw-bold text-success">{{ number_format($company->monthly_revenue ?? 0, 2) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>

@@ -232,7 +232,7 @@
                                     @endif
                                 </select>
                             </div>
-                           
+
                             @error('transporter_id')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
@@ -430,11 +430,11 @@
                             <label for="goods_value" class="form-label">Goods Value <small
                                     class="text-muted">(Optional)</small></label>
                             <input type="number" step="0.01" class="form-control" id="goods_value" name="goods_value"
-                                value="{{ old('goods_value') }}" min="0" placeholder="₹">
+                                value="{{ old('goods_value') }}" min="0" placeholder="">
                             @error('goods_value')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
-                            <small class="text-muted">Value of goods (₹)</small>
+                            <small class="text-muted">Value of goods ()</small>
                         </div>
 
                     </div>
@@ -452,16 +452,16 @@
                             <small class="text-muted">📏 Range: 0.1 - 100 tons</small>
                         </div>
                         <div class="col-md-4">
-                            <label for="fr_rate" class="form-label">Freight Rate * <small class="text-muted">(₹ per
+                            <label for="fr_rate" class="form-label">Freight Rate * <small class="text-muted">( per
                                     ton)</small></label>
                             <input type="number" step="0.01" class="form-control" id="fr_rate" name="fr_rate"
                                 required value="{{ old('fr_rate') }}" min="1" max="20000"
-                                title="Freight rate must be between ₹1 and ₹20,000 per ton">
+                                title="Freight rate must be between 1 and 20,000 per ton">
                             @error('fr_rate')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
-                            <div class="invalid-feedback">Please enter a freight rate between ₹1 and ₹20,000.</div>
-                            <small class="text-muted">💰 Range: ₹1 - ₹20,000 per ton</small>
+                            <div class="invalid-feedback">Please enter a freight rate between 1 and 20,000.</div>
+                            <small class="text-muted">💰 Range: 1 - 20,000 per ton</small>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label d-flex justify-content-between align-items-center">
@@ -1388,7 +1388,7 @@ grNumberInput.addEventListener('blur', function() {
                 const value = parseFloat(frRateInput.value);
 
                 if (frRateInput.value && (isNaN(value) || value < 1 || value > 20000)) {
-                    frRateInput.setCustomValidity('Please enter a valid freight rate between ₹1 and ₹20,000.');
+                    frRateInput.setCustomValidity('Please enter a valid freight rate between 1 and 20,000.');
                     frRateInput.classList.add('is-invalid');
                     frRateInput.classList.remove('is-valid');
                 } else if (frRateInput.value) {
@@ -1557,14 +1557,14 @@ grNumberInput.addEventListener('blur', function() {
                                                 Qty: ${formData.get('no_of_units') || '-'}
                                             </span>
                                             <span class="badge bg-white border border-secondary border-opacity-25 text-dark fw-medium" style="font-size:0.75rem;">
-                                                Rate: ₹${formData.get('fr_rate') || '-'}
+                                                Rate: ${formData.get('fr_rate') || '-'}
                                             </span>
                                         </div>
                                     </div>
                                     <div class="col-md-5 d-flex justify-content-md-end align-items-center">
                                         <div class="bg-success bg-opacity-10 px-3 py-1 rounded-3 border border-success border-opacity-25 text-end w-100">
                                             <span class="text-success fw-bold text-uppercase d-block mb-0" style="font-size: 0.7rem;">Total Amount</span>
-                                            <h5 class="mb-0 text-success fw-bold">₹${formData.get('amount') || '0.00'}</h5>
+                                            <h5 class="mb-0 text-success fw-bold">${formData.get('amount') || '0.00'}</h5>
                                         </div>
                                     </div>
                                 </div>
@@ -1610,7 +1610,7 @@ grNumberInput.addEventListener('blur', function() {
                         `Consignor: ${consignorName}\n` +
                         `Consignee: ${consigneeName}\n` +
                         `Weight: ${formData.get('weight')} tons\n` +
-                        `Amount: ₹${formData.get('amount')}\n\n` +
+                        `Amount: ${formData.get('amount')}\n\n` +
                         `Do you want to submit this good receipt (bilty)?`;
 
                     if (confirm(confirmText)) {

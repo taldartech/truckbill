@@ -109,7 +109,7 @@
                         <div class="mb-3">
                             <label for="advance_amount" class="form-label">Book Balance *</label>
                             <div class="input-group">
-                                <span class="input-group-text">₹</span>
+                                <span class="input-group-text"></span>
                                 <input type="number" step="0.01" class="form-control" id="advance_amount"
                                     name="advance_amount" required placeholder="Use + to add, - to deduct">
                             </div>
@@ -526,7 +526,7 @@
                 e.preventDefault();
                 //  confirm before submitting
                 let advanceAmount = $('#advance_amount').val();
-                if (!confirm('Are you sure you want to submit a book balance entry of ₹' + advanceAmount +
+                if (!confirm('Are you sure you want to submit a book balance entry of ' + advanceAmount +
                         '?')) {
                     return false;
                 }
@@ -555,7 +555,7 @@
                         $('body').prepend(`
                     <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
                         <i class="bi bi-check-circle"></i>
-                        <strong>Success!</strong> Book balance entry of ₹${$('#advance_amount').val()} has been saved successfully.
+                        <strong>Success!</strong> Book balance entry of ${$('#advance_amount').val()} has been saved successfully.
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 `);

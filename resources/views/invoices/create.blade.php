@@ -620,7 +620,7 @@
                                 tableHtml += `
                                     <div class="card border-dark">
                                         <div class="card-body text-end">
-                                            <h5 class="mb-0 fw-bold">Grand Total Amount: ₹${grandTotalAmount.toFixed(2)}</h5>
+                                            <h5 class="mb-0 fw-bold">Grand Total Amount: ${grandTotalAmount.toFixed(2)}</h5>
                                         </div>
                                     </div>
                                 `;
@@ -668,9 +668,9 @@
                                                     tableHtml += `
                                                         <div class="card border-dark">
                                                             <div class="card-body text-end">
-                                                                <p class="mb-1" name="sgst">SGST (${gst_slab / 2}%): ₹${sgst.toFixed(2)}</p>
-                                                                <p class="mb-1" name="cgst">CGST (${gst_slab / 2}%): ₹${cgst.toFixed(2)}</p>
-                                                                <h5 class="mb-0 fw-bold" name="net_amount">Net Total: ₹${netTotal.toFixed(2)}</h5>
+                                                                <p class="mb-1" name="sgst">SGST (${gst_slab / 2}%): ${sgst.toFixed(2)}</p>
+                                                                <p class="mb-1" name="cgst">CGST (${gst_slab / 2}%): ${cgst.toFixed(2)}</p>
+                                                                <h5 class="mb-0 fw-bold" name="net_amount">Net Total: ${netTotal.toFixed(2)}</h5>
                                                             </div>
                                                         </div>
                                                     `;
@@ -694,12 +694,12 @@
                                                     tableHtml += `
                                                         <div class="card border-dark">
                                                             <div class="card-body text-end">
-                                                                <p class="mb-1" name="sgst">SGST (${gst_slab/2}%): ₹${sgst.toFixed(2)}</p>
-                                                                        <p class="mb-1" name="cgst">CGST (${gst_slab/2}%): ₹${cgst.toFixed(2)}</p>
-                                                                <h5 class="mb-0 fw-bold" name="net_amount"> Total: ₹${netTotal.toFixed(2)}</h5>
+                                                                <p class="mb-1" name="sgst">SGST (${gst_slab/2}%): ${sgst.toFixed(2)}</p>
+                                                                        <p class="mb-1" name="cgst">CGST (${gst_slab/2}%): ${cgst.toFixed(2)}</p>
+                                                                <h5 class="mb-0 fw-bold" name="net_amount"> Total: ${netTotal.toFixed(2)}</h5>
 
-                                                                <p class="mb-1" name="gst">Tax under RCM: ₹${gst.toFixed(2)}</p>
-                                                                <h5 class="mb-0 fw-bold" >Net Total: ₹${grandTotalAmount.toFixed(2)}</h5>
+                                                                <p class="mb-1" name="gst">Tax under RCM: ${gst.toFixed(2)}</p>
+                                                                <h5 class="mb-0 fw-bold" >Net Total: ${grandTotalAmount.toFixed(2)}</h5>
 
                                                             </div>
                                                         </div>
@@ -727,8 +727,8 @@
                                                     tableHtml += `
                                                         <div class="card border-dark">
                                                             <div class="card-body text-end">
-                                                                <p class="mb-1" name="igst">IGST (${gst_slab}%): ₹${igst.toFixed(2)}</p>
-                                                                <h5 class="mb-0 fw-bold" name="net_amount">Net Total: ₹${netTotal.toFixed(2)}</h5>
+                                                                <p class="mb-1" name="igst">IGST (${gst_slab}%): ${igst.toFixed(2)}</p>
+                                                                <h5 class="mb-0 fw-bold" name="net_amount">Net Total: ${netTotal.toFixed(2)}</h5>
                                                             </div>
                                                         </div>
                                                     `;
@@ -749,10 +749,10 @@
                                                     tableHtml += `
                                                         <div class="card border-dark">
                                                             <div class="card-body text-end">
-                                                                <p class="mb-1" name="igst">IGST (${gst_slab}%): ₹${igst.toFixed(2)}</p>
-                                                                <h5 class="mb-0 fw-bold" name="net_amount"> Total: ₹${netTotal.toFixed(2)}</h5>
-                                                                <p class="mb-1" name="gst">Tax under RCM: ₹${igst.toFixed(2)}</p>
-                                                                <h5 class="mb-0 fw-bold">Net Total: ₹${grandTotalAmount.toFixed(2)}</h5>
+                                                                <p class="mb-1" name="igst">IGST (${gst_slab}%): ${igst.toFixed(2)}</p>
+                                                                <h5 class="mb-0 fw-bold" name="net_amount"> Total: ${netTotal.toFixed(2)}</h5>
+                                                                <p class="mb-1" name="gst">Tax under RCM: ${igst.toFixed(2)}</p>
+                                                                <h5 class="mb-0 fw-bold">Net Total: ${grandTotalAmount.toFixed(2)}</h5>
 
                                                             </div>
                                                         </div>

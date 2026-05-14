@@ -111,7 +111,7 @@ class CashExport implements FromCollection, WithHeadings, WithTitle, ShouldAutoS
             'Transporter/Truck Owner Name',
             'Short Name',
             'Beneficiary ID',
-            'Amount (₹)',
+            'Amount ()',
             'Narration',
             'TDS Deducted',
             'Status',

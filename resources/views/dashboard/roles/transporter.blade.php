@@ -80,7 +80,7 @@
                 </div>
                 <div>
                     <h6 class="text-muted fw-semi-bold mb-1">Freight Received</h6>
-                    <h3 class="fw-bold mb-1">₹{{ number_format($transporterStats['payments_received'] ?? 0, 2) }}</h3>
+                    <h3 class="fw-bold mb-1">{{ number_format($transporterStats['payments_received'] ?? 0, 2) }}</h3>
                     <span class="badge bg-soft-success text-success rounded-pill">Paid</span>
                 </div>
             </div>
@@ -94,7 +94,7 @@
                 </div>
                 <div>
                     <h6 class="text-muted fw-semi-bold mb-1">Advance Received</h6>
-                    <h3 class="fw-bold mb-1">₹{{ number_format($transporterStats['advance_received'] ?? 0, 2) }}</h3>
+                    <h3 class="fw-bold mb-1">{{ number_format($transporterStats['advance_received'] ?? 0, 2) }}</h3>
                     <span class="badge bg-soft-info text-info rounded-pill">Advance</span>
                 </div>
             </div>
@@ -194,7 +194,7 @@
                                         <small class="text-muted">{{ $booking->lr->consignee->name ?? '-' }}</small>
                                     </td>
                                     <td>{{ $booking->lr->truck->truck_number ?? '-' }}</td>
-                                    <td>₹{{ number_format($booking->tr_amount ?? 0, 2) }}</td>
+                                    <td>{{ number_format($booking->tr_amount ?? 0, 2) }}</td>
                                     <td>
                                         @if($booking->is_delivered)
                                             <span class="badge bg-success">Delivered</span>
@@ -244,7 +244,7 @@
                                 <tr>
                                     <td class="ps-4">{{ $payment->voucher_number ?? '-' }}</td>
                                     <td>#{{ $payment->freight_booking->lr->lr_number ?? '-' }}</td>
-                                    <td>₹{{ number_format($payment->amount ?? 0, 2) }}</td>
+                                    <td>{{ number_format($payment->amount ?? 0, 2) }}</td>
                                     <td><span class="badge bg-{{ $payment->payment_status === 'paid' ? 'success' : 'warning' }}">{{ ucfirst($payment->payment_status ?? '-') }}</span></td>
                                     <td>{{ $payment->date ? \Carbon\Carbon::parse($payment->date)->format('d-m-Y') : '-' }}</td>
                                 </tr>

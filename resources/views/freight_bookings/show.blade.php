@@ -263,22 +263,22 @@
                                 <div class="info-row">
                                     <span class="info-label">TR Rate:</span>
                                     <span
-                                        class="info-value">₹{{ number_format($freightBooking->tr_fr_rate ?? 0, 2) }}</span>
+                                        class="info-value">{{ number_format($freightBooking->tr_fr_rate ?? 0, 2) }}</span>
                                 </div>
                                 <div class="info-row">
                                     <span class="info-label">TR Amount:</span>
                                     <span
-                                        class="info-value">₹{{ number_format($freightBooking->tr_amount ?? 0, 2) }}</span>
+                                        class="info-value">{{ number_format($freightBooking->tr_amount ?? 0, 2) }}</span>
                                 </div>
                                 <div class="info-row">
                                     <span class="info-label">Advance:</span>
                                     <span
-                                        class="info-value">₹{{ number_format($freightBooking->advance_amount ?? 0, 2) }}</span>
+                                        class="info-value">{{ number_format($freightBooking->advance_amount ?? 0, 2) }}</span>
                                 </div>
                                 <div class="info-row">
                                     <span class="info-label">TDS Amount:</span>
                                     <span
-                                        class="info-value">₹{{ number_format($freightBooking->tds_amount ?? 0, 2) }}</span>
+                                        class="info-value">{{ number_format($freightBooking->tds_amount ?? 0, 2) }}</span>
                                 </div>
                                 <div class="info-row">
                                     <span class="info-label">Balance:</span>
@@ -288,7 +288,7 @@
                                             $badgeClass = 'bg-success';
                                         @endphp
                                         <span
-                                            class="badge {{ $badgeClass }} badge-status">₹{{ number_format($freightBooking->balance_amount ?? 0, 2) }}</span>
+                                            class="badge {{ $badgeClass }} badge-status">{{ number_format($freightBooking->balance_amount ?? 0, 2) }}</span>
                                     </span>
                                 </div>
                             @else
@@ -439,27 +439,27 @@
                                             <div class="me-4 mb-2">
                                                 <span class="info-label">Detention: </span>
                                                 <span
-                                                    class="fw-bold">₹{{ number_format($freightBooking->detention ?? 0, 2) }}</span>
+                                                    class="fw-bold">{{ number_format($freightBooking->detention ?? 0, 2) }}</span>
                                             </div>
                                             <div class="me-4 mb-2">
                                                 <span class="info-label">Deviation: </span>
                                                 <span
-                                                    class="fw-bold">₹{{ number_format($freightBooking->deviation ?? 0, 2) }}</span>
+                                                    class="fw-bold">{{ number_format($freightBooking->deviation ?? 0, 2) }}</span>
                                             </div>
                                             <div class="me-4 mb-2">
                                                 <span class="info-label">Misc. Expense: </span>
                                                 <span
-                                                    class="fw-bold">₹{{ number_format($freightBooking->misc_expense ?? 0, 2) }}</span>
+                                                    class="fw-bold">{{ number_format($freightBooking->misc_expense ?? 0, 2) }}</span>
                                             </div>
                                             <div class="me-4 mb-2">
                                                 <span class="info-label">Damage Amount: </span>
                                                 <span
-                                                    class="fw-bold">₹{{ number_format($freightBooking->damage_amount ?? 0, 2) }}</span>
+                                                    class="fw-bold">{{ number_format($freightBooking->damage_amount ?? 0, 2) }}</span>
                                             </div>
                                             <div class="me-4 mb-2">
                                                 <span class="info-label">Shortage Amount: </span>
                                                 <span
-                                                    class="fw-bold">₹{{ number_format($freightBooking->shortage_amount ?? 0, 2) }}</span>
+                                                    class="fw-bold">{{ number_format($freightBooking->shortage_amount ?? 0, 2) }}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -556,7 +556,7 @@
                                     <tr>
                                         <td>#{{ $freightBooking->id }}</td>
                                         <td>{{ $freightBooking->lr ? $freightBooking->lr->lr_number : 'N/A' }}</td>
-                                        <td>₹{{ number_format($freightBooking->balance_amount ?? 0, 2) }}</td>
+                                        <td>{{ number_format($freightBooking->balance_amount ?? 0, 2) }}</td>
                                         <td>
                                             <input type="number" class="form-control allocated-input"
                                                 data-fb-id="{{ $freightBooking->id }}" step="0.01" min="0.01"
@@ -568,7 +568,7 @@
                             </table>
                         </div>
                         <div class="text-end mt-2">
-                            <strong>Total Payment Amount: ₹<span id="totalPaymentAmount">0.00</span></strong>
+                            <strong>Total Payment Amount: <span id="totalPaymentAmount">0.00</span></strong>
                         </div>
                     </div>
 
@@ -719,7 +719,7 @@
                                     <td>#${payment.id}</td>
                                     <td>#${payment.freight_booking_id}</td>
                                     <td>${payment.voucher_number || 'N/A'}</td>
-                                    <td>₹${parseFloat(payment.amount || 0).toFixed(2)}</td>
+                                    <td>${parseFloat(payment.amount || 0).toFixed(2)}</td>
                                     <td>${payment.payment_type || 'N/A'}</td>
                                     <td>${paymentModeDisplay}</td>
                                     <td>${new Date(payment.date).toLocaleDateString('en-IN')}</td>
@@ -774,7 +774,7 @@
                 input.classList.add('is-invalid');
                 const errorMsg = document.createElement('div');
                 errorMsg.className = 'invalid-feedback';
-                errorMsg.textContent = `Amount cannot exceed balance (₹${max.toFixed(2)})`;
+                errorMsg.textContent = `Amount cannot exceed balance (${max.toFixed(2)})`;
                 input.parentNode.insertBefore(errorMsg, input.nextSibling);
                 return false;
             }
@@ -864,7 +864,7 @@
             // Validate payment amount doesn't exceed balance
             if (paymentAmount > maxBalance) {
                 alert(
-                    `Payment amount (₹${paymentAmount.toFixed(2)}) cannot exceed the balance amount (₹${maxBalance.toFixed(2)})`
+                    `Payment amount (${paymentAmount.toFixed(2)}) cannot exceed the balance amount (${maxBalance.toFixed(2)})`
                 );
                 allocatedInput.focus();
                 return;
@@ -915,7 +915,7 @@
                         if (data.adjust_in_advance && data.remaining_advance_balance !== undefined) {
                             const name = data.transporter_name || 'Transporter';
                             const bal = parseFloat(data.remaining_advance_balance).toFixed(2);
-                            successText += '\n\nRemaining advance balance (' + name + '): ₹ ' + bal;
+                            successText += '\n\nRemaining advance balance (' + name + '):  ' + bal;
                         }
                         if (typeof Swal !== 'undefined') {
                             Swal.fire({
@@ -1019,7 +1019,7 @@
                                 </div>
                                 <div class="col-md-4 d-flex align-items-center gap-2">
                                     <strong>Total Balance:</strong>
-                                    <span class="fw-bold">₹{{ number_format($combinedTotalBalance, 2) }}</span>
+                                    <span class="fw-bold">{{ number_format($combinedTotalBalance, 2) }}</span>
                                     <label class="form-label mb-0 ms-2">Combined Amount *</label>
                                     <input type="number" class="form-control" id="combinedAmountInput" name="combined_amount"
                                         step="0.01" min="0.01" max="{{ $combinedTotalBalance }}"
@@ -1042,9 +1042,9 @@
                                     @foreach ($linkedFreightBookings as $fb)
                                         <tr>
                                             <td>{{ $fb->lr ? $fb->lr->lr_number : 'N/A' }}</td>
-                                            <td>₹{{ number_format($fb->shortage_amount ?? 0, 2) }}</td>
-                                            <td>₹{{ number_format($fb->damage_amount ?? 0, 2) }}</td>
-                                            <td>₹{{ number_format($fb->balance_amount ?? 0, 2) }}</td>
+                                            <td>{{ number_format($fb->shortage_amount ?? 0, 2) }}</td>
+                                            <td>{{ number_format($fb->damage_amount ?? 0, 2) }}</td>
+                                            <td>{{ number_format($fb->balance_amount ?? 0, 2) }}</td>
                                             <td>
                                                 <input type="number" class="form-control form-control-sm allocated-input"
                                                     name="payment_amounts[]" data-fb-id="{{ $fb->id }}"
@@ -1183,7 +1183,7 @@
                             return (typeof Swal !== 'undefined' ? Swal.fire({
                                 icon: 'warning',
                                 title: 'Duplicate Payment Detected',
-                                html: `<p>A similar payment already exists:</p><ul><li>Date: ${d.date}</li><li>Amount: ₹${d.amount}</li><li>Payment Type: ${d.payment_type}</li><li>Payment Mode: ${d.payment_mode}</li></ul><p>Proceed anyway?</p>`,
+                                html: `<p>A similar payment already exists:</p><ul><li>Date: ${d.date}</li><li>Amount: ${d.amount}</li><li>Payment Type: ${d.payment_type}</li><li>Payment Mode: ${d.payment_mode}</li></ul><p>Proceed anyway?</p>`,
                                 showCancelButton: true,
                                 confirmButtonText: 'Yes, Proceed',
                                 cancelButtonText: 'Cancel'
@@ -1205,7 +1205,7 @@
                     if (data.adjust_in_advance && data.remaining_advance_balance !== undefined) {
                         const name = data.transporter_name || 'Transporter';
                         const bal = parseFloat(data.remaining_advance_balance).toFixed(2);
-                        successText += '\n\nRemaining advance balance (' + name + '): ₹ ' + bal;
+                        successText += '\n\nRemaining advance balance (' + name + '):  ' + bal;
                     }
                     (typeof Swal !== 'undefined' ? Swal.fire({ icon: 'success', title: 'Success', text: successText }) : Promise.resolve())
                         .then(() => { window.location.reload(); });
@@ -1252,7 +1252,7 @@
                                         {{ $payment->voucher_number ?? 'N/A' }}
                                     @endif
                                 </td>
-                                <td>₹{{ number_format($payment->amount, 2) }}</td>
+                                <td>{{ number_format($payment->amount, 2) }}</td>
                                 <td>{{ $payment->payment_type ?? 'N/A' }}</td>
                                 <td>
                                     {{ $payment->payment_mode ?? 'N/A' }}

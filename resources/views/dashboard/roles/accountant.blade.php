@@ -21,7 +21,7 @@
                 </div>
                 <div>
                     <h6 class="text-muted fw-semi-bold mb-1">Total Revenue</h6>
-                    <h3 class="fw-bold mb-1">₹{{ number_format($financialStats['total_revenue'], 2) }}</h3>
+                    <h3 class="fw-bold mb-1">{{ number_format($financialStats['total_revenue'], 2) }}</h3>
                     <span class="badge bg-soft-success text-success rounded-pill">Total Earnings</span>
                 </div>
             </div>
@@ -35,7 +35,7 @@
                 </div>
                 <div>
                     <h6 class="text-muted fw-semi-bold mb-1">Total Invoiced</h6>
-                    <h3 class="fw-bold mb-1">₹{{ number_format($financialStats['total_invoiced'], 2) }}</h3>
+                    <h3 class="fw-bold mb-1">{{ number_format($financialStats['total_invoiced'], 2) }}</h3>
                     <span class="badge bg-soft-primary text-primary rounded-pill">Monthly</span>
                 </div>
             </div>
@@ -49,7 +49,7 @@
                 </div>
                 <div>
                     <h6 class="text-muted fw-semi-bold mb-1">Pending Payments</h6>
-                    <h3 class="fw-bold mb-1">₹{{ number_format($financialStats['pending_payments'], 2) }}</h3>
+                    <h3 class="fw-bold mb-1">{{ number_format($financialStats['pending_payments'], 2) }}</h3>
                     <span class="badge bg-soft-warning text-warning rounded-pill">Awaiting</span>
                 </div>
             </div>
@@ -63,7 +63,7 @@
                 </div>
                 <div>
                     <h6 class="text-muted fw-semi-bold mb-1">Total Paid</h6>
-                    <h3 class="fw-bold mb-1">₹{{ number_format($financialStats['total_paid'], 2) }}</h3>
+                    <h3 class="fw-bold mb-1">{{ number_format($financialStats['total_paid'], 2) }}</h3>
                     <span class="badge bg-soft-info text-info rounded-pill">Received</span>
                 </div>
             </div>
@@ -123,8 +123,8 @@
                                     <td class="text-end">
                                         <div class="d-flex flex-column">
                                             @php $amountToCollect = $invoice->net_amount ?? $invoice->total_amount; @endphp
-                                            <span class="fw-bold text-danger">₹{{ number_format($invoice->remaining_amount, 2) }}</span>
-                                            <small class="text-muted">of ₹{{ number_format($amountToCollect, 2) }}</small>
+                                            <span class="fw-bold text-danger">{{ number_format($invoice->remaining_amount, 2) }}</span>
+                                            <small class="text-muted">of {{ number_format($amountToCollect, 2) }}</small>
                                         </div>
                                     </td>
                                     <td>{{ $invoice->generated_date ? \Carbon\Carbon::parse($invoice->generated_date)->format('d M Y') : '-' }}</td>
@@ -174,7 +174,7 @@
                                         ? $payment->invoice->invoice_number . ($payment->invoice->manual_invoice_number ? ' (' . $payment->invoice->manual_invoice_number . ')' : '')
                                         : ($payment->invoice->manual_invoice_number ?? $payment->invoice->id) }}</td>
                                     <td>{{ Str::limit($payment->invoice->consignee->name ?? 'N/A', 25) }}</td>
-                                    <td class="text-end fw-bold text-success">₹{{ number_format($payment->amount, 2) }}</td>
+                                    <td class="text-end fw-bold text-success">{{ number_format($payment->amount, 2) }}</td>
                                     <td><span class="badge bg-soft-info text-info rounded-pill px-3">{{ ucfirst($payment->mode) }}</span></td>
                                     <td class="pe-4">{{ $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('d M Y') : $payment->created_at->format('d M Y') }}</td>
                                 </tr>

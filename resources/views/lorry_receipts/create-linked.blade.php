@@ -220,7 +220,7 @@
                                     @endif
                                 </select>
                             </div>
-                           
+
                             @error('transporter_id')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
@@ -372,8 +372,8 @@
                                     </div>
                                     <div class="col-md-2">
                                         <label class="form-label">Goods Value</label>
-                                        <input type="number" step="0.01" class="form-control goods-value" min="0" placeholder="₹">
-                                        <small class="text-muted">₹</small>
+                                        <input type="number" step="0.01" class="form-control goods-value" min="0" placeholder="">
+                                        <small class="text-muted"></small>
                                     </div>
                                     <div class="col-md-2">
                                         <label class="form-label">Weight (Tons) *</label>
@@ -382,10 +382,10 @@
                                         <small class="text-muted">📏 Range: 0.1 - 100 tons</small>
                                     </div>
                                     <div class="col-md-2">
-                                        <label class="form-label">Fr Rate (₹/ton) *</label>
+                                        <label class="form-label">Fr Rate (/ton) *</label>
                                         <input type="number" step="0.01" class="form-control fr-rate" min="1"
                                             max="20000" required>
-                                        <small class="text-muted">💰 Range: ₹1 - ₹20,000 per ton</small>
+                                        <small class="text-muted">💰 Range: 1 - 20,000 per ton</small>
                                     </div>
                                     <div class="col-md-3">
                                         <label class="form-label d-flex justify-content-between align-items-center">
@@ -1131,7 +1131,7 @@
                     const value = parseFloat(fr.value);
                     if (fr.value && (isNaN(value) || value < 1 || value > 20000)) {
                         fr.setCustomValidity(
-                            'Please enter a valid freight rate between ₹1 and ₹20,000.');
+                            'Please enter a valid freight rate between 1 and 20,000.');
                         fr.classList.add('is-invalid');
                         fr.classList.remove('is-valid');
                     } else if (fr.value) {
@@ -1485,7 +1485,7 @@ lrItemsContainer.addEventListener('blur', function(e) {
                             <div class="card h-100 border-0 shadow-sm rounded-3 border-top border-3 border-success mb-2">
                                 <div class="card-header bg-light border-bottom border-light pt-2 pb-1 rounded-top-3 d-flex justify-content-between align-items-center">
                                     <span class="fw-bold text-dark small"><span class="badge bg-primary px-1 py-0 me-1">${i+1}</span> LR: ${it.lr_number}</span>
-                                    <span class="text-success fw-bold small">₹${it.amount}</span>
+                                    <span class="text-success fw-bold small">${it.amount}</span>
                                 </div>
                                 <div class="card-body p-2" style="font-size:0.85rem;">
                                     <div class="d-flex justify-content-between mb-1">
@@ -1520,7 +1520,7 @@ lrItemsContainer.addEventListener('blur', function(e) {
                                             <span class="text-muted">Wt:</span> <span class="fw-medium text-dark">${it.weight} t</span>
                                         </div>
                                         <div class="col-6 text-end">
-                                            <span class="text-muted">Rate:</span> <span class="fw-medium text-dark">₹${it.fr_rate}</span>
+                                            <span class="text-muted">Rate:</span> <span class="fw-medium text-dark">${it.fr_rate}</span>
                                         </div>
                                     </div>
                                 </div>

@@ -161,7 +161,7 @@ class TruckOwnerController extends Controller
                     'location' => $truckOwner->city->name ?? 'N/A',
                     'contact_number' => $truckOwner->mobile_number ?? 'N/A',
                     'declaration_given' => $truckOwner->declaration_given ? 'Yes' : 'No',
-                    'advance_amount' => '₹'.number_format($truckOwner->advance_amount, 2),
+                    'advance_amount' => ''.number_format($truckOwner->advance_amount, 2),
                     'actions' => $this->getActionButtons($truckOwner),
                 ];
             }
@@ -354,7 +354,7 @@ class TruckOwnerController extends Controller
             ->map(function ($payment) {
                 return [
                     'id' => $payment->id,
-                    'amount' => '₹'.number_format($payment->advance_amount, 2),
+                    'amount' => ''.number_format($payment->advance_amount, 2),
                     'payment_date' => $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('d-m-Y') : 'Not specified',
                     'remark' => $payment->remark ?: 'No remarks',
                     'created_at' => $payment->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
@@ -394,7 +394,7 @@ class TruckOwnerController extends Controller
             'tds_percentage' => $truck_owner->tds_percentage ?: '0',
             'tds_adjustment_remark' => $truck_owner->tds_adjustment_remark ?: '',
             'total_trucks' => $truck_owner->total_trucks,
-            'advance_amount' => '₹'.number_format($truck_owner->advance_amount, 2),
+            'advance_amount' => ''.number_format($truck_owner->advance_amount, 2),
             'created_at' => $truck_owner->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
             'updated_at' => $truck_owner->updated_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
             'advance_payments' => $advancePayments,

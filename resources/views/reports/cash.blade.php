@@ -112,7 +112,7 @@
                                 <td>{{ $payment['transporter_name'] ?? 'N/A' }}</td>
                                 <td>{{ $payment['name'] ?? 'N/A' }}</td>
                                 <td>{{ $payment['beneficiary_id'] ?? 'N/A' }}</td>
-                                <td class="text-end">₹{{ number_format($payment['amount'], 2) }}</td>
+                                <td class="text-end">{{ number_format($payment['amount'], 2) }}</td>
                                 <td>GR NO {{ $payment['gr_number'] ?? 'N/A' }}</td>
                                 <td>{{ $payment['tds_deducted'] ?? 'N/A' }}</td>
                                 <td>
@@ -132,7 +132,7 @@
                     <tfoot>
                         <tr>
                             <th colspan="7" class="text-end">Grand Total:</th>
-                            <th class="text-end">₹{{ number_format($grandTotalAmount ?? 0, 2) }}</th>
+                            <th class="text-end">{{ number_format($grandTotalAmount ?? 0, 2) }}</th>
                             <th colspan="3"></th>
                         </tr>
                     </tfoot>

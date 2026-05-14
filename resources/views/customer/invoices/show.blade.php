@@ -15,9 +15,9 @@
                     <div class="col-md-4"><strong>Date:</strong> {{ $invoice->generated_date ? \Carbon\Carbon::parse($invoice->generated_date)->format('d-m-Y') : '-' }}</div>
                     <div class="col-md-4"><strong>Invoice Type:</strong> {{ $invoice->invoice_type ?? '-' }}</div>
                     <div class="col-md-4"><strong>Status:</strong> {{ ucfirst($invoice->payment_status ?? 'pending') }}</div>
-                    <div class="col-md-4"><strong>Base Amount:</strong> ₹{{ number_format((float) ($invoice->base_amount ?? 0), 2) }}</div>
-                    <div class="col-md-4"><strong>Net Amount:</strong> ₹{{ number_format((float) ($invoice->net_amount ?? $invoice->total_amount), 2) }}</div>
-                    <div class="col-md-4"><strong>Outstanding:</strong> ₹{{ number_format((float) $invoice->remaining_amount, 2) }}</div>
+                    <div class="col-md-4"><strong>Base Amount:</strong> {{ number_format((float) ($invoice->base_amount ?? 0), 2) }}</div>
+                    <div class="col-md-4"><strong>Net Amount:</strong> {{ number_format((float) ($invoice->net_amount ?? $invoice->total_amount), 2) }}</div>
+                    <div class="col-md-4"><strong>Outstanding:</strong> {{ number_format((float) $invoice->remaining_amount, 2) }}</div>
                 </div>
             </div>
         </div>
@@ -42,7 +42,7 @@
                                 <tr>
                                     <td class="ps-4">{{ $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('d-m-Y') : '-' }}</td>
                                     <td>{{ ucfirst($payment->mode ?? '-') }}</td>
-                                    <td>₹{{ number_format((float) $payment->amount, 2) }}</td>
+                                    <td>{{ number_format((float) $payment->amount, 2) }}</td>
                                     <td>{{ $payment->remark ?? '-' }}</td>
                                 </tr>
                             @empty

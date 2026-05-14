@@ -183,7 +183,7 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Book Balance</label>
-                        <div class="form-control-plaintext bg-light border rounded px-3 py-2"><strong>₹ 0.00</strong></div>
+                        <div class="form-control-plaintext bg-light border rounded px-3 py-2"><strong> 0.00</strong></div>
                         <input type="hidden" name="advance_amount" value="0">
                     </div>
                 </div>
@@ -787,7 +787,7 @@
 
         document.getElementById('confirm-declaration').textContent = declaration;
         document.getElementById('confirm-total-trucks').textContent = totalTrucks;
-        document.getElementById('confirm-advance').textContent = '₹' + parseFloat(advance).toFixed(2);
+        document.getElementById('confirm-advance').textContent = '' + parseFloat(advance).toFixed(2);
 
         // Show modal
         const modal = new bootstrap.Modal(document.getElementById('confirmationModal'));

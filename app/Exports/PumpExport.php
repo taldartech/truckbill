@@ -51,7 +51,7 @@ class PumpExport implements FromCollection, ShouldAutoSize, WithEvents
             'Date',
             'Truck Number',
             'Destination',
-            'Amount (₹)',
+            'Amount ()',
             'Status',
         ]);
 

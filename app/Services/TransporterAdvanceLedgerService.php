@@ -28,7 +28,7 @@ class TransporterAdvanceLedgerService
 
         if ($newBalance < 0) {
             throw ValidationException::withMessages([
-                'advance_amount' => 'Deduction exceeds available book balance of ₹'.number_format((float) $transporter->advance_amount, 2).'.',
+                'advance_amount' => 'Deduction exceeds available book balance of '.number_format((float) $transporter->advance_amount, 2).'.',
             ]);
         }
 

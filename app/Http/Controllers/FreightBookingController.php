@@ -371,7 +371,7 @@ class FreightBookingController extends Controller
                 ->addColumn('balance', function (FreightBooking $row) {
                     $amt = (float) ($row->balance_amount ?? 0);
 
-                    return '<span class="text-end fw-bold text-brand-primary d-block">₹'.number_format($amt, 2).'</span>';
+                    return '<span class="text-end fw-bold text-brand-primary d-block">'.number_format($amt, 2).'</span>';
                 })
                 ->addColumn('actions', function (FreightBooking $booking) {
                     $html = '<div class="d-flex justify-content-center gap-1">';
@@ -1283,9 +1283,9 @@ class FreightBookingController extends Controller
 
                         return response()->json([
                             'success' => false,
-                            'message' => "Payment amount ₹{$amount} cannot exceed balance amount ₹{$currentBalance} for booking ID {$bookingId}.",
+                            'message' => "Payment amount {$amount} cannot exceed balance amount {$currentBalance} for booking ID {$bookingId}.",
                             'errors' => [
-                                'payment_amounts.'.$index => ["Payment amount cannot exceed balance amount ₹{$currentBalance}"],
+                                'payment_amounts.'.$index => ["Payment amount cannot exceed balance amount {$currentBalance}"],
                             ],
                         ], 422);
                     }
@@ -1294,9 +1294,9 @@ class FreightBookingController extends Controller
 
                         return response()->json([
                             'success' => false,
-                            'message' => "Negative payment ₹{$amount} cannot be less than balance ₹{$currentBalance} for booking ID {$bookingId}.",
+                            'message' => "Negative payment {$amount} cannot be less than balance {$currentBalance} for booking ID {$bookingId}.",
                             'errors' => [
-                                'payment_amounts.'.$index => ["Negative payment magnitude cannot exceed negative balance ₹{$currentBalance}"],
+                                'payment_amounts.'.$index => ["Negative payment magnitude cannot exceed negative balance {$currentBalance}"],
                             ],
                         ], 422);
                     }
@@ -1318,9 +1318,9 @@ class FreightBookingController extends Controller
 
                         return response()->json([
                             'success' => false,
-                            'message' => "Payment amount ₹{$amount} would cause advance amount (₹{$newAdvanceAmount}) to exceed effective payable amount ₹{$effectivePayableAmount} for booking ID {$bookingId}.",
+                            'message' => "Payment amount {$amount} would cause advance amount ({$newAdvanceAmount}) to exceed effective payable amount {$effectivePayableAmount} for booking ID {$bookingId}.",
                             'errors' => [
-                                'payment_amounts.'.$index => ["Total advance amount cannot exceed effective payable amount ₹{$effectivePayableAmount}"],
+                                'payment_amounts.'.$index => ["Total advance amount cannot exceed effective payable amount {$effectivePayableAmount}"],
                             ],
                         ], 422);
                     }
@@ -1419,7 +1419,7 @@ class FreightBookingController extends Controller
                         }
 
                         if ($amount > $transporter->advance_amount) {
-                            throw new \Exception("Allocated amount ₹{$amount} cannot exceed transporter available advance ₹{$transporter->advance_amount}");
+                            throw new \Exception("Allocated amount {$amount} cannot exceed transporter available advance {$transporter->advance_amount}");
                         }
 
                         // reduce from transporter advance

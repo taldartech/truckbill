@@ -34,7 +34,7 @@
                                     <td>{{ number_format((int) $row->delivered_lrs) }}</td>
                                     <td>{{ number_format((int) $row->pending_lrs) }}</td>
                                     <td>{{ number_format((int) $row->cancelled_lrs) }}</td>
-                                    <td>₹{{ number_format((float) $row->total_amount, 2) }}</td>
+                                    <td>{{ number_format((float) $row->total_amount, 2) }}</td>
                                 </tr>
                             @empty
                                 <tr>

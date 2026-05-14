@@ -122,7 +122,7 @@
                 <div class="row mb-3">
                     <div class="col-md-4">
                         <label class="form-label">Book Balance</label>
-                        <div class="form-control-plaintext bg-light border rounded px-3 py-2"><strong>₹ {{ number_format($truck_owner->advance_amount, 2) }}</strong></div>
+                        <div class="form-control-plaintext bg-light border rounded px-3 py-2"><strong> {{ number_format($truck_owner->advance_amount, 2) }}</strong></div>
                     </div>
                     <div class="col-md-4">
                         <label for="beneficiary_id" class="form-label">Beneficiary ID</label>
@@ -668,7 +668,7 @@
         document.getElementById('confirm-mobile').textContent = mobile;
         document.getElementById('confirm-declaration').textContent = declaration;
         document.getElementById('confirm-total-trucks').textContent = totalTrucks;
-        document.getElementById('confirm-advance').textContent = '₹' + parseFloat(advance || 0).toFixed(2);
+        document.getElementById('confirm-advance').textContent = '' + parseFloat(advance || 0).toFixed(2);
 
         const tdsField = document.getElementById('tds_percentage');
         fetch('/api/calculate-truck-owner-tds-percentage', {
