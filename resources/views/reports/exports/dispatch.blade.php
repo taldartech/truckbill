@@ -2,7 +2,6 @@
     // Flag that tells this view whether it's being rendered for Excel export
     // Default to false when included from a normal Blade view
     $forExcel = $forExcel ?? false;
-    $invoiceByLrId = $invoiceByLrId ?? collect();
 @endphp
 
 <table class="table table-bordered table-striped" style="font-size: 12px !important;">
@@ -67,8 +66,8 @@
                     $bank = $vouchers?->where('payment_mode', 'bank transfer')->sum('amount');
                     $fuel = $vouchers?->where('payment_mode', 'fuel(paid to pump)')->sum('amount');
                     $advance = $vouchers?->where('payment_mode', 'adjust in advance')->sum('amount');
-                    $diff = $lr->fr_rate - ($freight?->tr_fr_rate);
-                    $invoice = $invoiceByLrId[$lr->id] ?? null;
+                    $diff = $lr->fr_rate - $freight?->tr_fr_rate;
+                    $invoice = \App\Models\Invoice::whereJsonContains('lr_ids', $lr->id)->first();
                 @endphp
                 <td>{{ $loop->iteration }}</td>
                 <td>
@@ -85,7 +84,7 @@
                 <td>{{ $lr->destination_city ?? '-' }}</td>
                 <td>{{ $lr->invoice_number ?? '-' }}</td>
                 <td>{{ $lr->weight ?? 0 }}</td>
-                <td>{{ number_format($lr->unloading_weight ?? $lr->weight ?? 0, 3) }}</td>
+                <td>{{ number_format($lr->unloading_weight ?? ($lr->weight ?? 0), 3) }}</td>
                 <td>{{ $lr->no_of_units ?? 0 }}</td>
                 <td>{{ $lr->fr_rate ?? 0 }}</td>
                 <td>{{ $lr->actual_amount ?? 0 }}</td>
