@@ -79,11 +79,20 @@ class LorryReceiptCalculationService
             $updateData['transporter_tds_percentage'] = $freightBooking->transporter_tds_percentage;
         }
 
-        if (! $freightBooking->is_fixed_amount) {
+        if ($freightBooking->is_fixed_amount) {
+            $updateData['tr_amount'] = $freightBooking->tr_amount;
+        } else {
             $updateData['tr_amount'] = $freightBooking->tr_fr_rate * min($lorryReceipt->weight, $lorryReceipt->unloading_weight);
-            if ($freightBooking->canChangeTdsAmount()) {
+        }
+
+        if ($freightBooking->canChangeTdsAmount()) {
+            if ($freightBooking->is_fixed_amount) {
+                $updateData['tds_amount'] = round($updateData['tr_amount'] * ($updateData['transporter_tds_percentage'] / 100), 2);
+            } else {
                 $updateData['tds_amount'] = round($freightBooking->tr_fr_rate * $lorryReceipt->weight * ($updateData['transporter_tds_percentage'] / 100), 2);
             }
+        } else {
+            $updateData['tds_amount'] = $freightBooking->tds_amount;
         }
 
         $updateData['balance_amount'] =

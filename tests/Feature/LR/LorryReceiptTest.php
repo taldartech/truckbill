@@ -633,6 +633,8 @@ class LorryReceiptTest extends TestCase
             'voucher_number' => 'VB-SYNC-001',
         ]);
 
+        $lr->update(['freight_booking_id' => $freightBooking->id]);
+
         $payload = [
             'customer_id' => $customer->id,
             'lr_number' => 'LR-SYNC-001',
@@ -671,9 +673,103 @@ class LorryReceiptTest extends TestCase
 
         $freightBooking->refresh();
 
-        $this->assertSame(800.0, (float) $freightBooking->tr_amount);
-        $this->assertSame(16.0, (float) $freightBooking->tds_amount);
-        $this->assertSame(784.0, (float) $freightBooking->balance_amount);
+        $this->assertSame(1000.0, (float) $freightBooking->tr_amount);
+        $this->assertSame(20.0, (float) $freightBooking->tds_amount);
+        $this->assertSame(980.0, (float) $freightBooking->balance_amount);
+    }
+
+    public function test_update_syncs_freight_booking_when_tds_amount_cannot_change(): void
+    {
+        $admin = $this->makeAdmin();
+        [$customer, $consignor, $consignee] = $this->seedConsignees($admin);
+        [$transporter, $truck] = $this->makeTruck($admin);
+
+        $lr = \App\Models\LorryReceipt::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'consignor_id' => $consignor->id,
+            'consignee_id' => $consignee->id,
+            'lr_number' => 'LR-SYNC-TDS-001',
+            'gr_number' => 'GR-SYNC-TDS-001',
+            'invoice_number' => 'INV-SYNC-TDS-001',
+            'truck_id' => $truck->id,
+            'transporter_id' => $transporter->id,
+            'reference_by' => $transporter->id,
+            'gr_date' => now()->toDateString(),
+            'source_city' => 'A',
+            'source_state' => 'B',
+            'destination_city' => 'C',
+            'destination_state' => 'D',
+            'lane' => 'Lane',
+            'good_type' => 'Steel',
+            'weight' => 42,
+            'unloading_weight' => 42,
+            'fr_rate' => 1354,
+            'actual_amount' => 56868,
+            'amount' => 56868,
+            'damage_amount' => 0,
+            'shortage_amount' => 0,
+            'delivery_status' => 'In-Progress',
+        ]);
+
+        $freightBooking = FreightBooking::create([
+            'lr_id' => $lr->id,
+            'transporter_id' => $transporter->id,
+            'transporter_name' => $transporter->name,
+            'transporter_tds_percentage' => 2,
+            'tr_fr_rate' => 1354,
+            'tr_amount' => 56868,
+            'advance_amount' => 56868,
+            'balance_amount' => 0,
+            'tds_amount' => 1137.36,
+            'company_id' => $admin->company_id,
+            'voucher_number' => 'VB-SYNC-TDS-001',
+        ]);
+
+        $lr->update(['freight_booking_id' => $freightBooking->id]);
+
+        $payload = [
+            'customer_id' => $customer->id,
+            'lr_number' => 'LR-SYNC-TDS-001',
+            'gr_number' => 'GR-SYNC-TDS-001',
+            'invoice_number' => 'INV-SYNC-TDS-001',
+            'memo_id' => null,
+            'truck_id' => $truck->id,
+            'transporter_id' => $transporter->id,
+            'reference_by' => $transporter->id,
+            'consignor_id' => $consignor->id,
+            'consignee_id' => $consignee->id,
+            'gr_date' => now()->toDateString(),
+            'company_id' => $admin->company_id,
+            'delivery_status' => 'In-Progress',
+            'source_city' => 'A',
+            'source_state' => 'B',
+            'destination_city' => 'C',
+            'destination_state' => 'D',
+            'unloading_station' => null,
+            'lane' => 'Lane',
+            'good_type' => 'PUTTY',
+            'goods_value' => null,
+            'weight' => 40,
+            'no_of_units' => 1050,
+            'fr_rate' => 1354,
+            'is_fixed_amount' => false,
+            'actual_amount' => 56868,
+            'damage_amount' => 0,
+            'shortage_amount' => 0,
+            'transporter_type' => 'owner',
+        ];
+
+        $this->actingAs($admin)
+            ->put("/lorry_receipts/{$lr->id}", $payload)
+            ->assertRedirect(route('lorry_receipts.index'));
+
+        $freightBooking->refresh();
+
+        $this->assertFalse($freightBooking->canChangeTdsAmount());
+        $this->assertSame(56868.0, (float) $freightBooking->tr_amount);
+        $this->assertSame(1137.36, (float) $freightBooking->tds_amount);
+        $this->assertSame(0.0, (float) $freightBooking->balance_amount);
     }
 
     public function test_lorry_receipt_views_contain_declaration_warning_markup(): void
