@@ -2001,7 +2001,7 @@
                             <div class="col-md-4">
                                 <strong>Truck Number:</strong> ${firstTruck || 'N/A'}
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-4 text-danger">
                                 <strong>Advance Amount:</strong> ${firstAdvanceAmount || 'N/A'}
                             </div>
                       </div>

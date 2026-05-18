@@ -531,11 +531,15 @@
                                 <span
                                     id="truckNumber">{{ $freightBooking->lr && $freightBooking->lr->truck ? $freightBooking->lr->truck->truck_number : 'N/A' }}</span>
                             </div>
-                            <div class="col-md-3">
+                            @php
+                                $advanceAmount = $freightBooking->lr && $freightBooking->lr->transporter ? ($freightBooking->lr->transporter->advance_amount ?? 0) : 0;
+                            @endphp
+                            @if ($advanceAmount > 0)
+                            <div class="col-md-3 text-danger">
                                 <strong>Advance Amount:</strong><br>
-                                <span
-                                    id="advanceAmount">{{ $freightBooking->lr && $freightBooking->lr->transporter ? ($freightBooking->lr->transporter->advance_amount ?? 'N/A') : 'N/A' }}</span>
+                                <span id="advanceAmount">{{ number_format($advanceAmount, 2) }}</span>
                             </div>
+                            @endif
                         </div>
                     </div>
 
