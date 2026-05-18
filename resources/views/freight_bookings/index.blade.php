@@ -250,7 +250,7 @@
                     <div class="row g-2 align-items-end">
                         <div class="col-md-5">
                             <input type="text" class="form-control form-control-sm" name="search"
-                                value="{{ request('search') }}" placeholder="LR, Customer, Truck, City...">
+                                value="{{ \App\Support\ListingQueryString::scalarValue(request(), 'search', \App\Support\ListingQueryString::FREIGHT_BOOKING_KEYS) }}" placeholder="LR, Customer, Truck, City...">
                         </div>
                         <div class="col-md-3">
                             <div class="d-flex gap-2">

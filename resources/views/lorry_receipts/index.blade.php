@@ -620,7 +620,49 @@
 
         <script>
             $(document).ready(function() {
-                // Set default date values
+                const formatDate = (date) => {
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+
+                    return `${year}-${month}-${day}`;
+                };
+
+                function loadListingQueryFromUrl() {
+                    const params = new URLSearchParams(window.location.search);
+
+                    if (params.has('gr_date_from')) {
+                        $('#fromDate').val(params.get('gr_date_from'));
+                    }
+
+                    if (params.has('gr_date_to')) {
+                        $('#toDate').val(params.get('gr_date_to'));
+                    }
+
+                    return params.has('gr_date_from') || params.has('gr_date_to');
+                }
+
+                function syncListingQueryToUrl() {
+                    const params = new URLSearchParams();
+                    const fromDate = $('#fromDate').val();
+                    const toDate = $('#toDate').val();
+
+                    if (fromDate) {
+                        params.set('gr_date_from', fromDate);
+                    }
+
+                    if (toDate) {
+                        params.set('gr_date_to', toDate);
+                    }
+
+                    const query = params.toString();
+                    const nextUrl = query
+                        ? `${window.location.pathname}?${query}`
+                        : window.location.pathname;
+
+                    window.history.replaceState({}, '', nextUrl);
+                }
+
                 function setDefaultDates() {
                     const today = new Date();
                     const oneWeekAgo = new Date();
@@ -628,25 +670,20 @@
                     oneWeekAgo.setDate(today.getDate() - 7);
                     oneWeekAfter.setDate(today.getDate() + 7);
 
-                    // Format dates as YYYY-MM-DD
-                    const formatDate = (date) => {
-                        const year = date.getFullYear();
-                        const month = String(date.getMonth() + 1).padStart(2, '0');
-                        const day = String(date.getDate()).padStart(2, '0');
-                        return `${year}-${month}-${day}`;
-                    };
-
-                    // Set default values if not already set
                     if (!$('#fromDate').val()) {
                         $('#fromDate').val(formatDate(oneWeekAgo));
                     }
+
                     if (!$('#toDate').val()) {
                         $('#toDate').val(formatDate(oneWeekAfter));
                     }
                 }
 
-                // Call the function when the page loads
-                setDefaultDates();
+                if (!loadListingQueryFromUrl()) {
+                    setDefaultDates();
+                }
+
+                syncListingQueryToUrl();
 
                 // Initialize DataTable
                 var table = $('#lorryReceiptsTable').DataTable({
@@ -756,12 +793,14 @@
                 });
 
                 $('#filterBtn').on('click', function() {
+                    syncListingQueryToUrl();
                     $('#lorryReceiptsTable').DataTable().ajax.reload();
                 });
 
                 $('#resetDateFilter').on('click', function() {
                     $('#fromDate').val('');
                     $('#toDate').val('');
+                    syncListingQueryToUrl();
                     table.ajax.reload();
                 });
             });

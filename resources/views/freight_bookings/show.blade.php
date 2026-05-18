@@ -115,7 +115,7 @@
                             <i class="bi bi-credit-card"></i> Voucher Payment
                         </button>
                     @endif
-                    <a href="{{ route('freight_bookings.edit', $freightBooking->id) }}" class="btn btn-sm btn-primary me-2">
+                    <a href="{{ route('freight_bookings.edit', $freightBooking->id) }}{{ \App\Support\ListingQueryString::currentSuffix(\App\Support\ListingQueryString::FREIGHT_BOOKING_KEYS) }}" class="btn btn-sm btn-primary me-2">
                         <i class="bi bi-pencil"></i> Edit
                     </a>
                 @else
@@ -128,7 +128,7 @@
                         <i class="bi bi-pencil"></i> Edit
                     </button>
                 @endif
-                <a href="{{ route('freight_bookings.index') }}" class="btn btn-sm btn-back">
+                <a href="{{ route('freight_bookings.index') }}{{ \App\Support\ListingQueryString::currentSuffix(\App\Support\ListingQueryString::FREIGHT_BOOKING_KEYS) }}" class="btn btn-sm btn-back">
                     <i class="bi bi-arrow-left"></i> Back to List
                 </a>
             </div>

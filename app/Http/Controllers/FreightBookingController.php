@@ -15,6 +15,7 @@ use App\Services\FreightBookingCalculationService;
 use App\Services\Notifications\FreightBookingNotificationService;
 use App\Services\Notifications\LorryReceiptNotificationService;
 use App\Services\TransporterAdvanceLedgerService;
+use App\Support\ListingQueryString;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -30,6 +31,22 @@ class FreightBookingController extends Controller
         private readonly FreightBookingNotificationService $frNotificationService,
         private readonly FreightBookingCalculationService $freightBookingCalculationService,
     ) {}
+
+    private function redirectToFreightBookingsIndex(?Request $request = null, ?string $flashKey = null, ?string $flashMessage = null): \Illuminate\Http\RedirectResponse
+    {
+        $request ??= request();
+
+        $redirect = redirect()->route(
+            'freight_bookings.index',
+            ListingQueryString::params($request, ListingQueryString::FREIGHT_BOOKING_KEYS)
+        );
+
+        if ($flashKey !== null && $flashMessage !== null) {
+            return $redirect->with($flashKey, $flashMessage);
+        }
+
+        return $redirect;
+    }
 
     private function getActiveCompanyId(): ?int
     {
@@ -373,10 +390,11 @@ class FreightBookingController extends Controller
 
                     return '<span class="text-end fw-bold text-brand-primary d-block">'.number_format($amt, 2).'</span>';
                 })
-                ->addColumn('actions', function (FreightBooking $booking) {
+                ->addColumn('actions', function (FreightBooking $booking) use ($request) {
+                    $listingQuerySuffix = ListingQueryString::suffix($request, ListingQueryString::FREIGHT_BOOKING_KEYS);
                     $html = '<div class="d-flex justify-content-center gap-1">';
-                    $html .= '<a href="'.e(route('freight_bookings.show', $booking->id)).'" class="btn-action btn-action-info" title="View"><i class="bi bi-eye"></i></a>';
-                    $html .= '<a href="'.e(route('freight_bookings.edit', $booking->id)).'" class="btn-action btn-action-primary" title="Edit"><i class="bi bi-pencil"></i></a>';
+                    $html .= '<a href="'.e(route('freight_bookings.show', $booking->id).$listingQuerySuffix).'" class="btn-action btn-action-info" title="View"><i class="bi bi-eye"></i></a>';
+                    $html .= '<a href="'.e(route('freight_bookings.edit', $booking->id).$listingQuerySuffix).'" class="btn-action btn-action-primary" title="Edit"><i class="bi bi-pencil"></i></a>';
 
                     $lr = $booking->lr;
                     if ($lr) {
@@ -438,13 +456,11 @@ class FreightBookingController extends Controller
         $today = now()->startOfDay();
         $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
         if ($company->plan_end_date && $today->gt($planEndDate)) {
-            return redirect()->route('freight_bookings.index')
-                ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+            return $this->redirectToFreightBookingsIndex($request, 'error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
         // check for lr credits
         if ($company->lr_credits <= 0) {
-            return redirect()->route('freight_bookings.index')
-                ->with('error', 'You do not have enough credits to create a Good Hire (Lorry Hire).');
+            return $this->redirectToFreightBookingsIndex($request, 'error', 'You do not have enough credits to create a Good Hire (Lorry Hire).');
         }
         $goodsTypes = \App\Models\GoodType::where('user_id', Auth::user()->company->user_id)->get();
         $lorry_receipt_id = $request->lorry_receipt_id;
@@ -621,7 +637,7 @@ class FreightBookingController extends Controller
             if ($lorryReceipt->freight_booking_id) {
                 DB::rollBack();
 
-                return redirect()->route('freight_bookings.index')->with('error', 'This Good Receipt (Bilty) is already linked to a Good Hire (Lorry Hire).');
+                return $this->redirectToFreightBookingsIndex($request, 'error', 'This Good Receipt (Bilty) is already linked to a Good Hire (Lorry Hire).');
             }
 
             $nextVoucherNumber = FreightBooking::max('voucher_number') + 1;
@@ -711,11 +727,15 @@ class FreightBookingController extends Controller
                 ->with('success', 'Good Hire (Lorry Hire) created successfully. Ready to make payment.');
         }
         if ($request->has('action') && $request->action === 'save_and_view') {
-            return redirect()->route('freight_bookings.show', $freightBooking->id)
+            $showUrl = route('freight_bookings.show', $freightBooking->id)
+                .ListingQueryString::suffix($request, ListingQueryString::FREIGHT_BOOKING_KEYS);
+
+            return redirect()
+                ->to($showUrl)
                 ->with('success', 'Good Hire (Lorry Hire) created successfully. Ready to make payment.');
         }
 
-        return redirect()->route('freight_bookings.index')->with('success', 'Good Hire (Lorry Hire) created successfully.');
+        return $this->redirectToFreightBookingsIndex($request, 'success', 'Good Hire (Lorry Hire) created successfully.');
     }
 
     public function storeCombinedPayment(Request $request)
@@ -893,11 +913,9 @@ class FreightBookingController extends Controller
 
             return view('freight_bookings.show', compact('freightBooking', 'paymentTypes', 'paymentModes', 'pumps', 'payments', 'linkedFreightBookings', 'combinedTotalBalance'));
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return redirect()->route('freight_bookings.index')
-                ->with('error', 'Freight booking not found.');
+            return $this->redirectToFreightBookingsIndex(request(), 'error', 'Freight booking not found.');
         } catch (\Exception $e) {
-            return redirect()->route('freight_bookings.index')
-                ->with('error', 'An error occurred while loading the good hire (lorry hire).');
+            return $this->redirectToFreightBookingsIndex(request(), 'error', 'An error occurred while loading the good hire (lorry hire).');
         }
     }
 
@@ -907,8 +925,7 @@ class FreightBookingController extends Controller
         $today = now()->startOfDay();
         $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
         if ($company->plan_end_date && $today->gt($planEndDate)) {
-            return redirect()->route('freight_bookings.index')
-                ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+            return $this->redirectToFreightBookingsIndex(request(), 'error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
         try {
             $freightBooking = FreightBooking::query()
@@ -988,11 +1005,9 @@ class FreightBookingController extends Controller
                 'is_admin' => $is_admin,
             ]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return redirect()->route('freight_bookings.index')
-                ->with('error', 'Freight booking not found.');
+            return $this->redirectToFreightBookingsIndex(request(), 'error', 'Freight booking not found.');
         } catch (\Exception $e) {
-            return redirect()->route('freight_bookings.index')
-                ->with('error', 'An error occurred while loading the good hire (lorry hire) for editing.');
+            return $this->redirectToFreightBookingsIndex(request(), 'error', 'An error occurred while loading the good hire (lorry hire) for editing.');
         }
     }
 
@@ -1057,8 +1072,7 @@ class FreightBookingController extends Controller
         $today = now()->startOfDay();
         $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
         if ($company->plan_end_date && $today->gt($planEndDate)) {
-            return redirect()->route('freight_bookings.index')
-                ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+            return $this->redirectToFreightBookingsIndex($request, 'error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
 
         // Prevent updates to cancelled freight bookings
@@ -1171,7 +1185,7 @@ class FreightBookingController extends Controller
 
             DB::commit();
 
-            return redirect()->route('freight_bookings.index', $request->query())->with('success', 'Good Hire (Lorry Hire) updated successfully.');
+            return $this->redirectToFreightBookingsIndex($request, 'success', 'Good Hire (Lorry Hire) updated successfully.');
         } catch (\Throwable $e) {
             DB::rollBack();
             \Log::error('Freight booking update failed', [
@@ -1189,12 +1203,11 @@ class FreightBookingController extends Controller
         $today = now()->startOfDay();
         $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
         if ($company->plan_end_date && $today->gt($planEndDate)) {
-            return redirect()->route('freight_bookings.index')
-                ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+            return $this->redirectToFreightBookingsIndex(request(), 'error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
         $freight_booking->delete();
 
-        return redirect()->route('freight_bookings.index')->with('success', 'Good Hire (Lorry Hire) deleted.');
+        return $this->redirectToFreightBookingsIndex(request(), 'success', 'Good Hire (Lorry Hire) deleted.');
     }
 
     /**
@@ -1638,8 +1651,7 @@ class FreightBookingController extends Controller
                 }
             });
 
-            return redirect()->route('freight_bookings.index')
-                ->with('success', 'Memo ID assigned successfully to '.count($validated['lr_ids']).' good receipts (bilty) and '.count($validated['freight_booking_ids']).' good hires (lorry hire) updated.');
+            return $this->redirectToFreightBookingsIndex($request, 'success', 'Memo ID assigned successfully to '.count($validated['lr_ids']).' good receipts (bilty) and '.count($validated['freight_booking_ids']).' good hires (lorry hire) updated.');
         } catch (\Exception $e) {
             \Log::error('Bulk memo ID assignment error: '.$e->getMessage());
 

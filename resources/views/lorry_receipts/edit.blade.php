@@ -147,11 +147,14 @@
             </div>
         </div>
         <!--begin::Form-->
-        <form method="POST" action="{{ route('lorry_receipts.update', $lorry_receipt->id) }}" id="lorryReceiptForm"
+        <form method="POST" action="{{ route('lorry_receipts.update', $lorry_receipt->id) }}{{ \App\Support\ListingQueryString::currentSuffix(\App\Support\ListingQueryString::LORRY_RECEIPT_KEYS) }}" id="lorryReceiptForm"
             class="needs-validation" novalidate="">
             @csrf
             @method('PUT')
             <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
+            @foreach (\App\Support\ListingQueryString::params(request(), \App\Support\ListingQueryString::LORRY_RECEIPT_KEYS) as $listingKey => $listingValue)
+                <input type="hidden" name="{{ $listingKey }}" value="{{ $listingValue }}">
+            @endforeach
 
             <div class="card-body">
                 <!-- Declaration Warning (shown at top when truck owner declaration not submitted) -->
@@ -580,7 +583,7 @@
                             <button class="btn btn-brand-primary w-100" type="submit">💾 Update Good Receipt (Bilty)</button>
                         </div>
                         <div class="col-md-4">
-                            <a href="{{ route('lorry_receipts.index') }}" class="btn btn-back w-100">📄 Back to List</a>
+                            <a href="{{ route('lorry_receipts.index') }}{{ \App\Support\ListingQueryString::currentSuffix(\App\Support\ListingQueryString::LORRY_RECEIPT_KEYS) }}" class="btn btn-back w-100">📄 Back to List</a>
                         </div>
                     </div>
                 </div>

@@ -190,7 +190,7 @@
         </div>
         <!--begin::Form-->
         <form
-            action="{{ route('freight_bookings.update', $freightBooking->id) . (request()->query() ? '?' . http_build_query(request()->query()) : '') }}"
+            action="{{ route('freight_bookings.update', $freightBooking->id) }}{{ \App\Support\ListingQueryString::currentSuffix(\App\Support\ListingQueryString::FREIGHT_BOOKING_KEYS) }}"
             method="POST"
             {{ $freightBooking->is_cancelled ? 'onsubmit="return false;"' : '' }}>
             @csrf
@@ -199,6 +199,9 @@
                 $is_invoice_generated = $freightBooking->lr && $freightBooking->lr->invoice_generated;
             @endphp
             @method('PUT')
+            @foreach (\App\Support\ListingQueryString::params(request(), \App\Support\ListingQueryString::FREIGHT_BOOKING_KEYS) as $listingKey => $listingValue)
+                <input type="hidden" name="{{ $listingKey }}" value="{{ $listingValue }}">
+            @endforeach
             <div class="card-body">
                 <!-- Financial Information Section -->
                 <div class="row mb-3">
@@ -506,7 +509,7 @@
                                 <i class="bi bi-check-circle"></i> Update Good Hire (Lorry Hire)
                             </button>
                         @endif
-                        <a href="{{ route('freight_bookings.index') }}" class="btn btn-back">
+                        <a href="{{ route('freight_bookings.index') }}{{ \App\Support\ListingQueryString::currentSuffix(\App\Support\ListingQueryString::FREIGHT_BOOKING_KEYS) }}" class="btn btn-back">
                             <i class="bi bi-arrow-left"></i> Back to List
                         </a>
                     </div>

@@ -11,6 +11,7 @@ use App\Models\Transporter;
 use App\Models\Truck;
 use App\Services\LorryReceiptCalculationService;
 use App\Services\Notifications\LorryReceiptNotificationService;
+use App\Support\ListingQueryString;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -25,6 +26,22 @@ class LorryReceiptController extends Controller
         private readonly LorryReceiptNotificationService $lrNotificationService,
         private readonly LorryReceiptCalculationService $lrCalculationService,
     ) {}
+
+    private function redirectToLorryReceiptsIndex(?Request $request = null, ?string $flashKey = null, ?string $flashMessage = null): \Illuminate\Http\RedirectResponse
+    {
+        $request ??= request();
+
+        $redirect = redirect()->route(
+            'lorry_receipts.index',
+            ListingQueryString::params($request, ListingQueryString::LORRY_RECEIPT_KEYS)
+        );
+
+        if ($flashKey !== null && $flashMessage !== null) {
+            return $redirect->with($flashKey, $flashMessage);
+        }
+
+        return $redirect;
+    }
 
     /**
      * Check if user's subscription plan is expired
@@ -225,8 +242,10 @@ class LorryReceiptController extends Controller
                     return '<span class="badge bg-'.$statusClass.'">'.$statusText.'</span>';
                 })
 
-                ->addColumn('actions', function ($row) use ($company, $today, $planEndDate, $canActAsAdmin) {
-                    return $this->getActionButtons($row, $company, $today, $planEndDate, $canActAsAdmin);
+                ->addColumn('actions', function ($row) use ($company, $today, $planEndDate, $canActAsAdmin, $request) {
+                    $listingQuerySuffix = ListingQueryString::suffix($request, ListingQueryString::LORRY_RECEIPT_KEYS);
+
+                    return $this->getActionButtons($row, $company, $today, $planEndDate, $canActAsAdmin, $listingQuerySuffix);
                 })
                 ->rawColumns(['sr_no', 'lr_number', 'customer_name', 'consignor_name', 'consignee_name', 'truck_number', 'gr_date_formatted', 'amount_formatted', 'status_badge', 'actions', 'row_class'])
                 ->make(true);
@@ -238,7 +257,7 @@ class LorryReceiptController extends Controller
         }
     }
 
-    private function getActionButtons(LorryReceipt $lorryReceipt, Company $company, Carbon $today, ?Carbon $planEndDate, bool $canActAsAdmin): string
+    private function getActionButtons(LorryReceipt $lorryReceipt, Company $company, Carbon $today, ?Carbon $planEndDate, bool $canActAsAdmin, string $listingQuerySuffix = ''): string
     {
         $buttons = '<div class="d-flex gap-1 justify-content-center">';
 
@@ -247,7 +266,7 @@ class LorryReceiptController extends Controller
         $planExpired = $planEndDate !== null && $today->gt($planEndDate);
 
         if ($freight_booking_id) {
-            $buttons .= '<a href="'.route('freight_bookings.edit', $freight_booking_id).'" class="btn btn-sm btn-warning" title="Edit Good Hire (Lorry Hire)" data-bs-toggle="tooltip">';
+            $buttons .= '<a href="'.route('freight_bookings.edit', $freight_booking_id).$listingQuerySuffix.'" class="btn btn-sm btn-warning" title="Edit Good Hire (Lorry Hire)" data-bs-toggle="tooltip">';
             $buttons .= '<i class="bi bi-truck"></i></a>';
         } else {
             if ($company->lr_credits <= 0) {
@@ -263,7 +282,7 @@ class LorryReceiptController extends Controller
         }
 
         // Edit button
-        $editUrl = route('lorry_receipts.edit', $lorryReceipt->id);
+        $editUrl = route('lorry_receipts.edit', $lorryReceipt->id).$listingQuerySuffix;
         if ($lorryReceipt->invoice_generated == 0 && $canActAsAdmin) {
             $confirmMsg = $freightBooking ? ' onclick="return confirm(\'A good hire (lorry hire) already exists. Continue?\')"' : '';
             $buttons .= '<a href="'.$editUrl.'" class="btn-action btn-edit" title="Edit" data-bs-toggle="tooltip"'.$confirmMsg.'>';
@@ -668,7 +687,7 @@ class LorryReceiptController extends Controller
 
                 DB::commit();
 
-                return redirect()->route('lorry_receipts.index')->with('success', 'Created '.count($created).' linked Good Receipts (Bilty) (Linked ID: '.$nextLinkedId.').');
+                return $this->redirectToLorryReceiptsIndex($request, 'success', 'Created '.count($created).' linked Good Receipts (Bilty) (Linked ID: '.$nextLinkedId.').');
             } catch (\Throwable $e) {
                 DB::rollBack();
                 throw $e;
@@ -780,7 +799,7 @@ class LorryReceiptController extends Controller
                 ->with('success', 'Good Receipt (Bilty) saved! Now create Good Hire (Lorry Hire).');
         }
 
-        return redirect()->route('lorry_receipts.index')->with('success', 'Good Receipt (Bilty) created successfully!');
+        return $this->redirectToLorryReceiptsIndex($request, 'success', 'Good Receipt (Bilty) created successfully!');
     }
 
     /**
@@ -1046,12 +1065,11 @@ class LorryReceiptController extends Controller
         $today = now()->startOfDay();
         $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
         if ($company->plan_end_date && $today->gt($planEndDate)) {
-            return redirect()->route('lorry_receipts.index')
-                ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+            return $this->redirectToLorryReceiptsIndex($request, 'error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
 
         if ($lorry_receipt->invoice_generated == 1) {
-            return redirect()->route('lorry_receipts.index')->with('error', 'Cannot edit Good Receipt (Bilty) as invoice has already been generated.');
+            return $this->redirectToLorryReceiptsIndex($request, 'error', 'Cannot edit Good Receipt (Bilty) as invoice has already been generated.');
         }
         if ($lorry_receipt->delivery_status == 'Delivered') {
             // only allow updating memo_id if already delivered
@@ -1075,7 +1093,7 @@ class LorryReceiptController extends Controller
 
             $lorry_receipt->update($validated);
 
-            return redirect()->route('lorry_receipts.index')->with('success', 'Good Receipt (Bilty) updated successfully! Only Memo ID could be updated as the LR is already delivered.');
+            return $this->redirectToLorryReceiptsIndex($request, 'success', 'Good Receipt (Bilty) updated successfully! Only Memo ID could be updated as the LR is already delivered.');
         }
 
         $validated = $request->validate([
@@ -1185,7 +1203,7 @@ class LorryReceiptController extends Controller
             $this->lrNotificationService->notifyStatusChange($lorry_receipt, $validated['delivery_status'], auth()->user());
         }
 
-        return redirect()->route('lorry_receipts.index')->with('success', 'Good Receipt (Bilty) updated successfully!');
+        return $this->redirectToLorryReceiptsIndex($request, 'success', 'Good Receipt (Bilty) updated successfully!');
     }
 
     /**
@@ -1267,8 +1285,7 @@ class LorryReceiptController extends Controller
                 $lorry_receipt->delete();
             });
 
-            return redirect()->route('lorry_receipts.index')
-                ->with('success', 'Good receipt (bilty) and all associated data deleted successfully!');
+            return $this->redirectToLorryReceiptsIndex(request(), 'success', 'Good receipt (bilty) and all associated data deleted successfully!');
         } catch (\Exception $e) {
             Log::error('Error deleting lorry receipt: '.$e->getMessage());
 
