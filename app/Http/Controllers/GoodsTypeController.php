@@ -9,16 +9,9 @@ use Illuminate\Validation\Rule;
 
 class GoodsTypeController extends Controller
 {
-    private function ensureCompanyContext(): void
-    {
-        if (Auth::user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
-            abort(403, 'Please enter a company first.');
-        }
-    }
 
     public function index(Request $request)
     {
-        $this->ensureCompanyContext();
         // Handle DataTables AJAX request
         if ($request->ajax()) {
             return $this->getGoodsTypesData($request);
@@ -119,14 +112,12 @@ class GoodsTypeController extends Controller
 
     public function create()
     {
-        $this->ensureCompanyContext();
 
         return view('master.goods-types-form', ['goodsType' => null]);
     }
 
     public function store(Request $request)
     {
-        $this->ensureCompanyContext();
         $validated = $request->validate([
             'name' => [
                 'required',
@@ -151,14 +142,12 @@ class GoodsTypeController extends Controller
 
     public function edit(GoodType $goodsType)
     {
-        $this->ensureCompanyContext();
 
         return view('master.goods-types-form', compact('goodsType'));
     }
 
     public function update(Request $request, GoodType $goodsType)
     {
-        $this->ensureCompanyContext();
         $validated = $request->validate([
             'name' => 'required|string|max:255',
         ]);
@@ -169,7 +158,6 @@ class GoodsTypeController extends Controller
 
     public function destroy(GoodType $goodsType)
     {
-        $this->ensureCompanyContext();
         $goodsType->delete();
         return redirect()->route('master.goods-types.index')->with('success', 'Goods type deleted successfully');
     }

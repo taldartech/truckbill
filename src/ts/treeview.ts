@@ -18,13 +18,11 @@ import {
  * ------------------------------------------------------------------------
  */
 
-// const NAME = 'Treeview'
 const DATA_KEY = 'lte.treeview'
 const EVENT_KEY = `.${DATA_KEY}`
 
 const EVENT_EXPANDED = `expanded${EVENT_KEY}`
 const EVENT_COLLAPSED = `collapsed${EVENT_KEY}`
-// const EVENT_LOAD_DATA_API = `load${EVENT_KEY}`
 
 const CLASS_NAME_MENU_OPEN = 'menu-open'
 const SELECTOR_NAV_ITEM = '.nav-item'

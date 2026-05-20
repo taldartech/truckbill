@@ -6,7 +6,6 @@ use App\Http\Requests\StoreTruckOwnerRequest;
 use App\Http\Requests\UpdateTruckOwnerRequest;
 use App\Models\AdvancePayment;
 use App\Models\City;
-use App\Models\Company;
 use App\Models\Country;
 use App\Models\Driver;
 use App\Models\State;
@@ -35,21 +34,23 @@ class TruckOwnerController extends Controller
 
     public function index(Request $request)
     {
-        $this->ensureCompanyContext();
         if ($request->ajax()) {
             return $this->getTruckOwnersData($request);
         }
 
-        $companies = Company::all();
         $truckTypes = TruckType::orderBy('name')->get();
 
-        return view('truck_owner.index', compact('companies', 'truckTypes'));
+        return view('truck_owner.index', compact('truckTypes'));
     }
 
     private function getTruckOwnersData(Request $request)
     {
         try {
-            $query = Transporter::with(['company', 'transporterMaster.city'])->where('is_owner', 1); // Show only truck owners
+            $query = Transporter::with([
+                'company',
+                'transporterMaster.city',
+                'trucks:id,transporter_id,truck_number',
+            ])->where('is_owner', 1); // Show only truck owners
 
             if (Auth::user()->company_id) {
                 $query->where('company_id', Auth::user()->company_id);
@@ -127,10 +128,14 @@ class TruckOwnerController extends Controller
                         $query->orderBy('transporters.advance_amount', $orderDir);
                         break;
                     default:
-                        $query->orderBy('transporters.id', 'desc');
+                        $query->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+                            ->orderBy('transporter_masters.name', 'asc')
+                            ->select('transporters.*');
                 }
             } else {
-                $query->orderBy('transporters.id', 'desc');
+                $query->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+                    ->orderBy('transporter_masters.name', 'asc')
+                    ->select('transporters.*');
             }
 
             $totalQuery = Transporter::where('is_owner', 1);
@@ -147,8 +152,7 @@ class TruckOwnerController extends Controller
 
             $data = [];
             foreach ($truckOwners as $index => $truckOwner) {
-                $trucks = $truckOwner->trucks();
-                $truckNumbers = $trucks->pluck('truck_number')->toArray();
+                $truckNumbers = $truckOwner->trucks->pluck('truck_number')->toArray();
                 $truckList = implode(', ', $truckNumbers);
                 $data[] = [
                     'name' => '<a href="#" class="truck-owner-name-link text-brand-primary fw-bold" data-bs-toggle="tooltip" title="Trucks: '.htmlspecialchars($truckList).'" data-id="'.$truckOwner->id.'" style="text-decoration: none;">'.($truckOwner->name ?? 'N/A').'</a>',
@@ -157,7 +161,7 @@ class TruckOwnerController extends Controller
                     'location' => $truckOwner->city->name ?? 'N/A',
                     'contact_number' => $truckOwner->mobile_number ?? 'N/A',
                     'declaration_given' => $truckOwner->declaration_given ? 'Yes' : 'No',
-                    'advance_amount' => '₹'.number_format($truckOwner->advance_amount, 2),
+                    'advance_amount' => ''.number_format($truckOwner->advance_amount, 2),
                     'actions' => $this->getActionButtons($truckOwner),
                 ];
             }
@@ -212,18 +216,27 @@ class TruckOwnerController extends Controller
 
     public function create()
     {
-        $this->ensureCompanyContext();
-        $companies = Company::all();
         $countries = Country::all();
-        $states = State::all();
-        $cities = City::all();
+        $states = collect();
+        $cities = collect();
 
-        return view('truck_owner.create', compact('companies', 'countries', 'states', 'cities'));
+        if (old('country_id')) {
+            $states = State::where('country_id', old('country_id'))
+                ->orderBy('name')
+                ->get();
+        }
+
+        if (old('state_id')) {
+            $cities = City::where('state_id', old('state_id'))
+                ->orderBy('name')
+                ->get();
+        }
+
+        return view('truck_owner.create', compact('countries', 'states', 'cities'));
     }
 
     public function store(StoreTruckOwnerRequest $request)
     {
-        $this->ensureCompanyContext();
         $validated = $request->validated();
 
         $shortName = $validated['short_name'] ?? null;
@@ -323,7 +336,6 @@ class TruckOwnerController extends Controller
 
     public function show(Transporter $truck_owner)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $truck_owner->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this truck owner.');
         }
@@ -342,7 +354,7 @@ class TruckOwnerController extends Controller
             ->map(function ($payment) {
                 return [
                     'id' => $payment->id,
-                    'amount' => '₹'.number_format($payment->advance_amount, 2),
+                    'amount' => ''.number_format($payment->advance_amount, 2),
                     'payment_date' => $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('d-m-Y') : 'Not specified',
                     'remark' => $payment->remark ?: 'No remarks',
                     'created_at' => $payment->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
@@ -382,7 +394,7 @@ class TruckOwnerController extends Controller
             'tds_percentage' => $truck_owner->tds_percentage ?: '0',
             'tds_adjustment_remark' => $truck_owner->tds_adjustment_remark ?: '',
             'total_trucks' => $truck_owner->total_trucks,
-            'advance_amount' => '₹'.number_format($truck_owner->advance_amount, 2),
+            'advance_amount' => ''.number_format($truck_owner->advance_amount, 2),
             'created_at' => $truck_owner->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
             'updated_at' => $truck_owner->updated_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
             'advance_payments' => $advancePayments,
@@ -392,26 +404,21 @@ class TruckOwnerController extends Controller
 
     public function edit(Transporter $truck_owner)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $truck_owner->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this truck owner.');
         }
         // Load the trucks relationship with driver information and transporterMaster for name/address accessors
         $truck_owner->load(['trucks.driver', 'transporterMaster.city.state.country']);
 
-        $companies = Company::all();
         $trucks = Truck::where('transporter_id', $truck_owner->id)->get();
         $countries = Country::all();
-        $states = State::all();
-        $cities = City::all();
         $truckTypes = TruckType::orderBy('name')->get();
 
-        return view('truck_owner.edit', compact('truck_owner', 'companies', 'trucks', 'countries', 'states', 'cities', 'truckTypes'));
+        return view('truck_owner.edit', compact('truck_owner', 'trucks', 'countries', 'truckTypes'));
     }
 
     public function update(UpdateTruckOwnerRequest $request, Transporter $truck_owner)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $truck_owner->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this truck owner.');
         }
@@ -456,7 +463,6 @@ class TruckOwnerController extends Controller
 
     public function destroy(Transporter $truck_owner)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $truck_owner->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this truck owner.');
         }

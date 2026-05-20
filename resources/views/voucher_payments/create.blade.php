@@ -107,17 +107,6 @@
                     <div class="invalid-feedback">Please select a payment mode.</div>
                 </div>
                 <!--end::Col-->
-
-              
-                
-                <!--begin::Col-->
-                {{-- <div class="col-md-6">
-                    <label for="transaction_id" class="form-label">Transaction ID *</label>
-                    <input type="text" name="transaction_id" id="transaction_id" class="form-control" value="{{ old('transaction_id') }}" required>
-                    @error('transaction_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please enter a transaction ID.</div>
-                </div> --}}
-                <!--end::Col-->
                 <!--begin::Col-->
                 <div class="col-md-4">
                     <label for="amount" class="form-label">Amount *</label>
@@ -236,47 +225,7 @@
                 paymentModeIdSelect.dispatchEvent(new Event('change'));
             });
             </script>
-{{-- 
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const paymentModeSelect = document.getElementById('payment_mode');
-                const paymentStatusSelect = document.getElementById('payment_status');
-                const isAdmin = auth()->user()->role === 'admin';
-
-                paymentModeSelect.addEventListener('change', function() {
-                    // Get the selected option value (which is the payment mode name)
-                    const selectedValue = this.value;
-                    console.log('Selected payment mode:', selectedValue);
-                    
-                    if (isAdmin) {
-                        if (selectedValue.toLowerCase() === 'cash' || selectedValue.toLowerCase() === 'adjust in advance') {
-                            console.log('Cash selected, setting status to in-progress');
-                            paymentStatusSelect.value = 'in-progress';
-                            // paymentStatusSelect.disabled = true;
-                        } else if (selectedValue.toLowerCase() === 'bank' || 
-                                   selectedValue.toLowerCase() === 'online' || 
-                                   selectedValue.toLowerCase() === 'fuel') {
-                            console.log('Bank/Online/Fuel selected, setting status to pending');
-                            paymentStatusSelect.value = 'pending';
-                            paymentStatusSelect.disabled = false;
-                        } else {
-                            console.log('Other payment mode selected, enabling status');
-                            paymentStatusSelect.disabled = false;
-                        }
-                    } else {
-                        // For operators, set payment status based on payment mode
-                        if (selectedValue.toLowerCase() === 'cash' || selectedValue.toLowerCase() === 'adjust in advance') {
-                            paymentStatusSelect.value = 'in-progress';
-                        } else if (selectedValue.toLowerCase() === 'bank' || 
-                                   selectedValue.toLowerCase() === 'online' || 
-                                   selectedValue.toLowerCase() === 'fuel') {
-                            paymentStatusSelect.value = 'pending';
-                        }
-                    }
-                });
-            });
-        </script>
-        <!--end::Body--> --}}
+        <!--end::Body-->
         @if (session('warning') && session('duplicate_payment_id'))
             <div class="card-body border-top">
                 <div class="form-check">

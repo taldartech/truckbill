@@ -7,7 +7,7 @@ function isDataTableInitialized(selector) {
     try {
         return $.fn.DataTable.isDataTable(selector);
     } catch (e) {
-        console.log('DataTable check error:', e);
+        console.error('DataTable check error:', e);
         return false;
     }
 }
@@ -19,7 +19,6 @@ function isDataTableInitialized(selector) {
  */
 function safeGetDataTable(selector) {
     if (typeof $ === 'undefined' || typeof $.fn.DataTable === 'undefined') {
-        console.log('DataTable not available');
         return null;
     }
     
@@ -27,11 +26,10 @@ function safeGetDataTable(selector) {
         if ($.fn.DataTable.isDataTable(selector)) {
             return $(selector).DataTable();
         } else {
-            console.log('DataTable not initialized on', selector);
             return null;
         }
     } catch (e) {
-        console.log('Error getting DataTable:', e);
+        console.error('Error getting DataTable:', e);
         return null;
     }
 }

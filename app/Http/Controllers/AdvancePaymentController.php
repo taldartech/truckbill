@@ -2,17 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AdvancePayment;
-use App\Models\Transporter;
-use App\Services\Notifications\AdvancePaymentNotificationService;
+use App\Services\TransporterAdvanceLedgerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\ValidationException;
 
 class AdvancePaymentController extends Controller
 {
     public function __construct(
-        private readonly AdvancePaymentNotificationService $advancePaymentNotificationService
+        private readonly TransporterAdvanceLedgerService $transporterAdvanceLedgerService
     ) {}
 
     public function store(Request $request)
@@ -24,27 +21,15 @@ class AdvancePaymentController extends Controller
             'remark' => 'nullable|string|max:1000',
         ]);
 
-        $validated['company_id'] = Auth::user()->company_id;
-
-        $transporter = Transporter::findOrFail($validated['transporter_id']);
-        $newBalance = (float) $transporter->advance_amount + (float) $validated['advance_amount'];
-
-        if ($newBalance < 0) {
-            throw ValidationException::withMessages([
-                'advance_amount' => 'Deduction exceeds available book balance of ₹'.number_format((float) $transporter->advance_amount, 2).'.',
-            ]);
-        }
-
-        $advancePayment = AdvancePayment::create($validated);
-
-        // Update transporter's advance amount
-        $transporter->advance_amount = $newBalance;
-        $transporter->save();
-
-        if ((float) $validated['advance_amount'] > 0) {
-            $advancePayment->loadMissing(['company', 'transporter.transporterMaster']);
-            $this->advancePaymentNotificationService->notifyAdvancePaid($advancePayment, auth()->user());
-        }
+        $advancePayment = $this->transporterAdvanceLedgerService->recordAdvancePayment(
+            companyId: (int) Auth::user()->company_id,
+            transporterId: (int) $validated['transporter_id'],
+            advanceAmount: (float) $validated['advance_amount'],
+            paymentDate: $validated['payment_date'],
+            remark: $validated['remark'] ?? null,
+            actor: auth()->user(),
+            notifyCredit: true
+        );
 
         // Handle AJAX request
         if ($request->ajax()) {

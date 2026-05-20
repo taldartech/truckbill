@@ -21,7 +21,7 @@
                 </div>
                 <div>
                     <h6 class="text-muted fw-semi-bold mb-1">Monthly Revenue</h6>
-                    <h3 class="fw-bold mb-1 text-truncate">₹{{ number_format($adminStats['monthly_revenue'], 2) }}</h3>
+                    <h3 class="fw-bold mb-1 text-truncate">{{ number_format($adminStats['monthly_revenue'], 2) }}</h3>
                     <span class="badge bg-soft-success text-success rounded-pill">Total Revenue</span>
                 </div>
             </div>
@@ -108,7 +108,7 @@
                 </div>
                 <div>
                     <h6 class="text-muted fw-semi-bold mb-1">Outstanding Amount</h6>
-                    <h3 class="fw-bold mb-1">₹{{ number_format($adminStats['outstanding_amount'], 2) }}</h3>
+                    <h3 class="fw-bold mb-1">{{ number_format($adminStats['outstanding_amount'], 2) }}</h3>
                     <span class="badge bg-soft-warning text-warning rounded-pill">Invoice Balance</span>
                 </div>
             </div>
@@ -254,7 +254,7 @@
                             @foreach($revenueByCompany->take(10) as $company)
                                 <tr>
                                     <td class="ps-4 fw-medium">{{ Str::limit($company->name, 40) }}</td>
-                                    <td class="text-end pe-4 fw-bold text-success">₹{{ number_format($company->monthly_revenue ?? 0, 2) }}</td>
+                                    <td class="text-end pe-4 fw-bold text-success">{{ number_format($company->monthly_revenue ?? 0, 2) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -265,5 +265,4 @@
     </div>
 </div>
 @endif
-
 

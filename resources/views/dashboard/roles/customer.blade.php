@@ -80,7 +80,7 @@
                 </div>
                 <div>
                     <h6 class="text-muted fw-semi-bold mb-1">Outstanding Amount</h6>
-                    <h3 class="fw-bold mb-1">₹{{ number_format($customerStats['outstanding_amount'] ?? 0, 2) }}</h3>
+                    <h3 class="fw-bold mb-1">{{ number_format($customerStats['outstanding_amount'] ?? 0, 2) }}</h3>
                 </div>
             </div>
         </div>
@@ -153,7 +153,7 @@
                                         <td class="ps-4">{{ $payment->invoice->invoice_number ?? 'N/A' }}</td>
                                         <td>{{ ucfirst($payment->mode ?? '-') }}</td>
                                         <td>{{ $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('d-m-Y') : '-' }}</td>
-                                        <td>₹{{ number_format($payment->amount ?? 0, 2) }}</td>
+                                        <td>{{ number_format($payment->amount ?? 0, 2) }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>

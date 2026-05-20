@@ -50,6 +50,7 @@
             {{-- Company field hidden as requested --}}
             <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
             <input type="hidden" name="transporter_master_id" id="transporter_master_id" value="{{ old('transporter_master_id') }}">
+            <input type="hidden" id="pan_verified" value="0">
 
             <!-- PAN Check Section - must complete before rest of form -->
             <div class="card mb-4 p-3 bg-light" id="panLookupSection">
@@ -173,7 +174,7 @@
                 <div class="col-md-4">
                     <label class="form-label">Book Balance</label>
                     <div class="form-control-plaintext bg-light border rounded px-3 py-2">
-                        <strong>₹ 0.00</strong>
+                        <strong> 0.00</strong>
                         <small class="text-muted d-block">Read-only field</small>
                     </div>
                     <input type="hidden" name="advance_amount" value="0">
@@ -241,55 +242,6 @@
                             @error('city_id') <div class="text-danger">{{ $message }}</div> @enderror
                         </div>
                     </div>
-                    {{-- <div class="col-md-4">
-                        <label for="country_id" class="form-label">Country *</label>
-                        <select class="form-select" id="country_id" name="country_id" required>
-                            <option value="">Select Country</option>
-                            @foreach($countries as $country)
-                                <option value="{{ $country->id }}" {{ old('country_id') == $country->id ? 'selected' : '' }}>
-                                    {{ $country->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCountryModal" title="Add New Country">
-                            <i class="bi bi-plus"></i>
-                        </button>
-                        @error('country_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div> --}}
-                    {{-- <div class="col-md-4">
-                        <label for="state_id" class="form-label">State *</label>
-                        <select class="form-select" id="state_id" name="state_id" required>
-                            <option value="">Select State</option>
-                            @if(old('country_id'))
-                                @foreach($states as $state)
-                                    <option value="{{ $state->id }}" {{ old('state_id') == $state->id ? 'selected' : '' }}>
-                                        {{ $state->name }}
-                                    </option>
-                                @endforeach
-                            @endif
-                        </select>
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStateModal" title="Add New State">
-                            <i class="bi bi-plus"></i>
-                        </button>
-                        @error('state_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div> --}}
-                    {{-- <div class="col-md-4">
-                        <label for="city_id" class="form-label">City *</label>
-                        <select class="form-select" id="city_id" name="city_id" required>
-                            <option value="">Select City</option>
-                            @if(old('state_id'))
-                                @foreach($cities as $city)
-                                    <option value="{{ $city->id }}" {{ old('city_id') == $city->id ? 'selected' : '' }}>
-                                        {{ $city->name }}
-                                    </option>
-                                @endforeach
-                            @endif
-                        </select>
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCityModal" title="Add New City">
-                            <i class="bi bi-plus"></i>
-                        </button>
-                        @error('city_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div> --}}
                 </div>
                 <div class="row mb-3">
                     <div class="col-md-12">
@@ -562,12 +514,26 @@
       document.addEventListener('DOMContentLoaded', function() {
         const btnPanLookup = document.getElementById('btnPanLookup');
         const panLookup = document.getElementById('pan_lookup');
+        const panField = document.getElementById('pan_number');
+        const panVerifiedInput = document.getElementById('pan_verified');
         const panLookupMessage = document.getElementById('panLookupMessage');
         const masterDataSection = document.getElementById('masterDataSection');
         const newMasterFormSection = document.getElementById('newMasterFormSection');
         const transporterMasterId = document.getElementById('transporter_master_id');
         const restOfForm = document.getElementById('restOfForm');
         const panAlreadyRegisteredSection = document.getElementById('panAlreadyRegisteredSection');
+        let lastCheckedPan = '';
+
+        function invalidatePanVerification(changedPan) {
+          if (!panVerifiedInput) return;
+          if (panVerifiedInput.value !== '1') return;
+          if ((changedPan || '').toUpperCase() === (lastCheckedPan || '').toUpperCase()) return;
+          panVerifiedInput.value = '0';
+          if (restOfForm) restOfForm.classList.add('d-none');
+          if (panAlreadyRegisteredSection) panAlreadyRegisteredSection.classList.add('d-none');
+          panLookupMessage.textContent = 'PAN changed. Please click Check PAN again.';
+          panLookupMessage.className = 'mt-2 small text-warning';
+        }
 
         if (btnPanLookup) {
           btnPanLookup.addEventListener('click', function() {
@@ -594,6 +560,7 @@
             .then(r => r.ok ? r.json() : r.json().then(d => { throw new Error(d.error || 'Request failed'); }))
             .then(data => {
               if (data.already_registered) {
+                if (panVerifiedInput) panVerifiedInput.value = '0';
                 panLookupMessage.textContent = 'This PAN is already registered as a transporter/agency for this company.';
                 panLookupMessage.className = 'mt-2 small text-danger';
                 if (panAlreadyRegisteredSection) panAlreadyRegisteredSection.classList.remove('d-none');
@@ -635,12 +602,15 @@
                 panLookupMessage.textContent = 'PAN not in system. Please fill in all master details below.';
                 panLookupMessage.className = 'mt-2 small text-info';
               }
+              if (panVerifiedInput) panVerifiedInput.value = '1';
+              lastCheckedPan = pan;
               window.__agencyTdsUserEdited = false;
               if (typeof refreshAgencyTdsBaseline === 'function') {
                 refreshAgencyTdsBaseline();
               }
             })
             .catch((err) => {
+              if (panVerifiedInput) panVerifiedInput.value = '0';
               panLookupMessage.textContent = err.message || 'Check failed. Please try again.';
               panLookupMessage.className = 'mt-2 small text-danger';
             })
@@ -648,7 +618,22 @@
           });
         }
         if (panLookup) {
-          panLookup.addEventListener('input', function() { this.value = this.value.toUpperCase(); });
+          panLookup.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+            invalidatePanVerification(this.value);
+            if (panField) {
+              panField.value = this.value;
+            }
+          });
+        }
+        if (panField) {
+          panField.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+            if (panLookup && panLookup.value !== this.value) {
+              panLookup.value = this.value;
+            }
+            invalidatePanVerification(this.value);
+          });
         }
         document.querySelectorAll('input[name="declaration_given"]').forEach(function (el) {
           el.addEventListener('change', function () {
@@ -685,6 +670,16 @@
     <script>
       // Function to show confirmation modal with form data
       function showConfirmationModal() {
+          const panVerifiedInput = document.getElementById('pan_verified');
+          if (!panVerifiedInput || panVerifiedInput.value !== '1') {
+              const panLookupMessage = document.getElementById('panLookupMessage');
+              if (panLookupMessage) {
+                  panLookupMessage.textContent = 'Please check PAN again before submitting.';
+                  panLookupMessage.className = 'mt-2 small text-danger';
+              }
+              return;
+          }
+
           // First validate the form
 
           const form = document.querySelector('.needs-validation');
@@ -742,7 +737,7 @@
 
           document.getElementById('confirm-is-owner').textContent = isOwner;
           document.getElementById('confirm-declaration').textContent = declaration;
-          document.getElementById('confirm-advance').textContent = '₹' + parseFloat(advance).toFixed(2);
+          document.getElementById('confirm-advance').textContent = '' + parseFloat(advance).toFixed(2);
 
           // Show modal
           const modal = new bootstrap.Modal(document.getElementById('confirmationModal'));
@@ -837,102 +832,6 @@
     </script>
     <!--end::JavaScript-->
   </div>
-{{-- <div class="container mt-4">
-    <h2>Add New Transporter</h2>
-    <form action="{{ route('transporters.store') }}" method="POST" class="needs-validation" novalidate>
-        @csrf
-        @php
-    $canEditCompany = auth()->check() && auth()->user()->userRole->name === 'super_admin';
-    $userCompanyId = auth()->user()->company_id ?? null;
-@endphp
-        @error('registered_truck_id')
-            <div class="text-danger">{{ $message }}</div>
-        @enderror
-        <div class="mb-3">
-            <label for="company_id" class="form-label">Company *</label>
-            @if($canEditCompany)
-                <select class="form-select" id="company_id" name="company_id" required>
-                    <option value="">Select</option>
-                    @foreach($companies as $company)
-                        <option value="{{ $company->id }}" {{ old('company_id') == $company->id ? 'selected' : '' }}>{{ $company->name }}</option>
-                    @endforeach
-                </select>
-            @else
-                <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
-                <div class="form-control-plaintext">
-                    {{ $companies->firstWhere('id', $userCompanyId)->name ?? '' }}
-                </div>
-            @endif
-            @error('company_id') <div class="text-danger">{{ $message }}</div> @enderror
-        </div>
-
-        @php
-            $companyIdError = session('errors') ? session('errors')->first('company_id') : null;
-        @endphp
-        @if($companyIdError)
-            <div class="alert alert-danger">
-                {{ $companyIdError }}
-            </div>
-        @endif
-        <div class="mb-3">
-            <label for="name" class="form-label">Name *</label>
-            <input type="text" class="form-control" id="name" name="name" required value="{{ old('name') }}">
-            @error('name') <div class="text-danger">{{ $message }}</div> @enderror
-        </div>
-        <div class="mb-3">
-        <label for="gst_number" class="form-label">GST Number</label>
-            <input type="text" class="form-control" id="gst_number" name="gst_number" value="{{ old('gst_number') }}">
-            @error('gst_number') <div class="text-danger">{{ $message }}</div> @enderror
-        </div>
-
-        <div class="mb-3">
-            <label for="pan_number" class="form-label">PAN Number</label>
-            <input type="text" class="form-control" id="pan_number" name="pan_number" value="{{ old('pan_number') }}">
-            @error('pan_number') <div class="text-danger">{{ $message }}</div> @enderror
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Type *</label><br>
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="is_owner" id="owner" value="1" {{ old('is_owner') === '1' ? 'checked' : '' }} required>
-                <label class="form-check-label" for="owner">Owner</label>
-            </div>
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="is_owner" id="agency" value="0" {{ old('is_owner') === '0' ? 'checked' : '' }} required>
-                <label class="form-check-label" for="agency">Agency</label>
-            </div>
-            @error('is_owner') <div class="text-danger">{{ $message }}</div> @enderror
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Declaration Given? *</label><br>
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="declaration_given" id="decl_yes" value="1" {{ old('declaration_given') === '1' ? 'checked' : '' }} required>
-                <label class="form-check-label" for="decl_yes">Yes</label>
-            </div>
-            <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="declaration_given" id="decl_no" value="0" {{ old('declaration_given') === '0' ? 'checked' : '' }} required>
-                <label class="form-check-label" for="decl_no">No</label>
-            </div>
-            @error('declaration_given') <div class="text-danger">{{ $message }}</div> @enderror
-        </div>
-        <div class="mb-3">
-            <label for="total_trucks" class="form-label">Total Trucks *</label>
-            <input type="number" class="form-control" id="total_trucks" name="total_trucks" min="0" required value="{{ old('total_trucks', 0) }}">
-            @error('total_trucks') <div class="text-danger">{{ $message }}</div> @enderror
-        </div>
-        {{-- <div class="mb-3">
-            <label for="registered_truck_id" class="form-label">Registered Truck</label>
-            <input type="text" class="form-control" id="registered_truck_id" name="registered_truck_id" readonly value="">
-            @error('registered_truck_id') <div class="text-danger">{{ $message }}</div> @enderror
-        </div> --}}
-        {{-- <div class="mb-3">
-            <label for="advance_amount" class="form-label">Book Balance</label>
-            <input type="number" step="0.01" class="form-control" id="advance_amount" name="advance_amount" value="{{ old('advance_amount', 0) }}">
-            @error('advance_amount') <div class="text-danger">{{ $message }}</div> @enderror
-        </div>
-        <button type="submit" class="btn btn-primary">Create Transporter</button>
-        <a href="{{ route('transporters.index') }}" class="btn btn-back ms-2">Back to List</a>
-    </form> --}}
-{{-- </div> --}}
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -990,8 +889,6 @@
                 );
             });
         })();
-
-
 
         // Fresh approach using fetch API for modal submissions
         document.addEventListener('DOMContentLoaded', function() {
@@ -1290,283 +1187,6 @@
 
     // Note: The country, state, and city cascading selects are handled by dynamic-dropdowns.js
     // No need for duplicate event listeners here
-// $(document).ready(function() {
-        // Handle Country Modal Form Submission
-    //     $('#addCountryForm').on('submit', function(e) {
-    //         e.preventDefault();
-
-    //         const form = $(this);
-    //         const submitBtn = form.find('button[type="submit"]');
-    //         const spinner = submitBtn.find('.spinner-border');
-    //         const errorDiv = $('#countryFormErrors');
-    //         const countryName = $('#country_name').val();
-    //         const countryCode = $('#country_code').val();
-    //         const csrfToken = $('meta[name="csrf-token"]').attr('content');
-
-    //         // Show loading state
-    //         submitBtn.prop('disabled', true);
-    //         spinner.removeClass('d-none');
-    //         errorDiv.addClass('d-none');
-
-    //         // Create FormData object
-    //         const formData = new FormData();
-    //         formData.append('name', countryName);
-    //         formData.append('code', countryCode);
-    //         formData.append('from_modal', '1');
-    //         formData.append('_token', csrfToken);
-
-    //         // Use jQuery AJAX instead of fetch for better FormData handling
-    //         $.ajax({
-    //             url: '{{ route("master.countries.store") }}',
-    //             type: 'POST',
-    //             data: formData,
-    //             processData: false,
-    //             contentType: false,
-    //             headers: {
-    //                 'X-Requested-With': 'XMLHttpRequest',
-    //                 'Accept': 'application/json'
-    //             },
-    //             success: function(data) {
-    //                 console.log('Country creation response:', data);
-    //                 if (data && data.success && data.country) {
-    //                     // Add new country to the main dropdown
-    //                     $('#country_id').append(`<option value="${data.country.id}">${data.country.name}</option>`);
-
-    //                     // Select the newly created country
-    //                     $('#country_id').val(data.country.id).trigger('change');
-
-    //                     // Close modal and remove backdrop
-    //                     $('#addCountryModal').modal('hide');
-    //                     $('.modal-backdrop').remove();
-    //                     $('body').removeClass('modal-open').css('padding-right', '');
-    //                 }
-    //             },
-    //             error: function(xhr, status, error) {
-    //                 console.error('Error:', error);
-    //                 if (xhr.responseJSON && xhr.responseJSON.errors) {
-    //                     let errorMessages = Object.values(xhr.responseJSON.errors).flat().join('<br>');
-    //                     errorDiv.html(errorMessages).removeClass('d-none');
-    //                 } else {
-    //                     errorDiv.html('An error occurred while adding the country.').removeClass('d-none');
-    //                 }
-    //             },
-    //             complete: function() {
-    //                 // Hide loading state
-    //                 submitBtn.prop('disabled', false);
-    //                 spinner.addClass('d-none');
-    //             }
-    //         });
-    //     });
-
-    //     // Handle State Modal Form Submission
-    //     $('#addStateForm').on('submit', function(e) {
-    //         e.preventDefault();
-
-    //         const form = $(this);
-    //         const submitBtn = form.find('button[type="submit"]');
-    //         const spinner = submitBtn.find('.spinner-border');
-    //         const errorDiv = $('#stateFormErrors');
-    //         const stateName = $('#state_name').val();
-    //         const stateCode = $('#state_code').val();
-    //         const countryId = $('#modal_state_country_id').val();
-    //         const csrfToken = $('meta[name="csrf-token"]').attr('content');
-
-    //         // Show loading state
-    //         submitBtn.prop('disabled', true);
-    //         spinner.removeClass('d-none');
-    //         errorDiv.addClass('d-none');
-
-    //         // Create FormData object
-    //         const formData = new FormData();
-    //         formData.append('name', stateName);
-    //         formData.append('code', stateCode);
-    //         formData.append('country_id', countryId);
-    //         formData.append('from_modal', '1');
-    //         formData.append('_token', csrfToken);
-
-    //         // Use jQuery AJAX instead of fetch for better FormData handling
-    //         $.ajax({
-    //             url: '{{ route("master.states.store") }}',
-    //             type: 'POST',
-    //             data: formData,
-    //             processData: false,
-    //             contentType: false,
-    //             headers: {
-    //                 'X-Requested-With': 'XMLHttpRequest',
-    //                 'Accept': 'application/json'
-    //             },
-    //             success: function(data) {
-    //                 console.log('State creation response:', data);
-    //                 if (data && data.success && data.state) {
-    //                     // Add new state to the main dropdown
-    //                     $('#state_id').append(`<option value="${data.state.id}">${data.state.name}</option>`);
-
-    //                     // Select the newly created state
-    //                     $('#state_id').val(data.state.id).trigger('change');
-
-    //                     // Close modal and remove backdrop
-    //                     $('#addStateModal').modal('hide');
-    //                     $('.modal-backdrop').remove();
-    //                     $('body').removeClass('modal-open').css('padding-right', '');
-    //                 }
-    //             },
-    //             error: function(xhr, status, error) {
-    //                 console.error('Error:', error);
-    //                 if (xhr.responseJSON && xhr.responseJSON.errors) {
-    //                     let errorMessages = Object.values(xhr.responseJSON.errors).flat().join('<br>');
-    //                     errorDiv.html(errorMessages).removeClass('d-none');
-    //                 } else {
-    //                     errorDiv.html('An error occurred while adding the state.').removeClass('d-none');
-    //                 }
-    //             },
-    //             complete: function() {
-    //                 // Hide loading state
-    //                 submitBtn.prop('disabled', false);
-    //                 spinner.addClass('d-none');
-    //             }
-    //         });
-    //     });
-
-    //     // Handle City Modal Form Submission
-    //     $('#addCityForm').on('submit', function(e) {
-    //         e.preventDefault();
-
-    //         const form = $(this);
-    //         const submitBtn = form.find('button[type="submit"]');
-    //         const spinner = submitBtn.find('.spinner-border');
-    //         const errorDiv = $('#cityFormErrors');
-    //         const cityName = $('#modal_city_name').val();
-    //         const stateId = $('#modal_city_state_id').val();
-
-    //         const csrfToken = $('meta[name="csrf-token"]').attr('content');
-    //         console.log(cityName, stateId, csrfToken);
-    //         // Show loading state
-    //         submitBtn.prop('disabled', true);
-    //         spinner.removeClass('d-none');
-    //         errorDiv.addClass('d-none');
-
-    //         // Create FormData object
-    //         const formData = new FormData();
-    //         formData.append('name', cityName);
-    //         formData.append('state_id', stateId);
-
-
-    //         formData.append('from_modal', '1');
-    //         formData.append('_token', csrfToken);
-
-    //         // Use jQuery AJAX instead of fetch for better FormData handling
-    //         $.ajax({
-    //             url: '{{ route("master.cities.store") }}',
-    //             type: 'POST',
-    //             data: formData,
-    //             processData: false,
-    //             contentType: false,
-    //             headers: {
-    //                 'X-Requested-With': 'XMLHttpRequest',
-    //                 'Accept': 'application/json'
-    //             },
-    //             success: function(data) {
-    //                 console.log('City creation response:', data);
-    //                 if (data && data.success && data.city) {
-    //                     // Add new city to the main dropdown
-    //                     $('#city_id').append(`<option value="${data.city.id}">${data.city.name}</option>`);
-
-    //                     // Select the newly created city
-    //                     $('#city_id').val(data.city.id).trigger('change');
-
-    //                     // Close modal and remove backdrop
-    //                     $('#addCityModal').modal('hide');
-    //                     $('.modal-backdrop').remove();
-    //                     $('body').removeClass('modal-open').css('padding-right', '');
-    //                 }
-    //             },
-    //             error: function(xhr, status, error) {
-    //                 console.error('Error:', error);
-    //                 if (xhr.responseJSON && xhr.responseJSON.errors) {
-    //                     let errorMessages = Object.values(xhr.responseJSON.errors).flat().join('<br>');
-    //                     errorDiv.html(errorMessages).removeClass('d-none');
-    //                 } else {
-    //                     errorDiv.html('An error occurred while adding the city.').removeClass('d-none');
-    //                 }
-    //             },
-    //             complete: function() {
-    //                 // Hide loading state
-    //                 submitBtn.prop('disabled', false);
-    //                 spinner.addClass('d-none');
-    //             }
-    //         });
-    //     });
-
-    //     // Handle country change in city modal
-    //     $('#modal_city_country_id').on('change', function() {
-    //         const countryId = $(this).val();
-    //         const stateSelect = $('#modal_city_state_id');
-
-    //         stateSelect.html('<option value="">Select State</option>');
-
-    //         if (countryId) {
-    //             $.get(`/api/states/${countryId}`)
-    //                 .done(function(data) {
-    //                     data.forEach(function(state) {
-    //                         stateSelect.append(`<option value="${state.id}">${state.name}</option>`);
-    //                     });
-    //                 })
-    //                 .fail(function() {
-    //                     showErrorMessage('Error loading states');
-    //                 });
-    //         }
-    //     });
-
-    //     // Function to show success message
-    //     function showSuccessMessage(message) {
-    //         // Remove any existing alerts
-    //         $('.alert-success').remove();
-
-    //         // Create and show success alert
-    //         const alertHtml = `
-    //             <div class="alert alert-success alert-dismissible fade show mt-2" role="alert">
-    //                 <i class="bi bi-check-circle-fill"></i> ${message}
-    //                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    //             </div>
-    //         `;
-
-    //         // Insert after the page title or at the top of the form
-    //         if ($('.card-header').length) {
-    //             $('.card-header').after(alertHtml);
-    //         } else {
-    //             $('form').before(alertHtml);
-    //         }
-
-    //         // Auto-hide after 5 seconds
-    //         setTimeout(function() {
-    //             $('.alert-success').fadeOut();
-    //         }, 5000);
-    //     }
-
-    //     // Function to show error message
-    //     function showErrorMessage(message) {
-    //         // Remove any existing alerts
-    //         $('.alert-danger').remove();
-
-    //         // Create and show error alert
-    //         const alertHtml = `
-    //             <div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
-    //                 <i class="bi bi-exclamation-triangle-fill"></i> ${message}
-    //                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    //             </div>
-    //         `;
-
-    //         // Insert after the page title or at the top of the form
-    //         if ($('.card-header').length) {
-    //             $('.card-header').after(alertHtml);
-    //         } else {
-    //             $('form').before(alertHtml);
-    //         }
-    //     }
-    // });
-
-
-
     // Helper functions for modal management
     function updateCountryDropdowns(country) {
         const dropdowns = ['country_id', 'modal_state_country_id', 'modal_city_country_id'];
@@ -1624,9 +1244,6 @@
 
 </script>
 
-{{-- @section('scripts') --}}
-    {{-- @parent --}}
-    {{-- <script src="/js/dynamic-dropdowns.js"></script> --}}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Function to convert input to uppercase

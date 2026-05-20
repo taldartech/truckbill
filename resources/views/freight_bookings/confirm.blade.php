@@ -106,21 +106,21 @@
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <div class="confirmation-label">TR Freight Rate</div>
-                    <div class="confirmation-value">₹{{ number_format($formData['tr_fr_rate'], 2) }}</div>
+                    <div class="confirmation-value">{{ number_format($formData['tr_fr_rate'], 2) }}</div>
                 </div>
                 <div class="col-md-4 mb-3">
                     <div class="confirmation-label">TR Amount</div>
-                    <div class="confirmation-value">₹{{ number_format($formData['tr_amount'], 2) }}</div>
+                    <div class="confirmation-value">{{ number_format($formData['tr_amount'], 2) }}</div>
                 </div>
                 <div class="col-md-4 mb-3">
                     <div class="confirmation-label">TDS Amount</div>
-                    <div class="confirmation-value">₹{{ number_format($formData['tds_amount'], 2) }}</div>
+                    <div class="confirmation-value">{{ number_format($formData['tds_amount'], 2) }}</div>
                 </div>
             </div>
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <div class="confirmation-label">Balance Amount</div>
-                    <div class="confirmation-value">₹{{ number_format($formData['balance_amount'], 2) }}</div>
+                    <div class="confirmation-value">{{ number_format($formData['balance_amount'], 2) }}</div>
                 </div>
                 <div class="col-md-4 mb-3">
                     <div class="confirmation-label">E-Way Bill Number</div>
@@ -159,19 +159,19 @@
                     <div class="col-md-4">
                         <div class="d-flex justify-content-between">
                             <span>TR Amount:</span>
-                            <span class="fw-bold">₹{{ number_format($formData['tr_amount'], 2) }}</span>
+                            <span class="fw-bold">{{ number_format($formData['tr_amount'], 2) }}</span>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="d-flex justify-content-between">
                             <span>TDS Amount:</span>
-                            <span class="fw-bold text-danger">- ₹{{ number_format($formData['tds_amount'], 2) }}</span>
+                            <span class="fw-bold text-danger">- {{ number_format($formData['tds_amount'], 2) }}</span>
                         </div>
                     </div>
                     <div class="col-md-4">
                         <div class="d-flex justify-content-between">
                             <span>Balance Amount:</span>
-                            <span class="fw-bold text-brand-primary">₹{{ number_format($formData['balance_amount'], 2) }}</span>
+                            <span class="fw-bold text-brand-primary">{{ number_format($formData['balance_amount'], 2) }}</span>
                         </div>
                     </div>
                 </div>

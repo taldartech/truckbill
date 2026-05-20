@@ -68,7 +68,6 @@ class DispatchExport implements FromView, ShouldAutoSize, WithColumnFormatting
             'B' => NumberFormat::FORMAT_DATE_DDMMYYYY,
             'I' => $weightFormat,
             'J' => $weightFormat,
-            'K' => NumberFormat::FORMAT_NUMBER_00,
             'L' => $numFormat,
             'M' => $numFormat,
             'T' => $numFormat,
@@ -86,8 +85,8 @@ class DispatchExport implements FromView, ShouldAutoSize, WithColumnFormatting
             'AF' => $numFormat,
             'AG' => $numFormat,
             'AH' => $numFormat,
-            'AO' => NumberFormat::FORMAT_NUMBER,
-            'AP' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'AQ' => NumberFormat::FORMAT_NUMBER,
+            'AR' => NumberFormat::FORMAT_DATE_DDMMYYYY,
         ];
     }
 }

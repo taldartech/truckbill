@@ -9,6 +9,8 @@ use App\Models\LorryReceipt;
 use App\Services\InvoiceNumberService;
 use App\Services\Notifications\InvoiceNotificationService;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -23,84 +25,70 @@ class InvoiceController extends Controller
         private InvoiceNotificationService $invoiceNotificationService
     ) {}
 
-    private function ensureCompanyContext(): void
-    {
-        if (Auth::user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
-            abort(403, 'Please enter a company first.');
-        }
-    }
-
     public function index(Request $request)
     {
-        $this->ensureCompanyContext();
         // Handle DataTables AJAX request
         if ($request->ajax()) {
             return $this->getInvoicesData($request);
         }
 
-        $invoices = Invoice::with(['company', 'consignee', 'payments'])->orderByDesc('id');
+        $summaryQuery = Invoice::query();
+        $this->applyInvoiceFilters($summaryQuery, $request);
 
-        // Apply filters
-        // if ($request->has('generated_date') && !empty($request->generated_date)) {
-        //   $invoices->whereDate('generated_date', $request->generated_date);
-        // }
+        $stats = (clone $summaryQuery)
+            ->selectRaw(
+                'COUNT(*) as total_invoices, COALESCE(SUM(total_amount), 0) as total_amount, SUM(CASE WHEN payment_status = ? THEN 1 ELSE 0 END) as paid_count, SUM(CASE WHEN payment_status = ? THEN 1 ELSE 0 END) as unpaid_count',
+                ['paid', 'pending']
+            )
+            ->first();
 
-        if ($request->has('generated_date_from') && ! empty($request->generated_date_from) && $request->has('generated_date_to') && ! empty($request->generated_date_to)) {
-            $invoices->whereBetween('generated_date', [$request->generated_date_from, $request->generated_date_to]);
-        }
+        $totalInvoices = (int) ($stats->total_invoices ?? 0);
+        $totalAmount = (float) ($stats->total_amount ?? 0);
+        $paidCount = (int) ($stats->paid_count ?? 0);
+        $unpaidCount = (int) ($stats->unpaid_count ?? 0);
 
-        // Add other existing filters here if needed
-        if ($request->has('manual_invoice_number') && ! empty($request->manual_invoice_number)) {
-            $invoices->where('manual_invoice_number', 'like', '%'.$request->manual_invoice_number.'%');
-        }
-
-        if ($request->has('invoice_number') && ! empty($request->invoice_number)) {
-            $invoices->where('invoice_number', 'like', '%'.$request->invoice_number.'%');
-        }
-
-        if ($request->has('customer') && ! empty($request->customer)) {
-            $invoices->whereHas('consignee', function ($q) use ($request) {
-                $q->where('name', 'like', '%'.$request->customer.'%');
-            });
-        }
-
-        if ($request->has('company') && ! empty($request->company)) {
-            $invoices->whereHas('company', function ($q) use ($request) {
-                $q->where('name', 'like', '%'.$request->company.'%');
-            });
-        }
-
-        if ($request->has('payment_status') && ! empty($request->payment_status)) {
-            $invoices->where('payment_status', $request->payment_status);
-        }
-
-        if (Auth::user()->company_id) {
-            $invoices = $invoices->where('company_id', Auth::user()->company_id);
-        }
-        $invoices = $invoices->orderBy('generated_date', 'desc');
-        $invoices = $invoices->paginate(20);
-        $lastInvoiceId = Invoice::query()
-            ->when(Auth::user()->company_id, fn ($query) => $query->where('company_id', Auth::user()->company_id))
-            ->max('id');
-
-        return view('invoices.index', compact('invoices', 'lastInvoiceId'));
+        return view('invoices.index', compact('totalInvoices', 'totalAmount', 'paidCount', 'unpaidCount'));
     }
 
     public function getInvoicesData(Request $request)
     {
         try {
-            $query = Invoice::with(['company', 'consignee', 'payments'])
-                ->leftJoin('companies', 'invoices.company_id', '=', 'companies.id')
-                ->leftJoin('consignees', 'invoices.consignee_id', '=', 'consignees.id')
-                ->select('invoices.*');
+            $paymentTotalsSub = DB::table('invoice_payments')
+                ->select('invoice_id')
+                ->selectRaw('COALESCE(SUM(amount), 0) as paid_amount_sum')
+                ->groupBy('invoice_id');
 
-            if (Auth::user()->company_id) {
-                $query->where('invoices.company_id', Auth::user()->company_id);
-            }
+            $latestInvoiceIdByCompanySub = Invoice::query()
+                ->selectRaw('company_id, MAX(id) as latest_invoice_id')
+                ->groupBy('company_id')
+                ->toBase();
+
+            $query = Invoice::with(['consignee'])
+                ->leftJoin('companies', 'invoices.company_id', '=', 'companies.id')
+                ->leftJoin('consignees', 'invoices.customer_id', '=', 'consignees.id')
+                ->leftJoinSub($paymentTotalsSub, 'invoice_payment_totals', 'invoices.id', '=', 'invoice_payment_totals.invoice_id')
+                ->leftJoinSub($latestInvoiceIdByCompanySub, 'invoice_latest_by_company', 'invoices.company_id', '=', 'invoice_latest_by_company.company_id')
+                ->select('invoices.*')
+                ->selectRaw('COALESCE(invoice_payment_totals.paid_amount_sum, 0) as paid_amount_sum')
+                ->selectRaw('GREATEST(0, COALESCE(invoices.net_amount, invoices.total_amount) - COALESCE(invoice_payment_totals.paid_amount_sum, 0)) as remaining_amount_value')
+                ->selectRaw('(invoices.id = invoice_latest_by_company.latest_invoice_id) as is_latest_for_company');
+
+            $this->applyInvoiceFilters($query, $request, 'invoices');
 
             return DataTables::of($query)
-                ->addColumn('company_name', function ($row) {
-                    return $row->company ? $row->company->name : '-';
+                ->addColumn('invoice_link', function ($row) {
+                    $invoiceLabel = $row->invoice_number
+                        ? $row->invoice_number.($row->manual_invoice_number ? ' ('.$row->manual_invoice_number.')' : '')
+                        : $row->manual_invoice_number;
+
+                    return '<a href="#" class="text-primary invoice-details-link" data-id="'.$row->id.'">'.$invoiceLabel.'</a>';
+                })
+                ->addColumn('memo_numbers', function ($row) {
+                    if (is_array($row->memo_ids)) {
+                        return implode(', ', $row->memo_ids);
+                    }
+
+                    return (string) ($row->memo_ids ?? '-');
                 })
                 ->addColumn('consignee_name', function ($row) {
                     return $row->consignee ? $row->consignee->name : '-';
@@ -109,58 +97,53 @@ class InvoiceController extends Controller
                     return $row->generated_date ? date('d-m-Y', strtotime($row->generated_date)) : '-';
                 })
                 ->addColumn('total_amount_formatted', function ($row) {
-                    return $row->total_amount ? '₹'.number_format($row->total_amount, 2) : '₹0.00';
+                    return $row->total_amount ? ''.number_format($row->total_amount, 2) : '0.00';
                 })
                 ->addColumn('paid_amount_formatted', function ($row) {
-                    $paidAmount = $row->payments()->sum('amount');
+                    $paidAmount = (float) ($row->paid_amount_sum ?? 0);
 
-                    return '₹'.number_format($paidAmount, 2);
+                    return ''.number_format($paidAmount, 2);
                 })
                 ->addColumn('remaining_amount_formatted', function ($row) {
-                    $paidAmount = $row->payments()->sum('amount');
-                    $amountToCollect = $row->net_amount ?? $row->total_amount;
-                    $remaining = $amountToCollect - $paidAmount;
+                    $remaining = (float) ($row->remaining_amount_value ?? 0);
                     $class = $remaining > 0 ? 'text-danger' : 'text-brand-primary';
 
-                    return '<span class="'.$class.'">₹'.number_format($remaining, 2).'</span>';
+                    return '<span class="'.$class.'">'.number_format($remaining, 2).'</span>';
                 })
                 ->addColumn('payment_status_badge', function ($row) {
                     $statusClass = match ($row->payment_status) {
-                        'paid' => 'brand-primary',
+                        'paid' => 'success',
                         'pending' => 'warning',
-                        'overdue' => 'danger',
+                        'partial' => 'info',
                         default => 'secondary'
                     };
                     $statusText = ucfirst($row->payment_status ?? 'Unknown');
 
                     return '<span class="badge bg-'.$statusClass.'">'.$statusText.'</span>';
                 })
-                ->addColumn('invoice_type_badge', function ($row) {
-                    $typeClass = match ($row->invoice_type) {
-                        'manual' => 'primary',
-                        'auto' => 'info',
-                        default => 'secondary'
-                    };
-                    $typeText = ucfirst($row->invoice_type ?? 'Unknown');
-
-                    return '<span class="badge bg-'.$typeClass.'">'.$typeText.'</span>';
-                })
                 ->addColumn('actions', function ($row) {
                     return $this->getActionButtons($row);
                 })
-                ->filterColumn('company_name', function ($query, $keyword) {
-                    $query->whereHas('company', function ($q) use ($keyword) {
-                        $q->where('name', 'like', "%{$keyword}%");
-                    });
-                })
                 ->filterColumn('consignee_name', function ($query, $keyword) {
-                    $query->whereHas('consignee', function ($q) use ($keyword) {
-                        $q->where('name', 'like', "%{$keyword}%");
+                    $query->where('consignees.name', 'like', "%{$keyword}%");
+                })
+                ->filterColumn('invoice_link', function ($query, $keyword) {
+                    $query->where(function ($subQuery) use ($keyword) {
+                        $subQuery->where('invoices.invoice_number', 'like', "%{$keyword}%")
+                            ->orWhere('invoices.manual_invoice_number', 'like', "%{$keyword}%");
                     });
                 })
-                ->orderColumn('company_name', 'companies.name $1')
+                ->filterColumn('paid_amount_formatted', function ($query, $keyword) {
+                    $query->whereRaw('COALESCE(invoice_payment_totals.paid_amount_sum, 0) LIKE ?', ["%{$keyword}%"]);
+                })
+                ->filterColumn('remaining_amount_formatted', function ($query, $keyword) {
+                    $query->whereRaw('(GREATEST(0, COALESCE(invoices.net_amount, invoices.total_amount) - COALESCE(invoice_payment_totals.paid_amount_sum, 0))) LIKE ?', ["%{$keyword}%"]);
+                })
                 ->orderColumn('consignee_name', 'consignees.name $1')
-                ->rawColumns(['payment_status_badge', 'invoice_type_badge', 'actions', 'remaining_amount_formatted'])
+                ->orderColumn('invoice_link', 'invoices.invoice_number $1')
+                ->orderColumn('paid_amount_formatted', 'paid_amount_sum $1')
+                ->orderColumn('remaining_amount_formatted', 'remaining_amount_value $1')
+                ->rawColumns(['invoice_link', 'payment_status_badge', 'actions', 'remaining_amount_formatted'])
                 ->make(true);
         } catch (\Exception $e) {
             Log::error('DataTables error: '.$e->getMessage());
@@ -171,26 +154,18 @@ class InvoiceController extends Controller
 
     private function getActionButtons($invoice)
     {
-        $actions = '<div class="btn-group" role="group">';
+        $actions = '<div class="d-flex gap-1">';
 
-        // View button
-        $actions .= '<a href="'.route('invoices.show', $invoice->id).'" class="btn btn-sm btn-view" title="View">';
-        $actions .= '<i class="bi bi-eye"></i>';
-        $actions .= '</a>';
+        $actions .= '<a href="'.route('reports.party-bill-export', ['invoice_number' => $invoice->id, 'type' => 'pdf']).'" class="btn btn-sm btn-primary" title="View PDF" data-bs-toggle="tooltip" target="_blank">';
+        $actions .= '<i class="bi bi-eye"></i></a>';
 
-        // Edit button
-        $actions .= '<a href="'.route('invoices.edit', $invoice->id).'" class="btn btn-sm btn-edit" title="Edit">';
-        $actions .= '<i class="bi bi-pencil"></i>';
-        $actions .= '</a>';
+        if (Auth::user()->canActAsAdmin() && $invoice->payment_status !== 'paid') {
+            $actions .= '<a href="'.route('invoices.edit', $invoice->id).'" class="btn btn-sm btn-edit" title="Edit Invoice" data-bs-toggle="tooltip">';
+            $actions .= '<i class="bi bi-pencil"></i></a>';
+        }
 
-        // Print button
-        $actions .= '<a href="'.route('invoices.print', $invoice->id).'" class="btn btn-sm btn-back" title="Print" target="_blank">';
-        $actions .= '<i class="bi bi-printer"></i>';
-        $actions .= '</a>';
-
-        if ($invoice->payment_status === 'pending' && $this->isLastInvoiceForCompany($invoice)) {
-            // Delete button
-            $actions .= '<form method="POST" action="' . route('invoices.destroy', $invoice->id) . '" style="display: inline;">';
+        if ($invoice->payment_status === 'pending' && $this->invoiceRowIsLatestForCompany($invoice)) {
+            $actions .= '<form method="POST" action="'.route('invoices.destroy', $invoice->id).'" style="display: inline;">';
             $actions .= csrf_field();
             $actions .= method_field('DELETE');
             $actions .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete" onclick="return confirm(\'Are you sure you want to delete this invoice?\')">';
@@ -199,14 +174,72 @@ class InvoiceController extends Controller
             $actions .= '</form>';
         }
 
+        $paidAmountForRow = isset($invoice->paid_amount_sum)
+            ? (float) $invoice->paid_amount_sum
+            : (float) $invoice->paid_amount;
+        $remainingAmountForRow = isset($invoice->remaining_amount_value)
+            ? (float) $invoice->remaining_amount_value
+            : (float) $invoice->remaining_amount;
+
+        if (Auth::user()->canActAsAdmin() && $remainingAmountForRow > 0) {
+            $invoiceLabel = $invoice->invoice_number
+                ? $invoice->invoice_number.($invoice->manual_invoice_number ? ' ('.$invoice->manual_invoice_number.')' : '')
+                : $invoice->manual_invoice_number;
+
+            $actions .= '<button type="button" class="btn btn-sm btn-view add-payment-btn" title="Add Payment" data-bs-toggle="tooltip"';
+            $actions .= ' data-invoice-id="'.$invoice->id.'"';
+            $actions .= ' data-invoice-number="'.e($invoiceLabel).'"';
+            $actions .= ' data-total-amount="'.(float) $invoice->total_amount.'"';
+            $actions .= ' data-paid-amount="'.$paidAmountForRow.'"';
+            $actions .= ' data-remaining-amount="'.$remainingAmountForRow.'">';
+            $actions .= '<i class="bi bi-currency-rupee"></i></button>';
+        }
+
         $actions .= '</div>';
 
         return $actions;
     }
 
+    private function applyInvoiceFilters(Builder $query, Request $request, string $tablePrefix = ''): void
+    {
+        $column = static fn (string $name): string => $tablePrefix !== '' ? $tablePrefix.'.'.$name : $name;
+
+        $generatedDateFrom = trim((string) $request->input('generated_date_from', ''));
+        $generatedDateTo = trim((string) $request->input('generated_date_to', ''));
+        if ($generatedDateFrom !== '' && $generatedDateTo !== '') {
+            $query->whereBetween($column('generated_date'), [$generatedDateFrom, $generatedDateTo]);
+        } elseif ($generatedDateFrom !== '') {
+            $query->whereDate($column('generated_date'), '>=', $generatedDateFrom);
+        } elseif ($generatedDateTo !== '') {
+            $query->whereDate($column('generated_date'), '<=', $generatedDateTo);
+        }
+
+        $manualInvoiceNumber = trim((string) $request->input('manual_invoice_number', ''));
+        if ($manualInvoiceNumber !== '') {
+            $query->where(function ($subQuery) use ($manualInvoiceNumber, $column) {
+                $subQuery->where($column('manual_invoice_number'), 'like', '%'.$manualInvoiceNumber.'%')
+                    ->orWhere($column('invoice_number'), 'like', '%'.$manualInvoiceNumber.'%');
+            });
+        }
+
+        $customer = trim((string) $request->input('customer', ''));
+        if ($customer !== '') {
+            $query->whereHas('consignee', function ($subQuery) use ($customer) {
+                $subQuery->where('name', 'like', '%'.$customer.'%');
+            });
+        }
+
+        if ($request->filled('payment_status')) {
+            $query->where($column('payment_status'), (string) $request->input('payment_status'));
+        }
+
+        if (Auth::user()->company_id) {
+            $query->where($column('company_id'), Auth::user()->company_id);
+        }
+    }
+
     public function create()
     {
-        $this->ensureCompanyContext();
         $company = Auth::user()->company;
         $today = now()->startOfDay();
         $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
@@ -221,14 +254,27 @@ class InvoiceController extends Controller
             $company = Company::with('state')->find($user->company_id);
         }
 
-        $consignees = Consignee::all()->where('company_id', $user->company_id);
+        /** @var array{id: int, text: string}|null $invoiceCustomerSelectPrefill */
+        $invoiceCustomerSelectPrefill = null;
+        $oldCustomerId = old('customer_id');
+        if ($oldCustomerId && $user->company_id) {
+            $prefillRow = Consignee::query()
+                ->where('company_id', $user->company_id)
+                ->whereKey((int) $oldCustomerId)
+                ->first(['id', 'name']);
+            if ($prefillRow !== null) {
+                $invoiceCustomerSelectPrefill = [
+                    'id' => $prefillRow->id,
+                    'text' => $prefillRow->name ?: 'Not Set',
+                ];
+            }
+        }
 
-        return view('invoices.create', compact('company', 'consignees'));
+        return view('invoices.create', compact('company', 'invoiceCustomerSelectPrefill'));
     }
 
     public function getCustomerMemos($customerId)
     {
-        $this->ensureCompanyContext();
         $memos = DB::table('lorry_receipts')
             ->select('memo_id')
             ->where('company_id', Auth::user()->company_id)
@@ -245,14 +291,11 @@ class InvoiceController extends Controller
                 ];
             });
 
-        Log::info('Found memos for customer:', ['count' => count($memos)]);
-
         return response()->json($memos);
     }
 
     public function getAllCustomerMemos($customerId)
     {
-        $this->ensureCompanyContext();
         $memos = LorryReceipt::where('company_id', Auth::user()->company_id)
             ->where('customer_id', $customerId)
             ->whereNotNull('memo_id')
@@ -264,7 +307,6 @@ class InvoiceController extends Controller
 
     public function store(Request $request)
     {
-        $this->ensureCompanyContext();
         $companyId = (int) Auth::user()->company_id;
         $data = $request->validate([
             'manual_invoice_number' => [
@@ -339,7 +381,6 @@ class InvoiceController extends Controller
 
     public function show(Request $request, Invoice $invoice)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $invoice->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this invoice.');
         }
@@ -423,7 +464,6 @@ class InvoiceController extends Controller
 
     public function edit(Invoice $invoice)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $invoice->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this invoice.');
         }
@@ -434,13 +474,11 @@ class InvoiceController extends Controller
             return redirect()->route('invoices.index')
                 ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
-        $companies = Company::all();
-        $consignees = Consignee::all();
-
         // Get all memos for this customer
+        $lrIds = $invoice->lr_ids ?? [];
         $memos = DB::table('lorry_receipts')
             ->select('memo_id')
-            ->whereIn('id', $invoice->lr_ids)
+            ->whereIn('id', $lrIds)
             ->whereNotNull('memo_id')
             ->distinct()
             ->get()
@@ -457,12 +495,11 @@ class InvoiceController extends Controller
                 ];
             });
 
-        return view('invoices.edit', compact('invoice', 'companies', 'consignees', 'memos'));
+        return view('invoices.edit', compact('invoice', 'memos'));
     }
 
     public function update(Request $request, Invoice $invoice)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $invoice->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this invoice.');
         }
@@ -494,7 +531,6 @@ class InvoiceController extends Controller
 
     public function destroy(Invoice $invoice)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $invoice->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this invoice.');
         }
@@ -525,6 +561,15 @@ class InvoiceController extends Controller
         return redirect()->route('invoices.index')->with('success', 'Invoice deleted.');
     }
 
+    private function invoiceRowIsLatestForCompany(Invoice $invoice): bool
+    {
+        if (array_key_exists('is_latest_for_company', $invoice->getAttributes())) {
+            return (int) $invoice->getAttribute('is_latest_for_company') === 1;
+        }
+
+        return $this->isLastInvoiceForCompany($invoice);
+    }
+
     private function isLastInvoiceForCompany(Invoice $invoice): bool
     {
         $lastInvoiceId = Invoice::query()
@@ -536,10 +581,7 @@ class InvoiceController extends Controller
 
     public function getLrs($memoIds)
     {
-        $this->ensureCompanyContext();
         $memoIds = explode(',', $memoIds);
-        Log::info('Fetching LR numbers for memos:', ['memo_ids' => $memoIds]);
-
         $lrs = LorryReceipt::whereIn('memo_id', $memoIds)
             ->when(Auth::user()->company_id, fn ($q) => $q->where('company_id', Auth::user()->company_id))
             ->with(['transporter.transporterMaster', 'consignor', 'consignee', 'truck'])
@@ -571,7 +613,6 @@ class InvoiceController extends Controller
 
     public function getAllInvoiceNumbers()
     {
-        $this->ensureCompanyContext();
         $invoices = Invoice::where('company_id', Auth::user()->company_id)
             ->orderByDesc('id')
             ->get(['id', 'manual_invoice_number', 'invoice_number']);
@@ -579,12 +620,19 @@ class InvoiceController extends Controller
         return response()->json($invoices);
     }
 
-    public function getInvoiceNumbersForCustomer($customerId)
+    public function getInvoiceNumbersForCustomer($customerId): JsonResponse
     {
-        $this->ensureCompanyContext();
-        $invoices = Invoice::where('customer_id', $customerId)
-            ->where('company_id', Auth::user()->company_id)
+        $companyId = Auth::user()->company_id;
+        if (! $companyId || ! ctype_digit((string) $customerId) || (int) $customerId < 1) {
+            return response()->json([]);
+        }
+
+        $customerIdInt = (int) $customerId;
+
+        $invoices = Invoice::where('customer_id', $customerIdInt)
+            ->where('company_id', $companyId)
             ->orderByDesc('id')
+            ->limit(5000)
             ->get(['id', 'manual_invoice_number', 'invoice_number']);
 
         return response()->json($invoices);
@@ -592,7 +640,6 @@ class InvoiceController extends Controller
 
     public function checkManualInvoiceNumberUniqueness(Request $request)
     {
-        $this->ensureCompanyContext();
         $manualNumber = trim((string) $request->input('manual_invoice_number', ''));
         $invoiceNumber = trim((string) $request->input('invoice_number', ''));
         $invoiceId = $request->input('invoice_id'); // Get invoice ID if editing
@@ -633,7 +680,6 @@ class InvoiceController extends Controller
      */
     public function storePayment(Request $request, Invoice $invoice)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $invoice->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this invoice.');
         }
@@ -651,7 +697,7 @@ class InvoiceController extends Controller
         if ($validated['amount'] > $remainingAmount) {
             return response()->json([
                 'success' => false,
-                'message' => 'Payment amount cannot exceed the remaining balance of ₹'.number_format($remainingAmount, 2),
+                'message' => 'Payment amount cannot exceed the remaining balance of '.number_format($remainingAmount, 2),
             ], 422);
         }
 
@@ -687,7 +733,6 @@ class InvoiceController extends Controller
      */
     public function getPayments(Invoice $invoice)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $invoice->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this invoice.');
         }

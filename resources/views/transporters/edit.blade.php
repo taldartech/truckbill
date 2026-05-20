@@ -31,11 +31,9 @@
 }
 </style>
 <div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
-    <!--begin::Header-->
     <div class="card-header">
         <div class="card-title h4">Edit Transporter</div>
     </div>
-    <!--end::Header-->
     <!--begin::Form-->
     <form action="{{ route('transporters.update', $transporter->id) }}" method="POST" class="needs-validation" novalidate="">
         @csrf
@@ -112,7 +110,7 @@
                 <div class="row mb-3">
                     <div class="col-md-4">
                         <label class="form-label">Book Balance</label>
-                        <div class="form-control-plaintext bg-light border rounded px-3 py-2"><strong>₹ {{ number_format($transporter->advance_amount, 2) }}</strong></div>
+                        <div class="form-control-plaintext bg-light border rounded px-3 py-2"><strong> {{ number_format($transporter->advance_amount, 2) }}</strong></div>
                         <input type="hidden" name="advance_amount" value="{{ $transporter->advance_amount }}">
                     </div>
                     <div class="col-md-4">
@@ -473,7 +471,7 @@ function showConfirmationModal() {
 
     document.getElementById('confirm-is-owner').textContent = isOwner;
     document.getElementById('confirm-declaration').textContent = declaration;
-    document.getElementById('confirm-advance').textContent = '₹' + parseFloat(advance).toFixed(2);
+    document.getElementById('confirm-advance').textContent = '' + parseFloat(advance).toFixed(2);
 
     // Show modal
     const modal = new bootstrap.Modal(document.getElementById('confirmationModal'));
@@ -584,7 +582,6 @@ $(document).ready(function() {
     }
 });
 
-
 </script>
 <script>
     // Example starter JavaScript for disabling form submissions if there are invalid fields
@@ -610,7 +607,6 @@ $(document).ready(function() {
             );
         });
     })();
-
 
     // Modal form submissions with AJAX
     $(document).ready(function() {
@@ -650,7 +646,6 @@ $(document).ready(function() {
                     'Accept': 'application/json'
                 },
                 success: function(data) {
-                    console.log('Country creation response:', data);
                     if (data && data.success && data.country) {
                         // Add new country to the main dropdown
                         $('#country_id').append(`<option value="${data.country.id}">${data.country.name}</option>`);
@@ -723,7 +718,6 @@ $(document).ready(function() {
                     'Accept': 'application/json'
                 },
                 success: function(data) {
-                    console.log('State creation response:', data);
                     if (data && data.success && data.state) {
                         // Add new state to the main dropdown
                         $('#state_id').append(`<option value="${data.state.id}">${data.state.name}</option>`);
@@ -769,7 +763,6 @@ $(document).ready(function() {
             const stateId = $('#modal_city_state_id').val();
 
             const csrfToken = $('meta[name="csrf-token"]').attr('content');
-            console.log(cityName, stateId, csrfToken);
             // Show loading state
             submitBtn.prop('disabled', true);
             spinner.removeClass('d-none');
@@ -779,7 +772,6 @@ $(document).ready(function() {
             const formData = new FormData();
             formData.append('name', cityName);
             formData.append('state_id', stateId);
-
 
             formData.append('from_modal', '1');
             formData.append('_token', csrfToken);
@@ -796,7 +788,6 @@ $(document).ready(function() {
                     'Accept': 'application/json'
                 },
                 success: function(data) {
-                    console.log('City creation response:', data);
                     if (data && data.success && data.city) {
                         // Add new city to the main dropdown
                         $('#city_id').append(`<option value="${data.city.id}">${data.city.name}</option>`);
@@ -1228,7 +1219,6 @@ if (countrySelect && stateSelect && citySelect) {
     }
 
 </script>
-
 
 <script src="/js/dynamic-dropdowns.js"></script>
 

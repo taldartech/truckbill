@@ -146,8 +146,10 @@
                     </tbody>
                 </table>
             </div>
+            <div class="mt-3 d-flex justify-content-end">
+                {{ $transporters->links() }}
+            </div>
         </div>
     @endif
 @endsection
-
 

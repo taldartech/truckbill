@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\City;
 use App\Models\Company;
 use App\Models\Consignee;
@@ -15,13 +14,14 @@ use App\Models\State;
 use App\Models\Transporter;
 use App\Models\TransporterMaster;
 use App\Models\Truck;
+use App\Services\Notifications\CompanyLifecycleNotificationService;
 use App\Support\FreightChallanTemplate;
 use App\Support\LrCopyPdfTemplate;
-use App\Services\Notifications\CompanyLifecycleNotificationService;
-use Illuminate\Support\Collection;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
@@ -74,7 +74,7 @@ class CompanyController extends Controller
     private function getCompaniesData(Request $request)
     {
 
-        //if user is master admin than show all companies
+        // Master admin can access all companies; others see only owned records.
         if (auth()->user()->userRole->name === 'master_admin') {
             $query = \App\Models\Company::query();
         } else {
@@ -99,7 +99,7 @@ class CompanyController extends Controller
         // Handle column-specific search
         if ($request->has('columns')) {
             foreach ($request->columns as $index => $column) {
-                if (!empty($column['search']['value'])) {
+                if (! empty($column['search']['value'])) {
                     $searchValue = $column['search']['value'];
                     switch ($index) {
                         case 1: // Name
@@ -192,7 +192,7 @@ class CompanyController extends Controller
                 'address' => $company->address ?: '-',
                 'contact_person' => $company->contact_person ?: '-',
                 'contact_number' => $company->contact_number ?: '-',
-                'actions' => $this->getActionButtons($company)
+                'actions' => $this->getActionButtons($company),
             ];
         });
 
@@ -200,7 +200,7 @@ class CompanyController extends Controller
             'draw' => intval($request->draw),
             'recordsTotal' => $totalRecords,
             'recordsFiltered' => $filteredRecords,
-            'data' => $data
+            'data' => $data,
         ]);
     }
 
@@ -211,59 +211,61 @@ class CompanyController extends Controller
         // Enter button (super_admin only) - company listing only, for companies they own
         if (auth()->check() && auth()->user()->userRole->name === 'super_admin' && $company->user_id === auth()->id()) {
             $enterUrl = route('company.enter', $company);
-            $buttons .= '<a href="' . $enterUrl . '" class="btn btn-sm btn-success" title="Enter company panel">
+            $buttons .= '<a href="'.$enterUrl.'" class="btn btn-sm btn-success" title="Enter company panel">
                             <i class="bi bi-box-arrow-in-right"></i></a>';
         }
 
         // Edit button - always allow edit; GST scheme change restricted in edit form when invoices exist
         if (auth()->user()->userRole->name !== 'master_admin') {
             $editUrl = route('company.edit', $company->id);
-            $buttons .= '<a href="' . $editUrl . '" class="btn btn-sm btn-edit" title="Edit Company">
+            $buttons .= '<a href="'.$editUrl.'" class="btn btn-sm btn-edit" title="Edit Company">
                     <i class="bi bi-pencil"></i></a>';
-
-
 
             // Delete button
             $deleteUrl = route('company.destroy', $company->id);
-            $buttons .= '<form action="' . $deleteUrl . '" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this company?\')">';
-            $buttons .= csrf_field() . method_field('DELETE');
+            $buttons .= '<form action="'.$deleteUrl.'" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure you want to delete this company?\')">';
+            $buttons .= csrf_field().method_field('DELETE');
             $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete Company">';
             $buttons .= '<i class="bi bi-trash"></i></button></form>';
 
             $buttons .= '</div>';
+
             return $buttons;
         } else {
             if ($company->is_blocked) {
                 $unblockUrl = route('company.unblock', $company->id);
-                $buttons .= '<a href="' . $unblockUrl . '" class="btn btn-sm btn-danger" title="Unblock User"
+                $buttons .= '<a href="'.$unblockUrl.'" class="btn btn-sm btn-danger" title="Unblock User"
                           onclick="return confirm(\'Are you sure you want to unblock this company?\');">
                           <i class="bi bi-unlock"></i></a>';
             } else {
                 $blockUrl = route('company.block', $company->id);
-                $buttons .= '<a href="' . $blockUrl . '" class="btn btn-sm btn-edit" title="Block User"
+                $buttons .= '<a href="'.$blockUrl.'" class="btn btn-sm btn-edit" title="Block User"
                           onclick="return confirm(\'Are you sure you want to block this company?\');">
                           <i class="bi bi-lock"></i></a>';
             }
             $buttons .= '</div>';
+
             return $buttons;
         }
     }
+
     public function block($id)
     {
         $company = \App\Models\Company::findOrFail($id);
         $company->is_blocked = true;
         $company->save();
+
         return redirect()->back()->with('success', 'Company blocked successfully');
     }
+
     public function unblock($id)
     {
         $company = \App\Models\Company::findOrFail($id);
         $company->is_blocked = false;
         $company->save();
+
         return redirect()->back()->with('success', 'Company unblocked successfully');
     }
-
-
 
     public function edit($id)
     {
@@ -373,7 +375,6 @@ class CompanyController extends Controller
                 },
             ],
 
-
             'plan_end_date' => 'nullable|date',
             'lr_credits' => 'nullable|integer|min:0',
             'truck_credits' => 'nullable|integer|min:0',
@@ -399,7 +400,7 @@ class CompanyController extends Controller
             $validated['company_logo'] = $path;
         }
         $validated['user_id'] = auth()->user()->id;
-        if (!$request->filled('plan_end_date')) {
+        if (! $request->filled('plan_end_date')) {
             // You can decide the logic:
             // Option 1: keep existing plan_end_date
             $validated['plan_end_date'] = $company->plan_end_date;
@@ -416,6 +417,7 @@ class CompanyController extends Controller
         }
 
         $company->update($validated);
+
         return redirect()->route('company.index')->with('success', 'Company updated successfully!');
     }
 
@@ -423,41 +425,10 @@ class CompanyController extends Controller
     {
         $company = \App\Models\Company::findOrFail($id);
         $company->delete();
+
         return redirect()->route('company.index')->with('success', 'Company deleted successfully!');
     }
 
-    /**
-     * Generate a short company code from the provided name.
-     * Uses initials from the first two words (alphabetic), otherwise falls back to first 5 letters.
-     */
-    private function generateShortNameFromCompanyName(?string $companyName): string
-    {
-        $name = trim((string) $companyName);
-        if ($name === '') {
-            return '';
-        }
-
-        $words = preg_split('/\s+/', $name, -1, PREG_SPLIT_NO_EMPTY) ?: [];
-        $initials = [];
-
-        foreach ($words as $word) {
-            if (count($initials) >= 2) {
-                break;
-            }
-
-            if (preg_match('/[a-zA-Z]/', $word, $matches) === 1) {
-                $initials[] = strtoupper($matches[0]);
-            }
-        }
-
-        if (count($initials) >= 2) {
-            return implode('', $initials);
-        }
-
-        $lettersOnly = preg_replace('/[^a-zA-Z]/', '', $name) ?: '';
-
-        return strtoupper(substr($lettersOnly, 0, 5));
-    }
     public function create()
     {
         $companySlabs = config('payments.gst_slabs');
@@ -483,15 +454,15 @@ class CompanyController extends Controller
         $incomingShortName = (string) $request->input('short_name', '');
 
         if (trim($incomingShortName) === '') {
-            $incomingShortName = $this->generateShortNameFromCompanyName($companyName);
+            $incomingShortName = Company::generateShortNameFromCompanyName($companyName);
         }
 
         // Keep DB/invoice-friendly codes: uppercase A-Z0-9 only
         $normalizedShortName = strtoupper(trim(preg_replace('/[^a-zA-Z0-9]/', '', $incomingShortName)));
-        $request->merge(['short_name' => $normalizedShortName]);
+        $uniqueShortName = Company::ensureUniqueShortName($normalizedShortName);
+        $request->merge(['short_name' => $uniqueShortName]);
 
         $validated = $request->validate([
-
 
             'name' => [
                 'required',
@@ -506,7 +477,6 @@ class CompanyController extends Controller
                 'max:255',
                 'unique:companies,short_name',
             ],
-
 
             'gst_number' => [
                 'nullable',
@@ -558,7 +528,6 @@ class CompanyController extends Controller
                 Rule::in(config('payments.gst_slabs')),
             ],
 
-
         ], [
             'name.regex' => 'The name must contain at least one alphabetic character.',
             'pin_code.max' => 'The pin code must be a maximum of 10 characters.',
@@ -571,32 +540,30 @@ class CompanyController extends Controller
             $validated['company_logo'] = $path;
         }
         $validated['user_id'] = auth()->user()->id;
-        if (!$request->filled('gst_type')) {
+        if (! $request->filled('gst_type')) {
             $validated['gst_type'] = 'regular';
         }
-        if (!$request->filled('invoice_template')) {
+        if (! $request->filled('invoice_template')) {
             $validated['invoice_template'] = 'classic';
         }
-        if (!$request->filled('lr_copy_template')) {
+        if (! $request->filled('lr_copy_template')) {
             $validated['lr_copy_template'] = 'classic';
         }
-        if (!$request->filled('freight_challan_template')) {
+        if (! $request->filled('freight_challan_template')) {
             $validated['freight_challan_template'] = 'classic';
         }
 
-        // ✅ Automatically set plan_end_date = created_at + 45 days
-        $validated['plan_end_date'] = Carbon::now()->addDays(44)->toDateString();
+        // ✅ Automatically set plan_end_date = created_at + 15 days
+        $validated['plan_end_date'] = Carbon::now()->addDays(14)->toDateString();
 
         // ✅ Optional: Set default credits
-        $validated['lr_credits'] = 250;
+        $validated['lr_credits'] = 150;
         $validated['truck_credits'] = null;
-
-        $validated['short_name'] = $normalizedShortName;
 
         $company = \App\Models\Company::create($validated);
         $this->companyLifecycleNotificationService->notifyCompanyRegistered($company, auth()->user());
 
-        return redirect()->route('company.index')->with('success', 'Company registered successfully!,You are eligible for 45 days free plan');
+        return redirect()->route('company.index')->with('success', 'Company registered successfully!,You are eligible for 15 days free plan');
     }
 
     /**
@@ -930,10 +897,10 @@ class CompanyController extends Controller
 
     private function streamMpdfFreightChallan(string $html, string $downloadBaseName): Response
     {
-        $defaultConfig = (new \Mpdf\Config\ConfigVariables())->getDefaults();
+        $defaultConfig = (new \Mpdf\Config\ConfigVariables)->getDefaults();
         $fontDirs = $defaultConfig['fontDir'];
 
-        $defaultFontConfig = (new \Mpdf\Config\FontVariables())->getDefaults();
+        $defaultFontConfig = (new \Mpdf\Config\FontVariables)->getDefaults();
         $fontData = $defaultFontConfig['fontdata'];
 
         $mpdf = new \Mpdf\Mpdf([

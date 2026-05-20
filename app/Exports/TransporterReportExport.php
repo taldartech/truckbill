@@ -12,13 +12,18 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
-class TransporterReportExport implements FromCollection, WithHeadings, ShouldAutoSize, WithColumnFormatting
+class TransporterReportExport implements FromCollection, ShouldAutoSize, WithColumnFormatting, WithHeadings
 {
     private $startDate;
+
     private $endDate;
+
     private $transporterId;
+
     private $truckId;
+
     private $referenceBy;
+
     private $paymentNames;
 
     public function __construct($startDate, $endDate, $transporterId, $truckId, $referenceBy)
@@ -37,7 +42,9 @@ class TransporterReportExport implements FromCollection, WithHeadings, ShouldAut
     public function collection()
     {
         $company = Auth::user()->company;
-        $query = LorryReceipt::whereBetween('gr_date', [$this->startDate, $this->endDate]);
+        $query = LorryReceipt::query()
+            ->whereNotNull('freight_booking_id')
+            ->whereBetween('gr_date', [$this->startDate, $this->endDate]);
         if ($company) {
             $query->where('company_id', $company->id);
         }
@@ -52,14 +59,19 @@ class TransporterReportExport implements FromCollection, WithHeadings, ShouldAut
         }
         $query->orderBy('gr_date', 'asc');
 
-        $lorryReceipts = $query->get();
+        $lorryReceipts = $query->with([
+            'freightBooking.voucherPayments',
+            'truck',
+            'consignor',
+            'consignee',
+        ])->get();
         $data = [];
 
         foreach ($lorryReceipts as $lr) {
-            $fr = $lr->freightBookings->last();
+            $fr = $lr->freightBooking;
             $payments = array_fill_keys($this->paymentNames, 0);
             if ($fr) {
-                $vouchers = \App\Models\VoucherPayment::where('freight_booking_id', $fr->id)->get();
+                $vouchers = $fr->voucherPayments ?? collect();
                 foreach ($vouchers as $voucher) {
                     $paymentMode = $voucher->payment_mode;
                     if (isset($payments[$paymentMode])) {
@@ -67,8 +79,10 @@ class TransporterReportExport implements FromCollection, WithHeadings, ShouldAut
                     }
                 }
                 $total_balance = $fr->balance_amount;
+                $negativeAdjusted = (float) ($fr->negative_adjusted_amount ?? 0);
             } else {
                 $total_balance = 0;
+                $negativeAdjusted = 0;
             }
 
             $row = [
@@ -76,7 +90,7 @@ class TransporterReportExport implements FromCollection, WithHeadings, ShouldAut
                 $lr->lr_number,
                 $lr->gr_number,
                 $lr->truck ? $lr->truck->truck_number : 'N/A',
-                $lr->destination_city . ', ' . $lr->destination_state,
+                $lr->destination_city.', '.$lr->destination_state,
                 (float) ($lr->weight ?? 0),
                 (float) ($lr->unloading_weight ?? $lr->weight ?? 0),
                 (float) ($lr->no_of_units ?? 0),
@@ -94,9 +108,11 @@ class TransporterReportExport implements FromCollection, WithHeadings, ShouldAut
                 (float) ($fr?->shortage_amount ?? 0),
                 (float) ($fr?->misc_expense ?? 0),
                 (float) ($total_balance ?? 0),
+                $negativeAdjusted,
             ]);
             $data[] = $row;
         }
+
         return collect($data);
     }
 
@@ -127,6 +143,7 @@ class TransporterReportExport implements FromCollection, WithHeadings, ShouldAut
             'Short Amount',
             'Misc Expenses',
             'Balance',
+            'Negative Adjusted',
         ]);
 
         return $headers;
@@ -149,10 +166,11 @@ class TransporterReportExport implements FromCollection, WithHeadings, ShouldAut
             $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(14 + $i);
             $formats[$col] = $numFormat;
         }
-        for ($idx = 0; $idx < 4; $idx++) {
+        for ($idx = 0; $idx < 5; $idx++) {
             $col = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(14 + $paymentCount + $idx);
             $formats[$col] = $numFormat;
         }
+
         return $formats;
     }
 }

@@ -85,10 +85,8 @@
         $customer = $lrs->first() ? $lrs->first()->customer : null;
     @endphp
 
-
-
     @include('reports.exports.memo-copy')
-
+    <div style="margin-top: 4px; font-size: 7px; text-align: right;">Powered by TruckBill (www.truckbill.in)</div>
 
 </body>
 </html>

@@ -33,7 +33,7 @@ class InvoiceTest extends TestCase
     protected function makeUser(string $role): User
     {
         $company = Company::create([
-            'name' => 'Company ' . $role,
+            'name' => 'Company '.$role,
             'user_id' => null,
             'gst_slab' => config('payments.gst_slabs')[0],
             'lr_credits' => 5,
@@ -148,6 +148,22 @@ class InvoiceTest extends TestCase
 
         $this->post(route('logout'));
         $this->get('/invoices')->assertRedirect(route('login'));
+    }
+
+    public function test_invoice_create_page_loads_without_embedding_all_consignees(): void
+    {
+        $admin = $this->makeUser('admin');
+        for ($i = 0; $i < 30; $i++) {
+            Consignee::create([
+                'company_id' => $admin->company_id,
+                'name' => 'Bulk Invoice Create Customer '.$i,
+            ]);
+        }
+
+        $response = $this->actingAs($admin)->get(route('invoices.create'));
+
+        $response->assertOk();
+        $response->assertDontSee('Bulk Invoice Create Customer 0', false);
     }
 
     public function test_admin_can_store_invoice_and_marks_lrs_invoiced(): void
@@ -333,6 +349,28 @@ class InvoiceTest extends TestCase
             ->assertSee('Net Amount (After GST)');
     }
 
+    public function test_invoice_edit_page_loads_when_lr_ids_is_null(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+
+        $invoice = Invoice::create([
+            'manual_invoice_number' => 'INV-NULL-LR',
+            'invoice_type' => 'Forward',
+            'generated_date' => now()->toDateString(),
+            'customer_id' => $customer->id,
+            'total_amount' => 1000,
+            'base_amount' => 1000,
+            'net_amount' => 1000,
+            'payment_status' => 'pending',
+            'company_id' => $admin->company_id,
+            'memo_ids' => null,
+            'lr_ids' => null,
+        ]);
+
+        $this->actingAs($admin)->get("/invoices/{$invoice->id}/edit")->assertOk();
+    }
+
     public function test_moderator_cannot_edit_or_destroy_invoice(): void
     {
         $admin = $this->makeUser('admin');
@@ -434,4 +472,3 @@ class InvoiceTest extends TestCase
             ->assertJsonMissing(['manual_invoice_number' => 'INV-CUST-B']);
     }
 }
-

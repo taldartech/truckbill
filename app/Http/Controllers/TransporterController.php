@@ -25,48 +25,196 @@ class TransporterController extends Controller
         private readonly FreightBookingTdsSync $freightBookingTdsSync,
     ) {}
 
-    private function ensureCompanyContext(): void
-    {
-        if (Auth::user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
-            abort(403, 'Please enter a company first.');
-        }
-    }
-
     public function index(Request $request)
     {
-        $this->ensureCompanyContext();
         if ($request->ajax()) {
             return $this->getTransportersData($request);
         }
 
-        $companies = \App\Models\Company::all();
-
-        return view('transporters.index', compact('companies'));
+        return view('transporters.index');
     }
 
     private function getTransportersData(Request $request)
     {
         try {
-            \Log::info('DataTables request started for transporters');
+            $companyId = Auth::user()->company_id;
+            $orderColumn = (int) data_get($request->order, '0.column', 0);
+            $orderDirection = strtolower((string) data_get($request->order, '0.dir', 'asc')) === 'desc' ? 'desc' : 'asc';
 
-            $query = \App\Models\Transporter::with(['company', 'transporterMaster'])
-                ->where('is_owner', 0); // Default to show only Agencies
-
-            if (Auth::user()->company_id) {
-                $query->where('company_id', Auth::user()->company_id);
+            $hasGlobalSearch = $request->has('search') && ! empty($request->search['value']);
+            $hasColumnSearch = false;
+            if ($request->has('columns')) {
+                foreach ($request->columns as $column) {
+                    if (! empty($column['search']['value'])) {
+                        $hasColumnSearch = true;
+                        break;
+                    }
+                }
             }
 
-            \Log::info('Query built successfully');
+            $baseTransporterQuery = \App\Models\Transporter::query()
+                ->where('is_owner', 0);
+
+            if ($companyId) {
+                $baseTransporterQuery->where('company_id', $companyId);
+            }
+
+            $totalRecords = (clone $baseTransporterQuery)->count();
+            $start = max((int) ($request->start ?? 0), 0);
+            $length = max((int) ($request->length ?? 10), 1);
+
+            $requiresJoinQuery = $hasGlobalSearch || $hasColumnSearch || in_array($orderColumn, [0, 3], true);
+
+            if (! $requiresJoinQuery) {
+                $localSortColumns = [
+                    1 => 'short_name',
+                    2 => 'beneficiary_id',
+                    4 => 'contact_person_name',
+                    5 => 'mobile_number',
+                    6 => 'advance_amount',
+                ];
+                $sortColumn = $localSortColumns[$orderColumn] ?? 'created_at';
+
+                $transporters = (clone $baseTransporterQuery)
+                    ->with([
+                        'transporterMaster:id,name,pan_number',
+                        'company:id,name',
+                    ])
+                    ->orderBy($sortColumn, $orderDirection)
+                    ->offset($start)
+                    ->limit($length)
+                    ->get([
+                        'id',
+                        'transporter_master_id',
+                        'company_id',
+                        'short_name',
+                        'beneficiary_id',
+                        'contact_person_name',
+                        'mobile_number',
+                        'advance_amount',
+                        'declaration_given',
+                    ]);
+
+                $data = $transporters->map(function ($transporter, $index) use ($start) {
+                    return [
+                        'sr_no' => $start + $index + 1,
+                        'name' => '<a href="javascript:void(0)" class="text-brand-primary fw-bold transporter-name-link" data-id="'.$transporter->id.'" style="cursor: pointer; text-decoration: none;">'.($transporter->transporterMaster?->name ?: '-').'</a>',
+                        'short_name' => $transporter->short_name ?: '-',
+                        'beneficiary_id' => $transporter->beneficiary_id ?: '-',
+                        'pan_number' => $transporter->transporterMaster?->pan_number ?: '-',
+                        'contact_person' => $transporter->contact_person_name ?: '-',
+                        'contact_number' => $transporter->mobile_number ?: '-',
+                        'declaration_given' => $transporter->declaration_given ? 'Yes' : 'No',
+                        'advance_amount' => ''.number_format($transporter->advance_amount ?: 0, 2),
+                        'company' => $transporter->company?->name ?: '-',
+                        'actions' => $this->getActionButtons((object) [
+                            'id' => $transporter->id,
+                            'transporter_name' => $transporter->transporterMaster?->name,
+                        ]),
+                    ];
+                });
+
+                return response()->json([
+                    'draw' => intval($request->draw),
+                    'recordsTotal' => $totalRecords,
+                    'recordsFiltered' => $totalRecords,
+                    'data' => $data,
+                ]);
+            }
+
+            if (! $hasGlobalSearch && ! $hasColumnSearch && in_array($orderColumn, [0, 3], true)) {
+                $orderByMasterColumn = $orderColumn === 0 ? 'transporter_masters.name' : 'transporter_masters.pan_number';
+
+                $orderedIds = (clone $baseTransporterQuery)
+                    ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+                    ->orderBy($orderByMasterColumn, $orderDirection)
+                    ->offset($start)
+                    ->limit($length)
+                    ->pluck('transporters.id');
+
+                $transportersById = \App\Models\Transporter::query()
+                    ->with([
+                        'transporterMaster:id,name,pan_number',
+                        'company:id,name',
+                    ])
+                    ->whereIn('id', $orderedIds)
+                    ->get([
+                        'id',
+                        'transporter_master_id',
+                        'company_id',
+                        'short_name',
+                        'beneficiary_id',
+                        'contact_person_name',
+                        'mobile_number',
+                        'advance_amount',
+                        'declaration_given',
+                    ])
+                    ->keyBy('id');
+
+                $data = $orderedIds->values()->map(function ($id, $index) use ($start, $transportersById) {
+                    $transporter = $transportersById->get($id);
+                    if (! $transporter) {
+                        return null;
+                    }
+
+                    return [
+                        'sr_no' => $start + $index + 1,
+                        'name' => '<a href="javascript:void(0)" class="text-brand-primary fw-bold transporter-name-link" data-id="'.$transporter->id.'" style="cursor: pointer; text-decoration: none;">'.($transporter->transporterMaster?->name ?: '-').'</a>',
+                        'short_name' => $transporter->short_name ?: '-',
+                        'beneficiary_id' => $transporter->beneficiary_id ?: '-',
+                        'pan_number' => $transporter->transporterMaster?->pan_number ?: '-',
+                        'contact_person' => $transporter->contact_person_name ?: '-',
+                        'contact_number' => $transporter->mobile_number ?: '-',
+                        'declaration_given' => $transporter->declaration_given ? 'Yes' : 'No',
+                        'advance_amount' => ''.number_format($transporter->advance_amount ?: 0, 2),
+                        'company' => $transporter->company?->name ?: '-',
+                        'actions' => $this->getActionButtons((object) [
+                            'id' => $transporter->id,
+                            'transporter_name' => $transporter->transporterMaster?->name,
+                        ]),
+                    ];
+                })->filter()->values();
+
+                return response()->json([
+                    'draw' => intval($request->draw),
+                    'recordsTotal' => $totalRecords,
+                    'recordsFiltered' => $totalRecords,
+                    'data' => $data,
+                ]);
+            }
+
+            $query = \App\Models\Transporter::query()
+                ->leftJoin('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+                ->leftJoin('companies', 'transporters.company_id', '=', 'companies.id')
+                ->where('transporters.is_owner', 0)
+                ->select([
+                    'transporters.id',
+                    'transporters.short_name',
+                    'transporters.beneficiary_id',
+                    'transporters.contact_person_name',
+                    'transporters.mobile_number',
+                    'transporters.advance_amount',
+                    'transporters.declaration_given',
+                    'transporters.created_at',
+                    'transporter_masters.name as transporter_name',
+                    'transporter_masters.pan_number as transporter_pan_number',
+                    'companies.name as company_name',
+                ]);
+
+            if ($companyId) {
+                $query->where('transporters.company_id', $companyId);
+            }
 
             // Handle global search
-            if ($request->has('search') && $request->search['value']) {
+            if ($hasGlobalSearch) {
                 $searchValue = $request->search['value'];
                 $query->where(function ($q) use ($searchValue) {
-                    $q->whereHas('transporterMaster', fn ($m) => $m->where('name', 'like', "%{$searchValue}%")
-                        ->orWhere('pan_number', 'like', "%{$searchValue}%"))
+                    $q->where('transporter_masters.name', 'like', "%{$searchValue}%")
+                        ->orWhere('transporter_masters.pan_number', 'like', "%{$searchValue}%")
                         ->orWhere('transporters.mobile_number', 'like', "%{$searchValue}%")
-                        ->orWhereHas('company', fn ($companyQuery) => $companyQuery->where('name', 'like', "%{$searchValue}%"))
-                        ->orWhereHas('transporterMaster.city', fn ($cityQuery) => $cityQuery->where('name', 'like', "%{$searchValue}%"));
+                        ->orWhere('companies.name', 'like', "%{$searchValue}%")
+                        ->orWhere('transporters.short_name', 'like', "%{$searchValue}%")
+                        ->orWhere('transporters.beneficiary_id', 'like', "%{$searchValue}%");
                 });
             }
 
@@ -77,7 +225,7 @@ class TransporterController extends Controller
                         $searchValue = $column['search']['value'];
                         switch ($index) {
                             case 0: // Name
-                                $query->whereHas('transporterMaster', fn ($m) => $m->where('name', 'like', "%{$searchValue}%"));
+                                $query->where('transporter_masters.name', 'like', "%{$searchValue}%");
                                 break;
                             case 1: // Short Name
                                 $query->where('transporters.short_name', 'like', "%{$searchValue}%");
@@ -86,7 +234,7 @@ class TransporterController extends Controller
                                 $query->where('transporters.beneficiary_id', 'like', "%{$searchValue}%");
                                 break;
                             case 3: // PAN Number
-                                $query->whereHas('transporterMaster', fn ($m) => $m->where('pan_number', 'like', "%{$searchValue}%"));
+                                $query->where('transporter_masters.pan_number', 'like', "%{$searchValue}%");
                                 break;
                             case 4: // Contact Person
                                 $query->where('transporters.contact_person_name', 'like', "%{$searchValue}%");
@@ -104,70 +252,54 @@ class TransporterController extends Controller
             }
 
             // Handle sorting
-            if ($request->has('order')) {
-                $orderColumn = $request->order[0]['column'];
-                $orderDirection = $request->order[0]['dir'];
-
-                switch ($orderColumn) {
-                    case 0: // Name
-                        $query->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
-                            ->orderBy('transporter_masters.name', $orderDirection)
-                            ->select('transporters.*');
-                        break;
-                    case 1: // Short Number
-                        $query->orderBy('transporters.short_name', $orderDirection);
-                        break;
-                    case 2: // Beneficiary ID
-                        $query->orderBy('transporters.beneficiary_id', $orderDirection);
-                        break;
-                    case 3: // PAN Number
-                        $query->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
-                            ->orderBy('transporter_masters.pan_number', $orderDirection)
-                            ->select('transporters.*');
-                        break;
-                    case 4: // Contact Person
-                        $query->orderBy('transporters.contact_person_name', $orderDirection);
-                        break;
-                    case 5: // Contact Number
-                        $query->orderBy('transporters.mobile_number', $orderDirection);
-                        break;
-                    case 6: // Book Balance
-                        $query->orderBy('transporters.advance_amount', $orderDirection);
-                        break;
-                    default:
-                        $query->orderBy('transporters.created_at', 'desc');
-                }
-            } else {
-                $query->orderBy('transporters.created_at', 'desc');
+            switch ($orderColumn) {
+                case 0: // Name
+                    $query->orderBy('transporter_masters.name', $orderDirection);
+                    break;
+                case 1: // Short Number
+                    $query->orderBy('transporters.short_name', $orderDirection);
+                    break;
+                case 2: // Beneficiary ID
+                    $query->orderBy('transporters.beneficiary_id', $orderDirection);
+                    break;
+                case 3: // PAN Number
+                    $query->orderBy('transporter_masters.pan_number', $orderDirection);
+                    break;
+                case 4: // Contact Person
+                    $query->orderBy('transporters.contact_person_name', $orderDirection);
+                    break;
+                case 5: // Contact Number
+                    $query->orderBy('transporters.mobile_number', $orderDirection);
+                    break;
+                case 6: // Book Balance
+                    $query->orderBy('transporters.advance_amount', $orderDirection);
+                    break;
+                default:
+                    $query->orderBy('transporters.created_at', 'desc');
             }
 
-            // Get total count before pagination
-            $totalQuery = \App\Models\Transporter::where('is_owner', 0);
-            if (Auth::user()->company_id) {
-                $totalQuery->where('company_id', Auth::user()->company_id);
-            }
-            $totalRecords = $totalQuery->count();
-            $filteredRecords = $query->count();
+            // Skip expensive joined count when no filters are applied.
+            $filteredRecords = ($hasGlobalSearch || $hasColumnSearch)
+                ? (clone $query)->reorder()->count('transporters.id')
+                : $totalRecords;
 
             // Handle pagination
-            $start = $request->start ?? 0;
-            $length = $request->length ?? 10;
             $transporters = $query->offset($start)->limit($length)->get();
 
             // Format data for DataTables
             $data = $transporters->map(function ($transporter, $index) use ($start) {
                 return [
                     'sr_no' => $start + $index + 1,
-                    'name' => '<a href="javascript:void(0)" class="text-brand-primary fw-bold transporter-name-link" data-id="'.$transporter->id.'" style="cursor: pointer; text-decoration: none;">'.($transporter->name ?: '-').'</a>',
+                    'name' => '<a href="javascript:void(0)" class="text-brand-primary fw-bold transporter-name-link" data-id="'.$transporter->id.'" style="cursor: pointer; text-decoration: none;">'.($transporter->transporter_name ?: '-').'</a>',
                     'short_name' => $transporter->short_name ?: '-',
                     'beneficiary_id' => $transporter->beneficiary_id ?: '-',
-                    'pan_number' => $transporter->pan_number ?: '-',
+                    'pan_number' => $transporter->transporter_pan_number ?: '-',
                     'contact_person' => $transporter->contact_person_name ?: '-',
 
                     'contact_number' => $transporter->mobile_number ?: '-',
                     'declaration_given' => $transporter->declaration_given ? 'Yes' : 'No',
-                    'advance_amount' => '₹'.number_format($transporter->advance_amount ?: 0, 2),
-                    'company' => optional($transporter->company)->name ?: '-',
+                    'advance_amount' => ''.number_format($transporter->advance_amount ?: 0, 2),
+                    'company' => $transporter->company_name ?: '-',
                     'actions' => $this->getActionButtons($transporter),
                 ];
             });
@@ -195,8 +327,9 @@ class TransporterController extends Controller
     private function getActionButtons($transporter)
     {
         $buttons = '<div class="d-flex gap-1">';
+        $transporterName = $transporter->transporter_name ?? $transporter->name;
 
-        $buttons .= '<button type="button" class="btn btn-sm btn-view advance-payment-btn " title="Advance Payment" data-bs-toggle="tooltip" data-transporter-id="'.$transporter->id.'" data-transporter-name="'.htmlspecialchars($transporter->name).'">';
+        $buttons .= '<button type="button" class="btn btn-sm btn-view advance-payment-btn " title="Advance Payment" data-bs-toggle="tooltip" data-transporter-id="'.$transporter->id.'" data-transporter-name="'.htmlspecialchars((string) $transporterName).'">';
         $buttons .= '<i class="bi bi-currency-rupee "></i>';
         $buttons .= '</button>';
 
@@ -219,7 +352,6 @@ class TransporterController extends Controller
 
     public function show($id)
     {
-        $this->ensureCompanyContext();
         $transporter = \App\Models\Transporter::with(['company', 'transporterMaster.city.state.country'])->findOrFail($id);
 
         if (Auth::user()->company_id && $transporter->company_id !== Auth::user()->company_id) {
@@ -234,7 +366,7 @@ class TransporterController extends Controller
             ->map(function ($payment) {
                 return [
                     'id' => $payment->id,
-                    'amount' => '₹'.number_format($payment->advance_amount, 2),
+                    'amount' => ''.number_format($payment->advance_amount, 2),
                     'payment_date' => $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('d-m-Y') : 'Not specified',
                     'remark' => $payment->remark ?: 'No remarks',
                     'created_at' => $payment->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
@@ -259,7 +391,7 @@ class TransporterController extends Controller
             'declaration_given' => $transporter->declaration_given ? 'Yes' : 'No',
             'tds_percentage' => $transporter->tds_percentage ?: '0',
             'tds_adjustment_remark' => $transporter->tds_adjustment_remark ?: '',
-            'advance_amount' => '₹'.number_format($transporter->advance_amount, 2),
+            'advance_amount' => ''.number_format($transporter->advance_amount, 2),
             'created_at' => $transporter->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
             'updated_at' => $transporter->updated_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
             'advance_payments' => $advancePayments,
@@ -268,44 +400,37 @@ class TransporterController extends Controller
 
     public function create()
     {
-        $this->ensureCompanyContext();
-        $companies = \App\Models\Company::all();
-
-        // For create, we can't filter trucks as we don't have transporter_id yet
-        $trucks = \App\Models\Truck::all();
-        $countries = \App\Models\Country::all();
+        $countries = \App\Models\Country::query()
+            ->select(['id', 'name'])
+            ->orderBy('name')
+            ->get();
         $states = [];
         $cities = [];
 
         if (old('country_id')) {
-            $states = \App\Models\State::where('country_id', old('country_id'))->get();
+            $states = \App\Models\State::query()
+                ->select(['id', 'name'])
+                ->where('country_id', old('country_id'))
+                ->orderBy('name')
+                ->get();
         }
 
         if (old('state_id')) {
-            $cities = \App\Models\City::where('state_id', old('state_id'))->get();
+            $cities = \App\Models\City::query()
+                ->select(['id', 'name'])
+                ->where('state_id', old('state_id'))
+                ->orderBy('name')
+                ->get();
         }
 
-        return view('transporters.create', compact('companies', 'trucks', 'countries', 'states', 'cities'));
+        return view('transporters.create', compact('countries', 'states', 'cities'));
     }
 
     public function store(StoreTransporterRequest $request)
     {
-        $this->ensureCompanyContext();
         $validated = $request->validated();
 
         $shortName = $validated['short_name'] ?? null;
-        if ($shortName) {
-            $existing = Transporter::where('short_name', $shortName)->where('company_id', $validated['company_id'])->exists();
-            if ($existing) {
-                $suffix = 1;
-                do {
-                    $shortName = ($validated['short_name'] ?? '').'-'.$suffix;
-                    $existing = Transporter::where('short_name', $shortName)->where('company_id', $validated['company_id'])->exists();
-                    $suffix++;
-                } while ($existing);
-            }
-            $validated['short_name'] = $shortName;
-        }
 
         $validated['advance_amount'] = $validated['advance_amount'] ?? 0;
         $validated['is_owner'] = 0;
@@ -313,7 +438,9 @@ class TransporterController extends Controller
         $validated['total_trucks'] = 0;
 
         if ($request->filled('transporter_master_id')) {
-            $master = TransporterMaster::findOrFail($request->transporter_master_id);
+            $master = TransporterMaster::query()
+                ->select(['id', 'pan_number', 'pan_active'])
+                ->findOrFail($request->transporter_master_id);
             $validated['transporter_master_id'] = $master->id;
             $submittedTds = round((float) $validated['tds_percentage'], 2);
             $calculated = $this->tdsCalculator->calculate($declarationGiven, (string) $master->pan_number, (bool) $master->pan_active);
@@ -328,7 +455,7 @@ class TransporterController extends Controller
             return redirect()->route('transporters.index')->with('success', 'Transporter created successfully!');
         }
 
-        return DB::transaction(function () use ($validated, $declarationGiven) {
+        $onboardingData = DB::transaction(function () use ($validated, $declarationGiven) {
             $masterData = [
                 'name' => $validated['name'],
                 'email' => $validated['email'],
@@ -365,7 +492,7 @@ class TransporterController extends Controller
             Transporter::create($transporterData);
 
             $transporterRoleId = \DB::table('user_roles')->where('name', 'transporter')->value('id');
-            $user = User::create([
+            User::create([
                 'name' => $master->name,
                 'email' => $master->email,
                 'password' => bcrypt($master->mobile_number),
@@ -374,21 +501,24 @@ class TransporterController extends Controller
                 'transporter_master_id' => $master->id,
             ]);
 
-            Password::sendResetLink(['email' => $master->email]);
-            $this->transporterOnboardingNotificationService->sendAccountCreated($master->email, $master->name);
-
-            return redirect()->route('transporters.index')->with('success', 'Transporter created successfully! A password setup link has been sent to '.$master->email);
+            return [
+                'email' => $master->email,
+                'name' => $master->name,
+            ];
         });
+
+        Password::sendResetLink(['email' => $onboardingData['email']]);
+        $this->transporterOnboardingNotificationService->sendAccountCreated($onboardingData['email'], $onboardingData['name']);
+
+        return redirect()->route('transporters.index')->with('success', 'Transporter created successfully! A password setup link has been sent to '.$onboardingData['email']);
     }
 
     public function edit(\App\Models\Transporter $transporter)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $transporter->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this transporter.');
         }
         $transporter->load(['transporterMaster.city.state.country']);
-        $companies = \App\Models\Company::all();
         // Filter trucks to show only those belonging to this transporter
         $trucks = \App\Models\Truck::where('transporter_id', $transporter->id)->get();
         $countries = \App\Models\Country::all();
@@ -406,12 +536,11 @@ class TransporterController extends Controller
         // $countries = \App\Models\Country::all();
         // $states = $transporter->country_id ? \App\Models\State::where('country_id', $transporter->country_id)->get() : collect();
         // $cities = $transporter->state_id ? \App\Models\City::where('state_id', $transporter->state_id)->get() : collect();
-        return view('transporters.edit', compact('transporter', 'companies', 'trucks', 'countries', 'states', 'cities'));
+        return view('transporters.edit', compact('transporter', 'trucks', 'countries', 'states', 'cities'));
     }
 
     public function update(UpdateTransporterRequest $request, \App\Models\Transporter $transporter)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $transporter->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this transporter.');
         }
@@ -522,7 +651,6 @@ class TransporterController extends Controller
 
     public function destroy(\App\Models\Transporter $transporter)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $transporter->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this transporter.');
         }
@@ -582,76 +710,6 @@ class TransporterController extends Controller
             \Log::error('Error fetching agencies: '.$e->getMessage());
 
             return response()->json(['error' => 'Failed to fetch agencies'], 500);
-        }
-    }
-
-    /**
-     * Search agencies for Select2 AJAX.
-     * Returns Select2-compatible payload: { results: [{id, text, ...}], pagination: { more } }
-     */
-    public function searchAgenciesApi(Request $request)
-    {
-        try {
-            $this->ensureCompanyContext();
-
-            $companyId = Auth::user()->company_id;
-            $q = trim((string) $request->query('q', ''));
-            $page = (int) $request->query('page', 1);
-            $limit = (int) $request->query('limit', 20);
-            $limit = max(1, min($limit, 50));
-            $page = max(1, $page);
-
-            $query = \App\Models\Transporter::with('transporterMaster')
-                ->where('is_owner', 0);
-
-            if ($companyId) {
-                $query->where('company_id', $companyId);
-            }
-
-            // Join to allow ordering by transporter master name and searching in transporter_masters.
-            $query->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
-                ->select('transporters.*');
-
-            if ($q !== '') {
-                $query->where(function ($qq) use ($q) {
-                    $qq->where('transporters.short_name', 'like', "%{$q}%")
-                        ->orWhere('transporters.mobile_number', 'like', "%{$q}%")
-                        ->orWhere('transporters.contact_person_name', 'like', "%{$q}%")
-                        ->orWhere('transporter_masters.name', 'like', "%{$q}%")
-                        ->orWhere('transporter_masters.pan_number', 'like', "%{$q}%")
-                        ->orWhere('transporter_masters.email', 'like', "%{$q}%");
-                });
-            }
-
-            $query->orderBy('transporter_masters.name');
-
-            $offset = ($page - 1) * $limit;
-            $items = $query->offset($offset)->limit($limit + 1)->get();
-            $more = $items->count() > $limit;
-            $items = $items->take($limit);
-
-            $results = $items->map(function ($t) {
-                return [
-                    'id' => $t->id,
-                    'text' => $t->name ?: 'Not Set',
-                ];
-            })->values();
-
-            return response()->json([
-                'results' => $results,
-                'pagination' => [
-                    'more' => $more,
-                ],
-            ]);
-        } catch (\Exception $e) {
-            \Log::error('Error searching agencies: '.$e->getMessage());
-
-            return response()->json([
-                'results' => [],
-                'pagination' => [
-                    'more' => false,
-                ],
-            ]);
         }
     }
 

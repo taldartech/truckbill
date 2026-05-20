@@ -2,6 +2,12 @@
 return [
     'tds_submission_day' => (int) env('TDS_SUBMISSION_DAY', 3),
 
+    'tds_percentages' => [
+        'default' => (float) env('TDS_PERCENTAGE_DEFAULT', 20),
+        'agency' => (float) env('TDS_PERCENTAGE_AGENCY', 2),
+        'owner' => (float) env('TDS_PERCENTAGE_OWNER', 1),
+    ],
+
     'gst_slabs' => explode(',', env('GST_SLABS', '5,12,18')),
 
     'truck_count_1' => env('TRUCK_COUNT_1', '1-10'),

@@ -1,5 +1,10 @@
 @extends('layouts.app')
 
+@push('styles')
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css"
+        rel="stylesheet" />
+@endpush
+
 @section('content')
     <div class="container mt-4" id="preFormContainer">
         <div class="card card-warning card-outline" style="width: 50%; margin: auto;">
@@ -11,10 +16,7 @@
                     <div class="col-md-6">
                         <label class="form-label">Customer *</label>
                         <select id="preCustomerSelect" style="width:100%" required>
-                            <option value="">Select</option>
-                            @foreach ($consignees as $consignee)
-                                <option value="{{ $consignee->id }}">{{ $consignee->name }}</option>
-                            @endforeach
+                            <option value=""></option>
                         </select>
                     </div>
                     <div class="col-md-6">
@@ -149,19 +151,6 @@
                     </div>
                     <input type="hidden" name="payment_status" value="pending">
 
-                    {{-- <div class="col-md-4">
-                        <label class="form-label">Payment Status *</label>
-                        <select name="payment_status" class="form-select" required>
-                            <option value="">Select</option>
-                            <option value="pending" {{ old('payment_status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                            <option value="partial" {{ old('payment_status') == 'partial' ? 'selected' : '' }}>Partial</option>
-                            <option value="paid" {{ old('payment_status') == 'paid' ? 'selected' : '' }}>Paid</option>
-                        </select>
-                        @error('payment_status')
-                            <div class="text-danger">{{ $message }}</div>
-                        @enderror
-                        <div class="invalid-feedback">Please select a payment status.</div>
-                    </div> --}}
                     <div class="col-md-8" id="memoDiv" style="display: none;">
                         <label class="form-label">Memos</label>
                         <select name="memo_ids[]" class="form-select" id="memoSelect" multiple>
@@ -198,18 +187,59 @@
         </div>
     </div>
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            new Choices('#preCustomerSelect', {
-                searchEnabled: true, // enable search box
-                itemSelectText: '', // hide "press to select" text
-                shouldSort: false, // keep original order
-                placeholderValue: 'Select Customer',
-                searchPlaceholderValue: 'Type to search...',
-            });
+            const invoiceCustomerPrefill = @json($invoiceCustomerSelectPrefill);
+            const consigneeSearchUrl = @json(route('api.consignees.search'));
+
+            function initPreCustomerSelect2() {
+                if (typeof $ === 'undefined' || typeof $.fn.select2 === 'undefined') {
+                    setTimeout(initPreCustomerSelect2, 50);
+
+                    return;
+                }
+
+                const $sel = $('#preCustomerSelect');
+                $sel.select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    placeholder: 'Search customer…',
+                    allowClear: true,
+                    minimumInputLength: 0,
+                    ajax: {
+                        url: consigneeSearchUrl,
+                        dataType: 'json',
+                        delay: 250,
+                        data: function(params) {
+                            return {
+                                q: params.term || '',
+                                page: params.page || 1,
+                            };
+                        },
+                        processResults: function(data) {
+                            return {
+                                results: data.results || [],
+                                pagination: {
+                                    more: Boolean(data.pagination && data.pagination.more),
+                                },
+                            };
+                        },
+                        cache: true,
+                    },
+                });
+
+                if (invoiceCustomerPrefill && invoiceCustomerPrefill.id) {
+                    const opt = new Option(invoiceCustomerPrefill.text, String(invoiceCustomerPrefill.id), true,
+                        true);
+                    $sel.append(opt).trigger('change');
+                    window.invoiceCreatePendingCustomerId = String(invoiceCustomerPrefill.id);
+                    if (typeof window.invoiceCreateLoadCustomerMemos === 'function') {
+                        window.invoiceCreateLoadCustomerMemos(window.invoiceCreatePendingCustomerId);
+                    }
+                }
+            }
+
+            initPreCustomerSelect2();
         });
     </script>
 
@@ -240,14 +270,18 @@
 
         // Memo loading script
         document.addEventListener('DOMContentLoaded', function() {
-            console.log("🚀 Script loaded");
             const customerSelect = document.querySelector('select[name="customer_id"]');
             const memoDiv = document.getElementById('memoDiv');
             const memoSelect = document.getElementById('memoSelect');
 
+            // Legacy guard: this page now uses hidden #prefilledCustomerId instead of
+            // a visible select[name="customer_id"] in the main form.
+            if (!customerSelect || !memoDiv || !memoSelect) {
+                return;
+            }
+
             customerSelect.addEventListener('change', function() {
                 const customerId = this.value;
-                console.log("📦 Customer selected:", customerId);
                 memoDiv.style.display = customerId ? 'block' : 'none';
                 memoSelect.innerHTML = ''; // clear old options
 
@@ -265,7 +299,6 @@
                             return response.json();
                         })
                         .then(data => {
-                            console.log("✅ AJAX response:", data);
                             memoSelect.innerHTML = ''; // Clear existing options
 
                             if (Array.isArray(data) && data.length > 0) {
@@ -368,18 +401,34 @@
             const mainFormContainer = document.getElementById('mainInvoiceForm');
             const preFormContainer = document.getElementById('preFormContainer');
             const preCustomerSelect = document.getElementById('preCustomerSelect');
-            const preMemoId = document.getElementById('preMemoId');
             const showMemoOptionsBtn = document.getElementById('showMemoOptions');
             const memoOptionsContainer = document.getElementById('memoOptionsContainer');
             const memoCheckboxes = document.getElementById('memoCheckboxes');
-            // const nextBtn = document.getElementById('showInvoiceFormBtn'); // Next button
 
-            // Load memos when customer is selected
-            preCustomerSelect.addEventListener('change', function() {
-                const customerId = this.value;
+            if (!showInvoiceFormBtn || !mainFormContainer || !preFormContainer || !preCustomerSelect ||
+                !showMemoOptionsBtn || !memoOptionsContainer || !memoCheckboxes) {
+                return;
+            }
+
+            function resetMemoSelection() {
+                memoCheckboxes.innerHTML = '';
+                memoOptionsContainer.style.display = 'none';
+                showInvoiceFormBtn.disabled = true;
+            }
+
+            function bindMemoCheckboxState() {
+                memoCheckboxes.querySelectorAll('.memo-checkbox').forEach(cb => {
+                    cb.addEventListener('change', function() {
+                        const anyChecked = memoCheckboxes.querySelectorAll('.memo-checkbox:checked').length > 0;
+                        showInvoiceFormBtn.disabled = !anyChecked;
+                    });
+                });
+            }
+
+            function loadCustomerMemos(customerId) {
                 if (!customerId) {
-                    memoOptionsContainer.style.display = 'none';
-                    showInvoiceFormBtn.disabled = true;
+                    resetMemoSelection();
+
                     return;
                 }
 
@@ -389,9 +438,16 @@
                             'X-Requested-With': 'XMLHttpRequest'
                         }
                     })
-                    .then(response => response.json())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+
+                        return response.json();
+                    })
                     .then(data => {
                         memoCheckboxes.innerHTML = '';
+
                         if (data && data.length > 0) {
                             data.forEach(memo => {
                                 const checkbox = document.createElement('div');
@@ -404,28 +460,38 @@
                         `;
                                 memoCheckboxes.appendChild(checkbox);
                             });
-                            // memoOptionsContainer.style.display = 'block';
                             showInvoiceFormBtn.disabled = true; // keep disabled until user selects
-
-                            // Add change listener to each checkbox
-                            memoCheckboxes.querySelectorAll('.memo-checkbox').forEach(cb => {
-                                cb.addEventListener('change', function() {
-                                    const anyChecked = memoCheckboxes.querySelectorAll(
-                                        '.memo-checkbox:checked').length > 0;
-                                    showInvoiceFormBtn.disabled = !
-                                        anyChecked; // enable only if at least one checked
-                                });
-                            });
+                            bindMemoCheckboxState();
                         } else {
-                            memoOptionsContainer.style.display = 'none';
-                            showInvoiceFormBtn.disabled = true;
+                            resetMemoSelection();
                         }
                     })
                     .catch(error => {
                         console.error("Error loading memos:", error);
-                        memoOptionsContainer.style.display = 'none';
+                        resetMemoSelection();
                     });
-            });
+            }
+
+            window.invoiceCreateLoadCustomerMemos = loadCustomerMemos;
+
+            // Load memos when customer is selected
+            if (typeof $ !== 'undefined') {
+                $('#preCustomerSelect')
+                    .off('.invoiceCreateMemos')
+                    .on('change.invoiceCreateMemos select2:select.invoiceCreateMemos', function() {
+                        loadCustomerMemos($(this).val());
+                    });
+            } else {
+                preCustomerSelect.addEventListener('change', function() {
+                    loadCustomerMemos(this.value);
+                });
+            }
+
+            const initialCustomerId = window.invoiceCreatePendingCustomerId || preCustomerSelect.value ||
+                (typeof $ !== 'undefined' ? $('#preCustomerSelect').val() : '');
+            if (initialCustomerId) {
+                loadCustomerMemos(initialCustomerId);
+            }
 
             // Show/Hide memo options when button is clicked
             showMemoOptionsBtn.addEventListener('click', function() {
@@ -554,7 +620,7 @@
                                 tableHtml += `
                                     <div class="card border-dark">
                                         <div class="card-body text-end">
-                                            <h5 class="mb-0 fw-bold">Grand Total Amount: ₹${grandTotalAmount.toFixed(2)}</h5>
+                                            <h5 class="mb-0 fw-bold">Grand Total Amount: ${grandTotalAmount.toFixed(2)}</h5>
                                         </div>
                                     </div>
                                 `;
@@ -576,7 +642,6 @@
                                         const state = data.state?.toLowerCase() || 'n/a';
                                         document.getElementById('selectedLocation').textContent =
                                             data.state || 'N/A';
-                                        console.log("state fetched for tax calculation:", state);
 
                                         if (invoiceTypeInput) {
                                             document.getElementById('baseAmountInput').value = grandTotalAmount.toFixed(2);
@@ -603,9 +668,9 @@
                                                     tableHtml += `
                                                         <div class="card border-dark">
                                                             <div class="card-body text-end">
-                                                                <p class="mb-1" name="sgst">SGST (${gst_slab / 2}%): ₹${sgst.toFixed(2)}</p>
-                                                                <p class="mb-1" name="cgst">CGST (${gst_slab / 2}%): ₹${cgst.toFixed(2)}</p>
-                                                                <h5 class="mb-0 fw-bold" name="net_amount">Net Total: ₹${netTotal.toFixed(2)}</h5>
+                                                                <p class="mb-1" name="sgst">SGST (${gst_slab / 2}%): ${sgst.toFixed(2)}</p>
+                                                                <p class="mb-1" name="cgst">CGST (${gst_slab / 2}%): ${cgst.toFixed(2)}</p>
+                                                                <h5 class="mb-0 fw-bold" name="net_amount">Net Total: ${netTotal.toFixed(2)}</h5>
                                                             </div>
                                                         </div>
                                                     `;
@@ -629,12 +694,12 @@
                                                     tableHtml += `
                                                         <div class="card border-dark">
                                                             <div class="card-body text-end">
-                                                                <p class="mb-1" name="sgst">SGST (${gst_slab/2}%): ₹${sgst.toFixed(2)}</p>
-                                                                        <p class="mb-1" name="cgst">CGST (${gst_slab/2}%): ₹${cgst.toFixed(2)}</p>
-                                                                <h5 class="mb-0 fw-bold" name="net_amount"> Total: ₹${netTotal.toFixed(2)}</h5>
+                                                                <p class="mb-1" name="sgst">SGST (${gst_slab/2}%): ${sgst.toFixed(2)}</p>
+                                                                        <p class="mb-1" name="cgst">CGST (${gst_slab/2}%): ${cgst.toFixed(2)}</p>
+                                                                <h5 class="mb-0 fw-bold" name="net_amount"> Total: ${netTotal.toFixed(2)}</h5>
 
-                                                                <p class="mb-1" name="gst">Tax under RCM: ₹${gst.toFixed(2)}</p>
-                                                                <h5 class="mb-0 fw-bold" >Net Total: ₹${grandTotalAmount.toFixed(2)}</h5>
+                                                                <p class="mb-1" name="gst">Tax under RCM: ${gst.toFixed(2)}</p>
+                                                                <h5 class="mb-0 fw-bold" >Net Total: ${grandTotalAmount.toFixed(2)}</h5>
 
                                                             </div>
                                                         </div>
@@ -662,8 +727,8 @@
                                                     tableHtml += `
                                                         <div class="card border-dark">
                                                             <div class="card-body text-end">
-                                                                <p class="mb-1" name="igst">IGST (${gst_slab}%): ₹${igst.toFixed(2)}</p>
-                                                                <h5 class="mb-0 fw-bold" name="net_amount">Net Total: ₹${netTotal.toFixed(2)}</h5>
+                                                                <p class="mb-1" name="igst">IGST (${gst_slab}%): ${igst.toFixed(2)}</p>
+                                                                <h5 class="mb-0 fw-bold" name="net_amount">Net Total: ${netTotal.toFixed(2)}</h5>
                                                             </div>
                                                         </div>
                                                     `;
@@ -684,10 +749,10 @@
                                                     tableHtml += `
                                                         <div class="card border-dark">
                                                             <div class="card-body text-end">
-                                                                <p class="mb-1" name="igst">IGST (${gst_slab}%): ₹${igst.toFixed(2)}</p>
-                                                                <h5 class="mb-0 fw-bold" name="net_amount"> Total: ₹${netTotal.toFixed(2)}</h5>
-                                                                <p class="mb-1" name="gst">Tax under RCM: ₹${igst.toFixed(2)}</p>
-                                                                <h5 class="mb-0 fw-bold">Net Total: ₹${grandTotalAmount.toFixed(2)}</h5>
+                                                                <p class="mb-1" name="igst">IGST (${gst_slab}%): ${igst.toFixed(2)}</p>
+                                                                <h5 class="mb-0 fw-bold" name="net_amount"> Total: ${netTotal.toFixed(2)}</h5>
+                                                                <p class="mb-1" name="gst">Tax under RCM: ${igst.toFixed(2)}</p>
+                                                                <h5 class="mb-0 fw-bold">Net Total: ${grandTotalAmount.toFixed(2)}</h5>
 
                                                             </div>
                                                         </div>

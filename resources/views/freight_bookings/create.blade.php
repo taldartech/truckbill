@@ -7,7 +7,6 @@
         </div>
     @endif
 
-
     <style>
         /* Prevent form expansion on validation errors */
         .form-control,
@@ -141,7 +140,7 @@
                     <div class="mb-2">
                         <strong>Amount:</strong><br>
                         <span
-                            class="badge bg-brand-primary text-white fs-6">₹{{ $lorry_receipt->first() ? number_format($lorry_receipt->first()->amount ?? 0, 2) : '0.00' }}</span>
+                            class="badge bg-brand-primary text-white fs-6">{{ $lorry_receipt->first() ? number_format($lorry_receipt->first()->amount ?? 0, 2) : '0.00' }}</span>
                     </div>
 
                 </div>
@@ -152,7 +151,7 @@
                         @php
                             $rate = $lorry_receipt->first() ? $lorry_receipt->first()->fr_rate : 0;
                         @endphp
-                            class="badge bg-brand-primary text-white fs-6">₹{{ number_format($rate, 2) }}</span>
+                            class="badge bg-brand-primary text-white fs-6">{{ number_format($rate, 2) }}</span>
                     </div>
                     </div>
                 @if ($lorry_receipt->first() && $lorry_receipt->first()->freight_booking_id)
@@ -194,14 +193,7 @@
         </div>
     </div>
 
-    @php
-        $lrs = \App\Models\LorryReceipt::all();
-        $transporters = \App\Models\Transporter::where('company_id', auth()->user()->company_id)->get();
-    @endphp
-
-
     <div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
-        <!--begin::Header-->
         <div class="card-header">
             <div class="card-title h4 d-flex justify-content-between align-items-center w-100">
                 <span>Add New Good Hire (Lorry Hire)</span>
@@ -219,7 +211,6 @@
                 @endif
             </div>
         </div>
-        <!--end::Header-->
         <!--begin::Form-->
         @php
             $weight = $weight ?? 0; // default fallback
@@ -227,7 +218,6 @@
         <form method="POST" action="{{ route('freight_bookings.confirm') }}" class="needs-validation" novalidate="">
             @csrf
             <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
-            <!--begin::Body-->
             <div class="card-body">
                 <!-- Hidden inputs for form submission -->
                 <input type="hidden" name="lr_id" id="lr_id"
@@ -257,9 +247,9 @@
                         <label for="tr_fr_rate" class="form-label">TR Freight Rate *</label>
                         <input type="number" step="0.01" min="1" max="20000" class="form-control"
                             name="tr_fr_rate" id="tr_fr_rate" value="{{ old('tr_fr_rate') }}"
-                            placeholder="Enter freight rate (₹1 - ₹20,000 per ton)" required>
+                            placeholder="Enter freight rate (1 - 20,000 per ton)" required>
                         <small class="form-text text-muted">
-                            <i class="fas fa-info-circle"></i> Rate must be between ₹1 and ₹20,000 per ton
+                            <i class="fas fa-info-circle"></i> Rate must be between 1 and 20,000 per ton
                         </small>
                         @error('tr_fr_rate')
                             <div class="text-danger">{{ $message }}</div>
@@ -273,7 +263,7 @@
                         <small class="form-text text-muted">
                             <i class="fas fa-info-circle"></i> Auto-calculated: TR Freight Rate × Weight
                             ({{ $lorry_receipt->first() ? number_format($lorry_receipt->first()->weight ?? 0, 3) : '0.00' }}
-                            MT). Must be greater than ₹0.
+                            MT). Must be greater than 0.
                         </small>
                         @error('tr_amount')
                             <div class="text-danger">{{ $message }}</div>
@@ -302,7 +292,6 @@
                 </div>
 
                 <div class="row mb-3">
-
 
                 </div>
 
@@ -365,52 +354,6 @@
                     <!-- Hidden delivered field with default value 0 -->
                     <input type="hidden" name="is_delivered" id="is_delivered" value="0">
                 </div>
-
-
-                <div class="row">
-                    {{-- <div class="col-md-4 mb-3">
-                <label for="deviation" class="form-label">Deviation</label>
-                <input type="number" step="0.01" class="form-control" name="deviation" id="deviation" value="{{ old('deviation') }}">
-                @error('deviation') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="misc_expense" class="form-label">Misc. Expense</label>
-                <input type="number" step="0.01" class="form-control" name="misc_expense" id="misc_expense" value="{{ old('misc_expense') }}">
-                @error('misc_expense') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-
-            <div class="col-md-4 mb-3">
-                <label for="damage_qty" class="form-label">Damage Quantity</label>
-                <input type="number" step="0.01" class="form-control" name="damage_qty" id="damage_qty" value="{{ old('damage_qty') }}">
-                @error('damage_qty') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="damage_rate" class="form-label">Damage Rate</label>
-                <input type="number" step="0.01" class="form-control" name="damage_rate" id="damage_rate" value="{{ old('damage_rate') }}">
-                @error('damage_rate') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="damage_amount" class="form-label">Damage Amount</label>
-                <input type="number" step="0.01" class="form-control" name="damage_amount" id="damage_amount" value="{{ old('damage_amount') }}">
-                @error('damage_amount') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="shortage_qty" class="form-label">Shortage Quantity</label>
-                <input type="number" step="0.01" class="form-control" name="shortage_qty" id="shortage_qty" value="{{ old('shortage_qty') }}">
-                @error('shortage_qty') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="shortage_rate" class="form-label">Shortage Rate</label>
-                <input type="number" step="0.01" class="form-control" name="shortage_rate" id="shortage_rate" value="{{ old('shortage_rate') }}">
-                @error('shortage_rate') <div class="text-danger">{{ $message }}</div> @enderror
-            </div>
-            <div class="col-md-4 mb-3">
-                <label for="shortage_amount" class="form-label">Shortage Amount</label>
-                <input type="number" step="0.01" class="form-control" name="shortage_amount" id="shortage_amount" value="{{ old('shortage_amount') }}">
-                @error('shortage_amount') <div class="text-danger">{{ $message }}</div> @enderror
-            </div> --}}
-
-                </div>
                 <div class="row mb-3">
                     <div class="col-md-12">
                         <label for="remark" class="form-label">Remark</label>
@@ -422,24 +365,7 @@
                     <!-- Hidden cancelled field with default value 0 -->
                     <input type="hidden" name="is_cancelled" id="is_cancelled" value="0">
                 </div>
-                {{-- <div class="row"> --}}
-                {{-- <div class="col-md-6 mb-3">
-                <label for="linked_freight_booking_id" class="form-label">Linked Good Hire (Lorry Hire)</label>
-                <select name="linked_freight_booking_id" id="linked_freight_booking_id" class="form-select">
-                    <option value="">None</option>
-                    @foreach ($linkedBookings as $fb)
-                        <option value="{{ $fb->id }}" {{ old('linked_freight_booking_id') == $fb->id ? 'selected' : '' }}>
-                            #{{ $fb->id }} (LR: {{ $fb->lr ? $fb->lr->gr_number : '-' }})
-                        </option>
-                    @endforeach
-                </select>
-                @error('linked_freight_booking_id') <div class="text-danger">{{ $message }}</div> @enderror
-            </div> --}}
-                {{-- </div> --}}
-                <!--end::Row-->
             </div>
-            <!--end::Body-->
-            <!--begin::Footer-->
             <div class="card-footer d-flex justify-content-between">
                 <a href="{{ route('freight_bookings.index') }}" class="btn btn-back">
                     <i class="bi bi-arrow-left"></i> Back to List
@@ -451,7 +377,6 @@
 
                 </div>
             </div>
-            <!--end::Footer-->
             <input type="hidden" name="redirect_to_payment" value="0">
         </form>
     </div>
@@ -467,11 +392,11 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <p><strong>TR Freight Rate:</strong> ₹{{ number_format($cancelledBookings->tr_fr_rate, 2) }}</p>
-                        <p><strong>TR Amount:</strong> ₹{{ number_format($cancelledBookings->tr_amount, 2) }}</p>
-                        <p><strong>TDS Amount:</strong> ₹{{ number_format($cancelledBookings->tds_amount, 2) }}</p>
-                        <p><strong>Balance Amount:</strong> ₹{{ number_format($cancelledBookings->balance_amount, 2) }}</p>
-                        <p><strong>Advance Amount:</strong> ₹{{ number_format($cancelledBookings->advance_amount, 2) }}</p>
+                        <p><strong>TR Freight Rate:</strong> {{ number_format($cancelledBookings->tr_fr_rate, 2) }}</p>
+                        <p><strong>TR Amount:</strong> {{ number_format($cancelledBookings->tr_amount, 2) }}</p>
+                        <p><strong>TDS Amount:</strong> {{ number_format($cancelledBookings->tds_amount, 2) }}</p>
+                        <p><strong>Balance Amount:</strong> {{ number_format($cancelledBookings->balance_amount, 2) }}</p>
+                        <p><strong>Advance Amount:</strong> {{ number_format($cancelledBookings->advance_amount, 2) }}</p>
                         <p><strong>E-Way Bill Number:</strong> {{ $cancelledBookings->eway_bill_number ?? 'N/A' }}</p>
                         <p><strong>E-Way Bill Expiry Date:</strong>
                             {{ $cancelledBookings->eway_bill_expiry ? \Carbon\Carbon::parse($cancelledBookings->eway_bill_expiry)->format('d M Y') : 'N/A' }}
@@ -592,7 +517,7 @@
     </script>
 
     <script>
-        const IS_OWNER = {{ $preFilled['is_owner'] ?? 0 }};
+        const IS_OWNER = {{ (int) ($preFilled['is_owner'] ?? 0) }};
 
         document.addEventListener('DOMContentLoaded', function() {
             // Get all required elements with null checks

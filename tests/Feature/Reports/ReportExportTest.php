@@ -47,7 +47,7 @@ class ReportExportTest extends TestCase
     protected function makeUser(string $role): User
     {
         $company = Company::create([
-            'name' => 'Company ' . $role,
+            'name' => 'Company '.$role,
             'user_id' => null,
             'gst_slab' => config('payments.gst_slabs')[0],
             'lr_credits' => 5,
@@ -127,32 +127,53 @@ class ReportExportTest extends TestCase
         return [$lr, $booking];
     }
 
-    public function test_admin_and_accountant_can_view_reports(): void
+    public function test_admin_accountant_and_moderator_can_view_reports(): void
     {
         $admin = $this->makeUser('admin');
         $accountant = $this->makeUser('accountant');
+        $moderator = $this->makeUser('moderator');
         $this->seedLr($admin);
 
         $params = ['start_date' => now()->subDays(7)->toDateString(), 'end_date' => now()->toDateString()];
 
-        $this->actingAs($admin)->get('/reports/consignor-consignee?' . http_build_query($params))->assertOk();
-        $this->actingAs($admin)->get('/reports/tds?' . http_build_query($params))->assertOk();
-        $this->actingAs($accountant)->get('/reports/dispatch?' . http_build_query($params))->assertOk();
-        $this->actingAs($accountant)->get('/reports/invoice?' . http_build_query($params))->assertOk();
+        $this->actingAs($admin)->get('/reports/consignor-consignee?'.http_build_query($params))->assertOk();
+        $this->actingAs($admin)->get('/reports/tds?'.http_build_query($params))->assertOk();
+        $this->actingAs($accountant)->get('/reports/dispatch?'.http_build_query($params))->assertOk();
+        $this->actingAs($accountant)->get('/reports/invoice?'.http_build_query($params))->assertOk();
+        $this->actingAs($moderator)->get('/reports/consignor-consignee?'.http_build_query($params))->assertOk();
+        $this->actingAs($moderator)->get('/reports/tds?'.http_build_query($params))->assertOk();
         $this->actingAs($admin)->get('/reports/transporter-master')->assertOk();
         $this->actingAs($accountant)->get('/reports/transporter-master?type=owner')->assertOk();
-        $this->actingAs($admin)->get('/reports/transporter-report?' . http_build_query($params))->assertOk();
+        $this->actingAs($moderator)->get('/reports/transporter-master?type=owner')->assertOk();
+        $this->actingAs($admin)->get('/reports/party-ledger?'.http_build_query($params))->assertOk();
+        $this->actingAs($admin)->get('/reports/transporter-report?'.http_build_query($params))->assertOk();
+        $this->actingAs($moderator)->get('/reports/transporter-report?'.http_build_query($params))->assertOk();
     }
 
-    public function test_moderator_forbidden_from_reports(): void
+    public function test_accountant_can_fetch_memo_copy_customer_memos_json_but_not_invoice_all_memos_route(): void
+    {
+        $accountant = $this->makeUser('accountant');
+        [$lr] = $this->seedLr($accountant);
+
+        $this->actingAs($accountant)
+            ->getJson('/reports/customer-memos/'.$lr->customer_id)
+            ->assertOk()
+            ->assertJson([5001]);
+
+        $this->actingAs($accountant)
+            ->getJson('/invoices/all-memos/'.$lr->customer_id)
+            ->assertForbidden();
+    }
+
+    public function test_moderator_can_view_reports(): void
     {
         $mod = $this->makeUser('moderator');
         $params = ['start_date' => now()->subDays(7)->toDateString(), 'end_date' => now()->toDateString()];
 
-        $this->actingAs($mod)->get('/reports/consignor-consignee?' . http_build_query($params))->assertForbidden();
-        $this->actingAs($mod)->get('/reports/tds?' . http_build_query($params))->assertForbidden();
-        $this->actingAs($mod)->get('/reports/transporter-master')->assertForbidden();
-        $this->actingAs($mod)->get('/reports/transporter-report?' . http_build_query($params))->assertForbidden();
+        $this->actingAs($mod)->get('/reports/consignor-consignee?'.http_build_query($params))->assertOk();
+        $this->actingAs($mod)->get('/reports/tds?'.http_build_query($params))->assertOk();
+        $this->actingAs($mod)->get('/reports/transporter-master')->assertOk();
+        $this->actingAs($mod)->get('/reports/transporter-report?'.http_build_query($params))->assertOk();
     }
 
     public function test_exports_succeed_for_admin(): void
@@ -179,29 +200,29 @@ class ReportExportTest extends TestCase
         ]);
         $params = ['start_date' => now()->subDays(7)->toDateString(), 'end_date' => now()->toDateString()];
 
-        $this->actingAs($admin)->get('/reports/consignor-consignee-export?' . http_build_query($params))->assertOk();
-        $this->actingAs($admin)->get('/reports/tds-export?' . http_build_query($params))->assertOk();
-        $this->actingAs($admin)->get('/reports/dispatch-export?' . http_build_query($params))->assertOk();
-        $this->actingAs($admin)->get('/reports/invoice-export?' . http_build_query($params))->assertOk();
-        $this->actingAs($admin)->get('/reports/shortage-damage-export?' . http_build_query($params))->assertOk();
-        $this->actingAs($admin)->get('/reports/eway-bill-export?' . http_build_query($params))->assertOk();
-        $this->actingAs($admin)->get('/reports/pending-memo-export?' . http_build_query($params + ['status' => 'both']))->assertOk();
+        $this->actingAs($admin)->get('/reports/consignor-consignee-export?'.http_build_query($params))->assertOk();
+        $this->actingAs($admin)->get('/reports/tds-export?'.http_build_query($params))->assertOk();
+        $this->actingAs($admin)->get('/reports/dispatch-export?'.http_build_query($params))->assertOk();
+        $this->actingAs($admin)->get('/reports/invoice-export?'.http_build_query($params))->assertOk();
+        $this->actingAs($admin)->get('/reports/shortage-damage-export?'.http_build_query($params))->assertOk();
+        $this->actingAs($admin)->get('/reports/eway-bill-export?'.http_build_query($params))->assertOk();
+        $this->actingAs($admin)->get('/reports/pending-memo-export?'.http_build_query($params + ['status' => 'both']))->assertOk();
         $this->actingAs($admin)->get('/reports/pending-invoice-export')->assertOk();
-        $this->actingAs($admin)->get('/reports/bank-export?' . http_build_query($params))->assertOk();
-        $this->actingAs($admin)->get('/reports/transporter-report-export?' . http_build_query($params))->assertOk();
+        $this->actingAs($admin)->get('/reports/bank-export?'.http_build_query($params))->assertOk();
+        $this->actingAs($admin)->get('/reports/transporter-report-export?'.http_build_query($params))->assertOk();
         $this->actingAs($admin)->get('/reports/transporter-master-export?type=transporter')->assertOk();
-        $this->actingAs($admin)->get('/reports/pump-export?' . http_build_query($params + ['pump_id' => $pump->id]))->assertOk();
+        $this->actingAs($admin)->get('/reports/pump-export?'.http_build_query($params + ['pump_id' => $pump->id]))->assertOk();
     }
 
-    public function test_exports_forbidden_for_moderator(): void
+    public function test_moderator_can_access_report_exports(): void
     {
         $mod = $this->makeUser('moderator');
         $params = ['start_date' => now()->subDays(7)->toDateString(), 'end_date' => now()->toDateString()];
 
-        $this->actingAs($mod)->get('/reports/consignor-consignee-export?' . http_build_query($params))->assertForbidden();
-        $this->actingAs($mod)->get('/reports/tds-export?' . http_build_query($params))->assertForbidden();
-        $this->actingAs($mod)->get('/reports/transporter-report-export?' . http_build_query($params))->assertForbidden();
-        $this->actingAs($mod)->get('/reports/transporter-master-export')->assertForbidden();
+        $this->actingAs($mod)->get('/reports/consignor-consignee-export?'.http_build_query($params))->assertOk();
+        $this->actingAs($mod)->get('/reports/tds-export?'.http_build_query($params))->assertOk();
+        $this->actingAs($mod)->get('/reports/transporter-report-export?'.http_build_query($params))->assertOk();
+        $this->actingAs($mod)->get('/reports/transporter-master-export')->assertOk();
     }
 
     public function test_pump_report_shows_payment_status(): void
@@ -234,7 +255,7 @@ class ReportExportTest extends TestCase
             'pump_id' => $pump->id,
         ];
 
-        $this->actingAs($admin)->get('/reports/pump?' . http_build_query($params))
+        $this->actingAs($admin)->get('/reports/pump?'.http_build_query($params))
             ->assertOk()
             ->assertSee('HP Pump')
             ->assertSee('LR-RPT-1');
@@ -261,7 +282,7 @@ class ReportExportTest extends TestCase
             'end_date' => now()->toDateString(),
         ];
 
-        $this->actingAs($admin)->get('/reports/bank?' . http_build_query($params))
+        $this->actingAs($admin)->get('/reports/bank?'.http_build_query($params))
             ->assertOk()
             ->assertSee('Pending');
     }
@@ -275,12 +296,12 @@ class ReportExportTest extends TestCase
         $params = ['start_date' => now()->subDays(7)->toDateString(), 'end_date' => now()->toDateString()];
 
         $this->actingAs($admin)
-            ->get('/reports/dispatch?' . http_build_query($params))
+            ->get('/reports/dispatch?'.http_build_query($params))
             ->assertOk()
             ->assertSee('12.345');
 
         $this->actingAs($admin)
-            ->get('/reports/transporter-report?' . http_build_query($params))
+            ->get('/reports/transporter-report?'.http_build_query($params))
             ->assertOk()
             ->assertSee('12.345');
     }
@@ -332,7 +353,7 @@ class ReportExportTest extends TestCase
             'end_date' => '2025-01-31',
         ];
 
-        $response = $this->actingAs($admin)->get('/reports/invoice?' . http_build_query($params));
+        $response = $this->actingAs($admin)->get('/reports/invoice?'.http_build_query($params));
 
         $response->assertOk();
         $content = $response->getContent();
@@ -470,7 +491,7 @@ class ReportExportTest extends TestCase
         ]);
 
         $params = ['start_date' => '2025-01-01', 'end_date' => '2025-01-31'];
-        $response = $this->actingAs($admin)->get('/reports/invoice?' . http_build_query($params));
+        $response = $this->actingAs($admin)->get('/reports/invoice?'.http_build_query($params));
 
         $response->assertOk();
         $content = $response->getContent();
@@ -495,7 +516,7 @@ class ReportExportTest extends TestCase
 
         $params = ['start_date' => now()->subDays(7)->toDateString(), 'end_date' => now()->toDateString()];
 
-        $response = $this->actingAs($admin)->get('/reports/transporter-report?' . http_build_query($params));
+        $response = $this->actingAs($admin)->get('/reports/transporter-report?'.http_build_query($params));
         $response->assertOk();
         $response->assertSee('250.00');
     }
@@ -586,11 +607,62 @@ class ReportExportTest extends TestCase
         ]);
 
         $response = $this->actingAs($admin)->get(
-            '/reports/party-bill?' . http_build_query(['invoice_number' => $invoice->id])
+            '/reports/party-bill?'.http_build_query(['invoice_number' => $invoice->id])
         );
 
         $response->assertOk();
         $response->assertSee('Remark: Freight difference invoice');
     }
-}
 
+    public function test_party_bill_page_infers_customer_when_only_invoice_number_is_given(): void
+    {
+        $admin = $this->makeUser('admin');
+        $country = Country::create(['name' => 'India', 'code' => 'IN']);
+        $state = State::create(['name' => 'Gujarat', 'country_id' => $country->id]);
+        $city = City::create(['name' => 'Ahmedabad', 'state_id' => $state->id, 'country_id' => $country->id]);
+        $customer = Consignee::create([
+            'company_id' => $admin->company_id,
+            'name' => 'Inferred Party Bill Customer',
+            'state_id' => $state->id,
+            'city_id' => $city->id,
+        ]);
+        $invoice = Invoice::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'manual_invoice_number' => 'INV-PB-INF',
+            'invoice_type' => 'Forward',
+            'generated_date' => now()->toDateString(),
+            'total_amount' => 100,
+        ]);
+
+        $response = $this->actingAs($admin)->get(
+            '/reports/party-bill?'.http_build_query(['invoice_number' => $invoice->id])
+        );
+
+        $response->assertOk();
+        $response->assertSee('Inferred Party Bill Customer');
+        $response->assertSee('INV-PB-INF');
+    }
+
+    public function test_lr_copy_page_uses_selectable_customer_without_bulk_consignee_query(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$lr] = $this->seedLr($admin);
+        $customer = Consignee::query()->findOrFail($lr->customer_id);
+
+        $this->actingAs($admin)
+            ->get(route('reports.lr-copy'))
+            ->assertOk()
+            ->assertViewMissing('customers');
+
+        $this->actingAs($admin)
+            ->get(route('reports.lr-copy', [
+                'customer_id' => $customer->id,
+                'lr_id' => $lr->id,
+            ]))
+            ->assertOk()
+            ->assertViewHas('selectedCustomer', function ($c) use ($customer) {
+                return $c !== null && (int) $c->id === (int) $customer->id;
+            });
+    }
+}

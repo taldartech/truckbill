@@ -38,11 +38,9 @@
 @endif
 
 <div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
-    <!--begin::Header-->
     <div class="card-header">
         <div class="card-title h4">Add New Consignee/Consignor/Customer</div>
     </div>
-    <!--end::Header-->
     <!--begin::Form-->
     <form method="POST" action="{{ route('consignees.store') }}" class="needs-validation" novalidate="">
         @csrf
@@ -159,7 +157,6 @@
                 <i class="bi bi-arrow-left"></i> Back to List
             </a>
         </div>
-        <!--end::Footer-->
     </form>
     <!--end::Form-->
 </div>
@@ -495,51 +492,6 @@
         });
     }
 
-
-
-
-    // countrySelect.addEventListener('change', function() {
-    //     const countryId = this.value;
-    //     if (countryId) {
-    //         fetch(`/api/states/${countryId}`)
-    //             .then(response => response.json())
-    //             .then(states => {
-    //                 stateSelect.innerHTML = '<option value="">Select State</option>';
-    //                 states.forEach(state => {
-    //                     const option = document.createElement('option');
-    //                     option.value = state.id;
-    //                     option.textContent = state.name;
-    //                     stateSelect.appendChild(option);
-    //                 });
-    //                 stateSelect.required = true;
-    //             });
-    //     } else {
-    //         stateSelect.innerHTML = '<option value="">Select State</option>';
-    //         stateSelect.required = false;
-    //     }
-    // });
-
-    // stateSelect.addEventListener('change', function() {
-    //     const stateId = this.value;
-    //     if (stateId) {
-    //         fetch(`/api/cities/${stateId}`)
-    //             .then(response => response.json())
-    //             .then(cities => {
-    //                 citySelect.innerHTML = '<option value="">Select City</option>';
-    //                 cities.forEach(city => {
-    //                     const option = document.createElement('option');
-    //                     option.value = city.id;
-    //                     option.textContent = city.name;
-    //                     citySelect.appendChild(option);
-    //                 });
-    //                 citySelect.required = true;
-    //             });
-    //     } else {
-    //         citySelect.innerHTML = '<option value="">Select City</option>';
-    //         citySelect.required = false;
-    //     }
-    // });
-
     // Modal form submissions with AJAX
     $(document).ready(function() {
         // Function to show success message
@@ -625,7 +577,6 @@
                     'Accept': 'application/json'
                 },
                 success: function(data) {
-                    console.log('Country creation response:', data);
                     if (data && data.success && data.country) {
                         // Add new country to the main dropdown
                         $('#country_id').append(`<option value="${data.country.id}">${data.country.name}</option>`);
@@ -698,7 +649,6 @@
                     'Accept': 'application/json'
                 },
                 success: function(data) {
-                    console.log('State creation response:', data);
                     if (data && data.success && data.state) {
                         // Add new state to the main dropdown
                         $('#state_id').append(`<option value="${data.state.id}">${data.state.name}</option>`);
@@ -744,7 +694,6 @@
             const stateId = $('#modal_city_state_id').val();
           
             const csrfToken = $('meta[name="csrf-token"]').attr('content');
-            console.log(cityName, stateId, csrfToken);
             // Show loading state
             submitBtn.prop('disabled', true);
             spinner.removeClass('d-none');
@@ -771,7 +720,6 @@
                     'Accept': 'application/json'
                 },
                 success: function(data) {
-                    console.log('City creation response:', data);
                     if (data && data.success && data.city) {
                         // Add new city to the main dropdown
                         $('#city_id').append(`<option value="${data.city.id}">${data.city.name}</option>`);

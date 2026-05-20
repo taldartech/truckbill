@@ -62,9 +62,9 @@
                                     <td class="ps-4">{{ $invoice->invoice_number ?? $invoice->manual_invoice_number ?? '-' }}</td>
                                     <td>{{ $invoice->company->name ?? '-' }}</td>
                                     <td>{{ $invoice->generated_date ? \Carbon\Carbon::parse($invoice->generated_date)->format('d-m-Y') : '-' }}</td>
-                                    <td>₹{{ number_format((float) ($invoice->net_amount ?? $invoice->total_amount), 2) }}</td>
-                                    <td>₹{{ number_format((float) $invoice->paid_amount, 2) }}</td>
-                                    <td>₹{{ number_format((float) $invoice->remaining_amount, 2) }}</td>
+                                    <td>{{ number_format((float) ($invoice->net_amount ?? $invoice->total_amount), 2) }}</td>
+                                    <td>{{ number_format((float) $invoice->paid_amount, 2) }}</td>
+                                    <td>{{ number_format((float) $invoice->remaining_amount, 2) }}</td>
                                     <td><span class="badge bg-{{ $invoice->payment_status === 'paid' ? 'success' : ($invoice->payment_status === 'partial' ? 'warning' : 'secondary') }}">{{ ucfirst($invoice->payment_status ?? 'pending') }}</span></td>
                                     <td class="text-end pe-4">
                                         <a href="{{ route('customer.invoices.show', $invoice) }}" class="btn btn-sm btn-view"><i class="fas fa-eye"></i></a>

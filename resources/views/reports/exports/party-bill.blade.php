@@ -3,6 +3,14 @@
     $totalAmount = 0;
     $lrs = $invoice->custom_invoice ? [] : ($invoice->lr_ids ?? []);
     $customDetails = $customDetails ?? collect();
+    $forExcel = $forExcel ?? false;
+    $accountNumberDisplay = '-';
+    if (($company->account_number ?? null) !== null && $company->account_number !== '') {
+        $accountNumberDisplay = (string) $company->account_number;
+        if (stripos($accountNumberDisplay, 'e') !== false) {
+            $accountNumberDisplay = sprintf('%.0f', (float) $company->account_number);
+        }
+    }
     $usePdfLogoPath = ($partyBillInvoiceUsePdfLogoPath ?? false) === true;
     $invoiceCompanyLogoSrc = $usePdfLogoPath
         ? $company->logoFilesystemPathForPdf()
@@ -174,23 +182,23 @@
     @foreach ($lrs as $index => $lr_id)
         <tr>
             @php
-                $lr = App\Models\LorryReceipt::find($lr_id);
+                $lr = \App\Models\LorryReceipt::find($lr_id);
             @endphp
             <td>{{ $index + 1 }}</td>
-            <td>{{ $lr->lr_number }}</td>
-            <td>{{ $lr->truck ? $lr->truck->truck_number : 'N/A' }}</td>
-            <td>{{ $lr->destination_city }}</td>
-            <td>{{ $lr->invoice_number }}</td>
-            <td>{{ \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') }}</td>
-            <td>{{ $lr->weight }}</td>
-            <td>{{ number_format($lr->unloading_weight ?? $lr->weight, 3) }}</td>
-            <td>{{ $lr->no_of_units }}</td>
-            <td>{{ number_format($lr->fr_rate, 2) }}</td>
+            <td>{{ $lr->lr_number ?? '-' }}</td>
+            <td>{{ $lr && $lr->truck ? $lr->truck->truck_number : 'N/A' }}</td>
+            <td>{{ $lr->destination_city ?? '-' }}</td>
+            <td>{{ $lr->invoice_number ?? '-' }}</td>
+            <td>{{ $lr && $lr->gr_date ? \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') : '-' }}</td>
+            <td>{{ $lr->weight ?? 0 }}</td>
+            <td>{{ number_format($lr->unloading_weight ?? $lr->weight ?? 0, 3) }}</td>
+            <td>{{ $lr->no_of_units ?? 0 }}</td>
+            <td>{{ number_format($lr->fr_rate ?? 0, 2) }}</td>
             <td>{{ number_format($lr->shortage_amount ?? 0, 2) }}</td>
             <td>{{ number_format($lr->damage_amount ?? 0, 2) }}</td>
             @php
                 $totalShortageDamage = ($lr->shortage_amount ?? 0) + ($lr->damage_amount ?? 0);
-                $amount = $lr->actual_amount - $totalShortageDamage;
+                $amount = ($lr->actual_amount ?? 0) - $totalShortageDamage;
                 $totalAmount += $amount;
             @endphp
             <td>{{ number_format($amount, 2) }}</td>
@@ -217,7 +225,7 @@
     </tr>
     <tr>
         <td style="font-weight: bold;" colspan="2">Account No:</td>
-        <td colspan="7">{{ $company->account_number ?? '' }}</td>
+        <td colspan="7" style="text-align: left; {{ $forExcel ? "mso-number-format:'\\@';" : '' }}">{{ $accountNumberDisplay }}</td>
         @if ($cgst > 0)
             <td style="font-weight: bold;" colspan="2">CGST {{ $cgstpercent }}%</td>
             <td colspan="2">{{ number_format($cgst, 2) }}</td>
@@ -243,7 +251,9 @@
         <td colspan="7">{{ $company->bank ?? '' }}</td>
         <td style="font-weight: bold;" colspan="2">Total Amount</td>
         @php
-            $grandTotal = $invoice->total_amount ?? ($invoice->invoice_type == 'Reverse' ? $totalAmount : $totalAmount + $totalgst);
+            $grandTotal = ($invoice->invoice_type ?? '') === 'Reverse'
+                ? (float) ($invoice->net_amount ?? $invoice->base_amount ?? $totalAmount)
+                : (float) ($invoice->total_amount ?? ($totalAmount + $totalgst));
         @endphp
         <td colspan="2">{{ number_format($grandTotal, 2) }}</td>
     </tr>

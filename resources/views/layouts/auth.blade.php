@@ -215,7 +215,6 @@
         <div class="auth-card">
             <div class="logo-section">
                 <img src="{{ asset('logo.png') }}" alt="TruckBill Logo" class="brand-image" style="max-height: 120px">
-                {{-- <div class="brand-logo text-brand-gradient">TruckBill</div> --}}
             </div>
 
             @yield('content')

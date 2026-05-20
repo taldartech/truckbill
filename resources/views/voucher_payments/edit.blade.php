@@ -106,13 +106,13 @@
                     <div class="col-md-3">
                         <div class="mb-2">
                             <strong>TR Amount:</strong><br>
-                            <span>₹{{ number_format($freightBooking->tr_amount, 2) }}</span>
+                            <span>{{ number_format($freightBooking->tr_amount, 2) }}</span>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="mb-2">
                             <strong>Advance Amount:</strong><br>
-                            <span>₹{{ number_format($freightBooking->advance_amount, 2) }}</span>
+                            <span>{{ number_format($freightBooking->advance_amount, 2) }}</span>
                         </div>
                     </div>
                 </div>
@@ -120,7 +120,7 @@
                     <div class="col-md-3">
                         <div class="mb-2">
                             <strong>Balance Amount:</strong><br>
-                            <span class="text-success fw-bold">₹{{ number_format($balanceAmount, 2) }}</span>
+                            <span class="text-success fw-bold">{{ number_format($balanceAmount, 2) }}</span>
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -281,14 +281,6 @@
                         @enderror
                     </div>
                     <!--begin::Col-->
-                    {{-- <div class="col-md-6">
-                    <label for="transaction_id" class="form-label">Transaction ID *</label>
-                    <input type="text" name="transaction_id" id="transaction_id" class="form-control" value="{{ old('transaction_id', $voucher_payment->transaction_id) }}" required>
-                    @error('transaction_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please enter a transaction ID.</div>
-                </div> --}}
-                    <!--end::Col-->
-                    <!--begin::Col-->
                     <div class="col-md-6 mb-3">
                         <label for="remark" class="form-label">Remark</label>
                         <textarea {{ $voucher_payment->linked_voucher_id != null ? 'readonly' : '' }} name="remark" id="remark"
@@ -298,7 +290,6 @@
                         @enderror
                     </div>
                     <!--end::Col-->
-                    <!--begin::Col-->
                     <!-- Hidden payment_status for operators -->
 
                     @php
@@ -329,19 +320,11 @@
                         <div class="invalid-feedback">Please select a payment status.</div>
                     </div>
                     <!--end::Col-->
-                    {{-- <!--begin::Col-->
-                <div class="col-md-6">
-                    <label for="transaction_id" class="form-label">Transaction ID *</label>
-                    <input type="text" name="transaction_id" id="transaction_id" class="form-control" value="{{ old('transaction_id', $voucher_payment->transaction_id) }}" required>
-                    @error('transaction_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    <div class="invalid-feedback">Please enter a transaction ID.</div>
-                </div> --}}
-                    <!--end::Col-->
                     <!--begin::Col-->
                     <div class="col-md-4 mb-3">
                         <label for="amount" class="form-label">Amount *</label>
                         <div class="input-group">
-                            <span class="input-group-text">₹</span>
+                            <span class="input-group-text"></span>
                             <input type="number" step="0.01" name="amount" id="amount" class="form-control"
                                 value="{{ old('amount', $voucher_payment->amount) }}" required>
                         </div>

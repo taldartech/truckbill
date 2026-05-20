@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <!-- SweetAlert2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet" />
     @if (session('warning'))
@@ -43,9 +44,42 @@
             margin-bottom: 1rem !important;
         }
 
-        /* Select2 custom styling for truck dropdown */
+        .card-body .select2-container {
+            width: 100% !important;
+            max-width: 100%;
+        }
+
         .select2-container--bootstrap-5 .select2-selection {
             min-height: 38px;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single {
+            min-height: 38px;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+            display: block;
+            padding-left: 0.75rem;
+            padding-right: 2rem;
+            padding-top: 0.375rem;
+            padding-bottom: 0.375rem;
+            line-height: 1.35;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .select2-container--bootstrap-5.select2-container--focus .select2-selection--single,
+        .select2-container--bootstrap-5.select2-container--open .select2-selection--single {
+            border-color: var(--bs-primary);
+            box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+            height: auto;
+            min-height: 36px;
+            top: 0;
+            right: 0.5rem;
         }
 
         .select2-result-truck {
@@ -55,28 +89,6 @@
         .truck-info {
             font-size: 14px;
             line-height: 1.4;
-        }
-
-        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
-            padding-left: 12px;
-            padding-right: 20px;
-            color: #212529;
-            line-height: 36px;
-            background: var(--bs-body-bg);
-            border: var(--bs-border-width) solid var(--bs-border-color);
-            border-radius: 0.375rem;
-        }
-
-        .select2-container--bootstrap-5 .select2-selection--single:focus-visible {
-            border-color: var(--bs-primary);
-            box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
-            outline: 0;
-            border-radius: 0.375rem;
-        }
-
-        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
-            height: 36px;
-            right: 12px;
         }
 
         .select2-dropdown {
@@ -106,9 +118,25 @@
         .select2-container.declaration-warning .select2-selection__rendered {
             background-color: #fff3cd !important;
         }
+
+        .lr-payee-select-wrap .select2-container {
+            width: 100% !important;
+            max-width: 100%;
+        }
+
+        .lr-payee-select-wrap .select2-container .select2-selection--single {
+            min-height: 38px;
+            height: auto;
+        }
+
+        .lr-payee-select-wrap .select2-selection--single .select2-selection__rendered {
+            white-space: normal;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            text-overflow: clip;
+        }
     </style>
     <div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
-        <!--begin::Header-->
         <div class="card-header">
             <div class="d-flex w-100">
                 <div class="card-title h4">📝 Edit Good Receipt (Bilty)</div>
@@ -118,13 +146,15 @@
                 </div>
             </div>
         </div>
-        <!--end::Header-->
         <!--begin::Form-->
-        <form method="POST" action="{{ route('lorry_receipts.update', $lorry_receipt->id) }}" id="lorryReceiptForm"
+        <form method="POST" action="{{ route('lorry_receipts.update', $lorry_receipt->id) }}{{ \App\Support\ListingQueryString::currentSuffix(\App\Support\ListingQueryString::LORRY_RECEIPT_KEYS) }}" id="lorryReceiptForm"
             class="needs-validation" novalidate="">
             @csrf
             @method('PUT')
             <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
+            @foreach (\App\Support\ListingQueryString::params(request(), \App\Support\ListingQueryString::LORRY_RECEIPT_KEYS) as $listingKey => $listingValue)
+                <input type="hidden" name="{{ $listingKey }}" value="{{ $listingValue }}">
+            @endforeach
 
             <div class="card-body">
                 <!-- Declaration Warning (shown at top when truck owner declaration not submitted) -->
@@ -166,23 +196,18 @@
                         </div>
                         <div class="col-md-4">
                             <label for="customer_id" class="form-label">Customer *</label>
-                            <!-- Debug info -->
-                            <!-- Customer ID: {{ $lorry_receipt->customer_id }} -->
-                            <!-- Customer Name: {{ $lorry_receipt->customer ? $lorry_receipt->customer->name : 'Not found' }} -->
-
+                            @php($selectedCustomer = $customers->firstWhere('id', old('customer_id', $lorry_receipt->customer_id)))
                             <select class="form-select" id="customer_id" name="customer_id" required>
                                 <option value="">Select Customer</option>
-                                @foreach ($customers as $customer)
-                                    <option value="{{ $customer->id }}"
-                                        {{ $lorry_receipt->customer_id == $customer->id ? 'selected' : '' }}>
-                                        {{ $customer->name }}
+                                @if ($selectedCustomer)
+                                    <option value="{{ $selectedCustomer->id }}" selected>
+                                        {{ $selectedCustomer->name }}
                                     </option>
-                                @endforeach
+                                @endif
                             </select>
                             <script>
-                                // Store the selected customer data for JavaScript access
-                                window.selectedCustomerId = {{ $lorry_receipt->customer_id ?? 'null' }};
-                                window.selectedCustomerName = "{{ $lorry_receipt->customer ? addslashes($lorry_receipt->customer->name) : '' }}";
+                                window.selectedCustomerId = @json(old('customer_id', $lorry_receipt->customer_id));
+                                window.selectedCustomerName = @json($selectedCustomer?->name ?? '');
                             </script>
                             @error('customer_id')
                                 <div class="text-danger">{{ $message }}</div>
@@ -213,7 +238,7 @@
                             <select class="form-select" id="truck_id" name="truck_id" required
                                 data-placeholder="Search and select truck...">
                                 <option value="">Select Trucks</option>
-                                @php($selectedTruck = $trucks->firstWhere('id', $lorry_receipt->truck_id))
+                                @php($selectedTruck = $trucks->firstWhere('id', old('truck_id', $lorry_receipt->truck_id)))
                                 @if($selectedTruck)
                                     <option value="{{ $selectedTruck->id }}"
                                         data-transporter-id="{{ $selectedTruck->transporter_id }}"
@@ -236,26 +261,29 @@
                             <label for="transporter_type" class="form-label">Select Type *</label>
                             <select class="form-select" id="transporter_type" name="transporter_type" required>
                                 <option value="">Select Type</option>
-                                <option value="owner" {{ $lorry_receipt->transporter_type == 'owner' ? 'selected' : '' }}>
+                                <option value="owner" {{ old('transporter_type', $lorry_receipt->transporter_type) === 'owner' ? 'selected' : '' }}>
                                     Truck Owner</option>
                                 <option value="agency"
-                                    {{ $lorry_receipt->transporter_type == 'agency' ? 'selected' : '' }}>Agency</option>
+                                    {{ old('transporter_type', $lorry_receipt->transporter_type) === 'agency' ? 'selected' : '' }}>Agency</option>
                             </select>
                             <div class="invalid-feedback">Please select transporter type.</div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-4 min-w-0">
                             <label for="transporter_id" id="transporterLabel" class="form-label">Transporter *</label>
-                            <select class="form-select" id="transporter_id" name="transporter_id" required onchange="window.LREntity.showTdsPercentage(this.value)" {{ (!isset($canChangeTransporter) || !$canChangeTransporter) ? 'disabled' : '' }}>
-                                <option value="">Select Transporter</option>
-                                @php($selectedTransporter = $transporters->firstWhere('id', $lorry_receipt->transporter_id))
-                                @if($selectedTransporter)
-                                    <option value="{{ $selectedTransporter->id }}" selected>
-                                        {{ $selectedTransporter->name }}
-                                    </option>
-                                @endif
-                            </select>
+                            <div class="lr-payee-select-wrap">
+                                <select class="form-select" id="transporter_id" name="transporter_id" required onchange="window.LREntity.showTdsPercentage(this.value)" {{ (!isset($canChangeTransporter) || !$canChangeTransporter) ? 'disabled' : '' }}>
+                                    <option value="">Select Transporter</option>
+                                    @php($selectedTransporter = $transporters->firstWhere('id', old('transporter_id', $lorry_receipt->transporter_id)))
+                                    @if($selectedTransporter)
+                                        <option value="{{ $selectedTransporter->id }}" selected>
+                                            {{ $selectedTransporter->name }}
+                                        </option>
+                                    @endif
+                                </select>
+                            </div>
+
                             @if (!isset($canChangeTransporter) || !$canChangeTransporter)
-                                <input type="hidden" name="transporter_id" value="{{ $lorry_receipt->transporter_id }}">
+                                <input type="hidden" name="transporter_id" value="{{ old('transporter_id', $lorry_receipt->transporter_id) }}">
                                 <small class="text-danger d-block mt-1">⚠️ Transporter cannot be changed because TDS has already been submitted.</small>
                             @endif
                             @error('transporter_id')
@@ -270,17 +298,19 @@
                         </div>
                     </div>
                     <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label for="reference_by" class="form-label">Reference By</label>
-                            <select class="form-select" id="reference_by" name="reference_by">
-                                <option value="">Select Reference</option>
-                                @php($selectedAgency = $agencies->firstWhere('id', $lorry_receipt->reference_by))
-                                @if($selectedAgency)
-                                    <option value="{{ $selectedAgency->id }}" selected>
-                                        {{ $selectedAgency->name }}
-                                    </option>
-                                @endif
-                            </select>
+                        <div class="col-md-4 min-w-0">
+                            <label for="reference_by" class="form-label">Reference By (Agency)</label>
+                            <div class="lr-payee-select-wrap">
+                                <select class="form-select" id="reference_by" name="reference_by">
+                                    <option value="">Select Reference</option>
+                                    @php($selectedAgency = $agencies->firstWhere('id', old('reference_by', $lorry_receipt->reference_by)))
+                                    @if($selectedAgency)
+                                        <option value="{{ $selectedAgency->id }}" selected>
+                                            {{ $selectedAgency->name }}
+                                        </option>
+                                    @endif
+                                </select>
+                            </div>
                             @error('reference_by')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
@@ -327,7 +357,7 @@
                             <select class="form-select" id="consignor_id" name="consignor_id" required
                                 data-placeholder="Search and select consignor...">
                                 <option value="">Select Consignor</option>
-                                @php($selectedConsignor = $consignors->firstWhere('id', $lorry_receipt->consignor_id))
+                                @php($selectedConsignor = $consignors->firstWhere('id', old('consignor_id', $lorry_receipt->consignor_id)))
                                 @if($selectedConsignor)
                                     <option value="{{ $selectedConsignor->id }}" selected>
                                         {{ $selectedConsignor->name }}
@@ -343,7 +373,7 @@
                             <label for="consignor_contact_number" class="form-label">Consignor Contact Number</label>
                             <input type="text" class="form-control" id="consignor_contact_number"
                                 name="consignor_contact_number"
-                                value="{{ $lorry_receipt->consignor->contact_number ?? '' }}" readonly>
+                                value="{{ old('consignor_contact_number', $selectedConsignor->contact_number ?? $lorry_receipt->consignor->contact_number ?? '') }}" readonly>
                         </div>
 
                     </div>
@@ -353,7 +383,7 @@
                             <select class="form-select" id="consignee_id" name="consignee_id" required
                                 data-placeholder="Search and select consignee...">
                                 <option value="">Select Consignee</option>
-                                @php($selectedConsignee = $consignees->firstWhere('id', $lorry_receipt->consignee_id))
+                                @php($selectedConsignee = $consignees->firstWhere('id', old('consignee_id', $lorry_receipt->consignee_id)))
                                 @if($selectedConsignee)
                                     <option value="{{ $selectedConsignee->id }}" selected>
                                         {{ $selectedConsignee->name }}
@@ -369,7 +399,7 @@
                             <label for="consignee_contact_number" class="form-label">Consignee Contact Number</label>
                             <input type="text" class="form-control" id="consignee_contact_number"
                                 name="consignee_contact_number"
-                                value="{{ $lorry_receipt->consignee->contact_number ?? '' }}" readonly>
+                                value="{{ old('consignee_contact_number', $selectedConsignee->contact_number ?? $lorry_receipt->consignee->contact_number ?? '') }}" readonly>
                         </div>
                     </div>
                 </div>
@@ -455,11 +485,11 @@
                             <label for="goods_value" class="form-label">Goods Value <small
                                     class="text-muted">(Optional)</small></label>
                             <input type="number" step="0.01" class="form-control" id="goods_value" name="goods_value"
-                                value="{{ old('goods_value', $lorry_receipt->goods_value) }}" min="0" placeholder="₹">
+                                value="{{ old('goods_value', $lorry_receipt->goods_value) }}" min="0" placeholder="">
                             @error('goods_value')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
-                            <small class="text-muted">Value of goods (₹)</small>
+                            <small class="text-muted">Value of goods ()</small>
                         </div>
                         <div class="col-md-3">
                             <label for="unloading_weight" class="form-label">Unloading Weight * <small class="text-muted">(in
@@ -489,16 +519,16 @@
                             <small class="text-muted">📏 Range: 0.1 - 100 tons</small>
                         </div>
                         <div class="col-md-4">
-                            <label for="fr_rate" class="form-label">Freight Rate * <small class="text-muted">(₹ per
+                            <label for="fr_rate" class="form-label">Freight Rate * <small class="text-muted">( per
                                     ton)</small></label>
                             <input type="number" step="0.01" class="form-control" id="fr_rate" name="fr_rate"
                                 required value="{{ old('fr_rate', $lorry_receipt->fr_rate) }}" min="1"
-                                max="20000" title="Freight rate must be between ₹1 and ₹20,000 per ton">
+                                max="20000" title="Freight rate must be between 1 and 20,000 per ton">
                             @error('fr_rate')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
-                            <div class="invalid-feedback">Please enter a freight rate between ₹1 and ₹20,000.</div>
-                            <small class="text-muted">💰 Range: ₹1 - ₹20,000 per ton</small>
+                            <div class="invalid-feedback">Please enter a freight rate between 1 and 20,000.</div>
+                            <small class="text-muted">💰 Range: 1 - 20,000 per ton</small>
                         </div>
                         <div class="col-md-2">
                             <label class="form-label d-flex justify-content-between align-items-center">
@@ -552,11 +582,8 @@
                         <div class="col-md-4">
                             <button class="btn btn-brand-primary w-100" type="submit">💾 Update Good Receipt (Bilty)</button>
                         </div>
-                        {{-- <div class="col-md-4">
-                        <a href="{{ route('lorry_receipts.show', $lorry_receipt->id) }}" class="btn btn-brand-primary w-100">👁️ View Details</a>
-                    </div> --}}
                         <div class="col-md-4">
-                            <a href="{{ route('lorry_receipts.index') }}" class="btn btn-back w-100">📄 Back to List</a>
+                            <a href="{{ route('lorry_receipts.index') }}{{ \App\Support\ListingQueryString::currentSuffix(\App\Support\ListingQueryString::LORRY_RECEIPT_KEYS) }}" class="btn btn-back w-100">📄 Back to List</a>
                         </div>
                     </div>
                 </div>
@@ -586,8 +613,6 @@
         })();
     </script>
 
-    <!-- Load Select2 from CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <!-- Load SweetAlert2 from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
@@ -596,7 +621,6 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 Lorry Receipt Edit Form initialized');
 
             // Auto-calculate actual_amount and amount based on weight × freight rate (when not fixed)
             const weightInput = document.getElementById('weight');
@@ -634,24 +658,24 @@
                 const actualAmount = parseFloat(actualAmountInput.value) || 0;
                 const calculatedAmount = actualAmount - shortageAmount - damageAmount;
                 amountInput.value = Math.max(0, calculatedAmount).toFixed(2);
-
-                console.log(
-                    `💰 Actual Amount: ${actualAmount.toFixed(2)}, Amount: ${calculatedAmount.toFixed(2)} (${actualAmount.toFixed(2)} - ${shortageAmount} - ${damageAmount})`
-                );
             }
 
             // Auto-calculate on weight, unloading_weight, freight rate, or fixed toggle change
-            weightInput.addEventListener('input', function() {
-                calculateAmount();
-            });
+            if (weightInput) {
+                weightInput.addEventListener('input', function() {
+                    calculateAmount();
+                });
+            }
             if (unloadingWeightInput) {
                 unloadingWeightInput.addEventListener('input', function() {
                     calculateAmount();
                 });
             }
-            frRateInput.addEventListener('input', function() {
-                calculateAmount();
-            });
+            if (frRateInput) {
+                frRateInput.addEventListener('input', function() {
+                    calculateAmount();
+                });
+            }
             if (isFixedAmountInput) {
                 isFixedAmountInput.addEventListener('change', function() {
                     calculateAmount();
@@ -660,112 +684,24 @@
 
             // Update amount when actual_amount, shortage, or damage changes
             // User can manually edit actual_amount, but if weight/rate changes, it will be recalculated
-            actualAmountInput.addEventListener('input', function() {
-                const actualAmount = parseFloat(actualAmountInput.value) || 0;
-                const shortageAmount = parseFloat(shortageAmountInput.value) || 0;
-                const damageAmount = parseFloat(damageAmountInput.value) || 0;
-                const calculatedAmount = actualAmount - shortageAmount - damageAmount;
-                amountInput.value = Math.max(0, calculatedAmount).toFixed(2);
-            });
-            shortageAmountInput.addEventListener('input', calculateAmount);
-            damageAmountInput.addEventListener('input', calculateAmount);
+            if (actualAmountInput && amountInput) {
+                actualAmountInput.addEventListener('input', function() {
+                    const actualAmount = parseFloat(actualAmountInput.value) || 0;
+                    const shortageAmount = parseFloat(shortageAmountInput.value) || 0;
+                    const damageAmount = parseFloat(damageAmountInput.value) || 0;
+                    const calculatedAmount = actualAmount - shortageAmount - damageAmount;
+                    amountInput.value = Math.max(0, calculatedAmount).toFixed(2);
+                });
+            }
+            if (shortageAmountInput) {
+                shortageAmountInput.addEventListener('input', calculateAmount);
+            }
+            if (damageAmountInput) {
+                damageAmountInput.addEventListener('input', calculateAmount);
+            }
 
             // Initialize calculation on page load
             calculateAmount();
-
-            // Initialize Select2 with AJAX (optimized dropdown loading)
-            const ajaxConsigneesConfig = {
-                url: '/api/consignees/search',
-                dataType: 'json',
-                delay: 250,
-                data: function (params) {
-                    return { q: params.term || '', page: params.page || 1 };
-                },
-                processResults: function (data) {
-                    return {
-                        results: data.results || [],
-                        pagination: { more: data.pagination?.more || false }
-                    };
-                },
-                cache: true
-            };
-
-            const ajaxTrucksConfig = {
-                url: '/api/trucks/search',
-                dataType: 'json',
-                delay: 250,
-                data: function (params) {
-                    return { q: params.term || '', page: params.page || 1 };
-                },
-                processResults: function (data) {
-                    return {
-                        results: data.results || [],
-                        pagination: { more: data.pagination?.more || false }
-                    };
-                },
-                cache: true
-            };
-
-            const ajaxAgenciesConfig = {
-                url: '/api/agencies/search',
-                dataType: 'json',
-                delay: 250,
-                data: function (params) {
-                    return { q: params.term || '', page: params.page || 1 };
-                },
-                processResults: function (data) {
-                    return {
-                        results: data.results || [],
-                        pagination: { more: data.pagination?.more || false }
-                    };
-                },
-                cache: true
-            };
-
-            $('#customer_id').select2({
-                theme: 'bootstrap-5',
-                width: '100%',
-                minimumInputLength: 1,
-                allowClear: true,
-                placeholder: 'Search and select customer...',
-                ajax: ajaxConsigneesConfig
-            });
-
-            $('#consignor_id').select2({
-                theme: 'bootstrap-5',
-                width: '100%',
-                minimumInputLength: 1,
-                allowClear: true,
-                placeholder: 'Search and select consignor...',
-                ajax: ajaxConsigneesConfig
-            });
-
-            $('#consignee_id').select2({
-                theme: 'bootstrap-5',
-                width: '100%',
-                minimumInputLength: 1,
-                allowClear: true,
-                placeholder: 'Search and select consignee...',
-                ajax: ajaxConsigneesConfig
-            });
-
-            $('#truck_id').select2({
-                theme: 'bootstrap-5',
-                width: '100%',
-                minimumInputLength: 1,
-                allowClear: true,
-                placeholder: 'Search and select truck...',
-                ajax: ajaxTrucksConfig
-            });
-
-            $('#transporter_id').select2({
-                theme: 'bootstrap-5',
-                width: '100%',
-                minimumInputLength: 1,
-                allowClear: true,
-                placeholder: 'Search and select transporter...',
-                ajax: ajaxAgenciesConfig
-            });
 
             // Bootstrap form validation
             const forms = document.querySelectorAll('.needs-validation');
@@ -835,125 +771,46 @@
                     .catch(error => console.error('Error:', error));
             }
 
-            consignorSelect.addEventListener('change', updateConsignorDetails);
-            consigneeSelect.addEventListener('change', updateConsigneeDetails);
+            if (consignorSelect) {
+                consignorSelect.addEventListener('change', updateConsignorDetails);
+            }
+            if (consigneeSelect) {
+                consigneeSelect.addEventListener('change', updateConsigneeDetails);
+            }
         });
     </script>
 
     <script>
         // Handle truck selection and transporter details
-        document.getElementById('truck_id').addEventListener('change', function() {
-            let truckId = this.value;
+        const truckSelectEl = document.getElementById('truck_id');
+        if (truckSelectEl) {
+            truckSelectEl.addEventListener('change', function() {
+                let truckId = this.value;
 
-            if (truckId) {
-                fetch(`/get-transporter-name/${truckId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.transporter_name) {
-                            document.getElementById('transporter_name').value = data.transporter_name;
-                            if (data.transporter.is_owner == 1) {
-                                document.getElementById('ownerTransporterSelect').style.display = 'block';
+                if (truckId) {
+                    fetch(`/get-transporter-name/${truckId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.transporter_name) {
+                                document.getElementById('transporter_name').value = data.transporter_name;
+                                if (data.transporter.is_owner == 1) {
+                                    document.getElementById('ownerTransporterSelect').style.display = 'block';
+                                }
+                            } else {
+                                document.getElementById('ownerTransporterSelect').style.display = 'none';
                             }
-                        } else {
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
                             document.getElementById('ownerTransporterSelect').style.display = 'none';
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        document.getElementById('ownerTransporterSelect').style.display = 'none';
-                    });
-            } else {
-                document.getElementById('ownerTransporterSelect').style.display = 'none';
-            }
-        });
-    </script>
-
-    <script>
-        // Handle consignor and consignee contact number and location details
-        document.addEventListener('DOMContentLoaded', function() {
-            const consignorSelect = document.getElementById('consignor_id');
-            const consignorContact = document.getElementById('consignor_contact_number');
-            const consignorLocation = document.getElementById('consignor_location');
-            const consigneeSelect = document.getElementById('consignee_id');
-            const consigneeContact = document.getElementById('consignee_contact_number');
-            const consigneeLocation = document.getElementById('consignee_location');
-
-            function updateConsignorDetails() {
-                const selectedConsignor = consignorSelect.value;
-                if (!selectedConsignor) {
-                    consignorContact.value = '';
-                    consignorLocation.value = '';
-                    return;
+                        });
+                } else {
+                    document.getElementById('ownerTransporterSelect').style.display = 'none';
                 }
-
-                fetch(`/api/consignors/${selectedConsignor}`, {
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                            'Content-Type': 'application/json'
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(consignor => {
-                        consignorContact.value = consignor.contact_number;
-                        consignorLocation.value = `${consignor.city}, ${consignor.state}`;
-                    })
-                    .catch(error => console.error('Error:', error));
-            }
-
-            function updateConsigneeDetails() {
-                const selectedConsignee = consigneeSelect.value;
-                if (!selectedConsignee) {
-                    consigneeContact.value = '';
-                    consigneeLocation.value = '';
-                    return;
-                }
-
-                fetch(`/api/consignees/${selectedConsignee}`, {
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                            'Content-Type': 'application/json'
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(consignee => {
-                        consigneeContact.value = consignee.contact_number;
-                        consigneeLocation.value = `${consignee.city}, ${consignee.state}`;
-                    })
-                    .catch(error => console.error('Error:', error));
-            }
-
-            consignorSelect.addEventListener('change', updateConsignorDetails);
-            consigneeSelect.addEventListener('change', updateConsigneeDetails);
-        });
+            });
+        }
     </script>
 
-    <script>
-        // Handle truck selection and transporter details
-        document.getElementById('truck_id').addEventListener('change', function() {
-            let truckId = this.value;
-
-            if (truckId) {
-                fetch(`/get-transporter-name/${truckId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.transporter_name) {
-                            document.getElementById('transporter_name').value = data.transporter_name;
-                            if (data.transporter.is_owner == 1) {
-                                document.getElementById('ownerTransporterSelect').style.display = 'block';
-                            }
-                        } else {
-                            document.getElementById('ownerTransporterSelect').style.display = 'none';
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        document.getElementById('ownerTransporterSelect').style.display = 'none';
-                    });
-            } else {
-                document.getElementById('ownerTransporterSelect').style.display = 'none';
-            }
-        });
-    </script>
 @endsection
 
 <!-- SweetAlert2 JS -->
@@ -963,27 +820,31 @@
 <script>
     // Wait for DOM and jQuery to be ready
     document.addEventListener('DOMContentLoaded', function() {
+        let jqueryLoadStarted = false;
+
         // Wait for jQuery to be available
         function waitForJQuery() {
             if (typeof $ !== 'undefined' && typeof $.fn !== 'undefined') {
-                console.log('✅ jQuery is available');
                 checkSelect2();
             } else {
-                console.log('⏳ Waiting for jQuery...');
+                if (!jqueryLoadStarted) {
+                    jqueryLoadStarted = true;
+                    var jqueryScript = document.createElement('script');
+                    jqueryScript.src = 'https://code.jquery.com/jquery-3.7.1.min.js';
+                    jqueryScript.defer = true;
+                    document.head.appendChild(jqueryScript);
+                }
                 setTimeout(waitForJQuery, 100);
             }
         }
 
         function checkSelect2() {
             if (typeof $.fn.select2 !== 'undefined') {
-                console.log('✅ Select2 is available');
                 initializeLorryReceiptForm();
             } else {
-                console.log('Loading Select2...');
                 var script = document.createElement('script');
                 script.src = 'https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js';
                 script.onload = function() {
-                    console.log('✅ Select2 loaded successfully');
                     initializeLorryReceiptForm();
                 };
                 document.head.appendChild(script);
@@ -995,7 +856,6 @@
 
     function initializeLorryReceiptForm() {
         $(document).ready(function() {
-            console.log('🚀 Lorry Receipt Edit Form initialized');
 
             // Initialize other dropdowns with Select2 (AJAX driven)
             const ajaxConsigneesConfig = {
@@ -1046,6 +906,127 @@
                 cache: true
             };
 
+            const select2AjaxTransport = function (params, success, failure) {
+                const $element = $(params.element);
+                const previousRequest = $element.data('select2ActiveRequest');
+                if (previousRequest && typeof previousRequest.abort === 'function') {
+                    previousRequest.abort();
+                }
+                const request = $.ajax(params);
+                $element.data('select2ActiveRequest', request);
+                request.then(success);
+                request.fail(failure);
+                request.always(function () {
+                    $element.removeData('select2ActiveRequest');
+                });
+                return request;
+            };
+
+            const ajaxTruckOwnersConfig = {
+                url: '/api/truck-owners/search',
+                dataType: 'json',
+                delay: 700,
+                data: function (params) {
+                    return {
+                        q: params.term || '',
+                        limit: 20
+                    };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.results || [],
+                        pagination: { more: false }
+                    };
+                },
+                transport: select2AjaxTransport,
+                cache: true
+            };
+
+            const lrAddTransporterBtn = document.getElementById('lr-add-transporter-btn');
+            const lrAddTransporterWrap = document.getElementById('lr-add-transporter-wrap');
+
+            function syncLrTransporterAddButton(paymentType) {
+                if (lrAddTransporterWrap) {
+                    if (paymentType === 'owner') {
+                        lrAddTransporterWrap.classList.remove('d-none');
+                    } else {
+                        lrAddTransporterWrap.classList.add('d-none');
+                    }
+                }
+                if (lrAddTransporterBtn) {
+                    lrAddTransporterBtn.href = lrAddTransporterBtn.getAttribute('data-href-owner') || lrAddTransporterBtn.href;
+                }
+            }
+
+            function bindTransporterSelect2Title($t) {
+                function setTitleFromSelection() {
+                    const inst = $t.select2('data');
+                    const fromInst = inst && inst[0] && inst[0].text ? String(inst[0].text) : '';
+                    const fromOpt = ($t.find('option:selected').text() || '').trim();
+                    const text = (fromInst || fromOpt).trim();
+                    $t.next('.select2-container').find('.select2-selection__rendered').attr('title', text);
+                }
+                $t.off('select2:select.lrPayeeTitle select2:clear.lrPayeeTitle change.lrPayeeTitle')
+                    .on('select2:select.lrPayeeTitle', function (e) {
+                        const t = e.params && e.params.data && e.params.data.text ? String(e.params.data.text) : '';
+                        $(this).next('.select2-container').find('.select2-selection__rendered').attr('title', t);
+                    })
+                    .on('select2:clear.lrPayeeTitle', function () {
+                        $(this).next('.select2-container').find('.select2-selection__rendered').attr('title', '');
+                    })
+                    .on('change.lrPayeeTitle', function () {
+                        setTimeout(setTitleFromSelection, 0);
+                    });
+            }
+
+            const allowPayeeAjax = @json(!isset($canChangeTransporter) || $canChangeTransporter);
+
+            function rebindLrEditTransporterSelect2(paymentType) {
+                const $t = $('#transporter_id');
+                if (!$t.length || typeof $t.select2 !== 'function') {
+                    return;
+                }
+                if (!allowPayeeAjax || $t.prop('disabled')) {
+                    return;
+                }
+                if ($t.hasClass('select2-hidden-accessible')) {
+                    $t.select2('destroy');
+                }
+                const mode = paymentType === 'owner' ? 'owner' : 'agency';
+                syncLrTransporterAddButton(mode);
+                if (mode === 'owner') {
+                    $t.select2({
+                        theme: 'bootstrap-5',
+                        width: '100%',
+                        allowClear: true,
+                        minimumInputLength: 1,
+                        placeholder: 'Search truck owner (type first letter)...',
+                        language: {
+                            inputTooShort: function () {
+                                return 'Please type at least 1 character to search';
+                            },
+                            searching: function () {
+                                return 'Searching...';
+                            }
+                        },
+                        ajax: ajaxTruckOwnersConfig
+                    });
+                } else {
+                    $t.select2({
+                        theme: 'bootstrap-5',
+                        width: '100%',
+                        allowClear: true,
+                        minimumInputLength: 0,
+                        placeholder: 'Search agency...',
+                        ajax: ajaxAgenciesConfig
+                    });
+                }
+                bindTransporterSelect2Title($t);
+                $t.trigger('change.select2');
+            }
+
+            window.lrEditRebindTransporterSelect2 = rebindLrEditTransporterSelect2;
+
             $('#truck_id').select2({
                 theme: 'bootstrap-5',
                 width: '100%',
@@ -1054,13 +1035,31 @@
                 ajax: ajaxTrucksConfig
             });
 
-            $('#transporter_id').select2({
-                theme: 'bootstrap-5',
-                width: '100%',
-                minimumInputLength: 1,
-                placeholder: 'Search and select transporter...',
-                ajax: ajaxAgenciesConfig
-            });
+            const trucks = @json($trucks->keyBy('id'));
+            const dbTransporterType = @json(old('transporter_type', $lorry_receipt->transporter_type) ?? '');
+
+            if (dbTransporterType) {
+                $('#transporter_type').val(dbTransporterType);
+            } else {
+                const currentTruckIdForType = $('#truck_id').val();
+                if (currentTruckIdForType && trucks[currentTruckIdForType]) {
+                    const transporterTypeFromTruck = trucks[currentTruckIdForType].transporter_type;
+                    if (transporterTypeFromTruck) {
+                        $('#transporter_type').val(transporterTypeFromTruck);
+                    }
+                }
+            }
+
+            const transporterLabelElInit = document.getElementById('transporterLabel');
+            const typeValForLabel = $('#transporter_type').val();
+            if (transporterLabelElInit && typeValForLabel) {
+                transporterLabelElInit.textContent = typeValForLabel === 'owner' ? 'Truck Owner *' : 'Agency *';
+            }
+
+            if (allowPayeeAjax) {
+                const initialPayeeMode = document.getElementById('transporter_type')?.value === 'owner' ? 'owner' : 'agency';
+                rebindLrEditTransporterSelect2(initialPayeeMode);
+            }
 
             $('#consignor_id').select2({
                 theme: 'bootstrap-5',
@@ -1087,15 +1086,20 @@
             $('#reference_by').select2({
                 theme: 'bootstrap-5',
                 width: '100%',
-                minimumInputLength: 1,
-                placeholder: 'Search and select reference...',
+                allowClear: true,
+                minimumInputLength: 0,
+                placeholder: 'Search reference agency...',
                 ajax: ajaxAgenciesConfig
             });
+            bindTransporterSelect2Title($('#reference_by'));
 
-            // Access the customer data from the window object
-            console.log('Selected customer data:', {
-                id: window.selectedCustomerId,
-                name: window.selectedCustomerName
+            $(document).off('select2:open.autofocusLrEdit').on('select2:open.autofocusLrEdit', function () {
+                setTimeout(function () {
+                    const searchInput = document.querySelector('.select2-container--open .select2-search__field');
+                    if (searchInput) {
+                        searchInput.focus();
+                    }
+                }, 0);
             });
 
             // Initialize customer dropdown with Select2
@@ -1107,7 +1111,6 @@
                 ajax: ajaxConsigneesConfig
             }).on('select2:open', function() {
                 // Log when dropdown is opened
-                console.log('Customer dropdown opened');
             });
 
             // Create a function to ensure the customer is selected
@@ -1122,7 +1125,6 @@
                         const newOption = new Option(window.selectedCustomerName, window.selectedCustomerId,
                             true, true);
                         $('#customer_id').append(newOption);
-                        console.log('Created missing option for customer:', window.selectedCustomerName);
                     }
 
                     // Set the value and trigger change
@@ -1130,12 +1132,9 @@
 
                     // Verify the selection
                     const currentVal = $('#customer_id').val();
-                    console.log('Customer dropdown value after setting:', currentVal);
 
                     if (currentVal == window.selectedCustomerId) {
-                        console.log('✅ Customer dropdown set successfully');
                     } else {
-                        console.log('⚠️ Failed to set customer dropdown value');
                     }
                 }
             }
@@ -1146,38 +1145,18 @@
             // And also after a short delay to ensure Select2 is fully initialized
             setTimeout(ensureCustomerSelected, 300);
 
-            console.log('✅ All dropdowns initialized successfully');
-            console.log('Truck ID:', $('#truck_id').val());
-            console.log('Transporter ID:', $('#transporter_id').val());
-            console.log('Transporter Type:', $('#transporter_type').val());
-            console.log('Lorry Receipt Data:', {
-                customer_id: {{ $lorry_receipt->customer_id ?? 'null' }},
-                truck_id: {{ $lorry_receipt->truck_id ?? 'null' }},
-                transporter_id: {{ $lorry_receipt->transporter_id ?? 'null' }},
-                source: '{{ $lorry_receipt->source ?? '' }}',
-                destination: '{{ $lorry_receipt->destination ?? '' }}'
-            });
-
             // Ensure customer dropdown is properly initialized with the correct value
             const customerSelect = $('#customer_id');
             if (customerSelect.length) {
-                const customerId = {{ $lorry_receipt->customer_id ?? 'null' }};
+                const customerId = @json(old('customer_id', $lorry_receipt->customer_id));
                 if (customerId) {
                     customerSelect.val(customerId).trigger('change');
-                    console.log('✅ Customer dropdown initialized with ID:', customerId);
                 }
             }
-            console.log('Route field values:', {
-                source_city: $('#source_city').val(),
-                source_state: $('#source_state').val(),
-                destination_city: $('#destination_city').val(),
-                destination_state: $('#destination_state').val()
-            });
 
             // Store consignor and consignee data for contact number population
             const consignors = @json($consignors->keyBy('id'));
             const consignees = @json($consignees->keyBy('id'));
-            const trucks = @json($trucks->keyBy('id'));
             const transporters = @json($transporters->keyBy('id'));
 
             // Populate contact numbers and details on page load
@@ -1186,26 +1165,14 @@
             updateTruckDetails();
             updateTransporterDetails();
 
-            // Set transporter type based on current truck selection
-            const dbTransporterType = "{{ $lorry_receipt->transporter_type ?? '' }}";
-
-            if (dbTransporterType) {
-                $('#transporter_type').val(dbTransporterType);
-                console.log('Restored DB transporter_type:', dbTransporterType);
-            } else {
-                const currentTruckId = $('#truck_id').val();
-                if (currentTruckId && trucks[currentTruckId]) {
-                    const transporterType = trucks[currentTruckId].transporter_type;
-                    $('#transporter_type').val(transporterType);
-                    console.log('Set transporter type to:', transporterType);
-                }
-            }
-
             // Trigger Select2 to refresh and show selected values
             setTimeout(function() {
-                $('#customer_id, #truck_id, #transporter_id, #consignor_id, #consignee_id, #good_type')
+                $('#customer_id, #truck_id, #transporter_id, #reference_by, #consignor_id, #consignee_id, #good_type')
                     .trigger('change.select2');
-                console.log('🔄 Select2 dropdowns refreshed');
+                const payeeId = $('#transporter_id').val();
+                if (payeeId && typeof window.LREntity.showTdsPercentage === 'function') {
+                    window.LREntity.showTdsPercentage(payeeId);
+                }
             }, 500);
 
             // Handle consignor selection change
@@ -1221,7 +1188,6 @@
             // Handle truck selection change
             $('#truck_id').on('change', function() {
                 updateTruckDetails();
-                populateTransporterDropdown();
             });
 
             // Handle transporter selection change
@@ -1256,7 +1222,6 @@
                 // Check if fields are already filled (from DB in edit form)
                 if ($('#source_city').val() || $('#destination_city').val()) {
                     // Do nothing, keep DB values
-                    console.log('Keeping DB values for truck details.');
                     return;
                 }
 
@@ -1286,32 +1251,6 @@
                     }
                 } else {
                     $('#tds-badge').addClass('d-none');
-                }
-            }
-
-            function populateTransporterDropdown() {
-                const truckId = $('#truck_id').val();
-                const currentTransporterId = $('#transporter_id').val();
-
-                if (truckId && trucks[truckId]) {
-                    const truck = trucks[truckId];
-                    const transporterType = truck.transporter_type;
-
-                    // Clear and repopulate transporter dropdown
-                    $('#transporter_id').empty().append('<option value="">Select Transporter</option>');
-
-                    Object.values(transporters).forEach(transporter => {
-                        if (transporter.transporter_type === transporterType) {
-                            const selected = transporter.id == currentTransporterId ? 'selected' : '';
-                            $('#transporter_id').append(
-                                `<option value="${transporter.id}" ${selected}>${transporter.name}</option>`
-                            );
-                        }
-                    });
-
-                    $('#transporter_id').trigger('change');
-                } else {
-                    $('#transporter_id').empty().append('<option value="">Select Transporter</option>');
                 }
             }
 
@@ -1403,88 +1342,8 @@
 </script>
 
 <!-- Load Select2 from CDN -->
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <!-- Load SweetAlert2 from CDN -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-<script>
-    // Function to check if Select2 is loaded
-    function waitForSelect2() {
-        return new Promise((resolve) => {
-            if (typeof $.fn.select2 !== 'undefined') {
-                resolve();
-                return;
-            }
-
-            // Wait for Select2 to load
-            const checkSelect2 = setInterval(() => {
-                if (typeof $.fn.select2 !== 'undefined') {
-                    clearInterval(checkSelect2);
-                    console.log('✅ Select2 loaded successfully');
-                    resolve();
-                }
-            }, 100);
-        });
-    }
-
-    // Initialize Select2 after ensuring it's loaded
-    $(document).ready(function() {
-        waitForSelect2().then(() => {
-            // Wait a bit more to ensure Select2 is fully initialized
-            setTimeout(() => {
-                // Initialize truck dropdown
-                if ($('#truck_id').length > 0) {
-                    $('#truck_id').select2({
-                        placeholder: 'Search and select truck...',
-                        allowClear: true,
-                        width: '100%'
-                    });
-                    console.log('✅ Select2 initialized successfully for truck dropdown');
-                } else {
-                    console.error('❌ Truck element not found');
-                }
-
-                // Initialize customer dropdown
-                if ($('#customer_id').length > 0) {
-                    $('#customer_id').select2({
-                        placeholder: 'Search and select customer...',
-                        allowClear: true,
-                        width: '100%'
-                    });
-                    console.log('✅ Select2 initialized successfully for customer dropdown');
-                } else {
-                    console.error('❌ Customer element not found');
-                }
-
-                // Initialize consignor dropdown
-                if ($('#consignor_id').length > 0) {
-                    $('#consignor_id').select2({
-                        placeholder: 'Search and select consignor...',
-                        allowClear: true,
-                        width: '100%'
-                    });
-                    console.log('✅ Select2 initialized successfully for consignor dropdown');
-                } else {
-                    console.error('❌ Consignor element not found');
-                }
-
-                // Initialize consignee dropdown
-                if ($('#consignee_id').length > 0) {
-                    $('#consignee_id').select2({
-                        placeholder: 'Search and select consignee...',
-                        allowClear: true,
-                        width: '100%'
-                    });
-                    console.log('✅ Select2 initialized successfully for consignee dropdown');
-                } else {
-                    console.error('❌ Consignee element not found');
-                }
-            }, 100);
-        }).catch(() => {
-            console.error('❌ Failed to initialize Select2 - library could not be loaded');
-        });
-    });
-</script>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -1514,6 +1373,11 @@
             trucksData: initialTrucksData,
             mode: 'edit',
             allowTransporterChanges,
+            afterTransporterTypeChange: function (selectedType) {
+                if (typeof window.lrEditRebindTransporterSelect2 === 'function') {
+                    window.lrEditRebindTransporterSelect2(selectedType === 'owner' ? 'owner' : 'agency');
+                }
+            },
         });
 
         const { showValidationError, clearValidationError } = window.LREntity;
@@ -1526,7 +1390,6 @@
 
         // Handle consignor selection with Select2 support
         function handleConsignorSelection(consignorId) {
-            console.log('👤 Consignor selected:', consignorId);
 
             // Check if consignor and consignee are the same
             const consigneeId = consigneeSelect.value;
@@ -1545,18 +1408,14 @@
             }
 
             if (consignorId) {
-                console.log('🔄 Fetching consignor data from API...');
                 fetch(`/api/consignees/${consignorId}`)
                     .then(response => {
-                        console.log('📡 Consignor API response status:', response.status);
                         if (!response.ok) {
                             throw new Error(`HTTP error! status: ${response.status}`);
                         }
                         return response.json();
                     })
                     .then(data => {
-                        console.log('📊 Consignor data received:', data);
-                        console.log('📊 Consignor data keys:', Object.keys(data));
 
                         // Auto-populate consignor fields
                         consignorContactInput.value = data.contact_number || '';
@@ -1564,16 +1423,11 @@
                         sourceCityInput.value = data.city || '';
                         sourceStateInput.value = data.state || '';
 
-                        console.log('✅ Auto-populated consignor fields:');
-                        console.log('  📞 Contact:', data.contact_number || 'N/A');
-                        console.log('  🏙️ City:', data.city || 'N/A');
-                        console.log('  🗺️ State:', data.state || 'N/A');
                     })
                     .catch(error => {
                         console.error('❌ Error fetching consignor data:', error);
                     });
             } else {
-                console.log('🧹 Clearing consignor fields...');
                 consignorContactInput.value = '';
                 sourceCityInput.value = '';
                 sourceStateInput.value = '';
@@ -1587,10 +1441,12 @@
         });
 
         // Handle regular consignor selection (fallback)
-        consignorSelect.addEventListener('change', function() {
-            const consignorId = this.value;
-            handleConsignorSelection(consignorId);
-        });
+        if (consignorSelect) {
+            consignorSelect.addEventListener('change', function() {
+                const consignorId = this.value;
+                handleConsignorSelection(consignorId);
+            });
+        }
 
         // Handle consignee contact number and location details
         const consigneeSelect = document.getElementById('consignee_id');
@@ -1600,7 +1456,6 @@
 
         // Handle consignee selection with Select2 support
         function handleConsigneeSelection(consigneeId) {
-            console.log('🏢 Consignee selected:', consigneeId);
 
             // Check if consignor and consignee are the same
             const consignorId = consignorSelect.value;
@@ -1619,18 +1474,14 @@
             }
 
             if (consigneeId) {
-                console.log('🔄 Fetching consignee data from API...');
                 fetch(`/api/consignees/${consigneeId}`)
                     .then(response => {
-                        console.log('📡 Consignee API response status:', response.status);
                         if (!response.ok) {
                             throw new Error(`HTTP error! status: ${response.status}`);
                         }
                         return response.json();
                     })
                     .then(data => {
-                        console.log('📊 Consignee data received:', data);
-                        console.log('📊 Consignee data keys:', Object.keys(data));
 
                         // Auto-populate consignee fields
                         consigneeContactInput.value = data.contact_number || '';
@@ -1638,16 +1489,11 @@
                         destinationCityInput.value = data.city || '';
                         destinationStateInput.value = data.state || '';
 
-                        console.log('✅ Auto-populated consignee fields:');
-                        console.log('  📞 Contact:', data.contact_number || 'N/A');
-                        console.log('  🏙️ Destination City:', data.city || 'N/A');
-                        console.log('  🗺️ Destination State:', data.state || 'N/A');
                     })
                     .catch(error => {
                         console.error('❌ Error fetching consignee data:', error);
                     });
             } else {
-                console.log('🧹 Clearing consignee fields...');
                 consigneeContactInput.value = '';
                 destinationCityInput.value = '';
                 destinationStateInput.value = '';
@@ -1661,27 +1507,34 @@
         });
 
         // Handle regular consignee selection (fallback)
-        consigneeSelect.addEventListener('change', function() {
-            const consigneeId = this.value;
-            handleConsigneeSelection(consigneeId);
-        });
+        if (consigneeSelect) {
+            consigneeSelect.addEventListener('change', function() {
+                const consigneeId = this.value;
+                handleConsigneeSelection(consigneeId);
+            });
+        }
 
         // Handle truck selection for transporter info
-        truckSelect.addEventListener('change', function() {
-            const truckId = this.value;
-            if (truckId) {
-                fetch(`/api/trucks/${truckId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.transporter) {
-                            document.getElementById('tdsRateDisplay').textContent =
-                                `TDS Rate: ${data.transporter.tds_rate || 'N/A'}%`;
-                        }
-                    });
-            } else {
-                document.getElementById('tdsRateDisplay').textContent = '--';
-            }
-        });
+        if (truckSelect) {
+            truckSelect.addEventListener('change', function() {
+                const truckId = this.value;
+                if (truckId) {
+                    fetch(`/api/trucks/${truckId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const tdsRateDisplay = document.getElementById('tdsRateDisplay');
+                            if (data.transporter && tdsRateDisplay) {
+                                tdsRateDisplay.textContent = `TDS Rate: ${data.transporter.tds_rate || 'N/A'}%`;
+                            }
+                        });
+                } else {
+                    const tdsRateDisplay = document.getElementById('tdsRateDisplay');
+                    if (tdsRateDisplay) {
+                        tdsRateDisplay.textContent = '--';
+                    }
+                }
+            });
+        }
 
         // Custom form validation function
         function validateConsignorConsignee() {
@@ -1772,25 +1625,32 @@
             const actualAmount = parseFloat(actualAmountInput.value) || 0;
             const calculatedAmount = actualAmount - (shortageAmount + damageAmount);
             amountInput.value = Math.max(0, calculatedAmount).toFixed(2);
-
-            console.log(
-                `💰 Actual Amount: ${actualAmount.toFixed(2)}, Amount: ${calculatedAmount.toFixed(2)}`);
         }
 
         // Add event listeners for weight and freight rate changes
-        weightInput.addEventListener('input', function() {
-            validateWeight();
-            calculateAmount();
-        });
-        frRateInput.addEventListener('input', calculateAmount);
+        if (weightInput) {
+            weightInput.addEventListener('input', function() {
+                validateWeight();
+                calculateAmount();
+            });
+        }
+        if (frRateInput) {
+            frRateInput.addEventListener('input', calculateAmount);
+        }
 
         // Update amount when actual_amount, unloading_weight, shortage, or damage changes
         if (unloadingWeightInput) {
             unloadingWeightInput.addEventListener('input', calculateAmount);
         }
-        actualAmountInput.addEventListener('input', calculateAmount);
-        shortageAmountInput.addEventListener('input', calculateAmount);
-        damageAmountInput.addEventListener('input', calculateAmount);
+        if (actualAmountInput) {
+            actualAmountInput.addEventListener('input', calculateAmount);
+        }
+        if (shortageAmountInput) {
+            shortageAmountInput.addEventListener('input', calculateAmount);
+        }
+        if (damageAmountInput) {
+            damageAmountInput.addEventListener('input', calculateAmount);
+        }
 
         // Weight validation function
         function validateWeight() {
@@ -1811,19 +1671,18 @@
             } else {
                 weightInput.setCustomValidity('');
                 weightInput.classList.remove('is-invalid');
-                console.log('✅ Valid weight:', weight, 'tons');
             }
         }
 
         // Add blur validation for weight
-        weightInput.addEventListener('blur', validateWeight);
+        if (weightInput) {
+            weightInput.addEventListener('blur', validateWeight);
+        }
 
         // Calculate amount on page load if values exist
         if (weightInput.value && frRateInput.value) {
             calculateAmount();
         }
-
-
 
         // LR Number uniqueness validation
         const lrNumberInput = document.getElementById('lr_number');
@@ -1878,26 +1737,28 @@
         }
 
         // Add debounced input listener for LR Number
-        lrNumberInput.addEventListener('input', function() {
-            const lrNumber = this.value.trim();
+        if (lrNumberInput) {
+            lrNumberInput.addEventListener('input', function() {
+                const lrNumber = this.value.trim();
 
-            // Clear previous timeout
-            clearTimeout(lrNumberTimeout);
-
-            // Set new timeout for debounced checking
-            lrNumberTimeout = setTimeout(() => {
-                checkLrNumberUniqueness(lrNumber);
-            }, 500); // 500ms delay
-        });
-
-        // Check on blur as well
-        lrNumberInput.addEventListener('blur', function() {
-            const lrNumber = this.value.trim();
-            if (lrNumber) {
+                // Clear previous timeout
                 clearTimeout(lrNumberTimeout);
-                checkLrNumberUniqueness(lrNumber);
-            }
-        });
+
+                // Set new timeout for debounced checking
+                lrNumberTimeout = setTimeout(() => {
+                    checkLrNumberUniqueness(lrNumber);
+                }, 500); // 500ms delay
+            });
+
+            // Check on blur as well
+            lrNumberInput.addEventListener('blur', function() {
+                const lrNumber = this.value.trim();
+                if (lrNumber) {
+                    clearTimeout(lrNumberTimeout);
+                    checkLrNumberUniqueness(lrNumber);
+                }
+            });
+        }
 
         // Invoice Number uniqueness validation
         const invoiceNumberInput = document.getElementById('invoice_number');
@@ -1952,28 +1813,33 @@
         }
 
         // Add debounced input listener for Invoice Number
-        invoiceNumberInput.addEventListener('input', function() {
-            const invoiceNumber = this.value.trim();
+        if (invoiceNumberInput) {
+            invoiceNumberInput.addEventListener('input', function() {
+                const invoiceNumber = this.value.trim();
 
-            // Clear previous timeout
-            clearTimeout(invoiceNumberTimeout);
-
-            // Set new timeout for debounced checking
-            invoiceNumberTimeout = setTimeout(() => {
-                checkInvoiceNumberUniqueness(invoiceNumber);
-            }, 500); // 500ms delay
-        });
-
-        // Check on blur as well
-        invoiceNumberInput.addEventListener('blur', function() {
-            const invoiceNumber = this.value.trim();
-            if (invoiceNumber) {
+                // Clear previous timeout
                 clearTimeout(invoiceNumberTimeout);
-                checkInvoiceNumberUniqueness(invoiceNumber);
-            }
-        });
 
-                // Add this function for GR number validation
+                // Set new timeout for debounced checking
+                invoiceNumberTimeout = setTimeout(() => {
+                    checkInvoiceNumberUniqueness(invoiceNumber);
+                }, 500); // 500ms delay
+            });
+
+            // Check on blur as well
+            invoiceNumberInput.addEventListener('blur', function() {
+                const invoiceNumber = this.value.trim();
+                if (invoiceNumber) {
+                    clearTimeout(invoiceNumberTimeout);
+                    checkInvoiceNumberUniqueness(invoiceNumber);
+                }
+            });
+        }
+
+        const grNumberInput = document.getElementById('gr_number');
+        const grNumberFeedback = document.getElementById('gr-number-feedback');
+
+        // Add this function for GR number validation
 function checkGRNumberUniqueness(grNumber) {
     if (!grNumber) {
         grNumberFeedback.innerHTML = '';
@@ -2018,22 +1884,24 @@ function checkGRNumberUniqueness(grNumber) {
 
 // Add debounced input listener for GR Number
 let grNumberTimeout;
-grNumberInput.addEventListener('input', function() {
-    const grNumber = this.value.trim();
-    clearTimeout(grNumberTimeout);
-    grNumberTimeout = setTimeout(() => {
-        checkGRNumberUniqueness(grNumber);
-    }, 500);
-});
-
-// Check on blur as well
-grNumberInput.addEventListener('blur', function() {
-    const grNumber = this.value.trim();
-    if (grNumber) {
+if (grNumberInput) {
+    grNumberInput.addEventListener('input', function() {
+        const grNumber = this.value.trim();
         clearTimeout(grNumberTimeout);
-        checkGRNumberUniqueness(grNumber);
-    }
-});
+        grNumberTimeout = setTimeout(() => {
+            checkGRNumberUniqueness(grNumber);
+        }, 500);
+    });
+
+    // Check on blur as well
+    grNumberInput.addEventListener('blur', function() {
+        const grNumber = this.value.trim();
+        if (grNumber) {
+            clearTimeout(grNumberTimeout);
+            checkGRNumberUniqueness(grNumber);
+        }
+    });
+}
 
         // No. of Units validation
         const noOfUnitsInput = document.getElementById('no_of_units');
@@ -2057,15 +1925,17 @@ grNumberInput.addEventListener('blur', function() {
         }
 
         // Add event listeners for No. of Units validation
-        noOfUnitsInput.addEventListener('input', validateNoOfUnits);
-        noOfUnitsInput.addEventListener('blur', validateNoOfUnits);
+        if (noOfUnitsInput) {
+            noOfUnitsInput.addEventListener('input', validateNoOfUnits);
+            noOfUnitsInput.addEventListener('blur', validateNoOfUnits);
+        }
 
         // Freight Rate validation (using existing frRateInput variable)
         function validateFreightRate() {
             const value = parseFloat(frRateInput.value);
 
             if (frRateInput.value && (isNaN(value) || value < 1 || value > 20000)) {
-                frRateInput.setCustomValidity('Please enter a valid freight rate between ₹1 and ₹20,000.');
+                frRateInput.setCustomValidity('Please enter a valid freight rate between 1 and 20,000.');
                 frRateInput.classList.add('is-invalid');
                 frRateInput.classList.remove('is-valid');
             } else if (frRateInput.value) {
@@ -2079,8 +1949,10 @@ grNumberInput.addEventListener('blur', function() {
         }
 
         // Add event listeners for Freight Rate validation
-        frRateInput.addEventListener('input', validateFreightRate);
-        frRateInput.addEventListener('blur', validateFreightRate);
+        if (frRateInput) {
+            frRateInput.addEventListener('input', validateFreightRate);
+            frRateInput.addEventListener('blur', validateFreightRate);
+        }
 
         // Function to show confirmation dialog with form details
         function showConfirmationDialog(form) {
@@ -2203,14 +2075,14 @@ grNumberInput.addEventListener('blur', function() {
                                                 Qty: ${formData.get('no_of_units') || '-'}
                                             </span>
                                             <span class="badge bg-white border border-secondary border-opacity-25 text-dark fw-medium" style="font-size:0.75rem;">
-                                                Rate: ₹${formData.get('fr_rate') || '-'}
+                                                Rate: ${formData.get('fr_rate') || '-'}
                                             </span>
                                         </div>
                                     </div>
                                     <div class="col-md-5 d-flex justify-content-md-end align-items-center">
                                         <div class="bg-success bg-opacity-10 px-3 py-1 rounded-3 border border-success border-opacity-25 text-end w-100">
                                             <span class="text-success fw-bold text-uppercase d-block mb-0" style="font-size: 0.7rem;">Total Amount</span>
-                                            <h5 class="mb-0 text-success fw-bold">₹${formData.get('amount') || '0.00'}</h5>
+                                            <h5 class="mb-0 text-success fw-bold">${formData.get('amount') || '0.00'}</h5>
                                         </div>
                                     </div>
                                 </div>
@@ -2250,7 +2122,7 @@ grNumberInput.addEventListener('blur', function() {
                     `Consignor: ${consignorName}\n` +
                     `Consignee: ${consigneeName}\n` +
                     `Weight: ${formData.get('weight')} tons\n` +
-                    `Amount: ₹${formData.get('amount')}\n\n` +
+                    `Amount: ${formData.get('amount')}\n\n` +
                     `Do you want to submit this good receipt (bilty)?`;
 
                 if (confirm(confirmText)) {
@@ -2260,7 +2132,9 @@ grNumberInput.addEventListener('blur', function() {
         }
     });
     // Handle Add Goods Type Form Submission
-    document.getElementById('addGoodsTypeForm').addEventListener('submit', function(e) {
+    const addGoodsTypeForm = document.getElementById('addGoodsTypeForm');
+    if (addGoodsTypeForm) {
+    addGoodsTypeForm.addEventListener('submit', function(e) {
         e.preventDefault();
 
         let form = this;
@@ -2317,110 +2191,6 @@ grNumberInput.addEventListener('blur', function() {
                 errorBox.innerHTML = '⚠️ Error: ' + error.message;
             });
     });
-
-    // Final "AJAX enforcement" to override any earlier Select2 initializations
-    // that might not include AJAX search.
-    document.addEventListener('DOMContentLoaded', function () {
-        if (!window.jQuery || typeof window.jQuery.fn.select2 === 'undefined') return;
-
-        const $ = window.jQuery;
-
-        const ajaxConsigneesConfig = {
-            url: '/api/consignees/search',
-            dataType: 'json',
-            delay: 250,
-            data: function (params) {
-                return { q: params.term || '', page: params.page || 1 };
-            },
-            processResults: function (data) {
-                return { results: data.results || [], pagination: { more: data.pagination?.more || false } };
-            },
-            cache: true
-        };
-
-        const ajaxTrucksConfig = {
-            url: '/api/trucks/search',
-            dataType: 'json',
-            delay: 250,
-            data: function (params) {
-                return { q: params.term || '', page: params.page || 1 };
-            },
-            processResults: function (data) {
-                return { results: data.results || [], pagination: { more: data.pagination?.more || false } };
-            },
-            cache: true
-        };
-
-        const ajaxAgenciesConfig = {
-            url: '/api/agencies/search',
-            dataType: 'json',
-            delay: 250,
-            data: function (params) {
-                return { q: params.term || '', page: params.page || 1 };
-            },
-            processResults: function (data) {
-                return { results: data.results || [], pagination: { more: data.pagination?.more || false } };
-            },
-            cache: true
-        };
-
-        const initOrReinit = (selector, config) => {
-            const $el = $(selector);
-            if (!$el.length) return;
-            if ($el.hasClass('select2-hidden-accessible')) {
-                $el.select2('destroy');
-            }
-            $el.select2(config);
-        };
-
-        initOrReinit('#customer_id', {
-            theme: 'bootstrap-5',
-            width: '100%',
-            minimumInputLength: 1,
-            allowClear: true,
-            placeholder: 'Search and select customer...',
-            ajax: ajaxConsigneesConfig
-        });
-        initOrReinit('#consignor_id', {
-            theme: 'bootstrap-5',
-            width: '100%',
-            minimumInputLength: 1,
-            allowClear: true,
-            placeholder: 'Search and select consignor...',
-            ajax: ajaxConsigneesConfig
-        });
-        initOrReinit('#consignee_id', {
-            theme: 'bootstrap-5',
-            width: '100%',
-            minimumInputLength: 1,
-            allowClear: true,
-            placeholder: 'Search and select consignee...',
-            ajax: ajaxConsigneesConfig
-        });
-        initOrReinit('#truck_id', {
-            theme: 'bootstrap-5',
-            width: '100%',
-            minimumInputLength: 1,
-            allowClear: true,
-            placeholder: 'Search and select truck...',
-            ajax: ajaxTrucksConfig
-        });
-        initOrReinit('#transporter_id', {
-            theme: 'bootstrap-5',
-            width: '100%',
-            minimumInputLength: 1,
-            allowClear: true,
-            placeholder: 'Search and select transporter...',
-            ajax: ajaxAgenciesConfig
-        });
-        initOrReinit('#reference_by', {
-            theme: 'bootstrap-5',
-            width: '100%',
-            minimumInputLength: 1,
-            allowClear: true,
-            placeholder: 'Search and select reference...',
-            ajax: ajaxAgenciesConfig
-        });
-    });
+    }
 
 </script>

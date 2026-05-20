@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\Company;
 use App\Models\Lead;
 use App\Models\OnboardingToken;
 use App\Models\User;
@@ -9,6 +10,8 @@ use App\Models\UserRole;
 use App\Notifications\OnboardingOtpNotification;
 use App\Services\OnboardingTokenService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
@@ -20,6 +23,7 @@ class OnboardingFlowTest extends TestCase
     {
         UserRole::firstOrCreate(['id' => 1], ['name' => 'master_admin']);
         UserRole::firstOrCreate(['id' => 2], ['name' => 'super_admin']);
+        UserRole::firstOrCreate(['id' => 3], ['name' => 'admin']);
     }
 
     public function test_website_can_create_lead(): void
@@ -166,5 +170,132 @@ class OnboardingFlowTest extends TestCase
         ]);
 
         $this->assertNotNull(OnboardingToken::where('lead_id', $lead->id)->first()?->used_at);
+    }
+
+    public function test_complete_onboarding_reactivates_blocked_super_admin_and_linked_accounts(): void
+    {
+        Notification::fake();
+        Mail::fake();
+        $this->seedRoles();
+
+        $masterAdmin = User::factory()->create(['user_role_id' => 1]);
+        $blockedSuperAdmin = User::factory()->create([
+            'user_role_id' => 2,
+            'email' => 'blocked-super@example.com',
+            'name' => 'Blocked Super Admin',
+            'referral_code' => 'KEEPREF1',
+        ]);
+        $company = Company::create([
+            'name' => 'Blocked Company',
+            'user_id' => $blockedSuperAdmin->id,
+            'is_blocked' => false,
+        ]);
+        $linkedUser = User::factory()->create([
+            'user_role_id' => 3,
+            'company_id' => $company->id,
+            'email' => 'linked-blocked@example.com',
+        ]);
+
+        $this->actingAs($masterAdmin)->post(route('users.block', $blockedSuperAdmin), [
+            'reason' => 'Complete onboarding again to reactivate.',
+        ])->assertRedirect(route('users.index'));
+
+        $blockedSuperAdmin->refresh();
+        $company->refresh();
+        $linkedUser->refresh();
+
+        $this->assertTrue($blockedSuperAdmin->is_blocked);
+        $this->assertTrue((bool) $company->is_blocked);
+        $this->assertTrue($linkedUser->is_blocked);
+
+        $this->actingAs($masterAdmin)->post(route('logout'))->assertRedirect(route('login'));
+
+        $lead = Lead::create([
+            'name' => 'Blocked Super Admin',
+            'mobile' => '9666666666',
+            'email' => $blockedSuperAdmin->email,
+            'status' => Lead::STATUS_DEMO_COMPLETED,
+            'source' => 'manual',
+        ]);
+
+        $generated = app(OnboardingTokenService::class)->generateForLead($lead, $masterAdmin->id);
+
+        $this->postJson('/api/onboarding/send-otp', [
+            'token' => $generated['plain_token'],
+            'email' => $blockedSuperAdmin->email,
+        ])->assertOk();
+
+        $otpRecord = \App\Models\EmailOtp::where('email', $blockedSuperAdmin->email)->latest('id')->first();
+        $this->assertNotNull($otpRecord);
+        $otpRecord->update(['verified_at' => now()]);
+
+        $response = $this->postJson('/api/onboard', [
+            'token' => $generated['plain_token'],
+            'name' => 'Reactivated Super Admin',
+            'email' => $blockedSuperAdmin->email,
+            'password' => 'newpassword123',
+            'password_confirmation' => 'newpassword123',
+            'accepted_terms' => true,
+        ]);
+
+        $response->assertOk()->assertJson(['success' => true]);
+
+        $blockedSuperAdmin->refresh();
+        $company->refresh();
+        $linkedUser->refresh();
+
+        $this->assertSame('Reactivated Super Admin', $blockedSuperAdmin->name);
+        $this->assertTrue(Hash::check('newpassword123', $blockedSuperAdmin->password));
+        $this->assertFalse($blockedSuperAdmin->is_blocked);
+        $this->assertFalse((bool) $company->is_blocked);
+        $this->assertFalse($linkedUser->is_blocked);
+        $this->assertNull($blockedSuperAdmin->block_reason);
+        $this->assertNull($blockedSuperAdmin->blocked_by);
+        $this->assertNull($blockedSuperAdmin->session_token);
+        $this->assertSame('KEEPREF1', $blockedSuperAdmin->referral_code);
+        $this->assertSame(1, User::query()->where('email', 'blocked-super@example.com')->count());
+        $this->assertDatabaseHas('leads', [
+            'id' => $lead->id,
+            'status' => Lead::STATUS_ACTIVATED,
+        ]);
+    }
+
+    public function test_complete_onboarding_rejects_duplicate_email_for_active_user(): void
+    {
+        $this->seedRoles();
+
+        User::factory()->create([
+            'user_role_id' => 2,
+            'email' => 'active-super@example.com',
+            'is_blocked' => false,
+        ]);
+
+        $lead = Lead::create([
+            'name' => 'Lead Four',
+            'mobile' => '9555555555',
+            'email' => 'active-super@example.com',
+            'status' => Lead::STATUS_DEMO_COMPLETED,
+            'source' => 'manual',
+        ]);
+
+        $generated = app(OnboardingTokenService::class)->generateForLead($lead, User::factory()->create()->id);
+
+        $this->postJson('/api/onboarding/send-otp', [
+            'token' => $generated['plain_token'],
+            'email' => 'active-super@example.com',
+        ])->assertOk();
+
+        $otpRecord = \App\Models\EmailOtp::where('email', 'active-super@example.com')->latest('id')->first();
+        $this->assertNotNull($otpRecord);
+        $otpRecord->update(['verified_at' => now()]);
+
+        $this->postJson('/api/onboard', [
+            'token' => $generated['plain_token'],
+            'name' => 'Active Super Admin',
+            'email' => 'active-super@example.com',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+            'accepted_terms' => true,
+        ])->assertStatus(422)->assertJsonValidationErrors(['email']);
     }
 }

@@ -80,26 +80,20 @@
         $sgst = (float) ($sgst ?? 0);
         $igst = (float) ($igst ?? 0);
         $baseAmount = (float) ($totalAmount ?? 0);
-        $grandTotal = (float) ($invoice->total_amount ?? ($invoice->invoice_type === 'Reverse' ? $baseAmount : ($baseAmount + $cgst + $sgst + $igst)));
+        $grandTotal = ($invoice->invoice_type ?? '') === 'Reverse'
+            ? (float) ($invoice->net_amount ?? $invoice->base_amount ?? $baseAmount)
+            : (float) ($invoice->total_amount ?? ($baseAmount + $cgst + $sgst + $igst));
         $billNumber = $invoice->invoice_number
             ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '')
             : ($invoice->manual_invoice_number ?? $invoice->id);
     @endphp
 
     <div class="compact-shell">
-        {{-- <div class="compact-top">
-            <div class="compact-note">Official Compact Theme</div>
-            <div class="compact-company">{{ $company->name }}</div>
-            <div class="compact-sub">
-                {{ $company->address }},
-                {{ optional($company->city)->name }},
-                {{ optional($company->state)->name }} - {{ $company->pin_code }}
-            </div>
-        </div> --}}
         <div class="compact-content">
             @include('reports.exports.party-bill', ['partyBillHeaderCompact' => true])
         </div>
     </div>
+    <div style="margin-top: 4px; font-size: 7px; text-align: right;">Powered by TruckBill (www.truckbill.in)</div>
 
     <script type="text/php">
         if (isset($pdf)) {

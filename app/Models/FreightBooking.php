@@ -22,6 +22,7 @@ class FreightBooking extends Model implements Auditable
         'tr_amount',
         'advance_amount',
         'balance_amount',
+        'negative_adjusted_amount',
         'tds_amount',
         'shortage',
         'good_type',

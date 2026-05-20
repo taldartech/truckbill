@@ -62,18 +62,6 @@ class ShortageDamageExport implements FromCollection, WithHeadings, ShouldAutoSi
 
             $lrs = $query->get();
 
-            // Debug: Log the first few records to check relationships
-            if ($lrs->isNotEmpty()) {
-                \Log::info('First LorryReceipt data:', [
-                    'lr_id' => $lrs[0]->id,
-                    'lr_number' => $lrs[0]->lr_number,
-                    'has_freight_bookings' => $lrs[0]->relationLoaded('freightBookings') && $lrs[0]->freightBookings->isNotEmpty(),
-                    'freight_booking_count' => $lrs[0]->freightBookings->count(),
-                    'voucher_payments' => $lrs[0]->freightBookings->isNotEmpty() ?
-                        $lrs[0]->freightBookings[0]->voucherPayments->toArray() : 'No freight bookings'
-                ]);
-            }
-
             $generated = true;
         } else {
             $lrs = [];

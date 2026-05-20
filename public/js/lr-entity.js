@@ -451,6 +451,7 @@
       trucksData: initialTrucksData = {},
       mode = 'create', // create | edit
       allowTransporterChanges = true,
+      afterTransporterTypeChange = null,
     } = options;
 
     if (!transporterTypeSelect || !truckSelect || !transporterSelect || !transporterLabel) {
@@ -593,6 +594,9 @@
         const ownerAvailable = enforceAgencyForOwnerlessTruck(selectedTruckId);
         if (!ownerAvailable) {
           transporterSelect2.trigger('change.select2');
+          if (typeof afterTransporterTypeChange === 'function') {
+            afterTransporterTypeChange(selectedType);
+          }
           return;
         }
 
@@ -602,6 +606,10 @@
       } else if (selectedType === 'agency') {
         // Agencies are loaded via Select2 AJAX (no full list fetch).
         transporterSelect2.trigger('change.select2');
+      }
+
+      if (typeof afterTransporterTypeChange === 'function') {
+        afterTransporterTypeChange(selectedType);
       }
     });
 
@@ -822,18 +830,24 @@
         });
     }
 
-    transporterSelect2.on('select2:select', function (e) {
-      if (clearingDueToCancel) {
-        return;
-      }
+    $(document)
+      .off('select2:select.lrTransporterAgencyConfirm', '#transporter_id')
+      .on('select2:select.lrTransporterAgencyConfirm', '#transporter_id', function (e) {
+        if (!transporterSelect || this !== transporterSelect) {
+          return;
+        }
 
-      if (transporterTypeSelect.value !== 'agency') {
-        return;
-      }
+        if (clearingDueToCancel) {
+          return;
+        }
 
-      const selectedId = e?.params?.data?.id;
-      handleAgencySelection(selectedId);
-    });
+        if (transporterTypeSelect.value !== 'agency') {
+          return;
+        }
+
+        const selectedId = e?.params?.data?.id;
+        handleAgencySelection(selectedId);
+      });
 
     transporterSelect.addEventListener('change', function () {
       if (clearingDueToCancel) {

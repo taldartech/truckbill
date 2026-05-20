@@ -15,16 +15,9 @@ use Illuminate\Support\Str;
 
 class ConsigneeController extends Controller
 {
-    private function ensureCompanyContext(): void
-    {
-        if (Auth::user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
-            abort(403, 'Please enter a company first.');
-        }
-    }
 
     public function index(Request $request)
     {
-        $this->ensureCompanyContext();
         // Handle DataTables AJAX request
         if ($request->ajax()) {
             return $this->getConsigneesData($request);
@@ -182,7 +175,6 @@ class ConsigneeController extends Controller
 
     public function create()
     {
-        $this->ensureCompanyContext();
         $countries = \App\Models\Country::all();
         $states = [];
         $cities = [];
@@ -200,9 +192,6 @@ class ConsigneeController extends Controller
 
     public function store(Request $request)
     {
-        $this->ensureCompanyContext();
-        Log::info('Current user company_id: '.auth()->user()->company_id);
-
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'nullable|string',
@@ -327,7 +316,6 @@ class ConsigneeController extends Controller
 
     public function edit(Consignee $consignee)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $consignee->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this consignee.');
         }
@@ -340,7 +328,6 @@ class ConsigneeController extends Controller
 
     public function update(Request $request, Consignee $consignee)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $consignee->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this consignee.');
         }
@@ -529,7 +516,6 @@ class ConsigneeController extends Controller
 
     public function destroy(Consignee $consignee)
     {
-        $this->ensureCompanyContext();
         if (Auth::user()->company_id && $consignee->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this consignee.');
         }
@@ -546,7 +532,6 @@ class ConsigneeController extends Controller
      */
     public function getConsigneeApi($id)
     {
-        $this->ensureCompanyContext();
         try {
             $query = Consignee::with(['city', 'state', 'country', 'company']);
 
@@ -578,75 +563,4 @@ class ConsigneeController extends Controller
         }
     }
 
-    /**
-     * Search consignees for Select2 AJAX.
-     * Used for: Customer, Consignor, Consignee dropdowns.
-     *
-     * Returns Select2-compatible payload: { results: [{id,text}], pagination: { more } }
-     */
-    public function searchConsigneesApi(Request $request)
-    {
-        try {
-            $this->ensureCompanyContext();
-
-            $companyId = Auth::user()->company_id;
-            $q = trim((string) $request->query('q', ''));
-            $page = (int) $request->query('page', 1);
-            $limit = (int) $request->query('limit', 20);
-            $limit = max(1, min($limit, 50));
-            $page = max(1, $page);
-
-            $query = Consignee::with(['city', 'state', 'country'])
-                ->where('company_id', $companyId);
-
-            if ($q !== '') {
-                $query->where(function ($qq) use ($q) {
-                    $qq->where('name', 'like', "%{$q}%")
-                        ->orWhere('address', 'like', "%{$q}%")
-                        ->orWhere('contact_number', 'like', "%{$q}%")
-                        ->orWhere('gst_number', 'like', "%{$q}%")
-                        ->orWhere('pan_number', 'like', "%{$q}%")
-                        ->orWhereHas('city', function ($c) use ($q) {
-                            $c->where('name', 'like', "%{$q}%");
-                        })
-                        ->orWhereHas('state', function ($s) use ($q) {
-                            $s->where('name', 'like', "%{$q}%");
-                        })
-                        ->orWhereHas('country', function ($co) use ($q) {
-                            $co->where('name', 'like', "%{$q}%");
-                        });
-                });
-            }
-
-            $query->orderBy('name', 'asc');
-
-            $offset = ($page - 1) * $limit;
-            $items = $query->offset($offset)->limit($limit + 1)->get();
-            $more = $items->count() > $limit;
-            $items = $items->take($limit);
-
-            $results = $items->map(function ($c) {
-                return [
-                    'id' => $c->id,
-                    'text' => $c->name ?: 'Not Set',
-                ];
-            })->values();
-
-            return response()->json([
-                'results' => $results,
-                'pagination' => [
-                    'more' => $more,
-                ],
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Error searching consignees: '.$e->getMessage());
-
-            return response()->json([
-                'results' => [],
-                'pagination' => [
-                    'more' => false,
-                ],
-            ]);
-        }
-    }
 }

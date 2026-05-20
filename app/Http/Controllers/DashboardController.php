@@ -2,19 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\FreightBooking as Booking;
-use App\Models\Transporter;
-use App\Models\InvoicePayment;
-use App\Models\Truck;
-use App\Models\Invoice;
-use App\Models\User;
 use App\Models\Company;
+use App\Models\FreightBooking;
+use App\Models\FreightBooking as Booking;
+use App\Models\Invoice;
+use App\Models\InvoicePayment;
+use App\Models\LorryReceipt;
+use App\Models\Transporter;
+use App\Models\Truck;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use App\Models\AdvancePayment;
-use App\Models\FreightBooking;
-use App\Models\LorryReceipt;
-use App\Models\VoucherPayment;
 
 class DashboardController extends Controller
 {
@@ -213,37 +211,47 @@ class DashboardController extends Controller
         $endOfMonth = $now->copy()->endOfMonth();
         $companyId = auth()->user()->company_id;
 
-        // Calculate revenue as LR amount - FR amount
-        $totalRevenue = Booking::join('lorry_receipts', 'freight_bookings.lr_id', '=', 'lorry_receipts.id')
-            ->where('freight_bookings.company_id', $companyId)
-            ->whereRaw('freight_bookings.created_at BETWEEN ? AND ?', [$startOfMonth, $endOfMonth])
-            ->selectRaw('SUM(lorry_receipts.amount - freight_bookings.tr_amount) as revenue')
-            ->value('revenue') ?? 0;
-
-        // Comprehensive admin stats - Priority-based minimal content
-        // Calculate pending/partial invoices based on payment ledger
-        $allInvoicesForStats = Invoice::where('company_id', $companyId)
-            ->with('payments')
+        $companyInvoices = Invoice::where('company_id', $companyId)
+            ->with(['payments', 'consignee'])
             ->get();
 
-        $pendingInvoicesCount = 0;
-        $pendingInvoiceAmount = 0;
         $outstandingAmount = 0;
+        $invoicePaymentStatuses = [
+            'pending' => 0,
+            'partial' => 0,
+            'paid' => 0,
+        ];
 
-        foreach ($allInvoicesForStats as $invoice) {
+        foreach ($companyInvoices as $invoice) {
             $paidAmount = $invoice->paid_amount;
             $amountToCollect = $invoice->net_amount ?? $invoice->total_amount;
             $remainingAmount = $amountToCollect - $paidAmount;
+
             if ($paidAmount < $amountToCollect) {
-                $pendingInvoicesCount++;
-                $pendingInvoiceAmount += $remainingAmount;
                 $outstandingAmount += $remainingAmount;
+            }
+
+            if ($paidAmount >= $amountToCollect) {
+                $invoicePaymentStatuses['paid']++;
+            } elseif ($paidAmount > 0) {
+                $invoicePaymentStatuses['partial']++;
+            } else {
+                $invoicePaymentStatuses['pending']++;
             }
         }
 
+        $pendingInvoices = $companyInvoices
+            ->filter(function ($invoice) {
+                $amountToCollect = $invoice->net_amount ?? $invoice->total_amount;
+
+                return $invoice->paid_amount < $amountToCollect;
+            })
+            ->sortByDesc('generated_date')
+            ->take(5)
+            ->values();
+
         // Calculate Admin KPIs
         $today = now()->startOfDay();
-        $todayEnd = now()->endOfDay();
 
         $monthlyStats = [
             'total_bookings' => Booking::whereBetween('freight_bookings.created_at', [$startOfMonth, $endOfMonth])
@@ -279,105 +287,14 @@ class DashboardController extends Controller
             'outstanding_amount' => $outstandingAmount,
         ];
 
-        // Revenue data for the last 6 months - LR amount - FR amount
-        $revenueData = Booking::select(
-            DB::raw('DATE_FORMAT(freight_bookings.created_at, "%b %Y") as month'),
-            DB::raw('SUM(lorry_receipts.amount - freight_bookings.tr_amount) as total')
-        )
-            ->join('lorry_receipts', 'freight_bookings.lr_id', '=', 'lorry_receipts.id')
-            ->where('freight_bookings.created_at', '>=', now()->subMonths(5)->startOfMonth())
-            ->where('freight_bookings.company_id', $companyId)
-            ->groupBy('month')
-            ->orderBy('freight_bookings.created_at')
-            ->pluck('total', 'month');
-
-        // Booking status distribution
-        $bookingStatuses = [
-            'delivered' => Booking::where('is_delivered', true)
-                ->where('company_id', $companyId)
-                ->count(),
-            'cancelled' => Booking::where('is_cancelled', true)
-                ->where('company_id', $companyId)
-                ->count(),
-            'in_progress' => Booking::where('is_delivered', false)
-                ->where('is_cancelled', false)
-                ->where('company_id', $companyId)
-                ->count()
-        ];
-
-        // Recent bookings
-        $recentBookings = Booking::with(['lr.consignor', 'lr.consignee'])
-            ->where('company_id', $companyId)
-            ->latest()
-            ->take(5)
-            ->get();
-
-        // Top transporters
-        $topTransporters = Transporter::with('transporterMaster')
-            ->where('is_owner', 0)
-            ->where('company_id', $companyId)
-            ->withCount('lorryReceipts')
-            ->orderByDesc('lorry_receipts_count')
-            ->take(5)
-            ->get();
-
-        // Top consignees
-        $topConsignees = \App\Models\Consignee::where('company_id', $companyId)
-            ->withCount('lorryReceipts')
-            ->orderByDesc('lorry_receipts_count')
-            ->take(5)
-            ->get(['name', 'lorry_receipts_count']);
-
         // Expired Eway bills
-        $expiredEwayBills = FreightBooking::with('lr')
+        $expiredEwayBills = FreightBooking::with('lr.truck.driver')
             ->where('company_id', $companyId)
             ->where('is_delivered', 0)
             ->where('is_cancelled', 0)
             ->where('eway_bill_expiry', '<=', now()->addDays(2)->endOfDay())
             ->orderBy('eway_bill_expiry', 'asc')
             ->get();
-
-        // Recent invoices
-        $recentInvoices = Invoice::where('company_id', $companyId)
-            ->with('consignee')
-            ->latest()
-            ->take(5)
-            ->get();
-
-        // Priority: Recent invoices with pending/partial payments (highest priority)
-        $pendingInvoices = Invoice::where('company_id', $companyId)
-            ->with(['consignee', 'payments'])
-            ->get()
-            ->filter(function ($invoice) {
-                $amountToCollect = $invoice->net_amount ?? $invoice->total_amount;
-                return $invoice->paid_amount < $amountToCollect;
-            })
-            ->sortByDesc('generated_date')
-            ->take(5)
-            ->values();
-
-        // Payment ledger of invoices status breakdown - Based on actual payments
-        $allInvoices = Invoice::where('company_id', $companyId)
-            ->with('payments')
-            ->get();
-
-        $invoicePaymentStatuses = [
-            'pending' => 0,
-            'partial' => 0,
-            'paid' => 0,
-        ];
-
-        foreach ($allInvoices as $invoice) {
-            $paidAmount = $invoice->paid_amount;
-            $amountToCollect = $invoice->net_amount ?? $invoice->total_amount;
-            if ($paidAmount >= $amountToCollect) {
-                $invoicePaymentStatuses['paid']++;
-            } elseif ($paidAmount > 0) {
-                $invoicePaymentStatuses['partial']++;
-            } else {
-                $invoicePaymentStatuses['pending']++;
-            }
-        }
 
         return view('dashboard', compact(
             'monthlyStats',
@@ -455,21 +372,21 @@ class DashboardController extends Controller
             'loading_in_progress' => Booking::where('is_delivered', false)
                 ->where('is_cancelled', false)
                 ->where('company_id', $companyId)
-                ->whereHas('lr', function($q) {
+                ->whereHas('lr', function ($q) {
                     $q->where('delivery_status', 'Pending');
                 })
                 ->count(),
             'en_route' => Booking::where('is_delivered', false)
                 ->where('is_cancelled', false)
                 ->where('company_id', $companyId)
-                ->whereHas('lr', function($q) {
+                ->whereHas('lr', function ($q) {
                     $q->where('delivery_status', 'In-Progress');
                 })
                 ->count(),
             'delayed_trips' => Booking::where('is_delivered', false)
                 ->where('is_cancelled', false)
                 ->where('company_id', $companyId)
-                ->whereHas('lr', function($q) {
+                ->whereHas('lr', function ($q) {
                     $q->where('delivery_status', '!=', 'Pending');
                 })
                 ->count(),
@@ -486,7 +403,7 @@ class DashboardController extends Controller
             'in_progress' => Booking::where('is_delivered', false)
                 ->where('is_cancelled', false)
                 ->where('company_id', $companyId)
-                ->count()
+                ->count(),
         ];
 
         // Recent bookings
@@ -515,7 +432,7 @@ class DashboardController extends Controller
             ->get();
 
         // Expired Eway bills
-        $expiredEwayBills = FreightBooking::with('lr')
+        $expiredEwayBills = FreightBooking::with('lr.truck.driver')
             ->where('company_id', $companyId)
             ->where('is_delivered', 0)
             ->where('is_cancelled', 0)
@@ -585,9 +502,9 @@ class DashboardController extends Controller
             ->sum('total_amount');
 
         // Calculate total paid amount (all time)
-        $totalPaid = InvoicePayment::whereHas('invoice', function($q) use ($companyId) {
-                $q->where('company_id', $companyId);
-            })
+        $totalPaid = InvoicePayment::whereHas('invoice', function ($q) use ($companyId) {
+            $q->where('company_id', $companyId);
+        })
             ->sum('amount');
 
         $financialStats = [
@@ -601,7 +518,7 @@ class DashboardController extends Controller
             'pending_invoices_count' => $pendingInvoicesCount,
             'pending_invoices_amount' => $pendingInvoiceAmount,
             'payments_received_today' => InvoicePayment::whereBetween('created_at', [$today, $todayEnd])
-                ->whereHas('invoice', function($q) use ($companyId) {
+                ->whereHas('invoice', function ($q) use ($companyId) {
                     $q->where('company_id', $companyId);
                 })
                 ->sum('amount'),
@@ -627,6 +544,7 @@ class DashboardController extends Controller
             ->get()
             ->filter(function ($invoice) {
                 $amountToCollect = $invoice->net_amount ?? $invoice->total_amount;
+
                 return $invoice->paid_amount < $amountToCollect;
             })
             ->sortByDesc('generated_date')
@@ -635,7 +553,7 @@ class DashboardController extends Controller
 
         // Recent invoice payments (payment ledger entries)
         $recentInvoicePayments = InvoicePayment::with('invoice.consignee')
-            ->whereHas('invoice', function($q) use ($companyId) {
+            ->whereHas('invoice', function ($q) use ($companyId) {
                 $q->where('company_id', $companyId);
             })
             ->latest()
@@ -702,7 +620,7 @@ class DashboardController extends Controller
             ->take(10)
             ->get();
 
-        $expiredEwayBills = FreightBooking::with('lr')
+        $expiredEwayBills = FreightBooking::with('lr.truck.driver')
             ->whereIn('transporter_id', $transporterIds)
             ->where('is_delivered', 0)
             ->where('is_cancelled', 0)
@@ -817,4 +735,3 @@ class DashboardController extends Controller
         return view('dashboard', compact('monthlyStats'));
     }
 }
-

@@ -52,7 +52,7 @@
                                         <small class="text-muted">{{ $booking->lr->consignee->name ?? '-' }}</small>
                                     </td>
                                     <td>{{ $booking->lr->truck->truck_number ?? '-' }}</td>
-                                    <td>₹{{ number_format($booking->tr_amount ?? 0, 2) }}</td>
+                                    <td>{{ number_format($booking->tr_amount ?? 0, 2) }}</td>
                                     <td>
                                         @if($booking->is_delivered)
                                             <span class="badge bg-success">Delivered</span>

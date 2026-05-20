@@ -728,7 +728,7 @@
                         const razorpay = new Razorpay(options);
                         razorpay.open();
                     } else {
-                        console.log('Error creating payment order:', data);
+                        console.error('Error creating payment order:', data);
                         if (data.error) {
                             alert(data.error);
                         } else {

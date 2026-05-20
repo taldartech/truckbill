@@ -11,16 +11,9 @@ use Illuminate\Validation\Rule;
 
 class PumpController extends Controller
 {
-    private function ensureCompanyContext(): void
-    {
-        if (Auth::user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
-            abort(403, 'Please enter a company first.');
-        }
-    }
 
     public function index(Request $request)
     {
-        $this->ensureCompanyContext();
         // Handle DataTables AJAX request
         if ($request->ajax()) {
             return $this->getPumpsData($request);
@@ -139,14 +132,12 @@ class PumpController extends Controller
 
     public function create()
     {
-        $this->ensureCompanyContext();
 
         return view('master.pump-form');
     }
 
     public function store(Request $request)
     {
-        $this->ensureCompanyContext();
         $validated = $request->validate([
             'pump_name' => 'required|string|max:255',
             'contact_name' => 'required|string|max:255',
@@ -168,14 +159,12 @@ class PumpController extends Controller
 
     public function edit(Pump $pump)
     {
-        $this->ensureCompanyContext();
 
         return view('master.pump-form', compact('pump'));
     }
 
     public function update(Request $request, Pump $pump)
     {
-        $this->ensureCompanyContext();
         $validated = $request->validate([
             'pump_name' => 'required|string|max:255',
             'contact_name' => 'required|string|max:255',
@@ -190,7 +179,6 @@ class PumpController extends Controller
 
     public function destroy(Pump $pump)
     {
-        $this->ensureCompanyContext();
         $pump->delete();
         return redirect()->route('master.pump.index')->with('success', 'Pump deleted successfully');
     }

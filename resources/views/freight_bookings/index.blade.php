@@ -213,7 +213,6 @@
             @endif
         </div>
 
-
         <!-- Search & Operations Section -->
         <div class="glass-card mb-2 animate__animated animate__fadeInDown">
             <div class="card-header py-1 d-flex justify-content-between align-items-center" style="background-color: rgba(0, 0, 0, 0.1) !important;">
@@ -251,7 +250,7 @@
                     <div class="row g-2 align-items-end">
                         <div class="col-md-5">
                             <input type="text" class="form-control form-control-sm" name="search"
-                                value="{{ request('search') }}" placeholder="LR, Customer, Truck, City...">
+                                value="{{ \App\Support\ListingQueryString::scalarValue(request(), 'search', \App\Support\ListingQueryString::FREIGHT_BOOKING_KEYS) }}" placeholder="LR, Customer, Truck, City...">
                         </div>
                         <div class="col-md-3">
                             <div class="d-flex gap-2">
@@ -316,111 +315,6 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($bookings as $index => $booking)
-                                <tr class="@if ($booking->is_cancelled) table-danger @elseif($booking->is_delivered) table-success @endif">
-                                    <td class="text-center">
-                                        @if ($booking->lr && $booking->lr->memo_id && $booking->balance_amount <= 0)
-                                            <span class="text-muted"><i class="bi bi-dash-circle"></i></span>
-                                        @elseif($booking->is_cancelled)
-                                            <span class="text-muted"><i class="bi bi-dash-circle"></i></span>
-                                        @else
-                                            <input type="checkbox" class="row-checkbox" value="{{ $booking->id }}"
-                                                data-lr="{{ $booking->lr ? $booking->lr->lr_number : '' }}"
-                                                data-amount="{{ $booking->lr ? $booking->lr->amount : '' }}"
-                                                data-linked-lr-id="{{ $booking->lr ? $booking->lr->linked_lr_id : '' }}"
-                                                data-memo-id="{{ $booking->lr ? $booking->lr->memo_id : '' }}"
-                                                data-lr-id="{{ $booking->lr ? $booking->lr->id : '' }}"
-                                                data-truck="{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->truck_number : '' }}"
-                                                data-truck-id="{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->id : '' }}"
-                                                data-transporter-id="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->id : '' }}"
-                                                data-balance="{{ $booking->balance_amount ?? 0 }}"
-                                                data-voucher_number="{{ $booking->voucher_number ?? '' }}"
-                                                data-freight-booking-id="{{ $booking->id }}"
-                                                data-is-cancelled="{{ $booking->is_cancelled ? '1' : '0' }}"
-                                                data-is-delivered="{{ $booking->is_delivered ? '1' : '0' }}"
-                                                data-transporter="{{ $booking->transporter ? $booking->transporter->name : '' }}"
-                                                data-lr-transporter="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->name : '' }}"
-                                                data-lr-transporter-mobile-number="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->mobile_number : '' }}"
-                                                data-lr-transporter-short-name="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->short_name : '' }}"
-                                                data-lr-transporter-beneficiary-id="{{ $booking->lr && $booking->lr->transporter ? $booking->lr->transporter->beneficiary_id : '' }}"
-                                                data-fb-transporter="{{ $booking->transporter_name ?? ($booking->transporter ? $booking->transporter->name : '') }}"
-                                                data-tds-percentage="{{ $booking->transporter_tds_percentage ?? '' }}"
-                                                data-customer-id="{{ $booking->lr && $booking->lr->customer ? $booking->lr->customer->id : '' }}"
-                                                data-shortage-amount="{{ $booking->shortage_amount ?? 0 }}"
-                                                data-damage-amount="{{ $booking->damage_amount ?? 0 }}">
-                                        @endif
-                                    </td>
-                                    <td class="text-center"
-                                        data-order="{{ $booking->lr && $booking->lr->gr_date ? date('Y-m-d', strtotime($booking->lr->gr_date)) : '' }}">
-                                        {{ $booking->lr && $booking->lr->gr_date ? date('d-m-Y', strtotime($booking->lr->gr_date)) : '-' }}
-                                    </td>
-                                    <td data-order="{{ $booking->lr->lr_number }}">
-                                        @if ($booking->lr)
-                                            <span class="fw-bold text-primary">{{ $booking->lr->lr_number }}</span>
-                                            @if ($booking->linked_lr_id)
-                                                <span class="badge text-bg-success border-secondary">[{{ $booking->linked_lr_id }}]</span>
-                                            @endif
-                                        @else
-                                            -
-                                        @endif
-                                    </td>
-                                    <td data-order="{{ $booking?->lr?->customer?->name }}">
-                                        @if ($booking->lr)
-                                            {{ $booking->lr->customer->name }}
-                                            @if ($booking->lr->memo_id)
-                                                <span class="badge text-bg-success border-secondary ms-1">[{{ $booking->lr->memo_id }}]</span>
-                                            @endif
-                                        @else
-                                            -
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @php
-                                            $transporterName = $booking->transporter_name ?? ($booking->transporter ? $booking->transporter->name : '-');
-                                            $badge = '';
-                                            if ($booking->transporter && $booking->transporter->is_owner) {
-                                                $badge = '<span class="badge text-bg-success border-secondary ms-1" title="Owner"><i class="bi bi-truck"></i></span>';
-                                            } else {
-                                                $badge = '<span class="badge bg-info ms-1" title="Agency"><i class="bi bi-building"></i></span>';
-                                            }
-                                        @endphp
-                                        {!! $transporterName . ' ' . $badge !!}
-                                    </td>
-                                    <td>{{ $booking->lr && $booking->lr->truck ? $booking->lr->truck->truck_number : '-' }}</td>
-                                    <td>
-                                        <div class="small">
-                                            <span class="text-muted">{{ $booking->lr && $booking->lr->source_city ? $booking->lr->source_city : '-' }}</span>
-                                            <i class="bi bi-arrow-right mx-1 text-muted"></i>
-                                            <span class="text-muted">{{ $booking->lr && $booking->lr->destination_city ? $booking->lr->destination_city : '-' }}</span>
-                                        </div>
-                                    </td>
-                                    <td>{{ $booking->lr && $booking->lr->weight ? $booking->lr->weight : '-' }}</td>
-                                    <td class="text-muted">{{ $booking->lr && $booking->tr_fr_rate ? $booking->tr_fr_rate : '-' }}</td>
-                                    <td class="fw-bold">{{ $booking->lr && $booking->tr_fr_rate ? $booking->tr_amount : '-' }}</td>
-                                    <td data-order="{{ $booking->balance_amount ?? 0 }}" class="text-end fw-bold text-brand-primary">
-                                        ₹{{ number_format($booking->balance_amount ?? 0, 2) }}
-                                    </td>
-                                    <td class="text-center">
-                                        <div class="d-flex justify-content-center gap-1">
-                                            <a href="{{ route('freight_bookings.show', $booking->id) }}"
-                                                class="btn-action btn-action-info" title="View">
-                                                <i class="bi bi-eye"></i>
-                                            </a>
-                                            <a href="{{ route('freight_bookings.edit', $booking->id) }}"
-                                                class="btn-action btn-action-primary" title="Edit">
-                                                <i class="bi bi-pencil"></i>
-                                            </a>
-                                            <a href="{{ route('reports.voucher-receipt-export', ['lr_id' => $booking->lr->id]) }}"
-                                                class="btn-action voucher-print-btn {{ $booking->voucher_printed ? 'btn-action-success' : 'btn-action-outline-success' }}"
-                                                data-freight-booking-id="{{ $booking->id }}"
-                                                data-mark-url="{{ route('reports.voucher-receipt-mark-printed') }}"
-                                                title="{{ $booking->voucher_last_printed_at ? 'Last printed: ' . $booking->voucher_last_printed_at->format('d-m-Y h:i A') : 'Print voucher challan' }}">
-                                                <i class="bi bi-file-earmark-text"></i>
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
                         </tbody>
                     </table>
                 </div>
@@ -534,8 +428,6 @@
     </div>
 @endsection
 
-
-
 @push('scripts')
     <script>
         const paymentTypes = @json($paymentTypes);
@@ -557,6 +449,7 @@
                     memoId: $(this).data('memo-id'),
                     linkedLrId: $(this).data('linked-lr-id'),
                     voucher_number: $(this).data('voucher_number'),
+                    freight_rate: parseFloat($(this).data('freight-rate') || 0),
                     freight_booking_id: $(this).data('freight-booking-id'),
                     lr_id: $(this).data('lr-id'),
                     transporter: $(this).data('transporter'),
@@ -568,7 +461,8 @@
                     tds_percentage: $(this).data('tds-percentage'),
                     amount: $(this).data('amount'),
                     shortage_amount: $(this).data('shortage-amount'),
-                    damage_amount: $(this).data('damage-amount')
+                    damage_amount: $(this).data('damage-amount'),
+                    advance_amount: $(this).data('advance-amount')
                 };
                 if (!selectedBookingIds.includes(id)) {
                     selectedBookingIds.push(id);
@@ -599,6 +493,7 @@
                             memoId: $(this).data('memo-id'),
                             linkedLrId: $(this).data('linked-lr-id'),
                             voucher_number: $(this).data('voucher_number'),
+                            freight_rate: parseFloat($(this).data('freight-rate') || 0),
                             freight_booking_id: $(this).data('freight-booking-id'),
                                     lr_id: $(this).data('lr-id'),
                                     transporter: $(this).data('transporter'),
@@ -610,7 +505,8 @@
                                     tds_percentage: $(this).data('tds-percentage'),
                                     amount: $(this).data('amount'),
                                     shortage_amount: $(this).data('shortage-amount'),
-                                    damage_amount: $(this).data('damage-amount')
+                                    damage_amount: $(this).data('damage-amount'),
+                                    advance_amount: $(this).data('advance-amount')
                         };
                     }
                 } else {
@@ -676,18 +572,13 @@
                 }
             });
 
-
-
             // Voucher Payment Modal
             $('#voucher-payment-btn').on('click', function() {
                 const checkedBoxes = Object.values(selectedRows);
-                console.log(checkedBoxes);
                 if (checkedBoxes.length === 0) {
                     alert('Please select at least one good hire (lorry hire).');
                     return;
                 }
-
-
 
                 let tableBody = '';
                 let totalAmount = 0;
@@ -705,7 +596,7 @@
                             <td>${lrNumber}</td>
                             <td>${truckNumber}</td>
                             <td>${voucherNumber}</td>
-                            <td class="text-end">₹${balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
+                            <td class="text-end">${balance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</td>
                             <td>
                                 <input type="number" class="form-control payment-amount allocated-input"
                                       data-id="${data.id}"
@@ -760,7 +651,7 @@
                                 <tfoot>
                                     <tr class="table-info">
                                         <th colspan="4" class="text-end">Total Payment:</th>
-                                        <th class="text-end" id="totalPaymentAmount">₹${totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</th>
+                                        <th class="text-end" id="totalPaymentAmount">${totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</th>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -807,7 +698,6 @@
                 // If there's a linked LR ID, fetch all related LRs
                 if (linkedLrId) {
                     $.get(`/lorryreceipts/by-linked/${linkedLrId}`, function(response) {
-                        console.log('📦 Full response:', response);
                         const lrsArray = response.lrs || response;
 
                         if (lrsArray && lrsArray.length > 0) {
@@ -817,12 +707,6 @@
                                 lr.freight_booking_id !== undefined &&
                                 lr.freight_booking_id !== ''
                             );
-
-                            console.log('✅ All have freight booking?', allHaveFreightBooking);
-                            console.log('Freight booking IDs:', lrsArray.map(lr => ({
-                                lr_number: lr.lr_number,
-                                freight_booking_id: lr.freight_booking_id
-                            })));
 
                             if (!allHaveFreightBooking) {
                                 // Find which LRs are missing freight bookings
@@ -837,7 +721,6 @@
                                 alert(
                                     `⚠️ Error: The following linked LRs do not have Good Hires (Lorry Hire):\n\n${lrNumbers}\n\nPlease create FRs for all linked LRs before proceeding with combined payment.`
                                 );
-                                console.log('❌ Missing FRs for:', missingLRs);
                                 return;
                             }
 
@@ -902,7 +785,7 @@
                                     name="payment_amounts[]"
                                     data-fb-id="${fbId}"
                                     data-balance="${balance}"
-                                    min="0" max="${balance}"
+                                    min="${Math.min(balance, 0)}" max="${Math.max(balance, 0)}"
                                     step="0.01"
                                     value="${balance.toFixed(2)}">
                         </tr>
@@ -915,7 +798,7 @@
                         @csrf
                         <div class="alert alert-secondary d-flex align-items-center justify-content-between">
                             <div>
-                                <strong>Total Balance of Selected:</strong> ₹<span id="combinedTotalBalance">${totalBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                                <strong>Total Balance of Selected:</strong> <span id="combinedTotalBalance">${totalBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
                             </div>
                             <div class="d-flex align-items-center gap-2">
                                 <label class="form-label mb-0">Combined Amount *</label>
@@ -931,7 +814,7 @@
                                           value="${totalBalance.toFixed(2)}"
                                           required>
                                     <div class="invalid-feedback">
-                                        Amount must be between 0.01 and ₹${totalBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}
+                                        Amount must be between 0.01 and ${totalBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}
                                     </div>
                                 </div>
                             </div>
@@ -950,7 +833,7 @@
                                 <tfoot class="d-none">
                                     <tr class="table-info">
                                         <th colspan="3" class="text-end">Total Allocated:</th>
-                                        <th class="text-end" id="combinedAllocatedTotal">₹${totalBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</th>
+                                        <th class="text-end" id="combinedAllocatedTotal">${totalBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</th>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -1081,7 +964,7 @@
 
                     // Update total allocated display
                     $('#combinedAllocatedTotal').text(
-                        '₹' + totalAmount.toLocaleString('en-IN', {
+                        '' + totalAmount.toLocaleString('en-IN', {
                             minimumFractionDigits: 2
                         })
                     );
@@ -1108,7 +991,7 @@
 
                     // Update totals
                     $('#combinedAllocatedTotal').text(
-                        '₹' + allocatedTotal.toLocaleString('en-IN', {
+                        '' + allocatedTotal.toLocaleString('en-IN', {
                             minimumFractionDigits: 2
                         })
                     );
@@ -1144,7 +1027,7 @@
                                 const confirmMessage = `⚠️ DUPLICATE PAYMENT WARNING ⚠️\n\n` +
                                     `A similar payment already exists for booking ID ${data.booking_index || 'N/A'}:\n\n` +
                                     `Date: ${duplicate.date}\n` +
-                                    `Amount: ₹${duplicate.amount}\n` +
+                                    `Amount: ${duplicate.amount}\n` +
                                     `Payment Type: ${duplicate.payment_type}\n` +
                                     `Payment Mode: ${duplicate.payment_mode}\n` +
                                     `Created: ${duplicate.created_at}\n\n` +
@@ -1157,7 +1040,7 @@
                                         <p><strong>A similar payment already exists:</strong></p>
                                         <ul style="text-align: left;">
                                             <li><strong>Date:</strong> ${duplicate.date}</li>
-                                            <li><strong>Amount:</strong> ₹${duplicate.amount}</li>
+                                            <li><strong>Amount:</strong> ${duplicate.amount}</li>
                                             <li><strong>Payment Type:</strong> ${duplicate.payment_type}</li>
                                             <li><strong>Payment Mode:</strong> ${duplicate.payment_mode}</li>
                                             <li><strong>Created:</strong> ${duplicate.created_at}</li>
@@ -1205,7 +1088,7 @@
                         if (data.adjust_in_advance && data.remaining_advance_balance !== undefined) {
                             const name = data.transporter_name || 'Transporter';
                             const bal = parseFloat(data.remaining_advance_balance).toFixed(2);
-                            successText += '\n\nRemaining advance balance (' + name + '): ₹ ' + bal;
+                            successText += '\n\nRemaining advance balance (' + name + '):  ' + bal;
                         }
                         Swal.fire({
                             icon: 'success',
@@ -1253,7 +1136,7 @@
                     const lrNumber = data.lr;
                     const truckNumber = data.truck;
                     const amount = parseFloat(data.amount) || 0;
-                    const voucherNumber = data.voucher_number || '-';
+                    const freightRate = parseFloat(data.freight_rate || 0);
                     const freightBookingId = data.freight_booking_id;
                     const shortageAmount = parseFloat(data.shortage_amount) || 0;
                     const damageAmount = parseFloat(data.damage_amount) || 0;
@@ -1271,10 +1154,10 @@
                         <tr>
                             <td>${lrNumber}</td>
                             <td>${truckNumber}</td>
-                            <td>${voucherNumber}</td>
-                            <td class="text-end">₹${amount + shortageAmount + damageAmount}</td>
-                            <td class="text-end">₹${shortageAmount}</td>
-                            <td class="text-end">₹${damageAmount}</td>
+                            <td class="text-end">${freightRate.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                            <td class="text-end">${amount + shortageAmount + damageAmount}</td>
+                            <td class="text-end">${shortageAmount}</td>
+                            <td class="text-end">${damageAmount}</td>
                             <input type="hidden" name="lr_ids[]" value="${lrId}">
                             <input type="hidden" name="freight_booking_ids[]" value="${freightBookingId}">
                         </tr>
@@ -1298,7 +1181,7 @@
                                     <tr>
                                         <th>LR Number</th>
                                         <th>Truck Number</th>
-                                        <th>Voucher Number</th>
+                                        <th class="text-end">Freight Rate</th>
                                         <th class="text-end">LR Amount</th>
                                         <th class="text-end">Shortage</th>
                                         <th class="text-end">Damage</th>
@@ -1310,7 +1193,7 @@
                                 <tfoot>
                                     <tr class="table-info">
                                         <th colspan="5" class="text-end">Net Amount:</th>
-                                        <th class="text-end">₹${netAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</th>
+                                        <th class="text-end">${netAmount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</th>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -1346,7 +1229,7 @@
                 $('.payment-amount').each(function() {
                     total += parseFloat($(this).val()) || 0;
                 });
-                $('#totalPaymentAmount').text('₹' + total.toLocaleString('en-IN', {
+                $('#totalPaymentAmount').text('' + total.toLocaleString('en-IN', {
                     minimumFractionDigits: 2
                 }));
             });
@@ -1618,7 +1501,6 @@
     }
 </style>
 
-
 @push('scripts')
     <script>
         $(document).ready(function() {
@@ -1664,11 +1546,11 @@
                       <tr>
                           <td>${lrNumber}</td>
                           <td>${voucherNumber}</td>
-                          <td class="text-end">₹${balance.toFixed(2)}</td>
+                          <td class="text-end">${balance.toFixed(2)}</td>
                           <td>
                               <input type="number" class="form-control form-control-sm payment-amount"
                                     name="payments[${freightBookingId}]"
-                                    min="0" max="${balance}" step="0.01"
+                                    min="${Math.min(balance, 0)}" max="${Math.max(balance, 0)}" step="0.01"
                                     value="${balance.toFixed(2)}"
                                     data-max="${balance}">
                           </td>
@@ -1677,7 +1559,7 @@
                     $('#voucherPaymentTableBody').append(row);
                 });
 
-                $('#totalPaymentAmount').text('₹' + totalBalance.toLocaleString('en-IN', {
+                $('#totalPaymentAmount').text('' + totalBalance.toLocaleString('en-IN', {
                     minimumFractionDigits: 2
                 }));
             });
@@ -1702,11 +1584,11 @@
                     input.addClass('is-invalid');
                     if (!input.next('.invalid-feedback').length) {
                         input.after(
-                            `<div class="invalid-feedback">Amount cannot exceed balance (₹${max.toFixed(2)})</div>`
+                            `<div class="invalid-feedback">Amount cannot exceed balance (${max.toFixed(2)})</div>`
                         );
                     } else {
                         input.next('.invalid-feedback').text(
-                            `Amount cannot exceed balance (₹${max.toFixed(2)})`);
+                            `Amount cannot exceed balance (${max.toFixed(2)})`);
                     }
                     input.val(max.toFixed(2)); // Correct the value to maximum allowed
                 }
@@ -1728,7 +1610,7 @@
                     }
                 });
 
-                $('#totalPaymentAmount').text('₹' + total.toLocaleString('en-IN', {
+                $('#totalPaymentAmount').text('' + total.toLocaleString('en-IN', {
                     minimumFractionDigits: 2
                 }));
 
@@ -1822,23 +1704,101 @@
             // Initialize tooltips
             $('[data-bs-toggle="tooltip"]').tooltip();
 
-            // DataTable initialization
+            // DataTable initialization (server-side; rows load via AJAX)
             var table = $('#freightBookingsTable').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: "{{ route('freight_bookings.datatable') }}",
+                    data: function(d) {
+                        $('#searchForm').serializeArray().forEach(function(field) {
+                            if (field.name === 'search') {
+                                d.filter_search = field.value;
+                            } else {
+                                d[field.name] = field.value;
+                            }
+                        });
+                    }
+                },
+                columns: [{
+                        data: 'checkbox',
+                        name: 'checkbox',
+                        orderable: false,
+                        searchable: false,
+                        className: 'text-center'
+                    },
+                    {
+                        data: 'gr_date',
+                        name: 'gr_date',
+                        className: 'text-center'
+                    },
+                    {
+                        data: 'lr_number',
+                        name: 'lr_number'
+                    },
+                    {
+                        data: 'customer',
+                        name: 'customer',
+                        orderable: false
+                    },
+                    {
+                        data: 'transporter',
+                        name: 'transporter',
+                        orderable: false
+                    },
+                    {
+                        data: 'truck_number',
+                        name: 'truck_number',
+                        orderable: false
+                    },
+                    {
+                        data: 'route',
+                        name: 'route',
+                        orderable: false
+                    },
+                    {
+                        data: 'weight',
+                        name: 'weight'
+                    },
+                    {
+                        data: 'rate',
+                        name: 'rate'
+                    },
+                    {
+                        data: 'total',
+                        name: 'total'
+                    },
+                    {
+                        data: 'balance',
+                        name: 'balance',
+                        className: 'text-end'
+                    },
+                    {
+                        data: 'actions',
+                        name: 'actions',
+                        orderable: false,
+                        searchable: false,
+                        className: 'text-center'
+                    }
+                ],
+                pageLength: 25,
                 paging: true,
                 info: true,
                 searching: false,
                 ordering: true,
                 theme: 'bootstrap-5',
                 responsive: true,
-                lengthChange: false,
-                // Default sort by GR Date (newest to oldest). GR Date is column index 1.
+                lengthChange: true,
+                lengthMenu: [
+                    [10, 25, 50, 100],
+                    [10, 25, 50, 100]
+                ],
                 order: [
                     [1, 'desc']
                 ],
-                // Disable sorting for checkbox (first) and actions (last) columns
                 columnDefs: [{
                     orderable: false,
-                    targets: [0, -1]
+                    targets: [0, 3, 4, 5, 6, -1]
                 }],
                 language: {
                     emptyTable: `<div class="text-muted">
@@ -1869,6 +1829,7 @@
                                 memoId: $(this).data('memo-id'),
                                 linkedLrId: $(this).data('linked-lr-id'),
                                 voucher_number: $(this).data('voucher_number'),
+                                freight_rate: parseFloat($(this).data('freight-rate') || 0),
                                 freight_booking_id: $(this).data('freight-booking-id'),
                                 lr_id: $(this).data('lr-id')
                             };
@@ -1901,7 +1862,6 @@
                 $('#select-all').prop('checked', allChecked);
                 updatePaymentButtonsVisibility();
             });
-
 
             // Delete confirmation
             $(document).on('click', '.delete-btn', function(e) {
@@ -1949,7 +1909,6 @@
                     return false; // or just return
                 }
             }
-
 
             // Check if any LR has no voucher number
             const hasNoVoucher = checkedBoxes.some(data => data.voucher_number === '0' || !data.voucher_number);
@@ -2018,6 +1977,7 @@
             const firstTransporterShortName = firstData.transporter_short_name;
             const firstTransporterBeneficiaryId = firstData.transporter_beneficiary_id;
             const firstTdsPercentage = firstData.tds_percentage;
+            const firstAdvanceAmount = firstData.advance_amount;
 
             modalBody.innerHTML += `
                   <div class="alert alert-primary mb-3">
@@ -2041,6 +2001,9 @@
                             <div class="col-md-4">
                                 <strong>Truck Number:</strong> ${firstTruck || 'N/A'}
                             </div>
+                            <div class="col-md-4 text-danger">
+                                <strong>Advance Amount:</strong> ${firstAdvanceAmount || 'N/A'}
+                            </div>
                       </div>
                   </div>
               `;
@@ -2061,7 +2024,7 @@
                                 <td>${payment.freight_booking?.lr?.lr_number || 'N/A'}</td>
                                 <td>${payment.payment_type}</td>
                                 <td>${paymentModeDisplay}</td>
-                                <td class="text-end">₹${parseFloat(payment.amount).toFixed(2)}</td>
+                                <td class="text-end">${parseFloat(payment.amount).toFixed(2)}</td>
                             </tr>
                         `;
                     });
@@ -2102,12 +2065,12 @@
                             <td style="text-align: left; padding: 8px; border: 1px solid #ddd;">${lrNumber || 'N/A'}</td>
                             <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${firstTruck || 'N/A'}</td>
                             <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${voucherNumber || 'N/A'}</td>
-                            <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">₹${balance.toFixed(2)}</td>
+                            <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">${balance.toFixed(2)}</td>
                             <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">
                                 <input type="number" step="0.01" min="0" max="${balance}"
                                       style="width: 80px; text-align: right; border: 1px solid #ccc; padding: 2px;"
                                       class="allocated-input" data-lr="${lrNumber}"
-                                      onchange="updateTotalPayment()" value="${balance.toFixed(2)}">
+                                      onchange="updateTotalPayment()">
                             </td>
                         </tr>
                     `;
@@ -2131,7 +2094,7 @@
                   </table>
 
                   <div style="background-color: #e3f2fd; padding: 10px; margin: 10px 0; border-radius: 4px;">
-                      <strong>TOTAL PAYMENT: ₹<span id="totalPaymentAmount">${lrData.reduce((sum, item) => sum + item.balance, 0).toFixed(2)}</span></strong>
+                      <strong>TOTAL PAYMENT: <span id="totalPaymentAmount">${lrData.reduce((sum, item) => sum + item.balance, 0).toFixed(2)}</span></strong>
                   </div>
                   <div style="margin: 15px 0;">
                       <div style="display: flex; gap: 15px; margin-bottom: 15px;">
@@ -2175,7 +2138,6 @@
                           <textarea id="paymentRemarks" style="width: 100%; height: 60px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Enter any remarks..."></textarea>
                           </div>
 
-
                       </div>
 
                   </div>
@@ -2197,12 +2159,12 @@
                             <td style="text-align: left; padding: 8px; border: 1px solid #ddd;">${lrNumber || 'N/A'}</td>
                             <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${firstTruck || 'N/A'}</td>
                             <td style="text-align: center; padding: 8px; border: 1px solid #ddd;">${voucherNumber || 'N/A'}</td>
-                            <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">₹${balance.toFixed(2)}</td>
+                            <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">${balance.toFixed(2)}</td>
                             <td style="text-align: right; padding: 8px; border: 1px solid #ddd;">
                                 <input type="number" step="0.01" min="0" max="${balance}"
                                       style="width: 80px; text-align: right; border: 1px solid #ccc; padding: 2px;"
                                       class="allocated-input" data-lr="${lrNumber}"
-                                      onchange="updateTotalPayment()" value="${balance.toFixed(2)}">
+                                      onchange="updateTotalPayment()">
                             </td>
                         </tr>
                     `;
@@ -2226,7 +2188,7 @@
                     </table>
 
                     <div style="background-color: #e3f2fd; padding: 10px; margin: 10px 0; border-radius: 4px;">
-                        <strong>TOTAL PAYMENT: ₹<span id="totalPaymentAmount">${lrData.reduce((sum, item) => sum + item.balance, 0).toFixed(2)}</span></strong>
+                        <strong>TOTAL PAYMENT: <span id="totalPaymentAmount">${lrData.reduce((sum, item) => sum + item.balance, 0).toFixed(2)}</span></strong>
                     </div>
 
                     <div style="margin: 15px 0;">
@@ -2301,7 +2263,7 @@
                                 </div>
                                 <div class="d-flex justify-content-between">
                                     <span><strong>Balance Amount:</strong></span>
-                                    <span class="text-success"><strong>₹${balance.toFixed(2)}</strong></span>
+                                    <span class="text-success"><strong>${balance.toFixed(2)}</strong></span>
                                 </div>
                             </div>
                         </div>
@@ -2353,11 +2315,11 @@
                             <div class="col-md-6">
                                 <label for="individualTotalAmountInput" class="form-label">Payment Amount *</label>
                                 <div class="input-group">
-                                    <span class="input-group-text">₹</span>
-                                    <input type="number" step="0.01" class="form-control" name="total_amount" id="individualTotalAmountInput" value="${balance.toFixed(2)}" min="0.01" max="${balance}" required>
+                                    <span class="input-group-text"></span>
+                                    <input type="number" step="0.01" class="form-control" name="total_amount" id="individualTotalAmountInput" min="0.01" max="${balance}" required>
                                 </div>
                                 <div class="invalid-feedback">Please enter a valid payment amount.</div>
-                                <small class="text-muted">Amount must be greater than zero and not exceed ₹${balance.toFixed(2)}</small>
+                                <small class="text-muted">Amount must be greater than zero and not exceed ${balance.toFixed(2)}</small>
                             </div>
                         </div>
                     </div>
@@ -2400,7 +2362,7 @@
             // Validate amount doesn't exceed balance
             if (amountValue > maxAmount) {
                 alert(
-                    `Payment amount (₹${amountValue.toFixed(2)}) cannot exceed the balance amount (₹${maxAmount.toFixed(2)}).`
+                    `Payment amount (${amountValue.toFixed(2)}) cannot exceed the balance amount (${maxAmount.toFixed(2)}).`
                 );
                 totalAmountInput.focus();
                 return;
@@ -2442,7 +2404,7 @@
                         if (data.adjust_in_advance && data.remaining_advance_balance !== undefined) {
                             const name = data.transporter_name || 'Transporter';
                             const bal = parseFloat(data.remaining_advance_balance).toFixed(2);
-                            successText += '\n\nRemaining advance balance (' + name + '): ₹ ' + bal;
+                            successText += '\n\nRemaining advance balance (' + name + '):  ' + bal;
                         }
                         Swal.fire({
                             icon: 'success',
@@ -2526,11 +2488,11 @@
                             'invalid-feedback')) {
                         const errorMsg = document.createElement('div');
                         errorMsg.className = 'invalid-feedback';
-                        errorMsg.textContent = `Amount cannot exceed balance (₹${maxValue.toFixed(2)})`;
+                        errorMsg.textContent = `Amount cannot exceed balance (${maxValue.toFixed(2)})`;
                         input.parentNode.insertBefore(errorMsg, input.nextSibling);
                     } else {
                         input.nextElementSibling.textContent =
-                            `Amount cannot exceed balance (₹${maxValue.toFixed(2)})`;
+                            `Amount cannot exceed balance (${maxValue.toFixed(2)})`;
                     }
                     hasError = true;
                 }
@@ -2605,18 +2567,12 @@
             allocatedInputs.forEach(input => {
                 const amount = parseFloat(input.value) || 0;
                 const maxAmount = parseFloat(input.getAttribute('max')) || 0;
+                const minAmount = parseFloat(input.getAttribute('min')) || 0;
                 const lrNumber = input.getAttribute('data-lr') || 'Unknown';
 
-                if (amount <= 0) {
-                    alert(`Error: Payment amount for LR ${lrNumber} must be greater than zero.`);
-                    input.focus();
-                    hasValidationError = true;
-                    return;
-                }
-
-                if (amount > maxAmount) {
+                if (amount < minAmount || amount > maxAmount) {
                     alert(
-                        `Error: Payment amount for LR ${lrNumber} (₹${amount.toFixed(2)}) exceeds the balance amount (₹${maxAmount.toFixed(2)}).`
+                        `Error: Payment amount for LR ${lrNumber} (${amount.toFixed(2)}) must be between ${minAmount.toFixed(2)} and ${maxAmount.toFixed(2)}.`
                     );
                     input.focus();
                     hasValidationError = true;
@@ -2633,8 +2589,6 @@
             // Calculate total amount
             const totalAmount = paymentAmounts.reduce((sum, amount) => sum + amount, 0);
 
-
-
             if (totalAmount <= 0) {
                 alert('Please enter valid payment amounts');
                 return;
@@ -2648,10 +2602,6 @@
 
             // Create form data
             const formData = new FormData();
-            //     if (pumpId) {
-            //     formData.append('pump_id', pumpId);
-            // }
-            // formData.append('pump_id', pumpId || null);
             formData.append('pump_id', pumpId || '');
             // Append payment type and mode IDs for backend processing
             formData.append('payment_type_id', paymentTypeValue);
@@ -2661,7 +2611,6 @@
             formData.append('payment_mode', paymentMode);
 
             formData.append('total_amount', totalAmount.toFixed(2));
-            // formData.append('payment_date', new Date().toISOString().split('T')[0]);
             formData.append('date', paymentDate);
 
             if (referenceId) formData.append('reference_number', referenceId);
@@ -2683,8 +2632,6 @@
                 '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
             submitBtn.disabled = true;
 
-
-
             // Submit the form via AJAX
             fetch('{{ route('freight_bookings.voucher_payment') }}', {
                     method: 'POST',
@@ -2701,7 +2648,7 @@
                         if (data.adjust_in_advance && data.remaining_advance_balance !== undefined) {
                             const name = data.transporter_name || 'Transporter';
                             const bal = parseFloat(data.remaining_advance_balance).toFixed(2);
-                            successText += '\n\nRemaining advance balance (' + name + '): ₹ ' + bal;
+                            successText += '\n\nRemaining advance balance (' + name + '):  ' + bal;
                         }
                         Swal.fire({
                             icon: 'success',
@@ -2719,7 +2666,7 @@
                             const confirmMessage = `⚠️ DUPLICATE PAYMENT WARNING ⚠️\n\n` +
                                 `A similar payment already exists for this booking:\n\n` +
                                 `Date: ${duplicate.date}\n` +
-                                `Amount: ₹${duplicate.amount}\n` +
+                                `Amount: ${duplicate.amount}\n` +
                                 `Payment Type: ${duplicate.payment_type}\n` +
                                 `Payment Mode: ${duplicate.payment_mode}\n` +
                                 `Created: ${duplicate.created_at}\n\n` +
@@ -2744,7 +2691,7 @@
                                         if (data.adjust_in_advance && data.remaining_advance_balance !== undefined) {
                                             const name = data.transporter_name || 'Transporter';
                                             const bal = parseFloat(data.remaining_advance_balance).toFixed(2);
-                                            successText += '\n\nRemaining advance balance (' + name + '): ₹ ' + bal;
+                                            successText += '\n\nRemaining advance balance (' + name + '):  ' + bal;
                                         }
                                         Swal.fire({
                                             icon: 'success',

@@ -138,7 +138,7 @@
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h3 class="card-title mb-0">Tranporter/Truck wise Report</h3>
+                        <h3 class="card-title mb-0">Transporter/Truck wise Report</h3>
                     </div>
                     <div class="d-flex">
                         <a class="btn btn-warning ms-2"
@@ -149,7 +149,6 @@
                 </div>
             </div>
             @php
-                $paymentNames = \App\Models\PaymentMode::pluck('name')->toArray();
                 $payments = array_fill_keys($paymentNames, 0);
             @endphp
             <div class="card-body" style="overflow-x: auto;">
@@ -176,16 +175,17 @@
                             <th>Short Amount</th>
                             <th>Misc Expenses</th>
                             <th>Balance</th>
+                            <th>Negative Adjusted</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($lrs as $index => $lr)
                             @php
-                                $fr = $lr->freightBookings->last();
+                                $fr = $lr->freightBooking;
                                 $payments = array_fill_keys($paymentNames, 0);
                                 $total_balance = 0;
                                 if ($fr) {
-                                    $vouchers = \App\Models\VoucherPayment::where('freight_booking_id', $fr->id)->get();
+                                    $vouchers = $fr->voucherPayments ?? collect();
                                     foreach ($vouchers as $voucher) {
                                         $paymentMode = $voucher->payment_mode;
                                         if (isset($payments[$paymentMode])) {
@@ -217,10 +217,14 @@
                                 <td>{{ number_format($lr->shortage_amount ?? 0, 2) }}</td>
                                 <td>{{ number_format($fr?->misc_expense ?? 0, 2) }}</td>
                                 <td>{{ number_format($total_balance, 2) }}</td>
+                                <td>{{ number_format($fr?->negative_adjusted_amount ?? 0, 2) }}</td>
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
+            </div>
+            <div class="mt-3 d-flex justify-content-end">
+                {{ $lrs->links() }}
             </div>
         </div>
     @endif
@@ -263,6 +267,17 @@
                 minAllowedStart.setMonth(minAllowedStart.getMonth() - 3);
 
                 return start < minAllowedStart;
+            }
+
+            function transporterDisplayName(item) {
+                if (item.name != null && String(item.name).length > 0) {
+                    return String(item.name);
+                }
+                const master = item.transporter_master;
+                if (master && master.name != null && String(master.name).length > 0) {
+                    return String(master.name);
+                }
+                return '';
             }
 
             function rebuildSelect($select, options, placeholder, selectedValue, labelKey) {
@@ -325,7 +340,7 @@
                             'Select Transporter/Truck Owner',
                             currentSelections.transporter,
                             function(item) {
-                                return item.name + (item.is_owner ? ' (Owner)' : ' (Transporter)');
+                                return transporterDisplayName(item) + (item.is_owner ? ' (Owner)' : ' (Transporter)');
                             }
                         );
 
@@ -339,7 +354,7 @@
                             'Select Reference By',
                             currentSelections.reference,
                             function(item) {
-                                return item.name;
+                                return transporterDisplayName(item);
                             }
                         );
                     },

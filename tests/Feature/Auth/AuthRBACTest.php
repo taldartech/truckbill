@@ -346,7 +346,7 @@ class AuthRBACTest extends TestCase
             'super admin branch routes require correct role' => ['/branches', 'admin'],
             'admin or moderator routes require correct role' => ['/consignees', 'accountant'],
             'admin only voucher payments create requires admin' => ['/voucher_payments/create', 'moderator'],
-            'admin or accountant reports require those roles' => ['/reports/invoice', 'moderator'],
+            'reports still deny unrelated roles' => ['/reports/invoice', 'customer'],
         ];
     }
 

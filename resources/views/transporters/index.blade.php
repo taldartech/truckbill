@@ -109,7 +109,7 @@
                         <div class="mb-3">
                             <label for="advance_amount" class="form-label">Book Balance *</label>
                             <div class="input-group">
-                                <span class="input-group-text">₹</span>
+                                <span class="input-group-text"></span>
                                 <input type="number" step="0.01" class="form-control" id="advance_amount"
                                     name="advance_amount" required placeholder="Use + to add, - to deduct">
                             </div>
@@ -208,8 +208,8 @@
                 ],
                 pageLength: 10,
                 lengthMenu: [
-                    [10, 25, 50, 100, -1],
-                    [10, 25, 50, 100, "All"]
+                    [10, 25, 50, 100],
+                    [10, 25, 50, 100]
                 ],
                 dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
                     '<"row"<"col-sm-12 col-md-12"B>>' +
@@ -238,6 +238,11 @@
                 responsive: true,
                 autoWidth: false,
                 stateSave: true,
+                stateLoadParams: function(settings, data) {
+                    data.order = [
+                        [0, 'asc']
+                    ];
+                },
                 searchDelay: 500,
                 initComplete: function() {
                     // Add individual column search
@@ -521,11 +526,10 @@
                 e.preventDefault();
                 //  confirm before submitting
                 let advanceAmount = $('#advance_amount').val();
-                if (!confirm('Are you sure you want to submit a book balance entry of ₹' + advanceAmount +
+                if (!confirm('Are you sure you want to submit a book balance entry of ' + advanceAmount +
                         '?')) {
                     return false;
                 }
-
 
                 var form = $(this);
                 var submitBtn = form.find('button[type="submit"]');
@@ -551,7 +555,7 @@
                         $('body').prepend(`
                     <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
                         <i class="bi bi-check-circle"></i>
-                        <strong>Success!</strong> Book balance entry of ₹${$('#advance_amount').val()} has been saved successfully.
+                        <strong>Success!</strong> Book balance entry of ${$('#advance_amount').val()} has been saved successfully.
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 `);

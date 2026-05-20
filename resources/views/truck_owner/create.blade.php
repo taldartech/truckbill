@@ -42,6 +42,7 @@
         @php
             $canEditCompany = auth()->check() && auth()->user()->userRole->name === 'super_admin';
             $userCompanyId = auth()->user()->company_id ?? null;
+            $shouldRestoreAfterValidation = $errors->any() && (old('pan_number') || old('transporter_master_id'));
         @endphp
         @error('registered_truck_id')
             <div class="text-danger">{{ $message }}</div>
@@ -54,6 +55,7 @@
                 <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
             @endif
             <input type="hidden" name="transporter_master_id" id="transporter_master_id" value="{{ old('transporter_master_id') }}">
+            <input type="hidden" id="pan_verified" value="{{ $shouldRestoreAfterValidation ? '1' : '0' }}">
 
             <!-- PAN Check Section - must complete before rest of form -->
             <div class="card mb-4 p-3 bg-light" id="panLookupSection">
@@ -63,7 +65,7 @@
                     <div class="col-md-6">
                         <label for="pan_lookup" class="form-label">PAN Number *</label>
                         <div class="input-group">
-                            <input type="text" class="form-control" id="pan_lookup" placeholder="Enter 10-digit PAN" maxlength="10" style="text-transform: uppercase;">
+                            <input type="text" class="form-control" id="pan_lookup" value="{{ old('pan_number') }}" placeholder="Enter 10-digit PAN" maxlength="10" style="text-transform: uppercase;">
                             <button type="button" class="btn btn-brand-primary" id="btnPanLookup">
                                 <i class="fas fa-check me-1"></i> Check PAN
                             </button>
@@ -80,7 +82,7 @@
             </div>
 
             <!-- Rest of form (shown only after PAN check and not already registered) -->
-            <div id="restOfForm" class="d-none">
+            <div id="restOfForm" class="{{ $shouldRestoreAfterValidation ? '' : 'd-none' }}">
             <!-- Master Data (Read-only when found via PAN) -->
             <div id="masterDataSection" class="d-none">
                 <div class="card mb-4 p-3 bg-light">
@@ -181,7 +183,7 @@
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Book Balance</label>
-                        <div class="form-control-plaintext bg-light border rounded px-3 py-2"><strong>₹ 0.00</strong></div>
+                        <div class="form-control-plaintext bg-light border rounded px-3 py-2"><strong> 0.00</strong></div>
                         <input type="hidden" name="advance_amount" value="0">
                     </div>
                 </div>
@@ -284,47 +286,6 @@
                         @error('city_id') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
                 </div>
-                {{-- <div class="row mb-3"> --}}
-                    {{-- <div class="col-md-4">
-                        <label for="country_id" class="form-label">Country *</label>
-                        <select class="form-select @error('country_id') is-invalid @enderror" id="country_id" name="country_id" required>
-                            <option value="">Select Country</option>
-                            @foreach($countries as $country)
-                                <option value="{{ $country->id }}" {{ old('country_id') == $country->id ? 'selected' : '' }}>
-                                    {{ $country->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('country_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="state_id" class="form-label">State *</label>
-                        <select class="form-select @error('state_id') is-invalid @enderror" id="state_id" name="state_id" required>
-                            <option value="">Select State</option>
-                            @if(old('country_id'))
-                                @foreach($states as $state)
-                                    <option value="{{ $state->id }}" {{ old('state_id') == $state->id ? 'selected' : '' }}>
-                                        {{ $state->name }}
-                                    </option>
-                                @endforeach
-                            @endif
-                        </select>
-                        @error('state_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="col-md-4">
-                        <label for="city_id" class="form-label">City *</label>
-                        <select class="form-select @error('city_id') is-invalid @enderror" id="city_id" name="city_id" required>
-                            <option value="">Select City</option>
-                            @if(old('state_id'))
-                                @foreach($cities as $city)
-                                    <option value="{{ $city->id }}" {{ old('city_id') == $city->id ? 'selected' : '' }}>
-                                        {{ $city->name }}
-                                    </option>
-                                @endforeach
-                            @endif
-                        </select>
-                        @error('city_id') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div> --}}
                 {{-- </div> --}}
                 <div class="row mb-3">
                     <div class="col-md-12">
@@ -557,6 +518,8 @@
     document.addEventListener('DOMContentLoaded', function() {
         const btnPanLookup = document.getElementById('btnPanLookup');
         const panLookup = document.getElementById('pan_lookup');
+        const panField = document.getElementById('pan_number');
+        const panVerifiedInput = document.getElementById('pan_verified');
         const panLookupMessage = document.getElementById('panLookupMessage');
         const masterDataSection = document.getElementById('masterDataSection');
         const newMasterFormSection = document.getElementById('newMasterFormSection');
@@ -564,6 +527,19 @@
         const locationDetailsSection = document.getElementById('locationDetailsSection');
         const restOfForm = document.getElementById('restOfForm');
         const panAlreadyRegisteredSection = document.getElementById('panAlreadyRegisteredSection');
+        let lastCheckedPan = '';
+        const shouldRestoreAfterValidation = @json($shouldRestoreAfterValidation);
+
+        function invalidatePanVerification(changedPan) {
+            if (!panVerifiedInput) return;
+            if (panVerifiedInput.value !== '1') return;
+            if ((changedPan || '').toUpperCase() === (lastCheckedPan || '').toUpperCase()) return;
+            panVerifiedInput.value = '0';
+            if (restOfForm) restOfForm.classList.add('d-none');
+            if (panAlreadyRegisteredSection) panAlreadyRegisteredSection.classList.add('d-none');
+            panLookupMessage.textContent = 'PAN changed. Please click Check PAN again.';
+            panLookupMessage.className = 'mt-2 small text-warning';
+        }
 
         if (btnPanLookup && panLookup) {
             btnPanLookup.addEventListener('click', function() {
@@ -590,6 +566,7 @@
                 .then(r => r.ok ? r.json() : r.json().then(d => { throw new Error(d.error || 'Request failed'); }))
                 .then(data => {
                     if (data.already_registered) {
+                        if (panVerifiedInput) panVerifiedInput.value = '0';
                         panLookupMessage.textContent = 'This PAN is already registered as a truck owner for this company.';
                         panLookupMessage.className = 'mt-2 small text-danger';
                         if (panAlreadyRegisteredSection) panAlreadyRegisteredSection.classList.remove('d-none');
@@ -638,18 +615,53 @@
                         panLookupMessage.textContent = 'PAN not in system. Please fill in all master details below.';
                         panLookupMessage.className = 'mt-2 small text-info';
                     }
+                    if (panVerifiedInput) panVerifiedInput.value = '1';
+                    lastCheckedPan = pan;
                     window.__ownerTdsUserEdited = false;
                     if (typeof refreshOwnerTdsBaseline === 'function') {
                         refreshOwnerTdsBaseline();
                     }
                 })
                 .catch((err) => {
+                    if (panVerifiedInput) panVerifiedInput.value = '0';
                     panLookupMessage.textContent = err.message || 'Check failed. Please try again.';
                     panLookupMessage.className = 'mt-2 small text-danger';
                 })
                 .finally(() => { btnPanLookup.disabled = false; });
             });
-            panLookup.addEventListener('input', function() { this.value = this.value.toUpperCase(); });
+            panLookup.addEventListener('input', function() {
+                this.value = this.value.toUpperCase();
+                invalidatePanVerification(this.value);
+                if (panField) {
+                    panField.value = this.value;
+                }
+            });
+        }
+
+        if (shouldRestoreAfterValidation) {
+            if (restOfForm) {
+                restOfForm.classList.remove('d-none');
+            }
+            if (panAlreadyRegisteredSection) {
+                panAlreadyRegisteredSection.classList.add('d-none');
+            }
+            if (panLookupMessage) {
+                panLookupMessage.textContent = 'Validation errors found. Please correct the fields below.';
+                panLookupMessage.className = 'mt-2 small text-warning';
+            }
+            if (panLookup && panLookup.value && panLookup.value.length === 10 && btnPanLookup) {
+                btnPanLookup.click();
+            }
+        }
+
+        if (panField) {
+            panField.addEventListener('input', function() {
+                this.value = this.value.toUpperCase();
+                if (panLookup && panLookup.value !== this.value) {
+                    panLookup.value = this.value;
+                }
+                invalidatePanVerification(this.value);
+            });
         }
         document.querySelectorAll('input[name="declaration_given"]').forEach(function (el) {
             el.addEventListener('change', function () {
@@ -711,6 +723,16 @@
 
     // Function to show confirmation modal with form data
     function showConfirmationModal() {
+        const panVerifiedInput = document.getElementById('pan_verified');
+        if (!panVerifiedInput || panVerifiedInput.value !== '1') {
+            const panLookupMessage = document.getElementById('panLookupMessage');
+            if (panLookupMessage) {
+                panLookupMessage.textContent = 'Please check PAN again before submitting.';
+                panLookupMessage.className = 'mt-2 small text-danger';
+            }
+            return;
+        }
+
         // First validate the form
         const form = document.querySelector('.needs-validation');
         if (!form.checkValidity()) {
@@ -765,7 +787,7 @@
 
         document.getElementById('confirm-declaration').textContent = declaration;
         document.getElementById('confirm-total-trucks').textContent = totalTrucks;
-        document.getElementById('confirm-advance').textContent = '₹' + parseFloat(advance).toFixed(2);
+        document.getElementById('confirm-advance').textContent = '' + parseFloat(advance).toFixed(2);
 
         // Show modal
         const modal = new bootstrap.Modal(document.getElementById('confirmationModal'));
@@ -874,7 +896,6 @@
                     'Accept': 'application/json'
                 },
                 success: function(data) {
-                    console.log('Country creation response:', data);
                     if (data && data.success && data.country) {
                         // Add new country to the main dropdown
                         $('#country_id').append(`<option value="${data.country.id}">${data.country.name}</option>`);
@@ -947,7 +968,6 @@
                     'Accept': 'application/json'
                 },
                 success: function(data) {
-                    console.log('State creation response:', data);
                     if (data && data.success && data.state) {
                         // Update dropdowns
                         updateStateDropdowns(data.state);
@@ -991,7 +1011,6 @@
             const stateId = $('#modal_city_state_id').val();
 
             const csrfToken = $('meta[name="csrf-token"]').attr('content');
-            console.log(cityName, stateId, csrfToken);
             // Show loading state
             submitBtn.prop('disabled', true);
             spinner.removeClass('d-none');
@@ -1001,7 +1020,6 @@
             const formData = new FormData();
             formData.append('name', cityName);
             formData.append('state_id', stateId);
-
 
             formData.append('from_modal', '1');
             formData.append('_token', csrfToken);
@@ -1018,7 +1036,6 @@
                     'Accept': 'application/json'
                 },
                 success: function(data) {
-                    console.log('City creation response:', data);
                     if (data && data.success && data.city) {
                         // Update dropdown
                         updateCityDropdown(data.city);

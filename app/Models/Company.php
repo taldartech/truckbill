@@ -59,7 +59,8 @@ class Company extends Model
 
     /**
      * Generate a short company code from the provided name.
-     * Uses initials from the first two words (alphabetic), otherwise falls back to first 5 letters.
+     * Multiple words: first alphabetic letter of each word, up to 5 characters.
+     * Single word: first 5 letters of the name (letters only).
      */
     public static function generateShortNameFromCompanyName(?string $companyName): string
     {
@@ -69,38 +70,47 @@ class Company extends Model
         }
 
         $words = preg_split('/\s+/', $name, -1, PREG_SPLIT_NO_EMPTY) ?: [];
-        $initials = [];
+        $lettersOnly = preg_replace('/[^a-zA-Z]/', '', $name) ?: '';
 
+        if (count($words) <= 1) {
+            return strtoupper(substr($lettersOnly, 0, 5));
+        }
+
+        $initials = '';
         foreach ($words as $word) {
-            if (count($initials) >= 2) {
+            if (strlen($initials) >= 5) {
                 break;
             }
 
             if (preg_match('/[a-zA-Z]/', $word, $matches) === 1) {
-                $initials[] = strtoupper($matches[0]);
+                $initials .= strtoupper($matches[0]);
             }
         }
 
-        if (count($initials) >= 2) {
-            return implode('', $initials);
+        if ($initials !== '') {
+            return $initials;
         }
-
-        $lettersOnly = preg_replace('/[^a-zA-Z]/', '', $name) ?: '';
 
         return strtoupper(substr($lettersOnly, 0, 5));
     }
 
-    private static function ensureUniqueShortName(string $base, ?int $exceptCompanyId = null): string
+    /**
+     * Resolve a globally unique company short code: try $base, then $base01, $base02, and so on.
+     */
+    public static function ensureUniqueShortName(string $base, ?int $exceptCompanyId = null): string
     {
         if ($base === '') {
             return '';
         }
 
         $candidate = $base;
-        $suffix = 1;
+        $attempt = 0;
         while (self::shortNameIsTaken($candidate, $exceptCompanyId)) {
+            $attempt++;
+            $suffix = strlen((string) $attempt) < 3
+                ? str_pad((string) $attempt, 2, '0', STR_PAD_LEFT)
+                : (string) $attempt;
             $candidate = $base.$suffix;
-            $suffix++;
         }
 
         return $candidate;

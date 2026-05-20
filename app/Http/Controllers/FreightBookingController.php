@@ -5,14 +5,20 @@ namespace App\Http\Controllers;
 use App\Models\Company;
 use App\Models\FreightBooking;
 use App\Models\LorryReceipt;
+use App\Models\PaymentMode;
+use App\Models\PaymentType;
 use App\Models\Pump;
 use App\Models\Transporter;
 use App\Models\Truck;
 use App\Models\VoucherPayment;
+use App\Services\FreightBookingCalculationService;
 use App\Services\Notifications\FreightBookingNotificationService;
 use App\Services\Notifications\LorryReceiptNotificationService;
+use App\Services\TransporterAdvanceLedgerService;
+use App\Support\ListingQueryString;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -22,32 +28,97 @@ class FreightBookingController extends Controller
 {
     public function __construct(
         private readonly LorryReceiptNotificationService $lrNotificationService,
-        private readonly FreightBookingNotificationService $frNotificationService
+        private readonly FreightBookingNotificationService $frNotificationService,
+        private readonly FreightBookingCalculationService $freightBookingCalculationService,
     ) {}
+
+    private function redirectToFreightBookingsIndex(?Request $request = null, ?string $flashKey = null, ?string $flashMessage = null): \Illuminate\Http\RedirectResponse
+    {
+        $request ??= request();
+
+        $redirect = redirect()->route(
+            'freight_bookings.index',
+            ListingQueryString::params($request, ListingQueryString::FREIGHT_BOOKING_KEYS)
+        );
+
+        if ($flashKey !== null && $flashMessage !== null) {
+            return $redirect->with($flashKey, $flashMessage);
+        }
+
+        return $redirect;
+    }
+
+    private function getActiveCompanyId(): ?int
+    {
+        $user = Auth::user();
+
+        if ($user->userRole->name === 'super_admin') {
+            $companyId = session('super_admin_company_id');
+
+            return (int) $companyId;
+        }
+
+        return $user->company_id ? (int) $user->company_id : null;
+    }
+
+    /**
+     * When LR and FB point at the same transporter row, reuse the eager-loaded LR relation
+     * so we do not run a second `transporters` / `transporter_masters` batch for the same IDs.
+     */
+    private function freightBookingTransporterForDisplay(FreightBooking $booking): ?Transporter
+    {
+        $lr = $booking->lr;
+        $lrTransporter = $lr?->transporter;
+        if ($lrTransporter && (int) ($booking->transporter_id ?? 0) === (int) ($lr->transporter_id ?? 0)) {
+            return $lrTransporter;
+        }
+
+        return $booking->transporter;
+    }
+
+    private function paymentRequestLogContext(Request $request): array
+    {
+        return [
+            'payment_type_id' => $request->input('payment_type_id'),
+            'payment_mode_id' => $request->input('payment_mode_id'),
+            'payment_type' => $request->input('payment_type'),
+            'payment_mode' => $request->input('payment_mode'),
+            'pump_id' => $request->input('pump_id'),
+            'date' => $request->input('date'),
+            'confirm_duplicate' => $request->input('confirm_duplicate'),
+            'booking_ids_count' => count($request->input('booking_ids', [])),
+            'payment_amounts_count' => count($request->input('payment_amounts', [])),
+            'has_reference_number' => $request->filled('reference_number'),
+            'has_notes' => $request->filled('notes'),
+        ];
+    }
+
+    private function freightBookingUpdateLogContext(Request $request): array
+    {
+        return [
+            'lr_id' => $request->input('lr_id'),
+            'linked_freight_booking_id' => $request->input('linked_freight_booking_id'),
+            'eway_bill_number_present' => $request->filled('eway_bill_number'),
+            'is_fixed_amount' => $request->boolean('is_fixed_amount'),
+            'is_delivered' => $request->boolean('is_delivered'),
+            'is_cancelled' => $request->boolean('is_cancelled'),
+        ];
+    }
 
     public function index(Request $request)
     {
-        if (auth()->user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
-            abort(403, 'Please enter a company first.');
-        }
+        $pumpOwnerUserId = Auth::user()->company?->user_id;
+        $pumps = $pumpOwnerUserId
+            ? Pump::query()
+                ->where('user_id', $pumpOwnerUserId)
+                ->select(['id', 'pump_name'])
+                ->orderBy('pump_name')
+                ->get()
+            : collect();
 
-        $pumps = Pump::where('user_id', Auth::user()->company->user_id)->get();
-        if ($request->ajax()) {
-            return $this->getFreightBookingsData($request);
-        }
-
-        $baseQuery = FreightBooking::with(['lr.truck', 'linkedFreightBooking', 'company', 'transporter.transporterMaster']);
-
-        // Company filter
-        if (auth()->user()->company_id) {
-            $baseQuery->where('freight_bookings.company_id', auth()->user()->company_id);
-        }
-
-        // Default date range: last 15 days
         $endDate = $request->input('end_date', date('Y-m-d', strtotime('+7 days')));
         $startDate = $request->input('start_date', date('Y-m-d', strtotime('-7 days')));
 
-        // Apply date range filter if provided
         if ($request->filled('start_date')) {
             $startDate = $request->start_date;
         }
@@ -55,249 +126,314 @@ class FreightBookingController extends Controller
             $endDate = $request->end_date;
         }
 
-        // Ensure date range doesn't exceed 3 months
         $maxEndDate = (new \DateTime($startDate))->modify('+3 months')->format('Y-m-d');
         if ($endDate > $maxEndDate) {
             $endDate = $maxEndDate;
         }
 
-        // Filter by date range for LR -> gr_date
-        $baseQuery->whereHas('lr', function ($q) use ($startDate, $endDate) {
-            $q->whereDate('gr_date', '>=', $startDate)
-                ->whereDate('gr_date', '<=', $endDate);
-        });
-
-        // Transporter filter
-        if ($request->filled('transporter_id')) {
-            $baseQuery->where(function ($q) use ($request) {
-                $q->where('transporter_id', $request->transporter_id)
-                    ->orWhere('transporter_name', 'LIKE', "%{$request->transporter_id}%");
-            });
-        }
-
-        // Truck owner filter
-        if ($request->filled('truck_owner_id')) {
-            $baseQuery->whereHas('lr.truck', function ($q) use ($request) {
-                $q->where('transporter_id', $request->truck_owner_id);
-            });
-        }
-
-        // Pending memo filter (only show bookings whose LR has no memo_id)
-        if ($request->filled('pending_memo')) {
-            $baseQuery->whereHas('lr', function ($q) {
-                $q->where('memo_id', null);
-            });
-            $baseQuery->where('is_cancelled', 0);
-        }
-
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $searchQuery = clone $baseQuery;
-            $searchQuery->where(function ($q) use ($search) {
-                $q->where('voucher_number', 'LIKE', "%{$search}%")
-                    ->orWhereHas('lr', function ($lrQuery) use ($search) {
-                        $lrQuery->where('lr_number', 'LIKE', "%{$search}%")
-                            ->orWhere('source_city', 'LIKE', "%{$search}%")
-                            ->orWhere('destination_city', 'LIKE', "%{$search}%")
-                            ->orWhereHas('customer', function ($customerQuery) use ($search) {
-                                $customerQuery->where('name', 'LIKE', "%{$search}%");
-                            })
-                            ->orWhereHas('truck', function ($truckQuery) use ($search) {
-                                $truckQuery->where('truck_number', 'LIKE', "%{$search}%");
-                            })
-                            ->orWhereHas('transporter.transporterMaster', function ($transporterQuery) use ($search) {
-                                $transporterQuery->where('name', 'LIKE', "%{$search}%");
-                            })
-                            ->orWhereHas('reference.transporterMaster', function ($referenceQuery) use ($search) {
-                                $referenceQuery->where('name', 'LIKE', "%{$search}%");
-                            });
-                    });
-            });
-
-            // IDs of direct matches
-            $searchResultIds = (clone $searchQuery)->pluck('id')->toArray();
-
-            // Step 2: Extract linked_lr_id from search results
-            $linkedIds = (clone $searchQuery)
-                ->whereNotNull('linked_lr_id')
-                ->pluck('linked_lr_id')
-                ->unique()
-                ->toArray();
-
-            // Step 3: Merge search results + all linked FRs
-            $baseQuery->where(function ($q) use ($searchResultIds, $linkedIds) {
-
-                if (! empty($searchResultIds)) {
-                    $q->whereIn('freight_bookings.id', $searchResultIds);
-                }
-
-                if (! empty($linkedIds)) {
-                    $q->orWhereIn('freight_bookings.linked_lr_id', $linkedIds);
-                }
-            });
-        }
-
-        /* ------------------------------------
-     | Grouped Ordering (UNCHANGED)
-     |------------------------------------ */
-        $bookings = $baseQuery
-            ->select('freight_bookings.*')
-            ->leftJoin(
-                DB::raw('(
-                SELECT linked_lr_id, MAX(id) as max_id
-                FROM freight_bookings
-                WHERE linked_lr_id IS NOT NULL
-                GROUP BY linked_lr_id
-            ) as fb_group'),
-                function ($join) {
-                    $join->on('freight_bookings.linked_lr_id', '=', 'fb_group.linked_lr_id');
-                }
-            )
-            ->orderByDesc(DB::raw('COALESCE(fb_group.max_id, freight_bookings.id)'))
-            ->orderByDesc('freight_bookings.id')
-            ->get();
-
-        /* ------------------------------------
-     | Dropdown / Filter Data
-     |------------------------------------ */
-        $transporters = Transporter::with('transporterMaster')
-            ->where('is_owner', 0)
-            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
-            ->orderBy('transporter_masters.name')
-            ->select('transporters.*')
-            ->get();
-        $truckOwners = Transporter::with('transporterMaster')
-            ->where('is_owner', 1)
-            ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
-            ->orderBy('transporter_masters.name')
-            ->select('transporters.*')
-            ->get();
-        $lrs = LorryReceipt::all();
-        $paymentTypes = \App\Models\PaymentType::all();
-        $paymentModes = \App\Models\PaymentMode::all();
-        $customers = \App\Models\Consignee::all();
+        $paymentTypes = Cache::remember(
+            'freight_bookings.index.payment_types',
+            now()->addHour(),
+            fn () => PaymentType::query()
+                ->select(['id', 'name'])
+                ->orderBy('name')
+                ->get()
+        );
+        $paymentModes = Cache::remember(
+            'freight_bookings.index.payment_modes',
+            now()->addHour(),
+            fn () => PaymentMode::query()
+                ->select(['id', 'name'])
+                ->orderBy('name')
+                ->get()
+        );
 
         return view('freight_bookings.index', compact(
-            'bookings',
-            'lrs',
             'paymentTypes',
             'paymentModes',
-            'transporters',
-            'truckOwners',
             'startDate',
             'endDate',
-            'pumps',
-            'customers'
+            'pumps'
         ));
     }
 
     public function getFreightBookingsData(Request $request)
     {
-        if (auth()->user()->userRole->name === 'super_admin' && ! session('super_admin_company_id')) {
-            abort(403, 'Please enter a company first.');
-        }
         try {
-            \Log::info('FreightBookings DataTables request started');
+            $endDate = $request->input('end_date', date('Y-m-d', strtotime('+7 days')));
+            $startDate = $request->input('start_date', date('Y-m-d', strtotime('-7 days')));
 
-            $query = FreightBooking::with(['lr.truck', 'linkedFreightBooking', 'company', 'transporter.transporterMaster'])
-                ->select('freight_bookings.*');
+            if ($request->filled('start_date')) {
+                $startDate = $request->start_date;
+            }
+            if ($request->filled('end_date')) {
+                $endDate = $request->end_date;
+            }
+
+            $maxEndDate = (new \DateTime($startDate))->modify('+3 months')->format('Y-m-d');
+            if ($endDate > $maxEndDate) {
+                $endDate = $maxEndDate;
+            }
+
+            $query = FreightBooking::query()
+                ->with([
+                    'lr.truck',
+                    'lr.customer',
+                    'lr.transporter.transporterMaster',
+                ])
+                ->select('freight_bookings.*')
+                ->join('lorry_receipts as list_lr', function ($join) {
+                    $join->on('freight_bookings.lr_id', '=', 'list_lr.id')
+                        ->whereNull('list_lr.deleted_at');
+                });
 
             if (auth()->user()->company_id) {
                 $query->where('freight_bookings.company_id', auth()->user()->company_id);
             }
 
-            \Log::info('Query built, processing DataTables');
+            $grStart = \Carbon\Carbon::parse($startDate)->startOfDay();
+            $grEnd = \Carbon\Carbon::parse($endDate)->endOfDay();
 
-            $dataTable = DataTables::of($query)
-                ->addIndexColumn()
-                ->addColumn('checkbox', function ($row) {
-                    // Hide checkbox if freight booking is delivered and balance is zero
-                    if ($row->is_delivered && ($row->balance_amount <= 0)) {
-                        return '<span class="text-muted" title="No checkbox available: Delivered with zero balance"><i class="bi bi-dash-circle"></i></span>';
+            $query->whereBetween('list_lr.gr_date', [$grStart, $grEnd]);
+
+            if ($request->filled('transporter_id')) {
+                $query->where(function ($q) use ($request) {
+                    $q->where('freight_bookings.transporter_id', $request->transporter_id)
+                        ->orWhere('freight_bookings.transporter_name', 'LIKE', "%{$request->transporter_id}%");
+                });
+            }
+
+            if ($request->filled('truck_owner_id')) {
+                $query->whereHas('lr.truck', function ($q) use ($request) {
+                    $q->where('transporter_id', $request->truck_owner_id);
+                });
+            }
+
+            if ($request->filled('pending_memo')) {
+                $query->whereNull('list_lr.memo_id')
+                    ->where('freight_bookings.is_cancelled', 0);
+            }
+
+            $listSearch = trim((string) $request->input('filter_search', $request->input('search', '')));
+            if ($listSearch !== '') {
+                $search = $listSearch;
+                $searchQuery = clone $query;
+                $searchQuery->where(function ($q) use ($search) {
+                    $q->where('freight_bookings.voucher_number', 'LIKE', "%{$search}%")
+                        ->orWhereHas('lr', function ($lrQuery) use ($search) {
+                            $lrQuery->where('lr_number', 'LIKE', "%{$search}%")
+                                ->orWhere('source_city', 'LIKE', "%{$search}%")
+                                ->orWhere('destination_city', 'LIKE', "%{$search}%")
+                                ->orWhereHas('customer', function ($customerQuery) use ($search) {
+                                    $customerQuery->where('name', 'LIKE', "%{$search}%");
+                                })
+                                ->orWhereHas('truck', function ($truckQuery) use ($search) {
+                                    $truckQuery->where('truck_number', 'LIKE', "%{$search}%");
+                                })
+                                ->orWhereHas('transporter.transporterMaster', function ($transporterQuery) use ($search) {
+                                    $transporterQuery->where('name', 'LIKE', "%{$search}%");
+                                })
+                                ->orWhereHas('reference.transporterMaster', function ($referenceQuery) use ($search) {
+                                    $referenceQuery->where('name', 'LIKE', "%{$search}%");
+                                });
+                        });
+                });
+
+                $searchResultIds = (clone $searchQuery)->pluck('freight_bookings.id')->toArray();
+
+                $linkedIds = (clone $searchQuery)
+                    ->whereNotNull('freight_bookings.linked_lr_id')
+                    ->pluck('freight_bookings.linked_lr_id')
+                    ->unique()
+                    ->toArray();
+
+                $query->where(function ($q) use ($searchResultIds, $linkedIds) {
+                    if (! empty($searchResultIds)) {
+                        $q->whereIn('freight_bookings.id', $searchResultIds);
                     }
 
+                    if (! empty($linkedIds)) {
+                        $q->orWhereIn('freight_bookings.linked_lr_id', $linkedIds);
+                    }
+                });
+            }
+
+            $dataTable = DataTables::of($query)
+                ->setRowId('id')
+                ->setRowClass(function (FreightBooking $row) {
+                    if ($row->is_cancelled) {
+                        return 'table-danger';
+                    }
+                    if ($row->is_delivered) {
+                        return 'table-success';
+                    }
+
+                    return '';
+                })
+                ->addColumn('checkbox', function (FreightBooking $booking) {
+                    $lr = $booking->lr;
+                    if ($lr && $lr->memo_id && (float) ($booking->balance_amount ?? 0) <= 0) {
+                        return '<span class="text-muted"><i class="bi bi-dash-circle"></i></span>';
+                    }
+                    if ($booking->is_cancelled) {
+                        return '<span class="text-muted"><i class="bi bi-dash-circle"></i></span>';
+                    }
+
+                    $lrTransporter = $lr?->transporter;
+
                     return sprintf(
-                        '<input type="checkbox" class="row-checkbox" value="%s" data-lr="%s" data-truck="%s" data-balance="%s" data-voucher_number="%s" data-is-delivered="%s">',
-                        $row->id,
-                        $row->lr ? $row->lr->lr_number : '',
-                        $row->lr && $row->lr->truck ? $row->lr->truck->truck_number : '',
-                        $row->balance_amount ?? 0,
-                        $row->voucher_number ?? '',
-                        $row->is_delivered ? '1' : '0'
+                        '<input type="checkbox" class="row-checkbox" value="%s" data-lr="%s" data-amount="%s" data-linked-lr-id="%s" data-memo-id="%s" data-lr-id="%s" data-truck="%s" data-truck-id="%s" data-transporter-id="%s" data-balance="%s" data-voucher_number="%s" data-freight-rate="%s" data-freight-booking-id="%s" data-is-cancelled="%s" data-is-delivered="%s" data-transporter="%s" data-lr-transporter="%s" data-lr-transporter-mobile-number="%s" data-lr-transporter-short-name="%s" data-lr-transporter-beneficiary-id="%s" data-fb-transporter="%s" data-tds-percentage="%s" data-customer-id="%s" data-shortage-amount="%s" data-damage-amount="%s" data-advance-amount="%s">',
+                        e((string) $booking->id),
+                        e($lr?->lr_number ?? ''),
+                        e((string) ($lr?->amount ?? '')),
+                        e((string) ($lr?->linked_lr_id ?? '')),
+                        e((string) ($lr?->memo_id ?? '')),
+                        e((string) ($lr?->id ?? '')),
+                        e($lr?->truck?->truck_number ?? ''),
+                        e((string) ($lr?->truck?->id ?? '')),
+                        e((string) ($lr?->transporter?->id ?? '')),
+                        e((string) ($booking->balance_amount ?? 0)),
+                        e((string) ($booking->voucher_number ?? '')),
+                        e((string) ($booking->tr_fr_rate ?? 0)),
+                        e((string) $booking->id),
+                        $booking->is_cancelled ? '1' : '0',
+                        $booking->is_delivered ? '1' : '0',
+                        e($lrTransporter?->name ?? ''),
+                        e($lrTransporter?->name ?? ''),
+                        e($lrTransporter?->mobile_number ?? ''),
+                        e($lrTransporter?->short_name ?? ''),
+                        e((string) ($lrTransporter?->beneficiary_id ?? '')),
+                        e($booking->transporter_name ?? ($this->freightBookingTransporterForDisplay($booking)?->name ?? '')),
+                        e((string) ($booking->transporter_tds_percentage ?? '')),
+                        e((string) ($lr?->customer?->id ?? '')),
+                        e((string) ($booking->shortage_amount ?? 0)),
+                        e((string) ($booking->damage_amount ?? 0)),
+                        e((string) ($lrTransporter?->advance_amount ?? 0))
                     );
                 })
-                ->addColumn('fr_number', function ($row) {
-                    return $row->id ? $row->id : '-';
+                ->addColumn('gr_date', function (FreightBooking $row) {
+                    return $row->lr && $row->lr->gr_date
+                        ? date('d-m-Y', strtotime((string) $row->lr->gr_date))
+                        : '-';
                 })
-                ->addColumn('lr_number', function ($row) {
-                    return $row->lr ? $row->lr->lr_number : '-';
-                })
-                ->addColumn('source_city', function ($row) {
-                    return $row->lr && $row->lr->source_city ? $row->lr->source_city : '-';
-                })
-                ->addColumn('destination_city', function ($row) {
-                    return $row->lr && $row->lr->destination_city ? $row->lr->destination_city : '-';
-                })
-                ->addColumn('transporter', function ($row) {
-                    $transporterName = $row->transporter_name ?? ($row->transporter ? $row->transporter->name : '-');
-                    $badge = '';
+                ->addColumn('lr_number', function (FreightBooking $row) {
+                    if (! $row->lr) {
+                        return '-';
+                    }
+                    $html = '<span class="fw-bold text-primary">'.e($row->lr->lr_number).'</span>';
+                    if ($row->linked_lr_id) {
+                        $html .= ' <span class="badge text-bg-success border-secondary">['.e((string) $row->linked_lr_id).']</span>';
+                    }
 
-                    if ($row->transporter && $row->transporter->is_owner) {
-                        $badge = '<span class="badge bg-success ms-1" title="Truck Owner"><i class="bi bi-truck"></i></span>';
+                    return $html;
+                })
+                ->addColumn('customer', function (FreightBooking $row) {
+                    if (! $row->lr) {
+                        return '-';
+                    }
+                    $name = $row->lr->customer?->name ?? '-';
+                    $html = e($name);
+                    if ($row->lr->memo_id) {
+                        $html .= ' <span class="badge text-bg-success border-secondary ms-1">['.e((string) $row->lr->memo_id).']</span>';
+                    }
+
+                    return $html;
+                })
+                ->addColumn('transporter', function (FreightBooking $row) {
+                    $t = $this->freightBookingTransporterForDisplay($row);
+                    $transporterName = $row->transporter_name ?? ($t?->name ?? '-');
+                    if ($t && $t->is_owner) {
+                        $badge = '<span class="badge text-bg-success border-secondary ms-1" title="Owner"><i class="bi bi-truck"></i></span>';
                     } else {
                         $badge = '<span class="badge bg-info ms-1" title="Agency"><i class="bi bi-building"></i></span>';
                     }
 
-                    return $transporterName.' '.$badge;
+                    return e($transporterName).' '.$badge;
                 })
-                ->addColumn('truck_number', function ($row) {
-                    return $row->lr && $row->lr->truck ? $row->lr->truck->truck_number : '-';
-                })
+                ->addColumn('truck_number', function (FreightBooking $row) {
+                    if (! $row->lr || ! $row->lr->truck) {
+                        return '-';
+                    }
 
-                ->addColumn('tr_rate_formatted', function ($row) {
-                    return $row->tr_fr_rate ? '₹'.number_format($row->tr_fr_rate, 2) : '₹0.00';
+                    return e($row->lr->truck->truck_number);
                 })
-                // ->addColumn('tr_amount_formatted', function ($row) {
-                //     return $row->tr_amount ? '₹' . number_format($row->tr_amount, 2) : '₹0.00';
-                // })
-                ->addColumn('advance_formatted', function ($row) {
-                    return $row->advance_amount ? '₹'.number_format($row->advance_amount, 2) : '₹0.00';
-                })
-                ->addColumn('balance_formatted', function ($row) {
+                ->addColumn('route', function (FreightBooking $row) {
+                    if (! $row->lr) {
+                        return '-';
+                    }
+                    $src = e($row->lr->source_city ?: '-');
+                    $dst = e($row->lr->destination_city ?: '-');
 
-                    return $row->balance_amount ? '₹'.number_format($row->balance_amount, 2) : '₹0.00';
+                    return '<div class="small"><span class="text-muted">'.$src.'</span>'
+                        .'<i class="bi bi-arrow-right mx-1 text-muted"></i>'
+                        .'<span class="text-muted">'.$dst.'</span></div>';
                 })
-                ->addColumn('gr_date_formatted', function ($row) {
-                    return $row->lr && $row->lr->gr_date ? date('d-m-Y', strtotime($row->lr->gr_date)) : '-';
-                })
-                ->addColumn('truck_number', function ($row) {
-                    return $row->lr && $row->lr->truck ? $row->lr->truck->truck_number : '-';
-                })
-                // ->addColumn('is_delivered_badge', function ($row) {
-                //     if ($row->is_delivered == '1') {
-                //         return '<span class="badge bg-success">Yes</span>';
-                //     } else {
-                //         return '<span class="badge bg-warning">No</span>';
-                //     }
-                // })
-                // ->addColumn('is_cancelled_badge', function ($row) {
-                //     if ($row->is_cancelled == '1') {
-                //         return '<span class="badge bg-danger">Yes</span>';
-                //     } else {
-                //         return '<span class="badge bg-secondary">No</span>';
-                //     }
-                // })
-                ->addColumn('actions', function ($row) {
-                    return $this->getActionButtons($row);
-                })
-                ->filterColumn('lr_number', function ($query, $keyword) {
-                    $query->whereHas('lr', function ($q) use ($keyword) {
-                        $q->where('lr_number', 'like', "%{$keyword}%");
-                    });
-                })
-                ->rawColumns(['checkbox', 'actions', 'transporter']);
+                ->addColumn('weight', function (FreightBooking $row) {
+                    if (! $row->lr || $row->lr->weight === null || $row->lr->weight === '') {
+                        return '-';
+                    }
 
-            \Log::info('DataTables processing complete');
+                    return e((string) $row->lr->weight);
+                })
+                ->addColumn('rate', function (FreightBooking $row) {
+                    return $row->lr && $row->tr_fr_rate
+                        ? '<span class="text-muted">'.e((string) $row->tr_fr_rate).'</span>'
+                        : '-';
+                })
+                ->addColumn('total', function (FreightBooking $row) {
+                    return $row->lr && $row->tr_fr_rate
+                        ? '<span class="fw-bold">'.e((string) $row->tr_amount).'</span>'
+                        : '-';
+                })
+                ->addColumn('balance', function (FreightBooking $row) {
+                    $amt = (float) ($row->balance_amount ?? 0);
+
+                    return '<span class="text-end fw-bold text-brand-primary d-block">'.number_format($amt, 2).'</span>';
+                })
+                ->addColumn('actions', function (FreightBooking $booking) use ($request) {
+                    $listingQuerySuffix = ListingQueryString::suffix($request, ListingQueryString::FREIGHT_BOOKING_KEYS);
+                    $html = '<div class="d-flex justify-content-center gap-1">';
+                    $html .= '<a href="'.e(route('freight_bookings.show', $booking->id).$listingQuerySuffix).'" class="btn-action btn-action-info" title="View"><i class="bi bi-eye"></i></a>';
+                    $html .= '<a href="'.e(route('freight_bookings.edit', $booking->id).$listingQuerySuffix).'" class="btn-action btn-action-primary" title="Edit"><i class="bi bi-pencil"></i></a>';
+
+                    $lr = $booking->lr;
+                    if ($lr) {
+                        $printTitle = $booking->voucher_last_printed_at
+                            ? 'Last printed: '.$booking->voucher_last_printed_at->format('d-m-Y h:i A')
+                            : 'Print voucher challan';
+                        $btnClass = $booking->voucher_printed ? 'btn-action-success' : 'btn-action-outline-success';
+                        $html .= '<a href="'.e(route('reports.voucher-receipt-export', ['lr_id' => $lr->id])).'" ';
+                        $html .= 'class="btn-action voucher-print-btn '.$btnClass.'" ';
+                        $html .= 'data-freight-booking-id="'.e((string) $booking->id).'" ';
+                        $html .= 'data-mark-url="'.e(route('reports.voucher-receipt-mark-printed')).'" ';
+                        $html .= 'title="'.e($printTitle).'"><i class="bi bi-file-earmark-text"></i></a>';
+                    }
+
+                    $html .= '</div>';
+
+                    return $html;
+                })
+                ->orderColumn('gr_date', 'list_lr.gr_date $1')
+                ->orderColumn('lr_number', 'list_lr.lr_number $1')
+                ->orderColumn('weight', 'list_lr.weight $1')
+                ->orderColumn('rate', 'freight_bookings.tr_fr_rate $1')
+                ->orderColumn('total', 'freight_bookings.tr_amount $1')
+                ->orderColumn('balance', 'freight_bookings.balance_amount $1')
+                ->rawColumns(['checkbox', 'lr_number', 'customer', 'transporter', 'route', 'rate', 'total', 'balance', 'actions'])
+                ->only([
+                    'checkbox',
+                    'gr_date',
+                    'lr_number',
+                    'customer',
+                    'transporter',
+                    'truck_number',
+                    'route',
+                    'weight',
+                    'rate',
+                    'total',
+                    'balance',
+                    'actions',
+                ]);
 
             return $dataTable->make(true);
         } catch (\Exception $e) {
@@ -314,93 +450,26 @@ class FreightBookingController extends Controller
         }
     }
 
-    private function getActionButtons($freightBooking)
-    {
-        $actions = '<div class="btn-group" role="group">';
-
-        // // View button
-        // $actions .= '<a href="' . route('freight_bookings.show', $freightBooking->id) . '" class="btn btn-sm btn-outline-info" title="View">';
-        // $actions .= '<i class="bi bi-eye"></i>';
-        // $actions .= '</a>';
-
-        // Edit button
-        if (auth()->check() && auth()->user()->canActAsAdmin()) {
-            $actions .= '<a href="'.route('freight_bookings.edit', $freightBooking->id).'" class="btn btn-sm btn-edit" title="Edit">';
-            $actions .= '<i class="bi bi-pencil"></i>';
-            $actions .= '</a>';
-        }
-
-        // Individual Voucher Payment button
-        if ($freightBooking->voucher_number && $freightBooking->balance_amount > 0) {
-            $actions .= '<button type="button" class="btn btn-sm btn-success individual-payment-btn" ';
-            $actions .= 'data-id="'.$freightBooking->id.'" ';
-            $actions .= 'data-lr="'.($freightBooking->lr ? $freightBooking->lr->lr_number : 'N/A').'" ';
-            $actions .= 'data-voucher_number="'.$freightBooking->voucher_number.'" ';
-            $actions .= 'data-balance="'.$freightBooking->balance_amount.'" ';
-            $actions .= 'data-truck="'.($freightBooking->lr && $freightBooking->lr->truck ? $freightBooking->lr->truck->truck_number : 'N/A').'" ';
-            $actions .= 'title="Make Voucher Payment">';
-            $actions .= '<i class="bi bi-credit-card"></i>';
-            $actions .= '</button>';
-        }
-
-        // Delete button
-        if (auth()->check() && auth()->user()->canActAsAdmin()) {
-            $actions .= '<form method="POST" action="'.route('freight_bookings.destroy', $freightBooking->id).'" style="display: inline;">';
-            $actions .= csrf_field();
-            $actions .= method_field('DELETE');
-            $actions .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete" onclick="return confirm(\'Are you sure you want to delete this good hire (lorry hire)?\')">';
-            $actions .= '<i class="bi bi-trash"></i>';
-            $actions .= '</button>';
-            $actions .= '</form>';
-        }
-        $actions .= '</div>';
-
-        return $actions;
-    }
-
-    public function getFreightBookingDetails($id)
-    {
-        $freightBooking = FreightBooking::with([
-            'lr' => function ($query) {
-                $query->with(['transporter.transporterMaster', 'truck', 'consignor', 'consignee']);
-            },
-        ])->find($id);
-
-        if (! $freightBooking) {
-            return response()->json(['error' => 'Good Hire (Lorry Hire) not found'], 404);
-        }
-
-        return response()->json([
-            'freight_booking' => $freightBooking,
-            'lr' => $freightBooking->lr,
-        ]);
-    }
-
     public function create(Request $request)
     {
         $company = auth()->user()->company;
         $today = now()->startOfDay();
         $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
         if ($company->plan_end_date && $today->gt($planEndDate)) {
-            return redirect()->route('freight_bookings.index')
-                ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+            return $this->redirectToFreightBookingsIndex($request, 'error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
         // check for lr credits
         if ($company->lr_credits <= 0) {
-            return redirect()->route('freight_bookings.index')
-                ->with('error', 'You do not have enough credits to create a Good Hire (Lorry Hire).');
+            return $this->redirectToFreightBookingsIndex($request, 'error', 'You do not have enough credits to create a Good Hire (Lorry Hire).');
         }
-        $companies = \App\Models\Company::all();
-        $lrs = LorryReceipt::all();
-        $linkedBookings = FreightBooking::all();
         $goodsTypes = \App\Models\GoodType::where('user_id', Auth::user()->company->user_id)->get();
         $lorry_receipt_id = $request->lorry_receipt_id;
 
         // Get TDS percentages from config
         $tdsPercentages = [
-            'default' => env('TDS_PERCENTAGE_DEFAULT', 20),
-            'agency' => env('TDS_PERCENTAGE_AGENCY', 2),
-            'owner' => env('TDS_PERCENTAGE_OWNER', 1),
+            'default' => config('payments.tds_percentages.default', 20),
+            'agency' => config('payments.tds_percentages.agency', 2),
+            'owner' => config('payments.tds_percentages.owner', 1),
         ];
 
         $lorry_receipt = \App\Models\LorryReceipt::with([
@@ -427,9 +496,6 @@ class FreightBookingController extends Controller
                 $tdsPercentage = $transporter ? (float) $transporter->tds_percentage : 0.0;
 
                 return view('freight_bookings.create', [
-                    'companies' => $companies,
-                    'lrs' => $lrs,
-                    'linkedBookings' => $linkedBookings,
                     'goodsTypes' => $goodsTypes,
                     'lorry_receipt' => $lorry_receipt,
                     'weight' => $lr->weight,
@@ -457,9 +523,6 @@ class FreightBookingController extends Controller
         }
 
         return view('freight_bookings.create', [
-            'companies' => $companies,
-            'lrs' => $lrs,
-            'linkedBookings' => $linkedBookings,
             'goodsTypes' => $goodsTypes,
             'lorry_receipt' => $lorry_receipt,
             'transporter' => null,
@@ -476,6 +539,8 @@ class FreightBookingController extends Controller
      */
     public function confirm(Request $request)
     {
+        $activeCompanyId = auth()->user()->company_id;
+
         // Validate the form data
         $validator = Validator::make($request->all(), [
             'lr_id' => 'required|exists:lorry_receipts,id',
@@ -503,6 +568,12 @@ class FreightBookingController extends Controller
 
         // Get the validated form data
         $formData = $validator->validated();
+        if ((int) $formData['company_id'] !== (int) $activeCompanyId) {
+            return redirect()->back()
+                ->withErrors(['company_id' => 'Invalid company context for this request.'])
+                ->withInput();
+        }
+        $formData['company_id'] = (int) $activeCompanyId;
 
         // Get the lorry receipt with its relationships
         $lorry_receipt = LorryReceipt::with(['transporter.transporterMaster', 'truck', 'customer', 'consignor', 'consignee', 'reference.transporterMaster'])
@@ -519,6 +590,8 @@ class FreightBookingController extends Controller
      */
     public function store(Request $request)
     {
+        $activeCompanyId = auth()->user()->company_id;
+
         // Check if the form has been confirmed
         if (! $request->has('confirmed')) {
             return redirect()->route('freight_bookings.create')
@@ -544,50 +617,60 @@ class FreightBookingController extends Controller
             'company_id' => 'required|exists:companies,id',
 
         ]);
-
-        // Get the lorry receipt to get its LR number
-        $lorryReceipt = LorryReceipt::find($data['lr_id']);
-        if (! $lorryReceipt) {
-            return redirect()->back()->withErrors(['lr_id' => 'Invalid good receipt (bilty)']);
+        if ((int) $data['company_id'] !== (int) $activeCompanyId) {
+            return redirect()->back()
+                ->withErrors(['company_id' => 'Invalid company context for this request.'])
+                ->withInput();
         }
+        $data['company_id'] = (int) $activeCompanyId;
 
-        if ($lorryReceipt->freight_booking_id) {
-            return redirect()->route('freight_bookings.index')->with('error', 'This Good Receipt (Bilty) is already linked to a Good Hire (Lorry Hire).');
-        }
+        try {
+            DB::beginTransaction();
 
-        // Create freight booking with lorry receipt's LR number
-        // Get the next voucher number
-        $nextVoucherNumber = FreightBooking::max('voucher_number') + 1;
+            $lorryReceipt = LorryReceipt::lockForUpdate()->find($data['lr_id']);
+            if (! $lorryReceipt) {
+                DB::rollBack();
 
-        // Get transporter information from lorry receipt
-        $transporterInfo = [];
-        if ($lorryReceipt->transporter) {
-            $transporterInfo = [
-                'transporter_id' => $lorryReceipt->transporter_id,
-                'transporter_name' => $lorryReceipt->transporter->name,
-                'transporter_tds_percentage' => $lorryReceipt->transporter->tds_percentage,
-            ];
-        }
+                return redirect()->back()->withErrors(['lr_id' => 'Invalid good receipt (bilty)']);
+            }
 
-        $linkedLrId = $lorryReceipt->linked_lr_id ?? null;
-        $linked_freight_booking_id = FreightBooking::where('lr_id', $lorryReceipt->id)->orderBy('id', 'desc')->first()->id ?? null;
+            if ($lorryReceipt->freight_booking_id) {
+                DB::rollBack();
 
-        $freightBooking = FreightBooking::create(array_merge($data, [
-            'lr_number' => $lorryReceipt->lr_number,
-            'linked_freight_booking_id' => $linked_freight_booking_id,
-            'voucher_number' => $nextVoucherNumber,
-            'pan_verified' => (bool) $data['pan_verified'],
-            'company_id' => $data['company_id'],
-            'linked_lr_id' => $linkedLrId,
-        ], $transporterInfo));
+                return $this->redirectToFreightBookingsIndex($request, 'error', 'This Good Receipt (Bilty) is already linked to a Good Hire (Lorry Hire).');
+            }
 
-        if (! empty($data['is_cancelled'])) {
-            $freightBooking->loadMissing(['company', 'lr.truck', 'transporter.transporterMaster']);
-            $this->frNotificationService->notifyCancelled($freightBooking, auth()->user());
-        }
+            $nextVoucherNumber = FreightBooking::max('voucher_number') + 1;
 
-        // Update lorry receipt status and damage amount
-        if ($lorryReceipt) {
+            $transporterInfo = [];
+            if ($lorryReceipt->transporter) {
+                $transporterInfo = [
+                    'transporter_id' => $lorryReceipt->transporter_id,
+                    'transporter_name' => $lorryReceipt->transporter->name,
+                    'transporter_tds_percentage' => $lorryReceipt->transporter->tds_percentage,
+                ];
+            }
+
+            $calculatedAmounts = $this->freightBookingCalculationService->calculateForStore(
+                (bool) ($data['is_fixed_amount'] ?? false),
+                (float) $data['tr_fr_rate'],
+                (float) ($lorryReceipt->weight ?? 0),
+                (float) $data['tr_amount'],
+                (float) ($transporterInfo['transporter_tds_percentage'] ?? 0)
+            );
+
+            $linkedLrId = $lorryReceipt->linked_lr_id ?? null;
+            $linked_freight_booking_id = FreightBooking::where('lr_id', $lorryReceipt->id)->orderBy('id', 'desc')->first()->id ?? null;
+
+            $freightBooking = FreightBooking::create(array_merge($data, $calculatedAmounts, [
+                'lr_number' => $lorryReceipt->lr_number,
+                'linked_freight_booking_id' => $linked_freight_booking_id,
+                'voucher_number' => $nextVoucherNumber,
+                'pan_verified' => (bool) $data['pan_verified'],
+                'company_id' => $data['company_id'],
+                'linked_lr_id' => $linkedLrId,
+            ], $transporterInfo));
+
             $oldDeliveryStatus = $lorryReceipt->delivery_status;
             $deliveryStatus = 'Pending';
             if ($data['is_cancelled'] === '1') {
@@ -601,10 +684,41 @@ class FreightBookingController extends Controller
             $lorryReceipt->freight_booking_id = $freightBooking->id;
             $lorryReceipt->save();
 
-            if ($deliveryStatus !== $oldDeliveryStatus) {
-                $lorryReceipt->loadMissing(['company', 'truck', 'transporter.transporterMaster', 'customer']);
-                $this->lrNotificationService->notifyStatusChange($lorryReceipt, $deliveryStatus, auth()->user());
+            $company = Company::lockForUpdate()->find($data['company_id']);
+            if (! $company) {
+                DB::rollBack();
+
+                return redirect()->back()->withErrors(['company_id' => 'Invalid company context for this request.']);
             }
+            $company->lr_credits = $company->lr_credits - 1;
+            $company->save();
+
+            $notifyCancelled = ! empty($data['is_cancelled']);
+            $notifyLrStatusChange = $deliveryStatus !== $oldDeliveryStatus;
+
+            DB::afterCommit(function () use ($notifyCancelled, $notifyLrStatusChange, $freightBooking, $lorryReceipt, $deliveryStatus): void {
+                if ($notifyCancelled) {
+                    $freightBooking->loadMissing(['company', 'lr.truck', 'transporter.transporterMaster']);
+                    $this->frNotificationService->notifyCancelled($freightBooking, auth()->user());
+                }
+
+                if ($notifyLrStatusChange) {
+                    $lorryReceipt->loadMissing(['company', 'truck', 'transporter.transporterMaster', 'customer']);
+                    $this->lrNotificationService->notifyStatusChange($lorryReceipt, $deliveryStatus, auth()->user());
+                }
+            });
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            \Log::error('Freight booking create failed', [
+                'error' => $e->getMessage(),
+                'request_context' => $this->freightBookingUpdateLogContext($request),
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['general' => 'Unable to create Good Hire (Lorry Hire). Please try again.']);
         }
 
         if ($request->has('action') && $request->action === 'save_and_pay') {
@@ -613,15 +727,15 @@ class FreightBookingController extends Controller
                 ->with('success', 'Good Hire (Lorry Hire) created successfully. Ready to make payment.');
         }
         if ($request->has('action') && $request->action === 'save_and_view') {
-            return redirect()->route('freight_bookings.show', $freightBooking->id)
+            $showUrl = route('freight_bookings.show', $freightBooking->id)
+                .ListingQueryString::suffix($request, ListingQueryString::FREIGHT_BOOKING_KEYS);
+
+            return redirect()
+                ->to($showUrl)
                 ->with('success', 'Good Hire (Lorry Hire) created successfully. Ready to make payment.');
         }
-        // decrease lr credits by one in company table
-        $company = Company::find($data['company_id']);
-        $company->lr_credits = $company->lr_credits - 1;
-        $company->save();
 
-        return redirect()->route('freight_bookings.index')->with('success', 'Good Hire (Lorry Hire) created successfully.');
+        return $this->redirectToFreightBookingsIndex($request, 'success', 'Good Hire (Lorry Hire) created successfully.');
     }
 
     public function storeCombinedPayment(Request $request)
@@ -657,7 +771,14 @@ class FreightBookingController extends Controller
             $data['total_amount'] = $request->input('combined_amount');
             $data['date'] = $request->input('payment_date') ?? date('Y-m-d');
             $data['booking_ids'] = $request->input('booking_ids');
-            $data['payment_amounts'] = $request->input('payment_amounts');
+            // Keep signed split values as submitted (e.g. 1586.55 and -586.05 for linked offsets).
+            $data['payment_amounts'] = array_map(static fn ($v) => (float) $v, (array) $request->input('payment_amounts', []));
+            if (array_sum($data['payment_amounts']) <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Combined payment amount is not allocatable against selected bookings. Please review balances.',
+                ], 422);
+            }
             $data['reference_number'] = $request->input('reference_number');
             $data['notes'] = $request->input('notes').'   Combined Payment: '.($request->input('combined_amount'))
                 .'. [LR IDs: '.implode(', ', $lrs).'], Date: '.$data['date'];
@@ -678,7 +799,7 @@ class FreightBookingController extends Controller
 
             // If voucherPayment returned an error or warning, return it as JSON response
             if ($response['success'] !== true) {
-                return response()->json($response, $response['warning'] ? 422 : 422);
+                return response()->json($response, 422);
             }
 
             $voucherPayments = $response['processed_payments'] ?? [];
@@ -716,12 +837,6 @@ class FreightBookingController extends Controller
 
                 \DB::commit();
 
-                \Log::info('Combined payment created successfully', [
-                    'voucher_linked_id' => $VoucherLinked->id,
-                    'voucher_payments' => $voucherPayments,
-                    'total_amount' => $data['total_amount'],
-                ]);
-
                 return response()->json($response);
             } catch (\Exception $e) {
                 \DB::rollBack();
@@ -746,7 +861,7 @@ class FreightBookingController extends Controller
             \Log::error('Error in storeCombinedPayment', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'request_data' => $request->all(),
+                'request_context' => $this->paymentRequestLogContext($request),
             ]);
 
             return response()->json([
@@ -798,11 +913,9 @@ class FreightBookingController extends Controller
 
             return view('freight_bookings.show', compact('freightBooking', 'paymentTypes', 'paymentModes', 'pumps', 'payments', 'linkedFreightBookings', 'combinedTotalBalance'));
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return redirect()->route('freight_bookings.index')
-                ->with('error', 'Freight booking not found.');
+            return $this->redirectToFreightBookingsIndex(request(), 'error', 'Freight booking not found.');
         } catch (\Exception $e) {
-            return redirect()->route('freight_bookings.index')
-                ->with('error', 'An error occurred while loading the good hire (lorry hire).');
+            return $this->redirectToFreightBookingsIndex(request(), 'error', 'An error occurred while loading the good hire (lorry hire).');
         }
     }
 
@@ -812,101 +925,79 @@ class FreightBookingController extends Controller
         $today = now()->startOfDay();
         $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
         if ($company->plan_end_date && $today->gt($planEndDate)) {
-            return redirect()->route('freight_bookings.index')
-                ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+            return $this->redirectToFreightBookingsIndex(request(), 'error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
         try {
-            $freightBooking = FreightBooking::findOrFail($id);
+            $freightBooking = FreightBooking::query()
+                ->with([
+                    'lr.transporter.transporterMaster',
+                    'lr.consignee',
+                    'lr.truck',
+                ])
+                ->findOrFail($id);
 
             $is_admin = Auth::user()->canActAsAdmin();
             if (Auth::user()->company_id && $freightBooking->company_id !== Auth::user()->company_id) {
                 abort(403, 'Unauthorized access to good hire (lorry hire).');
             }
-            $companies = \App\Models\Company::all();
-            // Get the LorryReceipt details
-            $lorryReceipt = LorryReceipt::find($freightBooking->lr_id);
-            // Get TDS percentages from config
+
+            $lorryReceipt = $freightBooking->lr;
+            $transporter = $lorryReceipt?->transporter;
+            $truck = $lorryReceipt?->truck;
+
             $tdsPercentages = [
-                'default' => env('TDS_PERCENTAGE_DEFAULT', 20),
-                'agency' => env('TDS_PERCENTAGE_AGENCY', 2),
-                'owner' => env('TDS_PERCENTAGE_OWNER', 1),
+                'default' => config('payments.tds_percentages.default', 20),
+                'agency' => config('payments.tds_percentages.agency', 2),
+                'owner' => config('payments.tds_percentages.owner', 1),
             ];
 
-            // Get the transporter details
-            $transporter = \App\Models\Transporter::find($lorryReceipt->transporter_id);
-
-            // Get the truck details
-            $truck = \App\Models\Truck::find($lorryReceipt->truck_id);
-
-            // Get all LRs
-            $lrs = LorryReceipt::all();
-
-            // Get goods types
             $goodsTypes = \App\Models\GoodType::where('user_id', Auth::user()->company->user_id)->get();
-            $lorry_receipt = \App\Models\LorryReceipt::with(['transporter.transporterMaster', 'truck:id,truck_number'])
-                ->select('id', 'lr_number', 'transporter_id', 'truck_id', 'customer_id', 'consignor_id', 'consignee_id', 'good_type', 'reference_by')
-                ->when($lorryReceipt, function ($query) use ($lorryReceipt) {
-                    $query->where('id', $lorryReceipt->id);
-                })
-                ->get();
+            $lorry_receipt = $lorryReceipt ? collect([$lorryReceipt]) : collect();
 
-            // Get linked bookings
-            $linkedBookings = FreightBooking::where('id', '!=', $freightBooking->id)->get();
-            // If lorry_receipt_id is provided, fetch LR number and related data
             if ($lorryReceipt) {
-                $lr = \App\Models\LorryReceipt::find($lorryReceipt->id);
-                if ($lr) {
-                    // Fetch transporter and truck details directly from their models
-                    $transporter = \App\Models\Transporter::find($lr->transporter_id);
-                    $truck = \App\Models\Truck::find($lr->truck_id);
-                    $tdsPercentage = $transporter ? (float) $transporter->tds_percentage : 0.0;
+                $tdsPercentage = $transporter ? (float) $transporter->tds_percentage : 0.0;
 
-                    return view('freight_bookings.edit', [
-                        'freightBooking' => $freightBooking,
-                        'companies' => $companies,
-                        'lrs' => $lrs,
-                        'linkedBookings' => $linkedBookings,
-                        'goodsTypes' => $goodsTypes,
-                        'lorry_receipt' => $lorry_receipt,
-                        'weight' => $lr->weight,
+                return view('freight_bookings.edit', [
+                    'freightBooking' => $freightBooking,
+                    'goodsTypes' => $goodsTypes,
+                    'lorry_receipt' => $lorry_receipt,
+                    'weight' => $lorryReceipt->weight,
 
-                        'transporter' => $transporter ?? null,
-                        'tdsPercentages' => $tdsPercentages,
-                        'tdsPercentage' => $tdsPercentage, // send to view
-                        'canChangeTds' => $freightBooking->canChangeTdsAmount(),
-                        'preFilled' => [
-                            'lr_number' => $lr->lr_number,
-                            'lr_id' => $lr->id,
-                            'transporter_id' => $lr->transporter_id,
-                            'transporter_name' => $transporter ? $transporter->name : '',
-                            'truck_id' => $lr->truck_id,
-                            'truck_number' => $truck ? $truck->truck_number : '',
-                            'pan_verified' => $transporter ? $transporter->pan_active : 0,
-                            'is_owner' => $transporter ? $transporter->is_owner : 0,
-                            'goods_type' => $lr->good_type,
-                            'memo_id' => $lr->memo_id,
-                        ],
-                        'is_admin' => $is_admin,
-                    ]);
-                }
+                    'transporter' => $transporter,
+                    'tdsPercentages' => $tdsPercentages,
+                    'tdsPercentage' => $tdsPercentage,
+                    'canChangeTds' => $freightBooking->canChangeTdsAmount(),
+                    'preFilled' => [
+                        'lr_number' => $lorryReceipt->lr_number,
+                        'lr_id' => $lorryReceipt->id,
+                        'transporter_id' => $lorryReceipt->transporter_id,
+                        'transporter_name' => $transporter ? $transporter->name : '',
+                        'truck_id' => $lorryReceipt->truck_id,
+                        'truck_number' => $truck ? $truck->truck_number : '',
+                        'pan_verified' => $transporter ? $transporter->pan_active : 0,
+                        'is_owner' => $transporter ? $transporter->is_owner : 0,
+                        'goods_type' => $lorryReceipt->good_type,
+                        'memo_id' => $lorryReceipt->memo_id,
+                    ],
+                    'is_admin' => $is_admin,
+                ]);
             }
 
             return view('freight_bookings.edit', [
                 'freightBooking' => $freightBooking,
-                'lorry_receipt' => $lrs,
-                'linkedBookings' => $linkedBookings,
-                'goods_type' => $goodsTypes,
+                'lorry_receipt' => $lorry_receipt,
+                'goodsTypes' => $goodsTypes,
                 'transporter' => $transporter,
                 'truck' => $truck,
                 'tdsPercentages' => $tdsPercentages,
                 'tdsPercentage' => $transporter ? (float) $transporter->tds_percentage : (float) ($freightBooking->transporter_tds_percentage ?? 0),
                 'canChangeTds' => $freightBooking->canChangeTdsAmount(),
                 'preFilled' => [
-                    'lr_number' => $freightBooking->lr ? $freightBooking->lr->lr_number : '',
+                    'lr_number' => '',
                     'lr_id' => $freightBooking->lr_id,
-                    'transporter_id' => $freightBooking->lr ? $freightBooking->lr->transporter_id : '',
+                    'transporter_id' => '',
                     'transporter_name' => $transporter ? $transporter->name : '',
-                    'truck_id' => $freightBooking->lr ? $freightBooking->lr->truck_id : '',
+                    'truck_id' => '',
                     'truck_number' => $truck ? $truck->truck_number : '',
                     'pan_verified' => $transporter ? $transporter->pan_active : 0,
                     'is_owner' => $transporter ? $transporter->is_owner : 0,
@@ -914,11 +1005,9 @@ class FreightBookingController extends Controller
                 'is_admin' => $is_admin,
             ]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return redirect()->route('freight_bookings.index')
-                ->with('error', 'Freight booking not found.');
+            return $this->redirectToFreightBookingsIndex(request(), 'error', 'Freight booking not found.');
         } catch (\Exception $e) {
-            return redirect()->route('freight_bookings.index')
-                ->with('error', 'An error occurred while loading the good hire (lorry hire) for editing.');
+            return $this->redirectToFreightBookingsIndex(request(), 'error', 'An error occurred while loading the good hire (lorry hire) for editing.');
         }
     }
 
@@ -934,11 +1023,17 @@ class FreightBookingController extends Controller
 
     public function getTransporter($id)
     {
+        $companyId = $this->getActiveCompanyId();
         $transporter = \App\Models\Transporter::with([
             'transporterMaster.city',
             'transporterMaster.state',
             'transporterMaster.country',
-        ])->find($id);
+        ])
+            ->where('id', $id)
+            ->when($companyId, function ($query) use ($companyId) {
+                $query->where('company_id', $companyId);
+            })
+            ->first();
         if (! $transporter) {
             return response()->json(['error' => 'Transporter not found'], 404);
         }
@@ -948,7 +1043,18 @@ class FreightBookingController extends Controller
 
     public function getTruck($id)
     {
-        $truck = \App\Models\Truck::with(['transporter.transporterMaster', 'driver'])->find($id);
+        $companyId = $this->getActiveCompanyId();
+        $truck = \App\Models\Truck::with(['transporter.transporterMaster', 'driver'])
+            ->where('id', $id)
+            ->when($companyId, function ($query) use ($companyId) {
+                $query->where(function ($innerQuery) use ($companyId) {
+                    $innerQuery->where('company_id', $companyId)
+                        ->orWhereHas('transporter', function ($transporterQuery) use ($companyId) {
+                            $transporterQuery->where('company_id', $companyId);
+                        });
+                });
+            })
+            ->first();
         if (! $truck) {
             return response()->json(['error' => 'Truck not found'], 404);
         }
@@ -966,20 +1072,13 @@ class FreightBookingController extends Controller
         $today = now()->startOfDay();
         $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
         if ($company->plan_end_date && $today->gt($planEndDate)) {
-            return redirect()->route('freight_bookings.index')
-                ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+            return $this->redirectToFreightBookingsIndex($request, 'error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
 
         // Prevent updates to cancelled freight bookings
         if ($freightBooking->is_cancelled) {
             return redirect()->back()->withErrors(['general' => 'Cannot update a cancelled good hire (lorry hire). Please contact administrator if changes are needed.']);
         }
-
-        // Add debug logging
-        \Log::info('Freight booking update started', [
-            'freight_booking_id' => $freightBooking->id,
-            'request_data' => $request->all(),
-        ]);
 
         $data = $request->validate([
             'lr_id' => 'required|exists:lorry_receipts,id',
@@ -1010,256 +1109,92 @@ class FreightBookingController extends Controller
         if (! $lorryReceipt) {
             return redirect()->back()->withErrors(['lr_id' => 'Invalid good receipt (bilty)']);
         }
-        // Use the new TR amount from form data instead of existing (may be fixed or auto-calculated)
-        $newTrAmount = $data['tr_amount'];
-        $isFixedAmount = (bool) ($data['is_fixed_amount'] ?? $freightBooking->is_fixed_amount);
+        DB::beginTransaction();
+        try {
+            $isFixedAmount = (bool) ($data['is_fixed_amount'] ?? $freightBooking->is_fixed_amount);
+            $newDamageAmount = (float) ($data['damage_amount'] ?? 0);
+            $newShortageAmount = (float) ($data['shortage_amount'] ?? 0);
+            $unloadingWeight = isset($data['unloading_weight'])
+                ? (float) $data['unloading_weight']
+                : (float) ($lorryReceipt->unloading_weight ?? $lorryReceipt->weight ?? 0);
+            $voucherPaymentsTotal = (float) $freightBooking->voucherPayments()->sum('amount');
 
-        // Store old values before update for proper amount calculation
-        $oldDamageAmount = $freightBooking->damage_amount ?? 0;
-        $oldShortageAmount = $freightBooking->shortage_amount ?? 0;
-        $newDamageAmount = $data['damage_amount'] ?? 0;
-        $newShortageAmount = $data['shortage_amount'] ?? 0;
+            $calculatedAmounts = $this->freightBookingCalculationService->calculateForUpdate(
+                $isFixedAmount,
+                (float) $data['tr_fr_rate'],
+                (float) ($lorryReceipt->weight ?? 0),
+                $unloadingWeight,
+                (float) $data['tr_amount'],
+                $voucherPaymentsTotal,
+                (float) ($data['detention'] ?? 0),
+                (float) ($data['deviation'] ?? 0),
+                (float) ($data['misc_expense'] ?? 0),
+                $newDamageAmount,
+                $newShortageAmount,
+                (float) ($freightBooking->transporter_tds_percentage ?? 0),
+                $freightBooking->canChangeTdsAmount(),
+                (float) ($freightBooking->tds_amount ?? 0),
+                (float) ($freightBooking->negative_adjusted_amount ?? 0),
+            );
 
-        // Store old loading_weight and rate to detect changes for TDS calculation
-        $oldLoadingWeight = $lorryReceipt->weight ?? 0;
-        $oldTrFrRate = $freightBooking->tr_fr_rate ?? 0;
-        $newTrFrRate = $data['tr_fr_rate'] ?? 0;
-        $isDelivered = ($lorryReceipt->delivery_status === 'Delivered') || (isset($data['is_delivered']) && $data['is_delivered'] === '1');
+            $data = array_merge($data, $calculatedAmounts);
 
-        // Recalculate balance on the server side to ensure consistency
-        // This ensures balance is always correct when TDS, TR amount, or other fields change
-        $calculatedBalance = $newTrAmount
-            - $data['advance_amount']
-            - ($data['tds_amount'] ?? 0)
-            + ($data['detention'] ?? 0)
-            + ($data['deviation'] ?? 0)
-            - ($data['misc_expense'] ?? 0)
-            - $newDamageAmount
-            - $newShortageAmount;
+            $linkedLrId = $lorryReceipt->linked_lr_id ?? null;
 
-        // Update balance_amount with calculated value
-        $data['balance_amount'] = $calculatedBalance;
+            $wasFreightBookingCancelled = (bool) $freightBooking->is_cancelled;
 
-        $linkedLrId = $lorryReceipt->linked_lr_id ?? null;
-
-        $wasFreightBookingCancelled = (bool) $freightBooking->is_cancelled;
-
-        // Update freight booking with lorry receipt's LR number
-        $freightBooking->update(array_merge($data, [
-            'lr_number' => $lorryReceipt->lr_number,
-            'linked_lr_id' => $linkedLrId,
-        ]));
-
-        // Refresh freight booking to get updated values
-        $freightBooking->refresh();
-
-        $justCancelledFreightBooking = ! $wasFreightBookingCancelled && (bool) $freightBooking->is_cancelled;
-
-        // Update lorry receipt status
-        if ($lorryReceipt) {
-            // Refresh the lorry receipt to get latest data (in case memo_id was updated via AJAX)
-            $lorryReceipt->refresh();
-            $oldDeliveryStatus = $lorryReceipt->delivery_status;
-
-            \Log::info('FREIGHT BOOKING UPDATE: Starting LR status update', [
-                'freight_booking_id' => $freightBooking->id,
-                'lr_id' => $lorryReceipt->id,
+            // Update freight booking with lorry receipt's LR number
+            $freightBooking->update(array_merge($data, [
                 'lr_number' => $lorryReceipt->lr_number,
-                'current_memo_id' => $lorryReceipt->memo_id,
-                'current_delivery_status' => $lorryReceipt->delivery_status,
-                'is_delivered_from_form' => $data['is_delivered'] ?? 'not_set',
-                'is_cancelled_from_form' => $data['is_cancelled'] ?? 'not_set',
-                'old_damage' => $oldDamageAmount,
-                'old_shortage' => $oldShortageAmount,
-                'new_damage' => $newDamageAmount,
-                'new_shortage' => $newShortageAmount,
+                'linked_lr_id' => $linkedLrId,
+            ]));
+
+            // Refresh freight booking to get updated values
+            $freightBooking->refresh();
+
+            $justCancelledFreightBooking = ! $wasFreightBookingCancelled && (bool) $freightBooking->is_cancelled;
+
+            $lorryReceiptUpdate = null;
+
+            // Update lorry receipt status
+            if ($lorryReceipt) {
+                $lorryReceiptUpdate = $this->freightBookingCalculationService->updateLorryReceiptForFreightBookingUpdate(
+                    $lorryReceipt,
+                    $data,
+                    $newDamageAmount,
+                    $newShortageAmount,
+                );
+
+                if ($lorryReceiptUpdate['delivery_status'] !== $lorryReceiptUpdate['old_delivery_status']) {
+                    $lorryReceipt->loadMissing(['company', 'truck', 'transporter.transporterMaster', 'customer']);
+                    $this->lrNotificationService->notifyStatusChange($lorryReceipt, $lorryReceiptUpdate['delivery_status'], auth()->user());
+                }
+            }
+
+            if ($justCancelledFreightBooking) {
+                $freightBooking->loadMissing(['company', 'lr.truck', 'transporter.transporterMaster']);
+                $this->frNotificationService->notifyCancelled($freightBooking, auth()->user());
+            }
+
+            $freightBooking->refresh();
+            if (! empty($freightBooking->linked_lr_id)) {
+                $this->freightBookingCalculationService->applyNegativeAdjustmentForLinkedBookings($freightBooking, $lorryReceipt?->lr_number);
+            } else {
+                $this->freightBookingCalculationService->applyNegativeAdjustmentForSingleBooking($freightBooking, $lorryReceipt?->lr_number);
+            }
+
+            DB::commit();
+
+            return $this->redirectToFreightBookingsIndex($request, 'success', 'Good Hire (Lorry Hire) updated successfully.');
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            \Log::error('Freight booking update failed', [
+                'freight_booking_id' => $freightBooking->id ?? null,
+                'error' => $e->getMessage(),
             ]);
 
-            $deliveryStatus = 'Pending';
-            if (isset($data['is_cancelled']) && $data['is_cancelled'] === '1') {
-                // When freight booking is cancelled, lorry receipt goes back to Pending
-                $deliveryStatus = 'Pending';
-                $lorryReceipt->freight_booking_id = null; // Unlink freight booking
-                \Log::info('FREIGHT BOOKING UPDATE: Setting status to Pending (cancelled)');
-            } elseif (isset($data['is_delivered']) && $data['is_delivered'] === '1') {
-                // Only set to 'Delivered' if memo_id exists on the lorry receipt
-                $deliveryStatus = 'Delivered';
-            } else {
-                // If not delivered and not cancelled, set to In-Progress
-                $deliveryStatus = 'In-Progress';
-                \Log::info('FREIGHT BOOKING UPDATE: Setting status to In-Progress (default)');
-            }
-
-            // Update damage and shortage amounts on lorry receipt
-            $lorryReceipt->damage_amount = $newDamageAmount;
-            $lorryReceipt->shortage_amount = $newShortageAmount;
-
-            // Update unloading_weight if provided (for loose weight mode)
-            if (isset($data['unloading_weight'])) {
-                $lorryReceipt->unloading_weight = $data['unloading_weight'];
-
-                $loadingWeight = $lorryReceipt->weight;
-                $unloadingWeight = $data['unloading_weight'];
-
-                // Only recalculate tr_amount if loading_weight != unloading_weight
-                // If weights are equal, use the manually entered tr_amount from form
-                if (abs($loadingWeight - $unloadingWeight) > 0.01) {
-                    // Weights are different - always recalculate tr_amount
-                    $effectiveWeight = min($loadingWeight, $unloadingWeight);
-                    $newTrAmount = round($freightBooking->tr_fr_rate * $effectiveWeight, 2);
-                } else {
-                    // Weights are equal - use manually entered tr_amount from form
-                    $newTrAmount = $data['tr_amount'];
-                }
-
-                // TDS calculation logic:
-                // Before delivery: TDS is calculated from freight amount (TR amount)
-                // After delivery: TDS from loading_weight * rate; only change if loading_weight or rate changed
-                $loadingWeightChanged = abs($oldLoadingWeight - $loadingWeight) > 0.01;
-                $rateChanged = abs($oldTrFrRate - $newTrFrRate) > 0.01;
-
-                $shouldRecalculateTds = false;
-                if ($isDelivered) {
-                    // After delivery: only recalculate TDS if loading_weight or rate changed
-                    $shouldRecalculateTds = $loadingWeightChanged || $rateChanged;
-                } else {
-                    // Before delivery: always recalculate TDS (from freight amount)
-                    $shouldRecalculateTds = true;
-                }
-
-                if ($shouldRecalculateTds) {
-                    $tdsPercentage = $freightBooking->transporter_tds_percentage ?? 0;
-                    if (! $isDelivered) {
-                        // Before delivery: TDS = freight amount (TR amount) * tds_percentage
-                        $newTdsAmount = round($newTrAmount * ($tdsPercentage / 100), 2);
-                    } else {
-                        // After delivery: TDS = loading_weight * rate * tds_percentage
-                        $tdsBaseAmount = round($newTrFrRate * $loadingWeight, 2);
-                        $newTdsAmount = round($tdsBaseAmount * ($tdsPercentage / 100), 2);
-                    }
-                } else {
-                    // Keep existing TDS amount (loading_weight and rate didn't change)
-                    $newTdsAmount = $freightBooking->tds_amount ?? 0;
-                }
-
-                // Update tr_amount and tds_amount if they differ from calculated values
-                $trAmountChanged = abs($freightBooking->tr_amount - $newTrAmount) > 0.01;
-                $tdsAmountChanged = abs(($freightBooking->tds_amount ?? 0) - $newTdsAmount) > 0.01;
-
-                // Check if TDS can be changed before updating
-                $canChangeTds = $freightBooking->canChangeTdsAmount();
-
-                if ($trAmountChanged || ($tdsAmountChanged && $canChangeTds)) {
-                    $freightBooking->tr_amount = $newTrAmount;
-                    // Only update TDS if it can be changed and should be recalculated
-                    if ($tdsAmountChanged && $canChangeTds && $shouldRecalculateTds) {
-                        $freightBooking->tds_amount = $newTdsAmount;
-                    }
-
-                    // Recalculate balance_amount using current TDS amount (may be old if TDS cannot be changed)
-                    $currentTdsAmount = $freightBooking->tds_amount ?? 0;
-                    $freightBooking->balance_amount = $newTrAmount
-                        - $freightBooking->advance_amount
-                        - $currentTdsAmount
-                        - ($freightBooking->damage_amount ?? 0)
-                        - ($freightBooking->shortage_amount ?? 0)
-                        + ($freightBooking->detention ?? 0)
-                        + ($freightBooking->deviation ?? 0)
-                        - ($freightBooking->misc_expense ?? 0);
-
-                    $freightBooking->save();
-                }
-            } else {
-                // If unloading_weight is not being updated, check if rate or loading_weight changed
-                // and recalculate TDS accordingly
-                $loadingWeight = $lorryReceipt->weight ?? 0;
-                $loadingWeightChanged = abs($oldLoadingWeight - $loadingWeight) > 0.01;
-                $rateChanged = abs($oldTrFrRate - $newTrFrRate) > 0.01;
-
-                $shouldRecalculateTds = false;
-                if ($isDelivered) {
-                    // After delivery: only recalculate TDS if loading_weight or rate changed
-                    $shouldRecalculateTds = $loadingWeightChanged || $rateChanged;
-                } else {
-                    // Before delivery: always recalculate TDS from freight amount
-                    $shouldRecalculateTds = $loadingWeightChanged || $rateChanged;
-                }
-
-                if ($shouldRecalculateTds) {
-                    $tdsPercentage = $freightBooking->transporter_tds_percentage ?? 0;
-                    if (! $isDelivered) {
-                        // Before delivery: TDS = freight amount (TR amount) * tds_percentage
-                        $newTdsAmount = round($freightBooking->tr_amount * ($tdsPercentage / 100), 2);
-                    } else {
-                        // After delivery: TDS = loading_weight * rate * tds_percentage
-                        $tdsBaseAmount = round($newTrFrRate * $loadingWeight, 2);
-                        $newTdsAmount = round($tdsBaseAmount * ($tdsPercentage / 100), 2);
-                    }
-
-                    $tdsAmountChanged = abs(($freightBooking->tds_amount ?? 0) - $newTdsAmount) > 0.01;
-                    $canChangeTds = $freightBooking->canChangeTdsAmount();
-
-                    if ($tdsAmountChanged && $canChangeTds) {
-                        $freightBooking->tds_amount = $newTdsAmount;
-
-                        // Recalculate balance_amount with new TDS
-                        $freightBooking->balance_amount = $freightBooking->tr_amount
-                            - $freightBooking->advance_amount
-                            - $newTdsAmount
-                            - ($freightBooking->damage_amount ?? 0)
-                            - ($freightBooking->shortage_amount ?? 0)
-                            + ($freightBooking->detention ?? 0)
-                            + ($freightBooking->deviation ?? 0)
-                            - ($freightBooking->misc_expense ?? 0);
-
-                        $freightBooking->save();
-                    }
-                }
-            }
-
-            // Recalculate LR amount and actual_amount using loose weight
-            $loadingWeight = $lorryReceipt->weight;
-            $unloadingWeight = $lorryReceipt->unloading_weight ?? $loadingWeight;
-
-            // Only recalculate actual_amount if loading_weight != unloading_weight
-            // If weights are equal, use the manually entered actual_amount from LR form (if available)
-            if (abs($loadingWeight - $unloadingWeight) > 0.01) {
-                // Weights are different - always recalculate actual_amount
-                $effectiveWeight = min($loadingWeight, $unloadingWeight);
-                $lorryReceipt->actual_amount = round($effectiveWeight * $lorryReceipt->fr_rate, 2);
-            } else {
-                // Weights are equal - actual_amount should be set from LR edit form
-                // If not set, calculate it (for backward compatibility)
-                if (! isset($lorryReceipt->actual_amount) || $lorryReceipt->actual_amount === null) {
-                    $lorryReceipt->actual_amount = round($loadingWeight * $lorryReceipt->fr_rate, 2);
-                }
-            }
-
-            // Calculate amount: actual_amount - damage - shortage
-            $lorryReceipt->amount = max(0, round($lorryReceipt->actual_amount - $newDamageAmount - $newShortageAmount, 2));
-
-            $lorryReceipt->delivery_status = $deliveryStatus;
-            $lorryReceipt->save();
-
-            if ($deliveryStatus !== $oldDeliveryStatus) {
-                $lorryReceipt->loadMissing(['company', 'truck', 'transporter.transporterMaster', 'customer']);
-                $this->lrNotificationService->notifyStatusChange($lorryReceipt, $deliveryStatus, auth()->user());
-            }
-
-            \Log::info('FREIGHT BOOKING UPDATE: Final LR state after save', [
-                'lr_id' => $lorryReceipt->id,
-                'lr_number' => $lorryReceipt->lr_number,
-                'memo_id' => $lorryReceipt->memo_id,
-                'delivery_status' => $lorryReceipt->delivery_status,
-            ]);
+            return redirect()->back()->withErrors(['general' => 'Unable to update freight booking. Please try again.'])->withInput();
         }
-
-        if ($justCancelledFreightBooking) {
-            $freightBooking->loadMissing(['company', 'lr.truck', 'transporter.transporterMaster']);
-            $this->frNotificationService->notifyCancelled($freightBooking, auth()->user());
-        }
-
-        return redirect()->route('freight_bookings.index', $request->query())->with('success', 'Good Hire (Lorry Hire) updated successfully.');
     }
 
     public function destroy(FreightBooking $freight_booking)
@@ -1268,12 +1203,11 @@ class FreightBookingController extends Controller
         $today = now()->startOfDay();
         $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
         if ($company->plan_end_date && $today->gt($planEndDate)) {
-            return redirect()->route('freight_bookings.index')
-                ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+            return $this->redirectToFreightBookingsIndex(request(), 'error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
         $freight_booking->delete();
 
-        return redirect()->route('freight_bookings.index')->with('success', 'Good Hire (Lorry Hire) deleted.');
+        return $this->redirectToFreightBookingsIndex(request(), 'success', 'Good Hire (Lorry Hire) deleted.');
     }
 
     /**
@@ -1285,7 +1219,6 @@ class FreightBookingController extends Controller
     {
         try {
             // dd($request->all());
-            \Log::info('Voucher payment request received', $request->all());
 
             // Validate the request
             $validated = $request->validate([
@@ -1296,15 +1229,13 @@ class FreightBookingController extends Controller
                 'booking_ids' => 'required|array',
                 'booking_ids.*' => 'required|integer|exists:freight_bookings,id',
                 'payment_amounts' => 'required|array',
-                'payment_amounts.*' => 'required|numeric|min:0',
+                'payment_amounts.*' => 'required|numeric',
                 'total_amount' => 'required|numeric|min:0',
                 'reference_number' => 'nullable|string',
                 'notes' => 'nullable|string',
                 'pump_id' => 'nullable|exists:pumps,id',
                 'date' => 'nullable|date',
             ]);
-
-            \Log::info('Validation passed', $validated);
 
             // Begin transaction
             \DB::beginTransaction();
@@ -1315,20 +1246,70 @@ class FreightBookingController extends Controller
             foreach ($validated['booking_ids'] as $index => $bookingId) {
                 $amount = $validated['payment_amounts'][$index] ?? 0;
 
-                if ($amount > 0) {
+                if (abs((float) $amount) > 0.01) {
                     // Use row-level locking to prevent race conditions
                     // This ensures only one payment can be processed at a time for this booking
                     $freightBooking = FreightBooking::lockForUpdate()->findOrFail($bookingId);
 
-                    // Validate payment amount doesn't exceed balance
-                    if ($amount > $freightBooking->balance_amount) {
+                    $currentBalance = (float) ($freightBooking->balance_amount ?? 0);
+
+                    // Sign-direction validation by balance direction.
+                    if ($currentBalance > 0.01 && $amount < -0.01) {
                         \DB::rollBack();
 
                         return response()->json([
                             'success' => false,
-                            'message' => "Payment amount ₹{$amount} cannot exceed balance amount ₹{$freightBooking->balance_amount} for booking ID {$bookingId}.",
+                            'message' => "Booking ID {$bookingId} has positive balance ({$currentBalance}). Negative payment is not allowed for this row.",
                             'errors' => [
-                                'payment_amounts.'.$index => ["Payment amount cannot exceed balance amount ₹{$freightBooking->balance_amount}"],
+                                'payment_amounts.'.$index => ['Positive balance row cannot accept negative payment.'],
+                            ],
+                        ], 422);
+                    }
+
+                    if ($currentBalance < -0.01 && $amount > 0.01) {
+                        \DB::rollBack();
+
+                        return response()->json([
+                            'success' => false,
+                            'message' => "Booking ID {$bookingId} has negative balance ({$currentBalance}). Positive payment is not allowed for this row.",
+                            'errors' => [
+                                'payment_amounts.'.$index => ['Negative balance row cannot accept positive payment.'],
+                            ],
+                        ], 422);
+                    }
+
+                    if (abs($currentBalance) <= 0.01) {
+                        \DB::rollBack();
+
+                        return response()->json([
+                            'success' => false,
+                            'message' => "Booking ID {$bookingId} has zero balance. Payment must be 0 for this row.",
+                            'errors' => [
+                                'payment_amounts.'.$index => ['Zero balance row cannot accept non-zero payment.'],
+                            ],
+                        ], 422);
+                    }
+
+                    // Range validation by sign.
+                    if ($currentBalance > 0.01 && $amount > $currentBalance) {
+                        \DB::rollBack();
+
+                        return response()->json([
+                            'success' => false,
+                            'message' => "Payment amount {$amount} cannot exceed balance amount {$currentBalance} for booking ID {$bookingId}.",
+                            'errors' => [
+                                'payment_amounts.'.$index => ["Payment amount cannot exceed balance amount {$currentBalance}"],
+                            ],
+                        ], 422);
+                    }
+                    if ($currentBalance < -0.01 && $amount < $currentBalance) {
+                        \DB::rollBack();
+
+                        return response()->json([
+                            'success' => false,
+                            'message' => "Negative payment {$amount} cannot be less than balance {$currentBalance} for booking ID {$bookingId}.",
+                            'errors' => [
+                                'payment_amounts.'.$index => ["Negative payment magnitude cannot exceed negative balance {$currentBalance}"],
                             ],
                         ], 422);
                     }
@@ -1350,9 +1331,9 @@ class FreightBookingController extends Controller
 
                         return response()->json([
                             'success' => false,
-                            'message' => "Payment amount ₹{$amount} would cause advance amount (₹{$newAdvanceAmount}) to exceed effective payable amount ₹{$effectivePayableAmount} for booking ID {$bookingId}.",
+                            'message' => "Payment amount {$amount} would cause advance amount ({$newAdvanceAmount}) to exceed effective payable amount {$effectivePayableAmount} for booking ID {$bookingId}.",
                             'errors' => [
-                                'payment_amounts.'.$index => ["Total advance amount cannot exceed effective payable amount ₹{$effectivePayableAmount}"],
+                                'payment_amounts.'.$index => ["Total advance amount cannot exceed effective payable amount {$effectivePayableAmount}"],
                             ],
                         ], 422);
                     }
@@ -1423,11 +1404,6 @@ class FreightBookingController extends Controller
                         'date' => $validated['date'] ?? now()->toDateString(),
                     ]);
 
-                    \Log::info('Payment status set based on payment mode', [
-                        'payment_mode' => $paymentMode->name,
-                        'payment_status' => $paymentStatus,
-                    ]);
-
                     // Update freight booking balance
                     // $newadvance_amount = $freightBooking->advance_amount + $amount;
                     // $newBalance = max(0, $freightBooking->balance_amount - $amount);
@@ -1456,7 +1432,7 @@ class FreightBookingController extends Controller
                         }
 
                         if ($amount > $transporter->advance_amount) {
-                            throw new \Exception("Allocated amount ₹{$amount} cannot exceed transporter available advance ₹{$transporter->advance_amount}");
+                            throw new \Exception("Allocated amount {$amount} cannot exceed transporter available advance {$transporter->advance_amount}");
                         }
 
                         // reduce from transporter advance
@@ -1477,28 +1453,18 @@ class FreightBookingController extends Controller
                         $freightBooking->balance_amount = $effectivePayableAmount - $freightBooking->advance_amount;
                         $freightBooking->save();
 
-                        $advanceRequest = new \Illuminate\Http\Request([
-                            'company_id' => $freightBooking->company_id,
-                            'transporter_id' => $transporter->id,
-                            'advance_amount' => -$amount, // NEGATIVE because adjusting
-                            'payment_date' => now()->toDateString(),
-                            'remark' => "LR#{$freightBooking->lr->lr_number}",
-                        ]);
+                        $lrNumber = $freightBooking->lr?->lr_number ?? (string) $freightBooking->id;
+                        app(TransporterAdvanceLedgerService::class)->recordAdvancePayment(
+                            companyId: (int) $freightBooking->company_id,
+                            transporterId: (int) $transporter->id,
+                            advanceAmount: -(float) $amount,
+                            paymentDate: now()->toDateString(),
+                            remark: "LR#{$lrNumber}",
+                            actor: auth()->user(),
+                            notifyCredit: false
+                        );
 
-                        // mark request as ajax so it won’t redirect
-                        $advanceRequest->headers->set('X-Requested-With', 'XMLHttpRequest');
-
-                        app(\App\Http\Controllers\AdvancePaymentController::class)->store($advanceRequest);
-
-                        \Log::info('Adjusted from transporter advance', [
-
-                            'transporter_id' => $transporter->id,
-                            'old_advance' => $transporter->getOriginal('advance_amount'),
-                            'deducted' => $amount,
-                            'new_advance' => $transporter->advance_amount,
-                            'booking_id' => $bookingId,
-                            'new_balance' => $freightBooking->balance_amount,
-                        ]);
+                        // No success logging (log only on error paths)
                     }
                     // normal payment flow (cash, bank, fuel, etc.)
                     // Calculate effective payable amount (considering all deductions)
@@ -1518,22 +1484,11 @@ class FreightBookingController extends Controller
 
                     $freightBooking->save();
 
-                    \Log::info('Processed normal payment for booking', [
-                        'booking_id' => $bookingId,
-                        'amount' => $amount,
-                        'new_balance' => $freightBooking->balance_amount,
-                        'new_advance_amount' => $newAdvanceAmount,
-                    ]);
-
                     $processedPayments[] = $voucherPayment->id;
                 }
             }
 
             \DB::commit();
-
-            \Log::info('Voucher payment completed successfully', [
-                'processed_payments' => $processedPayments,
-            ]);
 
             $payload = [
                 'success' => true,
@@ -1560,7 +1515,7 @@ class FreightBookingController extends Controller
         } catch (\Illuminate\Validation\ValidationException $e) {
             \Log::error('Validation error in voucher payment', [
                 'errors' => $e->errors(),
-                'request_data' => $request->all(),
+                'request_context' => $this->paymentRequestLogContext($request),
             ]);
 
             return response()->json([
@@ -1573,7 +1528,7 @@ class FreightBookingController extends Controller
             \Log::error('Voucher payment error', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'request_data' => $request->all(),
+                'request_context' => $this->paymentRequestLogContext($request),
             ]);
 
             return response()->json([
@@ -1604,12 +1559,6 @@ class FreightBookingController extends Controller
                 ->whereIn('freight_booking_id', $validated['freight_booking_ids'])
                 ->orderBy('created_at', 'desc')
                 ->get();
-
-            \Log::info('Payment history query result:', [
-                'freight_booking_ids' => $validated['freight_booking_ids'],
-                'payments_count' => $payments->count(),
-                'payments' => $payments->toArray(),
-            ]);
 
             return response()->json([
                 'success' => true,
@@ -1700,16 +1649,9 @@ class FreightBookingController extends Controller
                     $fb->is_delivered = 1;
                     $fb->save();
                 }
-
-                \Log::info('Bulk memo ID assignment completed', [
-                    'memo_id' => $validated['memo_id'],
-                    'lr_ids' => $validated['lr_ids'],
-                    'freight_booking_ids' => $validated['freight_booking_ids'],
-                ]);
             });
 
-            return redirect()->route('freight_bookings.index')
-                ->with('success', 'Memo ID assigned successfully to '.count($validated['lr_ids']).' good receipts (bilty) and '.count($validated['freight_booking_ids']).' good hires (lorry hire) updated.');
+            return $this->redirectToFreightBookingsIndex($request, 'success', 'Memo ID assigned successfully to '.count($validated['lr_ids']).' good receipts (bilty) and '.count($validated['freight_booking_ids']).' good hires (lorry hire) updated.');
         } catch (\Exception $e) {
             \Log::error('Bulk memo ID assignment error: '.$e->getMessage());
 

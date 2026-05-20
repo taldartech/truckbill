@@ -8,7 +8,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (countrySelect && stateSelect && citySelect) {
         countrySelect.addEventListener('change', function() {
         const countryId = this.value;
-        console.log('Country changed:', countryId);
         
         // Clear state and city selections
         stateSelect.innerHTML = '<option value="">Select State</option>';
@@ -16,7 +15,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // If country is selected, fetch states
         if (countryId) {
-            console.log('Fetching states for country:', countryId);
             fetch(`/api/states/${countryId}`, {
                 headers: {
                     'Accept': 'application/json',
@@ -24,11 +22,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
                 .then(response => {
-                    console.log('API response status:', response.status);
                     return response.json();
                 })
                 .then(states => {
-                    console.log('Received states:', states);
                     states.forEach(state => {
                         const option = document.createElement('option');
                         option.value = state.id;

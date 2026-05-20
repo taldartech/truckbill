@@ -122,7 +122,7 @@
                 </div>
                 <div>
                     <h6 class="text-muted fw-semi-bold mb-1">Outstanding Amount</h6>
-                    <h3 class="fw-bold mb-1">₹{{ number_format($operationalStats['outstanding_amount'], 2) }}</h3>
+                    <h3 class="fw-bold mb-1">{{ number_format($operationalStats['outstanding_amount'], 2) }}</h3>
                     <span class="badge bg-soft-warning text-warning rounded-pill">Invoice Balance</span>
                 </div>
             </div>
@@ -240,5 +240,4 @@
     </div>
 </div>
 @endif
-
 

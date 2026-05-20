@@ -3,7 +3,6 @@
 namespace App\Services\Notifications;
 
 use App\Services\EmailTemplateMailSender;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use InvalidArgumentException;
 
@@ -30,10 +29,7 @@ class TransporterOnboardingNotificationService
                 'source' => 'transporter_account_created',
             ]);
         } catch (InvalidArgumentException $exception) {
-            Log::warning('Transporter onboarding template not available', [
-                'email' => $email,
-                'message' => $exception->getMessage(),
-            ]);
+            // Template may be unavailable in some environments; skip notification silently.
         }
     }
 }

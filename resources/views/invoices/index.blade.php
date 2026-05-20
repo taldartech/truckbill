@@ -1,5 +1,57 @@
 @extends('layouts.app')
 
+@push('styles')
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        /* Select2 custom styling for truck dropdown */
+        .select2-container--bootstrap-5 .select2-selection {
+            min-height: 38px;
+        }
+
+        .select2-result-truck {
+            padding: 4px 0;
+        }
+
+        .truck-info {
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+            padding-left: 12px;
+            padding-right: 20px;
+            color: var(--brand-text-primary);
+            line-height: 36px;
+            background: var(--brand-card-bg);
+            border: 1px solid var(--brand-border);
+            border-radius: 0.375rem;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single:focus-visible {
+            border-color: var(--brand-primary);
+            box-shadow: 0 0 0 0.25rem var(--brand-primary-light);
+            outline: 0;
+            border-radius: 0.375rem;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+            height: 36px;
+            right: 12px;
+        }
+
+        .select2-dropdown {
+            border: 1px solid var(--brand-border);
+            border-radius: 0.375rem;
+        }
+
+        .select2-results__option--highlighted {
+            background-color: var(--brand-primary);
+            color: white;
+        }
+    </style>
+@endpush
+
 @section('content')
     <div class="container mt-4">
         <div class="col-sm-6">
@@ -27,12 +79,6 @@
         </div>
 
         {{-- Quick Stats --}}
-        @php
-            $totalInvoices = $invoices->total();
-            $totalAmount = $invoices->sum('total_amount');
-            $paidCount = $invoices->where('payment_status', 'paid')->count();
-            $unpaidCount = $invoices->where('payment_status', 'pending')->count();
-        @endphp
         <div class="row mb-3">
             <div class="col-md-3">
                 <div class="card text-bg-primary mb-2">
@@ -74,11 +120,6 @@
                         <label class="form-check-label" for="filter_customer">Customer</label>
                     </div>
                     <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="checkbox" value="company" id="filter_company"
-                            onchange="toggleField(this)">
-                        <label class="form-check-label" for="filter_company">Company</label>
-                    </div>
-                    <div class="form-check form-check-inline">
                         <input class="form-check-input" type="checkbox" value="payment_status" id="filter_status"
                             onchange="toggleField(this)">
                         <label class="form-check-label" for="filter_status">Status</label>
@@ -88,21 +129,21 @@
                             onchange="toggleField(this)">
                         <label class="form-check-label" for="filter_date">Date</label>
                     </div>
-                    <div class="col-md-3 d-none" id="field_generated_date_from">
-                        <label class="form-label">From Date</label>
-                        <input type="date" name="generated_date_from" class="form-control"
-                            value="{{ request('generated_date_from') }}">
-                    </div>
-                    <div class="col-md-3 d-none" id="field_generated_date_to">
-                        <label class="form-label">To Date</label>
-                        <input type="date" name="generated_date_to" class="form-control"
-                            value="{{ request('generated_date_to') }}">
-                    </div>
                 </div>
             </div>
 
             {{-- Conditionally visible filter fields --}}
             <div class="row g-3 mt-2" id="filter-fields">
+                <div class="col-md-3 d-none" id="field_generated_date_from">
+                    <label class="form-label">From Date</label>
+                    <input type="date" name="generated_date_from" class="form-control"
+                        value="{{ request('generated_date_from') }}">
+                </div>
+                <div class="col-md-3 d-none" id="field_generated_date_to">
+                    <label class="form-label">To Date</label>
+                    <input type="date" name="generated_date_to" class="form-control"
+                        value="{{ request('generated_date_to') }}">
+                </div>
                 <div class="col-md-3 d-none" id="field_manual_invoice_number">
                     <label class="form-label">Invoice #</label>
                     <input type="text" name="manual_invoice_number" class="form-control"
@@ -110,11 +151,9 @@
                 </div>
                 <div class="col-md-3 d-none" id="field_customer">
                     <label class="form-label">Customer</label>
-                    <input type="text" name="customer" class="form-control" value="{{ request('customer') }}">
-                </div>
-                <div class="col-md-3 d-none" id="field_company">
-                    <label class="form-label">Company</label>
-                    <input type="text" name="company" class="form-control" value="{{ request('company') }}">
+                    <select name="customer" id="filter_customer_select" class="form-select">
+                        <option value="">All</option>
+                    </select>
                 </div>
                 <div class="col-md-3 d-none" id="field_payment_status">
                     <label class="form-label">Status</label>
@@ -151,7 +190,7 @@
                 <h3 class="card-title">Invoices List</h3>
             </div>
             <div class="card-body" style="overflow-x: auto;">
-                <table class="table table-bordered">
+                <table id="invoicesTable" class="table table-bordered">
                     <thead>
                         <tr>
                             <th style="width: 10px">ID</th>
@@ -167,90 +206,7 @@
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        @forelse($invoices as $invoice)
-                            <tr class="align-middle">
-                                <td>{{ $invoice->id }}</td>
-                                <td>
-                                    <a href="#" class="text-primary invoice-details-link"
-                                        data-id="{{ $invoice->id }}">
-                                        {{ $invoice->invoice_number
-                                            ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '')
-                                            : $invoice->manual_invoice_number }}
-                                    </a>
-                                </td>
-                                <td>{{ is_array($invoice->memo_ids) ? implode(', ', $invoice->memo_ids) : $invoice->memo_ids }}
-                                </td>
-                                <td>{{ $invoice->invoice_type }}</td>
-                                {{-- <td>{{ $invoice->generated_date }}</td> --}}
-                                <td>{{ formatDate(optional($invoice)->generated_date) }}</td>
-                                <td>{{ $invoice->consignee ? $invoice->consignee->name : '-' }}</td>
-                                <td class="text-brand-primary fw-bold">&#8377;{{ number_format($invoice->total_amount, 2) }}
-                                </td>
-                                <td class="text-brand-accent fw-bold">&#8377;{{ number_format($invoice->paid_amount, 2) }}
-                                </td>
-                                <td class="fw-bold {{ $invoice->remaining_amount > 0 ? 'text-danger' : 'text-brand-primary' }}">
-                                    &#8377;{{ number_format($invoice->remaining_amount, 2) }}
-                                </td>
-                                <td>{{ ucfirst($invoice->payment_status) }}</td>
-                                <td>
-                                    <div class="d-flex gap-1">
-                                        <a href="{{ route('reports.party-bill-export', ['invoice_number' => $invoice->id, 'type' => 'pdf']) }}"
-                                            class="btn btn-sm btn-primary" data-bs-toggle="tooltip" target="_blank"
-                                            data-bs-placement="top" title="View PDF">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                        @if (auth()->user()->canActAsAdmin())
-                                            @if ($invoice->payment_status !== 'paid')
-                                                <a href="{{ route('invoices.edit', $invoice->id) }}"
-                                                    class="btn btn-sm btn-edit" data-bs-toggle="tooltip"
-                                                    data-bs-placement="top" title="Edit Invoice">
-                                                    <i class="bi bi-pencil"></i>
-                                                </a>
-                                            @endif
-                                            @if ($invoice->payment_status === 'pending' && (int) $invoice->id === (int) $lastInvoiceId)
-                                                <form action="{{ route('invoices.destroy', $invoice->id) }}"
-                                                    method="POST" style="display:inline-block;">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger"
-                                                        data-bs-toggle="tooltip" data-bs-placement="top"
-                                                        title="Delete Invoice"
-                                                        onclick="return confirm('Delete this invoice?')">
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
-                                                </form>
-                                            @endif
-                                        @endif
-                                        @if (auth()->user()->canActAsAdmin() && $invoice->remaining_amount > 0)
-                                            <button type="button" class="btn btn-sm btn-view add-payment-btn"
-                                                data-bs-toggle="tooltip" data-bs-placement="top" title="Add Payment"
-                                                data-invoice-id="{{ $invoice->id }}"
-                                                data-invoice-number="{{ $invoice->invoice_number
-                                                    ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '')
-                                                    : $invoice->manual_invoice_number }}"
-                                                data-total-amount="{{ $invoice->total_amount }}"
-                                                data-paid-amount="{{ $invoice->paid_amount }}"
-                                                data-remaining-amount="{{ $invoice->remaining_amount }}">
-                                                <i class="bi bi-currency-rupee"></i>
-                                            </button>
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="11" class="text-center">
-                                    <div class="empty-state">
-                                        <i class="bi bi-box"></i>
-                                        <p class="mt-2">No invoices found.</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
                 </table>
-                {{ $invoices->links() }}
             </div>
         </div>
     </div>
@@ -305,7 +261,7 @@
                                     class="text-danger">*</span></label>
                             <input type="number" class="form-control" id="payment_amount" name="amount"
                                 step="0.01" min="0.01" required placeholder="0.00">
-                            <div class="form-text">Maximum: ₹<span id="max_payment_amount">0.00</span></div>
+                            <div class="form-text">Maximum: <span id="max_payment_amount">0.00</span></div>
                         </div>
                         <div class="mb-3">
                             <label for="payment_remark" class="form-label">Remark</label>
@@ -357,13 +313,91 @@
     <script>
         // Wait for both jQuery and Bootstrap to be loaded
         $(document).ready(function() {
-            // Initialize tooltips - ensure Bootstrap is loaded
-            if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
-                var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-                var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
-                    return new bootstrap.Tooltip(tooltipTriggerEl);
+            const initTooltips = function() {
+                if (typeof bootstrap === 'undefined' || !bootstrap.Tooltip) {
+                    return;
+                }
+                document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function(el) {
+                    bootstrap.Tooltip.getOrCreateInstance(el);
                 });
-            }
+            };
+            initTooltips();
+
+            const invoiceTable = $('#invoicesTable').DataTable({
+                processing: true,
+                serverSide: true,
+                responsive: true,
+                ajax: {
+                    url: '{{ route('invoices.index') }}',
+                    data: function(d) {
+                        d.manual_invoice_number = $('input[name="manual_invoice_number"]').val();
+                        d.customer = $('select[name="customer"]').val();
+                        d.payment_status = $('select[name="payment_status"]').val();
+                        d.generated_date_from = $('input[name="generated_date_from"]').val();
+                        d.generated_date_to = $('input[name="generated_date_to"]').val();
+                    }
+                },
+                columns: [{
+                        data: 'id',
+                        name: 'invoices.id'
+                    },
+                    {
+                        data: 'invoice_link',
+                        name: 'invoice_link',
+                        orderable: true,
+                        searchable: true
+                    },
+                    {
+                        data: 'memo_numbers',
+                        name: 'invoices.memo_ids',
+                        orderable: false
+                    },
+                    {
+                        data: 'invoice_type',
+                        name: 'invoices.invoice_type'
+                    },
+                    {
+                        data: 'generated_date_formatted',
+                        name: 'invoices.generated_date'
+                    },
+                    {
+                        data: 'consignee_name',
+                        name: 'consignees.name'
+                    },
+                    {
+                        data: 'total_amount_formatted',
+                        name: 'invoices.total_amount',
+                        searchable: false
+                    },
+                    {
+                        data: 'paid_amount_formatted',
+                        name: 'paid_amount_formatted',
+                        searchable: true,
+                        orderable: true
+                    },
+                    {
+                        data: 'remaining_amount_formatted',
+                        name: 'remaining_amount_formatted',
+                        searchable: true,
+                        orderable: true
+                    },
+                    {
+                        data: 'payment_status_badge',
+                        name: 'invoices.payment_status'
+                    },
+                    {
+                        data: 'actions',
+                        orderable: false,
+                        searchable: false
+                    }
+                ],
+                order: [
+                    [0, 'desc']
+                ],
+                drawCallback: function() {
+                    initTooltips();
+                }
+            });
 
             function showInvoiceModal(modalElement) {
                 if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
@@ -408,7 +442,7 @@
                     url: '/invoices/' + invoiceId,
                     type: 'GET',
                     success: function(data) {
-                    
+
                         var detailsHtml = `
                 <div class="row">
                     <div class="col-md-6">
@@ -468,31 +502,31 @@
                                 <table class="table table-borderless table-sm mb-0">
                                     <tr>
                                         <th class="fw-bold" style="width: 50%;">Base Amount:</th>
-                                        <td class="text-end">₹${data.total_amount ? parseFloat(data.total_amount).toFixed(2) : '0.00'}</td>
+                                        <td class="text-end">${data.total_amount ? parseFloat(data.total_amount).toFixed(2) : '0.00'}</td>
                                     </tr>
                                     ${(data.sgst > 0 || data.cgst > 0 || data.igst > 0) ? `
                                     ${data.sgst > 0 ? `
                                     <tr>
                                         <th class="fw-bold">SGST (${data.sgst_rate ? parseFloat(data.sgst_rate).toFixed(2) : '0.00'}%):</th>
-                                        <td class="text-end">₹${parseFloat(data.sgst).toFixed(2)}</td>
+                                        <td class="text-end">${parseFloat(data.sgst).toFixed(2)}</td>
                                     </tr>
                                     ` : ''}
                                     ${data.cgst > 0 ? `
                                     <tr>
                                         <th class="fw-bold">CGST (${data.cgst_rate ? parseFloat(data.cgst_rate).toFixed(2) : '0.00'}%):</th>
-                                        <td class="text-end">₹${parseFloat(data.cgst).toFixed(2)}</td>
+                                        <td class="text-end">${parseFloat(data.cgst).toFixed(2)}</td>
                                     </tr>
                                     ` : ''}
                                     ${data.igst > 0 ? `
                                     <tr>
                                         <th class="fw-bold">IGST (${data.igst_rate ? parseFloat(data.igst_rate).toFixed(2) : '0.00'}%):</th>
-                                        <td class="text-end">₹${parseFloat(data.igst).toFixed(2)}</td>
+                                        <td class="text-end">${parseFloat(data.igst).toFixed(2)}</td>
                                     </tr>
                                     ` : ''}
                                     ` : ''}
                                     <tr>
                                         <th class="fw-bold">Net Amount (After GST)${(data.invoice_type === 'Reverse') ? ' Under RCM' : ''}:</th>
-                                        <td class="text-end"><strong>₹${parseFloat(data.invoice_type === 'Reverse' ? (data.total_amount || 0) : (data.net_amount || 0)).toFixed(2)}</strong></td>
+                                        <td class="text-end"><strong>${parseFloat(data.invoice_type === 'Reverse' ? (data.total_amount || 0) : (data.net_amount || 0)).toFixed(2)}</strong></td>
                                     </tr>
                                 </table>
                             </div>
@@ -550,18 +584,8 @@
                 }
             });
 
-            // function toggleField(checkbox) {
-            //     const fieldId = 'field_' + checkbox.value;
-            //     const field = document.getElementById(fieldId);
-            //     if (checkbox.checked) {
-            //         field.classList.remove('d-none');
-            //     } else {
-            //         field.classList.add('d-none');
-            //         const input = field.querySelector('input, select');
-            //         if (input) input.value = '';
-            //     }
-            // }
-            function toggleField(checkbox) {
+            // Toggle filter inputs when corresponding checkbox is enabled.
+            window.toggleField = function(checkbox) {
                 if (checkbox.value === 'generated_date') {
                     // Toggle both from and to date fields
                     ['field_generated_date_from', 'field_generated_date_to'].forEach(id => {
@@ -585,35 +609,27 @@
                         if (input) input.value = '';
                     }
                 }
-            }
+            };
 
-
-            // Initialize filter fields based on URL parameters
-            // document.addEventListener('DOMContentLoaded', function() {
-            //     // Get all filter checkboxes
-            //     const checkboxes = document.querySelectorAll('.form-check-input');
-
-            //     // Check each checkbox based on URL parameters
-            //     checkboxes.forEach(checkbox => {
-            //         const value = checkbox.value;
-            //         const fieldId = 'field_' + value;
-            //         const field = document.getElementById(fieldId);
-            //         const urlValue = new URLSearchParams(window.location.search).get(value);
-
-            //         if (urlValue) {
-            //             checkbox.checked = true;
-            //             field.classList.remove('d-none');
-            //         }
-            //     });
-            // });
+            // Restore selected filter fields from current query parameters.
             document.addEventListener('DOMContentLoaded', function() {
+                const params = new URLSearchParams(window.location.search);
                 const checkboxes = document.querySelectorAll('.form-check-input');
+                let hasActiveFilter = false;
+
                 checkboxes.forEach(checkbox => {
                     const value = checkbox.value;
-                    const urlValue = new URLSearchParams(window.location.search).get(value);
+                    let hasValue = false;
 
-                    if (urlValue) {
+                    if (value === 'generated_date') {
+                        hasValue = Boolean(params.get('generated_date_from') || params.get('generated_date_to'));
+                    } else {
+                        hasValue = Boolean(params.get(value));
+                    }
+
+                    if (hasValue) {
                         checkbox.checked = true;
+                        hasActiveFilter = true;
                         if (value === 'generated_date') {
                             ['field_generated_date_from', 'field_generated_date_to'].forEach(id => {
                                 document.getElementById(id).classList.remove('d-none');
@@ -623,26 +639,46 @@
                         }
                     }
                 });
+
+                // Auto-open filter panel when filters are active
+                const advancedSearchBox = document.getElementById('advanced-search-box');
+                if (advancedSearchBox && hasActiveFilter) {
+                    advancedSearchBox.classList.remove('d-none');
+                }
+            });
+
+            $('#advanced-search-box').on('submit', function(e) {
+                e.preventDefault();
+                invoiceTable.ajax.reload();
+            });
+
+            $('#advanced-search-box').on('click', 'a[href="{{ route('invoices.index') }}"]', function(e) {
+                e.preventDefault();
+                const form = document.getElementById('advanced-search-box');
+                if (form) {
+                    form.reset();
+                }
+                $('.form-check-input').prop('checked', false);
+                ['field_generated_date_from', 'field_generated_date_to', 'field_manual_invoice_number', 'field_customer', 'field_payment_status', 'field_generated_date']
+                    .forEach(function(id) {
+                        const el = document.getElementById(id);
+                        if (el) {
+                            el.classList.add('d-none');
+                        }
+                    });
+                $('#filter_customer_select').val(null).trigger('change');
+                invoiceTable.ajax.reload();
             });
 
             // Add Payment Modal Handler
             $(document).on('click', '.add-payment-btn', function(e) {
                 e.preventDefault();
-                console.log('Add payment button clicked'); // Debug
 
                 var invoiceId = $(this).data('invoice-id');
                 var invoiceNumber = $(this).data('invoice-number');
                 var totalAmount = parseFloat($(this).data('total-amount')) || 0;
                 var paidAmount = parseFloat($(this).data('paid-amount')) || 0;
                 var remainingAmount = parseFloat($(this).data('remaining-amount')) || 0;
-
-                console.log('Invoice data:', {
-                    invoiceId,
-                    invoiceNumber,
-                    totalAmount,
-                    paidAmount,
-                    remainingAmount
-                }); // Debug
 
                 // Validate data
                 if (!invoiceId) {
@@ -653,9 +689,9 @@
                 // Set form values
                 $('#payment_invoice_id').val(invoiceId);
                 $('#payment_invoice_number').val(invoiceNumber);
-                $('#payment_total_amount').val('₹' + totalAmount.toFixed(2));
-                $('#payment_paid_amount').val('₹' + paidAmount.toFixed(2));
-                $('#payment_remaining_amount').val('₹' + remainingAmount.toFixed(2));
+                $('#payment_total_amount').val('' + totalAmount.toFixed(2));
+                $('#payment_paid_amount').val('' + paidAmount.toFixed(2));
+                $('#payment_remaining_amount').val('' + remainingAmount.toFixed(2));
                 $('#max_payment_amount').text(remainingAmount.toFixed(2));
                 $('#payment_amount').attr('max', remainingAmount);
             $('#payment_amount').val('');
@@ -694,7 +730,7 @@
                 var remainingAmount = parseFloat($('#max_payment_amount').text());
                 if (formData.amount > remainingAmount) {
                     $('#payment_error').removeClass('d-none').text(
-                        'Payment amount cannot exceed remaining balance of ₹' + remainingAmount.toFixed(
+                        'Payment amount cannot exceed remaining balance of ' + remainingAmount.toFixed(
                             2));
                     return;
                 }
@@ -737,6 +773,52 @@
                     }
                 });
             });
+
+            const customerFilterFromRequest = @json(request('customer', ''));
+
+            $('#filter_customer_select').select2({
+                theme: 'bootstrap-5',
+                width: '100%',
+                placeholder: 'Search customer…',
+                allowClear: true,
+                minimumInputLength: 0,
+                ajax: {
+                    url: '/api/consignees/search',
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            q: params.term || '',
+                            page: params.page || 1,
+                        };
+                    },
+                    processResults: function(data) {
+                        return {
+                            results: (data.results || []).map(function(item) {
+                                return {
+                                    id: item.text,
+                                    text: item.text,
+                                };
+                            }),
+                            pagination: {
+                                more: Boolean(data.pagination && data.pagination.more),
+                            },
+                        };
+                    },
+                    cache: true,
+                },
+            });
+
+            if (customerFilterFromRequest) {
+                const opt = new Option(customerFilterFromRequest, customerFilterFromRequest, true, true);
+                $('#filter_customer_select').append(opt).trigger('change');
+            }
         }); // End of document ready
     </script>
 @endsection
+
+@push('scripts')
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+@endpush

@@ -10,7 +10,9 @@ class TruckOwnerBankAccountController extends Controller
     public function index(Request $request)
     {
         // Get all companies for super admin
-        $companies = \App\Models\Company::all()->where('user_id', auth()->user()->id);
+        $companies = \App\Models\Company::query()
+            ->where('user_id', auth()->id())
+            ->get();
 
         // Get selected company ID and search term
         $selectedCompanyId = $request->get('company_id');

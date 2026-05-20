@@ -182,7 +182,10 @@ $(document).ready(function() {
         ],
         order: [[1, 'asc']],
         pageLength: 10,
-        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+        lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+        stateLoadParams: function(settings, data) {
+            data.order = [[1, 'asc']];
+        },
         dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
              '<"row"<"col-sm-12 col-md-12"B>>' +
              '<"row"<"col-sm-12"tr>>' +
@@ -194,17 +197,6 @@ $(document).ready(function() {
                 text: '<i class="bi bi-file-earmark-excel"></i> Excel'
             }
         ],
-        // responsive: true,
-        // stateSave: true,
-        // language: {
-        //     processing: '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>',
-        //     emptyTable: "No drivers found",
-        //     zeroRecords: "No matching drivers found"
-        // },
-        // drawCallback: function(settings) {
-        //     // Initialize tooltips
-        //     $('[data-bs-toggle="tooltip"]').tooltip();
-        // }
         language: {
             search: "Search:",
             lengthMenu: "Show _MENU_ entries",
@@ -238,11 +230,6 @@ $(document).ready(function() {
                 // Create input element
                 var input = $('<input type="text" class="form-control form-control-sm" placeholder="Search ' + title + '" />')
                     .appendTo($header)
-                    // .on('keyup change clear', function() {
-                    //     if (column.search() !== this.value) {
-                    //         column.search(this.value).draw();
-                    //     }
-                    // });
                     .on('keyup', function() {
                         clearTimeout(debounceTimer);
 
@@ -257,8 +244,6 @@ $(document).ready(function() {
             });
         }
     });
-
-
 
     // Individual column searching
     $('#driversTable thead tr:eq(1) th').each(function(i) {

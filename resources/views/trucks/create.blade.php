@@ -1,6 +1,51 @@
 @extends('layouts.app')
 
 @section('content')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<style>
+    .driver-joined-group {
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    .driver-joined-group > .flex-grow-1 {
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    .driver-joined-group .select2-container {
+        width: 100% !important;
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    .driver-joined-group .select2-container .select2-selection--single {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+        height: 38px;
+        display: flex;
+        align-items: center;
+    }
+
+    .driver-joined-group .select2-selection--single .select2-selection__rendered {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: block;
+        padding-right: 1.5rem;
+    }
+
+    .driver-joined-group .btn {
+        flex-shrink: 0;
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+        white-space: nowrap;
+        height: 38px;
+        display: inline-flex;
+        align-items: center;
+    }
+</style>
 <div class="container mt-4">
     <div class="row justify-content-center">
         <div class="col-12 col-lg-10 col-xl-8">
@@ -54,15 +99,17 @@
                 </div>
                 <!--end::Col-->
                 <!--begin::Col-->
-                <div class="col-md-6">
+                <div class="col-md-6 min-w-0">
                     <label for="driver_id" class="form-label">Driver</label>
-                    <div class="input-group">
-                        <select class="form-select" id="driver_id" name="driver_id">
-                            <option value="">Select</option>
-                            @foreach($drivers as $driver)
-                                <option value="{{ $driver->id }}" {{ old('driver_id') == $driver->id ? 'selected' : '' }}>{{ $driver->name }} ({{ $driver->mobile }})</option>
-                            @endforeach
-                        </select>
+                    <div class="driver-joined-group d-flex align-items-stretch">
+                        <div class="flex-grow-1">
+                            <select class="form-select" id="driver_id" name="driver_id">
+                                <option value="">No Driver</option>
+                                @foreach($drivers as $driver)
+                                    <option value="{{ $driver->id }}" {{ old('driver_id') == $driver->id ? 'selected' : '' }}>{{ $driver->name }} ({{ $driver->mobile }})</option>
+                                @endforeach
+                            </select>
+                        </div>
                         <a href="{{ route('drivers.create') }}" class="btn btn-secondary" target="_blank">Add New Driver</a>
                     </div>
                     @error('driver_id') <div class="text-danger">{{ $message }}</div> @enderror
@@ -93,12 +140,6 @@
             </div>
         </div>
         <!--end::Body-->
-        {{-- <!--begin::Footer-->
-        <div class="card-footer">
-            <button class="btn btn-brand-primary" type="submit">Submit form</button>
-            <a href="{{ route('trucks.index') }}" class="btn btn-back">Back to List</a>
-        </div>
-        <!--end::Footer--> --}}
         <!-- Quick Actions Section -->
        
     </form>
@@ -157,6 +198,86 @@
                     });
             });
         });
+        </script>
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                if (!window.jQuery || typeof window.jQuery.fn.select2 === 'undefined') {
+                    return;
+                }
+
+                const $ = window.jQuery;
+
+                const select2AjaxConfig = (url) => ({
+                    url: url,
+                    dataType: 'json',
+                    delay: 700,
+                    data: function (params) {
+                        return {
+                            q: params.term || '',
+                            limit: 20
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data.results || [],
+                            pagination: { more: false }
+                        };
+                    },
+                    transport: function (params, success, failure) {
+                        const $element = $(params.element);
+                        const previousRequest = $element.data('select2ActiveRequest');
+                        if (previousRequest && typeof previousRequest.abort === 'function') {
+                            previousRequest.abort();
+                        }
+
+                        const request = $.ajax(params);
+                        $element.data('select2ActiveRequest', request);
+                        request.then(success);
+                        request.fail(failure);
+                        request.always(function () {
+                            $element.removeData('select2ActiveRequest');
+                        });
+
+                        return request;
+                    },
+                    cache: true
+                });
+
+                $('#transporter_id').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    allowClear: true,
+                    minimumInputLength: 1,
+                    placeholder: 'Search owner (type first letter)...',
+                    language: {
+                        inputTooShort: function () {
+                            return 'Please type at least 1 character to search';
+                        },
+                        searching: function () {
+                            return 'Searching...';
+                        }
+                    },
+                    ajax: select2AjaxConfig('/api/truck-owners/search')
+                });
+
+                $('#driver_id').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    allowClear: true,
+                    minimumInputLength: 1,
+                    placeholder: 'Search driver (type first letter)...',
+                    language: {
+                        inputTooShort: function () {
+                            return 'Please type at least 1 character to search';
+                        },
+                        searching: function () {
+                            return 'Searching...';
+                        }
+                    },
+                    ajax: select2AjaxConfig('/api/drivers/search')
+                });
+            });
         </script>
         
         

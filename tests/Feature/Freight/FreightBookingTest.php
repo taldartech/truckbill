@@ -2,16 +2,19 @@
 
 namespace Tests\Feature\Freight;
 
+use App\Models\AdvancePayment;
 use App\Models\Company;
 use App\Models\Consignee;
 use App\Models\FreightBooking;
 use App\Models\LorryReceipt;
-use Carbon\Carbon;
 use App\Models\Pump;
 use App\Models\Transporter;
 use App\Models\Truck;
 use App\Models\User;
 use App\Models\UserRole;
+use App\Models\VoucherPayment;
+use App\Services\FreightBookingCalculationService;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -36,7 +39,7 @@ class FreightBookingTest extends TestCase
     protected function makeUser(string $role): User
     {
         $company = Company::create([
-            'name' => 'Company ' . $role,
+            'name' => 'Company '.$role,
             'user_id' => null,
             'gst_slab' => config('payments.gst_slabs')[0],
             'lr_credits' => 5,
@@ -169,14 +172,79 @@ class FreightBookingTest extends TestCase
             ->assertOk();
     }
 
-    public function test_super_admin_forbidden_and_guest_redirected(): void
+    /**
+     * @return array<string, mixed>
+     */
+    private function freightBookingsDataTableRequestPayload(array $overrides = []): array
+    {
+        $columnDefs = [
+            ['data' => 'checkbox', 'name' => 'checkbox', 'searchable' => false, 'orderable' => false],
+            ['data' => 'gr_date', 'name' => 'gr_date'],
+            ['data' => 'lr_number', 'name' => 'lr_number'],
+            ['data' => 'customer', 'name' => 'customer', 'searchable' => true, 'orderable' => false],
+            ['data' => 'transporter', 'name' => 'transporter', 'searchable' => true, 'orderable' => false],
+            ['data' => 'truck_number', 'name' => 'truck_number', 'searchable' => true, 'orderable' => false],
+            ['data' => 'route', 'name' => 'route', 'searchable' => true, 'orderable' => false],
+            ['data' => 'weight', 'name' => 'weight'],
+            ['data' => 'rate', 'name' => 'rate'],
+            ['data' => 'total', 'name' => 'total'],
+            ['data' => 'balance', 'name' => 'balance'],
+            ['data' => 'actions', 'name' => 'actions', 'searchable' => false, 'orderable' => false],
+        ];
+        $columns = [];
+        foreach ($columnDefs as $def) {
+            $columns[] = [
+                'data' => $def['data'],
+                'name' => $def['name'],
+                'searchable' => ($def['searchable'] ?? true) ? 'true' : 'false',
+                'orderable' => ($def['orderable'] ?? true) ? 'true' : 'false',
+                'search' => ['value' => '', 'regex' => 'false'],
+            ];
+        }
+
+        return array_merge([
+            'draw' => 1,
+            'start' => 0,
+            'length' => 10,
+            'start_date' => now()->subDays(7)->toDateString(),
+            'end_date' => now()->addDays(14)->toDateString(),
+            'search' => ['value' => '', 'regex' => 'false'],
+            'order' => [['column' => 1, 'dir' => 'desc']],
+            'columns' => $columns,
+        ], $overrides);
+    }
+
+    public function test_datatable_list_search_with_joined_lr_does_not_error(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'voucher_number' => 'V-343233',
+            'linked_lr_id' => 5,
+        ]));
+
+        $payload = $this->freightBookingsDataTableRequestPayload([
+            'filter_search' => '343233',
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->get('/freight_bookings/data', $payload);
+
+        $response->assertOk();
+        $json = $response->json();
+        $this->assertArrayNotHasKey('error', $json);
+        $this->assertSame(1, (int) ($json['recordsFiltered'] ?? 0));
+    }
+
+    public function test_super_admin_redirected_without_company_and_guest_redirected(): void
     {
         $super = $this->makeUser('super_admin');
-        $this->actingAs($super)->get('/freight_bookings')->assertForbidden();
+        $this->actingAs($super)->get('/freight_bookings')->assertRedirect(route('company.index'));
         $this->actingAs($super)
             ->withHeader('X-Requested-With', 'XMLHttpRequest')
             ->get('/freight_bookings/data')
-            ->assertForbidden();
+            ->assertRedirect(route('company.index'));
 
         $this->post(route('logout'));
         $this->get('/freight_bookings')->assertRedirect(route('login'));
@@ -195,6 +263,37 @@ class FreightBookingTest extends TestCase
             'company_id' => $admin->company_id,
         ]);
         $this->assertNotNull($lr->fresh()->freight_booking_id);
+    }
+
+    public function test_store_uses_document_calculations_and_defaults(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+
+        $response = $this->actingAs($admin)->post('/freight_bookings', array_merge(
+            $this->bookingPayload($admin, $lr),
+            [
+                'advance_amount' => 2500,
+                'balance_amount' => 1234,
+                'tds_amount' => 999,
+                'tr_amount' => 1,
+            ]
+        ));
+
+        $response->assertRedirect(route('freight_bookings.index'));
+
+        $booking = FreightBooking::query()->latest('id')->firstOrFail();
+
+        $this->assertSame(10000.0, (float) $booking->tr_amount);
+        $this->assertSame(0.0, (float) $booking->advance_amount);
+        $this->assertSame(2000.0, (float) $booking->tds_amount);
+        $this->assertSame(8000.0, (float) $booking->balance_amount);
+        $this->assertSame(0.0, (float) ($booking->detention ?? 0));
+        $this->assertSame(0.0, (float) ($booking->deviation ?? 0));
+        $this->assertSame(0.0, (float) ($booking->misc_expense ?? 0));
+        $this->assertSame(0.0, (float) ($booking->damage_amount ?? 0));
+        $this->assertSame(0.0, (float) ($booking->shortage_amount ?? 0));
+        $this->assertSame(0.0, (float) ($booking->negative_adjusted_amount ?? 0));
     }
 
     public function test_store_prevents_duplicate_booking_for_same_lr(): void
@@ -389,6 +488,155 @@ class FreightBookingTest extends TestCase
         $this->assertEquals(9920.0, (float) $lr->amount);
     }
 
+    public function test_update_syncs_lorry_receipt_status_and_unlinks_when_booking_is_cancelled(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+
+        $booking = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'voucher_number' => 5003,
+            'transporter_id' => $lr->transporter_id,
+            'transporter_name' => $lr->transporter?->name,
+            'transporter_tds_percentage' => 20,
+            'damage_amount' => 0,
+            'shortage_amount' => 0,
+            'balance_amount' => 8000,
+        ]));
+        $lr->update(['freight_booking_id' => $booking->id]);
+
+        $payload = array_merge($this->bookingPayload($admin, $lr), [
+            'voucher_number' => 5003,
+            'damage_amount' => 60,
+            'shortage_amount' => 40,
+            'unloading_weight' => 8,
+            'is_cancelled' => '1',
+            'is_delivered' => '0',
+        ]);
+
+        $this->actingAs($admin)->put("/freight_bookings/{$booking->id}", $payload)
+            ->assertRedirect(route('freight_bookings.index'));
+
+        $lr->refresh();
+
+        $this->assertNull($lr->freight_booking_id);
+        $this->assertSame('Pending', $lr->delivery_status);
+        $this->assertSame(60.0, (float) $lr->damage_amount);
+        $this->assertSame(40.0, (float) $lr->shortage_amount);
+        $this->assertSame(8.0, (float) $lr->unloading_weight);
+        $this->assertSame(8000.0, (float) $lr->actual_amount);
+        $this->assertSame(7900.0, (float) $lr->amount);
+    }
+
+    public function test_update_uses_document_formula_for_freight_booking_amounts(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        $lr->update(['freight_booking_id' => null]);
+
+        $booking = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
+            'voucher_number' => 7001,
+            'transporter_id' => $lr->transporter_id,
+            'transporter_name' => $lr->transporter?->name,
+            'transporter_tds_percentage' => 20,
+            'tds_amount' => 2000,
+            'advance_amount' => 0,
+            'balance_amount' => 8000,
+        ]));
+        $lr->update(['freight_booking_id' => $booking->id]);
+
+        VoucherPayment::create([
+            'freight_booking_id' => $booking->id,
+            'voucher_number' => 'V-FR-1',
+            'payment_type' => 'cash',
+            'payment_mode' => 'cash',
+            'amount' => 1000,
+            'payment_status' => 'in-progress',
+            'company_id' => $admin->company_id,
+            'date' => now()->toDateString(),
+        ]);
+
+        VoucherPayment::create([
+            'freight_booking_id' => $booking->id,
+            'voucher_number' => 'V-FR-2',
+            'payment_type' => 'cash',
+            'payment_mode' => 'cash',
+            'amount' => 500,
+            'payment_status' => 'in-progress',
+            'company_id' => $admin->company_id,
+            'date' => now()->toDateString(),
+        ]);
+
+        $payload = array_merge($this->bookingPayload($admin, $lr), [
+            'tr_fr_rate' => 1100,
+            'tr_amount' => 99999,
+            'advance_amount' => 99999,
+            'balance_amount' => 99999,
+            'tds_amount' => 99999,
+            'detention' => 100,
+            'deviation' => 40,
+            'misc_expense' => 30,
+            'damage_amount' => 20,
+            'shortage_amount' => 50,
+            'unloading_weight' => 8,
+        ]);
+
+        $this->actingAs($admin)->put("/freight_bookings/{$booking->id}", $payload)
+            ->assertRedirect(route('freight_bookings.index'));
+
+        $booking->refresh();
+
+        $this->assertSame(8800.0, (float) $booking->tr_amount);
+        $this->assertSame(1500.0, (float) $booking->advance_amount);
+        $this->assertSame(2200.0, (float) $booking->tds_amount);
+        $this->assertSame(5140.0, (float) $booking->balance_amount);
+    }
+
+    public function test_linked_negative_balances_offset_to_zero_without_advance_posting(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lrOne = $this->makeLorryReceipt($admin);
+        $lrTwo = $this->makeLorryReceipt($admin);
+        $linkedId = 12345;
+
+        $positiveBooking = FreightBooking::create(array_merge($this->bookingPayload($admin, $lrOne), [
+            'voucher_number' => 7101,
+            'linked_lr_id' => $linkedId,
+            'transporter_id' => $lrOne->transporter_id,
+            'transporter_name' => $lrOne->transporter?->name,
+            'transporter_tds_percentage' => 20,
+            'is_cancelled' => 0,
+            'balance_amount' => 500,
+            'negative_adjusted_amount' => 0,
+        ]));
+
+        $negativeBooking = FreightBooking::create(array_merge($this->bookingPayload($admin, $lrTwo), [
+            'voucher_number' => 7102,
+            'linked_lr_id' => $linkedId,
+            'transporter_id' => $lrOne->transporter_id,
+            'transporter_name' => $lrOne->transporter?->name,
+            'transporter_tds_percentage' => 20,
+            'is_cancelled' => 0,
+            'balance_amount' => -500,
+            'negative_adjusted_amount' => 0,
+        ]));
+
+        $this->actingAs($admin);
+
+        app(FreightBookingCalculationService::class)
+            ->applyNegativeAdjustmentForLinkedBookings($negativeBooking, $lrTwo->lr_number);
+
+        $positiveBooking->refresh();
+        $negativeBooking->refresh();
+        $transporter = $lrOne->transporter()->firstOrFail();
+
+        $this->assertSame(0.0, (float) $positiveBooking->balance_amount);
+        $this->assertSame(-500.0, (float) $positiveBooking->negative_adjusted_amount);
+        $this->assertSame(0.0, (float) $negativeBooking->balance_amount);
+        $this->assertSame(500.0, (float) $negativeBooking->negative_adjusted_amount);
+        $this->assertSame(0.0, (float) $transporter->advance_amount);
+        $this->assertSame(0, AdvancePayment::count());
+    }
+
     public function test_show_page_displays_combined_payment_button_for_linked_bookings(): void
     {
         $admin = $this->makeUser('admin');
@@ -541,4 +789,3 @@ class FreightBookingTest extends TestCase
         $this->assertGreaterThanOrEqual(0, $remaining);
     }
 }
-

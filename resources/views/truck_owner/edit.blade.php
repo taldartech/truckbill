@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
+<link href="{{ 'https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css' }}" rel="stylesheet" />
 <style>
 /* Prevent form expansion on validation errors */
 .form-control, .form-select {
@@ -29,15 +30,25 @@
 .mb-3 {
     margin-bottom: 1rem !important;
 }
+
+.truck-modal-driver-row .flex-grow-1 {
+    min-width: 0;
+}
+
+.truck-modal-driver-row .select2-container {
+    width: 100% !important;
+}
+
+.truck-modal-driver-row .select2-container .select2-selection--single {
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+}
 </style>
 <div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">
-    <!--begin::Header-->
     <div class="card-header">
         <div class="card-title h4">Edit Truck Owner</div>
     </div>
-    <!--end::Header-->
-
-
 
     <!--begin::Form-->
     <form action="{{ route('truck_owners.update', $truck_owner) }}" method="POST" class="needs-validation" novalidate="">
@@ -111,7 +122,7 @@
                 <div class="row mb-3">
                     <div class="col-md-4">
                         <label class="form-label">Book Balance</label>
-                        <div class="form-control-plaintext bg-light border rounded px-3 py-2"><strong>₹ {{ number_format($truck_owner->advance_amount, 2) }}</strong></div>
+                        <div class="form-control-plaintext bg-light border rounded px-3 py-2"><strong> {{ number_format($truck_owner->advance_amount, 2) }}</strong></div>
                     </div>
                     <div class="col-md-4">
                         <label for="beneficiary_id" class="form-label">Beneficiary ID</label>
@@ -158,42 +169,6 @@
                 </div>
             </div>
             <!-- Registered Trucks Section -->
-{{-- <div class="card mb-4 p-3 bg-light">
-    <div class="row">
-        <div class="col">
-            <h5 class="mb-3">Registered Trucks</h5>
-        </div>
-    </div>
-    <div class="table-responsive">
-        <table class="table table-bordered table-striped">
-            <thead class="table-light">
-                <tr>
-                    <th>S.No</th>
-                    <th>Truck Number</th>
-                    <th>Truck Type</th>
-                    <th>Driver Name</th>
-                    <th>Driver Mobile Number</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($trucks as $index => $truck)
-                    <tr>
-                        <td>{{ $index + 1 }}</td>
-                        <td>{{ $truck->truck_number }}</td>
-                        <td>{{ $truck->truck_type }}</td>
-                        <td>{{ $truck->driver->name ?? 'N/A' }}</td>
-                        <td>{{ $truck->driver->mobile ?? 'N/A' }}</td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="5" class="text-center text-muted">No trucks registered for this transporter.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-</div> --}}
-
             <!-- Form Actions -->
             <div class="d-flex justify-content-between align-items-center mt-4">
                 <a href="{{ route('truck_owners.index') }}" class="btn btn-back">
@@ -249,6 +224,8 @@
                                             data-truck-number="{{ $truck->truck_number }}"
                                             data-truck-type="{{ $truck->truck_type }}"
                                             data-driver-id="{{ $truck->driver_id }}"
+                                            data-driver-name="{{ e($truck->driver->name ?? '') }}"
+                                            data-driver-mobile="{{ e($truck->driver->mobile ?? '') }}"
                                             data-registration-date="{{ $truck->registration_date }}">
                                         <i class="bi bi-pencil"></i>
                                     </button>
@@ -326,11 +303,13 @@
                         </div>
                         <div class="col-md-6">
                             <label for="driver_id" class="form-label">Driver</label>
-                            <div class="d-flex gap-2">
-                                <select class="form-select" id="driver_id" name="driver_id">
-                                    <option value="">Select Driver</option>
-                                </select>
-                                <button type="button" class="btn btn-primary" id="showAddDriverFormTruck">
+                            <div class="d-flex gap-2 align-items-stretch truck-modal-driver-row">
+                                <div class="flex-grow-1">
+                                    <select class="form-select" id="driver_id" name="driver_id">
+                                        <option value="">No Driver</option>
+                                    </select>
+                                </div>
+                                <button type="button" class="btn btn-primary flex-shrink-0" id="showAddDriverFormTruck">
                                     <i class="bi bi-plus-circle"></i> Add New
                                 </button>
                             </div>
@@ -689,7 +668,7 @@
         document.getElementById('confirm-mobile').textContent = mobile;
         document.getElementById('confirm-declaration').textContent = declaration;
         document.getElementById('confirm-total-trucks').textContent = totalTrucks;
-        document.getElementById('confirm-advance').textContent = '₹' + parseFloat(advance || 0).toFixed(2);
+        document.getElementById('confirm-advance').textContent = '' + parseFloat(advance || 0).toFixed(2);
 
         const tdsField = document.getElementById('tds_percentage');
         fetch('/api/calculate-truck-owner-tds-percentage', {
@@ -732,85 +711,82 @@
     document.getElementById('submitFormBtn').addEventListener('click', showConfirmationModal);
 </script>
 
-{{-- JS for cascading dropdowns --}}
 <script>
-    $(document).ready(function () {
-        let countryId = "{{ old('country_id', $truck_owner->country_id) }}";
-        let stateId = "{{ old('state_id', $truck_owner->state_id) }}";
-        let cityId = "{{ old('city_id', $truck_owner->city_id) }}";
-
-        // Pre-fill states if editing
-        if (countryId) {
-            loadStates(countryId, stateId, function () {
-                // Load cities after states are loaded
-                if (stateId) {
-                    loadCities(stateId, cityId);
-                }
-            });
-        }
-
-        // Country change
-        $('#country_id').on('change', function () {
-            let cid = $(this).val();
-            $('#state_id').html('<option value="">Select State</option>');
-            $('#city_id').html('<option value="">Select City</option>');
-            if (cid) {
-                loadStates(cid);
-            }
-        });
-
-        // State change
-        $('#state_id').on('change', function () {
-            let sid = $(this).val();
-            $('#city_id').html('<option value="">Select City</option>');
-            if (sid) {
-                loadCities(sid);
-            }
-        });
-
-        function loadStates(countryId, selectedStateId = null, callback = null) {
-            $.get('/api/states/' + countryId, function (data) {
-                $('#state_id').empty().append('<option value="">Select State</option>');
-                $.each(data, function (key, state) {
-                    $('#state_id').append('<option value="' + state.id + '" ' +
-                        (state.id == selectedStateId ? 'selected' : '') + '>' + state.name + '</option>');
-                });
-                if (callback) callback();
-            });
-        }
-
-        function loadCities(stateId, selectedCityId = null) {
-            $.get('/api/cities/' + stateId, function (data) {
-                $('#city_id').empty().append('<option value="">Select City</option>');
-                $.each(data, function (key, city) {
-                    $('#city_id').append('<option value="' + city.id + '" ' +
-                        (city.id == selectedCityId ? 'selected' : '') + '>' + city.name + '</option>');
-                });
-            });
-        }
-    });
-
     // Truck Management JavaScript
     let isEditMode = false;
     let currentTruckId = null;
 
-    // Load drivers for truck modal
-    function loadDriversForTruck() {
-        $.ajax({
-            url: '/api/drivers',
-            type: 'GET',
-            success: function(drivers) {
-                const driverSelect = $('#driver_id');
-                driverSelect.empty();
-                driverSelect.append('<option value="">Select</option>');
+    function destroyTruckModalDriverSelect2() {
+        const $el = $('#driver_id');
+        if ($el.length && $el.hasClass('select2-hidden-accessible')) {
+            $el.select2('destroy');
+        }
+    }
 
-                drivers.forEach(function(driver) {
-                    driverSelect.append(`<option value="${driver.id}">${driver.name} (${driver.mobile})</option>`);
-                });
+    function truckModalDriverAjaxConfig(url) {
+        return {
+            url: url,
+            dataType: 'json',
+            delay: 700,
+            data: function (params) {
+                return {
+                    q: params.term || '',
+                    limit: 20
+                };
             },
-            error: function() {
-                console.log('Failed to load drivers');
-            }
+            processResults: function (data) {
+                return {
+                    results: data.results || [],
+                    pagination: { more: false }
+                };
+            },
+            transport: function (params, success, failure) {
+                const $element = $(params.element);
+                const previousRequest = $element.data('select2ActiveRequest');
+                if (previousRequest && typeof previousRequest.abort === 'function') {
+                    previousRequest.abort();
+                }
+                const request = $.ajax(params);
+                $element.data('select2ActiveRequest', request);
+                request.then(success);
+                request.fail(failure);
+                request.always(function () {
+                    $element.removeData('select2ActiveRequest');
+                });
+                return request;
+            },
+            cache: true
+        };
+    }
+
+    function initTruckModalDriverSelect2(selectedDriver) {
+        if (!window.jQuery || !window.jQuery.fn.select2) {
+            return;
+        }
+        const $el = $('#driver_id');
+        destroyTruckModalDriverSelect2();
+        $el.empty();
+        $el.append('<option value="">No Driver</option>');
+        if (selectedDriver && selectedDriver.id) {
+            const text = selectedDriver.text || String(selectedDriver.id);
+            $el.append(new Option(text, String(selectedDriver.id), true, true));
+        }
+        $el.select2({
+            theme: 'bootstrap-5',
+            dropdownParent: $('#truckModal'),
+            width: '100%',
+            allowClear: true,
+            minimumInputLength: 1,
+            placeholder: 'Search driver (type first letter)...',
+            language: {
+                inputTooShort: function () {
+                    return 'Please type at least 1 character to search';
+                },
+                searching: function () {
+                    return 'Searching...';
+                }
+            },
+            ajax: truckModalDriverAjaxConfig('/api/drivers/search')
         });
     }
 
@@ -822,29 +798,36 @@
         $('#saveTruckText').text('Add Truck');
         $('#truckForm')[0].reset();
         $('#truck_id').val('');
-        loadDriversForTruck();
+        initTruckModalDriverSelect2(null);
         $('#truckModal').modal('show');
     });
 
     // Show truck modal for editing existing truck
     $(document).on('click', '.edit-truck-btn', function() {
+        const $btn = $(this);
         isEditMode = true;
-        currentTruckId = $(this).data('truck-id');
+        currentTruckId = $btn.data('truck-id');
 
         $('#truckModalTitle').text('Edit Truck');
         $('#saveTruckText').text('Update Truck');
 
         // Populate form with truck data
         $('#truck_id').val(currentTruckId);
-        $('#truck_number').val($(this).data('truck-number'));
-        $('#truck_type').val($(this).data('truck-type'));
-        $('#registration_date').val($(this).data('registration-date'));
+        $('#truck_number').val($btn.data('truck-number'));
+        $('#truck_type').val($btn.data('truck-type'));
+        $('#registration_date').val($btn.data('registration-date'));
 
-        // Load drivers and select current driver
-        loadDriversForTruck();
-        setTimeout(() => {
-            $('#driver_id').val($(this).data('driver-id'));
-        }, 500);
+        const driverId = $btn.data('driver-id');
+        let selectedDriver = null;
+        if (driverId) {
+            const name = $btn.data('driver-name') || '';
+            const mobile = $btn.data('driver-mobile') || '';
+            selectedDriver = {
+                id: driverId,
+                text: name + (mobile ? ' (' + mobile + ')' : '')
+            };
+        }
+        initTruckModalDriverSelect2(selectedDriver);
 
         $('#truckModal').modal('show');
     });
@@ -885,12 +868,10 @@
                 location.reload(); // Reload page to show updated trucks
             },
             error: function(xhr) {
-                console.log('AJAX Error:', xhr.status, xhr.responseText);
 
                 if (xhr.status === 422) {
                     // Handle validation errors
                     const errors = xhr.responseJSON.errors;
-                    console.log('Validation errors:', errors);
 
                     // Clear previous validation states
                     $('#truckForm .form-control, #truckForm .form-select').removeClass('is-invalid');
@@ -993,70 +974,9 @@
     });
 
     // Handle truck removal (unlink from transporter)
-
-    $(document).on('click', '.remove-truck-btn', function() {
-    const truckId = $(this).data('truck-id');
-    const truckNumber = $(this).data('truck-number');
-    const $row = $(`#truck-row-${truckId}`);
-    const $button = $(this);
-
-    console.log('Remove button clicked for truck ID:', truckId); // Debug log
-
-    if (confirm(`Are you sure you want to remove truck "${truckNumber}" from this transporter?`)) {
-        // Show loading state
-        $button.prop('disabled', true).html('<i class="bi bi-arrow-repeat fa-spin"></i> Removing...');
-
-        console.log('Sending AJAX request...'); // Debug log
-
-        $.ajax({
-            url: `/trucks/${truckId}/remove-transporter`,
-            type: 'POST',
-            data: {
-                '_token': $('meta[name="csrf-token"]').attr('content'),
-                '_method': 'PATCH'
-            },
-            success: function(response) {
-    console.log('Success response:', response); // Debug log
-    // Re-enable the button in both success and error cases
-    $button.prop('disabled', false).html('<i class="bi bi-x-circle"></i>');
-
-    if (response.success) {
-        // Remove the row from the table
-        $row.fadeOut(400, function() {
-            $(this).remove();
-        });
-
-        // Show success message
-        showAlert('success', `<i class="bi bi-check-circle"></i> ${response.success}`);
-    } else if (response.error) {
-        // Show error message from response
-        showAlert('danger', `<i class="bi bi-exclamation-triangle"></i> ${response.error}`);
-    } else {
-        // Fallback error message
-        showAlert('danger', '<i class="bi bi-exclamation-triangle"></i> An unknown error occurred');
-    }
-            },
-            error: function(xhr, status, error) {
-                console.error('AJAX Error:', status, error); // Debug log
-                console.error('Response:', xhr.responseJSON); // Debug log
-
-                // Show error message
-                const errorMsg = xhr.responseJSON && xhr.responseJSON.error
-                    ? xhr.responseJSON.error
-                    : 'An error occurred while removing the truck. Please try again.';
-
-                showAlert('danger', `<i class="bi bi-exclamation-triangle"></i> ${errorMsg}`);
-
-                // Re-enable the button
-                $button.prop('disabled', false).html('<i class="bi bi-x-circle"></i>');
-            }
-        });
-    }
-
-});
-function showAlert(type, message) {
-    const alertId = 'alert-' + Math.random().toString(36).substr(2, 9);
-    const $alert = $(`
+    function showAlert(type, message) {
+        const alertId = 'alert-' + Math.random().toString(36).substr(2, 9);
+        const $alert = $(`
         <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show position-fixed"
              style="top: 20px; right: 20px; z-index: 1060; min-width: 300px;">
             ${message}
@@ -1064,21 +984,62 @@ function showAlert(type, message) {
         </div>
     `);
 
-    // Remove any existing alerts
-    $('.alert-dismissible.position-fixed').remove();
+        $('.alert-dismissible.position-fixed').remove();
+        $('body').prepend($alert);
+        setTimeout(() => {
+            $alert.alert('close');
+        }, 5000);
+    }
 
-    // Add new alert
-    $('body').prepend($alert);
+    $(document).on('click', '.remove-truck-btn', function () {
+        const truckId = $(this).data('truck-id');
+        const truckNumber = $(this).data('truck-number');
+        const $row = $(`#truck-row-${truckId}`);
+        const $button = $(this);
 
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-        $alert.alert('close');
-    }, 5000);
-}
+        if (confirm(`Are you sure you want to remove truck "${truckNumber}" from this transporter?`)) {
+            $button.prop('disabled', true).html('<i class="bi bi-arrow-repeat fa-spin"></i> Removing...');
 
+            $.ajax({
+                url: `/trucks/${truckId}/remove-transporter`,
+                type: 'POST',
+                data: {
+                    '_token': $('meta[name="csrf-token"]').attr('content'),
+                    '_method': 'PATCH'
+                },
+                success: function (response) {
+                    $button.prop('disabled', false).html('<i class="bi bi-x-circle"></i>');
+
+                    if (response.success) {
+                        $row.fadeOut(400, function () {
+                            $(this).remove();
+                        });
+                        showAlert('success', `<i class="bi bi-check-circle"></i> ${response.success}`);
+                    } else if (response.error) {
+                        showAlert('danger', `<i class="bi bi-exclamation-triangle"></i> ${response.error}`);
+                    } else {
+                        showAlert('danger', '<i class="bi bi-exclamation-triangle"></i> An unknown error occurred');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('AJAX Error:', status, error);
+                    console.error('Response:', xhr.responseJSON);
+
+                    const errorMsg = xhr.responseJSON && xhr.responseJSON.error
+                        ? xhr.responseJSON.error
+                        : 'An error occurred while removing the truck. Please try again.';
+
+                    showAlert('danger', `<i class="bi bi-exclamation-triangle"></i> ${errorMsg}`);
+                    $button.prop('disabled', false).html('<i class="bi bi-x-circle"></i>');
+                }
+            });
+        }
+    });
 
     // Reset truck modal when hidden
     $('#truckModal').on('hidden.bs.modal', function() {
+        destroyTruckModalDriverSelect2();
+        $('#driver_id').empty().append('<option value="">No Driver</option>');
         $('#truckForm')[0].reset();
         $('#truckForm .form-control, #truckForm .form-select').removeClass('is-invalid is-valid');
         $('#truckForm .invalid-feedback').hide();
@@ -1160,11 +1121,10 @@ function showAlert(type, message) {
                     $('#addDriverFormTruck').slideUp();
                     $('#showAddDriverFormTruck').show();
 
-                    // Reload drivers and auto-select the new one
-                    loadDriversForTruck();
-                    setTimeout(() => {
-                        $('#driver_id').val(response.driver.id);
-                    }, 500);
+                    const d = response.driver;
+                    const label = (d.name || '') + (d.mobile ? ' (' + d.mobile + ')' : '');
+                    const opt = new Option(label, String(d.id), true, true);
+                    $('#driver_id').append(opt).trigger('change');
 
                     // Auto-hide success message
                     setTimeout(function() {
@@ -1202,11 +1162,43 @@ function showAlert(type, message) {
         });
     });
 
-
-
-
     // Fresh approach using fetch API for modal submissions
     document.addEventListener('DOMContentLoaded', function() {
+
+        function loadStatesIntoSelect(stateSelectEl, countryId) {
+            if (!stateSelectEl || !countryId) {
+                return Promise.resolve();
+            }
+            stateSelectEl.innerHTML = '<option value="">Select State</option>';
+            return fetch('/api/states/' + encodeURIComponent(countryId), {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (states) {
+                    states.forEach(function (state) {
+                        const option = document.createElement('option');
+                        option.value = state.id;
+                        option.textContent = state.name;
+                        stateSelectEl.appendChild(option);
+                    });
+                })
+                .catch(function () {
+                    console.error('Error loading states for country');
+                });
+        }
+
+        const modalCityCountry = document.getElementById('modal_city_country_id');
+        const modalCityState = document.getElementById('modal_city_state_id');
+        if (modalCityCountry && modalCityState) {
+            modalCityCountry.addEventListener('change', function () {
+                loadStatesIntoSelect(modalCityState, this.value);
+            });
+        }
 
         // Country Modal Handler
         const countryForm = document.getElementById('addCountryForm');
@@ -1240,12 +1232,20 @@ function showAlert(type, message) {
                     const data = await response.json();
 
                     if (response.ok && data.success && data.country) {
-                        // Update all dropdowns
                         updateCountryDropdowns(data.country);
 
-                        // Select new country
-                        document.getElementById('country_id').value = data.country.id;
-                        document.getElementById('country_id').dispatchEvent(new Event('change'));
+                        const mainCountryEl = document.getElementById('country_id');
+                        if (mainCountryEl) {
+                            mainCountryEl.value = String(data.country.id);
+                            mainCountryEl.dispatchEvent(new Event('change'));
+                        }
+                        ['modal_state_country_id', 'modal_city_country_id'].forEach(function (id) {
+                            const sel = document.getElementById(id);
+                            if (sel) {
+                                sel.value = String(data.country.id);
+                                sel.dispatchEvent(new Event('change'));
+                            }
+                        });
 
                         // Clean close modal
                         closeModalClean('addCountryModal');
@@ -1316,12 +1316,17 @@ function showAlert(type, message) {
                     const data = await response.json();
 
                     if (response.ok && data.success && data.state) {
-                        // Update dropdowns
                         updateStateDropdowns(data.state);
 
-                        // Select new state
-                        document.getElementById('state_id').value = data.state.id;
-                        document.getElementById('state_id').dispatchEvent(new Event('change'));
+                        const mainStateEl = document.getElementById('state_id');
+                        if (mainStateEl) {
+                            mainStateEl.value = String(data.state.id);
+                            mainStateEl.dispatchEvent(new Event('change'));
+                        }
+                        const modalCityStateSelect = document.getElementById('modal_city_state_id');
+                        if (modalCityStateSelect) {
+                            modalCityStateSelect.value = String(data.state.id);
+                        }
 
                         // Clean close modal
                         closeModalClean('addStateModal');
@@ -1392,12 +1397,13 @@ function showAlert(type, message) {
                     const data = await response.json();
 
                     if (response.ok && data.success && data.city) {
-                        // Update dropdown
                         updateCityDropdown(data.city);
 
-                        // Select new city
-                        document.getElementById('city_id').value = data.city.id;
-                        document.getElementById('city_id').dispatchEvent(new Event('change'));
+                        const mainCityEl = document.getElementById('city_id');
+                        if (mainCityEl) {
+                            mainCityEl.value = String(data.city.id);
+                            mainCityEl.dispatchEvent(new Event('change'));
+                        }
 
                         // Clean close modal
                         closeModalClean('addCityModal');
@@ -1435,83 +1441,11 @@ function showAlert(type, message) {
                 }
             });
         }
-
-        // Handle country change with validation and reset
-        $('#country_id').on('change', function() {
-            const countryId = $(this).val();
-            const stateSelect = $('#state_id');
-            const citySelect = $('#city_id');
-
-            // Reset state and city dropdowns when country changes
-            stateSelect.html('<option value="">Select State</option>').val('');
-            citySelect.html('<option value="">Select City</option>').val('');
-
-            // Clear validation errors
-            stateSelect.removeClass('is-invalid');
-            citySelect.removeClass('is-invalid');
-            stateSelect.next('.invalid-feedback').remove();
-            citySelect.next('.invalid-feedback').remove();
-
-            if (countryId) {
-                $.get(`/api/states/${countryId}`)
-                    .done(function(data) {
-                        data.forEach(function(state) {
-                            stateSelect.append(`<option value="${state.id}">${state.name}</option>`);
-                        });
-                    })
-                    .fail(function() {
-                        console.error('Error loading states for selected country');
-                    });
-            }
-        });
-
-        // Handle state change with validation and reset
-        $('#state_id').on('change', function() {
-            const stateId = $(this).val();
-            const countryId = $('#country_id').val();
-            const citySelect = $('#city_id');
-
-            // Reset city dropdown when state changes
-            citySelect.html('<option value="">Select City</option>').val('');
-
-            // Clear validation errors
-            citySelect.removeClass('is-invalid');
-            citySelect.next('.invalid-feedback').remove();
-
-            if (stateId) {
-                $.get(`/api/cities/${stateId}`)
-                    .done(function(data) {
-                        data.forEach(function(city) {
-                            citySelect.append(`<option value="${city.id}">${city.name}</option>`);
-                        });
-                    })
-                    .fail(function() {
-                        console.error('Error loading cities for selected state');
-                    });
-            }
-        });
-
-        // Handle city change with validation
-        $('#city_id').on('change', function() {
-            const cityId = $(this).val();
-            const stateId = $('#state_id').val();
-            const countryId = $('#country_id').val();
-
-            // Clear validation errors
-            $(this).removeClass('is-invalid');
-            $(this).next('.invalid-feedback').remove();
-
-            // Additional client-side validation
-            if (cityId && (!stateId || !countryId)) {
-                $(this).addClass('is-invalid');
-                $(this).after('<div class="invalid-feedback">Please select country and state first.</div>');
-            }
-        });
     });
 
     // Helper functions for modal management
     function updateCountryDropdowns(country) {
-        const dropdowns = ['country_id', 'modal_state_country_id', 'modal_city_country_id'];
+        const dropdowns = ['modal_state_country_id', 'modal_city_country_id', 'country_id'];
         dropdowns.forEach(id => {
             const select = document.getElementById(id);
             if (select) {
@@ -1524,7 +1458,7 @@ function showAlert(type, message) {
     }
 
     function updateStateDropdowns(state) {
-        const dropdowns = ['state_id', 'modal_city_state_id'];
+        const dropdowns = ['modal_city_state_id', 'state_id'];
         dropdowns.forEach(id => {
             const select = document.getElementById(id);
             if (select) {

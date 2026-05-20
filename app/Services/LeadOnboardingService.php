@@ -9,7 +9,6 @@ use App\Models\UserRole;
 use App\Services\Notifications\OnboardingNotificationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -18,7 +17,8 @@ class LeadOnboardingService
     public function __construct(
         private readonly OnboardingTokenService $tokenService,
         private readonly OnboardingOtpService $otpService,
-        private readonly OnboardingNotificationService $onboardingNotificationService
+        private readonly OnboardingNotificationService $onboardingNotificationService,
+        private readonly UserBlockLifecycleService $userBlockLifecycleService
     ) {}
 
     public function complete(array $payload): array
@@ -43,29 +43,43 @@ class LeadOnboardingService
             throw ValidationException::withMessages(['email' => 'Email OTP verification is required.']);
         }
 
-        $result = DB::transaction(function () use ($payload, $lead, $tokenRecord): array {
-            $role = UserRole::firstOrCreate(['name' => 'super_admin']);
+        $existingBlockedUser = $this->resolveExistingBlockedUser($payload['email']);
 
-            $user = User::create([
-                'name' => $payload['name'],
-                'email' => $payload['email'],
-                'password' => Hash::make($payload['password']),
-                'user_role_id' => $role->id,
-                'company_id' => null,
-                'branch_id' => null,
-                'referral_code' => $this->generateUniqueReferralCode(),
-            ]);
+        $result = DB::transaction(function () use ($payload, $lead, $tokenRecord, $existingBlockedUser): array {
+            $user = $existingBlockedUser;
 
-            if (! empty($payload['referral_code'])) {
-                $referrer = User::query()->where('referral_code', $payload['referral_code'])->first();
-                if ($referrer !== null && $referrer->id !== $user->id) {
-                    Referral::create([
-                        'referrer_user_id' => $referrer->id,
-                        'referred_user_id' => $user->id,
-                        'referral_code' => $payload['referral_code'],
-                        'reward_status' => 'pending',
-                    ]);
+            if ($user === null) {
+                $role = UserRole::firstOrCreate(['name' => 'super_admin']);
+
+                $user = User::create([
+                    'name' => $payload['name'],
+                    'email' => $payload['email'],
+                    'password' => Hash::make($payload['password']),
+                    'user_role_id' => $role->id,
+                    'company_id' => null,
+                    'branch_id' => null,
+                    'referral_code' => $this->generateUniqueReferralCode(),
+                ]);
+
+                if (! empty($payload['referral_code'])) {
+                    $referrer = User::query()->where('referral_code', $payload['referral_code'])->first();
+                    if ($referrer !== null && $referrer->id !== $user->id) {
+                        Referral::create([
+                            'referrer_user_id' => $referrer->id,
+                            'referred_user_id' => $user->id,
+                            'referral_code' => $payload['referral_code'],
+                            'reward_status' => 'pending',
+                        ]);
+                    }
                 }
+            } else {
+                $user->update([
+                    'name' => $payload['name'],
+                    'email' => $payload['email'],
+                    'password' => Hash::make($payload['password']),
+                ]);
+
+                $this->userBlockLifecycleService->unblockOwnedAccount($user, sendNotification: false);
             }
 
             $lead->update([
@@ -77,11 +91,6 @@ class LeadOnboardingService
 
             $this->tokenService->markUsed($tokenRecord);
             $this->otpService->consumeVerified($payload['email']);
-
-            Log::info('Lead onboarding completed', [
-                'lead_id' => $lead->id,
-                'user_id' => $user->id,
-            ]);
 
             return [
                 'user' => $user,
@@ -95,7 +104,7 @@ class LeadOnboardingService
                 $result['user']->name
             );
         } catch (\Throwable $exception) {
-            Log::error('Welcome email notification failed after onboarding', [
+            \Log::error('Welcome email notification failed after onboarding', [
                 'user_id' => $result['user']->id,
                 'lead_id' => $result['lead']->id,
                 'message' => $exception->getMessage(),
@@ -112,5 +121,25 @@ class LeadOnboardingService
         } while (User::query()->where('referral_code', $code)->exists());
 
         return $code;
+    }
+
+    private function resolveExistingBlockedUser(string $email): ?User
+    {
+        $user = User::query()
+            ->with('userRole')
+            ->where('email', $email)
+            ->first();
+
+        if ($user === null) {
+            return null;
+        }
+
+        if ($user->is_blocked && $user->userRole?->name === 'super_admin') {
+            return $user;
+        }
+
+        throw ValidationException::withMessages([
+            'email' => 'The email has already been taken.',
+        ]);
     }
 }

@@ -9,11 +9,6 @@ use App\Http\Controllers\Controller;
 
 class DropdownController extends Controller
 {
-    //         return response()->json($cities);
-    //     } catch (\Exception $e) {
-    //         return response()->json(['error' => 'Failed to fetch cities'], 500);
-    //     }
-    // }
     public function states($countryId)
 {
     try {

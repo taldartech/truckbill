@@ -6,6 +6,22 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/searchpanes/2.2.0/css/searchPanes.bootstrap5.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/select/1.7.0/css/select.bootstrap5.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <style>
+        .add-truck-modal-driver-row .flex-grow-1 {
+            min-width: 0;
+        }
+
+        .add-truck-modal-driver-row .select2-container {
+            width: 100% !important;
+        }
+
+        .add-truck-modal-driver-row .select2-container .select2-selection--single {
+            min-height: 38px;
+            display: flex;
+            align-items: center;
+        }
+    </style>
 @endpush
 
 @section('content')
@@ -106,7 +122,7 @@
                         <div class="mb-3">
                             <label for="advance_amount" class="form-label">Book Balance *</label>
                             <div class="input-group">
-                                <span class="input-group-text">₹</span>
+                                <span class="input-group-text"></span>
                                 <input type="number" step="0.01" class="form-control" id="advance_amount"
                                     name="advance_amount" required placeholder="Use + to add, - to deduct">
                             </div>
@@ -182,11 +198,13 @@
                             </div>
                             <div class="col-md-6">
                                 <label for="modal_driver_id" class="form-label">Driver</label>
-                                <div class="d-flex gap-2">
-                                    <select class="form-select" id="modal_driver_id" name="driver_id">
-                                        <option value="">Select Driver</option>
-                                    </select>
-                                    <button type="button" class="btn btn-primary" id="showAddDriverFormModal">
+                                <div class="d-flex gap-2 align-items-stretch add-truck-modal-driver-row">
+                                    <div class="flex-grow-1">
+                                        <select class="form-select" id="modal_driver_id" name="driver_id">
+                                            <option value="">No Driver</option>
+                                        </select>
+                                    </div>
+                                    <button type="button" class="btn btn-primary flex-shrink-0" id="showAddDriverFormModal">
                                         <i class="bi bi-plus-circle"></i> Add New
                                     </button>
                                 </div>
@@ -281,6 +299,80 @@
 
     <script>
         $(document).ready(function() {
+            function destroyAddTruckModalDriverSelect2() {
+                const $el = $('#modal_driver_id');
+                if ($el.length && $el.hasClass('select2-hidden-accessible')) {
+                    $el.select2('destroy');
+                }
+            }
+
+            function addTruckModalDriverAjaxConfig(url) {
+                return {
+                    url: url,
+                    dataType: 'json',
+                    delay: 700,
+                    data: function (params) {
+                        return {
+                            q: params.term || '',
+                            limit: 20
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data.results || [],
+                            pagination: { more: false }
+                        };
+                    },
+                    transport: function (params, success, failure) {
+                        const $element = $(params.element);
+                        const previousRequest = $element.data('select2ActiveRequest');
+                        if (previousRequest && typeof previousRequest.abort === 'function') {
+                            previousRequest.abort();
+                        }
+                        const request = $.ajax(params);
+                        $element.data('select2ActiveRequest', request);
+                        request.then(success);
+                        request.fail(failure);
+                        request.always(function () {
+                            $element.removeData('select2ActiveRequest');
+                        });
+                        return request;
+                    },
+                    cache: true
+                };
+            }
+
+            function initAddTruckModalDriverSelect2(selectedDriver) {
+                if (!window.jQuery || typeof window.jQuery.fn.select2 === 'undefined') {
+                    return;
+                }
+                const $el = $('#modal_driver_id');
+                destroyAddTruckModalDriverSelect2();
+                $el.empty();
+                $el.append('<option value="">No Driver</option>');
+                if (selectedDriver && selectedDriver.id) {
+                    const text = selectedDriver.text || String(selectedDriver.id);
+                    $el.append(new Option(text, String(selectedDriver.id), true, true));
+                }
+                $el.select2({
+                    theme: 'bootstrap-5',
+                    dropdownParent: $('#addTruckModal'),
+                    width: '100%',
+                    allowClear: true,
+                    minimumInputLength: 1,
+                    placeholder: 'Search driver (type first letter)...',
+                    language: {
+                        inputTooShort: function () {
+                            return 'Please type at least 1 character to search';
+                        },
+                        searching: function () {
+                            return 'Searching...';
+                        }
+                    },
+                    ajax: addTruckModalDriverAjaxConfig('/api/drivers/search')
+                });
+            }
+
             $('#truckOwnersTable').DataTable({
                 processing: true,
                 serverSide: true,
@@ -339,12 +431,12 @@
                     }
                 ],
                 order: [
-                    [0, 'desc']
+                    [0, 'asc']
                 ],
                 pageLength: 10,
                 lengthMenu: [
-                    [10, 25, 50, 100, -1],
-                    [10, 25, 50, 100, "All"]
+                    [10, 25, 50, 100],
+                    [10, 25, 50, 100]
                 ],
                 dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
                     '<"row"<"col-sm-12 col-md-12"B>>' +
@@ -725,7 +817,7 @@
                 e.preventDefault();
                 //  confirm before submitting
                 let advanceAmount = $('#advance_amount').val();
-                if (!confirm('Are you sure you want to submit a book balance entry of ₹' + advanceAmount +
+                if (!confirm('Are you sure you want to submit a book balance entry of ' + advanceAmount +
                         '?')) {
                     return false;
                 }
@@ -754,7 +846,7 @@
                         $('body').prepend(`
                     <div class="alert alert-success alert-dismissible fade show position-fixed" style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
                         <i class="bi bi-check-circle"></i>
-                        <strong>Success!</strong> Book balance entry of ₹${$('#advance_amount').val()} has been saved successfully.
+                        <strong>Success!</strong> Book balance entry of ${$('#advance_amount').val()} has been saved successfully.
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 `);
@@ -814,8 +906,7 @@
                 $('#modal_transporter_id').val(transporterId);
                 $('#modal_truck_owner').val(transporterName);
 
-                // Load drivers for the dropdown
-                loadDrivers();
+                initAddTruckModalDriverSelect2(null);
 
                 // Show the modal
                 $('#addTruckModal').modal('show');
@@ -828,8 +919,6 @@
                 // Clear previous validation states
                 $(this).find('.form-control, .form-select').removeClass('is-invalid is-valid');
                 $(this).find('.invalid-feedback').hide();
-
-                console.log($(this).serialize());
 
                 $.ajax({
                     url: $(this).attr('action'),
@@ -888,6 +977,8 @@
 
             // Reset Add Truck form when modal is hidden
             $('#addTruckModal').on('hidden.bs.modal', function() {
+                destroyAddTruckModalDriverSelect2();
+                $('#modal_driver_id').empty().append('<option value="">No Driver</option>');
                 $('#addTruckForm')[0].reset();
                 $('#addTruckForm .form-control, #addTruckForm .form-select').removeClass(
                     'is-invalid is-valid');
@@ -971,11 +1062,10 @@
                             $('#addDriverFormModal').slideUp();
                             $('#showAddDriverFormModal').show();
 
-                            // Reload drivers and auto-select the new one
-                            loadDriversForModal();
-                            setTimeout(() => {
-                                $('#modal_driver_id').val(response.driver.id);
-                            }, 500);
+                            const d = response.driver;
+                            const label = (d.name || '') + (d.mobile ? ' (' + d.mobile + ')' : '');
+                            const opt = new Option(label, String(d.id), true, true);
+                            $('#modal_driver_id').append(opt).trigger('change');
 
                             // Auto-hide success message
                             setTimeout(function() {
@@ -1064,33 +1154,6 @@
                 }
             });
         });
-
-        // Function to load drivers for the Add Truck modal
-        function loadDrivers() {
-            $.ajax({
-                url: '/api/drivers',
-                type: 'GET',
-                success: function(drivers) {
-                    const driverSelect = $('#modal_driver_id');
-                    driverSelect.empty();
-                    driverSelect.append('<option value="">Select Driver</option>');
-
-                    drivers.forEach(function(driver) {
-                        driverSelect.append(
-                            `<option value="${driver.id}">${driver.name} (${driver.mobile})</option>`
-                        );
-                    });
-                },
-                error: function() {
-                    console.log('Failed to load drivers');
-                }
-            });
-        }
-
-        // Function to load drivers for modal (alias for consistency)
-        function loadDriversForModal() {
-            loadDrivers();
-        }
 
         // Function to view truck details
         function viewTruckDetails(truckId) {
