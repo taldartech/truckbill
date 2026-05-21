@@ -591,7 +591,7 @@ class FreightBookingTest extends TestCase
         $this->assertSame(5140.0, (float) $booking->balance_amount);
     }
 
-    public function test_linked_negative_balances_offset_to_zero_without_advance_posting(): void
+    public function test_linked_negative_balance_adjustment_is_skipped(): void
     {
         $admin = $this->makeUser('admin');
         $lrOne = $this->makeLorryReceipt($admin);
@@ -629,10 +629,10 @@ class FreightBookingTest extends TestCase
         $negativeBooking->refresh();
         $transporter = $lrOne->transporter()->firstOrFail();
 
-        $this->assertSame(0.0, (float) $positiveBooking->balance_amount);
-        $this->assertSame(-500.0, (float) $positiveBooking->negative_adjusted_amount);
-        $this->assertSame(0.0, (float) $negativeBooking->balance_amount);
-        $this->assertSame(500.0, (float) $negativeBooking->negative_adjusted_amount);
+        $this->assertSame(500.0, (float) $positiveBooking->balance_amount);
+        $this->assertSame(0.0, (float) $positiveBooking->negative_adjusted_amount);
+        $this->assertSame(-500.0, (float) $negativeBooking->balance_amount);
+        $this->assertSame(0.0, (float) $negativeBooking->negative_adjusted_amount);
         $this->assertSame(0.0, (float) $transporter->advance_amount);
         $this->assertSame(0, AdvancePayment::count());
     }
