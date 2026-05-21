@@ -83,10 +83,6 @@ class TruckController extends Controller
             ->get();
 
         $transporters = (clone $transportersBaseQuery)->get();
-
-
-           $transporters = [];
-           $owners = [];
         return view('trucks.index', compact('transporters', 'owners'));
     }
 
