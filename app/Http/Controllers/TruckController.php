@@ -67,19 +67,11 @@ class TruckController extends Controller
             return $this->getTrucksData($request);
         }
         $transportersBaseQuery = \App\Models\Transporter::query()
-            ->leftJoin('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
-            ->select([
-                'transporters.id',
-                'transporters.company_id',
-                'transporters.is_owner',
-                'transporters.mobile_number',
-                'transporter_masters.name',
-                'transporter_masters.pan_number',
-            ])
-            ->where('transporters.company_id', $companyId);
+            ->with('transporterMaster:id,name,pan_number')
+            ->where('company_id', $companyId);
 
         $owners = (clone $transportersBaseQuery)
-            ->where('transporters.is_owner', 1)
+            ->where('is_owner', 1)
             ->get();
 
         $transporters = (clone $transportersBaseQuery)->get();
