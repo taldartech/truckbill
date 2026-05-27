@@ -1163,7 +1163,7 @@ class LorryReceiptController extends Controller
         $this->forceAgencyForOrphanTruck($validated, $companyId);
 
         $isFixed = (bool) ($validated['is_fixed_amount'] ?? false);
-        $validated['unloading_weight'] = $lorry_receipt->unloading_weight;
+        $validated['unloading_weight'] = $lorry_receipt->weight;
         $validated['shortage_amount'] = $lorry_receipt->shortage_amount;
         $validated['damage_amount'] = $lorry_receipt->damage_amount;
         $resolved = $this->lrCalculationService->resolveForUpdate(
