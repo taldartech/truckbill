@@ -76,6 +76,11 @@ class User extends Authenticatable
         return $this->belongsTo(Company::class);
     }
 
+    public function ownedCompanies(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Company::class, 'user_id');
+    }
+
     /**
      * Whether the user can access the company panel (operational menus: LR, FB, consignees, etc.).
      * True for admin, moderator, or super_admin when a company is selected (session).

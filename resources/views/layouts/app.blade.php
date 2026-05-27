@@ -459,6 +459,15 @@
                             </a>
 
                         </li>
+                        @if (auth()->check() && auth()->user()->userRole->name === 'master_admin')
+                            <li class="nav-item">
+                                <a href="{{ route('master.summary-dashboard') }}"
+                                    class="nav-link{{ Request::is('master/summary-dashboard') ? ' active' : '' }}">
+                                    <i class="nav-icon fas fa-chart-pie"></i>
+                                    <p>Summary Dashboard</p>
+                                </a>
+                            </li>
+                        @endif
                         @if (auth()->check() && auth()->user()->userRole->name === 'transporter')
                             <li class="nav-item">
                                 <a href="{{ route('transporter.freight_bookings.index') }}" class="nav-link{{ Request::is('transporter/freight-bookings*') ? ' active' : '' }}">

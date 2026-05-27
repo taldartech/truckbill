@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\MasterPanelSummaryController;
 use App\Http\Controllers\AdvancePaymentController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\BranchController;
@@ -43,6 +44,10 @@ Route::middleware(['auth.blocked'])->group(function () {
     Route::group(['middleware' => 'role:super_admin,master_admin'], function () {
         // User Management
         Route::resource('users', UserController::class)->except(['show']);
+
+        Route::get('master/summary-dashboard', [MasterPanelSummaryController::class, 'index'])
+            ->middleware('role:master_admin')
+            ->name('master.summary-dashboard');
 
         // Company Registration
         Route::get('/company/enter/{company}', [CompanyController::class, 'enter'])->name('company.enter');
