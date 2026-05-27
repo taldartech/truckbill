@@ -16,6 +16,13 @@ class CompanyBranchTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        $compiledPath = sys_get_temp_dir().'/truckbill-views-'.getmypid();
+        if (! is_dir($compiledPath)) {
+            mkdir($compiledPath, 0777, true);
+        }
+        config(['view.compiled' => $compiledPath]);
+
         $this->seedRoles();
     }
 
@@ -42,6 +49,13 @@ class CompanyBranchTest extends TestCase
         ]);
     }
 
+    protected function makeAdmin(): User
+    {
+        return User::factory()->create([
+            'user_role_id' => 3,
+        ]);
+    }
+
     protected function createCompanyFor(User $owner, array $overrides = []): Company
     {
         return Company::create(array_merge([
@@ -52,13 +66,22 @@ class CompanyBranchTest extends TestCase
         ], $overrides));
     }
 
-    public function test_company_index_master_admin_returns_view(): void
+    public function test_company_index_master_admin_returns_datatable_payload(): void
     {
         $master = $this->makeMasterAdmin();
+        $this->createCompanyFor($master, ['name' => 'Index Co']);
 
-        $response = $this->actingAs($master)->get('/company');
+        $response = $this
+            ->actingAs($master)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->get('/company?draw=1&start=0&length=10');
 
-        $response->assertOk()->assertViewIs('company.index');
+        $response->assertOk()->assertJsonStructure([
+            'draw',
+            'recordsTotal',
+            'recordsFiltered',
+            'data',
+        ]);
     }
 
     public function test_company_datatable_scoped_for_super_admin(): void
@@ -127,16 +150,71 @@ class CompanyBranchTest extends TestCase
         ]);
     }
 
+    public function test_master_admin_can_update_company_subscription_fields(): void
+    {
+        $master = $this->makeMasterAdmin();
+        $company = $this->createCompanyFor($master, [
+            'plan_end_date' => now()->subDay()->toDateString(),
+            'lr_credits' => 10,
+            'truck_credits' => 5,
+            'name' => 'Subscription Co',
+        ]);
+
+        $response = $this->actingAs($master)->patch(route('company.subscription.update', $company), [
+            'plan_end_date' => now()->addDays(30)->toDateString(),
+            'lr_credits' => 120,
+            'truck_credits' => 45,
+        ]);
+
+        $response->assertRedirect(route('company.index'));
+        $this->assertDatabaseHas('companies', [
+            'id' => $company->id,
+            'name' => 'Subscription Co',
+            'lr_credits' => 120,
+            'truck_credits' => 45,
+        ]);
+    }
+
+    public function test_super_admin_cannot_update_company_subscription_fields(): void
+    {
+        $master = $this->makeMasterAdmin();
+        $super = $this->makeSuperAdmin();
+        $company = $this->createCompanyFor($master);
+
+        $response = $this->actingAs($super)->patch(route('company.subscription.update', $company), [
+            'plan_end_date' => now()->addDays(15)->toDateString(),
+            'lr_credits' => 200,
+            'truck_credits' => 20,
+        ]);
+
+        $response->assertForbidden();
+    }
+
+    public function test_non_master_admin_cannot_update_company_subscription_fields(): void
+    {
+        $master = $this->makeMasterAdmin();
+        $admin = $this->makeAdmin();
+        $company = $this->createCompanyFor($master);
+
+        $response = $this->actingAs($admin)->patch(route('company.subscription.update', $company), [
+            'plan_end_date' => now()->addDays(15)->toDateString(),
+            'lr_credits' => 200,
+            'truck_credits' => 20,
+        ]);
+
+        $response->assertForbidden();
+    }
+
     public function test_company_block_and_unblock_toggle_flag(): void
     {
         $master = $this->makeMasterAdmin();
         $company = $this->createCompanyFor($master);
 
-        $blockResponse = $this->actingAs($master)->get(route('company.block', $company->id));
+        $blockResponse = $this->actingAs($master)->post(route('company.block', $company->id));
         $blockResponse->assertRedirect();
         $this->assertSame(true, (bool) $company->fresh()->is_blocked);
 
-        $unblockResponse = $this->actingAs($master)->get(route('company.unblock', $company->id));
+        $unblockResponse = $this->actingAs($master)->post(route('company.unblock', $company->id));
         $unblockResponse->assertRedirect();
         $this->assertSame(false, (bool) $company->fresh()->is_blocked);
     }

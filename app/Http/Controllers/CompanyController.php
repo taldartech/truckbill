@@ -232,6 +232,15 @@ class CompanyController extends Controller
 
             return $buttons;
         } else {
+            $buttons .= '<button type="button" class="btn btn-sm btn-success js-update-subscription" '
+                .'title="Update Subscription" '
+                .'data-company-id="'.$company->id.'" '
+                .'data-company-name="'.e($company->name).'" '
+                .'data-plan-end-date="'.e((string) ($company->plan_end_date ?? '')).'" '
+                .'data-lr-credits="'.e((string) ($company->lr_credits ?? 0)).'" '
+                .'data-truck-credits="'.e((string) ($company->truck_credits ?? 0)).'">'
+                .'<i class="bi bi-calendar2-check"></i></button>';
+
             if ($company->is_blocked) {
                 $unblockUrl = route('company.unblock', $company->id);
                 $buttons .= '<a href="'.$unblockUrl.'" class="btn btn-sm btn-danger" title="Unblock User"
@@ -247,6 +256,27 @@ class CompanyController extends Controller
 
             return $buttons;
         }
+    }
+
+    public function updateSubscription(Request $request, Company $company)
+    {
+        if (! auth()->check() || auth()->user()->userRole->name !== 'master_admin') {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $validated = $request->validate([
+            'plan_end_date' => ['required', 'date'],
+            'lr_credits' => ['required', 'integer', 'min:0'],
+            'truck_credits' => ['required', 'integer', 'min:0'],
+        ]);
+
+        $company->update([
+            'plan_end_date' => $validated['plan_end_date'],
+            'lr_credits' => $validated['lr_credits'],
+            'truck_credits' => $validated['truck_credits'],
+        ]);
+
+        return redirect()->route('company.index')->with('success', 'Company subscription updated successfully.');
     }
 
     public function block($id)

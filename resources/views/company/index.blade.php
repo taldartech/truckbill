@@ -14,6 +14,15 @@
     @if(session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
     @if (auth()->user()->userRole->name !== 'master_admin')
     <div class="d-flex justify-content-end gap-2 mb-3">
         <a href="{{ route('company.create') }}" class="btn btn-brand-primary">
@@ -45,6 +54,46 @@
             </table>
         </div>
     </div>
+
+    @if (auth()->user()->userRole->name === 'master_admin')
+        <div class="modal fade" id="subscriptionModal" tabindex="-1" aria-labelledby="subscriptionModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form id="subscriptionForm" method="POST" action="">
+                        @csrf
+                        @method('PATCH')
+                        <input type="hidden" name="subscription_company_id" id="subscription_company_id" value="{{ old('subscription_company_id') }}">
+                        <input type="hidden" name="subscription_company_name" id="subscription_company_name_input" value="{{ old('subscription_company_name') }}">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="subscriptionModalLabel">Update Subscription</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="mb-3 text-muted">
+                                Updating plan for: <strong id="subscription_company_name">{{ old('subscription_company_name', '-') }}</strong>
+                            </p>
+                            <div class="mb-3">
+                                <label class="form-label" for="plan_end_date">Plan End Date</label>
+                                <input type="date" id="plan_end_date" name="plan_end_date" class="form-control" value="{{ old('plan_end_date') }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" for="lr_credits">LR Credits</label>
+                                <input type="number" id="lr_credits" name="lr_credits" class="form-control" min="0" value="{{ old('lr_credits') }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label" for="truck_credits">Truck Credits</label>
+                                <input type="number" id="truck_credits" name="truck_credits" class="form-control" min="0" value="{{ old('truck_credits') }}" required>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-brand-primary">Update Plan</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>
 @endsection
 
@@ -62,6 +111,10 @@
 
 <script>
 $(document).ready(function() {
+    const subscriptionModalElement = document.getElementById('subscriptionModal');
+    const subscriptionModal = subscriptionModalElement ? new bootstrap.Modal(subscriptionModalElement) : null;
+    const subscriptionForm = $('#subscriptionForm');
+
     $('#companiesTable').DataTable({
         processing: true,
         serverSide: true,
@@ -186,6 +239,47 @@ $(document).ready(function() {
             return false;
         }
     });
+
+    // Open subscription modal with row data
+    $(document).on('click', '.js-update-subscription', function() {
+        if (!subscriptionModalElement) {
+            return;
+        }
+
+        const companyId = $(this).data('company-id');
+        const companyName = $(this).data('company-name');
+        const planEndDate = $(this).data('plan-end-date');
+        const lrCredits = $(this).data('lr-credits');
+        const truckCredits = $(this).data('truck-credits');
+
+        $('#subscription_company_id').val(companyId);
+        $('#subscription_company_name_input').val(companyName);
+        $('#subscription_company_name').text(companyName);
+        $('#plan_end_date').val(planEndDate);
+        $('#lr_credits').val(lrCredits);
+        $('#truck_credits').val(truckCredits);
+
+        subscriptionForm.attr('action', "{{ url('/company') }}/" + companyId + "/subscription");
+        subscriptionModal.show();
+    });
+
+    // Confirmation popup on subscription submit
+    subscriptionForm.on('submit', function(e) {
+        if (!confirm('Are you sure you want to update this company subscription plan?')) {
+            e.preventDefault();
+            return false;
+        }
+    });
+
+    @if ($errors->has('plan_end_date') || $errors->has('lr_credits') || $errors->has('truck_credits'))
+        @if (old('subscription_company_id'))
+            subscriptionForm.attr('action', "{{ url('/company') }}/{{ old('subscription_company_id') }}/subscription");
+            $('#subscription_company_name').text(@json(old('subscription_company_name', 'Selected Company')));
+            if (subscriptionModal) {
+                subscriptionModal.show();
+            }
+        @endif
+    @endif
 });
 </script>
 @endpush
