@@ -87,7 +87,7 @@
                                 <td>{{ $lr->lr->truck->truck_number ?? 'N/A' }}</td>
                                 <td>{{ $lr->lr->destination_city . ', ' . $lr->lr->destination_state }}</td>
                                 <td>{{ number_format($lr->tr_amount, 2) }}</td>
-                                <td>{{ number_format($lr->tds_amount, 2) }}</td>
+                                <td>{{ roundUpTdsAmount((float) ($lr->tds_amount ?? 0)) }}</td>
                                 <td>{{ $lr->transporter_tds_percentage }}%</td>
                                 <td>{{ $lr->lr->transporter->name ?? 'N/A' }}</td>
                                 <td>{{ $lr->lr->transporter->pan_number ?? 'N/A' }}</td>

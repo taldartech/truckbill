@@ -1,4 +1,12 @@
 <?php
+
+if (! function_exists('roundUpTdsAmount')) {
+    function roundUpTdsAmount(float $amount): float
+    {
+        return ceil(round($amount, 10));
+    }
+}
+
 if (!function_exists('getIndianCurrency')) {
   function getIndianCurrency(float $number)
   {
