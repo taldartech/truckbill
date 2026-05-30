@@ -947,6 +947,10 @@
             // TDS already submitted to government cannot be changed
             const canChangeTds = @json($canChangeTds ?? true);
 
+            function roundUpTdsAmount(amount) {
+                return Math.ceil(amount);
+            }
+
             // Function to calculate TDS and Balance amounts
             function calculateTdsAndBalance() {
                 const trAmount = parseFloat(trAmountInput ? trAmountInput.value : 0) || 0;
@@ -972,6 +976,7 @@
 
                 let tdsAmount = previousTdsAmount;
                 let shouldRecalculateTds = false;
+                let tdsWasRecalculated = false;
 
                 if (canChangeTds) {
                     if (!isDelivered) {
@@ -987,17 +992,20 @@
 
                     if (shouldRecalculateTds) {
                         if (!isDelivered) {
-                            tdsAmount = Math.round(trAmount * (tdsPercentage / 100) * 100) / 100;
+                            tdsAmount = roundUpTdsAmount(trAmount * (tdsPercentage / 100));
                         } else {
                             const tdsBaseAmount = loadingWeight * trFrRate;
-                            tdsAmount = Math.round(tdsBaseAmount * (tdsPercentage / 100) * 100) / 100;
+                            tdsAmount = roundUpTdsAmount(tdsBaseAmount * (tdsPercentage / 100));
                         }
                         previousTdsAmount = tdsAmount;
+                        tdsWasRecalculated = true;
                     }
                 }
 
                 if (tdsAmountInput) {
-                    tdsAmountInput.value = tdsAmount.toFixed(2);
+                    tdsAmountInput.value = tdsWasRecalculated
+                        ? tdsAmount.toFixed(0)
+                        : tdsAmount.toFixed(2);
                 }
 
                 // Calculate Balance Amount: TR Amount - Advance - TDS + Detention + Deviation - Misc Expense - Damage - Shortage
