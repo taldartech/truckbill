@@ -32,13 +32,11 @@ class BackupDatabaseToS3 extends Command
 
             $this->createDatabaseDump($localFilePath);
 
-            $stream = fopen($localFilePath, 'rb');
-            if ($stream === false) {
-                throw new \RuntimeException('Unable to open local backup file stream.');
-            }
-
-            Storage::disk($disk)->put($remotePath, $stream);
-            fclose($stream);
+            Storage::disk($disk)->putFileAs(
+                $pathPrefix !== '' ? $pathPrefix : '',
+                new \Illuminate\Http\File($localFilePath),
+                $backupFileName
+            );
 
             $deletedCount = $this->pruneOldBackups($disk, $pathPrefix, $retentionHours);
 
