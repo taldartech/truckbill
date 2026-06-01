@@ -15,12 +15,11 @@ Schedule::command('truck-owners:reset-declarations --apply --no-interaction')
     ->onOneServer()
     ->description('Reset all truck owner declarations to "not given" and recalculate TDS at the start of financial year');
 
-Schedule::command('backup:email-daily-database --no-interaction')
-    ->dailyAt('01:00')
-    ->timezone((string) config('database_backup.schedule_timezone'))
+Schedule::command('database:backup-to-s3 --no-interaction')
+    ->everyThreeHours()
     ->withoutOverlapping()
     ->onOneServer()
-    ->description('Email the latest daily database backup to configured recipients');
+    ->description('Backup database to S3 and prune backups older than 24 hours');
 
 Schedule::command('invoice:send-due-reminders --days=3,1 --due-days=7 --no-interaction')
     ->dailyAt('08:00')
