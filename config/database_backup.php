@@ -1,8 +1,7 @@
 <?php
 
 return [
-    'disk' => env('DB_BACKUP_DISK', 'local'),
+    'disk' => env('DB_BACKUP_DISK', 's3'),
     'path_prefix' => env('DB_BACKUP_PATH_PREFIX', 'database-backups'),
-    'email_recipients' => env('DB_BACKUP_EMAIL_RECIPIENTS', ''),
-    'schedule_timezone' => env('DB_BACKUP_SCHEDULE_TIMEZONE', env('APP_TIMEZONE', 'UTC')),
+    'retention_hours' => (int) env('DB_BACKUP_RETENTION_HOURS', 24),
 ];

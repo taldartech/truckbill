@@ -45,7 +45,7 @@ class FreightBookingCalculationService
             $trAmount = $trFrRate * $weight;
         }
 
-        $tdsAmount = round($trAmount * ($tdsPercentage / 100), 2);
+        $tdsAmount = roundUpTdsAmount($trAmount * ($tdsPercentage / 100));
         $balanceAmount = $trAmount - $tdsAmount;
 
         return [
@@ -100,9 +100,9 @@ class FreightBookingCalculationService
 
         if ($canChangeTdsAmount) {
             if ($isFixedAmount) {
-                $tdsAmount = round($trAmount * ($tdsPercentage / 100), 2);
+                $tdsAmount = roundUpTdsAmount($trAmount * ($tdsPercentage / 100));
             } else {
-                $tdsAmount = round(($trFrRate * $weight) * ($tdsPercentage / 100), 2);
+                $tdsAmount = roundUpTdsAmount(($trFrRate * $weight) * ($tdsPercentage / 100));
             }
         } else {
             $tdsAmount = round($existingTdsAmount, 2);

@@ -360,7 +360,7 @@ class InvoiceController extends Controller
 
             // Update lorry_receipts before invoice creation individually to trigger auditing
             if (! empty($memoIds)) {
-                $lorryReceipts = \App\Models\LorryReceipt::whereIn('memo_id', $memoIds)->lockForUpdate()->get();
+                $lorryReceipts = \App\Models\LorryReceipt::whereIn('memo_id', $memoIds)->where('company_id', $companyId)->lockForUpdate()->get();
                 foreach ($lorryReceipts as $lr) {
                     $lr->invoice_generated = 1;
                     $lr->save();
@@ -397,6 +397,7 @@ class InvoiceController extends Controller
                 $memos = DB::table('lorry_receipts')
                     ->select('memo_id', 'lr_number', 'source_city as from_location', 'destination_city as to_location', 'fr_rate as rate', 'amount')
                     ->whereIn('id', $lrIds)
+                    ->where('company_id', $invoice->company_id)
                     ->whereNotNull('memo_id')
                     ->get();
             }

@@ -430,12 +430,16 @@
                 "{{ $lorry_receipt->first() && $lorry_receipt->first()->transporter ? $lorry_receipt->first()->transporter->tds_percentage : 0 }}"
             ); // already in %
 
+            function roundUpTdsAmount(amount) {
+                return Math.ceil(amount);
+            }
+
             // Function to calculate TDS and Balance amounts
             function calculateTdsAndBalance() {
                 const trAmount = parseFloat(trAmountInput ? trAmountInput.value : 0) || 0;
 
-                // Calculate TDS Amount based on TR Amount
-                const tdsAmount = (trAmount * (tdsPercentage / 100)).toFixed(2);
+                // Calculate TDS Amount based on TR Amount (always round up)
+                const tdsAmount = roundUpTdsAmount(trAmount * (tdsPercentage / 100)).toFixed(0);
                 if (tdsAmountInput) {
                     tdsAmountInput.value = tdsAmount;
                 }
@@ -536,12 +540,16 @@
             const tdsPercentageElement = document.getElementById('transporter_tds_percentage');
             const tdsPercentage = tdsPercentageElement ? parseFloat(tdsPercentageElement.value || 0) : 0;
 
+            function roundUpTdsAmount(amount) {
+                return Math.ceil(amount);
+            }
+
             // Function to calculate TDS and Balance amounts
             function calculateTdsAndBalance() {
                 const trAmount = parseFloat(trAmountInput ? trAmountInput.value : 0) || 0;
 
-                // Calculate TDS Amount based on TR Amount
-                const tdsAmount = (trAmount * (tdsPercentage / 100)).toFixed(2);
+                // Calculate TDS Amount based on TR Amount (always round up)
+                const tdsAmount = roundUpTdsAmount(trAmount * (tdsPercentage / 100)).toFixed(0);
                 if (tdsAmountInput) {
                     tdsAmountInput.value = tdsAmount;
                 }

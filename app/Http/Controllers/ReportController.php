@@ -724,9 +724,10 @@ class ReportController extends Controller
         $lrs = [];
         if ($customerId) {
             $memo_ids = LorryReceipt::where('customer_id', $customerId)
+                ->where('company_id', $companyId)
                 ->whereNotNull('memo_id')
                 ->pluck('memo_id')->unique();
-            $lrs = LorryReceipt::where('memo_id', $memo_id)->get();
+            $lrs = LorryReceipt::where('company_id', $companyId)->where('memo_id', $memo_id)->get();
         }
 
         return view('reports.memo-copy', compact('presetCustomer', 'customerId', 'memo_id', 'memo_ids', 'lrs'));

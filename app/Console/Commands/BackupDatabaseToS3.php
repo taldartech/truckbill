@@ -2,46 +2,31 @@
 
 namespace App\Console\Commands;
 
-use App\Mail\DailyDatabaseBackupMail;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Process\Process;
 use Throwable;
 
-class SendDailyDatabaseBackupEmail extends Command
+class BackupDatabaseToS3 extends Command
 {
-    protected $signature = 'backup:email-daily-database';
+    protected $signature = 'database:backup-to-s3';
 
-    protected $description = 'Send the latest daily database backup to configured email recipients';
+    protected $description = 'Backup the database to S3 and remove backups older than the retention window';
 
     public function handle(): int
     {
-        $disk = (string) config('database_backup.disk', 'local');
+        $disk = (string) config('database_backup.disk', 's3');
         $pathPrefix = trim((string) config('database_backup.path_prefix', 'database-backups'), '/');
-        $recipientList = (string) config('database_backup.email_recipients', '');
+        $retentionHours = max(1, (int) config('database_backup.retention_hours', 24));
         $localFilePath = null;
-        $backupPath = null;
-
-        $recipients = collect(explode(',', $recipientList))
-            ->map(static fn (string $email): string => trim($email))
-            ->filter(static fn (string $email): bool => $email !== '' && filter_var($email, FILTER_VALIDATE_EMAIL) !== false)
-            ->values()
-            ->all();
-
-        if ($recipients === []) {
-            $this->error('No valid recipients found in DB_BACKUP_EMAIL_RECIPIENTS.');
-
-            return self::FAILURE;
-        }
 
         try {
             $backupFileName = 'db-backup-'.now()->format('Y-m-d_H-i-s').'.sql';
             $localDirectory = storage_path('app/private/tmp-backups');
             $localFilePath = $localDirectory.DIRECTORY_SEPARATOR.$backupFileName;
-            $backupPath = $pathPrefix !== '' ? $pathPrefix.'/'.$backupFileName : $backupFileName;
+            $remotePath = $pathPrefix !== '' ? $pathPrefix.'/'.$backupFileName : $backupFileName;
 
             File::ensureDirectoryExists($localDirectory);
 
@@ -52,33 +37,31 @@ class SendDailyDatabaseBackupEmail extends Command
                 throw new \RuntimeException('Unable to open local backup file stream.');
             }
 
-            Storage::disk($disk)->put($backupPath, $stream);
+            Storage::disk($disk)->put($remotePath, $stream);
             fclose($stream);
 
-            Mail::to($recipients)->send(new DailyDatabaseBackupMail($disk, $backupPath));
+            $deletedCount = $this->pruneOldBackups($disk, $pathPrefix, $retentionHours);
 
             $this->info(sprintf(
-                'Database backup email sent to [%s] with attachment [%s].',
-                implode(', ', $recipients),
-                $backupPath
+                'Database backup uploaded to [%s:%s]. Removed %d backup(s) older than %d hour(s).',
+                $disk,
+                $remotePath,
+                $deletedCount,
+                $retentionHours
             ));
 
             return self::SUCCESS;
         } catch (Throwable $throwable) {
-            Log::error('Failed to send daily database backup email.', [
+            Log::error('Failed to back up database to S3.', [
                 'disk' => $disk,
                 'path_prefix' => $pathPrefix,
                 'message' => $throwable->getMessage(),
             ]);
 
-            $this->error('Failed to send backup email. Check logs for details.');
+            $this->error('Database backup failed. Check logs for details.');
 
             return self::FAILURE;
         } finally {
-            if (is_string($backupPath) && $backupPath !== '') {
-                Storage::disk($disk)->delete($backupPath);
-            }
-
             if (is_string($localFilePath) && $localFilePath !== '') {
                 File::delete($localFilePath);
             }
@@ -91,7 +74,7 @@ class SendDailyDatabaseBackupEmail extends Command
         $connectionConfig = (array) config('database.connections.'.$defaultConnection, []);
 
         if (($connectionConfig['driver'] ?? null) !== 'mysql') {
-            throw new \RuntimeException('Only MySQL connections are currently supported for backup email command.');
+            throw new \RuntimeException('Only MySQL connections are supported for database backups.');
         }
 
         $databaseName = (string) ($connectionConfig['database'] ?? '');
@@ -125,5 +108,29 @@ class SendDailyDatabaseBackupEmail extends Command
         if (! $process->isSuccessful()) {
             throw new \RuntimeException('Database dump failed: '.$process->getErrorOutput());
         }
+    }
+
+    private function pruneOldBackups(string $disk, string $pathPrefix, int $retentionHours): int
+    {
+        $cutoffTimestamp = now()->subHours($retentionHours)->getTimestamp();
+        $directory = $pathPrefix !== '' ? $pathPrefix : '';
+        $storage = Storage::disk($disk);
+        $deletedCount = 0;
+
+        foreach ($storage->files($directory) as $remotePath) {
+            if (! str_ends_with($remotePath, '.sql')) {
+                continue;
+            }
+
+            $lastModified = $storage->lastModified($remotePath);
+            if ($lastModified >= $cutoffTimestamp) {
+                continue;
+            }
+
+            $storage->delete($remotePath);
+            $deletedCount++;
+        }
+
+        return $deletedCount;
     }
 }

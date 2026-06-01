@@ -26,7 +26,7 @@ class FreightBookingTdsSync
             }
 
             $tdsBaseAmount = round($freightBooking->tr_fr_rate * $loadingWeight, 2);
-            $newTdsAmount = round($tdsBaseAmount * ($newTdsPercentage / 100), 2);
+            $newTdsAmount = roundUpTdsAmount($tdsBaseAmount * ($newTdsPercentage / 100));
 
             if ($newTdsAmount > $freightBooking->balance_amount) {
                 continue;
