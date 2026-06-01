@@ -8,8 +8,6 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::command('db:backup')->dailyAt('01:00')->timezone('Asia/Kolkata');
-
 Schedule::command('truck-owners:reset-declarations --apply --no-interaction')
     ->yearlyOn(4, 1, '00:00')
     ->timezone('Asia/Kolkata')
