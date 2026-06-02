@@ -151,9 +151,9 @@
         $grandTotal = ($invoice->invoice_type ?? '') === 'Reverse'
             ? (float) ($invoice->net_amount ?? $invoice->base_amount ?? $baseAmount)
             : (float) ($invoice->total_amount ?? ($baseAmount + $cgst + $sgst + $igst));
-        $billNumber = $invoice->invoice_number
-            ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '')
-            : ($invoice->manual_invoice_number ?? $invoice->id);
+        $billNumber = $invoice->manual_invoice_number
+            ? $invoice->manual_invoice_number
+            : ($invoice->invoice_number ?? $invoice->id);
         $totalGst = $cgst + $sgst + $igst;
         $usePdfLogoPath = ($partyBillInvoiceUsePdfLogoPath ?? false) === true;
         $invoiceCompanyLogoSrc = $usePdfLogoPath
