@@ -57,4 +57,16 @@ class TransporterMaster extends Model
     {
         return $this->belongsTo(Country::class);
     }
+
+    public static function normalizeEmail(?string $email): ?string
+    {
+        $trimmed = trim((string) $email);
+
+        return $trimmed !== '' ? $trimmed : null;
+    }
+
+    public function hasNotificationEmail(): bool
+    {
+        return filled($this->email);
+    }
 }

@@ -135,6 +135,11 @@
                             @error('name') <div class="text-danger">{{ $message }}</div> @enderror
                         </div>
                         <div class="col-md-4">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email') }}" placeholder="Enter Email (optional)">
+                            @error('email') <div class="text-danger">{{ $message }}</div> @enderror
+                        </div>
+                        <div class="col-md-4">
                             <label for="gst_number" class="form-label">GST Number</label>
                             <input type="text" class="form-control @error('gst_number') is-invalid @enderror" id="gst_number" name="gst_number" value="{{ old('gst_number') }}" placeholder="Enter GST Number">
                             @error('gst_number') <div class="text-danger">{{ $message }}</div> @enderror
@@ -369,12 +374,21 @@
                         </table>
                     </div>
                 </div>
+
+                <div id="noEmailNotificationNotice" class="alert alert-warning d-none mt-3 mb-0">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="confirm-no-email-notification">
+                        <label class="form-check-label" for="confirm-no-email-notification">
+                            I understand that no notification will be sent to this truck owner because no email address has been provided.
+                        </label>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times me-2"></i>Cancel
                 </button>
-                <button type="button" class="btn btn-brand-primary" onclick="submitForm()">
+                <button type="button" class="btn btn-brand-primary" id="confirmSubmitButton" onclick="submitForm()">
                     <i class="fas fa-check me-2"></i>Confirm & Submit
                 </button>
             </div>
@@ -721,6 +735,58 @@
         });
     }
 
+    function resolveNotificationEmail() {
+        const masterId = document.getElementById('transporter_master_id')?.value;
+
+        if (masterId) {
+            const displayEmail = document.getElementById('display_email')?.textContent?.trim() || '';
+
+            return displayEmail === '' || displayEmail === '-' ? '' : displayEmail;
+        }
+
+        return document.getElementById('email')?.value?.trim() || '';
+    }
+
+    function isNotificationEmailMissing() {
+        return resolveNotificationEmail() === '';
+    }
+
+    function updateNoEmailNotificationNotice() {
+        const notice = document.getElementById('noEmailNotificationNotice');
+        const checkbox = document.getElementById('confirm-no-email-notification');
+        const submitButton = document.getElementById('confirmSubmitButton');
+        const missingEmail = isNotificationEmailMissing();
+
+        if (!notice || !checkbox || !submitButton) {
+            return;
+        }
+
+        notice.classList.toggle('d-none', !missingEmail);
+        checkbox.checked = false;
+        submitButton.disabled = missingEmail;
+    }
+
+    document.getElementById('confirm-no-email-notification')?.addEventListener('change', function () {
+        const submitButton = document.getElementById('confirmSubmitButton');
+
+        if (submitButton && isNotificationEmailMissing()) {
+            submitButton.disabled = !this.checked;
+        }
+    });
+
+    document.getElementById('confirmationModal')?.addEventListener('hidden.bs.modal', function () {
+        const checkbox = document.getElementById('confirm-no-email-notification');
+        const submitButton = document.getElementById('confirmSubmitButton');
+
+        if (checkbox) {
+            checkbox.checked = false;
+        }
+
+        if (submitButton) {
+            submitButton.disabled = false;
+        }
+    });
+
     // Function to show confirmation modal with form data
     function showConfirmationModal() {
         const panVerifiedInput = document.getElementById('pan_verified');
@@ -789,6 +855,8 @@
         document.getElementById('confirm-total-trucks').textContent = totalTrucks;
         document.getElementById('confirm-advance').textContent = '' + parseFloat(advance).toFixed(2);
 
+        updateNoEmailNotificationNotice();
+
         // Show modal
         const modal = new bootstrap.Modal(document.getElementById('confirmationModal'));
         modal.show();
@@ -827,6 +895,13 @@
 
     // Function to submit the form after confirmation
     function submitForm() {
+        if (isNotificationEmailMissing()) {
+            const checkbox = document.getElementById('confirm-no-email-notification');
+            if (!checkbox?.checked) {
+                return;
+            }
+        }
+
         const form = document.querySelector('.needs-validation');
 
         // Hide modal

@@ -4,7 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreTransporterRequest;
 use App\Http\Requests\UpdateTransporterRequest;
+use App\Models\AdvancePayment;
+use App\Models\City;
 use App\Models\Company;
+use App\Models\Country;
+use App\Models\State;
 use App\Models\Transporter;
 use App\Models\TransporterMaster;
 use App\Models\Truck;
@@ -12,6 +16,7 @@ use App\Models\User;
 use App\Services\FreightBookingTdsSync;
 use App\Services\Notifications\TransporterOnboardingNotificationService;
 use App\Services\TransporterTdsCalculator;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -52,7 +57,7 @@ class TransporterController extends Controller
                 }
             }
 
-            $baseTransporterQuery = \App\Models\Transporter::query()
+            $baseTransporterQuery = Transporter::query()
                 ->where('is_owner', 0);
 
             if ($companyId) {
@@ -132,7 +137,7 @@ class TransporterController extends Controller
                     ->limit($length)
                     ->pluck('transporters.id');
 
-                $transportersById = \App\Models\Transporter::query()
+                $transportersById = Transporter::query()
                     ->with([
                         'transporterMaster:id,name,pan_number',
                         'company:id,name',
@@ -183,7 +188,7 @@ class TransporterController extends Controller
                 ]);
             }
 
-            $query = \App\Models\Transporter::query()
+            $query = Transporter::query()
                 ->leftJoin('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
                 ->leftJoin('companies', 'transporters.company_id', '=', 'companies.id')
                 ->where('transporters.is_owner', 0)
@@ -352,14 +357,14 @@ class TransporterController extends Controller
 
     public function show($id)
     {
-        $transporter = \App\Models\Transporter::with(['company', 'transporterMaster.city.state.country'])->findOrFail($id);
+        $transporter = Transporter::with(['company', 'transporterMaster.city.state.country'])->findOrFail($id);
 
         if (Auth::user()->company_id && $transporter->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this transporter.');
         }
 
         // Get last 10 advance payments for this transporter
-        $advancePayments = \App\Models\AdvancePayment::where('transporter_id', $id)
+        $advancePayments = AdvancePayment::where('transporter_id', $id)
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get()
@@ -367,7 +372,7 @@ class TransporterController extends Controller
                 return [
                     'id' => $payment->id,
                     'amount' => ''.number_format($payment->advance_amount, 2),
-                    'payment_date' => $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('d-m-Y') : 'Not specified',
+                    'payment_date' => $payment->payment_date ? Carbon::parse($payment->payment_date)->format('d-m-Y') : 'Not specified',
                     'remark' => $payment->remark ?: 'No remarks',
                     'created_at' => $payment->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
                 ];
@@ -400,7 +405,7 @@ class TransporterController extends Controller
 
     public function create()
     {
-        $countries = \App\Models\Country::query()
+        $countries = Country::query()
             ->select(['id', 'name'])
             ->orderBy('name')
             ->get();
@@ -408,7 +413,7 @@ class TransporterController extends Controller
         $cities = [];
 
         if (old('country_id')) {
-            $states = \App\Models\State::query()
+            $states = State::query()
                 ->select(['id', 'name'])
                 ->where('country_id', old('country_id'))
                 ->orderBy('name')
@@ -416,7 +421,7 @@ class TransporterController extends Controller
         }
 
         if (old('state_id')) {
-            $cities = \App\Models\City::query()
+            $cities = City::query()
                 ->select(['id', 'name'])
                 ->where('state_id', old('state_id'))
                 ->orderBy('name')
@@ -455,10 +460,12 @@ class TransporterController extends Controller
             return redirect()->route('transporters.index')->with('success', 'Transporter created successfully!');
         }
 
-        $onboardingData = DB::transaction(function () use ($validated, $declarationGiven) {
+        $email = TransporterMaster::normalizeEmail($validated['email'] ?? null);
+
+        $onboardingData = DB::transaction(function () use ($validated, $declarationGiven, $email) {
             $masterData = [
                 'name' => $validated['name'],
-                'email' => $validated['email'],
+                'email' => $email,
                 'pan_number' => strtoupper($validated['pan_number']),
                 'gst_number' => ! empty($validated['gst_number']) ? strtoupper($validated['gst_number']) : null,
                 'gst_type' => $validated['gst_type'] ?? null,
@@ -491,46 +498,53 @@ class TransporterController extends Controller
             ];
             Transporter::create($transporterData);
 
-            $transporterRoleId = \DB::table('user_roles')->where('name', 'transporter')->value('id');
-            User::create([
-                'name' => $master->name,
-                'email' => $master->email,
-                'password' => bcrypt($master->mobile_number),
-                'user_role_id' => $transporterRoleId,
-                'company_id' => null,
-                'transporter_master_id' => $master->id,
-            ]);
+            if ($email !== null) {
+                $transporterRoleId = \DB::table('user_roles')->where('name', 'transporter')->value('id');
+                User::create([
+                    'name' => $master->name,
+                    'email' => $master->email,
+                    'password' => bcrypt($validated['mobile_number']),
+                    'user_role_id' => $transporterRoleId,
+                    'company_id' => null,
+                    'transporter_master_id' => $master->id,
+                ]);
+            }
 
             return [
                 'email' => $master->email,
                 'name' => $master->name,
+                'notifiable' => $email !== null,
             ];
         });
 
-        Password::sendResetLink(['email' => $onboardingData['email']]);
-        $this->transporterOnboardingNotificationService->sendAccountCreated($onboardingData['email'], $onboardingData['name']);
+        if ($onboardingData['notifiable']) {
+            Password::sendResetLink(['email' => $onboardingData['email']]);
+            $this->transporterOnboardingNotificationService->sendAccountCreated($onboardingData['email'], $onboardingData['name']);
 
-        return redirect()->route('transporters.index')->with('success', 'Transporter created successfully! A password setup link has been sent to '.$onboardingData['email']);
+            return redirect()->route('transporters.index')->with('success', 'Transporter created successfully! A password setup link has been sent to '.$onboardingData['email']);
+        }
+
+        return redirect()->route('transporters.index')->with('success', 'Transporter created successfully. No email was provided, so notifications were not sent.');
     }
 
-    public function edit(\App\Models\Transporter $transporter)
+    public function edit(Transporter $transporter)
     {
         if (Auth::user()->company_id && $transporter->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this transporter.');
         }
         $transporter->load(['transporterMaster.city.state.country']);
         // Filter trucks to show only those belonging to this transporter
-        $trucks = \App\Models\Truck::where('transporter_id', $transporter->id)->get();
-        $countries = \App\Models\Country::all();
+        $trucks = Truck::where('transporter_id', $transporter->id)->get();
+        $countries = Country::all();
         $states = [];
         $cities = [];
 
         if (old('country_id')) {
-            $states = \App\Models\State::where('country_id', old('country_id'))->get();
+            $states = State::where('country_id', old('country_id'))->get();
         }
 
         if (old('state_id')) {
-            $cities = \App\Models\City::where('state_id', old('state_id'))->get();
+            $cities = City::where('state_id', old('state_id'))->get();
         }
 
         // $countries = \App\Models\Country::all();
@@ -539,7 +553,7 @@ class TransporterController extends Controller
         return view('transporters.edit', compact('transporter', 'trucks', 'countries', 'states', 'cities'));
     }
 
-    public function update(UpdateTransporterRequest $request, \App\Models\Transporter $transporter)
+    public function update(UpdateTransporterRequest $request, Transporter $transporter)
     {
         if (Auth::user()->company_id && $transporter->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this transporter.');
@@ -649,7 +663,7 @@ class TransporterController extends Controller
         ]);
     }
 
-    public function destroy(\App\Models\Transporter $transporter)
+    public function destroy(Transporter $transporter)
     {
         if (Auth::user()->company_id && $transporter->company_id !== Auth::user()->company_id) {
             abort(403, 'Unauthorized access to this transporter.');
@@ -665,7 +679,7 @@ class TransporterController extends Controller
     public function getTruckOwnersApi()
     {
         try {
-            $query = \App\Models\Transporter::with('transporterMaster')
+            $query = Transporter::with('transporterMaster')
                 ->where('is_owner', 1);
 
             if (Auth::user()->company_id) {
@@ -692,7 +706,7 @@ class TransporterController extends Controller
     public function getAgenciesApi()
     {
         try {
-            $query = \App\Models\Transporter::with('transporterMaster')
+            $query = Transporter::with('transporterMaster')
                 ->where('is_owner', 0);
 
             if (Auth::user()->company_id) {

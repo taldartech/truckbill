@@ -68,6 +68,39 @@ class TransporterOwnerTest extends TestCase
         $response->assertOk()->assertViewIs('transporters.index');
     }
 
+    public function test_transporter_store_without_email_keeps_null_and_skips_portal_user(): void
+    {
+        UserRole::create(['id' => 6, 'name' => 'transporter']);
+        $admin = $this->makeAdmin();
+        [$country, $state, $city] = $this->seedGeo();
+
+        $response = $this->actingAs($admin)->post('/transporters', [
+            'company_id' => $admin->company_id,
+            'name' => 'No Email Logistics',
+            'gst_number' => '12ABCDE1234F1Z5',
+            'pan_number' => 'ABCDE1234F',
+            'advance_amount' => 0,
+            'pan_active' => true,
+            'address' => '123 Street',
+            'country_id' => $country->id,
+            'state_id' => $state->id,
+            'city_id' => $city->id,
+            'mobile_number' => '9876543210',
+            'declaration_given' => false,
+            'tds_percentage' => 20,
+        ]);
+
+        $response->assertRedirect(route('transporters.index'));
+        $this->assertDatabaseHas('transporter_masters', [
+            'name' => 'No Email Logistics',
+            'pan_number' => 'ABCDE1234F',
+            'email' => null,
+        ]);
+
+        $masterId = TransporterMaster::query()->where('pan_number', 'ABCDE1234F')->value('id');
+        $this->assertNull(User::query()->where('transporter_master_id', $masterId)->first());
+    }
+
     public function test_transporter_store_creates_agency(): void
     {
         $admin = $this->makeAdmin();
@@ -110,7 +143,7 @@ class TransporterOwnerTest extends TestCase
         $admin = $this->makeAdmin();
         [$country, $state, $city] = $this->seedGeo();
 
-        $master = \App\Models\TransporterMaster::factory()->create([
+        $master = TransporterMaster::factory()->create([
             'name' => 'Existing',
             'pan_number' => 'ABCDE1234F',
         ]);
@@ -172,6 +205,7 @@ class TransporterOwnerTest extends TestCase
         $this->assertDatabaseHas('transporter_masters', [
             'name' => 'Owner One',
             'pan_number' => 'ABCPD1234Q',
+            'email' => null,
         ]);
         $this->assertDatabaseHas('transporters', [
             'company_id' => $admin->company_id,

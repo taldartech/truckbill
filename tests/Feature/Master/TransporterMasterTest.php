@@ -95,6 +95,28 @@ class TransporterMasterTest extends TestCase
         ]);
     }
 
+    public function test_master_admin_can_store_transporter_master_without_email(): void
+    {
+        $masterAdmin = $this->makeUser('master_admin');
+
+        $this->actingAs($masterAdmin)
+            ->post(route('master.transporter-masters.store'), [
+                'name' => 'No Email Transport',
+                'pan_number' => 'ABCDE1234F',
+                'gst_number' => null,
+                'gst_type' => null,
+                'pan_active' => '1',
+                'address' => null,
+            ])
+            ->assertRedirect(route('master.transporter-masters.index'));
+
+        $this->assertDatabaseHas('transporter_masters', [
+            'name' => 'No Email Transport',
+            'pan_number' => 'ABCDE1234F',
+            'email' => null,
+        ]);
+    }
+
     public function test_admin_cannot_access_transporter_masters_module(): void
     {
         $admin = $this->makeUser('admin');

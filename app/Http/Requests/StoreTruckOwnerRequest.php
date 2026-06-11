@@ -3,6 +3,10 @@
 namespace App\Http\Requests;
 
 use App\Http\Requests\Concerns\ValidatesTransporterTdsOverride;
+use App\Models\City;
+use App\Models\State;
+use App\Models\Transporter;
+use App\Models\TransporterMaster;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -45,7 +49,7 @@ class StoreTruckOwnerRequest extends FormRequest
                     'required',
                     'exists:transporter_masters,id',
                     function ($attr, $value, $fail) {
-                        $exists = \App\Models\Transporter::where('transporter_master_id', $value)
+                        $exists = Transporter::where('transporter_master_id', $value)
                             ->where('company_id', $this->input('company_id'))
                             ->where('is_owner', 1)
                             ->exists();
@@ -59,6 +63,7 @@ class StoreTruckOwnerRequest extends FormRequest
 
         return array_merge($baseRules, [
             'name' => 'required|string|max:255',
+            'email' => ['nullable', 'email', 'max:255', 'unique:transporter_masters,email', 'unique:users,email'],
             'pan_number' => [
                 'required',
                 'string',
@@ -79,7 +84,7 @@ class StoreTruckOwnerRequest extends FormRequest
                 'exists:states,id',
                 function ($attr, $value, $fail) {
                     if ($value && $this->country_id) {
-                        $state = \App\Models\State::find($value);
+                        $state = State::find($value);
                         if ($state && $state->country_id != $this->country_id) {
                             $fail('The selected state does not belong to the selected country.');
                         }
@@ -91,7 +96,7 @@ class StoreTruckOwnerRequest extends FormRequest
                 'exists:cities,id',
                 function ($attr, $value, $fail) {
                     if ($value && $this->state_id) {
-                        $city = \App\Models\City::find($value);
+                        $city = City::find($value);
                         if ($city && $city->state_id != $this->state_id) {
                             $fail('The selected city does not belong to the selected state.');
                         }
@@ -106,7 +111,7 @@ class StoreTruckOwnerRequest extends FormRequest
         $validator->after(function ($validator) {
             $declaration = filter_var($this->input('declaration_given'), FILTER_VALIDATE_BOOLEAN);
             if ($this->filled('transporter_master_id')) {
-                $master = \App\Models\TransporterMaster::find($this->input('transporter_master_id'));
+                $master = TransporterMaster::find($this->input('transporter_master_id'));
                 if (! $master) {
                     return;
                 }

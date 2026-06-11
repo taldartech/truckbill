@@ -55,12 +55,14 @@ class TransporterMasterController extends Controller
         $payload = $request->prepareTransporterMasterPayload();
         $transporterMaster->update($payload);
 
+        $userUpdate = ['name' => $payload['name']];
+        if ($payload['email'] !== null) {
+            $userUpdate['email'] = $payload['email'];
+        }
+
         User::query()
             ->where('transporter_master_id', $transporterMaster->id)
-            ->update([
-                'name' => $payload['name'],
-                'email' => $payload['email'],
-            ]);
+            ->update($userUpdate);
 
         return redirect()
             ->route('master.transporter-masters.index')
@@ -136,7 +138,7 @@ class TransporterMasterController extends Controller
             return [
                 'id' => $master->id,
                 'name' => $master->name,
-                'email' => $master->email,
+                'email' => $master->email ?: '-',
                 'pan_number' => $master->pan_number,
                 'gst_number' => $master->gst_number ?: '-',
                 'pan_active' => $master->pan_active ? 'Yes' : 'No',

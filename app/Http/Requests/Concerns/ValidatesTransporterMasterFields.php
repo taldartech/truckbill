@@ -4,6 +4,7 @@ namespace App\Http\Requests\Concerns;
 
 use App\Models\City;
 use App\Models\State;
+use App\Models\TransporterMaster;
 use App\Models\User;
 use Illuminate\Validation\Rule;
 
@@ -17,7 +18,7 @@ trait ValidatesTransporterMasterFields
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => [
-                'required',
+                'nullable',
                 'email',
                 'max:255',
                 Rule::unique('transporter_masters', 'email')->ignore($ignoreMasterId),
@@ -75,7 +76,7 @@ trait ValidatesTransporterMasterFields
 
         return [
             'name' => $validated['name'],
-            'email' => $validated['email'],
+            'email' => TransporterMaster::normalizeEmail($validated['email'] ?? null),
             'pan_number' => strtoupper($validated['pan_number']),
             'gst_number' => ! empty($validated['gst_number']) ? strtoupper($validated['gst_number']) : null,
             'gst_type' => $validated['gst_type'] ?? null,

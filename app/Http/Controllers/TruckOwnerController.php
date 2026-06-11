@@ -15,6 +15,7 @@ use App\Models\Truck;
 use App\Models\TruckType;
 use App\Services\FreightBookingTdsSync;
 use App\Services\TransporterTdsCalculator;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -292,7 +293,7 @@ class TruckOwnerController extends Controller
 
         $masterData = [
             'name' => $validated['name'],
-            'email' => $validated['pan_number'].'@truckowner.placeholder',
+            'email' => TransporterMaster::normalizeEmail($validated['email'] ?? null),
             'pan_number' => $validated['pan_number'],
             'gst_number' => $validated['gst_number'],
             'gst_type' => null,
@@ -355,7 +356,7 @@ class TruckOwnerController extends Controller
                 return [
                     'id' => $payment->id,
                     'amount' => ''.number_format($payment->advance_amount, 2),
-                    'payment_date' => $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('d-m-Y') : 'Not specified',
+                    'payment_date' => $payment->payment_date ? Carbon::parse($payment->payment_date)->format('d-m-Y') : 'Not specified',
                     'remark' => $payment->remark ?: 'No remarks',
                     'created_at' => $payment->created_at->setTimezone('Asia/Kolkata')->format('d-m-Y H:i'),
                 ];
