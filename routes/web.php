@@ -1,30 +1,37 @@
 <?php
 
-use App\Http\Controllers\MasterPanelSummaryController;
 use App\Http\Controllers\AdvancePaymentController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\BranchController;
+use App\Http\Controllers\CityController;
 use App\Http\Controllers\CompanyBankDetailsController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\ConsigneeController;
+use App\Http\Controllers\CountryController;
 use App\Http\Controllers\CustomerPortalController;
 use App\Http\Controllers\CustomInvoiceController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DriverController;
 use App\Http\Controllers\EmailTemplateController;
 use App\Http\Controllers\FreightBookingController;
+use App\Http\Controllers\GoodsTypeController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\LeadController;
 use App\Http\Controllers\LorryReceiptController;
+use App\Http\Controllers\MasterPanelSummaryController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PromoCodeController;
 use App\Http\Controllers\PumpController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\StateController;
 use App\Http\Controllers\TransporterBankAccountController;
 use App\Http\Controllers\TransporterController;
 use App\Http\Controllers\TransporterDashboardController;
+use App\Http\Controllers\TransporterMasterController;
 use App\Http\Controllers\TruckController;
 use App\Http\Controllers\TruckOwnerBankAccountController;
 use App\Http\Controllers\TruckOwnerController;
+use App\Http\Controllers\TruckTypeController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VoucherPaymentController;
 use App\Http\Controllers\VoucherTemplateController;
@@ -125,7 +132,7 @@ Route::middleware(['auth.blocked'])->group(function () {
         Route::get('/transporters', [CustomerPortalController::class, 'transporters'])->name('transporters.index');
     });
 
-    Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])
+    Route::get('/dashboard', [DashboardController::class, 'index'])
         ->middleware(['auth.blocked', 'verified'])
         ->name('dashboard');
 
@@ -255,42 +262,42 @@ Route::middleware(['auth.blocked'])->group(function () {
     Route::prefix('master')->name('master.')->group(function () {
         // Countries
         Route::middleware(['role:admin,moderator,super_admin,master_admin'])->group(function () {
-            Route::resource('countries', \App\Http\Controllers\CountryController::class)->only(['index', 'create', 'store']);
+            Route::resource('countries', CountryController::class)->only(['index', 'create', 'store']);
         });
         Route::middleware(['role:admin,super_admin,master_admin'])->group(function () {
-            Route::resource('countries', \App\Http\Controllers\CountryController::class)->only(['edit', 'update', 'destroy']);
+            Route::resource('countries', CountryController::class)->only(['edit', 'update', 'destroy']);
         });
 
         // States
         Route::middleware(['role:admin,moderator,super_admin,master_admin'])->group(function () {
-            Route::resource('states', \App\Http\Controllers\StateController::class)->only(['index', 'create', 'store']);
+            Route::resource('states', StateController::class)->only(['index', 'create', 'store']);
         });
         Route::middleware(['role:admin,super_admin,master_admin'])->group(function () {
-            Route::resource('states', \App\Http\Controllers\StateController::class)->only(['edit', 'update', 'destroy']);
+            Route::resource('states', StateController::class)->only(['edit', 'update', 'destroy']);
         });
 
         // Cities
         Route::middleware(['role:admin,moderator,super_admin,master_admin'])->group(function () {
-            Route::resource('cities', \App\Http\Controllers\CityController::class)->only(['index', 'create', 'store']);
+            Route::resource('cities', CityController::class)->only(['index', 'create', 'store']);
         });
         Route::middleware(['role:admin,super_admin,master_admin'])->group(function () {
-            Route::resource('cities', \App\Http\Controllers\CityController::class)->only(['edit', 'update', 'destroy']);
+            Route::resource('cities', CityController::class)->only(['edit', 'update', 'destroy']);
         });
 
         // Goods Types
         Route::middleware(['role:admin,moderator,super_admin'])->group(function () {
-            Route::resource('goods-types', \App\Http\Controllers\GoodsTypeController::class)->only(['index', 'create', 'store']);
+            Route::resource('goods-types', GoodsTypeController::class)->only(['index', 'create', 'store']);
         });
         Route::middleware(['role:admin,super_admin'])->group(function () {
-            Route::resource('goods-types', \App\Http\Controllers\GoodsTypeController::class)->only(['edit', 'update', 'destroy']);
+            Route::resource('goods-types', GoodsTypeController::class)->only(['edit', 'update', 'destroy']);
         });
 
         // Truck Types
         Route::middleware(['role:admin,moderator,super_admin'])->group(function () {
-            Route::resource('truck-types', \App\Http\Controllers\TruckTypeController::class)->only(['index', 'create', 'store']);
+            Route::resource('truck-types', TruckTypeController::class)->only(['index', 'create', 'store']);
         });
         Route::middleware(['role:admin,super_admin'])->group(function () {
-            Route::resource('truck-types', \App\Http\Controllers\TruckTypeController::class)->only(['edit', 'update', 'destroy']);
+            Route::resource('truck-types', TruckTypeController::class)->only(['edit', 'update', 'destroy']);
         });
 
         // Pumps
@@ -299,6 +306,10 @@ Route::middleware(['auth.blocked'])->group(function () {
         });
         Route::middleware(['role:admin,super_admin'])->group(function () {
             Route::resource('pumps', PumpController::class)->only(['edit', 'update', 'destroy'])->names(['edit' => 'pump.edit', 'update' => 'pump.update', 'destroy' => 'pump.destroy']);
+        });
+
+        Route::middleware(['role:master_admin'])->group(function () {
+            Route::resource('transporter-masters', TransporterMasterController::class)->except(['show']);
         });
     });
 

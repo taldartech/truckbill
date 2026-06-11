@@ -554,6 +554,13 @@
                                 </a>
                             </li>
                             <li class="nav-item">
+                                <a href="{{ route('master.transporter-masters.index') }}"
+                                    class="nav-link{{ Request::is('master/transporter-masters*') ? ' active' : '' }}">
+                                    <i class="fas fa-truck-moving"></i>
+                                    <p>Transporter Masters</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
                                 <a class="nav-link{{ Request::is('master/countries*') || Request::is('master/states*') || Request::is('master/cities*') ? ' active' : '' }}"
                                     href="#masterLocationMenuMasterAdmin">
                                     <i class="fas fa-globe"></i>
