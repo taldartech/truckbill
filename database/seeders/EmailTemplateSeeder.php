@@ -52,7 +52,7 @@ class EmailTemplateSeeder extends Seeder
                 'allowed_roles' => [],
                 'send_to_transporter' => false,
                 'send_to_customer' => false,
-                'is_active' => true,
+                'is_active' => false,
             ],
             [
                 'key' => 'COMPANY_REGISTERED',
@@ -63,7 +63,7 @@ class EmailTemplateSeeder extends Seeder
                 'allowed_roles' => ['super_admin'],
                 'send_to_transporter' => false,
                 'send_to_customer' => false,
-                'is_active' => true,
+                'is_active' => false,
             ],
             [
                 'key' => 'COMPANY_SUBSCRIPTION_RENEWED',
@@ -74,7 +74,7 @@ class EmailTemplateSeeder extends Seeder
                 'allowed_roles' => ['super_admin'],
                 'send_to_transporter' => false,
                 'send_to_customer' => false,
-                'is_active' => true,
+                'is_active' => false,
             ],
             [
                 'key' => 'COMPANY_PLAN_EXPIRING_SOON',
@@ -85,7 +85,7 @@ class EmailTemplateSeeder extends Seeder
                 'allowed_roles' => ['super_admin', 'admin', 'accountant'],
                 'send_to_transporter' => false,
                 'send_to_customer' => false,
-                'is_active' => true,
+                'is_active' => false,
             ],
             [
                 'key' => 'COMPANY_PLAN_EXPIRED',
@@ -96,7 +96,7 @@ class EmailTemplateSeeder extends Seeder
                 'allowed_roles' => ['super_admin', 'admin', 'accountant'],
                 'send_to_transporter' => false,
                 'send_to_customer' => false,
-                'is_active' => true,
+                'is_active' => false,
             ],
             [
                 'key' => 'COMPANY_CREDIT_LOW',
@@ -107,7 +107,7 @@ class EmailTemplateSeeder extends Seeder
                 'allowed_roles' => ['super_admin', 'admin'],
                 'send_to_transporter' => false,
                 'send_to_customer' => false,
-                'is_active' => true,
+                'is_active' => false,
             ],
             [
                 'key' => 'LR_STATUS_PENDING',
@@ -118,7 +118,7 @@ class EmailTemplateSeeder extends Seeder
                 'allowed_roles' => [],
                 'send_to_transporter' => false,
                 'send_to_customer' => false,
-                'is_active' => true,
+                'is_active' => false,
             ],
             [
                 'key' => 'LR_STATUS_IN_PROGRESS',
@@ -129,7 +129,7 @@ class EmailTemplateSeeder extends Seeder
                 'allowed_roles' => [],
                 'send_to_transporter' => true,
                 'send_to_customer' => true,
-                'is_active' => true,
+                'is_active' => false,
             ],
             [
                 'key' => 'LR_STATUS_DELIVERED',
@@ -140,7 +140,7 @@ class EmailTemplateSeeder extends Seeder
                 'allowed_roles' => [],
                 'send_to_transporter' => true,
                 'send_to_customer' => true,
-                'is_active' => true,
+                'is_active' => false,
             ],
             [
                 'key' => 'FR_STATUS_CANCELLED',
@@ -151,7 +151,7 @@ class EmailTemplateSeeder extends Seeder
                 'allowed_roles' => ['admin', 'moderator', 'accountant'],
                 'send_to_transporter' => true,
                 'send_to_customer' => false,
-                'is_active' => true,
+                'is_active' => false,
             ],
             [
                 'key' => 'ADVANCE_PAYMENT_PAID',
@@ -162,7 +162,7 @@ class EmailTemplateSeeder extends Seeder
                 'allowed_roles' => ['super_admin', 'admin'],
                 'send_to_transporter' => true,
                 'send_to_customer' => false,
-                'is_active' => true,
+                'is_active' => false,
             ],
             [
                 'key' => 'EWAY_EXPIRY_1D',
@@ -173,7 +173,7 @@ class EmailTemplateSeeder extends Seeder
                 'allowed_roles' => ['super_admin', 'admin', 'moderator'],
                 'send_to_transporter' => false,
                 'send_to_customer' => false,
-                'is_active' => true,
+                'is_active' => false,
             ],
             [
                 'key' => 'VOUCHER_PAYMENT_PENDING',
@@ -184,7 +184,7 @@ class EmailTemplateSeeder extends Seeder
                 'allowed_roles' => ['super_admin', 'admin'],
                 'send_to_transporter' => true,
                 'send_to_customer' => false,
-                'is_active' => true,
+                'is_active' => false,
             ],
             [
                 'key' => 'VOUCHER_PAYMENT_IN_PROGRESS',
@@ -195,7 +195,7 @@ class EmailTemplateSeeder extends Seeder
                 'allowed_roles' => ['super_admin', 'admin'],
                 'send_to_transporter' => true,
                 'send_to_customer' => false,
-                'is_active' => true,
+                'is_active' => false,
             ],
             [
                 'key' => 'VOUCHER_PAYMENT_PAID',
@@ -206,7 +206,7 @@ class EmailTemplateSeeder extends Seeder
                 'allowed_roles' => ['super_admin', 'admin'],
                 'send_to_transporter' => true,
                 'send_to_customer' => false,
-                'is_active' => true,
+                'is_active' => false,
             ],
         ];
 
