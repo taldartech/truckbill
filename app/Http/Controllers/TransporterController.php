@@ -20,7 +20,6 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Password;
 
 class TransporterController extends Controller
 {
@@ -518,10 +517,9 @@ class TransporterController extends Controller
         });
 
         if ($onboardingData['notifiable']) {
-            Password::sendResetLink(['email' => $onboardingData['email']]);
             $this->transporterOnboardingNotificationService->sendAccountCreated($onboardingData['email'], $onboardingData['name']);
 
-            return redirect()->route('transporters.index')->with('success', 'Transporter created successfully! A password setup link has been sent to '.$onboardingData['email']);
+            return redirect()->route('transporters.index')->with('success', 'Transporter created successfully! An account notification has been sent to '.$onboardingData['email']);
         }
 
         return redirect()->route('transporters.index')->with('success', 'Transporter created successfully. No email was provided, so notifications were not sent.');
