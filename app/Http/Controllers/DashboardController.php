@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AdvancePayment;
 use App\Models\Company;
 use App\Models\FreightBooking;
 use App\Models\FreightBooking as Booking;
@@ -11,6 +12,7 @@ use App\Models\LorryReceipt;
 use App\Models\Transporter;
 use App\Models\Truck;
 use App\Models\User;
+use App\Models\VoucherPayment;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -64,11 +66,7 @@ class DashboardController extends Controller
         $endOfMonth = $now->copy()->endOfMonth();
 
         // System-wide statistics
-        // Calculate revenue as LR amount - FR amount
-        $totalRevenue = Booking::join('lorry_receipts', 'freight_bookings.lr_id', '=', 'lorry_receipts.id')
-            ->whereRaw('freight_bookings.created_at BETWEEN ? AND ?', [$startOfMonth, $endOfMonth])
-            ->selectRaw('SUM(lorry_receipts.amount - freight_bookings.tr_amount) as revenue')
-            ->value('revenue') ?? 0;
+        $totalRevenue = $this->sumInvoiceTotalRevenue(null, $startOfMonth, $endOfMonth);
 
         $systemStats = [
             'monthly_revenue' => $totalRevenue,
@@ -90,13 +88,12 @@ class DashboardController extends Controller
         // Recent companies
         $recentCompanies = Company::latest()->take(5)->get();
 
-        // Revenue by company (top 10) - LR amount - FR amount
+        // Revenue by company (top 10) — sum of invoice totals
         $topCompaniesByRevenue = Company::select('companies.*')
             ->selectSub(
-                Booking::selectRaw('SUM(lorry_receipts.amount - freight_bookings.tr_amount)')
-                    ->join('lorry_receipts', 'freight_bookings.lr_id', '=', 'lorry_receipts.id')
-                    ->whereColumn('freight_bookings.company_id', 'companies.id')
-                    ->whereRaw('freight_bookings.created_at BETWEEN ? AND ?', [$startOfMonth, $endOfMonth]),
+                Invoice::selectRaw('COALESCE(SUM(total_amount), 0)')
+                    ->whereColumn('invoices.company_id', 'companies.id')
+                    ->whereBetween('invoices.created_at', [$startOfMonth, $endOfMonth]),
                 'monthly_revenue'
             )
             ->orderByDesc('monthly_revenue')
@@ -131,12 +128,7 @@ class DashboardController extends Controller
         // Get companies owned by super admin
         $companyIds = Company::where('user_id', auth()->user()->id)->pluck('id');
 
-        // Calculate revenue as LR amount - FR amount
-        $totalRevenue = Booking::join('lorry_receipts', 'freight_bookings.lr_id', '=', 'lorry_receipts.id')
-            ->whereIn('freight_bookings.company_id', $companyIds)
-            ->whereRaw('freight_bookings.created_at BETWEEN ? AND ?', [$startOfMonth, $endOfMonth])
-            ->selectRaw('SUM(lorry_receipts.amount - freight_bookings.tr_amount) as revenue')
-            ->value('revenue') ?? 0;
+        $totalRevenue = $this->sumInvoiceTotalRevenue($companyIds->all(), $startOfMonth, $endOfMonth);
 
         // Calculate outstanding amount across all companies
         $allInvoicesForStats = Invoice::whereIn('company_id', $companyIds)
@@ -183,14 +175,13 @@ class DashboardController extends Controller
             ->orderBy('plan_end_date', 'asc')
             ->get();
 
-        // Revenue by company - LR amount - FR amount
+        // Revenue by company — sum of invoice totals
         $revenueByCompany = Company::where('user_id', auth()->user()->id)
             ->select('companies.*')
             ->selectSub(
-                Booking::selectRaw('SUM(lorry_receipts.amount - freight_bookings.tr_amount)')
-                    ->join('lorry_receipts', 'freight_bookings.lr_id', '=', 'lorry_receipts.id')
-                    ->whereColumn('freight_bookings.company_id', 'companies.id')
-                    ->whereRaw('freight_bookings.created_at BETWEEN ? AND ?', [$startOfMonth, $endOfMonth]),
+                Invoice::selectRaw('COALESCE(SUM(total_amount), 0)')
+                    ->whereColumn('invoices.company_id', 'companies.id')
+                    ->whereBetween('invoices.created_at', [$startOfMonth, $endOfMonth]),
                 'monthly_revenue'
             )
             ->orderByDesc('monthly_revenue')
@@ -261,16 +252,16 @@ class DashboardController extends Controller
                 ->where('is_cancelled', false)
                 ->where('company_id', $companyId)
                 ->count(),
-            'pending_lrs' => \App\Models\LorryReceipt::where('delivery_status', 'Pending')
+            'pending_lrs' => LorryReceipt::where('delivery_status', 'Pending')
                 ->where('company_id', $companyId)
                 ->whereNull('deleted_at')
                 ->count(),
-            'delivered_today' => \App\Models\LorryReceipt::where('delivery_status', 'Delivered')
+            'delivered_today' => LorryReceipt::where('delivery_status', 'Delivered')
                 ->where('company_id', $companyId)
                 ->whereDate('updated_at', $today)
                 ->whereNull('deleted_at')
                 ->count(),
-            'lrs_pending_invoice' => \App\Models\LorryReceipt::where('invoice_generated', 0)
+            'lrs_pending_invoice' => LorryReceipt::where('invoice_generated', 0)
                 ->where('company_id', $companyId)
                 ->whereNull('deleted_at')
                 ->count(),
@@ -337,16 +328,16 @@ class DashboardController extends Controller
                 ->where('is_cancelled', false)
                 ->where('company_id', $companyId)
                 ->count(),
-            'pending_lrs' => \App\Models\LorryReceipt::where('delivery_status', 'Pending')
+            'pending_lrs' => LorryReceipt::where('delivery_status', 'Pending')
                 ->where('company_id', $companyId)
                 ->whereNull('deleted_at')
                 ->count(),
-            'delivered_today' => \App\Models\LorryReceipt::where('delivery_status', 'Delivered')
+            'delivered_today' => LorryReceipt::where('delivery_status', 'Delivered')
                 ->where('company_id', $companyId)
                 ->whereDate('updated_at', $today)
                 ->whereNull('deleted_at')
                 ->count(),
-            'lrs_pending_invoice' => \App\Models\LorryReceipt::where('invoice_generated', 0)
+            'lrs_pending_invoice' => LorryReceipt::where('invoice_generated', 0)
                 ->where('company_id', $companyId)
                 ->whereNull('deleted_at')
                 ->count(),
@@ -365,7 +356,7 @@ class DashboardController extends Controller
 
         // Moderator-specific stats for new KPI cards
         $moderatorStats = [
-            'incoming_bookings' => \App\Models\LorryReceipt::where('delivery_status', 'Pending')
+            'incoming_bookings' => LorryReceipt::where('delivery_status', 'Pending')
                 ->where('company_id', $companyId)
                 ->whereNull('deleted_at')
                 ->count(),
@@ -458,12 +449,7 @@ class DashboardController extends Controller
         $endOfMonth = $now->copy()->endOfMonth();
         $companyId = auth()->user()->company_id;
 
-        // Calculate revenue as LR amount - FR amount
-        $totalRevenue = Booking::join('lorry_receipts', 'freight_bookings.lr_id', '=', 'lorry_receipts.id')
-            ->where('freight_bookings.company_id', $companyId)
-            ->whereRaw('freight_bookings.created_at BETWEEN ? AND ?', [$startOfMonth, $endOfMonth])
-            ->selectRaw('SUM(lorry_receipts.amount - freight_bookings.tr_amount) as revenue')
-            ->value('revenue') ?? 0;
+        $totalRevenue = $this->sumInvoiceTotalRevenue([$companyId], $startOfMonth, $endOfMonth);
 
         // Calculate Accountant KPIs
         $today = now()->startOfDay();
@@ -489,17 +475,14 @@ class DashboardController extends Controller
                 $pendingInvoiceAmount += $remainingAmount;
                 $outstandingAmount += $remainingAmount;
 
-                $invoiceDate = $invoice->generated_date ? \Carbon\Carbon::parse($invoice->generated_date) : $invoice->created_at;
+                $invoiceDate = $invoice->generated_date ? Carbon::parse($invoice->generated_date) : $invoice->created_at;
                 if ($invoiceDate->copy()->addDays(30)->isPast()) {
                     $overdueInvoicesCount++;
                 }
             }
         }
 
-        // Calculate total invoiced amount (monthly)
-        $totalInvoiced = Invoice::where('company_id', $companyId)
-            ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
-            ->sum('total_amount');
+        $totalInvoiced = $totalRevenue;
 
         // Calculate total paid amount (all time)
         $totalPaid = InvoicePayment::whereHas('invoice', function ($q) use ($companyId) {
@@ -526,16 +509,15 @@ class DashboardController extends Controller
             'overdue_invoices' => $overdueInvoicesCount,
         ];
 
-        // Revenue data for the last 6 months - LR amount - FR amount
-        $revenueData = Booking::select(
-            DB::raw('DATE_FORMAT(freight_bookings.created_at, "%b %Y") as month'),
-            DB::raw('SUM(lorry_receipts.amount - freight_bookings.tr_amount) as total')
+        // Revenue chart for the last 6 months — sum of invoice totals
+        $revenueData = Invoice::select(
+            DB::raw('DATE_FORMAT(created_at, "%b %Y") as month'),
+            DB::raw('SUM(total_amount) as total')
         )
-            ->join('lorry_receipts', 'freight_bookings.lr_id', '=', 'lorry_receipts.id')
-            ->where('freight_bookings.created_at', '>=', now()->subMonths(5)->startOfMonth())
-            ->where('freight_bookings.company_id', $companyId)
+            ->where('created_at', '>=', now()->subMonths(5)->startOfMonth())
+            ->where('company_id', $companyId)
             ->groupBy('month')
-            ->orderBy('freight_bookings.created_at')
+            ->orderBy('created_at')
             ->pluck('total', 'month');
 
         // Payment ledger of invoices - Priority: Pending/Partial invoices (based on payment ledger)
@@ -588,19 +570,19 @@ class DashboardController extends Controller
                 ->where('is_delivered', false)
                 ->where('is_cancelled', false)
                 ->count(),
-            'pending_lrs' => \App\Models\LorryReceipt::whereIn('transporter_id', $transporterIds)
+            'pending_lrs' => LorryReceipt::whereIn('transporter_id', $transporterIds)
                 ->where('delivery_status', 'Pending')
                 ->whereNull('deleted_at')
                 ->count(),
-            'delivered_today' => \App\Models\LorryReceipt::whereIn('transporter_id', $transporterIds)
+            'delivered_today' => LorryReceipt::whereIn('transporter_id', $transporterIds)
                 ->where('delivery_status', 'Delivered')
                 ->whereDate('updated_at', $today)
                 ->whereNull('deleted_at')
                 ->count(),
-            'payments_received' => \App\Models\VoucherPayment::whereHas('freight_booking', fn ($q) => $q->whereIn('transporter_id', $transporterIds))
+            'payments_received' => VoucherPayment::whereHas('freight_booking', fn ($q) => $q->whereIn('transporter_id', $transporterIds))
                 ->where('payment_status', 'paid')
                 ->sum('amount'),
-            'advance_received' => \App\Models\AdvancePayment::whereIn('transporter_id', $transporterIds)->sum('advance_amount'),
+            'advance_received' => AdvancePayment::whereIn('transporter_id', $transporterIds)->sum('advance_amount'),
             'expired_eway_bills' => FreightBooking::whereIn('transporter_id', $transporterIds)
                 ->where('is_delivered', 0)
                 ->where('is_cancelled', 0)
@@ -614,7 +596,7 @@ class DashboardController extends Controller
             ->take(10)
             ->get();
 
-        $recentPayments = \App\Models\VoucherPayment::with('freight_booking.lr')
+        $recentPayments = VoucherPayment::with('freight_booking.lr')
             ->whereHas('freight_booking', fn ($q) => $q->whereIn('transporter_id', $transporterIds))
             ->latest()
             ->take(10)
@@ -718,12 +700,7 @@ class DashboardController extends Controller
         $endOfMonth = $now->copy()->endOfMonth();
         $companyId = auth()->user()->company_id;
 
-        // Calculate revenue as LR amount - FR amount
-        $totalRevenue = Booking::join('lorry_receipts', 'freight_bookings.lr_id', '=', 'lorry_receipts.id')
-            ->where('freight_bookings.company_id', $companyId)
-            ->whereRaw('freight_bookings.created_at BETWEEN ? AND ?', [$startOfMonth, $endOfMonth])
-            ->selectRaw('SUM(lorry_receipts.amount - freight_bookings.tr_amount) as revenue')
-            ->value('revenue') ?? 0;
+        $totalRevenue = $this->sumInvoiceTotalRevenue([$companyId], $startOfMonth, $endOfMonth);
 
         $monthlyStats = [
             'total_bookings' => Booking::whereBetween('freight_bookings.created_at', [$startOfMonth, $endOfMonth])
@@ -733,5 +710,23 @@ class DashboardController extends Controller
         ];
 
         return view('dashboard', compact('monthlyStats'));
+    }
+
+    /**
+     * @param  array<int, int>|null  $companyIds
+     */
+    private function sumInvoiceTotalRevenue(?array $companyIds, Carbon $start, Carbon $end): float
+    {
+        $query = Invoice::query()->whereBetween('created_at', [$start, $end]);
+
+        if ($companyIds !== null) {
+            if ($companyIds === []) {
+                return 0.0;
+            }
+
+            $query->whereIn('company_id', $companyIds);
+        }
+
+        return (float) ($query->sum('total_amount') ?? 0);
     }
 }

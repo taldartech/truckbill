@@ -83,12 +83,10 @@ class MasterPanelSummaryService
 
         $ids = $companyIds->all();
 
-        $revenue = (float) (FreightBooking::query()
-            ->join('lorry_receipts', 'freight_bookings.lr_id', '=', 'lorry_receipts.id')
-            ->whereIn('freight_bookings.company_id', $ids)
-            ->whereBetween('freight_bookings.created_at', [$rangeStart, $rangeEnd])
-            ->selectRaw('COALESCE(SUM(lorry_receipts.amount - freight_bookings.tr_amount), 0) as revenue')
-            ->value('revenue') ?? 0);
+        $revenue = (float) (Invoice::query()
+            ->whereIn('company_id', $ids)
+            ->whereBetween('created_at', [$rangeStart, $rangeEnd])
+            ->sum('total_amount') ?? 0);
 
         $lrBase = LorryReceipt::query()
             ->whereIn('company_id', $ids)
