@@ -18,13 +18,13 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth.blocked' => \App\Http\Middleware\CheckBlockMiddleware::class,
             'company.context' => \App\Http\Middleware\EnsureCompanyContextMiddleware::class,
             'customer.consignee' => \App\Http\Middleware\EnsureCustomerConsigneeContext::class,
+            'onboarding.signature' => \App\Http\Middleware\VerifyOnboardingSignature::class,
         ]);
 
         $middleware->validateCsrfTokens(except: [
-            'api/public/leads',
-            'api/onboarding/send-otp',
-            'api/onboarding/verify-otp',
-            'api/onboard',
+            'api/onboarding/create-user',
+            'api/onboarding/update-user',
+            'api/onboarding/status',
         ]);
 
         // Note: Single device login check is now included in CheckBlockMiddleware

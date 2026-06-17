@@ -1,10 +1,18 @@
 <?php
 
+use App\Http\Controllers\Api\OnboardingController as ApiOnboardingController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Auth\OnboardingController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use Illuminate\Support\Facades\Route;
+
+Route::prefix('api/onboarding')
+    ->middleware(['onboarding.signature'])
+    ->group(function (): void {
+        Route::post('create-user', [ApiOnboardingController::class, 'createUser']);
+        Route::post('update-user', [ApiOnboardingController::class, 'updateUser']);
+        Route::get('status', [ApiOnboardingController::class, 'status']);
+    });
 
 // Authentication Routes
 Route::middleware(['guest'])->group(function () {
@@ -14,12 +22,6 @@ Route::middleware(['guest'])->group(function () {
     Route::post('/forgot-password', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('password.email');
     Route::get('/reset-password/{token}', [ResetPasswordController::class, 'showResetForm'])->name('password.reset');
     Route::post('/reset-password', [ResetPasswordController::class, 'reset'])->name('password.update');
-    Route::post('/api/public/leads', [OnboardingController::class, 'createWebsiteLead'])->name('leads.website.store')->middleware('throttle:10,1');
-    Route::post('/public/leads', [OnboardingController::class, 'createWebsiteLead'])->name('leads.website.store.compat')->middleware('throttle:10,1');
-    Route::get('/api/onboarding/token/{token}', [OnboardingController::class, 'validateToken'])->name('onboarding.token.validate');
-    Route::post('/api/onboarding/send-otp', [OnboardingController::class, 'sendOtp'])->name('onboarding.otp.send')->middleware('throttle:5,1');
-    Route::post('/api/onboarding/verify-otp', [OnboardingController::class, 'verifyOtp'])->name('onboarding.otp.verify')->middleware('throttle:10,1');
-    Route::post('/api/onboard', [OnboardingController::class, 'onboard'])->name('onboarding.complete')->middleware('throttle:10,1');
 });
 
 Route::middleware(['auth.blocked'])->group(function () {
