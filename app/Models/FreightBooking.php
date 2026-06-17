@@ -1,15 +1,19 @@
 <?php
+
 namespace App\Models;
 
 use App\Contracts\Auditable;
 use App\Models\Concerns\HasHybridAuditLog;
 use App\Models\Traits\TracksUser;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class FreightBooking extends Model implements Auditable
 {
-    use HasFactory, HasHybridAuditLog, TracksUser;
+    use HasFactory, HasHybridAuditLog, SoftDeletes, TracksUser;
 
     protected $fillable = [
         'lr_id',
@@ -94,14 +98,32 @@ class FreightBooking extends Model implements Auditable
         return $this->belongsTo(Transporter::class, 'transporter_id')->withTrashed();
     }
 
-    public function voucherPayments()
+    public function voucherPayments(): HasMany
     {
         return $this->hasMany(VoucherPayment::class, 'freight_booking_id');
     }
 
-    public function payments()
+    public function payments(): HasMany
     {
-        return $this->hasMany(\App\Models\VoucherPayment::class, 'freight_booking_id');
+        return $this->hasMany(VoucherPayment::class, 'freight_booking_id');
+    }
+
+    public function voucherLinkeds(): HasMany
+    {
+        return $this->hasMany(VoucherLinked::class, 'freight_booking_id');
+    }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (FreightBooking $freightBooking): void {
+            $freightBooking->voucherPayments()->each(function (VoucherPayment $payment): void {
+                $payment->delete();
+            });
+
+            $freightBooking->voucherLinkeds()->each(function (VoucherLinked $linked): void {
+                $linked->delete();
+            });
+        });
     }
 
     /**
@@ -112,8 +134,6 @@ class FreightBooking extends Model implements Auditable
      * 2. OR complete payment is done to the transporter (balance_amount <= 0.01)
      *
      * TDS submission happens on the 3rd of next month (date from config, default: 3)
-     *
-     * @return bool
      */
     public function canChangeTdsAmount(): bool
     {
@@ -128,20 +148,20 @@ class FreightBooking extends Model implements Auditable
             return true;
         }
 
-        $grDate = \Carbon\Carbon::parse($this->lr->gr_date);
+        $grDate = Carbon::parse($this->lr->gr_date);
         $grMonth = $grDate->month;
         $grYear = $grDate->year;
 
         $submissionDay = config('payments.tds_submission_day', 3);
 
         // Calculate submission date: 3rd (or from config) of next month
-        $submissionDate = \Carbon\Carbon::create($grYear, $grMonth, 1)
+        $submissionDate = Carbon::create($grYear, $grMonth, 1)
             ->addMonth()
             ->day($submissionDay)
             ->startOfDay();
 
         // If current date is before submission date, TDS can be changed
-        return \Carbon\Carbon::now()->lt($submissionDate);
+        return Carbon::now()->lt($submissionDate);
     }
 
     /**

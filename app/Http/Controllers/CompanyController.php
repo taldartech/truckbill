@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\City;
 use App\Models\Company;
 use App\Models\Consignee;
+use App\Models\Country;
 use App\Models\CustomInvoiceDetail;
 use App\Models\Driver;
 use App\Models\FreightBooking;
@@ -17,6 +18,7 @@ use App\Models\Truck;
 use App\Services\Notifications\CompanyLifecycleNotificationService;
 use App\Support\FreightChallanTemplate;
 use App\Support\LrCopyPdfTemplate;
+use App\Support\MpdfDocument;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -34,7 +36,7 @@ class CompanyController extends Controller
     /**
      * Super admin: enter company context and redirect to dashboard.
      */
-    public function enter(\App\Models\Company $company)
+    public function enter(Company $company)
     {
         if (! Auth::check() || Auth::user()->userRole->name !== 'super_admin') {
             abort(403, 'Unauthorized.');
@@ -76,9 +78,9 @@ class CompanyController extends Controller
 
         // Master admin can access all companies; others see only owned records.
         if (auth()->user()->userRole->name === 'master_admin') {
-            $query = \App\Models\Company::query();
+            $query = Company::query();
         } else {
-            $query = \App\Models\Company::query()->where('user_id', auth()->user()->id);
+            $query = Company::query()->where('user_id', auth()->user()->id);
         }
 
         // Handle search
@@ -172,7 +174,7 @@ class CompanyController extends Controller
         }
 
         // Get total count before pagination
-        $totalRecords = \App\Models\Company::where('user_id', auth()->user()->id)->count();
+        $totalRecords = Company::where('user_id', auth()->user()->id)->count();
         $filteredRecords = $query->count();
 
         // Handle pagination
@@ -281,7 +283,7 @@ class CompanyController extends Controller
 
     public function block($id)
     {
-        $company = \App\Models\Company::findOrFail($id);
+        $company = Company::findOrFail($id);
         $company->is_blocked = true;
         $company->save();
 
@@ -290,7 +292,7 @@ class CompanyController extends Controller
 
     public function unblock($id)
     {
-        $company = \App\Models\Company::findOrFail($id);
+        $company = Company::findOrFail($id);
         $company->is_blocked = false;
         $company->save();
 
@@ -299,12 +301,12 @@ class CompanyController extends Controller
 
     public function edit($id)
     {
-        $company = \App\Models\Company::findOrFail($id);
-        $countries = \App\Models\Country::all();
+        $company = Company::findOrFail($id);
+        $countries = Country::all();
         $countryId = old('country_id', $company->country_id);
         $stateId = old('state_id', $company->state_id);
-        $states = \App\Models\State::where('country_id', $countryId)->get();
-        $cities = \App\Models\City::where('state_id', $stateId)->get();
+        $states = State::where('country_id', $countryId)->get();
+        $cities = City::where('state_id', $stateId)->get();
         $companySlabs = config('payments.gst_slabs');
 
         $now = Carbon::now();
@@ -319,7 +321,7 @@ class CompanyController extends Controller
             $fyEnd = Carbon::create($currentYear, 3, 31)->endOfDay();
         }
 
-        $hasInvoicesInFy = \App\Models\Invoice::where('company_id', $company->id)
+        $hasInvoicesInFy = Invoice::where('company_id', $company->id)
             ->whereBetween('generated_date', [$fyStart->toDateString(), $fyEnd->toDateString()])
             ->exists();
 
@@ -328,7 +330,7 @@ class CompanyController extends Controller
 
     public function update(Request $request, $id)
     {
-        $company = \App\Models\Company::findOrFail($id);
+        $company = Company::findOrFail($id);
 
         $newGstScheme = $request->input('gst_scheme');
         $oldGstScheme = $company->gst_scheme;
@@ -347,7 +349,7 @@ class CompanyController extends Controller
                 $fyEnd = Carbon::create($currentYear, 3, 31)->endOfDay();
             }
 
-            $hasInvoices = \App\Models\Invoice::where('company_id', $company->id)
+            $hasInvoices = Invoice::where('company_id', $company->id)
                 ->whereBetween('generated_date', [$fyStart->toDateString(), $fyEnd->toDateString()])
                 ->exists();
 
@@ -370,7 +372,7 @@ class CompanyController extends Controller
                 'string',
                 'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
                 function ($attribute, $value, $fail) use ($id) {
-                    if ($value && \App\Models\Company::where('gst_number', $value)->where('id', '!=', $id)->exists()) {
+                    if ($value && Company::where('gst_number', $value)->where('id', '!=', $id)->exists()) {
                         $fail('The GST number has already been taken.');
                     }
                 },
@@ -381,7 +383,7 @@ class CompanyController extends Controller
                 'size:10',
                 'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
                 function ($attribute, $value, $fail) use ($id) {
-                    if ($value && \App\Models\Company::where('pan_number', $value)->where('id', '!=', $id)->exists()) {
+                    if ($value && Company::where('pan_number', $value)->where('id', '!=', $id)->exists()) {
                         $fail('The PAN number has already been taken.');
                     }
                 },
@@ -399,7 +401,7 @@ class CompanyController extends Controller
                 'nullable',
                 'digits:10',
                 function ($attribute, $value, $fail) use ($id) {
-                    if ($value && \App\Models\Company::where('contact_number', $value)->where('id', '!=', $id)->exists()) {
+                    if ($value && Company::where('contact_number', $value)->where('id', '!=', $id)->exists()) {
                         $fail('The contact number has already been taken.');
                     }
                 },
@@ -453,7 +455,7 @@ class CompanyController extends Controller
 
     public function destroy($id)
     {
-        $company = \App\Models\Company::findOrFail($id);
+        $company = Company::findOrFail($id);
         $company->delete();
 
         return redirect()->route('company.index')->with('success', 'Company deleted successfully!');
@@ -462,17 +464,17 @@ class CompanyController extends Controller
     public function create()
     {
         $companySlabs = config('payments.gst_slabs');
-        $countries = \App\Models\Country::query()->orderBy('name')->get();
+        $countries = Country::query()->orderBy('name')->get();
 
         $states = collect();
         $cities = collect();
         $countryId = old('country_id');
         if ($countryId) {
-            $states = \App\Models\State::query()->where('country_id', $countryId)->orderBy('name')->get();
+            $states = State::query()->where('country_id', $countryId)->orderBy('name')->get();
         }
         $stateId = old('state_id');
         if ($stateId) {
-            $cities = \App\Models\City::query()->where('state_id', $stateId)->orderBy('name')->get();
+            $cities = City::query()->where('state_id', $stateId)->orderBy('name')->get();
         }
 
         return view('company.create', compact('companySlabs', 'countries', 'states', 'cities'));
@@ -513,7 +515,7 @@ class CompanyController extends Controller
                 'string',
                 'regex:/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/',
                 function ($attribute, $value, $fail) {
-                    if ($value && \App\Models\Company::where('gst_number', $value)->exists()) {
+                    if ($value && Company::where('gst_number', $value)->exists()) {
                         $fail('The GST number has already been taken.');
                     }
                 },
@@ -525,7 +527,7 @@ class CompanyController extends Controller
                 'size:10',
                 'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
                 function ($attribute, $value, $fail) {
-                    if ($value && \App\Models\Company::where('pan_number', $value)->exists()) {
+                    if ($value && Company::where('pan_number', $value)->exists()) {
                         $fail('The PAN number has already been taken.');
                     }
                 },
@@ -538,7 +540,7 @@ class CompanyController extends Controller
                 'nullable',
                 'digits:10',
                 function ($attribute, $value, $fail) {
-                    if ($value && \App\Models\Company::where('contact_number', $value)->exists()) {
+                    if ($value && Company::where('contact_number', $value)->exists()) {
                         $fail('The contact number has already been taken.');
                     }
                 },
@@ -590,7 +592,7 @@ class CompanyController extends Controller
         $validated['lr_credits'] = 150;
         $validated['truck_credits'] = null;
 
-        $company = \App\Models\Company::create($validated);
+        $company = Company::create($validated);
         $this->companyLifecycleNotificationService->notifyCompanyRegistered($company, auth()->user());
 
         return redirect()->route('company.index')->with('success', 'Company registered successfully!,You are eligible for 15 days free plan');
@@ -699,7 +701,7 @@ class CompanyController extends Controller
     }
 
     /**
-     * @return array{invoice: Invoice, customDetails: \Illuminate\Support\Collection, lrs: \Illuminate\Support\Collection, totalAmount: float, cgst: float, sgst: float, igst: float}
+     * @return array{invoice: Invoice, customDetails: Collection, lrs: Collection, totalAmount: float, cgst: float, sgst: float, igst: float}
      */
     private function buildDemoPartyBillPreviewData(Company $company): array
     {
@@ -927,30 +929,7 @@ class CompanyController extends Controller
 
     private function streamMpdfFreightChallan(string $html, string $downloadBaseName): Response
     {
-        $defaultConfig = (new \Mpdf\Config\ConfigVariables)->getDefaults();
-        $fontDirs = $defaultConfig['fontDir'];
-
-        $defaultFontConfig = (new \Mpdf\Config\FontVariables)->getDefaults();
-        $fontData = $defaultFontConfig['fontdata'];
-
-        $mpdf = new \Mpdf\Mpdf([
-            'mode' => 'utf-8',
-            'format' => 'A4',
-            'orientation' => 'P',
-            'fontDir' => array_merge($fontDirs, [storage_path('fonts')]),
-            'fontdata' => $fontData + [
-                'notosansdevanagari' => [
-                    'R' => 'NotoSansDevanagari-Regular.ttf',
-                    'B' => 'NotoSansDevanagari-Bold.ttf',
-                ],
-            ],
-            'default_font' => 'notosansdevanagari',
-            'useOTL' => 0xFF,
-            'useKerning' => true,
-            'autoScriptToLang' => true,
-            'autoLangToFont' => true,
-        ]);
-
+        $mpdf = MpdfDocument::make();
         $mpdf->WriteHTML($html);
 
         return response($mpdf->Output($downloadBaseName.'.pdf', 'S'), 200, [

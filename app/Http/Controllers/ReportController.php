@@ -31,6 +31,7 @@ use App\Models\VoucherLinked;
 use App\Models\VoucherPayment;
 use App\Support\FreightChallanTemplate;
 use App\Support\LrCopyPdfTemplate;
+use App\Support\MpdfDocument;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -543,7 +544,7 @@ class ReportController extends Controller
         $grandTotalAmount = 0;
         if ($pumpId && $hasRange) {
             // --- Step 1: Fetch records from voucher_payments where linked_voucher_id is null ---
-            $voucherPaymentsQuery = \App\Models\VoucherPayment::with(['freight_booking.lr'])
+            $voucherPaymentsQuery = VoucherPayment::with(['freight_booking.lr'])
                 ->where('pump_id', $pumpId)
                 ->where('company_id', $companyId)
                 ->whereNull('linked_voucher_id')
@@ -556,7 +557,7 @@ class ReportController extends Controller
             $voucherPayments = $voucherPaymentsQuery->get();
 
             // --- Step 2: Fetch all records from voucher_linked table ---
-            $linkedPaymentsQuery = \App\Models\VoucherLinked::with(['freight_booking.lr'])
+            $linkedPaymentsQuery = VoucherLinked::with(['freight_booking.lr'])
                 ->where('pump_id', $pumpId)
                 ->where('company_id', $companyId)
                 ->whereBetween('date', [$startDate, $endDate]);
@@ -569,7 +570,7 @@ class ReportController extends Controller
 
             // --- Step 3: Prepare merged data from unlinked payments ---
             $unlinkedData = $voucherPayments->map(function ($payment) {
-                $lrDetails = \App\Models\LorryReceipt::where('freight_booking_id', $payment->freight_booking_id)
+                $lrDetails = LorryReceipt::where('freight_booking_id', $payment->freight_booking_id)
                     ->with(['truck:id,truck_number'])
                     ->select('freight_booking_id', 'lr_number', 'destination_state', 'truck_id', 'destination_city')
                     ->get();
@@ -578,7 +579,7 @@ class ReportController extends Controller
                     'freight_booking_id' => $payment->freight_booking_id,
                     'amount' => $payment->amount,
                     'lrs' => $lrDetails,
-                    'date' => \Carbon\Carbon::parse($payment->date),
+                    'date' => Carbon::parse($payment->date),
                     'type' => 'Unlinked',
                     'payment_status' => $payment->payment_status ?? 'N/A',
                 ];
@@ -586,7 +587,7 @@ class ReportController extends Controller
 
             // --- Step 4: Prepare merged data from linked payments ---
             $linkedData = $linkedPayments->map(function ($linked) {
-                $lrDetails = \App\Models\LorryReceipt::where('freight_booking_id', $linked->freight_booking_id)
+                $lrDetails = LorryReceipt::where('freight_booking_id', $linked->freight_booking_id)
                     ->with(['truck:id,truck_number'])
                     ->select('freight_booking_id', 'lr_number', 'destination_state', 'truck_id', 'destination_city')
                     ->get();
@@ -595,7 +596,7 @@ class ReportController extends Controller
                     'freight_booking_id' => $linked->freight_booking_id,
                     'amount' => $linked->amount,
                     'lrs' => $lrDetails,
-                    'date' => \Carbon\Carbon::parse($linked->date),
+                    'date' => Carbon::parse($linked->date),
                     'type' => 'Linked',
                     'payment_status' => $linked->payment_status ?? 'N/A',
                 ];
@@ -631,7 +632,7 @@ class ReportController extends Controller
                 ->with('error', 'Please select a pump and date range to export.');
         }
 
-        $voucherPaymentsQuery = \App\Models\VoucherPayment::with(['freight_booking.lr'])
+        $voucherPaymentsQuery = VoucherPayment::with(['freight_booking.lr'])
             ->where('pump_id', $pumpId)
             ->where('company_id', $companyId)
             ->whereNull('linked_voucher_id')
@@ -643,7 +644,7 @@ class ReportController extends Controller
 
         $voucherPayments = $voucherPaymentsQuery->get();
 
-        $linkedPaymentsQuery = \App\Models\VoucherLinked::with(['freight_booking.lr'])
+        $linkedPaymentsQuery = VoucherLinked::with(['freight_booking.lr'])
             ->where('pump_id', $pumpId)
             ->where('company_id', $companyId)
             ->whereBetween('date', [$startDate, $endDate]);
@@ -655,7 +656,7 @@ class ReportController extends Controller
         $linkedPayments = $linkedPaymentsQuery->get();
 
         $unlinkedData = $voucherPayments->map(function ($payment) {
-            $lrDetails = \App\Models\LorryReceipt::where('freight_booking_id', $payment->freight_booking_id)
+            $lrDetails = LorryReceipt::where('freight_booking_id', $payment->freight_booking_id)
                 ->with(['truck:id,truck_number'])
                 ->select('freight_booking_id', 'lr_number', 'destination_state', 'truck_id', 'destination_city')
                 ->get();
@@ -664,14 +665,14 @@ class ReportController extends Controller
                 'freight_booking_id' => $payment->freight_booking_id,
                 'amount' => $payment->amount,
                 'lrs' => $lrDetails,
-                'date' => \Carbon\Carbon::parse($payment->date),
+                'date' => Carbon::parse($payment->date),
                 'type' => 'Unlinked',
                 'payment_status' => $payment->payment_status ?? 'N/A',
             ];
         });
 
         $linkedData = $linkedPayments->map(function ($linked) {
-            $lrDetails = \App\Models\LorryReceipt::where('freight_booking_id', $linked->freight_booking_id)
+            $lrDetails = LorryReceipt::where('freight_booking_id', $linked->freight_booking_id)
                 ->with(['truck:id,truck_number'])
                 ->select('freight_booking_id', 'lr_number', 'destination_state', 'truck_id', 'destination_city')
                 ->get();
@@ -680,7 +681,7 @@ class ReportController extends Controller
                 'freight_booking_id' => $linked->freight_booking_id,
                 'amount' => $linked->amount,
                 'lrs' => $lrDetails,
-                'date' => \Carbon\Carbon::parse($linked->date),
+                'date' => Carbon::parse($linked->date),
                 'type' => 'Linked',
                 'payment_status' => $linked->payment_status ?? 'N/A',
             ];
@@ -1144,31 +1145,7 @@ class ReportController extends Controller
 
         $html = view($view, compact('lrs', 'company'))->render();
 
-        // Render with mPDF for proper Devanagari shaping
-        $defaultConfig = (new \Mpdf\Config\ConfigVariables)->getDefaults();
-        $fontDirs = $defaultConfig['fontDir'];
-
-        $defaultFontConfig = (new \Mpdf\Config\FontVariables)->getDefaults();
-        $fontData = $defaultFontConfig['fontdata'];
-
-        $mpdf = new \Mpdf\Mpdf([
-            'mode' => 'utf-8',
-            'format' => 'A4',
-            'orientation' => 'P',
-            'fontDir' => array_merge($fontDirs, [storage_path('fonts')]),
-            'fontdata' => $fontData + [
-                'notosansdevanagari' => [
-                    'R' => 'NotoSansDevanagari-Regular.ttf',
-                    'B' => 'NotoSansDevanagari-Bold.ttf',
-                ],
-            ],
-            'default_font' => 'notosansdevanagari',
-            'useOTL' => 0xFF, // Enable OpenType layout (Indic shaping)
-            'useKerning' => true,
-            'autoScriptToLang' => true,
-            'autoLangToFont' => true,
-        ]);
-
+        $mpdf = MpdfDocument::make();
         $mpdf->WriteHTML($html);
 
         return $mpdf->Output('voucher_receipt.pdf', 'I');
@@ -1288,7 +1265,7 @@ class ReportController extends Controller
         $resolvedTemplateKey = 'classic';
 
         if ($exportType === 'pdf') {
-            $selectedCompany = \App\Models\Company::find(Auth::user()->company_id);
+            $selectedCompany = Company::find(Auth::user()->company_id);
             $companyTemplate = (string) ($selectedCompany->invoice_template ?? 'classic');
 
             $resolvedTemplateKey = match ($companyTemplate) {

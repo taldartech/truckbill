@@ -66,7 +66,7 @@ class LorryReceipt extends Model implements Auditable
 
     public function syncStatusWithFreightBooking()
     {
-        $freightBooking = \App\Models\FreightBooking::where('lr_id', $this->id)->first();
+        $freightBooking = FreightBooking::where('lr_id', $this->id)->first();
 
         if (! $freightBooking) {
             return false;
@@ -112,14 +112,8 @@ class LorryReceipt extends Model implements Auditable
 
     protected static function booted()
     {
-        static::deleting(function ($lorryReceipt) {
-            // Delete related freight bookings and their associated voucher payments
-            $lorryReceipt->freightBookings->each(function ($freightBooking) {
-                // Delete associated voucher payments
-                if ($freightBooking->voucherPayments) {
-                    $freightBooking->voucherPayments()->delete();
-                }
-                // Delete the freight booking
+        static::deleting(function (LorryReceipt $lorryReceipt): void {
+            $lorryReceipt->freightBookings()->each(function (FreightBooking $freightBooking): void {
                 $freightBooking->delete();
             });
         });
