@@ -119,9 +119,9 @@ class AuditLogController extends Controller
 
         if (! empty($validated['lr_number']) && $scopeCompanyIds !== []) {
             $lrNumber = trim((string) $validated['lr_number']);
-            $lrIds = LorryReceipt::query()
+            $lrIds = LorryReceipt::withTrashed()
                 ->whereIn('company_id', $scopeCompanyIds)
-                ->where('lr_number', 'like', '%'.$lrNumber.'%')
+                ->where('lr_number', $lrNumber)
                 ->pluck('id');
             $freightBookingIds = collect();
             $voucherPaymentIds = collect();
@@ -134,14 +134,7 @@ class AuditLogController extends Controller
                     ->whereIn('lr_id', $lrIds)
                     ->pluck('id');
 
-                if ($freightBookingIds->isNotEmpty()) {
-                    $voucherPaymentIds = VoucherPayment::query()
-                        ->whereIn('company_id', $scopeCompanyIds)
-                        ->whereIn('freight_booking_id', $freightBookingIds)
-                        ->pluck('id');
-                }
-
-                $invoiceIdsQuery = Invoice::query()
+                $invoiceIdsQuery = Invoice::withTrashed()
                     ->whereIn('company_id', $scopeCompanyIds)
                     ->where(function ($invoiceQuery) use ($lrIds): void {
                         foreach ($lrIds as $lrId) {
@@ -158,7 +151,35 @@ class AuditLogController extends Controller
                 }
             }
 
-            $query->where(function ($q) use ($lrIds, $freightBookingIds, $voucherPaymentIds, $invoiceIds, $invoicePaymentIds, $lrNumber): void {
+            $freightBookingLabel = 'FB for LR '.$lrNumber;
+            $freightBookingIdsFromAuditLogs = AuditLog::query()
+                ->whereIn('company_id', $scopeCompanyIds)
+                ->where('subject_type', FreightBooking::class)
+                ->where('subject_label', $freightBookingLabel)
+                ->pluck('subject_id');
+
+            $freightBookingIds = $freightBookingIds
+                ->merge($freightBookingIdsFromAuditLogs)
+                ->unique()
+                ->values();
+
+            if ($freightBookingIds->isNotEmpty()) {
+                $voucherPaymentIds = VoucherPayment::withTrashed()
+                    ->whereIn('company_id', $scopeCompanyIds)
+                    ->whereIn('freight_booking_id', $freightBookingIds)
+                    ->pluck('id');
+            }
+
+            $hasRelatedIds = $lrIds->isNotEmpty()
+                || $freightBookingIds->isNotEmpty()
+                || $voucherPaymentIds->isNotEmpty()
+                || $invoiceIds->isNotEmpty()
+                || $invoicePaymentIds->isNotEmpty();
+
+            if (! $hasRelatedIds) {
+                $query->whereRaw('0 = 1');
+            } else {
+                $query->where(function ($q) use ($lrIds, $freightBookingIds, $voucherPaymentIds, $invoiceIds, $invoicePaymentIds): void {
                 if ($lrIds->isNotEmpty()) {
                     $q->where(function ($q2) use ($lrIds): void {
                         $q2->where('subject_type', LorryReceipt::class)
@@ -193,15 +214,8 @@ class AuditLogController extends Controller
                             ->whereIn('subject_id', $invoicePaymentIds);
                     });
                 }
-
-                $q->orWhere(function ($q2) use ($lrNumber): void {
-                    $q2->where('subject_type', FreightBooking::class)
-                        ->where('subject_label', 'like', '%'.$lrNumber.'%');
                 });
-
-                $q->orWhere('summary', 'like', '%'.$lrNumber.'%');
-                $q->orWhere('subject_label', 'like', '%'.$lrNumber.'%');
-            });
+            }
         }
 
         if (! empty($validated['q'])) {
