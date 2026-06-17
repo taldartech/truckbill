@@ -1388,6 +1388,7 @@ class LorryReceiptController extends Controller
                 ->get()
                 ->map(function ($lr) {
                     $lastFreight = $lr->freightBookings->last();
+                    $transporter = $lr->transporter;
 
                     return [
                         'id' => $lr->id,
@@ -1395,7 +1396,14 @@ class LorryReceiptController extends Controller
                         'truck_number' => $lr->truck?->truck_number ?? '',
                         'freight_booking_id' => $lr->freight_booking_id,
                         'balance_amount' => $lastFreight ? (float) $lastFreight->balance_amount : 0,
-                        'advance_amount' => $lr->transporter ? ($lr->transporter->advance_amount ?? 0) : 0,
+                        'shortage_amount' => $lastFreight ? (float) ($lastFreight->shortage_amount ?? 0) : 0,
+                        'damage_amount' => $lastFreight ? (float) ($lastFreight->damage_amount ?? 0) : 0,
+                        'transporter_name' => $transporter?->name ?? '',
+                        'transporter_mobile' => $transporter?->mobile_number ?? '',
+                        'transporter_short_name' => $transporter?->short_name ?? '',
+                        'transporter_beneficiary_id' => $transporter?->beneficiary_id ?? '',
+                        'transporter_tds_percentage' => $transporter?->tds_percentage ?? '',
+                        'transporter_advance_amount' => $transporter?->advance_amount ?? 0,
                     ];
                 })
                 ->sortBy('balance_amount')

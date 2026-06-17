@@ -328,16 +328,19 @@
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="combinedPaymentModalLabel">🧾 Combined Payment</h5>
+                    <h5 class="modal-title" id="combinedPaymentModalLabel">
+                        <i class="bi bi-wallet2"></i> Combined Payment - Linked Bookings
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="combinedPaymentBody">
                     <!-- Dynamic content will be loaded here -->
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" form="combinedPaymentForm" class="btn btn-warning">💳 Submit Combined
-                        Payment</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" id="combinedPaymentSubmitBtn">
+                        <i class="fas fa-save"></i> Submit Combined Payment
+                    </button>
                 </div>
             </div>
         </div>
@@ -728,15 +731,7 @@
                             buildCombinedModal(lrsArray);
                         } else {
                             // Fallback to just the selected LRs if no linked ones found
-                            const lrData = checkedBoxes.map(data => {
-                                return {
-                                    freight_booking_id: data.freight_booking_id,
-                                    lr_number: data.lr,
-                                    truck_number: data.truck,
-                                    balance_amount: data.balance
-                                };
-                            });
-                            buildCombinedModal(lrData);
+                            buildCombinedModal(checkedBoxes.map(mapSelectedRowToLrData));
                         }
                     }).fail(function(error) {
                         console.error('Error fetching linked LRs:', error);
@@ -744,124 +739,153 @@
                     });
                 } else {
                     // No linked LR ID, just use the selected rows
-                    const lrData = checkedBoxes.map(data => {
-                        return {
-                            freight_booking_id: data.freight_booking_id,
-                            lr_number: data.lr,
-                            truck_number: data.truck,
-                            balance_amount: data.balance
-                        };
-                    });
-                    buildCombinedModal(lrData);
+                    buildCombinedModal(checkedBoxes.map(mapSelectedRowToLrData));
                 }
             });
-            // In your combined payment button click handler, after fetching the LRs:
+
+            function mapSelectedRowToLrData(data) {
+                return {
+                    freight_booking_id: data.freight_booking_id,
+                    lr_number: data.lr,
+                    truck_number: data.truck,
+                    balance_amount: data.balance,
+                    shortage_amount: data.shortage_amount ?? 0,
+                    damage_amount: data.damage_amount ?? 0,
+                    transporter_name: data.lr_transporter || data.transporter || '',
+                    transporter_mobile: data.transporter_mobile_number || '',
+                    transporter_short_name: data.transporter_short_name || '',
+                    transporter_beneficiary_id: data.transporter_beneficiary_id || '',
+                    transporter_tds_percentage: data.tds_percentage || '',
+                    transporter_advance_amount: data.advance_amount ?? 0,
+                };
+            }
+
+            function formatCombinedAmount(value) {
+                return parseFloat(value || 0).toLocaleString('en-IN', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            }
+
             function buildCombinedModal(lrData) {
                 let rowsHtml = '';
                 const bookingIds = [];
                 let totalBalance = 0;
+                const firstLr = lrData[0] || {};
 
-                // First calculate total balance
                 lrData.forEach(lr => {
                     totalBalance += parseFloat(lr.balance_amount) || 0;
                 });
 
-                // Then build rows
                 lrData.forEach(lr => {
                     const fbId = lr.freight_booking_id;
                     const lrNo = lr.lr_number;
-                    const truckNo = lr.truck_number;
+                    const shortage = parseFloat(lr.shortage_amount) || 0;
+                    const damage = parseFloat(lr.damage_amount) || 0;
                     const balance = parseFloat(lr.balance_amount) || 0;
-                    const percentage = totalBalance > 0 ? (balance / totalBalance) * 100 : 0;
 
                     bookingIds.push(fbId);
 
                     rowsHtml += `
                         <tr>
                             <td>${lrNo}</td>
-                            <td>${truckNo}</td>
-                                <input type="hidden"
-                                    class="form-control form-control-sm allocated-input"
-                                    name="payment_amounts[]"
-                                    data-fb-id="${fbId}"
+                            <td>${formatCombinedAmount(shortage)}</td>
+                            <td>${formatCombinedAmount(damage)}</td>
+                            <td>${formatCombinedAmount(balance)}</td>
+                            <td>
+                                <input type="number" class="form-control form-control-sm allocated-input"
+                                    name="payment_amounts[]" data-fb-id="${fbId}"
                                     data-balance="${balance}"
-                                    min="${Math.min(balance, 0)}" max="${Math.max(balance, 0)}"
-                                    step="0.01"
-                                    value="${balance.toFixed(2)}">
+                                    step="0.01" min="0" max="${balance}" readonly>
+                            </td>
                         </tr>
                     `;
                 });
 
-                // Build the modal content with the existing structure
                 const modalContent = `
-                    <form id="combinedPaymentForm" method="POST" action="{{ route('freight_bookings.store_combined_payment') }}">
+                    <form id="combinedPaymentForm" method="POST" action="{{ route('freight_bookings.store_combined_payment') }}" data-total-balance="${totalBalance}">
                         @csrf
-                        <div class="alert alert-secondary d-flex align-items-center justify-content-between">
-                            <div>
-                                <strong>Total Balance of Selected:</strong> <span id="combinedTotalBalance">${totalBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
-                            </div>
-                            <div class="d-flex align-items-center gap-2">
-                                <label class="form-label mb-0">Combined Amount *</label>
-                                <div>
-                                    <input type="number"
-                                          step="0.01"
-                                          min="0.01"
-                                          max="${totalBalance}"
-                                          class="form-control"
-                                          id="combinedAmountInput"
-                                          name="combined_amount"
-                                          style="width: 200px;"
-                                          value="${totalBalance.toFixed(2)}"
-                                          required>
-                                    <div class="invalid-feedback">
-                                        Amount must be between 0.01 and ${totalBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}
-                                    </div>
+                        <div class="alert alert-secondary mb-3">
+                            <h6><i class="fas fa-truck"></i> Transporter Details</h6>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <strong>Transporter:</strong><br>
+                                    <span>${firstLr.transporter_name || 'N/A'}</span>
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Mobile:</strong><br>
+                                    <span>${firstLr.transporter_mobile || 'N/A'}</span>
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Short Name:</strong><br>
+                                    <span>${firstLr.transporter_short_name || 'N/A'}</span>
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Beneficiary ID:</strong><br>
+                                    <span>${firstLr.transporter_beneficiary_id || 'N/A'}</span>
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>TDS %:</strong><br>
+                                    <span>${firstLr.transporter_tds_percentage || 'N/A'}%</span>
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Truck:</strong><br>
+                                    <span>${firstLr.truck_number || 'N/A'}</span>
+                                </div>
+                                <div class="col-md-3 text-danger">
+                                    <strong>Advance:</strong><br>
+                                    <span>${firstLr.transporter_advance_amount ?? 'N/A'}</span>
                                 </div>
                             </div>
                         </div>
-                        <div class="table-responsive mb-2">
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="col-md-4">
+                                    <strong>Total Balance:</strong>
+                                    <span class="fw-bold text-danger">${formatCombinedAmount(totalBalance)}</span>
+                                </div>
+                                <div class="col-md-4 d-flex justify-content-end align-items-center gap-2">
+                                    <label class="form-label mb-0 ms-2">Combined Amount *</label>
+                                    <input type="number" class="form-control" id="combinedAmountInput" name="combined_amount"
+                                        step="0.01" min="0.01" max="${totalBalance}" required style="max-width: 200px;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-responsive mb-3">
                             <table class="table table-sm table-bordered">
                                 <thead class="table-light">
                                     <tr>
                                         <th>LR Number</th>
-                                        <th>Truck Number</th>
+                                        <th>Shortage Amount</th>
+                                        <th>Damage Amount</th>
+                                        <th>Balance</th>
+                                        <th>Allocated</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     ${rowsHtml}
                                 </tbody>
-                                <tfoot class="d-none">
-                                    <tr class="table-info">
-                                        <th colspan="3" class="text-end">Total Allocated:</th>
-                                        <th class="text-end" id="combinedAllocatedTotal">${totalBalance.toLocaleString('en-IN', {minimumFractionDigits: 2})}</th>
-                                    </tr>
-                                </tfoot>
                             </table>
                         </div>
                         ${bookingIds.map(id => `<input type="hidden" name="booking_ids[]" value="${id}">`).join('')}
-                        <div id="combinedAmountsContainer"></div>
-                        <div style="display: flex; gap: 15px; margin-bottom: 15px;">
-                            <div style="flex: 1;">
-                                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Type *</label>
-                                <select id="paymentType" name="payment_type" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="combinedPaymentType" class="form-label">Payment Type *</label>
+                                <select class="form-select" id="combinedPaymentType" name="payment_type" required>
                                     <option value="">Select Payment Type</option>
-                                    ${paymentTypes.map(type =>
-                                        `<option value="${type.id}">${type.name}</option>`
-                                    ).join('')}
+                                    ${paymentTypes.map(type => `<option value="${type.id}">${type.name}</option>`).join('')}
                                 </select>
                             </div>
-                            <div style="flex: 1;">
-                                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Mode *</label>
-                                <select id="paymentMode" name="payment_mode" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
+                            <div class="col-md-4">
+                                <label for="combinedPaymentMode" class="form-label">Payment Mode *</label>
+                                <select class="form-select" id="combinedPaymentMode" name="payment_mode" required>
                                     <option value="">Select Payment Mode</option>
-                                    ${paymentModes.map(mode =>
-                                        `<option value="${mode.id}">${mode.name}</option>`
-                                    ).join('')}
+                                    ${paymentModes.map(mode => `<option value="${mode.id}">${mode.name}</option>`).join('')}
                                 </select>
                             </div>
-                            <div id="pumpNameContainer" style="display: none; margin-bottom: 15px; flex: 1;">
-                                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Pump Name *</label>
-                                <select id="pumpName" name="pump_id" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                            <div class="col-md-4" id="combinedPumpContainer" style="display: none;">
+                                <label for="combinedPumpName" class="form-label">Pump Name *</label>
+                                <select class="form-select" id="combinedPumpName" name="pump_id">
                                     <option value="">Select Pump</option>
                                     @foreach ($pumps as $pump)
                                         <option value="{{ $pump->id }}">{{ $pump->pump_name }} ({{ $pump->contact_name }})</option>
@@ -869,247 +893,201 @@
                                 </select>
                             </div>
                         </div>
-                        <div style="display: flex; gap: 20px; margin-bottom: 15px;">
-                            <div style="flex: 1;">
-                                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Payment Date</label>
-                                <input type="date" id="paymentDate" name="payment_date" value="{{ date('Y-m-d') }}" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" required>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="combinedPaymentDate" class="form-label">Payment Date</label>
+                                <input type="date" class="form-control" id="combinedPaymentDate" name="payment_date"
+                                    value="{{ date('Y-m-d') }}">
                             </div>
-                            <div style="flex: 1;">
-                                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Remarks</label>
-                                <textarea id="paymentRemarks" name="remarks" style="width: 100%; height: 60px; padding: 8px; border: 1px solid #ccc; border-radius: 4px;" placeholder="Enter any remarks..."></textarea>
+                            <div class="col-md-4">
+                                <label for="combinedNotes" class="form-label">Notes</label>
+                                <input type="text" class="form-control" id="combinedNotes" name="notes" placeholder="Enter notes...">
                             </div>
                         </div>
                     </form>
                 `;
 
-                // Update modal content
                 $('#combinedPaymentBody').html(modalContent);
 
-                // Show the modal
                 const modal = new bootstrap.Modal(document.getElementById('combinedPaymentModal'));
                 modal.show();
 
-                // Initialize amount allocation
-                initializeAmountAllocation(totalBalance);
+                initializeCombinedPaymentHandlers(totalBalance);
             }
 
-            function initializeAmountAllocation(totalBalance) {
-                // Handle allocation when combined amount changes
-                $(document).off('input', '#combinedAmountInput').on('input', '#combinedAmountInput', function() {
-                    const totalAmount = parseFloat($(this).val()) || 0;
-                    const maxAmount = parseFloat($(this).attr('max')) || 0;
+            function initializeCombinedPaymentHandlers(totalBalance) {
+                const amountInput = document.getElementById('combinedAmountInput');
+                const allocatedInputs = document.querySelectorAll('#combinedPaymentForm .allocated-input');
 
-                    // Validation
-                    if (totalAmount > maxAmount || totalAmount < 0) {
-                        $(this).addClass('is-invalid');
+                function allocateCombinedAmount() {
+                    const totalAmount = parseFloat(amountInput?.value) || 0;
+                    if (totalAmount <= 0 || totalBalance <= 0) {
                         return;
                     }
-                    $(this).removeClass('is-invalid');
 
-                    // Percentage-based allocation logic
-                    // First, calculate total balance from all inputs
-                    let totalBalanceAmount = 0;
-                    $('.allocated-input').each(function() {
-                        totalBalanceAmount += parseFloat($(this).data('balance')) || 0;
+                    let totalAlloc = 0;
+                    const allocs = [];
+                    allocatedInputs.forEach(input => {
+                        const bal = parseFloat(input.dataset.balance) || 0;
+                        const pct = totalBalance > 0 ? (bal / totalBalance) : 0;
+                        let a = Math.min(totalAmount * pct, bal);
+                        allocs.push({ input, a });
+                        totalAlloc += a;
                     });
 
-                    let allocatedTotal = 0;
-                    let allocations = [];
-
-                    // Calculate percentage-based allocation for each booking
-                    $('.allocated-input').each(function() {
-                        const $input = $(this);
-                        const balance = parseFloat($input.data('balance')) || 0;
-
-                        // Calculate percentage of total balance
-                        const percentage = totalBalanceAmount > 0 ? (balance / totalBalanceAmount) : 0;
-
-                        // Allocate based on percentage
-                        let alloc = totalAmount * percentage;
-
-                        // Ensure allocation doesn't exceed balance
-                        alloc = Math.min(alloc, balance);
-
-                        allocations.push({
-                            $input: $input,
-                            alloc: alloc
-                        });
-
-                        allocatedTotal += alloc;
-                    });
-
-                    // Handle rounding differences
-                    const difference = totalAmount - allocatedTotal;
-                    if (Math.abs(difference) > 0.01) {
-                        // Distribute rounding difference to the first booking with remaining balance
-                        for (let i = 0; i < allocations.length; i++) {
-                            const item = allocations[i];
-                            const balance = parseFloat(item.$input.data('balance')) || 0;
-                            const currentAlloc = item.alloc;
-                            const remaining = balance - currentAlloc;
-
-                            if (remaining > 0 && difference > 0) {
-                                const adjustment = Math.min(remaining, Math.abs(difference));
-                                item.alloc += adjustment;
-                                allocatedTotal += adjustment;
-                                break; // Stop after adjusting first available
+                    const diff = totalAmount - totalAlloc;
+                    if (Math.abs(diff) > 0.01 && allocs.length > 0) {
+                        for (const item of allocs) {
+                            const bal = parseFloat(item.input.dataset.balance) || 0;
+                            if (bal - item.a > 0 && diff > 0) {
+                                item.a += Math.min(bal - item.a, diff);
+                                break;
                             }
                         }
                     }
 
-                    // Apply allocations
-                    allocations.forEach(item => {
-                        item.$input.val(item.alloc.toFixed(2));
+                    allocs.forEach(({ input, a }) => {
+                        input.value = a.toFixed(2);
                     });
+                }
 
-                    // Update total allocated display
-                    $('#combinedAllocatedTotal').text(
-                        '' + totalAmount.toLocaleString('en-IN', {
-                            minimumFractionDigits: 2
-                        })
-                    );
-                });
+                if (amountInput) {
+                    $(amountInput).off('input').on('input', allocateCombinedAmount);
+                }
 
-                // Handle manual input changes in individual allocations
-                $(document).off('input', '.allocated-input').on('input', '.allocated-input', function() {
-                    const $input = $(this);
-                    const val = parseFloat($input.val()) || 0;
-                    const max = parseFloat($input.attr('max')) || 0;
-
-                    // Validation
-                    if (val > max || val < 0) {
-                        $input.addClass('is-invalid');
-                    } else {
-                        $input.removeClass('is-invalid');
+                function toggleCombinedPump() {
+                    const sel = document.getElementById('combinedPaymentMode');
+                    const pump = document.getElementById('combinedPumpContainer');
+                    if (!sel || !pump) {
+                        return;
                     }
+                    const txt = sel.options[sel.selectedIndex]?.text?.toLowerCase() || '';
+                    pump.style.display = txt.includes('fuel') ? 'block' : 'none';
+                    if (!txt.includes('fuel')) {
+                        const pumpSelect = document.getElementById('combinedPumpName');
+                        if (pumpSelect) {
+                            pumpSelect.value = '';
+                        }
+                    }
+                }
 
-                    // Recalculate total allocated
-                    let allocatedTotal = 0;
-                    $('.allocated-input').each(function() {
-                        allocatedTotal += parseFloat($(this).val()) || 0;
-                    });
-
-                    // Update totals
-                    $('#combinedAllocatedTotal').text(
-                        '' + allocatedTotal.toLocaleString('en-IN', {
-                            minimumFractionDigits: 2
-                        })
-                    );
-                    $('#combinedAmountInput').val(allocatedTotal.toFixed(2));
-                });
+                $('#combinedPaymentMode').off('change').on('change', toggleCombinedPump);
+                $('#combinedPaymentModal').off('shown.bs.modal.combined').on('shown.bs.modal.combined', toggleCombinedPump);
+                toggleCombinedPump();
             }
 
-            // Handle submit of Combined Payment via AJAX
-            $(document).off('submit', '#combinedPaymentForm').on('submit', '#combinedPaymentForm', function(e) {
-                e.preventDefault();
-                if (!confirm(
-                        "Please review all payment details carefully before proceeding.\nOnce the voucher status is marked as PAID, it cannot be edited or changed.\nEnsure the information is correct before saving."
-                    )) {
+            $(document).off('click', '#combinedPaymentSubmitBtn').on('click', '#combinedPaymentSubmitBtn', function() {
+                const btn = this;
+                const form = document.getElementById('combinedPaymentForm');
+                if (!form) {
                     return;
                 }
-                const form = this;
-                const url = $(form).attr('action');
+
+                const totalBalance = parseFloat(form.dataset.totalBalance) || 0;
+                const combinedAmount = parseFloat(document.getElementById('combinedAmountInput')?.value) || 0;
+                if (combinedAmount <= 0 || combinedAmount > totalBalance) {
+                    alert('Please enter a valid combined amount between 0.01 and ' + totalBalance);
+                    return;
+                }
+
+                const paymentType = document.getElementById('combinedPaymentType')?.value;
+                if (!paymentType) {
+                    alert('Please select a payment type');
+                    return;
+                }
+
+                const paymentMode = document.getElementById('combinedPaymentMode')?.value;
+                if (!paymentMode) {
+                    alert('Please select a payment mode');
+                    return;
+                }
+
+                const paymentDate = document.getElementById('combinedPaymentDate')?.value;
+                if (!paymentDate) {
+                    alert('Please select a payment date');
+                    return;
+                }
+
+                if (!confirm('Please review all payment details carefully before proceeding. Once the voucher status is marked as PAID, it cannot be edited or changed.')) {
+                    return;
+                }
+
+                const originalText = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Submitting...';
+
                 const formData = new FormData(form);
+                const url = form.action;
+
                 fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
-                                .getAttribute('content')
-                        },
-                        body: formData
-                    })
-                    .then(async (res) => {
-                        const data = await res.json().catch(() => ({}));
-                        if (!res.ok || data.success === false) {
-                            // Check if this is a duplicate warning
-                            if (data.warning && data.duplicate_details) {
-                                const duplicate = data.duplicate_details;
-                                const confirmMessage = `⚠️ DUPLICATE PAYMENT WARNING ⚠️\n\n` +
-                                    `A similar payment already exists for booking ID ${data.booking_index || 'N/A'}:\n\n` +
-                                    `Date: ${duplicate.date}\n` +
-                                    `Amount: ${duplicate.amount}\n` +
-                                    `Payment Type: ${duplicate.payment_type}\n` +
-                                    `Payment Mode: ${duplicate.payment_mode}\n` +
-                                    `Created: ${duplicate.created_at}\n\n` +
-                                    `Do you want to proceed with creating this duplicate payment?`;
-
-                                return Swal.fire({
-                                    icon: 'warning',
-                                    title: 'Duplicate Payment Detected',
-                                    html: `<div style="text-align: left;">
-                                        <p><strong>A similar payment already exists:</strong></p>
-                                        <ul style="text-align: left;">
-                                            <li><strong>Date:</strong> ${duplicate.date}</li>
-                                            <li><strong>Amount:</strong> ${duplicate.amount}</li>
-                                            <li><strong>Payment Type:</strong> ${duplicate.payment_type}</li>
-                                            <li><strong>Payment Mode:</strong> ${duplicate.payment_mode}</li>
-                                            <li><strong>Created:</strong> ${duplicate.created_at}</li>
-                                        </ul>
-                                        <p>Do you want to proceed with creating this duplicate payment?</p>
-                                    </div>`,
-                                    showCancelButton: true,
-                                    confirmButtonText: 'Yes, Proceed',
-                                    cancelButtonText: 'Cancel',
-                                    confirmButtonColor: '#ffc107',
-                                    cancelButtonColor: '#6c757d'
-                                }).then((result) => {
-                                    if (result.isConfirmed) {
-                                        // Add confirm_duplicate flag and resubmit
-                                        formData.append('confirm_duplicate', '1');
-
-                                        // Resubmit the form
-                                        return fetch(url, {
-                                            method: 'POST',
-                                            headers: {
-                                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')
-                                                    .getAttribute('content')
-                                            },
-                                            body: formData
-                                        })
-                                        .then(async (res) => {
-                                            const data = await res.json().catch(() => ({}));
-                                            if (!res.ok || data.success === false) {
-                                                throw new Error(data.message || 'Failed to process combined payment');
-                                            }
-                                            return data;
-                                        });
-                                    } else {
-                                        throw new Error('Payment cancelled by user');
-                                    }
-                                });
-                            }
-                            throw new Error(data.message || 'Failed to process combined payment');
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                    },
+                    body: formData
+                })
+                .then(async (res) => {
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok || data.success === false) {
+                        if (data.warning && data.duplicate_details) {
+                            const d = data.duplicate_details;
+                            return (typeof Swal !== 'undefined' ? Swal.fire({
+                                icon: 'warning',
+                                title: 'Duplicate Payment Detected',
+                                html: `<p>A similar payment already exists:</p><ul><li>Date: ${d.date}</li><li>Amount: ${d.amount}</li><li>Payment Type: ${d.payment_type}</li><li>Payment Mode: ${d.payment_mode}</li></ul><p>Proceed anyway?</p>`,
+                                showCancelButton: true,
+                                confirmButtonText: 'Yes, Proceed',
+                                cancelButtonText: 'Cancel'
+                            }) : Promise.resolve({ isConfirmed: confirm('Duplicate payment detected. Proceed?') }))
+                            .then(r => {
+                                if (r?.isConfirmed) {
+                                    formData.append('confirm_duplicate', '1');
+                                    return fetch(url, {
+                                        method: 'POST',
+                                        headers: {
+                                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                                        },
+                                        body: formData
+                                    });
+                                }
+                                throw new Error('Cancelled');
+                            })
+                            .then(r => r.json());
                         }
-                        return data;
-                    })
-                    .then((data) => {
-                        $('#combinedPaymentModal').modal('hide');
-                        let successText = data.message || 'Combined payment processed successfully';
-                        if (data.adjust_in_advance && data.remaining_advance_balance !== undefined) {
-                            const name = data.transporter_name || 'Transporter';
-                            const bal = parseFloat(data.remaining_advance_balance).toFixed(2);
-                            successText += '\n\nRemaining advance balance (' + name + '):  ' + bal;
-                        }
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Success',
-                            text: successText,
-                            confirmButtonColor: '#28a745'
-                        }).then(() => {
-                            window.location.reload();
-                        });
-                    })
-                    .catch((err) => {
-                        if (err.message !== 'Payment cancelled by user') {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Payment Error',
-                                text: err.message ||
-                                    'An error occurred while processing combined payment.',
-                                confirmButtonColor: '#dc3545'
-                            });
-                        }
+                        throw new Error(data.message || 'Failed to process combined payment');
+                    }
+                    return data;
+                })
+                .then((data) => {
+                    bootstrap.Modal.getInstance(document.getElementById('combinedPaymentModal'))?.hide();
+                    let successText = data.message || 'Combined payment processed successfully';
+                    if (data.adjust_in_advance && data.remaining_advance_balance !== undefined) {
+                        const name = data.transporter_name || 'Transporter';
+                        const bal = parseFloat(data.remaining_advance_balance).toFixed(2);
+                        successText += '\n\nRemaining advance balance (' + name + '):  ' + bal;
+                    }
+                    (typeof Swal !== 'undefined' ? Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: successText
+                    }) : Promise.resolve())
+                    .then(() => {
+                        window.location.reload();
                     });
+                })
+                .catch((err) => {
+                    if (err.message !== 'Cancelled') {
+                        (typeof Swal !== 'undefined' ? Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: err.message
+                        }) : alert(err.message));
+                    }
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                });
             });
 
             // Bulk Memo ID Modal

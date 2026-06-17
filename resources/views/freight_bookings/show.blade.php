@@ -1009,25 +1009,42 @@
                                     <strong>Transporter:</strong><br>
                                     <span>{{ $firstLr && $firstLr->transporter ? $firstLr->transporter->name : ($firstLinked->transporter_name ?? 'N/A') }}</span>
                                 </div>
-                                <div class="col-md-2">
+                                <div class="col-md-3">
+                                    <strong>Mobile:</strong><br>
+                                    <span>{{ $firstLr && $firstLr->transporter ? $firstLr->transporter->mobile_number : 'N/A' }}</span>
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Short Name:</strong><br>
+                                    <span>{{ $firstLr && $firstLr->transporter ? $firstLr->transporter->short_name : 'N/A' }}</span>
+                                </div>
+                                <div class="col-md-3">
+                                    <strong>Beneficiary ID:</strong><br>
+                                    <span>{{ $firstLr && $firstLr->transporter ? $firstLr->transporter->beneficiary_id : 'N/A' }}</span>
+                                </div>
+                                <div class="col-md-3">
                                     <strong>TDS %:</strong><br>
-                                    <span>{{ $firstLinked->transporter_tds_percentage ?? 0 }}%</span>
+                                    <span>{{ $firstLr && $firstLr->transporter ? $firstLr->transporter->tds_percentage : 'N/A' }}%</span>
                                 </div>
                                 <div class="col-md-3">
                                     <strong>Truck:</strong><br>
                                     <span>{{ $firstLr && $firstLr->truck ? $firstLr->truck->truck_number : 'N/A' }}</span>
                                 </div>
-                                <div class="col-md-2">
+                                <div class="col-md-3 text-danger">
                                     <strong>Advance:</strong><br>
                                     <span>{{ $firstLr && $firstLr->transporter ? ($firstLr->transporter->advance_amount ?? 'N/A') : 'N/A' }}</span>
                                 </div>
-                                <div class="col-md-4 d-flex align-items-center gap-2">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="col-md-4">
                                     <strong>Total Balance:</strong>
-                                    <span class="fw-bold">{{ number_format($combinedTotalBalance, 2) }}</span>
+                                    <span class="fw-bold text-danger">{{ number_format($combinedTotalBalance, 2) }}</span>
+                                </div>
+                                <div class="col-md-4 d-flex justify-content-end align-items-center gap-2">
                                     <label class="form-label mb-0 ms-2">Combined Amount *</label>
                                     <input type="number" class="form-control" id="combinedAmountInput" name="combined_amount"
-                                        step="0.01" min="0.01" max="{{ $combinedTotalBalance }}"
-                                        value="{{ $combinedTotalBalance }}" required style="max-width: 150px;">
+                                        step="0.01" min="0.01" max="{{ $combinedTotalBalance }}" required style="max-width: 200px;">
                                 </div>
                             </div>
                         </div>
@@ -1053,8 +1070,7 @@
                                                 <input type="number" class="form-control form-control-sm allocated-input"
                                                     name="payment_amounts[]" data-fb-id="{{ $fb->id }}"
                                                     data-balance="{{ $fb->balance_amount ?? 0 }}"
-                                                    step="0.01" min="0" max="{{ $fb->balance_amount ?? 0 }}"
-                                                    value="{{ $fb->balance_amount ?? 0 }}">
+                                                    step="0.01" min="0" max="{{ $fb->balance_amount ?? 0 }}" readonly>
                                             </td>
                                         </tr>
                                     @endforeach
@@ -1099,9 +1115,9 @@
                                 <input type="date" class="form-control" id="combinedPaymentDate" name="payment_date"
                                     value="{{ date('Y-m-d') }}">
                             </div>
-                            <div class="col-md-8">
+                            <div class="col-md-4">
                                 <label for="combinedNotes" class="form-label">Notes</label>
-                                <textarea class="form-control" id="combinedNotes" name="notes" rows="2" placeholder="Enter notes..."></textarea>
+                                <input type="text" class="form-control" id="combinedNotes" name="notes" placeholder="Enter notes...">
                             </div>
                         </div>
                     </form>
@@ -1167,6 +1183,35 @@
                 const btn = this;
                 const form = document.getElementById('combinedPaymentForm');
                 if (!form) return;
+
+                // Validate the combined amount
+                const combinedAmount = parseFloat(document.getElementById('combinedAmountInput').value) || 0;
+                if (combinedAmount <= 0 || combinedAmount > totalBalance) {
+                    alert('Please enter a valid combined amount between 0.01 and ' + totalBalance);
+                    return;
+                }
+
+                // Validate the payment type
+                const paymentType = document.getElementById('combinedPaymentType').value;
+                if (!paymentType) {
+                    alert('Please select a payment type');
+                    return;
+                }
+
+                // Validate the payment mode
+                const paymentMode = document.getElementById('combinedPaymentMode').value;
+                if (!paymentMode) {
+                    alert('Please select a payment mode');
+                    return;
+                }
+
+                // Validate the payment date
+                const paymentDate = document.getElementById('combinedPaymentDate').value;
+                if (!paymentDate) {
+                    alert('Please select a payment date');
+                    return;
+                }
+
                 if (!confirm('Please review all payment details carefully before proceeding. Once the voucher status is marked as PAID, it cannot be edited or changed.')) return;
 
                 const originalText = btn.innerHTML;
