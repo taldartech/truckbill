@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Company;
 use App\Models\OnboardingProvisioningLog;
 use App\Models\User;
 use App\Models\UserRole;
@@ -34,7 +33,7 @@ class OnboardingProvisioningService
             ]);
         }
 
-        return DB::transaction(function () use ($payload, $existingLog): array {
+        return DB::transaction(function () use ($payload): array {
             $role = UserRole::firstOrCreate(['name' => 'super_admin']);
 
             $user = User::create([
@@ -50,23 +49,11 @@ class OnboardingProvisioningService
                 'referral_code' => $this->generateUniqueReferralCode(),
             ]);
 
-            $companyId = null;
-
-            if (! empty($payload['company_name'])) {
-                $company = Company::create([
-                    'name' => $payload['company_name'],
-                    'user_id' => $user->id,
-                    'contact_number' => $payload['mobile'] ?? null,
-                ]);
-                $companyId = $company->id;
-            }
-
             $response = [
                 'status' => 'created',
                 'user_id' => $user->id,
                 'email' => $user->email,
                 'role' => 'super_admin',
-                'company_id' => $companyId,
             ];
 
             OnboardingProvisioningLog::query()->updateOrCreate(
@@ -107,23 +94,6 @@ class OnboardingProvisioningService
 
         if ($updates !== []) {
             $user->update($updates);
-        }
-
-        if (! empty($payload['company_name'])) {
-            $company = $user->ownedCompanies()->orderBy('id')->first();
-
-            if ($company !== null) {
-                $company->update(array_filter([
-                    'name' => $payload['company_name'],
-                    'contact_number' => $payload['mobile'] ?? null,
-                ], fn ($value) => $value !== null));
-            } else {
-                Company::create([
-                    'name' => $payload['company_name'],
-                    'user_id' => $user->id,
-                    'contact_number' => $payload['mobile'] ?? null,
-                ]);
-            }
         }
 
         return $this->statusFor($user->fresh(['userRole', 'ownedCompanies']));
