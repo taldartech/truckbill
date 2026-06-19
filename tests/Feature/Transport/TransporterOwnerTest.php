@@ -351,4 +351,180 @@ class TransporterOwnerTest extends TestCase
             'tds_percentage' => 0,
         ]);
     }
+
+    public function test_transporter_edit_shows_tds_refresh_when_mismatch(): void
+    {
+        $admin = $this->makeAdmin();
+
+        $master = TransporterMaster::factory()->create([
+            'pan_number' => 'ABCPD1234Q',
+            'pan_active' => false,
+        ]);
+
+        $transporter = Transporter::factory()->forCompany($admin->company_id)->create([
+            'transporter_master_id' => $master->id,
+            'declaration_given' => false,
+            'tds_percentage' => 1,
+            'mobile_number' => '9876543210',
+        ]);
+
+        $response = $this->actingAs($admin)->get("/transporters/{$transporter->id}/edit");
+
+        $response->assertOk();
+        $response->assertViewHas('hasTdsMismatch', true);
+        $response->assertSee('Refresh TDS %', false);
+    }
+
+    public function test_transporter_refresh_tds_updates_stored_percentage(): void
+    {
+        $admin = $this->makeAdmin();
+
+        $master = TransporterMaster::factory()->create([
+            'pan_number' => 'ABCPD1234Q',
+            'pan_active' => false,
+        ]);
+
+        $transporter = Transporter::factory()->forCompany($admin->company_id)->create([
+            'transporter_master_id' => $master->id,
+            'declaration_given' => false,
+            'tds_percentage' => 1,
+            'tds_adjustment_remark' => 'Manual override',
+            'mobile_number' => '9876543210',
+        ]);
+
+        $response = $this->actingAs($admin)->post("/transporters/{$transporter->id}/refresh-tds");
+
+        $response->assertRedirect(route('transporters.edit', $transporter));
+        $response->assertSessionHas('success');
+
+        $transporter->refresh();
+        $this->assertEquals(20.0, (float) $transporter->tds_percentage);
+        $this->assertNull($transporter->tds_adjustment_remark);
+    }
+
+    public function test_truck_owner_refresh_tds_updates_stored_percentage(): void
+    {
+        $admin = $this->makeAdmin();
+
+        $master = TransporterMaster::factory()->create([
+            'pan_number' => 'ABCPD1234Q',
+            'pan_active' => false,
+        ]);
+
+        $truckOwner = Transporter::factory()->forCompany($admin->company_id)->truckOwner()->create([
+            'transporter_master_id' => $master->id,
+            'declaration_given' => false,
+            'tds_percentage' => 1,
+            'mobile_number' => '7777777777',
+            'total_trucks' => 1,
+        ]);
+
+        $response = $this->actingAs($admin)->post("/truck_owners/{$truckOwner->id}/refresh-tds");
+
+        $response->assertRedirect(route('truck_owners.edit', $truckOwner));
+        $response->assertSessionHas('success');
+
+        $truckOwner->refresh();
+        $this->assertEquals(20.0, (float) $truckOwner->tds_percentage);
+    }
+
+    public function test_transporter_refresh_tds_rejects_when_no_mismatch(): void
+    {
+        $admin = $this->makeAdmin();
+
+        $master = TransporterMaster::factory()->create([
+            'pan_number' => 'ABCPD1234Q',
+            'pan_active' => false,
+        ]);
+
+        $transporter = Transporter::factory()->forCompany($admin->company_id)->create([
+            'transporter_master_id' => $master->id,
+            'declaration_given' => false,
+            'tds_percentage' => 20,
+            'mobile_number' => '9876543210',
+        ]);
+
+        $response = $this->actingAs($admin)->post("/transporters/{$transporter->id}/refresh-tds");
+
+        $response->assertRedirect(route('transporters.edit', $transporter));
+        $response->assertSessionHas('error');
+        $this->assertEquals(20.0, (float) $transporter->fresh()->tds_percentage);
+    }
+
+    public function test_truck_owner_refresh_tds_syncs_eligible_freight_booking(): void
+    {
+        $admin = $this->makeAdmin();
+
+        $master = TransporterMaster::factory()->create([
+            'pan_number' => 'ABCPD1234Q',
+            'pan_active' => false,
+        ]);
+
+        $truckOwner = Transporter::factory()->forCompany($admin->company_id)->truckOwner()->create([
+            'transporter_master_id' => $master->id,
+            'declaration_given' => false,
+            'tds_percentage' => 1,
+            'mobile_number' => '7777777777',
+            'total_trucks' => 1,
+        ]);
+
+        $truck = Truck::create([
+            'transporter_id' => $truckOwner->id,
+            'truck_number' => 'GJ01XX0099',
+            'truck_type' => 'Flatbed',
+        ]);
+
+        $customer = Consignee::create(['company_id' => $admin->company_id, 'name' => 'C', 'address' => 'A']);
+        $consignor = Consignee::create(['company_id' => $admin->company_id, 'name' => 'S', 'address' => 'A']);
+        $consignee = Consignee::create(['company_id' => $admin->company_id, 'name' => 'E', 'address' => 'A']);
+
+        $lr = LorryReceipt::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'consignor_id' => $consignor->id,
+            'consignee_id' => $consignee->id,
+            'truck_id' => $truck->id,
+            'transporter_id' => $truckOwner->id,
+            'reference_by' => $truckOwner->id,
+            'lr_number' => 'LR-REF-'.uniqid(),
+            'gr_number' => 'GR-REF-'.uniqid(),
+            'invoice_number' => 'INV-REF-'.uniqid(),
+            'gr_date' => now()->toDateString(),
+            'source_city' => 'A',
+            'source_state' => 'B',
+            'destination_city' => 'C',
+            'destination_state' => 'D',
+            'lane' => 'L1',
+            'good_type' => 'Steel',
+            'weight' => 10,
+            'fr_rate' => 100,
+            'amount' => 1000,
+            'damage_amount' => 0,
+            'shortage_amount' => 0,
+            'delivery_status' => 'Pending',
+        ]);
+
+        $freightBooking = FreightBooking::create([
+            'lr_id' => $lr->id,
+            'transporter_id' => $truckOwner->id,
+            'tr_fr_rate' => 100,
+            'tr_amount' => 1000,
+            'advance_amount' => 200,
+            'balance_amount' => 790,
+            'tds_amount' => 10,
+            'company_id' => $admin->company_id,
+            'transporter_tds_percentage' => 1,
+            'voucher_number' => 'VB-REF-001',
+        ]);
+
+        $response = $this->actingAs($admin)->post("/truck_owners/{$truckOwner->id}/refresh-tds");
+
+        $response->assertRedirect(route('truck_owners.edit', $truckOwner));
+        $response->assertSessionHas('success');
+
+        $freightBooking->refresh();
+        $this->assertEquals(20.0, (float) $freightBooking->transporter_tds_percentage);
+        $this->assertEquals(200.0, (float) $freightBooking->tds_amount);
+        $this->assertEquals(600.0, (float) $freightBooking->balance_amount);
+    }
 }

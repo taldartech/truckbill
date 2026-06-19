@@ -49,6 +49,12 @@
     <div class="card-header">
         <div class="card-title h4">Edit Truck Owner</div>
     </div>
+    @if (session('success'))
+        <div class="alert alert-success mx-3 mt-3 mb-0">{{ session('success') }}</div>
+    @endif
+    @if (session('error'))
+        <div class="alert alert-danger mx-3 mt-3 mb-0">{{ session('error') }}</div>
+    @endif
 
     <!--begin::Form-->
     <form action="{{ route('truck_owners.update', $truck_owner) }}" method="POST" class="needs-validation" novalidate="">
@@ -121,8 +127,9 @@
                 </div>
                 <div class="row mb-3">
                     <div class="col-md-4">
-                        <label class="form-label">Book Balance</label>
-                        <div class="form-control-plaintext bg-light border rounded px-3 py-2"><strong> {{ number_format($truck_owner->advance_amount, 2) }}</strong></div>
+                        <label for="total_trucks" class="form-label">Total Trucks *</label>
+                        <input type="number" class="form-control" id="total_trucks" name="total_trucks" min="0" required value="{{ old('total_trucks', $truck_owner->total_trucks) }}">
+                        @error('total_trucks') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4">
                         <label for="beneficiary_id" class="form-label">Beneficiary ID</label>
@@ -135,21 +142,6 @@
                         @error('beneficiary_id') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
                     <div class="col-md-4">
-                        <label for="tds_percentage" class="form-label">TDS % *</label>
-                        <input type="hidden" id="tds_calculated_baseline" value="{{ number_format(old('tds_percentage', $truck_owner->tds_percentage ?? 0), 2, '.', '') }}">
-                        <input type="number" step="0.01" min="0" max="100" class="form-control @error('tds_percentage') is-invalid @enderror" name="tds_percentage" id="tds_percentage" value="{{ old('tds_percentage', $truck_owner->tds_percentage) }}" required>
-                        @error('tds_percentage') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                </div>
-                <div class="row mb-3">
-                    <div class="col-md-12">
-                        <label for="tds_adjustment_remark" class="form-label">TDS adjustment remark</label>
-                        <textarea class="form-control @error('tds_adjustment_remark') is-invalid @enderror" id="tds_adjustment_remark" name="tds_adjustment_remark" rows="2" placeholder="Required when TDS % differs from the calculated rate">{{ old('tds_adjustment_remark', $truck_owner->tds_adjustment_remark) }}</textarea>
-                        @error('tds_adjustment_remark') <div class="text-danger">{{ $message }}</div> @enderror
-                    </div>
-                </div>
-                <div class="row mb-3">
-                    <div class="col-md-4">
                         <label class="form-label">Declaration Given? *</label><br>
                         <div class="form-check form-check-inline">
                             <input class="form-check-input" type="radio" name="declaration_given" id="decl_yes" value="1" {{ old('declaration_given', $truck_owner->declaration_given) == 1 ? 'checked' : '' }} required>
@@ -161,10 +153,29 @@
                         </div>
                         @error('declaration_given') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
+                </div>
+                <div class="row mb-3">
                     <div class="col-md-4">
-                        <label for="total_trucks" class="form-label">Total Trucks *</label>
-                        <input type="number" class="form-control" id="total_trucks" name="total_trucks" min="0" required value="{{ old('total_trucks', $truck_owner->total_trucks) }}">
-                        @error('total_trucks') <div class="text-danger">{{ $message }}</div> @enderror
+                        <label for="tds_percentage" class="form-label">TDS % *</label>
+                        <input type="hidden" id="tds_calculated_baseline" value="{{ number_format(old('tds_percentage', $truck_owner->tds_percentage ?? 0), 2, '.', '') }}">
+                        <input type="number" step="0.01" min="0" max="100" class="form-control @error('tds_percentage') is-invalid @enderror" name="tds_percentage" id="tds_percentage" value="{{ old('tds_percentage', $truck_owner->tds_percentage) }}" required>
+                        @error('tds_percentage') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-8">
+                        <label for="tds_adjustment_remark" class="form-label">TDS adjustment remark</label>
+                        <textarea class="form-control @error('tds_adjustment_remark') is-invalid @enderror" id="tds_adjustment_remark" name="tds_adjustment_remark" rows="1" placeholder="Required when TDS % differs from the calculated rate">{{ old('tds_adjustment_remark', $truck_owner->tds_adjustment_remark) }}</textarea>
+                        @error('tds_adjustment_remark') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+
+                    <div class="col-md-12">
+                        @include('shared.transporter-tds-refresh', [
+                            'hasTdsMismatch' => $hasTdsMismatch,
+                            'calculatedTdsPercentage' => $calculatedTdsPercentage,
+                            'storedTdsPercentage' => $storedTdsPercentage,
+                            'refreshRoute' => route('truck_owners.refresh-tds', $truck_owner),
+                            'entityLabel' => 'Truck Owner',
+                            'part' => 'alert',
+                        ])
                     </div>
                 </div>
             </div>
@@ -181,6 +192,15 @@
         </div>
     </form>
 </div>
+
+@include('shared.transporter-tds-refresh', [
+    'hasTdsMismatch' => $hasTdsMismatch,
+    'calculatedTdsPercentage' => $calculatedTdsPercentage,
+    'storedTdsPercentage' => $storedTdsPercentage,
+    'refreshRoute' => route('truck_owners.refresh-tds', $truck_owner),
+    'entityLabel' => 'Truck Owner',
+    'part' => 'modal',
+])
 
 <!-- Registered Trucks Section -->
 <div class="card card-info card-outline mb-4" style="max-width: 1000px; margin: 0 auto;">

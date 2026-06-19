@@ -34,6 +34,12 @@
     <div class="card-header">
         <div class="card-title h4">Edit Transporter</div>
     </div>
+    @if (session('success'))
+        <div class="alert alert-success mx-3 mt-3 mb-0">{{ session('success') }}</div>
+    @endif
+    @if (session('error'))
+        <div class="alert alert-danger mx-3 mt-3 mb-0">{{ session('error') }}</div>
+    @endif
     <!--begin::Form-->
     <form action="{{ route('transporters.update', $transporter->id) }}" method="POST" class="needs-validation" novalidate="">
         @csrf
@@ -135,18 +141,28 @@
                         </div>
                         @error('declaration_given') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
+                </div>
+                <div class="row mb-3">
                     <div class="col-md-4">
                         <label for="tds_percentage" class="form-label">TDS % *</label>
                         <input type="hidden" id="tds_calculated_baseline" value="{{ number_format(old('tds_percentage', $transporter->tds_percentage ?? 0), 2, '.', '') }}">
                         <input type="number" step="0.01" min="0" max="100" class="form-control @error('tds_percentage') is-invalid @enderror" name="tds_percentage" id="tds_percentage" value="{{ old('tds_percentage', $transporter->tds_percentage) }}" required>
                         @error('tds_percentage') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
-                </div>
-                <div class="row mb-3">
-                    <div class="col-md-12">
+                    <div class="col-md-8">
                         <label for="tds_adjustment_remark" class="form-label">TDS adjustment remark</label>
-                        <textarea class="form-control @error('tds_adjustment_remark') is-invalid @enderror" id="tds_adjustment_remark" name="tds_adjustment_remark" rows="2" placeholder="Required when TDS % differs from the calculated rate">{{ old('tds_adjustment_remark', $transporter->tds_adjustment_remark) }}</textarea>
+                        <textarea class="form-control @error('tds_adjustment_remark') is-invalid @enderror" id="tds_adjustment_remark" name="tds_adjustment_remark" rows="1" placeholder="Required when TDS % differs from the calculated rate">{{ old('tds_adjustment_remark', $transporter->tds_adjustment_remark) }}</textarea>
                         @error('tds_adjustment_remark') <div class="text-danger">{{ $message }}</div> @enderror
+                    </div>
+                    <div class="col-md-12">
+                        @include('shared.transporter-tds-refresh', [
+                            'hasTdsMismatch' => $hasTdsMismatch,
+                            'calculatedTdsPercentage' => $calculatedTdsPercentage,
+                            'storedTdsPercentage' => $storedTdsPercentage,
+                            'refreshRoute' => route('transporters.refresh-tds', $transporter),
+                            'entityLabel' => 'Transporter',
+                            'part' => 'alert',
+                        ])
                     </div>
                 </div>
             </div>
@@ -166,6 +182,15 @@
         </div>
     </form>
 </div>
+
+@include('shared.transporter-tds-refresh', [
+    'hasTdsMismatch' => $hasTdsMismatch,
+    'calculatedTdsPercentage' => $calculatedTdsPercentage,
+    'storedTdsPercentage' => $storedTdsPercentage,
+    'refreshRoute' => route('transporters.refresh-tds', $transporter),
+    'entityLabel' => 'Transporter',
+    'part' => 'modal',
+])
 
 <!-- Confirmation Modal -->
 <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">

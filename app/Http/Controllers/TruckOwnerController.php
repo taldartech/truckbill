@@ -15,15 +15,19 @@ use App\Models\Truck;
 use App\Models\TruckType;
 use App\Services\FreightBookingTdsSync;
 use App\Services\TransporterTdsCalculator;
+use App\Services\TransporterTdsRefresh;
 use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use InvalidArgumentException;
 
 class TruckOwnerController extends Controller
 {
     public function __construct(
         private readonly TransporterTdsCalculator $tdsCalculator,
         private readonly FreightBookingTdsSync $freightBookingTdsSync,
+        private readonly TransporterTdsRefresh $transporterTdsRefresh,
     ) {}
 
     private function ensureCompanyContext(): void
@@ -414,8 +418,42 @@ class TruckOwnerController extends Controller
         $trucks = Truck::where('transporter_id', $truck_owner->id)->get();
         $countries = Country::all();
         $truckTypes = TruckType::orderBy('name')->get();
+        $calculatedTdsPercentage = $this->transporterTdsRefresh->calculatedPercentage($truck_owner);
+        $hasTdsMismatch = $this->transporterTdsRefresh->hasMismatch($truck_owner);
+        $storedTdsPercentage = round((float) $truck_owner->tds_percentage, 2);
 
-        return view('truck_owner.edit', compact('truck_owner', 'trucks', 'countries', 'truckTypes'));
+        return view('truck_owner.edit', compact(
+            'truck_owner',
+            'trucks',
+            'countries',
+            'truckTypes',
+            'calculatedTdsPercentage',
+            'hasTdsMismatch',
+            'storedTdsPercentage',
+        ));
+    }
+
+    public function refreshTds(Transporter $truck_owner): RedirectResponse
+    {
+        if (Auth::user()->company_id && $truck_owner->company_id !== Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this truck owner.');
+        }
+
+        try {
+            $result = $this->transporterTdsRefresh->refresh($truck_owner);
+        } catch (InvalidArgumentException $exception) {
+            return redirect()
+                ->route('truck_owners.edit', $truck_owner)
+                ->with('error', $exception->getMessage());
+        }
+
+        return redirect()
+            ->route('truck_owners.edit', $truck_owner)
+            ->with('success', sprintf(
+                'TDS percentage updated from %s%% to %s%%.',
+                number_format($result['previous'], 2),
+                number_format($result['new'], 2),
+            ));
     }
 
     public function update(UpdateTruckOwnerRequest $request, Transporter $truck_owner)

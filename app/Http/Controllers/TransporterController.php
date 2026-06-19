@@ -16,10 +16,13 @@ use App\Models\User;
 use App\Services\FreightBookingTdsSync;
 use App\Services\Notifications\TransporterOnboardingNotificationService;
 use App\Services\TransporterTdsCalculator;
+use App\Services\TransporterTdsRefresh;
 use Carbon\Carbon;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 class TransporterController extends Controller
 {
@@ -27,6 +30,7 @@ class TransporterController extends Controller
         private readonly TransporterOnboardingNotificationService $transporterOnboardingNotificationService,
         private readonly TransporterTdsCalculator $tdsCalculator,
         private readonly FreightBookingTdsSync $freightBookingTdsSync,
+        private readonly TransporterTdsRefresh $transporterTdsRefresh,
     ) {}
 
     public function index(Request $request)
@@ -548,7 +552,43 @@ class TransporterController extends Controller
         // $countries = \App\Models\Country::all();
         // $states = $transporter->country_id ? \App\Models\State::where('country_id', $transporter->country_id)->get() : collect();
         // $cities = $transporter->state_id ? \App\Models\City::where('state_id', $transporter->state_id)->get() : collect();
-        return view('transporters.edit', compact('transporter', 'trucks', 'countries', 'states', 'cities'));
+        $calculatedTdsPercentage = $this->transporterTdsRefresh->calculatedPercentage($transporter);
+        $hasTdsMismatch = $this->transporterTdsRefresh->hasMismatch($transporter);
+        $storedTdsPercentage = round((float) $transporter->tds_percentage, 2);
+
+        return view('transporters.edit', compact(
+            'transporter',
+            'trucks',
+            'countries',
+            'states',
+            'cities',
+            'calculatedTdsPercentage',
+            'hasTdsMismatch',
+            'storedTdsPercentage',
+        ));
+    }
+
+    public function refreshTds(Transporter $transporter): RedirectResponse
+    {
+        if (Auth::user()->company_id && $transporter->company_id !== Auth::user()->company_id) {
+            abort(403, 'Unauthorized access to this transporter.');
+        }
+
+        try {
+            $result = $this->transporterTdsRefresh->refresh($transporter);
+        } catch (InvalidArgumentException $exception) {
+            return redirect()
+                ->route('transporters.edit', $transporter)
+                ->with('error', $exception->getMessage());
+        }
+
+        return redirect()
+            ->route('transporters.edit', $transporter)
+            ->with('success', sprintf(
+                'TDS percentage updated from %s%% to %s%%.',
+                number_format($result['previous'], 2),
+                number_format($result['new'], 2),
+            ));
     }
 
     public function update(UpdateTransporterRequest $request, Transporter $transporter)

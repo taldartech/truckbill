@@ -145,6 +145,7 @@ Route::middleware(['auth.blocked'])->group(function () {
     });
     Route::middleware(['role:admin,super_admin', 'company.context'])->group(function () {
         Route::resource('transporters', TransporterController::class)->only(['edit', 'update', 'destroy']);
+        Route::post('/transporters/{transporter}/refresh-tds', [TransporterController::class, 'refreshTds'])->name('transporters.refresh-tds');
     });
 
     // Truck Owner Management
@@ -153,6 +154,7 @@ Route::middleware(['auth.blocked'])->group(function () {
     });
     Route::middleware(['role:admin,super_admin', 'company.context'])->group(function () {
         Route::resource('truck_owners', TruckOwnerController::class)->only(['edit', 'update', 'destroy']);
+        Route::post('/truck_owners/{truck_owner}/refresh-tds', [TruckOwnerController::class, 'refreshTds'])->name('truck_owners.refresh-tds');
     });
 
     // Advance Payment Management
