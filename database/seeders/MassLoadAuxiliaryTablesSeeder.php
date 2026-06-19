@@ -49,7 +49,6 @@ class MassLoadAuxiliaryTablesSeeder extends Seeder
         $now = now();
         $nowStr = $now->toDateTimeString();
         $dateStr = $now->toDateString();
-        $expiresAt = $now->copy()->addDay()->toDateTimeString();
 
         if ($requestedBatch !== $batch && $this->command) {
             $this->command->warn("Batch size capped to {$batch}.");
@@ -57,13 +56,11 @@ class MassLoadAuxiliaryTablesSeeder extends Seeder
 
         $this->seedGoodTypesAndPumps($target, $batch, $userId, $runToken, $nowStr);
         $this->seedPromoCodes($target, $batch, $runToken, $nowStr, $dateStr);
-        $this->seedEmailOtps($target, $batch, $runToken, $expiresAt, $nowStr);
         $this->seedEmailTemplates($target, $batch, $companyId, $runToken, $nowStr);
         $this->seedEmailDispatchLogs($target, $batch, $companyId, $runToken, $nowStr);
         $this->seedCompanyReminderLogs($target, $batch, $companyId, $runToken, $dateStr, $nowStr);
         $this->seedAuditLogsWithChanges($target, $batch, $companyId, $userId, $runToken, $now);
         $this->seedConsigneeUser($target, $userId, $nowStr);
-        $this->seedOnboardingTokens($target, $batch, $userId, $runToken, $nowStr);
         $this->seedInvoiceReminderLogs($target, $companyId, $runToken, $dateStr, $nowStr);
         $this->seedEwayBillReminderLogs($target, $companyId, $runToken, $dateStr, $nowStr);
         $this->seedCustomInvoiceDetails($target, $userId, $nowStr);
@@ -129,28 +126,6 @@ class MassLoadAuxiliaryTablesSeeder extends Seeder
                 ];
             }
             DB::table('promo_codes')->insert($rows);
-            $inserted += $chunk;
-        }
-    }
-
-    private function seedEmailOtps(int $target, int $batch, string $runToken, string $expiresAt, string $nowStr): void
-    {
-        $inserted = 0;
-        while ($inserted < $target) {
-            $chunk = min($batch, $target - $inserted);
-            $base = $inserted + 1;
-            $rows = [];
-            for ($i = 0; $i < $chunk; $i++) {
-                $seq = $base + $i;
-                $rows[] = [
-                    'email' => "mass_otp_{$runToken}_{$seq}@example.test",
-                    'otp_hash' => hash('sha256', "otp|{$runToken}|{$seq}"),
-                    'expires_at' => $expiresAt,
-                    'verified_at' => null,
-                    'created_at' => $nowStr,
-                ];
-            }
-            DB::table('email_otps')->insert($rows);
             $inserted += $chunk;
         }
     }
@@ -317,36 +292,6 @@ WHERE c.deleted_at IS NULL
 LIMIT ?
 SQL;
         DB::statement($sql, [$userId, $nowStr, $nowStr, $userId, $target]);
-    }
-
-    private function seedOnboardingTokens(int $target, int $batch, int $userId, string $runToken, string $nowStr): void
-    {
-        $leadId = (int) DB::table('leads')->orderBy('id')->value('id');
-        if ($leadId <= 0) {
-            if ($this->command) {
-                $this->command->warn('onboarding_tokens: no leads; skip.');
-            }
-
-            return;
-        }
-
-        $inserted = 0;
-        while ($inserted < $target) {
-            $chunk = min($batch, $target - $inserted);
-            $rows = [];
-            for ($j = 0; $j < $chunk; $j++) {
-                $seq = $inserted + $j + 1;
-                $rows[] = [
-                    'lead_id' => $leadId,
-                    'token_hash' => hash('sha256', "obt|{$runToken}|{$seq}"),
-                    'used_at' => null,
-                    'created_by' => $userId,
-                    'created_at' => $nowStr,
-                ];
-            }
-            DB::table('onboarding_tokens')->insert($rows);
-            $inserted += $chunk;
-        }
     }
 
     private function seedInvoiceReminderLogs(int $target, int $companyId, string $runToken, string $dateStr, string $nowStr): void

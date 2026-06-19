@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Pulse\PulseDatabaseStorage;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Pulse\Contracts\Storage;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -12,7 +14,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(Storage::class, PulseDatabaseStorage::class);
     }
 
     /**

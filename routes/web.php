@@ -16,7 +16,6 @@ use App\Http\Controllers\EmailTemplateController;
 use App\Http\Controllers\FreightBookingController;
 use App\Http\Controllers\GoodsTypeController;
 use App\Http\Controllers\InvoiceController;
-use App\Http\Controllers\LeadController;
 use App\Http\Controllers\LorryReceiptController;
 use App\Http\Controllers\MasterPanelSummaryController;
 use App\Http\Controllers\PaymentController;
@@ -75,13 +74,9 @@ Route::middleware(['auth.blocked'])->group(function () {
         Route::post('/users/{user}/block', [UserController::class, 'block'])->name('users.block');
         Route::post('/users/{user}/unblock', [UserController::class, 'unblock'])->name('users.unblock');
         Route::resource('promo_codes', PromoCodeController::class)->except(['show']);
-        Route::resource('leads', LeadController::class)->only(['index', 'store', 'update']);
         Route::resource('email_templates', EmailTemplateController::class)->except(['show', 'destroy']);
         Route::get('email_templates/{email_template}/preview', [EmailTemplateController::class, 'preview'])->name('email_templates.preview');
         Route::post('email_templates/{email_template}/send-test', [EmailTemplateController::class, 'sendTest'])->name('email_templates.send-test');
-        Route::post('leads/{lead}/status', [LeadController::class, 'updateStatus'])->name('leads.status');
-        Route::post('leads/{lead}/reject', [LeadController::class, 'reject'])->name('leads.reject');
-        Route::post('leads/{lead}/generate-onboarding-link', [LeadController::class, 'generateOnboardingLink'])->name('leads.generate-link');
     });
     Route::post('promo_codes/validate', [PaymentController::class, 'applyPromoCode'])->name('promo_codes.validate');
 

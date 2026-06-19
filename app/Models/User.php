@@ -18,12 +18,15 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'email_verified_at',
         'user_role_id',
         'company_id',
         'branch_id',
         'transporter_master_id',
         'session_token',
         'referral_code',
+        'policy_accepted_at',
+        'policy_version',
         'is_blocked',
         'block_reason',
         'blocked_by',
@@ -167,6 +170,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'policy_accepted_at' => 'datetime',
             'password' => 'hashed',
             'is_blocked' => 'boolean',
         ];
