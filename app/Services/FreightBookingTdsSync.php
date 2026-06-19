@@ -21,11 +21,15 @@ class FreightBookingTdsSync
             }
 
             $loadingWeight = $freightBooking->lr ? $freightBooking->lr->weight : 0;
-            if ($loadingWeight <= 0) {
-                continue;
+            if ($freightBooking->is_fixed_amount) {
+                $tdsBaseAmount = $freightBooking->tr_amount;
+            } else {
+                if ($loadingWeight <= 0) {
+                    continue;
+                }
+                $tdsBaseAmount = round($freightBooking->tr_fr_rate * $loadingWeight, 2);
             }
 
-            $tdsBaseAmount = round($freightBooking->tr_fr_rate * $loadingWeight, 2);
             $newTdsAmount = roundUpTdsAmount($tdsBaseAmount * ($newTdsPercentage / 100));
 
             if ($newTdsAmount > $freightBooking->balance_amount) {
