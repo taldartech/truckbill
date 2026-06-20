@@ -235,7 +235,7 @@ class MassLoadAuxiliaryTablesSeeder extends Seeder
                     'company_id' => $companyId,
                     'user_id' => $userId,
                     'action' => 'created',
-                    'subject_type' => 'App\\Models\\LorryReceipt',
+                    'subject_type' => \App\Models\LorryReceipt::class,
                     'subject_id' => $seq,
                     'subject_label' => 'LR',
                     'subject_type_name' => 'LorryReceipt',
