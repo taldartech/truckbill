@@ -26,7 +26,6 @@ class User extends Authenticatable
         'session_token',
         'referral_code',
         'policy_accepted_at',
-        'policy_version',
         'is_blocked',
         'block_reason',
         'blocked_by',
