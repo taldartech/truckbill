@@ -2,56 +2,42 @@
 
 namespace App\Support;
 
+use App\Models\Company;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
 
 class SubscriptionExpiredResponse
 {
-    public static function message(): string
+    public static function forGraceRestrictedAction(Request $request, ?Company $company = null): RedirectResponse
     {
-        return 'Your subscription has expired. Please renew to continue.';
+        return redirect()->route('dashboard');
     }
 
-    public static function staffMessage(): string
+    public static function forLocked(Request $request): RedirectResponse
     {
-        return 'Your subscription has expired. Please contact your super admin to renew.';
-    }
-
-    public static function wantsJson(Request $request): bool
-    {
-        return $request->expectsJson() && ! $request->header('X-Inertia');
-    }
-
-    public static function forRequest(Request $request): Response
-    {
-        if (self::wantsJson($request)) {
-            return new JsonResponse(['message' => self::message()], 403);
-        }
-
-        return self::redirectForUser($request);
+        return redirect()->route('dashboard');
     }
 
     public static function redirectForUser(Request $request): RedirectResponse
     {
-        $user = $request->user();
-        $message = self::message();
-
-        if ($user && $user->userRole?->name === 'super_admin') {
-            return redirect()->route('subscription.index')->with('error', $message);
-        }
-
-        return redirect()->route('dashboard')->with('error', self::staffMessage());
+        return self::forLocked($request);
     }
 
     public static function abortUnlessActive(Request $request): void
     {
-        if (self::wantsJson($request)) {
-            abort(403, self::message());
+        throw new HttpResponseException(self::forLocked($request));
+    }
+
+    public static function abortUnlessCanMutate(Request $request, ?Company $company = null): void
+    {
+        $payload = $company?->subscriptionAccessPayload() ?? [];
+        $mode = $payload['access_mode'] ?? 'locked';
+
+        if ($mode === 'grace') {
+            throw new HttpResponseException(self::forGraceRestrictedAction($request, $company));
         }
 
-        throw new HttpResponseException(self::redirectForUser($request));
+        throw new HttpResponseException(self::forLocked($request));
     }
 }

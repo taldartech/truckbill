@@ -345,14 +345,13 @@ Route::middleware(['auth.blocked'])->group(function () {
         Route::get('/pending-invoice-export', [ReportController::class, 'pendingInvoiceExport'])->name('reports.pending-invoice-export');
         Route::get('/transporter-master', [ReportController::class, 'transporter_master'])->name('reports.transporter-master');
         Route::get('/transporter-master-export', [ReportController::class, 'transporter_master_export'])->name('reports.transporter-master-export');
+        Route::get('/voucher-receipt-export', [ReportController::class, 'voucher_receipt_export'])->name('reports.voucher-receipt-export');
+        Route::post('/voucher-receipt-mark-printed', [ReportController::class, 'markVoucherReceiptPrinted'])->name('reports.voucher-receipt-mark-printed');
     });
 
     Route::middleware(['role:super_admin'])->group(function () {
         Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
     });
-
-    Route::get('/voucher-receipt-export', [ReportController::class, 'voucher_receipt_export'])->name('reports.voucher-receipt-export');
-    Route::post('/voucher-receipt-mark-printed', [ReportController::class, 'markVoucherReceiptPrinted'])->name('reports.voucher-receipt-mark-printed');
 });
 
 require __DIR__.'/api-routes.php';

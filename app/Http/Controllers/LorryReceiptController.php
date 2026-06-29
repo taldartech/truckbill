@@ -51,7 +51,7 @@ class LorryReceiptController extends Controller
         $company = Auth::user()->company;
         $company?->loadMissing('subscription');
 
-        return $company ? ! $company->isPlanActive() : false;
+        return $company ? ! $company->subscriptionCanWrite() : false;
     }
 
     /**
@@ -124,7 +124,7 @@ class LorryReceiptController extends Controller
 
             $company = $user->company;
             $company?->loadMissing('subscription');
-            $planExpired = $company ? ! $company->isPlanActive() : false;
+            $planExpired = $company ? ! $company->subscriptionCanWrite() : false;
 
             // Join consignees + truck once with aliases so DataTables never hydrates duplicate Consignee
             // models per row (customer / consignor / consignee are the same table).
@@ -256,7 +256,7 @@ class LorryReceiptController extends Controller
 
         $freight_booking_id = $lorryReceipt->freight_booking_id;
         $freightBooking = $lorryReceipt->freightBooking;
-        $planExpired = $company ? ! $company->isPlanActive() : false;
+        $planExpired = $company ? ! $company->subscriptionCanWrite() : false;
 
         if ($freight_booking_id) {
             $buttons .= '<a href="'.route('freight_bookings.edit', $freight_booking_id).$listingQuerySuffix.'" class="btn btn-sm btn-warning" title="Edit Good Hire (Lorry Hire)" data-bs-toggle="tooltip">';
@@ -1056,7 +1056,7 @@ class LorryReceiptController extends Controller
         $companyId = $this->getCurrentCompanyId();
         $company = Auth::user()->company;
         $company?->loadMissing('subscription');
-        if (! $company?->isPlanActive()) {
+        if (! $company?->subscriptionCanWrite()) {
             return $this->redirectToLorryReceiptsIndex($request, 'error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
 

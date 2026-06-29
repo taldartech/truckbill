@@ -1133,6 +1133,7 @@
             <div class="app-content-header">
                 <!--begin::Container-->
                 <div class="container-fluid">
+                    @include('partials.subscription-access-banner')
                     @yield('content')
 
                     <!-- /.row (main row) -->

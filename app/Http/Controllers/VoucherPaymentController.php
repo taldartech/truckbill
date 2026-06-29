@@ -285,7 +285,7 @@ class VoucherPaymentController extends Controller
     {
         $company = auth()->user()->company;
         $company->loadMissing('subscription');
-        if (! $company->isPlanActive()) {
+        if (! $company->subscriptionCanWrite()) {
             return redirect()->route('freight_bookings.index')
                 ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
@@ -497,7 +497,7 @@ class VoucherPaymentController extends Controller
         }
         $company = auth()->user()->company;
         $company->loadMissing('subscription');
-        if (! $company->isPlanActive()) {
+        if (! $company->subscriptionCanWrite()) {
             return redirect()->route('voucher_payments.index')
                 ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
@@ -552,7 +552,7 @@ class VoucherPaymentController extends Controller
         }
         $company = auth()->user()->company;
         $company->loadMissing('subscription');
-        if (! $company->isPlanActive()) {
+        if (! $company->subscriptionCanWrite()) {
             return redirect()->route('voucher_payments.index')
                 ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
@@ -1008,7 +1008,7 @@ class VoucherPaymentController extends Controller
         }
         $company = auth()->user()->company;
         $company->loadMissing('subscription');
-        if (! $company->isPlanActive()) {
+        if (! $company->subscriptionCanWrite()) {
             return redirect()->route('voucher_payments.index')
                 ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }

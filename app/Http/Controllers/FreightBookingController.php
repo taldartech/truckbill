@@ -463,7 +463,7 @@ class FreightBookingController extends Controller
     {
         $company = auth()->user()->company;
         $company?->loadMissing('subscription');
-        if (! $company?->isPlanActive()) {
+        if (! $company?->subscriptionCanWrite()) {
             return $this->redirectToFreightBookingsIndex($request, 'error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
         if ($company->lrCreditsRemaining() <= 0) {
@@ -934,7 +934,7 @@ class FreightBookingController extends Controller
     {
         $company = auth()->user()->company;
         $company?->loadMissing('subscription');
-        if (! $company?->isPlanActive()) {
+        if (! $company?->subscriptionCanWrite()) {
             return $this->redirectToFreightBookingsIndex(request(), 'error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
         try {
@@ -1080,7 +1080,7 @@ class FreightBookingController extends Controller
     {
         $company = auth()->user()->company;
         $company?->loadMissing('subscription');
-        if (! $company?->isPlanActive()) {
+        if (! $company?->subscriptionCanWrite()) {
             return $this->redirectToFreightBookingsIndex($request, 'error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
 
@@ -1210,7 +1210,7 @@ class FreightBookingController extends Controller
     {
         $company = auth()->user()->company;
         $company?->loadMissing('subscription');
-        if (! $company?->isPlanActive()) {
+        if (! $company?->subscriptionCanWrite()) {
             return $this->redirectToFreightBookingsIndex(request(), 'error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
         $freight_booking->delete();

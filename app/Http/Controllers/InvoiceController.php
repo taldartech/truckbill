@@ -242,7 +242,7 @@ class InvoiceController extends Controller
     {
         $company = Auth::user()->company;
         $company->loadMissing('subscription');
-        if (! $company->isPlanActive()) {
+        if (! $company->subscriptionCanWrite()) {
             return redirect()->route('invoices.index')
                 ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
@@ -469,7 +469,7 @@ class InvoiceController extends Controller
         }
         $company = Auth::user()->company;
         $company->loadMissing('subscription');
-        if (! $company->isPlanActive()) {
+        if (! $company->subscriptionCanWrite()) {
             return redirect()->route('invoices.index')
                 ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
@@ -504,7 +504,7 @@ class InvoiceController extends Controller
         }
         $company = Auth::user()->company;
         $company->loadMissing('subscription');
-        if (! $company->isPlanActive()) {
+        if (! $company->subscriptionCanWrite()) {
             return redirect()->route('invoices.index')
                 ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
@@ -534,7 +534,7 @@ class InvoiceController extends Controller
         }
         $company = Auth::user()->company;
         $company->loadMissing('subscription');
-        if (! $company->isPlanActive()) {
+        if (! $company->subscriptionCanWrite()) {
             return redirect()->route('invoices.index')
                 ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
