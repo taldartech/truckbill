@@ -123,6 +123,10 @@
                                 <span>—</span>
                             </div>
                         </div>
+                        <div id="quote_gst_row" class="sub-quote-line border-top pt-2 mt-2" style="display: none;">
+                            <span id="quote_gst_label">GST</span>
+                            <span>₹<span id="quote_gst">0.00</span></span>
+                        </div>
                         <div class="sub-quote-total">
                             <span class="sub-quote-total-label">Total payable</span>
                             <span class="sub-quote-total-value">₹<span id="quote_total">0.00</span></span>
@@ -151,6 +155,9 @@
     const quoteErrorsEl = document.getElementById('quote_feedback');
     const promoFeedbackEl = document.getElementById('promo_feedback');
     const quoteLinesEl = document.getElementById('quote_lines');
+    const quoteGstRowEl = document.getElementById('quote_gst_row');
+    const quoteGstLabelEl = document.getElementById('quote_gst_label');
+    const quoteGstEl = document.getElementById('quote_gst');
     const quoteTotalEl = document.getElementById('quote_total');
     const payBtn = document.getElementById('pay_btn');
     const manageUrl = @json(route('subscription.show', ['company_id' => $company->id]));
@@ -199,6 +206,7 @@
             if (!res.ok) {
                 quoteErrorsEl.textContent = quote.message || 'Unable to load pricing. Please try again later.';
                 renderQuoteLines([]);
+                quoteGstRowEl.style.display = 'none';
                 quoteTotalEl.textContent = '0.00';
                 payBtn.disabled = true;
                 return;
@@ -206,10 +214,14 @@
 
             quoteErrorsEl.textContent = (quote.blocking_errors || []).join(' ');
             renderQuoteLines(quote.line_items || []);
+            quoteGstRowEl.style.display = '';
+            quoteGstLabelEl.textContent = `GST (${Number(quote.gst_rate_percent || 0)}%)`;
+            quoteGstEl.textContent = Number(quote.gst_amount || 0).toFixed(2);
             quoteTotalEl.textContent = Number(quote.total_amount || 0).toFixed(2);
             payBtn.disabled = !quote.can_checkout;
         } catch (error) {
             quoteErrorsEl.textContent = 'Unable to load pricing. Please try again later.';
+            quoteGstRowEl.style.display = 'none';
             payBtn.disabled = true;
         }
     }
