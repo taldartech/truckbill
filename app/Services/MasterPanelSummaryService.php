@@ -185,7 +185,7 @@ class MasterPanelSummaryService
                 'name' => $company->name,
                 'owner_name' => $company->user?->name,
                 'is_blocked' => (bool) $company->is_blocked,
-                'plan_end_date' => $company->plan_end_date,
+                'plan_end_date' => $company->subscription?->ends_on?->toDateString(),
                 ...$kpis,
             ];
         });

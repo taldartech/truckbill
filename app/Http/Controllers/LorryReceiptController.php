@@ -49,14 +49,9 @@ class LorryReceiptController extends Controller
     private function isPlanExpired(): bool
     {
         $company = Auth::user()->company;
-        if (! $company->plan_end_date) {
-            return false;
-        }
+        $company?->loadMissing('subscription');
 
-        $today = now()->startOfDay();
-        $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
-
-        return $today->gt($planEndDate);
+        return $company ? ! $company->isPlanActive() : false;
     }
 
     /**
@@ -128,10 +123,8 @@ class LorryReceiptController extends Controller
             $canActAsAdmin = $user->canActAsAdmin();
 
             $company = $user->company;
-            $today = now()->startOfDay();
-            $planEndDate = $company->plan_end_date
-                ? Carbon::parse($company->plan_end_date)->startOfDay()
-                : null;
+            $company?->loadMissing('subscription');
+            $planExpired = $company ? ! $company->isPlanActive() : false;
 
             // Join consignees + truck once with aliases so DataTables never hydrates duplicate Consignee
             // models per row (customer / consignor / consignee are the same table).
@@ -242,10 +235,10 @@ class LorryReceiptController extends Controller
                     return '<span class="badge bg-'.$statusClass.'">'.$statusText.'</span>';
                 })
 
-                ->addColumn('actions', function ($row) use ($company, $today, $planEndDate, $canActAsAdmin, $request) {
+                ->addColumn('actions', function ($row) use ($company, $canActAsAdmin, $request) {
                     $listingQuerySuffix = ListingQueryString::suffix($request, ListingQueryString::LORRY_RECEIPT_KEYS);
 
-                    return $this->getActionButtons($row, $company, $today, $planEndDate, $canActAsAdmin, $listingQuerySuffix);
+                    return $this->getActionButtons($row, $company, $canActAsAdmin, $listingQuerySuffix);
                 })
                 ->rawColumns(['sr_no', 'lr_number', 'customer_name', 'consignor_name', 'consignee_name', 'truck_number', 'gr_date_formatted', 'amount_formatted', 'status_badge', 'actions', 'row_class'])
                 ->make(true);
@@ -257,19 +250,19 @@ class LorryReceiptController extends Controller
         }
     }
 
-    private function getActionButtons(LorryReceipt $lorryReceipt, Company $company, Carbon $today, ?Carbon $planEndDate, bool $canActAsAdmin, string $listingQuerySuffix = ''): string
+    private function getActionButtons(LorryReceipt $lorryReceipt, Company $company, bool $canActAsAdmin, string $listingQuerySuffix = ''): string
     {
         $buttons = '<div class="d-flex gap-1 justify-content-center">';
 
         $freight_booking_id = $lorryReceipt->freight_booking_id;
         $freightBooking = $lorryReceipt->freightBooking;
-        $planExpired = $planEndDate !== null && $today->gt($planEndDate);
+        $planExpired = $company ? ! $company->isPlanActive() : false;
 
         if ($freight_booking_id) {
             $buttons .= '<a href="'.route('freight_bookings.edit', $freight_booking_id).$listingQuerySuffix.'" class="btn btn-sm btn-warning" title="Edit Good Hire (Lorry Hire)" data-bs-toggle="tooltip">';
             $buttons .= '<i class="bi bi-truck"></i></a>';
         } else {
-            if ($company->lr_credits <= 0) {
+            if ($company->lrCreditsRemaining() <= 0) {
                 $buttons .= '<button class="btn btn-sm btn-secondary" title="Insufficient Credits" data-bs-toggle="tooltip" onclick="alert(\'Insufficient credits\')">';
                 $buttons .= '<i class="bi bi-truck"></i></button>';
             } elseif ($planExpired) {
@@ -1062,9 +1055,8 @@ class LorryReceiptController extends Controller
     {
         $companyId = $this->getCurrentCompanyId();
         $company = Auth::user()->company;
-        $today = now()->startOfDay();
-        $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
-        if ($company->plan_end_date && $today->gt($planEndDate)) {
+        $company?->loadMissing('subscription');
+        if (! $company?->isPlanActive()) {
             return $this->redirectToLorryReceiptsIndex($request, 'error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
 

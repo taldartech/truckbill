@@ -40,9 +40,6 @@ class Company extends Model
         'lr_copy_template',
         'freight_challan_template',
         'gst_slab',
-        'plan_end_date',
-        'lr_credits',
-        'truck_credits',
     ];
 
     protected $dates = ['deleted_at'];
@@ -147,6 +144,43 @@ class Company extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function subscription()
+    {
+        return $this->hasOne(CompanySubscription::class);
+    }
+
+    public function pendingUpcomingRenewals()
+    {
+        return $this->hasMany(UpcomingSubscription::class)->where('status', 'pending');
+    }
+
+    public function hasPendingUpcomingRenewal(): bool
+    {
+        return UpcomingSubscription::query()
+            ->where('company_id', $this->id)
+            ->where('status', 'pending')
+            ->exists();
+    }
+
+    public function isPlanActive(): bool
+    {
+        if ($this->subscription?->isActive()) {
+            return true;
+        }
+
+        return $this->hasPendingUpcomingRenewal();
+    }
+
+    public function planEndsOn(): ?\Illuminate\Support\Carbon
+    {
+        return $this->subscription?->ends_on;
+    }
+
+    public function lrCreditsRemaining(): int
+    {
+        return (int) ($this->subscription?->lr_credits_remaining ?? 0);
     }
 
     public function invoices()

@@ -6,6 +6,7 @@ use App\Http\Requests\StoreBranchRequest;
 use App\Http\Requests\UpdateBranchRequest;
 use App\Models\Branch;
 use App\Models\Company;
+use App\Services\SubscriptionGuard;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,6 +17,10 @@ use Yajra\DataTables\Facades\DataTables;
 
 class BranchController extends Controller
 {
+    public function __construct(
+        private readonly SubscriptionGuard $subscriptionGuard,
+    ) {}
+
     /**
      * Display a listing of the resource.
      */
@@ -132,6 +137,9 @@ class BranchController extends Controller
     {
         // Form Request validation already passed, now add controller-level validation
         $validated = $request->validated();
+
+        $company = Company::with('subscription')->findOrFail($validated['company_id']);
+        $this->subscriptionGuard->assertCanCreateBranch($company);
 
         // Additional controller-level validation for branch constraints
         $this->validateBranchConstraints($validated);

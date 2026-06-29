@@ -15,6 +15,13 @@ Schedule::command('truck-owners:reset-declarations --apply --no-interaction')
     ->onOneServer()
     ->description('Reset all truck owner declarations to "not given" and recalculate TDS at the start of financial year');
 
+Schedule::command('subscription:apply-upcoming')
+    ->dailyAt('00:15')
+    ->timezone('Asia/Kolkata')
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->description('Apply pending upcoming subscriptions after term end');
+
 Schedule::command('database:backup-to-s3 --no-interaction')
     ->everyThreeHours()
     ->withoutOverlapping()

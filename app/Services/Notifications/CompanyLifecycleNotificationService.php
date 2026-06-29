@@ -4,7 +4,7 @@ namespace App\Services\Notifications;
 
 use App\Models\Company;
 use App\Models\EmailTemplate;
-use App\Models\PaymentLedger;
+use App\Models\SubscriptionPayment;
 use App\Models\User;
 use App\Services\EmailTemplateMailSender;
 use Illuminate\Support\Collection;
@@ -35,7 +35,7 @@ class CompanyLifecycleNotificationService
         $variables = [
             'name' => $owner->name ?? 'User',
             'companyName' => (string) ($company->name ?? ''),
-            'planEndDate' => $company->plan_end_date ? (string) $company->plan_end_date : '',
+            'planEndDate' => $company->subscription?->ends_on?->toDateString() ?? '',
             'dateTime' => now()->format('d M Y, h:i A'),
             'downloadUrl' => config('app.url'),
         ];
@@ -50,7 +50,7 @@ class CompanyLifecycleNotificationService
         $this->mailSender->sendTemplate($template, $email, $variables, $meta);
     }
 
-    public function notifySubscriptionRenewed(Company $company, PaymentLedger $payment, ?User $triggeredBy = null): void
+    public function notifySubscriptionRenewed(Company $company, SubscriptionPayment $payment, ?User $triggeredBy = null): void
     {
         $template = $this->activeTemplate('COMPANY_SUBSCRIPTION_RENEWED');
         if ($template === null) {
@@ -66,7 +66,7 @@ class CompanyLifecycleNotificationService
         $baseVariables = [
             'companyName' => (string) ($company->name ?? ''),
             'amount' => number_format((float) ($payment->total_amount ?? 0), 2),
-            'planEndDate' => $company->plan_end_date ? (string) $company->plan_end_date : '',
+            'planEndDate' => $company->subscription?->ends_on?->toDateString() ?? '',
             'tenure' => (string) ($payment->tenure ?? ''),
             'dateTime' => now()->format('d M Y, h:i A'),
             'downloadUrl' => config('app.url'),
@@ -99,7 +99,7 @@ class CompanyLifecycleNotificationService
 
         $baseVariables = [
             'companyName' => (string) ($company->name ?? ''),
-            'planEndDate' => $company->plan_end_date ? (string) $company->plan_end_date : '',
+            'planEndDate' => $company->subscription?->ends_on?->toDateString() ?? '',
             'daysLeft' => (string) $daysLeft,
             'dateTime' => now()->format('d M Y, h:i A'),
             'downloadUrl' => config('app.url'),
@@ -132,7 +132,7 @@ class CompanyLifecycleNotificationService
 
         $baseVariables = [
             'companyName' => (string) ($company->name ?? ''),
-            'planEndDate' => $company->plan_end_date ? (string) $company->plan_end_date : '',
+            'planEndDate' => $company->subscription?->ends_on?->toDateString() ?? '',
             'dateTime' => now()->format('d M Y, h:i A'),
             'downloadUrl' => config('app.url'),
         ];

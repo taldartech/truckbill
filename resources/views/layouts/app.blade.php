@@ -375,13 +375,13 @@
                                     <div class="credit-pill" title="Plan Expiry">
                                         <i class="bi bi-calendar-event"></i>
                                         <span class="label">Expiry:</span>
-                                        <span class="value">{{ Auth::user()->company ? \Carbon\Carbon::parse(Auth::user()->company->plan_end_date)->format('d M, Y') : 'N/A' }}</span>
+                                        <span class="value">{{ Auth::user()->company?->subscription?->ends_on?->format('d M, Y') ?? 'N/A' }}</span>
                                     </div>
                                     <div class="credit-divider"></div>
                                     <div class="credit-pill" title="LR Credits Remaining">
                                         <i class="bi bi-coin"></i>
                                         <span class="label">Credits:</span>
-                                        <span class="value">{{ Auth::user()->company ? Auth::user()->company->lr_credits : 'N/A' }}</span>
+                                        <span class="value">{{ Auth::user()->company?->lrCreditsRemaining() ?? 'N/A' }}</span>
                                     </div>
                                 </div>
                             </li>
@@ -532,13 +532,6 @@
                                     </li>
 
                                 </ul>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('promo_codes.index') }}"
-                                    class="nav-link{{ Request::is('promo_codes*') ? ' active' : '' }}">
-                                    <i class="fas fa-tag"></i>
-                                    <p>Promo Codes</p>
-                                </a>
                             </li>
                             <li class="nav-item">
                                 <a href="{{ route('email_templates.index') }}"
@@ -693,10 +686,10 @@
                                 </ul>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ route('payment.index') }}"
-                                    class="nav-link{{ Request::is('payment*') ? ' active' : '' }}">
+                                <a href="{{ route('subscription.index') }}"
+                                    class="nav-link{{ Request::is('subscription*') ? ' active' : '' }}">
                                     <i class="fas fa-credit-card"></i>
-                                    <p>Payment Management</p>
+                                    <p>Subscription</p>
                                 </a>
                             </li>
                             <li class="nav-item">

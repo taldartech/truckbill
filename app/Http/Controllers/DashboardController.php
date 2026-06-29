@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AdvancePayment;
 use App\Models\Company;
+use App\Models\CompanySubscription;
 use App\Models\FreightBooking;
 use App\Models\FreightBooking as Booking;
 use App\Models\Invoice;
@@ -13,6 +14,7 @@ use App\Models\Transporter;
 use App\Models\Truck;
 use App\Models\User;
 use App\Models\VoucherPayment;
+use App\Models\UpcomingSubscription;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -65,6 +67,10 @@ class DashboardController extends Controller
         $startOfMonth = $now->copy()->startOfMonth();
         $endOfMonth = $now->copy()->endOfMonth();
 
+        $pendingRenewalCompanyIds = UpcomingSubscription::query()
+            ->where('status', 'pending')
+            ->pluck('company_id');
+
         // System-wide statistics
         $totalRevenue = $this->sumInvoiceTotalRevenue(null, $startOfMonth, $endOfMonth);
 
@@ -72,18 +78,23 @@ class DashboardController extends Controller
             'monthly_revenue' => $totalRevenue,
             'total_companies' => Company::count(),
             'active_companies' => Company::where('is_blocked', 0)->count(),
-            'expired_plans' => Company::where('plan_end_date', '<', now()->startOfDay())->count(),
-            'upcoming_renewals' => Company::where('plan_end_date', '<=', now()->addDays(30)->endOfDay())
-                ->where('plan_end_date', '>=', now()->startOfDay())
+            'expired_plans' => CompanySubscription::where('ends_on', '<', now()->toDateString())
+                ->whereNotIn('company_id', $pendingRenewalCompanyIds)
+                ->count(),
+            'upcoming_renewals' => CompanySubscription::whereBetween('ends_on', [now()->toDateString(), now()->addDays(30)->toDateString()])
+                ->whereNotIn('company_id', $pendingRenewalCompanyIds)
                 ->count(),
             'total_users' => User::count(),
         ];
 
         // Companies with expiring/expired plans
-        $expiringCompanies = Company::where('plan_end_date', '<=', now()->addDays(30)->endOfDay())
-            ->orderBy('plan_end_date', 'asc')
+        $expiringCompanies = Company::with('subscription')
+            ->whereDoesntHave('pendingUpcomingRenewals')
+            ->whereHas('subscription', fn ($q) => $q->where('ends_on', '<=', now()->addDays(30)->toDateString()))
+            ->get()
+            ->sortBy(fn ($c) => $c->subscription?->ends_on)
             ->take(10)
-            ->get();
+            ->values();
 
         // Recent companies
         $recentCompanies = Company::latest()->take(5)->get();
@@ -145,18 +156,24 @@ class DashboardController extends Controller
             }
         }
 
+        $pendingRenewalCompanyIds = UpcomingSubscription::query()
+            ->where('status', 'pending')
+            ->whereIn('company_id', $companyIds)
+            ->pluck('company_id');
+
         $adminStats = [
             'monthly_revenue' => $totalRevenue,
             'total_companies' => Company::where('user_id', auth()->user()->id)->count(),
             'active_companies' => Company::where('user_id', auth()->user()->id)
                 ->where('is_blocked', 0)
                 ->count(),
-            'expired_plans' => Company::where('user_id', auth()->user()->id)
-                ->where('plan_end_date', '<', now()->startOfDay())
+            'expired_plans' => CompanySubscription::whereIn('company_id', $companyIds)
+                ->where('ends_on', '<', now()->toDateString())
+                ->whereNotIn('company_id', $pendingRenewalCompanyIds)
                 ->count(),
-            'upcoming_renewals' => Company::where('user_id', auth()->user()->id)
-                ->where('plan_end_date', '<=', now()->addDays(30)->endOfDay())
-                ->where('plan_end_date', '>=', now()->startOfDay())
+            'upcoming_renewals' => CompanySubscription::whereIn('company_id', $companyIds)
+                ->whereBetween('ends_on', [now()->toDateString(), now()->addDays(30)->toDateString()])
+                ->whereNotIn('company_id', $pendingRenewalCompanyIds)
                 ->count(),
             'total_users' => User::whereIn('company_id', $companyIds)->count(),
             'outstanding_amount' => $outstandingAmount,
@@ -164,16 +181,20 @@ class DashboardController extends Controller
 
         // Companies with expiring/expired plans (today or past)
         $expiringCompanies = Company::where('user_id', auth()->user()->id)
-            ->where('plan_end_date', '<=', now()->endOfDay())
-            ->orderBy('plan_end_date', 'asc')
-            ->get();
+            ->with('subscription')
+            ->whereDoesntHave('pendingUpcomingRenewals')
+            ->whereHas('subscription', fn ($q) => $q->where('ends_on', '<=', now()->toDateString()))
+            ->get()
+            ->sortBy(fn ($c) => $c->subscription?->ends_on);
 
-        // Companies with upcoming plan expiry (next 30 days, not expired yet)
         $upcomingPlanExpiry = Company::where('user_id', auth()->user()->id)
-            ->where('plan_end_date', '>', now()->endOfDay())
-            ->where('plan_end_date', '<=', now()->addDays(30)->endOfDay())
-            ->orderBy('plan_end_date', 'asc')
-            ->get();
+            ->with('subscription')
+            ->whereDoesntHave('pendingUpcomingRenewals')
+            ->whereHas('subscription', fn ($q) => $q
+                ->where('ends_on', '>', now()->toDateString())
+                ->where('ends_on', '<=', now()->addDays(30)->toDateString()))
+            ->get()
+            ->sortBy(fn ($c) => $c->subscription?->ends_on);
 
         // Revenue by company — sum of invoice totals
         $revenueByCompany = Company::where('user_id', auth()->user()->id)
