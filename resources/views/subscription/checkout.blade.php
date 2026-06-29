@@ -110,10 +110,11 @@
                             <input type="text" class="sub-input" id="promo_code" placeholder="Enter code">
                             <button type="button" class="sub-btn-secondary" id="validate_promo">Apply</button>
                         </div>
+                        <div id="promo_error" class="sub-error"></div>
+                        <div id="promo_feedback" class="sub-success-note"></div>
                     </div>
 
                     <div id="quote_feedback" class="sub-error"></div>
-                    <div id="promo_feedback" class="sub-success-note"></div>
 
                     <div class="sub-quote-box">
                         <div class="sub-card-label mb-2">Order summary</div>
@@ -153,6 +154,7 @@
 
     const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
     const quoteErrorsEl = document.getElementById('quote_feedback');
+    const promoErrorEl = document.getElementById('promo_error');
     const promoFeedbackEl = document.getElementById('promo_feedback');
     const quoteLinesEl = document.getElementById('quote_lines');
     const quoteGstRowEl = document.getElementById('quote_gst_row');
@@ -232,25 +234,22 @@
     }
 
     document.querySelectorAll('.quote-input').forEach((el) => {
-        el.addEventListener('input', () => {
-            promoValidated = false;
-            promoFeedbackEl.textContent = '';
-            scheduleQuote();
-        });
+        el.addEventListener('input', scheduleQuote);
     });
 
     document.getElementById('promo_code').addEventListener('input', () => {
         promoValidated = false;
         promoFeedbackEl.textContent = '';
+        promoErrorEl.textContent = '';
     });
 
     document.getElementById('validate_promo').addEventListener('click', async () => {
         const code = document.getElementById('promo_code').value.trim();
         promoFeedbackEl.textContent = '';
-        quoteErrorsEl.textContent = '';
+        promoErrorEl.textContent = '';
 
         if (!code) {
-            quoteErrorsEl.textContent = 'Enter a promo code first.';
+            promoErrorEl.textContent = 'Enter a promo code first.';
             return;
         }
 
@@ -265,7 +264,7 @@
         if (data.valid) {
             promoFeedbackEl.textContent = 'Promo code applied successfully.';
         } else {
-            quoteErrorsEl.textContent = data.message || 'Invalid promo code.';
+            promoErrorEl.textContent = data.message || 'Invalid promo code.';
         }
 
         fetchQuote();
