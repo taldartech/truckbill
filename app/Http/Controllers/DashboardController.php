@@ -187,11 +187,17 @@ class DashboardController extends Controller
             ->orderByDesc('monthly_revenue')
             ->get();
 
+        $ownedCompanies = Company::query()
+            ->where('user_id', auth()->user()->id)
+            ->orderBy('name')
+            ->get(['id', 'name', 'is_blocked']);
+
         return view('dashboard', compact(
             'adminStats',
             'expiringCompanies',
             'upcomingPlanExpiry',
-            'revenueByCompany'
+            'revenueByCompany',
+            'ownedCompanies',
         ));
     }
 

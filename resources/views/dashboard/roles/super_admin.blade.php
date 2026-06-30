@@ -11,6 +11,53 @@
     </div>
 </div>
 
+@if (! session('super_admin_company_id') && isset($ownedCompanies) && $ownedCompanies->isNotEmpty())
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm" style="border-radius: 16px; border-left: 4px solid var(--bs-primary, #2FB36F) !important;">
+                <div class="card-body py-3">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                        <div>
+                            <h5 class="fw-bold mb-1"><i class="fas fa-door-open text-brand-primary me-2"></i>Enter Company Panel</h5>
+                            <p class="text-muted small mb-0">Click a company to open its panel instantly.</p>
+                        </div>
+                        @if ($ownedCompanies->count() > 6)
+                            <div style="min-width: 220px; max-width: 320px; flex: 1;">
+                                <input type="search" id="super_admin_company_enter_filter" class="form-control form-control-sm" placeholder="Filter companies…" autocomplete="off">
+                            </div>
+                        @endif
+                    </div>
+                    <div class="row g-2" id="super_admin_company_enter_grid">
+                        @foreach ($ownedCompanies as $company)
+                            <div class="col-12 col-sm-6 col-md-4 col-lg-3 company-enter-item" data-company-name="{{ strtolower($company->name) }}">
+                                @if ($company->is_blocked)
+                                    <span class="btn btn-danger w-100 text-start py-2 px-3 disabled opacity-75" title="This company is blocked">
+                                        <span class="d-flex align-items-center">
+                                            <i class="fas fa-building me-2"></i>
+                                            <span class="text-truncate fw-semibold">{{ $company->name }}</span>
+                                        </span>
+                                    </span>
+                                @else
+                                    <a href="{{ route('company.enter', $company) }}" class="btn btn-primary w-100 text-start py-2 px-3 company-enter-tile">
+                                        <span class="d-flex align-items-center">
+                                            <i class="fas fa-building me-2"></i>
+                                            <span class="text-truncate fw-semibold">{{ $company->name }}</span>
+                                        </span>
+                                    </a>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                    <div id="super_admin_company_enter_empty" class="text-muted small py-2 d-none">No companies match your search.</div>
+                    <div class="mt-3 text-end">
+                        <a href="{{ route('company.index') }}" class="small text-muted">Manage all companies</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+@endif
+
 <!-- SuperAdmin KPI Cards -->
 <div class="row g-3">
     <div class="col-12 col-sm-6 col-md-3">
@@ -265,4 +312,37 @@
     </div>
 </div>
 @endif
+
+@push('scripts')
+    @if (! session('super_admin_company_id') && isset($ownedCompanies) && $ownedCompanies->count() > 6)
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const filter = document.getElementById('super_admin_company_enter_filter');
+                const items = document.querySelectorAll('.company-enter-item');
+                const empty = document.getElementById('super_admin_company_enter_empty');
+                if (!filter || !items.length) {
+                    return;
+                }
+
+                filter.addEventListener('input', function () {
+                    const term = filter.value.trim().toLowerCase();
+                    let visible = 0;
+
+                    items.forEach(function (item) {
+                        const name = item.getAttribute('data-company-name') || '';
+                        const show = term === '' || name.includes(term);
+                        item.classList.toggle('d-none', !show);
+                        if (show) {
+                            visible++;
+                        }
+                    });
+
+                    if (empty) {
+                        empty.classList.toggle('d-none', visible > 0);
+                    }
+                });
+            });
+        </script>
+    @endif
+@endpush
 

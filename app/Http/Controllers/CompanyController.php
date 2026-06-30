@@ -44,6 +44,11 @@ class CompanyController extends Controller
         if ($company->user_id !== Auth::id()) {
             abort(403, 'You can only enter companies you own.');
         }
+        if ($company->is_blocked) {
+            return redirect()
+                ->back()
+                ->with('error', 'This company is blocked and cannot be entered.');
+        }
         session(['super_admin_company_id' => $company->id]);
 
         return redirect()->route('dashboard');
@@ -211,7 +216,7 @@ class CompanyController extends Controller
         $buttons = '<div class="d-flex gap-1">';
 
         // Enter button (super_admin only) - company listing only, for companies they own
-        if (auth()->check() && auth()->user()->userRole->name === 'super_admin' && $company->user_id === auth()->id()) {
+        if (auth()->check() && auth()->user()->userRole->name === 'super_admin' && $company->user_id === auth()->id() && ! $company->is_blocked) {
             $enterUrl = route('company.enter', $company);
             $buttons .= '<a href="'.$enterUrl.'" class="btn btn-sm btn-success" title="Enter company panel">
                             <i class="bi bi-box-arrow-in-right"></i></a>';

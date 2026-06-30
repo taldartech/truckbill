@@ -69,7 +69,7 @@ Route::middleware(['auth.blocked'])->group(function () {
     // Master Admin only routes
     Route::group(['middleware' => 'role:master_admin'], function () {
         Route::patch('/company/{company}/subscription', [CompanyController::class, 'updateSubscription'])->name('company.subscription.update');
-        Route::post('/company/{company}/block', [CompanyController::class, 'block'])->name('company.block');
+        Route::get('/company/{company}/block', [CompanyController::class, 'block'])->name('company.block');
         Route::post('/company/{company}/unblock', [CompanyController::class, 'unblock'])->name('company.unblock');
         Route::post('/users/{user}/block', [UserController::class, 'block'])->name('users.block');
         Route::post('/users/{user}/unblock', [UserController::class, 'unblock'])->name('users.unblock');

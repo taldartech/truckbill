@@ -52,7 +52,7 @@ class CompanyEnterExitTest extends TestCase
     protected function createCompanyFor(User $owner, array $overrides = []): Company
     {
         return Company::create(array_merge([
-            'name' => 'Company ' . $owner->id,
+            'name' => 'Company '.$owner->id,
             'gst_slab' => config('payments.gst_slabs')[0],
             'user_id' => $owner->id,
             'is_blocked' => false,
@@ -79,6 +79,32 @@ class CompanyEnterExitTest extends TestCase
         $response = $this->actingAs($super)->get(route('company.enter', $company));
 
         $response->assertForbidden();
+        $this->assertNull(session('super_admin_company_id'));
+    }
+
+    public function test_super_admin_cannot_enter_blocked_company(): void
+    {
+        $super = $this->makeSuperAdmin();
+        $company = $this->createCompanyFor($super, ['is_blocked' => true]);
+
+        $response = $this->actingAs($super)->get(route('company.enter', $company));
+
+        $response->assertRedirect();
+        $response->assertSessionHas('error');
+        $this->assertNull(session('super_admin_company_id'));
+    }
+
+    public function test_super_admin_in_blocked_company_session_is_redirected_from_company_resources(): void
+    {
+        $super = $this->makeSuperAdmin();
+        $company = $this->createCompanyFor($super, ['is_blocked' => true]);
+
+        $response = $this->actingAs($super)
+            ->withSession(['super_admin_company_id' => $company->id])
+            ->get('/transporters');
+
+        $response->assertRedirect(route('dashboard'));
+        $response->assertSessionHas('error');
         $this->assertNull(session('super_admin_company_id'));
     }
 
