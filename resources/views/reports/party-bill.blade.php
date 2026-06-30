@@ -16,8 +16,8 @@
                 class="tb-report-customer-select2-form">
                 <div class="row mb-2">
                     <div class="col-md-3">
-                        <label class="form-label">Customer <span class="text-danger">*</span></label>
-                        <select name="customer_id" id="party_bill_customer_id" class="form-select" required>
+                        <label class="form-label">Customer <span class="text-muted">(optional)</span></label>
+                        <select name="customer_id" id="party_bill_customer_id" class="form-select">
                             <option value=""></option>
                             @if ($presetCustomer)
                                 <option value="{{ $presetCustomer->id }}" selected>{{ $presetCustomer->name }}</option>
@@ -69,7 +69,6 @@
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
                         <h3 class="card-title mb-0">Party Bill</h3>
-                        <small class="text-muted">Selected Invoice Template: {{ $selectedInvoiceTemplateLabel ?? 'A (Classic)' }}</small>
                     </div>
                     <div class="d-flex gap-2">
                         <a class="btn btn-warning"
@@ -96,15 +95,7 @@
         const partyBillInvoiceNumbersUrl = @json(route('api.invoice-numbers'));
 
         function validatePartyBillForm(event) {
-            const customerId = $('#party_bill_customer_id').val();
             const invoiceId = $('#party_bill_invoice_number').val();
-
-            if (!customerId) {
-                event.preventDefault();
-                alert('Please select a customer.');
-
-                return false;
-            }
 
             if (!invoiceId) {
                 event.preventDefault();
@@ -127,14 +118,12 @@
                 partyBillInvoiceListXhr.abort();
             }
 
-            if (!customerId) {
-                updateInvoiceDropdown([], { clearInvoiceSelection: true });
-
-                return;
-            }
+            const url = customerId
+                ? partyBillInvoiceNumbersUrl + '/' + encodeURIComponent(customerId)
+                : partyBillInvoiceNumbersUrl;
 
             partyBillInvoiceListXhr = $.ajax({
-                url: partyBillInvoiceNumbersUrl + '/' + encodeURIComponent(customerId),
+                url: url,
                 method: 'GET',
                 dataType: 'json',
                 headers: {
@@ -246,7 +235,7 @@
                 theme: 'bootstrap-5',
                 width: '100%',
                 allowClear: true,
-                placeholder: 'Search customer…',
+                placeholder: 'Filter by customer (optional)…',
                 minimumInputLength: 0,
                 containerCssClass: 'tb-select2-container-brand',
                 dropdownCssClass: 'tb-select2-dropdown-brand',
@@ -268,11 +257,9 @@
             });
 
             const serverCustomerId = @json($customerId ?? null);
-            if (serverCustomerId) {
-                filterInvoiceNumbers(String(serverCustomerId), { clearInvoiceSelection: false });
-            } else {
-                updateInvoiceDropdown([], { clearInvoiceSelection: true });
-            }
+            filterInvoiceNumbers(serverCustomerId ? String(serverCustomerId) : '', {
+                clearInvoiceSelection: false,
+            });
         });
     </script>
 @endpush

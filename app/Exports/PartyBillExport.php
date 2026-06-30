@@ -15,11 +15,11 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 
 class PartyBillExport implements FromView, ShouldAutoSize, WithEvents
 {
-  protected $id;
+  private Invoice $invoice;
 
-  public function __construct($id)
+  public function __construct(Invoice $invoice)
   {
-    $this->id = $id;
+    $this->invoice = $invoice;
   }
 
   /**
@@ -27,12 +27,8 @@ class PartyBillExport implements FromView, ShouldAutoSize, WithEvents
    */
   public function view(): View
   {
-    $invoice = Invoice::with([
-      'consignee.city',
-      'consignee.state',
-      'company.city',
-      'company.state',
-    ])->find($this->id);
+    $invoice = $this->invoice;
+    $invoice->load(['consignee.city', 'consignee.state', 'company.city', 'company.state']);
     $customDetails = collect();
     $lorryReceiptsById = collect();
     if ($invoice && $invoice->custom_invoice) {
