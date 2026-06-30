@@ -75,7 +75,7 @@
 
                             <div class="col-md-6">
                                 <label for="truck_number" class="form-label">Truck Number *</label>
-                                <input type="text" class="form-control" placeholder="Enter Truck Number" id="truck_number" name="truck_number" required value="{{ old('truck_number', $truck->truck_number) }}">
+                                <input type="text" class="form-control" placeholder="Enter Truck Number" id="truck_number" name="truck_number" required value="{{ old('truck_number', $truck->truck_number) }}" style="text-transform: uppercase;">
                                 @error('truck_number') <div class="text-danger">{{ $message }}</div> @enderror
                                 <div class="invalid-feedback">Please enter a truck number.</div>
                             </div>
@@ -146,6 +146,10 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('truck_number')?.addEventListener('input', function () {
+            this.value = this.value.toUpperCase();
+        });
+
         if (!window.jQuery || typeof window.jQuery.fn.select2 === 'undefined') {
             return;
         }

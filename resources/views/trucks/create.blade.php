@@ -78,7 +78,7 @@
                 <!--begin::Col-->
                 <div class="col-md-6">
                     <label for="truck_number" class="form-label">Truck Number *</label>
-                    <input type="text" class="form-control" placeholder="Enter Truck Number" id="truck_number" name="truck_number" required value="{{ old('truck_number') }}">
+                    <input type="text" class="form-control" placeholder="Enter Truck Number" id="truck_number" name="truck_number" required value="{{ old('truck_number') }}" style="text-transform: uppercase;">
                     @error('truck_number') <div class="text-danger">{{ $message }}</div> @enderror
                     <div class="invalid-feedback">Please enter a truck number.</div>
                 </div>
@@ -173,6 +173,10 @@
     <!--end::JavaScript-->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('truck_number')?.addEventListener('input', function () {
+                this.value = this.value.toUpperCase();
+            });
+
             document.getElementById('truckForm').addEventListener('submit', function(e) {
                 e.preventDefault(); // Stop Laravel submit
         

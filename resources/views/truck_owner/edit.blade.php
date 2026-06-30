@@ -305,7 +305,7 @@
                         </div>
                         <div class="col-md-6">
                             <label for="truck_number" class="form-label">Truck Number *</label>
-                            <input type="text" class="form-control" placeholder="e.g., MH12AB1234 or GJ01CD5678" id="truck_number" name="truck_number" required>
+                            <input type="text" class="form-control" placeholder="e.g., MH12AB1234 or GJ01CD5678" id="truck_number" name="truck_number" required style="text-transform: uppercase;">
                             <div class="invalid-feedback">Please enter a valid truck number (6-15 characters).</div>
                             <small class="form-text text-muted">Format: State code + digits + letters + digits (e.g., MH12AB1234)</small>
                         </div>
@@ -736,6 +736,10 @@
     // Truck Management JavaScript
     let isEditMode = false;
     let currentTruckId = null;
+
+    $('#truck_number').on('input', function () {
+        this.value = this.value.toUpperCase();
+    });
 
     function destroyTruckModalDriverSelect2() {
         const $el = $('#driver_id');
