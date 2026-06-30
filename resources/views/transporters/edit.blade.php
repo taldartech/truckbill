@@ -71,6 +71,7 @@
                     <div class="col-md-4">
                         <label class="form-label">PAN Number</label>
                         <div class="form-control-plaintext bg-white border rounded px-3 py-2">{{ $master->pan_number ?? '-' }}</div>
+                        <div class="mt-1">@include('shared.check-pan-status-link')</div>
                     </div>
                 </div>
                 <div class="row mb-3">

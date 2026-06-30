@@ -56,6 +56,7 @@
             <div class="card mb-4 p-3 bg-light" id="panLookupSection">
                 <h5 class="mb-3"><i class="fas fa-search me-2"></i> Enter PAN Number First</h5>
                 <p class="text-muted small mb-3">Enter the 10-digit PAN and click Check. The form will appear only after a successful PAN check.</p>
+                <div class="mb-2">@include('shared.check-pan-status-link')</div>
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label for="pan_lookup" class="form-label">PAN Number *</label>
@@ -155,6 +156,7 @@
                             <label class="form-check-label" for="pan_active_no">No</label>
                         </div>
                         @error('pan_active') <div class="text-danger">{{ $message }}</div> @enderror
+                        <div class="mt-1">@include('shared.check-pan-status-link')</div>
                     </div>
                 </div>
             </div>

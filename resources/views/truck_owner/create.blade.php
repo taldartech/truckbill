@@ -61,6 +61,7 @@
             <div class="card mb-4 p-3 bg-light" id="panLookupSection">
                 <h5 class="mb-3"><i class="fas fa-search me-2"></i> Enter PAN Number First</h5>
                 <p class="text-muted small mb-3">Enter the 10-digit PAN and click Check. The form will appear only after a successful PAN check.</p>
+                <div class="mb-2">@include('shared.check-pan-status-link')</div>
                 <div class="row mb-3">
                     <div class="col-md-6">
                         <label for="pan_lookup" class="form-label">PAN Number *</label>
@@ -144,13 +145,13 @@
                             <input type="text" class="form-control @error('gst_number') is-invalid @enderror" id="gst_number" name="gst_number" value="{{ old('gst_number') }}" placeholder="Enter GST Number">
                             @error('gst_number') <div class="text-danger">{{ $message }}</div> @enderror
                         </div>
+                    </div>
+                    <div class="row mb-3">
                         <div class="col-md-4">
                             <label for="pan_number" class="form-label">PAN Number *</label>
                             <input type="text" class="form-control" id="pan_number" name="pan_number" value="{{ old('pan_number') }}" placeholder="Enter PAN Number" maxlength="10" style="text-transform: uppercase;">
                             @error('pan_number') <div class="text-danger">{{ $message }}</div> @enderror
                         </div>
-                    </div>
-                    <div class="row mb-3">
                         <div class="col-md-4">
                             <label class="form-label">PAN is Active *</label><br>
                             <div class="form-check form-check-inline">
@@ -162,11 +163,7 @@
                                 <label class="form-check-label" for="pan_active_no">No</label>
                             </div>
                             @error('pan_active') <div class="text-danger">{{ $message }}</div> @enderror
-                        </div>
-                        <div class="col-md-4">
-                            <label for="address" class="form-label">Address</label>
-                            <textarea class="form-control" id="address" name="address" rows="2" placeholder="Enter address">{{ old('address') }}</textarea>
-                            @error('address') <div class="text-danger">{{ $message }}</div> @enderror
+                            <div class="mt-1">@include('shared.check-pan-status-link')</div>
                         </div>
                     </div>
                 </div>
