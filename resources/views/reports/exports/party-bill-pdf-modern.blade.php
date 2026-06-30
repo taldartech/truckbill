@@ -2,8 +2,7 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Party Bill (Modern) -
-        {{
+    <title>Party Bill - {{
             $invoice->invoice_number
                 ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '')
                 : ($invoice->manual_invoice_number ?? $invoice->id)
@@ -78,6 +77,43 @@
             word-wrap: break-word;
             overflow-wrap: break-word;
             vertical-align: top;
+        }
+        .lines-table {
+            page-break-inside: auto;
+            table-layout: fixed;
+        }
+        .lines-table th,
+        .lines-table td {
+            padding: 2px 2px;
+            font-size: 6.3pt !important;
+            line-height: 1.15;
+            vertical-align: middle;
+            word-wrap: normal;
+            overflow-wrap: normal;
+        }
+        .lines-table th {
+            font-size: 6.5pt !important;
+            font-weight: 700;
+            text-align: center;
+            white-space: normal;
+            line-height: 1.1;
+            padding: 3px 1px;
+        }
+        .lines-table .c-seq,
+        .lines-table .c-date,
+        .lines-table .c-nowrap {
+            white-space: nowrap;
+            text-align: center;
+        }
+        .lines-table .c-num,
+        .lines-table .c-money {
+            white-space: nowrap;
+            text-align: right;
+        }
+        .lines-table .c-text {
+            font-size: 6.8pt;
+            line-height: 1.1;
+            word-break: break-all;
         }
         th {
             background: #E9F7F0;
@@ -222,61 +258,68 @@
 
             <div class="chip-title">Transportation Bill</div>
             @if ($invoice->custom_invoice)
-                <table>
+                @php
+                    $customColWidths = ['4%', '10%', '9%', '14%', '10%', '8%', '7%', '7%', '7%', '12%'];
+                @endphp
+                <table class="lines-table">
                     <tr>
-                        <th width="6%">#</th>
-                        <th width="13%">GR No</th>
-                        <th width="14%">Truck</th>
-                        <th width="16%">Destination</th>
-                        <th width="13%">Invoice No</th>
-                        <th width="12%">Date</th>
-                        <th width="10%">Weight</th>
+                        <th width="{{ $customColWidths[0] }}" style="width:{{ $customColWidths[0] }}">#</th>
+                        <th width="{{ $customColWidths[1] }}" style="width:{{ $customColWidths[1] }}">GR No</th>
+                        <th width="{{ $customColWidths[2] }}" style="width:{{ $customColWidths[2] }}">Truck</th>
+                        <th width="{{ $customColWidths[3] }}" style="width:{{ $customColWidths[3] }}">Destination</th>
+                        <th width="{{ $customColWidths[4] }}" style="width:{{ $customColWidths[4] }}">Inv No</th>
+                        <th width="{{ $customColWidths[5] }}" style="width:{{ $customColWidths[5] }}">Date</th>
+                        <th width="{{ $customColWidths[6] }}" style="width:{{ $customColWidths[6] }}">Wt</th>
                         @if ($invoice->custom_invoice === 'rate_difference')
-                            <th width="8%">Portal</th>
-                            <th width="8%">Diff</th>
+                            <th width="{{ $customColWidths[7] }}" style="width:{{ $customColWidths[7] }}">Portal</th>
+                            <th width="{{ $customColWidths[8] }}" style="width:{{ $customColWidths[8] }}">Diff</th>
                         @else
-                            <th width="8%">Shortage</th>
-                            <th width="8%">Damage</th>
+                            <th width="{{ $customColWidths[7] }}" style="width:{{ $customColWidths[7] }}">Short</th>
+                            <th width="{{ $customColWidths[8] }}" style="width:{{ $customColWidths[8] }}">Dam</th>
                         @endif
-                        <th width="10%">Amount</th>
+                        <th width="{{ $customColWidths[9] }}" style="width:{{ $customColWidths[9] }}">Amount</th>
                     </tr>
                     @foreach ($customDetails as $index => $row)
                         @php $lr = $row->lorryReceipt; @endphp
                         <tr>
-                            <td>{{ $index + 1 }}</td>
-                            <td>{{ $lr ? $lr->lr_number : '-' }}</td>
-                            <td>{{ $lr && $lr->truck ? $lr->truck->truck_number : '-' }}</td>
-                            <td>{{ $lr ? ($lr->destination_city ?? '-') : '-' }}</td>
-                            <td>{{ $lr ? ($lr->invoice_number ?? '-') : '-' }}</td>
-                            <td>{{ $lr && $lr->gr_date ? \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') : '-' }}</td>
-                            <td>{{ $lr ? ($lr->weight ?? '-') : '-' }}</td>
+                            <td class="c-seq">{{ $index + 1 }}</td>
+                            <td class="c-nowrap">{{ $lr ? $lr->lr_number : '-' }}</td>
+                            <td class="c-nowrap">{{ $lr && $lr->truck ? $lr->truck->truck_number : '-' }}</td>
+                            <td class="c-text">{{ $lr ? ($lr->destination_city ?? '-') : '-' }}</td>
+                            <td class="c-nowrap">{{ $lr ? ($lr->invoice_number ?? '-') : '-' }}</td>
+                            <td class="c-date">{{ $lr && $lr->gr_date ? \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') : '-' }}</td>
+                            <td class="c-num">{{ $lr ? ($lr->weight ?? '-') : '-' }}</td>
                             @if ($invoice->custom_invoice === 'rate_difference')
-                                <td>{{ $row->portal_rate !== null ? number_format($row->portal_rate, 2) : '-' }}</td>
-                                <td>{{ $row->diff !== null ? number_format($row->diff, 2) : '-' }}</td>
+                                <td class="c-num">{{ $row->portal_rate !== null ? number_format($row->portal_rate, 2) : '-' }}</td>
+                                <td class="c-num">{{ $row->diff !== null ? number_format($row->diff, 2) : '-' }}</td>
                             @else
-                                <td>{{ $row->shortage_qty !== null ? $row->shortage_qty : '-' }}</td>
-                                <td>{{ $row->damage_qty !== null ? $row->damage_qty : '-' }}</td>
+                                <td class="c-num">{{ $row->shortage_qty !== null ? $row->shortage_qty : '-' }}</td>
+                                <td class="c-num">{{ $row->damage_qty !== null ? $row->damage_qty : '-' }}</td>
                             @endif
-                            <td>{{ number_format((float) ($row->amount ?? 0), 2) }}</td>
+                            <td class="c-money">{{ number_format((float) ($row->amount ?? 0), 2) }}</td>
                         </tr>
                     @endforeach
                 </table>
             @else
-                <table>
+                @php
+                    // DomPDF ignores <colgroup>; set widths here (must sum to 100%).
+                    $standardColWidths = ['3%', '9%', '8%', '14%', '11%', '7%', '7%', '7%', '6%', '6%', '7%', '7%', '8%'];
+                @endphp
+                <table class="lines-table">
                     <tr>
-                        <th width="6%">#</th>
-                        <th width="12%">GR No</th>
-                        <th width="12%">Truck No</th>
-                        <th width="12%">Destination</th>
-                        <th width="11%">Invoice No</th>
-                        <th width="10%">Date</th>
-                        <th width="9%">Load Wt.</th>
-                        <th width="9%">Unload Wt.</th>
-                        <th width="7%">Bags</th>
-                        <th width="8%">Fr Rate</th>
-                        <th width="7%">Shortage</th>
-                        <th width="7%">Damage</th>
-                        <th width="10%">Amount</th>
+                        <th width="{{ $standardColWidths[0] }}" style="width:{{ $standardColWidths[0] }}">#</th>
+                        <th width="{{ $standardColWidths[1] }}" style="width:{{ $standardColWidths[1] }}">GR No</th>
+                        <th width="{{ $standardColWidths[2] }}" style="width:{{ $standardColWidths[2] }}">Truck</th>
+                        <th width="{{ $standardColWidths[3] }}" style="width:{{ $standardColWidths[3] }}">Destination</th>
+                        <th width="{{ $standardColWidths[4] }}" style="width:{{ $standardColWidths[4] }}">Inv No</th>
+                        <th width="{{ $standardColWidths[5] }}" style="width:{{ $standardColWidths[5] }}">Date</th>
+                        <th width="{{ $standardColWidths[6] }}" style="width:{{ $standardColWidths[6] }}">Loading<br>Wt</th>
+                        <th width="{{ $standardColWidths[7] }}" style="width:{{ $standardColWidths[7] }}">Unloading<br>Wt</th>
+                        <th width="{{ $standardColWidths[8] }}" style="width:{{ $standardColWidths[8] }}">No. of<br>Units</th>
+                        <th width="{{ $standardColWidths[9] }}" style="width:{{ $standardColWidths[9] }}">Rate</th>
+                        <th width="{{ $standardColWidths[10] }}" style="width:{{ $standardColWidths[10] }}">Shortage</th>
+                        <th width="{{ $standardColWidths[11] }}" style="width:{{ $standardColWidths[11] }}">Damage</th>
+                        <th width="{{ $standardColWidths[12] }}" style="width:{{ $standardColWidths[12] }}">Amount</th>
                     </tr>
                     @foreach ($lrs as $index => $lr)
                         @php
@@ -285,19 +328,19 @@
                             $lineAmount = (float) (($lr->actual_amount ?? 0) - ($shortageAmount + $damageAmount));
                         @endphp
                         <tr>
-                            <td>{{ $index + 1 }}</td>
-                            <td>{{ $lr->lr_number }}</td>
-                            <td>{{ optional($lr->truck)->truck_number ?? '-' }}</td>
-                            <td>{{ $lr->destination_city }}</td>
-                            <td>{{ $lr->invoice_number }}</td>
-                            <td>{{ \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') }}</td>
-                            <td>{{ $lr->weight }}</td>
-                            <td>{{ number_format($lr->unloading_weight ?? $lr->weight, 3) }}</td>
-                            <td>{{ $lr->no_of_units }}</td>
-                            <td>{{ number_format((float) ($lr->fr_rate ?? 0), 2) }}</td>
-                            <td>{{ number_format($shortageAmount, 2) }}</td>
-                            <td>{{ number_format($damageAmount, 2) }}</td>
-                            <td>{{ number_format($lineAmount, 2) }}</td>
+                            <td class="c-seq">{{ $index + 1 }}</td>
+                            <td class="c-nowrap">{{ $lr->lr_number }}</td>
+                            <td class="c-nowrap">{{ optional($lr->truck)->truck_number ?? '-' }}</td>
+                            <td class="c-text">{{ $lr->destination_city }}</td>
+                            <td class="c-nowrap">{{ $lr->invoice_number }}</td>
+                            <td class="c-date">{{ \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') }}</td>
+                            <td class="c-num">{{ $lr->weight }}</td>
+                            <td class="c-num">{{ number_format($lr->unloading_weight ?? $lr->weight, 3) }}</td>
+                            <td class="c-num">{{ $lr->no_of_units }}</td>
+                            <td class="c-num">{{ number_format((float) ($lr->fr_rate ?? 0), 2) }}</td>
+                            <td class="c-num">{{ number_format($shortageAmount, 2) }}</td>
+                            <td class="c-num">{{ number_format($damageAmount, 2) }}</td>
+                            <td class="c-money">{{ number_format($lineAmount, 2) }}</td>
                         </tr>
                     @endforeach
                 </table>
