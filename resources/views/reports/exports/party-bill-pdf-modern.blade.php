@@ -338,7 +338,7 @@
                 </tr>
                 <tr>
                     <td class="footer-note"><strong>Amount in words:</strong> {{ ucfirst(getIndianCurrency($grandTotal)) }} Only</td>
-                    <td class="signature-box">FOR {{ $company->name }}<br><br>Authorized Signature</td>
+                    <td class="signature-box">FOR {{ $company->name }}<br><br><br><br>Authorized Signature</td>
                 </tr>
             </table>
         </div>
