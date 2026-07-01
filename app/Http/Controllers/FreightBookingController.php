@@ -254,15 +254,23 @@ class FreightBookingController extends Controller
                     ->unique()
                     ->toArray();
 
-                $query->where(function ($q) use ($searchResultIds, $linkedIds) {
-                    if (! empty($searchResultIds)) {
-                        $q->whereIn('freight_bookings.id', $searchResultIds);
-                    }
+                if (empty($searchResultIds) && empty($linkedIds)) {
+                    $query->whereRaw('0 = 1');
+                } else {
+                    $query->where(function ($q) use ($searchResultIds, $linkedIds) {
+                        if (! empty($searchResultIds)) {
+                            $q->whereIn('freight_bookings.id', $searchResultIds);
+                        }
 
-                    if (! empty($linkedIds)) {
-                        $q->orWhereIn('freight_bookings.linked_lr_id', $linkedIds);
-                    }
-                });
+                        if (! empty($linkedIds)) {
+                            if (! empty($searchResultIds)) {
+                                $q->orWhereIn('freight_bookings.linked_lr_id', $linkedIds);
+                            } else {
+                                $q->whereIn('freight_bookings.linked_lr_id', $linkedIds);
+                            }
+                        }
+                    });
+                }
             }
 
             $dataTable = DataTables::of($query)

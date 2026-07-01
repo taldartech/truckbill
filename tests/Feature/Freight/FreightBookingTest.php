@@ -237,6 +237,27 @@ class FreightBookingTest extends TestCase
         $this->assertSame(1, (int) ($json['recordsFiltered'] ?? 0));
     }
 
+    public function test_datatable_list_search_with_no_matches_returns_empty_results(): void
+    {
+        $admin = $this->makeUser('admin');
+        $lr = $this->makeLorryReceipt($admin);
+        FreightBooking::create($this->bookingPayload($admin, $lr));
+
+        $payload = $this->freightBookingsDataTableRequestPayload([
+            'filter_search' => 'ZZZ-NO-MATCH-TERM',
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->get('/freight_bookings/data', $payload);
+
+        $response->assertOk();
+        $json = $response->json();
+        $this->assertArrayNotHasKey('error', $json);
+        $this->assertSame(0, (int) ($json['recordsFiltered'] ?? -1));
+        $this->assertSame(0, count($json['data'] ?? []));
+    }
+
     public function test_super_admin_redirected_without_company_and_guest_redirected(): void
     {
         $super = $this->makeUser('super_admin');
