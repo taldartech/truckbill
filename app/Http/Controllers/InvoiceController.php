@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Yajra\DataTables\Facades\DataTables;
 
 class InvoiceController extends Controller
@@ -273,21 +274,47 @@ class InvoiceController extends Controller
         return view('invoices.create', compact('company', 'invoiceCustomerSelectPrefill'));
     }
 
-    public function getCustomerMemos($customerId)
+    public function getCustomerMemos(Request $request, $customerId)
     {
+        $companyId = Auth::user()->company_id;
+        $currentMemoIds = [];
+
+        if ($request->filled('invoice_id')) {
+            $invoice = Invoice::query()
+                ->where('company_id', $companyId)
+                ->where('customer_id', $customerId)
+                ->find($request->input('invoice_id'));
+
+            if ($invoice) {
+                $currentMemoIds = $this->invoiceMemoIds($invoice);
+            }
+        }
+
+        $oldMemoIds = $request->old('memo_ids', []);
+
         $memos = DB::table('lorry_receipts')
             ->select('memo_id')
-            ->where('company_id', Auth::user()->company_id)
+            ->where('company_id', $companyId)
             ->where('customer_id', $customerId)
-            ->where('invoice_generated', 0) // Only those not yet invoiced
             ->whereNotNull('memo_id')
+            ->where(function ($query) use ($currentMemoIds) {
+                $query->where('invoice_generated', 0);
+
+                if (! empty($currentMemoIds)) {
+                    $query->orWhereIn('memo_id', $currentMemoIds);
+                }
+            })
             ->distinct()
+            ->orderBy('memo_id')
             ->get()
-            ->map(function ($memo) {
+            ->map(function ($memo) use ($currentMemoIds, $oldMemoIds) {
+                $memoId = $memo->memo_id;
+
                 return [
-                    'id' => $memo->memo_id,
-                    'memo_number' => 'Memo #'.$memo->memo_id,
-                    'selected' => request()->old('memo_ids') && in_array($memo->memo_id, request()->old('memo_ids')),
+                    'id' => $memoId,
+                    'memo_number' => 'Memo #'.$memoId,
+                    'selected' => (! empty($oldMemoIds) && in_array($memoId, $oldMemoIds, false))
+                        || (empty($oldMemoIds) && in_array($memoId, $currentMemoIds, false)),
                 ];
             });
 
@@ -366,6 +393,7 @@ class InvoiceController extends Controller
                     $lr->save();
                 }
                 $data['lr_ids'] = $lorryReceipts->pluck('id')->toArray();
+                $data['memo_ids'] = array_values(array_unique($memoIds));
             }
 
             $createdInvoice = Invoice::create($data);
@@ -475,28 +503,10 @@ class InvoiceController extends Controller
             return redirect()->route('invoices.index')
                 ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
-        // Get all memos for this customer
-        $lrIds = $invoice->lr_ids ?? [];
-        $memos = DB::table('lorry_receipts')
-            ->select('memo_id')
-            ->whereIn('id', $lrIds)
-            ->whereNotNull('memo_id')
-            ->distinct()
-            ->get()
-            ->map(function ($memo) {
-                // Only show memos that have an invoice_id (indicating they're used)
-                $hasInvoice = DB::table('lorry_receipts')
-                    ->where('memo_id', $memo->memo_id)
-                    ->exists();
+        $invoice->loadMissing(['consignee.state', 'company.state']);
+        $selectedMemoIds = $this->invoiceMemoIds($invoice);
 
-                return (object) [
-                    'memo_id' => $memo->memo_id,
-                    'memo_number' => 'Memo #'.$memo->memo_id,
-                    'selected' => $hasInvoice,
-                ];
-            });
-
-        return view('invoices.edit', compact('invoice', 'memos'));
+        return view('invoices.edit', compact('invoice', 'selectedMemoIds'));
     }
 
     public function update(Request $request, Invoice $invoice)
@@ -514,18 +524,52 @@ class InvoiceController extends Controller
         if ($invoice->payment_status === 'paid' || $invoice->payment_status === 'partial') {
             return redirect()->back()->with('error', 'Cannot edit a paid or partial invoice.');
         }
-        $data = $request->validate([
+        $rules = [
             'manual_invoice_number' => [
-                'required',
+                'nullable',
                 'string',
                 Rule::unique('invoices')->where(
                     fn ($query) => $query->where('company_id', Auth::user()->company_id)
                 )->ignore($invoice->id),
             ],
             'generated_date' => 'required|date',
-        ]);
+        ];
 
-        $invoice->update($data);
+        if (! $invoice->custom_invoice) {
+            $rules['memo_ids'] = 'required|array|min:1';
+            $rules['memo_ids.*'] = 'exists:lorry_receipts,memo_id';
+        }
+
+        $data = $request->validate($rules);
+        $companyId = (int) Auth::user()->company_id;
+
+        DB::transaction(function () use ($invoice, $data, $request, $company, $companyId): void {
+            $invoice->manual_invoice_number = filled($data['manual_invoice_number'] ?? null)
+                ? trim((string) $data['manual_invoice_number'])
+                : null;
+            $invoice->generated_date = $data['generated_date'];
+
+            if (! $invoice->custom_invoice) {
+                $memoIds = $request->input('memo_ids', []);
+                $this->syncInvoiceMemos($invoice, $memoIds, $companyId);
+
+                $lrs = LorryReceipt::query()
+                    ->whereIn('id', $invoice->lr_ids ?? [])
+                    ->where('company_id', $companyId)
+                    ->get();
+
+                $amounts = $this->calculateInvoiceAmounts(
+                    round((float) $lrs->sum('amount'), 2),
+                    (string) $invoice->invoice_type,
+                    $company->loadMissing('state'),
+                    $invoice->consignee()->with('state')->first()
+                );
+
+                $invoice->fill($amounts);
+            }
+
+            $invoice->save();
+        });
 
         return redirect()->route('invoices.index')->with('success', 'Invoice updated successfully.');
     }
@@ -580,14 +624,32 @@ class InvoiceController extends Controller
         return (int) $lastInvoiceId === (int) $invoice->id;
     }
 
-    public function getLrs($memoIds)
+    public function getLrs(Request $request, $memoIds)
     {
         $memoIds = explode(',', $memoIds);
+        $currentLrIds = [];
+
+        if ($request->filled('invoice_id') && Auth::user()->company_id) {
+            $invoice = Invoice::query()
+                ->where('company_id', Auth::user()->company_id)
+                ->find($request->input('invoice_id'));
+
+            if ($invoice) {
+                $currentLrIds = $invoice->lr_ids ?? [];
+            }
+        }
+
         $lrs = LorryReceipt::whereIn('memo_id', $memoIds)
             ->when(Auth::user()->company_id, fn ($q) => $q->where('company_id', Auth::user()->company_id))
             ->with(['transporter.transporterMaster', 'consignor', 'consignee', 'truck'])
-            ->select('lr_number', 'memo_id', 'source_city', 'destination_city', 'transporter_id', 'consignor_id', 'consignee_id', 'gr_date', 'amount', 'truck_id', 'weight')
-            ->where('invoice_generated', 0)
+            ->select('id', 'lr_number', 'memo_id', 'source_city', 'destination_city', 'transporter_id', 'consignor_id', 'consignee_id', 'gr_date', 'amount', 'truck_id', 'weight')
+            ->where(function ($query) use ($currentLrIds) {
+                $query->where('invoice_generated', 0);
+
+                if (! empty($currentLrIds)) {
+                    $query->orWhereIn('id', $currentLrIds);
+                }
+            })
             ->get()
             ->groupBy('memo_id');
 
@@ -749,6 +811,136 @@ class InvoiceController extends Controller
             'total_amount' => $invoice->total_amount,
             'net_amount' => $invoice->net_amount,
         ]);
+    }
+
+    /**
+     * @return list<int|string>
+     */
+    private function invoiceMemoIds(Invoice $invoice): array
+    {
+        $memoIds = $invoice->memo_ids ?? [];
+        if (! empty($memoIds)) {
+            return array_values($memoIds);
+        }
+
+        $lrIds = $invoice->lr_ids ?? [];
+        if (empty($lrIds)) {
+            return [];
+        }
+
+        return LorryReceipt::query()
+            ->whereIn('id', $lrIds)
+            ->where('company_id', $invoice->company_id)
+            ->whereNotNull('memo_id')
+            ->distinct()
+            ->orderBy('memo_id')
+            ->pluck('memo_id')
+            ->values()
+            ->all();
+    }
+
+    /**
+     * @param  list<int|string>  $memoIds
+     */
+    private function syncInvoiceMemos(Invoice $invoice, array $memoIds, int $companyId): void
+    {
+        $memoIds = array_values(array_unique($memoIds));
+        $oldLrIds = array_map('intval', $invoice->lr_ids ?? []);
+
+        $newLorryReceipts = LorryReceipt::query()
+            ->whereIn('memo_id', $memoIds)
+            ->where('company_id', $companyId)
+            ->where('customer_id', $invoice->customer_id)
+            ->lockForUpdate()
+            ->get();
+
+        $foundMemoIds = $newLorryReceipts->pluck('memo_id')->unique()->values()->all();
+        if (count($foundMemoIds) !== count($memoIds)) {
+            throw ValidationException::withMessages([
+                'memo_ids' => ['One or more selected memos are invalid for this customer.'],
+            ]);
+        }
+
+        $newLrIds = $newLorryReceipts->pluck('id')->map(fn ($id) => (int) $id)->values()->all();
+
+        foreach ($newLorryReceipts as $lr) {
+            if ($lr->invoice_generated && ! in_array((int) $lr->id, $oldLrIds, true)) {
+                throw ValidationException::withMessages([
+                    'memo_ids' => ["Memo #{$lr->memo_id} is already invoiced on another bill."],
+                ]);
+            }
+        }
+
+        $removedLrIds = array_diff($oldLrIds, $newLrIds);
+        if (! empty($removedLrIds)) {
+            foreach (LorryReceipt::query()->whereIn('id', $removedLrIds)->get() as $lr) {
+                $lr->invoice_generated = 0;
+                $lr->save();
+            }
+        }
+
+        foreach ($newLorryReceipts as $lr) {
+            if (! $lr->invoice_generated) {
+                $lr->invoice_generated = 1;
+                $lr->save();
+            }
+        }
+
+        $invoice->memo_ids = $memoIds;
+        $invoice->lr_ids = $newLrIds;
+    }
+
+    /**
+     * @return array{base_amount: float, sgst: float, cgst: float, igst: float, net_amount: float, total_amount: float}
+     */
+    private function calculateInvoiceAmounts(
+        float $baseAmount,
+        string $invoiceType,
+        Company $company,
+        ?Consignee $customer
+    ): array {
+        $gstRate = ((int) ($company->gst_slab ?? 5)) / 100;
+        $companyState = $company->state ? strtolower($company->state->name) : '';
+        $customerState = $customer && $customer->state ? strtolower($customer->state->name) : '';
+
+        $sgst = 0.0;
+        $cgst = 0.0;
+        $igst = 0.0;
+        $netAmount = $baseAmount;
+
+        if ($companyState === $customerState && $companyState !== '') {
+            if ($invoiceType === 'Forward') {
+                $sgst = $baseAmount * ($gstRate / 2);
+                $cgst = $baseAmount * ($gstRate / 2);
+                $netAmount = $baseAmount + $sgst + $cgst;
+            } else {
+                $sgst = $baseAmount * ($gstRate / 2);
+                $cgst = $baseAmount * ($gstRate / 2);
+                $netAmount = $baseAmount;
+            }
+        } else {
+            if ($invoiceType === 'Forward') {
+                $igst = $baseAmount * $gstRate;
+                $netAmount = $baseAmount + $igst;
+            } else {
+                $igst = $baseAmount * $gstRate;
+                $netAmount = $baseAmount;
+            }
+        }
+
+        $amounts = [
+            'base_amount' => round($baseAmount, 2),
+            'sgst' => round($sgst, 2),
+            'cgst' => round($cgst, 2),
+            'igst' => round($igst, 2),
+            'net_amount' => round($netAmount, 2),
+        ];
+
+        $amounts['total_amount'] = $invoiceType === 'Forward'
+            ? $amounts['net_amount']
+            : round($baseAmount + $sgst + $cgst + $igst, 2);
+
+        return $amounts;
     }
 
     /**

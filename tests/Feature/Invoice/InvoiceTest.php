@@ -371,6 +371,101 @@ class InvoiceTest extends TestCase
         $this->actingAs($admin)->get("/invoices/{$invoice->id}/edit")->assertOk();
     }
 
+    public function test_admin_can_update_invoice_memo_selection(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        [$lr1, $lr2] = $this->seedLrs($admin, $customer);
+
+        $lr3 = LorryReceipt::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'consignor_id' => $customer->id,
+            'consignee_id' => $customer->id,
+            'lr_number' => 'LR-INV-3',
+            'memo_id' => 1003,
+            'invoice_generated' => 0,
+            'delivery_status' => 'Pending',
+            'source_city' => 'A',
+            'source_state' => 'B',
+            'destination_city' => 'C',
+            'destination_state' => 'D',
+            'lane' => 'Lane 3',
+            'good_type' => 'Steel',
+            'weight' => 1,
+            'fr_rate' => 150,
+            'amount' => 150,
+            'gr_date' => now()->toDateString(),
+        ]);
+
+        $invoice = Invoice::create([
+            'manual_invoice_number' => 'INV-MEMO-EDIT',
+            'invoice_type' => 'Reverse',
+            'generated_date' => now()->toDateString(),
+            'customer_id' => $customer->id,
+            'total_amount' => 200,
+            'base_amount' => 200,
+            'net_amount' => 200,
+            'payment_status' => 'pending',
+            'company_id' => $admin->company_id,
+            'memo_ids' => [$lr1->memo_id, $lr2->memo_id],
+            'lr_ids' => [$lr1->id, $lr2->id],
+        ]);
+
+        $lr1->invoice_generated = 1;
+        $lr1->save();
+        $lr2->invoice_generated = 1;
+        $lr2->save();
+
+        $response = $this->actingAs($admin)->put("/invoices/{$invoice->id}", [
+            'manual_invoice_number' => 'INV-MEMO-EDIT',
+            'generated_date' => now()->toDateString(),
+            'memo_ids' => [$lr2->memo_id, $lr3->memo_id],
+        ]);
+
+        $response->assertRedirect(route('invoices.index'));
+        $invoice->refresh();
+        $this->assertSame([$lr2->memo_id, $lr3->memo_id], $invoice->memo_ids);
+        $this->assertEqualsCanonicalizing([$lr2->id, $lr3->id], $invoice->lr_ids);
+        $this->assertDatabaseHas('lorry_receipts', ['id' => $lr1->id, 'invoice_generated' => 0]);
+        $this->assertDatabaseHas('lorry_receipts', ['id' => $lr2->id, 'invoice_generated' => 1]);
+        $this->assertDatabaseHas('lorry_receipts', ['id' => $lr3->id, 'invoice_generated' => 1]);
+        $this->assertSame(250.0, (float) $invoice->base_amount);
+    }
+
+    public function test_admin_can_clear_manual_invoice_number_on_update(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        [$lr1] = $this->seedLrs($admin, $customer);
+
+        $invoice = Invoice::create([
+            'manual_invoice_number' => 'INV-CLEAR-REF',
+            'invoice_type' => 'Reverse',
+            'generated_date' => now()->toDateString(),
+            'customer_id' => $customer->id,
+            'total_amount' => 100,
+            'base_amount' => 100,
+            'net_amount' => 100,
+            'payment_status' => 'pending',
+            'company_id' => $admin->company_id,
+            'memo_ids' => [$lr1->memo_id],
+            'lr_ids' => [$lr1->id],
+        ]);
+
+        $lr1->invoice_generated = 1;
+        $lr1->save();
+
+        $response = $this->actingAs($admin)->put("/invoices/{$invoice->id}", [
+            'manual_invoice_number' => '',
+            'generated_date' => now()->toDateString(),
+            'memo_ids' => [$lr1->memo_id],
+        ]);
+
+        $response->assertRedirect(route('invoices.index'));
+        $this->assertNull($invoice->fresh()->manual_invoice_number);
+    }
+
     public function test_moderator_cannot_edit_or_destroy_invoice(): void
     {
         $admin = $this->makeUser('admin');
