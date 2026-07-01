@@ -63,21 +63,6 @@
                 </div>
             </div>
             <style>
-                .table-sticky {
-                    width: 100%;
-                    max-height: 400px;
-                    overflow-y: auto;
-                    overflow-x: auto;
-                    display: block;
-                    padding-top: 0px;
-                }
-
-                .table-sticky table {
-                    border-collapse: collapse;
-                    width: max-content;
-                    min-width: 100%;
-                }
-
                 .select2-dropdown {
                     border: 1px solid var(--brand-border);
                     border-radius: 0.375rem;
@@ -86,14 +71,6 @@
                 .select2-results__option--highlighted {
                     background-color: var(--brand-primary);
                     color: white;
-                }
-
-                .table-sticky thead th {
-                    position: sticky;
-                    top: 0;
-                    background: #fff;
-                    z-index: 2;
-                    border-bottom: 1px solid #ddd;
                 }
             </style>
             <div class="card-body table-sticky">

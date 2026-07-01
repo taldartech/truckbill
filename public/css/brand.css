@@ -521,3 +521,30 @@ a.btn-outline-primary:hover {
 .rounded-16 {
     border-radius: 16px !important;
 }
+
+.table-sticky {
+    width: 100%;
+    /* Set your desired width */
+    max-height: 400px;
+    /* Adjust as needed */
+    overflow-y: auto;
+    /* Enables vertical scroll */
+    overflow-x: auto;
+    /* Enables horizontal scroll */
+    display: block;
+    padding-top: 0px;
+}
+
+.table-sticky table {
+    border-collapse: collapse;
+    width: max-content;
+    /* Adjust if you want wider tables */
+    min-width: 100%;
+}
+
+.table-sticky thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    border-bottom: 1px solid var(--brand-border);
+}

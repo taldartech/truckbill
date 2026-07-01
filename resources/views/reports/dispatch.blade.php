@@ -75,26 +75,6 @@
                 </div>
             </div>
             <style>
-                .table-sticky {
-                    width: 100%;
-                    /* Set your desired width */
-                    max-height: 400px;
-                    /* Adjust as needed */
-                    overflow-y: auto;
-                    /* Enables vertical scroll */
-                    overflow-x: auto;
-                    /* Enables horizontal scroll */
-                    display: block;
-                    padding-top: 0px;
-                }
-
-                .table-sticky table {
-                    border-collapse: collapse;
-                    width: max-content;
-                    /* Adjust if you want wider tables */
-                    min-width: 100%;
-                }
-
                 .select2-dropdown {
                     border: 1px solid var(--brand-border);
                     border-radius: 0.375rem;
@@ -103,13 +83,6 @@
                 .select2-results__option--highlighted {
                     background-color: var(--brand-primary);
                     color: white;
-                }
-
-                .table-sticky thead th {
-                    position: sticky;
-                    top: 0;
-                    z-index: 2;
-                    border-bottom: 1px solid var(--brand-border);
                 }
             </style>
             <div class="card-body table-sticky">

@@ -1091,6 +1091,13 @@
                                         </a>
                                     </li>
                                     <li class="nav-item">
+                                        <a href="{{ route('reports.party-pending-invoice') }}"
+                                            class="nav-link{{ Request::is('reports/party-pending-invoice') ? ' active' : '' }}">
+                                            <i class="fas fa-file-alt"></i>
+                                            <p>Party Pending Invoice</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
                                         <a href="{{ route('reports.pending-memo') }} "
                                             class="nav-link{{ Request::is('reports/pending-memo') ? ' active' : '' }}">
                                             <i class="fas fa-file-alt"></i>
