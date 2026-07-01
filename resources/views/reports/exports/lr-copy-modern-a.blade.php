@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>LR Copy (Modern A)</title>
+    <title>LR Copy</title>
     <style>
         @page { margin: 6px 8px; }
         * { box-sizing: border-box; }
@@ -84,16 +84,10 @@
     @endif
     <div class="lr-theme-a">
         <div class="lr-bilty-wrap lr-sheet lr-sheet--a">
-            <div class="lr-sheet__ribbon">FORM A · GOOD RECEIPT (BILTY) · LR COPY</div>
-            <div class="lr-sheet__inner">
-                @include('reports.exports.partials.lr-copy-bilty-block', ['lr' => $lr, 'company' => $company, 'copyLabel' => 'CONSIGNOR COPY'])
-            </div>
+            @include('reports.exports.partials.lr-copy-bilty-block', ['lr' => $lr, 'company' => $company, 'copyLabel' => 'CONSIGNOR COPY'])
         </div>
         <div class="lr-bilty-wrap lr-sheet lr-sheet--a" style="margin-top: 35px!important;">
-            <div class="lr-sheet__ribbon">FORM A · GOOD RECEIPT (BILTY) · LR COPY</div>
-            <div class="lr-sheet__inner">
-                @include('reports.exports.partials.lr-copy-bilty-block', ['lr' => $lr, 'company' => $company, 'copyLabel' => 'DRIVER COPY'])
-            </div>
+            @include('reports.exports.partials.lr-copy-bilty-block', ['lr' => $lr, 'company' => $company, 'copyLabel' => 'DRIVER COPY'])
         </div>
     </div>
 @endforeach

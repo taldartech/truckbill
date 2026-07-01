@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>LR Copy (Modern C)</title>
+    <title>LR Copy</title>
     <style>
         @page { margin: 5px 6px; }
         * { box-sizing: border-box; }
@@ -103,7 +103,7 @@
             vertical-align: top;
         }
         .lr-cut-line {
-            margin: 3px 0 4px;
+            margin: 15px 0;
             padding: 5px 8px;
             text-align: center;
             font-size: 7px;
@@ -111,9 +111,9 @@
             letter-spacing: 0.6px;
             text-transform: uppercase;
             color: #92400e;
-            border-top: 1px dashed #d97706;
-            border-bottom: 1px dashed #d97706;
-            background: #fef3c7;
+
+            /* line through the text with dashed line */
+            text-decoration: line-through dashed #92400e;
         }
         .page-break {
             page-break-after: always;
@@ -140,19 +140,13 @@
     @endif
     <div class="lr-theme-c lr-bilty-page-pair">
         <div class="lr-bilty-wrap lr-sheet lr-sheet--c">
-            @include('reports.exports.partials.lr-copy-pdf-header-strip', ['company' => $company, 'logoSrc' => $lrCopyLogoSrc, 'theme' => 'c'])
-            <div class="lr-sheet__ribbon">FORM C · COMPACT BILTY · LR COPY</div>
-            <div class="lr-sheet__inner">
-                @include('reports.exports.partials.lr-copy-bilty-block', ['lr' => $lr, 'company' => $company, 'copyLabel' => 'CONSIGNOR COPY'])
-            </div>
+            {{-- @include('reports.exports.partials.lr-copy-pdf-header-strip', ['company' => $company, 'logoSrc' => $lrCopyLogoSrc, 'theme' => 'c']) --}}
+            @include('reports.exports.partials.lr-copy-bilty-block', ['lr' => $lr, 'company' => $company, 'copyLabel' => 'CONSIGNOR COPY'])
         </div>
         <div class="lr-cut-line">Cut here — separate copies</div>
         <div class="lr-bilty-wrap lr-sheet lr-sheet--c">
-            @include('reports.exports.partials.lr-copy-pdf-header-strip', ['company' => $company, 'logoSrc' => $lrCopyLogoSrc, 'theme' => 'c'])
-            <div class="lr-sheet__ribbon">FORM C · COMPACT BILTY · LR COPY</div>
-            <div class="lr-sheet__inner">
-                @include('reports.exports.partials.lr-copy-bilty-block', ['lr' => $lr, 'company' => $company, 'copyLabel' => 'DRIVER COPY'])
-            </div>
+            {{-- @include('reports.exports.partials.lr-copy-pdf-header-strip', ['company' => $company, 'logoSrc' => $lrCopyLogoSrc, 'theme' => 'c']) --}}
+            @include('reports.exports.partials.lr-copy-bilty-block', ['lr' => $lr, 'company' => $company, 'copyLabel' => 'DRIVER COPY'])
         </div>
     </div>
 @endforeach

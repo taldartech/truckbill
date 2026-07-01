@@ -1,28 +1,15 @@
-{{--
-    One full Good Receipt (Bilty) block — same fields as resources/views/reports/exports/lr_copy.blade.php
-    @var \App\Models\LorryReceipt $lr
-    @var \App\Models\Company $company
-    @var string $copyLabel  e.g. CONSIGNOR COPY | DRIVER COPY
---}}
 @php
     $companyLine = ($company->address ?? '') . ', ' . optional($company->country)->name . ', ' . optional($company->state)->name . ', ' . optional($company->city)->name . ' - ' . ($company->pin_code ?? '') . ', Ph. ' . ($company->contact_number ?? '');
 @endphp
+<div class="lr-sheet__ribbon">Lorry Receipt / Good Receipt / Bilty Copy - <span class="fw-bold">{{ $lr->lr_number }}</span></div>
+<div class="lr-sheet__inner">
 <table class="lr-bilty-table" style="width:100%; border-collapse:collapse;">
-    <tr>
-        <td colspan="3" class="fs-6">AT OWNERS RISK</td>
-        <td colspan="5"></td>
-        <td colspan="4" class="text-center fw-bold">F-04(Q10-01)</td>
-    </tr>
     <tr>
         <td colspan="12" class="text-center fw-bold">
             <p class="fs-5">{{ $company->name }}</p>
             <p class="">{{ $companyLine }}</p>
             <p class="">GST No: {{ $company->gst_number }}, PAN No: {{ $company->pan_number }}</p>
         </td>
-    </tr>
-    <tr>
-        <td colspan="6" class="text-center fw-bold">GOOD RECEIPT (BILTY) FORM</td>
-        <td colspan="6" class="text-center fw-bold">L.R. No.: <span class="values">{{ $lr->lr_number }}</span></td>
     </tr>
     <tr>
         <td colspan="3" class="text-center fw-bold">CAUTION</td>
@@ -47,21 +34,32 @@
         </td>
     </tr>
     <tr>
-        <td colspan="3" class="fw-bold">Trk.Ownr PAN: <span class="values">{{ optional(optional($lr->truck)->transporter)->pan_number ?? '-' }}</span></td>
-        <td colspan="3" class="fw-bold">Lr Dt: <span class="values">{{ \Carbon\Carbon::parse($lr->gr_date)->format('d.m.Y') }}</span></td>
-        <td colspan="2" class="fw-bold">Truck No: <span class="values">{{ $lr->truck->truck_number }}</span></td>
-        <td colspan="2" class="fw-bold">Shipment No: <span class="values">{{ $lr->invoice_number ?? '' }}</span></td>
-        <td colspan="2" class="fw-bold">ShptDt: <span class="values">{{ \Carbon\Carbon::parse($lr->gr_date)->format('d.m.Y') }}</span></td>
+        <td colspan="3">
+            <p class="fw-bold">LR No.:</p>
+            <p class="values fw-bold">{{ $lr->lr_number }}</p>
+        </td>
+        <td colspan="3">
+            <p class="fw-bold">Truck Owner PAN:</p>
+            <p class="values">{{ optional(optional($lr->truck)->transporter)->pan_number ?? '-' }}</p>
+        </td>
+        <td colspan="2">
+            <p class="fw-bold">LR Date: </p>
+            <p class="values">{{ \Carbon\Carbon::parse($lr->gr_date)->format('d.m.Y') }}</p>
+        </td>
+        <td colspan="2">
+            <p class="fw-bold">Truck Number: </p>
+            <p class="values fw-bold">{{ $lr->truck->truck_number }}</p>
+        </td>
+        <td colspan="2">
+            <p class="fw-bold">Invoice No: </p>
+            <p class="values">{{ $lr->invoice_number ?? '' }}</p>
+        </td>
     </tr>
     <tr>
         <td colspan="8">
             <p>
                 <span class="fw-bold">Consignor's Name:</span>
                 <span class="values">{{ $lr->consignor->name }}</span>
-            </p>
-            <p>
-                <span class="fw-bold">TIN:</span>
-                <span class="values"></span>
                 <span class="fw-bold">GST NO:</span>
                 <span class="values">{{ $lr->consignor->gst_number }}</span>
             </p>
@@ -72,47 +70,60 @@
                 <span class="values">{{ $lr->consignee->gst_number }}</span>
             </p>
         </td>
-        <td colspan="4">
-            <p><span class="fw-bold">From:</span> <span class="values">{{ $lr->source_city . ', ' . $lr->source_state }}</span></p>
-            <p><span class="fw-bold">To:</span> <span class="values">{{ $lr->destination_city . ', ' . $lr->destination_state }}</span></p>
-            <p>Transhipment at if any:</p>
+        <td colspan="4" class="fw-bold">
+            <p>
+                <span class="fw-bold">From:</span>
+                <span class="values">{{ $lr->source_city . ', ' . $lr->source_state }}</span>
+            </p>
+            <p>
+                <span class="fw-bold">To:</span>
+                <span class="values">{{ $lr->destination_city . ', ' . $lr->destination_state }}</span>
+            </p>
+            <p>
+                <span class="fw-bold">Unloading Station:</span>
+                <span class="values">{{ $lr->unloading_station ?? '-' }}</span>
+            </p>
         </td>
     </tr>
-    <tr>
+    <tr class="text-center">
         <td colspan="7" class="text-center fw-bold">Description(said to contain)/ Product Description</td>
-        <td colspan="3" class="text-center fw-bold">No Of Bags</td>
+        <td colspan="3" class="text-center fw-bold">No Of Units</td>
         <td colspan="2" class="text-center fw-bold">Weight(MT)</td>
     </tr>
-    <tr>
+    <tr class="text-center">
         <td colspan="7" class="values">{{ $lr->good_type }}</td>
-        <td colspan="3" class="values text-end">{{ $lr->no_of_units }}</td>
-        <td colspan="2" class="values text-end">{{ $lr->weight }}</td>
+        <td colspan="3" class="values">{{ $lr->no_of_units }}</td>
+        <td colspan="2" class="values">{{ $lr->weight }}</td>
     </tr>
-    <tr>
+    <tr class="text-center">
         <td colspan="7" class="values">Total</td>
-        <td colspan="3" class="values text-end">{{ $lr->no_of_units }}</td>
-        <td colspan="2" class="values text-end">{{ $lr->weight }}</td>
+        <td colspan="3" class="values">{{ $lr->no_of_units }}</td>
+        <td colspan="2" class="values">{{ $lr->weight }}</td>
     </tr>
     <tr>
-        <td colspan="3" class="fw-bold">FREIGHT Amt:
+        <td colspan="9">
+            @php
+                $fr = $lr->freightBookings->last();
+                $ewayBillNumber = $fr ? $fr->eway_bill_number : null;
+                $ewayBillExpiry = $fr ? $fr->eway_bill_expiry : null;
+            @endphp
+            @if ($ewayBillNumber || $ewayBillExpiry)
+                <span class="fw-bold">Eway Bill:</span>
+                <span class="values">{{ $ewayBillNumber }} ({{ \Carbon\Carbon::parse($ewayBillExpiry)->format('d-m-Y') }})</span>
+            @endif
+        </td>
+        <td colspan="3">
+            <span class="fw-bold">TotalFreight:</span>
             <span class="values">
                 @if (request()->has('show_freight') && request()->get('show_freight') == 1)
                     {{ number_format($lr->amount, 2) }}
                 @endif
             </span>
         </td>
-        <td colspan="3" class="fw-bold">Del.Chrgs.: <span class="values"></span></td>
-        <td colspan="3" class="fw-bold">TotalFreight:
-            <span class="values">
-                @if (request()->has('show_freight') && request()->get('show_freight') == 1)
-                    {{ number_format($lr->amount, 2) }}
-                @endif
-            </span>
-        </td>
-        <td colspan="3" class="fw-bold">Freight/MT: <span class="values"></span></td>
     </tr>
     <tr>
         <td colspan="8">
+            <p>AT OWNERS RISK</p>
             <p>Declaration: We hereby declare that we have not availed input credit on capital goods and
                 forproviding services.</p>
             @if ($company->gst_scheme == 'reverse charge')
@@ -120,9 +131,10 @@
             @endif
             <p>{{ $copyLabel }}</p>
         </td>
-        <td colspan="4" style="vertical-align: bottom">For {{ $company->name }}</td>
+        <td colspan="4" style="vertical-align: bottom; text-align: right;">For {{ $company->name }}</td>
     </tr>
     <tr>
         <td colspan="12" class="fw-bold" style="font-size: 7px; text-align: right;">Digitally Managed by TruckBill (www.truckbill.in)</td>
     </tr>
 </table>
+</div>

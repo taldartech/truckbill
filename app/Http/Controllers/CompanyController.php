@@ -871,6 +871,7 @@ class CompanyController extends Controller
             'destination_state' => 'Rajasthan',
             'invoice_number' => 'INV-2024-001',
             'linked_lr_id' => null,
+            'unloading_station' => '1KM to Transport Nagar',
         ]);
         $lr->setRelation('truck', $truck);
         $lr->setRelation('consignor', $consignor);
