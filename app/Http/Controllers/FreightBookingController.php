@@ -123,8 +123,8 @@ class FreightBookingController extends Controller
                 ->get()
             : collect();
 
-        $endDate = $request->input('end_date', date('Y-m-d', strtotime('+7 days')));
-        $startDate = $request->input('start_date', date('Y-m-d', strtotime('-7 days')));
+        $endDate = $request->input('end_date', date('Y-m-d', strtotime('+0 days')));
+        $startDate = $request->input('start_date', date('Y-m-d', strtotime('-15 days')));
 
         if ($request->filled('start_date')) {
             $startDate = $request->start_date;

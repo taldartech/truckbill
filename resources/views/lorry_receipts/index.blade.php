@@ -665,17 +665,14 @@
 
                 function setDefaultDates() {
                     const today = new Date();
-                    const oneWeekAgo = new Date();
-                    const oneWeekAfter = new Date();
-                    oneWeekAgo.setDate(today.getDate() - 7);
-                    oneWeekAfter.setDate(today.getDate() + 7);
-
+                    const fromDate = new Date();
+                    fromDate.setDate(today.getDate() - 15);
                     if (!$('#fromDate').val()) {
-                        $('#fromDate').val(formatDate(oneWeekAgo));
+                        $('#fromDate').val(formatDate(fromDate));
                     }
 
                     if (!$('#toDate').val()) {
-                        $('#toDate').val(formatDate(oneWeekAfter));
+                        $('#toDate').val(formatDate(today));
                     }
                 }
 
