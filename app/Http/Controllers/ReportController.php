@@ -10,7 +10,6 @@ use App\Exports\EwayBillExport;
 use App\Exports\InvoiceExport;
 use App\Exports\MemoCopyExport;
 use App\Exports\PartyBillExport;
-use App\Exports\PartyLedgerExport;
 use App\Exports\PendingInvoiceExport;
 use App\Exports\PendingMemoExport;
 use App\Exports\PumpExport;
@@ -273,82 +272,6 @@ class ReportController extends Controller
         $balanceAsOnEndDate = $request->has('balance_as_on_end_date');
 
         $export = Excel::download(new DispatchExport($startDate, $endDate, $balanceAsOnEndDate), 'dispatch_report.xlsx');
-
-        return $export;
-    }
-
-    public function party_ledger(Request $request)
-    {
-        $companyId = Auth::user()->company_id;
-        [$startDate, $endDate, $hasRange] = $this->normalizeDateRange($request);
-
-        $customerId = $request->input('customer_id') ?? null;
-
-        $presetCustomer = null;
-        if ($customerId !== null && $customerId !== '' && $companyId) {
-            $presetCustomer = Consignee::query()
-                ->where('company_id', $companyId)
-                ->whereKey((int) $customerId)
-                ->first(['id', 'name']);
-        }
-
-        $invoiceByLrId = collect();
-
-        if ($customerId && $hasRange) {
-            $query = LorryReceipt::query()
-                ->with('truck')
-                ->whereBetween('gr_date', [$startDate, $endDate]);
-            $query->where('invoice_generated', 1);
-            if ($companyId) {
-                $query->where('company_id', $companyId);
-            }
-            $query->orderBy('gr_date', 'asc');
-            if ($customerId) {
-                $query->where('customer_id', $customerId);
-            }
-
-            $lrs = $query->paginate(self::REPORTS_PER_PAGE)->appends($request->query());
-
-            $currentPageLrIds = collect($lrs->items())->pluck('id')->all();
-            if (! empty($currentPageLrIds)) {
-                $invoices = Invoice::query()
-                    ->where('company_id', $companyId)
-                    ->where(function ($invoiceQuery) use ($currentPageLrIds) {
-                        foreach ($currentPageLrIds as $lrId) {
-                            $invoiceQuery->orWhereJsonContains('lr_ids', (int) $lrId);
-                        }
-                    })
-                    ->get([
-                        'id',
-                        'invoice_number',
-                        'manual_invoice_number',
-                        'generated_date',
-                        'payment_status',
-                        'invoice_type',
-                        'lr_ids',
-                    ]);
-
-                $invoiceByLrId = $invoices
-                    ->flatMap(function ($invoice) {
-                        return collect($invoice->lr_ids ?? [])->mapWithKeys(function ($lrId) use ($invoice) {
-                            return [(int) $lrId => $invoice];
-                        });
-                    });
-            }
-        } else {
-            $lrs = collect();
-        }
-
-        return view('reports.party-ledger', compact('lrs', 'startDate', 'endDate', 'customerId', 'invoiceByLrId', 'presetCustomer'));
-    }
-
-    public function party_ledger_export(Request $request)
-    {
-        $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
-        $customerId = $request->input('customer_id');
-
-        $export = Excel::download(new PartyLedgerExport($startDate, $endDate, $customerId), 'party_ledger_report.xlsx');
 
         return $export;
     }

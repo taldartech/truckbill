@@ -55,7 +55,7 @@
         <div class="alert alert-warning">
             Please select the Customer to generate the report.
         </div>
-    @elseif (empty($lrs) || $lrs->isEmpty())
+    @elseif ($ledgerRows->isEmpty())
         <div class="alert alert-info">
             No records found for the selected criteria.
         </div>
@@ -68,64 +68,26 @@
                     </div>
                     <div class="d-flex">
                         <a class="btn btn-warning ms-2"
-                            href="{{ route('reports.party-ledger-export', ['start_date' => $startDate, 'end_date' => $endDate, 'customer_id' => $customerId]) }}">
+                            href="{{ route('reports.party-ledger-export', [
+                                'start_date' => $startDate,
+                                'end_date' => $endDate,
+                                'customer_id' => $customerId,
+                            ]) }}">
                             <i class="bi bi-file-earmark-spreadsheet"></i> Export
                         </a>
                     </div>
                 </div>
             </div>
             <div class="card-body" style="overflow-x: auto;">
-                <table class="table table-bordered table-striped" style="font-size: 12px !important;">
-                    <thead>
-                        <tr>
-                            <th>Sr No</th>
-                            <th>Date</th>
-                            <th>LR Number</th>
-                            <th>Truck No</th>
-                            <th>Disptach (Destination)</th>
-                            <th>LR Rate</th>
-                            <th>LR Amt</th>
-                            <th>Bill no</th>
-                            <th>Bill Date</th>
-                            <th>Amount</th>
-                            <th>Payment Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($lrs as $index => $lr)
-                            <tr>
-                                <td>{{ $index + 1 }}</td>
-                                <td style="white-space: nowrap;">{{ \Carbon\Carbon::parse($lr->gr_date)->format('d-m-Y') }}
-                                </td>
-                                <td>{{ $lr->lr_number }}</td>
-                                <td>{{ $lr->truck ? $lr->truck->truck_number : 'N/A' }}</td>
-                                <td>{{ $lr->destination_city . ', ' . $lr->destination_state }}</td>
-                                <td style="text-align: right;">{{ number_format($lr->fr_rate, 2) }}</td>
-                                <td style="text-align: right;">{{ number_format($lr->amount, 2) }}</td>
-                                @php
-                                    $invoice = $invoiceByLrId[$lr->id] ?? null;
-                                    if (($invoice->invoice_type ?? '') === 'Forward') {
-                                        $gst = 5;
-                                    } else {
-                                        $gst = 0;
-                                    }
-                                @endphp
-                                <td>{{ $invoice ? ($invoice->invoice_number ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '') : ($invoice->manual_invoice_number ?? $invoice->id)) : 'N/A' }}</td>
-                                <td style="white-space: nowrap;">
-                                    {{ $invoice && $invoice->generated_date ? \Carbon\Carbon::parse($invoice->generated_date)->format('d-m-Y') : 'N/A' }}
-                                </td>
-                                <td style="text-align: right;">
-                                    {{ number_format($lr->amount + ($lr->amount * $gst) / 100, 2) }}
-                                </td>
-                                <td>{{ $invoice->payment_status ?? 'N/A' }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                @include('reports.exports.party-ledger-table', [
+                    'ledgerRows' => $ledgerRows,
+                ])
             </div>
-            <div class="mt-3 d-flex justify-content-end">
-                {{ $lrs->links() }}
-            </div>
+            @if ($lrs instanceof \Illuminate\Pagination\LengthAwarePaginator)
+                <div class="card-body pt-0 d-flex justify-content-end">
+                    {{ $lrs->links() }}
+                </div>
+            @endif
         </div>
     @endif
 @endsection
@@ -167,11 +129,9 @@
                 ajax: partiesAjax,
             });
         });
-    </script>
-    <script>
+
         function validateForm(event) {
             event.preventDefault();
-            // Get the values of the date inputs
             const customerId = $('select[name="customer_id"]').val();
 
             if (!customerId) {
@@ -179,7 +139,6 @@
                 return false;
             }
 
-            // If validation passes, submit the form
             event.target.submit();
         }
     </script>

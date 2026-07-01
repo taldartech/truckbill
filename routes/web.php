@@ -21,6 +21,7 @@ use App\Http\Controllers\MasterPanelSummaryController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\PromoCodeController;
 use App\Http\Controllers\PumpController;
+use App\Http\Controllers\Report\PartyLedgerReportController;
 use App\Http\Controllers\Report\PartyPendingInvoiceReportController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StateController;
@@ -318,8 +319,8 @@ Route::middleware(['auth.blocked'])->group(function () {
         Route::get('/tds-export', [ReportController::class, 'tds_export'])->name('reports.tds-export');
         Route::get('/dispatch', [ReportController::class, 'dispatch'])->name('reports.dispatch');
         Route::get('/dispatch-export', [ReportController::class, 'dispatch_export'])->name('reports.dispatch-export');
-        Route::get('/party-ledger', [ReportController::class, 'party_ledger'])->name('reports.party-ledger');
-        Route::get('/party-ledger-export', [ReportController::class, 'party_ledger_export'])->name('reports.party-ledger-export');
+        Route::get('/party-ledger', [PartyLedgerReportController::class, 'index'])->name('reports.party-ledger');
+        Route::get('/party-ledger-export', [PartyLedgerReportController::class, 'export'])->name('reports.party-ledger-export');
         Route::get('/lr-copy', [ReportController::class, 'lr_copy'])->name('reports.lr-copy');
         Route::get('/lr-copy-export', [ReportController::class, 'lr_copy_export'])->name('reports.lr-copy-export');
         Route::get('/invoice', [ReportController::class, 'invoice'])->name('reports.invoice');

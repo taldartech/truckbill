@@ -2,36 +2,48 @@
 
 namespace App\Exports;
 
+use App\Models\Consignee;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromView;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithColumnFormatting;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
-class PartyLedgerExport implements FromView
+class PartyLedgerExport implements FromView, ShouldAutoSize, WithColumnFormatting
 {
-    private $startDate, $endDate, $customerId;
+    /**
+     * @param  array{
+     *     startDate: string|null,
+     *     endDate: string,
+     *     customerId: string|null,
+     *     presetCustomer: Consignee|null,
+     *     customer: Consignee|null,
+     *     lrs: Collection,
+     *     ledgerRows: Collection
+     * }  $payload
+     */
+    public function __construct(
+        private array $payload,
+    ) {}
 
-    public function __construct($startDate, $endDate, $customerId)
+    public function view(): View
     {
-        $this->startDate = $startDate;
-        $this->endDate = $endDate;
-        $this->customerId = $customerId;
+        return view('reports.exports.party-ledger', [
+            'customer' => $this->payload['customer'],
+            'ledgerRows' => $this->payload['ledgerRows'],
+            'forExcel' => true,
+        ]);
     }
 
-    public function view() : View
+    public function columnFormats(): array
     {
-        $company_id = Auth::user()->company_id;
-
-        $query = \App\Models\LorryReceipt::query()
-            ->whereBetween('gr_date', [$this->startDate, $this->endDate])
-            ->where('customer_id', $this->customerId)
-            ->where('invoice_generated', 1);
-
-        if ($company_id) {
-            $query->where('company_id', $company_id);
-        }
-
-        $lrs = $query->get();
-        $customer = \App\Models\Consignee::find($this->customerId);
-        return view('reports.exports.party-ledger', compact('lrs', 'customer'));
+        return [
+            'B' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'F' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'G' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+            'I' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'J' => NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1,
+        ];
     }
 }
