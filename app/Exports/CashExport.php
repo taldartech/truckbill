@@ -20,12 +20,14 @@ class CashExport implements FromCollection, WithHeadings, WithTitle, ShouldAutoS
     protected $startDate;
     protected $endDate;
     protected $paymentStatus;
+    protected $branchId;
 
-    public function __construct($startDate = null, $endDate = null, $paymentStatus = null)
+    public function __construct($startDate = null, $endDate = null, $paymentStatus = null, $branchId = null)
     {
         $this->startDate = $startDate;
         $this->endDate = $endDate;
         $this->paymentStatus = $paymentStatus;
+        $this->branchId = $branchId;
     }
 
     public function collection()
@@ -38,21 +40,26 @@ class CashExport implements FromCollection, WithHeadings, WithTitle, ShouldAutoS
             ->whereNull('linked_voucher_id')
             ->where('payment_mode', 'cash');
 
-        if ($this->paymentStatus) {
-            $paymentsQuery->where('payment_status', $this->paymentStatus);
-        }
-
-        $payments = $paymentsQuery->get();
-
         $linkedPaymentsQuery = VoucherLinked::with(['freight_booking.lr.truck', 'freight_booking.lr.transporter', 'freight_booking'])
             ->whereBetween('date', [$this->startDate, $this->endDate])
             ->where('company_id', $companyId)
             ->where('payment_mode', 'cash');
 
         if ($this->paymentStatus) {
+            $paymentsQuery->where('payment_status', $this->paymentStatus);
             $linkedPaymentsQuery->where('payment_status', $this->paymentStatus);
         }
 
+        if ($this->branchId) {
+            $paymentsQuery->whereHas('creator', function ($q) {
+                $q->where('branch_id', $this->branchId);
+            });
+            $linkedPaymentsQuery->whereHas('creator', function ($q) {
+                $q->where('branch_id', $this->branchId);
+            });
+        }
+
+        $payments = $paymentsQuery->get();
         $linkedPayments = $linkedPaymentsQuery->get();
 
         $allPayments = [];

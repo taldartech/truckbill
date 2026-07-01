@@ -39,6 +39,18 @@
                             <option value="paid" {{ request('payment_status') == 'paid' ? 'selected' : '' }}>Paid</option>
                         </select>
                     </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Branch</label>
+                        <select name="branch" class="form-select">
+                            <option value="">All Branches</option>
+                            @foreach ($branches as $branch)
+                                <option value="{{ $branch->id }}"
+                                    {{ request('branch') == $branch->id ? 'selected' : '' }}>
+                                    {{ $branch->branch_name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
 
                 <div class="row">
@@ -76,6 +88,7 @@
                                 'start_date' => $startDate,
                                 'end_date' => $endDate,
                                 'payment_status' => request('payment_status'),
+                                'branch' => request('branch'),
                             ]) }}">
                             <i class="bi bi-file-earmark-spreadsheet"></i> Export
                         </a>

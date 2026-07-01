@@ -18,6 +18,7 @@ use App\Exports\ShortageDamageExport;
 use App\Exports\TDSExport;
 use App\Exports\TransporterMasterExport;
 use App\Exports\TransporterReportExport;
+use App\Models\Branch;
 use App\Models\Company;
 use App\Models\Consignee;
 use App\Models\FreightBooking;
@@ -1001,7 +1002,14 @@ class ReportController extends Controller
     {
         $companyId = Auth::user()->company_id;
         $paymentStatus = $request->input('payment_status');
+        $branchId = $request->input('branch');
         [$startDate, $endDate, $hasRange] = $this->normalizeDateRange($request);
+
+        $branchesQuery = Branch::orderBy('branch_name');
+        if ($companyId) {
+            $branchesQuery->where('company_id', $companyId);
+        }
+        $branches = $branchesQuery->get();
 
         if ($hasRange) {
             $query = VoucherPayment::with(['freight_booking.lr.truck', 'freight_booking.lr.transporter.transporterMaster'])
@@ -1010,21 +1018,26 @@ class ReportController extends Controller
             $query->whereNull('linked_voucher_id');
             $query->where('payment_mode', 'cash');
 
-            if ($paymentStatus) {
-                $query->where('payment_status', $paymentStatus);
-            }
-
-            $payments = $query->get();
-
             $query1 = VoucherLinked::with(['freight_booking.lr.truck', 'freight_booking.lr.transporter.transporterMaster'])
                 ->whereBetween('date', [$startDate, $endDate]);
             $query1->where('company_id', $companyId);
             $query1->where('payment_mode', 'cash');
 
             if ($paymentStatus) {
+                $query->where('payment_status', $paymentStatus);
                 $query1->where('payment_status', $paymentStatus);
             }
 
+            if ($branchId) {
+                $query->whereHas('creator', function ($q) use ($branchId) {
+                    $q->where('branch_id', $branchId);
+                });
+                $query1->whereHas('creator', function ($q) use ($branchId) {
+                    $q->where('branch_id', $branchId);
+                });
+            }
+
+            $payments = $query->get();
             $linked_payments = $query1->get();
         }
         $allPayments = [];
@@ -1074,7 +1087,7 @@ class ReportController extends Controller
         $grandTotalAmount = (float) $allPayments->sum('amount');
         $allPayments = $this->paginateCollection($allPayments, $request);
 
-        return view('reports.cash', compact('startDate', 'endDate', 'allPayments', 'paymentStatus', 'grandTotalAmount'));
+        return view('reports.cash', compact('startDate', 'endDate', 'allPayments', 'paymentStatus', 'grandTotalAmount', 'branches'));
     }
 
     public function cash_export(Request $request)
@@ -1082,8 +1095,9 @@ class ReportController extends Controller
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
         $paymentStatus = $request->input('payment_status');
+        $branchId = $request->input('branch');
 
-        $export = Excel::download(new CashExport($startDate, $endDate, $paymentStatus), 'cash_report.xlsx');
+        $export = Excel::download(new CashExport($startDate, $endDate, $paymentStatus, $branchId), 'cash_report.xlsx');
 
         return $export;
     }
