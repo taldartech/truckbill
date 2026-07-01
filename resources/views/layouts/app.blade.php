@@ -1007,66 +1007,10 @@
                                 <ul class="nav nav-treeview collapse {{ Request::is('reports*') ? ' show' : '' }}"
                                     id="reportsMenu">
                                     <li class="nav-item">
-                                        <a href="{{ route('reports.tds') }}"
-                                            class="nav-link{{ Request::is('reports/tds') ? ' active' : '' }}">
-                                            <i class="fas fa-file-alt"></i>
-                                            <p>TDS</p>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="{{ route('reports.consignor-consignee') }}"
-                                            class="nav-link{{ Request::is('reports/consignor-consignee') ? ' active' : '' }}">
-                                            <i class="fas fa-file-alt"></i>
-                                            <p>Consignor Consignee</p>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
                                         <a href="{{ route('reports.dispatch') }}"
                                             class="nav-link{{ Request::is('reports/dispatch') ? ' active' : '' }}">
                                             <i class="fas fa-file-alt"></i>
                                             <p>Dispatch</p>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="{{ route('reports.party-ledger') }}"
-                                            class="nav-link{{ Request::is('reports/party-ledger') ? ' active' : '' }}">
-                                            <i class="fas fa-file-alt"></i>
-                                            <p>Party Ledger</p>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="{{ route('reports.lr-copy') }}"
-                                            class="nav-link{{ Request::is('reports/lr-copy') ? ' active' : '' }}">
-                                            <i class="fas fa-file-alt"></i>
-                                            <p>LR Copy</p>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="{{ route('reports.invoice') }}"
-                                            class="nav-link{{ Request::is('reports/invoice') ? ' active' : '' }}">
-                                            <i class="fas fa-file-alt"></i>
-                                            <p>GSTR1</p>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="{{ route('reports.shortage-damage') }}"
-                                            class="nav-link{{ Request::is('reports/shortage-damage') ? ' active' : '' }}">
-                                            <i class="fas fa-file-alt"></i>
-                                            <p>Shortage Damage</p>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="{{ route('reports.eway-bill') }}"
-                                            class="nav-link{{ Request::is('reports/eway-bill') ? ' active' : '' }}">
-                                            <i class="fas fa-file-alt"></i>
-                                            <p>Eway Bill</p>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="{{ route('reports.pump') }}"
-                                            class="nav-link{{ Request::is('reports/pump') ? ' active' : '' }}">
-                                            <i class="fas fa-file-alt"></i>
-                                            <p>Pump</p>
                                         </a>
                                     </li>
                                     <li class="nav-item">
@@ -1084,17 +1028,17 @@
                                         </a>
                                     </li>
                                     <li class="nav-item">
+                                        <a href="{{ route('reports.pump') }}"
+                                            class="nav-link{{ Request::is('reports/pump') ? ' active' : '' }}">
+                                            <i class="fas fa-file-alt"></i>
+                                            <p>Pump</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
                                         <a href="{{ route('reports.party-bill') }}"
                                             class="nav-link{{ Request::is('reports/party-bill') ? ' active' : '' }}">
                                             <i class="fas fa-file-alt"></i>
                                             <p>Party Bill</p>
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="{{ route('reports.memo-copy') }}"
-                                            class="nav-link{{ Request::is('reports/memo-copy') ? ' active' : '' }}">
-                                            <i class="fas fa-file-alt"></i>
-                                            <p>Memo Copy</p>
                                         </a>
                                     </li>
                                     <li class="nav-item">
@@ -1105,10 +1049,45 @@
                                         </a>
                                     </li>
                                     <li class="nav-item">
-                                        <a href="{{ route('reports.transporter-master') }} "
-                                            class="nav-link{{ Request::is('reports/transporter-master') ? ' active' : '' }}">
+                                        <a href="{{ route('reports.tds') }}"
+                                            class="nav-link{{ Request::is('reports/tds') ? ' active' : '' }}">
                                             <i class="fas fa-file-alt"></i>
-                                            <p>Transporter Master</p>
+                                            <p>TDS</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.invoice') }}"
+                                            class="nav-link{{ Request::is('reports/invoice') ? ' active' : '' }}">
+                                            <i class="fas fa-file-alt"></i>
+                                            <p>GSTR1</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.party-ledger') }}"
+                                            class="nav-link{{ Request::is('reports/party-ledger') ? ' active' : '' }}">
+                                            <i class="fas fa-file-alt"></i>
+                                            <p>Party Ledger</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.eway-bill') }}"
+                                            class="nav-link{{ Request::is('reports/eway-bill') ? ' active' : '' }}">
+                                            <i class="fas fa-file-alt"></i>
+                                            <p>Eway Bill</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.shortage-damage') }}"
+                                            class="nav-link{{ Request::is('reports/shortage-damage') ? ' active' : '' }}">
+                                            <i class="fas fa-file-alt"></i>
+                                            <p>Shortage Damage</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.pending-invoice') }} "
+                                            class="nav-link{{ Request::is('reports/pending-invoice') ? ' active' : '' }}">
+                                            <i class="fas fa-file-alt"></i>
+                                            <p>Pending Invoice</p>
                                         </a>
                                     </li>
                                     <li class="nav-item">
@@ -1119,10 +1098,31 @@
                                         </a>
                                     </li>
                                     <li class="nav-item">
-                                        <a href="{{ route('reports.pending-invoice') }} "
-                                            class="nav-link{{ Request::is('reports/pending-invoice') ? ' active' : '' }}">
+                                        <a href="{{ route('reports.consignor-consignee') }}"
+                                            class="nav-link{{ Request::is('reports/consignor-consignee') ? ' active' : '' }}">
                                             <i class="fas fa-file-alt"></i>
-                                            <p>Pending Invoice</p>
+                                            <p>Consignor Consignee</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.lr-copy') }}"
+                                            class="nav-link{{ Request::is('reports/lr-copy') ? ' active' : '' }}">
+                                            <i class="fas fa-file-alt"></i>
+                                            <p>LR Copy</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.memo-copy') }}"
+                                            class="nav-link{{ Request::is('reports/memo-copy') ? ' active' : '' }}">
+                                            <i class="fas fa-file-alt"></i>
+                                            <p>Memo Copy</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.transporter-master') }} "
+                                            class="nav-link{{ Request::is('reports/transporter-master') ? ' active' : '' }}">
+                                            <i class="fas fa-file-alt"></i>
+                                            <p>Transporter Master</p>
                                         </a>
                                     </li>
                                 </ul>
