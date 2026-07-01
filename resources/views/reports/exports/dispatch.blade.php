@@ -2,6 +2,8 @@
     // Flag that tells this view whether it's being rendered for Excel export
     // Default to false when included from a normal Blade view
     $forExcel = $forExcel ?? false;
+    $balanceAsOnEndDate = $balanceAsOnEndDate ?? false;
+    $emptyPaymentSummary = ['cash' => 0, 'bank' => 0, 'fuel' => 0, 'advance' => 0, 'total_paid' => 0, 'balance' => 0];
 @endphp
 
 <table class="table table-bordered table-striped" style="font-size: 12px !important;">
@@ -60,12 +62,9 @@
             <tr>
                 @php
                     $freight = $lr->freightBookings->last();
-                    $vouchers = $freight?->payments;
-                    $total_paid = $vouchers?->sum('amount');
-                    $cash = $vouchers?->where('payment_mode', 'cash')->sum('amount');
-                    $bank = $vouchers?->where('payment_mode', 'bank transfer')->sum('amount');
-                    $fuel = $vouchers?->where('payment_mode', 'fuel(paid to pump)')->sum('amount');
-                    $advance = $vouchers?->where('payment_mode', 'adjust in advance')->sum('amount');
+                    $paymentSummary = $freight
+                        ? $freight->dispatchPaymentSummary($balanceAsOnEndDate ? $endDate : null)
+                        : $emptyPaymentSummary;
                     $diff = $lr->fr_rate - $freight?->tr_fr_rate;
                     $invoice = \App\Models\Invoice::whereJsonContains('lr_ids', $lr->id)->first();
                 @endphp
@@ -99,11 +98,11 @@
                 <td>{{ $freight?->tr_amount ?? 0 }}</td>
                 <td>{{ round($freight?->tds_amount ?? 0) }}</td>
 
-                <td>{{ $cash ?? 0 }}</td>
-                <td>{{ $bank ?? 0 }}</td>
-                <td>{{ $advance ?? 0 }}</td>
-                <td>{{ $fuel ?? 0 }}</td>
-                <td>{{ $total_paid ?? 0 }}</td>
+                <td>{{ $paymentSummary['cash'] }}</td>
+                <td>{{ $paymentSummary['bank'] }}</td>
+                <td>{{ $paymentSummary['advance'] }}</td>
+                <td>{{ $paymentSummary['fuel'] }}</td>
+                <td>{{ $paymentSummary['total_paid'] }}</td>
 
                 <td>{{ $freight?->damage_amount ?? 0 }}</td>
                 <td>{{ $freight?->shortage_amount ?? 0 }}</td>
@@ -111,7 +110,7 @@
                 <td>{{ $freight?->deviation ?? 0 }}</td>
                 <td>{{ $freight?->misc_expense ?? 0 }}</td>
 
-                <td>{{ $freight?->balance_amount ?? 0 }}</td>
+                <td>{{ $paymentSummary['balance'] }}</td>
                 <td>{{ $freight?->negative_adjusted_amount ?? 0 }}</td>
 
                 <td>{{ $diff ?? 0 }}</td>

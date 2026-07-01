@@ -237,6 +237,7 @@ class ReportController extends Controller
     public function dispatch(Request $request)
     {
         [$startDate, $endDate, $generated] = $this->normalizeDateRange($request);
+        $balanceAsOnEndDate = $request->has('balance_as_on_end_date');
 
         $user = Auth::user()->company_id;
 
@@ -262,15 +263,16 @@ class ReportController extends Controller
             $lrs = collect();
         }
 
-        return view('reports.dispatch', compact('lrs', 'startDate', 'endDate', 'generated'));
+        return view('reports.dispatch', compact('lrs', 'startDate', 'endDate', 'generated', 'balanceAsOnEndDate'));
     }
 
     public function dispatch_export(Request $request)
     {
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
+        $balanceAsOnEndDate = $request->has('balance_as_on_end_date');
 
-        $export = Excel::download(new DispatchExport($startDate, $endDate), 'dispatch_report.xlsx');
+        $export = Excel::download(new DispatchExport($startDate, $endDate, $balanceAsOnEndDate), 'dispatch_report.xlsx');
 
         return $export;
     }

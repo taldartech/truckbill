@@ -2,30 +2,30 @@
 
 namespace App\Exports;
 
-use App\Models\FreightBooking;
 use App\Models\LorryReceipt;
-use App\Models\Invoice;
-use App\Models\Truck;
-use Carbon\Carbon;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
-use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithColumnFormatting;
-use PhpOffice\PhpSpreadsheet\Shared\Date;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class DispatchExport implements FromView, ShouldAutoSize, WithColumnFormatting
 {
-    private $startDate, $endDate;
+    private $startDate;
 
-    public function __construct($startDate, $endDate)
+    private $endDate;
+
+    private $balanceAsOnEndDate;
+
+    public function __construct($startDate, $endDate, $balanceAsOnEndDate = false)
     {
         $this->startDate = $startDate;
         $this->endDate = $endDate;
+        $this->balanceAsOnEndDate = $balanceAsOnEndDate;
     }
 
-    public function view(): \Illuminate\Contracts\View\View
+    public function view(): View
     {
         $user = Auth::user()->company_id;
         if ($this->startDate || $this->endDate) {
@@ -36,7 +36,7 @@ class DispatchExport implements FromView, ShouldAutoSize, WithColumnFormatting
                 'consignor',
                 'consignee',
                 'customer',
-                'truck'
+                'truck',
             ])->whereBetween('gr_date', [$this->startDate, $this->endDate])
                 ->orderBy('gr_date', 'asc');
 
@@ -51,14 +51,13 @@ class DispatchExport implements FromView, ShouldAutoSize, WithColumnFormatting
 
         // When exporting, let the view know it's being rendered for Excel
         return view('reports.exports.dispatch', [
-            'lrs'      => $lrs,
+            'lrs' => $lrs,
             'forExcel' => true,
+            'endDate' => $this->endDate,
+            'balanceAsOnEndDate' => $this->balanceAsOnEndDate,
         ]);
     }
 
-    /**
-     * @return array
-     */
     public function columnFormats(): array
     {
         $numFormat = NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1;

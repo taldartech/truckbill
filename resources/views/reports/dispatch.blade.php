@@ -20,6 +20,16 @@
                         <label class="form-label">End Date <span class="text-danger">*</span></label>
                         <input type="date" name="end_date" class="form-control" value="{{ $endDate }}" required>
                     </div>
+                    <div class="col-md-3 align-self-end p-2">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="balance_as_on_end_date"
+                                id="balance_as_on_end_date" value="1"
+                                @if ($balanceAsOnEndDate ?? false) checked @endif>
+                            <label class="form-check-label" for="balance_as_on_end_date">
+                                Balance &amp; payments as on end date
+                            </label>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="row">
@@ -54,7 +64,11 @@
                     </div>
                     <div class="d-flex">
                         <a class="btn btn-warning ms-2"
-                            href="{{ route('reports.dispatch-export', ['start_date' => $startDate, 'end_date' => $endDate]) }}">
+                            href="{{ route('reports.dispatch-export', array_filter([
+                                'start_date' => $startDate,
+                                'end_date' => $endDate,
+                                'balance_as_on_end_date' => ($balanceAsOnEndDate ?? false) ? '1' : null,
+                            ])) }}">
                             <i class="bi bi-file-earmark-spreadsheet"></i> Export
                         </a>
                     </div>
@@ -94,15 +108,15 @@
                 .table-sticky thead th {
                     position: sticky;
                     top: 0;
-                    background: var(--brand-white);
-                    /* Ensures visibility */
                     z-index: 2;
-                    /* Keeps header above table rows */
                     border-bottom: 1px solid var(--brand-border);
                 }
             </style>
             <div class="card-body table-sticky">
-                @include('reports.exports.dispatch')
+                @include('reports.exports.dispatch', [
+                    'balanceAsOnEndDate' => $balanceAsOnEndDate ?? false,
+                    'endDate' => $endDate,
+                ])
             </div>
             <div class="card-body pt-0 d-flex justify-content-end">
                 {{ $lrs->links() }}

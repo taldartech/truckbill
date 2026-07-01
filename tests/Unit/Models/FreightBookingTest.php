@@ -8,8 +8,8 @@ use App\Models\FreightBooking;
 use App\Models\LorryReceipt;
 use App\Models\Transporter;
 use App\Models\Truck;
-use App\Models\User;
 use App\Models\UserRole;
+use App\Models\VoucherPayment;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -58,9 +58,9 @@ class FreightBookingTest extends TestCase
             'truck_id' => $truck->id,
             'transporter_id' => $transporter->id,
             'reference_by' => $transporter->id,
-            'lr_number' => 'LR-U-' . uniqid(),
-            'gr_number' => 'GR-U-' . uniqid(),
-            'invoice_number' => 'INV-U-' . uniqid(),
+            'lr_number' => 'LR-U-'.uniqid(),
+            'gr_number' => 'GR-U-'.uniqid(),
+            'invoice_number' => 'INV-U-'.uniqid(),
             'gr_date' => $grDate ?? now()->toDateString(),
             'source_city' => 'A',
             'source_state' => 'B',
@@ -85,7 +85,7 @@ class FreightBookingTest extends TestCase
             'balance_amount' => $balanceAmount,
             'tds_amount' => 10,
             'company_id' => $company->id,
-            'voucher_number' => 'VB-U-' . uniqid(),
+            'voucher_number' => 'VB-U-'.uniqid(),
             'transporter_tds_percentage' => 2,
         ]);
     }
@@ -135,5 +135,45 @@ class FreightBookingTest extends TestCase
         $this->assertTrue($fb->canChangeTdsAmount());
 
         Carbon::setTestNow();
+    }
+
+    public function test_balance_as_on_date_excludes_payments_after_cutoff(): void
+    {
+        $fb = $this->makeFreightBookingWithLr(grDate: '2025-01-15', balanceAmount: 200);
+
+        VoucherPayment::create([
+            'freight_booking_id' => $fb->id,
+            'company_id' => $fb->company_id,
+            'payment_type' => 'cash',
+            'payment_mode' => 'cash',
+            'amount' => 300,
+            'payment_status' => 'paid',
+            'date' => '2025-01-20',
+        ]);
+
+        VoucherPayment::create([
+            'freight_booking_id' => $fb->id,
+            'company_id' => $fb->company_id,
+            'payment_type' => 'cash',
+            'payment_mode' => 'cash',
+            'amount' => 200,
+            'payment_status' => 'paid',
+            'date' => '2025-02-10',
+        ]);
+
+        $fb->load('voucherPayments');
+
+        $this->assertSame(690.0, $fb->balanceAsOnDate('2025-01-31'));
+        $this->assertSame(490.0, $fb->balanceAsOnDate('2025-02-28'));
+
+        $summary = $fb->dispatchPaymentSummary('2025-01-31');
+        $this->assertSame(300.0, $summary['cash']);
+        $this->assertSame(300.0, $summary['total_paid']);
+        $this->assertSame(690.0, $summary['balance']);
+
+        $laterSummary = $fb->dispatchPaymentSummary('2025-02-28');
+        $this->assertSame(500.0, $laterSummary['cash']);
+        $this->assertSame(500.0, $laterSummary['total_paid']);
+        $this->assertSame(490.0, $laterSummary['balance']);
     }
 }

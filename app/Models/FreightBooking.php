@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 
 class FreightBooking extends Model implements Auditable
 {
@@ -106,6 +107,93 @@ class FreightBooking extends Model implements Auditable
     public function payments(): HasMany
     {
         return $this->hasMany(VoucherPayment::class, 'freight_booking_id');
+    }
+
+    public function effectivePayableAmount(): float
+    {
+        return (float) $this->tr_amount
+            - ($this->tds_amount ?? 0)
+            - ($this->damage_amount ?? 0)
+            - ($this->shortage_amount ?? 0)
+            + ($this->detention ?? 0)
+            + ($this->deviation ?? 0)
+            - ($this->misc_expense ?? 0);
+    }
+
+    /**
+     * @return Collection<int, VoucherPayment>
+     */
+    public function voucherPaymentsUpToDate(string|Carbon $date): Collection
+    {
+        $end = $date instanceof Carbon ? $date->copy()->endOfDay() : Carbon::parse($date)->endOfDay();
+
+        return $this->loadedVoucherPayments()->filter(
+            fn (VoucherPayment $payment): bool => $this->paymentOccursOnOrBefore($payment, $end)
+        );
+    }
+
+    public function balanceAsOnDate(string|Carbon $date): float
+    {
+        return $this->dispatchPaymentSummary($date instanceof Carbon ? $date->toDateString() : $date)['balance'];
+    }
+
+    /**
+     * @return array{
+     *     cash: float,
+     *     bank: float,
+     *     fuel: float,
+     *     advance: float,
+     *     total_paid: float,
+     *     balance: float
+     * }
+     */
+    public function dispatchPaymentSummary(?string $asOnDate = null): array
+    {
+        $payments = $asOnDate !== null
+            ? $this->voucherPaymentsUpToDate($asOnDate)
+            : $this->loadedVoucherPayments();
+
+        $totalPaid = (float) $payments->sum('amount');
+
+        return [
+            'cash' => (float) $payments->where('payment_mode', 'cash')->sum('amount'),
+            'bank' => (float) $payments->where('payment_mode', 'bank transfer')->sum('amount'),
+            'fuel' => (float) $payments->where('payment_mode', 'fuel(paid to pump)')->sum('amount'),
+            'advance' => (float) $payments->where('payment_mode', 'adjust in advance')->sum('amount'),
+            'total_paid' => $totalPaid,
+            'balance' => $asOnDate !== null
+                ? $this->effectivePayableAmount() - $totalPaid
+                : (float) ($this->balance_amount ?? 0),
+        ];
+    }
+
+    /**
+     * @return Collection<int, VoucherPayment>
+     */
+    protected function loadedVoucherPayments(): Collection
+    {
+        if ($this->relationLoaded('voucherPayments')) {
+            return $this->voucherPayments;
+        }
+
+        if ($this->relationLoaded('payments')) {
+            return $this->payments;
+        }
+
+        return $this->voucherPayments()->get();
+    }
+
+    protected function paymentOccursOnOrBefore(VoucherPayment $payment, Carbon $end): bool
+    {
+        $paymentDate = $payment->date !== null
+            ? Carbon::parse($payment->date)
+            : ($payment->created_at?->copy());
+
+        if ($paymentDate === null) {
+            return false;
+        }
+
+        return $paymentDate->lte($end);
     }
 
     public function voucherLinkeds(): HasMany
