@@ -91,6 +91,23 @@ class Transporter extends Model
         return $this->transporterMaster?->country;
     }
 
+    public function displayNameWithShortName(): string
+    {
+        $name = trim((string) $this->name);
+
+        if ($name === '') {
+            $name = 'Not Set';
+        }
+
+        $shortName = trim((string) ($this->short_name ?? ''));
+
+        if ($shortName !== '') {
+            return "{$name} ({$shortName})";
+        }
+
+        return $name;
+    }
+
     public function transporterMaster(): BelongsTo
     {
         return $this->belongsTo(TransporterMaster::class, 'transporter_master_id');

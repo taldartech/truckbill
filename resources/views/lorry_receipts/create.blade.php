@@ -227,7 +227,7 @@
                                     <option value="">Select Transporter</option>
                                     @if (! empty($payeeTransporter))
                                         <option value="{{ $payeeTransporter->id }}" selected>
-                                            {{ $payeeTransporter->name }}
+                                            {{ $payeeTransporter->displayNameWithShortName() }}
                                         </option>
                                     @endif
                                 </select>

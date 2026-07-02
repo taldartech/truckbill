@@ -119,7 +119,7 @@ class Select2SearchController extends Controller
             $results = $items->map(function (Transporter $owner) {
                 return [
                     'id' => $owner->id,
-                    'text' => $owner->name ?: 'Not Set',
+                    'text' => $owner->displayNameWithShortName(),
                 ];
             })->values();
 
@@ -227,7 +227,7 @@ class Select2SearchController extends Controller
             $results = $items->map(function (Transporter $agency) {
                 return [
                     'id' => $agency->id,
-                    'text' => $agency->name ?: 'Not Set',
+                    'text' => $agency->displayNameWithShortName(),
                 ];
             })->values();
 
@@ -281,7 +281,9 @@ class Select2SearchController extends Controller
             $items = $items->take($limit);
 
             $results = $items->map(function (Truck $truck) {
-                $transporterName = $truck->transporter ? ($truck->transporter->name ?: 'No Transporter') : 'No Transporter';
+                $transporterName = $truck->transporter
+                    ? $truck->transporter->displayNameWithShortName()
+                    : 'No Transporter';
                 $driverName = $truck->driver ? $truck->driver->name : null;
 
                 $text = $truck->truck_number ?: '';

@@ -276,7 +276,7 @@
                                     @php($selectedTransporter = $transporters->firstWhere('id', old('transporter_id', $lorry_receipt->transporter_id)))
                                     @if($selectedTransporter)
                                         <option value="{{ $selectedTransporter->id }}" selected>
-                                            {{ $selectedTransporter->name }}
+                                            {{ $selectedTransporter->displayNameWithShortName() }}
                                         </option>
                                     @endif
                                 </select>

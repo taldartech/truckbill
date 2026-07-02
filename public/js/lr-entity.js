@@ -8,6 +8,31 @@
       .replaceAll("'", '&#039;');
   }
 
+  function formatTransporterDisplayName(data) {
+    if (!data || typeof data !== 'object') {
+      return '';
+    }
+
+    const name = String(
+      data.name ??
+        data.transporterMaster?.name ??
+        data.transporter_master?.name ??
+        ''
+    ).trim();
+
+    const shortName = String(data.short_name ?? '').trim();
+
+    if (name === '') {
+      return shortName !== '' ? `Not Set (${shortName})` : 'Not Set';
+    }
+
+    if (shortName !== '') {
+      return `${name} (${shortName})`;
+    }
+
+    return name;
+  }
+
   function renderDetailsHtmlFromObject(data, options = {}) {
     const { title = 'All Details', hideDeclarationGiven = false } = options;
 
@@ -678,12 +703,7 @@
               return;
             }
 
-            const entityName =
-              transporterDetails.name ||
-              transporterDetails?.transporterMaster?.name ||
-              transporterDetails?.transporter_master?.name ||
-              owner.name ||
-              'N/A';
+            const entityName = formatTransporterDisplayName(transporterDetails) || owner.name || 'N/A';
 
             const completeDetailsHtml = renderDetailsHtmlFromObject(transporterDetails, {
               title: 'Complete Transporter/Truck Owner Details',

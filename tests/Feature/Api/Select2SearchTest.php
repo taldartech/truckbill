@@ -93,6 +93,7 @@ class Select2SearchTest extends TestCase
             'transporter_master_id' => $ownerMaster->id,
             'company_id' => $admin->company_id,
             'is_owner' => 1,
+            'short_name' => 'OWNR',
             'mobile_number' => '9888888888',
             'declaration_given' => 0,
             'total_trucks' => 0,
@@ -122,8 +123,37 @@ class Select2SearchTest extends TestCase
             ]);
 
         $resultTexts = collect($response->json('results'))->pluck('text')->implode(' ');
-        $this->assertStringContainsString('Owner Alpha', $resultTexts);
+        $this->assertStringContainsString('Owner Alpha (OWNR)', $resultTexts);
         $this->assertStringNotContainsString('Owner Other', $resultTexts);
+    }
+
+    public function test_agencies_search_includes_short_name_in_brackets(): void
+    {
+        $admin = $this->makeAdmin();
+
+        $agencyMaster = TransporterMaster::factory()->create([
+            'name' => 'Agency Alpha',
+            'pan_number' => 'ABCDE5678G',
+        ]);
+
+        Transporter::create([
+            'transporter_master_id' => $agencyMaster->id,
+            'company_id' => $admin->company_id,
+            'is_owner' => 0,
+            'short_name' => 'AGCY',
+            'mobile_number' => '9666666666',
+            'declaration_given' => 0,
+            'total_trucks' => 0,
+            'advance_amount' => 0,
+            'tds_percentage' => 20,
+        ]);
+
+        $response = $this->actingAs($admin)->get('/api/agencies/search?q=Agency&limit=20');
+
+        $response->assertOk();
+
+        $resultTexts = collect($response->json('results'))->pluck('text')->implode(' ');
+        $this->assertStringContainsString('Agency Alpha (AGCY)', $resultTexts);
     }
 
     public function test_voucher_transporters_search_returns_owners_and_agencies_company_scoped(): void

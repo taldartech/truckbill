@@ -2,7 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Driver;
+use App\Models\LorryReceipt;
+use App\Models\Transporter;
+use App\Models\Truck;
 use App\Models\TruckType;
+use Carbon\Carbon;
+use Illuminate\Database\QueryException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -21,7 +28,7 @@ class TruckController extends Controller
 
     private function isTruckNumberTakenInCompany(string $truckNumber, int $companyId, ?int $ignoreTruckId = null): bool
     {
-        return \App\Models\Truck::query()
+        return Truck::query()
             ->where('truck_number', $truckNumber)
             ->whereNull('deleted_at')
             ->where(function ($query) use ($companyId) {
@@ -36,7 +43,7 @@ class TruckController extends Controller
             ->exists();
     }
 
-    private function isTruckAccessibleToCurrentCompany(\App\Models\Truck $truck): bool
+    private function isTruckAccessibleToCurrentCompany(Truck $truck): bool
     {
         $companyId = $this->getCurrentCompanyId();
 
@@ -50,7 +57,7 @@ class TruckController extends Controller
     public function getTrucksForTransporter($transporterId)
     {
         $companyId = $this->getCurrentCompanyId();
-        $trucks = \App\Models\Truck::with(['transporter.transporterMaster', 'driver'])
+        $trucks = Truck::with(['transporter.transporterMaster', 'driver'])
             ->where('transporter_id', $transporterId)
             ->whereHas('transporter', function ($q) use ($companyId) {
                 $q->where('company_id', $companyId);
@@ -66,7 +73,7 @@ class TruckController extends Controller
         if ($request->ajax()) {
             return $this->getTrucksData($request);
         }
-        $transportersBaseQuery = \App\Models\Transporter::query()
+        $transportersBaseQuery = Transporter::query()
             ->with('transporterMaster:id,name,pan_number')
             ->where('company_id', $companyId);
 
@@ -75,13 +82,14 @@ class TruckController extends Controller
             ->get();
 
         $transporters = (clone $transportersBaseQuery)->get();
+
         return view('trucks.index', compact('transporters', 'owners'));
     }
 
     private function getTrucksData(Request $request)
     {
         $companyId = $this->getCurrentCompanyId();
-        $query = \App\Models\Truck::query()
+        $query = Truck::query()
             ->leftJoin('transporters', 'trucks.transporter_id', '=', 'transporters.id')
             ->leftJoin('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
             ->leftJoin('drivers', 'trucks.driver_id', '=', 'drivers.id')
@@ -171,7 +179,7 @@ class TruckController extends Controller
         // $totalQuery = \App\Models\Truck::whereHas('transporter', function($q) {
         //     $q->where('company_id', Auth::user()->company_id);
         // });
-        $totalQuery = \App\Models\Truck::where(function ($q) use ($companyId) {
+        $totalQuery = Truck::where(function ($q) use ($companyId) {
             $q->whereHas('transporter', function ($subQuery) use ($companyId) {
                 $subQuery->where('company_id', $companyId);
             })
@@ -255,7 +263,7 @@ class TruckController extends Controller
     public function getOwnerTransporters($truckId)
     {
         $companyId = $this->getCurrentCompanyId();
-        $truck = \App\Models\Truck::with('transporter.transporterMaster')
+        $truck = Truck::with('transporter.transporterMaster')
             ->where('id', $truckId)
             ->where(function ($query) use ($companyId) {
                 $query->whereHas('transporter', function ($q) use ($companyId) {
@@ -279,7 +287,7 @@ class TruckController extends Controller
             return response()->json([
                 [
                     'id' => $transporter->id,
-                    'name' => $transporter->name,
+                    'name' => $transporter->displayNameWithShortName(),
                 ],
             ]);
         }
@@ -293,7 +301,7 @@ class TruckController extends Controller
         $transporter = null;
 
         if ($transporter_id) {
-            $transporter = \App\Models\Transporter::with('transporterMaster')
+            $transporter = Transporter::with('transporterMaster')
                 ->where('company_id', $companyId)
                 ->where('id', $transporter_id)
                 ->where('is_owner', 1)
@@ -305,7 +313,7 @@ class TruckController extends Controller
 
         $transporters = collect();
         if ($selectedTransporterId) {
-            $selectedTransporter = \App\Models\Transporter::with('transporterMaster')
+            $selectedTransporter = Transporter::with('transporterMaster')
                 ->where('company_id', $companyId)
                 ->where('is_owner', 1)
                 ->where('id', $selectedTransporterId)
@@ -318,7 +326,7 @@ class TruckController extends Controller
 
         $drivers = collect();
         if ($selectedDriverId) {
-            $selectedDriver = \App\Models\Driver::query()
+            $selectedDriver = Driver::query()
                 ->where('company_id', $companyId)
                 ->where('id', $selectedDriverId)
                 ->first();
@@ -369,7 +377,7 @@ class TruckController extends Controller
 
         $validated['company_id'] = $companyId;
         try {
-            $truck = \App\Models\Truck::create($validated);
+            $truck = Truck::create($validated);
 
             // Return JSON response for AJAX requests
             if ($request->expectsJson() || $request->ajax()) {
@@ -381,7 +389,7 @@ class TruckController extends Controller
             }
 
             return redirect()->route('trucks.index')->with('success', 'Truck created successfully!');
-        } catch (\Illuminate\Database\QueryException $e) {
+        } catch (QueryException $e) {
             // Handle database constraint violations
             if ($e->errorInfo[1] == 1062) { // Duplicate entry error
                 $errorMessage = 'This truck number is already registered in the system. Please use a different truck number.';
@@ -414,7 +422,7 @@ class TruckController extends Controller
     public function checkTruckNumber(Request $request)
     {
         $company_id = $this->getCurrentCompanyId();
-        $exists = \App\Models\Truck::where('truck_number', $request->truck_number)
+        $exists = Truck::where('truck_number', $request->truck_number)
             ->where(function ($query) use ($company_id) {
                 $query->where('company_id', $company_id)
                     ->orWhereHas('transporter', function ($transporters) use ($company_id) {
@@ -426,7 +434,7 @@ class TruckController extends Controller
         return response()->json(['exists' => $exists]);
     }
 
-    public function edit(\App\Models\Truck $truck)
+    public function edit(Truck $truck)
     {
         $companyId = $this->getCurrentCompanyId();
         $selectedTransporterId = old('transporter_id', $truck->transporter_id);
@@ -434,7 +442,7 @@ class TruckController extends Controller
 
         $transporters = collect();
         if ($selectedTransporterId) {
-            $selectedTransporter = \App\Models\Transporter::with('transporterMaster')
+            $selectedTransporter = Transporter::with('transporterMaster')
                 ->where('company_id', $companyId)
                 ->where(function ($query) use ($selectedTransporterId) {
                     $query->where('is_owner', 1)
@@ -450,7 +458,7 @@ class TruckController extends Controller
 
         $drivers = collect();
         if ($selectedDriverId) {
-            $selectedDriver = \App\Models\Driver::withTrashed()
+            $selectedDriver = Driver::withTrashed()
                 ->where(function ($query) use ($companyId, $selectedDriverId) {
                     $query->where('company_id', $companyId)
                         ->orWhere('id', $selectedDriverId);
@@ -468,7 +476,7 @@ class TruckController extends Controller
         return view('trucks.edit', compact('truck', 'transporters', 'drivers', 'truckTypes'));
     }
 
-    public function update(Request $request, \App\Models\Truck $truck)
+    public function update(Request $request, Truck $truck)
     {
         $companyId = $this->getCurrentCompanyId();
         $validated = $request->validate([
@@ -517,7 +525,7 @@ class TruckController extends Controller
             }
 
             return redirect()->route('trucks.index')->with('success', 'Truck updated successfully!');
-        } catch (\Illuminate\Database\QueryException $e) {
+        } catch (QueryException $e) {
             // Handle database constraint violations
             if ($e->errorInfo[1] == 1062) { // Duplicate entry error
                 $errorMessage = 'This truck number is already registered in the system. Please use a different truck number.';
@@ -547,13 +555,13 @@ class TruckController extends Controller
         }
     }
 
-    public function removeTransporter(\App\Models\Truck $truck)
+    public function removeTransporter(Truck $truck)
     {
         if (! $this->isTruckAccessibleToCurrentCompany($truck)) {
             abort(403, 'Unauthorized access to this truck.');
         }
         // Check if this truck has any undelivered Lorry Receipts
-        $hasUndeliveredLr = \App\Models\LorryReceipt::where('truck_id', $truck->id)
+        $hasUndeliveredLr = LorryReceipt::where('truck_id', $truck->id)
             ->where('delivery_status', '!=', 'delivered')
             ->exists();
 
@@ -572,7 +580,7 @@ class TruckController extends Controller
         }
     }
 
-    public function destroy(\App\Models\Truck $truck)
+    public function destroy(Truck $truck)
     {
         if (! $this->isTruckAccessibleToCurrentCompany($truck)) {
             abort(403, 'Unauthorized access to this truck.');
@@ -605,7 +613,7 @@ class TruckController extends Controller
         }
     }
 
-    public function show(\App\Models\Truck $truck)
+    public function show(Truck $truck)
     {
         $truck->load(['transporter', 'driver']);
 
@@ -618,7 +626,7 @@ class TruckController extends Controller
             'id' => $truck->id,
             'truck_number' => $truck->truck_number,
             'truck_type' => $truck->truck_type,
-            'registration_date' => $truck->registration_date ? \Carbon\Carbon::parse($truck->registration_date)->format('d-m-Y') : null,
+            'registration_date' => $truck->registration_date ? Carbon::parse($truck->registration_date)->format('d-m-Y') : null,
             'transporter' => $truck->transporter ? [
                 'id' => $truck->transporter->id,
                 'name' => $truck->transporter->name,
@@ -641,7 +649,7 @@ class TruckController extends Controller
         return response()->json($truckData);
     }
 
-    public function assignDriver(Request $request, \App\Models\Truck $truck)
+    public function assignDriver(Request $request, Truck $truck)
     {
         $validated = $request->validate([
             'driver_id' => 'nullable|exists:drivers,id',
@@ -680,7 +688,7 @@ class TruckController extends Controller
     /**
      * Assign a truck owner to a truck
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function assignOwner(Request $request)
     {
@@ -690,7 +698,7 @@ class TruckController extends Controller
         ]);
 
         try {
-            $truck = \App\Models\Truck::findOrFail($request->truck_id);
+            $truck = Truck::findOrFail($request->truck_id);
 
             // Check if the truck already has this owner
             if ($truck->transporter_id == $request->transporter_id) {
