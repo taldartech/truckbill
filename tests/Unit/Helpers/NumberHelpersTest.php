@@ -21,5 +21,16 @@ class NumberHelpersTest extends TestCase
         $this->assertSame('One  Rupees And Twenty Five Paise', getIndianCurrency(1.25));
         $this->assertSame('One Lakh Ten  Rupees ', getIndianCurrency(100010));
     }
+
+    public function test_format_indian_number_uses_lakh_crore_grouping(): void
+    {
+        $this->assertSame('10,50,000.00', formatIndianNumber(1050000));
+        $this->assertSame('1,00,000.00', formatIndianNumber(100000));
+        $this->assertSame('999.00', formatIndianNumber(999));
+        $this->assertSame('1,000.00', formatIndianNumber(1000));
+        $this->assertSame('1,23,45,678.90', formatIndianNumber(12345678.9));
+        $this->assertSame('-10,50,000.00', formatIndianNumber(-1050000));
+        $this->assertSame('1,050', formatIndianNumber(1050, 0));
+    }
 }
 

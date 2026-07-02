@@ -7,6 +7,35 @@ if (! function_exists('roundUpTdsAmount')) {
     }
 }
 
+if (! function_exists('formatIndianNumber')) {
+    /**
+     * Format a number using the Indian numbering system (lakh/crore grouping).
+     * Example: 1050000 => "10,50,000.00".
+     */
+    function formatIndianNumber(float $number, int $decimals = 2): string
+    {
+        $isNegative = $number < 0;
+        $number = abs($number);
+
+        $rounded = number_format($number, $decimals, '.', '');
+        [$integer, $fraction] = array_pad(explode('.', $rounded), 2, '');
+
+        $lastThree = substr($integer, -3);
+        $otherDigits = substr($integer, 0, -3);
+
+        if ($otherDigits !== '') {
+            $lastThree = preg_replace('/\B(?=(\d{2})+(?!\d))/', ',', $otherDigits).','.$lastThree;
+        }
+
+        $formatted = $lastThree;
+        if ($decimals > 0) {
+            $formatted .= '.'.$fraction;
+        }
+
+        return ($isNegative ? '-' : '').$formatted;
+    }
+}
+
 if (!function_exists('getIndianCurrency')) {
   function getIndianCurrency(float $number)
   {

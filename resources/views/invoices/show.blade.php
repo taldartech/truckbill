@@ -327,8 +327,18 @@
     </div>
 
     <!-- Add Payment Modal -->
+    <style>
+        #addPaymentModal .payment-summary-label {
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        #addPaymentModal .payment-summary {
+            overflow: hidden;
+        }
+    </style>
     <div class="modal fade" id="addPaymentModal" tabindex="-1" aria-labelledby="addPaymentModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header bg-brand-primary text-white">
                     <h5 class="modal-title" id="addPaymentModalLabel">
@@ -339,46 +349,66 @@
                 <form id="addPaymentForm">
                     <div class="modal-body">
                         <input type="hidden" id="payment_invoice_id" name="invoice_id" value="{{ $invoice->id }}">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Invoice Number</label>
-                            <input type="text" class="form-control" value="{{ $invoice->invoice_number
-                                ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '')
-                                : $invoice->manual_invoice_number }}" readonly>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold">Total Amount</label>
-                                <input type="text" class="form-control" value="&#8377;{{ number_format($invoice->total_amount, 2) }}" readonly>
+
+                        <div class="payment-summary border rounded mb-3">
+                            <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-light">
+                                <span class="text-muted">Invoice</span>
+                                <span class="fw-semibold text-truncate ms-2">{{ $invoice->invoice_number
+                                    ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '')
+                                    : $invoice->manual_invoice_number }}</span>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold">Paid Amount</label>
-                                <input type="text" class="form-control" value="&#8377;{{ number_format($invoice->paid_amount, 2) }}" readonly>
+                            <div class="row g-0 text-center">
+                                <div class="col-4 py-2 border-end">
+                                    <div class="text-muted payment-summary-label">Total</div>
+                                    <div class="fw-semibold">&#8377;{{ formatIndianNumber($invoice->total_amount) }}</div>
+                                </div>
+                                <div class="col-4 py-2 border-end">
+                                    <div class="text-muted payment-summary-label">Paid</div>
+                                    <div class="fw-semibold text-success">&#8377;{{ formatIndianNumber($invoice->paid_amount) }}</div>
+                                </div>
+                                <div class="col-4 py-2">
+                                    <div class="text-muted payment-summary-label">Balance</div>
+                                    <div class="fw-bold text-danger">&#8377;{{ formatIndianNumber($invoice->remaining_amount) }}</div>
+                                </div>
                             </div>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Remaining Balance</label>
-                            <input type="text" class="form-control fw-bold text-danger" value="&#8377;{{ number_format($invoice->remaining_amount, 2) }}" readonly>
+
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <label for="payment_date" class="form-label fw-semibold mb-1">Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="payment_date" name="payment_date" value="{{ date('Y-m-d') }}" required>
+                            </div>
+                            <div class="col-6">
+                                <label for="payment_mode" class="form-label fw-semibold mb-1">Mode <span class="text-danger">*</span></label>
+                                <select class="form-select" id="payment_mode" name="mode" required>
+                                    <option value="">Select&hellip;</option>
+                                    <option value="Cash">Cash</option>
+                                    <option value="Bank Transfer">Bank Transfer</option>
+                                    <option value="UPI">UPI</option>
+                                    <option value="Cheque">Cheque</option>
+                                    <option value="NEFT">NEFT</option>
+                                    <option value="RTGS">RTGS</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="mb-3">
-                            <label for="payment_date" class="form-label fw-bold">Payment Date <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control" id="payment_date" name="payment_date" value="{{ date('Y-m-d') }}" required>
+
+                        <div class="mb-2">
+                            <label for="payment_amount" class="form-label fw-semibold mb-1">Amount <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">&#8377;</span>
+                                <input type="number" class="form-control" id="payment_amount" name="amount" step="0.01" min="0.01" max="{{ $invoice->remaining_amount }}" required placeholder="0.00">
+                                <button type="button" class="btn btn-outline-secondary" id="fill_full_amount">Full</button>
+                            </div>
+                            <div class="form-text mt-1">Max: &#8377;{{ formatIndianNumber($invoice->remaining_amount) }}</div>
                         </div>
-                        <div class="mb-3">
-                            <label for="payment_mode" class="form-label fw-bold">Payment Mode <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="payment_mode" name="mode" required placeholder="e.g., Cash, Bank Transfer, Cheque, UPI">
+
+                        <div class="mb-1">
+                            <label for="payment_remark" class="form-label fw-semibold mb-1">Remark</label>
+                            <textarea class="form-control" id="payment_remark" name="remark" rows="2" placeholder="Optional"></textarea>
                         </div>
-                        <div class="mb-3">
-                            <label for="payment_amount" class="form-label fw-bold">Amount <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" id="payment_amount" name="amount" step="0.01" min="0.01" max="{{ $invoice->remaining_amount }}" required placeholder="0.00">
-                            <div class="form-text">Maximum: &#8377;{{ number_format($invoice->remaining_amount, 2) }}</div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="payment_remark" class="form-label">Remark</label>
-                            <textarea class="form-control" id="payment_remark" name="remark" rows="3" placeholder="Optional remarks"></textarea>
-                        </div>
-                        <div id="payment_error" class="alert alert-danger d-none"></div>
+                        <div id="payment_error" class="alert alert-danger d-none py-2 mb-0 mt-2"></div>
                     </div>
-                    <div class="modal-footer">
+                    <div class="modal-footer py-2">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-brand-primary">
                             <i class="bi bi-check-circle"></i> Add Payment
@@ -391,6 +421,12 @@
 
     <script>
         $(document).ready(function() {
+            // Quick-fill the full remaining balance
+            $('#fill_full_amount').on('click', function() {
+                var max = parseFloat($('#payment_amount').attr('max')) || 0;
+                $('#payment_amount').val(max.toFixed(2)).focus();
+            });
+
             // Handle payment form submission
             $('#addPaymentForm').on('submit', function(e) {
                 e.preventDefault();
