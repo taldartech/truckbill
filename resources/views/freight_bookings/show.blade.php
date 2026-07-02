@@ -128,6 +128,20 @@
                         <i class="bi bi-pencil"></i> Edit
                     </button>
                 @endif
+                @if ($freightBooking->lr)
+                    @php
+                        $voucherPrintTitle = $freightBooking->voucher_last_printed_at
+                            ? 'Last printed: '.$freightBooking->voucher_last_printed_at->format('d-m-Y h:i A')
+                            : 'Print voucher challan';
+                    @endphp
+                    <a href="{{ route('reports.voucher-receipt-export', ['lr_id' => $freightBooking->lr->id]) }}"
+                        class="btn btn-sm me-2 voucher-print-btn {{ $freightBooking->voucher_printed ? 'btn-primary' : 'btn-secondary' }}"
+                        data-freight-booking-id="{{ $freightBooking->id }}"
+                        data-mark-url="{{ route('reports.voucher-receipt-mark-printed') }}"
+                        title="{{ $voucherPrintTitle }}">
+                        <i class="bi bi-file-earmark-text"></i> Voucher Receipt
+                    </a>
+                @endif
                 <a href="{{ route('freight_bookings.index') }}{{ \App\Support\ListingQueryString::currentSuffix(\App\Support\ListingQueryString::FREIGHT_BOOKING_KEYS) }}" class="btn btn-sm btn-back">
                     <i class="bi bi-arrow-left"></i> Back to List
                 </a>
@@ -1429,5 +1443,68 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('click', function(event) {
+            const printButton = event.target.closest('.voucher-print-btn');
+            if (!printButton) {
+                return;
+            }
+
+            event.preventDefault();
+            const printUrl = printButton.getAttribute('href');
+            window.open(printUrl, '_blank');
+
+            if (typeof Swal === 'undefined') {
+                return;
+            }
+
+            Swal.fire({
+                icon: 'question',
+                title: 'Print Confirmation',
+                text: 'Did you print voucher challan successfully?',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, Printed',
+                cancelButtonText: 'No',
+                confirmButtonColor: '#198754',
+            }).then((result) => {
+                if (!result.isConfirmed) {
+                    return;
+                }
+
+                fetch(printButton.dataset.markUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            freight_booking_id: printButton.dataset.freightBookingId
+                        }),
+                    })
+                    .then(async (response) => {
+                        const data = await response.json();
+                        if (!response.ok) {
+                            throw new Error(data.message || 'Failed to update print status.');
+                        }
+                        return data;
+                    })
+                    .then((data) => {
+                        printButton.classList.remove('btn-outline-success');
+                        printButton.classList.add('btn-success');
+                        printButton.setAttribute('title', `Last printed: ${data.voucher_last_printed_at}`);
+                    })
+                    .catch((error) => {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Update Failed',
+                            text: error.message || 'Could not update print status.',
+                        });
+                    });
+            });
+        });
+    </script>
 
 @endsection

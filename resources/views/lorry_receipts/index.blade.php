@@ -358,6 +358,12 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         <i class="bi bi-x-lg me-1"></i> Close
                     </button>
+                    <a href="#" class="btn btn-primary" id="printLrBtn" target="_blank">
+                        <i class="bi bi-file-earmark-text"></i> Print LR with Freight
+                    </a>
+                    <a href="#" class="btn btn-primary" id="printLrWithoutFreightBtn" target="_blank">
+                        <i class="bi bi-file-earmark-text"></i> Print LR without Freight
+                    </a>
                     @if (Auth::user()->canActAsAdmin())
                         <a href="#" class="btn btn-primary" id="editLorryReceiptBtn">
                             <i class="bi bi-pencil me-1"></i> Edit
@@ -983,6 +989,16 @@
                     const editBtn = document.getElementById('editLorryReceiptBtn');
                     if (editBtn) {
                         editBtn.href = `/lorry_receipts/${id}/edit`;
+                    }
+
+                    // Update print buttons
+                    const printLrBtn = document.getElementById('printLrBtn');
+                    if (printLrBtn) {
+                        printLrBtn.href = `/reports/lr-copy-export?lr_id=${id}&show_freight=1`;
+                    }
+                    const printLrWithoutFreightBtn = document.getElementById('printLrWithoutFreightBtn');
+                    if (printLrWithoutFreightBtn) {
+                        printLrWithoutFreightBtn.href = `/reports/lr-copy-export?lr_id=${id}&show_freight=0`;
                     }
                 } catch (error) {
                     console.error('Error fetching LR details:', error);
