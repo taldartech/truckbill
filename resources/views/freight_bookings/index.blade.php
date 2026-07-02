@@ -672,6 +672,7 @@
                 `;
 
                 $('#voucherPaymentBody').html(modalContent);
+                updatePaymentTypeFromAmounts({ inputSelector: '.payment-amount' });
             });
 
             // Combined Payment Button Click Handler
@@ -919,6 +920,24 @@
                 const amountInput = document.getElementById('combinedAmountInput');
                 const allocatedInputs = document.querySelectorAll('#combinedPaymentForm .allocated-input');
 
+                function updateCombinedPaymentType() {
+                    const paymentTypeSelect = document.getElementById('combinedPaymentType');
+                    if (!paymentTypeSelect) {
+                        return;
+                    }
+
+                    const totalAmount = parseFloat(amountInput?.value) || 0;
+                    const isFullAmount = totalAmount > 0 && Math.abs(totalAmount - totalBalance) <= 0.01;
+                    const targetType = isFullAmount ? 'final' : 'advance';
+                    const match = Array.from(paymentTypeSelect.options).find(
+                        (option) => option.textContent.trim().toLowerCase() === targetType
+                    );
+
+                    if (match) {
+                        paymentTypeSelect.value = match.value;
+                    }
+                }
+
                 function allocateCombinedAmount() {
                     const totalAmount = parseFloat(amountInput?.value) || 0;
                     if (totalAmount <= 0 || totalBalance <= 0) {
@@ -949,11 +968,15 @@
                     allocs.forEach(({ input, a }) => {
                         input.value = a.toFixed(2);
                     });
+
+                    updateCombinedPaymentType();
                 }
 
                 if (amountInput) {
                     $(amountInput).off('input').on('input', allocateCombinedAmount);
                 }
+
+                updateCombinedPaymentType();
 
                 function toggleCombinedPump() {
                     const sel = document.getElementById('combinedPaymentMode');
@@ -1210,6 +1233,7 @@
                 $('#totalPaymentAmount').text('' + total.toLocaleString('en-IN', {
                     minimumFractionDigits: 2
                 }));
+                updatePaymentTypeFromAmounts({ inputSelector: '.payment-amount' });
             });
         });
 
@@ -2048,7 +2072,7 @@
                                 <input type="number" step="0.01" min="0" max="${balance}"
                                       style="width: 80px; text-align: right; border: 1px solid #ccc; padding: 2px;"
                                       class="allocated-input" data-lr="${lrNumber}"
-                                      onchange="updateTotalPayment()">
+                                      oninput="updateTotalPayment()" onchange="updateTotalPayment()">
                             </td>
                         </tr>
                     `;
@@ -2123,6 +2147,7 @@
 
                 // Show the modal
                 $('#voucherPaymentModal').modal('show');
+                updatePaymentTypeFromAmounts();
             }).catch(error => {
                 console.error('Error fetching payment history:', error);
                 // Continue with original layout even if history fetch fails
@@ -2142,7 +2167,7 @@
                                 <input type="number" step="0.01" min="0" max="${balance}"
                                       style="width: 80px; text-align: right; border: 1px solid #ccc; padding: 2px;"
                                       class="allocated-input" data-lr="${lrNumber}"
-                                      onchange="updateTotalPayment()">
+                                      oninput="updateTotalPayment()" onchange="updateTotalPayment()">
                             </td>
                         </tr>
                     `;
@@ -2204,6 +2229,7 @@
                 // Show the modal
                 updatePaymentButtonsVisibility();
                 $('#voucherPaymentModal').modal('show');
+                updatePaymentTypeFromAmounts();
             });
         }
 
@@ -2294,7 +2320,9 @@
                                 <label for="individualTotalAmountInput" class="form-label">Payment Amount *</label>
                                 <div class="input-group">
                                     <span class="input-group-text"></span>
-                                    <input type="number" step="0.01" class="form-control" name="total_amount" id="individualTotalAmountInput" min="0.01" max="${balance}" required>
+                                    <input type="number" step="0.01" class="form-control" name="total_amount" id="individualTotalAmountInput" min="0.01" max="${balance}" required
+                                        oninput="updatePaymentTypeFromAmounts({ selectId: 'individual_payment_type', amountInputId: 'individualTotalAmountInput' })"
+                                        onchange="updatePaymentTypeFromAmounts({ selectId: 'individual_payment_type', amountInputId: 'individualTotalAmountInput' })">
                                 </div>
                                 <div class="invalid-feedback">Please enter a valid payment amount.</div>
                                 <small class="text-muted">Amount must be greater than zero and not exceed ${balance.toFixed(2)}</small>
@@ -2435,6 +2463,50 @@
                 });
         }
 
+        // Auto-select payment type: final when full balance is paid, otherwise advance.
+        function updatePaymentTypeFromAmounts(options = {}) {
+            const selectId = options.selectId || 'paymentType';
+            const paymentTypeSelect = document.getElementById(selectId);
+
+            if (!paymentTypeSelect) {
+                return;
+            }
+
+            let inputs = [];
+            if (options.amountInputId) {
+                const amountInput = document.getElementById(options.amountInputId);
+                if (amountInput) {
+                    inputs = [amountInput];
+                }
+            } else {
+                const inputSelector = options.inputSelector || '.allocated-input';
+                inputs = Array.from(document.querySelectorAll(inputSelector));
+            }
+
+            if (inputs.length === 0) {
+                return;
+            }
+
+            let allFullAmount = true;
+            inputs.forEach((input) => {
+                const value = parseFloat(input.value) || 0;
+                const maxValue = parseFloat(input.getAttribute('max')) || 0;
+
+                if (value <= 0 || Math.abs(value - maxValue) > 0.01) {
+                    allFullAmount = false;
+                }
+            });
+
+            const targetType = allFullAmount ? 'final' : 'advance';
+            const match = Array.from(paymentTypeSelect.options).find(
+                (option) => option.textContent.trim().toLowerCase() === targetType
+            );
+
+            if (match) {
+                paymentTypeSelect.value = match.value;
+            }
+        }
+
         // Function to update total payment amount
         function updateTotalPayment() {
             const allocatedInputs = document.querySelectorAll('.allocated-input');
@@ -2497,6 +2569,8 @@
             if (submitBtn) {
                 submitBtn.disabled = hasError || total <= 0;
             }
+
+            updatePaymentTypeFromAmounts();
 
             return !hasError;
         }

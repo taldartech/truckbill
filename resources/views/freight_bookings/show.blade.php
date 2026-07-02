@@ -565,7 +565,7 @@
                                             <input type="number" class="form-control allocated-input"
                                                 data-fb-id="{{ $freightBooking->id }}" step="0.01" min="0.01"
                                                 max="{{ $freightBooking->balance_amount ?? 0 }}"
-                                                oninput="validatePaymentAmount(this)" onchange="updateTotalPayment()">
+                                                oninput="validatePaymentAmount(this); updateTotalPayment();" onchange="updateTotalPayment()">
                                         </td>
                                     </tr>
                                 </tbody>
@@ -789,6 +789,39 @@
             }
         }
 
+        // Auto-select payment type: final when full balance is paid, otherwise advance.
+        function updatePaymentTypeFromAmounts() {
+            const paymentTypeSelect = document.getElementById('paymentType');
+
+            if (!paymentTypeSelect) {
+                return;
+            }
+
+            const allocatedInputs = document.querySelectorAll('.allocated-input');
+            if (allocatedInputs.length === 0) {
+                return;
+            }
+
+            let allFullAmount = true;
+            allocatedInputs.forEach((input) => {
+                const value = parseFloat(input.value) || 0;
+                const maxValue = parseFloat(input.getAttribute('max')) || 0;
+
+                if (value <= 0 || Math.abs(value - maxValue) > 0.01) {
+                    allFullAmount = false;
+                }
+            });
+
+            const targetType = allFullAmount ? 'final' : 'advance';
+            const match = Array.from(paymentTypeSelect.options).find(
+                (option) => option.textContent.trim().toLowerCase() === targetType
+            );
+
+            if (match) {
+                paymentTypeSelect.value = match.value;
+            }
+        }
+
         // Function to update total payment amount
         function updateTotalPayment() {
             const allocatedInputs = document.querySelectorAll('.allocated-input');
@@ -813,6 +846,8 @@
             if (submitBtn) {
                 submitBtn.disabled = hasError || total <= 0;
             }
+
+            updatePaymentTypeFromAmounts();
         }
 
         // Function to submit voucher payment
@@ -1162,11 +1197,31 @@
                     }
                 }
                 allocs.forEach(({ input, a }) => { input.value = a.toFixed(2); });
+
+                updateCombinedPaymentType();
+            }
+
+            function updateCombinedPaymentType() {
+                const paymentTypeSelect = document.getElementById('combinedPaymentType');
+                if (!paymentTypeSelect) return;
+
+                const totalAmount = parseFloat(amountInput?.value) || 0;
+                const isFullAmount = totalAmount > 0 && Math.abs(totalAmount - totalBalance) <= 0.01;
+                const targetType = isFullAmount ? 'final' : 'advance';
+                const match = Array.from(paymentTypeSelect.options).find(
+                    (option) => option.textContent.trim().toLowerCase() === targetType
+                );
+
+                if (match) {
+                    paymentTypeSelect.value = match.value;
+                }
             }
 
             if (amountInput) {
                 amountInput.addEventListener('input', allocateCombinedAmount);
             }
+
+            updateCombinedPaymentType();
 
             function toggleCombinedPump() {
                 const sel = document.getElementById('combinedPaymentMode');
