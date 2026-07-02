@@ -20,6 +20,17 @@
                     @endif
 
                     <div class="card-body">
+                        @if($transporterMaster && $associatedCompanies->isNotEmpty())
+                            <div class="mb-4">
+                                <label class="form-label">Associated Companies</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    @foreach($associatedCompanies as $company)
+                                        <span class="badge bg-secondary">{{ $company->name }}</span>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label for="name" class="form-label">Transport Name *</label>

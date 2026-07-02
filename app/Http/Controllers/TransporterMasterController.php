@@ -27,6 +27,7 @@ class TransporterMasterController extends Controller
     {
         return view('master.transporter-masters-form', [
             'transporterMaster' => null,
+            'associatedCompanies' => collect(),
             'countries' => Country::query()->orderBy('name')->get(),
         ]);
     }
@@ -44,8 +45,18 @@ class TransporterMasterController extends Controller
     {
         $transporterMaster->load(['city', 'state', 'country']);
 
+        $associatedCompanies = $transporterMaster->transporters()
+            ->with('company:id,name')
+            ->get()
+            ->pluck('company')
+            ->filter()
+            ->unique('id')
+            ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
+            ->values();
+
         return view('master.transporter-masters-form', [
             'transporterMaster' => $transporterMaster,
+            'associatedCompanies' => $associatedCompanies,
             'countries' => Country::query()->orderBy('name')->get(),
         ]);
     }
