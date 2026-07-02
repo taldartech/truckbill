@@ -385,7 +385,7 @@
                                         <label class="form-label">Fr Rate (/ton) *</label>
                                         <input type="number" step="0.01" class="form-control fr-rate" min="1"
                                             max="20000" required>
-                                        <small class="text-muted">💰 Range: 1 - 20,000 per ton</small>
+                                        <small class="text-muted"><i class="bi bi-currency-rupee"></i> Range: 1 - 20,000 per ton</small>
                                     </div>
                                     <div class="col-md-3">
                                         <label class="form-label d-flex justify-content-between align-items-center">

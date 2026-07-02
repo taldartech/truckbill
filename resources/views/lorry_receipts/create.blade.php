@@ -461,7 +461,7 @@
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
                             <div class="invalid-feedback">Please enter a freight rate between 1 and 20,000.</div>
-                            <small class="text-muted">💰 Range: 1 - 20,000 per ton</small>
+                            <small class="text-muted"><i class="bi bi-currency-rupee"></i> Range: 1 - 20,000 per ton</small>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label d-flex justify-content-between align-items-center">

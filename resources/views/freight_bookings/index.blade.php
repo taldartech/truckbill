@@ -382,7 +382,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-success" onclick="submitVoucherPayment()">💰 Process
+                    <button type="button" class="btn btn-success" onclick="submitVoucherPayment()"><i class="bi bi-currency-rupee"></i> Process
                         Payment</button>
                 </div>
             </div>
@@ -403,7 +403,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-success" id="submitIndividualPayment">💰 Process
+                    <button type="button" class="btn btn-success" id="submitIndividualPayment"><i class="bi bi-currency-rupee"></i> Process
                         Payment</button>
                 </div>
             </div>
