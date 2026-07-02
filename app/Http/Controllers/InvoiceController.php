@@ -157,8 +157,11 @@ class InvoiceController extends Controller
     {
         $actions = '<div class="d-flex gap-1">';
 
-        $actions .= '<a href="'.route('reports.party-bill-export', ['invoice_number' => $invoice->id, 'type' => 'pdf']).'" class="btn btn-sm btn-primary" title="View PDF" data-bs-toggle="tooltip" target="_blank">';
+        $actions .= '<a href="'.route('invoices.show', $invoice->id).'" class="btn btn-sm btn-primary" title="View Invoice" data-bs-toggle="tooltip" target="_blank">';
         $actions .= '<i class="bi bi-eye"></i></a>';
+
+        $actions .= '<a href="'.route('reports.party-bill-export', ['invoice_number' => $invoice->id, 'type' => 'pdf']).'" class="btn btn-sm btn-primary" title="View PDF" data-bs-toggle="tooltip" target="_blank">';
+        $actions .= '<i class="bi bi-file-earmark-text"></i></a>';
 
         if (Auth::user()->canActAsAdmin() && $invoice->payment_status !== 'paid') {
             $actions .= '<a href="'.route('invoices.edit', $invoice->id).'" class="btn btn-sm btn-edit" title="Edit Invoice" data-bs-toggle="tooltip">';

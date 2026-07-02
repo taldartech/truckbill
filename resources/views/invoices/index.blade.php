@@ -334,6 +334,9 @@
                     <a href="#" class="btn btn-primary" id="viewFullInvoiceBtn" style="display: none;">
                         <i class="bi bi-eye"></i> View Full Invoice
                     </a>
+                    <a href="#" class="btn btn-primary" id="printInvoiceBtn" style="display: none;" target="_blank">
+                        <i class="bi bi-file-earmark-text"></i> Print Invoice
+                    </a>
                 </div>
             </div>
         </div>
@@ -465,7 +468,7 @@
 
                 // Show view full invoice button
                 $('#viewFullInvoiceBtn').attr('href', '/invoices/' + invoiceId).show();
-
+                $('#printInvoiceBtn').attr('href', '/reports/party-bill-export?invoice_number=' + invoiceId + '&type=pdf').show();
                 // Fetch invoice details
                 $.ajax({
                     url: '/invoices/' + invoiceId,
