@@ -8,7 +8,10 @@
     @endif
 
     <style>
-        /* Prevent form expansion on validation errors */
+        #tr_amount.tr-amount-exceeds-lr {
+            background-color: #fff3cd;
+        }
+    </style>
         .form-control,
         .form-select {
             min-height: 38px;
@@ -256,10 +259,13 @@
                         @enderror
                     </div>
                     <div class="col-md-4">
-                        <label for="tr_amount" class="form-label">TR Amount *</label>
+                        <label for="tr_amount" class="form-label" id="tr_amount_label">TR Amount *</label>
                         <input type="number" step="0.01" min="0.01" class="form-control" name="tr_amount"
                             id="tr_amount" value="{{ old('tr_amount') }}" placeholder="Auto-calculated (editable)"
                             required>
+                        <div id="tr_amount_lr_warning" class="form-text text-warning fw-semibold d-none">
+                            <i class="fas fa-exclamation-triangle"></i> TR Amount exceeds LR Amount.
+                        </div>
                         <small class="form-text text-muted">
                             <i class="fas fa-info-circle"></i> Auto-calculated: TR Freight Rate × Weight
                             ({{ $lorry_receipt->first() ? number_format($lorry_receipt->first()->weight ?? 0, 3) : '0.00' }}
@@ -297,6 +303,7 @@
 
                 <!-- Hidden weight input (if needed for JS) -->
                 <input type="hidden" id="weight" value="{{ $weight }}">
+                <input type="hidden" id="lr_amount" value="{{ $lorry_receipt->first() ? ($lorry_receipt->first()->amount ?? 0) : 0 }}">
                 <!-- Hidden transporter TDS percentage for JS calculations -->
                 <input type="hidden" id="transporter_tds_percentage" name="transporter_tds_percentage"
                     value="{{ $lorry_receipt->first() && $lorry_receipt->first()->transporter ? $lorry_receipt->first()->transporter->tds_percentage : 0 }}">
@@ -434,6 +441,25 @@
                 return Math.ceil(amount);
             }
 
+            function updateTrAmountHighlight() {
+                const lrAmountElement = document.getElementById('lr_amount');
+                const trAmountField = document.getElementById('tr_amount');
+                const trAmountLabel = document.getElementById('tr_amount_label');
+                const warning = document.getElementById('tr_amount_lr_warning');
+
+                if (!lrAmountElement || !trAmountField) {
+                    return;
+                }
+
+                const lrAmount = parseFloat(lrAmountElement.value) || 0;
+                const trAmount = parseFloat(trAmountField.value) || 0;
+                const exceeds = lrAmount > 0 && trAmount > lrAmount;
+
+                trAmountField.classList.toggle('tr-amount-exceeds-lr', exceeds);
+                trAmountLabel?.classList.toggle('tr-amount-exceeds-lr', exceeds);
+                warning?.classList.toggle('d-none', !exceeds);
+            }
+
             // Function to calculate TDS and Balance amounts
             function calculateTdsAndBalance() {
                 const trAmount = parseFloat(trAmountInput ? trAmountInput.value : 0) || 0;
@@ -449,6 +475,8 @@
                 if (balanceAmountInput) {
                     balanceAmountInput.value = balance.toFixed(2);
                 }
+
+                updateTrAmountHighlight();
             }
 
             // Add null checks for event listeners
@@ -544,6 +572,25 @@
                 return Math.ceil(amount);
             }
 
+            function updateTrAmountHighlight() {
+                const lrAmountElement = document.getElementById('lr_amount');
+                const trAmountField = document.getElementById('tr_amount');
+                const trAmountLabel = document.getElementById('tr_amount_label');
+                const warning = document.getElementById('tr_amount_lr_warning');
+
+                if (!lrAmountElement || !trAmountField) {
+                    return;
+                }
+
+                const lrAmount = parseFloat(lrAmountElement.value) || 0;
+                const trAmount = parseFloat(trAmountField.value) || 0;
+                const exceeds = lrAmount > 0 && trAmount > lrAmount;
+
+                trAmountField.classList.toggle('tr-amount-exceeds-lr', exceeds);
+                trAmountLabel?.classList.toggle('tr-amount-exceeds-lr', exceeds);
+                warning?.classList.toggle('d-none', !exceeds);
+            }
+
             // Function to calculate TDS and Balance amounts
             function calculateTdsAndBalance() {
                 const trAmount = parseFloat(trAmountInput ? trAmountInput.value : 0) || 0;
@@ -559,6 +606,8 @@
                 if (balanceAmountInput) {
                     balanceAmountInput.value = balance.toFixed(2);
                 }
+
+                updateTrAmountHighlight();
             }
 
             // Add null checks for event listeners

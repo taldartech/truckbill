@@ -2,6 +2,10 @@
 
 @section('content')
     <style>
+        #tr_amount.tr-amount-exceeds-lr {
+            background-color: #fff3cd;
+        }
+
         /* Prevent form expansion on validation errors */
         .form-control,
         .form-select {
@@ -221,13 +225,16 @@
                         @enderror
                     </div>
                     <div class="col-md-4">
-                        <label for="tr_amount" class="form-label">TR Amount *</label>
+                        <label for="tr_amount" class="form-label" id="tr_amount_label">TR Amount *</label>
                         <input type="number" step="0.01" min="0.01"
                             class="form-control @error('tr_amount') is-invalid @enderror" name="tr_amount" id="tr_amount"
                             value="{{ old('tr_amount', $freightBooking->tr_amount) }}"
                             placeholder="Auto-calculated (editable)" required
                             {{ ! $is_admin ? 'readonly style=background-color:#e9ecef;' : '' }}
                             {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
+                        <div id="tr_amount_lr_warning" class="form-text text-warning fw-semibold d-none">
+                            <i class="fas fa-exclamation-triangle"></i> TR Amount exceeds LR Amount.
+                        </div>
                         <small class="form-text text-muted">
                             <i class="fas fa-info-circle"></i> Auto-calculated: TR Freight Rate × Min(Loading Weight, Unloading Weight). Must be greater
                             than 0.
@@ -477,6 +484,8 @@
                     <!-- Hidden weight input and transporter TDS percentage -->
                     <input type="hidden" id="weight"
                         value="{{ $freightBooking->lr ? $freightBooking->lr->weight : 0 }}">
+                    <input type="hidden" id="lr_amount"
+                        value="{{ $freightBooking->lr ? ($freightBooking->lr->amount ?? 0) : 0 }}">
                     <input type="hidden" id="transporter_tds_percentage" name="transporter_tds_percentage"
                         value="{{ old('transporter_tds_percentage', $freightBooking->transporter_tds_percentage) }}">
                     <input type="hidden" id="pan_verified" name="pan_verified"
@@ -951,6 +960,25 @@
                 return Math.ceil(amount);
             }
 
+            function updateTrAmountHighlight() {
+                const lrAmountElement = document.getElementById('lr_amount');
+                const trAmountField = document.getElementById('tr_amount');
+                const trAmountLabel = document.getElementById('tr_amount_label');
+                const warning = document.getElementById('tr_amount_lr_warning');
+
+                if (!lrAmountElement || !trAmountField) {
+                    return;
+                }
+
+                const lrAmount = parseFloat(lrAmountElement.value) || 0;
+                const trAmount = parseFloat(trAmountField.value) || 0;
+                const exceeds = lrAmount > 0 && trAmount > lrAmount;
+
+                trAmountField.classList.toggle('tr-amount-exceeds-lr', exceeds);
+                trAmountLabel?.classList.toggle('tr-amount-exceeds-lr', exceeds);
+                warning?.classList.toggle('d-none', !exceeds);
+            }
+
             // Function to calculate TDS and Balance amounts
             function calculateTdsAndBalance() {
                 const trAmount = parseFloat(trAmountInput ? trAmountInput.value : 0) || 0;
@@ -1014,6 +1042,8 @@
                 if (balanceAmountInput) {
                     balanceAmountInput.value = balance.toFixed(2);
                 }
+
+                updateTrAmountHighlight();
             }
 
             // Function to calculate TR Amount using loose weight (min of loading and unloading weight)
