@@ -157,6 +157,47 @@ class TransporterMasterTest extends TestCase
         $this->assertSoftDeleted('transporter_masters', ['id' => $transporterMaster->id]);
     }
 
+    public function test_edit_page_displays_associated_companies(): void
+    {
+        $masterAdmin = $this->makeUser('master_admin');
+        $transporterMaster = TransporterMaster::factory()->create();
+
+        $companyA = Company::create([
+            'name' => 'Alpha Transport Co',
+            'user_id' => null,
+            'gst_slab' => config('payments.gst_slabs')[0],
+            'lr_credits' => 5,
+            'is_blocked' => false,
+        ]);
+
+        $companyB = Company::create([
+            'name' => 'Beta Logistics',
+            'user_id' => null,
+            'gst_slab' => config('payments.gst_slabs')[0],
+            'lr_credits' => 5,
+            'is_blocked' => false,
+        ]);
+
+        Transporter::factory()->create([
+            'company_id' => $companyA->id,
+            'transporter_master_id' => $transporterMaster->id,
+            'is_owner' => 0,
+        ]);
+
+        Transporter::factory()->create([
+            'company_id' => $companyB->id,
+            'transporter_master_id' => $transporterMaster->id,
+            'is_owner' => 0,
+        ]);
+
+        $this->actingAs($masterAdmin)
+            ->get(route('master.transporter-masters.edit', $transporterMaster))
+            ->assertOk()
+            ->assertSee('Associated Companies')
+            ->assertSee('Alpha Transport Co')
+            ->assertSee('Beta Logistics');
+    }
+
     public function test_update_syncs_linked_portal_user(): void
     {
         $masterAdmin = $this->makeUser('master_admin');
