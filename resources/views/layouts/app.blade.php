@@ -653,17 +653,10 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a href="{{ route('voucher_templates.index') }}"
-                                    class="nav-link{{ Request::is('voucher_templates*') ? ' active' : '' }}">
-                                    <i class="fas fa-file-invoice"></i>
-                                    <p>Voucher Template</p>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a href="{{ route('company_bank_details.index') }}"
-                                    class="nav-link{{ Request::is('company_bank_details*') ? ' active' : '' }}">
-                                    <i class="fas fa-university"></i>
-                                    <p>Company Bank Details</p>
+                                <a href="{{ route('company_settings.index') }}"
+                                    class="nav-link{{ Request::is('company_settings*') ? ' active' : '' }}">
+                                    <i class="fas fa-sliders-h"></i>
+                                    <p>Company Settings</p>
                                 </a>
                             </li>
                             <li class="nav-item">

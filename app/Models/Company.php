@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 
@@ -24,11 +25,6 @@ class Company extends Model
         'state_id',
         'city_id',
         'pin_code',
-        'template_jurisdictional_boundary',
-        'template_header',
-        'template_name',
-        'template_address',
-        'template_note',
         'bank',
         'account_number',
         'ifsc',
@@ -36,9 +32,6 @@ class Company extends Model
         'is_blocked',
         'company_type',
         'company_logo',
-        'invoice_template',
-        'lr_copy_template',
-        'freight_challan_template',
         'gst_slab',
         'plan_end_date',
         'lr_credits',
@@ -54,6 +47,13 @@ class Company extends Model
                 $base = self::generateShortNameFromCompanyName($company->name);
                 $company->short_name = self::ensureUniqueShortName($base);
             }
+        });
+
+        static::created(function (Company $company): void {
+            $company->setting()->firstOrCreate(
+                ['company_id' => $company->id],
+                CompanySetting::defaultsFor($company)
+            );
         });
     }
 
@@ -147,6 +147,11 @@ class Company extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function setting(): HasOne
+    {
+        return $this->hasOne(CompanySetting::class);
     }
 
     public function invoices()

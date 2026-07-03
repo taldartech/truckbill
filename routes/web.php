@@ -4,8 +4,8 @@ use App\Http\Controllers\AdvancePaymentController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\CityController;
-use App\Http\Controllers\CompanyBankDetailsController;
 use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\CompanySettingsController;
 use App\Http\Controllers\ConsigneeController;
 use App\Http\Controllers\CountryController;
 use App\Http\Controllers\CustomerPortalController;
@@ -35,7 +35,6 @@ use App\Http\Controllers\TruckOwnerController;
 use App\Http\Controllers\TruckTypeController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VoucherPaymentController;
-use App\Http\Controllers\VoucherTemplateController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/robots.txt', function () {
@@ -86,13 +85,10 @@ Route::middleware(['auth.blocked'])->group(function () {
         // Branch Management
         Route::resource('branches', BranchController::class)->except(['show']);
 
-        // Voucher Template Routes
-        Route::resource('voucher_templates', VoucherTemplateController::class)->except(['create', 'store', 'show', 'destroy']);
-
-        // Company Bank Details
-        Route::get('company_bank_details', [CompanyBankDetailsController::class, 'index'])->name('company_bank_details.index');
-        Route::get('company_bank_details/{id}/edit', [CompanyBankDetailsController::class, 'edit'])->name('company_bank_details.edit');
-        Route::put('company_bank_details/{id}', [CompanyBankDetailsController::class, 'update'])->name('company_bank_details.update');
+        // Company settings (voucher header, PDF templates)
+        Route::get('company_settings', [CompanySettingsController::class, 'index'])->name('company_settings.index');
+        Route::get('company_settings/{company}/edit', [CompanySettingsController::class, 'edit'])->name('company_settings.edit');
+        Route::put('company_settings/{company}', [CompanySettingsController::class, 'update'])->name('company_settings.update');
 
         // Truck_Owner Bank Accounts
         Route::get('truck_owner_bank_accounts/index', [TruckOwnerBankAccountController::class, 'index'])->name('truck_owner_bank_accounts.index');

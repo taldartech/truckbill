@@ -7,7 +7,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Challan — {{ $company->template_name ?? $company->name }}</title>
+    <title>Challan — {{ $company->setting?->template_name ?? $company->name }}</title>
     <style>
         body { font-family: DejaVu Sans, Helvetica, Arial, sans-serif; font-size: 8px; margin: 6px; color: #111; }
         .ch-wrap { border: 1px solid #000; padding: 6px; }
@@ -94,7 +94,7 @@
             </td>
             <td style="width: auto; text-align: center;">
                 <p class="ch-title" style="margin: 0 0 2px;">CHALLAN</p>
-                <p class="ch-sub" style="margin: 0;"><strong>{{ $company->template_name ?? $company->name }}</strong></p>
+                <p class="ch-sub" style="margin: 0;"><strong>{{ $company->setting?->template_name ?? $company->name }}</strong></p>
             </td>
             <td style="width: 22%; text-align: right; font-size: 7px;">
                 <span class="muted">Mobile</span><br>
@@ -107,7 +107,7 @@
         <tr>
             <td style="width: 50%;">
                 <span class="muted">Registered office / address (voucher template)</span><br>
-                {{ $company->template_address ?? $company->address ?? '—' }}
+                {{ $company->setting?->template_address ?? $company->address ?? '—' }}
             </td>
             <td style="width: 25%;">
                 <span class="muted">Challan No.</span><br>
@@ -232,8 +232,8 @@
                     <strong>Net amount:</strong> {{ number_format($grandTotal, 2) }}
                     &nbsp;|&nbsp; <strong>Balance:</strong> {{ number_format($balance, 2) }}
                 </p>
-                @if($company->template_jurisdictional_boundary)
-                    <p class="muted" style="margin-top: 4px;">{{ $company->template_jurisdictional_boundary }}</p>
+                @if($company->setting?->template_jurisdictional_boundary)
+                    <p class="muted" style="margin-top: 4px;">{{ $company->setting->template_jurisdictional_boundary }}</p>
                 @endif
             </td>
             <td style="width: 45%;">
@@ -253,7 +253,7 @@
         <table style="width: 100%;">
             <tr>
                 <td style="width: 50%; border-top: 1px solid #000; padding-top: 4px;">Owner / Driver</td>
-                <td style="width: 50%; border-top: 1px solid #000; padding-top: 4px; text-align: right;">For {{ $company->template_name ?? $company->name }}</td>
+                <td style="width: 50%; border-top: 1px solid #000; padding-top: 4px; text-align: right;">For {{ $company->setting?->template_name ?? $company->name }}</td>
             </tr>
         </table>
         <p class="muted" style="margin-top: 6px;">

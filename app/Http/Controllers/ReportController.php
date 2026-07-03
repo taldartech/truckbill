@@ -19,6 +19,7 @@ use App\Exports\TransporterMasterExport;
 use App\Exports\TransporterReportExport;
 use App\Models\Branch;
 use App\Models\Company;
+use App\Models\CompanySetting;
 use App\Models\Consignee;
 use App\Models\FreightBooking;
 use App\Models\Invoice;
@@ -298,7 +299,7 @@ class ReportController extends Controller
                 ->find((int) $lr_id);
         }
         $companyDefaultTemplate = LrCopyPdfTemplate::normalizeKey(
-            Auth::user()->company?->lr_copy_template ?? 'classic'
+            Auth::user()->company?->setting?->lr_copy_template ?? 'classic'
         );
 
         return view('reports.lr-copy', compact('lr', 'selectedCustomer', 'customerId', 'lr_id', 'companyDefaultTemplate'));
@@ -312,7 +313,7 @@ class ReportController extends Controller
 
         $companyId = Auth::user()->company_id;
         $lr = LorryReceipt::query()
-            ->with(['truck.transporter', 'consignor', 'consignee', 'company.city', 'company.state', 'company.country'])
+            ->with(['truck.transporter', 'consignor', 'consignee', 'company.city', 'company.state', 'company.country', 'company.setting'])
             ->where('company_id', $companyId)
             ->find($request->input('lr_id'));
 
@@ -321,7 +322,7 @@ class ReportController extends Controller
         }
 
         $companyTemplate = LrCopyPdfTemplate::normalizeKey(
-            Auth::user()->company?->lr_copy_template ?? 'classic'
+            Auth::user()->company?->setting?->lr_copy_template ?? 'classic'
         );
         $requested = $request->filled('template')
             ? LrCopyPdfTemplate::normalizeKey($request->input('template'))
@@ -1066,19 +1067,11 @@ class ReportController extends Controller
             $lrs = collect([$lr]);
         }
 
-        $company = Company::find($companyId);
-        // Export should not hard-fail if voucher template fields are empty.
-        // Use fallback values to keep PDF generation + UI flow working.
-        if (! $company->template_name) {
-            $company->template_name = $company->name;
-        }
-
-        if (! $company->template_address) {
-            $company->template_address = $company->address ?? 'Sample registered office address';
-        }
+        $company = Company::with('setting')->find($companyId);
+        CompanySetting::applyPreviewDefaults($company);
 
         $templateKey = FreightChallanTemplate::normalizeKey(
-            $request->input('template') ?? ($company->freight_challan_template ?? 'classic')
+            $request->input('template') ?? ($company->setting?->freight_challan_template ?? 'classic')
         );
         $view = FreightChallanTemplate::viewName($templateKey);
 
@@ -1159,8 +1152,8 @@ class ReportController extends Controller
                 ->first(['id', 'name']);
         }
 
-        $selectedCompany = Company::find($companyId);
-        $selectedInvoiceTemplate = (string) ($selectedCompany->invoice_template ?? 'classic');
+        $selectedCompany = Company::with('setting')->find($companyId);
+        $selectedInvoiceTemplate = (string) ($selectedCompany?->setting?->invoice_template ?? 'classic');
         $selectedInvoiceTemplateLabel = match ($selectedInvoiceTemplate) {
             'modern' => 'B (Modern)',
             'compact' => 'C (Compact)',
@@ -1204,8 +1197,8 @@ class ReportController extends Controller
         $resolvedTemplateKey = 'classic';
 
         if ($exportType === 'pdf') {
-            $selectedCompany = Company::find(Auth::user()->company_id);
-            $companyTemplate = (string) ($selectedCompany->invoice_template ?? 'classic');
+            $selectedCompany = Company::with('setting')->find(Auth::user()->company_id);
+            $companyTemplate = (string) ($selectedCompany?->setting?->invoice_template ?? 'classic');
 
             $resolvedTemplateKey = match ($companyTemplate) {
                 'modern' => 'modern',

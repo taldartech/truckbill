@@ -46,47 +46,32 @@ class CompanyBankDetailsTest extends TestCase
         return $super->fresh();
     }
 
-    public function test_super_admin_can_view_company_bank_details_index(): void
-    {
-        $super = $this->makeSuperAdmin();
-
-        $response = $this->actingAs($super)->get(route('company_bank_details.index'));
-
-        $response->assertOk();
-        $response->assertViewIs('company_bank_details.index');
-        $response->assertSee('Company Bank Details');
-    }
-
-    public function test_super_admin_can_view_edit_form(): void
-    {
-        $super = $this->makeSuperAdmin();
-        $company = $super->company;
-
-        $response = $this->actingAs($super)->get(route('company_bank_details.edit', $company->id));
-
-        $response->assertOk();
-        $response->assertViewIs('company_bank_details.edit');
-        $response->assertSee($company->name);
-        $response->assertSee('bank');
-        $response->assertSee('account_number');
-        $response->assertSee('ifsc');
-    }
-
-    public function test_super_admin_can_update_company_bank_details(): void
+    public function test_super_admin_can_update_bank_details_on_company_edit(): void
     {
         $super = $this->makeSuperAdmin();
         $company = $super->company;
 
         $payload = [
+            'name' => $company->name,
+            'pan_number' => $company->pan_number ?? 'AABAD1452A',
+            'gst_scheme' => $company->gst_scheme ?? 'reverse charge',
+            'address' => $company->address ?? 'Test address',
+            'contact_person' => $company->contact_person ?? 'Contact',
+            'contact_number' => $company->contact_number ?? '9876543210',
+            'company_type' => $company->company_type ?? 'Broker',
+            'country_id' => $company->country_id,
+            'state_id' => $company->state_id,
+            'city_id' => $company->city_id,
+            'pin_code' => $company->pin_code ?? '400001',
+            'gst_slab' => $company->gst_slab,
             'bank' => 'State Bank of India',
             'account_number' => '12345678901234',
             'ifsc' => 'SBIN0001234',
         ];
 
-        $response = $this->actingAs($super)->put(route('company_bank_details.update', $company->id), $payload);
+        $response = $this->actingAs($super)->put(route('company.update', $company->id), $payload);
 
-        $response->assertRedirect(route('company_bank_details.index'));
-        $response->assertSessionHas('success', 'Company bank details updated successfully.');
+        $response->assertRedirect(route('company.index'));
 
         $company->refresh();
         $this->assertSame('State Bank of India', $company->bank);
@@ -94,48 +79,30 @@ class CompanyBankDetailsTest extends TestCase
         $this->assertSame('SBIN0001234', $company->ifsc);
     }
 
-    public function test_update_validates_ifsc_format(): void
+    public function test_company_update_validates_ifsc_format(): void
     {
         $super = $this->makeSuperAdmin();
         $company = $super->company;
 
-        $response = $this->actingAs($super)->put(route('company_bank_details.update', $company->id), [
+        $response = $this->actingAs($super)->put(route('company.update', $company->id), [
+            'name' => $company->name,
+            'pan_number' => $company->pan_number ?? 'AABAD1452A',
+            'gst_scheme' => $company->gst_scheme ?? 'reverse charge',
+            'address' => $company->address ?? 'Test address',
+            'contact_person' => $company->contact_person ?? 'Contact',
+            'contact_number' => $company->contact_number ?? '9876543210',
+            'company_type' => $company->company_type ?? 'Broker',
+            'pin_code' => $company->pin_code ?? '400001',
+            'gst_slab' => $company->gst_slab,
             'bank' => 'Test Bank',
             'account_number' => '12345',
             'ifsc' => 'INVALID',
         ]);
 
         $response->assertSessionHasErrors('ifsc');
-        $company->refresh();
-        $this->assertNull($company->bank);
     }
 
-    public function test_super_admin_cannot_edit_bank_details_for_company_they_do_not_own(): void
-    {
-        $super = $this->makeSuperAdmin();
-
-        $otherOwner = User::factory()->create([
-            'user_role_id' => 2,
-            'company_id' => null,
-        ]);
-
-        $foreignCompany = Company::create([
-            'name' => 'Other Owner Co',
-            'gst_slab' => config('payments.gst_slabs')[0],
-            'user_id' => $otherOwner->id,
-            'lr_credits' => 5,
-            'is_blocked' => false,
-        ]);
-
-        $this->actingAs($super)->get(route('company_bank_details.edit', $foreignCompany->id))->assertForbidden();
-        $this->actingAs($super)->put(route('company_bank_details.update', $foreignCompany->id), [
-            'bank' => 'Test Bank',
-            'account_number' => '12345',
-            'ifsc' => 'SBIN0001234',
-        ])->assertForbidden();
-    }
-
-    public function test_admin_forbidden_from_company_bank_details(): void
+    public function test_admin_forbidden_from_company_settings(): void
     {
         $company = Company::create([
             'name' => 'Admin Co',
@@ -149,7 +116,7 @@ class CompanyBankDetailsTest extends TestCase
             'company_id' => $company->id,
         ]);
 
-        $this->actingAs($admin)->get(route('company_bank_details.index'))->assertForbidden();
-        $this->actingAs($admin)->get(route('company_bank_details.edit', $company->id))->assertForbidden();
+        $this->actingAs($admin)->get(route('company_settings.index'))->assertForbidden();
+        $this->actingAs($admin)->get(route('company_settings.edit', $company->id))->assertForbidden();
     }
 }

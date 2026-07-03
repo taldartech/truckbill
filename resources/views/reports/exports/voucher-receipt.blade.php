@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>भाड़ा-चालान - {{ $company->template_name ?? $company->name ?? '' }}</title>
+    <title>भाड़ा-चालान - {{ $company->setting?->template_name ?? $company->name ?? '' }}</title>
     <!-- Favicon -->
     <link rel="icon" type="image/png" sizes="192x192"  href="{{ asset('favicon/android-icon-192x192.png') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('favicon/apple-touch-icon.png') }}">
@@ -130,8 +130,8 @@
 <body>
     @php
         $voucherLogoSrc = $company->logoFilesystemPathForPdf() ?: $company->logoPublicUrl();
-        $templateName = $company->template_name ?? $company->name ?? '';
-        $templateAddress = $company->template_address ?? $company->address ?? '';
+        $templateName = $company->setting?->template_name ?? $company->name ?? '';
+        $templateAddress = $company->setting?->template_address ?? $company->address ?? '';
     @endphp
     <div class="container">
 
@@ -139,8 +139,8 @@
         <table class="top-line-table">
             <tr>
                 <td style="width:26%; text-align:left;">
-                  @if (!empty($company->template_jurisdictional_boundary))
-                    {{ $company->template_jurisdictional_boundary }}<br>
+                  @if (!empty($company->setting?->template_jurisdictional_boundary))
+                    {{ $company->setting->template_jurisdictional_boundary }}<br>
                   @endif
                     <span style="font-size: 18px"><b>(भाड़ा-चालान)</b></span>
                 </td>
@@ -155,8 +155,8 @@
                             ])
                         </div>
                     @endif
-                    @if (!empty($company->template_header))
-                    <b>{{ $company->template_header }}<br>
+                    @if (!empty($company->setting?->template_header))
+                    <b>{{ $company->setting->template_header }}<br>
                     @endif
                         <span style="font-size: 27px">{{ $templateName }}</span>
                     </b><br>
@@ -324,7 +324,7 @@
                 <td class="summary-left" style="font-size: 12px;">
                     <p><b>R.C. PAN / TDS FORM:</b> जमा □ &nbsp;&nbsp;&nbsp; बाकी □</p>
                     <br>
-                    {!! $company->template_note !!}
+                    {!! $company->setting?->template_note !!}
                 </td>
                 <td class="summary-right">
                     <table>

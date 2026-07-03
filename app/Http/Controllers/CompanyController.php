@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\City;
 use App\Models\Company;
+use App\Models\CompanySetting;
 use App\Models\Consignee;
 use App\Models\Country;
 use App\Models\CustomInvoiceDetail;
@@ -395,9 +396,9 @@ class CompanyController extends Controller
             ],
             'company_type' => 'nullable|in:Broker,Agency,Both',
             'company_logo' => 'nullable|image|mimes:jpeg,png,jpg|max:250',
-            'invoice_template' => 'nullable|in:classic,modern,compact',
-            'lr_copy_template' => 'nullable|in:classic,modern,compact',
-            'freight_challan_template' => 'nullable|in:classic,modern',
+            'bank' => 'nullable|string|max:255',
+            'account_number' => 'nullable|string|max:34',
+            'ifsc' => ['nullable', 'string', 'size:11', 'regex:/^[A-Za-z]{4}0[A-Za-z0-9]{6}$/'],
             'gst_scheme' => 'nullable|in:reverse charge,forward charge',
             'gst_type' => 'nullable|in:composition,regular',
             'address' => 'nullable|string',
@@ -428,6 +429,7 @@ class CompanyController extends Controller
         ], [
             'name.regex' => 'The name must contain at least one alphabetic character.',
             'pin_code.max' => 'The pin code must be a maximum of 10 characters.',
+            'ifsc.regex' => 'IFSC must be 11 characters (e.g. SBIN0001234).',
         ]);
         // dd($validated);
         if ($request->hasFile('company_logo')) {
@@ -446,11 +448,9 @@ class CompanyController extends Controller
         // ✅ Default values if not set
         $validated['lr_credits'] = $request->input('lr_credits', $company->lr_credits ?? 0);
         $validated['truck_credits'] = $request->input('truck_credits', $company->truck_credits ?? 0);
-        if (! $request->filled('lr_copy_template')) {
-            $validated['lr_copy_template'] = $company->lr_copy_template ?? 'classic';
-        }
-        if (! $request->filled('freight_challan_template')) {
-            $validated['freight_challan_template'] = $company->freight_challan_template ?? 'classic';
+
+        if (! empty($validated['ifsc'] ?? null)) {
+            $validated['ifsc'] = strtoupper($validated['ifsc']);
         }
 
         $company->update($validated);
@@ -552,9 +552,9 @@ class CompanyController extends Controller
             ],
             'company_type' => 'nullable|in:Broker,Agency,Both',
             'company_logo' => 'nullable|image|mimes:jpeg,png,jpg|max:250',
-            'invoice_template' => 'nullable|in:classic,modern,compact',
-            'lr_copy_template' => 'nullable|in:classic,modern,compact',
-            'freight_challan_template' => 'nullable|in:classic,modern',
+            'bank' => 'nullable|string|max:255',
+            'account_number' => 'nullable|string|max:34',
+            'ifsc' => ['nullable', 'string', 'size:11', 'regex:/^[A-Za-z]{4}0[A-Za-z0-9]{6}$/'],
             'country_id' => 'nullable|exists:countries,id',
             'state_id' => 'nullable|exists:states,id',
             'city_id' => 'nullable|exists:cities,id',
@@ -568,6 +568,7 @@ class CompanyController extends Controller
         ], [
             'name.regex' => 'The name must contain at least one alphabetic character.',
             'pin_code.max' => 'The pin code must be a maximum of 10 characters.',
+            'ifsc.regex' => 'IFSC must be 11 characters (e.g. SBIN0001234).',
         ]);
 
         // Set default GST type to regular if not provided
@@ -580,14 +581,9 @@ class CompanyController extends Controller
         if (! $request->filled('gst_type')) {
             $validated['gst_type'] = 'regular';
         }
-        if (! $request->filled('invoice_template')) {
-            $validated['invoice_template'] = 'classic';
-        }
-        if (! $request->filled('lr_copy_template')) {
-            $validated['lr_copy_template'] = 'classic';
-        }
-        if (! $request->filled('freight_challan_template')) {
-            $validated['freight_challan_template'] = 'classic';
+
+        if (! empty($validated['ifsc'] ?? null)) {
+            $validated['ifsc'] = strtoupper($validated['ifsc']);
         }
 
         // ✅ Automatically set plan_end_date = created_at + 15 days
@@ -701,6 +697,12 @@ class CompanyController extends Controller
         $state = new State(['name' => $request->query('state', 'Rajasthan'), 'code' => '08']);
         $company->setRelation('city', $city);
         $company->setRelation('state', $state);
+        $company->setRelation('setting', new CompanySetting(
+            array_merge(CompanySetting::defaultsFor($company), [
+                'template_name' => $company->name,
+                'template_address' => $company->address ?? 'Sample registered office address',
+            ])
+        ));
 
         return $company;
     }
@@ -888,19 +890,10 @@ class CompanyController extends Controller
     {
         $this->authorizeCompanyAccess($company);
 
-        // Preview should never hard-fail if template fields are empty.
-        // When the company is newly created, template_name/template_address may be blank,
-        // so we fallback to company name/address for a consistent UI + PDF output.
-        if (! $company->template_name) {
-            $company->template_name = $company->name;
-        }
-
-        if (! $company->template_address) {
-            $company->template_address = $company->address ?? 'Sample registered office address';
-        }
+        $company->loadMissing(['city', 'state', 'country', 'setting']);
+        CompanySetting::applyPreviewDefaults($company);
 
         $template = FreightChallanTemplate::normalizeKey((string) $request->query('template', 'classic'));
-        $company->loadMissing(['city', 'state', 'country']);
         $lrs = $this->buildDemoFreightChallanPreviewLrs($company);
 
         $view = FreightChallanTemplate::viewName($template);
@@ -916,8 +909,7 @@ class CompanyController extends Controller
     public function freightChallanTemplateDemo(Request $request)
     {
         $company = $this->buildDemoCompanyFromQuery($request);
-        $company->template_name = $company->name;
-        $company->template_address = $company->address ?? 'Sample registered office address';
+        CompanySetting::applyPreviewDefaults($company);
         $company->loadMissing(['city', 'state', 'country']);
 
         $template = FreightChallanTemplate::normalizeKey((string) $request->query('template', 'classic'));
