@@ -9,6 +9,9 @@ return Application::configure(basePath: dirname(__DIR__))
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
+        then: function (): void {
+            require __DIR__.'/../routes/api-admin.php';
+        },
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->appendToGroup('web', \App\Http\Middleware\PreventSearchIndexing::class);
@@ -19,12 +22,16 @@ return Application::configure(basePath: dirname(__DIR__))
             'company.context' => \App\Http\Middleware\EnsureCompanyContextMiddleware::class,
             'customer.consignee' => \App\Http\Middleware\EnsureCustomerConsigneeContext::class,
             'onboarding.signature' => \App\Http\Middleware\VerifyOnboardingSignature::class,
+            'subscription.active' => \App\Http\Middleware\EnsureActiveSubscription::class,
         ]);
 
         $middleware->validateCsrfTokens(except: [
             'api/onboarding/create-user',
             'api/onboarding/update-user',
             'api/onboarding/status',
+            'api/admin/subscriptions',
+            'api/admin/subscriptions/*',
+            'subscription/callback',
         ]);
 
         // Note: Single device login check is now included in CheckBlockMiddleware

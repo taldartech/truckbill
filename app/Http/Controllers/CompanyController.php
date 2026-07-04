@@ -21,6 +21,7 @@ use App\Support\FreightChallanTemplate;
 use App\Support\LrCopyPdfTemplate;
 use App\Support\MpdfDocument;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\SubscriptionPricingService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -31,7 +32,8 @@ use Illuminate\Validation\Rule;
 class CompanyController extends Controller
 {
     public function __construct(
-        private readonly CompanyLifecycleNotificationService $companyLifecycleNotificationService
+        private readonly CompanyLifecycleNotificationService $companyLifecycleNotificationService,
+        private readonly SubscriptionPricingService $subscriptionPricingService,
     ) {}
 
     /**
@@ -240,15 +242,6 @@ class CompanyController extends Controller
 
             return $buttons;
         } else {
-            $buttons .= '<button type="button" class="btn btn-sm btn-success js-update-subscription" '
-                .'title="Update Subscription" '
-                .'data-company-id="'.$company->id.'" '
-                .'data-company-name="'.e($company->name).'" '
-                .'data-plan-end-date="'.e((string) ($company->plan_end_date ?? '')).'" '
-                .'data-lr-credits="'.e((string) ($company->lr_credits ?? 0)).'" '
-                .'data-truck-credits="'.e((string) ($company->truck_credits ?? 0)).'">'
-                .'<i class="bi bi-calendar2-check"></i></button>';
-
             if ($company->is_blocked) {
                 $unblockUrl = route('company.unblock', $company->id);
                 $buttons .= '<a href="'.$unblockUrl.'" class="btn btn-sm btn-danger" title="Unblock User"
@@ -264,27 +257,6 @@ class CompanyController extends Controller
 
             return $buttons;
         }
-    }
-
-    public function updateSubscription(Request $request, Company $company)
-    {
-        if (! auth()->check() || auth()->user()->userRole->name !== 'master_admin') {
-            abort(403, 'Unauthorized action.');
-        }
-
-        $validated = $request->validate([
-            'plan_end_date' => ['required', 'date'],
-            'lr_credits' => ['required', 'integer', 'min:0'],
-            'truck_credits' => ['required', 'integer', 'min:0'],
-        ]);
-
-        $company->update([
-            'plan_end_date' => $validated['plan_end_date'],
-            'lr_credits' => $validated['lr_credits'],
-            'truck_credits' => $validated['truck_credits'],
-        ]);
-
-        return redirect()->route('company.index')->with('success', 'Company subscription updated successfully.');
     }
 
     public function block($id)
@@ -413,9 +385,6 @@ class CompanyController extends Controller
                 },
             ],
 
-            'plan_end_date' => 'nullable|date',
-            'lr_credits' => 'nullable|integer|min:0',
-            'truck_credits' => 'nullable|integer|min:0',
             'country_id' => 'nullable|exists:countries,id',
             'state_id' => 'nullable|exists:states,id',
             'city_id' => 'nullable|exists:cities,id',
@@ -439,15 +408,6 @@ class CompanyController extends Controller
             $validated['company_logo'] = $path;
         }
         $validated['user_id'] = auth()->user()->id;
-        if (! $request->filled('plan_end_date')) {
-            // You can decide the logic:
-            // Option 1: keep existing plan_end_date
-            $validated['plan_end_date'] = $company->plan_end_date;
-        }
-
-        // ✅ Default values if not set
-        $validated['lr_credits'] = $request->input('lr_credits', $company->lr_credits ?? 0);
-        $validated['truck_credits'] = $request->input('truck_credits', $company->truck_credits ?? 0);
 
         if (! empty($validated['ifsc'] ?? null)) {
             $validated['ifsc'] = strtoupper($validated['ifsc']);
@@ -586,14 +546,8 @@ class CompanyController extends Controller
             $validated['ifsc'] = strtoupper($validated['ifsc']);
         }
 
-        // ✅ Automatically set plan_end_date = created_at + 15 days
-        $validated['plan_end_date'] = Carbon::now()->addDays(14)->toDateString();
-
-        // ✅ Optional: Set default credits
-        $validated['lr_credits'] = 150;
-        $validated['truck_credits'] = null;
-
         $company = Company::create($validated);
+        $this->subscriptionPricingService->createTrialSubscription($company);
         $this->companyLifecycleNotificationService->notifyCompanyRegistered($company, auth()->user());
 
         return redirect()->route('company.index')->with('success', 'Company registered successfully!,You are eligible for 15 days free plan');

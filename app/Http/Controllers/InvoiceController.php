@@ -245,9 +245,8 @@ class InvoiceController extends Controller
     public function create()
     {
         $company = Auth::user()->company;
-        $today = now()->startOfDay();
-        $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
-        if ($company->plan_end_date && $today->gt($planEndDate)) {
+        $company->loadMissing('subscription');
+        if (! $company->subscriptionCanWrite()) {
             return redirect()->route('invoices.index')
                 ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
@@ -500,9 +499,8 @@ class InvoiceController extends Controller
             abort(403, 'Unauthorized access to this invoice.');
         }
         $company = Auth::user()->company;
-        $today = now()->startOfDay();
-        $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
-        if ($company->plan_end_date && $today->gt($planEndDate)) {
+        $company->loadMissing('subscription');
+        if (! $company->subscriptionCanWrite()) {
             return redirect()->route('invoices.index')
                 ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
@@ -518,9 +516,8 @@ class InvoiceController extends Controller
             abort(403, 'Unauthorized access to this invoice.');
         }
         $company = Auth::user()->company;
-        $today = now()->startOfDay();
-        $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
-        if ($company->plan_end_date && $today->gt($planEndDate)) {
+        $company->loadMissing('subscription');
+        if (! $company->subscriptionCanWrite()) {
             return redirect()->route('invoices.index')
                 ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
@@ -583,9 +580,8 @@ class InvoiceController extends Controller
             abort(403, 'Unauthorized access to this invoice.');
         }
         $company = Auth::user()->company;
-        $today = now()->startOfDay();
-        $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
-        if ($company->plan_end_date && $today->gt($planEndDate)) {
+        $company->loadMissing('subscription');
+        if (! $company->subscriptionCanWrite()) {
             return redirect()->route('invoices.index')
                 ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }

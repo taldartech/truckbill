@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth.blocked')->group(function () {
-    Route::middleware('company.context')->group(function () {
+    Route::middleware(['company.context', 'subscription.active'])->group(function () {
         Route::get('/api/transporters/{transporter}/trucks', [TruckController::class, 'getTrucksForTransporter']);
         Route::get('/api/trucks/{truck}/owner-transporters', [TruckController::class, 'getOwnerTransporters']);
         Route::get('/api/drivers', [DriverController::class, 'getDriversApi']);
@@ -49,7 +49,7 @@ Route::middleware('auth.blocked')->group(function () {
     Route::get('/api/cities/search', [Select2SearchController::class, 'citiesSearch']);
     Route::get('/api/cities/{stateId}', [DropdownController::class, 'cities']);
 
-    Route::middleware('company.context')->group(function () {
+    Route::middleware(['company.context', 'subscription.active'])->group(function () {
         // Validation routes
         Route::post('/api/validate/gst-number', [ValidationController::class, 'checkGstNumber']);
         Route::post('/api/validate/pan-number', [ValidationController::class, 'checkPanNumber']);

@@ -15,13 +15,6 @@ return new class extends Migration
             Schema::table('freight_bookings', function (Blueprint $table) {
                 $table->integer('voucher_number')->unique()->after('id');
             });
-
-            // Initialize the first voucher number
-            $firstBooking = \App\Models\FreightBooking::first();
-            if ($firstBooking) {
-                $firstBooking->voucher_number = 1;
-                $firstBooking->save();
-            }
         }
     }
 
@@ -32,7 +25,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('freight_bookings', function (Blueprint $table) {
-            //
+            $table->dropColumn('voucher_number');
         });
     }
 };

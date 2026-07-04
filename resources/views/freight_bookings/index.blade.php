@@ -676,7 +676,7 @@
             });
 
             // Combined Payment Button Click Handler
-            const planEndDateStr = @json(Auth::user()->company->plan_end_date ?? null);
+            const planEndDateStr = @json(Auth::user()->company?->subscription?->ends_on?->toDateString() ?? null);
             const today = new Date();
             $('#combined-payment-btn').on('click', function() {
                 const checkedBoxes = Object.values(selectedRows);
@@ -1116,7 +1116,7 @@
             // Bulk Memo ID Modal
             $('#bulk-memo-id-btn').on('click', function() {
                 const checkedBoxes = Object.values(selectedRows);
-                const planEndDateStr = @json(Auth::user()->company->plan_end_date ?? null);
+                const planEndDateStr = @json(Auth::user()->company?->subscription?->ends_on?->toDateString() ?? null);
                 const today = new Date();
                 if (planEndDateStr && new Date(planEndDateStr) < today) {
                     alert('Your plan has expired. Please renew your plan to use this feature.');
@@ -1888,7 +1888,7 @@
     </script>
     <script>
         // Global variables for plan expiry check
-        const planEndDateStr = @json(Auth::user()->company->plan_end_date ?? null);
+        const planEndDateStr = @json(Auth::user()->company?->subscription?->ends_on?->toDateString() ?? null);
         const today = new Date();
 
         function handleVoucherPayment() {

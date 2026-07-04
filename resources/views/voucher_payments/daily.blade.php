@@ -738,7 +738,7 @@
             // Handle bulk action button click
             if (bulkActionBtn) {
                 bulkActionBtn.addEventListener('click', function() {
-                    const planEndDateStr = @json(Auth::user()->company->plan_end_date ?? null);
+                    const planEndDateStr = @json(Auth::user()->company?->subscription?->ends_on?->toDateString() ?? null);
                     const today = new Date();
                     if (planEndDateStr && new Date(planEndDateStr) < today) {
                         alert('Your plan has expired. Please renew your plan to use this feature.');

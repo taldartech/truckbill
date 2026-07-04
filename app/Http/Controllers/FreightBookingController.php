@@ -16,6 +16,7 @@ use App\Models\VoucherPayment;
 use App\Services\FreightBookingCalculationService;
 use App\Services\Notifications\FreightBookingNotificationService;
 use App\Services\Notifications\LorryReceiptNotificationService;
+use App\Services\SubscriptionGuard;
 use App\Services\TransporterAdvanceLedgerService;
 use App\Support\ListingQueryString;
 use Carbon\Carbon;
@@ -37,6 +38,7 @@ class FreightBookingController extends Controller
         private readonly LorryReceiptNotificationService $lrNotificationService,
         private readonly FreightBookingNotificationService $frNotificationService,
         private readonly FreightBookingCalculationService $freightBookingCalculationService,
+        private readonly SubscriptionGuard $subscriptionGuard,
     ) {}
 
     private function redirectToFreightBookingsIndex(?Request $request = null, ?string $flashKey = null, ?string $flashMessage = null): RedirectResponse
@@ -468,13 +470,11 @@ class FreightBookingController extends Controller
     public function create(Request $request)
     {
         $company = auth()->user()->company;
-        $today = now()->startOfDay();
-        $planEndDate = Carbon::parse($company->plan_end_date)->startOfDay();
-        if ($company->plan_end_date && $today->gt($planEndDate)) {
+        $company?->loadMissing('subscription');
+        if (! $company?->subscriptionCanWrite()) {
             return $this->redirectToFreightBookingsIndex($request, 'error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
-        // check for lr credits
-        if ($company->lr_credits <= 0) {
+        if ($company->lrCreditsRemaining() <= 0) {
             return $this->redirectToFreightBookingsIndex($request, 'error', 'You do not have enough credits to create a Good Hire (Lorry Hire).');
         }
         $goodsTypes = GoodType::where('user_id', Auth::user()->company->user_id)->get();
@@ -639,6 +639,11 @@ class FreightBookingController extends Controller
         }
         $data['company_id'] = (int) $activeCompanyId;
 
+        $company = Company::query()->with('subscription')->find($activeCompanyId);
+        if ($company) {
+            $this->subscriptionGuard->assertHasLrCredits($company, 1);
+        }
+
         try {
             DB::beginTransaction();
 
@@ -699,14 +704,13 @@ class FreightBookingController extends Controller
             $lorryReceipt->freight_booking_id = $freightBooking->id;
             $lorryReceipt->save();
 
-            $company = Company::lockForUpdate()->find($data['company_id']);
+            $company = Company::lockForUpdate()->with('subscription')->find($data['company_id']);
             if (! $company) {
                 DB::rollBack();
 
                 return redirect()->back()->withErrors(['company_id' => 'Invalid company context for this request.']);
             }
-            $company->lr_credits = $company->lr_credits - 1;
-            $company->save();
+            $this->subscriptionGuard->decrementLrCredits($company, 1);
 
             $notifyCancelled = ! empty($data['is_cancelled']);
             $notifyLrStatusChange = $deliveryStatus !== $oldDeliveryStatus;
@@ -937,9 +941,8 @@ class FreightBookingController extends Controller
     public function edit($id)
     {
         $company = auth()->user()->company;
-        $today = now()->startOfDay();
-        $planEndDate = Carbon::parse($company->plan_end_date)->startOfDay();
-        if ($company->plan_end_date && $today->gt($planEndDate)) {
+        $company?->loadMissing('subscription');
+        if (! $company?->subscriptionCanWrite()) {
             return $this->redirectToFreightBookingsIndex(request(), 'error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
         try {
@@ -1084,9 +1087,8 @@ class FreightBookingController extends Controller
     public function update(Request $request, FreightBooking $freightBooking)
     {
         $company = auth()->user()->company;
-        $today = now()->startOfDay();
-        $planEndDate = Carbon::parse($company->plan_end_date)->startOfDay();
-        if ($company->plan_end_date && $today->gt($planEndDate)) {
+        $company?->loadMissing('subscription');
+        if (! $company?->subscriptionCanWrite()) {
             return $this->redirectToFreightBookingsIndex($request, 'error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
 
@@ -1215,9 +1217,8 @@ class FreightBookingController extends Controller
     public function destroy(FreightBooking $freight_booking)
     {
         $company = auth()->user()->company;
-        $today = now()->startOfDay();
-        $planEndDate = Carbon::parse($company->plan_end_date)->startOfDay();
-        if ($company->plan_end_date && $today->gt($planEndDate)) {
+        $company?->loadMissing('subscription');
+        if (! $company?->subscriptionCanWrite()) {
             return $this->redirectToFreightBookingsIndex(request(), 'error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
         $freight_booking->delete();

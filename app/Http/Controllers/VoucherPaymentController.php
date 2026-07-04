@@ -284,9 +284,8 @@ class VoucherPaymentController extends Controller
     public function create(Request $request)
     {
         $company = auth()->user()->company;
-        $today = now()->startOfDay();
-        $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
-        if ($company->plan_end_date && $today->gt($planEndDate)) {
+        $company->loadMissing('subscription');
+        if (! $company->subscriptionCanWrite()) {
             return redirect()->route('freight_bookings.index')
                 ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
@@ -497,9 +496,8 @@ class VoucherPaymentController extends Controller
             abort(403, 'Unauthorized access to this voucher payment.');
         }
         $company = auth()->user()->company;
-        $today = now()->startOfDay();
-        $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
-        if ($company->plan_end_date && $today->gt($planEndDate)) {
+        $company->loadMissing('subscription');
+        if (! $company->subscriptionCanWrite()) {
             return redirect()->route('voucher_payments.index')
                 ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
@@ -553,9 +551,8 @@ class VoucherPaymentController extends Controller
             abort(403, 'Unauthorized access to this voucher payment.');
         }
         $company = auth()->user()->company;
-        $today = now()->startOfDay();
-        $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
-        if ($company->plan_end_date && $today->gt($planEndDate)) {
+        $company->loadMissing('subscription');
+        if (! $company->subscriptionCanWrite()) {
             return redirect()->route('voucher_payments.index')
                 ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }
@@ -1010,9 +1007,8 @@ class VoucherPaymentController extends Controller
             abort(403, 'Unauthorized access to this voucher payment.');
         }
         $company = auth()->user()->company;
-        $today = now()->startOfDay();
-        $planEndDate = \Carbon\Carbon::parse($company->plan_end_date)->startOfDay();
-        if ($company->plan_end_date && $today->gt($planEndDate)) {
+        $company->loadMissing('subscription');
+        if (! $company->subscriptionCanWrite()) {
             return redirect()->route('voucher_payments.index')
                 ->with('error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
         }

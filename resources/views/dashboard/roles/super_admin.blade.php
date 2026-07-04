@@ -188,7 +188,7 @@
                         <tbody>
                             @foreach($expiringCompanies->take(10) as $company)
                                 @php
-                                    $expiryDate = \Carbon\Carbon::parse($company->plan_end_date);
+                                    $expiryDate = \Carbon\Carbon::parse($company->subscription?->ends_on);
                                     $today = \Carbon\Carbon::today();
                                 @endphp
                                 <tr>
@@ -238,7 +238,7 @@
                         <tbody>
                             @foreach($upcomingPlanExpiry as $company)
                                 @php
-                                    $expiryDate = \Carbon\Carbon::parse($company->plan_end_date);
+                                    $expiryDate = \Carbon\Carbon::parse($company->subscription?->ends_on);
                                     $today = \Carbon\Carbon::today();
                                     $daysRemaining = $today->diffInDays($expiryDate, false);
 

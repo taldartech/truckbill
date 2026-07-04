@@ -6,6 +6,7 @@ use App\Models\Branch;
 use App\Models\Company;
 use App\Models\User;
 use App\Models\UserRole;
+use App\Services\SubscriptionGuard;
 use App\Services\UserBlockLifecycleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,7 +15,8 @@ use Illuminate\Support\Facades\DB;
 class UserController extends Controller
 {
     public function __construct(
-        private readonly UserBlockLifecycleService $userBlockLifecycleService
+        private readonly UserBlockLifecycleService $userBlockLifecycleService,
+        private readonly SubscriptionGuard $subscriptionGuard,
     ) {}
 
     /**
@@ -308,6 +310,11 @@ class UserController extends Controller
         $validated = $request->validate($rules);
         $validated['password'] = bcrypt($validated['password']);
 
+        if (! empty($validated['company_id']) && ! empty($validated['branch_id'])) {
+            $company = Company::query()->with('subscription')->findOrFail($validated['company_id']);
+            $this->subscriptionGuard->assertCanAssignUserToBranch($company, (int) $validated['branch_id']);
+        }
+
         // Get or create user role
         $userRole = UserRole::firstOrCreate(['name' => $validated['role']]);
         $validated['user_role_id'] = $userRole->id;
@@ -399,6 +406,20 @@ class UserController extends Controller
             $validated['password'] = bcrypt($validated['password']);
         } else {
             unset($validated['password']);
+        }
+
+        if (! empty($validated['company_id']) && ! empty($validated['branch_id'])) {
+            $company = Company::query()->with('subscription')->findOrFail($validated['company_id']);
+            $branchChanged = (int) $user->branch_id !== (int) $validated['branch_id']
+                || (int) $user->company_id !== (int) $validated['company_id'];
+
+            if ($branchChanged) {
+                $this->subscriptionGuard->assertCanAssignUserToBranch(
+                    $company,
+                    (int) $validated['branch_id'],
+                    $user->id,
+                );
+            }
         }
 
         // Get or create user role

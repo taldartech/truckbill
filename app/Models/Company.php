@@ -33,9 +33,6 @@ class Company extends Model
         'company_type',
         'company_logo',
         'gst_slab',
-        'plan_end_date',
-        'lr_credits',
-        'truck_credits',
     ];
 
     protected $dates = ['deleted_at'];
@@ -152,6 +149,59 @@ class Company extends Model
     public function setting(): HasOne
     {
         return $this->hasOne(CompanySetting::class);
+    }
+
+    public function subscription()
+    {
+        return $this->hasOne(CompanySubscription::class);
+    }
+
+    public function pendingUpcomingRenewals()
+    {
+        return $this->hasMany(UpcomingSubscription::class)->where('status', 'pending');
+    }
+
+    public function hasPendingUpcomingRenewal(): bool
+    {
+        return UpcomingSubscription::query()
+            ->where('company_id', $this->id)
+            ->where('status', 'pending')
+            ->exists();
+    }
+
+    public function isPlanActive(): bool
+    {
+        return $this->subscription?->isActive() ?? false;
+    }
+
+    public function subscriptionAccessPayload(): array
+    {
+        return app(\App\Services\SubscriptionAccessService::class)->accessPayloadForCompany($this);
+    }
+
+    public function subscriptionCanWrite(): bool
+    {
+        return $this->subscriptionAccessPayload()['can_write'] ?? false;
+    }
+
+    public function subscriptionCanExport(): bool
+    {
+        return $this->subscriptionAccessPayload()['can_export'] ?? false;
+    }
+
+    public function subscriptionCanPrint(): bool
+    {
+        return $this->subscriptionAccessPayload()['can_print'] ?? false;
+    }
+
+    public function planEndsOn(): ?\Illuminate\Support\Carbon
+    {
+        return $this->subscription?->ends_on;
+    }
+
+    public function lrCreditsRemaining(): int
+    {
+        return (int) ($this->subscription?->lr_credits_remaining ?? 0);
     }
 
     public function invoices()
