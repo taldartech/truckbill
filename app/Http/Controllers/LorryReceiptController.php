@@ -13,11 +13,16 @@ use App\Services\LorryReceiptCalculationService;
 use App\Services\Notifications\LorryReceiptNotificationService;
 use App\Support\ListingQueryString;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 use Yajra\DataTables\Facades\DataTables;
 
 class LorryReceiptController extends Controller
@@ -27,7 +32,7 @@ class LorryReceiptController extends Controller
         private readonly LorryReceiptCalculationService $lrCalculationService,
     ) {}
 
-    private function redirectToLorryReceiptsIndex(?Request $request = null, ?string $flashKey = null, ?string $flashMessage = null): \Illuminate\Http\RedirectResponse
+    private function redirectToLorryReceiptsIndex(?Request $request = null, ?string $flashKey = null, ?string $flashMessage = null): RedirectResponse
     {
         $request ??= request();
 
@@ -57,7 +62,7 @@ class LorryReceiptController extends Controller
     /**
      * Redirect if plan is expired
      */
-    private function redirectIfPlanExpired(string $route = 'lorry_receipts.index'): ?\Illuminate\Http\RedirectResponse
+    private function redirectIfPlanExpired(string $route = 'lorry_receipts.index'): ?RedirectResponse
     {
         if ($this->isPlanExpired()) {
             return redirect()->route($route)
@@ -106,7 +111,7 @@ class LorryReceiptController extends Controller
         }
     }
 
-    public function index(Request $request): \Illuminate\View\View|\Illuminate\Http\JsonResponse
+    public function index(Request $request): View|JsonResponse
     {
         if ($request->ajax()) {
             return $this->getLorryReceiptsData($request);
@@ -115,7 +120,7 @@ class LorryReceiptController extends Controller
         return view('lorry_receipts.index');
     }
 
-    private function getLorryReceiptsData(Request $request): \Illuminate\Http\JsonResponse
+    private function getLorryReceiptsData(Request $request): JsonResponse
     {
         try {
             $user = Auth::user();
@@ -282,9 +287,12 @@ class LorryReceiptController extends Controller
             $buttons .= '<i class="bi bi-pencil"></i></a>';
         }
 
-        if ($lorryReceipt->delivery_status != 'Delivered' && $canActAsAdmin) {
+        if ($lorryReceipt->delivery_status === 'Pending' && $canActAsAdmin) {
             $deleteUrl = route('lorry_receipts.destroy', $lorryReceipt->id);
-            $buttons .= '<form action="'.$deleteUrl.'" method="POST" style="display:inline-block;" onsubmit="return confirm(\'Are you sure?\')">';
+            $confirmMsg = $lorryReceipt->linked_lr_id
+                ? 'This will delete all linked good receipts in this group. Are you sure?'
+                : 'Are you sure you want to delete this good receipt (bilty)?';
+            $buttons .= '<form action="'.$deleteUrl.'" method="POST" style="display:inline-block;" onsubmit="return confirm(\''.$confirmMsg.'\')">';
             $buttons .= csrf_field().method_field('DELETE');
             $buttons .= '<button type="submit" class="btn btn-sm btn-danger" title="Delete" data-bs-toggle="tooltip">';
             $buttons .= '<i class="bi bi-trash"></i></button></form>';
@@ -299,7 +307,7 @@ class LorryReceiptController extends Controller
         return $buttons;
     }
 
-    public function create(): \Illuminate\View\View|\Illuminate\Http\RedirectResponse
+    public function create(): View|RedirectResponse
     {
         if ($redirect = $this->redirectIfPlanExpired()) {
             return $redirect;
@@ -363,7 +371,7 @@ class LorryReceiptController extends Controller
         return view('lorry_receipts.create', compact('trucks', 'consignees', 'goodsTypes', 'agencies', 'payeeTransporter'));
     }
 
-    public function createLinked(): \Illuminate\View\View|\Illuminate\Http\RedirectResponse
+    public function createLinked(): View|RedirectResponse
     {
         if ($redirect = $this->redirectIfPlanExpired()) {
             return $redirect;
@@ -430,7 +438,7 @@ class LorryReceiptController extends Controller
     /**
      * Bulk update memo_id and delivery status for multiple lorry receipts
      */
-    public function bulkPayment(Request $request): \Illuminate\Http\JsonResponse
+    public function bulkPayment(Request $request): JsonResponse
     {
         try {
             $validated = $request->validate([
@@ -506,7 +514,7 @@ class LorryReceiptController extends Controller
                 $freightBookingIds = $lorryReceipts->pluck('freight_booking_id')->toArray();
 
                 // Update freight bookings
-                \App\Models\FreightBooking::whereIn('id', $freightBookingIds)
+                FreightBooking::whereIn('id', $freightBookingIds)
                     ->update(['is_delivered' => 1]);
 
                 // Update lorry receipts
@@ -528,7 +536,7 @@ class LorryReceiptController extends Controller
                 'success' => true,
                 'message' => 'Memo ID updated successfully for selected good receipts (bilty)',
             ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation error: '.json_encode($e->errors()),
@@ -546,7 +554,7 @@ class LorryReceiptController extends Controller
         }
     }
 
-    public function store(Request $request): \Illuminate\Http\RedirectResponse
+    public function store(Request $request): RedirectResponse
     {
 
         $companyId = $this->getCurrentCompanyId();
@@ -610,13 +618,13 @@ class LorryReceiptController extends Controller
             try {
                 // Next linked_lr_id (increment previous)
                 // $nextLinkedId = (\App\Models\LorryReceipt::max('linked_lr_id') ?? 0) + 1;
-                $nextLinkedId = (\App\Models\LorryReceipt::where('company_id', $companyId)->max('linked_lr_id') ?? 0) + 1;
+                $nextLinkedId = (LorryReceipt::where('company_id', $companyId)->max('linked_lr_id') ?? 0) + 1;
 
                 $created = [];
                 foreach ($validated['lrs'] as $item) {
                     // Prevent consignor == consignee per LR
                     if ($item['consignor_id'] === $item['consignee_id']) {
-                        throw \Illuminate\Validation\ValidationException::withMessages([
+                        throw ValidationException::withMessages([
                             'lrs' => ['Consignor and Consignee cannot be the same for LR '.($item['lr_number'] ?? '')],
                         ]);
                     }
@@ -675,7 +683,7 @@ class LorryReceiptController extends Controller
                         // Remove "LR" prefix, then trim leading zeros
                         $data['gr_number'] = ltrim(str_ireplace('LR', '', $data['lr_number']), '0');
                     }
-                    $created[] = \App\Models\LorryReceipt::create($data);
+                    $created[] = LorryReceipt::create($data);
                 }
 
                 DB::commit();
@@ -761,7 +769,7 @@ class LorryReceiptController extends Controller
             // Remove "LR" prefix, then trim leading zeros
             $validated['gr_number'] = ltrim(str_ireplace('LR', '', $validated['lr_number']), '0');
         }
-        if (\App\Models\LorryReceipt::where('lr_number', $validated['lr_number'])
+        if (LorryReceipt::where('lr_number', $validated['lr_number'])
             ->where('company_id', $companyId)
             ->exists()
         ) {
@@ -784,7 +792,7 @@ class LorryReceiptController extends Controller
         $validated['actual_amount'] = $resolved['actual_amount'];
         $validated['amount'] = $resolved['amount'];
 
-        $lorryReceipt = \App\Models\LorryReceipt::create($validated);
+        $lorryReceipt = LorryReceipt::create($validated);
 
         // Check if user clicked "Save & Create FR"
         if ($request->has('redirect_to_fr')) {
@@ -801,19 +809,21 @@ class LorryReceiptController extends Controller
     /**
      * Validate uniqueness of LR numbers, GR numbers, and invoice numbers
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
-    private function validateLorryReceiptsUniqueness(array $lrs, int $companyId): void
+    private function validateLorryReceiptsUniqueness(array $lrs, int $companyId, array $excludeIds = []): void
     {
         $errors = [];
         $lrNumbers = array_filter(array_column($lrs, 'lr_number'));
         $grNumbers = array_filter(array_column($lrs, 'gr_number'));
         $invoiceNumbers = array_filter(array_column($lrs, 'invoice_number'));
+        $excludeIds = array_values(array_filter(array_map('intval', $excludeIds)));
 
         // Check LR_NUMBER uniqueness (Company-wise)
         if (! empty($lrNumbers)) {
             $duplicateLrs = LorryReceipt::where('company_id', $companyId)
                 ->whereNull('deleted_at')
+                ->when($excludeIds !== [], fn ($query) => $query->whereNotIn('id', $excludeIds))
                 ->whereIn('lr_number', $lrNumbers)
                 ->pluck('lr_number')
                 ->toArray();
@@ -831,6 +841,7 @@ class LorryReceiptController extends Controller
         if (! empty($grNumbers)) {
             $duplicateGrs = LorryReceipt::where('company_id', $companyId)
                 ->whereNull('deleted_at')
+                ->when($excludeIds !== [], fn ($query) => $query->whereNotIn('id', $excludeIds))
                 ->whereIn('gr_number', $grNumbers)
                 ->pluck('gr_number')
                 ->toArray();
@@ -848,6 +859,7 @@ class LorryReceiptController extends Controller
         if (! empty($invoiceNumbers)) {
             $duplicateInvoices = LorryReceipt::where('company_id', $companyId)
                 ->whereNull('deleted_at')
+                ->when($excludeIds !== [], fn ($query) => $query->whereNotIn('id', $excludeIds))
                 ->whereIn('invoice_number', $invoiceNumbers)
                 ->pluck('invoice_number')
                 ->toArray();
@@ -862,11 +874,346 @@ class LorryReceiptController extends Controller
         }
 
         if (! empty($errors)) {
-            throw \Illuminate\Validation\ValidationException::withMessages($errors);
+            throw ValidationException::withMessages($errors);
         }
     }
 
-    public function checkLrNumberUniqueness(Request $request): \Illuminate\Http\JsonResponse
+    private function editLinkedLorryReceipts(LorryReceipt $lorry_receipt): View|RedirectResponse
+    {
+        $companyId = $this->getCurrentCompanyId();
+
+        $linkedLorryReceipts = LorryReceipt::query()
+            ->with(['truck.transporter.transporterMaster', 'truck.driver', 'customer', 'transporter.transporterMaster', 'consignor', 'consignee', 'reference.transporterMaster'])
+            ->where('company_id', $companyId)
+            ->where('linked_lr_id', $lorry_receipt->linked_lr_id)
+            ->orderBy('id')
+            ->get();
+
+        if ($linkedLorryReceipts->isEmpty()) {
+            return $this->redirectToLorryReceiptsIndex(null, 'error', 'Linked good receipts (bilty) not found.');
+        }
+
+        if ($linkedLorryReceipts->contains(fn (LorryReceipt $lr): bool => (int) $lr->invoice_generated === 1)) {
+            return $this->redirectToLorryReceiptsIndex(null, 'error', 'Cannot edit linked good receipts (bilty) because an invoice has already been generated for one or more items.');
+        }
+
+        if ($linkedLorryReceipts->contains(fn (LorryReceipt $lr): bool => $lr->delivery_status === 'Delivered')) {
+            return $this->redirectToLorryReceiptsIndex(null, 'error', 'Cannot edit linked good receipts (bilty) in bulk when one or more items are already delivered.');
+        }
+
+        $sharedLorryReceipt = $linkedLorryReceipts->first();
+        $goodsTypes = GoodType::where('user_id', Auth::user()->company->user_id)->get();
+
+        $selectedConsigneeIds = $linkedLorryReceipts
+            ->flatMap(fn (LorryReceipt $lr): array => [$lr->customer_id, $lr->consignor_id, $lr->consignee_id])
+            ->merge(collect(old('lrs', []))->flatMap(fn (array $item): array => [
+                $item['customer_id'] ?? null,
+                $item['consignor_id'] ?? null,
+                $item['consignee_id'] ?? null,
+            ]))
+            ->filter()
+            ->unique()
+            ->values();
+
+        $consignees = $selectedConsigneeIds->isNotEmpty()
+            ? Consignee::withTrashed()
+                ->where('company_id', $companyId)
+                ->whereIn('id', $selectedConsigneeIds)
+                ->orderBy('name')
+                ->get()
+            : collect();
+
+        $selectedTruckId = old('truck_id', $sharedLorryReceipt->truck_id);
+        $trucks = $selectedTruckId
+            ? Truck::with(['transporter.transporterMaster', 'driver'])
+                ->where('id', $selectedTruckId)
+                ->where(function ($query) use ($companyId) {
+                    $query->whereHas('transporter', function ($transporterQuery) use ($companyId) {
+                        $transporterQuery->withTrashed()->where('company_id', $companyId);
+                    })->orWhere(function ($orphanQuery) use ($companyId) {
+                        $orphanQuery->whereNull('transporter_id')
+                            ->where('company_id', $companyId);
+                    });
+                })
+                ->get()
+            : collect();
+
+        $selectedReferenceById = old('reference_by', $sharedLorryReceipt->reference_by);
+        $agencies = $selectedReferenceById
+            ? Transporter::withTrashed()
+                ->with('transporterMaster')
+                ->where('is_owner', 0)
+                ->where('company_id', $companyId)
+                ->where('transporters.id', $selectedReferenceById)
+                ->join('transporter_masters', 'transporters.transporter_master_id', '=', 'transporter_masters.id')
+                ->orderBy('transporter_masters.name')
+                ->select('transporters.*')
+                ->get()
+            : collect();
+
+        $selectedTransporterId = old('transporter_id', $sharedLorryReceipt->transporter_id);
+        $payeeTransporter = $selectedTransporterId
+            ? Transporter::withTrashed()
+                ->with('transporterMaster')
+                ->where('company_id', $companyId)
+                ->where('id', $selectedTransporterId)
+                ->first()
+            : null;
+
+        $canChangeTransporter = $this->canChangeTransporterForLorryReceipt($sharedLorryReceipt);
+        $tdsPercentages = [
+            'default' => config('payments.tds_percentages.default', 20),
+            'agency' => config('payments.tds_percentages.agency', 2),
+            'owner' => config('payments.tds_percentages.owner', 1),
+        ];
+
+        $linkedLrsPayload = $linkedLorryReceipts->map(function (LorryReceipt $lr): array {
+            return [
+                'id' => $lr->id,
+                'lr_number' => $lr->lr_number,
+                'gr_number' => $lr->gr_number,
+                'invoice_number' => $lr->invoice_number,
+                'customer_id' => $lr->customer_id,
+                'customer_name' => $lr->customer?->name,
+                'consignor_id' => $lr->consignor_id,
+                'consignor_name' => $lr->consignor?->name,
+                'consignor_contact_number' => $lr->consignor_contact_number,
+                'consignee_id' => $lr->consignee_id,
+                'consignee_name' => $lr->consignee?->name,
+                'consignee_contact_number' => $lr->consignee_contact_number,
+                'source_city' => $lr->source_city,
+                'source_state' => $lr->source_state,
+                'destination_city' => $lr->destination_city,
+                'destination_state' => $lr->destination_state,
+                'unloading_station' => $lr->unloading_station,
+                'good_type' => $lr->good_type,
+                'no_of_units' => $lr->no_of_units,
+                'goods_value' => $lr->goods_value,
+                'weight' => $lr->weight,
+                'fr_rate' => $lr->fr_rate,
+                'is_fixed_amount' => $lr->is_fixed_amount,
+                'amount' => $lr->amount,
+            ];
+        })->values();
+
+        return view('lorry_receipts.edit-linked', [
+            'lorry_receipt' => $lorry_receipt,
+            'linkedLorryReceipts' => $linkedLorryReceipts,
+            'linkedLrsPayload' => $linkedLrsPayload,
+            'linkedLrId' => $lorry_receipt->linked_lr_id,
+            'sharedLorryReceipt' => $sharedLorryReceipt,
+            'trucks' => $trucks,
+            'consignees' => $consignees,
+            'goodsTypes' => $goodsTypes,
+            'agencies' => $agencies,
+            'payeeTransporter' => $payeeTransporter,
+            'canChangeTransporter' => $canChangeTransporter,
+            'tdsPercentages' => $tdsPercentages,
+        ]);
+    }
+
+    private function updateLinkedLorryReceipts(Request $request, LorryReceipt $lorry_receipt, ?int $companyId): RedirectResponse
+    {
+        if (! $lorry_receipt->linked_lr_id) {
+            return $this->redirectToLorryReceiptsIndex($request, 'error', 'This good receipt (bilty) is not part of a linked group.');
+        }
+
+        $linkedLorryReceipts = LorryReceipt::query()
+            ->where('company_id', $companyId)
+            ->where('linked_lr_id', $lorry_receipt->linked_lr_id)
+            ->orderBy('id')
+            ->get()
+            ->keyBy('id');
+
+        if ($linkedLorryReceipts->isEmpty()) {
+            return $this->redirectToLorryReceiptsIndex($request, 'error', 'Linked good receipts (bilty) not found.');
+        }
+
+        if ($linkedLorryReceipts->contains(fn (LorryReceipt $lr): bool => (int) $lr->invoice_generated === 1)) {
+            return $this->redirectToLorryReceiptsIndex($request, 'error', 'Cannot edit linked good receipts (bilty) because an invoice has already been generated for one or more items.');
+        }
+
+        if ($linkedLorryReceipts->contains(fn (LorryReceipt $lr): bool => $lr->delivery_status === 'Delivered')) {
+            return $this->redirectToLorryReceiptsIndex($request, 'error', 'Cannot edit linked good receipts (bilty) in bulk when one or more items are already delivered.');
+        }
+
+        $sharedRules = [
+            'gr_date' => 'required|date',
+            'truck_id' => 'nullable|exists:trucks,id',
+            'transporter_type' => 'nullable|in:owner,agency',
+            'transporter_id' => 'nullable|exists:transporters,id',
+            'reference_by' => 'nullable|exists:transporters,id',
+            'company_id' => 'required|exists:companies,id',
+        ];
+
+        $perItemRules = [
+            'lrs' => 'required|array|min:1',
+            'lrs.*.id' => 'required|integer|exists:lorry_receipts,id',
+            'lrs.*.lr_number' => ['required', 'string', 'max:100', 'distinct'],
+            'lrs.*.gr_number' => ['nullable', 'string', 'max:100', 'distinct'],
+            'lrs.*.invoice_number' => ['nullable', 'string', 'max:256', 'distinct'],
+            'lrs.*.customer_id' => 'required|exists:consignees,id',
+            'lrs.*.consignor_id' => 'required|exists:consignees,id',
+            'lrs.*.consignor_contact_number' => 'nullable|string|max:20',
+            'lrs.*.consignee_id' => 'required|exists:consignees,id',
+            'lrs.*.consignee_contact_number' => 'nullable|string|max:20',
+            'lrs.*.source_city' => 'required|string|max:100',
+            'lrs.*.source_state' => 'required|string|max:100',
+            'lrs.*.destination_city' => 'required|string|max:100',
+            'lrs.*.destination_state' => 'required|string|max:100',
+            'lrs.*.unloading_station' => 'nullable|string|max:100',
+            'lrs.*.lane' => 'required|string|max:100',
+            'lrs.*.good_type' => 'required|string|max:100',
+            'lrs.*.goods_value' => 'nullable|numeric|min:0',
+            'lrs.*.weight' => 'required|numeric|min:0',
+            'lrs.*.no_of_units' => 'nullable|numeric|min:1|max:100000',
+            'lrs.*.fr_rate' => 'required|numeric|min:1|max:20000',
+            'lrs.*.is_fixed_amount' => 'nullable|boolean',
+            'lrs.*.amount' => 'required|numeric|min:0',
+        ];
+
+        $excludeIds = collect($request->input('lrs', []))
+            ->pluck('id')
+            ->filter()
+            ->map(fn ($id): int => (int) $id)
+            ->values()
+            ->all();
+
+        $this->validateLorryReceiptsUniqueness($request->input('lrs', []), (int) $companyId, $excludeIds);
+
+        $validated = $request->validate(array_merge($sharedRules, $perItemRules));
+        $this->forceAgencyForOrphanTruck($validated, (int) $companyId);
+
+        foreach ($validated['lrs'] as $item) {
+            $existing = $linkedLorryReceipts->get((int) $item['id']);
+
+            if ($existing === null || (int) $existing->linked_lr_id !== (int) $lorry_receipt->linked_lr_id) {
+                throw ValidationException::withMessages([
+                    'lrs' => ['One or more linked good receipts (bilty) do not belong to this linked group.'],
+                ]);
+            }
+
+            if ($item['consignor_id'] === $item['consignee_id']) {
+                throw ValidationException::withMessages([
+                    'lrs' => ['Consignor and Consignee cannot be the same for LR '.($item['lr_number'] ?? '')],
+                ]);
+            }
+        }
+
+        DB::beginTransaction();
+
+        try {
+            foreach ($validated['lrs'] as $item) {
+                /** @var LorryReceipt $existing */
+                $existing = $linkedLorryReceipts->get((int) $item['id']);
+
+                $isFixed = (bool) ($item['is_fixed_amount'] ?? false);
+                $itemWeight = (float) $item['weight'];
+                $itemFrRate = (float) $item['fr_rate'];
+                $amountInput = (float) $item['amount'];
+
+                $resolved = $this->lrCalculationService->resolveForUpdate(
+                    $isFixed,
+                    $itemWeight,
+                    (float) ($existing->unloading_weight ?? $itemWeight),
+                    $itemFrRate,
+                    $amountInput,
+                    (float) ($existing->shortage_amount ?? 0),
+                    (float) ($existing->damage_amount ?? 0),
+                );
+
+                if ($item['gr_number'] === null || $item['gr_number'] === '') {
+                    $item['gr_number'] = ltrim(str_ireplace('LR', '', $item['lr_number']), '0');
+                }
+
+                $updateData = [
+                    'lr_number' => $item['lr_number'],
+                    'gr_number' => $item['gr_number'],
+                    'invoice_number' => $item['invoice_number'],
+                    'customer_id' => $item['customer_id'],
+                    'consignor_id' => $item['consignor_id'],
+                    'consignor_contact_number' => $item['consignor_contact_number'] ?? null,
+                    'consignee_id' => $item['consignee_id'],
+                    'consignee_contact_number' => $item['consignee_contact_number'] ?? null,
+                    'source_city' => $item['source_city'],
+                    'source_state' => $item['source_state'],
+                    'destination_city' => $item['destination_city'],
+                    'destination_state' => $item['destination_state'],
+                    'unloading_station' => $item['unloading_station'] ?? null,
+                    'lane' => $item['lane'],
+                    'good_type' => $item['good_type'],
+                    'goods_value' => $item['goods_value'] ?? null,
+                    'weight' => $itemWeight,
+                    'no_of_units' => $item['no_of_units'] ?? null,
+                    'fr_rate' => $itemFrRate,
+                    'is_fixed_amount' => $isFixed,
+                    'amount' => $resolved['amount'],
+                    'actual_amount' => $resolved['actual_amount'],
+                    'gr_date' => $validated['gr_date'],
+                    'truck_id' => $validated['truck_id'] ?? null,
+                    'transporter_type' => $validated['transporter_type'] ?? null,
+                    'transporter_id' => $validated['transporter_id'] ?? null,
+                    'reference_by' => $validated['reference_by'] ?? null,
+                    'company_id' => $companyId,
+                ];
+
+                $freightBooking = FreightBooking::find($existing->freight_booking_id);
+                if ($freightBooking) {
+                    if (! $freightBooking->canChangeTdsAmount()
+                        && isset($updateData['transporter_id'])
+                        && (int) $updateData['transporter_id'] !== (int) $existing->transporter_id) {
+                        throw ValidationException::withMessages([
+                            'transporter_id' => 'Transporter cannot be changed because TDS has already been submitted for one or more linked good hires (lorry hires).',
+                        ]);
+                    }
+
+                    $this->lrCalculationService->syncFreightBookingsForUpdatedLorryReceipt(
+                        $existing,
+                        $freightBooking,
+                        array_merge($updateData, ['transporter_id' => $updateData['transporter_id']])
+                    );
+                }
+
+                $existing->update($updateData);
+            }
+
+            DB::commit();
+
+            return $this->redirectToLorryReceiptsIndex(
+                $request,
+                'success',
+                'Updated '.count($validated['lrs']).' linked Good Receipts (Bilty) (Linked ID: '.$lorry_receipt->linked_lr_id.').'
+            );
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    private function canChangeTransporterForLorryReceipt(LorryReceipt $lorryReceipt): bool
+    {
+        $grDateToCheck = $lorryReceipt->gr_date;
+
+        if (! $grDateToCheck) {
+            $freightBooking = FreightBooking::query()->where('lr_id', $lorryReceipt->id)->first();
+            $grDateToCheck = $freightBooking?->lr?->gr_date;
+        }
+
+        if (! $grDateToCheck) {
+            return true;
+        }
+
+        $grDate = Carbon::parse($grDateToCheck);
+        $submissionDay = config('payments.tds_submission_day', 3);
+        $submissionDate = Carbon::create($grDate->year, $grDate->month, 1)
+            ->addMonth()
+            ->day($submissionDay)
+            ->startOfDay();
+
+        return ! Carbon::now()->startOfDay()->gte($submissionDate);
+    }
+
+    public function checkLrNumberUniqueness(Request $request): JsonResponse
     {
         $request->validate([
             'lr_number' => 'required|string',
@@ -886,7 +1233,7 @@ class LorryReceiptController extends Controller
         ]);
     }
 
-    public function checkInvoiceNumberUniqueness(Request $request): \Illuminate\Http\JsonResponse
+    public function checkInvoiceNumberUniqueness(Request $request): JsonResponse
     {
         $request->validate([
             'invoice_number' => 'required|string',
@@ -906,23 +1253,29 @@ class LorryReceiptController extends Controller
         ]);
     }
 
-    public function checkGRNumberUniqueness(Request $request): \Illuminate\Http\JsonResponse
+    public function checkGRNumberUniqueness(Request $request): JsonResponse
     {
         $request->validate([
             'gr_number' => 'required|string',
+            'exclude_id' => 'nullable|integer',
         ]);
 
         $exists = LorryReceipt::where('gr_number', $request->gr_number)
             ->where('company_id', $this->getCurrentCompanyId())
+            ->when($request->exclude_id, fn ($query) => $query->where('id', '!=', $request->exclude_id))
             ->exists();
 
         return response()->json(['available' => ! $exists]);
     }
 
-    public function edit(LorryReceipt $lorry_receipt): \Illuminate\View\View|\Illuminate\Http\RedirectResponse
+    public function edit(LorryReceipt $lorry_receipt): View|RedirectResponse
     {
         if ($redirect = $this->redirectIfPlanExpired()) {
             return $redirect;
+        }
+
+        if ($lorry_receipt->linked_lr_id) {
+            return $this->editLinkedLorryReceipts($lorry_receipt);
         }
 
         $companyId = $this->getCurrentCompanyId();
@@ -1003,7 +1356,7 @@ class LorryReceiptController extends Controller
         // Check if transporter can be changed (TDS not submitted)
         // Transporter cannot be changed if TDS is submitted, regardless of payment status
         $canChangeTransporter = true;
-        $freightBookings = \App\Models\FreightBooking::where('lr_id', $lorry_receipt->id)->get();
+        $freightBookings = FreightBooking::where('lr_id', $lorry_receipt->id)->get();
 
         $grDateToCheck = null;
         if ($lorry_receipt->gr_date) {
@@ -1018,18 +1371,18 @@ class LorryReceiptController extends Controller
         }
 
         if ($grDateToCheck) {
-            $grDate = \Carbon\Carbon::parse($grDateToCheck);
+            $grDate = Carbon::parse($grDateToCheck);
             $grMonth = $grDate->month;
             $grYear = $grDate->year;
 
             $submissionDay = config('payments.tds_submission_day', 3);
 
-            $submissionDate = \Carbon\Carbon::create($grYear, $grMonth, 1)
+            $submissionDate = Carbon::create($grYear, $grMonth, 1)
                 ->addMonth()
                 ->day($submissionDay)
                 ->startOfDay();
 
-            $today = \Carbon\Carbon::now()->startOfDay();
+            $today = Carbon::now()->startOfDay();
             if ($today->gte($submissionDate)) {
                 $canChangeTransporter = false;
             }
@@ -1051,13 +1404,17 @@ class LorryReceiptController extends Controller
         ]);
     }
 
-    public function update(Request $request, LorryReceipt $lorry_receipt): \Illuminate\Http\RedirectResponse
+    public function update(Request $request, LorryReceipt $lorry_receipt): RedirectResponse
     {
         $companyId = $this->getCurrentCompanyId();
         $company = Auth::user()->company;
         $company?->loadMissing('subscription');
         if (! $company?->subscriptionCanWrite()) {
             return $this->redirectToLorryReceiptsIndex($request, 'error', 'Your subscription plan has expired. Please renew your subscription to continue using the service.');
+        }
+
+        if ($request->has('lrs') && is_array($request->input('lrs'))) {
+            return $this->updateLinkedLorryReceipts($request, $lorry_receipt, $companyId);
         }
 
         if ($lorry_receipt->invoice_generated == 1) {
@@ -1071,7 +1428,7 @@ class LorryReceiptController extends Controller
                     'string',
                     function ($attribute, $value, $fail) use ($request, $lorry_receipt) {
                         if ($value) {
-                            $exists = \App\Models\LorryReceipt::where('memo_id', $value)
+                            $exists = LorryReceipt::where('memo_id', $value)
                                 ->where('id', '!=', $lorry_receipt->id) // ignore current LR
                                 ->first();
 
@@ -1099,7 +1456,7 @@ class LorryReceiptController extends Controller
                 'string',
                 function ($attribute, $value, $fail) use ($request, $lorry_receipt) {
                     if ($value) {
-                        $exists = \App\Models\LorryReceipt::where('memo_id', $value)
+                        $exists = LorryReceipt::where('memo_id', $value)
                             ->where('id', '!=', $lorry_receipt->id) // ignore current LR
                             ->first();
 
@@ -1201,7 +1558,7 @@ class LorryReceiptController extends Controller
     /**
      * Validate uniqueness of LR fields for update
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     private function validateLorryReceiptUniquenessUpdate(array $data, ?int $excludeId, int $companyId): void
     {
@@ -1209,7 +1566,7 @@ class LorryReceiptController extends Controller
 
         // ✅ CHECK 1: LR_NUMBER
         if (! empty($data['lr_number'])) {
-            $exists = \App\Models\LorryReceipt::where('company_id', $companyId)
+            $exists = LorryReceipt::where('company_id', $companyId)
                 ->where('lr_number', $data['lr_number'])
                 ->where('id', '!=', $excludeId)
                 ->whereNull('deleted_at')
@@ -1222,7 +1579,7 @@ class LorryReceiptController extends Controller
 
         // ✅ CHECK 2: GR_NUMBER
         if (! empty($data['gr_number'])) {
-            $exists = \App\Models\LorryReceipt::where('company_id', $companyId)
+            $exists = LorryReceipt::where('company_id', $companyId)
                 ->where('gr_number', $data['gr_number'])
                 ->where('id', '!=', $excludeId)
                 ->whereNull('deleted_at')
@@ -1235,7 +1592,7 @@ class LorryReceiptController extends Controller
 
         // ✅ CHECK 3: INVOICE_NUMBER
         if (! empty($data['invoice_number'])) {
-            $exists = \App\Models\LorryReceipt::where('company_id', $companyId)
+            $exists = LorryReceipt::where('company_id', $companyId)
                 ->where('invoice_number', $data['invoice_number'])
                 ->where('id', '!=', $excludeId)
                 ->whereNull('deleted_at')
@@ -1248,7 +1605,7 @@ class LorryReceiptController extends Controller
 
         // ✅ CHECK 4: MEMO_ID
         if (! empty($data['memo_id'])) {
-            $exists = \App\Models\LorryReceipt::where('company_id', $companyId)
+            $exists = LorryReceipt::where('company_id', $companyId)
                 ->where('memo_id', $data['memo_id'])
                 ->where('id', '!=', $excludeId)
                 ->whereNull('deleted_at')
@@ -1260,24 +1617,35 @@ class LorryReceiptController extends Controller
         }
 
         if (! empty($errors)) {
-            throw \Illuminate\Validation\ValidationException::withMessages($errors);
+            throw ValidationException::withMessages($errors);
         }
     }
 
-    public function destroy(LorryReceipt $lorry_receipt): \Illuminate\Http\RedirectResponse
+    public function destroy(LorryReceipt $lorry_receipt): RedirectResponse
     {
         if ($redirect = $this->redirectIfPlanExpired()) {
             return $redirect;
         }
 
+        $lorryReceiptsToDelete = $this->resolveLorryReceiptsForDeletion($lorry_receipt);
+
+        if ($lorryReceiptsToDelete === null) {
+            return redirect()->back()
+                ->with('error', 'Good receipt (bilty) can only be deleted when delivery status is Pending.');
+        }
+
         try {
-            DB::transaction(function () use ($lorry_receipt) {
-                // This will trigger the deleting event in the model
-                // which will handle the related FreightBookings and VoucherPayments
-                $lorry_receipt->delete();
+            DB::transaction(function () use ($lorryReceiptsToDelete) {
+                foreach ($lorryReceiptsToDelete as $lr) {
+                    $lr->delete();
+                }
             });
 
-            return $this->redirectToLorryReceiptsIndex(request(), 'success', 'Good receipt (bilty) and all associated data deleted successfully!');
+            $message = $lorryReceiptsToDelete->count() > 1
+                ? $lorryReceiptsToDelete->count().' linked good receipts (bilty) and all associated data deleted successfully!'
+                : 'Good receipt (bilty) and all associated data deleted successfully!';
+
+            return $this->redirectToLorryReceiptsIndex(request(), 'success', $message);
         } catch (\Exception $e) {
             Log::error('Error deleting lorry receipt: '.$e->getMessage());
 
@@ -1286,7 +1654,33 @@ class LorryReceiptController extends Controller
         }
     }
 
-    public function details(int $id): \Illuminate\Http\JsonResponse
+    /**
+     * @return Collection<int, LorryReceipt>|null
+     */
+    private function resolveLorryReceiptsForDeletion(LorryReceipt $lorry_receipt): ?Collection
+    {
+        $companyId = $this->getCurrentCompanyId();
+
+        if ($lorry_receipt->linked_lr_id) {
+            $group = LorryReceipt::where('company_id', $companyId)
+                ->where('linked_lr_id', $lorry_receipt->linked_lr_id)
+                ->get();
+
+            if ($group->contains(fn (LorryReceipt $lr) => $lr->delivery_status !== 'Pending')) {
+                return null;
+            }
+
+            return $group;
+        }
+
+        if ($lorry_receipt->delivery_status !== 'Pending') {
+            return null;
+        }
+
+        return collect([$lorry_receipt]);
+    }
+
+    public function details(int $id): JsonResponse
     {
         $lorryReceipt = LorryReceipt::with([
             'truck',
@@ -1361,7 +1755,7 @@ class LorryReceiptController extends Controller
         return $values->count() === 1 ? $values->first() : null;
     }
 
-    public function getLorryReceiptsForCustomer(int $customerId): \Illuminate\Http\JsonResponse
+    public function getLorryReceiptsForCustomer(int $customerId): JsonResponse
     {
         $lorryReceipts = LorryReceipt::where('customer_id', $customerId)
             ->where('company_id', Auth::user()->company_id)
@@ -1370,7 +1764,7 @@ class LorryReceiptController extends Controller
         return response()->json($lorryReceipts);
     }
 
-    public function getByLinkedId(int $linkedId): \Illuminate\Http\JsonResponse
+    public function getByLinkedId(int $linkedId): JsonResponse
     {
         try {
 

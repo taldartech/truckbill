@@ -489,7 +489,7 @@
                             @error('goods_value')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
-                            <small class="text-muted">Value of goods ()</small>
+                            <small class="text-muted">Value of goods</small>
                         </div>
                         <div class="col-md-3">
                             <label for="unloading_weight" class="form-label">Unloading Weight * <small class="text-muted">(in

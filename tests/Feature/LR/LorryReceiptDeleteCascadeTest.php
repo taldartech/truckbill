@@ -3,6 +3,7 @@
 namespace Tests\Feature\LR;
 
 use App\Models\Company;
+use App\Models\CompanySubscription;
 use App\Models\Consignee;
 use App\Models\FreightBooking;
 use App\Models\LorryReceipt;
@@ -44,6 +45,17 @@ class LorryReceiptDeleteCascadeTest extends TestCase
             'user_id' => null,
             'gst_slab' => config('payments.gst_slabs')[0],
             'is_blocked' => false,
+            'lr_credits' => 5,
+            'plan_end_date' => now()->addYear(),
+        ]);
+
+        CompanySubscription::create([
+            'company_id' => $company->id,
+            'status' => 'active',
+            'starts_on' => now()->subMonth(),
+            'ends_on' => now()->addYear(),
+            'included_branches' => 2,
+            'users_per_branch' => 3,
         ]);
 
         return User::factory()->create([
@@ -163,6 +175,135 @@ class LorryReceiptDeleteCascadeTest extends TestCase
             'id' => $linked->id,
             'freight_booking_id' => $booking->id,
         ]);
+    }
+
+    public function test_cannot_delete_lorry_receipt_when_status_is_not_pending(): void
+    {
+        $admin = $this->makeAdmin();
+        $lr = $this->createLorryReceipt($admin, ['delivery_status' => 'In-Progress']);
+
+        $this->actingAs($admin)
+            ->from('/lorry_receipts')
+            ->delete("/lorry_receipts/{$lr->id}")
+            ->assertRedirect('/lorry_receipts')
+            ->assertSessionHas('error');
+
+        $this->assertDatabaseHas('lorry_receipts', [
+            'id' => $lr->id,
+            'deleted_at' => null,
+        ]);
+    }
+
+    public function test_deleting_one_linked_lorry_receipt_deletes_entire_group(): void
+    {
+        $admin = $this->makeAdmin();
+        $linkedId = 42;
+
+        $lr1 = $this->createLorryReceipt($admin, [
+            'lr_number' => 'LR-LINK-DEL-001',
+            'gr_number' => 'GR-LINK-DEL-001',
+            'invoice_number' => 'INV-LINK-DEL-001',
+            'linked_lr_id' => $linkedId,
+            'delivery_status' => 'Pending',
+        ]);
+        $lr2 = $this->createLorryReceipt($admin, [
+            'lr_number' => 'LR-LINK-DEL-002',
+            'gr_number' => 'GR-LINK-DEL-002',
+            'invoice_number' => 'INV-LINK-DEL-002',
+            'linked_lr_id' => $linkedId,
+            'delivery_status' => 'Pending',
+        ]);
+
+        $this->actingAs($admin)
+            ->delete("/lorry_receipts/{$lr1->id}")
+            ->assertRedirect(route('lorry_receipts.index'));
+
+        $this->assertSoftDeleted('lorry_receipts', ['id' => $lr1->id]);
+        $this->assertSoftDeleted('lorry_receipts', ['id' => $lr2->id]);
+    }
+
+    public function test_cannot_delete_linked_group_when_any_member_is_not_pending(): void
+    {
+        $admin = $this->makeAdmin();
+        $linkedId = 43;
+
+        $lr1 = $this->createLorryReceipt($admin, [
+            'lr_number' => 'LR-LINK-BLOCK-001',
+            'gr_number' => 'GR-LINK-BLOCK-001',
+            'invoice_number' => 'INV-LINK-BLOCK-001',
+            'linked_lr_id' => $linkedId,
+            'delivery_status' => 'Pending',
+        ]);
+        $lr2 = $this->createLorryReceipt($admin, [
+            'lr_number' => 'LR-LINK-BLOCK-002',
+            'gr_number' => 'GR-LINK-BLOCK-002',
+            'invoice_number' => 'INV-LINK-BLOCK-002',
+            'linked_lr_id' => $linkedId,
+            'delivery_status' => 'Delivered',
+        ]);
+
+        $this->actingAs($admin)
+            ->from('/lorry_receipts')
+            ->delete("/lorry_receipts/{$lr1->id}")
+            ->assertRedirect('/lorry_receipts')
+            ->assertSessionHas('error');
+
+        $this->assertDatabaseHas('lorry_receipts', ['id' => $lr1->id, 'deleted_at' => null]);
+        $this->assertDatabaseHas('lorry_receipts', ['id' => $lr2->id, 'deleted_at' => null]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $overrides
+     */
+    protected function createLorryReceipt(User $admin, array $overrides = []): LorryReceipt
+    {
+        $customer = Consignee::create([
+            'company_id' => $admin->company_id,
+            'name' => 'Customer A',
+            'address' => 'Addr',
+        ]);
+        $consignor = Consignee::create([
+            'company_id' => $admin->company_id,
+            'name' => 'Consignor A',
+            'address' => 'Addr',
+        ]);
+        $consignee = Consignee::create([
+            'company_id' => $admin->company_id,
+            'name' => 'Consignee A',
+            'address' => 'Addr',
+        ]);
+        $transporter = Transporter::factory()->forCompany($admin->company_id)->create([
+            'mobile_number' => fake()->unique()->numerify('##########'),
+        ]);
+        $truck = Truck::create([
+            'transporter_id' => $transporter->id,
+            'truck_number' => fake()->unique()->bothify('GJ##??####'),
+            'truck_type' => 'Flatbed',
+        ]);
+
+        return LorryReceipt::create(array_merge([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'consignor_id' => $consignor->id,
+            'consignee_id' => $consignee->id,
+            'lr_number' => 'LR-'.fake()->unique()->numerify('######'),
+            'gr_number' => 'GR-'.fake()->unique()->numerify('######'),
+            'invoice_number' => 'INV-'.fake()->unique()->numerify('######'),
+            'truck_id' => $truck->id,
+            'transporter_id' => $transporter->id,
+            'reference_by' => $transporter->id,
+            'gr_date' => now()->toDateString(),
+            'source_city' => 'A',
+            'source_state' => 'B',
+            'destination_city' => 'C',
+            'destination_state' => 'D',
+            'lane' => 'Lane',
+            'good_type' => 'Steel',
+            'weight' => 10,
+            'fr_rate' => 100,
+            'amount' => 1000,
+            'delivery_status' => 'Pending',
+        ], $overrides));
     }
 
     public function test_mpdf_document_uses_writable_storage_temp_dir(): void

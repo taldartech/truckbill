@@ -5,6 +5,7 @@ namespace Tests\Feature\LR;
 use App\Models\Company;
 use App\Models\Consignee;
 use App\Models\FreightBooking;
+use App\Models\LorryReceipt;
 use App\Models\Transporter;
 use App\Models\Truck;
 use App\Models\User;
@@ -147,7 +148,7 @@ class LorryReceiptTest extends TestCase
         [$customer, $consignor, $consignee] = $this->seedConsignees($admin);
         [, $truck] = $this->makeTruck($admin);
 
-        $lr = \App\Models\LorryReceipt::create([
+        $lr = LorryReceipt::create([
             'company_id' => $admin->company_id,
             'customer_id' => $customer->id,
             'consignor_id' => $consignor->id,
@@ -171,7 +172,7 @@ class LorryReceiptTest extends TestCase
             'delivery_status' => 'Pending',
         ]);
 
-        $booking = \App\Models\FreightBooking::create([
+        $booking = FreightBooking::create([
             'lr_id' => $lr->id,
             'tr_fr_rate' => 100,
             'tr_amount' => $trAmount,
@@ -388,7 +389,7 @@ class LorryReceiptTest extends TestCase
 
         $response->assertRedirect(route('lorry_receipts.index'));
 
-        $linkedId = \App\Models\LorryReceipt::max('linked_lr_id');
+        $linkedId = LorryReceipt::max('linked_lr_id');
         $this->assertDatabaseHas('lorry_receipts', ['lr_number' => 'LRB001', 'linked_lr_id' => $linkedId]);
         $this->assertDatabaseHas('lorry_receipts', ['lr_number' => 'LRB002', 'linked_lr_id' => $linkedId]);
     }
@@ -399,7 +400,7 @@ class LorryReceiptTest extends TestCase
         [$customer, $consignor, $consignee] = $this->seedConsignees($admin);
         [, $truck] = $this->makeTruck($admin);
 
-        \App\Models\LorryReceipt::create([
+        LorryReceipt::create([
             'company_id' => $admin->company_id,
             'customer_id' => $customer->id,
             'consignor_id' => $consignor->id,
@@ -424,7 +425,7 @@ class LorryReceiptTest extends TestCase
             'linked_lr_id' => 10,
         ]);
 
-        \App\Models\LorryReceipt::create([
+        LorryReceipt::create([
             'company_id' => $admin->company_id,
             'customer_id' => $customer->id,
             'consignor_id' => $consignor->id,
@@ -497,7 +498,7 @@ class LorryReceiptTest extends TestCase
         [, $truck] = $this->makeTruck($admin);
         $payload = $this->validPayload($admin);
         $this->actingAs($admin)->post('/lorry_receipts', $payload);
-        $lr = \App\Models\LorryReceipt::where('lr_number', 'LR001')->firstOrFail();
+        $lr = LorryReceipt::where('lr_number', 'LR001')->firstOrFail();
 
         // Admin edit ok
         $this->actingAs($admin)->get("/lorry_receipts/{$lr->id}/edit")->assertOk();
@@ -529,7 +530,7 @@ class LorryReceiptTest extends TestCase
             'truck_type' => 'Flatbed',
         ]);
 
-        $lr = \App\Models\LorryReceipt::create([
+        $lr = LorryReceipt::create([
             'company_id' => $admin->company_id,
             'customer_id' => $customer->id,
             'consignor_id' => $consignor->id,
@@ -591,7 +592,7 @@ class LorryReceiptTest extends TestCase
         [$customer, $consignor, $consignee] = $this->seedConsignees($admin);
         [$transporter, $truck] = $this->makeTruck($admin);
 
-        $lr = \App\Models\LorryReceipt::create([
+        $lr = LorryReceipt::create([
             'company_id' => $admin->company_id,
             'customer_id' => $customer->id,
             'consignor_id' => $consignor->id,
@@ -684,7 +685,7 @@ class LorryReceiptTest extends TestCase
         [$customer, $consignor, $consignee] = $this->seedConsignees($admin);
         [$transporter, $truck] = $this->makeTruck($admin);
 
-        $lr = \App\Models\LorryReceipt::create([
+        $lr = LorryReceipt::create([
             'company_id' => $admin->company_id,
             'customer_id' => $customer->id,
             'consignor_id' => $consignor->id,
@@ -790,7 +791,7 @@ class LorryReceiptTest extends TestCase
         $responseCreateLinked->assertSee('Declaration is not submitted for the selected truck owner');
         $responseCreateLinked->assertSee('Edit Truck Owner');
 
-        $lr = \App\Models\LorryReceipt::create([
+        $lr = LorryReceipt::create([
             'company_id' => $admin->company_id,
             'customer_id' => $customer->id,
             'consignor_id' => $consignor->id,
@@ -819,6 +820,146 @@ class LorryReceiptTest extends TestCase
         $responseEdit->assertSee('id="declarationWarning"', false);
         $responseEdit->assertSee('Declaration is not submitted for the selected truck owner');
         $responseEdit->assertSee('Edit Truck Owner');
+    }
+
+    public function test_edit_linked_lorry_receipt_shows_combined_form_and_updates_group(): void
+    {
+        $admin = $this->makeAdmin();
+        [$customer, $consignor, $consignee] = $this->seedConsignees($admin);
+        [, $truck] = $this->makeTruck($admin);
+
+        $payload = [
+            'gr_date' => now()->toDateString(),
+            'truck_id' => $truck->id,
+            'transporter_id' => $truck->transporter_id,
+            'transporter_type' => 'agency',
+            'company_id' => $admin->company_id,
+            'lrs' => [
+                [
+                    'lr_number' => 'LRB101',
+                    'gr_number' => 'GRB101',
+                    'invoice_number' => 'INVB101',
+                    'customer_id' => $customer->id,
+                    'consignor_id' => $consignor->id,
+                    'consignee_id' => $consignee->id,
+                    'consignor_contact_number' => '9000000001',
+                    'consignee_contact_number' => '9000000002',
+                    'source_city' => 'City A',
+                    'source_state' => 'State A',
+                    'destination_city' => 'City B',
+                    'destination_state' => 'State B',
+                    'lane' => 'Road',
+                    'good_type' => 'Steel',
+                    'weight' => 5,
+                    'fr_rate' => 500,
+                    'amount' => 2500,
+                ],
+                [
+                    'lr_number' => 'LRB102',
+                    'gr_number' => 'GRB102',
+                    'invoice_number' => 'INVB102',
+                    'customer_id' => $customer->id,
+                    'consignor_id' => $consignor->id,
+                    'consignee_id' => $consignee->id,
+                    'consignor_contact_number' => '9000000001',
+                    'consignee_contact_number' => '9000000002',
+                    'source_city' => 'City A',
+                    'source_state' => 'State A',
+                    'destination_city' => 'City B',
+                    'destination_state' => 'State B',
+                    'lane' => 'Road',
+                    'good_type' => 'Cement',
+                    'weight' => 7,
+                    'fr_rate' => 700,
+                    'amount' => 4900,
+                ],
+            ],
+        ];
+
+        $this->actingAs($admin)->post('/lorry_receipts', $payload)->assertRedirect(route('lorry_receipts.index'));
+
+        $linkedId = (int) LorryReceipt::max('linked_lr_id');
+        $firstLr = LorryReceipt::query()->where('lr_number', 'LRB101')->firstOrFail();
+        $secondLr = LorryReceipt::query()->where('lr_number', 'LRB102')->firstOrFail();
+
+        $this->actingAs($admin)
+            ->get("/lorry_receipts/{$firstLr->id}/edit")
+            ->assertOk()
+            ->assertSee('Edit Linked Good Receipts (Bilty)', false)
+            ->assertSee('Linked ID: '.$linkedId, false)
+            ->assertSee('LRB101', false)
+            ->assertSee('LRB102', false);
+
+        $newGrDate = now()->addDay()->toDateString();
+
+        $updatePayload = [
+            'gr_date' => $newGrDate,
+            'truck_id' => $truck->id,
+            'transporter_id' => $truck->transporter_id,
+            'transporter_type' => 'agency',
+            'company_id' => $admin->company_id,
+            'lrs' => [
+                [
+                    'id' => $firstLr->id,
+                    'lr_number' => 'LRB101',
+                    'gr_number' => 'GRB101',
+                    'invoice_number' => 'INVB101',
+                    'customer_id' => $customer->id,
+                    'consignor_id' => $consignor->id,
+                    'consignee_id' => $consignee->id,
+                    'consignor_contact_number' => '9000000001',
+                    'consignee_contact_number' => '9000000002',
+                    'source_city' => 'City A',
+                    'source_state' => 'State A',
+                    'destination_city' => 'City B',
+                    'destination_state' => 'State B',
+                    'lane' => 'Road',
+                    'good_type' => 'Steel',
+                    'weight' => 6,
+                    'fr_rate' => 500,
+                    'amount' => 3000,
+                ],
+                [
+                    'id' => $secondLr->id,
+                    'lr_number' => 'LRB102-UPDATED',
+                    'gr_number' => 'GRB102',
+                    'invoice_number' => 'INVB102',
+                    'customer_id' => $customer->id,
+                    'consignor_id' => $consignor->id,
+                    'consignee_id' => $consignee->id,
+                    'consignor_contact_number' => '9000000001',
+                    'consignee_contact_number' => '9000000002',
+                    'source_city' => 'City A',
+                    'source_state' => 'State A',
+                    'destination_city' => 'City B',
+                    'destination_state' => 'State B',
+                    'lane' => 'Road',
+                    'good_type' => 'Cement',
+                    'weight' => 7,
+                    'fr_rate' => 700,
+                    'amount' => 4900,
+                ],
+            ],
+        ];
+
+        $this->actingAs($admin)
+            ->put("/lorry_receipts/{$firstLr->id}", $updatePayload)
+            ->assertRedirect(route('lorry_receipts.index'));
+
+        $this->assertDatabaseHas('lorry_receipts', [
+            'id' => $firstLr->id,
+            'gr_date' => $newGrDate,
+            'weight' => 6,
+            'amount' => 3000,
+            'linked_lr_id' => $linkedId,
+        ]);
+
+        $this->assertDatabaseHas('lorry_receipts', [
+            'id' => $secondLr->id,
+            'lr_number' => 'LRB102-UPDATED',
+            'gr_date' => $newGrDate,
+            'linked_lr_id' => $linkedId,
+        ]);
     }
 
     public function test_super_admin_forbidden_and_guest_redirected(): void

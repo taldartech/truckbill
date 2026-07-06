@@ -434,7 +434,7 @@
                             @error('goods_value')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
-                            <small class="text-muted">Value of goods ()</small>
+                            <small class="text-muted">Value of goods</small>
                         </div>
 
                     </div>

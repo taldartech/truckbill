@@ -1,152 +1,35 @@
 @extends('layouts.app')
 
 @section('content')
-    <!-- Select2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
-    <!-- SweetAlert2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet" />
-    <style>
-        /* Prevent form expansion on validation errors */
-        .form-control,
-        .form-select {
-            min-height: 38px;
-            box-sizing: border-box;
-        }
-
-        .text-danger {
-            font-size: 0.875rem;
-            margin-top: 0.25rem;
-            word-wrap: break-word;
-        }
-
-        /* Ensure consistent column widths */
-        .row .col-md-4 {
-            flex: 0 0 33.333333%;
-            max-width: 33.333333%;
-        }
-
-        /* Prevent card from expanding */
-        .card {
-            overflow: hidden;
-        }
-
-        /* Consistent spacing for form groups */
-        .mb-3 {
-            margin-bottom: 1rem !important;
-        }
-
-        .card-body .select2-container {
-            width: 100% !important;
-            max-width: 100%;
-        }
-
-        .select2-container--bootstrap-5 .select2-selection {
-            min-height: 38px;
-        }
-
-        .select2-container--bootstrap-5 .select2-selection--single {
-            min-height: 38px;
-        }
-
-        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
-            display: block;
-            padding-left: 0.75rem;
-            padding-right: 2rem;
-            padding-top: 0.375rem;
-            padding-bottom: 0.375rem;
-            line-height: 1.35;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .select2-container--bootstrap-5.select2-container--focus .select2-selection--single,
-        .select2-container--bootstrap-5.select2-container--open .select2-selection--single {
-            border-color: var(--bs-primary);
-            box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
-        }
-
-        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
-            height: auto;
-            min-height: 36px;
-            top: 0;
-            right: 0.5rem;
-        }
-
-        .select2-result-truck {
-            padding: 4px 0;
-        }
-
-        .truck-info {
-            font-size: 14px;
-            line-height: 1.4;
-        }
-
-        .select2-dropdown {
-            border: 1px solid #dee2e6;
-            border-radius: 0.375rem;
-        }
-
-        .select2-results__option--highlighted {
-            background-color: var(--bs-primary);
-            color: white;
-        }
-
-        /* Highlight transporter input when declaration not given */
-        #transporter_id.declaration-warning {
-            border-color: #ffc107 !important;
-            border-width: 2px !important;
-            box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25) !important;
-        }
-
-        /* Highlight Select2 container when declaration not given */
-        .select2-container.declaration-warning {
-            border-color: #ffc107 !important;
-            border-width: 2px !important;
-            box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25) !important;
-        }
-
-        .select2-container.declaration-warning .select2-selection__rendered {
-            background-color: #fff3cd !important;
-        }
-
-        .lr-payee-select-wrap .select2-container {
-            width: 100% !important;
-            max-width: 100%;
-        }
-
-        .lr-payee-select-wrap .select2-container .select2-selection--single {
-            min-height: 38px;
-            height: auto;
-        }
-
-        .lr-payee-select-wrap .select2-selection--single .select2-selection__rendered {
-            white-space: normal;
-            word-break: break-word;
-            overflow-wrap: anywhere;
-            text-overflow: clip;
-        }
-    </style>
-    <div class="card card-info card-outline mb-4" style="max-width: 1100px;margin: 0 auto;">
-        <!--begin::Header-->
-        <div class="card-header">
-            <div class="d-flex w-100">
-                <div class="card-title h4">Add Linked Good Receipts (Bilty)</div>
-                <div class="ms-auto">
+    @include('lorry_receipts.partials.linked-lr-form-styles')
+    <div class="card card-info card-outline mb-4 linked-lr-page">
+        <div class="card-header linked-lr-hero">
+            <div class="d-flex w-100 align-items-start flex-wrap gap-3">
+                <div class="flex-grow-1">
+                    <div class="linked-lr-hero__title">
+                        <div class="card-title h4 mb-0">Add Linked Good Receipts (Bilty)</div>
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Batch Entry</span>
+                    </div>
+                    <div class="linked-lr-hero__subtitle">Enter shared transport details once, then add multiple lorry receipts in the same linked group.</div>
+                </div>
+                <div class="ms-auto d-flex flex-wrap gap-2">
+                    <a href="{{ route('lorry_receipts.index') }}" class="btn btn-back">
+                        <i class="bi bi-arrow-left"></i> Back to List
+                    </a>
                     <a href="{{ route('consignees.create') }}" class="btn btn-brand-primary">
-                        <i class="bi bi-plus"></i> Create Consignee/Consignor/Customer</a>
+                        <i class="bi bi-plus"></i> Create Party
+                    </a>
                 </div>
             </div>
         </div>
-        <!--end::Header-->
-        <!--begin::Form-->
-        <form method="POST" action="{{ route('lorry_receipts.store') }}" id="lorryReceiptForm" class="needs-validation"
+        <form method="POST" action="{{ route('lorry_receipts.store') }}" id="lorryReceiptForm" class="needs-validation linked-lr-form"
             novalidate="">
             @csrf
             <input type="hidden" name="company_id" value="{{ auth()->user()->company_id }}">
             <div class="card-body">
-                <!-- Declaration Warning (shown at top when truck owner declaration not submitted) -->
                 <div id="declarationWarning" class="alert alert-warning mb-3" style="display: none;">
                     <i class="bi bi-exclamation-triangle"></i>
                     <strong>Warning:</strong> Declaration is not submitted for the selected truck owner.
@@ -154,15 +37,15 @@
                         <i class="bi bi-pencil-square"></i> Edit Truck Owner
                     </a>
                 </div>
-                <!-- Shared Details for all LRs -->
-                <div class="card mb-4 p-3 bg-light">
-                    <div class="row">
-                        <div class="col">
-                            <h5 class="mb-3">Shared Details</h5>
-                        </div>
+
+                <div class="linked-lr-section">
+                    <div class="linked-lr-section__head">
+                        <h5 class="linked-lr-section__title"><i class="bi bi-truck-front"></i> Shared Transport Details</h5>
+                        <span class="badge bg-light text-dark border">Applies to all LRs</span>
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
+                    <div class="linked-lr-section__body">
+                    <div class="row g-3 mb-0">
+                        <div class="col-12 col-md-4">
                             <label for="gr_date" class="form-label">GR Date *</label>
                             <input type="date" class="form-control" id="gr_date" name="gr_date" required
                                 value="{{ old('gr_date') }}">
@@ -171,7 +54,7 @@
                             @enderror
                             <div class="invalid-feedback">Please select a GR date.</div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-12 col-md-4">
                             <label for="truck_id" class="form-label">Truck *</label>
                             <select class="form-select" id="truck_id" name="truck_id" required>
                                 <option value="">Select Trucks</option>
@@ -194,7 +77,7 @@
                             @enderror
                             <div class="invalid-feedback">Please select a truck.</div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-12 col-md-4">
                             <label for="transporter_type" class="form-label" id="transporterTypeLabel">Select Payment Type
                                 *</label>
                             <select class="form-select" id="transporter_type" name="transporter_type" required>
@@ -206,8 +89,8 @@
                         </div>
                     </div>
                     <!-- Memo ID field removed from creation form as it cannot be present at creation time -->
-                    <div class="row mb-3">
-                        <div class="col-md-6 min-w-0">
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6 min-w-0">
                             <label for="transporter_id" id="transporterLabel" class="form-label">Transporter *</label>
                             <div class="lr-payee-select-wrap">
                                 <select class="form-select" id="transporter_id" name="transporter_id" required
@@ -231,7 +114,7 @@
                                 </span>
                             </div>
                         </div>
-                        <div class="col-md-6 min-w-0">
+                        <div class="col-12 col-md-6 min-w-0">
                             <label for="reference_by" class="form-label">Reference By</label>
                             <div class="lr-payee-select-wrap">
                                 <select class="form-select" id="reference_by" name="reference_by">
@@ -250,182 +133,47 @@
                             <div class="invalid-feedback">Please select a reference.</div>
                         </div>
                     </div>
+                    </div>
                 </div>
-                <!-- LR Items Repeater -->
-                <div class="card mb-4 p-3 bg-light">
-                    <div class="d-flex align-items-center mb-3">
-                        <h5 class="mb-0">LR Items</h5>
-                    </div>
-                    <div id="lr-items-container"></div>
-                    <template id="lr-item-template">
-                        <div class="lr-item card mb-3 p-3">
-                            <div class="d-flex align-items-center mb-2">
-                                <h6 class="mb-0">LR <span class="lr-index">#1</span></h6>
-                                <button type="button"
-                                    class="btn btn-sm btn-danger ms-auto remove-lr-item">Remove</button>
-                            </div>
-                            <input type="hidden" class="lane-input" value="Road">
-                            <div class="card mb-4 p-3 bg-light">
-                                <div class="row mb-3">
-                                    <div class="col-md-3">
-                                        <label class="form-label">LR Number *</label>
-                                        <input type="text" class="form-control lr-number-input" required
-                                            placeholder="Unique LR Number">
-                                        <div class="invalid-feedback">Please enter a unique LR number.</div>
-                                        <div class="lr-number-feedback mt-1"></div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label">Invoice Number</label>
-                                        <input type="text" class="form-control invoice-number-input"
-                                            placeholder="Unique Invoice Number">
-                                        <div class="invalid-feedback">Please enter a unique Invoice number.</div>
-                                        <div class="invoice-number-feedback mt-1"></div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label">Customer *</label>
-                                        <select class="form-select select2 customer-select" required>
-                                            <option value="">Select Customer</option>
-                                        </select>
-                                        <div class="invalid-feedback">Please select a customer.</div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label">GR Number <small class="text-muted">(Optional)</small></label>
-                                        <input type="text" class="form-control gr-number-input"
-                                               value="{{ old('gr_number') }}" placeholder="Enter GR Number" autocomplete="off">
-                                        <div class="gr-number-feedback mt-1"></div>
-                                        @error('gr_number')
-                                            <div class="text-danger">{{ $message }}</div>
-                                        @enderror
-                                    </div>
 
-                                </div>
-                                <div class="row">
-
-                                    <div class="col-md-4">
-                                        <label class="form-label">Consignor *</label>
-                                        <select class="form-select select2 consignor-select" required>
-                                            <option value="">Select Consignor</option>
-                                        </select>
-                                        <small class="form-text text-muted d-block consignor-contact-text"></small>
-                                        <small class="form-text text-muted d-block consignor-city-text"></small>
-                                        <small class="form-text text-muted d-block consignor-state-text"></small>
-                                        <div class="invalid-feedback">Please select a consignor.</div>
-                                    </div>
-                                    <div class="col-md-3" style="display: none;">
-                                        <label class="form-label">Consignor Contact</label>
-                                        <input type="text" class="form-control consignor-contact" readonly>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label">Consignee *</label>
-                                        <select class="form-select select2 consignee-select" required>
-                                            <option value="">Select Consignee</option>
-                                        </select>
-                                        <small class="form-text text-muted d-block consignee-contact-text"></small>
-                                        <small class="form-text text-muted d-block consignee-city-text"></small>
-                                        <small class="form-text text-muted d-block consignee-state-text"></small>
-                                        <div class="invalid-feedback">Please select a consignee.</div>
-                                    </div>
-                                    <div class="col-md-3" style="display: none;">
-                                        <label class="form-label">Consignee Contact</label>
-                                        <input type="text" class="form-control consignee-contact" readonly>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label">Unloading Station </label>
-                                        <input type="text" class="form-control unloading-station-input"
-                                            value="{{ old('unloading_station') }}" autocomplete="off">
-                                    </div>
-                                </div>
-                                <div class="row mb-3">
-
-                                    <input type="hidden" class="form-control source-city" readonly>
-                                    <input type="hidden" class="form-control source-state" readonly>
-
-                                </div>
-                                <div class="row mb-3">
-                                    <input type="hidden" class="form-control destination-city" readonly>
-                                    <input type="hidden" class="form-control destination-state" readonly>
-
-                                </div>
-                            </div>
-                            <div class="card mb-4 p-3 bg-light">
-                                <div class="row mb-3">
-                                    <div class="col-md-2 ">
-                                        <label class="form-label">Goods Type *</label>
-                                        <div class="input-group flex-nowrap">
-                                            <select class="form-select select2 goods-type" required>
-                                                <option value="">Select Goods Type</option>
-                                                @foreach ($goodsTypes as $goodsType)
-                                                    <option value="{{ $goodsType->name }}">{{ $goodsType->name }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                            <button type="button" class="btn btn-primary"
-                                                onclick="displayGoodAdd(this)" title="Add New Goods Type">
-                                                <i class="bi bi-plus"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-2 ms-4">
-                                        <label class="form-label">No. of Units</label>
-                                        <input type="number" class="form-control units" min="1" max="100000">
-                                        <small class="text-muted">📦 Max: 100,000 units</small>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label class="form-label">Goods Value</label>
-                                        <input type="number" step="0.01" class="form-control goods-value" min="0" placeholder="">
-                                        <small class="text-muted"></small>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label class="form-label">Weight (Tons) *</label>
-                                        <input type="number" step="0.001" class="form-control weight" min="0.1"
-                                            max="100" required>
-                                        <small class="text-muted">📏 Range: 0.1 - 100 tons</small>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label class="form-label">Fr Rate (/ton) *</label>
-                                        <input type="number" step="0.01" class="form-control fr-rate" min="1"
-                                            max="20000" required>
-                                        <small class="text-muted"><i class="bi bi-currency-rupee"></i> Range: 1 - 20,000 per ton</small>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label d-flex justify-content-between align-items-center">
-                                            <span>Amount *</span>
-                                            <span class="form-check form-check-inline mb-0">
-                                                <input class="form-check-input is-fixed-amount" type="checkbox"
-                                                    value="1">
-                                                <label class="form-check-label">Use fixed amount</label>
-                                            </span>
-                                        </label>
-                                        <input type="number" step="0.01" class="form-control amount" required>
-                                        <small class="text-muted amount-help-text">Auto: Weight × FR Rate (uncheck to auto-calculate)</small>
-                                    </div>
-                                </div>
-
-                                <div class="row mb-3">
-
-                                    <input type="hidden" class="form-control lane" value="Road" readonly>
-                                </div>
-                            </div>
+                <div class="linked-lr-section">
+                    <div class="linked-lr-section__head">
+                        <div>
+                            <h5 class="linked-lr-section__title mb-1"><i class="bi bi-layers"></i> Linked Lorry Receipts</h5>
+                            <div class="linked-lr-items-count" id="linked-lr-toolbar-count">0 items</div>
                         </div>
-                    </template>
-                    <button type="button" class="btn btn-sm btn-primary ms-auto" id="add-lr-item"><i
-                            class="bi bi-plus"></i> Add LR</button>
+                        <button type="button" class="btn btn-sm btn-brand-primary" id="add-lr-item">
+                            <i class="bi bi-plus-lg"></i> Add LR
+                        </button>
+                    </div>
+                    <div class="linked-lr-section__body">
+                        <div id="lr-items-container"></div>
+                        @include('lorry_receipts.partials.linked-lr-item-template')
+                    </div>
                 </div>
-                <!-- Submit Actions -->
-                <div class="card mb-4 p-3 bg-light">
-                    <div class="row">
-                        <div class="col">
-                            <h5 class="mb-3">Submit Actions</h5>
-                        </div>
+
+                <div class="linked-lr-summary" id="linked-lr-summary">
+                    <div class="linked-lr-summary__item">
+                        <span class="linked-lr-summary__label">LR Count</span>
+                        <span class="linked-lr-summary__value" id="linked-lr-count">0</span>
                     </div>
-                    <div class="row g-2">
-                        <div class="col-12 col-md-6">
-                            <button class="btn btn-brand-primary w-100" type="submit">💾 Create Linked Good Receipt (Bilty)</button>
-                        </div>
-                        <div class="col-12 col-md-6">
-                            <a href="{{ route('lorry_receipts.index') }}" class="btn btn-back w-100">📄 Back to List</a>
-                        </div>
+                    <div class="linked-lr-summary__item">
+                        <span class="linked-lr-summary__label">Total Weight</span>
+                        <span class="linked-lr-summary__value" id="linked-lr-total-weight">0.000 t</span>
                     </div>
+                    <div class="linked-lr-summary__item">
+                        <span class="linked-lr-summary__label">Total Amount</span>
+                        <span class="linked-lr-summary__value" id="linked-lr-total-amount">₹0.00</span>
+                    </div>
+                </div>
+
+                <div class="linked-lr-actions">
+                    <button class="btn btn-brand-primary btn-lg" type="submit">
+                        <i class="bi bi-check2-circle"></i> Create Linked Good Receipts
+                    </button>
+                    <a href="{{ route('lorry_receipts.index') }}" class="btn btn-back btn-lg">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </a>
                 </div>
             </div>
         </form>
@@ -471,6 +219,7 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <!-- Common LR entity confirmation helpers -->
+    <script src="/js/linked-lr-form-ui.js"></script>
     <script src="/js/lr-entity.js"></script>
 
     <script>
@@ -520,13 +269,27 @@
         }
 
         function refreshIndices() {
+            if (window.LinkedLrFormUI) {
+                window.LinkedLrFormUI.refreshIndices();
+                return;
+            }
+
             const lrItemsContainer = document.getElementById('lr-items-container');
-            if (!lrItemsContainer) return;
-            const items = lrItemsContainer.querySelectorAll('.lr-item');
-            items.forEach((item, idx) => {
+            if (!lrItemsContainer) {
+                return;
+            }
+
+            lrItemsContainer.querySelectorAll('.lr-item').forEach((item, idx) => {
                 const indexEl = item.querySelector('.lr-index');
+                const badgeEl = item.querySelector('.lr-index-badge');
+                const label = `#${idx + 1}`;
+
                 if (indexEl) {
-                    indexEl.textContent = `#${idx + 1}`;
+                    indexEl.textContent = label;
+                }
+
+                if (badgeEl) {
+                    badgeEl.textContent = String(idx + 1);
                 }
             });
         }
@@ -892,6 +655,7 @@
 
                             scope.querySelector('.source-city').value = cityValue;
                             scope.querySelector('.source-state').value = stateValue;
+                            window.LinkedLrFormUI?.updateRoutePreview(scope);
                         })
                         .catch(err => {
                             console.error('❌ Consignor fetch error:', err);
@@ -957,6 +721,7 @@
 
                             scope.querySelector('.destination-city').value = cityValue;
                             scope.querySelector('.destination-state').value = stateValue;
+                            window.LinkedLrFormUI?.updateRoutePreview(scope);
                         })
                         .catch(err => {
                             console.error('❌ Consignee fetch error:', err);
@@ -1773,6 +1538,7 @@ lrItemsContainer.addEventListener('blur', function(e) {
 
                         scope.querySelector('.source-city').value = cityValue;
                         scope.querySelector('.source-state').value = stateValue;
+                        window.LinkedLrFormUI?.updateRoutePreview(scope);
                     })
                     .catch(err => {
                         console.error('❌ Consignor fetch error:', err);
@@ -1823,6 +1589,7 @@ lrItemsContainer.addEventListener('blur', function(e) {
 
                         scope.querySelector('.destination-city').value = cityValue;
                         scope.querySelector('.destination-state').value = stateValue;
+                        window.LinkedLrFormUI?.updateRoutePreview(scope);
                     })
                     .catch(err => {
                         console.error('❌ Consignee fetch error:', err);
