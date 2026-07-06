@@ -121,7 +121,7 @@ return new class extends Migration
                     $promoCode = $ledger->promo_code ?? null;
                 }
 
-                $newId = DB::table('subscription_payments')->insertGetId([
+                $paymentData = [
                     'company_id' => $ledger->company_id,
                     'type' => $ledger->payment_type,
                     'status' => $ledger->status,
@@ -136,16 +136,26 @@ return new class extends Migration
                         'addon_lr_credits' => $ledger->addon_lr_credits,
                         'tenure' => $ledger->tenure,
                     ]),
-                    'subtotal_paise' => (int) round(((float) $ledger->subtotal) * 100),
-                    'promo_discount_paise' => (int) round(((float) $ledger->promo_discount) * 100),
-                    'gst_amount_paise' => (int) round(((float) $ledger->gst_amount) * 100),
-                    'total_amount_paise' => (int) round(((float) $ledger->total_amount) * 100),
                     'catalog_snapshot' => json_encode(['migrated' => true, 'legacy' => true]),
-                    'razorpay_response' => $ledger->razorpay_response ? json_decode($ledger->razorpay_response, true) : null,
+                    'razorpay_response' => $ledger->razorpay_response,
                     'legacy_payment_ledger_id' => $ledger->id,
                     'created_at' => $ledger->created_at,
                     'updated_at' => $ledger->updated_at,
-                ]);
+                ];
+
+                if (Schema::hasColumn('subscription_payments', 'subtotal')) {
+                    $paymentData['subtotal'] = (float) $ledger->subtotal;
+                    $paymentData['promo_discount'] = (float) $ledger->promo_discount;
+                    $paymentData['gst_amount'] = (float) $ledger->gst_amount;
+                    $paymentData['total_amount'] = (float) $ledger->total_amount;
+                } else {
+                    $paymentData['subtotal_paise'] = (int) round(((float) $ledger->subtotal) * 100);
+                    $paymentData['promo_discount_paise'] = (int) round(((float) $ledger->promo_discount) * 100);
+                    $paymentData['gst_amount_paise'] = (int) round(((float) $ledger->gst_amount) * 100);
+                    $paymentData['total_amount_paise'] = (int) round(((float) $ledger->total_amount) * 100);
+                }
+
+                $newId = DB::table('subscription_payments')->insertGetId($paymentData);
 
                 $ledgerMap[$ledger->id] = $newId;
             }
