@@ -283,7 +283,7 @@ class Select2SearchController extends Controller
             $results = $items->map(function (Truck $truck) {
                 $transporterName = $truck->transporter
                     ? $truck->transporter->displayNameWithShortName()
-                    : 'No Transporter';
+                    : 'No Truck Owner';
                 $driverName = $truck->driver ? $truck->driver->name : null;
 
                 $text = $truck->truck_number ?: '';

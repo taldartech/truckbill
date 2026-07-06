@@ -68,7 +68,7 @@
                                         @if ($selectedTruck->driver)
                                             - Driver: {{ $selectedTruck->driver->name }}
                                         @endif
-                                        ({{ $selectedTruck->transporter ? $selectedTruck->transporter->name : 'No Transporter' }})
+                                        ({{ $selectedTruck->transporter ? $selectedTruck->transporter->name : 'No Truck Owner' }})
                                     </option>
                                 @endif
                             </select>
