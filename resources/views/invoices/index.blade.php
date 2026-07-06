@@ -4,15 +4,6 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
-        .payment-summary-label {
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
-        }
-
-        #addPaymentModal .payment-summary {
-            overflow: hidden;
-        }
-
         /* Select2 custom styling for truck dropdown */
         .select2-container--bootstrap-5 .select2-selection {
             min-height: 38px;
@@ -235,27 +226,10 @@
                 <form id="addPaymentForm">
                     <div class="modal-body">
                         <input type="hidden" id="payment_invoice_id" name="invoice_id">
-
-                        <div class="payment-summary border rounded mb-3">
-                            <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-light">
-                                <span class="text-muted">Invoice</span>
-                                <span class="fw-semibold text-truncate ms-2" id="payment_invoice_number">&mdash;</span>
-                            </div>
-                            <div class="row g-0 text-center">
-                                <div class="col-4 py-2 border-end">
-                                    <div class="text-muted payment-summary-label">Total</div>
-                                    <div class="fw-semibold" id="payment_total_amount">&#8377;0.00</div>
-                                </div>
-                                <div class="col-4 py-2 border-end">
-                                    <div class="text-muted payment-summary-label">Paid</div>
-                                    <div class="fw-semibold text-success" id="payment_paid_amount">&#8377;0.00</div>
-                                </div>
-                                <div class="col-4 py-2">
-                                    <div class="text-muted payment-summary-label">Balance</div>
-                                    <div class="fw-bold text-danger" id="payment_remaining_amount">&#8377;0.00</div>
-                                </div>
-                            </div>
-                        </div>
+                        <input type="hidden" id="payment_invoice_number">
+                        <input type="hidden" id="payment_total_amount">
+                        <input type="hidden" id="payment_paid_amount">
+                        <input type="hidden" id="payment_remaining_amount">
 
                         <div class="row g-2 mb-2">
                             <div class="col-6">
@@ -301,7 +275,7 @@
                     <div class="modal-footer py-2">
                         <button type="button" class="btn btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn btn-brand-primary">
-                            <i class="bi bi-check-circle"></i> Add Payment
+                            <i class="bi bi-check-circle"></i> Add payment
                         </button>
                     </div>
                 </form>
@@ -341,6 +315,8 @@
             </div>
         </div>
     </div>
+
+    @include('invoices.partials.confirmation-assets')
 
     <script>
         // Wait for both jQuery and Bootstrap to be loaded
@@ -731,12 +707,12 @@
                     return;
                 }
 
-                // Set summary values
+                // Set values for confirmation
                 $('#payment_invoice_id').val(invoiceId);
-                $('#payment_invoice_number').text(invoiceNumber || '—');
-                $('#payment_total_amount').text('₹' + formatPaymentAmount(totalAmount));
-                $('#payment_paid_amount').text('₹' + formatPaymentAmount(paidAmount));
-                $('#payment_remaining_amount').text('₹' + formatPaymentAmount(remainingAmount));
+                $('#payment_invoice_number').val(invoiceNumber || '—');
+                $('#payment_total_amount').val(totalAmount);
+                $('#payment_paid_amount').val(paidAmount);
+                $('#payment_remaining_amount').val(remainingAmount);
                 $('#max_payment_amount').text(formatPaymentAmount(remainingAmount));
                 $('#payment_amount').attr('max', remainingAmount);
             $('#payment_amount').val('');
@@ -763,60 +739,90 @@
             $('#addPaymentForm').on('submit', function(e) {
                 e.preventDefault();
                 var invoiceId = $('#payment_invoice_id').val();
-            var formData = {
-                mode: $('#payment_mode').val(),
-                amount: parseFloat($('#payment_amount').val()),
-                remark: $('#payment_remark').val(),
-                payment_date: $('#payment_date').val(),
-                _token: '{{ csrf_token() }}'
-            };
+                var formData = {
+                    mode: $('#payment_mode').val(),
+                    amount: parseFloat($('#payment_amount').val()),
+                    remark: $('#payment_remark').val(),
+                    payment_date: $('#payment_date').val(),
+                    _token: '{{ csrf_token() }}'
+                };
 
                 // Validate amount
                 var remainingAmount = parseFloat($('#payment_amount').attr('max')) || 0;
+                if (!formData.mode) {
+                    $('#payment_error').removeClass('d-none').text('Please select a payment mode.');
+                    return;
+                }
+                if (!formData.amount || formData.amount <= 0) {
+                    $('#payment_error').removeClass('d-none').text('Please enter a valid payment amount.');
+                    return;
+                }
                 if (formData.amount > remainingAmount) {
                     $('#payment_error').removeClass('d-none').text(
-                        'Payment amount cannot exceed remaining balance of ' + remainingAmount.toFixed(
-                            2));
+                        'Payment amount cannot exceed remaining balance of ' + remainingAmount.toFixed(2));
                     return;
                 }
 
-                // Disable submit button
+                $('#payment_error').addClass('d-none').text('');
+
                 var submitBtn = $(this).find('button[type="submit"]');
-                submitBtn.prop('disabled', true).html(
-                    '<span class="spinner-border spinner-border-sm"></span> Processing...');
+                var invoiceTotal = parseFloat($('#payment_total_amount').val()) || 0;
+                var paidAmount = parseFloat($('#payment_paid_amount').val()) || 0;
+                var confirmationData = {
+                    invoiceNumber: $('#payment_invoice_number').val(),
+                    paymentDate: formData.payment_date,
+                    mode: formData.mode,
+                    amount: formData.amount,
+                    remark: formData.remark,
+                    invoiceTotal: invoiceTotal,
+                    paidAmount: paidAmount,
+                    balanceBefore: remainingAmount,
+                    balanceAfter: Math.max(0, remainingAmount - formData.amount),
+                };
 
-                $.ajax({
-                    url: '/invoices/' + invoiceId + '/payments',
-                    type: 'POST',
-                    data: formData,
-                    success: function(response) {
-                        if (response.success) {
-                            // Close modal
-                            if (typeof bootstrap !== 'undefined') {
-                                var modal = bootstrap.Modal.getInstance(document.getElementById(
-                                    'addPaymentModal'));
-                                if (modal) {
-                                    modal.hide();
+                function submitPayment() {
+                    submitBtn.prop('disabled', true).html(
+                        '<span class="spinner-border spinner-border-sm"></span> Processing...');
+
+                    $.ajax({
+                        url: '/invoices/' + invoiceId + '/payments',
+                        type: 'POST',
+                        data: formData,
+                        success: function(response) {
+                            if (response.success) {
+                                if (typeof bootstrap !== 'undefined') {
+                                    var modal = bootstrap.Modal.getInstance(document.getElementById(
+                                        'addPaymentModal'));
+                                    if (modal) {
+                                        modal.hide();
+                                    }
                                 }
+
+                                alert('Payment added successfully!');
+                                location.reload();
                             }
-
-                            // Show success message
-                            alert('Payment added successfully!');
-
-                            // Reload page to show updated amounts
-                            location.reload();
+                        },
+                        error: function(xhr) {
+                            var errorMessage = 'Error adding payment. Please try again.';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            }
+                            $('#payment_error').removeClass('d-none').text(errorMessage);
+                            submitBtn.prop('disabled', false).html(
+                                '<i class="bi bi-check-circle"></i> Add payment');
                         }
-                    },
-                    error: function(xhr) {
-                        var errorMessage = 'Error adding payment. Please try again.';
-                        if (xhr.responseJSON && xhr.responseJSON.message) {
-                            errorMessage = xhr.responseJSON.message;
+                    });
+                }
+
+                if (window.InvoiceConfirmation) {
+                    window.InvoiceConfirmation.confirmPaymentSummary(confirmationData).then(function(confirmed) {
+                        if (confirmed) {
+                            submitPayment();
                         }
-                        $('#payment_error').removeClass('d-none').text(errorMessage);
-                        submitBtn.prop('disabled', false).html(
-                            '<i class="bi bi-check-circle"></i> Add Payment');
-                    }
-                });
+                    });
+                } else if (window.confirm('Record this payment?')) {
+                    submitPayment();
+                }
             });
 
             const customerFilterFromRequest = @json(request('customer', ''));

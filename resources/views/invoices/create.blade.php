@@ -75,7 +75,7 @@
                 </div>
             </div>
         </div>
-        <form action="{{ route('invoices.store') }}" method="POST" class="needs-validation" novalidate="">
+        <form action="{{ route('invoices.store') }}" method="POST" class="needs-validation" id="invoiceCreateForm" novalidate="">
             @csrf
             @php
                 $canEditCompany = auth()->check() && auth()->user()->userRole->name === 'super_admin';
@@ -170,7 +170,9 @@
             <input type="hidden" name="base_amount" id="baseAmountInput" value="0">
 
             <div class="card-footer">
-                <button class="btn btn-brand-primary" type="submit">Generate Invoice</button>
+                <button class="btn btn-brand-primary" type="submit">
+                    <i class="bi bi-check2-circle me-1"></i>Generate invoice
+                </button>
             </div>
         </form>
     </div>
@@ -542,6 +544,7 @@
                             // Create a table for LR details
                             let tableHtml = '';
                             let grandTotalAmount = 0;
+                            let lrCount = 0;
                             // Prefill customer select field when form is shown
                             showInvoiceFormBtn.addEventListener('click', function() {
                                 const selectedCustomerName = document.getElementById(
@@ -563,6 +566,7 @@
 
                             for (const memoId in data) {
                                 if (data[memoId].length > 0) {
+                                    lrCount += data[memoId].length;
                                     const totalAmount = data[memoId].reduce((sum, lr) => sum +
                                         parseFloat(lr.amount || 0), 0);
                                     grandTotalAmount += totalAmount;
@@ -767,6 +771,11 @@
                                         // Update LR details with tax info
                                         document.getElementById('lrDetailsContent').innerHTML =
                                             `<div class="row">${tableHtml}</div>`;
+
+                                        window.invoiceCreateMeta = {
+                                            lrCount: lrCount,
+                                            memoCount: selectedMemos.length,
+                                        };
                                     })
                                     .catch(err => {
                                         console.error("Error fetching customer state for tax:",
@@ -782,6 +791,11 @@
                                     ${tableHtml}
                                 </div>
                             `;
+
+                            window.invoiceCreateMeta = {
+                                lrCount: lrCount,
+                                memoCount: selectedMemos.length,
+                            };
                         })
 
                         .catch(error => {
@@ -829,6 +843,102 @@
                 // Hide pre-form, show main form
                 preFormContainer.style.display = 'none';
                 mainFormContainer.style.display = 'block';
+
+                window.invoiceCreateMeta = {
+                    lrCount: 0,
+                    memoCount: selectedMemos.length,
+                };
+            });
+        });
+    </script>
+
+    @include('invoices.partials.confirmation-assets')
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const invoiceCreateForm = document.getElementById('invoiceCreateForm');
+            if (!invoiceCreateForm) {
+                return;
+            }
+
+            const gstSlab = @json((int) ($company->gst_slab ?? 5));
+
+            function getTaxLines() {
+                const invoiceType = (document.querySelector('input[name="invoice_type"]')?.value || '').toLowerCase();
+                const baseAmount = parseFloat(document.getElementById('baseAmountInput')?.value || '0') || 0;
+                const sgst = parseFloat(document.getElementById('sgstInput')?.value || '0') || 0;
+                const cgst = parseFloat(document.getElementById('cgstInput')?.value || '0') || 0;
+                const igst = parseFloat(document.getElementById('igstInput')?.value || '0') || 0;
+                const lines = [];
+
+                if (sgst > 0) {
+                    lines.push({ label: `SGST (${gstSlab / 2}%)`, amount: sgst });
+                }
+                if (cgst > 0) {
+                    lines.push({ label: `CGST (${gstSlab / 2}%)`, amount: cgst });
+                }
+                if (igst > 0) {
+                    lines.push({ label: `IGST (${gstSlab}%)`, amount: igst });
+                }
+
+                const netAmount = parseFloat(document.getElementById('netAmountInput')?.value || '0') || 0;
+                if (invoiceType === 'reverse' && (sgst > 0 || cgst > 0 || igst > 0)) {
+                    lines.push({
+                        label: 'Tax under RCM',
+                        amount: sgst + cgst + igst,
+                        muted: true,
+                    });
+                }
+
+                return { lines, baseAmount, netAmount };
+            }
+
+            invoiceCreateForm.addEventListener('submit', function(event) {
+                if (!invoiceCreateForm.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    invoiceCreateForm.classList.add('was-validated');
+                    return;
+                }
+
+                event.preventDefault();
+                event.stopPropagation();
+                invoiceCreateForm.classList.add('was-validated');
+
+                const tax = getTaxLines();
+                const invoiceType = document.querySelector('input[name="invoice_type"]')?.value || '';
+                const totalAmount = parseFloat(document.querySelector('input[name="total_amount"]')?.value || '0') || 0;
+                const meta = window.invoiceCreateMeta || { lrCount: 0, memoCount: 0 };
+                const confirmationData = {
+                    dialogTitle: 'Confirm invoice generation',
+                    title: 'Review invoice before generating',
+                    confirmText: 'Generate invoice',
+                    customer: document.getElementById('prefilledCustomerName')?.value
+                        || document.getElementById('selectedCustomerName')?.textContent
+                        || '—',
+                    generatedDate: document.querySelector('input[name="generated_date"]')?.value || '',
+                    reference: document.getElementById('manual_invoice_number')?.value || '',
+                    memos: document.getElementById('selectedMemoIds')?.textContent || '—',
+                    lrMeta: meta.lrCount
+                        ? `${meta.lrCount} LR(s) across ${meta.memoCount || 0} memo(s)`
+                        : '—',
+                    invoiceType: invoiceType,
+                    subtotal: tax.baseAmount,
+                    taxLines: tax.lines,
+                    totalAmount: totalAmount,
+                    netAmount: tax.netAmount,
+                    totalLabel: invoiceType.toLowerCase() === 'forward' ? 'Net total' : 'Invoice total',
+                };
+
+                if (window.InvoiceConfirmation) {
+                    window.InvoiceConfirmation.confirmInvoiceSummary(confirmationData).then(function(confirmed) {
+                        if (confirmed) {
+                            invoiceCreateForm.submit();
+                        }
+                    });
+                } else if (window.confirm('Generate this invoice?')) {
+                    invoiceCreateForm.submit();
+                }
             });
         });
     </script>

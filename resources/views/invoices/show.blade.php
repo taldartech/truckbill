@@ -327,16 +327,6 @@
     </div>
 
     <!-- Add Payment Modal -->
-    <style>
-        #addPaymentModal .payment-summary-label {
-            text-transform: uppercase;
-            letter-spacing: 0.03em;
-        }
-
-        #addPaymentModal .payment-summary {
-            overflow: hidden;
-        }
-    </style>
     <div class="modal fade" id="addPaymentModal" tabindex="-1" aria-labelledby="addPaymentModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -349,29 +339,10 @@
                 <form id="addPaymentForm">
                     <div class="modal-body">
                         <input type="hidden" id="payment_invoice_id" name="invoice_id" value="{{ $invoice->id }}">
-
-                        <div class="payment-summary border rounded mb-3">
-                            <div class="d-flex justify-content-between align-items-center px-3 py-2 border-bottom bg-light">
-                                <span class="text-muted">Invoice</span>
-                                <span class="fw-semibold text-truncate ms-2">{{ $invoice->invoice_number
-                                    ? $invoice->invoice_number . ($invoice->manual_invoice_number ? ' (' . $invoice->manual_invoice_number . ')' : '')
-                                    : $invoice->manual_invoice_number }}</span>
-                            </div>
-                            <div class="row g-0 text-center">
-                                <div class="col-4 py-2 border-end">
-                                    <div class="text-muted payment-summary-label">Total</div>
-                                    <div class="fw-semibold">&#8377;{{ formatIndianNumber($invoice->total_amount) }}</div>
-                                </div>
-                                <div class="col-4 py-2 border-end">
-                                    <div class="text-muted payment-summary-label">Paid</div>
-                                    <div class="fw-semibold text-success">&#8377;{{ formatIndianNumber($invoice->paid_amount) }}</div>
-                                </div>
-                                <div class="col-4 py-2">
-                                    <div class="text-muted payment-summary-label">Balance</div>
-                                    <div class="fw-bold text-danger">&#8377;{{ formatIndianNumber($invoice->remaining_amount) }}</div>
-                                </div>
-                            </div>
-                        </div>
+                        <input type="hidden" id="payment_invoice_number" value="{{ $invoice->invoice_number ?: $invoice->manual_invoice_number }}">
+                        <input type="hidden" id="payment_total_amount" value="{{ (float) ($invoice->net_amount ?? $invoice->total_amount) }}">
+                        <input type="hidden" id="payment_paid_amount" value="{{ (float) $invoice->paid_amount }}">
+                        <input type="hidden" id="payment_remaining_amount" value="{{ (float) $invoice->remaining_amount }}">
 
                         <div class="row g-2 mb-2">
                             <div class="col-6">
@@ -411,13 +382,15 @@
                     <div class="modal-footer py-2">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-brand-primary">
-                            <i class="bi bi-check-circle"></i> Add Payment
+                            <i class="bi bi-check-circle"></i> Add payment
                         </button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
+
+    @include('invoices.partials.confirmation-assets')
 
     <script>
         $(document).ready(function() {
@@ -439,43 +412,75 @@
                     _token: '{{ csrf_token() }}'
                 };
 
-                // Validate amount
-                var remainingAmount = {{ $invoice->remaining_amount }};
+                var invoiceTotal = parseFloat($('#payment_total_amount').val()) || 0;
+                var paidAmount = parseFloat($('#payment_paid_amount').val()) || 0;
+                var remainingAmount = parseFloat($('#payment_remaining_amount').val()) || 0;
+                if (!formData.mode) {
+                    $('#payment_error').removeClass('d-none').text('Please select a payment mode.');
+                    return;
+                }
+                if (!formData.amount || formData.amount <= 0) {
+                    $('#payment_error').removeClass('d-none').text('Please enter a valid payment amount.');
+                    return;
+                }
                 if (formData.amount > remainingAmount) {
                     $('#payment_error').removeClass('d-none').text('Payment amount cannot exceed remaining balance of ' + remainingAmount.toFixed(2));
                     return;
                 }
 
-                // Disable submit button
-                var submitBtn = $(this).find('button[type="submit"]');
-                submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Processing...');
+                $('#payment_error').addClass('d-none').text('');
 
-                $.ajax({
-                    url: '/invoices/' + invoiceId + '/payments',
-                    type: 'POST',
-                    data: formData,
-                    success: function(response) {
-                        if (response.success) {
-                            // Close modal
-                            if (typeof bootstrap !== 'undefined') {
-                                var modal = bootstrap.Modal.getInstance(document.getElementById('addPaymentModal'));
-                                if (modal) {
-                                    modal.hide();
+                var submitBtn = $(this).find('button[type="submit"]');
+                var confirmationData = {
+                    invoiceNumber: $('#payment_invoice_number').val(),
+                    paymentDate: formData.payment_date,
+                    mode: formData.mode,
+                    amount: formData.amount,
+                    remark: formData.remark,
+                    invoiceTotal: invoiceTotal,
+                    paidAmount: paidAmount,
+                    balanceBefore: remainingAmount,
+                    balanceAfter: Math.max(0, remainingAmount - formData.amount),
+                };
+
+                function submitPayment() {
+                    submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Processing...');
+
+                    $.ajax({
+                        url: '/invoices/' + invoiceId + '/payments',
+                        type: 'POST',
+                        data: formData,
+                        success: function(response) {
+                            if (response.success) {
+                                if (typeof bootstrap !== 'undefined') {
+                                    var modal = bootstrap.Modal.getInstance(document.getElementById('addPaymentModal'));
+                                    if (modal) {
+                                        modal.hide();
+                                    }
                                 }
+                                location.reload();
                             }
-                            // Reload page to show updated payment history
-                            location.reload();
+                        },
+                        error: function(xhr) {
+                            var errorMessage = 'Error adding payment. Please try again.';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            }
+                            $('#payment_error').removeClass('d-none').text(errorMessage);
+                            submitBtn.prop('disabled', false).html('<i class="bi bi-check-circle"></i> Add payment');
                         }
-                    },
-                    error: function(xhr) {
-                        var errorMessage = 'Error adding payment. Please try again.';
-                        if (xhr.responseJSON && xhr.responseJSON.message) {
-                            errorMessage = xhr.responseJSON.message;
+                    });
+                }
+
+                if (window.InvoiceConfirmation) {
+                    window.InvoiceConfirmation.confirmPaymentSummary(confirmationData).then(function(confirmed) {
+                        if (confirmed) {
+                            submitPayment();
                         }
-                        $('#payment_error').removeClass('d-none').text(errorMessage);
-                        submitBtn.prop('disabled', false).html('<i class="bi bi-check-circle"></i> Add Payment');
-                    }
-                });
+                    });
+                } else if (window.confirm('Record this payment?')) {
+                    submitPayment();
+                }
             });
         });
     </script>

@@ -446,42 +446,9 @@
                             </div>
                         </div>
 
-                        @if (! $invoice->custom_invoice)
-                            <div class="invoice-edit-panel" id="livePreviewPanel">
-                                <div class="invoice-edit-panel__header">
-                                    <h6 class="mb-0 fw-semibold">Amounts preview</h6>
-                                    <div class="small text-muted">Updates as you change memos</div>
-                                </div>
-                                <div class="invoice-edit-panel__body">
-                                    <div id="previewEmptyState" class="text-muted small text-center py-3">
-                                        <i class="bi bi-check2-square d-block fs-4 mb-2"></i>
-                                        Select memos to preview LR amounts and GST.
-                                    </div>
-                                    <div id="previewContent" class="d-none">
-                                        <div class="invoice-edit-stat">
-                                            <span class="invoice-edit-stat__label">LR subtotal</span>
-                                            <span class="invoice-edit-stat__value" id="previewSubtotal">₹0.00</span>
-                                        </div>
-                                        <div id="previewTaxLines" class="mb-2"></div>
-                                        <div class="invoice-edit-preview-total mt-3">
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <span class="fw-semibold" id="previewTotalLabel">Invoice total</span>
-                                                <span class="fs-5 fw-bold text-brand-primary" id="previewTotal">₹0.00</span>
-                                            </div>
-                                            <div id="previewNetRow" class="d-flex justify-content-between align-items-center small text-muted mt-2 d-none">
-                                                <span>Net amount to collect</span>
-                                                <span id="previewNetAmount">₹0.00</span>
-                                            </div>
-                                        </div>
-                                        <div class="small text-muted mt-3" id="previewMeta">—</div>
-                                    </div>
-                                </div>
-                            </div>
-                        @endif
-
                         <div class="invoice-edit-panel">
                             <div class="invoice-edit-panel__body d-grid gap-2">
-                                <button type="submit" class="btn btn-brand-primary">
+                                <button type="submit" class="btn btn-brand-primary" id="invoiceEditSubmitBtn">
                                     <i class="bi bi-check2-circle me-1"></i>Save changes
                                 </button>
                                 <a href="{{ route('invoices.index') }}" class="btn btn-outline-secondary">Cancel</a>
@@ -495,6 +462,7 @@
 @endsection
 
 @section('scripts')
+    @include('invoices.partials.confirmation-assets')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const manualInvoiceInput = document.getElementById('manual_invoice_number');
@@ -515,15 +483,6 @@
             const lrDetailsContent = document.getElementById('lrDetailsContent');
             const lrSelectedMemoCount = document.getElementById('lrSelectedMemoCount');
             const lrSummaryMeta = document.getElementById('lrSummaryMeta');
-            const previewEmptyState = document.getElementById('previewEmptyState');
-            const previewContent = document.getElementById('previewContent');
-            const previewSubtotal = document.getElementById('previewSubtotal');
-            const previewTaxLines = document.getElementById('previewTaxLines');
-            const previewTotal = document.getElementById('previewTotal');
-            const previewTotalLabel = document.getElementById('previewTotalLabel');
-            const previewNetRow = document.getElementById('previewNetRow');
-            const previewNetAmount = document.getElementById('previewNetAmount');
-            const previewMeta = document.getElementById('previewMeta');
             const gstSlab = @json((int) ($invoice->company->gst_slab ?? 5));
             const companyState = @json(strtolower($invoice->company?->state?->name ?? ''));
             const customerState = @json(strtolower($invoice->consignee?->state?->name ?? ''));
@@ -531,6 +490,7 @@
             let manualInvoiceTimeout;
             let lrDetailsController = null;
             let availableMemoCount = 0;
+            let lastEditTaxState = { baseAmount: 0, lrCount: 0, memoCount: 0 };
 
             function escapeHtml(value) {
                 return String(value ?? '')
@@ -615,52 +575,11 @@
             }
 
             function renderTaxSummary(baseAmount, lrCount, memoCount) {
-                const tax = calculateTaxPreview(baseAmount);
-                const hasSelection = baseAmount > 0 || memoCount > 0;
-
-                if (previewEmptyState && previewContent) {
-                    previewEmptyState.classList.toggle('d-none', hasSelection);
-                    previewContent.classList.toggle('d-none', !hasSelection);
-                }
-
-                if (!hasSelection) {
-                    return;
-                }
-
-                if (previewSubtotal) {
-                    previewSubtotal.textContent = formatAmount(tax.baseAmount);
-                }
-
-                if (previewTaxLines) {
-                    previewTaxLines.innerHTML = tax.lines.map(function(line) {
-                        return `
-                            <div class="invoice-edit-tax-line ${line.muted ? 'is-muted' : ''}">
-                                <span>${escapeHtml(line.label)}</span>
-                                <span class="fw-semibold">${formatAmount(line.amount)}</span>
-                            </div>
-                        `;
-                    }).join('');
-                }
-
-                if (previewTotal) {
-                    previewTotal.textContent = formatAmount(tax.totalAmount);
-                }
-
-                if (previewTotalLabel) {
-                    previewTotalLabel.textContent = String(invoiceType).toLowerCase() === 'forward'
-                        ? 'Net total'
-                        : 'Invoice total';
-                }
-
-                if (previewNetRow && previewNetAmount) {
-                    const showNetRow = Math.abs(tax.netAmount - tax.totalAmount) > 0.009;
-                    previewNetRow.classList.toggle('d-none', !showNetRow);
-                    previewNetAmount.textContent = formatAmount(tax.netAmount);
-                }
-
-                if (previewMeta) {
-                    previewMeta.textContent = `${memoCount} memo(s), ${lrCount} LR(s) · ${String(invoiceType)} invoice · GST ${gstSlab}%`;
-                }
+                lastEditTaxState = {
+                    baseAmount: baseAmount,
+                    lrCount: lrCount,
+                    memoCount: memoCount,
+                };
             }
 
             function renderLrDetails(data, selectedMemoIds) {
@@ -1043,6 +962,73 @@
                         event.preventDefault();
                         event.stopPropagation();
                         memoSelectionError?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                        return;
+                    }
+
+                    if (!invoiceEditForm.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        invoiceEditForm.classList.add('was-validated');
+                        return;
+                    }
+
+                    event.preventDefault();
+                    event.stopPropagation();
+                    invoiceEditForm.classList.add('was-validated');
+
+                    const selectedMemoLabels = memoCheckboxes
+                        ? Array.from(memoCheckboxes.querySelectorAll('.memo-checkbox:checked'))
+                            .map(function(checkbox) {
+                                const label = memoCheckboxes.querySelector('label[for="' + checkbox.id + '"]');
+                                return label ? label.textContent.trim() : checkbox.value;
+                            })
+                        : [];
+                    const isCustomInvoice = @json((bool) $invoice->custom_invoice);
+                    let confirmationData;
+
+                    if (isCustomInvoice) {
+                        confirmationData = {
+                            dialogTitle: 'Confirm invoice update',
+                            title: 'Review invoice before saving',
+                            confirmText: 'Save changes',
+                            customer: @json($invoice->consignee?->name ?? '—'),
+                            generatedDate: document.getElementById('generated_date')?.value || '',
+                            reference: document.getElementById('manual_invoice_number')?.value || '',
+                            invoiceType: invoiceType,
+                            totalAmount: @json((float) $invoice->total_amount),
+                            netAmount: @json((float) ($invoice->net_amount ?? $invoice->total_amount)),
+                            totalLabel: 'Invoice total',
+                        };
+                    } else {
+                        const tax = calculateTaxPreview(lastEditTaxState.baseAmount);
+                        confirmationData = {
+                            dialogTitle: 'Confirm invoice update',
+                            title: 'Review invoice before saving',
+                            confirmText: 'Save changes',
+                            customer: @json($invoice->consignee?->name ?? '—'),
+                            generatedDate: document.getElementById('generated_date')?.value || '',
+                            reference: document.getElementById('manual_invoice_number')?.value || '',
+                            memos: selectedMemoLabels.join(', ') || '—',
+                            lrMeta: lastEditTaxState.lrCount
+                                ? `${lastEditTaxState.lrCount} LR(s) across ${lastEditTaxState.memoCount} memo(s)`
+                                : (lrSummaryMeta?.textContent || memoSelectedCount?.textContent || '—'),
+                            invoiceType: invoiceType,
+                            subtotal: tax.baseAmount,
+                            taxLines: tax.lines,
+                            totalAmount: tax.totalAmount,
+                            netAmount: tax.netAmount,
+                            totalLabel: String(invoiceType).toLowerCase() === 'forward' ? 'Net total' : 'Invoice total',
+                        };
+                    }
+
+                    if (window.InvoiceConfirmation) {
+                        window.InvoiceConfirmation.confirmInvoiceSummary(confirmationData).then(function(confirmed) {
+                            if (confirmed) {
+                                invoiceEditForm.submit();
+                            }
+                        });
+                    } else if (window.confirm('Save these invoice changes?')) {
+                        invoiceEditForm.submit();
                     }
                 });
             }

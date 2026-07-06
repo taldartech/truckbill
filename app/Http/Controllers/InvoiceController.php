@@ -163,7 +163,7 @@ class InvoiceController extends Controller
         $actions .= '<a href="'.route('reports.party-bill-export', ['invoice_number' => $invoice->id, 'type' => 'pdf']).'" class="btn btn-sm btn-primary" title="View PDF" data-bs-toggle="tooltip" target="_blank">';
         $actions .= '<i class="bi bi-file-earmark-text"></i></a>';
 
-        if (Auth::user()->canActAsAdmin() && $invoice->payment_status !== 'paid') {
+        if (Auth::user()->canActAsAdmin() && $invoice->payment_status === 'pending') {
             $actions .= '<a href="'.route('invoices.edit', $invoice->id).'" class="btn btn-sm btn-edit" title="Edit Invoice" data-bs-toggle="tooltip">';
             $actions .= '<i class="bi bi-pencil"></i></a>';
         }
