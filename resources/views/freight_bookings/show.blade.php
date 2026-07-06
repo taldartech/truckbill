@@ -630,7 +630,7 @@
                                     <option value="">Select Pump</option>
                                     @foreach ($pumps as $pump)
                                         <option value="{{ $pump->id }}">{{ $pump->pump_name }}
-                                            ({{ $pump->contact_name }})
+                                            {{ $pump->contact_name ? '('.$pump->contact_name.')' : '' }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -1153,7 +1153,7 @@
                                 <select class="form-select" id="combinedPumpName" name="pump_id">
                                     <option value="">Select Pump</option>
                                     @foreach ($pumps as $pump)
-                                        <option value="{{ $pump->id }}">{{ $pump->pump_name }} ({{ $pump->contact_name }})</option>
+                                        <option value="{{ $pump->id }}">{{ $pump->pump_name }} {{ $pump->contact_name ? '('.$pump->contact_name.')' : '' }}</option>
                                     @endforeach
                                 </select>
                             </div>
