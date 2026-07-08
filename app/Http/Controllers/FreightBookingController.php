@@ -14,6 +14,7 @@ use App\Models\Truck;
 use App\Models\VoucherLinked;
 use App\Models\VoucherPayment;
 use App\Services\FreightBookingCalculationService;
+use App\Services\FreightBookingCustomAmountService;
 use App\Services\Notifications\FreightBookingNotificationService;
 use App\Services\Notifications\LorryReceiptNotificationService;
 use App\Services\SubscriptionGuard;
@@ -29,6 +30,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -38,6 +40,7 @@ class FreightBookingController extends Controller
         private readonly LorryReceiptNotificationService $lrNotificationService,
         private readonly FreightBookingNotificationService $frNotificationService,
         private readonly FreightBookingCalculationService $freightBookingCalculationService,
+        private readonly FreightBookingCustomAmountService $freightBookingCustomAmountService,
         private readonly SubscriptionGuard $subscriptionGuard,
     ) {}
 
@@ -773,9 +776,39 @@ class FreightBookingController extends Controller
                 'notes' => 'nullable|string|max:1000',
             ]);
 
-            $lr_ids = FreightBooking::whereIn('id', $request->input('booking_ids'))
-                ->pluck('lr_id')
-                ->toArray();
+            $selectedBookings = FreightBooking::query()
+                ->whereIn('id', $request->input('booking_ids'))
+                ->get();
+
+            if ($selectedBookings->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No valid freight bookings were selected for combined payment.',
+                ], 422);
+            }
+
+            $linkedLrIds = $selectedBookings->pluck('linked_lr_id')->unique()->filter()->values();
+            if ($linkedLrIds->count() !== 1) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Combined payment requires bookings from a single linked group.',
+                ], 422);
+            }
+
+            $linkedLrId = (int) $linkedLrIds->first();
+            $fullGroupCount = FreightBooking::query()
+                ->linkedGroup($linkedLrId, (int) auth()->user()->company_id)
+                ->where('is_cancelled', false)
+                ->count();
+
+            if ($fullGroupCount !== $selectedBookings->count()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Combined payment must include every booking in the linked group.',
+                ], 422);
+            }
+
+            $lr_ids = $selectedBookings->pluck('lr_id')->all();
             $lrs = LorryReceipt::whereIn('id', $lr_ids)->get()->select('lr_number')->toArray();
             $lrs = array_map(function ($item) {
                 return $item['lr_number'];
@@ -801,6 +834,7 @@ class FreightBookingController extends Controller
             $data['reference_number'] = $request->input('reference_number');
             $data['notes'] = $request->input('notes').'   Combined Payment: '.($request->input('combined_amount'))
                 .'. [LR IDs: '.implode(', ', $lrs).'], Date: '.$data['date'];
+            $data['combined_payment_flow'] = true;
             if (strtolower($data['payment_mode']) === 'cash' || strtolower($data['payment_mode']) === 'adjust in advance') {
                 $paymentStatus = 'in-progress';
             } elseif (
@@ -894,7 +928,7 @@ class FreightBookingController extends Controller
     {
 
         try {
-            $freightBooking = FreightBooking::with(['lr', 'linkedFreightBooking', 'company'])->findOrFail($id);
+            $freightBooking = FreightBooking::with(['lr', 'linkedFreightBooking', 'company', 'customAmounts'])->findOrFail($id);
 
             if (Auth::user()->company_id && $freightBooking->company_id !== Auth::user()->company_id) {
                 abort(403, 'Unauthorized access to good hire (lorry hire).');
@@ -919,7 +953,7 @@ class FreightBookingController extends Controller
                     ->get();
                 $linkedFreightBookings = FreightBooking::where('linked_lr_id', $freightBooking->linked_lr_id)
                     ->where('company_id', auth()->user()->company_id)
-                    ->with('lr.truck', 'lr.transporter.transporterMaster')
+                    ->with(['lr.truck', 'lr.transporter.transporterMaster', 'customAmounts'])
                     ->orderBy('id')
                     ->get();
                 $combinedTotalBalance = $linkedFreightBookings->sum('balance_amount');
@@ -951,6 +985,7 @@ class FreightBookingController extends Controller
                     'lr.transporter.transporterMaster',
                     'lr.consignee',
                     'lr.truck',
+                    'customAmounts',
                 ])
                 ->findOrFail($id);
 
@@ -1119,6 +1154,16 @@ class FreightBookingController extends Controller
             'linked_freight_booking_id' => 'nullable|exists:freight_bookings,id',
             'eway_bill_number' => 'nullable|string',
             'eway_bill_expiry' => 'nullable|date',
+            'custom_amounts' => 'nullable|array',
+            'custom_amounts.*.id' => [
+                'nullable',
+                'integer',
+                Rule::exists('freight_booking_custom_amounts', 'id')->where(
+                    fn ($query) => $query->where('freight_booking_id', $freightBooking->id)
+                ),
+            ],
+            'custom_amounts.*.description' => 'required|string|max:255',
+            'custom_amounts.*.amount' => 'required|numeric|not_in:0',
         ]);
 
         // Get the lorry receipt to get its LR number
@@ -1136,6 +1181,11 @@ class FreightBookingController extends Controller
                 : (float) ($lorryReceipt->unloading_weight ?? $lorryReceipt->weight ?? 0);
             $voucherPaymentsTotal = (float) $freightBooking->voucherPayments()->sum('amount');
 
+            $customAmountsTotal = $this->freightBookingCustomAmountService->sync(
+                $freightBooking,
+                $data['custom_amounts'] ?? []
+            );
+
             $calculatedAmounts = $this->freightBookingCalculationService->calculateForUpdate(
                 $isFixedAmount,
                 (float) $data['tr_fr_rate'],
@@ -1152,6 +1202,7 @@ class FreightBookingController extends Controller
                 $freightBooking->canChangeTdsAmount(),
                 (float) ($freightBooking->tds_amount ?? 0),
                 (float) ($freightBooking->negative_adjusted_amount ?? 0),
+                $customAmountsTotal,
             );
 
             $data = array_merge($data, $calculatedAmounts);
@@ -1194,11 +1245,10 @@ class FreightBookingController extends Controller
             }
 
             $freightBooking->refresh();
-            if (! empty($freightBooking->linked_lr_id)) {
-                $this->freightBookingCalculationService->applyNegativeAdjustmentForLinkedBookings($freightBooking, $lorryReceipt?->lr_number);
-            } else {
-                $this->freightBookingCalculationService->applyNegativeAdjustmentForSingleBooking($freightBooking, $lorryReceipt?->lr_number);
-            }
+            $this->freightBookingCalculationService->applyNegativeAdjustment(
+                $freightBooking,
+                $lorryReceipt?->lr_number
+            );
 
             DB::commit();
 
@@ -1251,12 +1301,46 @@ class FreightBookingController extends Controller
                 'notes' => 'nullable|string',
                 'pump_id' => 'nullable|exists:pumps,id',
                 'date' => 'nullable|date',
+                'combined_payment_flow' => 'nullable|boolean',
             ]);
+
+            $isCombinedFlow = $request->boolean('combined_payment_flow');
+            $requestedBookings = FreightBooking::query()
+                ->whereIn('id', $validated['booking_ids'])
+                ->get()
+                ->keyBy('id');
+
+            if ($isCombinedFlow) {
+                $linkedLrIds = $requestedBookings->pluck('linked_lr_id')->unique()->filter()->values();
+                if ($linkedLrIds->count() !== 1) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Combined payment requires bookings from a single linked group.',
+                    ], 422);
+                }
+            } else {
+                foreach ($validated['booking_ids'] as $bookingId) {
+                    $booking = $requestedBookings->get($bookingId);
+                    if ($booking === null) {
+                        continue;
+                    }
+
+                    try {
+                        $this->freightBookingCalculationService->assertIndividualPaymentAllowed($booking, false);
+                    } catch (\DomainException $e) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => $e->getMessage(),
+                        ], 422);
+                    }
+                }
+            }
 
             // Begin transaction
             \DB::beginTransaction();
 
             $processedPayments = [];
+            $affectedBookingIds = [];
 
             // Process each booking payment
             foreach ($validated['booking_ids'] as $index => $bookingId) {
@@ -1330,14 +1414,7 @@ class FreightBookingController extends Controller
                         ], 422);
                     }
 
-                    // Calculate effective payable amount (considering all deductions)
-                    $effectivePayableAmount = $freightBooking->tr_amount
-                        - ($freightBooking->tds_amount ?? 0)
-                        - ($freightBooking->damage_amount ?? 0)
-                        - ($freightBooking->shortage_amount ?? 0)
-                        + ($freightBooking->detention ?? 0)
-                        + ($freightBooking->deviation ?? 0)
-                        - ($freightBooking->misc_expense ?? 0);
+                    $effectivePayableAmount = $freightBooking->effectivePayableAmount();
 
                     // Validate that advance_amount + payment won't exceed effective payable amount
                     // Allow small tolerance (0.01) for floating point precision
@@ -1440,7 +1517,6 @@ class FreightBookingController extends Controller
                         // your pump payment logic here
                     }
                     if (strtolower($paymentMode->name) === 'adjust in advance') {
-                        // make sure transporter exists for this booking
                         $transporter = Transporter::find($freightBooking->transporter_id);
 
                         if (! $transporter) {
@@ -1455,23 +1531,7 @@ class FreightBookingController extends Controller
                             ]);
                         }
 
-                        // reduce from transporter advance
-                        // $newTransporterAdvance = $transporter->advance_amount - $amount;
-                        // $transporter->update([
-                        //     'advance_amount' => $newTransporterAdvance
-                        // ]);
-
-                        // Recalculate balance_amount using full formula (advance_amount not changed for adjust in advance)
-                        $effectivePayableAmount = $freightBooking->tr_amount
-                            - ($freightBooking->tds_amount ?? 0)
-                            - ($freightBooking->damage_amount ?? 0)
-                            - ($freightBooking->shortage_amount ?? 0)
-                            + ($freightBooking->detention ?? 0)
-                            + ($freightBooking->deviation ?? 0)
-                            - ($freightBooking->misc_expense ?? 0);
-
-                        $freightBooking->balance_amount = $effectivePayableAmount - $freightBooking->advance_amount;
-                        $freightBooking->save();
+                        $this->freightBookingCalculationService->recalculateFromVoucherPayments($freightBooking, true);
 
                         $lrNumber = $freightBooking->lr?->lr_number ?? (string) $freightBooking->id;
                         app(TransporterAdvanceLedgerService::class)->recordAdvancePayment(
@@ -1484,31 +1544,24 @@ class FreightBookingController extends Controller
                             notifyCredit: false
                         );
 
-                        // No success logging (log only on error paths)
+                        $processedPayments[] = $voucherPayment->id;
+                        $affectedBookingIds[] = $bookingId;
+
+                        continue;
                     }
-                    // normal payment flow (cash, bank, fuel, etc.)
-                    // Calculate effective payable amount (considering all deductions)
-                    $effectivePayableAmount = $freightBooking->tr_amount
-                        - ($freightBooking->tds_amount ?? 0)
-                        - ($freightBooking->damage_amount ?? 0)
-                        - ($freightBooking->shortage_amount ?? 0)
-                        + ($freightBooking->detention ?? 0)
-                        + ($freightBooking->deviation ?? 0)
-                        - ($freightBooking->misc_expense ?? 0);
 
-                    $newAdvanceAmount = $freightBooking->advance_amount + $amount;
-
-                    // Recalculate balance_amount using full formula
-                    $freightBooking->advance_amount = $newAdvanceAmount;
-                    $freightBooking->balance_amount = $effectivePayableAmount - $freightBooking->advance_amount;
-
-                    $freightBooking->save();
+                    $this->freightBookingCalculationService->recalculateFromVoucherPayments($freightBooking);
 
                     $processedPayments[] = $voucherPayment->id;
+                    $affectedBookingIds[] = $bookingId;
                 }
             }
 
             \DB::commit();
+
+            $this->freightBookingCalculationService->applyNegativeAdjustmentsForBookings(
+                FreightBooking::query()->whereIn('id', array_unique($affectedBookingIds))->get()
+            );
 
             $payload = [
                 'success' => true,
@@ -1679,4 +1732,5 @@ class FreightBookingController extends Controller
                 ->withErrors(['general' => 'An error occurred while assigning memo ID: '.$e->getMessage()]);
         }
     }
+
 }

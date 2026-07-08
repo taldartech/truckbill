@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Branch;
 use App\Models\City;
 use App\Models\FreightBooking;
+use App\Models\LorryReceipt;
 use App\Models\PaymentMode;
 use App\Models\PaymentType;
 use App\Models\Pump;
@@ -15,9 +17,11 @@ use App\Services\FreightBookingCalculationService;
 use App\Services\Notifications\VoucherPaymentNotificationService;
 use App\Services\TransporterAdvanceLedgerService;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
 
 class VoucherPaymentController extends Controller
 {
@@ -49,7 +53,7 @@ class VoucherPaymentController extends Controller
     /**
      * Display the daily payments report
      *
-     * @return \Illuminate\View\View
+     * @return View
      */
     public function dailyPayments(Request $request)
     {
@@ -158,7 +162,7 @@ class VoucherPaymentController extends Controller
 
         $linkedLorryReceiptsByLinkedId = collect();
         if ($linkedLrIds->isNotEmpty()) {
-            $linkedLorryReceiptsByLinkedId = \App\Models\LorryReceipt::with([
+            $linkedLorryReceiptsByLinkedId = LorryReceipt::with([
                 'consignor.city',
                 'consignee.city',
             ])
@@ -169,10 +173,10 @@ class VoucherPaymentController extends Controller
                 ->groupBy('linked_lr_id');
         }
 
-        $paymentModes = \App\Models\PaymentMode::select('name')->get();
+        $paymentModes = PaymentMode::select('name')->get();
 
         // Get branches for filter dropdown
-        $branchesQuery = \App\Models\Branch::orderBy('branch_name');
+        $branchesQuery = Branch::orderBy('branch_name');
         if (Auth::user()->company_id) {
             $branchesQuery->where('company_id', Auth::user()->company_id);
         }
@@ -297,14 +301,14 @@ class VoucherPaymentController extends Controller
         //     })
         //     ->get();
 
-        $lorry_receipt = \App\Models\LorryReceipt::with(['transporter.transporterMaster', 'truck:id,truck_number'])
+        $lorry_receipt = LorryReceipt::with(['transporter.transporterMaster', 'truck:id,truck_number'])
             ->select('id', 'lr_number', 'transporter_id', 'truck_id', 'customer_id', 'consignor_id', 'consignee_id')
             ->when($lorry_receipt_id, function ($query) use ($lorry_receipt_id) {
                 $query->where('id', $lorry_receipt_id);
             })
             ->get();
 
-        $vouchers = \App\Models\FreightBooking::select('voucher_number')
+        $vouchers = FreightBooking::select('voucher_number')
             ->when($freight_booking_id, function ($query) use ($freight_booking_id) {
                 $query->where('id', $freight_booking_id);
             })
@@ -314,8 +318,13 @@ class VoucherPaymentController extends Controller
         // Get balance amount from freight booking
         $balanceAmount = null;
         if ($freight_booking_id) {
-            $freightBooking = \App\Models\FreightBooking::find($freight_booking_id);
+            $freightBooking = FreightBooking::find($freight_booking_id);
             if ($freightBooking) {
+                if ($freightBooking->isLinked()) {
+                    return redirect()->route('freight_bookings.index')
+                        ->with('error', 'Linked freight bookings must be paid via combined voucher payment.');
+                }
+
                 $balanceAmount = $freightBooking->balance_amount;
             }
         }
@@ -352,9 +361,18 @@ class VoucherPaymentController extends Controller
         // Add company_id to data
         $data['company_id'] = auth()->user()->company_id;
 
+        $freightBooking = FreightBooking::query()->findOrFail($data['freight_booking_id']);
+        try {
+            $this->freightBookingCalculationService->assertIndividualPaymentAllowed($freightBooking, false);
+        } catch (\DomainException $e) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $e->getMessage());
+        }
+
         // Check for duplicate payment on the same day
         $paymentDate = $data['date'] ?? now()->toDateString();
-        $duplicatePayment = \App\Models\VoucherPayment::where('freight_booking_id', $data['freight_booking_id'])
+        $duplicatePayment = VoucherPayment::where('freight_booking_id', $data['freight_booking_id'])
             ->where('amount', $data['amount'])
             ->where('payment_type_id', $data['payment_type_id'])
             ->where('payment_mode_id', $data['payment_mode_id'])
@@ -364,7 +382,7 @@ class VoucherPaymentController extends Controller
 
         if ($duplicatePayment && ! $request->has('confirm_duplicate')) {
             // Return warning with duplicate payment details
-            $freightBooking = \App\Models\FreightBooking::find($data['freight_booking_id']);
+            $freightBooking = FreightBooking::find($data['freight_booking_id']);
 
             return redirect()->back()
                 ->withInput()
@@ -380,16 +398,10 @@ class VoucherPaymentController extends Controller
         try {
             $voucherPayment = DB::transaction(function () use ($data) {
                 // Use row-level locking to prevent race conditions
-                $freightBooking = \App\Models\FreightBooking::lockForUpdate()->findOrFail($data['freight_booking_id']);
+                $freightBooking = FreightBooking::lockForUpdate()->findOrFail($data['freight_booking_id']);
+                $freightBooking->loadMissing('customAmounts');
 
-                // Calculate effective payable amount (considering all deductions)
-                $effectivePayableAmount = $freightBooking->tr_amount
-                    - ($freightBooking->tds_amount ?? 0)
-                    - ($freightBooking->damage_amount ?? 0)
-                    - ($freightBooking->shortage_amount ?? 0)
-                    + ($freightBooking->detention ?? 0)
-                    + ($freightBooking->deviation ?? 0)
-                    - ($freightBooking->misc_expense ?? 0);
+                $effectivePayableAmount = $freightBooking->effectivePayableAmount();
 
                 // Validate that advance amount won't exceed effective payable amount
                 // Allow small tolerance (0.01) for floating point precision
@@ -406,19 +418,8 @@ class VoucherPaymentController extends Controller
                 // Create voucher payment
                 $voucherPayment = VoucherPayment::create($data);
 
-                // Update advance_amount
-                $freightBooking->advance_amount += $data['amount'];
-
-                // Recalculate balance_amount using full formula
-                $freightBooking->balance_amount = $effectivePayableAmount - $freightBooking->advance_amount;
-
-                // Save the freight booking
-                $freightBooking->save();
-                if (! empty($freightBooking->linked_lr_id)) {
-                    $this->freightBookingCalculationService->applyNegativeAdjustmentForLinkedBookings($freightBooking);
-                } else {
-                    $this->freightBookingCalculationService->applyNegativeAdjustmentForSingleBooking($freightBooking);
-                }
+                $this->freightBookingCalculationService->recalculateFromVoucherPayments($freightBooking);
+                $this->freightBookingCalculationService->applyNegativeAdjustment($freightBooking);
 
                 return $voucherPayment;
             });
@@ -450,7 +451,7 @@ class VoucherPaymentController extends Controller
      * Display the specified voucher payment.
      *
      * @param  string  $voucherNumber
-     * @return \Illuminate\View\View
+     * @return View
      */
     public function show($voucherNumber)
     {
@@ -510,7 +511,7 @@ class VoucherPaymentController extends Controller
         $freight_booking_id = $request->query('freight_booking_id', $voucher_payment->freight_booking_id);
 
         // Get the lorry receipt
-        $lorry_receipt = \App\Models\LorryReceipt::with(['transporter.transporterMaster', 'truck:id,truck_number', 'customer:id,name', 'consignor:id,name', 'consignee:id,name'])
+        $lorry_receipt = LorryReceipt::with(['transporter.transporterMaster', 'truck:id,truck_number', 'customer:id,name', 'consignor:id,name', 'consignee:id,name'])
             ->select('id', 'lr_number', 'transporter_id', 'truck_id', 'customer_id', 'consignor_id', 'consignee_id')
             ->where('id', $lorry_receipt_id)
             ->get();
@@ -518,7 +519,7 @@ class VoucherPaymentController extends Controller
         $balanceAmount = null;
         $freightBooking = null;
         if ($freight_booking_id) {
-            $freightBooking = \App\Models\FreightBooking::with(['transporter.transporterMaster'])
+            $freightBooking = FreightBooking::with(['transporter.transporterMaster'])
                 ->find($freight_booking_id);
             if ($freightBooking) {
                 $balanceAmount = $freightBooking->balance_amount;
@@ -610,7 +611,7 @@ class VoucherPaymentController extends Controller
             }
 
             $newFreightBooking = FreightBooking::findOrFail($newFreightBookingId);
-            $effectivePayableAmount = $this->effectivePayableAmount($newFreightBooking);
+            $effectivePayableAmount = $newFreightBooking->effectivePayableAmount();
 
             $sumOtherPaymentsOnNew = (float) VoucherPayment::where('freight_booking_id', $newFreightBookingId)
                 ->where('id', '!=', $voucher_payment->id)
@@ -768,6 +769,11 @@ class VoucherPaymentController extends Controller
                 $this->recalculateFreightBookingFromVoucherPayments($fbId);
             }
 
+            $affectedBookings = FreightBooking::query()
+                ->whereIn('id', $idsToLock)
+                ->get();
+            $this->freightBookingCalculationService->applyNegativeAdjustmentsForBookings($affectedBookings);
+
             DB::commit();
 
             $voucher_payment->refresh();
@@ -834,6 +840,8 @@ class VoucherPaymentController extends Controller
             $freightBookings = $validated['freight_bookings'];
             $amounts = $validated['amounts'];
 
+            $processedBookings = [];
+
             foreach ($lorryReceipts as $index => $lorryReceiptId) {
                 $freightBookingId = $freightBookings[$lorryReceiptId] ?? null;
                 $amount = $amounts[$lorryReceiptId] ?? 0;
@@ -842,18 +850,31 @@ class VoucherPaymentController extends Controller
                     continue;
                 }
 
-                $freightBooking = \App\Models\FreightBooking::find($freightBookingId);
+                $freightBooking = FreightBooking::with('customAmounts')->find($freightBookingId);
                 if (! $freightBooking) {
                     \Log::error('Freight booking not found', ['freight_booking_id' => $freightBookingId]);
 
                     continue;
                 }
 
-                if (($freightBooking->advance_amount + $amount) > $freightBooking->tr_amount) {
-                    \Log::error('Advance amount exceeds TR amount', [
+                $effectivePayableAmount = $freightBooking->effectivePayableAmount();
+
+                try {
+                    $this->freightBookingCalculationService->assertIndividualPaymentAllowed($freightBooking, false);
+                } catch (\DomainException $e) {
+                    \Log::error('Bulk payment rejected for linked booking', [
+                        'freight_booking_id' => $freightBooking->id,
+                        'message' => $e->getMessage(),
+                    ]);
+
+                    continue;
+                }
+
+                if (($freightBooking->advance_amount + $amount) > $effectivePayableAmount + 0.01) {
+                    \Log::error('Advance amount exceeds effective payable amount', [
                         'freight_booking_id' => $freightBooking->id,
                         'advance_amount' => $freightBooking->advance_amount,
-                        'tr_amount' => $freightBooking->tr_amount,
+                        'effective_payable_amount' => $effectivePayableAmount,
                         'new_amount' => $amount,
                     ]);
 
@@ -877,15 +898,13 @@ class VoucherPaymentController extends Controller
                 ]);
 
                 // Update advance and balance
-                $freightBooking->advance_amount += $amount;
-                $freightBooking->balance_amount = $freightBooking->tr_amount - $freightBooking->advance_amount;
-                $freightBooking->save();
-                if (! empty($freightBooking->linked_lr_id)) {
-                    $this->freightBookingCalculationService->applyNegativeAdjustmentForLinkedBookings($freightBooking);
-                } else {
-                    $this->freightBookingCalculationService->applyNegativeAdjustmentForSingleBooking($freightBooking);
-                }
+                $this->freightBookingCalculationService->recalculateFromVoucherPayments($freightBooking);
+                $processedBookings[$freightBooking->id] = $freightBooking->fresh();
             }
+
+            $this->freightBookingCalculationService->applyNegativeAdjustmentsForBookings(
+                collect($processedBookings)->values()
+            );
 
             return redirect()->route('voucher_payments.index')
                 ->with('success', 'Bulk voucher payments created successfully.');
@@ -999,7 +1018,7 @@ class VoucherPaymentController extends Controller
     /**
      * Remove the specified voucher payment from storage (soft delete).
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function destroy(VoucherPayment $voucher_payment)
     {
@@ -1019,80 +1038,31 @@ class VoucherPaymentController extends Controller
 
         try {
             DB::transaction(function () use ($voucher_payment) {
-                // Get the freight booking and voucher number before deletion
                 $linked_voucher_id = $voucher_payment->linked_voucher_id;
+                $affectedBookings = collect();
 
                 if ($linked_voucher_id) {
-                    // Handle linked voucher payments
                     $vouchers = VoucherPayment::where('linked_voucher_id', $linked_voucher_id)->get();
 
                     foreach ($vouchers as $voucher) {
-                        // Use row-level locking to prevent race conditions
-                        $freightBooking = \App\Models\FreightBooking::lockForUpdate()->findOrFail($voucher->freight_booking_id);
-
-                        // Calculate effective payable amount (considering all deductions)
-                        $effectivePayableAmount = $freightBooking->tr_amount
-                            - ($freightBooking->tds_amount ?? 0)
-                            - ($freightBooking->damage_amount ?? 0)
-                            - ($freightBooking->shortage_amount ?? 0)
-                            + ($freightBooking->detention ?? 0)
-                            + ($freightBooking->deviation ?? 0)
-                            - ($freightBooking->misc_expense ?? 0);
-
-                        // Update advance_amount
-                        $freightBooking->advance_amount -= $voucher->amount;
-
-                        // Recalculate balance_amount using full formula
-                        $freightBooking->balance_amount = $effectivePayableAmount - $freightBooking->advance_amount;
-
-                        // Save the freight booking
-                        $freightBooking->save();
-                        if (! empty($freightBooking->linked_lr_id)) {
-                            $this->freightBookingCalculationService->applyNegativeAdjustmentForLinkedBookings($freightBooking);
-                        } else {
-                            $this->freightBookingCalculationService->applyNegativeAdjustmentForSingleBooking($freightBooking);
-                        }
-
-                        // Delete the voucher payment
+                        $freightBooking = FreightBooking::lockForUpdate()->findOrFail($voucher->freight_booking_id);
                         $voucher->delete();
+                        $this->freightBookingCalculationService->recalculateFromVoucherPayments($freightBooking);
+                        $affectedBookings->put($freightBooking->id, $freightBooking->fresh());
                     }
 
-                    // Delete the linked voucher record
                     $linked_voucher = VoucherLinked::find($linked_voucher_id);
                     if ($linked_voucher) {
                         $linked_voucher->delete();
                     }
                 } else {
-                    // Handle single voucher payment
-                    // Use row-level locking to prevent race conditions
-                    $freightBooking = \App\Models\FreightBooking::lockForUpdate()->findOrFail($voucher_payment->freight_booking_id);
-
-                    // Calculate effective payable amount (considering all deductions)
-                    $effectivePayableAmount = $freightBooking->tr_amount
-                        - ($freightBooking->tds_amount ?? 0)
-                        - ($freightBooking->damage_amount ?? 0)
-                        - ($freightBooking->shortage_amount ?? 0)
-                        + ($freightBooking->detention ?? 0)
-                        + ($freightBooking->deviation ?? 0)
-                        - ($freightBooking->misc_expense ?? 0);
-
-                    // Update advance_amount
-                    $freightBooking->advance_amount -= $voucher_payment->amount;
-
-                    // Recalculate balance_amount using full formula
-                    $freightBooking->balance_amount = $effectivePayableAmount - $freightBooking->advance_amount;
-
-                    // Save the freight booking
-                    $freightBooking->save();
-                    if (! empty($freightBooking->linked_lr_id)) {
-                        $this->freightBookingCalculationService->applyNegativeAdjustmentForLinkedBookings($freightBooking);
-                    } else {
-                        $this->freightBookingCalculationService->applyNegativeAdjustmentForSingleBooking($freightBooking);
-                    }
-
-                    // Delete the voucher payment
+                    $freightBooking = FreightBooking::lockForUpdate()->findOrFail($voucher_payment->freight_booking_id);
                     $voucher_payment->delete();
+                    $this->freightBookingCalculationService->recalculateFromVoucherPayments($freightBooking);
+                    $affectedBookings->put($freightBooking->id, $freightBooking->fresh());
                 }
+
+                $this->freightBookingCalculationService->applyNegativeAdjustmentsForBookings($affectedBookings->values());
             });
 
             // Redirect to the index page
@@ -1113,7 +1083,7 @@ class VoucherPaymentController extends Controller
     /**
      * Update the payment status for a single payment
      *
-     * @return \Illuminate\Http\Response
+     * @return Response
      */
     public function updateStatus(Request $request)
     {
@@ -1305,24 +1275,10 @@ class VoucherPaymentController extends Controller
         );
     }
 
-    private function effectivePayableAmount(FreightBooking $freightBooking): float
-    {
-        return (float) $freightBooking->tr_amount
-            - ($freightBooking->tds_amount ?? 0)
-            - ($freightBooking->damage_amount ?? 0)
-            - ($freightBooking->shortage_amount ?? 0)
-            + ($freightBooking->detention ?? 0)
-            + ($freightBooking->deviation ?? 0)
-            - ($freightBooking->misc_expense ?? 0);
-    }
-
     private function recalculateFreightBookingFromVoucherPayments(int $freightBookingId): void
     {
         $freightBooking = FreightBooking::lockForUpdate()->findOrFail($freightBookingId);
-        $advance = (float) VoucherPayment::where('freight_booking_id', $freightBookingId)->sum('amount');
-        $freightBooking->advance_amount = $advance;
-        $freightBooking->balance_amount = $this->effectivePayableAmount($freightBooking) - $advance;
-        $freightBooking->save();
+        $this->freightBookingCalculationService->recalculateFromVoucherPayments($freightBooking);
     }
 
     /**

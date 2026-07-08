@@ -319,6 +319,18 @@
                             </small>
                         </div>
                         <div class="col-md-4">
+                            <label for="negative_adjusted_amount_display" class="form-label">Negative Adjusted Amount</label>
+                            <input type="number" step="0.01" class="form-control {{ ($freightBooking->negative_adjusted_amount ?? 0) > 0 ? '' : 'text-muted' }}"
+                                id="negative_adjusted_amount_display"
+                                value="{{ number_format((float) ($freightBooking->negative_adjusted_amount ?? 0), 2, '.', '') }}"
+                                readonly style="background-color: #f8f9fa;">
+                            <input type="hidden" id="negative_adjusted_amount"
+                                value="{{ number_format((float) ($freightBooking->negative_adjusted_amount ?? 0), 2, '.', '') }}">
+                            <small class="form-text text-muted">
+                                <i class="fas fa-info-circle"></i> Overpayment moved to transporter advance (system-managed)
+                            </small>
+                        </div>
+                        <div class="col-md-4">
                             <label for="balance_amount" class="form-label">Balance Amount *</label>
                             <input type="number" step="0.01"
                                 class="form-control @error('balance_amount') is-invalid @enderror" name="balance_amount"
@@ -326,13 +338,102 @@
                                 required readonly style="background-color: #f8f9fa;"
                                 {{ $freightBooking->is_cancelled ? 'disabled' : '' }}>
                             <small class="form-text text-muted">
-                                <i class="fas fa-calculator"></i> Auto-calculated: TR Amount - TDS Amount
+                                <i class="fas fa-calculator"></i> Auto-calculated
                             </small>
                             @error('balance_amount')
                                 <div class="text-danger">{{ $message }}</div>
                             @enderror
                         </div>
                     </div>
+
+                    @if (! $freightBooking->is_cancelled)
+                        @php
+                            $customAmountRows = old('custom_amounts');
+                            if ($customAmountRows === null) {
+                                $customAmountRows = $freightBooking->customAmounts->map(fn ($row) => [
+                                    'id' => $row->id,
+                                    'description' => $row->description,
+                                    'amount' => $row->amount,
+                                ])->values()->all();
+                            }
+                        @endphp
+                        <div class="row mb-3" id="custom-amounts-section">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                                    <h5 class="text-primary mb-0">
+                                        <i class="fas fa-list-ul"></i> Custom Amounts
+                                    </h5>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" id="addCustomAmountRow">
+                                        <i class="fas fa-plus"></i> Add amount
+                                    </button>
+                                </div>
+                                <p class="small text-muted mb-2">Add positive or negative adjustments with a description. These affect the booking balance.</p>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered align-middle mb-2">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th style="width: 55%;">Description</th>
+                                                <th style="width: 30%;">Amount (+/−)</th>
+                                                <th style="width: 15%;" class="text-center">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="custom-amounts-body">
+                                            @forelse ($customAmountRows as $index => $customAmountRow)
+                                                <tr class="custom-amount-row">
+                                                    <td>
+                                                        @if (! empty($customAmountRow['id']))
+                                                            <input type="hidden" name="custom_amounts[{{ $index }}][id]"
+                                                                value="{{ $customAmountRow['id'] }}">
+                                                        @endif
+                                                        <input type="text" class="form-control form-control-sm"
+                                                            name="custom_amounts[{{ $index }}][description]"
+                                                            value="{{ $customAmountRow['description'] ?? '' }}"
+                                                            maxlength="255" required placeholder="e.g. Loading charge">
+                                                    </td>
+                                                    <td>
+                                                        <input type="number" step="0.01"
+                                                            class="form-control form-control-sm custom-amount-value"
+                                                            name="custom_amounts[{{ $index }}][amount]"
+                                                            value="{{ $customAmountRow['amount'] ?? '' }}"
+                                                            required placeholder="0.00">
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <button type="button" class="btn btn-sm btn-outline-danger remove-custom-amount-row">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            @empty
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="d-flex justify-content-end small">
+                                    <span class="text-muted me-2">Custom amounts total:</span>
+                                    <strong id="custom-amounts-total">0.00</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <template id="custom-amount-row-template">
+                            <tr class="custom-amount-row">
+                                <td>
+                                    <input type="text" class="form-control form-control-sm custom-amount-description"
+                                        maxlength="255" required placeholder="e.g. Loading charge">
+                                </td>
+                                <td>
+                                    <input type="number" step="0.01"
+                                        class="form-control form-control-sm custom-amount-value"
+                                        required placeholder="0.00">
+                                </td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-sm btn-outline-danger remove-custom-amount-row">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </template>
+                    @endif
 
                     <!-- Additional Charges & Status Section -->
                     <div class="row">
@@ -577,6 +678,18 @@
                         <div class="col-md-3">
                             <p class="mb-1"><strong>Balance Amount:</strong> <span id="confirm-balance-amount"></span>
                             </p>
+                        </div>
+                        <div class="col-md-3" id="confirm-negative-adjusted-wrap">
+                            <p class="mb-1"><strong>Negative Adjusted:</strong> <span id="confirm-negative-adjusted"></span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3" id="confirm-custom-amounts-row" style="display: none;">
+                        <div class="col-12">
+                            <h6 class="border-bottom pb-2"><i class="fas fa-list-ul me-2"></i> Custom Amounts</h6>
+                            <div id="confirm-custom-amounts-list"></div>
+                            <p class="mb-0 mt-2"><strong>Custom amounts total:</strong> <span id="confirm-custom-amounts-total"></span></p>
                         </div>
                     </div>
 
@@ -868,6 +981,40 @@
                     document.getElementById('confirm-balance-amount').textContent = '' + parseFloat(
                         balanceAmount).toFixed(2);
 
+                    const negativeAdjustedAmount = parseFloat(document.getElementById('negative_adjusted_amount')?.value || 0) || 0;
+                    const negativeAdjustedWrap = document.getElementById('confirm-negative-adjusted-wrap');
+                    if (negativeAdjustedWrap) {
+                        negativeAdjustedWrap.style.display = negativeAdjustedAmount > 0 ? 'block' : 'none';
+                        document.getElementById('confirm-negative-adjusted').textContent = '' + negativeAdjustedAmount.toFixed(2);
+                    }
+
+                    const customAmountRows = document.querySelectorAll('#custom-amounts-body .custom-amount-row');
+                    const customAmountsRow = document.getElementById('confirm-custom-amounts-row');
+                    const customAmountsList = document.getElementById('confirm-custom-amounts-list');
+                    if (customAmountsRow && customAmountsList) {
+                        if (customAmountRows.length > 0) {
+                            customAmountsRow.style.display = 'flex';
+                            customAmountsList.innerHTML = '';
+                            let customTotal = 0;
+
+                            customAmountRows.forEach(function(row) {
+                                const description = row.querySelector('[name*="[description]"], .custom-amount-description')?.value || '';
+                                const amount = parseFloat(row.querySelector('.custom-amount-value')?.value || 0) || 0;
+                                customTotal += amount;
+
+                                const item = document.createElement('p');
+                                item.className = 'mb-1';
+                                item.innerHTML = '<strong>' + description + ':</strong> ' + amount.toFixed(2);
+                                customAmountsList.appendChild(item);
+                            });
+
+                            document.getElementById('confirm-custom-amounts-total').textContent = '' + customTotal.toFixed(2);
+                        } else {
+                            customAmountsRow.style.display = 'none';
+                            customAmountsList.innerHTML = '';
+                        }
+                    }
+
                     // Status
                     const isDelivered = document.getElementById('is_delivered').checked;
                     const isCancelled = document.getElementById('is_cancelled').checked;
@@ -979,11 +1126,86 @@
                 warning?.classList.toggle('d-none', !exceeds);
             }
 
+            // Function to sum custom amount row values
+            function getCustomAmountsTotal() {
+                let total = 0;
+                document.querySelectorAll('#custom-amounts-body .custom-amount-value').forEach(function(input) {
+                    total += parseFloat(input.value) || 0;
+                });
+
+                const totalDisplay = document.getElementById('custom-amounts-total');
+                if (totalDisplay) {
+                    totalDisplay.textContent = total.toFixed(2);
+                }
+
+                return total;
+            }
+
+            function reindexCustomAmountRows() {
+                document.querySelectorAll('#custom-amounts-body .custom-amount-row').forEach(function(row, index) {
+                    const idInput = row.querySelector('input[name*="[id]"]');
+                    const descInput = row.querySelector('[name*="[description]"], .custom-amount-description');
+                    const amountInput = row.querySelector('.custom-amount-value');
+
+                    if (descInput) {
+                        descInput.name = 'custom_amounts[' + index + '][description]';
+                    }
+                    if (amountInput) {
+                        amountInput.name = 'custom_amounts[' + index + '][amount]';
+                    }
+                    if (idInput && idInput.name.includes('[id]')) {
+                        idInput.name = 'custom_amounts[' + index + '][id]';
+                    }
+                });
+            }
+
+            function initCustomAmountsRepeater() {
+                const addBtn = document.getElementById('addCustomAmountRow');
+                const body = document.getElementById('custom-amounts-body');
+                const template = document.getElementById('custom-amount-row-template');
+
+                if (!addBtn || !body || !template) {
+                    return;
+                }
+
+                addBtn.addEventListener('click', function() {
+                    const clone = template.content.cloneNode(true);
+                    body.appendChild(clone);
+                    reindexCustomAmountRows();
+                    getCustomAmountsTotal();
+                    calculateTdsAndBalance();
+                });
+
+                body.addEventListener('click', function(event) {
+                    const removeBtn = event.target.closest('.remove-custom-amount-row');
+                    if (!removeBtn) {
+                        return;
+                    }
+
+                    removeBtn.closest('.custom-amount-row')?.remove();
+                    reindexCustomAmountRows();
+                    getCustomAmountsTotal();
+                    calculateTdsAndBalance();
+                });
+
+                body.addEventListener('input', function(event) {
+                    if (event.target.classList.contains('custom-amount-value')) {
+                        getCustomAmountsTotal();
+                        calculateTdsAndBalance();
+                    }
+                });
+
+                getCustomAmountsTotal();
+            }
+
             // Function to calculate TDS and Balance amounts
             function calculateTdsAndBalance() {
                 const trAmount = parseFloat(trAmountInput ? trAmountInput.value : 0) || 0;
                 const advanceAmount = parseFloat(document.getElementById('advance_amount_main') ? document
                     .getElementById('advance_amount_main').value : 0) || 0;
+                const negativeAdjustedAmount = parseFloat(document.getElementById('negative_adjusted_amount') ?
+                    document.getElementById('negative_adjusted_amount').value : 0) || 0;
+                const customAmountsTotal = getCustomAmountsTotal();
                 const detention = parseFloat(document.getElementById('detention') ? document.getElementById(
                     'detention').value : 0) || 0;
                 const deviation = parseFloat(document.getElementById('deviation') ? document.getElementById(
@@ -1036,9 +1258,9 @@
                         : tdsAmount.toFixed(2);
                 }
 
-                // Calculate Balance Amount: TR Amount - Advance - TDS + Detention + Deviation - Misc Expense - Damage - Shortage
+                // Calculate Balance Amount
                 const balance = trAmount - advanceAmount - tdsAmount + detention + deviation -
-                    miscExpense - damageAmount - shortageAmount;
+                    miscExpense - damageAmount - shortageAmount + customAmountsTotal + negativeAdjustedAmount;
                 if (balanceAmountInput) {
                     balanceAmountInput.value = balance.toFixed(2);
                 }
@@ -1102,7 +1324,9 @@
                         const miscExpense = parseFloat(document.getElementById('misc_expense') ? document.getElementById('misc_expense').value : 0) || 0;
                         const damageAmount = parseFloat(document.getElementById('damage_amount') ? document.getElementById('damage_amount').value : 0) || 0;
                         const shortageAmount = parseFloat(document.getElementById('shortage_amount') ? document.getElementById('shortage_amount').value : 0) || 0;
-                        const balance = trAmount - advanceAmount - previousTdsAmount + detention + deviation - miscExpense - damageAmount - shortageAmount;
+                        const customAmountsTotal = getCustomAmountsTotal();
+                        const negativeAdjustedAmount = parseFloat(document.getElementById('negative_adjusted_amount') ? document.getElementById('negative_adjusted_amount').value : 0) || 0;
+                        const balance = trAmount - advanceAmount - previousTdsAmount + detention + deviation - miscExpense - damageAmount - shortageAmount + customAmountsTotal + negativeAdjustedAmount;
                         const balanceAmountInput = document.getElementById('balance_amount');
                         if (balanceAmountInput) {
                             balanceAmountInput.value = balance.toFixed(2);
@@ -1138,6 +1362,7 @@
             previousTdsAmount = parseFloat(tdsAmountInput ? tdsAmountInput.value : 0) || 0;
 
             // Calculate initial TDS and balance if values exist
+            initCustomAmountsRepeater();
             calculateTdsAndBalance();
 
             // Validation for additional charges fields

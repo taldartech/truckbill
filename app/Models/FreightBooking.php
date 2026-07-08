@@ -109,6 +109,20 @@ class FreightBooking extends Model implements Auditable
         return $this->hasMany(VoucherPayment::class, 'freight_booking_id');
     }
 
+    public function customAmounts(): HasMany
+    {
+        return $this->hasMany(FreightBookingCustomAmount::class);
+    }
+
+    public function customAmountsTotal(): float
+    {
+        if ($this->relationLoaded('customAmounts')) {
+            return (float) $this->customAmounts->sum('amount');
+        }
+
+        return (float) $this->customAmounts()->sum('amount');
+    }
+
     public function effectivePayableAmount(): float
     {
         return (float) $this->tr_amount
@@ -117,7 +131,29 @@ class FreightBooking extends Model implements Auditable
             - ($this->shortage_amount ?? 0)
             + ($this->detention ?? 0)
             + ($this->deviation ?? 0)
-            - ($this->misc_expense ?? 0);
+            - ($this->misc_expense ?? 0)
+            + $this->customAmountsTotal()
+            + ($this->negative_adjusted_amount ?? 0);
+    }
+
+    public function balanceFromAdvance(?float $advanceAmount = null): float
+    {
+        $advance = $advanceAmount ?? (float) ($this->advance_amount ?? 0);
+
+        return round(
+            $this->effectivePayableAmount() - $advance,
+            2
+        );
+    }
+
+    public function isLinked(): bool
+    {
+        return ! empty($this->linked_lr_id);
+    }
+
+    public function scopeLinkedGroup($query, int $linkedLrId, int $companyId)
+    {
+        return $query->where('linked_lr_id', $linkedLrId)->where('company_id', $companyId);
     }
 
     /**
@@ -204,6 +240,10 @@ class FreightBooking extends Model implements Auditable
     protected static function booted(): void
     {
         static::deleting(function (FreightBooking $freightBooking): void {
+            $freightBooking->customAmounts()->each(function (FreightBookingCustomAmount $customAmount): void {
+                $customAmount->delete();
+            });
+
             $freightBooking->voucherPayments()->each(function (VoucherPayment $payment): void {
                 $payment->delete();
             });

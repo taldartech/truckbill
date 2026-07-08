@@ -6,6 +6,8 @@ use App\Models\AdvancePayment;
 use App\Models\FreightBooking;
 use App\Models\LorryReceipt;
 use App\Models\Transporter;
+use App\Models\VoucherPayment;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
 class FreightBookingCalculationService
@@ -91,6 +93,7 @@ class FreightBookingCalculationService
         bool $canChangeTdsAmount,
         float $existingTdsAmount,
         float $negativeAdjustedAmount,
+        float $customAmountsTotal = 0.0,
     ): array {
         if ($isFixedAmount) {
             $trAmount = $trAmountInput;
@@ -115,6 +118,7 @@ class FreightBookingCalculationService
             - $miscExpense
             + $detention
             + $deviation
+            + $customAmountsTotal
             - $tdsAmount
             - $advanceAmount
             + $negativeAdjustedAmount;
@@ -166,7 +170,7 @@ class FreightBookingCalculationService
 
         $loadingWeight = (float) $lorryReceipt->weight;
         $unloadingWeight = (float) ($lorryReceipt->unloading_weight ?? $loadingWeight);
-        if (!$lorryReceipt->is_fixed_amount) {
+        if (! $lorryReceipt->is_fixed_amount) {
             $lorryReceipt->actual_amount = min($loadingWeight, $unloadingWeight) * $lorryReceipt->fr_rate;
         }
 
@@ -178,6 +182,246 @@ class FreightBookingCalculationService
             'old_delivery_status' => $oldDeliveryStatus,
             'delivery_status' => $deliveryStatus,
         ];
+    }
+
+    public function assertIndividualPaymentAllowed(FreightBooking $freightBooking, bool $isCombinedFlow): void
+    {
+        if ($isCombinedFlow) {
+            return;
+        }
+
+        if ($freightBooking->isLinked()) {
+            throw new \DomainException('Linked freight bookings must be paid via combined voucher payment.');
+        }
+    }
+
+    /**
+     * @return Collection<int, FreightBooking>
+     */
+    public function resolveLinkedGroup(FreightBooking $booking): Collection
+    {
+        if (! $booking->isLinked()) {
+            return collect([$booking]);
+        }
+
+        return FreightBooking::query()
+            ->with('customAmounts')
+            ->linkedGroup((int) $booking->linked_lr_id, (int) $booking->company_id)
+            ->where('is_cancelled', false)
+            ->orderBy('id')
+            ->get();
+    }
+
+    public function recalculateFromVoucherPayments(
+        FreightBooking $freightBooking,
+        bool $preserveAdvanceAmount = false,
+    ): void {
+        $freightBooking->loadMissing('customAmounts');
+
+        if (! $preserveAdvanceAmount) {
+            $advance = (float) VoucherPayment::query()
+                ->where('freight_booking_id', $freightBooking->id)
+                ->whereNull('deleted_at')
+                ->sum('amount');
+            $freightBooking->advance_amount = $advance;
+        }
+
+        $freightBooking->balance_amount = $freightBooking->balanceFromAdvance();
+        $freightBooking->save();
+    }
+
+    public function recalculateFromLorryReceipt(
+        FreightBooking $freightBooking,
+        LorryReceipt $lorryReceipt,
+        array $validated,
+    ): void {
+        $freightBooking->loadMissing('customAmounts');
+        $updateData = ['good_type' => $validated['good_type']];
+
+        if ($freightBooking->canChangeTdsAmount()) {
+            $transporter = Transporter::find($validated['transporter_id']);
+            $updateData['transporter_id'] = $transporter->id;
+            $updateData['transporter_name'] = $transporter->name;
+            $updateData['transporter_tds_percentage'] = $transporter->tds_percentage;
+        } else {
+            $updateData['transporter_id'] = $freightBooking->transporter_id;
+            $updateData['transporter_name'] = $freightBooking->transporter->name;
+            $updateData['transporter_tds_percentage'] = $freightBooking->transporter_tds_percentage;
+        }
+
+        if ($freightBooking->is_fixed_amount) {
+            $updateData['tr_amount'] = $freightBooking->tr_amount;
+        } else {
+            $updateData['tr_amount'] = $freightBooking->tr_fr_rate * min(
+                $lorryReceipt->weight,
+                $lorryReceipt->unloading_weight
+            );
+        }
+
+        if ($freightBooking->canChangeTdsAmount()) {
+            if ($freightBooking->is_fixed_amount) {
+                $updateData['tds_amount'] = roundUpTdsAmount(
+                    $updateData['tr_amount'] * ($updateData['transporter_tds_percentage'] / 100)
+                );
+            } else {
+                $updateData['tds_amount'] = roundUpTdsAmount(
+                    $freightBooking->tr_fr_rate * $lorryReceipt->weight * ($updateData['transporter_tds_percentage'] / 100)
+                );
+            }
+        } else {
+            $updateData['tds_amount'] = $freightBooking->tds_amount;
+        }
+
+        $freightBooking->tr_amount = $updateData['tr_amount'];
+        $freightBooking->tds_amount = $updateData['tds_amount'];
+        $updateData['balance_amount'] = $freightBooking->balanceFromAdvance();
+
+        $freightBooking->update($updateData);
+    }
+
+    public function recalculateFromTdsChange(
+        FreightBooking $freightBooking,
+        float $newTdsAmount,
+        float $newTdsPercentage,
+    ): void {
+        $freightBooking->loadMissing('customAmounts');
+        $freightBooking->tds_amount = $newTdsAmount;
+        $freightBooking->transporter_tds_percentage = $newTdsPercentage;
+        $freightBooking->balance_amount = $freightBooking->balanceFromAdvance();
+        $freightBooking->save();
+    }
+
+    public function applyNegativeAdjustment(FreightBooking $freightBooking, ?string $lrNumber = null): void
+    {
+        if ($freightBooking->isLinked()) {
+            $this->applyNegativeAdjustmentForLinkedGroup(
+                $this->resolveLinkedGroup($freightBooking),
+                $lrNumber
+            );
+
+            return;
+        }
+
+        $this->applyNegativeAdjustmentForSingleBooking($freightBooking, $lrNumber);
+    }
+
+    /**
+     * @param  iterable<int, FreightBooking>  $bookings
+     */
+    public function applyNegativeAdjustmentsForBookings(iterable $bookings): void
+    {
+        $processedLinkedIds = [];
+
+        foreach ($bookings as $booking) {
+            if ($booking->isLinked()) {
+                $linkedLrId = (int) $booking->linked_lr_id;
+                if (isset($processedLinkedIds[$linkedLrId])) {
+                    continue;
+                }
+                $processedLinkedIds[$linkedLrId] = true;
+                $this->applyNegativeAdjustmentForLinkedGroup(
+                    $this->resolveLinkedGroup($booking)
+                );
+
+                continue;
+            }
+
+            $this->applyNegativeAdjustmentForSingleBooking($booking);
+        }
+    }
+
+    /**
+     * @param  Collection<int, FreightBooking>  $bookings
+     */
+    public function applyNegativeAdjustmentForLinkedGroup(Collection $bookings, ?string $lrNumber = null): void
+    {
+        if ($bookings->isEmpty()) {
+            return;
+        }
+
+        $bookings->each(fn (FreightBooking $booking) => $booking->loadMissing('customAmounts'));
+
+        $totalBalance = round($bookings->sum(fn (FreightBooking $b) => (float) ($b->balance_amount ?? 0)), 2);
+        if ($totalBalance >= -0.01) {
+            return;
+        }
+
+        $requiredTotal = round(abs($totalBalance), 2);
+        $alreadyAdjusted = round($bookings->sum(fn (FreightBooking $b) => (float) ($b->negative_adjusted_amount ?? 0)), 2);
+        $increment = round($requiredTotal - $alreadyAdjusted, 2);
+
+        if (abs($increment) <= 0.01) {
+            foreach ($bookings as $booking) {
+                $booking->balance_amount = $booking->balanceFromAdvance();
+                $booking->save();
+            }
+
+            return;
+        }
+
+        $transporter = Transporter::find($bookings->first()->transporter_id);
+        if (! $transporter) {
+            Log::warning('Skipped linked negative balance adjustment: transporter missing', [
+                'freight_booking_ids' => $bookings->pluck('id')->all(),
+                'transporter_id' => $bookings->first()->transporter_id,
+            ]);
+
+            return;
+        }
+
+        $weights = $bookings->mapWithKeys(function (FreightBooking $booking): array {
+            $balance = (float) ($booking->balance_amount ?? 0);
+
+            return [$booking->id => $balance < -0.01 ? round(abs($balance), 2) : 0.0];
+        });
+        $weightSum = round($weights->sum(), 2);
+
+        if ($weightSum <= 0.01) {
+            $equalShare = round($increment / $bookings->count(), 2);
+            $allocations = $bookings->mapWithKeys(fn (FreightBooking $b) => [$b->id => $equalShare]);
+        } else {
+            $allocations = $weights->map(fn (float $weight) => round($increment * ($weight / $weightSum), 2));
+        }
+
+        $allocatedSum = round($allocations->sum(), 2);
+        $remainder = round($increment - $allocatedSum, 2);
+        if (abs($remainder) > 0.01) {
+            $firstId = $allocations->keys()->first();
+            $allocations[$firstId] = round($allocations[$firstId] + $remainder, 2);
+        }
+
+        $lrNumbers = $bookings
+            ->map(fn (FreightBooking $b) => $b->lr?->lr_number)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+        $resolvedLrNumber = $lrNumber ?? ($lrNumbers !== [] ? implode(', ', $lrNumbers) : 'N/A');
+
+        if ($increment > 0) {
+            $transporter->advance_amount = round((float) ($transporter->advance_amount ?? 0) + $increment, 2);
+            $transporter->save();
+
+            AdvancePayment::create([
+                'company_id' => $bookings->first()->company_id,
+                'transporter_id' => $transporter->id,
+                'advance_amount' => $increment,
+                'payment_date' => now()->toDateString(),
+                'remark' => "Linked negative balance adjustment: LR#{$resolvedLrNumber}",
+            ]);
+        }
+
+        foreach ($bookings as $booking) {
+            $allocation = (float) ($allocations[$booking->id] ?? 0);
+            if ($allocation > 0) {
+                $booking->negative_adjusted_amount = round(
+                    (float) ($booking->negative_adjusted_amount ?? 0) + $allocation,
+                    2
+                );
+            }
+            $booking->balance_amount = $booking->balanceFromAdvance();
+            $booking->save();
+        }
     }
 
     public function applyNegativeAdjustmentForSingleBooking(FreightBooking $freightBooking, ?string $lrNumber = null): void
@@ -240,7 +484,4 @@ class FreightBookingCalculationService
         $freightBooking->save();
     }
 
-    public function applyNegativeAdjustmentForLinkedBookings(FreightBooking $freightBooking, ?string $lrNumber = null): void
-    {
-    }
 }

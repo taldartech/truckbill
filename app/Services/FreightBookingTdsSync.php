@@ -7,13 +7,21 @@ use App\Models\Transporter;
 
 class FreightBookingTdsSync
 {
+    public function __construct(
+        private readonly FreightBookingCalculationService $freightBookingCalculationService,
+    ) {}
+
     /**
      * Recalculate TDS amount on freight bookings for this transporter when TDS % changes.
      * Only updates bookings where canChangeTdsAmount() is true.
      */
     public function syncForTransporter(Transporter $transporter, float $newTdsPercentage): void
     {
-        $freightBookings = FreightBooking::where('transporter_id', $transporter->id)->get();
+        $freightBookings = FreightBooking::with('customAmounts')
+            ->where('transporter_id', $transporter->id)
+            ->get();
+
+        $processedLinkedIds = [];
 
         foreach ($freightBookings as $freightBooking) {
             if (! $freightBooking->canChangeTdsAmount()) {
@@ -36,23 +44,21 @@ class FreightBookingTdsSync
                 continue;
             }
 
-            $freightBooking->tds_amount = $newTdsAmount;
-            $freightBooking->transporter_tds_percentage = $newTdsPercentage;
+            $this->freightBookingCalculationService->recalculateFromTdsChange(
+                $freightBooking,
+                $newTdsAmount,
+                $newTdsPercentage
+            );
 
-            $freightBooking->balance_amount = $freightBooking->tr_amount
-                - $freightBooking->advance_amount
-                - $newTdsAmount
-                - ($freightBooking->damage_amount ?? 0)
-                - ($freightBooking->shortage_amount ?? 0)
-                + ($freightBooking->detention ?? 0)
-                + ($freightBooking->deviation ?? 0)
-                - ($freightBooking->misc_expense ?? 0);
-
-            if ($freightBooking->balance_amount < 0) {
-                $freightBooking->balance_amount = 0;
+            if ($freightBooking->isLinked()) {
+                $linkedLrId = (int) $freightBooking->linked_lr_id;
+                if (! isset($processedLinkedIds[$linkedLrId])) {
+                    $processedLinkedIds[$linkedLrId] = true;
+                    $this->freightBookingCalculationService->applyNegativeAdjustment($freightBooking);
+                }
+            } else {
+                $this->freightBookingCalculationService->applyNegativeAdjustment($freightBooking);
             }
-
-            $freightBooking->save();
         }
     }
 }

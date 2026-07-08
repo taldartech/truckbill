@@ -295,6 +295,16 @@
                                         class="info-value">{{ number_format($freightBooking->tds_amount ?? 0, 2) }}</span>
                                 </div>
                                 <div class="info-row">
+                                    <span class="info-label">Negative Adjusted Amount:</span>
+                                    <span
+                                        class="info-value {{ ($freightBooking->negative_adjusted_amount ?? 0) > 0 ? '' : 'text-muted' }}">{{ number_format($freightBooking->negative_adjusted_amount ?? 0, 2) }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">Custom Amounts Total:</span>
+                                    <span
+                                        class="info-value {{ $freightBooking->customAmountsTotal() != 0 ? '' : 'text-muted' }}">{{ number_format($freightBooking->customAmountsTotal(), 2) }}</span>
+                                </div>
+                                <div class="info-row">
                                     <span class="info-label">Balance:</span>
                                     <span class="info-value">
                                         @php
@@ -313,6 +323,8 @@
                                     $total_tr_amount = $frs->sum('tr_amount');
                                     $total_advance = $frs->sum('advance_amount');
                                     $total_tds_amount = $frs->sum('tds_amount');
+                                    $total_negative_adjusted = $frs->sum('negative_adjusted_amount');
+                                    $total_custom_amounts = $frs->sum(fn ($fr) => $fr->customAmountsTotal());
                                     $total_balance = $frs->sum('balance_amount');
                                 @endphp
                                 <table class="table combined-table">
@@ -353,6 +365,20 @@
                                                 <td>{{ number_format($fr->tds_amount, 2) }}</td>
                                             @endforeach
                                             <td>{{ number_format($total_tds_amount, 2) }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Negative Adjusted</td>
+                                            @foreach ($frs as $fr)
+                                                <td>{{ number_format($fr->negative_adjusted_amount ?? 0, 2) }}</td>
+                                            @endforeach
+                                            <td>{{ number_format($total_negative_adjusted, 2) }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Custom Amounts Total</td>
+                                            @foreach ($frs as $fr)
+                                                <td>{{ number_format($fr->customAmountsTotal(), 2) }}</td>
+                                            @endforeach
+                                            <td>{{ number_format($total_custom_amounts, 2) }}</td>
                                         </tr>
                                         <tr>
                                             <td>Balance</td>
@@ -437,6 +463,46 @@
                     </div>
                 </div>
             </div>
+
+            @if ($freightBooking->customAmounts->isNotEmpty())
+                <div class="row">
+                    <div class="col-12">
+                        <div class="info-card card">
+                            <div class="card-header">
+                                <h5 class="mb-0">Custom Amounts</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Description</th>
+                                                <th class="text-end">Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($freightBooking->customAmounts as $customAmount)
+                                                <tr>
+                                                    <td>{{ $customAmount->description }}</td>
+                                                    <td class="text-end {{ (float) $customAmount->amount < 0 ? 'text-danger' : '' }}">
+                                                        {{ number_format($customAmount->amount, 2) }}
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                        <tfoot>
+                                            <tr class="table-light">
+                                                <th>Custom amounts total</th>
+                                                <th class="text-end">{{ number_format($freightBooking->customAmountsTotal(), 2) }}</th>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
 
             <!-- Additional Charges Section -->
             @if ($freightBooking->is_delivered)
