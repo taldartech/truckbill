@@ -531,6 +531,76 @@ class InvoiceTest extends TestCase
             ->assertRedirect('/invoices')->assertSessionHas('error');
     }
 
+    public function test_destroy_resets_invoice_generated_for_regular_invoice(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        [$lr1] = $this->seedLrs($admin, $customer);
+        $lr1->invoice_generated = 1;
+        $lr1->save();
+
+        $invoice = Invoice::create([
+            'invoice_number' => 'VGC/2026/0001',
+            'manual_invoice_number' => 'INV-DEL-001',
+            'invoice_type' => 'Reverse',
+            'generated_date' => now()->toDateString(),
+            'customer_id' => $customer->id,
+            'total_amount' => 100,
+            'base_amount' => 100,
+            'net_amount' => 100,
+            'payment_status' => 'pending',
+            'company_id' => $admin->company_id,
+            'lr_ids' => [$lr1->id],
+            'custom_invoice' => null,
+        ]);
+
+        $this->actingAs($admin)
+            ->delete("/invoices/{$invoice->id}")
+            ->assertRedirect(route('invoices.index'))
+            ->assertSessionHas('success');
+
+        $this->assertSoftDeleted('invoices', ['id' => $invoice->id]);
+        $this->assertDatabaseHas('lorry_receipts', [
+            'id' => $lr1->id,
+            'invoice_generated' => 0,
+        ]);
+    }
+
+    public function test_destroy_custom_invoice_does_not_reset_invoice_generated(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        [$lr1] = $this->seedLrs($admin, $customer);
+        $lr1->invoice_generated = 1;
+        $lr1->save();
+
+        $invoice = Invoice::create([
+            'invoice_number' => 'VGC/2026/0002',
+            'manual_invoice_number' => 'INV-DEL-CUSTOM-001',
+            'invoice_type' => 'Reverse',
+            'custom_invoice' => 'rate_difference',
+            'generated_date' => now()->toDateString(),
+            'customer_id' => $customer->id,
+            'total_amount' => 100,
+            'base_amount' => 100,
+            'net_amount' => 100,
+            'payment_status' => 'pending',
+            'company_id' => $admin->company_id,
+            'lr_ids' => [$lr1->id],
+        ]);
+
+        $this->actingAs($admin)
+            ->delete("/invoices/{$invoice->id}")
+            ->assertRedirect(route('invoices.index'))
+            ->assertSessionHas('success');
+
+        $this->assertSoftDeleted('invoices', ['id' => $invoice->id]);
+        $this->assertDatabaseHas('lorry_receipts', [
+            'id' => $lr1->id,
+            'invoice_generated' => 1,
+        ]);
+    }
+
     public function test_invoice_numbers_api_returns_company_scoped_results(): void
     {
         $admin = $this->makeUser('admin');

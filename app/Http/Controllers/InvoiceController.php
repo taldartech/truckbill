@@ -591,16 +591,35 @@ class InvoiceController extends Controller
         if (! $this->isLastInvoiceForCompany($invoice)) {
             return redirect()->back()->with('error', 'Only the latest invoice can be deleted.');
         }
-        $lr_ids = $invoice->lr_ids ?? [];
-        if (! empty($lr_ids)) {
-            // Update individually to trigger auditing
-            $lorryReceipts = LorryReceipt::whereIn('id', $lr_ids)->get();
-            foreach ($lorryReceipts as $lr) {
-                $lr->invoice_generated = 0;
-                $lr->save();
-            }
+
+        try {
+            DB::transaction(function () use ($invoice): void {
+                // Custom invoices do not flip LR invoice_generated on create, so do not reset it on delete.
+                if (! $invoice->custom_invoice) {
+                    $lrIds = $invoice->lr_ids ?? [];
+                    if (! empty($lrIds)) {
+                        $lorryReceipts = LorryReceipt::query()
+                            ->whereIn('id', $lrIds)
+                            ->lockForUpdate()
+                            ->get();
+
+                        foreach ($lorryReceipts as $lr) {
+                            $lr->invoice_generated = 0;
+                            $lr->save();
+                        }
+                    }
+                }
+
+                $invoice->delete();
+            });
+        } catch (\Throwable $e) {
+            Log::error('Invoice delete failed', [
+                'invoice_id' => $invoice->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return redirect()->back()->with('error', 'Failed to delete invoice. Please try again.');
         }
-        $invoice->delete();
 
         return redirect()->route('invoices.index')->with('success', 'Invoice deleted.');
     }
