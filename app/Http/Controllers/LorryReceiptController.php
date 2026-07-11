@@ -1111,11 +1111,13 @@ class LorryReceiptController extends Controller
                 $itemWeight = (float) $item['weight'];
                 $itemFrRate = (float) $item['fr_rate'];
                 $amountInput = (float) $item['amount'];
+                // Before delivery, loading and unloading weight must stay the same.
+                $itemUnloadingWeight = $itemWeight;
 
                 $resolved = $this->lrCalculationService->resolveForUpdate(
                     $isFixed,
                     $itemWeight,
-                    (float) ($existing->unloading_weight ?? $itemWeight),
+                    $itemUnloadingWeight,
                     $itemFrRate,
                     $amountInput,
                     (float) ($existing->shortage_amount ?? 0),
@@ -1144,6 +1146,7 @@ class LorryReceiptController extends Controller
                     'good_type' => $item['good_type'],
                     'goods_value' => $item['goods_value'] ?? null,
                     'weight' => $itemWeight,
+                    'unloading_weight' => $itemUnloadingWeight,
                     'no_of_units' => $item['no_of_units'] ?? null,
                     'fr_rate' => $itemFrRate,
                     'is_fixed_amount' => $isFixed,
@@ -1512,7 +1515,8 @@ class LorryReceiptController extends Controller
         $this->forceAgencyForOrphanTruck($validated, $companyId);
 
         $isFixed = (bool) ($validated['is_fixed_amount'] ?? false);
-        $validated['unloading_weight'] = $lorry_receipt->weight;
+        // Before delivery, loading and unloading weight must stay the same.
+        $validated['unloading_weight'] = $validated['weight'];
         $validated['shortage_amount'] = $lorry_receipt->shortage_amount;
         $validated['damage_amount'] = $lorry_receipt->damage_amount;
         $resolved = $this->lrCalculationService->resolveForUpdate(

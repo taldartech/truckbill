@@ -249,13 +249,13 @@ class FreightBookingCalculationService
             $updateData['transporter_tds_percentage'] = $freightBooking->transporter_tds_percentage;
         }
 
+        $weight = (float) ($validated['weight'] ?? $lorryReceipt->weight ?? 0);
+        $unloadingWeight = (float) ($validated['unloading_weight'] ?? $lorryReceipt->unloading_weight ?? $weight);
+
         if ($freightBooking->is_fixed_amount) {
             $updateData['tr_amount'] = $freightBooking->tr_amount;
         } else {
-            $updateData['tr_amount'] = $freightBooking->tr_fr_rate * min(
-                $lorryReceipt->weight,
-                $lorryReceipt->unloading_weight
-            );
+            $updateData['tr_amount'] = $freightBooking->tr_fr_rate * min($weight, $unloadingWeight);
         }
 
         if ($freightBooking->canChangeTdsAmount()) {
@@ -265,7 +265,7 @@ class FreightBookingCalculationService
                 );
             } else {
                 $updateData['tds_amount'] = roundUpTdsAmount(
-                    $freightBooking->tr_fr_rate * $lorryReceipt->weight * ($updateData['transporter_tds_percentage'] / 100)
+                    $freightBooking->tr_fr_rate * $weight * ($updateData['transporter_tds_percentage'] / 100)
                 );
             }
         } else {

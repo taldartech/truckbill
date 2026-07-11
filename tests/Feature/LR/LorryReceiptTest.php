@@ -3,6 +3,7 @@
 namespace Tests\Feature\LR;
 
 use App\Models\Company;
+use App\Models\CompanySubscription;
 use App\Models\Consignee;
 use App\Models\FreightBooking;
 use App\Models\LorryReceipt;
@@ -39,7 +40,18 @@ class LorryReceiptTest extends TestCase
             'name' => 'Main Co',
             'user_id' => null,
             'gst_slab' => config('payments.gst_slabs')[0],
+            'lr_credits' => 5,
             'is_blocked' => false,
+            'plan_end_date' => now()->addYear(),
+        ]);
+
+        CompanySubscription::create([
+            'company_id' => $company->id,
+            'status' => 'active',
+            'starts_on' => now()->subMonth(),
+            'ends_on' => now()->addYear(),
+            'included_branches' => 2,
+            'users_per_branch' => 3,
         ]);
 
         return User::factory()->create([
@@ -634,7 +646,8 @@ class LorryReceiptTest extends TestCase
             'voucher_number' => 'VB-SYNC-001',
         ]);
 
-        $lr->update(['freight_booking_id' => $freightBooking->id]);
+        $lr->freight_booking_id = $freightBooking->id;
+        $lr->save();
 
         $payload = [
             'customer_id' => $customer->id,
@@ -672,11 +685,15 @@ class LorryReceiptTest extends TestCase
             ->put("/lorry_receipts/{$lr->id}", $payload)
             ->assertRedirect(route('lorry_receipts.index'));
 
+        $lr->refresh();
         $freightBooking->refresh();
 
-        $this->assertSame(1000.0, (float) $freightBooking->tr_amount);
-        $this->assertSame(20.0, (float) $freightBooking->tds_amount);
-        $this->assertSame(980.0, (float) $freightBooking->balance_amount);
+        $this->assertSame(8.0, (float) $lr->weight);
+        $this->assertSame(8.0, (float) $lr->unloading_weight);
+        $this->assertSame(800.0, (float) $lr->actual_amount);
+        $this->assertSame(800.0, (float) $freightBooking->tr_amount);
+        $this->assertSame(160.0, (float) $freightBooking->tds_amount);
+        $this->assertSame(640.0, (float) $freightBooking->balance_amount);
     }
 
     public function test_update_syncs_freight_booking_when_tds_amount_cannot_change(): void
@@ -727,7 +744,8 @@ class LorryReceiptTest extends TestCase
             'voucher_number' => 'VB-SYNC-TDS-001',
         ]);
 
-        $lr->update(['freight_booking_id' => $freightBooking->id]);
+        $lr->freight_booking_id = $freightBooking->id;
+        $lr->save();
 
         $payload = [
             'customer_id' => $customer->id,
@@ -765,12 +783,16 @@ class LorryReceiptTest extends TestCase
             ->put("/lorry_receipts/{$lr->id}", $payload)
             ->assertRedirect(route('lorry_receipts.index'));
 
+        $lr->refresh();
         $freightBooking->refresh();
 
         $this->assertFalse($freightBooking->canChangeTdsAmount());
-        $this->assertSame(56868.0, (float) $freightBooking->tr_amount);
+        $this->assertSame(40.0, (float) $lr->weight);
+        $this->assertSame(40.0, (float) $lr->unloading_weight);
+        $this->assertSame(54160.0, (float) $freightBooking->tr_amount);
         $this->assertSame(1137.36, (float) $freightBooking->tds_amount);
         $this->assertSame(0.0, (float) $freightBooking->balance_amount);
+        $this->assertEqualsWithDelta(3845.36, (float) $freightBooking->negative_adjusted_amount, 0.01);
     }
 
     public function test_lorry_receipt_views_contain_declaration_warning_markup(): void

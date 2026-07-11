@@ -1260,6 +1260,10 @@
 
             // Auto-calculate actual_amount and amount when weight, unloading_weight, freight rate, or fixed toggle changes (when not fixed)
             $('#weight, #fr_rate').on('input', function() {
+                const isDelivered = @json($lorry_receipt->delivery_status === 'Delivered');
+                if (! isDelivered && hasUnloadingWeight && $(this).is('#weight')) {
+                    unloadingWeightInput.val($('#weight').val());
+                }
                 calculateAmount();
             });
             $('#is_fixed_amount').on('change', function() {
