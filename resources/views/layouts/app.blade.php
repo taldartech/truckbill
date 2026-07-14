@@ -121,15 +121,15 @@
 
         .app-sidebar,
         .main-sidebar {
-            width: 220px !important;
-            min-width: 220px !important;
-            max-width: 220px !important;
+            width: 250px !important;
+            min-width: 250px !important;
+            max-width: 250px !important;
         }
 
         .sidebar-wrapper {
-            width: 220px !important;
-            min-width: 220px !important;
-            max-width: 220px !important;
+            width: 250px !important;
+            min-width: 250px !important;
+            max-width: 250px !important;
         }
 
         .nav-link.active,
@@ -175,17 +175,6 @@
         .user-footer .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-        }
-
-        width: 220px !important;
-        min-width: 220px !important;
-        max-width: 220px !important;
-        }
-
-        .sidebar-wrapper {
-            width: 220px !important;
-            min-width: 220px !important;
-            max-width: 220px !important;
         }
 
         .app-sidebar {
@@ -438,7 +427,7 @@
                 <!--begin::Brand Link-->
                 <a href="#" class="brand-link">
 
-                    <img src="{{ asset('logo.png') }}" alt="TruckBill Logo" class="brand-image" style="max-height: 90px">
+                    <img src="{{ asset('logo.png') }}" alt="TruckBill Logo" class="brand-image" style="max-height: 75px;">
                 </a>
                 <!--end::Brand Link-->
             </div>
