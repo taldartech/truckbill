@@ -679,8 +679,15 @@
                 }
             });
 
+            function findFieldFeedback(inputEl, feedbackClass) {
+                return inputEl.parentElement?.querySelector('.' + feedbackClass) ?? null;
+            }
+
             // Fetch consignor details
             function handleConsignorSelection(consignorId, scope) {
+                if (!scope) {
+                    return;
+                }
 
                 const consigneeId = scope.querySelector('.consignee-select')?.value;
                 if (consignorId && consigneeId && String(consignorId) === String(consigneeId)) {
@@ -747,6 +754,9 @@
 
             // Fetch consignee details
             function handleConsigneeSelection(consigneeId, scope) {
+                if (!scope) {
+                    return;
+                }
 
                 const consignorId = scope.querySelector('.consignor-select')?.value;
                 if (consigneeId && consignorId && String(consigneeId) === String(consignorId)) {
@@ -981,6 +991,10 @@
             let lrNumberTimeout;
 
             function checkLrUniq(lrNumber, feedbackEl, inputEl) {
+                if (!feedbackEl) {
+                    return;
+                }
+
                 if (!lrNumber || lrNumber.length < 2) {
                     feedbackEl.innerHTML = '';
                     inputEl.classList.remove('is-valid', 'is-invalid');
@@ -1040,8 +1054,7 @@
             lrItemsContainer.addEventListener('input', function(e) {
                 if (e.target.classList.contains('lr-number-input')) {
                     const inputEl = e.target;
-                    const feedbackEl = e.target.closest('.col-md-3').querySelector(
-                        '.lr-number-feedback');
+                    const feedbackEl = findFieldFeedback(inputEl, 'lr-number-feedback');
                     const lrNumber = inputEl.value.trim();
                     clearTimeout(lrNumberTimeout);
                     lrNumberTimeout = setTimeout(() => checkLrUniq(lrNumber, feedbackEl, inputEl), 500);
@@ -1051,8 +1064,7 @@
             lrItemsContainer.addEventListener('blur', function(e) {
                 if (e.target.classList.contains('lr-number-input')) {
                     const inputEl = e.target;
-                    const feedbackEl = e.target.closest('.col-md-3').querySelector(
-                        '.lr-number-feedback');
+                    const feedbackEl = findFieldFeedback(inputEl, 'lr-number-feedback');
                     const lrNumber = inputEl.value.trim();
                     if (lrNumber) {
                         clearTimeout(lrNumberTimeout);
@@ -1065,6 +1077,10 @@
             let invoiceNumberTimeout;
 
             function checkInvoiceUniq(invoiceNumber, feedbackEl, inputEl) {
+                if (!feedbackEl) {
+                    return;
+                }
+
                 if (!invoiceNumber) {
                     feedbackEl.innerHTML = '';
                     inputEl.classList.remove('is-valid', 'is-invalid');
@@ -1124,8 +1140,7 @@
             lrItemsContainer.addEventListener('input', function(e) {
                 if (e.target.classList.contains('invoice-number-input')) {
                     const inputEl = e.target;
-                    const feedbackEl = e.target.closest('.col-md-3').querySelector(
-                        '.invoice-number-feedback');
+                    const feedbackEl = findFieldFeedback(inputEl, 'invoice-number-feedback');
                     const invoiceNumber = inputEl.value.trim();
                     clearTimeout(invoiceNumberTimeout);
                     invoiceNumberTimeout = setTimeout(() => checkInvoiceUniq(invoiceNumber, feedbackEl,
@@ -1136,8 +1151,7 @@
             lrItemsContainer.addEventListener('blur', function(e) {
                 if (e.target.classList.contains('invoice-number-input')) {
                     const inputEl = e.target;
-                    const feedbackEl = e.target.closest('.col-md-3').querySelector(
-                        '.invoice-number-feedback');
+                    const feedbackEl = findFieldFeedback(inputEl, 'invoice-number-feedback');
                     const invoiceNumber = inputEl.value.trim();
                     if (invoiceNumber) {
                         clearTimeout(invoiceNumberTimeout);
@@ -1581,6 +1595,9 @@ lrItemsContainer.addEventListener('blur', function(e) {
     <script>
         // Fetch consignor details
         function handleConsignorSelection(consignorId, scope) {
+            if (!scope) {
+                return;
+            }
 
             const consigneeId = scope.querySelector('.consignee-select')?.value;
             if (consignorId && consigneeId && String(consignorId) === String(consigneeId)) {
@@ -1632,6 +1649,9 @@ lrItemsContainer.addEventListener('blur', function(e) {
 
         // Fetch consignee details
         function handleConsigneeSelection(consigneeId, scope) {
+            if (!scope) {
+                return;
+            }
 
             const consignorId = scope.querySelector('.consignor-select')?.value;
             if (consigneeId && consignorId && String(consigneeId) === String(consignorId)) {
