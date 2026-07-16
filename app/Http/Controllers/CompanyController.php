@@ -965,6 +965,7 @@ class CompanyController extends Controller
             'eway_bill_number' => 'EWB123456789',
             'eway_bill_expiry' => now()->addDays(5)->toDateString(),
         ]);
+        $fb->setRelation('customAmounts', collect());
 
         $lr->setRelation('freightBookings', collect([$fb]));
 

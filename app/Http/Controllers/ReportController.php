@@ -1040,7 +1040,7 @@ class ReportController extends Controller
             'transporter.transporterMaster',
             'consignor',
             'consignee',
-            'freightBookings',
+            'freightBookings.customAmounts',
         ];
 
         $lr = LorryReceipt::with($lrRelations)

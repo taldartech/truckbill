@@ -47,6 +47,8 @@
     $shortage = 0;
     $damage = 0;
     $tds = 0;
+    $customAmountsTotal = 0;
+    $customAmountRows = [];
     $isLinked = $lrs->count() > 1;
     $paymentNames = \App\Models\PaymentMode::pluck('name')->toArray();
     $payments = array_fill_keys($paymentNames, 0);
@@ -62,6 +64,13 @@
         $shortage += (float) ($lr->shortage_amount ?? 0);
         $damage += (float) ($lr->damage_amount ?? 0);
         $tds += (float) ($fb->tds_amount ?? 0);
+        $customAmountsTotal += $fb->customAmountsTotal();
+        foreach ($fb->customAmounts as $customAmount) {
+            $customAmountRows[] = [
+                'description' => $customAmount->description,
+                'amount' => (float) $customAmount->amount,
+            ];
+        }
         if ($isLinked) {
             $vouchers = \App\Models\VoucherLinked::where('freight_booking_id', $fb->id)->get();
         } else {
@@ -74,7 +83,7 @@
     $expenses = $detention + $deviation;
     $totalWithExtras = $totalAmount + $expenses;
     $totalDeductions = $shortage + $damage + $misc;
-    $grandTotal = $totalWithExtras - $totalDeductions;
+    $grandTotal = $totalWithExtras - $totalDeductions + $customAmountsTotal;
     $balance = $grandTotal - array_sum($payments) - $tds;
     $challanLogoSrc = $company->logoFilesystemPathForPdf() ?: $company->logoPublicUrl();
 @endphp
@@ -219,15 +228,31 @@
                         <th>Freight / hire</th>
                         <th>Detn. / Dev.</th>
                         <th>Short / Damage / Misc</th>
+                        <th>Custom</th>
                         <th>TDS</th>
                     </tr>
                     <tr>
                         <td>{{ number_format($totalAmount, 2) }}</td>
                         <td>{{ number_format($expenses, 2) }}</td>
                         <td>{{ number_format($totalDeductions, 2) }}</td>
+                        <td>{{ number_format($customAmountsTotal, 2) }}</td>
                         <td>{{ number_format($tds, 2) }}</td>
                     </tr>
                 </table>
+                @if (count($customAmountRows) > 0)
+                    <table class="grid" style="margin-top: 4px;">
+                        <tr>
+                            <th>Custom amount</th>
+                            <th>Amount</th>
+                        </tr>
+                        @foreach ($customAmountRows as $customAmountRow)
+                            <tr>
+                                <td>{{ $customAmountRow['description'] }}</td>
+                                <td>{{ number_format($customAmountRow['amount'], 2) }}</td>
+                            </tr>
+                        @endforeach
+                    </table>
+                @endif
                 <p style="font-size: 7px; margin-top: 4px;">
                     <strong>Net amount:</strong> {{ number_format($grandTotal, 2) }}
                     &nbsp;|&nbsp; <strong>Balance:</strong> {{ number_format($balance, 2) }}

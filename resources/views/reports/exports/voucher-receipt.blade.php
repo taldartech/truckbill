@@ -179,6 +179,8 @@
             $shortage = 0;
             $damage = 0;
             $tds = 0;
+            $customAmountsTotal = 0;
+            $customAmountRows = [];
 
             $isLinked = count($lrs) > 1 ? true : false;
             $paymentNames = \App\Models\PaymentMode::pluck('name')->toArray();
@@ -289,6 +291,13 @@
                         $shortage += $lr->shortage_amount ?? 0;
                         $damage += $lr->damage_amount ?? 0;
                         $tds += $freightBooking->tds_amount ?? 0;
+                        $customAmountsTotal += $freightBooking->customAmountsTotal();
+                        foreach ($freightBooking->customAmounts as $customAmount) {
+                            $customAmountRows[] = [
+                                'description' => $customAmount->description,
+                                'amount' => (float) $customAmount->amount,
+                            ];
+                        }
                         if ($isLinked) {
                             $vouchers = \App\Models\VoucherLinked::where(
                                 'freight_booking_id',
@@ -349,9 +358,15 @@
                             <td>Short/Other</td>
                             <td>{{ number_format($totalDeductions, 2) }}</td>
                         </tr>
+                        @foreach ($customAmountRows as $customAmountRow)
+                            <tr>
+                                <td>{{ $customAmountRow['description'] }}</td>
+                                <td>{{ number_format($customAmountRow['amount'], 2) }}</td>
+                            </tr>
+                        @endforeach
                         <tr>
                             @php
-                                $grandTotal = $totalWithExtras - $totalDeductions;
+                                $grandTotal = $totalWithExtras - $totalDeductions + $customAmountsTotal;
                             @endphp
                             <td>Amount</td>
                             <td>{{ number_format($grandTotal, 2) }}</td>
