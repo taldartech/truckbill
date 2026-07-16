@@ -11,7 +11,6 @@
         #tr_amount.tr-amount-exceeds-lr {
             background-color: #fff3cd;
         }
-    </style>
         .form-control,
         .form-select {
             min-height: 38px;
