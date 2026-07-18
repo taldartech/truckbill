@@ -212,19 +212,15 @@ class FreightBookingCalculationService
             ->get();
     }
 
-    public function recalculateFromVoucherPayments(
-        FreightBooking $freightBooking,
-        bool $preserveAdvanceAmount = false,
-    ): void {
+    public function recalculateFromVoucherPayments(FreightBooking $freightBooking): void
+    {
         $freightBooking->loadMissing('customAmounts');
 
-        if (! $preserveAdvanceAmount) {
-            $advance = (float) VoucherPayment::query()
-                ->where('freight_booking_id', $freightBooking->id)
-                ->whereNull('deleted_at')
-                ->sum('amount');
-            $freightBooking->advance_amount = $advance;
-        }
+        $advance = (float) VoucherPayment::query()
+            ->where('freight_booking_id', $freightBooking->id)
+            ->whereNull('deleted_at')
+            ->sum('amount');
+        $freightBooking->advance_amount = $advance;
 
         $freightBooking->balance_amount = $freightBooking->balanceFromAdvance();
         $freightBooking->save();

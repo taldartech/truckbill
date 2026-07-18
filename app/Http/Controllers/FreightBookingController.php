@@ -1531,7 +1531,7 @@ class FreightBookingController extends Controller
                             ]);
                         }
 
-                        $this->freightBookingCalculationService->recalculateFromVoucherPayments($freightBooking, true);
+                        $this->freightBookingCalculationService->recalculateFromVoucherPayments($freightBooking);
 
                         $lrNumber = $freightBooking->lr?->lr_number ?? (string) $freightBooking->id;
                         app(TransporterAdvanceLedgerService::class)->recordAdvancePayment(

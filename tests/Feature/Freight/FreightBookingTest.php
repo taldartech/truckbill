@@ -882,7 +882,8 @@ class FreightBookingTest extends TestCase
 
         $fb = FreightBooking::create(array_merge($this->bookingPayload($admin, $lr), [
             'transporter_id' => $transporter->id,
-            'balance_amount' => 5000,
+            'advance_amount' => 0,
+            'balance_amount' => 10000,
             'voucher_number' => 6010,
         ]));
         $lr->update(['freight_booking_id' => $fb->id]);
@@ -908,7 +909,12 @@ class FreightBookingTest extends TestCase
 
         $remaining = $response->json('remaining_advance_balance');
         $this->assertIsNumeric($remaining);
-        $this->assertGreaterThanOrEqual(0, $remaining);
+        $this->assertEquals(1500.0, (float) $remaining);
+
+        $fb->refresh();
+        $this->assertEquals(1000.0, (float) $fb->advance_amount);
+        $this->assertEquals(9000.0, (float) $fb->balance_amount);
+        $this->assertEquals(1500.0, (float) $transporter->fresh()->advance_amount);
     }
 
     /**
