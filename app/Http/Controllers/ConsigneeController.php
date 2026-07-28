@@ -227,7 +227,7 @@ class ConsigneeController extends Controller
                 },
             ],
             'contact_number' => [
-                'nullable',
+                'required',
 
                 'digits:10',
 
@@ -366,7 +366,7 @@ class ConsigneeController extends Controller
                 },
             ],
             'contact_number' => [
-                'nullable',
+                'required',
 
                 'digits:10',
 
