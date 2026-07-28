@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class ConsigneeController extends Controller
 {
@@ -228,9 +229,10 @@ class ConsigneeController extends Controller
             ],
             'contact_number' => [
                 'required',
-
                 'digits:10',
-
+                Rule::unique('consignees', 'contact_number')
+                    ->where('company_id', auth()->user()->company_id)
+                    ->withoutTrashed(),
             ],
             'gst_number' => [
                 'nullable',
@@ -251,6 +253,10 @@ class ConsigneeController extends Controller
 
             ],
 
+        ], [
+            'contact_number.required' => 'The contact number is required.',
+            'contact_number.digits' => 'The contact number must be exactly 10 digits.',
+            'contact_number.unique' => 'This contact number is already used by another consignee in your company.',
         ]);
         $validated = $this->normalizeConsigneeValues($validated);
         $this->validateConsigneeUniquenessCreate($validated, auth()->user()->company_id);
@@ -280,13 +286,6 @@ class ConsigneeController extends Controller
         // Query: non-deleted records from this company only
         $query = Consignee::where('company_id', $companyId)
             ->whereNull('deleted_at');
-
-        // Check contact_number
-        if (! empty($data['contact_number'])) {
-            if ($query->clone()->where('contact_number', $data['contact_number'])->exists()) {
-                $errors['contact_number'] = 'This contact number is already used by another consignee in your company.';
-            }
-        }
 
         // Check email
         if (! empty($data['email'])) {
@@ -367,9 +366,11 @@ class ConsigneeController extends Controller
             ],
             'contact_number' => [
                 'required',
-
                 'digits:10',
-
+                Rule::unique('consignees', 'contact_number')
+                    ->where('company_id', auth()->user()->company_id)
+                    ->withoutTrashed()
+                    ->ignore($consignee->id),
             ],
             'gst_number' => [
                 'nullable',
@@ -389,6 +390,10 @@ class ConsigneeController extends Controller
                 'email',
 
             ],
+        ], [
+            'contact_number.required' => 'The contact number is required.',
+            'contact_number.digits' => 'The contact number must be exactly 10 digits.',
+            'contact_number.unique' => 'This contact number is already used by another consignee in your company.',
         ]);
         $validated = $this->normalizeConsigneeValues($validated);
         $this->validateConsigneeUniquenessUpdate($validated, $consignee->company_id, $consignee->id);
@@ -406,14 +411,7 @@ class ConsigneeController extends Controller
         // Query: non-deleted records from this company, excluding current record
         $query = Consignee::where('company_id', $companyId)
             ->whereNull('deleted_at')
-            ->where('id', '!=', $excludeId);  // ✅ KEY: Exclude self
-
-        // Check contact_number
-        if (! empty($data['contact_number'])) {
-            if ($query->clone()->where('contact_number', $data['contact_number'])->exists()) {
-                $errors['contact_number'] = 'This contact number is already used by another consignee in your company.';
-            }
-        }
+            ->where('id', '!=', $excludeId);
 
         // Check email
         if (! empty($data['email'])) {
