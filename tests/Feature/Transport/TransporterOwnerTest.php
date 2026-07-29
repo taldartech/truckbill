@@ -4,6 +4,7 @@ namespace Tests\Feature\Transport;
 
 use App\Models\City;
 use App\Models\Company;
+use App\Models\CompanySubscription;
 use App\Models\Consignee;
 use App\Models\Country;
 use App\Models\FreightBooking;
@@ -42,6 +43,13 @@ class TransporterOwnerTest extends TestCase
             'user_id' => null,
             'gst_slab' => config('payments.gst_slabs')[0],
             'is_blocked' => false,
+        ]);
+
+        CompanySubscription::create([
+            'company_id' => $company->id,
+            'status' => 'active',
+            'starts_on' => now()->subMonth(),
+            'ends_on' => now()->addYear(),
         ]);
 
         return User::factory()->create([
@@ -349,6 +357,256 @@ class TransporterOwnerTest extends TestCase
             'is_owner' => 0,
             'declaration_given' => 1,
             'tds_percentage' => 0,
+        ]);
+    }
+
+    public function test_transporter_dummy_pan_defaults_tds_zero_but_allows_override_and_remark_persists(): void
+    {
+        $admin = $this->makeAdmin();
+        [$country, $state, $city] = $this->seedGeo();
+
+        $dummyPan = Company::dummyTransporterTruckOwnerPanNumber($admin->company_id);
+        $remark = 'Dummy transporter remark';
+        $updatedRemark = 'Dummy transporter remark updated';
+
+        $createResponse = $this->actingAs($admin)->post('/transporters', [
+            'company_id' => $admin->company_id,
+            'name' => 'Dummy Agency',
+            'gst_number' => '12ABCDE1234F1Z5',
+            'pan_number' => $dummyPan,
+            'advance_amount' => 0,
+            'pan_active' => true,
+            'address' => 'Addr',
+            'country_id' => $country->id,
+            'state_id' => $state->id,
+            'city_id' => $city->id,
+            'mobile_number' => '7555555000',
+            'declaration_given' => true,
+            // User-modified TDS should be persisted (default UI baseline is 0%).
+            'tds_percentage' => 5,
+            'tds_adjustment_remark' => $remark,
+        ]);
+
+        $createResponse->assertRedirect(route('transporters.index'));
+
+        $masterId = TransporterMaster::query()->where('pan_number', $dummyPan)->value('id');
+        $transporter = Transporter::query()
+            ->where('transporter_master_id', $masterId)
+            ->where('company_id', $admin->company_id)
+            ->where('is_owner', 0)
+            ->firstOrFail();
+
+        $this->assertEquals(5.0, (float) $transporter->tds_percentage);
+        $this->assertSame($remark, (string) $transporter->tds_adjustment_remark);
+
+        $updateResponse = $this->actingAs($admin)->put("/transporters/{$transporter->id}", [
+            'company_id' => $admin->company_id,
+            'mobile_number' => '7555555000',
+            'advance_amount' => 0,
+            'declaration_given' => true,
+            'total_trucks' => $transporter->total_trucks,
+            'tds_percentage' => 2.5,
+            'tds_adjustment_remark' => $updatedRemark,
+        ]);
+
+        $updateResponse->assertRedirect(route('transporters.index'));
+
+        $transporter->refresh();
+        $this->assertEquals(2.5, (float) $transporter->tds_percentage);
+        $this->assertSame($updatedRemark, (string) $transporter->tds_adjustment_remark);
+    }
+
+    public function test_truck_owner_dummy_pan_defaults_tds_zero_but_allows_override_and_remark_persists(): void
+    {
+        $admin = $this->makeAdmin();
+        [$country, $state, $city] = $this->seedGeo();
+
+        $dummyPan = Company::dummyTransporterTruckOwnerPanNumber($admin->company_id);
+        $remark = 'Dummy truck owner remark';
+        $updatedRemark = 'Dummy truck owner remark updated';
+
+        $createResponse = $this->actingAs($admin)->post('/truck_owners', [
+            'company_id' => $admin->company_id,
+            'name' => 'Dummy Owner',
+            'pan_number' => $dummyPan,
+            'pan_active' => true,
+            'declaration_given' => true,
+            'total_trucks' => 2,
+            'advance_amount' => 0,
+            'country_id' => $country->id,
+            'state_id' => $state->id,
+            'city_id' => $city->id,
+            'mobile_number' => '7555555010',
+            'tds_percentage' => 5,
+            'tds_adjustment_remark' => $remark,
+        ]);
+
+        $createResponse->assertRedirect(route('truck_owners.index'));
+
+        $masterId = TransporterMaster::query()->where('pan_number', $dummyPan)->value('id');
+        $truckOwner = Transporter::query()
+            ->where('transporter_master_id', $masterId)
+            ->where('company_id', $admin->company_id)
+            ->where('is_owner', 1)
+            ->firstOrFail();
+
+        $this->assertEquals(5.0, (float) $truckOwner->tds_percentage);
+        $this->assertSame($remark, (string) $truckOwner->tds_adjustment_remark);
+
+        $updateResponse = $this->actingAs($admin)->put("/truck_owners/{$truckOwner->id}", [
+            'company_id' => $admin->company_id,
+            'mobile_number' => '7555555010',
+            'advance_amount' => 0,
+            'declaration_given' => true,
+            'total_trucks' => $truckOwner->total_trucks,
+            'tds_percentage' => 2.5,
+            'tds_adjustment_remark' => $updatedRemark,
+        ]);
+
+        $updateResponse->assertRedirect(route('truck_owners.index'));
+
+        $truckOwner->refresh();
+        $this->assertEquals(2.5, (float) $truckOwner->tds_percentage);
+        $this->assertSame($updatedRemark, (string) $truckOwner->tds_adjustment_remark);
+    }
+
+    public function test_transporter_dummy_pan_allows_multiple_records_within_company(): void
+    {
+        $admin = $this->makeAdmin();
+        [$country, $state, $city] = $this->seedGeo();
+
+        $dummyPan = Company::dummyTransporterTruckOwnerPanNumber($admin->company_id);
+
+        $remark1 = 'Dummy transporter remark 1';
+        $remark2 = 'Dummy transporter remark 2';
+
+        $create1 = $this->actingAs($admin)->post('/transporters', [
+            'company_id' => $admin->company_id,
+            'name' => 'Dummy Agency 1',
+            'gst_number' => '12ABCDE1234F1Z5',
+            'pan_number' => $dummyPan,
+            'advance_amount' => 0,
+            'pan_active' => true,
+            'address' => 'Addr',
+            'country_id' => $country->id,
+            'state_id' => $state->id,
+            'city_id' => $city->id,
+            'mobile_number' => '7555555001',
+            'declaration_given' => true,
+            'tds_percentage' => 5,
+            'tds_adjustment_remark' => $remark1,
+        ]);
+
+        $create1->assertRedirect(route('transporters.index'));
+
+        $firstMasterId = TransporterMaster::query()->where('pan_number', $dummyPan)->value('id');
+
+        $create2 = $this->actingAs($admin)->post('/transporters', [
+            'company_id' => $admin->company_id,
+            'name' => 'Dummy Agency 2',
+            'gst_number' => '12ABCDE1234F1Z5',
+            'pan_number' => $dummyPan,
+            'advance_amount' => 0,
+            'pan_active' => true,
+            'address' => 'Addr',
+            'country_id' => $country->id,
+            'state_id' => $state->id,
+            'city_id' => $city->id,
+            'mobile_number' => '7555555002',
+            'declaration_given' => true,
+            'tds_percentage' => 5,
+            'tds_adjustment_remark' => $remark2,
+        ]);
+
+        $create2->assertRedirect(route('transporters.index'));
+
+        $this->assertSame(2, TransporterMaster::query()->where('pan_number', $dummyPan)->count());
+
+        $trans1 = Transporter::query()->where('mobile_number', '7555555001')->firstOrFail();
+        $trans2 = Transporter::query()->where('mobile_number', '7555555002')->firstOrFail();
+        $this->assertNotSame($trans1->transporter_master_id, $trans2->transporter_master_id);
+
+        $this->assertDatabaseHas('transporters', [
+            'company_id' => $admin->company_id,
+            'is_owner' => 0,
+            'mobile_number' => '7555555001',
+            'tds_adjustment_remark' => $remark1,
+        ]);
+
+        $this->assertDatabaseHas('transporters', [
+            'company_id' => $admin->company_id,
+            'is_owner' => 0,
+            'mobile_number' => '7555555002',
+            'tds_adjustment_remark' => $remark2,
+        ]);
+    }
+
+    public function test_truck_owner_dummy_pan_allows_multiple_records_within_company(): void
+    {
+        $admin = $this->makeAdmin();
+        [$country, $state, $city] = $this->seedGeo();
+
+        $dummyPan = Company::dummyTransporterTruckOwnerPanNumber($admin->company_id);
+
+        $remark1 = 'Dummy truck owner remark 1';
+        $remark2 = 'Dummy truck owner remark 2';
+
+        $create1 = $this->actingAs($admin)->post('/truck_owners', [
+            'company_id' => $admin->company_id,
+            'name' => 'Dummy Owner 1',
+            'pan_number' => $dummyPan,
+            'pan_active' => true,
+            'declaration_given' => true,
+            'total_trucks' => 2,
+            'advance_amount' => 0,
+            'country_id' => $country->id,
+            'state_id' => $state->id,
+            'city_id' => $city->id,
+            'mobile_number' => '7555555011',
+            'tds_percentage' => 5,
+            'tds_adjustment_remark' => $remark1,
+        ]);
+
+        $create1->assertRedirect(route('truck_owners.index'));
+
+        $firstMasterId = TransporterMaster::query()->where('pan_number', $dummyPan)->value('id');
+
+        $create2 = $this->actingAs($admin)->post('/truck_owners', [
+            'company_id' => $admin->company_id,
+            'name' => 'Dummy Owner 2',
+            'pan_number' => $dummyPan,
+            'pan_active' => true,
+            'declaration_given' => true,
+            'total_trucks' => 3,
+            'advance_amount' => 0,
+            'country_id' => $country->id,
+            'state_id' => $state->id,
+            'city_id' => $city->id,
+            'mobile_number' => '7555555012',
+            'tds_percentage' => 5,
+            'tds_adjustment_remark' => $remark2,
+        ]);
+
+        $create2->assertRedirect(route('truck_owners.index'));
+
+        $this->assertSame(2, TransporterMaster::query()->where('pan_number', $dummyPan)->count());
+
+        $trans1 = Transporter::query()->where('mobile_number', '7555555011')->firstOrFail();
+        $trans2 = Transporter::query()->where('mobile_number', '7555555012')->firstOrFail();
+        $this->assertNotSame($trans1->transporter_master_id, $trans2->transporter_master_id);
+
+        $this->assertDatabaseHas('transporters', [
+            'company_id' => $admin->company_id,
+            'is_owner' => 1,
+            'mobile_number' => '7555555011',
+            'tds_adjustment_remark' => $remark1,
+        ]);
+
+        $this->assertDatabaseHas('transporters', [
+            'company_id' => $admin->company_id,
+            'is_owner' => 1,
+            'mobile_number' => '7555555012',
+            'tds_adjustment_remark' => $remark2,
         ]);
     }
 

@@ -164,7 +164,14 @@
                     </div>
                     <div class="col-md-8">
                         <label for="tds_adjustment_remark" class="form-label">TDS adjustment remark</label>
-                        <textarea class="form-control @error('tds_adjustment_remark') is-invalid @enderror" id="tds_adjustment_remark" name="tds_adjustment_remark" rows="1" placeholder="Required when TDS % differs from the calculated rate">{{ old('tds_adjustment_remark', $truck_owner->tds_adjustment_remark) }}</textarea>
+                        @php
+                            $editIsDummyPan = auth()->user()->company_id
+                                && strtoupper((string) ($master->pan_number ?? '')) === \App\Models\Company::dummyTransporterTruckOwnerPanNumber((int) auth()->user()->company_id);
+                            $editRemarkDefault = $editIsDummyPan
+                                ? ($truck_owner->tds_adjustment_remark ?: \App\Models\Company::DUMMY_PAN_TDS_ADJUSTMENT_REMARK)
+                                : $truck_owner->tds_adjustment_remark;
+                        @endphp
+                        <textarea class="form-control @error('tds_adjustment_remark') is-invalid @enderror" id="tds_adjustment_remark" name="tds_adjustment_remark" rows="3" placeholder="Required when TDS % differs from the calculated rate">{{ old('tds_adjustment_remark', $editRemarkDefault) }}</textarea>
                         @error('tds_adjustment_remark') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
 
@@ -458,12 +465,21 @@
                         </table>
                     </div>
                 </div>
+
+                <div id="dummyPanAckNotice" class="alert alert-warning d-none mt-3 mb-0">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="confirm-dummy-pan-ack">
+                        <label class="form-check-label" for="confirm-dummy-pan-ack">
+                            {{ \App\Models\Company::DUMMY_PAN_TDS_ADJUSTMENT_REMARK }}
+                        </label>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times me-2"></i>Cancel
                 </button>
-                <button type="button" class="btn btn-brand-primary" onclick="submitForm()">
+                <button type="button" class="btn btn-brand-primary" id="confirmSubmitButton" onclick="submitForm()">
                     <i class="fas fa-check me-2"></i>Confirm & Update
                 </button>
             </div>
@@ -655,6 +671,11 @@
         if (te) {
             te.addEventListener('input', function () { window.__truckOwnerEditTdsUserEdited = true; });
         }
+
+        // For dummy PAN records we want the UI to show the forced 0.00% by default.
+        if (masterData?.panNumber && /^[0-9]/.test((masterData.panNumber || '').trim())) {
+            refreshTruckOwnerEditTdsBaseline();
+        }
     });
 
     // Function to show confirmation modal with form data
@@ -709,7 +730,8 @@
             const submitted = parseFloat(tdsField?.value || '0');
             const calculated = parseFloat(data.tds_percentage);
             let text = (isNaN(submitted) ? '0' : submitted.toFixed(2)) + '%';
-            if (!isNaN(calculated) && Math.abs(submitted - calculated) > 0.01) {
+            const isDummyPan = masterData?.panNumber && /^[0-9]/.test((masterData.panNumber || '').trim());
+            if (!isDummyPan && !isNaN(calculated) && Math.abs(submitted - calculated) > 0.01) {
                 text += ' (calculated ' + calculated.toFixed(2) + '%)';
             }
             document.getElementById('confirm-tds-percentage').textContent = text;
@@ -718,13 +740,39 @@
             document.getElementById('confirm-tds-percentage').textContent = (tdsField?.value || '0') + '%';
         });
 
+        const needsDummyAck = masterData?.panNumber && /^[0-9]/.test((masterData.panNumber || '').trim());
+        const dummyNotice = document.getElementById('dummyPanAckNotice');
+        const dummyCheckbox = document.getElementById('confirm-dummy-pan-ack');
+        const submitButton = document.getElementById('confirmSubmitButton');
+        if (dummyNotice && dummyCheckbox && submitButton) {
+            dummyNotice.classList.toggle('d-none', !needsDummyAck);
+            dummyCheckbox.checked = false;
+            submitButton.disabled = needsDummyAck;
+        }
+
         // Show the modal
         const modal = new bootstrap.Modal(document.getElementById('confirmationModal'));
         modal.show();
     }
 
+    document.getElementById('confirm-dummy-pan-ack')?.addEventListener('change', function () {
+        const submitButton = document.getElementById('confirmSubmitButton');
+        const notice = document.getElementById('dummyPanAckNotice');
+        if (submitButton && notice && !notice.classList.contains('d-none')) {
+            submitButton.disabled = !this.checked;
+        }
+    });
+
     // Function to submit the form
     function submitForm() {
+        const notice = document.getElementById('dummyPanAckNotice');
+        if (notice && !notice.classList.contains('d-none')) {
+            const checkbox = document.getElementById('confirm-dummy-pan-ack');
+            if (!checkbox?.checked) {
+                return;
+            }
+        }
+
         document.querySelector('.needs-validation').submit();
     }
 

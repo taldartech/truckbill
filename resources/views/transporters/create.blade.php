@@ -42,6 +42,12 @@
         @php
             $canEditCompany = auth()->check() && auth()->user()->userRole->name === 'super_admin';
             $userCompanyId = auth()->user()->company_id ?? null;
+            $shouldRestoreAfterValidation = $errors->any() && ! empty(old('pan_number'));
+            $restoredPanIsDummy = false;
+            if ($shouldRestoreAfterValidation && $userCompanyId) {
+                $restoredPanIsDummy = strtoupper((string) old('pan_number'))
+                    === \App\Models\Company::dummyTransporterTruckOwnerPanNumber((int) $userCompanyId);
+            }
         @endphp
         @error('registered_truck_id')
             <div class="text-danger">{{ $message }}</div>
@@ -50,7 +56,8 @@
             {{-- Company field hidden as requested --}}
             <input type="hidden" name="company_id" value="{{ $userCompanyId }}">
             <input type="hidden" name="transporter_master_id" id="transporter_master_id" value="{{ old('transporter_master_id') }}">
-            <input type="hidden" id="pan_verified" value="0">
+            <input type="hidden" id="pan_verified" value="{{ $shouldRestoreAfterValidation ? '1' : '0' }}">
+            <input type="hidden" id="is_dummy_pan" value="{{ $restoredPanIsDummy ? '1' : '0' }}">
 
             <!-- PAN Check Section - must complete before rest of form -->
             <div class="card mb-4 p-3 bg-light" id="panLookupSection">
@@ -61,7 +68,16 @@
                     <div class="col-md-6">
                         <label for="pan_lookup" class="form-label">PAN Number *</label>
                         <div class="input-group">
-                            <input type="text" class="form-control" id="pan_lookup" placeholder="Enter 10-digit PAN" maxlength="10" style="text-transform: uppercase;">
+                            <input
+                                type="text"
+                                class="form-control"
+                                id="pan_lookup"
+                                name="pan_lookup"
+                                placeholder="Enter 10-digit PAN"
+                                maxlength="10"
+                                value="{{ old('pan_lookup', old('pan_number', '')) }}"
+                                style="text-transform: uppercase;"
+                            >
                             <button type="button" class="btn btn-brand-primary" id="btnPanLookup">
                                 <i class="fas fa-check me-1"></i> Check PAN
                             </button>
@@ -279,7 +295,7 @@
                 <div class="row mb-3">
                     <div class="col-md-12">
                         <label for="tds_adjustment_remark" class="form-label">TDS adjustment remark</label>
-                        <textarea class="form-control @error('tds_adjustment_remark') is-invalid @enderror" id="tds_adjustment_remark" name="tds_adjustment_remark" rows="2" placeholder="Required when TDS % differs from the calculated rate">{{ old('tds_adjustment_remark') }}</textarea>
+                        <textarea class="form-control @error('tds_adjustment_remark') is-invalid @enderror" id="tds_adjustment_remark" name="tds_adjustment_remark" rows="3" placeholder="Required when TDS % differs from the calculated rate">{{ old('tds_adjustment_remark') }}</textarea>
                         @error('tds_adjustment_remark') <div class="text-danger">{{ $message }}</div> @enderror
                     </div>
                 </div>
@@ -364,6 +380,15 @@
                         <input class="form-check-input" type="checkbox" id="confirm-no-email-notification">
                         <label class="form-check-label" for="confirm-no-email-notification">
                             I understand that no notification will be sent to this transporter because no email address has been provided.
+                        </label>
+                    </div>
+                </div>
+
+                <div id="dummyPanAckNotice" class="alert alert-warning d-none mt-3 mb-0">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="confirm-dummy-pan-ack">
+                        <label class="form-check-label" for="confirm-dummy-pan-ack">
+                            {{ \App\Models\Company::DUMMY_PAN_TDS_ADJUSTMENT_REMARK }}
                         </label>
                     </div>
                 </div>
@@ -518,6 +543,28 @@
 @section('scripts')
 @parent
     <script>
+        const DEFAULT_DUMMY_TDS_REMARK = @json(\App\Models\Company::DUMMY_PAN_TDS_ADJUSTMENT_REMARK);
+
+        function setIsDummyPan(flag) {
+          const isDummyPanInput = document.getElementById('is_dummy_pan');
+          if (isDummyPanInput) {
+            isDummyPanInput.value = flag ? '1' : '0';
+          }
+        }
+
+        function isDummyPanSelected() {
+          return document.getElementById('is_dummy_pan')?.value === '1';
+        }
+
+        function applyDefaultDummyTdsRemark() {
+          const remark = document.getElementById('tds_adjustment_remark');
+          if (!remark || !isDummyPanSelected()) {
+            return;
+          }
+          if ((remark.value || '').trim() === '') {
+            remark.value = DEFAULT_DUMMY_TDS_REMARK;
+          }
+        }
 
         @if($errors->any())
             document.getElementById('restOfForm').classList.remove('d-none');
@@ -535,11 +582,18 @@
         const panAlreadyRegisteredSection = document.getElementById('panAlreadyRegisteredSection');
         let lastCheckedPan = '';
 
+        // If the form was re-rendered after validation errors, keep the PAN lookup box in sync.
+        if (panLookup && panField && (panField.value || '').trim() !== '') {
+          panLookup.value = panField.value;
+          applyDefaultDummyTdsRemark();
+        }
+
         function invalidatePanVerification(changedPan) {
           if (!panVerifiedInput) return;
           if (panVerifiedInput.value !== '1') return;
           if ((changedPan || '').toUpperCase() === (lastCheckedPan || '').toUpperCase()) return;
           panVerifiedInput.value = '0';
+          setIsDummyPan(false);
           if (restOfForm) restOfForm.classList.add('d-none');
           if (panAlreadyRegisteredSection) panAlreadyRegisteredSection.classList.add('d-none');
           panLookupMessage.textContent = 'PAN changed. Please click Check PAN again.';
@@ -549,8 +603,10 @@
         if (btnPanLookup) {
           btnPanLookup.addEventListener('click', function() {
             const pan = (panLookup?.value || '').trim().toUpperCase();
-            if (pan.length !== 10 || !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(pan)) {
-              panLookupMessage.textContent = 'Please enter a valid 10-digit PAN.';
+            // Client-side validation is intentionally relaxed:
+            // real PAN regex validation + dummy-PAN acceptance is handled server-side.
+            if (pan.length !== 10 || !/^[A-Z0-9]{10}$/.test(pan)) {
+              panLookupMessage.textContent = 'Please enter a 10-character PAN (letters/numbers).';
               panLookupMessage.className = 'mt-2 small text-danger';
               return;
             }
@@ -572,11 +628,13 @@
             .then(data => {
               if (data.already_registered) {
                 if (panVerifiedInput) panVerifiedInput.value = '0';
+                setIsDummyPan(false);
                 panLookupMessage.textContent = 'This PAN is already registered as a transporter/agency for this company.';
                 panLookupMessage.className = 'mt-2 small text-danger';
                 if (panAlreadyRegisteredSection) panAlreadyRegisteredSection.classList.remove('d-none');
                 return;
               }
+              setIsDummyPan(!!data.is_dummy_pan);
               if (restOfForm) restOfForm.classList.remove('d-none');
               if (data.found && data.master) {
                 document.getElementById('display_name').textContent = data.master.name || '-';
@@ -610,6 +668,7 @@
                 document.getElementById('country_id').setAttribute('required', 'required');
                 document.getElementById('state_id').setAttribute('required', 'required');
                 document.getElementById('city_id').setAttribute('required', 'required');
+                applyDefaultDummyTdsRemark();
                 panLookupMessage.textContent = 'PAN not in system. Please fill in all master details below.';
                 panLookupMessage.className = 'mt-2 small text-info';
               }
@@ -622,6 +681,7 @@
             })
             .catch((err) => {
               if (panVerifiedInput) panVerifiedInput.value = '0';
+              setIsDummyPan(false);
               panLookupMessage.textContent = err.message || 'Check failed. Please try again.';
               panLookupMessage.className = 'mt-2 small text-danger';
             })
@@ -695,37 +755,56 @@
           return resolveNotificationEmail() === '';
       }
 
-      function updateNoEmailNotificationNotice() {
-          const notice = document.getElementById('noEmailNotificationNotice');
-          const checkbox = document.getElementById('confirm-no-email-notification');
+      function updateConfirmationSubmitState(resetChecks = false) {
           const submitButton = document.getElementById('confirmSubmitButton');
-          const missingEmail = isNotificationEmailMissing();
-
-          if (!notice || !checkbox || !submitButton) {
+          const emailNotice = document.getElementById('noEmailNotificationNotice');
+          const emailCheckbox = document.getElementById('confirm-no-email-notification');
+          const dummyNotice = document.getElementById('dummyPanAckNotice');
+          const dummyCheckbox = document.getElementById('confirm-dummy-pan-ack');
+          if (!submitButton) {
               return;
           }
 
-          notice.classList.toggle('d-none', !missingEmail);
-          checkbox.checked = false;
-          submitButton.disabled = missingEmail;
+          const missingEmail = isNotificationEmailMissing();
+          const needsDummyAck = isDummyPanSelected();
+
+          if (emailNotice && emailCheckbox) {
+              emailNotice.classList.toggle('d-none', !missingEmail);
+              if (resetChecks || !missingEmail) {
+                  emailCheckbox.checked = false;
+              }
+          }
+
+          if (dummyNotice && dummyCheckbox) {
+              dummyNotice.classList.toggle('d-none', !needsDummyAck);
+              if (resetChecks || !needsDummyAck) {
+                  dummyCheckbox.checked = false;
+              }
+          }
+
+          const emailOk = !missingEmail || !!emailCheckbox?.checked;
+          const dummyOk = !needsDummyAck || !!dummyCheckbox?.checked;
+          submitButton.disabled = !(emailOk && dummyOk);
       }
 
-      document.getElementById('confirm-no-email-notification')?.addEventListener('change', function () {
-          const submitButton = document.getElementById('confirmSubmitButton');
+      function updateNoEmailNotificationNotice() {
+          updateConfirmationSubmitState(true);
+      }
 
-          if (submitButton && isNotificationEmailMissing()) {
-              submitButton.disabled = !this.checked;
-          }
-      });
+      document.getElementById('confirm-no-email-notification')?.addEventListener('change', updateConfirmationSubmitState);
+      document.getElementById('confirm-dummy-pan-ack')?.addEventListener('change', updateConfirmationSubmitState);
 
       document.getElementById('confirmationModal')?.addEventListener('hidden.bs.modal', function () {
-          const checkbox = document.getElementById('confirm-no-email-notification');
+          const emailCheckbox = document.getElementById('confirm-no-email-notification');
+          const dummyCheckbox = document.getElementById('confirm-dummy-pan-ack');
           const submitButton = document.getElementById('confirmSubmitButton');
 
-          if (checkbox) {
-              checkbox.checked = false;
+          if (emailCheckbox) {
+              emailCheckbox.checked = false;
           }
-
+          if (dummyCheckbox) {
+              dummyCheckbox.checked = false;
+          }
           if (submitButton) {
               submitButton.disabled = false;
           }
@@ -787,7 +866,8 @@
             const submitted = parseFloat(tdsField?.value || '0');
             const calculated = parseFloat(calculatedStr);
             let text = (isNaN(submitted) ? '0' : submitted.toFixed(2)) + '%';
-            if (!isNaN(calculated) && Math.abs(submitted - calculated) > 0.01) {
+            const isDummyPan = panNumber !== '-' && /^[0-9]/.test((panNumber || '').trim());
+            if (!isDummyPan && !isNaN(calculated) && Math.abs(submitted - calculated) > 0.01) {
               text += ' (calculated ' + calculated.toFixed(2) + '%)';
             }
             document.getElementById('confirm-tds-percentage').textContent = text;
@@ -867,6 +947,13 @@
       function submitForm() {
           if (isNotificationEmailMissing()) {
               const checkbox = document.getElementById('confirm-no-email-notification');
+              if (!checkbox?.checked) {
+                  return;
+              }
+          }
+
+          if (isDummyPanSelected()) {
+              const checkbox = document.getElementById('confirm-dummy-pan-ack');
               if (!checkbox?.checked) {
                   return;
               }

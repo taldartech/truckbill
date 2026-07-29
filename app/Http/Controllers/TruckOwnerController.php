@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateTruckOwnerRequest;
 use App\Models\AdvancePayment;
 use App\Models\City;
 use App\Models\Country;
+use App\Models\Company;
 use App\Models\Driver;
 use App\Models\State;
 use App\Models\Transporter;
@@ -243,6 +244,8 @@ class TruckOwnerController extends Controller
     public function store(StoreTruckOwnerRequest $request)
     {
         $validated = $request->validated();
+        $companyId = (int) ($validated['company_id'] ?? 0);
+        $dummyPan = Company::dummyTransporterTruckOwnerPanNumber($companyId);
 
         $shortName = $validated['short_name'] ?? null;
         if ($shortName) {
@@ -266,9 +269,21 @@ class TruckOwnerController extends Controller
             $validated['transporter_master_id'] = $master->id;
             $calculatedTds = $this->tdsCalculator->calculate((bool) $validated['declaration_given'], (string) $master->pan_number, (bool) $master->pan_active);
             $submittedTds = round((float) $validated['tds_percentage'], 2);
-            $remark = abs($submittedTds - round($calculatedTds, 2)) > 0.01
-                ? trim((string) ($validated['tds_adjustment_remark'] ?? ''))
-                : null;
+
+            $isDummyPan = strtoupper((string) $master->pan_number) === $dummyPan;
+            if ($isDummyPan) {
+                // Default UI baseline is 0%; keep the user-submitted value and always require a remark.
+                $remark = trim((string) ($validated['tds_adjustment_remark'] ?? ''));
+                if ($remark === '') {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'tds_adjustment_remark' => ['TDS adjustment remark is required for dummy PAN.'],
+                    ]);
+                }
+            } else {
+                $remark = abs($submittedTds - round($calculatedTds, 2)) > 0.01
+                    ? trim((string) ($validated['tds_adjustment_remark'] ?? ''))
+                    : null;
+            }
             Transporter::create([
                 'transporter_master_id' => $validated['transporter_master_id'],
                 'company_id' => $validated['company_id'],
@@ -289,11 +304,23 @@ class TruckOwnerController extends Controller
         $validated['pan_active'] = filter_var($validated['pan_active'], FILTER_VALIDATE_BOOLEAN);
         $validated['pan_number'] = strtoupper($validated['pan_number']);
         $validated['gst_number'] = ! empty($validated['gst_number']) ? strtoupper($validated['gst_number']) : null;
+
+        $isDummyPan = strtoupper((string) $validated['pan_number']) === $dummyPan;
         $calculatedTds = $this->tdsCalculator->calculate((bool) $validated['declaration_given'], $validated['pan_number'], $validated['pan_active']);
         $submittedTds = round((float) $validated['tds_percentage'], 2);
-        $tdsRemark = abs($submittedTds - round($calculatedTds, 2)) > 0.01
-            ? trim((string) ($validated['tds_adjustment_remark'] ?? ''))
-            : null;
+        if ($isDummyPan) {
+            // Default UI baseline is 0%; keep the user-submitted value and always require a remark.
+            $tdsRemark = trim((string) ($validated['tds_adjustment_remark'] ?? ''));
+            if ($tdsRemark === '') {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'tds_adjustment_remark' => ['TDS adjustment remark is required for dummy PAN.'],
+                ]);
+            }
+        } else {
+            $tdsRemark = abs($submittedTds - round($calculatedTds, 2)) > 0.01
+                ? trim((string) ($validated['tds_adjustment_remark'] ?? ''))
+                : null;
+        }
 
         $masterData = [
             'name' => $validated['name'],
@@ -328,11 +355,15 @@ class TruckOwnerController extends Controller
 
     public function calculateTruckOwnerTdsPercentage(Request $request)
     {
-        $panNumber = (string) $request->input('pan_number', '');
+        $panNumber = strtoupper((string) $request->input('pan_number', ''));
         $panActive = filter_var($request->input('pan_active'), FILTER_VALIDATE_BOOLEAN);
         $declarationGiven = $request->input('declaration_given') == '1';
 
-        $tdsPercentage = $this->tdsCalculator->calculate($declarationGiven, $panNumber, $panActive);
+        if ($panNumber !== '' && strlen($panNumber) === 10 && ctype_digit($panNumber[0])) {
+            $tdsPercentage = 0.00;
+        } else {
+            $tdsPercentage = $this->tdsCalculator->calculate($declarationGiven, $panNumber, $panActive);
+        }
 
         return response()->json([
             'tds_percentage' => number_format($tdsPercentage, 2),
@@ -462,6 +493,7 @@ class TruckOwnerController extends Controller
             abort(403, 'Unauthorized access to this truck owner.');
         }
         $validated = $request->validated();
+        $dummyPan = Company::dummyTransporterTruckOwnerPanNumber((int) ($validated['company_id'] ?? $truck_owner->company_id ?? 0));
 
         $master = $truck_owner->transporterMaster;
         $previousTds = round((float) $truck_owner->tds_percentage, 2);
@@ -471,9 +503,20 @@ class TruckOwnerController extends Controller
             (string) $master->pan_number,
             (bool) $master->pan_active
         );
-        $tdsRemark = abs($submittedTds - round($calculatedTds, 2)) > 0.01
-            ? trim((string) ($validated['tds_adjustment_remark'] ?? ''))
-            : null;
+        $isDummyPan = strtoupper((string) $master->pan_number) === $dummyPan;
+        if ($isDummyPan) {
+            // Default UI baseline is 0%; keep the user-submitted value and always require a remark.
+            $tdsRemark = trim((string) ($validated['tds_adjustment_remark'] ?? ''));
+            if ($tdsRemark === '') {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'tds_adjustment_remark' => ['TDS adjustment remark is required for dummy PAN.'],
+                ]);
+            }
+        } else {
+            $tdsRemark = abs($submittedTds - round($calculatedTds, 2)) > 0.01
+                ? trim((string) ($validated['tds_adjustment_remark'] ?? ''))
+                : null;
+        }
 
         $updateData = [
             'company_id' => $validated['company_id'],

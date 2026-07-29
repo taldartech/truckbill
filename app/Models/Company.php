@@ -11,6 +11,8 @@ class Company extends Model
 {
     use SoftDeletes;
 
+    public const DUMMY_PAN_TDS_ADJUSTMENT_REMARK = 'PAN not provided. A dummy PAN is currently used. The responsibility for collecting the correct PAN details and ensuring correct TDS compliance rests solely with the company/user entering the data.';
+
     protected $fillable = [
         'name',
         'short_name',
@@ -43,6 +45,10 @@ class Company extends Model
             if (empty($company->short_name) && ! empty($company->name)) {
                 $base = self::generateShortNameFromCompanyName($company->name);
                 $company->short_name = self::ensureUniqueShortName($base);
+            }
+
+            if (empty($company->dummy_pan_number)) {
+                $company->dummy_pan_number = self::generateUniqueDummyPanNumber();
             }
         });
 
@@ -239,5 +245,49 @@ class Company extends Model
         }
 
         return Storage::disk('public')->path($this->company_logo);
+    }
+
+    /**
+     * Stored company-scoped dummy PAN for transporter/truck-owner records without a real PAN.
+     *
+     * Requirements:
+     * - 10 characters to satisfy existing `pan_number` column sizing.
+     * - Intentionally fails the real PAN regex (first char is a digit).
+     * - Unique across companies (DB unique index on companies.dummy_pan_number).
+     */
+    public static function dummyTransporterTruckOwnerPanNumber(int $companyId): string
+    {
+        $company = self::withTrashed()->find($companyId);
+        if (! $company) {
+            throw new \InvalidArgumentException("Company [{$companyId}] was not found.");
+        }
+
+        if (blank($company->dummy_pan_number)) {
+            $company->forceFill([
+                'dummy_pan_number' => self::generateUniqueDummyPanNumber(),
+            ])->saveQuietly();
+        }
+
+        return strtoupper((string) $company->dummy_pan_number);
+    }
+
+    /**
+     * Generate a unique 10-char dummy PAN that cannot match real PAN format.
+     */
+    public static function generateUniqueDummyPanNumber(?int $exceptCompanyId = null): string
+    {
+        do {
+            $candidate = '0'.strtoupper(substr(bin2hex(random_bytes(5)), 0, 9));
+        } while (self::dummyPanNumberIsTaken($candidate, $exceptCompanyId));
+
+        return $candidate;
+    }
+
+    private static function dummyPanNumberIsTaken(string $dummyPanNumber, ?int $exceptCompanyId = null): bool
+    {
+        return self::withTrashed()
+            ->where('dummy_pan_number', $dummyPanNumber)
+            ->when($exceptCompanyId !== null, fn ($query) => $query->where('id', '!=', $exceptCompanyId))
+            ->exists();
     }
 }

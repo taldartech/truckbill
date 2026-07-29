@@ -43,6 +43,9 @@
                         <th>Name</th>
                         <th>GST Number</th>
                         <th>PAN Number</th>
+                        @if (auth()->check() && auth()->user()->userRole?->name === 'master_admin')
+                            <th>Dummy PAN (System)</th>
+                        @endif
                         <th>GST Scheme</th>
                         <th>GST Type</th>
                         <th>Address</th>
@@ -99,6 +102,13 @@ $(document).ready(function() {
                 name: 'pan_number',
                 width: '120px'
             },
+            @if (auth()->check() && auth()->user()->userRole?->name === 'master_admin')
+            {
+                data: 'dummy_pan_number',
+                name: 'dummy_pan_number',
+                width: '140px'
+            },
+            @endif
             {
                 data: 'gst_scheme',
                 name: 'gst_scheme',
@@ -168,7 +178,11 @@ $(document).ready(function() {
         scrollX: true,
         initComplete: function() {
             // Add individual column search
+            @if (auth()->check() && auth()->user()->userRole?->name === 'master_admin')
+            this.api().columns([1, 2, 3, 4, 5, 6, 7, 8, 9]).every(function() {
+            @else
             this.api().columns([1, 2, 3, 4, 5, 6, 7, 8]).every(function() {
+            @endif
                 var column = this;
                 var $header = $(column.header());
                 var title = $header.text().trim();

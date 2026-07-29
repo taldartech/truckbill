@@ -197,6 +197,9 @@ class CompanyController extends Controller
                 'name' => $company->name,
                 'gst_number' => $company->gst_number ?: '-',
                 'pan_number' => $company->pan_number ?: '-',
+                'dummy_pan_number' => auth()->check() && auth()->user()->userRole?->name === 'master_admin'
+                    ? ($company->dummy_pan_number ?: '-')
+                    : '-',
                 'gst_scheme' => $company->gst_scheme ? ucfirst($company->gst_scheme) : '-',
                 'gst_type' => $company->gst_type ? ucfirst($company->gst_type) : '-',
                 'address' => $company->address ?: '-',

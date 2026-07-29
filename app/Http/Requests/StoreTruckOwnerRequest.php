@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Http\Requests\Concerns\ValidatesTransporterTdsOverride;
 use App\Models\City;
+use App\Models\Company;
 use App\Models\State;
 use App\Models\Transporter;
 use App\Models\TransporterMaster;
@@ -22,6 +23,12 @@ class StoreTruckOwnerRequest extends FormRequest
     public function rules(): array
     {
         $companyId = $this->input('company_id');
+        $dummyPan = null;
+        $panNumberInput = strtoupper((string) $this->input('pan_number', ''));
+        if ($companyId !== null && $companyId !== '' && is_numeric((string) $companyId)) {
+            $dummyPan = Company::dummyTransporterTruckOwnerPanNumber((int) $companyId);
+        }
+        $isDummyPan = $dummyPan !== null && $panNumberInput !== '' && $panNumberInput === $dummyPan;
         $baseRules = array_merge([
             'company_id' => 'required|exists:companies,id',
             'contact_person_name' => 'nullable|string|max:255',
@@ -43,12 +50,25 @@ class StoreTruckOwnerRequest extends FormRequest
             'total_trucks' => 'required|integer|min:0|max:10000',
         ], $this->tdsOverrideFieldRules());
 
+        if ($isDummyPan) {
+            // Dummy PAN records must always have a remark (controllers also enforce TDS=0.00).
+            $baseRules['tds_adjustment_remark'] = 'required|string|max:1000';
+        }
+
         if ($this->filled('transporter_master_id')) {
             return array_merge($baseRules, [
                 'transporter_master_id' => [
                     'required',
                     'exists:transporter_masters,id',
                     function ($attr, $value, $fail) {
+                        $companyId = (int) $this->input('company_id');
+                        $master = TransporterMaster::find($value);
+
+                        // Allow multiple truck-owner records per company for the dummy PAN.
+                        if ($master && strtoupper((string) $master->pan_number) === Company::dummyTransporterTruckOwnerPanNumber($companyId)) {
+                            return;
+                        }
+
                         $exists = Transporter::where('transporter_master_id', $value)
                             ->where('company_id', $this->input('company_id'))
                             ->where('is_owner', 1)
@@ -64,12 +84,20 @@ class StoreTruckOwnerRequest extends FormRequest
         return array_merge($baseRules, [
             'name' => 'required|string|max:255',
             'email' => ['nullable', 'email', 'max:255', 'unique:transporter_masters,email', 'unique:users,email'],
-            'pan_number' => [
+            'pan_number' => array_merge([
                 'required',
                 'string',
                 'size:10',
-                'regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
-            ],
+                function ($attr, $value, $fail) use ($dummyPan): void {
+                    $pan = strtoupper((string) $value);
+                    if ($dummyPan !== null && $pan === $dummyPan) {
+                        return;
+                    }
+                    if (! preg_match('/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/', $pan)) {
+                        $fail('The PAN number format is invalid.');
+                    }
+                },
+            ], $isDummyPan ? [] : ['unique:transporter_masters,pan_number']),
             'gst_number' => [
                 'nullable',
                 'string',

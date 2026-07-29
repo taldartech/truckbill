@@ -437,6 +437,8 @@ class TransporterController extends Controller
     public function store(StoreTransporterRequest $request)
     {
         $validated = $request->validated();
+        $companyId = (int) ($validated['company_id'] ?? 0);
+        $dummyPan = Company::dummyTransporterTruckOwnerPanNumber($companyId);
 
         $shortName = $validated['short_name'] ?? null;
 
@@ -450,11 +452,24 @@ class TransporterController extends Controller
                 ->select(['id', 'pan_number', 'pan_active'])
                 ->findOrFail($request->transporter_master_id);
             $validated['transporter_master_id'] = $master->id;
+            $isDummyPan = strtoupper((string) $master->pan_number) === $dummyPan;
+
             $submittedTds = round((float) $validated['tds_percentage'], 2);
             $calculated = $this->tdsCalculator->calculate($declarationGiven, (string) $master->pan_number, (bool) $master->pan_active);
-            $remark = abs($submittedTds - round($calculated, 2)) > 0.01
-                ? trim((string) ($validated['tds_adjustment_remark'] ?? ''))
-                : null;
+
+            if ($isDummyPan) {
+                // Default UI baseline is 0%; keep the user-submitted value and always require a remark.
+                $remark = trim((string) ($validated['tds_adjustment_remark'] ?? ''));
+                if ($remark === '') {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'tds_adjustment_remark' => ['TDS adjustment remark is required for dummy PAN.'],
+                    ]);
+                }
+            } else {
+                $remark = abs($submittedTds - round($calculated, 2)) > 0.01
+                    ? trim((string) ($validated['tds_adjustment_remark'] ?? ''))
+                    : null;
+            }
             $validated['declaration_given'] = $declarationGiven;
             $validated['tds_percentage'] = $submittedTds;
             $validated['tds_adjustment_remark'] = $remark;
@@ -465,7 +480,7 @@ class TransporterController extends Controller
 
         $email = TransporterMaster::normalizeEmail($validated['email'] ?? null);
 
-        $onboardingData = DB::transaction(function () use ($validated, $declarationGiven, $email) {
+        $onboardingData = DB::transaction(function () use ($validated, $declarationGiven, $email, $dummyPan) {
             $masterData = [
                 'name' => $validated['name'],
                 'email' => $email,
@@ -480,11 +495,22 @@ class TransporterController extends Controller
             ];
             $master = TransporterMaster::create($masterData);
 
+            $isDummyPan = strtoupper((string) $master->pan_number) === $dummyPan;
             $submittedTds = round((float) $validated['tds_percentage'], 2);
             $calculated = $this->tdsCalculator->calculate($declarationGiven, (string) $master->pan_number, (bool) $master->pan_active);
-            $remark = abs($submittedTds - round($calculated, 2)) > 0.01
-                ? trim((string) ($validated['tds_adjustment_remark'] ?? ''))
-                : null;
+            if ($isDummyPan) {
+                // Default UI baseline is 0%; keep the user-submitted value and always require a remark.
+                $remark = trim((string) ($validated['tds_adjustment_remark'] ?? ''));
+                if ($remark === '') {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'tds_adjustment_remark' => ['TDS adjustment remark is required for dummy PAN.'],
+                    ]);
+                }
+            } else {
+                $remark = abs($submittedTds - round($calculated, 2)) > 0.01
+                    ? trim((string) ($validated['tds_adjustment_remark'] ?? ''))
+                    : null;
+            }
 
             $transporterData = [
                 'transporter_master_id' => $master->id,
@@ -598,6 +624,7 @@ class TransporterController extends Controller
         }
         $validated = $request->validated();
         $master = $transporter->transporterMaster;
+        $dummyPan = Company::dummyTransporterTruckOwnerPanNumber((int) ($validated['company_id'] ?? $transporter->company_id ?? 0));
         $previousTds = round((float) $transporter->tds_percentage, 2);
         $submittedTds = round((float) $validated['tds_percentage'], 2);
         $calculated = $this->tdsCalculator->calculate(
@@ -605,9 +632,21 @@ class TransporterController extends Controller
             (string) $master->pan_number,
             (bool) $master->pan_active
         );
-        $tdsRemark = abs($submittedTds - round($calculated, 2)) > 0.01
-            ? trim((string) ($validated['tds_adjustment_remark'] ?? ''))
-            : null;
+
+        $isDummyPan = strtoupper((string) $master->pan_number) === $dummyPan;
+        if ($isDummyPan) {
+            // Default UI baseline is 0%; keep the user-submitted value and always require a remark.
+            $tdsRemark = trim((string) ($validated['tds_adjustment_remark'] ?? ''));
+            if ($tdsRemark === '') {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'tds_adjustment_remark' => ['TDS adjustment remark is required for dummy PAN.'],
+                ]);
+            }
+        } else {
+            $tdsRemark = abs($submittedTds - round($calculated, 2)) > 0.01
+                ? trim((string) ($validated['tds_adjustment_remark'] ?? ''))
+                : null;
+        }
 
         $updateData = [
             'company_id' => $validated['company_id'],
@@ -636,11 +675,17 @@ class TransporterController extends Controller
 
     public function calculateTdsPercentage(Request $request)
     {
-        $panNumber = (string) $request->input('pan_number', '');
+        $panNumber = strtoupper((string) $request->input('pan_number', ''));
         $panActive = filter_var($request->input('pan_active'), FILTER_VALIDATE_BOOLEAN);
         $declarationGiven = $request->input('declaration_given') == '1';
 
-        $tdsPercentage = $this->tdsCalculator->calculate($declarationGiven, $panNumber, $panActive);
+        // Dummy PANs are company-scoped and intentionally do not match real PAN regex.
+        // Since the dummy helper forces the first character to be a digit, we can safely return 0.00 for UI purposes.
+        if ($panNumber !== '' && strlen($panNumber) === 10 && ctype_digit($panNumber[0])) {
+            $tdsPercentage = 0.00;
+        } else {
+            $tdsPercentage = $this->tdsCalculator->calculate($declarationGiven, $panNumber, $panActive);
+        }
 
         return response()->json([
             'tds_percentage' => number_format($tdsPercentage, 2),
@@ -653,12 +698,33 @@ class TransporterController extends Controller
     public function getTransporterMasterByPan(Request $request)
     {
         $panNumber = strtoupper(trim($request->query('pan_number', '')));
-        if (strlen($panNumber) !== 10 || ! preg_match('/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/', $panNumber)) {
+
+        $companyIdRaw = $request->query('company_id');
+        $companyId = null;
+        if ($companyIdRaw !== null && $companyIdRaw !== '' && is_numeric((string) $companyIdRaw)) {
+            $companyId = (int) $companyIdRaw;
+        }
+
+        $dummyPan = $companyId !== null
+            ? Company::dummyTransporterTruckOwnerPanNumber($companyId)
+            : null;
+
+        $isDummyPan = $dummyPan !== null && $panNumber === $dummyPan;
+
+        if (strlen($panNumber) !== 10 || (! $isDummyPan && ! preg_match('/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/', $panNumber))) {
             return response()->json(['error' => 'Invalid PAN number'], 422);
         }
 
-        $companyId = $request->query('company_id');
         $isOwner = $request->has('is_owner') ? (int) $request->query('is_owner') : null;
+
+        // Dummy PAN should always behave as "not found" so the UI always opens the new master form.
+        if ($isDummyPan) {
+            return response()->json([
+                'found' => false,
+                'already_registered' => false,
+                'is_dummy_pan' => true,
+            ]);
+        }
 
         $master = TransporterMaster::with(['city', 'state', 'country'])
             ->where('pan_number', $panNumber)
@@ -676,12 +742,14 @@ class TransporterController extends Controller
             return response()->json([
                 'found' => false,
                 'already_registered' => false,
+                'is_dummy_pan' => false,
             ]);
         }
 
         return response()->json([
             'found' => true,
             'already_registered' => $alreadyRegistered,
+            'is_dummy_pan' => false,
             'master' => [
                 'id' => $master->id,
                 'name' => $master->name,

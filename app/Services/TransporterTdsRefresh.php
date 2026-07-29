@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Company;
 use App\Models\Transporter;
 use InvalidArgumentException;
 
@@ -16,6 +17,10 @@ class TransporterTdsRefresh
     {
         $master = $transporter->transporterMaster;
 
+        if ($this->isDummyPan($transporter, $master?->pan_number)) {
+            return 0.00;
+        }
+
         return $this->tdsCalculator->calculate(
             (bool) $transporter->declaration_given,
             (string) ($master?->pan_number ?? ''),
@@ -23,8 +28,27 @@ class TransporterTdsRefresh
         );
     }
 
+    private function isDummyPan(Transporter $transporter, ?string $panNumber): bool
+    {
+        if ($panNumber === null || $panNumber === '') {
+            return false;
+        }
+
+        if (! $transporter->company_id) {
+            return false;
+        }
+
+        $expectedDummyPan = Company::dummyTransporterTruckOwnerPanNumber((int) $transporter->company_id);
+
+        return strtoupper($panNumber) === $expectedDummyPan;
+    }
+
     public function hasMismatch(Transporter $transporter): bool
     {
+        if ($this->isDummyPan($transporter, $transporter->transporterMaster?->pan_number)) {
+            return false;
+        }
+
         $stored = round((float) $transporter->tds_percentage, 2);
         $calculated = round($this->calculatedPercentage($transporter), 2);
 
