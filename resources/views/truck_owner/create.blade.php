@@ -834,8 +834,12 @@
         updateConfirmationSubmitState(true);
     }
 
-    document.getElementById('confirm-no-email-notification')?.addEventListener('change', updateConfirmationSubmitState);
-    document.getElementById('confirm-dummy-pan-ack')?.addEventListener('change', updateConfirmationSubmitState);
+    document.getElementById('confirm-no-email-notification')?.addEventListener('change', function () {
+        updateConfirmationSubmitState(false);
+    });
+    document.getElementById('confirm-dummy-pan-ack')?.addEventListener('change', function () {
+        updateConfirmationSubmitState(false);
+    });
 
     document.getElementById('confirmationModal')?.addEventListener('hidden.bs.modal', function () {
         const emailCheckbox = document.getElementById('confirm-no-email-notification');
