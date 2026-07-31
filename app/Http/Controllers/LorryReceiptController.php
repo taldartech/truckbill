@@ -587,7 +587,6 @@ class LorryReceiptController extends Controller
                     'nullable',
                     'string',
                     'max:256',
-                    'distinct',  // ✅ Only checks within request array
                 ],
                 'lrs.*.customer_id' => 'nullable|exists:consignees,id',
                 'lrs.*.consignor_id' => 'nullable|exists:consignees,id',
@@ -717,9 +716,6 @@ class LorryReceiptController extends Controller
                 'nullable',
                 'string',
                 'max:256',
-                Rule::unique('lorry_receipts', 'invoice_number')->where(function ($query) {
-                    return $query->where('company_id', $this->getCurrentCompanyId());
-                }),
             ],
             'truck_id' => 'nullable|exists:trucks,id',
             'transporter_id' => 'nullable|exists:transporters,id',
@@ -804,10 +800,7 @@ class LorryReceiptController extends Controller
     }
 
     /**
-     * ✅ VALIDATE LORRY RECEIPTS COMPANY-WISE UNIQUENESS
-     */
-    /**
-     * Validate uniqueness of LR numbers, GR numbers, and invoice numbers
+     * Validate uniqueness of LR numbers and GR numbers.
      *
      * @throws ValidationException
      */
@@ -816,7 +809,6 @@ class LorryReceiptController extends Controller
         $errors = [];
         $lrNumbers = array_filter(array_column($lrs, 'lr_number'));
         $grNumbers = array_filter(array_column($lrs, 'gr_number'));
-        $invoiceNumbers = array_filter(array_column($lrs, 'invoice_number'));
         $excludeIds = array_values(array_filter(array_map('intval', $excludeIds)));
 
         // Check LR_NUMBER uniqueness (Company-wise)
@@ -850,24 +842,6 @@ class LorryReceiptController extends Controller
                 foreach ($lrs as $index => $lr) {
                     if (! empty($lr['gr_number']) && in_array($lr['gr_number'], $duplicateGrs)) {
                         $errors["lrs.{$index}.gr_number"] = "GR Number '{$lr['gr_number']}' already exists in your company.";
-                    }
-                }
-            }
-        }
-
-        // Check INVOICE_NUMBER uniqueness (Company-wise)
-        if (! empty($invoiceNumbers)) {
-            $duplicateInvoices = LorryReceipt::where('company_id', $companyId)
-                ->whereNull('deleted_at')
-                ->when($excludeIds !== [], fn ($query) => $query->whereNotIn('id', $excludeIds))
-                ->whereIn('invoice_number', $invoiceNumbers)
-                ->pluck('invoice_number')
-                ->toArray();
-
-            if (! empty($duplicateInvoices)) {
-                foreach ($lrs as $index => $lr) {
-                    if (! empty($lr['invoice_number']) && in_array($lr['invoice_number'], $duplicateInvoices)) {
-                        $errors["lrs.{$index}.invoice_number"] = "Invoice Number '{$lr['invoice_number']}' already exists in your company.";
                     }
                 }
             }
@@ -1051,7 +1025,7 @@ class LorryReceiptController extends Controller
             'lrs.*.id' => 'required|integer|exists:lorry_receipts,id',
             'lrs.*.lr_number' => ['required', 'string', 'max:100', 'distinct'],
             'lrs.*.gr_number' => ['nullable', 'string', 'max:100', 'distinct'],
-            'lrs.*.invoice_number' => ['nullable', 'string', 'max:256', 'distinct'],
+            'lrs.*.invoice_number' => ['nullable', 'string', 'max:256'],
             'lrs.*.customer_id' => 'required|exists:consignees,id',
             'lrs.*.consignor_id' => 'required|exists:consignees,id',
             'lrs.*.consignor_contact_number' => 'nullable|string|max:20',
@@ -1243,16 +1217,10 @@ class LorryReceiptController extends Controller
             'exclude_id' => 'nullable|integer',
         ]);
 
-        $exists = LorryReceipt::where('invoice_number', $request->invoice_number)
-            ->where('company_id', $this->getCurrentCompanyId())
-            ->when($request->exclude_id, fn ($query) => $query->where('id', '!=', $request->exclude_id))
-            ->exists();
-
+        // Invoice numbers are intentionally not unique on lorry receipts.
         return response()->json([
-            'valid' => ! $exists,
-            'message' => $exists
-                ? 'Invoice Number already exists. Please use a unique Invoice Number.'
-                : 'Invoice Number is available',
+            'valid' => true,
+            'message' => 'Invoice Number is available',
         ]);
     }
 
@@ -1594,20 +1562,7 @@ class LorryReceiptController extends Controller
             }
         }
 
-        // ✅ CHECK 3: INVOICE_NUMBER
-        if (! empty($data['invoice_number'])) {
-            $exists = LorryReceipt::where('company_id', $companyId)
-                ->where('invoice_number', $data['invoice_number'])
-                ->where('id', '!=', $excludeId)
-                ->whereNull('deleted_at')
-                ->exists();
-
-            if ($exists) {
-                $errors['invoice_number'] = "Invoice Number '{$data['invoice_number']}' already exists in your company.";
-            }
-        }
-
-        // ✅ CHECK 4: MEMO_ID
+        // ✅ CHECK 3: MEMO_ID
         if (! empty($data['memo_id'])) {
             $exists = LorryReceipt::where('company_id', $companyId)
                 ->where('memo_id', $data['memo_id'])

@@ -270,17 +270,28 @@ class LorryReceiptTest extends TestCase
         $response->assertSessionHasErrors(['consignor_id', 'consignee_id']);
     }
 
-    public function test_store_rejects_duplicate_gr_and_invoice_numbers(): void
+    public function test_store_rejects_duplicate_gr_number_but_allows_duplicate_invoice_number(): void
     {
         $admin = $this->makeAdmin();
         $payload = $this->validPayload($admin);
 
         $this->actingAs($admin)->post('/lorry_receipts', $payload);
 
-        $response = $this->actingAs($admin)->from('/lorry_receipts/create')->post('/lorry_receipts', $payload);
+        $duplicateInvoicePayload = $payload;
+        $duplicateInvoicePayload['lr_number'] = 'LR-DUP-INV-001';
+        $duplicateInvoicePayload['gr_number'] = 'GR-DUP-INV-001';
+
+        $allowedInvoiceResponse = $this->actingAs($admin)->post('/lorry_receipts', $duplicateInvoicePayload);
+        $allowedInvoiceResponse->assertRedirect(route('lorry_receipts.index'));
+
+        $duplicateGrPayload = $payload;
+        $duplicateGrPayload['lr_number'] = 'LR-DUP-GR-001';
+
+        $response = $this->actingAs($admin)->from('/lorry_receipts/create')->post('/lorry_receipts', $duplicateGrPayload);
 
         $response->assertRedirect('/lorry_receipts/create');
-        $response->assertSessionHasErrors(['gr_number', 'invoice_number']);
+        $response->assertSessionHasErrors(['gr_number']);
+        $response->assertSessionDoesntHaveErrors(['invoice_number']);
     }
 
     public function test_store_forces_agency_payment_type_for_truck_without_owner(): void

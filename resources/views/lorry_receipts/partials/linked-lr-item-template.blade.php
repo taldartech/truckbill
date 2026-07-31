@@ -31,7 +31,7 @@
                     </div>
                     <div class="col-12 col-md-6 col-xl-3">
                         <label class="form-label">Invoice Number</label>
-                        <input type="text" class="form-control invoice-number-input" placeholder="Unique Invoice Number">
+                        <input type="text" class="form-control invoice-number-input" placeholder="Enter Invoice Number">
                         <div class="invalid-feedback">Please enter a unique Invoice number.</div>
                         <div class="invoice-number-feedback mt-1"></div>
                     </div>
