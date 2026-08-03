@@ -593,7 +593,7 @@
                 let lrCount = 0;
 
                 selectedMemoIds.forEach(function(memoId) {
-                    const rows = data[memoId] || [];
+                    const rows = Array.isArray(data[memoId]) ? data[memoId] : [];
                     if (!rows.length) {
                         return;
                     }
@@ -701,10 +701,17 @@
 
                 lrDetailsController = new AbortController();
 
-                fetch(`/invoices/lrs/${selectedMemoIds.join(',')}?invoice_id=${invoiceId}`, {
+                fetch(`/invoices/lrs?${(function() {
+                        const params = new URLSearchParams();
+                        selectedMemoIds.forEach(function(id) {
+                            params.append('memo_ids[]', id);
+                        });
+                        params.set('invoice_id', invoiceId);
+                        return params.toString();
+                    })()}`, {
                         cache: 'no-store',
                         signal: lrDetailsController.signal,
-                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
                     })
                     .then(function(response) {
                         if (!response.ok) {

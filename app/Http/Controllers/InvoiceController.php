@@ -642,9 +642,23 @@ class InvoiceController extends Controller
         return (int) $lastInvoiceId === (int) $invoice->id;
     }
 
-    public function getLrs(Request $request, $memoIds)
+    public function getLrs(Request $request)
     {
-        $memoIds = explode(',', $memoIds);
+        $memoIds = $request->input('memo_ids', []);
+
+        if (is_string($memoIds)) {
+            $memoIds = explode(',', $memoIds);
+        }
+
+        if (! is_array($memoIds)) {
+            $memoIds = [];
+        }
+
+        $memoIds = array_values(array_filter(array_map(
+            static fn ($memoId): string => trim((string) $memoId),
+            $memoIds
+        ), static fn (string $memoId): bool => $memoId !== ''));
+
         $currentLrIds = [];
 
         if ($request->filled('invoice_id') && Auth::user()->company_id) {
@@ -655,6 +669,10 @@ class InvoiceController extends Controller
             if ($invoice) {
                 $currentLrIds = $invoice->lr_ids ?? [];
             }
+        }
+
+        if ($memoIds === []) {
+            return response()->json([]);
         }
 
         $lrs = LorryReceipt::whereIn('memo_id', $memoIds)

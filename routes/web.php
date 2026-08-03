@@ -204,15 +204,16 @@ Route::middleware(['auth.blocked'])->group(function () {
 
     // Invoices
     Route::middleware(['role:admin,moderator,super_admin', 'company.context', 'subscription.active'])->group(function () {
+        // Register AJAX helpers before the resource so `/invoices/lrs` is not captured as `{invoice}`.
+        Route::get('/invoices/lrs', [InvoiceController::class, 'getLrs'])->name('invoices.lrs');
+        Route::get('/invoices/memos/{customerId}', [InvoiceController::class, 'getCustomerMemos']);
+        Route::get('/invoices/all-memos/{customerId}', [InvoiceController::class, 'getAllCustomerMemos']);
+        Route::get('/invoices/pending-memo/{customerId}', [InvoiceController::class, 'getPendingMemo']);
         Route::resource('invoices', InvoiceController::class)
             ->except(['edit', 'update', 'destroy']);
         Route::get('/custom-invoices/create', [CustomInvoiceController::class, 'create'])->name('custom-invoices.create');
         Route::post('/custom-invoices', [CustomInvoiceController::class, 'store'])->name('custom-invoices.store');
         Route::get('/custom-invoices/lr-by-number', [CustomInvoiceController::class, 'lrByNumber'])->name('custom-invoices.lr-by-number');
-        Route::get('/invoices/lrs/{memoIds}', [InvoiceController::class, 'getLrs'])->name('invoices.lrs');
-        Route::get('/invoices/memos/{customerId}', [InvoiceController::class, 'getCustomerMemos']);
-        Route::get('/invoices/all-memos/{customerId}', [InvoiceController::class, 'getAllCustomerMemos']);
-        Route::get('/invoices/pending-memo/{customerId}', [InvoiceController::class, 'getPendingMemo']);
     });
     Route::middleware(['role:admin,super_admin', 'company.context', 'subscription.active'])->group(function () {
         Route::get('/invoices/{invoice}/edit', [InvoiceController::class, 'edit'])->name('invoices.edit');

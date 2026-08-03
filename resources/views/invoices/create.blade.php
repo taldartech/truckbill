@@ -533,13 +533,23 @@
                 // Fetch LR numbers for selected memos
                 const memoIds = selectedMemos.map(memo => memo.id);
                 if (memoIds.length > 0) {
-                    fetch(`/invoices/lrs/${memoIds.join(',')}`, {
+                    const lrParams = new URLSearchParams();
+                    memoIds.forEach(id => lrParams.append('memo_ids[]', id));
+
+                    fetch(`/invoices/lrs?${lrParams.toString()}`, {
                             cache: 'no-store',
                             headers: {
-                                'X-Requested-With': 'XMLHttpRequest'
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json'
                             }
                         })
-                        .then(response => response.json())
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`Failed to load LR numbers (${response.status})`);
+                            }
+
+                            return response.json();
+                        })
                         .then(data => {
                             // Create a table for LR details
                             let tableHtml = '';
@@ -565,9 +575,10 @@
                             });
 
                             for (const memoId in data) {
-                                if (data[memoId].length > 0) {
-                                    lrCount += data[memoId].length;
-                                    const totalAmount = data[memoId].reduce((sum, lr) => sum +
+                                const memoLrs = Array.isArray(data[memoId]) ? data[memoId] : [];
+                                if (memoLrs.length > 0) {
+                                    lrCount += memoLrs.length;
+                                    const totalAmount = memoLrs.reduce((sum, lr) => sum +
                                         parseFloat(lr.amount || 0), 0);
                                     grandTotalAmount += totalAmount;
                                     tableHtml += `
@@ -592,7 +603,7 @@
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        ${data[memoId].map(lr => `
+                                                        ${memoLrs.map(lr => `
                                                                             <tr>
                                                                                 <td>${lr.lr_number}</td>
                                                                                 <td>${lr.source_city}</td>

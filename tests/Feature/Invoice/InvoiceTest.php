@@ -3,6 +3,7 @@
 namespace Tests\Feature\Invoice;
 
 use App\Models\Company;
+use App\Models\CompanySubscription;
 use App\Models\Consignee;
 use App\Models\Invoice;
 use App\Models\InvoicePayment;
@@ -38,6 +39,15 @@ class InvoiceTest extends TestCase
             'gst_slab' => config('payments.gst_slabs')[0],
             'lr_credits' => 5,
             'is_blocked' => false,
+        ]);
+
+        CompanySubscription::create([
+            'company_id' => $company->id,
+            'status' => 'active',
+            'starts_on' => now()->subMonth(),
+            'ends_on' => now()->addYear(),
+            'included_branches' => 2,
+            'users_per_branch' => 3,
         ]);
 
         $roleId = UserRole::where('name', $role)->value('id');
@@ -635,5 +645,41 @@ class InvoiceTest extends TestCase
         $response->assertOk()
             ->assertJsonFragment(['manual_invoice_number' => $invoiceA->manual_invoice_number])
             ->assertJsonMissing(['manual_invoice_number' => 'INV-CUST-B']);
+    }
+
+    public function test_get_lrs_supports_memo_ids_with_slashes(): void
+    {
+        $admin = $this->makeUser('admin');
+        $customer = $this->seedConsignees($admin);
+        $memoId = '9387429/9387429';
+
+        LorryReceipt::create([
+            'company_id' => $admin->company_id,
+            'customer_id' => $customer->id,
+            'consignor_id' => $customer->id,
+            'consignee_id' => $customer->id,
+            'lr_number' => 'LR-SLASH-1',
+            'memo_id' => $memoId,
+            'invoice_generated' => 0,
+            'delivery_status' => 'Pending',
+            'source_city' => 'A',
+            'source_state' => 'B',
+            'destination_city' => 'C',
+            'destination_state' => 'D',
+            'lane' => 'Lane 1',
+            'good_type' => 'Steel',
+            'weight' => 1,
+            'fr_rate' => 100,
+            'amount' => 250,
+            'gr_date' => now()->toDateString(),
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->withHeader('X-Requested-With', 'XMLHttpRequest')
+            ->get('/invoices/lrs?'.http_build_query(['memo_ids' => [$memoId]]));
+
+        $response->assertOk()
+            ->assertJsonPath($memoId.'.0.lr_number', 'LR-SLASH-1')
+            ->assertJsonPath($memoId.'.0.amount', 250);
     }
 }
