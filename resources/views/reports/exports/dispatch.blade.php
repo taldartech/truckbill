@@ -41,6 +41,7 @@
             <th>Detention</th>
             <th>Deviation</th>
             <th>Misc</th>
+            <th>Custom Amount</th>
             <th>Balance</th>
             <th>Negative Adjusted</th>
             <th>Diff</th>
@@ -109,6 +110,7 @@
                 <td>{{ $freight?->detention ?? 0 }}</td>
                 <td>{{ $freight?->deviation ?? 0 }}</td>
                 <td>{{ $freight?->misc_expense ?? 0 }}</td>
+                <td>{{ $freight?->customAmountsTotal() ?? 0 }}</td>
 
                 <td>{{ $paymentSummary['balance'] }}</td>
                 <td>{{ $freight?->negative_adjusted_amount ?? 0 }}</td>

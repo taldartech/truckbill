@@ -245,7 +245,7 @@ class ReportController extends Controller
             // First, get the LorryReceipts with their freight bookings and voucher payments
             $query = LorryReceipt::with([
                 'freightBookings' => function ($q) {
-                    $q->with(['voucherPayments']);
+                    $q->with(['voucherPayments', 'customAmounts']);
                 },
                 'consignor',
                 'consignee',

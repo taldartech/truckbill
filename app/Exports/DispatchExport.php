@@ -31,7 +31,7 @@ class DispatchExport implements FromView, ShouldAutoSize, WithColumnFormatting
         if ($this->startDate || $this->endDate) {
             $query = LorryReceipt::with([
                 'freightBookings' => function ($q) {
-                    $q->with(['voucherPayments']);
+                    $q->with(['voucherPayments', 'customAmounts']);
                 },
                 'consignor',
                 'consignee',
@@ -84,8 +84,9 @@ class DispatchExport implements FromView, ShouldAutoSize, WithColumnFormatting
             'AF' => $numFormat,
             'AG' => $numFormat,
             'AH' => $numFormat,
-            'AQ' => NumberFormat::FORMAT_NUMBER,
-            'AR' => NumberFormat::FORMAT_DATE_DDMMYYYY,
+            'AI' => $numFormat,
+            'AR' => NumberFormat::FORMAT_NUMBER,
+            'AS' => NumberFormat::FORMAT_DATE_DDMMYYYY,
         ];
     }
 }

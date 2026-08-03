@@ -11,9 +11,11 @@ use App\Exports\ShortageDamageExport;
 use App\Exports\TransporterReportExport;
 use App\Models\City;
 use App\Models\Company;
+use App\Models\CompanySubscription;
 use App\Models\Consignee;
 use App\Models\Country;
 use App\Models\FreightBooking;
+use App\Models\FreightBookingCustomAmount;
 use App\Models\Invoice;
 use App\Models\LorryReceipt;
 use App\Models\Pump;
@@ -52,6 +54,15 @@ class ReportExportTest extends TestCase
             'gst_slab' => config('payments.gst_slabs')[0],
             'lr_credits' => 5,
             'is_blocked' => false,
+        ]);
+
+        CompanySubscription::create([
+            'company_id' => $company->id,
+            'status' => 'active',
+            'starts_on' => now()->subMonth(),
+            'ends_on' => now()->addYear(),
+            'included_branches' => 2,
+            'users_per_branch' => 3,
         ]);
 
         $roleId = UserRole::where('name', $role)->value('id');
@@ -304,6 +315,36 @@ class ReportExportTest extends TestCase
             ->get('/reports/transporter-report?'.http_build_query($params))
             ->assertOk()
             ->assertSee('12.345');
+    }
+
+    public function test_dispatch_report_displays_freight_booking_custom_amount_total(): void
+    {
+        $admin = $this->makeUser('admin');
+        [$lr, $booking] = $this->seedLr($admin);
+
+        FreightBookingCustomAmount::create([
+            'freight_booking_id' => $booking->id,
+            'company_id' => $admin->company_id,
+            'description' => 'Loading charge',
+            'amount' => 250.50,
+        ]);
+        FreightBookingCustomAmount::create([
+            'freight_booking_id' => $booking->id,
+            'company_id' => $admin->company_id,
+            'description' => 'Rebate',
+            'amount' => -50.25,
+        ]);
+
+        $params = [
+            'start_date' => now()->subDays(7)->toDateString(),
+            'end_date' => now()->toDateString(),
+        ];
+
+        $this->actingAs($admin)
+            ->get('/reports/dispatch?'.http_build_query($params))
+            ->assertOk()
+            ->assertSee('Custom Amount')
+            ->assertSee('200.25');
     }
 
     public function test_invoice_report_displays_invoices_sorted_ascending_by_generated_date(): void
